@@ -38,6 +38,7 @@ pub(crate) fn run(state: &mut RuntimeState) {
         );
         info!(%user_id, %multi_user_canister_id, "User migration requested");
     }
+    super::cancel_stalled_user_migrations::start_job_if_required(state);
 }
 
 // Users can be migrated if they are held in a canister of their own. Suspended users are migrated

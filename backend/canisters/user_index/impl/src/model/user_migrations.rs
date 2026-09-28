@@ -1,4 +1,4 @@
-use oc_error_codes::OCError;
+use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use types::{BuildVersion, CanisterId, Hash, TimestampMillis, UserId};
@@ -39,6 +39,12 @@ pub struct UserMigration {
     // Set once the user's canister has started migrating them, from when it is frozen until the
     // MultiUser canister has pulled them
     pub started: Option<StartedUserMigration>,
+}
+
+impl UserMigration {
+    fn last_progress(&self) -> TimestampMillis {
+        self.started.as_ref().map_or(self.requested, |s| s.timestamp)
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -245,6 +251,47 @@ impl UserMigrations {
             }
             _ => false,
         }
+    }
+
+    pub fn get(&self, user_id: &UserId) -> Option<&UserMigration> {
+        self.in_progress.get(user_id)
+    }
+
+    // When the migration which has gone longest without making progress last made any
+    pub fn earliest_progress(&self) -> Option<TimestampMillis> {
+        self.in_progress.values().map(|m| m.last_progress()).min()
+    }
+
+    // The migrations which have made no progress since before `cutoff`, along with the MultiUser
+    // canister each is to and, once started, the hash identifying it
+    pub fn stalled(&self, cutoff: TimestampMillis) -> Vec<(UserId, CanisterId, Option<Hash>)> {
+        self.in_progress
+            .iter()
+            .filter(|(_, m)| m.last_progress() < cutoff)
+            .map(|(user_id, m)| (*user_id, m.multi_user_canister_id, m.started.as_ref().map(|s| s.user_hash)))
+            .collect()
+    }
+
+    // Returns false if the user isn't being migrated to the given MultiUser canister. Otherwise the
+    // migration, which has been cancelled for having stalled, is recorded as failed.
+    pub fn mark_stalled(&mut self, user_id: UserId, multi_user_canister_id: CanisterId, now: TimestampMillis) -> bool {
+        if !self
+            .in_progress
+            .get(&user_id)
+            .is_some_and(|m| m.multi_user_canister_id == multi_user_canister_id)
+        {
+            return false;
+        }
+        self.in_progress.remove(&user_id);
+        self.failed.insert(
+            user_id,
+            FailedUserMigration {
+                multi_user_canister_id,
+                timestamp: now,
+                error: OCErrorCode::UserMigrationStalled.into(),
+            },
+        );
+        true
     }
 
     // Whether the user has been taken from the queue to be migrated, and hasn't yet been imported
@@ -555,6 +602,39 @@ mod tests {
 
         assert!(migrations.mark_imported(next, UserId::new_indexed(canister_id(1), 1), 3));
         assert_eq!(migrations.try_take_next(), Some(queued(2)));
+    }
+
+    #[test]
+    fn migrations_are_stalled_once_they_make_no_progress_for_long_enough() {
+        let mut migrations = UserMigrations::default();
+        for i in 1..=2 {
+            migrations.enqueue(queued(i), false);
+            let next = migrations.try_take_next().unwrap().user_id;
+            migrations.mark_requested(next, canister_id(1), 10);
+        }
+        // Starting a migration counts as progress
+        migrations.mark_started(user_id(2), canister_id(1), 100, BuildVersion::default(), [2; 32], 20);
+
+        assert_eq!(migrations.earliest_progress(), Some(10));
+        assert!(migrations.stalled(10).is_empty());
+        assert_eq!(migrations.stalled(11), vec![(user_id(1), canister_id(1), None)]);
+        let mut stalled = migrations.stalled(21);
+        stalled.sort();
+        assert_eq!(
+            stalled,
+            vec![
+                (user_id(1), canister_id(1), None),
+                (user_id(2), canister_id(1), Some([2; 32]))
+            ]
+        );
+
+        assert!(!migrations.mark_stalled(user_id(1), canister_id(2), 30));
+        assert!(migrations.mark_stalled(user_id(1), canister_id(1), 30));
+        assert!(!migrations.is_in_progress(&user_id(1)));
+        assert!(matches!(
+            migrations.status(&user_id(1)),
+            Some(UserMigrationStatus::Failed { error, .. }) if error.matches_code(OCErrorCode::UserMigrationStalled)
+        ));
     }
 
     #[test]
