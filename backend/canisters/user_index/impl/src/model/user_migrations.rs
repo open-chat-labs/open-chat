@@ -275,10 +275,10 @@ impl UserMigrations {
     // Returns false if the user isn't being migrated to the given MultiUser canister. Otherwise the
     // migration, which has been cancelled for having stalled, is recorded as failed.
     pub fn mark_stalled(&mut self, user_id: UserId, multi_user_canister_id: CanisterId, now: TimestampMillis) -> bool {
-        if !self
+        if self
             .in_progress
             .get(&user_id)
-            .is_some_and(|m| m.multi_user_canister_id == multi_user_canister_id)
+            .is_none_or(|m| m.multi_user_canister_id != multi_user_canister_id)
         {
             return false;
         }
