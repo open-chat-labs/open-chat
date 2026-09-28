@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove the syncing of users' minutes online to the deprecated AirdropBot, along with its canister id and the `sync_online_minutes_to_airdrop_bot_increment` setting ([#9595](https://github.com/open-chat-labs/open-chat/pull/9595))
+- Remove the syncing of users' minutes online to the deprecated AirdropBot ([#9595](https://github.com/open-chat-labs/open-chat/pull/9595))
 
 ### Fixed
 
