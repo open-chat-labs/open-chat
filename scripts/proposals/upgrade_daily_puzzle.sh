@@ -1,10 +1,8 @@
 #!/bin/bash
 
 VERSION=$1
-SUMMARY_PATH=$2
 
 TITLE="Upgrade DailyPuzzle canister to $VERSION"
-SUMMARY=`cat $SUMMARY_PATH`
 FUNCTION_ID=3
 CANISTER_NAME=daily_puzzle
 
@@ -14,4 +12,4 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
 # Submit the proposal
-./make_upgrade_canister_proposal.sh $FUNCTION_ID $CANISTER_NAME "$VERSION" "$TITLE" "$SUMMARY"
+./make_upgrade_canister_proposal.sh $FUNCTION_ID $CANISTER_NAME "$VERSION" "$TITLE"
