@@ -13,9 +13,15 @@ fn c2c_export_user(args: Args) -> Response {
 }
 
 fn c2c_export_user_impl(args: Args, state: &RuntimeState) -> Response {
-    let bytes = state.data.migration.as_ref().map(|m| m.user.as_slice()).unwrap_or_default();
+    // The guard ensures the user is being migrated
+    let migration = state.data.migration.as_ref().unwrap();
+    let bytes = migration.user.as_slice();
     let from = min(usize::try_from(args.from).unwrap_or(usize::MAX), bytes.len());
     let to = min(from.saturating_add(PAGE_SIZE as usize), bytes.len());
 
-    Success(ByteBuf::from(bytes[from..to].to_vec()))
+    Success(SuccessResult {
+        page: ByteBuf::from(bytes[from..to].to_vec()),
+        total_bytes: bytes.len() as u64,
+        hash: migration.user_hash,
+    })
 }

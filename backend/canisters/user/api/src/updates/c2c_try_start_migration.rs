@@ -1,6 +1,6 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
-use types::{BuildVersion, CanisterId};
+use types::{BuildVersion, CanisterId, Hash};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -20,4 +20,6 @@ pub struct SuccessResult {
     // The version of the User canister the user was serialized by, which the MultiUser canister
     // must match to deserialize them
     pub wasm_version: BuildVersion,
+    // The hash of the user serialized, which identifies the migration
+    pub user_hash: Hash,
 }

@@ -1,5 +1,6 @@
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
+use crate::model::user_imports::UserImports;
 use crate::model::users::Users;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
@@ -182,36 +183,6 @@ impl RuntimeState {
         self.user_index(user_id).filter(|index| self.data.users.contains(*index))
     }
 
-    // Runs `f` against the copy of the chat with `my_user_id` held by `their_user_id`, provided they
-    // are a different user in this canister who has the chat and hasn't blocked `my_user_id`. This
-    // is how a change a user makes to their copy of a direct chat reaches the other copy when both
-    // users are in this canister, in place of the `UserCanisterEvent`s sent between User canisters
-    // (which a User canister ignores if its user has blocked the sender).
-    pub fn with_their_direct_chat_mut<R>(
-        &mut self,
-        my_user_id: UserId,
-        their_user_id: UserId,
-        f: impl FnOnce(&mut DirectChat, &MigratedUserIds) -> R,
-    ) -> Option<R> {
-        if their_user_id == my_user_id {
-            return None;
-        }
-        let their_index = self.index_of_local_user(their_user_id)?;
-        let migrated_user_ids = &self.data.migrated_user_ids;
-        self.data
-            .users
-            .with_user_mut(their_index, |user| {
-                if user.blocked_users.contains(&my_user_id) {
-                    None
-                } else {
-                    user.direct_chats
-                        .get_mut(&my_user_id.into())
-                        .map(|chat| f(chat, migrated_user_ids))
-                }
-            })
-            .flatten()
-    }
-
     // Queues an event from the user at `user_index` for the LocalUserIndex, which it takes as being
     // from that user
     pub fn push_local_user_index_canister_event(
@@ -228,14 +199,24 @@ impl RuntimeState {
         });
     }
 
-    // Queues a direct chat event from the user at `sender_index` for `recipient`, a user in another
-    // canister, as the User canister does for its user. A user in this canister is updated directly
-    // instead, and the OpenChat bot is never sent events.
-    pub fn push_user_canister_event(&mut self, sender_index: u16, recipient: UserId, event: UserCanisterEvent) {
-        if recipient == OPENCHAT_BOT_USER_ID || self.user_index(recipient).is_some() {
+    // Sends a direct chat event from the user at `sender_index` to `recipient`, as the User canister
+    // does for its user. A recipient whose id is in this canister has it applied straight away,
+    // exactly as if it had come from another canister, while any other is sent it via the canister
+    // holding their latest id (which is this one for a user migrated here since having `recipient`,
+    // keeping the order of any events already queued for them). Nothing is sent to the sender
+    // themselves or to the OpenChat bot.
+    pub fn send_user_canister_event(&mut self, sender_index: u16, recipient: UserId, event: UserCanisterEvent) {
+        let sender = self.user_id(sender_index);
+        if recipient == sender || recipient == OPENCHAT_BOT_USER_ID {
             return;
         }
-        let sender = self.user_id(sender_index);
+        if self.user_index(recipient).is_some() {
+            // An index in this canister which holds no user has nobody to apply the event to
+            if let Some(recipient_index) = self.index_of_local_user(recipient) {
+                updates::c2c_user_canister_v2::apply_event(event, sender, recipient_index, self);
+            }
+            return;
+        }
         // Sent to the recipient's latest id if they are known to have been migrated since having
         // `recipient`
         let recipient = self.data.migrated_user_ids.latest(recipient);
@@ -298,33 +279,6 @@ impl RuntimeState {
 
     pub fn award_achievement_and_notify(&mut self, user_index: u16, achievement: Achievement, now: TimestampMillis) {
         self.award_achievements_and_notify(user_index, [achievement], now);
-    }
-
-    // Tells whoever referred the user at `user_index` of the status the user has reached, so they
-    // earn the CHIT for it. A referrer in another canister is sent it as the User canister does,
-    // while one in this canister is updated directly, unless they have blocked the user, as their
-    // canister would skip the event from a blocked sender.
-    pub fn set_referral_status_of_referrer(&mut self, user_index: u16, status: ReferralStatus, now: TimestampMillis) {
-        let Some(Some(referred_by)) = self.data.users.with_user(user_index, |user| user.referred_by) else {
-            return;
-        };
-        if let Some(referrer_index) = self.index_of_local_user(referred_by) {
-            let referred = self.user_id(user_index);
-            let blocked = self
-                .data
-                .users
-                .with_user(referrer_index, |user| user.blocked_users.contains(&referred))
-                .unwrap_or(true);
-            if !blocked {
-                self.set_referral_status(referrer_index, referred, status, now);
-            }
-        } else {
-            self.push_user_canister_event(
-                user_index,
-                referred_by,
-                UserCanisterEvent::SetReferralStatus(Box::new(status)),
-            );
-        }
     }
 
     // Records the status `referred` has reached for the user at `referrer_index` who referred them,
@@ -591,6 +545,7 @@ impl RuntimeState {
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             queued_user_canister_events: self.data.user_canister_events_queue.len() as u32,
             known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
+            user_imports_in_progress: self.data.user_imports.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -632,6 +587,9 @@ struct Data {
     // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
     // have changed
     pub migrated_user_ids: MigratedUserIds,
+    // The users being imported from canisters of their own, keyed by their old id
+    #[serde(default)]
+    pub user_imports: UserImports,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -665,6 +623,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
+            user_imports: UserImports::default(),
             rng_seed,
             test_mode,
         }
@@ -710,6 +669,7 @@ pub struct Metrics {
     pub queued_local_user_index_events: u32,
     pub queued_user_canister_events: u32,
     pub known_multi_user_canisters: u32,
+    pub user_imports_in_progress: u32,
     pub canister_ids: CanisterIds,
 }
 
