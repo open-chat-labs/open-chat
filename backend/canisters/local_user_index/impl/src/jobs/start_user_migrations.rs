@@ -127,8 +127,9 @@ async fn start_migration(
     .await
     {
         Ok(user_canister::c2c_try_start_migration::Response::Success(result)) => Ok(result),
-        // A canister which isn't ready has work outstanding which clears by itself, eg. work left
-        // over from the upgrade above, so it is retried until the attempts run out
+        // Most reasons for a canister not being ready clear by themselves, eg. work left over from
+        // the upgrade above, so these are retried. Those which don't clear in time, such as the user
+        // having an open P2P swap, are reported once the attempts run out
         Ok(user_canister::c2c_try_start_migration::Response::Error(error))
             if error.matches_code(OCErrorCode::NotReadyForMigration) =>
         {

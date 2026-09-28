@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{KeyPrefix, P2PSwapKeyPrefix, with_map, with_map_mut};
+use stable_memory_map::{KeyPrefix, P2PSwapKey, P2PSwapKeyPrefix, with_map, with_map_mut};
 use std::collections::HashMap;
 use types::{P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
 use user_canister::P2PSwapCreated;
@@ -43,6 +43,20 @@ impl P2PSwaps {
             token1_amount: swap.token1_amount,
             expires_at: swap.expires_at,
         });
+    }
+
+    // Whether the user created a swap which expires after `time`. Until a swap has expired, and been
+    // refunded if it wasn't accepted, the Escrow canister may still pay out to the account of the
+    // user who created it.
+    pub fn any_created_by_expiring_after(&self, created_by: UserId, time: TimestampMillis) -> bool {
+        let prefix = P2PSwapKeyPrefix::new();
+        with_map(|m| {
+            m.range::<P2PSwapKey, _>(prefix.create_key(&0)..=prefix.create_key(&u32::MAX))
+                .any(|(_, bytes)| {
+                    let swap: P2PSwap = msgpack::deserialize_then_unwrap(&bytes);
+                    swap.created_by == created_by && swap.expires_at > time
+                })
+        })
     }
 
     pub fn is_empty(&self) -> bool {
@@ -98,7 +112,6 @@ mod tests {
     use candid::Principal;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-    use stable_memory_map::P2PSwapKey;
     use types::{Chat, MessageId};
 
     #[test]
@@ -133,6 +146,27 @@ mod tests {
             msgpack::deserialize_then_unwrap(&with_map(|m| m.get(P2PSwapKeyPrefix::new().create_key(&4))).unwrap());
         assert_eq!(stored.created_by, created_by);
         assert_eq!(stored.token0_amount, 400);
+    }
+
+    #[test]
+    fn only_unexpired_swaps_created_by_the_user_are_found() {
+        init_stable_memory_map();
+        let mut swaps = P2PSwaps::default();
+        let user: UserId = Principal::from_slice(&[5; 10]).into();
+        let other_user: UserId = Principal::from_slice(&[6; 10]).into();
+
+        // Created by the user, expiring at 1001
+        swaps.add(swap(1));
+        // Accepted by the user, expiring at 1002
+        swaps.add(P2PSwap {
+            created_by: other_user,
+            ..swap(2)
+        });
+
+        assert!(swaps.any_created_by_expiring_after(user, 1000));
+        assert!(!swaps.any_created_by_expiring_after(user, 1001));
+        assert!(swaps.any_created_by_expiring_after(other_user, 1001));
+        assert!(!swaps.any_created_by_expiring_after(other_user, 1002));
     }
 
     #[test]

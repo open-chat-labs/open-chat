@@ -12,7 +12,8 @@ use user_canister::c2c_try_start_migration::{Response::*, *};
 fn c2c_try_start_migration(args: Args) -> Response {
     mutate_state(|state| {
         let now = state.env.now();
-        match state.data.try_start_migration(args.multi_user_canister_id, now) {
+        let user_id = state.env.canister_id().into();
+        match state.data.try_start_migration(user_id, args.multi_user_canister_id, now) {
             Ok(migration) => Success(SuccessResult {
                 user_bytes: migration.user.len() as u64,
                 wasm_version: migration.wasm_version,
@@ -27,12 +28,19 @@ fn c2c_try_start_migration(args: Args) -> Response {
 mod tests {
     use crate::{Data, WASM_VERSION};
     use candid::Principal;
+    use constants::HOUR_IN_MS;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use oc_error_codes::OCErrorCode;
-    use types::{BuildVersion, CanisterId, FrozenUserInfo, Timestamped};
-    use user_core::User;
+    use types::{
+        BuildVersion, CanisterId, Chat, FrozenUserInfo, MessageId, P2PSwapLocation, TimestampMillis, Timestamped, TokenInfo,
+        UserId,
+    };
+    use user_core::{P2PSwap, User};
     use utils::async_work::AsyncWorkGuard;
 
     fn data() -> Data {
+        init_stable_memory_map();
         Data::new(
             Principal::from_slice(&[1]),
             Principal::from_slice(&[2]),
@@ -52,6 +60,15 @@ mod tests {
         Principal::from_slice(&[10, i])
     }
 
+    fn user_id() -> UserId {
+        Principal::from_slice(&[20]).into()
+    }
+
+    fn init_stable_memory_map() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
+    }
+
     fn version(patch: u32) -> BuildVersion {
         BuildVersion::new(2, 0, patch)
     }
@@ -65,7 +82,7 @@ mod tests {
         let mut data = data();
         set_wasm_version(1);
 
-        let migration = data.try_start_migration(multi_user_canister(1), 2).unwrap();
+        let migration = data.try_start_migration(user_id(), multi_user_canister(1), 2).unwrap();
 
         let user: User = msgpack::deserialize_then_unwrap(&migration.user);
         assert_eq!(migration.multi_user_canister_id, multi_user_canister(1));
@@ -81,11 +98,15 @@ mod tests {
         let mut data = data();
         set_wasm_version(1);
 
-        let first = data.try_start_migration(multi_user_canister(1), 2).unwrap().user.clone();
+        let first = data
+            .try_start_migration(user_id(), multi_user_canister(1), 2)
+            .unwrap()
+            .user
+            .clone();
 
         // Even if the canister has since been upgraded, the user as they were serialized is returned
         set_wasm_version(2);
-        let second = data.try_start_migration(multi_user_canister(1), 3).unwrap();
+        let second = data.try_start_migration(user_id(), multi_user_canister(1), 3).unwrap();
 
         assert_eq!(second.user, first);
         assert_eq!(second.started, 2);
@@ -95,9 +116,12 @@ mod tests {
     #[test]
     fn migration_to_another_canister_is_rejected() {
         let mut data = data();
-        data.try_start_migration(multi_user_canister(1), 2).unwrap();
+        data.try_start_migration(user_id(), multi_user_canister(1), 2).unwrap();
 
-        let error = data.try_start_migration(multi_user_canister(2), 3).map(|_| ()).unwrap_err();
+        let error = data
+            .try_start_migration(user_id(), multi_user_canister(2), 3)
+            .map(|_| ())
+            .unwrap_err();
 
         assert!(error.matches_code(OCErrorCode::AlreadyInProgress));
         assert_eq!(data.migration.unwrap().multi_user_canister_id, multi_user_canister(1));
@@ -108,7 +132,10 @@ mod tests {
         let mut data = data();
         let _guard = AsyncWorkGuard::new();
 
-        let error = data.try_start_migration(multi_user_canister(1), 2).map(|_| ()).unwrap_err();
+        let error = data
+            .try_start_migration(user_id(), multi_user_canister(1), 2)
+            .map(|_| ())
+            .unwrap_err();
 
         assert!(error.matches_code(OCErrorCode::NotReadyForMigration));
         assert!(data.migration.is_none());
@@ -123,9 +150,34 @@ mod tests {
             reason: None,
         });
 
-        let migration = data.try_start_migration(multi_user_canister(1), 2).unwrap();
+        let migration = data.try_start_migration(user_id(), multi_user_canister(1), 2).unwrap();
 
         assert_eq!(migration.multi_user_canister_id, multi_user_canister(1));
+    }
+
+    #[test]
+    fn user_with_an_open_swap_they_created_is_not_ready_until_an_hour_after_it_expires() {
+        let mut data = data();
+        data.user.p2p_swaps.add(p2p_swap(user_id(), 1_000));
+
+        let error = data
+            .try_start_migration(user_id(), multi_user_canister(1), 1_000 + HOUR_IN_MS - 1)
+            .map(|_| ())
+            .unwrap_err();
+
+        assert!(error.matches_code(OCErrorCode::NotReadyForMigration));
+        assert!(data.migration.is_none());
+
+        data.try_start_migration(user_id(), multi_user_canister(1), 1_000 + HOUR_IN_MS)
+            .unwrap();
+    }
+
+    #[test]
+    fn user_who_accepted_an_open_swap_is_ready() {
+        let mut data = data();
+        data.user.p2p_swaps.add(p2p_swap(Principal::from_slice(&[21]).into(), 1_000));
+
+        data.try_start_migration(user_id(), multi_user_canister(1), 2).unwrap();
     }
 
     #[test]
@@ -134,9 +186,36 @@ mod tests {
         data.stable_memory_keys_to_garbage_collect
             .push(stable_memory_map::ChatEventKeyPrefix::new_from_direct_chat_key_id(1, None).into());
 
-        let error = data.try_start_migration(multi_user_canister(1), 2).map(|_| ()).unwrap_err();
+        let error = data
+            .try_start_migration(user_id(), multi_user_canister(1), 2)
+            .map(|_| ())
+            .unwrap_err();
 
         assert!(error.matches_code(OCErrorCode::NotReadyForMigration));
         assert!(data.migration.is_none());
+    }
+
+    fn p2p_swap(created_by: UserId, expires_at: TimestampMillis) -> P2PSwap {
+        let token = TokenInfo {
+            symbol: "ICP".to_string(),
+            ledger: Principal::from_slice(&[30]),
+            decimals: 8,
+            fee: 10_000,
+        };
+        P2PSwap {
+            id: 1,
+            location: P2PSwapLocation::from_message(
+                Chat::Direct(Principal::from_slice(&[31]).into()),
+                None,
+                MessageId::from(1u64),
+            ),
+            created_by,
+            created: 0,
+            token0: token.clone(),
+            token0_amount: 100,
+            token1: token,
+            token1_amount: 100,
+            expires_at,
+        }
     }
 }
