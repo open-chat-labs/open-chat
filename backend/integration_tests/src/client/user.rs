@@ -42,6 +42,7 @@ generate_msgpack_update_call!(c2c_remove_from_group);
 generate_msgpack_update_call!(c2c_set_user_suspended);
 generate_msgpack_update_call!(c2c_uninstall_bot);
 generate_msgpack_update_call!(c2c_user_canister_v2);
+generate_msgpack_update_call!(c2c_withdraw_from_icpswap);
 generate_msgpack_update_call!(cancel_message_reminder);
 generate_msgpack_update_call!(cancel_p2p_swap);
 generate_msgpack_update_call!(claim_daily_chit);
