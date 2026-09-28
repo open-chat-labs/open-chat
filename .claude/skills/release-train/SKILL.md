@@ -77,15 +77,23 @@ Then the developer smoke-tests the prod-test site manually, exercising the featu
 
 ## Phase 2 — prod (SNS proposals)
 
-Before creating ANY prod proposal: write `./local/summary.md` with the proposal text, drawn from the relevant component's CHANGELOG.md `[unreleased]` section and/or the commit history since the last released tag. The developer MUST review `./local/summary.md` before the proposal script is executed — never run a proposal script against unreviewed text.
+The developer MUST review the proposal text before the proposal script is executed — never run a proposal script against unreviewed text.
 
 ### Canisters
 
-Per-canister wrapper scripts in `scripts/proposals/` (e.g. `upgrade_storage_buckets.sh`, `upgrade_storage_index.sh`, `upgrade_user_index.sh`...) wrap `make_upgrade_canister_proposal.sh` with the right SNS function id. Args: version + path to the reviewed summary file:
+Per-canister wrapper scripts in `scripts/proposals/` (e.g. `upgrade_storage_buckets.sh`, `upgrade_storage_index.sh`, `upgrade_user_index.sh`...) wrap `make_upgrade_canister_proposal.sh` with the right SNS function id. Args: version, plus an optional dfx identity for the chunked ones:
 
 ```bash
-sh ./scripts/proposals/upgrade_storage_buckets.sh 2.0.<tag> "<abs path to local/summary.md>"
+sh ./scripts/proposals/upgrade_storage_buckets.sh 2.0.<tag>
 ```
+
+The script takes the proposal's changelog from the `[unreleased]` section of `backend/canisters/<canister>/CHANGELOG.md` **as of the tag commit** (so entries merged after tagging are left out), and fails if that section is empty. Before the developer runs it, show them that section as the script will see it:
+
+```bash
+git show v2.0.<tag>-<canister>:backend/canisters/<canister>/CHANGELOG.md | sed -n '/^## \[unreleased\]/,/^## \[\[/p'
+```
+
+The text is fixed once the tag is cut, so wording fixes have to land in CHANGELOG.md before tagging.
 
 The script downloads the wasm from S3 at the tag commit, hashes it, and embeds verification instructions in the proposal summary.
 
@@ -124,7 +132,7 @@ The developer smoke-tests web-test, then stages the prod assets:
 sh ./scripts/prepare-frontend-assets.sh openchat 2.0.<tag>
 ```
 
-builds and stages assets via `dfx deploy --network ic --by-proposal website`, printing a **batch id** and **evidence hash**. Then, with the reviewed `./local/summary.md`:
+builds and stages assets via `dfx deploy --network ic --by-proposal website`, printing a **batch id** and **evidence hash**. Then write `./local/summary.md` with the proposal text, drawn from the commit history since the last website tag (`frontend/CHANGELOG.md` is no longer maintained), and once the developer has reviewed it:
 
 ```bash
 sh ./scripts/proposals/commit_frontend_assets.sh 2.0.<tag> "<abs path to local/summary.md>" <batch_id> <evidence_hash>
