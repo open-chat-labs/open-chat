@@ -5,6 +5,7 @@ use crate::{Data, mutate_state, read_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
+use notifications_index_canister::{UserIdMigrated, UserIndexEvent as NotificationsIndexEvent};
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
@@ -49,6 +50,45 @@ fn post_upgrade(args: Args) {
         let now = state.env.now();
         for (bot_id, from, to) in state.data.users.repair_misrecorded_direct_chat_bot_installations(now) {
             info!(%bot_id, ?from, ?to, "Moved misrecorded bot installation");
+        }
+    });
+
+    // One-off: point the new NotificationsIndex event queue, which was created with a placeholder
+    // target, at the NotificationsIndex, then tell it the new id of each user migrated so far, so that
+    // it stops knowing them by their old one
+    // TODO remove after the release containing this has been deployed, along with the queue's serde default
+    mutate_state(|state| {
+        let notifications_index_canister_id = state.data.notifications_index_canister_id;
+        state
+            .data
+            .notifications_index_event_sync_queue
+            .set_state(notifications_index_canister_id);
+
+        let migrated_users: Vec<_> = state
+            .data
+            .migrated_user_ids
+            .iter()
+            // Only each user's latest id matters
+            .filter(|(_, new_user_id)| state.data.migrated_user_ids.get(new_user_id).is_none())
+            .filter_map(|(old_user_id, new_user_id)| {
+                state
+                    .data
+                    .users
+                    .get_by_user_id(&new_user_id)
+                    .map(|u| (u.principal, old_user_id, new_user_id))
+            })
+            .collect();
+
+        info!(
+            count = migrated_users.len(),
+            "Telling the NotificationsIndex about previously migrated users"
+        );
+        for (user_principal, old_user_id, new_user_id) in migrated_users {
+            state.push_event_to_notifications_index(NotificationsIndexEvent::UserIdMigrated(UserIdMigrated {
+                user_principal,
+                old_user_id,
+                new_user_id,
+            }));
         }
     });
 

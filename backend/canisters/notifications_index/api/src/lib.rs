@@ -27,10 +27,14 @@ pub enum NotificationsIndexEvent {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum UserIndexEvent {
-    UserBlocked(UserId, UserId),
-    UserUnblocked(UserId, UserId),
-    BotEndpointUpdated(UserId, String),
-    BotRemoved(UserId),
+    UserIdMigrated(UserIdMigrated),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserIdMigrated {
+    pub user_principal: Principal,
+    pub old_user_id: UserId,
+    pub new_user_id: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

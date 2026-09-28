@@ -670,6 +670,84 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
 }
 
 #[test]
+fn notifications_index_knows_migrated_user_by_their_new_id() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    // Subscribing to notifications has the NotificationsIndex cache the user's id
+    let endpoint = random_string();
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        "auth",
+        "p256dh",
+        &endpoint,
+    );
+    assert!(client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        &endpoint
+    ));
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+
+    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id) {
+        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
+        status => panic!("User not imported: {status:?}"),
+    };
+
+    // The NotificationsIndex now knows the user by their new id, so the subscription held under their
+    // old id is no longer theirs
+    assert!(!client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        &endpoint
+    ));
+
+    // Once pushed again, the subscription is held under their new id, so they are notified of messages
+    // sent to them
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        "auth",
+        "p256dh",
+        &endpoint,
+    );
+    tick_many(env, 3);
+    let latest_notification_index =
+        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
+    client::user::happy_path::send_text_message(env, &user2, new_user_id, random_string(), None);
+    tick_many(env, 3);
+    let notifications =
+        client::local_user_index::happy_path::notifications(env, *controller, local_user_index, latest_notification_index + 1);
+    assert_eq!(notifications.notifications.len(), 1);
+    assert!(notifications.subscriptions.contains_key(&new_user_id));
+}
+
+#[test]
 fn suspended_user_is_migrated() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

@@ -15,3 +15,11 @@ pub fn caller_is_push_service() -> Result<(), String> {
         Err("Caller is not a push service".to_string())
     }
 }
+
+pub fn caller_is_user_index_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_user_index_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the UserIndex canister".to_string())
+    }
+}
