@@ -5144,6 +5144,13 @@ fn users_send_crypto_from_their_own_wallets() {
         &initial_state(env, b_principal, canister_id),
         Achievement::ReceivedCrypto
     ));
+    // And appears in B's message activity feed
+    let feed = message_activity_feed(env, b_principal, canister_id, 0);
+    assert!(
+        feed.events
+            .iter()
+            .any(|e| e.activity == MessageActivity::Crypto && e.user_id == Some(a))
+    );
 
     // To Carol, in a User canister
     let transfer = icrc2_transfer(env, icrc1::Account::legacy_for_user(carol.user_id));

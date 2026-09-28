@@ -1,17 +1,16 @@
 use crate::timer_job_types::{HardDeleteMessageContentJob, TimerJob};
-use crate::updates::send_message::{HandleMessageArgs, handle_message_impl};
+use crate::updates::send_message::receive_message;
 use crate::updates::start_video_call::handle_start_video_call;
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use constants::{HOUR_IN_MS, MINUTE_IN_MS};
-use direct_chat::DirectChat;
-use oc_error_codes::OCErrorCode;
 use rand::RngExt;
-use types::{Achievement, CallKind, CanisterId, MessageId, MessageIndex, OCResult, UserId, UserType};
+use types::{Achievement, CallKind, CanisterId, UserId, UserType};
 use user_canister::c2c_user_canister::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, SendMessagesArgs, ToggleReactionArgs, UserCanisterEvent};
+use user_core::updates::c2c_user_canister::ReceiveMessageArgs;
 
 #[update(msgpack = true)]
 #[trace]
@@ -169,58 +168,28 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
 }
 
 fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeState) {
-    let now = state.env.now();
     for message in args.messages {
-        // Messages sent c2c can be retried so the same messageId may be received multiple
-        // times, so here we skip any messages whose messageId already exists.
-        let chat = state.data.user.direct_chats.get(&sender.into());
-        let Ok(thread_root_message_index) = thread_root_message_index(chat, message.thread_root_message_id) else {
-            continue;
-        };
-        if chat.is_some_and(|chat| {
-            chat.events()
-                .message_already_finalised(thread_root_message_index, message.message_id, false)
-        }) {
-            continue;
-        }
-
-        handle_message_impl(
-            HandleMessageArgs {
+        receive_message(
+            ReceiveMessageArgs {
                 sender,
-                thread_root_message_index,
-                message_id: Some(message.message_id),
-                sender_message_index: Some(message.sender_message_index),
+                sender_user_type: UserType::User,
                 sender_name: args.sender_name.clone(),
                 sender_display_name: args.sender_display_name.clone(),
+                sender_avatar_id: args.sender_avatar_id,
+                thread_root_message_id: message.thread_root_message_id,
+                message_id: message.message_id,
+                sender_message_index: Some(message.sender_message_index),
                 content: message.content,
                 replies_to: message.replies_to,
                 forwarding: message.forwarding,
-                sender_user_type: UserType::User,
-                sender_avatar_id: args.sender_avatar_id,
-                push_message_sent_event: false,
-                mute_notification: message.message_filter_failed.is_some(),
-                mentioned: Vec::new(),
                 block_level_markdown: message.block_level_markdown,
                 og_previews: message.og_previews,
-                now,
+                mentioned: Vec::new(),
+                mute_notification: message.message_filter_failed.is_some(),
             },
+            false,
             state,
         );
-    }
-}
-
-// The index in our copy of the chat of the thread a message received from another canister is in,
-// given the id of the thread root there (message ids are the same in both users' copies of a chat
-// while the indexes are not). Fails if there is no such message visible in the chat, including
-// when there is no chat with the sender yet.
-fn thread_root_message_index(
-    chat: Option<&DirectChat>,
-    thread_root_message_id: Option<MessageId>,
-) -> OCResult<Option<MessageIndex>> {
-    match chat {
-        Some(chat) => chat.thread_root_message_index(thread_root_message_id),
-        None if thread_root_message_id.is_none() => Ok(None),
-        None => Err(OCErrorCode::ThreadNotFound.into()),
     }
 }
 

@@ -3,10 +3,11 @@ use crate::timer_job_types::{MessageReminderJob, TimerJob};
 use crate::{RuntimeState, mutate_state, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use chat_events::{MessageContentInternal, MessageReminderCreatedContentInternal, ReplyContextInternal};
+use chat_events::{MessageContentInternal, MessageReminderCreatedContentInternal};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{Achievement, FieldTooLongResult, OCResult};
+use user_canister::C2CReplyContext;
 use user_canister::set_message_reminder_v2::{Response::*, *};
 
 const MAX_NOTES_LENGTH: usize = 1000;
@@ -47,10 +48,11 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> OCResult<u
             notes: args.notes.clone(),
             hidden: false,
         }),
-        Some(ReplyContextInternal {
-            chat_if_other: Some((args.chat.into(), args.thread_root_message_index)),
-            event_index: args.event_index,
-        }),
+        Some(C2CReplyContext::OtherChat(
+            args.chat,
+            args.thread_root_message_index,
+            args.event_index,
+        )),
         Vec::new(),
         true,
         state,

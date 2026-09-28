@@ -4,19 +4,21 @@
 
 use crate::User;
 use chat_events::{
-    AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, NullEventPusher, Reader, TipMessageArgs,
+    AddRemoveReactionArgs, DeleteUndeleteMessagesArgs, EditMessageArgs, EventPusher, MessageContentInternal, NullEventPusher,
+    PushMessageArgs, Reader, ReplyContextInternal, TipMessageArgs,
 };
 use direct_chat::{DirectChat, EventsTtlChange, EventsTtlLatestChange};
 use ledger_utils::format_crypto_amount_with_symbol;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
 use types::{
-    CanisterId, Chat, DirectChatUserNotificationPayload, DirectMessageTipped, DirectReactionAddedNotification, EventIndex,
-    MessageContentInitial, MessageId, MessageIndex, OCResult, P2PSwapStatus, TimestampMillis, UserId, UserType,
-    VideoCallPresence,
+    CanisterId, Chat, DirectChatUserNotificationPayload, DirectMessageNotification, DirectMessageTipped,
+    DirectReactionAddedNotification, EventIndex, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId,
+    MessageIndex, OCResult, OgPreview, P2PSwapStatus, TimestampMillis, UserId, UserType, VideoCallPresence,
 };
 use user_canister::{
-    DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, MessageActivity,
-    MessageActivityEvent, P2PSwapStatusChange, SetEventsTtl, TipMessageArgs as C2CTipMessageArgs, ToggleReactionArgs,
+    C2CReplyContext, DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs,
+    MessageActivity, MessageActivityEvent, P2PSwapStatusChange, SetEventsTtl, TipMessageArgs as C2CTipMessageArgs,
+    ToggleReactionArgs,
 };
 use utils::migrated_user_ids::MigratedUserIds;
 
@@ -29,6 +31,158 @@ pub fn can_act_for(kind: CanisterKind, sender: UserId, caller: CanisterId) -> bo
         CanisterKind::MultiUserCanister => sender.index() != 0 && sender.canister_id() == caller,
         CanisterKind::Neither => false,
     }
+}
+
+// A message from another user, or from the OpenChat bot, for the recipient's copy of their direct
+// chat with its sender
+pub struct ReceiveMessageArgs {
+    pub sender: UserId,
+    pub sender_user_type: UserType,
+    pub sender_name: String,
+    pub sender_display_name: Option<String>,
+    pub sender_avatar_id: Option<u128>,
+    // The thread is given by the id of its root message, since message ids are the same in both
+    // users' copies of a chat while the indexes are not
+    pub thread_root_message_id: Option<MessageId>,
+    pub message_id: MessageId,
+    pub sender_message_index: Option<MessageIndex>,
+    pub content: MessageContentInternal,
+    pub replies_to: Option<C2CReplyContext>,
+    pub forwarding: bool,
+    pub block_level_markdown: bool,
+    pub og_previews: Vec<OgPreview>,
+    pub mentioned: Vec<types::User>,
+    pub mute_notification: bool,
+}
+
+// A message pushed to the recipient's copy of the chat, and the notification of it to push, if the
+// recipient is to be notified
+pub struct MessageReceived {
+    pub message_event: EventWrapper<Message>,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub notification: Option<DirectChatUserNotificationPayload>,
+}
+
+// Pushes a message to the recipient's copy of their chat with its sender, creating the chat if there
+// is none, recording any crypto it carries in their message activity feed and any reply it makes to
+// a message in another chat. Returns None if the message is skipped: because it is in a thread the
+// recipient's copy of the chat doesn't have, or because it has already been received, since
+// messages sent c2c may be retried.
+pub fn receive_message<P: EventPusher>(
+    user: &mut User,
+    my_user_id: UserId,
+    args: ReceiveMessageArgs,
+    event_pusher: Option<P>,
+    anonymized_id: u128,
+    now: TimestampMillis,
+) -> Option<MessageReceived> {
+    let sender = args.sender;
+    let chat_id = sender.into();
+    let existing_chat = user.direct_chats.get(&chat_id);
+    let thread_root_message_index = match existing_chat {
+        Some(chat) => chat.thread_root_message_index(args.thread_root_message_id).ok()?,
+        None if args.thread_root_message_id.is_none() => None,
+        None => return None,
+    };
+    if existing_chat.is_some_and(|chat| {
+        chat.events()
+            .message_already_finalised(thread_root_message_index, args.message_id, false)
+    }) {
+        return None;
+    }
+
+    // What the message replies to is given by its index in this copy of the chat
+    let replies_to = match args.replies_to {
+        Some(C2CReplyContext::ThisChat(message_id)) => existing_chat
+            .and_then(|chat| chat.main_events_reader().event_index(message_id.into()))
+            .map(|event_index| ReplyContextInternal {
+                chat_if_other: None,
+                event_index,
+            }),
+        Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, event_index)) => Some(ReplyContextInternal {
+            chat_if_other: Some((chat.into(), thread_root_message_index)),
+            event_index,
+        }),
+        None => None,
+    };
+    let chat_private_replying_to = match replies_to.as_ref().and_then(|r| r.chat_if_other) {
+        Some((chat, None)) => Some(chat),
+        _ => None,
+    };
+
+    let chat = user
+        .direct_chats
+        .get_or_create(my_user_id, sender, args.sender_user_type, || anonymized_id, now);
+
+    let message_event = chat.push_message(
+        PushMessageArgs {
+            thread_root_message_index,
+            message_id: args.message_id,
+            sender,
+            content: args.content,
+            mentioned: Vec::new(),
+            replies_to,
+            forwarded: args.forwarding,
+            sender_is_bot: args.sender_user_type.is_bot(),
+            block_level_markdown: args.block_level_markdown,
+            og_previews: args.og_previews,
+            now,
+            sender_context: None,
+        },
+        args.sender_message_index,
+        event_pusher,
+    );
+
+    // A bot has read its own messages
+    if args.sender_user_type.is_bot() {
+        chat.mark_read_by_them_up_to(message_event.event.message_index, now);
+    }
+
+    let notification = (!args.mute_notification && !chat.notifications_muted.value && !user.suspended.value).then(|| {
+        let content = &message_event.event.content;
+        DirectChatUserNotificationPayload::DirectMessage(DirectMessageNotification {
+            sender,
+            thread_root_message_index,
+            message_index: message_event.event.message_index,
+            event_index: message_event.index,
+            sender_name: args.sender_name,
+            sender_display_name: args.sender_display_name,
+            message_type: content.content_type().to_string(),
+            message_text: content.notification_text(&args.mentioned, &[]),
+            image_url: content.notification_image_url(),
+            file_name: content.notification_file_name(),
+            sender_avatar_id: args.sender_avatar_id,
+            crypto_transfer: content.notification_crypto_transfer_details(&[]),
+            call: None,
+        })
+    });
+
+    if matches!(message_event.event.content, MessageContent::Crypto(_)) {
+        user.push_message_activity(
+            MessageActivityEvent {
+                chat: Chat::Direct(chat_id),
+                thread_root_message_index,
+                message_index: message_event.event.message_index,
+                message_id: message_event.event.message_id,
+                event_index: message_event.index,
+                activity: MessageActivity::Crypto,
+                timestamp: now,
+                user_id: Some(sender),
+            },
+            now,
+        );
+    }
+
+    if let Some(chat) = chat_private_replying_to {
+        user.direct_chats
+            .mark_private_reply(sender, chat, message_event.event.message_index);
+    }
+
+    Some(MessageReceived {
+        message_event,
+        thread_root_message_index,
+        notification,
+    })
 }
 
 pub fn edit_message(

@@ -2,11 +2,12 @@ use crate::updates::end_video_call::end_video_call_impl;
 use crate::{mutate_state, openchat_bot, read_state};
 use candid::Principal;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{MessageContentInternal, MessageReminderContentInternal, ReplyContextInternal};
+use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use constants::{OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{Chat, ChatId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
+use user_canister::C2CReplyContext;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -195,10 +196,7 @@ impl Job for RemoveExpiredEventsJob {
 
 impl Job for MessageReminderJob {
     fn execute(self) {
-        let replies_to = ReplyContextInternal {
-            chat_if_other: Some((self.chat.into(), self.thread_root_message_index)),
-            event_index: self.event_index,
-        };
+        let replies_to = C2CReplyContext::OtherChat(self.chat, self.thread_root_message_index, self.event_index);
         let content = MessageContentInternal::MessageReminder(MessageReminderContentInternal {
             reminder_id: self.reminder_id,
             notes: self.notes,
