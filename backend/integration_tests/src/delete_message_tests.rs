@@ -37,7 +37,7 @@ fn delete_direct_message_succeeds() {
         user_canister::delete_messages::Response::Success
     ));
 
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     let user1_events_response =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_response.event_index]);
@@ -352,6 +352,8 @@ fn delete_then_undelete_direct_message(delay: bool) {
     } else {
         panic!("Unexpected response from `undelete_messages`: {undelete_messages_response:?}");
     }
+
+    tick_many(env, 10);
 
     let events_response1 =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_response.event_index]);

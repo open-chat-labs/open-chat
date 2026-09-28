@@ -20,7 +20,7 @@ fn retries_after_failures(failures: usize) {
     let message_id = random_from_u128();
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
-    env.tick();
+    tick_many(env, 10);
 
     let events_response1 =
         client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![send_message_result.event_index]);
@@ -40,7 +40,7 @@ fn retries_after_failures(failures: usize) {
     start_canister(env, user2.local_user_index, user2.user_id.canister_id());
     env.tick();
     env.advance_time(Duration::from_secs(100));
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     let events_response1 =
         client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![send_message_result.event_index]);

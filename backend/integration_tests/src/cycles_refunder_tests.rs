@@ -14,10 +14,11 @@ const CYCLES_REFUNDER_WASM: &[u8] = include_bytes!("../../canisters/cycles_refun
 // The canister ID baked into the wat
 const PROD_CYCLES_DISPENSER_CANISTER_ID: &str = "gonut-hqaaa-aaaaf-aby7a-cai";
 
-// Roughly 80B cycles necessarily remain in the canister: the IC withholds the execution
+// Roughly 110B cycles necessarily remain in the canister: the IC withholds the execution
 // prepayment for the update (~40B) and the reservation for the call's response and callback
-// (~42B) until after they complete, so neither can be attached to the call.
-const MAX_RESIDUAL_BALANCE: u128 = 100_000_000_000;
+// (~42B) until after they complete, so neither can be attached to the call, and the liquid
+// balance excludes the freezing threshold (~26B, 30 days of the base fee every canister pays).
+const MAX_RESIDUAL_BALANCE: u128 = 125_000_000_000;
 
 #[test]
 fn cycles_refunder_sends_all_spare_cycles_to_the_prod_cycles_dispenser_by_default() {

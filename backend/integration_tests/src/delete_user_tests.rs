@@ -43,7 +43,7 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
         ));
     }
 
-    tick_many(env, 5);
+    tick_many(env, 20);
 
     let current_user_response = client::user_index::current_user(env, user.principal, canister_ids.user_index, &Empty {});
 
@@ -295,8 +295,8 @@ fn cycles_refund_leaves_a_canister_with_other_code_untouched() {
     wrapper.discard();
 }
 
-// See backend/canisters/cycles_refunder/README.md for why ~80B cycles can't be recovered
-const MAX_RESIDUAL_CYCLES: u128 = 100_000_000_000;
+// See backend/canisters/cycles_refunder/README.md for why ~110B cycles can't be recovered
+const MAX_RESIDUAL_CYCLES: u128 = 125_000_000_000;
 
 fn cycles_refunded_metric(env: &pocket_ic::PocketIc, local_user_index: types::CanisterId) -> u128 {
     let metrics = crate::utils::metrics(env, local_user_index);

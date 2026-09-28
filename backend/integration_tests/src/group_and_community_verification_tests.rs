@@ -9,6 +9,10 @@ use std::time::Duration;
 use testing::rng::random_string;
 use types::{CanisterId, ChatId, CommunityId};
 
+// The GroupIndex pushes verification changes to groups and communities via their LocalUserIndex,
+// which may be on another subnet, so it takes a number of rounds for them to land
+const TICKS_FOR_VERIFICATION_TO_PROPAGATE: usize = 20;
+
 #[test]
 fn e2e_group_and_community_verification_test() {
     let mut wrapper = ENV.deref().get();
@@ -55,7 +59,7 @@ fn e2e_group_and_community_verification_test() {
     assert_ne!(&new_group_name, &group_name);
     assert!(group_match.name.starts_with(&group_name));
 
-    tick_many(env, 3);
+    tick_many(env, TICKS_FOR_VERIFICATION_TO_PROPAGATE);
     let time_after_community_verification = now_millis(env);
     env.advance_time(Duration::from_secs(10));
     tick_many(env, 3);
@@ -94,7 +98,7 @@ fn e2e_group_and_community_verification_test() {
     );
     assert!(matches!(response, revoke_community_verification::Response::Success));
 
-    tick_many(env, 3);
+    tick_many(env, TICKS_FOR_VERIFICATION_TO_PROPAGATE);
     assert_community_verification_status(env, user.principal, community_id, canister_ids.group_index, false);
 
     let time_after_community_unverified = now_millis(env);
@@ -131,7 +135,7 @@ fn e2e_group_and_community_verification_test() {
     assert_ne!(&new_community_name, &group_name);
     assert!(community_match.name.starts_with(&group_name));
 
-    tick_many(env, 5);
+    tick_many(env, TICKS_FOR_VERIFICATION_TO_PROPAGATE);
     let time_after_group_verification = now_millis(env);
     env.advance_time(Duration::from_secs(10));
 
@@ -161,7 +165,7 @@ fn e2e_group_and_community_verification_test() {
     );
     assert!(matches!(response, revoke_group_verification::Response::Success));
 
-    tick_many(env, 5);
+    tick_many(env, TICKS_FOR_VERIFICATION_TO_PROPAGATE);
     assert_group_verification_status(env, user.principal, group_id, canister_ids.group_index, false);
 
     env.advance_time(Duration::from_secs(10));
@@ -195,7 +199,7 @@ fn group_verification_revoked_if_name_changed() {
         group_name.clone(),
     );
 
-    env.tick();
+    tick_many(env, TICKS_FOR_VERIFICATION_TO_PROPAGATE);
     assert_group_verification_status(env, user.principal, group_id, canister_ids.group_index, true);
 
     client::group::happy_path::update_group(
@@ -232,7 +236,7 @@ fn community_verification_revoked_if_name_changed() {
         community_name.clone(),
     );
 
-    env.tick();
+    tick_many(env, TICKS_FOR_VERIFICATION_TO_PROPAGATE);
     assert_community_verification_status(env, user.principal, community_id, canister_ids.group_index, true);
 
     client::community::happy_path::update_community(
