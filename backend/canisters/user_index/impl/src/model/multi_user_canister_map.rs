@@ -3,7 +3,11 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use types::{CanisterId, MAX_USER_INDEX, TimestampMillis, UserId};
 
+// Serialized as the map itself, so that it reads the empty map of the shape which preceded it
+// (canister id -> LocalUserIndex), which is all any UserIndex holds, since no MultiUser canister
+// has been created yet
 #[derive(Serialize, Deserialize, Default)]
+#[serde(transparent)]
 pub struct MultiUserCanisterMap {
     canisters: HashMap<CanisterId, MultiUserCanister>,
 }
@@ -16,7 +20,6 @@ pub struct MultiUserCanister {
     pub user_count: u32,
     // Set once a user has been given the last index, since indexes aren't reused so the canister
     // can take no more users, however many have since been deleted
-    #[serde(default)]
     pub full: bool,
 }
 
@@ -102,6 +105,39 @@ mod tests {
 
     fn canister_id(i: u64) -> CanisterId {
         Principal::from_slice(&[&i.to_be_bytes()[..], &[1, 1]].concat())
+    }
+
+    #[test]
+    fn empty_map_of_the_previous_shape_deserializes() {
+        #[derive(Serialize)]
+        struct Previous {
+            multi_user_canisters: HashMap<CanisterId, CanisterId>,
+        }
+
+        #[derive(Deserialize)]
+        struct Current {
+            multi_user_canisters: MultiUserCanisterMap,
+        }
+
+        let bytes = msgpack::serialize_then_unwrap(Previous {
+            multi_user_canisters: HashMap::new(),
+        });
+        let current: Current = msgpack::deserialize_then_unwrap(&bytes);
+
+        assert_eq!(current.multi_user_canisters.iter().count(), 0);
+    }
+
+    #[test]
+    fn serialization_round_trips() {
+        let mut map = MultiUserCanisterMap::default();
+        map.add(canister_id(1), canister_id(100), 10);
+        map.add(canister_id(2), canister_id(101), 20);
+        map.on_user_added(&UserId::new_indexed(canister_id(1), 1));
+
+        let bytes = msgpack::serialize_then_unwrap(&map);
+        let deserialized: MultiUserCanisterMap = msgpack::deserialize_then_unwrap(&bytes);
+
+        assert_eq!(deserialized.canisters, map.canisters);
     }
 
     #[test]
