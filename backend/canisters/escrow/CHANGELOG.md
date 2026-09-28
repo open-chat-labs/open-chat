@@ -18,7 +18,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove `user_to_notify` and `SwapStatusChange::user_id`, identifying users by principal alone ([#9529](https://github.com/open-chat-labs/open-chat/pull/9529))
-- Remove the unused cache of migrated users' latest ids ([#9617](https://github.com/open-chat-labs/open-chat/pull/9617))
 
 ### Fixed
 
