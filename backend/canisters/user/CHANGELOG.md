@@ -107,6 +107,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove the unused `User` variant of `UserOrAccount`, leaving an NNS transfer only for an ICP withdrawal to an account identifier, as users are paid via ICRC1 or ICRC2 ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
+- Remove `c2c_handle_bot_messages`, whose only caller was the deleted AirdropBot ([#9596](https://github.com/open-chat-labs/open-chat/pull/9596))
 
 ### Fixed
 
