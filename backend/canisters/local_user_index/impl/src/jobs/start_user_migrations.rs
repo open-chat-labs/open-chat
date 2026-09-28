@@ -74,6 +74,7 @@ async fn process_user(user: UserToMigrate) {
                         multi_user_canister_id,
                         user_bytes: result.user_bytes,
                         wasm_version: result.wasm_version,
+                        user_hash: result.user_hash,
                     })),
                     now,
                 );
@@ -127,8 +128,8 @@ async fn start_migration(
     {
         Ok(user_canister::c2c_try_start_migration::Response::Success(result)) => Ok(result),
         // Most reasons for a canister not being ready clear by themselves, eg. work left over from
-        // the upgrade above, so these are retried. Those which don't, such as the user having P2P
-        // swaps, are reported once the attempts run out
+        // the upgrade above, so these are retried. Those which don't clear in time, such as the user
+        // having a P2P swap which hasn't yet expired, are reported once the attempts run out
         Ok(user_canister::c2c_try_start_migration::Response::Error(error))
             if error.matches_code(OCErrorCode::NotReadyForMigration) =>
         {

@@ -1818,6 +1818,7 @@ type CurrentUserSummary = record {
     streak : nat16;
     max_streak : nat16;
     hide_online_status : bool;
+    previous_user_ids : vec UserId;
 };
 
 type BotConfig = record {

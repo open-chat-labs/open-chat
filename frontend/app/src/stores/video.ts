@@ -10,6 +10,12 @@ import type {
     DailyParticipantUpdateOptions,
     DailyThemeConfig,
 } from "@daily-co/daily-js";
+import {
+    keepCallTeardownTokenFresh,
+    reportCallActive,
+    reportCallEnded,
+    type NativeCallControl,
+} from "../utils/native/call_bridge";
 import { isAndroidTauriApp } from "@shared";
 import { type ChatIdentifier, type VideoCallType } from "@client";
 import { get, type Subscriber, writable } from "svelte/store";
@@ -69,9 +75,13 @@ export type ActiveVideoCall = {
 };
 
 const activeStore = writable<ActiveVideoCall | undefined>(undefined);
+// Stops the shell's end-token refresh for the active direct call (#9559).
+let stopEndTokenRefresh: () => void = () => undefined;
 const incomingStore = writable<IncomingVideoCall | undefined>(undefined);
 
 export const microphone = writable<boolean>(false);
+// The audio route the platform reports for the active call in the Android shell (#9559).
+export const speaker = writable<boolean>(false);
 export const hasPresence = writable<boolean>(false);
 export const camera = writable<boolean>(false);
 export const sharing = writable<boolean>(false);
@@ -133,7 +143,52 @@ export type ActiveVideoCallStore = typeof activeVideoCall;
 export const activeVideoCall = {
     subscribe: (subscriber: Subscriber<ActiveVideoCall | undefined>, invalidate?: () => void) =>
         activeStore.subscribe(subscriber, invalidate),
-    setCall: (chatId: ChatIdentifier, messageId: bigint, call: DailyCall) => {
+    // A native surface acted on the call (#9559): the ongoing notification's hang-up, a
+    // headset, Telecom. Applied only to the call that is active, by message id.
+    applyNativeControl: (control: NativeCallControl) => {
+        const current = get(activeStore);
+        if (current?.call === undefined || current.messageId !== control.messageId) return;
+        switch (control.kind) {
+            case "hangup":
+                // leaving fires left-meeting, which ends the call
+                current.call.leave();
+                break;
+            case "mute":
+                current.call.setLocalAudio(!control.muted);
+                break;
+            case "route":
+                // the in-app speaker control follows the platform; nothing to apply to Daily
+                speaker.set(control.speaker);
+                break;
+        }
+    },
+    setCall: (
+        chatId: ChatIdentifier,
+        messageId: bigint,
+        call: DailyCall,
+        title = "",
+        teardownToken?: (kind: "end" | "leave") => Promise<string>,
+    ) => {
+        // The shell keeps the process alive and owns the audio route for an active call
+        // (native calls M4, #9559). Video is anything with a camera, so audio-only is the
+        // only voice call.
+        const current = get(activeStore);
+        reportCallActive(chatId, messageId, current?.callType !== "audio", title);
+        stopEndTokenRefresh();
+        if (teardownToken !== undefined) {
+            let sessionId: string | undefined;
+            try {
+                sessionId = call.participants().local?.session_id;
+            } catch {
+                sessionId = undefined;
+            }
+            stopEndTokenRefresh = keepCallTeardownTokenFresh(
+                chatId,
+                messageId,
+                teardownToken,
+                sessionId,
+            );
+        }
         return updateCall((current) => ({
             ...current,
             chatId,
@@ -266,7 +321,12 @@ export const activeVideoCall = {
         }));
     },
     endCall: () => {
+        stopEndTokenRefresh();
+        stopEndTokenRefresh = () => undefined;
         return activeStore.update((current) => {
+            if (current?.messageId !== undefined) {
+                reportCallEnded(current.chatId, current.messageId);
+            }
             current?.call?.destroy();
             microphone.set(false);
             camera.set(false);

@@ -53,7 +53,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add a cache of the latest ids of users migrated to MultiUser canisters, which nothing fills yet ([#9540](https://github.com/open-chat-labs/open-chat/pull/9540))
 - Retry sending events for migrated users to their new canister ([#9551](https://github.com/open-chat-labs/open-chat/pull/9551))
 - Serve each user's avatar and profile background over HTTP at `/user/{user_index}/avatar` and `/user/{user_index}/profile_background` ([#9555](https://github.com/open-chat-labs/open-chat/pull/9555))
-- Tell the UserIndex a user's new avatar id when they set or remove their avatar, as the User canister does. The UserIndex must be upgraded first ([#9560](https://github.com/open-chat-labs/open-chat/pull/9560))
+- Tell the UserIndex a user's new avatar id when they set or remove their avatar, as the User canister does ([#9560](https://github.com/open-chat-labs/open-chat/pull/9560))
+- Add `c2c_import_user` which starts the `import_user` job for the given user, callable by the LocalUserIndex ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
+- Add `inspect_message`, accepting ingress messages only from the canister's users and the video call operators ([#9597](https://github.com/open-chat-labs/open-chat/pull/9597))
+- Include the imported user's groups and communities in `UserImported`, for them to be told of the user's new id ([#9602](https://github.com/open-chat-labs/open-chat/pull/9602))
+- Clear an imported user's BTC and OneSec deposit addresses, which were for their old canister's account ([#9607](https://github.com/open-chat-labs/open-chat/pull/9607))
 
 ### Changed
 
@@ -65,7 +69,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Drop messages and read receipts from a user the recipient has blocked on the recipient's side, as between User canisters, so a chat deleted by one user is unaffected on the other's side and comes back as a fresh copy when they are messaged again ([#9415](https://github.com/open-chat-labs/open-chat/pull/9415))
 - Garbage collect a deleted chat's stable memory entries within the scope of the user who deleted it, and remove the `direct_chat_cores` metric ([#9415](https://github.com/open-chat-labs/open-chat/pull/9415))
 - Rename the `caller_is_owner` guards to `caller_is_hosted_user`, since the canister hosts many users ([#9432](https://github.com/open-chat-labs/open-chat/pull/9432))
-- Verify the caller of `c2c_user_canister_v2` once per call rather than each sender, by asking the LocalUserIndex, which must be upgraded first, caching the MultiUser canisters it confirms, and skip events from blocked senders ([#9459](https://github.com/open-chat-labs/open-chat/pull/9459))
+- Verify the caller of `c2c_user_canister_v2` once per call rather than each sender, by asking the LocalUserIndex, caching the MultiUser canisters it confirms, and skip events from blocked senders ([#9459](https://github.com/open-chat-labs/open-chat/pull/9459))
 - Move `User` into the `user_state` library, shared with the User canister ([#9467](https://github.com/open-chat-labs/open-chat/pull/9467))
 - Build `initial_state` and `updates` from the shared `User`, as the User canister does, so they now include the user's bots ([#9469](https://github.com/open-chat-labs/open-chat/pull/9469))
 - Rename the `user_state` library to `user_core`, with the state under `model` and one module per shared endpoint under `queries` and `updates` ([#9470](https://github.com/open-chat-labs/open-chat/pull/9470))
@@ -83,10 +87,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
 - Rename `send_message` back to `send_message_v2`, the name the User canister gives the endpoint whose args and response it takes, so that clients call both canisters the same way ([#9590](https://github.com/open-chat-labs/open-chat/pull/9590))
-
-### Removed
-
-- Remove the serde defaults and `post_upgrade` fix-up for canisters created before fields existed, since no MultiUser canister has been created yet ([#9589](https://github.com/open-chat-labs/open-chat/pull/9589))
+- Apply direct chat events between users in the same canister as those from other canisters, so their recipients get the same achievements and notifications ([#9594](https://github.com/open-chat-labs/open-chat/pull/9594))
+- Return an error rather than trapping from `swap_tokens` and `c2c_withdraw_from_icpswap`, which aren't supported yet ([#9593](https://github.com/open-chat-labs/open-chat/pull/9593))
 
 ### Fixed
 

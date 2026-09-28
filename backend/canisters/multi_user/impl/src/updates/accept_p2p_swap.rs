@@ -1,14 +1,13 @@
 use crate::guards::caller_is_hosted_user;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
-use crate::updates::c2c_user_canister_v2::send_p2p_swap_status_change;
 use crate::{RuntimeState, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ledger_utils::{Payer, deposit_to_accept_p2p_swap};
 use types::{AcceptSwapSuccess, Achievement, CanisterId, OCResult, P2PSwapStatus, TimestampMillis, UserId};
-use user_canister::P2PSwapStatusChange;
 use user_canister::accept_p2p_swap::{Response::*, *};
+use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 use user_core::updates::accept_p2p_swap::{Reserved, deposit_failed, deposited, prepare};
 
 // The User canister's `accept_p2p_swap`. Users hold their own funds in their own wallets, so token1
@@ -59,15 +58,14 @@ async fn accept_p2p_swap(mut args: Args) -> Response {
                     })
                     .flatten();
                 if let Some(accepted) = accepted {
-                    send_p2p_swap_status_change(
+                    state.send_user_canister_event(
                         my_index,
                         args.user_id,
-                        P2PSwapStatusChange {
+                        UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
                             thread_root_message_id: reserved.thread_root_message_id,
                             message_id: args.message_id,
                             status: P2PSwapStatus::Accepted(accepted),
-                        },
-                        state,
+                        })),
                     );
                     state.award_achievement_and_notify(my_index, Achievement::AcceptedP2PSwapOffer, now);
                 }

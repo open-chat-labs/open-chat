@@ -103,7 +103,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let notifications_index_canister_id = create_canister(env, openchat_installer_canister_id);
     let identity_canister_id = create_canister(env, openchat_installer_canister_id);
     let online_users_canister_id = create_canister(env, controller);
-    let airdrop_bot_canister_id = create_canister(env, controller);
     let proposals_bot_canister_id = create_canister(env, controller);
     let storage_index_canister_id = create_canister(env, controller);
     let cycles_dispenser_canister_id = create_canister(env, controller);
@@ -132,7 +131,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let multi_user_canister_wasm = wasms::MULTI_USER.clone();
     let openchat_installer_canister_wasm = wasms::OPENCHAT_INSTALLER.clone();
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
-    let airdrop_bot_canister_wasm = wasms::AIRDROP_BOT.clone();
     let registry_canister_wasm = wasms::REGISTRY.clone();
     let sign_in_with_email_canister_wasm = wasms::SIGN_IN_WITH_EMAIL.clone();
     let sns_wasm_canister_wasm = wasms::SNS_WASM.clone();
@@ -153,7 +151,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         notifications_index_canister_id,
         identity_canister_id,
         proposals_bot_canister_id,
-        airdrop_bot_canister_id,
         online_users_canister_id,
         cycles_dispenser_canister_id,
         storage_index_canister_id,
@@ -243,10 +240,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let online_users_init_args = online_users_canister::init::Args {
         user_index_canister_id,
-        airdrop_bot_canister_id,
         event_relay_canister_id,
         cycles_dispenser_canister_id,
-        sync_online_minutes_to_airdrop_bot_increment: 1,
         wasm_version,
         test_mode,
     };
@@ -487,23 +482,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         sns_wasm_canister_init_args,
     );
 
-    let airdrop_bot_init_args = airdrop_bot_canister::init::Args {
-        admins: vec![controller],
-        user_index_canister_id,
-        local_user_index_canister_id: subnets.first().unwrap().local_user_index,
-        online_users_canister_id,
-        chat_ledger_canister_id,
-        wasm_version,
-        test_mode,
-    };
-    install_canister(
-        env,
-        controller,
-        airdrop_bot_canister_id,
-        airdrop_bot_canister_wasm,
-        airdrop_bot_init_args,
-    );
-
     client::storage_index::happy_path::add_bucket_canister(
         env,
         controller,
@@ -522,7 +500,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         identity: identity_canister_id,
         online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,
-        airdrop_bot: airdrop_bot_canister_id,
         storage_index: storage_index_canister_id,
         cycles_dispenser: cycles_dispenser_canister_id,
         daily_puzzle: daily_puzzle_canister_id,

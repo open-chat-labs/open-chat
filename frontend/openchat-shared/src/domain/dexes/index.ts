@@ -15,3 +15,10 @@ export type TokenSwapPool = {
 export type ExchangeTokenSwapArgs =
     | { dex: "icpswap"; swapCanisterId: string; zeroForOne: boolean }
     | { dex: "taco"; swapCanisterId: string; treasuryCanisterId: string };
+
+// The outcome of a swap made straight from the user's wallet, where the DEX pulls the input via
+// ICRC2 and sends the output back to the wallet. `amountOut` is what the DEX sends to the wallet.
+// An error means nothing was swapped; each DEX's client says what becomes of the input.
+export type DexSwapResult =
+    | { kind: "success"; amountOut: bigint }
+    | { kind: "error"; error: string };

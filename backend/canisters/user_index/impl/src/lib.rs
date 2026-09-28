@@ -163,6 +163,11 @@ impl RuntimeState {
         }
     }
 
+    pub fn push_event_to_local_user_index_canister(&mut self, canister_id: CanisterId, event: LocalUserIndexEvent) {
+        self.data.user_index_event_sync_queue.push(canister_id, event);
+        jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
+    }
+
     pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
         for canister_id in self.data.local_index_map.canisters() {
             if except != Some(*canister_id) {
@@ -172,11 +177,56 @@ impl RuntimeState {
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
+    // Switches a user migrated to a MultiUser canister over from their old id to the new one it gave
+    // them, once it has imported them. From then on they are known here by their new id, as they are
+    // by the Identity canister and by each LocalUserIndex once told.
+    pub fn switch_over_migrated_user(
+        &mut self,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        canisters_to_notify: Vec<CanisterId>,
+    ) -> bool {
+        let now = self.env.now();
+        let Some(principal) = self.data.users.migrate_user_id(old_user_id, new_user_id, now) else {
+            return false;
+        };
+
+        self.data.local_index_map.remove_user(&old_user_id);
+        if let Some(local_user_index) = self.data.multi_user_canisters.local_user_index(&new_user_id.canister_id()) {
+            self.data.local_index_map.add_user(local_user_index, new_user_id);
+        }
+        for user_ids in [
+            &mut self.data.platform_moderators,
+            &mut self.data.platform_operators,
+            &mut self.data.vault_reviewers,
+        ] {
+            if user_ids.remove(&old_user_id) {
+                user_ids.insert(new_user_id);
+            }
+        }
+        self.data.chit_leaderboard.migrate_user_id(old_user_id, new_user_id);
+        self.data.external_achievements.migrate_user_id(old_user_id, new_user_id);
+        for (_, job) in self.data.timer_jobs.iter() {
+            if let Some(job) = job.borrow_mut().as_mut() {
+                job.migrate_user_id(old_user_id, new_user_id);
+            }
+        }
+
+        self.data.identity_canister_user_sync_queue.push_back(UserIdentity {
+            principal,
+            user_id: Some(new_user_id),
+            email: None,
+        });
+        jobs::sync_users_to_identity_canister::try_run_now(self);
+
+        self.record_user_id_migrated(old_user_id, new_user_id, canisters_to_notify);
+        true
+    }
+
     // Records that a user migrated to a MultiUser canister has been given a new id, and tells every
     // LocalUserIndex, each of which tells whichever of the user's groups and communities it controls.
     // Only the first call for a migration is acted on, so it must list all of them.
-    #[expect(dead_code, reason = "Called once the UserIndex orchestrates migrations")]
-    pub fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId, canisters_to_notify: Vec<CanisterId>) {
+    fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId, canisters_to_notify: Vec<CanisterId>) {
         if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
             self.data.multi_user_canisters.on_user_removed(&old_user_id);
             self.data.multi_user_canisters.on_user_added(&new_user_id);
@@ -206,10 +256,7 @@ impl RuntimeState {
         let now = self.env.now();
         if let Some(user) = self.data.users.delete_user(user_id, now) {
             self.data.local_index_map.remove_user(&user_id);
-            // A migrated user may still be held under their old id, so decrement the count of the
-            // canister holding them now
-            let latest_user_id = self.data.migrated_user_ids.latest(user_id);
-            self.data.multi_user_canisters.on_user_removed(&latest_user_id);
+            self.data.multi_user_canisters.on_user_removed(&user_id);
             self.data.empty_users.remove(&user_id);
 
             #[derive(Serialize)]
@@ -359,7 +406,6 @@ impl RuntimeState {
                 notifications_index: self.data.notifications_index_canister_id,
                 identity: self.data.identity_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
-                airdrop_bot: self.data.airdrop_bot_canister_id,
                 online_users: self.data.online_users_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 storage_index: self.data.storage_index_canister_id,
@@ -413,7 +459,6 @@ struct Data {
     pub notifications_index_canister_id: CanisterId,
     pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
-    pub airdrop_bot_canister_id: CanisterId,
     pub online_users_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -535,7 +580,6 @@ impl Data {
         notifications_index_canister_id: CanisterId,
         identity_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
-        airdrop_bot_canister_id: CanisterId,
         online_users_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
@@ -559,7 +603,6 @@ impl Data {
             notifications_index_canister_id,
             identity_canister_id,
             proposals_bot_canister_id,
-            airdrop_bot_canister_id,
             online_users_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
@@ -639,18 +682,6 @@ impl Data {
             None,
         );
 
-        // Register the AirdropBot
-        data.users.register(
-            airdrop_bot_canister_id,
-            airdrop_bot_canister_id.into(),
-            "AirdropBot".to_string(),
-            None,
-            now,
-            None,
-            UserType::OcControlledBot,
-            None,
-        );
-
         data
     }
 
@@ -691,7 +722,6 @@ impl Default for Data {
             notifications_index_canister_id: Principal::anonymous(),
             identity_canister_id: Principal::anonymous(),
             proposals_bot_canister_id: Principal::anonymous(),
-            airdrop_bot_canister_id: Principal::anonymous(),
             online_users_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
@@ -905,7 +935,6 @@ pub struct CanisterIds {
     pub notifications_index: CanisterId,
     pub identity: CanisterId,
     pub proposals_bot: CanisterId,
-    pub airdrop_bot: CanisterId,
     pub online_users: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub storage_index: CanisterId,

@@ -12,8 +12,8 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::collections::HashSet;
 use types::{
-    Achievement, BotDefinitionUpdate, BotInitiator, BotPermissions, BotUpdated, Chat, ChatId, ChitEvent, ChitEventType,
-    CommunityId, MultiUserChat, ReferralStatus, TimestampMillis, Timestamped, UniquePersonProof, UserId,
+    Achievement, BotDefinitionUpdate, BotInitiator, BotPermissions, BotUpdated, CanisterId, Chat, ChatId, ChitEvent,
+    ChitEventType, CommunityId, MultiUserChat, ReferralStatus, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
 use user_canister::{MessageActivityEvent, WalletConfig};
 
@@ -94,6 +94,26 @@ pub struct User {
 }
 
 impl User {
+    // Moves what the user holds under their own id onto their new id once they are migrated from a
+    // canister of their own to a MultiUser canister
+    pub fn migrate_own_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        self.direct_chats.migrate_own_user_id(old_user_id, new_user_id);
+        self.favourite_chats.migrate_own_user_id(old_user_id, new_user_id);
+        // The deposit addresses were generated for the account of the user's old canister, so new
+        // ones are generated for the user's own account when next asked for
+        self.btc_address = None;
+        self.one_sec_address = None;
+    }
+
+    // The canisters of the groups and communities the user is in
+    pub fn group_and_community_canisters(&self) -> Vec<CanisterId> {
+        self.group_chats
+            .iter()
+            .map(|g| CanisterId::from(g.chat_id))
+            .chain(self.communities.iter().map(|c| CanisterId::from(c.community_id)))
+            .collect()
+    }
+
     pub fn new(principal: Principal, username: String, referred_by: Option<UserId>, now: TimestampMillis) -> User {
         User {
             principal,

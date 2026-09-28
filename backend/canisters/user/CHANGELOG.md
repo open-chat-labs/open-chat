@@ -25,8 +25,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `c2c_export_user` and `c2c_export_user_stable_memory`, through which the MultiUser canister a user is being migrated to pulls, in pages, the user as serialized when the migration started and the raw entries of the stable memory map ([#9547](https://github.com/open-chat-labs/open-chat/pull/9547))
 - Retry sending events for migrated users to their new canister ([#9551](https://github.com/open-chat-labs/open-chat/pull/9551))
 - Add `c2c_cancel_migration`, through which the UserIndex or the MultiUser canister the user is being migrated to cancels the migration to that canister, unfreezing the canister and scheduling again the timer jobs cancelled when it started ([#9553](https://github.com/open-chat-labs/open-chat/pull/9553))
-- Don't migrate users who have created or accepted P2P swaps ([#9561](https://github.com/open-chat-labs/open-chat/pull/9561))
+- Don't migrate users until their P2P swaps have expired ([#9561](https://github.com/open-chat-labs/open-chat/pull/9561), [#9603](https://github.com/open-chat-labs/open-chat/pull/9603))
 - Only allow the LocalUserIndex to call `c2c_try_start_migration`, rather than the UserIndex ([#9582](https://github.com/open-chat-labs/open-chat/pull/9582))
+- Return the size and hash of the serialized user with each page from `c2c_export_user`, for the MultiUser canister to check once it has pulled them all ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
 
 ### Changed
 
@@ -73,7 +74,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the group and community models (`GroupChats`, `Communities` and `ThreadsRead`) into the `user_state` library, shared with the MultiUser canister ([#9447](https://github.com/open-chat-labs/open-chat/pull/9447))
 - Move `Membership` and `COMMUNITY_CREATION_LIMIT` into the `user_state` library, shared with the MultiUser canister ([#9450](https://github.com/open-chat-labs/open-chat/pull/9450))
 - Queue direct chat events per canister, paired with their recipient, and send those for users in a MultiUser canister via its `c2c_user_canister_v2` ([#9457](https://github.com/open-chat-labs/open-chat/pull/9457))
-- Verify the caller of `c2c_user_canister_v2` once per call rather than each sender, by asking the LocalUserIndex, which must be upgraded first, caching the MultiUser canisters it confirms, and skip events from blocked senders ([#9459](https://github.com/open-chat-labs/open-chat/pull/9459))
+- Verify the caller of `c2c_user_canister_v2` once per call rather than each sender, by asking the LocalUserIndex, caching the MultiUser canisters it confirms, and skip events from blocked senders ([#9459](https://github.com/open-chat-labs/open-chat/pull/9459))
 - Move the referrals model into the `user_state` library, shared with the MultiUser canister ([#9464](https://github.com/open-chat-labs/open-chat/pull/9464))
 - Hold the user's state, including their token and P2P swaps, BTC and 1sec addresses, bots and premium items, in the `User` struct shared with the MultiUser canister via the `user_state` library, nested within `Data` as `user`, migrating the previous layout on upgrade ([#9467](https://github.com/open-chat-labs/open-chat/pull/9467))
 - Build `initial_state` and `updates` from the shared `User`, so the MultiUser canister serves the same ([#9469](https://github.com/open-chat-labs/open-chat/pull/9469))
@@ -107,6 +108,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove the unused `User` variant of `UserOrAccount`, leaving an NNS transfer only for an ICP withdrawal to an account identifier, as users are paid via ICRC1 or ICRC2 ([#9505](https://github.com/open-chat-labs/open-chat/pull/9505))
+- Remove `c2c_handle_bot_messages`, whose only caller was the deleted AirdropBot ([#9596](https://github.com/open-chat-labs/open-chat/pull/9596))
 
 ### Fixed
 

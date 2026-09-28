@@ -1,5 +1,4 @@
 use crate::guards::caller_is_hosted_user;
-use crate::updates::c2c_user_canister_v2::receive_join_video_call;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -26,19 +25,14 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         state.push_notification(None, my_index, dismissal, now);
     }
 
-    // The other user is told as the User canister tells them: directly if they are in this canister
-    if state.index_of_local_user(args.user_id).is_some() {
-        let my_user_id = state.user_id(my_index);
-        receive_join_video_call(args.message_id, my_user_id, args.user_id, now, state);
-    } else {
-        state.push_user_canister_event(
-            my_index,
-            args.user_id,
-            UserCanisterEvent::JoinVideoCall(Box::new(JoinVideoCall {
-                message_id: args.message_id,
-            })),
-        );
-    }
+    // The other user is told, as the User canister tells them
+    state.send_user_canister_event(
+        my_index,
+        args.user_id,
+        UserCanisterEvent::JoinVideoCall(Box::new(JoinVideoCall {
+            message_id: args.message_id,
+        })),
+    );
     state.award_achievement_and_notify(my_index, Achievement::JoinedCall, now);
     Ok(())
 }

@@ -109,6 +109,42 @@ impl GlobalUserMap {
         }
     }
 
+    // Moves the user from their old id onto the new one they were given when migrated to a MultiUser
+    // canister, returning their principal. Returns None if the old id isn't known, or the new one
+    // already is.
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) -> Option<Principal> {
+        if self.user_id_to_principal.contains_key(&new_user_id) {
+            return None;
+        }
+        let principal = self.user_id_to_principal.remove(&old_user_id)?;
+        self.user_id_to_principal.insert(new_user_id, principal);
+        self.principal_to_user_id.insert(principal, new_user_id);
+        if new_user_id.index() != 0 {
+            self.multi_user_canisters.insert(new_user_id.canister_id());
+        }
+
+        for user_ids in [
+            &mut self.platform_operators,
+            &mut self.platform_moderators,
+            &mut self.legacy_bots,
+            &mut self.oc_controlled_bot_users,
+        ] {
+            if user_ids.remove(&old_user_id) {
+                user_ids.insert(new_user_id);
+            }
+        }
+        if let Some(proof) = self.unique_person_proofs.remove(&old_user_id) {
+            self.unique_person_proofs.insert(new_user_id, proof);
+        }
+        if let Some(expires_at) = self.diamond_membership_expiry_dates.remove(&old_user_id) {
+            self.diamond_membership_expiry_dates.insert(new_user_id, expires_at);
+        }
+        if let Some(chit) = self.chit.remove(&old_user_id) {
+            self.chit.insert(new_user_id, chit);
+        }
+        Some(principal)
+    }
+
     pub fn insert_unique_person_proof(&mut self, user_id: UserId, proof: UniquePersonProof) {
         self.unique_person_proofs.insert(user_id, proof);
     }
@@ -199,5 +235,34 @@ mod tests {
             map.multi_user_canisters().iter().copied().collect::<Vec<_>>(),
             vec![multi_user_canister]
         );
+    }
+
+    #[test]
+    fn migrated_user_is_moved_onto_their_new_id() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let principal = Principal::from_slice(&[1]);
+        let old_user_id: UserId = CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]).into();
+        let multi_user_canister = CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, 2, 1, 1]);
+        let new_user_id = UserId::new_indexed(multi_user_canister, 1);
+        let mut map = GlobalUserMap::default();
+
+        map.add(principal, old_user_id, UserType::User);
+        map.set_platform_moderator(old_user_id, true);
+        map.set_diamond_membership_expiry_date(old_user_id, 100);
+
+        assert_eq!(map.migrate_user_id(old_user_id, new_user_id), Some(principal));
+
+        assert!(map.get_by_user_id(&old_user_id).is_none());
+        let user = map.get_by_principal(&principal).unwrap();
+        assert_eq!(user.user_id, new_user_id);
+        assert!(user.is_platform_moderator);
+        assert_eq!(user.diamond_membership_expires_at, Some(100));
+        assert!(!map.platform_moderators().contains(&old_user_id));
+        assert!(map.multi_user_canisters().contains(&multi_user_canister));
+        assert_eq!(map.len(), 1);
+
+        assert_eq!(map.migrate_user_id(old_user_id, new_user_id), None);
     }
 }

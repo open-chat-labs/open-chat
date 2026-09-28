@@ -47,6 +47,19 @@ impl ExternalAchievements {
         );
     }
 
+    // Moves what is held under the user's old id onto the new one they were given when migrated to a
+    // MultiUser canister
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        for achievement in self.achievements.values_mut() {
+            if achievement.awarded.remove(&old_user_id) {
+                achievement.awarded.insert(new_user_id);
+            }
+            if achievement.submitted_by == Some(old_user_id) {
+                achievement.submitted_by = Some(new_user_id);
+            }
+        }
+    }
+
     pub fn award(
         &mut self,
         id: u32,

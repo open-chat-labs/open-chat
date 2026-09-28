@@ -83,18 +83,18 @@ class CallDeclineTest {
     fun `invariant 12 the bridge report is bounded and its failure is swallowed`() = runBlocking {
         val previous = CallDeclineReporter.post
         try {
-            CallDeclineReporter.post = { _, _ -> throw IllegalStateException("no network") }
+            CallDeclineReporter.post = { _, _, _ -> throw IllegalStateException("no network") }
             assertFalse(CallDeclineReporter.report("https://bridge", "tok"))
 
-            CallDeclineReporter.post = { _, _ -> 500 }
+            CallDeclineReporter.post = { _, _, _ -> 500 }
             assertFalse(CallDeclineReporter.report("https://bridge", "tok"))
 
             var seen: Pair<String, String>? = null
-            CallDeclineReporter.post = { url, token -> seen = url to token; 204 }
+            CallDeclineReporter.post = { url, token, _ -> seen = url to token; 204 }
             assertTrue(CallDeclineReporter.report("https://bridge", "tok"))
             assertEquals("https://bridge/room/decline" to "tok", seen)
 
-            CallDeclineReporter.post = { _, _ -> Thread.sleep(5_000); 204 }
+            CallDeclineReporter.post = { _, _, _ -> Thread.sleep(5_000); 204 }
             val startedAt = System.currentTimeMillis()
             assertFalse(CallDeclineReporter.report("https://bridge", "tok", timeoutMs = 50))
             assertTrue(System.currentTimeMillis() - startedAt < 2_000)

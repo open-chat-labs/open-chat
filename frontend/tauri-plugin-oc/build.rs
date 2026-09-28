@@ -26,6 +26,11 @@ const COMMANDS: &[&str] = &[
     "get_pending_call_action",
     "call_ring_handled",
     "set_call_config",
+    "call_active",
+    "call_ended",
+    "set_call_speaker",
+    "set_call_ringback",
+    "set_call_end_token",
 ];
 
 fn main() {

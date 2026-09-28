@@ -1,5 +1,5 @@
 use crate::RuntimeState;
-use crate::updates::c2c_send_messages::{HandleMessageArgs, handle_message_impl};
+use crate::updates::send_message::{HandleMessageArgs, handle_message_impl};
 use chat_events::{MessageContentInternal, TextContentInternal};
 use constants::{OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
 use types::{EventWrapper, Message, User, UserId, UserType};

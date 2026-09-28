@@ -67,48 +67,15 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     enqueue_hard_delete_jobs(my_index, args.user_id.into(), args.thread_root_message_index, deleted, state);
 
     // Only the caller's own messages are deleted in the other user's copy, where the thread is
-    // identified by the id of its root message since message indexes differ between the copies. A
-    // user in another canister is sent the deletion.
+    // identified by the id of its root message since message indexes differ between the copies
     if !my_messages.is_empty() {
-        state.push_user_canister_event(
+        state.send_user_canister_event(
             my_index,
             args.user_id,
             UserCanisterEvent::DeleteMessages(Box::new(C2CDeleteUndeleteMessagesArgs {
                 thread_root_message_id,
-                message_ids: my_messages.clone(),
+                message_ids: my_messages,
             })),
-        );
-    }
-    if !my_messages.is_empty()
-        && let Some(their_index) = state.index_of_local_user(args.user_id)
-        && let Some((thread_root_message_index, deleted_in_theirs)) = state
-            .with_their_direct_chat_mut(my_user_id, args.user_id, |chat, migrated_user_ids| {
-                let thread_root_message_index = chat.thread_root_message_index(thread_root_message_id).ok()?;
-                let deleted: Vec<_> = chat
-                    .delete_messages(
-                        DeleteUndeleteMessagesArgs {
-                            caller: my_user_id,
-                            is_admin: false,
-                            min_visible_event_index: EventIndex::default(),
-                            thread_root_message_index,
-                            message_ids: my_messages,
-                            now,
-                        },
-                        migrated_user_ids,
-                    )
-                    .into_iter()
-                    .filter_map(|(message_id, result)| result.is_ok().then_some(message_id))
-                    .collect();
-                Some((thread_root_message_index, deleted))
-            })
-            .flatten()
-    {
-        enqueue_hard_delete_jobs(
-            their_index,
-            my_user_id.into(),
-            thread_root_message_index,
-            deleted_in_theirs,
-            state,
         );
     }
 

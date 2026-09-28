@@ -14,7 +14,14 @@ import app.tauri.plugin.JSArray
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import com.google.firebase.messaging.FirebaseMessaging
+import com.ocplugin.app.calls.CallChat
 import com.ocplugin.app.calls.CallConfig
+import com.ocplugin.app.calls.CallId
+import com.ocplugin.app.calls.CallKind
+import com.ocplugin.app.calls.CallRingback
+import com.ocplugin.app.calls.CallSession
+import com.ocplugin.app.calls.CallSessionState
+import com.ocplugin.app.calls.IncomingCall
 import com.ocplugin.app.calls.CallRinger
 import com.ocplugin.app.calls.CallTelecom
 import com.ocplugin.app.calls.IncomingCallNotifications
@@ -177,6 +184,78 @@ class OpenChatPlugin(private val activity: Activity) : Plugin(activity) {
         CallConfig.set(activity, args.videoBridgeUrl)
         invoke.resolve()
     }
+
+    // The web layer is in a call (joined or started).
+    @Command
+    fun callActive(invoke: Invoke) {
+        val args = invoke.parseArgs(CallActiveArgs::class.java)
+        val chatType = args.chatType
+        val chatId = args.chatId
+        val messageId = args.messageId
+        if (chatType == null || chatId == null || messageId == null) {
+            invoke.reject("chatType, chatId and messageId are required")
+            return
+        }
+        val call = IncomingCall(
+            id = CallId(CallChat(chatType, chatId, args.communityId), messageId),
+            kind = if (args.video) CallKind.VIDEO else CallKind.AUDIO,
+            started = System.currentTimeMillis(),
+            title = args.title ?: "",
+            callerName = null,
+            avatarUrl = null,
+        )
+        CallSession.active(activity, call, args.video, activity.taskId)
+        invoke.resolve()
+    }
+
+    // The in-app speaker control.
+    @Command
+    fun setCallSpeaker(invoke: Invoke) {
+        val args = invoke.parseArgs(SetCallSpeakerArgs::class.java)
+        CallSession.setSpeaker(activity, args.speaker)
+        invoke.resolve()
+    }
+
+    // The caller's ringback while a direct call rings out.
+    @Command
+    fun setCallRingback(invoke: Invoke) {
+        val args = invoke.parseArgs(SetCallRingbackArgs::class.java)
+        CallRingback.set(args.on)
+        invoke.resolve()
+    }
+
+    // The bridge token that ends the active direct call for both sides, refreshed while
+    // the call runs.
+    @Command
+    fun setCallEndToken(invoke: Invoke) {
+        val args = invoke.parseArgs(SetCallEndTokenArgs::class.java)
+        val chatType = args.chatType
+        val chatId = args.chatId
+        val messageId = args.messageId
+        val token = args.token
+        if (chatType == null || chatId == null || messageId == null || token == null) {
+            invoke.reject("chatType, chatId, messageId and token are required")
+            return
+        }
+        val kind = if (args.kind == "leave") CallSessionState.TeardownKind.LEAVE else CallSessionState.TeardownKind.END
+        CallSession.setTeardown(CallId(CallChat(chatType, chatId, args.communityId), messageId), CallSessionState.Teardown(kind, token, args.sessionId))
+        invoke.resolve()
+    }
+
+    // The web layer left the call.
+    @Command
+    fun callEnded(invoke: Invoke) {
+        val args = invoke.parseArgs(CallEndedArgs::class.java)
+        val chatType = args.chatType
+        val chatId = args.chatId
+        val messageId = args.messageId
+        if (chatType == null || chatId == null || messageId == null) {
+            invoke.reject("chatType, chatId and messageId are required")
+            return
+        }
+        CallSession.ended(activity, CallId(CallChat(chatType, chatId, args.communityId), messageId))
+        invoke.resolve()
+    }
 }
 
 @InvokeArg
@@ -187,6 +266,47 @@ class CallRingHandledArgs {
 @InvokeArg
 class SetCallConfigArgs {
     var videoBridgeUrl: String? = null
+}
+
+@InvokeArg
+class CallActiveArgs {
+    var chatType: String? = null
+    var chatId: String? = null
+    var communityId: String? = null
+    var messageId: String? = null
+    var video: Boolean = false
+    var title: String? = null
+}
+
+@InvokeArg
+class SetCallSpeakerArgs {
+    var speaker: Boolean = false
+}
+
+@InvokeArg
+class SetCallRingbackArgs {
+    var on: Boolean = false
+}
+
+@InvokeArg
+class SetCallEndTokenArgs {
+    var chatType: String? = null
+    var chatId: String? = null
+    var communityId: String? = null
+    var messageId: String? = null
+    var token: String? = null
+    // "end" or "leave"
+    var kind: String? = null
+    // This device's Daily session, for a leave
+    var sessionId: String? = null
+}
+
+@InvokeArg
+class CallEndedArgs {
+    var chatType: String? = null
+    var chatId: String? = null
+    var communityId: String? = null
+    var messageId: String? = null
 }
 
 object OCPluginCompanion {

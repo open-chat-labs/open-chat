@@ -254,6 +254,15 @@ impl ChatEvents {
         !self.has_legacy_events()
     }
 
+    // Changes the other user of a direct chat, without moving its events in stable memory, since a
+    // direct chat's events are keyed by its key id rather than by the other user. Used when a user
+    // is migrated to a new id, for their chat with themselves.
+    pub fn set_direct_chat_user(&mut self, them: UserId) {
+        if matches!(self.chat, Chat::Direct(_)) {
+            self.chat = Chat::Direct(them.into());
+        }
+    }
+
     pub fn set_chat(&mut self, chat: Chat) {
         self.chat = chat;
         let prefix = ChatEventKeyPrefix::new_from_chat(chat, None);

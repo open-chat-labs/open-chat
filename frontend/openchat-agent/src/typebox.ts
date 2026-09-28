@@ -5953,6 +5953,11 @@ export const ChannelReactionAddedNotification = /* @__PURE__ */ Type.Object({
     cha: Type.Optional(Type.BigInt()),
 });
 
+export type VideoCallParticipantArgs = Static<typeof VideoCallParticipantArgs>;
+export const VideoCallParticipantArgs = /* @__PURE__ */ Type.Object({
+    chat: Chat,
+});
+
 export type BotRegisteredEvent = Static<typeof BotRegisteredEvent>;
 export const BotRegisteredEvent = /* @__PURE__ */ Type.Object({
     bot_id: UserId,
@@ -8415,6 +8420,7 @@ export const UserIndexCurrentUserSuccessResult = /* @__PURE__ */ Type.Object({
     hide_online_status: Type.Optional(Type.Boolean()),
     accepted_terms_version: Type.Optional(Type.Number()),
     current_terms_version: Type.Optional(Type.Number()),
+    previous_user_ids: Type.Optional(Type.Array(UserId)),
 });
 
 export type UserIndexCurrentUserResponse = Static<typeof UserIndexCurrentUserResponse>;
@@ -8876,6 +8882,7 @@ export const CurrentUserSummary = /* @__PURE__ */ Type.Object({
     streak: Type.Number(),
     max_streak: Type.Number(),
     hide_online_status: Type.Optional(Type.Boolean()),
+    previous_user_ids: Type.Optional(Type.Array(UserId)),
 });
 
 export type SenderContext = Static<typeof SenderContext>;
@@ -9041,6 +9048,9 @@ export const LocalUserIndexAccessTokenV2Args = /* @__PURE__ */ Type.Union([
     }),
     Type.Object({
         MarkVideoCallAsEnded: MarkVideoCallAsEndedArgs,
+    }),
+    Type.Object({
+        VideoCallParticipant: VideoCallParticipantArgs,
     }),
     Type.Object({
         BotActionByCommand: BotActionByCommandArgs,

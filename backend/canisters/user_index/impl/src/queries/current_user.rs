@@ -40,6 +40,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             hide_online_status: u.hide_online_status,
             accepted_terms_version: u.accepted_terms_version,
             current_terms_version: crate::updates::accept_terms::CURRENT_TERMS_VERSION,
+            previous_user_ids: state.data.migrated_user_ids.previous_ids(u.user_id),
         })
     } else {
         UserNotFound

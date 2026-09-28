@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
-use types::{CanisterId, Milliseconds, OCResult, TimestampMillis, UserId, UserType};
+use types::{CanisterId, OCResult, UserId, UserType};
 use user_canister::update_chat_settings::*;
 use user_canister::{SetEventsTtl, UserCanisterEvent};
 
@@ -48,17 +48,10 @@ fn update_chat_settings_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let them = args.user_id;
     let now = state.env.now();
 
-    // The other user, if they are a different user in this canister
-    let their_index = if them == my_user_id {
-        None
-    } else if let Some(index) = state.index_of_local_user(them) {
-        Some(index)
-    } else if state.user_index(them).is_some() {
+    if state.user_index(them).is_some() && state.index_of_local_user(them).is_none() {
         // An index in this canister which holds no user
         return Err(OCErrorCode::TargetUserNotFound.into());
-    } else {
-        None
-    };
+    }
 
     let events_ttl = args.events_ttl.expand();
     let anonymized_id: u128 = state.env.rng().random();
@@ -81,48 +74,15 @@ fn update_chat_settings_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .flatten();
 
     if let (Some(events_ttl), Some(changed_at)) = (events_ttl, changed_at) {
-        if let Some(their_index) = their_index {
-            set_their_events_ttl(their_index, my_user_id, events_ttl, changed_at, now, state);
-        } else if them != my_user_id {
-            state.push_user_canister_event(
-                my_index,
-                them,
-                UserCanisterEvent::SetEventsTtl(Box::new(SetEventsTtl {
-                    events_ttl,
-                    timestamp: changed_at,
-                })),
-            );
-        }
+        state.send_user_canister_event(
+            my_index,
+            them,
+            UserCanisterEvent::SetEventsTtl(Box::new(SetEventsTtl {
+                events_ttl,
+                timestamp: changed_at,
+            })),
+        );
     }
 
     Ok(())
-}
-
-// Applies the time to live the user `sender` set on their copy of the chat to the other user's
-// copy, which is the User canister's handling of the `SetEventsTtl` event it receives from the
-// sender's canister, applied directly. As there, the other user's copy of the chat is created if
-// they don't have it, and nothing is done if they have blocked the sender.
-fn set_their_events_ttl(
-    their_index: u16,
-    sender: UserId,
-    events_ttl: Option<Milliseconds>,
-    changed_at: TimestampMillis,
-    now: TimestampMillis,
-    state: &mut RuntimeState,
-) {
-    let their_user_id = state.user_id(their_index);
-    let anonymized_id: u128 = state.env.rng().random();
-
-    state.data.users.with_user_mut(their_index, |user| {
-        if user.blocked_users.contains(&sender) {
-            return;
-        }
-
-        // Unlike between User canisters, where each side applies the other's change some time
-        // after its own and so needs a rule to settle two changes made at the same time, both
-        // copies are updated here within the one call, so the latest call wins in both
-        user.direct_chats
-            .get_or_create(their_user_id, sender, UserType::User, || anonymized_id, now)
-            .apply_their_events_time_to_live(events_ttl, changed_at, now);
-    });
 }

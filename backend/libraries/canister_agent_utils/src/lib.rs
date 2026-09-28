@@ -12,7 +12,6 @@ use types::{BuildVersion, CanisterId, CanisterWasm};
 
 #[derive(Clone, Debug)]
 pub enum CanisterName {
-    AirdropBot,
     Community,
     CyclesDispenser,
     DailyPuzzle,
@@ -46,7 +45,6 @@ impl FromStr for CanisterName {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "airdrop_bot" => Ok(CanisterName::AirdropBot),
             "community" => Ok(CanisterName::Community),
             "cycles_dispenser" => Ok(CanisterName::CyclesDispenser),
             "daily_puzzle" => Ok(CanisterName::DailyPuzzle),
@@ -81,7 +79,6 @@ impl FromStr for CanisterName {
 impl Display for CanisterName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let name = match self {
-            CanisterName::AirdropBot => "airdrop_bot",
             CanisterName::Community => "community",
             CanisterName::CyclesDispenser => "cycles_dispenser",
             CanisterName::DailyPuzzle => "daily_puzzle",
@@ -124,7 +121,6 @@ pub struct CanisterIds {
     pub identity: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
-    pub airdrop_bot: CanisterId,
     pub storage_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub daily_puzzle: CanisterId,

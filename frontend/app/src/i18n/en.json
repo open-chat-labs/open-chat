@@ -2457,6 +2457,9 @@
         "switchCall": "You are already in a video call. Would you like to switch to this one?",
         "toggleCam": "Toggle your camera",
         "toggleMic": "Toggle your microphone",
+        "toggleSpeaker": "Toggle speaker",
+        "speakerOn": "Speaker on",
+        "speakerOff": "Speaker off",
         "toggleShare": "Toggle desktop sharing",
         "viewers": "Viewers ({count})"
     },
