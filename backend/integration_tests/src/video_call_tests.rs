@@ -497,6 +497,60 @@ fn invariant_9_only_a_broadcast_starts_in_a_public_chat(audio_only: Option<bool>
 // message that gained `audio_only` crosses between a canister on this release and one on the
 // previous release, in both directions. The "previous" shapes below are frozen copies of the
 // types as they were before audio calls. Do not update them when the real types change.
+// #9559 invariant 17: the participant token the local user index signs for a decline or a
+// native leave carries its own claim type, the caller and the chat, and is signed only for a
+// member of the chat. The video bridge scopes on that claim type: a join token joins and
+// nothing else, so a widening of the join token can never widen a decline or a leave.
+#[test]
+fn invariant_17_participant_token_names_the_caller_and_chat_under_its_own_claim_type() {
+    use jwt_simple::algorithms::{ECDSAP256PublicKeyLike, ES256PublicKey};
+    use serde::Deserialize;
+    use types::{CLAIM_TYPE_VIDEO_CALL_PARTICIPANT, CanisterId};
+
+    #[derive(Deserialize)]
+    struct ParticipantTokenClaims {
+        claim_type: String,
+        user_id: UserId,
+        chat_id: Chat,
+        local_user_index: Option<CanisterId>,
+    }
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+    env.set_time(std::time::SystemTime::now().into());
+
+    let member = client::register_diamond_user(env, canister_ids, *controller);
+    let outsider = client::register_user(env, canister_ids);
+    let group = client::user::happy_path::create_group(env, &member, random_string().as_str(), true, true);
+    tick_many(env, 3);
+
+    let local_user_index = canister_ids.local_user_index(env, group);
+    let args = local_user_index_canister::access_token_v2::Args::VideoCallParticipant(
+        local_user_index_canister::access_token_v2::VideoCallParticipantArgs {
+            chat: Chat::Group(group),
+        },
+    );
+
+    let token = client::local_user_index::happy_path::access_token(env, &member, local_user_index, &args);
+    let public_key =
+        ES256PublicKey::from_pem(&client::user_index::happy_path::public_key(env, canister_ids.user_index)).unwrap();
+    let claims: ParticipantTokenClaims = public_key.verify_token(&token, None).unwrap().custom;
+    assert_eq!(claims.claim_type, CLAIM_TYPE_VIDEO_CALL_PARTICIPANT);
+    assert_eq!(claims.user_id, member.user_id);
+    assert_eq!(claims.chat_id, Chat::Group(group));
+    assert_eq!(claims.local_user_index, Some(local_user_index));
+
+    assert!(matches!(
+        client::local_user_index::access_token_v2(env, outsider.principal, local_user_index, &args),
+        local_user_index_canister::access_token_v2::Response::NotAuthorized
+    ));
+}
+
 mod mixed_releases {
     use serde::{Deserialize, Serialize};
     use types::{Chat, MessageId, MessageIndex, Milliseconds, StartVideoCallClaims, UserId, VideoCallType};

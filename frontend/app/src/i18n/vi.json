@@ -2457,6 +2457,9 @@
         "switchCall": "Bạn đã tham gia cuộc gọi điện video. Bạn có muốn chuyển sang cái này không?",
         "toggleCam": "Chuyển đổi máy ảnh của bạn",
         "toggleMic": "Chuyển đổi micrô của bạn",
+        "toggleSpeaker": "Bật/tắt loa",
+        "speakerOn": "Loa đang bật",
+        "speakerOff": "Loa đang tắt",
         "toggleShare": "Chuyển đổi chia sẻ máy tính để bàn",
         "viewers": "Người xem ({count})"
     },

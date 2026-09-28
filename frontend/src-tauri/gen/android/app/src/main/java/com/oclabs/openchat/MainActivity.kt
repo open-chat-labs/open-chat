@@ -5,8 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.webkit.PermissionRequest
-import android.webkit.WebChromeClient
+import com.ocplugin.app.calls.CallSession
 import android.webkit.WebView
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
@@ -118,17 +117,10 @@ class MainActivity : TauriActivity() {
         return data.toString()
     }
 
-    override fun onWebViewCreate(webView: WebView) {
-        super.onWebViewCreate(webView)
-
-        webView.webChromeClient =
-                object : WebChromeClient() {
-                    override fun onPermissionRequest(request: PermissionRequest) {
-                        // Grant camera & mic to the WebView
-                        request.grant(request.resources)
-                    }
-                }
-    }
+    // The generated RustWebChromeClient stays in place: it asks for the camera and
+    // microphone runtime permissions before granting them to the WebView, and it handles
+    // the file chooser. An override here once granted every request and discarded both
+    // (#9559 invariant 8).
 
     private fun handleNotificationIntent(intent: Intent) {
         val notificationPayload = intent.getStringExtra("notificationPayload")
@@ -248,6 +240,14 @@ class MainActivity : TauriActivity() {
             // val isDarkMode = (resources.configuration.uiMode and
             //     Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         }
+    }
+
+    // The WebView dies with this activity. If a call is running, nothing on the web side can
+    // end it now, so the native side does (#9559). A configuration change keeps the task and
+    // the call; only a finishing activity counts.
+    override fun onDestroy() {
+        if (isFinishing) CallSession.endAll(this)
+        super.onDestroy()
     }
 
     override fun onRequestPermissionsResult(

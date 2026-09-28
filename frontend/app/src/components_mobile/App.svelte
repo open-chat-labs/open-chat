@@ -11,7 +11,7 @@
     } from "@stores/androidInterfaceSizes";
     import { rtlStore } from "@stores/rtl";
     import { snowing } from "@stores/snow";
-    import { incomingVideoCall } from "@stores/video";
+    import { activeVideoCall, incomingVideoCall } from "@stores/video";
     import { broadcastLoggedInUser } from "@stores/xframe";
     import "@utils/markdown";
     import {
@@ -23,6 +23,7 @@
     } from "@utils/native/notification_channels";
     import {
         expectCallActions,
+        expectCallControls,
         notifyCallJoined,
         runCallAction,
         setCallConfig,
@@ -285,6 +286,9 @@
             import.meta.env.OC_VIDEO_BRIDGE_URL
                 ? setCallConfig(import.meta.env.OC_VIDEO_BRIDGE_URL)
                 : Promise.resolve(),
+
+            // Hang-up, mute and route changes from the phone's own call surfaces
+            expectCallControls(activeVideoCall.applyNativeControl),
         ]);
         listenersRegistered.then((results) => {
             results

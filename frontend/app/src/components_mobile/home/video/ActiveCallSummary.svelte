@@ -16,6 +16,10 @@
     import HandFrontLeft from "svelte-material-icons/HandFrontLeft.svelte";
     import Microphone from "svelte-material-icons/Microphone.svelte";
     import MicrophoneOff from "svelte-material-icons/MicrophoneOff.svelte";
+    import VolumeHigh from "svelte-material-icons/VolumeHigh.svelte";
+    import VolumeMedium from "svelte-material-icons/VolumeMedium.svelte";
+    import { setCallSpeaker } from "@utils/native/call_bridge";
+    import { isAndroidTauriApp } from "@shared";
     import MonitorOff from "svelte-material-icons/MonitorOff.svelte";
     import MonitorShare from "svelte-material-icons/MonitorShare.svelte";
     import PhoneHangup from "svelte-material-icons/PhoneHangup.svelte";
@@ -28,6 +32,7 @@
         camera,
         hasPresence,
         microphone,
+        speaker,
         sharing,
     } from "../../../stores/video";
     import FancyLoader from "../../icons/FancyLoader.svelte";
@@ -105,6 +110,11 @@
         }
     }
 
+    // The shell owns the route (native calls M4, #9559); the store follows what it reports.
+    function toggleSpeaker() {
+        setCallSpeaker(!$speaker);
+    }
+
     function toggleMic(e?: Event) {
         e?.stopPropagation();
         if ($activeVideoCall?.call) {
@@ -164,6 +174,22 @@
                             </IconButton>
                             {#snippet popupTemplate()}
                                 <Translatable resourceKey={i18nKey("videoCall.toggleCam")} />
+                            {/snippet}
+                        </Tooltip>
+                    {/if}
+                    {#if isAndroidTauriApp()}
+                        <Tooltip position={"top"} align={"middle"}>
+                            <IconButton padding={"zero"} onclick={toggleSpeaker}>
+                                {#snippet icon(color)}
+                                    {#if $speaker}
+                                        <VolumeHigh {color} />
+                                    {:else}
+                                        <VolumeMedium {color} />
+                                    {/if}
+                                {/snippet}
+                            </IconButton>
+                            {#snippet popupTemplate()}
+                                <Translatable resourceKey={i18nKey("videoCall.toggleSpeaker")} />
                             {/snippet}
                         </Tooltip>
                     {/if}

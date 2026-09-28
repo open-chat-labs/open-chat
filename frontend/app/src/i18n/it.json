@@ -2457,6 +2457,9 @@
         "switchCall": "Stai già partecipando a una videochiamata. Vorresti passare a questo?",
         "toggleCam": "Attiva/disattiva la fotocamera",
         "toggleMic": "Attiva/disattiva il microfono",
+        "toggleSpeaker": "Attiva/disattiva altoparlante",
+        "speakerOn": "Altoparlante attivo",
+        "speakerOff": "Altoparlante disattivato",
         "toggleShare": "Attiva/disattiva la condivisione del desktop",
         "viewers": "Spettatori ({count})"
     },

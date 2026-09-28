@@ -21,6 +21,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { videoCameraOn, videoMicOn, videoSpeakerView } from "../../../stores/settings";
     import { toastStore } from "../../../stores/toast";
+    import { setCallRingback } from "@utils/native/call_bridge";
     import {
         activeVideoCall,
         camera,
@@ -268,7 +269,9 @@
 
             await call.join();
 
-            activeVideoCall.setCall(chatId, BigInt(messageId), call);
+            activeVideoCall.setCall(chatId, BigInt(messageId), call, chat?.name ?? "", (kind) =>
+                client.getVideoCallTeardownToken(chatId, kind),
+            );
 
             if (ringOutApplies(chatId, joining)) {
                 ringOut?.cancel();
@@ -278,6 +281,7 @@
                         toastStore.showSuccessToast(i18nKey("videoCall.noAnswer"));
                         hangup();
                     },
+                    setCallRingback,
                 );
             }
 

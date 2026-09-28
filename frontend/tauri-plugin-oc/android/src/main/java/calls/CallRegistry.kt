@@ -23,6 +23,8 @@ class CallRegistry(
         DECLINED_ELSEWHERE(false),
         // Answered on this device, from the ring screen, Telecom, or inside the app.
         ANSWERED_HERE(false),
+        // An active call ended, from either side (#9559). Never a ring's end.
+        HUNG_UP(false),
     }
 
     sealed class Started {
