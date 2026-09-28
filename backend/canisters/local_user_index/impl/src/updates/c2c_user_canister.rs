@@ -97,12 +97,13 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
                 **now,
             );
         }
-        UserEvent::UserImportFailed(old_user_id, error) if user_id.index() != 0 => {
+        UserEvent::UserImportFailed(ev) if user_id.index() != 0 => {
             state.push_event_to_user_index(
                 UserIndexEvent::UserImportFailed(Box::new(UserImportFailed {
-                    user_id: old_user_id,
+                    user_id: ev.old_user_id,
                     multi_user_canister_id: user_id.canister_id(),
-                    error,
+                    user_hash: ev.user_hash,
+                    error: ev.error,
                 })),
                 **now,
             );

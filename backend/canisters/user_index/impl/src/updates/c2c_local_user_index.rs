@@ -53,15 +53,16 @@ fn cancel_migration(user_id: UserId, multi_user_canister_id: CanisterId, user_ha
     });
 }
 
-async fn cancel_failed_import(ev: UserImportFailed, user_hash: Hash) {
-    match crate::updates::cancel_user_migration::cancel_migration(ev.user_id, ev.multi_user_canister_id, Some(user_hash)).await
+async fn cancel_failed_import(ev: UserImportFailed) {
+    match crate::updates::cancel_user_migration::cancel_migration(ev.user_id, ev.multi_user_canister_id, Some(ev.user_hash))
+        .await
     {
         Ok(()) => mutate_state(|state| {
             let now = state.env.now();
             if state
                 .data
                 .user_migrations
-                .mark_import_failed(ev.user_id, ev.multi_user_canister_id, ev.error, now)
+                .mark_import_failed(ev.user_id, ev.multi_user_canister_id, ev.user_hash, ev.error, now)
             {
                 info!(user_id = %ev.user_id, "User migration cancelled after its import failed");
                 crate::jobs::start_user_migrations::run(state);
@@ -259,16 +260,17 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             // The migration is only recorded as failed once it has been cancelled. If it can't be,
             // eg. because the MultiUser canister can't be reached to abandon the import, it is left
             // in progress, to be cancelled once it has stalled.
-            if let Some(user_hash) = state
+            // The failure of an earlier migration's import is ignored.
+            if state
                 .data
                 .user_migrations
                 .get(&ev.user_id)
                 .filter(|m| m.multi_user_canister_id == ev.multi_user_canister_id)
                 .and_then(|m| m.started.as_ref())
-                .map(|s| s.user_hash)
+                .is_some_and(|s| s.user_hash == ev.user_hash)
             {
                 info!(user_id = %ev.user_id, multi_user_canister_id = %ev.multi_user_canister_id, error = ?ev.error, "User import failed");
-                utils::async_work::spawn_tracked(cancel_failed_import(*ev, user_hash));
+                utils::async_work::spawn_tracked(cancel_failed_import(*ev));
             }
         }
         LocalUserIndexEvent::UserMigrationFailedToStart(ev) => {

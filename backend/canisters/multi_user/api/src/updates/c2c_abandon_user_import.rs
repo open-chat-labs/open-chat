@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use types::{Hash, UserId};
 
 // Called by the UserIndex before cancelling a user's migration to this canister, to make sure that
-// the user can't then be imported. Any import of the user in progress is abandoned, and the
-// migration is never imported, even if asked to later. Fails if the user has already been imported,
+// the user can't then be imported. The migration's import is abandoned if it is in progress, and it
+// is never imported, even if asked to later. Fails if the user has already been imported,
 // in which case the migration must not be cancelled.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {

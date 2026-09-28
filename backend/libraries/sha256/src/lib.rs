@@ -7,6 +7,15 @@ pub fn sha256(bytes: &[u8]) -> [u8; 32] {
     hasher.finalize().into()
 }
 
+// The hash of the parts joined together, without joining them
+pub fn sha256_of_parts<'a>(parts: impl IntoIterator<Item = &'a [u8]>) -> [u8; 32] {
+    let mut hasher = Sha256::new();
+    for part in parts {
+        hasher.update(part);
+    }
+    hasher.finalize().into()
+}
+
 pub fn sha256_string(bytes: &[u8]) -> String {
     let mut hash_string = String::with_capacity(64);
     for byte in sha256(bytes) {
@@ -31,5 +40,10 @@ mod tests {
             sha256_string(b"abc"),
             "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
         );
+    }
+
+    #[test]
+    fn hash_of_parts_matches_hash_of_them_joined() {
+        assert_eq!(sha256_of_parts([b"ab".as_slice(), b"c".as_slice()]), sha256(b"abc"));
     }
 }

@@ -2,7 +2,7 @@ use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use crate::{RuntimeState, jobs, mutate_state, read_state};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
-use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserImported};
+use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserImportFailed, UserImported};
 use oc_error_codes::{OCError, OCErrorCode};
 use stable_memory_map::{KeyScope, with_key_scope};
 use std::cell::{Cell, RefCell};
@@ -179,7 +179,9 @@ async fn pull_next_page_inner(user_id: UserId) -> PullResult {
 
             if (import.user.len() as u64) < result.total_bytes && !page_is_empty {
                 PullResult::MoreToPull
-            } else if import.user.len() as u64 == result.total_bytes && sha256::sha256(&import.user) == user_hash {
+            } else if import.user.len() as u64 == result.total_bytes
+                && user_canister::migration_hash(&import.user, result.started) == user_hash
+            {
                 import.user_pulled = true;
                 PullResult::MoreToPull
             } else {
@@ -286,5 +288,13 @@ fn fail_import(old_user_id: UserId, error: OCError, state: &mut RuntimeState) {
     jobs::garbage_collect_stable_memory::start_job_if_required(&state.data);
 
     let now = state.env.now();
-    state.push_local_user_index_canister_event(import.index, LocalUserIndexEvent::UserImportFailed(old_user_id, error), now);
+    state.push_local_user_index_canister_event(
+        import.index,
+        LocalUserIndexEvent::UserImportFailed(UserImportFailed {
+            old_user_id,
+            user_hash: import.user_hash,
+            error,
+        }),
+        now,
+    );
 }

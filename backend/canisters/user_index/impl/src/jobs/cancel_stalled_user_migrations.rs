@@ -9,7 +9,10 @@ use tracing::{error, info, trace};
 use types::{CanisterId, Hash, Milliseconds, UserId};
 
 // A migration which makes no progress for this long, from being requested to being started, or from
-// being started to the user being imported, is cancelled
+// being started to the user being imported, is cancelled. Pulling the user doesn't count as progress,
+// and a MultiUser canister only pulls a couple of users at a time, so this must cover a user waiting
+// behind the others being migrated to the same canister as well as their own import. It should be
+// raised along with the migration concurrency if that is raised much.
 const STALL_TIMEOUT: Milliseconds = 2 * HOUR_IN_MS;
 // The job doesn't run more often than this, so that a stalled migration which fails to be cancelled
 // is only tried again after a while
@@ -64,7 +67,11 @@ async fn cancel_stalled_migration(user_id: UserId, multi_user_canister_id: Canis
     match result {
         Ok(()) => mutate_state(|state| {
             let now = state.env.now();
-            if state.data.user_migrations.mark_stalled(user_id, multi_user_canister_id, now) {
+            if state
+                .data
+                .user_migrations
+                .mark_stalled(user_id, multi_user_canister_id, user_hash, now)
+            {
                 info!(%user_id, %multi_user_canister_id, "Stalled user migration cancelled");
                 jobs::start_user_migrations::run(state);
             }

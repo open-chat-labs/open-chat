@@ -449,7 +449,8 @@ pub struct Migration {
     // canister to pull
     #[serde(with = "serde_bytes")]
     pub user: Vec<u8>,
-    // The hash of `user`, which the MultiUser canister checks once it has pulled all of it
+    // The hash of `user` and `started`, which identifies the migration, and which the MultiUser
+    // canister checks once it has pulled all of `user`
     pub user_hash: Hash,
     // The version of the wasm which serialized the user, which may since have been upgraded
     pub wasm_version: BuildVersion,
@@ -483,7 +484,7 @@ impl Data {
                 self.migration = Some(Migration {
                     multi_user_canister_id,
                     started: now,
-                    user_hash: sha256::sha256(&user),
+                    user_hash: user_canister::migration_hash(&user, now),
                     user,
                     wasm_version: WASM_VERSION.with_borrow(|v| **v),
                 });

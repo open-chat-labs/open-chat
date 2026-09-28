@@ -346,14 +346,6 @@ fn cancelled_migration_is_never_imported() {
         matches!(response, user_index_canister::cancel_user_migration::Response::Error(_)),
         "{response:?}"
     );
-    let set_bio = |env: &mut PocketIc| {
-        client::user::set_bio(
-            env,
-            user.principal,
-            user.canister(),
-            &user_canister::set_bio::Args { text: random_string() },
-        )
-    };
     assert!(
         env.update_call(
             user.canister(),
@@ -370,9 +362,12 @@ fn cancelled_migration_is_never_imported() {
         matches!(response, user_index_canister::cancel_user_migration::Response::Success),
         "{response:?}"
     );
-    assert!(matches!(set_bio(env), types::UnitResult::Success));
+    assert_eq!(
+        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+        None
+    );
 
-    // The LocalUserIndex keeps asking the MultiUser canister to import the user, which it refuses
+    // The LocalUserIndex tries again to have the MultiUser canister import the user, which it refuses
     for _ in 0..3 {
         env.advance_time(Duration::from_secs(31));
         tick_many(env, 5);
@@ -382,7 +377,19 @@ fn cancelled_migration_is_never_imported() {
         user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
         None
     );
-    assert!(matches!(set_bio(env), types::UnitResult::Success));
+
+    // Migrating the user again to the same MultiUser canister imports them, even though they haven't
+    // changed, since the new migration is told apart from the cancelled one
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+    let status = user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id);
+    assert!(matches!(status, Some(UserMigrationStatus::Imported { .. })), "{status:?}");
 }
 
 #[test]

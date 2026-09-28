@@ -18,7 +18,15 @@ fn c2c_abandon_user_import_impl(args: Args, state: &mut RuntimeState) -> Respons
         return AlreadyImported(latest_user_id);
     }
 
-    abandon_import(old_user_id, state);
+    // An import for another migration of the user is left for that migration to deal with
+    if state
+        .data
+        .user_imports
+        .get(&old_user_id)
+        .is_some_and(|i| i.user_hash == args.user_hash)
+    {
+        abandon_import(old_user_id, state);
+    }
     state.data.abandoned_user_imports.insert(args.user_hash);
     Success
 }

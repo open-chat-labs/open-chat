@@ -37,18 +37,27 @@ async fn cancel_user_migration(args: Args) -> Response {
     };
 
     match cancel_migration(args.user_id, args.multi_user_canister_id, user_hash).await {
-        Ok(()) => {
-            mutate_state(|state| {
-                if state
-                    .data
-                    .user_migrations
-                    .mark_cancelled(args.user_id, args.multi_user_canister_id)
-                {
-                    start_user_migrations::run(state);
-                }
-            });
-            Success
-        }
+        Ok(()) => mutate_state(|state| {
+            if state
+                .data
+                .user_migrations
+                .mark_cancelled(args.user_id, args.multi_user_canister_id, user_hash)
+            {
+                start_user_migrations::run(state);
+                Success
+            } else if state
+                .data
+                .user_migrations
+                .get(&args.user_id)
+                .is_some_and(|m| m.multi_user_canister_id == args.multi_user_canister_id)
+            {
+                // The migration started while it was being cancelled, so the user's canister was
+                // frozen again, and the MultiUser canister may now be importing them
+                Error(OCErrorCode::InvalidRequest.with_message("The migration started while being cancelled, so try again"))
+            } else {
+                Success
+            }
+        }),
         Err(error) => Error(error),
     }
 }

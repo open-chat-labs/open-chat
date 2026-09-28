@@ -12862,6 +12862,7 @@ dependencies = [
  "oc_error_codes",
  "serde",
  "serde_bytes",
+ "sha256",
  "ts-rs",
  "ts_export",
  "types",
