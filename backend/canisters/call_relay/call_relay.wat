@@ -9,9 +9,13 @@
 ;;
 ;;   callee length (1 byte) | callee | method length (1 byte) | method | payload
 ;;
-;; and calls `method` on `callee` with `payload`, as a guaranteed response call with no cycles
-;; attached. Once the callee responds it replies with the callee's reject code (u32 LE), which
-;; is 0 if the callee replied, followed by the callee's reply or reject message.
+;; and calls `method` on `callee` with `payload`, with no cycles attached. Once the callee
+;; responds it replies with the callee's reject code (u32 LE), which is 0 if the callee replied,
+;; followed by the callee's reply or reject message.
+;;
+;; The call is a bounded wait (best-effort response) call with a 30 second timeout, so a callee
+;; which never responds can't hold on to the cycles reserved for its response for longer than
+;; that. If it times out the reject code is SYS_UNKNOWN, and the callee may or may not have acted.
 ;;
 ;; Only a controller can call `relay`, which gives them nothing they don't already have, since
 ;; they could install any code they like on the canister.
@@ -30,6 +34,7 @@
   (import "ic0" "msg_reply" (func $msg_reply))
   (import "ic0" "call_new" (func $call_new (param i32 i32 i32 i32 i32 i32 i32 i32)))
   (import "ic0" "call_data_append" (func $call_data_append (param i32 i32)))
+  (import "ic0" "call_with_best_effort_response" (func $call_with_best_effort_response (param i32)))
   (import "ic0" "call_perform" (func $call_perform (result i32)))
   (import "ic0" "trap" (func $trap (param i32 i32)))
 
@@ -87,6 +92,7 @@
       (i32.const 0) (i32.const 0)   ;; on_reply
       (i32.const 1) (i32.const 0))  ;; on_reject
     (call $call_data_append (local.get $payload) (i32.sub (local.get $end) (local.get $payload)))
+    (call $call_with_best_effort_response (i32.const 30))
     (if (call $call_perform)
       (then (call $trap (i32.const 96) (i32.const 19)))))
 

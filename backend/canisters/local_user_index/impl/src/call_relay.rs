@@ -1,25 +1,57 @@
-use candid::CandidType;
 use ic_cdk::call::RejectCode;
-use serde::Deserialize;
-use types::{C2CError, CanisterId};
+use std::cell::RefCell;
+use std::collections::HashSet;
+use types::{C2CError, CanisterId, CanisterWasmBytes};
 
 // A tiny canister which relays calls from its controllers, making them as itself. Installed on
 // a migrated user's uninstalled canister, it lets this LocalUserIndex move the funds the canister
 // holds. See backend/canisters/call_relay, which is where this wasm is built from.
-pub const CALL_RELAY_WASM: &[u8] = include_bytes!("../../../call_relay/call_relay.wasm");
+const CALL_RELAY_WASM: &[u8] = include_bytes!("../../../call_relay/call_relay.wasm");
 
-// Calls `method` on `callee` as `canister_id`, which has the call relay installed
-pub async fn call<A: CandidType, R: CandidType + for<'de> Deserialize<'de>>(
+thread_local! {
+    // The canisters reserved for the relay's use, which the cycles refund job leaves alone
+    static IN_USE: RefCell<HashSet<CanisterId>> = RefCell::default();
+}
+
+pub fn wasm() -> CanisterWasmBytes {
+    CanisterWasmBytes(CALL_RELAY_WASM.to_vec())
+}
+
+pub fn is_in_use(canister_id: CanisterId) -> bool {
+    IN_USE.with_borrow(|c| c.contains(&canister_id))
+}
+
+// Reserves the canister for the relay's use while held. Being on the heap, reservations are
+// cleared by an upgrade, but the canister is stopped first, so none are held at the time.
+pub struct InUseGuard(CanisterId);
+
+impl InUseGuard {
+    // None if the canister is already reserved
+    pub fn new(canister_id: CanisterId) -> Option<InUseGuard> {
+        IN_USE
+            .with_borrow_mut(|c| c.insert(canister_id))
+            .then_some(InUseGuard(canister_id))
+    }
+}
+
+impl Drop for InUseGuard {
+    fn drop(&mut self) {
+        IN_USE.with_borrow_mut(|c| c.remove(&self.0));
+    }
+}
+
+// Calls `method` on `callee` with `payload` as `canister_id`, which has the relay installed,
+// returning the callee's reply
+pub async fn call(
     canister_id: CanisterId,
     callee: CanisterId,
     method: &str,
-    args: &A,
+    payload: &[u8],
     timeout_seconds: u32,
-) -> Result<R, C2CError> {
-    let payload = encode_args(callee, method, &candid::encode_one(args).unwrap());
-    let reply = canister_client::make_c2c_call_raw(canister_id, "relay", &payload, 0, Some(timeout_seconds)).await?;
-    let bytes = decode_reply(callee, method, &reply)?;
-    candid::decode_one(bytes).map_err(|error| C2CError::new(callee, method, RejectCode::CanisterReject, error.to_string()))
+) -> Result<Vec<u8>, C2CError> {
+    let args = encode_args(callee, method, payload);
+    let reply = canister_client::make_c2c_call_raw(canister_id, "relay", &args, 0, Some(timeout_seconds)).await?;
+    decode_reply(callee, method, &reply).map(|bytes| bytes.to_vec())
 }
 
 fn encode_args(callee: CanisterId, method: &str, payload: &[u8]) -> Vec<u8> {

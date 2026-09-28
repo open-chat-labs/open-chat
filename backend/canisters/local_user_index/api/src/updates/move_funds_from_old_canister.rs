@@ -4,7 +4,8 @@ use ts_export::ts_export;
 use types::{CanisterId, UserId};
 
 // Moves the funds held by the canister of the id the caller had before being migrated to a
-// MultiUser canister, on each of the given ledgers, to the caller's wallet
+// MultiUser canister, on each of the given ledgers (at most 20), to the caller's wallet. Must be
+// called on the LocalUserIndex which controls that canister, once it has been uninstalled.
 #[ts_export(local_user_index, move_funds_from_old_canister)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -35,5 +36,7 @@ pub enum MoveFundsResult {
     Moved { amount: u128, fee: u128, block_index: u64 },
     // The balance didn't exceed the ledger's fee, so there was nothing to move
     NothingToMove,
+    // If the transfer timed out (a `C2CError` with reject code 6, `SYS_UNKNOWN`) it may still have
+    // been made, in which case a later call finds nothing left to move
     Failed(OCError),
 }

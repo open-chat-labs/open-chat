@@ -1,5 +1,5 @@
-use crate::{CanisterToRefund, RuntimeState, mutate_state, read_state};
-use constants::{B, CYCLES_REQUIRED_FOR_UPGRADE};
+use crate::{CanisterToRefund, RuntimeState, call_relay, mutate_state, read_state};
+use constants::{B, CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
 use ic_cdk_management_canister::CanisterInstallMode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -80,13 +80,14 @@ fn run() {
 
 // Returns the next canister whose retry delay (if any) has elapsed, having rotated it to the
 // front of the queue where it stays until it has been processed, else how long until the first
-// of them is due
+// of them is due. A canister reserved for the call relay is left until the relay is done with it.
 fn get_next(state: &mut RuntimeState) -> Result<CanisterToRefund, Option<Milliseconds>> {
     let now = state.env.now();
     let queue = &mut state.data.cycles_refund_queue;
     for _ in 0..queue.len() {
         if let Some(front) = queue.front()
             && front.retry_after <= now
+            && !call_relay::is_in_use(front.canister_id)
         {
             return Ok(front.clone());
         }
@@ -94,7 +95,13 @@ fn get_next(state: &mut RuntimeState) -> Result<CanisterToRefund, Option<Millise
             queue.push_back(front);
         }
     }
-    Err(queue.iter().map(|c| c.retry_after.saturating_sub(now)).min())
+    Err(queue
+        .iter()
+        .map(|c| {
+            let due_in = c.retry_after.saturating_sub(now);
+            if call_relay::is_in_use(c.canister_id) { due_in.max(MINUTE_IN_MS) } else { due_in }
+        })
+        .min())
 }
 
 async fn process_canister(canister: CanisterToRefund) {
@@ -181,7 +188,14 @@ async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
         return Err(RefundError::NotController);
     }
 
-    match status.module_hash {
+    // The call relay, left installed by a move of the canister's funds which failed to uninstall it
+    let mut module_hash = status.module_hash.clone();
+    if module_hash.as_ref().is_some_and(|hash| *hash == call_relay::wasm().hash()) {
+        utils::canister::uninstall(canister_id).await?;
+        module_hash = None;
+    }
+
+    match module_hash {
         None => {
             let balance = status.cycles();
             if balance < MIN_CYCLES_TO_REFUND {
