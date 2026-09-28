@@ -59,12 +59,10 @@ async fn c2c_user_canister_v2(args: Args) -> Response {
     Response::Success
 }
 
-// Which kind of canister the caller is. A MultiUser canister the UserIndex has already confirmed is
-// cached, and a User canister whose user one of the recipients has a chat with is known.
-// Any other caller is checked with the UserIndex, and cached if it is a MultiUser canister. A user
-// who has only just registered may not be known to the UserIndex yet, since it learns of them via an
-// event from their LocalUserIndex, so a caller the UserIndex doesn't know is then looked up in the
-// LocalUserIndex, which knows users as soon as they register.
+// Which kind of canister the caller is. A MultiUser canister the LocalUserIndex has already
+// confirmed is cached, and a User canister whose user one of the recipients has a chat with is
+// known. Any other caller is checked with the LocalUserIndex, which knows every user as soon as they
+// register, and cached if it is a MultiUser canister.
 async fn verify_caller(args: &Args) -> CanisterKind {
     let (caller, local_user_index_canister_id, known) = read_state(|state| {
         let caller = state.env.caller();
