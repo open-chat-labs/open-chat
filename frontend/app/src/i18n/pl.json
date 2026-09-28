@@ -2415,6 +2415,9 @@
         "switchCall": "Bierzesz już udział w rozmowie wideo. Czy chcesz przejść na ten?",
         "toggleCam": "Przełącz kamerę",
         "toggleMic": "Przełącz mikrofon",
+        "toggleSpeaker": "Przełącz głośnik",
+        "speakerOn": "Głośnik włączony",
+        "speakerOff": "Głośnik wyłączony",
         "toggleShare": "Przełącz udostępnianie pulpitu",
         "viewers": "Widzowie ({count})"
     },

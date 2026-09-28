@@ -2415,6 +2415,9 @@
         "switchCall": "すでにビデオ通話中です。これに切り替えますか?",
         "toggleCam": "カメラを切り替えます",
         "toggleMic": "マイクを切り替えます",
+        "toggleSpeaker": "スピーカーを切り替える",
+        "speakerOn": "スピーカーオン",
+        "speakerOff": "スピーカーオフ",
         "toggleShare": "デスクトップ共有の切り替え",
         "viewers": "視聴者 ({count})"
     },

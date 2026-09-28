@@ -2415,6 +2415,9 @@
         "switchCall": "Ya estás en una videollamada. ¿Te gustaría cambiar a este?",
         "toggleCam": "Cambia tu cámara",
         "toggleMic": "Cambia tu micrófono",
+        "toggleSpeaker": "Alternar altavoz",
+        "speakerOn": "Altavoz activado",
+        "speakerOff": "Altavoz desactivado",
         "toggleShare": "Alternar compartir escritorio",
         "viewers": "Espectadores ({count})"
     },

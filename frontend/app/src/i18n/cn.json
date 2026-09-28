@@ -2415,6 +2415,9 @@
         "switchCall": "您已经在进行视频通话。您想切换到这个吗？",
         "toggleCam": "切换你的相机",
         "toggleMic": "切换麦克风",
+        "toggleSpeaker": "切换扬声器",
+        "speakerOn": "扬声器已开启",
+        "speakerOff": "扬声器已关闭",
         "toggleShare": "切换桌面共享",
         "viewers": "观看者 ({count})"
     },

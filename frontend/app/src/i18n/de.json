@@ -2415,6 +2415,9 @@
         "switchCall": "Sie befinden sich bereits in einem Videoanruf. Möchten Sie zu diesem wechseln?",
         "toggleCam": "Schalten Sie Ihre Kamera um",
         "toggleMic": "Schalten Sie Ihr Mikrofon um",
+        "toggleSpeaker": "Lautsprecher umschalten",
+        "speakerOn": "Lautsprecher an",
+        "speakerOff": "Lautsprecher aus",
         "toggleShare": "Desktop-Freigabe umschalten",
         "viewers": "Zuschauer ({count})"
     },

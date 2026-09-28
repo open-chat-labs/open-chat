@@ -2415,6 +2415,9 @@
         "switchCall": "Vous êtes déjà en appel vidéo. Souhaitez-vous passer à celui-ci ?",
         "toggleCam": "Basculez votre caméra",
         "toggleMic": "Basculez votre microphone",
+        "toggleSpeaker": "Activer/désactiver le haut-parleur",
+        "speakerOn": "Haut-parleur activé",
+        "speakerOff": "Haut-parleur désactivé",
         "toggleShare": "Activer le partage de bureau",
         "viewers": "Téléspectateurs ({count})"
     },
