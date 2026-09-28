@@ -57,6 +57,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `c2c_import_user` which starts the `import_user` job for the given user, callable by the LocalUserIndex ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
 - Add `inspect_message`, accepting ingress messages only from the canister's users and the video call operators ([#9597](https://github.com/open-chat-labs/open-chat/pull/9597))
 - Include the imported user's groups and communities in `UserImported`, for them to be told of the user's new id ([#9602](https://github.com/open-chat-labs/open-chat/pull/9602))
+- Clear an imported user's BTC and OneSec deposit addresses, which were for their old canister's account ([#9607](https://github.com/open-chat-labs/open-chat/pull/9607))
 
 ### Changed
 

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index;
-use crate::model::users_to_migrate::{UserToImport, UserToMigrate};
+use crate::model::users_to_migrate::{UserToCloseOut, UserToImport, UserToMigrate};
 use crate::{CanisterToRefund, CommunityEvent, GroupEvent, RuntimeState, UserEvent, UserToDelete, jobs, mutate_state};
 use canister_api_macros::update;
 use canister_time::now_millis;
@@ -380,8 +380,16 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         }
         UserIndexEvent::UserIdMigrated(ev) => {
             if state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id) {
-                // The user's old canister stays in `local_users` on the LocalUserIndex controlling it,
-                // since it is kept until the user's funds have been moved out of it
+                // The user's old canister, if this LocalUserIndex controls it, stays in `local_users`
+                // until it has been uninstalled
+                if ev.old_user_id.index() == 0 && state.data.local_users.contains(&ev.old_user_id) {
+                    state.data.users_to_close_out.push(UserToCloseOut {
+                        user_id: ev.old_user_id,
+                        attempt: 0,
+                        not_before: 0,
+                    });
+                    jobs::close_out_migrated_users::start_job_if_required(state);
+                }
                 if let Some(principal) = state.data.global_users.migrate_user_id(ev.old_user_id, ev.new_user_id) {
                     let canister_id = ev.new_user_id.canister_id();
                     if state.data.local_multi_user_canisters.contains(&canister_id)

@@ -46,6 +46,26 @@ pub struct UserToImport {
     pub not_before: TimestampMillis,
 }
 
+// A user who has been switched over to the MultiUser canister they were migrated to, whose old
+// canister is to be uninstalled
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct UserToCloseOut {
+    pub user_id: UserId,
+    // The number of failed attempts in a row, which the delay before the next attempt grows with
+    pub attempt: u32,
+    pub not_before: TimestampMillis,
+}
+
+impl QueuedUser for UserToCloseOut {
+    fn user_id(&self) -> UserId {
+        self.user_id
+    }
+
+    fn not_before(&self) -> TimestampMillis {
+        self.not_before
+    }
+}
+
 impl QueuedUser for UserToMigrate {
     fn user_id(&self) -> UserId {
         self.user_id

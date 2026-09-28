@@ -14,7 +14,7 @@ use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::top_up_leaderboards::TopUpLeaderboards;
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
-use crate::model::users_to_migrate::{UserToImport, UsersToMigrate};
+use crate::model::users_to_migrate::{UserToCloseOut, UserToImport, UsersToMigrate};
 use crate::model::web_push_subscriptions::WebPushSubscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -712,6 +712,8 @@ impl RuntimeState {
             users_to_migrate_in_progress: self.data.users_to_migrate.in_progress(),
             users_to_import_pending: self.data.users_to_import.pending(),
             users_to_import_in_progress: self.data.users_to_import.in_progress(),
+            users_to_close_out_pending: self.data.users_to_close_out.pending(),
+            users_to_close_out_in_progress: self.data.users_to_close_out.in_progress(),
             chunk_store: crate::jobs::refresh_chunk_store::metrics(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
@@ -872,6 +874,10 @@ struct Data {
     // Users the UserIndex has asked this LocalUserIndex to have one of its MultiUser canisters import
     #[serde(default)]
     pub users_to_import: UsersToMigrate<UserToImport>,
+    // Users switched over to the MultiUser canister they were migrated to, whose old canisters, which
+    // this LocalUserIndex controls, are to be uninstalled
+    #[serde(default)]
+    pub users_to_close_out: UsersToMigrate<UserToCloseOut>,
     // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
     #[serde(skip)]
     pub top_up_leaderboards: TopUpLeaderboards,
@@ -1026,6 +1032,7 @@ impl Data {
             migrated_user_ids: MigratedUserIds::default(),
             users_to_migrate: UsersToMigrate::default(),
             users_to_import: UsersToMigrate::default(),
+            users_to_close_out: UsersToMigrate::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
     }
@@ -1086,6 +1093,8 @@ pub struct Metrics {
     pub users_to_migrate_in_progress: usize,
     pub users_to_import_pending: usize,
     pub users_to_import_in_progress: usize,
+    pub users_to_close_out_pending: usize,
+    pub users_to_close_out_in_progress: usize,
     pub chunk_store: crate::jobs::refresh_chunk_store::ChunkStoreMetrics,
     pub cycles_refund_queue_length: usize,
     pub cycles_refunded_from_deleted_users: Cycles,
