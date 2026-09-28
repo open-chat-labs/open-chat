@@ -26,7 +26,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Make `set_multi_user_canisters_enabled` callable by platform operators ([#9574](https://github.com/open-chat-labs/open-chat/pull/9574))
 - Store the date created and user count of each MultiUser canister alongside its LocalUserIndex, keeping the count up to date as users are created, deleted and migrated, and include them in `metrics` ([#9575](https://github.com/open-chat-labs/open-chat/pull/9575))
 - Once enabled, route newly registering users to the MultiUser canister with the fewest users ([#9579](https://github.com/open-chat-labs/open-chat/pull/9579))
-- Store the MultiUser canisters under `multi_user_canisters` again rather than `multi_user_canisters_v2`, reading the empty map of the previous shape, which is all any released UserIndex holds ([#9591](https://github.com/open-chat-labs/open-chat/pull/9591))
 
 ### Fixed
 
