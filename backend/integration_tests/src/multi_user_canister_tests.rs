@@ -6117,3 +6117,68 @@ fn the_user_index_is_told_of_avatars_set_in_multi_user_canisters() {
     tick_many(env, 3);
     assert_eq!(avatar_id(env, a), None);
 }
+
+#[test]
+fn token_swaps_return_errors_rather_than_trapping() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (principal, user_id) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let swap_response = client::user::swap_tokens(
+        env,
+        principal,
+        canister_id,
+        &user_canister::swap_tokens::Args {
+            swap_id: random_from_u128(),
+            input_token: types::TokenInfo {
+                symbol: ICP_SYMBOL.to_string(),
+                ledger: canister_ids.icp_ledger,
+                decimals: 8,
+                fee: ICP_TRANSFER_FEE,
+            },
+            output_token: types::TokenInfo {
+                symbol: constants::CHAT_SYMBOL.to_string(),
+                ledger: canister_ids.chat_ledger,
+                decimals: 8,
+                fee: constants::CHAT_TRANSFER_FEE,
+            },
+            input_amount: 100_000_000,
+            exchange_args: user_canister::swap_tokens::ExchangeArgs::ICPSwap(user_canister::swap_tokens::ExchangeSwapArgs {
+                swap_canister_id: random_principal(),
+                zero_for_one: true,
+            }),
+            min_output_amount: 1,
+            from_account: None,
+            pin: None,
+        },
+    );
+    assert!(
+        matches!(&swap_response, user_canister::swap_tokens::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{swap_response:?}"
+    );
+
+    let withdraw_response = client::user::c2c_withdraw_from_icpswap(
+        env,
+        local_user_index,
+        canister_id,
+        &user_canister::c2c_withdraw_from_icpswap::Args {
+            user_id,
+            swap_id: random_from_u128(),
+            input_token: true,
+            amount: None,
+            fee: None,
+        },
+    );
+    assert!(
+        matches!(&withdraw_response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{withdraw_response:?}"
+    );
+}
