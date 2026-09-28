@@ -18,6 +18,7 @@ description: OpenChat release train runbook — tagging components, prod-test (i
 2. Unreleased work per component:
    `git log --oneline <last-tag>..master -- backend/canisters/<component>` (frontend for website).
    A component whose only diff is CHANGELOG.md needs no release.
+   Before tagging, check that the component's CHANGELOG `[unreleased]` section matches that log, because the section becomes the prod proposal text. Every PR in the log needs an entry there. An entry that a squash merge left under an already released heading has to be moved up. The component's last prod release has to be cut to its own heading already, or its entries will be announced again.
 3. Canister version numbers are globally sequential across all canister components (next free number, regardless of component). Tag format: `v2.0.NNNN-<component>`, lightweight, at master head:
    `git tag v2.0.NNNN-<component> master && git push origin <tags...>`
    **The website no longer shares that sequence** (decided 2026-09-04). Its version drives the Android OTA gate, so its bump level is a decision, not the next free number. See step 3a.
@@ -93,7 +94,7 @@ The script takes the proposal's changelog from the `[unreleased]` section of `ba
 git show v2.0.<tag>-<canister>:backend/canisters/<canister>/CHANGELOG.md | sed -n '/^## \[unreleased\]/,/^## \[\[/p'
 ```
 
-The text is fixed once the tag is cut, so wording fixes have to land in CHANGELOG.md before tagging.
+If the section at the tag turns out to be wrong or empty, write the corrected text to `./local/summary.md`, have the developer review it, and pass it with `CHANGELOG_PATH="<abs path to local/summary.md>"` in front of the command. This avoids re-tagging, which would mean a new version and another prod-test round.
 
 The script downloads the wasm from S3 at the tag commit, hashes it, and embeds verification instructions in the proposal summary.
 
@@ -143,5 +144,5 @@ sh ./scripts/proposals/commit_frontend_assets.sh 2.0.<tag> "<abs path to local/s
 ## Phase 3 — post-release
 
 - Verify prod metrics / live site `/version`.
-- Tidy PR: cut each released component's CHANGELOG.md `[unreleased]` section to `## [[2.0.NNNN](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.NNNN-<component>)] - <date>`.
+- Tidy PR: cut each released component's CHANGELOG.md `[unreleased]` section to `## [[2.0.NNNN](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.NNNN-<component>)] - <date>`. Cut only the entries that were in the section at the tag. Entries merged after tagging stay under `[unreleased]`.
 - Update the release-train memory/status.

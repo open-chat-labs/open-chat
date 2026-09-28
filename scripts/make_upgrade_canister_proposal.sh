@@ -23,17 +23,22 @@ TAG=v$VERSION-$CANISTER_NAME
 COMMIT_ID=$(git rev-list -n 1 tags/$TAG) || exit 1
 URL="https://github.com/open-chat-labs/open-chat/releases/tag/$TAG"
 
-# Take the changelog from the [unreleased] section of the canister's CHANGELOG as of the tagged commit
-CHANGELOG_FILE=backend/canisters/$CANISTER_NAME/CHANGELOG.md
-CHANGELOG=$(git show $COMMIT_ID:$CHANGELOG_FILE | awk '
-    /^## \[unreleased\]/ { found = 1; next }
-    found && /^## / { exit }
-    found && (started || NF) { started = 1; print }
-')
+# Take the changelog from the [unreleased] section of the canister's CHANGELOG as of the tagged commit,
+# unless CHANGELOG_PATH is set, in which case take it from that file instead
+if [ -n "$CHANGELOG_PATH" ] ; then
+    CHANGELOG=$(cat "$CHANGELOG_PATH") || exit 1
+else
+    CHANGELOG_FILE=backend/canisters/$CANISTER_NAME/CHANGELOG.md
+    CHANGELOG=$(git show $COMMIT_ID:$CHANGELOG_FILE | awk '
+        /^## \[unreleased\]/ { found = 1; next }
+        found && /^## / { exit }
+        found && (started || NF) { started = 1; print }
+    ')
 
-if [ -z "$CHANGELOG" ] ; then
-    echo "No [unreleased] entries found in $CHANGELOG_FILE at $TAG"
-    exit 1
+    if [ -z "$CHANGELOG" ] ; then
+        echo "No [unreleased] entries found in $CHANGELOG_FILE at $TAG, set CHANGELOG_PATH to provide the changelog"
+        exit 1
+    fi
 fi
 
 echo "TITLE: $TITLE"
