@@ -31,7 +31,9 @@ fn direct_message_notification_succeeds() {
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
-    tick_many(env, 3);
+    // Long enough for the message to reach user2's canister and the notification to reach their
+    // LocalUserIndex, even if the users are on different subnets
+    tick_many(env, 10);
 
     let notifications_response = client::local_user_index::happy_path::notifications(
         env,
@@ -495,7 +497,9 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {
         "https://xyz.com/",
     );
 
-    tick_many(env, 3);
+    // Long enough for the subscription to reach every LocalUserIndex, including those on a
+    // different subnet from the NotificationsIndex
+    tick_many(env, 10);
 
     TestData { user1, user2 }
 }

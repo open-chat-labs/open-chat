@@ -272,7 +272,7 @@ Each user is given a byte allowance which they can’t exceed. The first file re
 
 In the case of OpenChat, users are given an allowance of 0.1GB if they either verify the "uniqueness" of their account with an SMS code or if they pay a small charge. They can pay to increase their allowance in 0.1GB increments up to a maximum of 1GB although this is likely to increase in the future. Soon we will support a toggle in OpenChat to automatically delete old image/video data so they can recycle their allowance. The actual _message_ itself would not be deleted and this contains a very low-res thumbnail which would not be deleted and would be shown in place of the full image.
 
-OpenStorage also has the notion of file _accessors_ which are the principals permitted to view any given file (in addition to the file owner). An accessor may also grant read access to other principals so they also become accessors. In OpenChat the _id_ of the chat in which a file message is sent is made the accessor. When a file message is forwarded to another chat the original chat grants access to the file to the new chat.
+OpenStorage also has the notion of file _accessors_ which are the principals permitted to view any given file (in addition to the file owner). An accessor may also grant read access to other principals so they also become accessors. In OpenChat the accessor is the canister of the chat in which a file message is sent: the group or community, or for a direct chat the canisters holding the two users (a user's own _user_ canister, or the _multi user_ canister holding them). When a file message is forwarded to another chat the original chat grants access to the file to the new chat.
 
 ### Notifications canister {#2-10}
 
