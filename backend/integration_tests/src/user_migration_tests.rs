@@ -10,7 +10,7 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Chat, Document, Empty, MessageContent, MessageContentInitial, OptionUpdate,
+    BuildVersion, CanisterId, CanisterWasm, Chat, ChatId, Document, Empty, MessageContent, MessageContentInitial, OptionUpdate,
     P2PSwapContentInitial, UserId,
 };
 use user_index_canister::user_migration::UserMigrationStatus;
@@ -670,6 +670,70 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
 }
 
 #[test]
+fn blocked_user_pairs_are_moved_onto_a_migrated_users_new_id() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    let user3 = client::register_user(env, canister_ids);
+    // A private group, since members who join a public group have its notifications muted
+    let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
+    let group_local_user_index = canister_ids.local_user_index(env, group_id);
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        &user1,
+        group_local_user_index,
+        group_id,
+        vec![(user2.user_id, user2.principal), (user3.user_id, user3.principal)],
+    );
+    // user2 blocks user1, who blocks user3
+    client::user::happy_path::block_user(env, &user2, user1.user_id);
+    client::user::happy_path::block_user(env, &user1, user3.user_id);
+    subscribe_to_notifications(env, canister_ids, &user2);
+    tick_many(env, 10);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id) {
+        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
+        status => panic!("User not imported: {status:?}"),
+    };
+    // Having not subscribed until now, the user's subscription is held under their new id
+    subscribe_to_notifications(env, canister_ids, &user1);
+    tick_many(env, 10);
+
+    // user2 isn't notified of a message from user1, now under their new id
+    let recipients = group_message_notification_recipients(env, *controller, group_local_user_index, &user1, group_id);
+    assert!(recipients.is_empty(), "{recipients:?}");
+    // Nor is user1, under their new id, notified of a message from user3, while user2 is
+    let recipients = group_message_notification_recipients(env, *controller, group_local_user_index, &user3, group_id);
+    assert!(!recipients.contains(&new_user_id));
+    assert_eq!(recipients, vec![user2.user_id]);
+
+    // Once user2 unblocks user1, by the old id their canister still holds, they are notified again
+    client::user::happy_path::unblock_user(env, &user2, user1.user_id);
+    tick_many(env, 10);
+    let recipients = group_message_notification_recipients(env, *controller, group_local_user_index, &user1, group_id);
+    assert_eq!(recipients, vec![user2.user_id]);
+}
+
+#[test]
 fn suspended_user_is_migrated() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -1025,6 +1089,34 @@ fn migrate_users(
         user_index_canister::migrate_users::Response::Success(result) => result.queued,
         response => panic!("'migrate_users' error: {response:?}"),
     }
+}
+
+fn subscribe_to_notifications(env: &mut PocketIc, canister_ids: &CanisterIds, user: &User) {
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user.principal,
+        canister_ids.notifications_index,
+        random_string(),
+        random_string(),
+        format!("https://{}.com/", random_string()),
+    );
+}
+
+// Sends a message to the group, returning the users its notification is pushed to
+fn group_message_notification_recipients(
+    env: &mut PocketIc,
+    controller: Principal,
+    local_user_index: CanisterId,
+    sender: &User,
+    group_id: ChatId,
+) -> Vec<UserId> {
+    let from_index = client::local_user_index::happy_path::latest_notification_index(env, controller, local_user_index) + 1;
+    client::group::happy_path::send_text_message(env, sender, group_id, None, random_string(), None);
+    tick_many(env, 3);
+    client::local_user_index::happy_path::notifications(env, controller, local_user_index, from_index)
+        .subscriptions
+        .into_keys()
+        .collect()
 }
 
 fn set_message_reminder(env: &mut PocketIc, user: &User, other_user: &User, remind_in: u64) {

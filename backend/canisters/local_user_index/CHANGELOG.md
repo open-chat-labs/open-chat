@@ -36,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Send `c2c_bot_send_message` for a direct chat to the canister holding the user, rather than to their user id, which for a user in a MultiUser canister is not a canister id ([#9532](https://github.com/open-chat-labs/open-chat/pull/9532))
 - Serve a daily puzzle hint step at level 1 until it has been served, whatever level is asked for, so a client still climbing a finished step's ladder is not sold a new step's answer ([#9535](https://github.com/open-chat-labs/open-chat/pull/9535))
 - Serve a daily puzzle hint's premise first: an earlier negatives-only step that rules out a key the hint looks at, and is not yet marked on the board, rather than a hint whose reasoning doesn't hold on the player's board, but never in place of a hint already bought ([#9614](https://github.com/open-chat-labs/open-chat/pull/9614))
+- Move the blocked-user pairs naming a migrated user onto their new id, including those blocked or unblocked by their old id afterwards ([#9630](https://github.com/open-chat-labs/open-chat/pull/9630))
 
 ## [[2.0.2063](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2063-local_user_index)] - 2026-09-23
 
