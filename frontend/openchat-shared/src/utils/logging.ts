@@ -87,16 +87,21 @@ export function thrownByDocumentScript(payload: any): boolean {
     }
 }
 
-// True for our CSP refusing an eval whose code has no script URL at all: content scripts and
-// in-app browsers inject code that evals, and Safari reports its frames as bare `:234:30`
-// (Rollbar #29957). Every frame of ours names a file under an http(s) or tauri URL, so an eval
-// refused in our own bundle is still reported.
+// True for our CSP refusing an eval in code with no script URL anywhere on its stack: content
+// scripts and in-app browsers inject code that evals, and Safari reports its frames as bare
+// `:234:30` (Rollbar #29957). Every frame is checked, not just the throw site: Safari keeps
+// builtins such as `Function@[native code]` as the last frame, so an eval refused in our own
+// bundle ends in a frame with no URL too, and must still be reported via the frames above it.
 // Exported for testing.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function evalRefusedInInjectedCode(payload: any): boolean {
     if (rollbarPayloadError(payload).name !== "EvalError") return false;
-    const filename = throwSiteFilename(payload);
-    return filename !== undefined && !/^[a-z-]+:\/\//i.test(filename);
+    const body = payload?.body;
+    const frames = (body?.trace_chain?.[0] ?? body?.trace)?.frames;
+    if (!Array.isArray(frames) || frames.length === 0) return false;
+    return frames.every(
+        (f) => typeof f?.filename === "string" && !/^[a-z-]+:\/\//i.test(f.filename),
+    );
 }
 
 // Rollbar matches an uploaded source map to a stack frame by exact minified URL. The same bundle

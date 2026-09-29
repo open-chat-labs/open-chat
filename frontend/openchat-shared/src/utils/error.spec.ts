@@ -207,9 +207,7 @@ describe("shouldReportError", () => {
             ),
         ).toBe(false);
         expect(
-            shouldReportError(
-                new HttpError(0, new Error("Failed to fetch HTTP request: Load failed")),
-            ),
+            shouldReportError(new HttpError(0, new Error("Failed to fetch HTTP request: Load failed"))),
         ).toBe(false);
         // the same words from a plain Error are still a signal
         expect(shouldReportError(new Error("Failed to fetch HTTP request: Failed to fetch"))).toBe(
@@ -220,8 +218,8 @@ describe("shouldReportError", () => {
     // Invariant: client-environment and IC-side failures seen on 2.0.2054 are not reported, and
     // the rules stay narrow enough that a nearby failure of ours still is. Each message was a live
     // Rollbar item: #27293 and #10401 IndexedDB without a transaction, #28921 a lost IndexedDB
-    // blob, #31128 and #30432 the platform passkey service, #30972 an abandoned view transition,
-    // #31771 the IC's Bitcoin API switched off.
+    // blob, #31128 and #30432 the platform passkey service, #31771 the IC's Bitcoin API switched
+    // off.
     test("silences the 2026-09-29 environment noise", () => {
         for (const [name, message] of [
             [
@@ -241,7 +239,6 @@ describe("shouldReportError", () => {
                 "NotReadableError",
                 "An unknown error occurred while talking to the credential manager.",
             ],
-            ["InvalidStateError", "Transition was aborted because of invalid state"],
         ]) {
             const error = new Error(message);
             error.name = name;
@@ -275,21 +272,6 @@ describe("shouldReportError", () => {
                 ),
             ),
         ).toBe(true);
-    });
-
-    // Invariant: the agent's TransportError carrying only the browser's fetch-failure words is
-    // not reported (#31973, Safari "Load failed"); the same words with anything after them, or
-    // from our own Errors, still are.
-    test("silences an HttpError that is only the browser's fetch failure", () => {
-        expect(shouldReportError(new HttpError(0, new Error("Load failed")))).toBe(false);
-        expect(shouldReportError(new HttpError(0, new Error("Failed to fetch")))).toBe(false);
-        expect(shouldReportMessage("HttpError", "Load failed")).toBe(false);
-
-        expect(shouldReportError(new HttpError(0, new Error("Load failed: bad response")))).toBe(
-            true,
-        );
-        expect(shouldReportError(new Error("Load failed"))).toBe(true);
-        expect(shouldReportError(new Error("Failed to fetch ip from IP Location"))).toBe(true);
     });
 
     test("silences Safari storage and in-app browser bridge failures", () => {

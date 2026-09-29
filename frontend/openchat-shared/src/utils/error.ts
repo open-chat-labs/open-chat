@@ -60,11 +60,6 @@ const RETRY_EXHAUSTED_PATTERN = /retry strategy exhausted after \d+ attempts/i;
 
 const AGENT_FETCH_FAILED_PATTERN = /^failed to fetch http request/i;
 
-// The agent's TransportError for a fetch that threw can also carry nothing but the browser's own
-// words ("Load failed" on Safari, #31973). Anchored so that only the bare phrase matches.
-const BARE_FETCH_FAILED_PATTERN =
-    /^(failed to fetch|load failed|networkerror when attempting to fetch resource\.?)$/i;
-
 // Every HttpError subclass overwrites `name` with its own, so a bare `name === "HttpError"` test
 // misses them. `code` only means an HTTP status on one of these.
 const HTTP_ERROR_NAMES = new Set<string>([
@@ -95,7 +90,6 @@ function isTransientNetworkError(error: unknown): boolean {
     // The agent wraps a fetch that threw (no response at all) as an HttpError with this prefix
     // and the browser's own text after it. Same network weather, different envelope.
     if (HTTP_ERROR_NAMES.has(name) && AGENT_FETCH_FAILED_PATTERN.test(message)) return true;
-    if (HTTP_ERROR_NAMES.has(name) && BARE_FETCH_FAILED_PATTERN.test(message)) return true;
     // Only for the browser's own TypeError: our code also throws Errors whose text happens to
     // start "Failed to fetch ...", and those must stay reportable. A bare string carries no
     // name, so it can never satisfy this and is reported like any other unrecognised failure.
@@ -154,9 +148,6 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     /can't find variable: EmptyRanges/i,
     // Benign browser warning surfaced as an error event
     /resizeobserver loop/i,
-    // The browser abandoning a view transition (the page was hidden mid-transition, say); the
-    // navigation itself still happens (#30972)
-    /transition was aborted because of invalid state/i,
     // The IC's Bitcoin canister trapping while the Bitcoin API is switched off: an IC-side
     // incident that every background BTC balance refresh hits until it is switched back on (#31771)
     /bitcoin api is disabled/i,

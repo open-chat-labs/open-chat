@@ -82,9 +82,7 @@ describe("normaliseSourceMapUrls", () => {
     });
 
     test("ignores payloads with no trace at all", () => {
-        expect(() =>
-            normaliseSourceMapUrls({ body: { message: { body: "hello" } } }),
-        ).not.toThrow();
+        expect(() => normaliseSourceMapUrls({ body: { message: { body: "hello" } } })).not.toThrow();
         expect(() => normaliseSourceMapUrls({})).not.toThrow();
     });
 });
@@ -185,6 +183,17 @@ describe("evalRefusedInInjectedCode", () => {
         expect(evalRefusedInInjectedCode(payload("EvalError", "tauri://localhost/main.js"))).toBe(
             false,
         );
+        // Safari keeps the builtin that did the eval as the throw site, below our own frame
+        expect(
+            evalRefusedInInjectedCode(
+                payload("EvalError", "http://dynamichost/main.js", "[native code]"),
+            ),
+        ).toBe(false);
+        expect(
+            evalRefusedInInjectedCode(
+                payload("EvalError", "http://dynamichost/main.js", "(unknown)"),
+            ),
+        ).toBe(false);
     });
 
     test("only applies to EvalError", () => {
