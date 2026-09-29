@@ -22,14 +22,15 @@ use utils::canister::{CanisterStatusMinimal, CanisterToInstall, WasmToInstall, i
 // Only ledgers known to the Registry are called, but they are still outside our control, so to be
 // safe each call to one times out, the calls are made in a bounded number of rounds, and their
 // replies are decoded within a quota. That way a ledger which misbehaves can't hold up the move,
-// nor keep this canister from being stopped to be upgraded, for longer than the 3 minutes the
-// rounds take at most.
+// nor keep this canister from being stopped to be upgraded, for longer than the rounds take at
+// most: 30s for the balances, then for each of the 2 rounds of transfers, 30s for a transfer and
+// 30s for its retry, 2.5 minutes in all, well within the 5 minutes a stop is given.
 const MAX_LEDGERS: usize = 20;
 const MAX_CONCURRENT_TRANSFERS: usize = 10;
 const LEDGER_CALL_TIMEOUT_SECONDS: u32 = 30;
 // The relay's own call to the ledger only times out after 5 minutes, but an honest ledger's reply
 // comes back through the relay well within this
-const RELAY_CALL_TIMEOUT_SECONDS: u32 = 60;
+const RELAY_CALL_TIMEOUT_SECONDS: u32 = 30;
 const DECODING_QUOTA: usize = 100_000;
 const SKIPPING_QUOTA: usize = 10_000;
 // Each transfer in flight holds back the execution prepayment for the relay's update, and the

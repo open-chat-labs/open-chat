@@ -28,6 +28,9 @@ fn run() {
 
 async fn refresh(registry_canister_id: CanisterId) {
     match registry_canister_c2c_client::c2c_tokens(registry_canister_id, &Empty {}).await {
+        // Not taken as a refresh, so that it is retried within the hour, since the Registry always
+        // has at least ICP, other than in a test env where it is set up before the ICP ledger
+        Ok(Response::Success(tokens)) if tokens.is_empty() => error!("The Registry returned no tokens"),
         Ok(Response::Success(tokens)) => mutate_state(|state| {
             info!(tokens = tokens.len(), "Refreshed the tokens from the Registry");
             let now = state.env.now();

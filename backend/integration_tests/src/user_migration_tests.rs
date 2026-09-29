@@ -693,12 +693,15 @@ fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
     // ledger isn't used, since the Registry marks it as uninstalled, having been set up before it.
     let abc_ledger = install_registered_ledger(env, canister_ids, *controller, "ABC");
     let def_ledger = install_registered_ledger(env, canister_ids, *controller, "DEF");
+    let ghi_ledger = install_registered_ledger(env, canister_ids, *controller, "GHI");
     let xyz_ledger = install_registered_ledger(env, canister_ids, *controller, "XYZ");
     let balance = 1_000_000_000;
     client::ledger::happy_path::transfer(env, *controller, abc_ledger, user.user_id, balance);
     client::ledger::happy_path::transfer(env, *controller, def_ledger, user.user_id, balance);
-    // Too little XYZ to be worth moving, since it doesn't exceed the fee
-    client::ledger::happy_path::transfer(env, *controller, xyz_ledger, user.user_id, 10_000);
+    // Too little GHI to be worth moving, since it doesn't exceed the fee
+    client::ledger::happy_path::transfer(env, *controller, ghi_ledger, user.user_id, 10_000);
+    // Enough XYZ to be worth moving at the Registry's fee, but not once its fee is raised
+    client::ledger::happy_path::transfer(env, *controller, xyz_ledger, user.user_id, 15_000);
 
     migrate_users(
         env,
@@ -718,16 +721,17 @@ fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
     crate::delete_user_tests::wait_for_cycles_to_be_refunded(env, &user);
 
     // The LocalUserIndexes refresh the tokens from the Registry once they are a day old, after
-    // which ABC's fee is raised, leaving the LocalUserIndexes with the old one
+    // which the fees of ABC and XYZ are raised, leaving the LocalUserIndexes with the old ones
     env.advance_time(Duration::from_secs(25 * 60 * 60));
     tick_many(env, 10);
     set_ledger_fee(env, *controller, abc_ledger, 20_000);
+    set_ledger_fee(env, *controller, xyz_ledger, 20_000);
 
     // The UserIndex is not a ledger known to the Registry, so fails, but doesn't stop the funds on
     // the others moving
     let args = local_user_index_canister::move_funds_from_old_canister::Args {
         old_user_id: user.user_id,
-        ledgers: vec![abc_ledger, def_ledger, xyz_ledger, canister_ids.user_index],
+        ledgers: vec![abc_ledger, def_ledger, ghi_ledger, xyz_ledger, canister_ids.user_index],
     };
     let move_funds = |env: &mut PocketIc, sender: Principal, local_user_index: CanisterId| {
         client::local_user_index::move_funds_from_old_canister(env, sender, local_user_index, &args)
@@ -776,7 +780,7 @@ fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
     let [MoveFundsResponse::Success(outcomes)] = <[_; 1]>::try_from(moved).unwrap() else {
         unreachable!();
     };
-    assert_eq!(outcomes.len(), 4);
+    assert_eq!(outcomes.len(), 5);
     for outcome in outcomes {
         match outcome.result {
             // Moved having been retried with the ledger's new fee
@@ -788,7 +792,9 @@ fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
                 assert_eq!(fee, 10_000);
                 assert_eq!(amount, balance - fee);
             }
-            MoveFundsResult::NothingToMove if outcome.ledger == xyz_ledger => {}
+            // XYZ having been tried at the Registry's fee, then found to have too little at the
+            // ledger's new one
+            MoveFundsResult::NothingToMove if outcome.ledger == ghi_ledger || outcome.ledger == xyz_ledger => {}
             MoveFundsResult::Failed(error)
                 if outcome.ledger == canister_ids.user_index && error.matches_code(OCErrorCode::LedgerNotFound) => {}
             result => panic!("Unexpected result for {}: {result:?}", outcome.ledger),
@@ -801,29 +807,35 @@ fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
     assert_eq!(balance_of(env, abc_ledger, user.principal), balance - 20_000);
     assert_eq!(balance_of(env, def_ledger, user.canister()), 0);
     assert_eq!(balance_of(env, def_ledger, user.principal), balance - 10_000);
+    assert_eq!(balance_of(env, xyz_ledger, user.canister()), 15_000);
 
     // The relay is uninstalled and the old canister's cycles refunded again, during which moves
     // are turned away
     crate::delete_user_tests::wait_for_cycles_to_be_refunded(env, &user);
 
-    // Once moved there is nothing left to move
-    let MoveFundsResponse::Success(outcomes) = move_funds(env, user.principal, user.local_user_index) else {
+    // Once moved there is nothing left to move. XYZ is left out from here on, since its balance
+    // still exceeds the fee the LocalUserIndex has for it, so a transfer would be tried each time.
+    let settled_args = local_user_index_canister::move_funds_from_old_canister::Args {
+        old_user_id: user.user_id,
+        ledgers: vec![abc_ledger, def_ledger, ghi_ledger],
+    };
+    let move_settled_funds = |env: &mut PocketIc| {
+        client::local_user_index::move_funds_from_old_canister(env, user.principal, user.local_user_index, &settled_args)
+    };
+    let MoveFundsResponse::Success(outcomes) = move_settled_funds(env) else {
         panic!("Funds not checked");
     };
-    assert!(
-        outcomes
-            .iter()
-            .all(|o| matches!(o.result, MoveFundsResult::NothingToMove) || o.ledger == canister_ids.user_index)
-    );
+    assert!(outcomes.iter().all(|o| matches!(o.result, MoveFundsResult::NothingToMove)));
 
     // A relay left installed by an earlier move is uninstalled by the cycles refund job, even if
     // there is nothing to move
     install_call_relay(env, &user);
-    assert!(matches!(
-        move_funds(env, user.principal, user.local_user_index),
-        MoveFundsResponse::Success(_)
-    ));
+    let response = move_settled_funds(env);
+    assert!(matches!(response, MoveFundsResponse::Success(_)), "{response:?}");
     crate::delete_user_tests::wait_for_cycles_to_be_refunded(env, &user);
+
+    // Having advanced the clock by a day
+    wrapper.discard();
 }
 
 // Installs an ICRC ledger with a fee of 10_000, and adds its token to the Registry

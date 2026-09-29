@@ -35,7 +35,8 @@ pub struct LedgerOutcome {
 pub enum MoveFundsResult {
     // `amount` arrived in the caller's wallet, the ledger having charged `fee` on top
     Moved { amount: u128, fee: u128, block_index: u64 },
-    // The balance didn't exceed the ledger's fee, so there was nothing to move
+    // The balance didn't exceed the fee, as known to the Registry, or as the ledger gave when it
+    // rejected that fee, so there was nothing to move
     NothingToMove,
     // If the transfer timed out (a `C2CError` with reject code 6, `SYS_UNKNOWN`) it may still have
     // been made, in which case a later call finds nothing left to move
