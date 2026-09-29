@@ -38,9 +38,12 @@ pub fn is_out_of_cycles_error(reject_code: RejectCode, message: &str) -> bool {
 }
 
 // The reject message for this case doesn't always include the `IC0512` code, so also match on
-// the message text
+// the message text. Newer replicas reject a non-controller's `canister_status` with their own text.
 pub fn is_invalid_controller_error(reject_code: RejectCode, message: &str) -> bool {
-    matches!(reject_code, RejectCode::CanisterError) && (message.contains("IC0512") || message.contains("can control it"))
+    matches!(reject_code, RejectCode::CanisterError)
+        && (message.contains("IC0512")
+            || message.contains("can control it")
+            || message.contains("is not allowed to read the canister status"))
 }
 
 // Returns `Some(delay)` if the call should be retried, else `None`.
@@ -79,7 +82,8 @@ pub fn is_target_canister_uninstalled_or_deleted(reject_code: RejectCode, messag
 
 // Whether a call to a User canister failed in a way it does once its user has been migrated to a
 // MultiUser canister: the canister is uninstalled, then briefly installed with the cycles refunder,
-// which has none of the User canister's methods, and then uninstalled again. A caller finding this
+// or the call relay if the user moves their funds out of it, neither of which has any of the User
+// canister's methods, and then uninstalled again. A caller finding this
 // checks whether the user has been migrated, so that it can send the call on to them.
 pub fn is_user_canister_possibly_migrated(error: &C2CError) -> bool {
     is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) || error.is_method_not_found()
@@ -139,6 +143,23 @@ mod tests {
         assert!(is_target_canister_uninstalled_or_deleted(
             RejectCode::CanisterError,
             "IC0537: whatever"
+        ));
+    }
+
+    #[test]
+    fn invalid_controller_is_detected_from_either_replica_message() {
+        assert!(is_invalid_controller_error(
+            RejectCode::CanisterError,
+            "Only the controllers of the canister x can control it."
+        ));
+        // As sent by newer replicas for `canister_status`
+        assert!(is_invalid_controller_error(
+            RejectCode::CanisterError,
+            "Caller x is not allowed to read the canister status"
+        ));
+        assert!(!is_invalid_controller_error(
+            RejectCode::CanisterError,
+            "trapped explicitly: something went wrong"
         ));
     }
 

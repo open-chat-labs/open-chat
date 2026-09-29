@@ -293,6 +293,7 @@ fn cycles_refund_resumes_after_the_local_user_index_is_upgraded_mid_way() {
     let wasm = crate::wasms::LOCAL_USER_INDEX.clone();
     let args = candid::encode_one(local_user_index_canister::post_upgrade::Args {
         wasm_version: wasm.version,
+        registry_canister_id: Some(canister_ids.registry),
     })
     .unwrap();
     client::stop_canister(env, canister_ids.user_index, user.local_user_index);

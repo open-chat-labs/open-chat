@@ -16,6 +16,10 @@ This must happen before the canister's cycles are refunded, or else it must be t
 `install_code` needs ~300B cycles up front, and each relayed call reserves cycles for its
 response.
 
+The LocalUserIndex embeds `call_relay.wasm` and does exactly this when the user calls its
+`move_funds_from_old_canister` endpoint, topping the canister up first if need be, and then
+queueing the canister's cycles to be refunded once more.
+
 Only a controller can call `relay`, which gives them nothing they don't already have, since they
 could install any code they like on the canister. While it is installed, calls to any of the
 User canister's methods fail as "method not found", which callers already treat as meaning the

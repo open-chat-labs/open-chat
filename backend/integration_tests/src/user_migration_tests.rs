@@ -1,8 +1,10 @@
 use crate::env::ENV;
+use crate::setup::install_icrc_ledger;
 use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client, wasms};
-use candid::Principal;
+use candid::{CandidType, Nat, Principal};
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
+use local_user_index_canister::move_funds_from_old_canister::{MoveFundsResult, Response as MoveFundsResponse};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::collections::BTreeMap;
@@ -14,6 +16,8 @@ use types::{
     MessageContentInitial, OptionUpdate, P2PSwapContentInitial, ReferralStatus, UserId,
 };
 use user_index_canister::user_migration::UserMigrationStatus;
+
+const CALL_RELAY_WASM: &[u8] = include_bytes!("../../canisters/call_relay/call_relay.wasm");
 
 #[test]
 fn users_with_a_p2p_swap_are_not_migrated_until_an_hour_after_it_expires() {
@@ -667,6 +671,235 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
         MessageContent::Text(text) => assert_eq!(text.text, message_to_old_id),
         content => panic!("Unexpected content: {content:?}"),
     }
+}
+
+#[test]
+fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user = client::register_user(env, canister_ids);
+    let other_user = client::register_user(env, canister_ids);
+    // Ledgers of this test's own, known to the Registry, with fees of 10_000. The test env's ICP
+    // ledger isn't used, since the Registry marks it as uninstalled, having been set up before it.
+    let abc_ledger = install_registered_ledger(env, canister_ids, *controller, "ABC");
+    let def_ledger = install_registered_ledger(env, canister_ids, *controller, "DEF");
+    let ghi_ledger = install_registered_ledger(env, canister_ids, *controller, "GHI");
+    let xyz_ledger = install_registered_ledger(env, canister_ids, *controller, "XYZ");
+    let balance = 1_000_000_000;
+    client::ledger::happy_path::transfer(env, *controller, abc_ledger, user.user_id, balance);
+    client::ledger::happy_path::transfer(env, *controller, def_ledger, user.user_id, balance);
+    // Too little GHI to be worth moving, since it doesn't exceed the fee
+    client::ledger::happy_path::transfer(env, *controller, ghi_ledger, user.user_id, 10_000);
+    // Enough XYZ to be worth moving at the Registry's fee, but not once its fee is raised
+    client::ledger::happy_path::transfer(env, *controller, xyz_ledger, user.user_id, 15_000);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+    assert!(matches!(
+        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+        Some(UserMigrationStatus::Imported { .. })
+    ));
+
+    // Once the old canister is uninstalled its cycles are refunded, so it has to be topped up for
+    // the relay to be installed on it
+    crate::delete_user_tests::wait_for_cycles_to_be_refunded(env, &user);
+
+    // The LocalUserIndexes refresh the tokens from the Registry daily, after which the fees of ABC
+    // and XYZ are raised, leaving the LocalUserIndexes with the old ones
+    env.advance_time(Duration::from_secs(25 * 60 * 60));
+    tick_many(env, 10);
+    set_ledger_fee(env, *controller, abc_ledger, 20_000);
+    set_ledger_fee(env, *controller, xyz_ledger, 20_000);
+
+    // The UserIndex is not a ledger known to the Registry, so fails, but doesn't stop the funds on
+    // the others moving
+    let args = local_user_index_canister::move_funds_from_old_canister::Args {
+        old_user_id: user.user_id,
+        ledgers: vec![abc_ledger, def_ledger, ghi_ledger, xyz_ledger, canister_ids.user_index],
+    };
+    let move_funds = |env: &mut PocketIc, sender: Principal, local_user_index: CanisterId| {
+        client::local_user_index::move_funds_from_old_canister(env, sender, local_user_index, &args)
+    };
+    let is_error = |response: &MoveFundsResponse, code: OCErrorCode| matches!(response, MoveFundsResponse::Error(error) if error.matches_code(code));
+
+    // Only the user can move their funds
+    let response = move_funds(env, other_user.principal, user.local_user_index);
+    assert!(is_error(&response, OCErrorCode::InitiatorNotAuthorized), "{response:?}");
+
+    // And only through the LocalUserIndex which controls their old canister
+    let other_local_user_index = canister_ids
+        .subnets
+        .iter()
+        .map(|s| s.local_user_index)
+        .find(|c| *c != user.local_user_index)
+        .unwrap();
+    let response = move_funds(env, user.principal, other_local_user_index);
+    assert!(is_error(&response, OCErrorCode::CanisterNotFound), "{response:?}");
+
+    // As if an earlier move had failed to uninstall the relay, which the next move carries on with
+    install_call_relay(env, &user);
+
+    // Of two calls at once, whichever comes second is turned away while the other is in progress
+    let responses: Vec<MoveFundsResponse> = [0, 1]
+        .map(|_| {
+            env.submit_call(
+                user.local_user_index,
+                user.principal,
+                "move_funds_from_old_canister_msgpack",
+                msgpack::serialize_then_unwrap(&args),
+            )
+            .unwrap()
+        })
+        .into_iter()
+        .map(|id| msgpack::deserialize_then_unwrap(&env.await_call(id).unwrap()))
+        .collect();
+    let (moved, turned_away): (Vec<_>, Vec<_>) = responses
+        .into_iter()
+        .partition(|r| matches!(r, MoveFundsResponse::Success(_)));
+    assert!(
+        turned_away.iter().all(|r| is_error(r, OCErrorCode::AlreadyInProgress)),
+        "{turned_away:?}"
+    );
+
+    let [MoveFundsResponse::Success(outcomes)] = <[_; 1]>::try_from(moved).unwrap() else {
+        unreachable!();
+    };
+    assert_eq!(outcomes.len(), 5);
+    for outcome in outcomes {
+        match outcome.result {
+            // Moved having been retried with the ledger's new fee
+            MoveFundsResult::Moved { amount, fee, .. } if outcome.ledger == abc_ledger => {
+                assert_eq!(fee, 20_000);
+                assert_eq!(amount, balance - fee);
+            }
+            MoveFundsResult::Moved { amount, fee, .. } if outcome.ledger == def_ledger => {
+                assert_eq!(fee, 10_000);
+                assert_eq!(amount, balance - fee);
+            }
+            // XYZ having been tried at the Registry's fee, then found to have too little at the
+            // ledger's new one
+            MoveFundsResult::NothingToMove if outcome.ledger == ghi_ledger || outcome.ledger == xyz_ledger => {}
+            MoveFundsResult::Failed(error)
+                if outcome.ledger == canister_ids.user_index && error.matches_code(OCErrorCode::LedgerNotFound) => {}
+            result => panic!("Unexpected result for {}: {result:?}", outcome.ledger),
+        }
+    }
+    let balance_of = |env: &PocketIc, ledger: CanisterId, principal: Principal| {
+        client::ledger::happy_path::balance_of(env, ledger, principal)
+    };
+    assert_eq!(balance_of(env, abc_ledger, user.canister()), 0);
+    assert_eq!(balance_of(env, abc_ledger, user.principal), balance - 20_000);
+    assert_eq!(balance_of(env, def_ledger, user.canister()), 0);
+    assert_eq!(balance_of(env, def_ledger, user.principal), balance - 10_000);
+    assert_eq!(balance_of(env, xyz_ledger, user.canister()), 15_000);
+
+    // The relay is uninstalled and the old canister's cycles refunded again, during which moves
+    // are turned away
+    crate::delete_user_tests::wait_for_cycles_to_be_refunded(env, &user);
+
+    // Once moved there is nothing left to move. XYZ is left out from here on, since its balance
+    // still exceeds the fee the LocalUserIndex has for it, so a transfer would be tried each time.
+    let settled_args = local_user_index_canister::move_funds_from_old_canister::Args {
+        old_user_id: user.user_id,
+        ledgers: vec![abc_ledger, def_ledger, ghi_ledger],
+    };
+    let move_settled_funds = |env: &mut PocketIc| {
+        client::local_user_index::move_funds_from_old_canister(env, user.principal, user.local_user_index, &settled_args)
+    };
+    let MoveFundsResponse::Success(outcomes) = move_settled_funds(env) else {
+        panic!("Funds not checked");
+    };
+    assert!(outcomes.iter().all(|o| matches!(o.result, MoveFundsResult::NothingToMove)));
+
+    // A relay left installed by an earlier move is uninstalled by the cycles refund job, even if
+    // there is nothing to move
+    install_call_relay(env, &user);
+    let response = move_settled_funds(env);
+    assert!(matches!(response, MoveFundsResponse::Success(_)), "{response:?}");
+    crate::delete_user_tests::wait_for_cycles_to_be_refunded(env, &user);
+
+    // Having advanced the clock by a day
+    wrapper.discard();
+}
+
+// Installs an ICRC ledger with a fee of 10_000, and adds its token to the Registry
+fn install_registered_ledger(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    symbol: &str,
+) -> CanisterId {
+    let ledger = install_icrc_ledger(
+        env,
+        controller,
+        format!("{symbol} Token"),
+        symbol.to_string(),
+        10_000,
+        None,
+        Vec::new(),
+    );
+    let response = client::registry::add_token(
+        env,
+        controller,
+        canister_ids.registry,
+        &registry_canister::add_token::Args {
+            ledger_canister_id: ledger,
+            payer: None,
+            info_url: "info".to_string(),
+            transaction_url_format: "format".to_string(),
+            one_sec_enabled: None,
+        },
+    );
+    assert!(matches!(response, types::UnitResult::Success), "{response:?}");
+    ledger
+}
+
+// Changes the ledger's fee by upgrading it
+fn set_ledger_fee(env: &mut PocketIc, controller: Principal, ledger: CanisterId, fee: u64) {
+    #[derive(CandidType)]
+    enum LedgerArgument {
+        Upgrade(Option<UpgradeArgs>),
+    }
+
+    #[derive(CandidType)]
+    struct UpgradeArgs {
+        transfer_fee: Option<Nat>,
+    }
+
+    let args = candid::encode_one(LedgerArgument::Upgrade(Some(UpgradeArgs {
+        transfer_fee: Some(fee.into()),
+    })))
+    .unwrap();
+    env.upgrade_canister(ledger, wasms::ICRC_LEDGER.module.clone().into(), args, Some(controller))
+        .unwrap();
+}
+
+// Installs the call relay on the user's old canister, as the LocalUserIndex which controls it,
+// having first topped it up with enough cycles to do so
+fn install_call_relay(env: &mut PocketIc, user: &User) {
+    env.add_cycles(user.canister(), 1_000_000_000_000);
+    env.install_canister(
+        user.canister(),
+        CALL_RELAY_WASM.to_vec(),
+        Vec::new(),
+        Some(user.local_user_index),
+    );
 }
 
 #[test]

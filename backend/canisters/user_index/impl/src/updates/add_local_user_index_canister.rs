@@ -138,6 +138,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 escrow_canister_id: state.data.escrow_canister_id,
                 event_relay_canister_id: state.data.event_store_client.info().event_store_canister_id,
                 online_users_canister_id: state.data.online_users_canister_id,
+                registry_canister_id: state.data.registry_canister_id,
                 internet_identity_canister_id: state.data.internet_identity_canister_id,
                 website_canister_id: state.data.website_canister_id,
                 video_call_operators: state.data.video_call_operators.clone(),
