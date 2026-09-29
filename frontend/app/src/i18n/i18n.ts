@@ -7,6 +7,7 @@ import {
 import { _, getLocaleFromNavigator, init, locale, register } from "svelte-i18n";
 import { get, writable } from "svelte/store";
 import { configKeys } from "../utils/config";
+import { withEnglishFallback } from "./localeFallback";
 
 export const translationCodes: Record<string, string> = {
     cn: "zh-cn",
@@ -98,21 +99,25 @@ export const supportedLanguagesByCode = supportedLanguages.reduce(
 );
 
 // this can't be done in a loop from supportedLanguages because rollup won't understand that
-register("en", () => import("./en.json"));
-register("cn", () => import("./cn.json"));
-register("de", () => import("./de.json"));
-register("es", () => import("./es.json"));
-register("fr", () => import("./fr.json"));
-register("hi", () => import("./hi.json"));
-register("it", () => import("./it.json"));
-register("iw", () => import("./iw.json"));
-register("jp", () => import("./jp.json"));
-register("ru", () => import("./ru.json"));
-register("uk", () => import("./uk.json"));
-register("vi", () => import("./vi.json"));
-register("pl", () => import("./pl.json"));
-register("fa", () => import("./fa.json"));
-register("ar", () => import("./ar.json"));
+function registerLocaleLoaders() {
+    register("en", () => import("./en.json"));
+    register("cn", () => import("./cn.json"));
+    register("de", () => import("./de.json"));
+    register("es", () => import("./es.json"));
+    register("fr", () => import("./fr.json"));
+    register("hi", () => import("./hi.json"));
+    register("it", () => import("./it.json"));
+    register("iw", () => import("./iw.json"));
+    register("jp", () => import("./jp.json"));
+    register("ru", () => import("./ru.json"));
+    register("uk", () => import("./uk.json"));
+    register("vi", () => import("./vi.json"));
+    register("pl", () => import("./pl.json"));
+    register("fa", () => import("./fa.json"));
+    register("ar", () => import("./ar.json"));
+}
+
+registerLocaleLoaders();
 
 export function getStoredLocale(): string {
     const fromStorage = localStorage.getItem(configKeys.locale);
@@ -150,10 +155,16 @@ function setDialectIfMatchesBrowserLocale(code: string): string {
     return code;
 }
 
-init({
-    fallbackLocale: "en",
-    initialLocale: getStoredLocale(),
-});
+// Set when no locale could be loaded at all, so the app shows a plain reload prompt instead
+export const localeLoadFailed = writable(false);
+
+withEnglishFallback(
+    init({
+        fallbackLocale: "en",
+        initialLocale: getStoredLocale(),
+    }),
+    registerLocaleLoaders,
+).then((loaded) => localeLoadFailed.set(!loaded));
 
 export function interpolate(
     formatter: MessageFormatter,

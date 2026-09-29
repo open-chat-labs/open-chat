@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { isLoading } from "svelte-i18n";
+    import { isLoading, locale } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import { showHomeScreenPrompt } from "../../stores/settings";
     import Checkbox from "../Checkbox.svelte";
@@ -21,7 +21,7 @@
     }
 </script>
 
-{#if show && !dismissed && !$isLoading}
+{#if show && !dismissed && $locale && !$isLoading}
     <Overlay dismissible {onClose}>
         <ModalContent {onClose} closeIcon hideFooter>
             {#snippet header()}
