@@ -16,6 +16,9 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
+# So that sorting, and hence every key, is the same whatever the caller's locale
+export LC_ALL=C
+
 DRY_RUN=0
 if [ "$1" == "--dry-run" ]
 then
@@ -47,37 +50,23 @@ fi
 CACHE_ENTRIES_PER_CANISTER=20
 mkdir -p "${CACHE_DIR}" wasms || exit 1
 
+ALL_CANISTERS=($(./scripts/generate-all-canister-wasms.sh --list))
 if [ $# -gt 0 ]
 then
   CANISTERS=("$@")
 else
-  CANISTERS=($(./scripts/generate-all-canister-wasms.sh --list))
+  CANISTERS=("${ALL_CANISTERS[@]}")
 fi
 
 WORK_DIR=$(mktemp -d)
 trap 'rm -rf "${WORK_DIR}"' EXIT
-
-# Inputs every canister shares: the workspace manifest, the toolchain, the build script and its
-# flags, and the version of this cache's format. The dependency versions each canister uses are
-# part of its own key (below), so that a change to Cargo.lock only rebuilds the canisters using
-# the dependencies it changes.
-COMMON_KEY=$(
-  {
-    echo "format 2"
-    for f in Cargo.toml rust-toolchain.toml .cargo/config.toml scripts/generate-all-canister-wasms.sh
-    do
-      echo "$f $(git hash-object "$f")"
-    done
-    rustc -vV
-  } | shasum -a 256 | cut -d' ' -f1
-)
 
 # The workspace crates (as directories relative to the repo root) each canister depends on,
 # directly or not, when built for wasm, including itself and any proc macros. And the other crates
 # it depends on, by id, which includes their version and source.
 cargo metadata --format-version 1 --locked --filter-platform wasm32-unknown-unknown > "${WORK_DIR}/metadata.json" || exit 1
 ROOT=$(pwd)
-for CANISTER in "${CANISTERS[@]}"
+for CANISTER in "${ALL_CANISTERS[@]}"
 do
   jq -r --arg pkg "${CANISTER}_canister_impl" --arg root "${ROOT}/" '
     (.resolve.nodes | map({key: .id, value: [.deps[] | select(any(.dep_kinds[]; .kind != "dev")) | .pkg]}) | from_entries) as $graph
@@ -95,28 +84,51 @@ do
   fi
 done
 
-# Every crate directory any of the canisters depends on
+# Every crate directory any canister depends on
 ALL_DIRS=($(cat "${WORK_DIR}"/*.dirs | sort -u))
 
-# The files the crates embed with `include_bytes!` or `include_str!` from outside their own
-# directories (eg. the LocalUserIndex embeds the CyclesRefunder's wasm), as "<source file>
-# <embedded file>" pairs relative to the repo root
-git grep -nE 'include_(bytes|str)!\("\.\./' -- "${ALL_DIRS[@]/%//*.rs}" \
-  | sed -E 's/^([^:]+):[0-9]+:.*include_(bytes|str)!\("([^"]+)".*/\1 \3/' \
-  | while read -r SOURCE EMBEDDED
-    do
-      echo "${SOURCE} $(cd "$(dirname "${SOURCE}")/$(dirname "${EMBEDDED}")" 2>/dev/null && pwd | sed "s|^${ROOT}/||")/$(basename "${EMBEDDED}")"
-    done > "${WORK_DIR}/embedded"
+# Writes the key of each canister given to "${WORK_DIR}/<canister>.key", hashing the files as they
+# are at the time it's called
+compute_keys() {
+  # The files the crates embed with `include_bytes!` or `include_str!` from outside their own
+  # directories (eg. the LocalUserIndex embeds the CyclesRefunder's wasm), as "<source file>
+  # <embedded file>" pairs relative to the repo root
+  git grep --untracked -nE 'include_(bytes|str)!\("\.\./' -- "${ALL_DIRS[@]/%//*.rs}" \
+    | sed -E 's/^([^:]+):[0-9]+:.*include_(bytes|str)!\("([^"]+)".*/\1 \3/' \
+    | while read -r SOURCE EMBEDDED
+      do
+        echo "${SOURCE} $(cd "$(dirname "${SOURCE}")/$(dirname "${EMBEDDED}")" 2>/dev/null && pwd | sed "s|^${ROOT}/||")/$(basename "${EMBEDDED}")"
+      done > "${WORK_DIR}/embedded"
 
-# The hash of every file which could be an input, tracked or not, uncommitted changes included
-git ls-files -co --exclude-standard -- "${ALL_DIRS[@]}" | while read -r f; do [ -f "$f" ] && echo "$f"; done > "${WORK_DIR}/files"
-git hash-object --stdin-paths < "${WORK_DIR}/files" | paste -d' ' "${WORK_DIR}/files" - > "${WORK_DIR}/hashes"
+  # The hash of every file which could be an input, tracked or not, uncommitted changes included
+  git ls-files -co --exclude-standard -- "${ALL_DIRS[@]}" | while read -r f; do [ -f "$f" ] && echo "$f"; done > "${WORK_DIR}/files"
+  git hash-object --stdin-paths < "${WORK_DIR}/files" | paste -d' ' "${WORK_DIR}/files" - > "${WORK_DIR}/hashes"
 
-MISSES=()
-for CANISTER in "${CANISTERS[@]}"
-do
-  DIRS=$(tr '\n' ' ' < "${WORK_DIR}/${CANISTER}.dirs")
-  KEY=$(
+  # Inputs every canister shares: the workspace manifest, the toolchain, the build script and its
+  # flags, the version of this cache's format, and the manifest of every workspace crate any
+  # canister depends on. Cargo unifies features across every canister in a build (see
+  # generate-all-canister-wasms.sh), so a change to one crate's dependencies or their features can
+  # change the others' wasms. The dependency versions each canister uses are part of its own key.
+  local COMMON_KEY
+  COMMON_KEY=$(
+    {
+      echo "format 3"
+      for f in Cargo.toml rust-toolchain.toml .cargo/config.toml scripts/generate-all-canister-wasms.sh
+      do
+        echo "$f $(git hash-object "$f")"
+      done
+      for d in "${ALL_DIRS[@]}"
+      do
+        echo "$d/Cargo.toml $(git hash-object "$d/Cargo.toml")"
+      done
+      rustc -vV
+    } | shasum -a 256 | cut -d' ' -f1
+  )
+
+  local CANISTER DIRS
+  for CANISTER in "$@"
+  do
+    DIRS=$(tr '\n' ' ' < "${WORK_DIR}/${CANISTER}.dirs")
     {
       echo "${COMMON_KEY}"
       echo "${CANISTER}"
@@ -125,17 +137,23 @@ do
       awk -v dirs="${DIRS}" 'BEGIN { n = split(dirs, d, " ") } { for (i = 1; i <= n; i++) if (index($1, d[i] "/") == 1) { print; next } }' "${WORK_DIR}/hashes"
       awk -v dirs="${DIRS}" 'BEGIN { n = split(dirs, d, " ") } { for (i = 1; i <= n; i++) if (index($1, d[i] "/") == 1) { print $2; next } }' "${WORK_DIR}/embedded" \
         | sort -u | while read -r f; do echo "${f} $(git hash-object "${f}")"; done
-    } | shasum -a 256 | cut -d' ' -f1
-  )
-  echo "${KEY}" > "${WORK_DIR}/${CANISTER}.key"
+    } | shasum -a 256 | cut -d' ' -f1 > "${WORK_DIR}/${CANISTER}.key"
+  done
+}
 
+compute_keys "${CANISTERS[@]}"
+
+MISSES=()
+for CANISTER in "${CANISTERS[@]}"
+do
+  KEY=$(cat "${WORK_DIR}/${CANISTER}.key")
   CACHED="${CACHE_DIR}/${CANISTER}-${KEY}.wasm.gz"
   if [ ${DRY_RUN} -eq 1 ]
   then
     [ -f "${CACHED}" ] && echo "${CANISTER}: in the cache (${KEY:0:12})" || echo "${CANISTER}: to build (${KEY:0:12})"
-  elif [ -f "${CACHED}" ]
+  # Built if it isn't in the cache, or was removed by another worktree between these two steps
+  elif [ -f "${CACHED}" ] && cp "${CACHED}" "wasms/${CANISTER}.wasm.gz" 2>/dev/null
   then
-    cp "${CACHED}" "wasms/${CANISTER}.wasm.gz" || exit 1
     # Marks it as recently used, so that it's the last to be removed
     touch "${CACHED}"
     echo "${CANISTER}: unchanged, copied from the cache"
@@ -154,11 +172,23 @@ then
 fi
 
 echo "Building ${MISSES[*]}"
+for CANISTER in "${MISSES[@]}"
+do
+  mv "${WORK_DIR}/${CANISTER}.key" "${WORK_DIR}/${CANISTER}.key.before"
+done
 TEST_BUILD=1 ./scripts/generate-all-canister-wasms.sh "${MISSES[@]}" || exit 1
 
+# A wasm is only cached if its inputs didn't change while it was being built, since it could then
+# have been built from either version of them
+compute_keys "${MISSES[@]}"
 for CANISTER in "${MISSES[@]}"
 do
   KEY=$(cat "${WORK_DIR}/${CANISTER}.key")
+  if [ "${KEY}" != "$(cat "${WORK_DIR}/${CANISTER}.key.before")" ]
+  then
+    echo "${CANISTER}: its inputs changed during the build, so it isn't cached"
+    continue
+  fi
   # Written under a temporary name then renamed, so that a build running at the same time in
   # another worktree never reads a partly written file
   cp "wasms/${CANISTER}.wasm.gz" "${CACHE_DIR}/.${CANISTER}-${KEY}.$$" \

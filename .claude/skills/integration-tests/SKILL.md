@@ -19,8 +19,9 @@ everything (slow).
 
 ## What `build` does locally
 
-- `scripts/generate-test-wasms.sh` builds only the canisters whose inputs changed. Each wasm is
-  cached under `~/Library/Caches/openchat/test-wasms`, keyed by a hash of the source of every
+- `scripts/generate-test-wasms.sh` only rebuilds the canisters whose inputs changed. When any
+  have, cargo still compiles every canister, since it unifies features across the canisters in a
+  build, but only the changed ones are optimised and cached. Each wasm is cached under `~/Library/Caches/openchat/test-wasms`, keyed by a hash of the source of every
   workspace crate the canister depends on (uncommitted changes included), the versions of the
   other crates it depends on, the toolchain and the build script. A canister built before by any worktree, on any branch, is
   copied from the cache in a second rather than rebuilt.

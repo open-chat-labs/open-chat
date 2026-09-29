@@ -47,9 +47,13 @@ cd ../..
 # needed to find it, but aren't included in shallow checkouts.
 # Worktrees share the repository, so this can fail on its lock while another worktree is fetching,
 # in which case the tags fetched before are used
-if ! git fetch --quiet --depth=1 origin "refs/tags/*-user:refs/tags/*-user" && [ -z "$(git tag -l '*-user')" ]
+if ! git fetch --quiet --depth=1 origin "refs/tags/*-user:refs/tags/*-user"
 then
-  exit 1
+  if [ -z "$(git tag -l '*-user')" ]
+  then
+    exit 1
+  fi
+  echo "Failed to fetch the User canister's release tags, so using the latest already fetched: $(git tag -l --sort=-version:refname '*-user' | head -n 1)"
 fi
 ./scripts/download-canister-wasm.sh user prod user_prod || exit 1
 

@@ -89,8 +89,17 @@ do
   export RUSTFLAGS="--remap-path-prefix ${CARGO_HOME}/registry/src/${l}=/cargo/registry/src/github ${RUSTFLAGS}"
 done
 
+# Cargo unifies the features of the dependencies of every package in a build, so building only
+# some canisters can give them different features, and so different wasms, from building them all.
+# A test build therefore always compiles every canister, then only optimises those asked for.
+if [ "${TEST_BUILD}" == "1" ]
+then
+  PACKAGE_CANISTERS=("${ALL_CANISTERS[@]}")
+else
+  PACKAGE_CANISTERS=("${CANISTERS[@]}")
+fi
 PACKAGES=()
-for CANISTER in "${CANISTERS[@]}"; do
+for CANISTER in "${PACKAGE_CANISTERS[@]}"; do
   PACKAGES+=(--package "${CANISTER}_canister_impl")
 done
 cargo build --locked --target wasm32-unknown-unknown --release "${PACKAGES[@]}" || exit 1
