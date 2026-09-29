@@ -13064,6 +13064,8 @@ dependencies = [
  "msgpack",
  "multi_user_canister",
  "multi_user_canister_c2c_client",
+ "notifications_index_canister",
+ "notifications_index_canister_c2c_client",
  "oc_error_codes",
  "online_users_canister",
  "online_users_canister_c2c_client",
