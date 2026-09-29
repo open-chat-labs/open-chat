@@ -10,6 +10,7 @@ use std::collections::BTreeMap;
 use std::time::Duration;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
+use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
 mod jobs;
@@ -75,6 +76,8 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub mark_as_online_count: u64,
     pub cached_active_users: ActiveUsers,
+    #[serde(default)]
+    pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -97,6 +100,7 @@ impl Data {
                 .build(),
             mark_as_online_count: 0,
             cached_active_users: ActiveUsers::default(),
+            idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode,
         }
