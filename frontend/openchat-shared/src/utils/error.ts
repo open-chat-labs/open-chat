@@ -60,6 +60,11 @@ const RETRY_EXHAUSTED_PATTERN = /retry strategy exhausted after \d+ attempts/i;
 
 const AGENT_FETCH_FAILED_PATTERN = /^failed to fetch http request/i;
 
+// The agent's TransportError for a fetch that threw can also carry nothing but the browser's own
+// words ("Load failed" on Safari, #31973). Anchored so that only the bare phrase matches.
+const BARE_FETCH_FAILED_PATTERN =
+    /^(failed to fetch|load failed|networkerror when attempting to fetch resource\.?)$/i;
+
 // Every HttpError subclass overwrites `name` with its own, so a bare `name === "HttpError"` test
 // misses them. `code` only means an HTTP status on one of these.
 const HTTP_ERROR_NAMES = new Set<string>([
@@ -90,6 +95,7 @@ function isTransientNetworkError(error: unknown): boolean {
     // The agent wraps a fetch that threw (no response at all) as an HttpError with this prefix
     // and the browser's own text after it. Same network weather, different envelope.
     if (HTTP_ERROR_NAMES.has(name) && AGENT_FETCH_FAILED_PATTERN.test(message)) return true;
+    if (HTTP_ERROR_NAMES.has(name) && BARE_FETCH_FAILED_PATTERN.test(message)) return true;
     // Only for the browser's own TypeError: our code also throws Errors whose text happens to
     // start "Failed to fetch ...", and those must stay reportable. A bare string carries no
     // name, so it can never satisfy this and is reported like any other unrecognised failure.
@@ -109,12 +115,19 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     /denied permission to use service worker/i,
     // WebAuthn's blanket NotAllowedError: the user dismissed the passkey prompt or it timed out
     /operation either timed out or was not allowed/i,
+    // The platform's passkey service itself failing: Android's credential manager (#30432) or a
+    // browser with no WebAuthn service to talk to (#31128)
+    /error connecting to web authentication service/i,
+    /unknown error occurred while talking to the credential manager/i,
     /failed to (update|register) a serviceworker/i,
     // IndexedDB backing store failures (UnknownError) seen in storms from broken iOS installs
     /failed to delete record from object store/i,
     /unable to store record in object store/i,
-    /delete range from database without an in-progress transaction/i,
-    /get a record from database without an in-progress transaction/i,
+    // "Attempt to delete range / get a record / open a cursor / get an index record ..." (#27293,
+    // #10401): the same failure whichever operation happened to hit it
+    /database without an in-progress transaction/i,
+    // Chrome's IndexedDB lost the blob file behind a record (#28921)
+    /data lost due to missing file/i,
     // Safari / Firefox-on-iOS dropping the IndexedDB connection; only a reload recovers it
     /connection to indexed database server lost/i,
     // Safari's IndexedDB failing internally, or the user (or the OS reclaiming space) wiping
@@ -141,6 +154,12 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     /can't find variable: EmptyRanges/i,
     // Benign browser warning surfaced as an error event
     /resizeobserver loop/i,
+    // The browser abandoning a view transition (the page was hidden mid-transition, say); the
+    // navigation itself still happens (#30972)
+    /transition was aborted because of invalid state/i,
+    // The IC's Bitcoin canister trapping while the Bitcoin API is switched off: an IC-side
+    // incident that every background BTC balance refresh hits until it is switched back on (#31771)
+    /bitcoin api is disabled/i,
 ];
 
 function errorName(error: unknown): string {

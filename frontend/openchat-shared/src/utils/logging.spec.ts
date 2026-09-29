@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { normaliseSourceMapUrls, thrownByDocumentScript, uncaughtReason } from "./logging";
+import {
+    evalRefusedInInjectedCode,
+    normaliseSourceMapUrls,
+    thrownByDocumentScript,
+    uncaughtReason,
+} from "./logging";
 
 // These expectations are the other half of a contract: `scripts/upload-source-maps.mjs` registers
 // each map as `http://dynamichost/<path relative to frontend/app/build>`. If a frame's filename
@@ -77,7 +82,9 @@ describe("normaliseSourceMapUrls", () => {
     });
 
     test("ignores payloads with no trace at all", () => {
-        expect(() => normaliseSourceMapUrls({ body: { message: { body: "hello" } } })).not.toThrow();
+        expect(() =>
+            normaliseSourceMapUrls({ body: { message: { body: "hello" } } }),
+        ).not.toThrow();
         expect(() => normaliseSourceMapUrls({})).not.toThrow();
     });
 });
@@ -142,5 +149,46 @@ describe("thrownByDocumentScript", () => {
         expect(thrownByDocumentScript(payload(undefined))).toBe(false);
         expect(thrownByDocumentScript(payload())).toBe(false);
         expect(thrownByDocumentScript(undefined)).toBe(false);
+    });
+});
+
+// Invariant: our CSP refusing an eval in injected code with no script URL is not reported; an
+// eval refused in a script of ours still is (Rollbar #29957, Safari frames `:234:30`).
+describe("evalRefusedInInjectedCode", () => {
+    function payload(exceptionClass: string, ...filenames: unknown[]) {
+        return {
+            body: {
+                trace: {
+                    exception: {
+                        class: exceptionClass,
+                        message:
+                            "Refused to evaluate a string as JavaScript because 'unsafe-eval' is " +
+                            "not an allowed source of script",
+                    },
+                    frames: filenames.map((filename) => ({ filename })),
+                },
+            },
+        };
+    }
+
+    test("matches an EvalError thrown from code with no script URL", () => {
+        expect(evalRefusedInInjectedCode(payload("EvalError", ":234", ":234"))).toBe(true);
+    });
+
+    test("leaves an eval refused in our own scripts alone", () => {
+        expect(evalRefusedInInjectedCode(payload("EvalError", "http://dynamichost/main.js"))).toBe(
+            false,
+        );
+        expect(evalRefusedInInjectedCode(payload("EvalError", "https://oc.app/main.js"))).toBe(
+            false,
+        );
+        expect(evalRefusedInInjectedCode(payload("EvalError", "tauri://localhost/main.js"))).toBe(
+            false,
+        );
+    });
+
+    test("only applies to EvalError", () => {
+        expect(evalRefusedInInjectedCode(payload("TypeError", ":234"))).toBe(false);
+        expect(evalRefusedInInjectedCode(payload("EvalError"))).toBe(false);
     });
 });

@@ -87,6 +87,18 @@ export function thrownByDocumentScript(payload: any): boolean {
     }
 }
 
+// True for our CSP refusing an eval whose code has no script URL at all: content scripts and
+// in-app browsers inject code that evals, and Safari reports its frames as bare `:234:30`
+// (Rollbar #29957). Every frame of ours names a file under an http(s) or tauri URL, so an eval
+// refused in our own bundle is still reported.
+// Exported for testing.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function evalRefusedInInjectedCode(payload: any): boolean {
+    if (rollbarPayloadError(payload).name !== "EvalError") return false;
+    const filename = throwSiteFilename(payload);
+    return filename !== undefined && !/^[a-z-]+:\/\//i.test(filename);
+}
+
 // Rollbar matches an uploaded source map to a stack frame by exact minified URL. The same bundle
 // is served from four origins - oc.app, webtest.oc.app, the canister's own .icp0.io domain, and
 // http://tauri.localhost in the native app - and the workers are loaded with a `?v=` cache
@@ -150,7 +162,12 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
             // (isUncaught false) already passed shouldReportError and are not re-filtered here.
             checkIgnore: (isUncaught, args, payload) => {
                 if (!isUncaught) return false;
-                if (thrownByExtension(payload) || thrownByDocumentScript(payload)) return true;
+                if (
+                    thrownByExtension(payload) ||
+                    thrownByDocumentScript(payload) ||
+                    evalRefusedInInjectedCode(payload)
+                )
+                    return true;
                 // Prefer the reason itself: it still carries name and code, which the payload
                 // does not for anything that crossed the worker boundary
                 const reason = uncaughtReason(args);

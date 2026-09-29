@@ -207,12 +207,89 @@ describe("shouldReportError", () => {
             ),
         ).toBe(false);
         expect(
-            shouldReportError(new HttpError(0, new Error("Failed to fetch HTTP request: Load failed"))),
+            shouldReportError(
+                new HttpError(0, new Error("Failed to fetch HTTP request: Load failed")),
+            ),
         ).toBe(false);
         // the same words from a plain Error are still a signal
         expect(shouldReportError(new Error("Failed to fetch HTTP request: Failed to fetch"))).toBe(
             true,
         );
+    });
+
+    // Invariant: client-environment and IC-side failures seen on 2.0.2054 are not reported, and
+    // the rules stay narrow enough that a nearby failure of ours still is. Each message was a live
+    // Rollbar item: #27293 and #10401 IndexedDB without a transaction, #28921 a lost IndexedDB
+    // blob, #31128 and #30432 the platform passkey service, #30972 an abandoned view transition,
+    // #31771 the IC's Bitcoin API switched off.
+    test("silences the 2026-09-29 environment noise", () => {
+        for (const [name, message] of [
+            [
+                "UnknownError",
+                "Attempt to open a cursor in database without an in-progress transaction",
+            ],
+            [
+                "UnknownError",
+                "Attempt to get an index record from database without an in-progress transaction",
+            ],
+            [
+                "NotReadableError",
+                "Data lost due to missing file. Affected record should be considered irrecoverable",
+            ],
+            ["NotSupportedError", "Error connecting to Web Authentication service."],
+            [
+                "NotReadableError",
+                "An unknown error occurred while talking to the credential manager.",
+            ],
+            ["InvalidStateError", "Transition was aborted because of invalid state"],
+        ]) {
+            const error = new Error(message);
+            error.name = name;
+            expect(shouldReportError(error)).toBe(false);
+            expect(shouldReportMessage(name, message)).toBe(false);
+        }
+        expect(
+            shouldReportError(
+                new HttpError(
+                    500,
+                    new Error(
+                        "The replica returned a rejection error:\n  Reject code: 5\n  Reject text: " +
+                            "Error from Canister <id>: Canister called `ic0.trap` with message: " +
+                            "'Panicked at 'Bitcoin API is disabled', canister/src/lib.rs",
+                    ),
+                ),
+            ),
+        ).toBe(false);
+
+        // Nearby failures that are ours: a different IndexedDB failure, a passkey the user has
+        // no pubkey for, and some other canister trap
+        const quota = new Error("Attempt to open a cursor in database failed");
+        quota.name = "UnknownError";
+        expect(shouldReportError(quota)).toBe(true);
+        expect(shouldReportError(new Error("Failed to lookup WebAuthn PubKey"))).toBe(true);
+        expect(
+            shouldReportError(
+                new HttpError(
+                    500,
+                    new Error("Canister called `ic0.trap`: Bitcoin address invalid"),
+                ),
+            ),
+        ).toBe(true);
+    });
+
+    // Invariant: the agent's TransportError carrying only the browser's fetch-failure words is
+    // not reported (#31973, Safari "Load failed"); the same words with anything after them, or
+    // from our own Errors, still are.
+    test("silences an HttpError that is only the browser's fetch failure", () => {
+        expect(shouldReportError(new HttpError(0, new Error("Load failed")))).toBe(false);
+        expect(shouldReportError(new HttpError(0, new Error("Failed to fetch")))).toBe(false);
+        expect(shouldReportMessage("HttpError", "Load failed")).toBe(false);
+
+        expect(shouldReportError(new HttpError(0, new Error("Load failed: bad response")))).toBe(
+            true,
+        );
+        expect(shouldReportError(new Error("Load failed"))).toBe(true);
+        expect(shouldReportError(new Error("Failed to fetch ip from IP Location"))).toBe(true);
     });
 
     test("silences Safari storage and in-app browser bridge failures", () => {
