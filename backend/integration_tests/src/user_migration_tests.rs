@@ -2,7 +2,7 @@ use crate::env::ENV;
 use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client, wasms};
 use candid::Principal;
-use constants::{DAY_IN_MS, HOUR_IN_MS};
+use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::collections::BTreeMap;
@@ -296,6 +296,193 @@ fn cancelling_a_migration_unfreezes_the_user_canister() {
 
     // And the migration can be started again, to another MultiUser canister
     start_migration(env, canister_ids, *controller, &user1, multi_user_canister(2));
+}
+
+#[test]
+fn cancelled_migration_is_never_imported() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user = client::register_user(env, canister_ids);
+
+    // The MultiUser canister is stopped, so it can't start importing the user
+    env.stop_canister(multi_user_canister, Some(local_user_index)).unwrap();
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 10);
+    assert!(matches!(
+        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+        Some(UserMigrationStatus::Started { .. })
+    ));
+
+    // Nor can it be made to abandon the import, so the migration isn't cancelled
+    let cancel = |env: &mut PocketIc| {
+        client::user_index::cancel_user_migration(
+            env,
+            operator.principal,
+            canister_ids.user_index,
+            &user_index_canister::cancel_user_migration::Args {
+                user_id: user.user_id,
+                multi_user_canister_id: multi_user_canister,
+            },
+        )
+    };
+    let response = cancel(env);
+    assert!(
+        matches!(response, user_index_canister::cancel_user_migration::Response::Error(_)),
+        "{response:?}"
+    );
+    assert!(
+        env.update_call(
+            user.canister(),
+            user.principal,
+            "set_bio_msgpack",
+            msgpack::serialize_then_unwrap(&user_canister::set_bio::Args { text: random_string() }),
+        )
+        .is_err()
+    );
+
+    env.start_canister(multi_user_canister, Some(local_user_index)).unwrap();
+    let response = cancel(env);
+    assert!(
+        matches!(response, user_index_canister::cancel_user_migration::Response::Success),
+        "{response:?}"
+    );
+    assert_eq!(
+        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+        None
+    );
+
+    // The LocalUserIndex tries again to have the MultiUser canister import the user, which it refuses
+    for _ in 0..3 {
+        env.advance_time(Duration::from_secs(31));
+        tick_many(env, 5);
+    }
+    assert_eq!(metrics(env, multi_user_canister)["user_imports_in_progress"], 0);
+    assert_eq!(
+        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+        None
+    );
+
+    // Migrating the user again to the same MultiUser canister imports them, even though they haven't
+    // changed, since the new migration is told apart from the cancelled one
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+    let status = user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id);
+    assert!(matches!(status, Some(UserMigrationStatus::Imported { .. })), "{status:?}");
+}
+
+#[test]
+fn stalled_migration_is_cancelled() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+
+    // Migrated to a canister which doesn't import users, so the migration makes no more progress
+    start_migration(env, canister_ids, *controller, &user, multi_user_canister(1));
+    env.advance_time(Duration::from_millis(30 * MINUTE_IN_MS));
+    tick_many(env, 5);
+    assert!(matches!(
+        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+        Some(UserMigrationStatus::Started { .. })
+    ));
+
+    env.advance_time(Duration::from_millis(40 * MINUTE_IN_MS));
+    tick_many(env, 10);
+
+    let status = user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id);
+    assert!(
+        matches!(status, Some(UserMigrationStatus::Failed { ref error, .. }) if error.matches_code(OCErrorCode::UserMigrationStalled)),
+        "{status:?}"
+    );
+    // The canister is no longer frozen, so its owner can change it again
+    let response = client::user::set_bio(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::set_bio::Args { text: random_string() },
+    );
+    assert!(matches!(response, types::UnitResult::Success), "{response:?}");
+}
+
+#[test]
+fn migration_which_fails_to_start_is_tracked_until_cancelled() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+
+    // The user's canister is stopped, so every call to start the migration fails, as would one whose
+    // reply was lost after it had frozen the canister
+    env.stop_canister(user.canister(), Some(user.local_user_index)).unwrap();
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister(1)),
+    );
+    for _ in 0..25 {
+        env.advance_time(Duration::from_secs(31));
+        tick_many(env, 3);
+    }
+
+    // The migration can't be cancelled while the canister can't be reached, so it isn't recorded as
+    // having failed, but is kept track of
+    assert!(matches!(
+        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+        Some(UserMigrationStatus::Requested { .. })
+    ));
+
+    // Once the canister can be reached, the migration is cancelled when it stalls
+    env.start_canister(user.canister(), Some(user.local_user_index)).unwrap();
+    env.advance_time(Duration::from_millis(HOUR_IN_MS));
+    tick_many(env, 10);
+    let status = user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id);
+    assert!(
+        matches!(status, Some(UserMigrationStatus::Failed { ref error, .. }) if error.matches_code(OCErrorCode::UserMigrationStalled)),
+        "{status:?}"
+    );
+    let response = client::user::set_bio(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::set_bio::Args { text: random_string() },
+    );
+    assert!(matches!(response, types::UnitResult::Success), "{response:?}");
 }
 
 #[test]

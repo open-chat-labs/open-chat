@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Don't migrate users until their P2P swaps have expired ([#9561](https://github.com/open-chat-labs/open-chat/pull/9561), [#9603](https://github.com/open-chat-labs/open-chat/pull/9603))
 - Only allow the LocalUserIndex to call `c2c_try_start_migration`, rather than the UserIndex ([#9582](https://github.com/open-chat-labs/open-chat/pull/9582))
 - Return the size and hash of the serialized user with each page from `c2c_export_user`, for the MultiUser canister to check once it has pulled them all ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
+- Include when a migration started in its hash, so that each migration of a user is told apart ([#9610](https://github.com/open-chat-labs/open-chat/pull/9610))
 
 ### Changed
 

@@ -1,5 +1,6 @@
 use crate::client::{create_canister, create_canister_with_id};
 use crate::env::ENV;
+use crate::utils::assert_wasm_built_from_wat;
 use crate::{T, TestEnv};
 use candid::Principal;
 use pocket_ic::{PocketIc, RejectResponse};
@@ -147,15 +148,7 @@ fn cycles_refunder_rejects_invalid_init_arg() {
 
 #[test]
 fn committed_cycles_refunder_wasm_matches_the_wat() {
-    let from_wat = wat::parse_str(CYCLES_REFUNDER_WAT).unwrap();
-
-    // The `wat` crate appends a "name" custom section (id 0) which `wat2wasm` doesn't emit,
-    // otherwise the two are identical
-    assert!(
-        from_wat.starts_with(CYCLES_REFUNDER_WASM),
-        "cycles_refunder.wasm is out of date, rebuild it from the wat"
-    );
-    assert_eq!(from_wat.get(CYCLES_REFUNDER_WASM.len()), Some(&0));
+    assert_wasm_built_from_wat(CYCLES_REFUNDER_WASM, CYCLES_REFUNDER_WAT, "cycles_refunder.wasm");
 }
 
 fn wasm() -> Vec<u8> {
