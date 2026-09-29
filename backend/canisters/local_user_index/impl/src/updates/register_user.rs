@@ -42,11 +42,20 @@ async fn register_user(args: Args) -> Response {
         } => create_user_canister(canister_id, canister_wasm, cycles_to_use, init_canister_args)
             .await
             .map(|(user_id, wasm_version)| (user_id, Some(wasm_version))),
-        Target::MultiUserCanister(existing) => {
-            create_user_in_multi_user_canister(existing, caller, args.username.clone(), referred_by)
-                .await
-                .map(|user_id| (user_id, None))
-        }
+        Target::MultiUserCanister {
+            canister_id,
+            openchat_bot_messages,
+        } => create_user_in_multi_user_canister(
+            canister_id,
+            multi_user_canister::c2c_create_user::Args {
+                principal: caller,
+                username: args.username.clone(),
+                referred_by,
+                openchat_bot_messages,
+            },
+        )
+        .await
+        .map(|user_id| (user_id, None)),
     };
 
     match result {
@@ -116,12 +125,10 @@ async fn create_user_canister(
 
 async fn create_user_in_multi_user_canister(
     mut existing: Option<CanisterId>,
-    principal: Principal,
-    username: String,
-    referred_by: Option<UserId>,
+    args: multi_user_canister::c2c_create_user::Args,
 ) -> Result<UserId, OCError> {
     while let Some(canister_id) = existing {
-        match c2c_create_user(canister_id, principal, username.clone(), referred_by).await {
+        match c2c_create_user(canister_id, &args).await {
             // The canister is full, so stop offering it and try whichever has the fewest users
             // now, only creating a new one once there are none left. Each canister is only tried
             // once, since each one found to be full is excluded from then on
@@ -136,25 +143,14 @@ async fn create_user_in_multi_user_canister(
     }
 
     let (canister_id, _) = create_multi_user_canister().await?;
-    c2c_create_user(canister_id, principal, username, referred_by).await
+    c2c_create_user(canister_id, &args).await
 }
 
 async fn c2c_create_user(
     canister_id: CanisterId,
-    principal: Principal,
-    username: String,
-    referred_by: Option<UserId>,
+    args: &multi_user_canister::c2c_create_user::Args,
 ) -> Result<UserId, OCError> {
-    match multi_user_canister_c2c_client::c2c_create_user(
-        canister_id,
-        &multi_user_canister::c2c_create_user::Args {
-            principal,
-            username,
-            referred_by,
-        },
-    )
-    .await?
-    {
+    match multi_user_canister_c2c_client::c2c_create_user(canister_id, args).await? {
         multi_user_canister::c2c_create_user::Response::Success(user_id) => Ok(user_id),
         multi_user_canister::c2c_create_user::Response::Error(error) => Err(error),
     }
@@ -176,7 +172,10 @@ enum Target {
     },
     // The canister to add the user to, being the one with the fewest users. If it is full, whichever
     // has the fewest users next is tried, and a new one is only created once none remain
-    MultiUserCanister(Option<CanisterId>),
+    MultiUserCanister {
+        canister_id: Option<CanisterId>,
+        openchat_bot_messages: Vec<MessageContentInitial>,
+    },
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
@@ -250,18 +249,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         .and_then(|c| c.user())
         .filter(|user_id| state.data.global_users.contains(user_id));
 
-    if use_multi_user_canister {
-        return Ok(PrepareOk {
-            caller,
-            referred_by,
-            is_from_identity_canister,
-            target: Target::MultiUserCanister(
-                args.multi_user_canister_id
-                    .or_else(|| state.data.local_multi_user_canisters.canister_for_new_user()),
-            ),
-        });
-    }
-
+    // The OpenChat bot's welcome messages, which the user's canister sends them once created
     let openchat_bot_messages = if is_btc_miami {
         vec![
             MessageContentInitial::Text(TextContent {
@@ -277,6 +265,20 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
             .map(|t| MessageContentInitial::Text(TextContent { text: t }))
             .collect()
     };
+
+    if use_multi_user_canister {
+        return Ok(PrepareOk {
+            caller,
+            referred_by,
+            is_from_identity_canister,
+            target: Target::MultiUserCanister {
+                canister_id: args
+                    .multi_user_canister_id
+                    .or_else(|| state.data.local_multi_user_canisters.canister_for_new_user()),
+                openchat_bot_messages,
+            },
+        });
+    }
 
     let cycles_to_use = if state.data.canister_pool.is_empty() {
         let cycles_required = CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
