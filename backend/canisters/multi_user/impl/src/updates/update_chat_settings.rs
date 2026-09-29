@@ -13,14 +13,16 @@ use user_canister::{SetEventsTtl, UserCanisterEvent};
 #[trace]
 async fn update_chat_settings(args: Args) -> Response {
     // As in the User canister, a user in another canister whom the caller has no chat with yet is
-    // looked up in the LocalUserIndex
-    if let Err(local_user_index_canister_id) = read_state(|state| check_chat_exists(args.user_id, state))
-        && let Err(error) = look_up_direct_chat_user(local_user_index_canister_id, args.user_id).await
-    {
-        return Response::Error(error);
+    // looked up in the LocalUserIndex, which gives whether they are a user or a bot
+    let mut their_user_type = UserType::User;
+    if let Err(local_user_index_canister_id) = read_state(|state| check_chat_exists(args.user_id, state)) {
+        match look_up_direct_chat_user(local_user_index_canister_id, args.user_id).await {
+            Ok(user_type) => their_user_type = user_type,
+            Err(error) => return Response::Error(error),
+        }
     }
 
-    mutate_state(|state| update_chat_settings_impl(args, state)).into()
+    mutate_state(|state| update_chat_settings_impl(args, their_user_type, state)).into()
 }
 
 // Ok if `them` needs no looking up: they are the OpenChat bot, a user in this canister, or a user
@@ -41,7 +43,7 @@ fn check_chat_exists(them: UserId, state: &RuntimeState) -> Result<(), CanisterI
     if has_chat { Ok(()) } else { Err(state.data.local_user_index_canister_id) }
 }
 
-fn update_chat_settings_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+fn update_chat_settings_impl(args: Args, their_user_type: UserType, state: &mut RuntimeState) -> OCResult {
     // Checked again, since the caller may have been deleted while the other user was looked up
     let my_index = state.caller_user_index().ok_or(OCErrorCode::InitiatorNotAuthorized)?;
     let my_user_id = state.user_id(my_index);
@@ -59,7 +61,7 @@ fn update_chat_settings_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     // As in the User canister, the chat is created if the user doesn't have it yet
     // The OpenChat bot has no canister to be told of the change, so it applies to the user's copy of
     // the chat alone, as in the User canister
-    let their_user_type = if them == OPENCHAT_BOT_USER_ID { UserType::OcControlledBot } else { UserType::User };
+    let their_user_type = if them == OPENCHAT_BOT_USER_ID { UserType::OcControlledBot } else { their_user_type };
     // As in the User canister, only a change is passed on to the other user
     let changed_at = state
         .data

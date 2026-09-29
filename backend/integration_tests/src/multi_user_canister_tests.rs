@@ -5253,6 +5253,117 @@ fn multi_user_canister_count(env: &PocketIc, local_user_index: CanisterId) -> u6
 // is under their user id. An ICRC1 transfer would be made from the canister's own account, so is
 // refused.
 #[test]
+fn users_can_message_bots_and_send_them_crypto() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bob, _) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (bot_id, _) = client::user_index::happy_path::register_bot(
+        env,
+        alice,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        BotDefinition {
+            description: "Takes bets".to_string(),
+            commands: Vec::new(),
+            autonomous_config: None,
+            default_subscriptions: None,
+            data_encoding: None,
+            restricted_locations: None,
+        },
+    );
+    tick_many(env, 3);
+
+    // Bob, who has no chat with the ProposalsBot, a bot with a canister of its own, messages it,
+    // which creates his chat with it
+    let proposals_bot: UserId = canister_ids.proposals_bot.into();
+    send_text_message(env, bob, canister_id, proposals_bot, "hello bot", random_from_u128());
+    assert!(
+        initial_state(env, bob, canister_id)
+            .direct_chats
+            .summaries
+            .iter()
+            .any(|c| c.them == proposals_bot)
+    );
+
+    // Alice installs the bot she registered, which creates her chat with it
+    client::local_user_index::happy_path::install_bot(
+        env,
+        alice,
+        local_user_index,
+        BotInstallationLocation::User(alice_id.into()),
+        bot_id,
+        BotPermissions::text_only(),
+        None,
+    );
+
+    // Crypto sent to the bot goes to the bot's subaccount for Alice, as from a User canister
+    let amount = 1_000_000;
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, alice, 1_000_000_000);
+    client::ledger::happy_path::approve(
+        env,
+        alice,
+        canister_ids.icp_ledger,
+        icrc_ledger_types::icrc1::account::Account {
+            owner: canister_id,
+            subaccount: Some(ledger_utils::spender_subaccount(alice)),
+        },
+        amount + ICP_TRANSFER_FEE,
+    );
+    let response = client::user::send_message_v2(
+        env,
+        alice,
+        canister_id,
+        &user_canister::send_message_v2::Args {
+            content: MessageContentInitial::Crypto(CryptoContent {
+                recipient: bot_id,
+                transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
+                    ledger: ICP_LEDGER_CANISTER_ID,
+                    token_symbol: ICP_SYMBOL.to_string(),
+                    amount,
+                    from: alice.into(),
+                    to: bot_id.as_principal().into(),
+                    fee: ICP_TRANSFER_FEE,
+                    memo: None,
+                    created: now_millis(env) * 1_000_000,
+                })),
+                caption: None,
+            }),
+            ..send_message_args(bot_id, "", random_from_u128())
+        },
+    );
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    let alices_subaccount = ic_ledger_types::Subaccount::from(alice_id.as_principal()).0;
+    assert_eq!(
+        client::ledger::happy_path::balance_of(
+            env,
+            canister_ids.icp_ledger,
+            icrc_ledger_types::icrc1::account::Account {
+                owner: bot_id.as_principal(),
+                subaccount: Some(alices_subaccount),
+            }
+        ),
+        amount
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, bot_id.as_principal()),
+        0
+    );
+}
+
+#[test]
 fn users_send_crypto_from_their_own_wallets() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

@@ -43,16 +43,13 @@ mod queries;
 mod timer_job_types;
 mod updates;
 
-// Checks that `user_id` is a user who can be sent direct messages, by looking them up in the
-// LocalUserIndex. Bots can't be messaged from a MultiUser canister yet.
-async fn look_up_direct_chat_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> OCResult {
+// Looks `user_id` up in the LocalUserIndex, returning whether they are a user or a bot, which a direct
+// chat with them is created as
+async fn look_up_direct_chat_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> OCResult<UserType> {
     match local_user_index_canister_c2c_client::lookup_user(user_id.as_principal(), local_user_index_canister_id).await? {
         // The lookup also resolves the principal a user signs in with, which isn't their user id
         Some(user) if user.user_id != user_id => Err(OCErrorCode::TargetUserNotFound.into()),
-        Some(user) if user.user_type == UserType::User => Ok(()),
-        Some(_) => {
-            Err(OCErrorCode::InvalidRequest.with_message("Chats with bots are not yet supported by the MultiUser canister"))
-        }
+        Some(user) => Ok(user.user_type),
         None => Err(OCErrorCode::TargetUserNotFound.into()),
     }
 }
