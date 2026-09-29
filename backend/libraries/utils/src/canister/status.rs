@@ -17,6 +17,7 @@ pub struct CanisterStatusMinimal {
     pub settings: CanisterSettingsMinimal,
     pub module_hash: Option<Vec<u8>>,
     pub cycles: Nat,
+    pub reserved_cycles: Nat,
     pub idle_cycles_burned_per_day: Nat,
 }
 
@@ -30,11 +31,6 @@ pub struct CanisterSettingsMinimal {
 impl CanisterStatusMinimal {
     pub fn cycles(&self) -> u128 {
         nat_to_u128(&self.cycles)
-    }
-
-    // The balance below which the canister is frozen, which it can't spend
-    pub fn freezing_threshold_cycles(&self) -> u128 {
-        nat_to_u128(&self.idle_cycles_burned_per_day) * nat_to_u128(&self.settings.freezing_threshold) / (24 * 60 * 60)
     }
 }
 

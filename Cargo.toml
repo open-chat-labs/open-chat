@@ -234,8 +234,8 @@ ic-certificate-verification = { version = "3", default-features = false }
 ic-certification = "3"
 ic-http-certification = "3"
 ic-ledger-types = "0.16"
-ic-cdk-management-canister = "0.1"
-ic-management-canister-types = "0.8"
+ic-cdk-management-canister = "0.2"
+ic-management-canister-types = "0.10"
 ic_principal = "0.1"
 ic-representation-independent-hash = "3"
 ic-stable-structures = "0.7"
@@ -256,7 +256,7 @@ p256 = { version = "0.14" }
 # `pocket-ic` should be pinned to an exact version so that the PocketIC server binary version
 # `POCKET_IC_SERVER_VERSION` defined in `scripts/run-integration-tests.sh` is compatible:
 # https://docs.google.com/document/d/1VYmHUTjrgbzRHtsAyRrI5cj-gWGs7ktTnutPvUMJioU/edit
-pocket-ic = "=11.0.0"
+pocket-ic = "=16.0.0"
 proc-macro2 = "1"
 prometheus = "0.14"
 proptest = "1"

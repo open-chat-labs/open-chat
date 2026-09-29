@@ -1,7 +1,7 @@
 use ic_cdk::call::RejectCode;
 use ic_cdk_management_canister::{
-    self as management_canister, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgs, HttpHeader, HttpMethod, HttpRequestArgs,
-    SignCallError, SignWithEcdsaArgs,
+    self as management_canister, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgs, HttpMethod, HttpRequest, SignCallError,
+    SignWithEcdsaArgs,
 };
 use ic_transport_types::{EnvelopeContent, to_request_id};
 use serde::Serialize;
@@ -49,27 +49,18 @@ pub async fn make_canister_call_via_ecdsa(request: CanisterEcdsaRequest) -> Resu
         Err(error) => return Err(format!("Failed to sign envelope: {error:?}")),
     };
 
-    let response = management_canister::http_request_with_closure(
-        &HttpRequestArgs {
-            url: request.request_url,
-            max_response_bytes: Some(1024 * 1024), // 1 MB
-            method: HttpMethod::POST,
-            headers: vec![HttpHeader {
-                name: "content-type".to_string(),
-                value: "application/cbor".to_string(),
-            }],
-            body: Some(body),
-            transform: None,
-            // `None` keeps the default behaviour of the request being made by all nodes in the subnet
-            is_replicated: None,
-        },
-        |mut response| {
+    let response = HttpRequest::new(request.request_url)
+        .with_method(HttpMethod::POST)
+        .with_header("content-type", "application/cbor")
+        .with_body(body)
+        .with_max_response_bytes(1024 * 1024) // 1 MB
+        .with_transform_closure(|mut response| {
             response.headers.clear();
             response
-        },
-    )
-    .await
-    .map_err(|error| format!("Failed to make http request: {error:?}"))?;
+        })
+        .send()
+        .await
+        .map_err(|error| format!("Failed to make http request: {error:?}"))?;
 
     Ok(String::from_utf8(response.body).unwrap())
 }

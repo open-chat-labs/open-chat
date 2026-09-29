@@ -464,6 +464,7 @@ fn invariant_1_only_small_private_groups_ring() {
         },
     );
     assert!(matches!(response, UnitResult::Success));
+    tick_many(env, 10);
     let pushes = feed.pushes_since(env, *controller, &index);
     let others = pushes_for(&pushes, member.user_id);
     assert_eq!(others.len(), 2);
