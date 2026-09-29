@@ -30,5 +30,7 @@ pub struct Args {
     pub multi_user_canisters_enabled: bool,
     #[serde(default)]
     pub call_push_enabled: bool,
+    #[serde(default)]
+    pub registry_canister_id: Option<CanisterId>,
     pub test_mode: bool,
 }

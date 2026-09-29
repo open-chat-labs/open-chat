@@ -5,7 +5,8 @@ use types::{CanisterId, UserId};
 
 // Moves the funds held by the canister of the id the caller had before being migrated to a
 // MultiUser canister, on each of the given ledgers (at most 20), to the caller's wallet. Must be
-// called on the LocalUserIndex which controls that canister, once it has been uninstalled.
+// called on the LocalUserIndex which controls that canister, once it has been uninstalled. Only
+// ledgers known to the Registry are moved from, the others failing with `LedgerNotFound`.
 #[ts_export(local_user_index, move_funds_from_old_canister)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {

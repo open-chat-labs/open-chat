@@ -11,6 +11,7 @@ use crate::model::media_scan_job_log::MediaScanJobLog;
 use crate::model::moderation_queue::ModerationQueue;
 use crate::model::premium_items::PremiumItems;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
+use crate::model::registry_tokens::RegistryTokens;
 use crate::model::top_up_leaderboards::TopUpLeaderboards;
 use crate::model::user_event_batch::UserEventBatch;
 use crate::model::user_index_event_batch::UserIndexEventBatch;
@@ -719,6 +720,8 @@ impl RuntimeState {
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
             cycles_topped_up_for_refunds: self.data.cycles_topped_up_for_refunds,
+            registry_tokens: self.data.registry_tokens.len(),
+            registry_tokens_last_refreshed: self.data.registry_tokens.last_refreshed(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
             notification_pushers: self.data.notification_pushers.iter().copied().collect(),
@@ -879,6 +882,13 @@ struct Data {
     // this LocalUserIndex controls, are to be uninstalled
     #[serde(default)]
     pub users_to_close_out: UsersToMigrate<UserToCloseOut>,
+    // Passed in the init and upgrade args, so is set once this LocalUserIndex has been upgraded by a
+    // UserIndex which passes it
+    #[serde(default)]
+    pub registry_canister_id: Option<CanisterId>,
+    // The ledgers from which migrated users' funds can be moved, refreshed from the Registry daily
+    #[serde(default)]
+    pub registry_tokens: RegistryTokens,
     // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
     #[serde(skip)]
     pub top_up_leaderboards: TopUpLeaderboards,
@@ -957,6 +967,7 @@ impl Data {
         media_scan_config: MediaScanConfig,
         multi_user_canisters_enabled: bool,
         call_push_enabled: bool,
+        registry_canister_id: Option<CanisterId>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -1034,6 +1045,8 @@ impl Data {
             users_to_migrate: UsersToMigrate::default(),
             users_to_import: UsersToMigrate::default(),
             users_to_close_out: UsersToMigrate::default(),
+            registry_canister_id,
+            registry_tokens: RegistryTokens::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
     }
@@ -1100,6 +1113,8 @@ pub struct Metrics {
     pub cycles_refund_queue_length: usize,
     pub cycles_refunded_from_deleted_users: Cycles,
     pub cycles_topped_up_for_refunds: Cycles,
+    pub registry_tokens: usize,
+    pub registry_tokens_last_refreshed: TimestampMillis,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,
     pub user_versions: BTreeMap<String, u32>,

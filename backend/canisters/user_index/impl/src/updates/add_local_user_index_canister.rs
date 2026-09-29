@@ -149,6 +149,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 media_scan_config: state.data.media_scan_config.clone(),
                 multi_user_canisters_enabled: state.data.multi_user_canisters_enabled,
                 call_push_enabled: state.data.call_push_enabled,
+                registry_canister_id: Some(state.data.registry_canister_id),
                 test_mode: state.data.test_mode,
             },
         })

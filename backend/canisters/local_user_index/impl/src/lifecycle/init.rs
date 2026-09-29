@@ -39,6 +39,7 @@ fn init(args: Args) {
         args.media_scan_config,
         args.multi_user_canisters_enabled,
         args.call_push_enabled,
+        args.registry_canister_id,
         args.test_mode,
     );
 

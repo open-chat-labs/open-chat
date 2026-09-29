@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Once a migrated user is switched over, uninstall their old canister and refund its cycles ([#9607](https://github.com/open-chat-labs/open-chat/pull/9607))
 - Pass on the migration's hash with a failed import, and let a later migration's import replace an earlier one still waiting ([#9610](https://github.com/open-chat-labs/open-chat/pull/9610))
 - Add `move_funds_from_old_canister`, which moves the funds held by a migrated user's old canister to their wallet, by installing the call relay on the canister ([#9623](https://github.com/open-chat-labs/open-chat/pull/9623))
+- Refresh the tokens known to the Registry daily, which are the only ledgers `move_funds_from_old_canister` moves funds from ([#9623](https://github.com/open-chat-labs/open-chat/pull/9623))
 
 ### Changed
 

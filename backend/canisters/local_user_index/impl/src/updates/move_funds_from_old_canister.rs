@@ -19,11 +19,11 @@ use tracing::{error, info};
 use types::{BuildVersion, C2CError, CanisterId, Cycles, TimestampNanos, UserIdAndPrincipal};
 use utils::canister::{CanisterStatusMinimal, CanisterToInstall, WasmToInstall, is_invalid_controller_error};
 
-// The ledgers are chosen by the caller, so they may be anything, eg. canisters which never respond,
-// or which reply with candid which is costly to decode. So each call to one times out, the calls
-// are made in a bounded number of rounds, and their replies are decoded within a quota. That way
-// a call can't hold up the move, nor keep this canister from being stopped to be upgraded, for
-// longer than the 3 minutes the rounds take at most.
+// Only ledgers known to the Registry are called, but they are still outside our control, so to be
+// safe each call to one times out, the calls are made in a bounded number of rounds, and their
+// replies are decoded within a quota. That way a ledger which misbehaves can't hold up the move,
+// nor keep this canister from being stopped to be upgraded, for longer than the 3 minutes the
+// rounds take at most.
 const MAX_LEDGERS: usize = 20;
 const MAX_CONCURRENT_TRANSFERS: usize = 10;
 const LEDGER_CALL_TIMEOUT_SECONDS: u32 = 30;
@@ -46,6 +46,8 @@ async fn move_funds_from_old_canister(args: Args) -> Response {
         old_canister_id,
         wallet,
         now_nanos,
+        ledgers,
+        unknown_ledgers,
         guard,
     } = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
@@ -57,8 +59,11 @@ async fn move_funds_from_old_canister(args: Args) -> Response {
         Err(error) => return Response::Error(error),
     };
 
-    let ledgers: BTreeSet<_> = args.ledgers.into_iter().collect();
     let (mut outcomes, transfers) = transfers_to_make(old_canister_id, ledgers).await;
+    outcomes.extend(unknown_ledgers.into_iter().map(|ledger| LedgerOutcome {
+        ledger,
+        result: MoveFundsResult::Failed(OCErrorCode::LedgerNotFound.with_message("Ledger not known to the Registry")),
+    }));
 
     if !transfers.is_empty() || relay_installed {
         // Once the move is done, and the canister no longer reserved, the refund job uninstalls
@@ -106,6 +111,9 @@ struct PrepareResult {
     old_canister_id: CanisterId,
     wallet: Account,
     now_nanos: TimestampNanos,
+    // The ledgers known to the Registry, with their fees
+    ledgers: Vec<(CanisterId, u128)>,
+    unknown_ledgers: Vec<CanisterId>,
     guard: call_relay::InUseGuard,
 }
 
@@ -125,6 +133,9 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, OCError> 
     if state.data.local_users.contains(&args.old_user_id) {
         return Err(OCErrorCode::AlreadyInProgress.with_message("Old canister not yet uninstalled"));
     }
+    if state.data.registry_tokens.is_empty() {
+        return Err(OCErrorCode::NotInitialized.with_message("Tokens not yet loaded from the Registry"));
+    }
 
     let old_canister_id = args.old_user_id.canister_id();
     if refund_cycles::is_in_progress(state, old_canister_id) {
@@ -135,10 +146,21 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, OCError> 
         return Err(OCErrorCode::AlreadyInProgress.with_message("Funds already being moved"));
     };
 
+    let mut ledgers = Vec::new();
+    let mut unknown_ledgers = Vec::new();
+    for ledger in args.ledgers.iter().copied().collect::<BTreeSet<_>>() {
+        match state.data.registry_tokens.fee(&ledger) {
+            Some(fee) => ledgers.push((ledger, fee)),
+            None => unknown_ledgers.push(ledger),
+        }
+    }
+
     Ok(PrepareResult {
         old_canister_id,
         wallet: UserIdAndPrincipal::new(user.user_id, user.principal).into(),
         now_nanos: state.env.now_nanos(),
+        ledgers,
+        unknown_ledgers,
         guard,
     })
 }
@@ -166,41 +188,24 @@ async fn old_canister_status(canister_id: CanisterId) -> Result<(CanisterStatusM
 
 struct Transfer {
     ledger: CanisterId,
-    amount: u128,
+    balance: u128,
     fee: u128,
 }
 
-// Works out how much can be moved on each ledger, which is the old canister's balance less the
-// fee, returning the outcomes for the ledgers with nothing to move or where that can't be found
-async fn transfers_to_make(old_canister_id: CanisterId, ledgers: BTreeSet<CanisterId>) -> (Vec<LedgerOutcome>, Vec<Transfer>) {
-    let mut outcomes = Vec::new();
+// Looks up the old canister's balance on each ledger, returning the transfers of those with a
+// balance which exceeds the fee, and the outcomes for the rest
+async fn transfers_to_make(
+    old_canister_id: CanisterId,
+    ledgers: Vec<(CanisterId, u128)>,
+) -> (Vec<LedgerOutcome>, Vec<Transfer>) {
     let account = Account::from(old_canister_id);
+    let balances = join_all(ledgers.iter().map(|(ledger, _)| balance_of(*ledger, account))).await;
 
-    let balances = join_all(ledgers.iter().map(|ledger| balance_of(*ledger, account))).await;
-    let mut with_balance = Vec::new();
-    for (ledger, balance) in ledgers.into_iter().zip(balances) {
-        match balance {
-            Ok(0) => outcomes.push(LedgerOutcome {
-                ledger,
-                result: MoveFundsResult::NothingToMove,
-            }),
-            Ok(balance) => with_balance.push((ledger, balance)),
-            Err(error) => outcomes.push(LedgerOutcome {
-                ledger,
-                result: MoveFundsResult::Failed(error.into()),
-            }),
-        }
-    }
-
-    let fees = join_all(with_balance.iter().map(|(ledger, _)| fee(*ledger))).await;
+    let mut outcomes = Vec::new();
     let mut transfers = Vec::new();
-    for ((ledger, balance), fee) in with_balance.into_iter().zip(fees) {
-        match fee {
-            Ok(fee) if balance > fee => transfers.push(Transfer {
-                ledger,
-                amount: balance - fee,
-                fee,
-            }),
+    for ((ledger, fee), balance) in ledgers.into_iter().zip(balances) {
+        match balance {
+            Ok(balance) if balance > fee => transfers.push(Transfer { ledger, balance, fee }),
             Ok(_) => outcomes.push(LedgerOutcome {
                 ledger,
                 result: MoveFundsResult::NothingToMove,
@@ -211,7 +216,6 @@ async fn transfers_to_make(old_canister_id: CanisterId, ledgers: BTreeSet<Canist
             }),
         }
     }
-
     (outcomes, transfers)
 }
 
@@ -221,19 +225,6 @@ async fn balance_of(ledger: CanisterId, account: Account) -> Result<u128, C2CErr
         ledger,
         method,
         &candid::encode_one(account).unwrap(),
-        0,
-        Some(LEDGER_CALL_TIMEOUT_SECONDS),
-    )
-    .await?;
-    decode_untrusted(ledger, method, &reply).map(to_u128)
-}
-
-async fn fee(ledger: CanisterId) -> Result<u128, C2CError> {
-    let method = "icrc1_fee";
-    let reply = canister_client::make_c2c_call_raw(
-        ledger,
-        method,
-        &candid::encode_args(()).unwrap(),
         0,
         Some(LEDGER_CALL_TIMEOUT_SECONDS),
     )
@@ -261,38 +252,32 @@ fn to_u128(value: Nat) -> u128 {
     value.0.try_into().unwrap_or(u128::MAX)
 }
 
-// Makes the transfer as the old canister, through the relay. The fee is given so that the ledger
-// rejects the transfer if it has changed, since the amount depends on it.
+// Makes the transfer as the old canister, through the relay, of the balance less the fee. The fee
+// is the Registry's, which may be out of date, in which case the ledger rejects the transfer with
+// the fee it expects, and the transfer is tried once more with that fee.
 async fn make_transfer(
     old_canister_id: CanisterId,
     to: Account,
     transfer: &Transfer,
     now_nanos: TimestampNanos,
 ) -> LedgerOutcome {
-    let method = "icrc1_transfer";
-    let args = TransferArg {
-        from_subaccount: None,
-        to,
-        fee: Some(transfer.fee.into()),
-        created_at_time: Some(now_nanos),
-        memo: None,
-        amount: transfer.amount.into(),
-    };
-
-    let response = call_relay::call(
-        old_canister_id,
-        transfer.ledger,
-        method,
-        &candid::encode_one(&args).unwrap(),
-        RELAY_CALL_TIMEOUT_SECONDS,
-    )
-    .await
-    .and_then(|reply| decode_untrusted::<Result<Nat, TransferError>>(transfer.ledger, method, &reply));
+    let mut fee = transfer.fee;
+    let mut response = relay_transfer(old_canister_id, to, transfer, fee, now_nanos).await;
+    if let Ok(Err(TransferError::BadFee { expected_fee })) = &response {
+        fee = to_u128(expected_fee.clone());
+        if transfer.balance <= fee {
+            return LedgerOutcome {
+                ledger: transfer.ledger,
+                result: MoveFundsResult::NothingToMove,
+            };
+        }
+        response = relay_transfer(old_canister_id, to, transfer, fee, now_nanos).await;
+    }
 
     let result = match response {
         Ok(Ok(block_index)) => MoveFundsResult::Moved {
-            amount: transfer.amount,
-            fee: transfer.fee,
+            amount: transfer.balance - fee,
+            fee,
             block_index: block_index.0.try_into().unwrap_or_default(),
         },
         Ok(Err(error)) => MoveFundsResult::Failed(OCErrorCode::TransferFailed.with_message(format!("{error:?}"))),
@@ -303,6 +288,34 @@ async fn make_transfer(
         ledger: transfer.ledger,
         result,
     }
+}
+
+async fn relay_transfer(
+    old_canister_id: CanisterId,
+    to: Account,
+    transfer: &Transfer,
+    fee: u128,
+    now_nanos: TimestampNanos,
+) -> Result<Result<Nat, TransferError>, C2CError> {
+    let method = "icrc1_transfer";
+    let args = TransferArg {
+        from_subaccount: None,
+        to,
+        fee: Some(fee.into()),
+        created_at_time: Some(now_nanos),
+        memo: None,
+        amount: (transfer.balance - fee).into(),
+    };
+
+    let reply = call_relay::call(
+        old_canister_id,
+        transfer.ledger,
+        method,
+        &candid::encode_one(&args).unwrap(),
+        RELAY_CALL_TIMEOUT_SECONDS,
+    )
+    .await?;
+    decode_untrusted(transfer.ledger, method, &reply)
 }
 
 // Queues the canister's cycles to be refunded, unless they already are. A canister which has

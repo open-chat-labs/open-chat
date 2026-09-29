@@ -1,8 +1,9 @@
 use crate::env::ENV;
+use crate::setup::install_icrc_ledger;
 use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client, wasms};
-use candid::Principal;
-use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
+use candid::{CandidType, Nat, Principal};
+use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 use local_user_index_canister::move_funds_from_old_canister::{MoveFundsResult, Response as MoveFundsResponse};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
@@ -688,10 +689,16 @@ fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
     let user = client::register_user(env, canister_ids);
     let other_user = client::register_user(env, canister_ids);
-    let icp_balance = 1_000_000_000;
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, icp_balance);
-    // Too little CHAT to be worth moving, since it doesn't exceed the fee
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, CHAT_TRANSFER_FEE);
+    // Ledgers of this test's own, known to the Registry, with fees of 10_000. The test env's ICP
+    // ledger isn't used, since the Registry marks it as uninstalled, having been set up before it.
+    let abc_ledger = install_registered_ledger(env, canister_ids, *controller, "ABC");
+    let def_ledger = install_registered_ledger(env, canister_ids, *controller, "DEF");
+    let xyz_ledger = install_registered_ledger(env, canister_ids, *controller, "XYZ");
+    let balance = 1_000_000_000;
+    client::ledger::happy_path::transfer(env, *controller, abc_ledger, user.user_id, balance);
+    client::ledger::happy_path::transfer(env, *controller, def_ledger, user.user_id, balance);
+    // Too little XYZ to be worth moving, since it doesn't exceed the fee
+    client::ledger::happy_path::transfer(env, *controller, xyz_ledger, user.user_id, 10_000);
 
     migrate_users(
         env,
@@ -710,10 +717,17 @@ fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
     // the relay to be installed on it
     crate::delete_user_tests::wait_for_cycles_to_be_refunded(env, &user);
 
-    // The UserIndex is not a ledger, so fails, but doesn't stop the funds on the others moving
+    // The LocalUserIndexes refresh the tokens from the Registry once they are a day old, after
+    // which ABC's fee is raised, leaving the LocalUserIndexes with the old one
+    env.advance_time(Duration::from_secs(25 * 60 * 60));
+    tick_many(env, 10);
+    set_ledger_fee(env, *controller, abc_ledger, 20_000);
+
+    // The UserIndex is not a ledger known to the Registry, so fails, but doesn't stop the funds on
+    // the others moving
     let args = local_user_index_canister::move_funds_from_old_canister::Args {
         old_user_id: user.user_id,
-        ledgers: vec![canister_ids.icp_ledger, canister_ids.chat_ledger, canister_ids.user_index],
+        ledgers: vec![abc_ledger, def_ledger, xyz_ledger, canister_ids.user_index],
     };
     let move_funds = |env: &mut PocketIc, sender: Principal, local_user_index: CanisterId| {
         client::local_user_index::move_funds_from_old_canister(env, sender, local_user_index, &args)
@@ -762,22 +776,31 @@ fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
     let [MoveFundsResponse::Success(outcomes)] = <[_; 1]>::try_from(moved).unwrap() else {
         unreachable!();
     };
-    assert_eq!(outcomes.len(), 3);
+    assert_eq!(outcomes.len(), 4);
     for outcome in outcomes {
         match outcome.result {
-            MoveFundsResult::Moved { amount, fee, .. } if outcome.ledger == canister_ids.icp_ledger => {
-                assert_eq!(fee, 10_000);
-                assert_eq!(amount, icp_balance - fee);
+            // Moved having been retried with the ledger's new fee
+            MoveFundsResult::Moved { amount, fee, .. } if outcome.ledger == abc_ledger => {
+                assert_eq!(fee, 20_000);
+                assert_eq!(amount, balance - fee);
             }
-            MoveFundsResult::NothingToMove if outcome.ledger == canister_ids.chat_ledger => {}
-            MoveFundsResult::Failed(_) if outcome.ledger == canister_ids.user_index => {}
+            MoveFundsResult::Moved { amount, fee, .. } if outcome.ledger == def_ledger => {
+                assert_eq!(fee, 10_000);
+                assert_eq!(amount, balance - fee);
+            }
+            MoveFundsResult::NothingToMove if outcome.ledger == xyz_ledger => {}
+            MoveFundsResult::Failed(error)
+                if outcome.ledger == canister_ids.user_index && error.matches_code(OCErrorCode::LedgerNotFound) => {}
             result => panic!("Unexpected result for {}: {result:?}", outcome.ledger),
         }
     }
-    let icp_balance_of =
-        |env: &PocketIc, principal: Principal| client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, principal);
-    assert_eq!(icp_balance_of(env, user.canister()), 0);
-    assert_eq!(icp_balance_of(env, user.principal), icp_balance - 10_000);
+    let balance_of = |env: &PocketIc, ledger: CanisterId, principal: Principal| {
+        client::ledger::happy_path::balance_of(env, ledger, principal)
+    };
+    assert_eq!(balance_of(env, abc_ledger, user.canister()), 0);
+    assert_eq!(balance_of(env, abc_ledger, user.principal), balance - 20_000);
+    assert_eq!(balance_of(env, def_ledger, user.canister()), 0);
+    assert_eq!(balance_of(env, def_ledger, user.principal), balance - 10_000);
 
     // The relay is uninstalled and the old canister's cycles refunded again, during which moves
     // are turned away
@@ -801,6 +824,58 @@ fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
         MoveFundsResponse::Success(_)
     ));
     crate::delete_user_tests::wait_for_cycles_to_be_refunded(env, &user);
+}
+
+// Installs an ICRC ledger with a fee of 10_000, and adds its token to the Registry
+fn install_registered_ledger(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    symbol: &str,
+) -> CanisterId {
+    let ledger = install_icrc_ledger(
+        env,
+        controller,
+        format!("{symbol} Token"),
+        symbol.to_string(),
+        10_000,
+        None,
+        Vec::new(),
+    );
+    let response = client::registry::add_token(
+        env,
+        controller,
+        canister_ids.registry,
+        &registry_canister::add_token::Args {
+            ledger_canister_id: ledger,
+            payer: None,
+            info_url: "info".to_string(),
+            transaction_url_format: "format".to_string(),
+            one_sec_enabled: None,
+        },
+    );
+    assert!(matches!(response, types::UnitResult::Success), "{response:?}");
+    ledger
+}
+
+// Changes the ledger's fee by upgrading it
+fn set_ledger_fee(env: &mut PocketIc, controller: Principal, ledger: CanisterId, fee: u64) {
+    #[derive(CandidType)]
+    enum LedgerArgument {
+        Upgrade(Option<UpgradeArgs>),
+    }
+
+    #[derive(CandidType)]
+    struct UpgradeArgs {
+        transfer_fee: Option<Nat>,
+    }
+
+    let args = candid::encode_one(LedgerArgument::Upgrade(Some(UpgradeArgs {
+        transfer_fee: Some(fee.into()),
+    })))
+    .unwrap();
+    env.upgrade_canister(ledger, wasms::ICRC_LEDGER.module.clone().into(), args, Some(controller))
+        .unwrap();
 }
 
 // Installs the call relay on the user's old canister, as the LocalUserIndex which controls it,
