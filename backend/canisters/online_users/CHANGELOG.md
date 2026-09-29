@@ -6,9 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_user_index`, through which the UserIndex says when a user is deleted or migrated ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+
 ### Removed
 
 - Remove the syncing of users' minutes online to the deprecated AirdropBot ([#9595](https://github.com/open-chat-labs/open-chat/pull/9595))
+
+### Fixed
+
+- Know a user migrated to a MultiUser canister by their new id, moving their last online date and minutes online to it ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
 
 ## [[2.0.2065](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2065-online_users)] - 2026-09-25
 

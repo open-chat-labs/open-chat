@@ -870,6 +870,78 @@ fn user_canister_is_upgraded_to_the_latest_wasm_before_migrating() {
     wrapper.discard();
 }
 
+#[test]
+fn online_users_knows_migrated_user_by_their_new_id() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user = client::register_user(env, canister_ids);
+
+    // Marking the user as online has the OnlineUsers canister cache their id
+    client::online_users::happy_path::mark_as_online(env, user.principal, canister_ids.online_users);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+
+    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id) {
+        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
+        status => panic!("User not imported: {status:?}"),
+    };
+
+    // The user's last online date has moved from their old id to their new one
+    let last_online = |env: &PocketIc, user_id: UserId| {
+        client::online_users::happy_path::last_online(env, vec![user_id], canister_ids.online_users)
+            .first()
+            .map(|u| u.duration_since_last_online)
+    };
+    assert!(last_online(env, new_user_id).is_some());
+    assert!(last_online(env, user.user_id).is_none());
+
+    // The user is marked as online under their new id, carrying on from the minutes online recorded
+    // under their old id. The month may have ended in the meantime, so both months are counted.
+    env.advance_time(Duration::from_secs(60));
+    let online_users_canister::mark_as_online::Response::SuccessV2(result) =
+        client::online_users::mark_as_online(env, user.principal, canister_ids.online_users, &Empty {})
+    else {
+        panic!("Failed to mark user as online");
+    };
+    assert_eq!(result.minutes_online + result.minutes_online_last_month, 2);
+    assert_eq!(last_online(env, new_user_id), Some(0));
+    assert!(last_online(env, user.user_id).is_none());
+
+    // Upgrading the UserIndex once users have been migrated sends the events again, which changes
+    // nothing
+    crate::delete_user_tests::upgrade_user_index(env, canister_ids);
+    tick_many(env, 3);
+    assert!(last_online(env, new_user_id).is_some());
+    assert!(last_online(env, user.user_id).is_none());
+    assert_eq!(
+        client::online_users::happy_path::minutes_online(
+            env,
+            user.principal,
+            canister_ids.online_users,
+            result.year,
+            result.month
+        ),
+        result.minutes_online
+    );
+}
+
 fn cancel_user_migration(
     env: &mut PocketIc,
     sender: Principal,

@@ -5,6 +5,7 @@ use crate::{Data, mutate_state, read_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
+use online_users_canister::{UserDeleted, UserIdMigrated, UserIndexEvent as OnlineUsersEvent};
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
@@ -50,6 +51,54 @@ fn post_upgrade(args: Args) {
         for (bot_id, from, to) in state.data.users.repair_misrecorded_direct_chat_bot_installations(now) {
             info!(%bot_id, ?from, ?to, "Moved misrecorded bot installation");
         }
+    });
+
+    // One-off: point the new OnlineUsers event queue, which was created with a placeholder target, at
+    // the OnlineUsers canister. Then send it the users queued to be removed from it the old way, and
+    // tell it the new id of each user migrated so far, so that it stops knowing them by their old id.
+    // Each of a user's old ids is mapped straight to their latest id, so the events can be handled in
+    // any order. The events are pushed from a timer because pushing them starts sending them, which
+    // makes c2c calls, which can't be made from post_upgrade. They are idempotent, so running this on
+    // more than one upgrade is harmless.
+    // TODO remove after the release containing this has been deployed, along with the queue's serde
+    // default and `remove_from_online_users_queue`
+    mutate_state(|state| {
+        let online_users_canister_id = state.data.online_users_canister_id;
+        state.data.online_users_event_sync_queue.set_state(online_users_canister_id);
+    });
+    ic_cdk_timers::set_timer(Duration::ZERO, async {
+        mutate_state(|state| {
+            let users_to_remove: Vec<_> = state.data.remove_from_online_users_queue.drain(..).collect();
+            let migrated_users: Vec<_> = state
+                .data
+                .migrated_user_ids
+                .iter()
+                .filter_map(|(old_user_id, _)| {
+                    let new_user_id = state.data.migrated_user_ids.latest(old_user_id);
+                    state
+                        .data
+                        .users
+                        .get_by_user_id(&new_user_id)
+                        .map(|u| (u.principal, old_user_id, new_user_id))
+                })
+                .collect();
+
+            info!(
+                users_to_remove = users_to_remove.len(),
+                migrated_users = migrated_users.len(),
+                "Sending events to the OnlineUsers canister"
+            );
+            for user_principal in users_to_remove {
+                state.push_event_to_online_users(OnlineUsersEvent::UserDeleted(UserDeleted { user_principal }));
+            }
+            for (user_principal, old_user_id, new_user_id) in migrated_users {
+                state.push_event_to_online_users(OnlineUsersEvent::UserIdMigrated(UserIdMigrated {
+                    user_principal,
+                    old_user_id,
+                    new_user_id,
+                }));
+            }
+        });
     });
 
     // One-off: record the prod daily_puzzle canister id and push it to every LocalUserIndex, in
