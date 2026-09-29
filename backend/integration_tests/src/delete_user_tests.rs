@@ -60,13 +60,14 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
         ));
     }
 
-    let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
-    assert_eq!(canister_status.module_hash.is_none(), should_delete_user);
-
     if should_delete_user {
-        // The uninstalled canister's cycles are sent to the CyclesDispenser
+        // The uninstalled canister's cycles are sent to the CyclesDispenser, for which the cycles
+        // refunder is briefly installed on it, so wait for that to finish before checking it's empty
         wait_for_cycles_to_be_refunded(env, &user);
     }
+
+    let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
+    assert_eq!(canister_status.module_hash.is_none(), should_delete_user);
 
     // The identity canister should no longer know the auth principal of a deleted user
     let check_auth_principal_response =
