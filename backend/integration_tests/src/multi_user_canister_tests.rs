@@ -156,6 +156,7 @@ fn users_registered_in_a_multi_user_canister_are_sent_the_welcome_messages() {
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
     let (principal, user_id) = create_user(env, canister_ids, local_user_index, canister_id);
     let user_in_own_canister = client::register_user(env, canister_ids);
+    assert_eq!(user_in_own_canister.user_id.index(), 0);
 
     // The OpenChat bot sends the same welcome messages as it does to a user in a canister of their own
     let expected = messages(&client::user::happy_path::events(
@@ -2488,6 +2489,7 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
     let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
     let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
     let welcome_messages = bot_messages(env, a_principal, canister_id, a).len();
+    let b_bot_messages = bot_message_texts(env, b_principal, canister_id, b);
 
     let now = now_millis(env);
     let notes = random_string();
@@ -2569,8 +2571,8 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
             .any(|event| matches!(event.reason, types::ChitEventType::Achievement(Achievement::SentReminder)))
     );
 
-    // The other user has no chat with the OpenChat bot
-    assert!(initial_state(env, b_principal, canister_id).direct_chats.summaries.is_empty());
+    // The other user's chat with the OpenChat bot still holds only their welcome messages
+    assert_eq!(bot_message_texts(env, b_principal, canister_id, b), b_bot_messages);
 }
 
 fn set_message_reminder(
@@ -3626,6 +3628,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     let carol = client::register_user(env, canister_ids);
     let (alice, alice_id) = create_user_referred_by(env, canister_ids, local_user_index, canister_id, Some(carol.user_id));
     let (bob, bob_id) = create_user_referred_by(env, canister_ids, local_user_index, canister_id, Some(alice_id));
+    let bob_bot_messages = bot_message_texts(env, bob, canister_id, bob_id);
     let referred_elsewhere: UserId = random_principal().into();
 
     let events = vec![
@@ -3711,6 +3714,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     assert!(bob_state.referrals.is_empty());
     assert!(bob_state.chit_balance == 0);
     assert!(bob_state.direct_chats.summaries.is_empty());
+    assert_eq!(bot_message_texts(env, bob, canister_id, bob_id), bob_bot_messages);
 
     // A referred user in another canister reaching a status is sent as a `SetReferralStatus`
     // event from their canister, as the User canister sends it
@@ -4515,7 +4519,10 @@ fn a_user_is_deleted_from_a_multi_user_canister_without_affecting_the_others() {
         panic!("{response:?}");
     };
     assert_eq!(new_alice_id.index(), 3);
-    assert!(initial_state(env, alice, canister_id).direct_chats.summaries.is_empty());
+    // Created without welcome messages, so she has no chat at all, not even with the OpenChat bot
+    let user_canister::initial_state::Response::Success(new_alice_state) =
+        client::user::initial_state(env, alice, canister_id, &user_canister::initial_state::Args {});
+    assert!(new_alice_state.direct_chats.summaries.is_empty());
 }
 
 fn delete_user(env: &mut PocketIc, local_user_index: CanisterId, canister_id: CanisterId, user_id: UserId) {
