@@ -14,10 +14,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the syncing of users' minutes online to the deprecated AirdropBot ([#9595](https://github.com/open-chat-labs/open-chat/pull/9595))
 
-### Fixed
-
-- Know a user migrated to a MultiUser canister by their new id, moving their last online date and minutes online to it ([#9632](https://github.com/open-chat-labs/open-chat/pull/9632))
-
 ## [[2.0.2065](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2065-online_users)] - 2026-09-25
 
 ### Added
