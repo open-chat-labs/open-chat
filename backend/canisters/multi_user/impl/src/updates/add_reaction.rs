@@ -1,6 +1,6 @@
 use crate::guards::caller_is_hosted_user;
 use crate::updates::remove_reaction::toggle_reaction;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::Achievement;
@@ -9,7 +9,7 @@ use user_canister::add_reaction::*;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn add_reaction(args: Args) -> Response {
-    mutate_state(|state| add_reaction_impl(args, state)).into()
+    execute_update(|state| add_reaction_impl(args, state)).into()
 }
 
 fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> types::OCResult {

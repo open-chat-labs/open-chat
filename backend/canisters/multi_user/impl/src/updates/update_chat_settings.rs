@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, look_up_direct_chat_user, mutate_state, read_state};
+use crate::{RuntimeState, execute_update_async, look_up_direct_chat_user, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
@@ -12,6 +12,10 @@ use user_canister::{SetEventsTtl, UserCanisterEvent};
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 async fn update_chat_settings(args: Args) -> Response {
+    execute_update_async(|| update_chat_settings_impl(args)).await
+}
+
+async fn update_chat_settings_impl(args: Args) -> Response {
     // As in the User canister, a user in another canister whom the caller has no chat with yet is
     // looked up in the LocalUserIndex, which gives whether they are a user or a bot
     let mut their_user_type = UserType::User;
@@ -22,7 +26,7 @@ async fn update_chat_settings(args: Args) -> Response {
         }
     }
 
-    mutate_state(|state| update_chat_settings_impl(args, their_user_type, state)).into()
+    mutate_state(|state| commit(args, their_user_type, state)).into()
 }
 
 // Ok if `them` needs no looking up: they are the OpenChat bot, a user in this canister, or a user
@@ -43,7 +47,7 @@ fn check_chat_exists(them: UserId, state: &RuntimeState) -> Result<(), CanisterI
     if has_chat { Ok(()) } else { Err(state.data.local_user_index_canister_id) }
 }
 
-fn update_chat_settings_impl(args: Args, their_user_type: UserType, state: &mut RuntimeState) -> OCResult {
+fn commit(args: Args, their_user_type: UserType, state: &mut RuntimeState) -> OCResult {
     // Checked again, since the caller may have been deleted while the other user was looked up
     let my_index = state.caller_user_index().ok_or(OCErrorCode::InitiatorNotAuthorized)?;
     let my_user_id = state.user_id(my_index);

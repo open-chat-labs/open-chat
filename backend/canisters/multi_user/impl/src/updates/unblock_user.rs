@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
@@ -9,7 +9,7 @@ use user_canister::unblock_user::*;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn unblock_user(args: Args) -> Response {
-    mutate_state(|state| unblock_user_impl(args, state)).into()
+    execute_update(|state| unblock_user_impl(args, state)).into()
 }
 
 fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {

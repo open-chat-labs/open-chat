@@ -1,6 +1,6 @@
 use crate::guards::caller_is_user_index;
 use crate::updates::c2c_import_user::abandon_import;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use multi_user_canister::c2c_abandon_user_import::{Response::*, *};
@@ -8,7 +8,7 @@ use multi_user_canister::c2c_abandon_user_import::{Response::*, *};
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
 fn c2c_abandon_user_import(args: Args) -> Response {
-    mutate_state(|state| c2c_abandon_user_import_impl(args, state))
+    execute_update(|state| c2c_abandon_user_import_impl(args, state))
 }
 
 fn c2c_abandon_user_import_impl(args: Args, state: &mut RuntimeState) -> Response {

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state, read_state};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -10,6 +10,10 @@ use user_canister::delete_group::*;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 async fn delete_group(args: Args) -> Response {
+    execute_update_async(|| delete_group_impl(args)).await
+}
+
+async fn delete_group_impl(args: Args) -> Response {
     let (my_index, _, my_user_id) = match read_state(prepare) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),

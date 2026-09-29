@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state};
+use crate::{execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_types::EventBuilder;
@@ -16,6 +16,10 @@ use user_core::updates::update_btc_balance::{BtcDepositOrWithdrawalEventPayload,
 #[update(msgpack = true)]
 #[trace]
 async fn update_btc_balance(args: Args) -> Response {
+    execute_update_async(|| update_btc_balance_impl(args)).await
+}
+
+async fn update_btc_balance_impl(args: Args) -> Response {
     let (user_index, me, test_mode) = match read_state(|state| {
         let index = state.authorized_user_index(args.user_id)?;
         let principal = state

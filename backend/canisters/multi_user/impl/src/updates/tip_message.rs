@@ -1,6 +1,6 @@
 use crate::crypto::user_wallet;
 use crate::guards::caller_is_hosted_user;
-use crate::{MultiUserEventPusher, RuntimeState, mutate_state, read_state};
+use crate::{MultiUserEventPusher, RuntimeState, execute_update_async, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -17,7 +17,11 @@ use user_canister::tip_message::{Response::*, *};
 // groups and channels are given by calling the group or community directly.
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-async fn tip_message(mut args: Args) -> Response {
+async fn tip_message(args: Args) -> Response {
+    execute_update_async(|| tip_message_impl(args)).await
+}
+
+async fn tip_message_impl(mut args: Args) -> Response {
     let PrepareOk {
         my_index,
         my_principal,

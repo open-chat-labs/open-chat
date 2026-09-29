@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
@@ -9,7 +9,7 @@ use user_canister::set_profile_background::*;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn set_profile_background(args: Args) -> Response {
-    mutate_state(|state| set_profile_background_impl(args, state)).into()
+    execute_update(|state| set_profile_background_impl(args, state)).into()
 }
 
 fn set_profile_background_impl(args: Args, state: &mut RuntimeState) -> OCResult {

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
@@ -11,7 +11,7 @@ use utils::document::validate_avatar;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn set_avatar(args: Args) -> Response {
-    mutate_state(|state| set_avatar_impl(args, state)).into()
+    execute_update(|state| set_avatar_impl(args, state)).into()
 }
 
 fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> OCResult {

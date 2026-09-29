@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::Achievement;
@@ -8,7 +8,7 @@ use user_canister::manage_favourite_chats::*;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn manage_favourite_chats(args: Args) -> Response {
-    mutate_state(|state| manage_favourite_chats_impl(args, state))
+    execute_update(|state| manage_favourite_chats_impl(args, state))
 }
 
 fn manage_favourite_chats_impl(args: Args, state: &mut RuntimeState) -> Response {
