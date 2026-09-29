@@ -90,16 +90,12 @@ do
 done
 
 # Cargo unifies the features of the dependencies of every package in a build, so building only
-# some canisters can give them different features, and so different wasms, from building them all.
-# A test build therefore always compiles every canister, then only optimises those asked for.
-if [ "${TEST_BUILD}" == "1" ]
-then
-  PACKAGE_CANISTERS=("${ALL_CANISTERS[@]}")
-else
-  PACKAGE_CANISTERS=("${CANISTERS[@]}")
-fi
+# some canisters can give them different features, and so different wasms, from building them all
+# (eg. the LocalUserIndex built alone is over the size limit). So every canister is always
+# compiled, and only those asked for are optimised, so that a canister's wasm is the same however
+# it was built, and matches the released wasm (see docker-build-all-wasms.sh).
 PACKAGES=()
-for CANISTER in "${PACKAGE_CANISTERS[@]}"; do
+for CANISTER in "${ALL_CANISTERS[@]}"; do
   PACKAGES+=(--package "${CANISTER}_canister_impl")
 done
 cargo build --locked --target wasm32-unknown-unknown --release "${PACKAGES[@]}" || exit 1
