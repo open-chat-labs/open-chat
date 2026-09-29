@@ -562,7 +562,7 @@ export class UserClient
         blockLevelMarkdown?: boolean,
     ): Promise<EditMessageResponse> {
         return new DataClient(this.identity, this.agent, this.config)
-            .uploadData(message.content, [this.userId, recipientId])
+            .uploadData(message.content, accessorCanisterIds(this.userId, recipientId))
             .then((content) => {
                 const req = {
                     content: apiMessageContent(content ?? message.content),
@@ -594,8 +594,14 @@ export class UserClient
 
         const dataClient = new DataClient(this.identity, this.agent, this.config);
         const uploadContentPromise = event.event.forwarded
-            ? dataClient.forwardData(event.event.content, [this.userId, chatId.userId])
-            : dataClient.uploadData(event.event.content, [this.userId, chatId.userId]);
+            ? dataClient.forwardData(
+                  event.event.content,
+                  accessorCanisterIds(this.userId, chatId.userId),
+              )
+            : dataClient.uploadData(
+                  event.event.content,
+                  accessorCanisterIds(this.userId, chatId.userId),
+              );
 
         return uploadContentPromise.then((content) => {
             const newEvent =
@@ -1669,4 +1675,11 @@ export class UserClient
             UnitResult,
         );
     }
+}
+
+// The canisters which may access the files in a direct message: those holding the two users, which
+// for a user in a MultiUser canister isn't their user id. They delete the files when the message
+// is deleted or expires.
+function accessorCanisterIds(...userIds: string[]): string[] {
+    return userIds.map((userId) => userCanisterId(userId).toText());
 }
