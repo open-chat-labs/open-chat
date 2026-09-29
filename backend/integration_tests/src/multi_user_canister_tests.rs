@@ -6832,3 +6832,79 @@ fn users_read_their_direct_chats_via_the_local_user_index() {
         );
     }
 }
+
+// A bot reads its direct chat with a user in a MultiUser canister via the LocalUserIndex's
+// `bot_chat_events`, which asks the canister for that user's copy of the chat
+#[test]
+fn bots_read_their_direct_chats_with_users_via_the_local_user_index() {
+    use local_user_index_canister::chat_events::{EventsPageArgs, EventsSelectionCriteria};
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
+        env,
+        // Registered by A, since a bot is private until published, so only its owner can install it
+        a_principal,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        BotDefinition {
+            description: random_string(),
+            commands: Vec::new(),
+            autonomous_config: Some(AutonomousConfig {
+                permissions: BotPermissions::text_only(),
+            }),
+            default_subscriptions: None,
+            data_encoding: None,
+            restricted_locations: None,
+        },
+    );
+    client::local_user_index::happy_path::install_bot(
+        env,
+        a_principal,
+        local_user_index,
+        BotInstallationLocation::User(a.into()),
+        bot_id,
+        BotPermissions::text_only(),
+        Some(BotPermissions::text_only()),
+    );
+    tick_many(env, 3);
+
+    send_text_message(env, a_principal, canister_id, bot_id, "Hello bot", random_from_u128());
+
+    let response = client::local_user_index::bot_chat_events(
+        env,
+        bot_principal,
+        local_user_index,
+        &local_user_index_canister::bot_chat_events::Args {
+            chat_context: BotChatContext::Autonomous(Chat::Direct(a.into())),
+            thread: None,
+            events: EventsSelectionCriteria::Page(EventsPageArgs {
+                start_index: 0.into(),
+                ascending: true,
+                max_messages: 10,
+                max_events: 10,
+            }),
+        },
+    );
+    let local_user_index_canister::bot_chat_events::Response::Success(result) = &response else {
+        panic!("{response:?}");
+    };
+    assert!(
+        result
+            .events
+            .iter()
+            .any(|e| matches!(&e.event, ChatEvent::Message(m) if m.sender == a && m.content.text() == Some("Hello bot"))),
+        "{result:?}"
+    );
+}
