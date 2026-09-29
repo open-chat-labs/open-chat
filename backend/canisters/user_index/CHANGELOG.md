@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Once a MultiUser canister has imported a migrating user, switch them over to their new id, re-keying them here and telling the Identity canister and every LocalUserIndex ([#9602](https://github.com/open-chat-labs/open-chat/pull/9602))
 - Add `previous_user_ids` to the current user in `current_user` and `users` responses ([#9608](https://github.com/open-chat-labs/open-chat/pull/9608))
 - Cancel user migrations which make no progress for an hour, and only unfreeze a user's canister once the MultiUser canister has abandoned importing them ([#9610](https://github.com/open-chat-labs/open-chat/pull/9610))
+- Notify the OnlineUsers canister when a user is migrated ([#9632](https://github.com/open-chat-labs/open-chat/pull/9632))
 
 ### Changed
 
@@ -39,6 +40,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 - Move bot installations in a user's direct chat which were recorded under a `Group` or `Community` location back to the `User` location, since their events were being routed to a group or community that doesn't exist ([#9522](https://github.com/open-chat-labs/open-chat/pull/9522))
+- Tell the NotificationsIndex when a user is migrated, so it stops knowing them by their old id ([#9627](https://github.com/open-chat-labs/open-chat/pull/9627))
+- Move the blocked-user pairs naming a migrated user onto their new id, including those blocked or unblocked by their old id afterwards ([#9630](https://github.com/open-chat-labs/open-chat/pull/9630))
 
 ## [[2.0.2064](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2064-user_index)] - 2026-09-23
 

@@ -51,23 +51,36 @@ export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
     }
 
     async getWithdrawalInfo(amount: bigint): Promise<CkbtcMinterWithdrawalInfo> {
-        const minWithdrawalAmountPromise = this.getMinterInfoCached().then(
-            (i) => i.minWithdrawalAmount,
-        );
-        const feeEstimatePromise = this.handleQueryResponse(
-            () => this.service.estimate_withdrawal_fee({ amount: [amount] }),
-            (resp) => resp.minter_fee + resp.bitcoin_fee,
-        );
+        const { minWithdrawalAmount } = await this.getMinterInfoCached();
 
-        const [minWithdrawalAmount, feeEstimate] = await Promise.all([
-            minWithdrawalAmountPromise,
-            feeEstimatePromise,
-        ]);
+        // The minter traps on 0 ("withdrawal amount is too large", as no UTXOs are selected), on
+        // a small amount under its minimum ("withdrawal amount is too low") and on more than all
+        // its UTXOs together ("withdrawal amount is too large"). The send form asks for an
+        // estimate with 0 on open and again on every keystroke, so those amounts are routine.
+        // Fall back to the minter's amount-independent estimate for them.
+        const feeEstimate = await (amount >= minWithdrawalAmount
+            ? this.estimateWithdrawalFee(amount).catch((err) => {
+                  if (String(err?.message).includes("withdrawal amount is too large")) {
+                      return this.estimateWithdrawalFee(undefined);
+                  }
+                  throw err;
+              })
+            : this.estimateWithdrawalFee(undefined));
 
         return {
             minWithdrawalAmount,
             feeEstimate,
         };
+    }
+
+    private estimateWithdrawalFee(amount: bigint | undefined): Promise<bigint> {
+        return this.handleQueryResponse(
+            () =>
+                this.service.estimate_withdrawal_fee({
+                    amount: amount === undefined ? [] : [amount],
+                }),
+            (resp) => resp.minter_fee + resp.bitcoin_fee,
+        );
     }
 
     private async getMinterInfoCached(): Promise<CkbtcMinterInfo> {

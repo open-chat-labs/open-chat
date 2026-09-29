@@ -10,7 +10,7 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Chat, DiamondMembershipPlanDuration, Document, Empty, MessageContent,
+    BuildVersion, CanisterId, CanisterWasm, Chat, ChatId, DiamondMembershipPlanDuration, Document, Empty, MessageContent,
     MessageContentInitial, OptionUpdate, P2PSwapContentInitial, ReferralStatus, UserId,
 };
 use user_index_canister::user_migration::UserMigrationStatus;
@@ -670,6 +670,159 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
 }
 
 #[test]
+fn notifications_index_knows_migrated_user_by_their_new_id() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    // Subscribing to notifications has the NotificationsIndex cache the user's id
+    let endpoint = random_string();
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        "auth",
+        "p256dh",
+        &endpoint,
+    );
+    assert!(client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        &endpoint
+    ));
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+
+    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id) {
+        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
+        status => panic!("User not imported: {status:?}"),
+    };
+
+    // The NotificationsIndex now knows the user by their new id, so the subscription held under their
+    // old id is no longer theirs
+    assert!(!client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        &endpoint
+    ));
+
+    // Upgrading the UserIndex once users have been migrated succeeds, and the user is still known by
+    // their new id
+    crate::delete_user_tests::upgrade_user_index(env, canister_ids);
+    tick_many(env, 3);
+    assert!(!client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        &endpoint
+    ));
+
+    // Once pushed again, the subscription is held under their new id, so they are notified of messages
+    // sent to them
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        "auth",
+        "p256dh",
+        &endpoint,
+    );
+    tick_many(env, 3);
+    let latest_notification_index =
+        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
+    client::user::happy_path::send_text_message(env, &user2, new_user_id, random_string(), None);
+    tick_many(env, 3);
+    let notifications =
+        client::local_user_index::happy_path::notifications(env, *controller, local_user_index, latest_notification_index + 1);
+    assert_eq!(notifications.notifications.len(), 1);
+    assert!(notifications.subscriptions.contains_key(&new_user_id));
+}
+
+#[test]
+fn blocked_user_pairs_are_moved_onto_a_migrated_users_new_id() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    let user3 = client::register_user(env, canister_ids);
+    // A private group, since members who join a public group have its notifications muted
+    let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
+    let group_local_user_index = canister_ids.local_user_index(env, group_id);
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        &user1,
+        group_local_user_index,
+        group_id,
+        vec![(user2.user_id, user2.principal), (user3.user_id, user3.principal)],
+    );
+    // user2 blocks user1, who blocks user3
+    client::user::happy_path::block_user(env, &user2, user1.user_id);
+    client::user::happy_path::block_user(env, &user1, user3.user_id);
+    subscribe_to_notifications(env, canister_ids, &user2);
+    tick_many(env, 10);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id) {
+        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
+        status => panic!("User not imported: {status:?}"),
+    };
+    // Having not subscribed until now, the user's subscription is held under their new id
+    subscribe_to_notifications(env, canister_ids, &user1);
+    tick_many(env, 10);
+
+    // user2 isn't notified of a message from user1, now under their new id
+    let recipients = group_message_notification_recipients(env, *controller, group_local_user_index, &user1, group_id);
+    assert!(recipients.is_empty(), "{recipients:?}");
+    // Nor is user1, under their new id, notified of a message from user3, while user2 is
+    let recipients = group_message_notification_recipients(env, *controller, group_local_user_index, &user3, group_id);
+    assert!(!recipients.contains(&new_user_id));
+    assert_eq!(recipients, vec![user2.user_id]);
+
+    // Once user2 unblocks user1, by the old id their canister still holds, they are notified again
+    client::user::happy_path::unblock_user(env, &user2, user1.user_id);
+    tick_many(env, 10);
+    let recipients = group_message_notification_recipients(env, *controller, group_local_user_index, &user1, group_id);
+    assert_eq!(recipients, vec![user2.user_id]);
+}
+
+#[test]
 fn migrated_user_is_not_rewarded_again_to_their_referrer() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -954,6 +1107,81 @@ fn user_canister_is_upgraded_to_the_latest_wasm_before_migrating() {
     wrapper.discard();
 }
 
+#[test]
+fn online_users_knows_migrated_user_by_their_new_id() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user = client::register_user(env, canister_ids);
+
+    // Marking the user as online has the OnlineUsers canister cache their id
+    client::online_users::happy_path::mark_as_online(env, user.principal, canister_ids.online_users);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+
+    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id) {
+        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
+        status => panic!("User not imported: {status:?}"),
+    };
+
+    // The user's last online date has moved from their old id to their new one
+    let last_online = |env: &PocketIc, user_id: UserId| {
+        client::online_users::happy_path::last_online(env, vec![user_id], canister_ids.online_users)
+            .first()
+            .map(|u| u.duration_since_last_online)
+    };
+    assert!(last_online(env, new_user_id).is_some());
+    assert!(last_online(env, user.user_id).is_none());
+
+    // The user is marked as online under their new id, carrying on from the minutes online recorded
+    // under their old id. The month may have ended in the meantime, so both months are counted.
+    env.advance_time(Duration::from_secs(60));
+    let online_users_canister::mark_as_online::Response::SuccessV2(result) =
+        client::online_users::mark_as_online(env, user.principal, canister_ids.online_users, &Empty {})
+    else {
+        panic!("Failed to mark user as online");
+    };
+    assert_eq!(result.minutes_online + result.minutes_online_last_month, 2);
+    assert_eq!(last_online(env, new_user_id), Some(0));
+    assert!(last_online(env, user.user_id).is_none());
+
+    // Upgrading the UserIndex once users have been migrated sends the events again, which changes
+    // nothing
+    crate::delete_user_tests::upgrade_user_index(env, canister_ids);
+    tick_many(env, 3);
+    assert!(last_online(env, new_user_id).is_some());
+    assert!(last_online(env, user.user_id).is_none());
+    assert_eq!(
+        client::online_users::happy_path::minutes_online(
+            env,
+            user.principal,
+            canister_ids.online_users,
+            result.year,
+            result.month
+        ),
+        result.minutes_online
+    );
+
+    // Upgrading the UserIndex runs its one-offs, which would break later tests which draw this env
+    wrapper.discard();
+}
+
 fn cancel_user_migration(
     env: &mut PocketIc,
     sender: Principal,
@@ -1109,6 +1337,34 @@ fn migrate_users(
         user_index_canister::migrate_users::Response::Success(result) => result.queued,
         response => panic!("'migrate_users' error: {response:?}"),
     }
+}
+
+fn subscribe_to_notifications(env: &mut PocketIc, canister_ids: &CanisterIds, user: &User) {
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user.principal,
+        canister_ids.notifications_index,
+        random_string(),
+        random_string(),
+        format!("https://{}.com/", random_string()),
+    );
+}
+
+// Sends a message to the group, returning the users its notification is pushed to
+fn group_message_notification_recipients(
+    env: &mut PocketIc,
+    controller: Principal,
+    local_user_index: CanisterId,
+    sender: &User,
+    group_id: ChatId,
+) -> Vec<UserId> {
+    let from_index = client::local_user_index::happy_path::latest_notification_index(env, controller, local_user_index) + 1;
+    client::group::happy_path::send_text_message(env, sender, group_id, None, random_string(), None);
+    tick_many(env, 3);
+    client::local_user_index::happy_path::notifications(env, controller, local_user_index, from_index)
+        .subscriptions
+        .into_keys()
+        .collect()
 }
 
 fn set_message_reminder(env: &mut PocketIc, user: &User, other_user: &User, remind_in: u64) {

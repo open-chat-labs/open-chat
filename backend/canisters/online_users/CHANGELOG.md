@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_user_index`, through which the UserIndex says when a user is deleted or migrated ([#9632](https://github.com/open-chat-labs/open-chat/pull/9632))
+
 ### Removed
 
 - Remove the syncing of users' minutes online to the deprecated AirdropBot ([#9595](https://github.com/open-chat-labs/open-chat/pull/9595))

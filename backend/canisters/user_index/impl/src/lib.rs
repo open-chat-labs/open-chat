@@ -1,5 +1,7 @@
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
+use crate::model::notifications_index_event_batch::NotificationsIndexEventBatch;
+use crate::model::online_users_event_batch::OnlineUsersEventBatch;
 use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
 use crate::model::protected_actions::{ProtectedActionMetrics, ProtectedActions};
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
@@ -27,6 +29,12 @@ use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
 use model::user_migrations::{UserMigrations, UserMigrationsMetrics};
 use model::users_last_online::{UsersLastOnline, UsersLastOnlineMetrics};
+use notifications_index_canister::{
+    UserIdMigrated as NotificationsIndexUserIdMigrated, UserIndexEvent as NotificationsIndexEvent,
+};
+use online_users_canister::{
+    UserDeleted as OnlineUsersUserDeleted, UserIdMigrated as OnlineUsersUserIdMigrated, UserIndexEvent as OnlineUsersEvent,
+};
 use p256_key_pair::P256KeyPair;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -37,7 +45,8 @@ use std::time::Duration;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId, Cycles, DiamondMembershipFees,
-    MediaScanConfig, Milliseconds, ModerationReferralConfig, TimestampMillis, Timestamped, UserId, UserType,
+    IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig, TimestampMillis, Timestamped, UserId,
+    UserType,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -177,9 +186,28 @@ impl RuntimeState {
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
+    pub fn push_event_to_notifications_index(&mut self, event: NotificationsIndexEvent) {
+        let now = self.env.now();
+        self.data.notifications_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        });
+    }
+
+    pub fn push_event_to_online_users(&mut self, event: OnlineUsersEvent) {
+        let now = self.env.now();
+        self.data.online_users_event_sync_queue.push(IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        });
+    }
+
     // Switches a user migrated to a MultiUser canister over from their old id to the new one it gave
     // them, once it has imported them. From then on they are known here by their new id, as they are
-    // by the Identity canister and by each LocalUserIndex once told.
+    // by the Identity canister, the NotificationsIndex, the OnlineUsers canister and each LocalUserIndex
+    // once told.
     pub fn switch_over_migrated_user(
         &mut self,
         old_user_id: UserId,
@@ -206,6 +234,15 @@ impl RuntimeState {
         }
         self.data.chit_leaderboard.migrate_user_id(old_user_id, new_user_id);
         self.data.external_achievements.migrate_user_id(old_user_id, new_user_id);
+        // Finding the users they've blocked means scanning every blocked-user pair (~55M instructions
+        // for 7.6k pairs). That is only done here, where no more users are switched over in a batch
+        // than the migration concurrency, which must be kept well below the ~700 at which a batch
+        // would run out of instructions, and not by each LocalUserIndex, which may be sent up to 1000
+        // switch-overs in one batch
+        let blocked_users: Vec<UserId> = self.data.blocked_users.all_users_linked_to(old_user_id);
+        self.data
+            .blocked_users
+            .migrate_user_id(old_user_id, new_user_id, &blocked_users);
         for (_, job) in self.data.timer_jobs.iter() {
             if let Some(job) = job.borrow_mut().as_mut() {
                 job.migrate_user_id(old_user_id, new_user_id);
@@ -219,14 +256,33 @@ impl RuntimeState {
         });
         jobs::sync_users_to_identity_canister::try_run_now(self);
 
-        self.record_user_id_migrated(old_user_id, new_user_id, canisters_to_notify);
+        self.push_event_to_notifications_index(NotificationsIndexEvent::UserIdMigrated(NotificationsIndexUserIdMigrated {
+            user_principal: principal,
+            old_user_id,
+            new_user_id,
+        }));
+
+        self.push_event_to_online_users(OnlineUsersEvent::UserIdMigrated(OnlineUsersUserIdMigrated {
+            user_principal: principal,
+            old_user_id,
+            new_user_id,
+        }));
+
+        self.record_user_id_migrated(old_user_id, new_user_id, canisters_to_notify, blocked_users);
         true
     }
 
     // Records that a user migrated to a MultiUser canister has been given a new id, and tells every
-    // LocalUserIndex, each of which tells whichever of the user's groups and communities it controls.
-    // Only the first call for a migration is acted on, so it must list all of them.
-    fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId, canisters_to_notify: Vec<CanisterId>) {
+    // LocalUserIndex, each of which tells whichever of the user's groups and communities it controls,
+    // and moves the pairs of the user and those they've blocked onto their new id. Only the first
+    // call for a migration is acted on, so it must list all of them.
+    fn record_user_id_migrated(
+        &mut self,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        canisters_to_notify: Vec<CanisterId>,
+        blocked_users: Vec<UserId>,
+    ) {
         if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
             self.data.multi_user_canisters.on_user_removed(&old_user_id);
             self.data.multi_user_canisters.on_user_added(&new_user_id);
@@ -235,6 +291,7 @@ impl RuntimeState {
                     old_user_id,
                     new_user_id,
                     canisters_to_notify,
+                    blocked_users,
                 }),
                 None,
             );
@@ -278,8 +335,9 @@ impl RuntimeState {
                 timestamp: now,
             });
 
-            self.data.remove_from_online_users_queue.push_back(user.principal);
-            jobs::remove_from_online_users_canister::start_job_if_required(self);
+            self.push_event_to_online_users(OnlineUsersEvent::UserDeleted(OnlineUsersUserDeleted {
+                user_principal: user.principal,
+            }));
 
             self.data.storage_index_users_to_remove_queue.push(user.principal);
             true
@@ -472,6 +530,10 @@ struct Data {
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
+    #[serde(default = "notifications_index_event_sync_queue")]
+    pub notifications_index_event_sync_queue: BatchedTimerJobQueue<NotificationsIndexEventBatch>,
+    #[serde(default = "online_users_event_sync_queue")]
+    pub online_users_event_sync_queue: BatchedTimerJobQueue<OnlineUsersEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub platform_moderators: HashSet<UserId>,
     pub platform_operators: HashSet<UserId>,
@@ -507,6 +569,10 @@ struct Data {
     pub deleted_users: Vec<DeletedUser>,
     #[serde(alias = "identity_canister_user_sync_queue_2")]
     pub identity_canister_user_sync_queue: VecDeque<UserIdentity>,
+    // No longer pushed to, its principals are sent to the OnlineUsers canister as `UserDeleted`
+    // events after the upgrade.
+    // TODO remove after the release containing this has been deployed
+    #[serde(default)]
     pub remove_from_online_users_queue: VecDeque<Principal>,
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
@@ -618,6 +684,8 @@ impl Data {
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(group_index_canister_id, false),
+            notifications_index_event_sync_queue: BatchedTimerJobQueue::new(notifications_index_canister_id, false),
+            online_users_event_sync_queue: BatchedTimerJobQueue::new(online_users_canister_id, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             platform_moderators: HashSet::new(),
             platform_operators: HashSet::new(),
@@ -711,6 +779,14 @@ impl Data {
     }
 }
 
+fn notifications_index_event_sync_queue() -> BatchedTimerJobQueue<NotificationsIndexEventBatch> {
+    BatchedTimerJobQueue::new(Principal::anonymous(), false)
+}
+
+fn online_users_event_sync_queue() -> BatchedTimerJobQueue<OnlineUsersEventBatch> {
+    BatchedTimerJobQueue::new(Principal::anonymous(), false)
+}
+
 #[cfg(test)]
 impl Default for Data {
     fn default() -> Data {
@@ -735,6 +811,8 @@ impl Default for Data {
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
+            notifications_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
+            online_users_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             platform_moderators: HashSet::new(),
             platform_operators: HashSet::new(),

@@ -8,7 +8,7 @@ use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT, Tokens};
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
 use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
-use pocket_ic::common::rest::{IcpFeatures, IcpFeaturesConfig};
+use pocket_ic::common::rest::{IcpConfig, IcpConfigFlag, IcpFeatures, IcpFeaturesConfig};
 use pocket_ic::{PocketIc, PocketIcBuilder, PocketIcState};
 use rand::{RngExt, SeedableRng, rngs::StdRng};
 use sha256::sha256;
@@ -16,7 +16,7 @@ use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
 use std::sync::OnceLock;
-use std::time::Instant;
+use std::time::{Instant, SystemTime};
 use storage_index_canister::init::CyclesDispenserConfig;
 use testing::NNS_INTERNET_IDENTITY_CANISTER_ID;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
@@ -35,7 +35,10 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
 
     let (state, canister_ids) = BASE_STATE.get_or_init(|| initialize_base_state(controller, seed));
 
-    let env = PocketIcBuilder::new().with_read_only_state(state).build();
+    let env = PocketIcBuilder::new()
+        .with_read_only_state(state)
+        .with_icp_config(icp_config())
+        .build();
 
     TestEnv {
         env,
@@ -61,6 +64,11 @@ fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIc
         .with_application_subnet()
         .with_state(PocketIcState::new())
         .with_icp_features(icp_features)
+        .with_icp_config(icp_config())
+        // Start from the current time rather than PocketIC's default of May 2021. Tests which need a
+        // recent time would otherwise jump the clock forward by years, which drains canisters of
+        // their cycles now that the IC charges every canister a base fee.
+        .with_initial_time(SystemTime::now().into())
         .build();
 
     println!("PocketIC instance ready. Installing canisters...");
@@ -76,6 +84,15 @@ fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIc
     let state = env.drop_and_take_state().unwrap();
 
     (state, canister_ids)
+}
+
+// PocketIC's beta features consist of the `flexible_http_requests` flag, which lets HTTPS outcalls
+// use pay-as-you-go pricing. The flag is enabled on every mainnet subnet, so enable it here too.
+fn icp_config() -> IcpConfig {
+    IcpConfig {
+        beta_features: Some(IcpConfigFlag::Enabled),
+        ..Default::default()
+    }
 }
 
 fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
