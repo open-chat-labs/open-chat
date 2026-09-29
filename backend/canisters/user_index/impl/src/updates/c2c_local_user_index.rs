@@ -336,11 +336,17 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 .users
                 .remove_bot_installation(ev.bot_id, ev.location, ev.uninstalled_by, event_timestamp);
         }
+        // A migrated user may still be named by their old id, eg. by the canisters of those who had
+        // blocked them before, whereas the pairs are held under their latest id
         LocalUserIndexEvent::UserBlocked(user_id, blocked) => {
+            let user_id = state.data.migrated_user_ids.latest(user_id);
+            let blocked = state.data.migrated_user_ids.latest(blocked);
             state.data.blocked_users.insert((blocked, user_id), ());
             state.push_event_to_all_local_user_indexes(UserIndexEvent::UserBlocked(user_id, blocked), Some(caller));
         }
         LocalUserIndexEvent::UserUnblocked(user_id, unblocked) => {
+            let user_id = state.data.migrated_user_ids.latest(user_id);
+            let unblocked = state.data.migrated_user_ids.latest(unblocked);
             state.data.blocked_users.remove(&(unblocked, user_id));
             state.push_event_to_all_local_user_indexes(UserIndexEvent::UserUnblocked(user_id, unblocked), Some(caller));
         }

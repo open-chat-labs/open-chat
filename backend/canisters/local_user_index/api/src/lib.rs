@@ -272,6 +272,10 @@ pub struct UserIdMigrated {
     // tells of the user's new id. Empty when sent to a LocalUserIndex added after the migration.
     #[serde(rename = "c", default, skip_serializing_if = "Vec::is_empty")]
     pub canisters_to_notify: Vec<CanisterId>,
+    // The users the migrated user has blocked, whose blocked-user pairs with the user's old id are
+    // moved onto the new one, since the LocalUserIndex could only find them by scanning every pair
+    #[serde(rename = "b", default, skip_serializing_if = "Vec::is_empty")]
+    pub blocked_users: Vec<UserId>,
 }
 
 // Tells the LocalUserIndex controlling a user's canister to start migrating the user to the given

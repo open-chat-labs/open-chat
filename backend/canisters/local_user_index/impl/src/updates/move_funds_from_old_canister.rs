@@ -320,7 +320,9 @@ fn queue_refund(state: &mut RuntimeState, canister_id: CanisterId) {
 
 // Installs the relay on the old canister, first topping the canister up, if need be, with the
 // cycles needed to install it and make the transfers through it. The top up comes back when the
-// canister's cycles are refunded.
+// canister's cycles are refunded. The canister's freezing threshold is left out, since it holds
+// back next to nothing for an uninstalled canister, which uses next to no memory, and is 0 once
+// the canister's cycles have been refunded.
 async fn install_relay(
     canister_id: CanisterId,
     status: &CanisterStatusMinimal,
@@ -328,8 +330,7 @@ async fn install_relay(
     transfer_count: usize,
 ) -> Result<(), OCError> {
     let concurrent_transfers = transfer_count.min(MAX_CONCURRENT_TRANSFERS) as Cycles;
-    let required =
-        status.freezing_threshold_cycles() + CYCLES_REQUIRED_FOR_INSTALL + concurrent_transfers * CYCLES_REQUIRED_PER_TRANSFER;
+    let required = CYCLES_REQUIRED_FOR_INSTALL + concurrent_transfers * CYCLES_REQUIRED_PER_TRANSFER;
     let balance = status.cycles();
     if balance < required {
         let top_up = required - balance;

@@ -249,8 +249,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::RefundDeletedUserCycles(canister_ids) => {
             let mut queued: HashSet<CanisterId> = state.data.cycles_refund_queue.iter().map(|c| c.canister_id).collect();
             for canister_id in canister_ids {
-                // Belt and braces, the job also refuses to touch any canister with code installed
-                if !state.data.local_users.contains(&canister_id.into()) && queued.insert(canister_id) {
+                // Belt and braces, the job also refuses to touch any canister with code installed.
+                // Deleted users' canisters used to be added to the canister pool, from which they
+                // may yet become live canisters, so any still in it are left alone.
+                if !state.data.local_users.contains(&canister_id.into())
+                    && !state.data.canister_pool.contains(&canister_id)
+                    && queued.insert(canister_id)
+                {
                     state.data.cycles_refund_queue.push_back(CanisterToRefund {
                         canister_id,
                         attempt: 0,
@@ -326,10 +331,15 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 state.push_event_to_user(user_id.into(), UserEvent::BotUpdated(Box::new(ev)), **now);
             }
         },
+        // The UserIndex names users by their latest ids, but a migration may not have reached here yet
         UserIndexEvent::UserBlocked(user_id, blocked) => {
+            let user_id = state.data.migrated_user_ids.latest(user_id);
+            let blocked = state.data.migrated_user_ids.latest(blocked);
             state.data.blocked_users.insert((blocked, user_id), ());
         }
         UserIndexEvent::UserUnblocked(user_id, unblocked) => {
+            let user_id = state.data.migrated_user_ids.latest(user_id);
+            let unblocked = state.data.migrated_user_ids.latest(unblocked);
             state.data.blocked_users.remove(&(unblocked, user_id));
         }
         UserIndexEvent::SetPremiumItemCost(ev) => state.data.premium_items.set(ev.item_id, ev.chit_cost),
@@ -403,6 +413,10 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         }
                     }
                 }
+                state
+                    .data
+                    .blocked_users
+                    .migrate_user_id(ev.old_user_id, ev.new_user_id, &ev.blocked_users);
                 for canister_id in ev.canisters_to_notify {
                     if state.data.local_groups.get(&canister_id.into()).is_some() {
                         state.push_event_to_group(
