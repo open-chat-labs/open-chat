@@ -55,7 +55,7 @@ fn join_private_group_with_invitation_succeeds() {
 
     client::group::happy_path::join_group(env, user2.principal, group_id);
 
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 

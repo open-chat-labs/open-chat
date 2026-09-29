@@ -1,9 +1,9 @@
+use base64::Engine;
 use canister_agent_utils::get_dfx_identity;
 use clap::Parser;
 use ic_agent::agent::AgentBuilder;
 use ic_utils::interfaces::ManagementCanister;
-use pocket_ic::nonblocking::PocketIc;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::Path;
 use types::CanisterId;
@@ -19,8 +19,7 @@ async fn main() {
         .build()
         .unwrap();
 
-    let pocket_ic = PocketIc::new_from_existing_instance(Url::parse(&args.pocket_ic_url).unwrap(), 0, None);
-    let effective_canister_id = pocket_ic.topology().await.default_effective_canister_id.into();
+    let effective_canister_id = default_effective_canister_id(&args.pocket_ic_url).await;
 
     ic_agent.fetch_root_key().await.unwrap();
 
@@ -44,6 +43,30 @@ async fn main() {
 
     let file_path = Path::new(&args.canister_ids_json_dir).join("canister_ids.json");
     std::fs::write(file_path, json).unwrap();
+}
+
+// Reads just the field we need from the PocketIC instance's topology rather than going through the
+// `pocket-ic` crate, whose `Topology` requires fields which the older PocketIC server bundled with
+// dfx doesn't return
+async fn default_effective_canister_id(pocket_ic_url: &str) -> CanisterId {
+    #[derive(Deserialize)]
+    struct Topology {
+        default_effective_canister_id: RawCanisterId,
+    }
+
+    #[derive(Deserialize)]
+    struct RawCanisterId {
+        // The principal's bytes, base64 encoded
+        canister_id: String,
+    }
+
+    let url = Url::parse(pocket_ic_url).unwrap().join("instances/0/read/topology").unwrap();
+    let body = reqwest::get(url).await.unwrap().text().await.unwrap();
+    let topology: Topology = serde_json::from_str(&body).unwrap();
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(topology.default_effective_canister_id.canister_id)
+        .unwrap();
+    CanisterId::from_slice(&bytes)
 }
 
 async fn create_canister(

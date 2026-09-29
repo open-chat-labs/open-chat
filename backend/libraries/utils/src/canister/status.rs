@@ -17,6 +17,7 @@ pub struct CanisterStatusMinimal {
     pub settings: CanisterSettingsMinimal,
     pub module_hash: Option<Vec<u8>>,
     pub cycles: Nat,
+    pub reserved_cycles: Nat,
     pub idle_cycles_burned_per_day: Nat,
 }
 

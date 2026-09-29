@@ -37,10 +37,12 @@ response was lost, in which case the cycles have most likely still arrived; call
 again is always safe. Anyone can call `refund`, since all it can do is move the canister's
 cycles to the CyclesDispenser.
 
-Note that a floor of roughly 80B cycles is left in each canister regardless. The IC withholds
+Note that a floor of roughly 110B cycles is left in each canister regardless. The IC withholds
 the execution prepayment for the update (~40B) and the reservation for the call's response and
 callback (~42B) until after they complete, so they cannot be attached to the call, and any call
-made later would need the same reservations again. Deleting a canister discards its cycles, so
+made later would need the same reservations again. The liquid balance also excludes the freezing
+threshold, which for an otherwise empty canister is ~26B (30 days of the base fee every canister
+pays). Deleting a canister discards its cycles, so
 leaving them uninstalled costs nothing more. Also note that once drained a canister no longer
 has enough cycles for `install_code`, which prepays for its execution, so the wasm cannot be
 installed a second time without first topping the canister up.
