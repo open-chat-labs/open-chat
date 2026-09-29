@@ -6780,3 +6780,55 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
     )
     .unwrap();
 }
+
+// A user in a MultiUser canister can read their direct chats via their LocalUserIndex's
+// `chat_events`, which asks the canister for that user's copy of the chat
+#[test]
+fn users_read_their_direct_chats_via_the_local_user_index() {
+    use local_user_index_canister::chat_events::{EventsArgs, EventsContext, EventsResponse, EventsSelectionCriteria};
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    send_text_message(env, a_principal, canister_id, b, "Hello from A", random_from_u128());
+
+    for (principal, them) in [(a_principal, b), (b_principal, a)] {
+        let local_user_index_canister::chat_events::Response::Success(result) = client::local_user_index::chat_events(
+            env,
+            principal,
+            local_user_index,
+            &local_user_index_canister::chat_events::Args {
+                requests: vec![EventsArgs {
+                    context: EventsContext::Direct(them),
+                    args: EventsSelectionCriteria::Page(local_user_index_canister::chat_events::EventsPageArgs {
+                        start_index: 0.into(),
+                        ascending: true,
+                        max_messages: 10,
+                        max_events: 10,
+                    }),
+                    latest_known_update: None,
+                }],
+            },
+        );
+        let EventsResponse::Success(events) = &result.responses[0] else {
+            panic!("{:?}", result.responses[0]);
+        };
+        assert!(
+            events.events.iter().any(|e| matches!(
+                &e.event,
+                ChatEvent::Message(m) if m.sender == a && m.content.text() == Some("Hello from A")
+            )),
+            "{events:?}"
+        );
+    }
+}

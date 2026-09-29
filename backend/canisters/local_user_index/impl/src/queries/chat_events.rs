@@ -34,9 +34,10 @@ pub(crate) async fn make_c2c_call_to_get_events(
             // A bot reads the chat from the other user's canister, so the two roles swap
             let (user_id, them) = if bot_initiator.is_some() { (them, user_id) } else { (user_id, them) };
             let canister_id = user_id.canister_id();
-            // User canisters on the previous wasm read the peer from `user_id`, so it is sent in both
-            // fields until they have all been upgraded to read it from `them`
-            let user_id = them;
+            // A MultiUser canister reads the copy of the chat held by `user_id`, one of the users it
+            // holds. User canisters on the previous wasm read the peer from `user_id`, so for them it
+            // is sent in both fields until they have all been upgraded to read it from `them`.
+            let user_id = if user_id.is_indexed() { user_id } else { them };
 
             match events_args.args {
                 EventsSelectionCriteria::Page(args) => map_response(
