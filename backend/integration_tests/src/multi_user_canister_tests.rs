@@ -1430,6 +1430,89 @@ fn events_for_the_local_user_index_are_sent_from_a_multi_user_canister() {
     assert_eq!(queued_local_user_index_events(env, canister_id), 0);
 }
 
+#[test]
+fn message_events_are_pushed_to_the_event_store_as_by_user_canisters() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let message_id = random_from_u128();
+    let sent = now_millis(env);
+    send_text_message(env, a_principal, canister_id, b, "hello", message_id);
+    env.advance_time(Duration::from_millis(1000));
+    let edited = now_millis(env);
+    edit_message(env, a_principal, canister_id, b, None, message_id, "hello edited");
+    env.advance_time(Duration::from_millis(1000));
+    let reacted = now_millis(env);
+    toggle_reaction(
+        env,
+        b_principal,
+        canister_id,
+        a,
+        None,
+        message_id,
+        &Reaction::new("👍".to_string()),
+        true,
+    );
+
+    // The events are batched by this canister and then by the LocalUserIndex before reaching the
+    // event store
+    for _ in 0..4 {
+        env.advance_time(Duration::from_millis(60_000));
+        tick_many(env, 3);
+    }
+
+    // Each is pushed once, by the user who acted, even though both users' copies of the chat are in
+    // this canister
+    for (name, timestamp) in [
+        ("message_sent", sent),
+        ("message_edited", edited),
+        ("reaction_added", reacted),
+    ] {
+        assert_eq!(
+            event_store_count(env, *controller, canister_ids, name, timestamp),
+            1,
+            "{name} at {timestamp}"
+        );
+    }
+}
+
+// The number of events with the name and timestamp among the most recent in the event store, which
+// is shared with every other test running against the env, so events from other tests may have
+// landed after them
+fn event_store_count(
+    env: &mut PocketIc,
+    controller: Principal,
+    canister_ids: &CanisterIds,
+    name: &str,
+    timestamp: TimestampMillis,
+) -> usize {
+    let latest_event_index = client::event_store::happy_path::events(env, controller, canister_ids.event_store, 0, 0)
+        .latest_event_index
+        .unwrap_or_default();
+    let window = 100;
+    client::event_store::happy_path::events(
+        env,
+        controller,
+        canister_ids.event_store,
+        latest_event_index.saturating_sub(window),
+        window + 1,
+    )
+    .events
+    .iter()
+    .filter(|e| e.name == name && e.timestamp == timestamp)
+    .count()
+}
+
 fn queued_local_user_index_events(env: &PocketIc, canister_id: CanisterId) -> u32 {
     serde_json::from_value(metrics(env, canister_id)["queued_local_user_index_events"].clone()).unwrap()
 }
@@ -5303,11 +5386,14 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     // directly, and the tip goes from Alice's wallet to Bob's.
     let message_id = random_from_u128();
     send_text_message(env, bob, canister_id, alice_id, "tip me", message_id);
+    let tipped = now_millis(env);
     let response = alice_tips(env, bob_id, message_id);
     assert!(
         matches!(response, user_canister::tip_message::Response::Success),
         "{response:?}"
     );
+    // So that no later tip, eg. one from a User canister, has the same timestamp as this one
+    env.advance_time(Duration::from_millis(1));
     assert_eq!(
         tips_on(message(&events(env, alice, canister_id, alice_id, bob_id), message_id)),
         tipped_by(alice_id)
@@ -5437,6 +5523,13 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
         );
     }
     assert_eq!(client::ledger::happy_path::balance_of(env, ledger, alice), alices_balance);
+
+    // Alice's first tip was pushed to the event store, as a User canister's is
+    for _ in 0..4 {
+        env.advance_time(Duration::from_millis(60_000));
+        tick_many(env, 3);
+    }
+    assert_eq!(event_store_count(env, *controller, canister_ids, "message_tipped", tipped), 1);
 }
 
 #[test]

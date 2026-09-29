@@ -1,7 +1,7 @@
 use crate::model::members::stable_memory::MembersStableStorage;
 use crate::model::user_groups::{UserGroup, UserGroups};
 use constants::calculate_summary_updates_data_removal_cutoff;
-use group_community_common::{Member, MemberUpdate, Members};
+use group_community_common::{FormerMembers, Member, MemberUpdate, Members};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
@@ -39,12 +39,10 @@ pub struct CommunityMembers {
     members_with_referrals: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
     latest_update_removed: TimestampMillis,
-    // Users who were members of the community but no longer are, other than deleted users, plus the former members
-    // of any groups imported into it who are not in the community, since the imported channels' events refer to
-    // them too. A user who joins is removed again. Recorded so that a user who rejoins under a new id, having been
-    // migrated to a MultiUser canister, can be recognised as having events under their earlier ids.
+    // Also holds the former members of any groups imported into the community who are not in it, since the
+    // imported channels' events refer to them too
     #[serde(default)]
-    former_members: BTreeSet<UserId>,
+    former_members: FormerMembers,
 }
 
 impl CommunityMembers {
@@ -93,7 +91,7 @@ impl CommunityMembers {
             members_with_referrals: BTreeSet::new(),
             updates: BTreeSet::new(),
             latest_update_removed: 0,
-            former_members: BTreeSet::new(),
+            former_members: FormerMembers::default(),
         }
     }
 
@@ -130,7 +128,7 @@ impl CommunityMembers {
             };
             self.add_user_id(principal, user_id);
             self.members_map.insert(member.user_id, member.clone());
-            self.former_members.remove(&user_id);
+            self.former_members.on_member_added(user_id);
             self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
 
             if let Some(referrer) = referred_by
@@ -226,10 +224,7 @@ impl CommunityMembers {
         if record_update {
             self.prune_then_insert_member_update(user_id, MemberUpdate::Removed, now);
         }
-        // A deleted user never rejoins, so there is no need to record them
-        if !user_deleted {
-            self.former_members.insert(user_id);
-        }
+        self.former_members.on_member_removed(user_id, user_deleted);
 
         Some(member)
     }
@@ -470,12 +465,7 @@ impl CommunityMembers {
             }
             updated = true;
         }
-        if self.former_members.remove(&old_user_id) {
-            if !is_member {
-                self.former_members.insert(new_user_id);
-            }
-            updated = true;
-        }
+        updated |= self.former_members.migrate_user_id(old_user_id, new_user_id, is_member);
         updated
     }
 
@@ -540,7 +530,7 @@ impl CommunityMembers {
         }
 
         self.members_map.insert(new_user_id, member);
-        self.former_members.remove(&new_user_id);
+        self.former_members.on_member_added(new_user_id);
         self.prune_then_insert_member_update(old_user_id, MemberUpdate::Removed, now);
         self.prune_then_insert_member_update(new_user_id, MemberUpdate::Added, now);
     }
@@ -617,7 +607,7 @@ impl CommunityMembers {
     pub fn add_former_members(&mut self, user_ids: impl IntoIterator<Item = UserId>) {
         for user_id in user_ids {
             if !self.members_and_channels.contains_key(&user_id) {
-                self.former_members.insert(user_id);
+                self.former_members.record(user_id);
             }
         }
     }
@@ -843,7 +833,7 @@ impl CommunityMembers {
         assert_eq!(suspended, self.suspended);
         assert_eq!(members_with_display_names, self.members_with_display_names);
         assert_eq!(members_with_referrals, self.members_with_referrals);
-        assert!(self.former_members.is_disjoint(&member_ids));
+        assert!(self.former_members.iter().all(|u| !member_ids.contains(&u)));
     }
 }
 

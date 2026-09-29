@@ -138,7 +138,7 @@ fn commit(user_to_remove: UserId, block: bool, remove: bool, caller: Caller, sta
         .remove_member(caller, user_to_remove, block, state.env.now())?;
 
     if remove {
-        state.data.remove_user(user_to_remove, None);
+        state.data.remove_user(user_to_remove, None, false);
     }
 
     state.push_bot_notification(bot_notification);
