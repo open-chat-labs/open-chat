@@ -60,6 +60,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Clear an imported user's BTC and OneSec deposit addresses, which were for their old canister's account ([#9607](https://github.com/open-chat-labs/open-chat/pull/9607))
 - Add `c2c_abandon_user_import`, after which a cancelled migration is never imported ([#9610](https://github.com/open-chat-labs/open-chat/pull/9610))
 - Push sent, edited and tipped messages, reactions and OpenChat bot messages to the event store, as User canisters do ([#9625](https://github.com/open-chat-labs/open-chat/pull/9625))
+- Send the OpenChat bot's welcome messages to each user created by `c2c_create_user`, as a User canister does when installed ([#9643](https://github.com/open-chat-labs/open-chat/pull/9643))
+- Delete the files of direct messages which are deleted or expire, record private replies to group messages, and record crypto received as message activity, as the User canister does ([#9644](https://github.com/open-chat-labs/open-chat/pull/9644))
+- Ask the LocalUserIndex for a top up when the cycles balance runs low, checked as updates run ([#9646](https://github.com/open-chat-labs/open-chat/pull/9646))
 
 ### Changed
 
@@ -91,7 +94,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Rename `send_message` back to `send_message_v2`, the name the User canister gives the endpoint whose args and response it takes, so that clients call both canisters the same way ([#9590](https://github.com/open-chat-labs/open-chat/pull/9590))
 - Apply direct chat events between users in the same canister as those from other canisters, so their recipients get the same achievements and notifications ([#9594](https://github.com/open-chat-labs/open-chat/pull/9594))
 - Return an error rather than trapping from `swap_tokens` and `c2c_withdraw_from_icpswap`, which aren't supported yet ([#9593](https://github.com/open-chat-labs/open-chat/pull/9593))
-- Record received crypto as message activity and replies to group messages as private replies, as the User canister does ([#9631](https://github.com/open-chat-labs/open-chat/pull/9631))
+- Run every update through `execute_update` or `execute_update_async`, which flush the queued events once the update is done ([#9642](https://github.com/open-chat-labs/open-chat/pull/9642))
+- Receive direct messages via `user_core`'s `receive_message`, shared with the User canister ([#9631](https://github.com/open-chat-labs/open-chat/pull/9631))
 
 ### Fixed
 

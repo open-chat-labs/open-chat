@@ -1,6 +1,6 @@
 use crate::guards::caller_is_hosted_user;
 use crate::timer_job_types::{HardDeleteMessageContentJob, TimerJob};
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::DeleteUndeleteMessagesArgs;
@@ -13,7 +13,7 @@ use user_canister::{DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs,
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn delete_messages(args: Args) -> Response {
-    mutate_state(|state| delete_messages_impl(args, state)).into()
+    execute_update(|state| delete_messages_impl(args, state)).into()
 }
 
 fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {

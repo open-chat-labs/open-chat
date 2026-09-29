@@ -2,6 +2,8 @@
     import "@styles/global.scss";
 
     import "@i18n/i18n";
+    import { localeLoadFailed } from "@i18n/i18n";
+    import Reload from "@shared_components/Reload.svelte";
     import { invoke } from "@tauri-apps/api/core";
     import { trackedEffect } from "@src/utils/effects.svelte";
     import { detectNeedsSafeInset, setupKeyboardTracking } from "@src/utils/safe_area";
@@ -53,7 +55,7 @@
     import { warmRichTextEditor } from "@shared_components/richTextEditorLoader";
     import { onMount, setContext } from "svelte";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
-    import { _, isLoading } from "svelte-i18n";
+    import { _, isLoading, locale } from "svelte-i18n";
     import {
         clearAllNotifications,
         deleteFcmToken,
@@ -438,7 +440,10 @@
 
     <!-- should we perhaps just _always_ render the router -->
     {#if $identityStateStore.kind === "anon" || $identityStateStore.kind === "logging_in" || $identityStateStore.kind === "registering" || $identityStateStore.kind === "logged_in" || $identityStateStore.kind === "loading_user"}
-        {#if !$isLoading}
+        <!-- a failed locale load clears isLoading with no locale set, and translating then throws; if English fails too nothing can be translated (#9636) -->
+        {#if $localeLoadFailed}
+            <Reload>Couldn't load OpenChat.</Reload>
+        {:else if $locale && !$isLoading}
             <Router />
         {/if}
     {/if}

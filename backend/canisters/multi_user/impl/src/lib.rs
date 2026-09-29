@@ -2,10 +2,10 @@ use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::model::user_imports::UserImports;
 use crate::model::users::Users;
-use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
-use canister_timer_jobs::TimerJobs;
+use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::EventPusher;
 use constants::OPENCHAT_BOT_USER_ID;
 use direct_chat::DirectChat;
@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
+use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
@@ -28,9 +29,11 @@ use types::{
 use user_canister::UserCanisterEvent;
 use user_core::User;
 use user_core::{Community, GroupChat};
+use utils::async_work::AsyncWorkGuard;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::migrated_user_ids::MigratedUserIds;
+use utils::regular_jobs::RegularJobs;
 
 mod crypto;
 mod guards;
@@ -40,6 +43,7 @@ mod memory;
 mod model;
 mod openchat_bot;
 mod queries;
+mod regular_jobs;
 mod timer_job_types;
 mod updates;
 
@@ -63,14 +67,38 @@ thread_local! {
 
 canister_state!(RuntimeState);
 
+// Runs an update call. Every update goes through this or `execute_update_async`, so that anything
+// which must happen around each update is done in one place
+fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
+    mutate_state(|state| {
+        state.run_regular_jobs();
+        let result = f(state);
+        state.data.flush_pending_events();
+        result
+    })
+}
+
+async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
+    let _guard = AsyncWorkGuard::new();
+    mutate_state(|state| state.run_regular_jobs());
+    let result = f().await;
+    mutate_state(|state| state.data.flush_pending_events());
+    result
+}
+
 struct RuntimeState {
     pub env: Box<dyn Environment>,
     pub data: Data,
+    pub regular_jobs: RegularJobs<Data>,
 }
 
 impl RuntimeState {
-    pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
-        RuntimeState { env, data }
+    pub fn new(env: Box<dyn Environment>, data: Data, regular_jobs: RegularJobs<Data>) -> RuntimeState {
+        RuntimeState { env, data, regular_jobs }
+    }
+
+    pub fn run_regular_jobs(&mut self) {
+        self.regular_jobs.run(self.env.deref(), &mut self.data);
     }
 
     pub fn is_caller_local_user_index(&self) -> bool {
@@ -500,9 +528,10 @@ impl RuntimeState {
     // the job to run again when their next event expires
     pub fn run_event_expiry_job(&mut self, user_index: u16) {
         let now = self.env.now();
-        let Some((next_event_expiry, thread_prefixes)) = self.data.users.with_user_mut(user_index, |user| {
+        let Some((next_event_expiry, thread_prefixes, files_to_delete)) = self.data.users.with_user_mut(user_index, |user| {
             let mut next_event_expiry = None;
             let mut thread_prefixes = Vec::new();
+            let mut files_to_delete = Vec::new();
             for chat in user.direct_chats.iter_mut() {
                 let result = chat.remove_expired_events(now);
                 if let Some(expiry) = chat.events().next_event_expiry()
@@ -510,9 +539,7 @@ impl RuntimeState {
                 {
                     next_event_expiry = Some(expiry);
                 }
-                // TODO: Delete the files referenced by the expired messages (`result.files`), as
-                // the User canister does
-                //
+                files_to_delete.extend(result.files);
                 // Threads aren't currently enabled for direct chats, but if a thread's root message
                 // expires then its entries in stable memory must be garbage collected
                 for thread in result.threads {
@@ -520,13 +547,18 @@ impl RuntimeState {
                 }
             }
             user.next_event_expiry = next_event_expiry;
-            (next_event_expiry, thread_prefixes)
+            (next_event_expiry, thread_prefixes, files_to_delete)
         }) else {
             return;
         };
 
         if !thread_prefixes.is_empty() {
             self.garbage_collect_stable_memory_keys(user_index, thread_prefixes);
+        }
+        // As in the User canister, each copy of the chat deletes the files of its expired messages.
+        // A file already deleted from the other copy is simply not found.
+        if !files_to_delete.is_empty() {
+            DeleteFileReferencesJob { files: files_to_delete }.execute();
         }
         if let Some(expiry) = next_event_expiry {
             self.data.timer_jobs.enqueue_job(
@@ -607,6 +639,12 @@ struct Data {
 }
 
 impl Data {
+    // Starts sending the events queued by the update, rather than waiting for the queues' timers
+    pub fn flush_pending_events(&mut self) {
+        self.user_canister_events_queue.flush();
+        self.local_user_index_event_sync_queue.flush();
+    }
+
     #[expect(clippy::too_many_arguments)]
     pub fn new(
         user_index_canister_id: CanisterId,

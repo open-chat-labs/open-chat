@@ -3,11 +3,15 @@ use crate::guards::{caller_is_hosted_user, caller_is_local_user_index};
 use crate::timer_job_types::{
     CancelP2PSwapInEscrowCanisterJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, TimerJob,
 };
-use crate::{MultiUserEventPusher, RuntimeState, look_up_direct_chat_user, mutate_state, read_state};
+use crate::{
+    MultiUserEventPusher, RuntimeState, execute_update, execute_update_async, look_up_direct_chat_user, mutate_state,
+    read_state,
+};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{
-    MessageContentInternal, NullEventPusher, PushMessageArgs, Reader, ReplyContextInternal, ValidateNewMessageContentResult,
+    ChatInternal, MessageContentInternal, NullEventPusher, PushMessageArgs, Reader, ReplyContextInternal,
+    ValidateNewMessageContentResult,
 };
 use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, NANOS_PER_MILLISECOND, OPENCHAT_BOT_USER_ID};
 use ledger_utils::UserTransfer;
@@ -32,10 +36,10 @@ use user_core::updates::offer_p2p_swap;
 // subaccount (see `ledger_utils::spender_subaccount`), or already made by the user and certified
 // (see `ledger_utils::UserTransfer`).
 async fn send_message_v2(args: Args) -> Response {
-    send_message_impl_async(args).await
+    execute_update_async(|| send_message_v2_impl(args)).await
 }
 
-async fn send_message_impl_async(mut args: Args) -> Response {
+async fn send_message_v2_impl(mut args: Args) -> Response {
     let PrepareOk {
         my_index,
         my_user_id,
@@ -252,7 +256,7 @@ async fn prepare_crypto_transfer(
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_message::Response {
-    mutate_state(|state| c2c_bot_send_message_impl(args, state))
+    execute_update(|state| c2c_bot_send_message_impl(args, state))
 }
 
 fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut RuntimeState) -> c2c_bot_send_message::Response {
@@ -503,14 +507,17 @@ fn send_message_impl(
 ) -> Response {
     let now = state.env.now();
 
-    // TODO: Record replies to messages in other chats (`mark_private_reply`)
+    let reply_context = replies_to.as_ref().map(ReplyContextInternal::from);
+    // A reply to a message in a group is recorded against the group, as in the User canister
+    let chat_private_replying_to = private_reply_chat(reply_context.as_ref().and_then(|r| r.chat_if_other));
+
     let push_message_args = PushMessageArgs {
         thread_root_message_index,
         message_id,
         sender: my_user_id,
         content: content.clone(),
         mentioned: Vec::new(),
-        replies_to: replies_to.as_ref().map(ReplyContextInternal::from),
+        replies_to: reply_context,
         forwarded: forwarding,
         sender_is_bot: false,
         block_level_markdown,
@@ -570,6 +577,10 @@ fn send_message_impl(
             display_name: user.display_name.value.clone(),
             avatar_id: user.avatar.id(),
         };
+        if let Some(chat) = chat_private_replying_to {
+            user.direct_chats
+                .mark_private_reply(recipient, chat, message_event.event.message_index);
+        }
         Ok((message_event, message_for_recipient, sender_details))
     });
 
@@ -723,4 +734,10 @@ pub(crate) fn receive_message(
     if let Some(notification) = received.notification {
         state.push_notification(Some(sender), their_index, notification, now);
     }
+}
+
+// The chat a reply is to when it is to a message in the main events of another chat, which is how
+// a private reply to a group message is made
+fn private_reply_chat(chat_if_other: Option<(ChatInternal, Option<MessageIndex>)>) -> Option<ChatInternal> {
+    if let Some((chat, None)) = chat_if_other { Some(chat) } else { None }
 }

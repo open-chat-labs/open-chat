@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state, read_state};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
@@ -11,6 +11,10 @@ use user_index_canister::c2c_report_message;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 async fn report_message(args: Args) -> Response {
+    execute_update_async(|| report_message_impl(args)).await
+}
+
+async fn report_message_impl(args: Args) -> Response {
     let (my_index, c2c_args, user_index_canister) = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),

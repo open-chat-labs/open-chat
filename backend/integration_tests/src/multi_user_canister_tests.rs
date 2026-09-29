@@ -13,13 +13,14 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    Achievement, AutonomousConfig, BotChatContext, BotDefinition, BotInitiator, BotInstallationLocation, BotMessageContent,
-    BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex, Chat, ChatEvent, ChatId,
-    ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent, CryptoTransaction, DeletedCommunityInfo,
-    DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty,
-    EventsResponse, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    NotificationEnvelope, OptionUpdate, P2PSwapContentInitial, P2PSwapStatus, PendingCryptoTransaction, PinNumberSettings,
-    Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
+    Achievement, AutonomousConfig, BlobReference, BotChatContext, BotDefinition, BotInitiator, BotInstallationLocation,
+    BotMessageContent, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex, Chat,
+    ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent, CryptoTransaction,
+    DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates,
+    Document, Empty, EventIndex, EventsResponse, FileContent, IdempotentEnvelope, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, Milliseconds, NotificationEnvelope, OptionUpdate, P2PSwapContentInitial,
+    P2PSwapStatus, PendingCryptoTransaction, PinNumberSettings, Reaction, ReferralStatus, ReplyContext, TextContent,
+    TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -140,6 +141,39 @@ fn register_user_with_flag_places_user_in_multi_user_canister() {
     for (canister_id, expected) in expected_user_counts {
         assert_eq!(user_count(&multi_user_canisters_after, canister_id), expected);
     }
+}
+
+#[test]
+fn users_registered_in_a_multi_user_canister_are_sent_the_welcome_messages() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (principal, user_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let user_in_own_canister = client::register_user(env, canister_ids);
+    assert_eq!(user_in_own_canister.user_id.index(), 0);
+
+    // The OpenChat bot sends the same welcome messages as it does to a user in a canister of their own
+    let expected = messages(&client::user::happy_path::events(
+        env,
+        &user_in_own_canister,
+        OPENCHAT_BOT_USER_ID,
+        0.into(),
+        true,
+        10,
+        10,
+    ));
+    assert!(!expected.is_empty());
+    assert_eq!(
+        messages(&events(env, principal, canister_id, user_id, OPENCHAT_BOT_USER_ID)),
+        expected
+    );
 }
 
 #[test]
@@ -284,6 +318,7 @@ fn users_created_in_multi_user_canister_are_addressed_by_indexed_user_id() {
                 principal,
                 username: random_string(),
                 referred_by: None,
+                openchat_bot_messages: Vec::new(),
             },
         )
     };
@@ -1038,12 +1073,16 @@ fn contacts(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> Vec<(
     result.contacts.into_iter().map(|c| (c.user_id, c.nickname)).collect()
 }
 
+// Leaves out the user's chat with the OpenChat bot, which every user has from being sent the
+// welcome messages when they registered
 fn initial_state(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> user_canister::initial_state::SuccessResult {
-    let user_canister::initial_state::Response::Success(result) =
+    let user_canister::initial_state::Response::Success(mut result) =
         client::user::initial_state(env, sender, canister_id, &user_canister::initial_state::Args {});
+    result.direct_chats.summaries.retain(|c| c.them != OPENCHAT_BOT_USER_ID);
     result
 }
 
+// Leaves out the user's chat with the OpenChat bot, as `initial_state` does
 fn updates(
     env: &PocketIc,
     sender: Principal,
@@ -1051,7 +1090,14 @@ fn updates(
     updates_since: TimestampMillis,
 ) -> Option<user_canister::updates::SuccessResult> {
     match client::user::updates(env, sender, canister_id, &user_canister::updates::Args { updates_since }) {
-        user_canister::updates::Response::Success(result) => Some(result),
+        user_canister::updates::Response::Success(mut result) => {
+            result.direct_chats.added.retain(|c| c.them != OPENCHAT_BOT_USER_ID);
+            result
+                .direct_chats
+                .updated
+                .retain(|c| c.chat_id != ChatId::from(OPENCHAT_BOT_USER_ID));
+            Some(result)
+        }
         user_canister::updates::Response::SuccessNoUpdates => None,
     }
 }
@@ -1445,6 +1491,8 @@ fn message_events_are_pushed_to_the_event_store_as_by_user_canisters() {
     let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
     let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
+    // Past when the welcome messages were sent, so that they aren't counted as the message sent below
+    env.advance_time(Duration::from_millis(1000));
     let message_id = random_from_u128();
     let sent = now_millis(env);
     send_text_message(env, a_principal, canister_id, b, "hello", message_id);
@@ -2441,6 +2489,8 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
 
     let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
     let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+    let welcome_messages = bot_messages(env, a_principal, canister_id, a).len();
+    let b_bot_messages = bot_message_texts(env, b_principal, canister_id, b);
 
     let now = now_millis(env);
     let notes = random_string();
@@ -2484,7 +2534,7 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
 
     env.advance_time(Duration::from_millis(999));
     env.tick();
-    assert_eq!(bot_messages(env, a_principal, canister_id, a).len(), 2);
+    assert_eq!(bot_messages(env, a_principal, canister_id, a).len(), welcome_messages + 2);
 
     env.advance_time(Duration::from_millis(1));
     env.tick();
@@ -2492,7 +2542,10 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
     // The OpenChat bot sent a message when each reminder was set, both of which are now hidden (the
     // first as its reminder has been sent and the second as its reminder was cancelled), followed by
     // the one reminder which wasn't cancelled
-    let [created1, created2, reminder]: [Message; 3] = bot_messages(env, a_principal, canister_id, a).try_into().unwrap();
+    let [created1, created2, reminder]: [Message; 3] = bot_messages(env, a_principal, canister_id, a)
+        .split_off(welcome_messages)
+        .try_into()
+        .unwrap();
     for (message, reminder_id) in [(created1, reminder1), (created2, reminder2)] {
         assert_eq!(message.sender, OPENCHAT_BOT_USER_ID);
         let MessageContent::MessageReminderCreated(created) = message.content else {
@@ -2519,8 +2572,8 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
             .any(|event| matches!(event.reason, types::ChitEventType::Achievement(Achievement::SentReminder)))
     );
 
-    // The other user has no chat with the OpenChat bot
-    assert!(initial_state(env, b_principal, canister_id).direct_chats.summaries.is_empty());
+    // The other user's chat with the OpenChat bot still holds only their welcome messages
+    assert_eq!(bot_message_texts(env, b_principal, canister_id, b), b_bot_messages);
 }
 
 fn set_message_reminder(
@@ -3576,6 +3629,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     let carol = client::register_user(env, canister_ids);
     let (alice, alice_id) = create_user_referred_by(env, canister_ids, local_user_index, canister_id, Some(carol.user_id));
     let (bob, bob_id) = create_user_referred_by(env, canister_ids, local_user_index, canister_id, Some(alice_id));
+    let bob_bot_messages = bot_message_texts(env, bob, canister_id, bob_id);
     let referred_elsewhere: UserId = random_principal().into();
 
     let events = vec![
@@ -3661,6 +3715,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     assert!(bob_state.referrals.is_empty());
     assert!(bob_state.chit_balance == 0);
     assert!(bob_state.direct_chats.summaries.is_empty());
+    assert_eq!(bot_message_texts(env, bob, canister_id, bob_id), bob_bot_messages);
 
     // A referred user in another canister reaching a status is sent as a `SetReferralStatus`
     // event from their canister, as the User canister sends it
@@ -4458,13 +4513,17 @@ fn a_user_is_deleted_from_a_multi_user_canister_without_affecting_the_others() {
             principal: alice,
             username: random_string(),
             referred_by: None,
+            openchat_bot_messages: Vec::new(),
         },
     );
     let multi_user_canister::c2c_create_user::Response::Success(new_alice_id) = response else {
         panic!("{response:?}");
     };
     assert_eq!(new_alice_id.index(), 3);
-    assert!(initial_state(env, alice, canister_id).direct_chats.summaries.is_empty());
+    // Created without welcome messages, so she has no chat at all, not even with the OpenChat bot
+    let user_canister::initial_state::Response::Success(new_alice_state) =
+        client::user::initial_state(env, alice, canister_id, &user_canister::initial_state::Args {});
+    assert!(new_alice_state.direct_chats.summaries.is_empty());
 }
 
 fn delete_user(env: &mut PocketIc, local_user_index: CanisterId, canister_id: CanisterId, user_id: UserId) {
@@ -5272,7 +5331,7 @@ fn users_send_crypto_from_their_own_wallets() {
         &initial_state(env, b_principal, canister_id),
         Achievement::ReceivedCrypto
     ));
-    // And appears once in B's message activity feed
+    // And it appears once in B's message activity feed, as it would were B in a User canister
     let feed = message_activity_feed(env, b_principal, canister_id, 0);
     assert_eq!(
         feed.events
@@ -6386,4 +6445,233 @@ fn token_swaps_return_errors_rather_than_trapping() {
         matches!(&withdraw_response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{withdraw_response:?}"
     );
+}
+
+// The files in a direct message are deleted by the canister holding the sender once the message is
+// deleted for good, or by the canisters holding each user when it expires, as a User canister does.
+// The frontend names the canisters holding the two users as the files' accessors, which is what lets
+// them delete the files.
+#[test]
+fn files_in_direct_messages_are_deleted_along_with_the_messages() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let send_file = |env: &mut PocketIc| {
+        let blob_reference = client::storage_index::happy_path::upload_file(
+            env,
+            a_principal,
+            canister_ids.storage_index,
+            100,
+            vec![canister_id],
+        );
+        let message_id = random_from_u128();
+        let response = client::user::send_message_v2(
+            env,
+            a_principal,
+            canister_id,
+            &user_canister::send_message_v2::Args {
+                content: MessageContentInitial::File(FileContent {
+                    name: random_string(),
+                    caption: None,
+                    mime_type: random_string(),
+                    file_size: 100,
+                    blob_reference: Some(blob_reference.clone()),
+                }),
+                ..send_message_args(b, "", message_id)
+            },
+        );
+        assert!(
+            matches!(response, user_canister::send_message_v2::Response::Success(_)),
+            "{response:?}"
+        );
+        (blob_reference, message_id)
+    };
+    let file_exists = |env: &PocketIc, blob_reference: &BlobReference| {
+        client::storage_bucket::happy_path::file_exists(env, a_principal, blob_reference.canister_id, blob_reference.blob_id)
+    };
+
+    // B deleting A's message from their copy of the chat leaves the file, which A's copy references
+    let (blob_reference, message_id) = send_file(env);
+    delete_messages(env, b_principal, canister_id, a, None, vec![message_id]);
+    env.advance_time(Duration::from_secs(301));
+    tick_many(env, 3);
+    assert!(file_exists(env, &blob_reference));
+
+    // A deleting it deletes the file once the message can no longer be undeleted
+    delete_messages(env, a_principal, canister_id, b, None, vec![message_id]);
+    env.advance_time(Duration::from_secs(301));
+    tick_many(env, 3);
+    assert!(!file_exists(env, &blob_reference));
+
+    // A message which disappears has its file deleted when it does
+    update_chat_settings(env, a_principal, canister_id, b, OptionUpdate::SetToSome(1000));
+    let (blob_reference, _) = send_file(env);
+    env.advance_time(Duration::from_millis(999));
+    tick_many(env, 5);
+    assert!(file_exists(env, &blob_reference));
+    env.advance_time(Duration::from_millis(1));
+    tick_many(env, 5);
+    assert!(!file_exists(env, &blob_reference));
+}
+
+// A reply in a direct chat to a message in a group is recorded against the group, in both users'
+// copies of the chat, so that when the group is imported into a community the reply is pointed at
+// the channel it became, as in the User canister
+#[test]
+fn private_replies_to_a_group_follow_it_into_a_community() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let group: ChatId = random_principal().into();
+    let community: CommunityId = random_principal().into();
+    let channel_id: ChannelId = 7u32.into();
+    let replied_to_event_index: EventIndex = 5.into();
+
+    let response = client::user::send_message_v2(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::send_message_v2::Args {
+            replies_to: Some(ReplyContext {
+                chat_if_other: Some((Chat::Group(group), None)),
+                event_index: replied_to_event_index,
+            }),
+            ..send_message_args(b, "A private reply", random_from_u128())
+        },
+    );
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::Success(_)),
+        "{response:?}"
+    );
+
+    let now = now_millis(env);
+    for user_id in [a, b] {
+        client::user::c2c_notify_group_deleted(
+            env,
+            canister_ids.group_index,
+            canister_id,
+            &user_canister::c2c_notify_group_deleted::Args {
+                user_id,
+                deleted_group: DeletedGroupInfoInternal {
+                    id: group,
+                    timestamp: now,
+                    deleted_by: random_principal().into(),
+                    group_name: "Group".to_string(),
+                    name: "Group".to_string(),
+                    public: false,
+                    community_imported_into: Some(CommunityImportedInto {
+                        community_name: "Community".to_string(),
+                        community_id: community,
+                        local_user_index_canister_id: local_user_index,
+                        channel: ChannelLatestMessageIndex {
+                            channel_id,
+                            latest_message_index: None,
+                        },
+                        other_default_channels: Vec::new(),
+                    }),
+                },
+            },
+        );
+    }
+
+    for (principal, me, them) in [(a_principal, a, b), (b_principal, b, a)] {
+        let ChatEvent::Message(message) = events(env, principal, canister_id, me, them).events.pop().unwrap().event else {
+            panic!("Expected a message");
+        };
+        let replies_to = message.replies_to.unwrap();
+        assert_eq!(replies_to.chat_if_other, Some((Chat::Channel(community, channel_id), None)));
+        assert_eq!(replies_to.event_index, replied_to_event_index);
+    }
+}
+
+// A MultiUser canister checks its cycles balance as it handles updates, as a User canister does, and
+// asks the LocalUserIndex for a top up once it runs low
+#[test]
+fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
+    const TOP_UP_AMOUNT: u128 = 200_000_000_000;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    // Runs an update once the check is due again, then gives the top up time to arrive
+    let update_once_check_due = |env: &mut PocketIc| {
+        env.advance_time(Duration::from_secs(6 * 60));
+        let response = client::user::set_bio(
+            env,
+            principal,
+            canister_id,
+            &user_canister::set_bio::Args { text: random_string() },
+        );
+        assert!(matches!(response, user_canister::set_bio::Response::Success));
+        tick_many(env, 5);
+    };
+
+    // While the balance is healthy there's no top up
+    let balance = env.cycle_balance(canister_id);
+    update_once_check_due(env);
+    assert!(env.cycle_balance(canister_id) <= balance);
+
+    // Raise the freezing threshold until the cycles it reserves are three quarters of the balance.
+    // The canister still runs, but its balance is now less than twice the reserve, which is when
+    // `check_cycles_balance` counts it as low.
+    let balance = env.cycle_balance(canister_id);
+    let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
+    let original_freezing_threshold = status.settings.freezing_threshold.clone();
+    let burned_per_day: u128 = status.idle_cycles_burned_per_day.0.try_into().unwrap();
+    assert!(burned_per_day > 0);
+    let freezing_threshold_secs = balance * 3 / 4 * 24 * 60 * 60 / burned_per_day;
+    env.update_canister_settings(
+        canister_id,
+        Some(local_user_index),
+        pocket_ic::CanisterSettings {
+            freezing_threshold: Some(freezing_threshold_secs.into()),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    update_once_check_due(env);
+    // Less a margin for the cycles the update and the check themselves use
+    assert!(env.cycle_balance(canister_id) > balance + TOP_UP_AMOUNT - 10_000_000_000);
+
+    // Put the freezing threshold back, since the environment, and so this canister, is shared with
+    // later tests
+    env.update_canister_settings(
+        canister_id,
+        Some(local_user_index),
+        pocket_ic::CanisterSettings {
+            freezing_threshold: Some(original_freezing_threshold),
+            ..Default::default()
+        },
+    )
+    .unwrap();
 }
