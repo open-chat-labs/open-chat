@@ -9,7 +9,7 @@ mod pre_upgrade;
 
 fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion) {
     let now = env.now();
-    let state = RuntimeState::new(env, data);
+    let state = RuntimeState::new(env, data, crate::regular_jobs::build());
 
     crate::jobs::start(&state);
     crate::init_state(state);

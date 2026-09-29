@@ -149,8 +149,11 @@ impl HardDeleteMessageContentJob {
 
 impl Job for TimerJob {
     fn execute(self) {
-        // Timer jobs which run within an update have their events flushed by it
+        // Timer jobs which run within an update rely on it to run the regular jobs and flush events
         let can_borrow_state = can_borrow_state();
+        if can_borrow_state {
+            mutate_state(|state| state.run_regular_jobs());
+        }
 
         match self {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
