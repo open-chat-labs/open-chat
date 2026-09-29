@@ -29,8 +29,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { toastStore } from "../../../stores/toast";
-    import { Debouncer } from "../../../utils/debouncer";
-    import { LatestOnly } from "../../../utils/latestOnly";
+    import { CkbtcWithdrawalInfoRequests } from "../../../utils/ckbtcWithdrawalInfo";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
@@ -67,7 +66,10 @@
     let accounts: NamedAccount[] = $state([]);
     let saveAccountElement: SaveAccount;
     let balanceWithRefresh: BalanceWithRefresh;
-    const ckbtcMinterInfoDebouncer = new Debouncer(getCkbtcMinterWithdrawalInfo, 500);
+    const ckbtcMinterInfoRequests = new CkbtcWithdrawalInfoRequests(
+        (amount) => client.getCkbtcMinterWithdrawalInfo(amount),
+        (info) => (ckbtcMinterWithdrawalInfo = info),
+    );
 
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
@@ -159,7 +161,7 @@
         accounts = await client.loadSavedCryptoAccounts();
 
         if (isBtc) {
-            getCkbtcMinterWithdrawalInfo(BigInt(0));
+            ckbtcMinterInfoRequests.now(BigInt(0));
         }
     });
 
@@ -171,7 +173,7 @@
     const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees());
     $effect(() => {
         if (isBtcNetwork) {
-            ckbtcMinterInfoDebouncer.execute(amountToSend);
+            ckbtcMinterInfoRequests.debounced(amountToSend);
         } else if (isOneSecNetwork) {
             // Filter to where source token equals destination token since we're dealing with cross-chain withdrawals
             oneSecFeesPromise
@@ -187,16 +189,6 @@
         }
     });
 
-    // The minter can answer an old amount after a newer one (a rejected amount falls back only
-    // after the agent's retries), so only the latest request may set the info
-    const ckbtcMinterInfoRequests = new LatestOnly();
-
-    function getCkbtcMinterWithdrawalInfo(amountToSend: bigint) {
-        ckbtcMinterInfoRequests.run(
-            () => client.getCkbtcMinterWithdrawalInfo(amountToSend),
-            (i) => (ckbtcMinterWithdrawalInfo = i),
-        );
-    }
 
     function saveAccount() {
         if (saveAccountElement !== undefined) {
