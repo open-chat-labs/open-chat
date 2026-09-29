@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::UserId;
@@ -8,7 +8,7 @@ use user_canister::c2c_grant_super_admin::*;
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
 fn c2c_grant_super_admin(args: Args) -> Response {
-    mutate_state(|state| set_platform_moderator(args.user_id, true, state))
+    execute_update(|state| set_platform_moderator(args.user_id, true, state))
 }
 
 // Traps for a user who isn't in this canister, rather than letting the UserIndex go on to record

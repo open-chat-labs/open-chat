@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state, read_state};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community;
@@ -10,6 +10,10 @@ use user_canister::create_community::{Response::*, *};
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 async fn create_community(args: Args) -> Response {
+    execute_update_async(|| create_community_impl(args)).await
+}
+
+async fn create_community_impl(args: Args) -> Response {
     let PrepareResult {
         my_index,
         group_index_canister_id,

@@ -1,6 +1,6 @@
 use crate::guards::caller_is_local_user_index;
 use crate::model::users::AddUserError;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use multi_user_canister::c2c_create_user::{Response::*, *};
@@ -10,7 +10,7 @@ use types::{OCResult, UserId};
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_create_user(args: Args) -> Response {
-    match mutate_state(|state| c2c_create_user_impl(args, state)) {
+    match execute_update(|state| c2c_create_user_impl(args, state)) {
         Ok(user_id) => Success(user_id),
         Err(error) => Error(error),
     }

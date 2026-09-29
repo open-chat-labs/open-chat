@@ -3,7 +3,10 @@ use crate::guards::{caller_is_hosted_user, caller_is_local_user_index};
 use crate::timer_job_types::{
     CancelP2PSwapInEscrowCanisterJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, TimerJob,
 };
-use crate::{MultiUserEventPusher, RuntimeState, look_up_direct_chat_user, mutate_state, read_state};
+use crate::{
+    MultiUserEventPusher, RuntimeState, execute_update, execute_update_async, look_up_direct_chat_user, mutate_state,
+    read_state,
+};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{
@@ -31,10 +34,10 @@ use user_core::updates::offer_p2p_swap;
 // subaccount (see `ledger_utils::spender_subaccount`), or already made by the user and certified
 // (see `ledger_utils::UserTransfer`).
 async fn send_message_v2(args: Args) -> Response {
-    send_message_impl_async(args).await
+    execute_update_async(|| send_message_v2_impl(args)).await
 }
 
-async fn send_message_impl_async(mut args: Args) -> Response {
+async fn send_message_v2_impl(mut args: Args) -> Response {
     let PrepareOk {
         my_index,
         my_user_id,
@@ -251,7 +254,7 @@ async fn prepare_crypto_transfer(
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_message::Response {
-    mutate_state(|state| c2c_bot_send_message_impl(args, state))
+    execute_update(|state| c2c_bot_send_message_impl(args, state))
 }
 
 fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut RuntimeState) -> c2c_bot_send_message::Response {

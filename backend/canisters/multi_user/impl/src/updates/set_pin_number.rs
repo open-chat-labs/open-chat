@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
@@ -14,7 +14,7 @@ const MAX_LENGTH: usize = 20;
 async fn set_pin_number(args: Args) -> Response {
     // TODO: This is async because verifying by reauthenticating calls the LocalUserIndex, as in the
     // User canister, which isn't supported yet
-    mutate_state(|state| set_pin_number_impl(args, state))
+    execute_update(|state| set_pin_number_impl(args, state))
 }
 
 fn set_pin_number_impl(args: Args, state: &mut RuntimeState) -> Response {

@@ -1,6 +1,6 @@
 use crate::guards::caller_is_hosted_user;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update_async, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -16,7 +16,11 @@ use user_core::updates::accept_p2p_swap::{Reserved, deposit_failed, deposited, p
 // by which it knows them.
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-async fn accept_p2p_swap(mut args: Args) -> Response {
+async fn accept_p2p_swap(args: Args) -> Response {
+    execute_update_async(|| accept_p2p_swap_impl(args)).await
+}
+
+async fn accept_p2p_swap_impl(mut args: Args) -> Response {
     let PrepareOk {
         my_index,
         my_user_id,

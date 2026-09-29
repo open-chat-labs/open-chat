@@ -1,4 +1,4 @@
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update_async, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -15,7 +15,11 @@ use user_core::updates::c2c_accept_p2p_swap::{deposited, prepare};
 // for them under their principal, which the group or community names them by too.
 #[update(msgpack = true)]
 #[trace]
-async fn c2c_accept_p2p_swap(mut args: Args) -> Response {
+async fn c2c_accept_p2p_swap(args: Args) -> Response {
+    execute_update_async(|| c2c_accept_p2p_swap_impl(args)).await
+}
+
+async fn c2c_accept_p2p_swap_impl(mut args: Args) -> Response {
     let PrepareOk {
         user_index,
         principal,

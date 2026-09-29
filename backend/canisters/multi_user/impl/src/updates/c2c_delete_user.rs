@@ -1,5 +1,5 @@
 use crate::guards::caller_is_local_user_index;
-use crate::{RuntimeState, jobs, mutate_state};
+use crate::{RuntimeState, execute_update, jobs};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use multi_user_canister::c2c_delete_user::*;
@@ -10,7 +10,7 @@ use tracing::info;
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_delete_user(args: Args) -> Response {
-    mutate_state(|state| c2c_delete_user_impl(args, state))
+    execute_update(|state| c2c_delete_user_impl(args, state))
 }
 
 // The user is removed, along with their timer jobs, and all of their entries in the stable memory

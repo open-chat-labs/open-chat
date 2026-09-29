@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_types::EventBuilder;
@@ -10,7 +10,7 @@ use user_core::updates::claim_daily_chit::{Claimed, UserClaimedDailyChitEventPay
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn claim_daily_chit(args: Args) -> Response {
-    mutate_state(|state| claim_daily_chit_impl(args, state))
+    execute_update(|state| claim_daily_chit_impl(args, state))
 }
 
 fn claim_daily_chit_impl(args: Args, state: &mut RuntimeState) -> Response {
