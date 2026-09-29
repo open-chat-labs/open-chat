@@ -20,8 +20,18 @@ pub struct Referrals {
 }
 
 impl Referrals {
-    pub fn set_status(&mut self, user_id: UserId, status: ReferralStatus, now: TimestampMillis) -> u32 {
-        let key = ReferralKeyPrefix::new().create_key(&user_id);
+    // Records the status the user has reached, returning the CHIT it earns: how much more it is worth
+    // than the status already recorded for them. A user migrated to a MultiUser canister since being
+    // referred keeps their referral under the id it was first recorded under, found from
+    // `previous_user_ids`, so that it isn't rewarded again under their new id.
+    pub fn set_status(
+        &mut self,
+        user_id: UserId,
+        previous_user_ids: &[UserId],
+        status: ReferralStatus,
+        now: TimestampMillis,
+    ) -> u32 {
+        let key = referral_key(user_id, previous_user_ids);
 
         let (chit_reward_diff, updated) = with_map_mut(|m| match m.entry(key) {
             Entry::Occupied(e) => {
@@ -103,6 +113,27 @@ impl Referrals {
     }
 }
 
+// The key the user's referral is held under: that of their current id, unless it is held under one of
+// their previous ids, in which case the latest such. A new referral is held under their current id.
+fn referral_key(user_id: UserId, previous_user_ids: &[UserId]) -> ReferralKey {
+    let prefix = ReferralKeyPrefix::new();
+    let key = prefix.create_key(&user_id);
+    if previous_user_ids.is_empty() {
+        return key;
+    }
+    with_map(|m| {
+        if m.contains_key(key.clone()) {
+            return key;
+        }
+        previous_user_ids
+            .iter()
+            .rev()
+            .map(|user_id| prefix.create_key(user_id))
+            .find(|previous_key| m.contains_key(previous_key.clone()))
+            .unwrap_or(key)
+    })
+}
+
 fn all_keys() -> RangeInclusive<ReferralKey> {
     // User ids are at most 29 bytes
     let prefix = ReferralKeyPrefix::new();
@@ -155,15 +186,15 @@ mod tests {
         let mut referrals = Referrals::default();
         let (user1, user2) = (user_id(1), user_id(2));
 
-        assert_eq!(referrals.set_status(user1, ReferralStatus::Registered, 10), 0);
-        assert_eq!(referrals.set_status(user2, ReferralStatus::Registered, 11), 0);
+        assert_eq!(referrals.set_status(user1, &[], ReferralStatus::Registered, 10), 0);
+        assert_eq!(referrals.set_status(user2, &[], ReferralStatus::Registered, 11), 0);
         assert_eq!(referrals.total_verified(), 0);
 
         let diamond_reward = Achievement::UpgradedToDiamond.chit_reward();
-        assert_eq!(referrals.set_status(user1, ReferralStatus::Diamond, 20), diamond_reward);
+        assert_eq!(referrals.set_status(user1, &[], ReferralStatus::Diamond, 20), diamond_reward);
         // Setting the same status again gives no further reward and doesn't update the referral
-        assert_eq!(referrals.set_status(user1, ReferralStatus::Diamond, 30), 0);
-        assert_eq!(referrals.set_status(user1, ReferralStatus::Registered, 30), 0);
+        assert_eq!(referrals.set_status(user1, &[], ReferralStatus::Diamond, 30), 0);
+        assert_eq!(referrals.set_status(user1, &[], ReferralStatus::Registered, 30), 0);
         assert_eq!(referrals.total_verified(), 1);
 
         let mut list = referrals.list();
@@ -177,6 +208,47 @@ mod tests {
         assert_eq!(updated.len(), 1);
         assert_eq!(updated[0].user_id, user1);
         assert!(referrals.updated_since(20).is_empty());
+    }
+
+    #[test]
+    fn migrated_users_status_is_set_on_their_referral_under_a_previous_id() {
+        init_stable_memory_map();
+        let mut referrals = Referrals::default();
+        let previous_user_ids = [user_id(1), user_id(2)];
+        let new_user_id = user_id(3);
+        let diamond_reward = Achievement::UpgradedToDiamond.chit_reward();
+        let lifetime_diamond_reward = Achievement::UpgradedToGoldDiamond.chit_reward();
+
+        assert_eq!(
+            referrals.set_status(previous_user_ids[0], &[], ReferralStatus::Diamond, 10),
+            diamond_reward
+        );
+        // Reaching the same status again under their new id earns nothing more
+        assert_eq!(
+            referrals.set_status(new_user_id, &previous_user_ids, ReferralStatus::Diamond, 20),
+            0
+        );
+        // While a higher status earns only the difference
+        assert_eq!(
+            referrals.set_status(new_user_id, &previous_user_ids, ReferralStatus::LifetimeDiamond, 30),
+            lifetime_diamond_reward - diamond_reward
+        );
+
+        // Their referral stays under the id it was first recorded under
+        let list = referrals.list();
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].user_id, previous_user_ids[0]);
+        assert!(matches!(list[0].status, ReferralStatus::LifetimeDiamond));
+        assert_eq!(referrals.total_verified(), 1);
+        assert_eq!(referrals.updated_since(20).len(), 1);
+
+        // A user with no referral under any of their ids is recorded under their current id
+        assert_eq!(
+            referrals.set_status(user_id(4), &[user_id(5)], ReferralStatus::Diamond, 40),
+            diamond_reward
+        );
+        assert!(referrals.list().iter().any(|r| r.user_id == user_id(4)));
+        assert!(!referrals.list().iter().any(|r| r.user_id == user_id(5)));
     }
 
     #[test]

@@ -284,11 +284,20 @@ impl RuntimeState {
     // Records the status `referred` has reached for the user at `referrer_index` who referred them,
     // telling the LocalUserIndex of their CHIT if it earned them any. This is the User canister's
     // handling of the `SetReferralStatus` event.
-    pub fn set_referral_status(&mut self, referrer_index: u16, referred: UserId, status: ReferralStatus, now: TimestampMillis) {
+    pub fn set_referral_status(
+        &mut self,
+        referrer_index: u16,
+        referred: UserId,
+        previous_user_ids: &[UserId],
+        status: ReferralStatus,
+        now: TimestampMillis,
+    ) {
         let rewarded = self
             .data
             .users
-            .with_user_mut(referrer_index, |user| user.set_referral_status(referred, status, now))
+            .with_user_mut(referrer_index, |user| {
+                user.set_referral_status(referred, previous_user_ids, status, now)
+            })
             .unwrap_or_default();
         if rewarded {
             self.notify_user_index_of_chit(referrer_index, now);

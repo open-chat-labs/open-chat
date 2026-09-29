@@ -355,7 +355,7 @@ fn cycles_refunded_metric(env: &pocket_ic::PocketIc, local_user_index: types::Ca
     metrics["cycles_refunded_from_deleted_users"].as_u64().unwrap().into()
 }
 
-fn upgrade_user_index(env: &mut pocket_ic::PocketIc, canister_ids: &crate::CanisterIds) {
+pub(crate) fn upgrade_user_index(env: &mut pocket_ic::PocketIc, canister_ids: &crate::CanisterIds) {
     let wasm = crate::wasms::USER_INDEX.clone();
     let args = candid::encode_one(user_index_canister::post_upgrade::Args {
         wasm_version: wasm.version,
