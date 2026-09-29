@@ -1,5 +1,6 @@
 use crate::model::group_index_event_batch::GroupIndexEventBatch;
 use crate::model::local_user_index_map::LocalUserIndex;
+use crate::model::notifications_index_event_batch::NotificationsIndexEventBatch;
 use crate::model::online_users_event_batch::OnlineUsersEventBatch;
 use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
 use crate::model::protected_actions::{ProtectedActionMetrics, ProtectedActions};
@@ -28,6 +29,9 @@ use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use model::user::SuspensionDetails;
 use model::user_migrations::{UserMigrations, UserMigrationsMetrics};
 use model::users_last_online::{UsersLastOnline, UsersLastOnlineMetrics};
+use notifications_index_canister::{
+    UserIdMigrated as NotificationsIndexUserIdMigrated, UserIndexEvent as NotificationsIndexEvent,
+};
 use online_users_canister::{
     UserDeleted as OnlineUsersUserDeleted, UserIdMigrated as OnlineUsersUserIdMigrated, UserIndexEvent as OnlineUsersEvent,
 };
@@ -182,6 +186,15 @@ impl RuntimeState {
         jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
+    pub fn push_event_to_notifications_index(&mut self, event: NotificationsIndexEvent) {
+        let now = self.env.now();
+        self.data.notifications_index_event_sync_queue.push(IdempotentEnvelope {
+            created_at: now,
+            idempotency_id: self.env.rng().next_u64(),
+            value: event,
+        });
+    }
+
     pub fn push_event_to_online_users(&mut self, event: OnlineUsersEvent) {
         let now = self.env.now();
         self.data.online_users_event_sync_queue.push(IdempotentEnvelope {
@@ -193,7 +206,8 @@ impl RuntimeState {
 
     // Switches a user migrated to a MultiUser canister over from their old id to the new one it gave
     // them, once it has imported them. From then on they are known here by their new id, as they are
-    // by the Identity canister, the OnlineUsers canister and each LocalUserIndex once told.
+    // by the Identity canister, the NotificationsIndex, the OnlineUsers canister and each LocalUserIndex
+    // once told.
     pub fn switch_over_migrated_user(
         &mut self,
         old_user_id: UserId,
@@ -241,6 +255,12 @@ impl RuntimeState {
             email: None,
         });
         jobs::sync_users_to_identity_canister::try_run_now(self);
+
+        self.push_event_to_notifications_index(NotificationsIndexEvent::UserIdMigrated(NotificationsIndexUserIdMigrated {
+            user_principal: principal,
+            old_user_id,
+            new_user_id,
+        }));
 
         self.push_event_to_online_users(OnlineUsersEvent::UserIdMigrated(OnlineUsersUserIdMigrated {
             user_principal: principal,
@@ -510,6 +530,8 @@ struct Data {
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
+    #[serde(default = "notifications_index_event_sync_queue")]
+    pub notifications_index_event_sync_queue: BatchedTimerJobQueue<NotificationsIndexEventBatch>,
     #[serde(default = "online_users_event_sync_queue")]
     pub online_users_event_sync_queue: BatchedTimerJobQueue<OnlineUsersEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
@@ -662,6 +684,7 @@ impl Data {
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(group_index_canister_id, false),
+            notifications_index_event_sync_queue: BatchedTimerJobQueue::new(notifications_index_canister_id, false),
             online_users_event_sync_queue: BatchedTimerJobQueue::new(online_users_canister_id, false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -756,6 +779,10 @@ impl Data {
     }
 }
 
+fn notifications_index_event_sync_queue() -> BatchedTimerJobQueue<NotificationsIndexEventBatch> {
+    BatchedTimerJobQueue::new(Principal::anonymous(), false)
+}
+
 fn online_users_event_sync_queue() -> BatchedTimerJobQueue<OnlineUsersEventBatch> {
     BatchedTimerJobQueue::new(Principal::anonymous(), false)
 }
@@ -784,6 +811,7 @@ impl Default for Data {
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
+            notifications_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             online_users_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             pending_payments_queue: PendingPaymentsQueue::default(),
             platform_moderators: HashSet::new(),

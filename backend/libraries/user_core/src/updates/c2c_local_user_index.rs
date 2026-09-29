@@ -58,7 +58,7 @@ pub fn apply(user: &mut User, event: LocalUserIndexEvent, now: TimestampMillis) 
                 .push(BotMessage::text(openchat_bot::storage_upgraded_text(&ev)));
         }
         LocalUserIndexEvent::ReferredUserRegistered(ev) => {
-            user.referrals.set_status(ev.user_id, ReferralStatus::Registered, now);
+            user.referrals.set_status(ev.user_id, &[], ReferralStatus::Registered, now);
             effects.bot_messages.push(BotMessage {
                 content: MessageContentInternal::Text(TextContentInternal {
                     text: openchat_bot::referred_user_joined_text(ev.user_id),

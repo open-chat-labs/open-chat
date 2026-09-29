@@ -334,9 +334,16 @@ impl User {
     }
 
     // Records the status a user this user referred has reached, as the User canister does on a
-    // `SetReferralStatus` event, returning whether CHIT was awarded for it
-    pub fn set_referral_status(&mut self, user_id: UserId, status: ReferralStatus, now: TimestampMillis) -> bool {
-        let chit_reward = self.referrals.set_status(user_id, status, now);
+    // `SetReferralStatus` event, returning whether CHIT was awarded for it. `previous_user_ids` are
+    // the ids the referred user had before being migrated to a MultiUser canister.
+    pub fn set_referral_status(
+        &mut self,
+        user_id: UserId,
+        previous_user_ids: &[UserId],
+        status: ReferralStatus,
+        now: TimestampMillis,
+    ) -> bool {
+        let chit_reward = self.referrals.set_status(user_id, previous_user_ids, status, now);
         let mut rewarded = false;
 
         if chit_reward > 0 {

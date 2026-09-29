@@ -10,8 +10,8 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, Chat, ChatId, Document, Empty, MessageContent, MessageContentInitial, OptionUpdate,
-    P2PSwapContentInitial, UserId,
+    BuildVersion, CanisterId, CanisterWasm, Chat, ChatId, DiamondMembershipPlanDuration, Document, Empty, MessageContent,
+    MessageContentInitial, OptionUpdate, P2PSwapContentInitial, ReferralStatus, UserId,
 };
 use user_index_canister::user_migration::UserMigrationStatus;
 
@@ -670,6 +670,95 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
 }
 
 #[test]
+fn notifications_index_knows_migrated_user_by_their_new_id() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    // Subscribing to notifications has the NotificationsIndex cache the user's id
+    let endpoint = random_string();
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        "auth",
+        "p256dh",
+        &endpoint,
+    );
+    assert!(client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        &endpoint
+    ));
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+
+    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id) {
+        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
+        status => panic!("User not imported: {status:?}"),
+    };
+
+    // The NotificationsIndex now knows the user by their new id, so the subscription held under their
+    // old id is no longer theirs
+    assert!(!client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        &endpoint
+    ));
+
+    // Upgrading the UserIndex once users have been migrated succeeds, and the user is still known by
+    // their new id
+    crate::delete_user_tests::upgrade_user_index(env, canister_ids);
+    tick_many(env, 3);
+    assert!(!client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        &endpoint
+    ));
+
+    // Once pushed again, the subscription is held under their new id, so they are notified of messages
+    // sent to them
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        "auth",
+        "p256dh",
+        &endpoint,
+    );
+    tick_many(env, 3);
+    let latest_notification_index =
+        client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
+    client::user::happy_path::send_text_message(env, &user2, new_user_id, random_string(), None);
+    tick_many(env, 3);
+    let notifications =
+        client::local_user_index::happy_path::notifications(env, *controller, local_user_index, latest_notification_index + 1);
+    assert_eq!(notifications.notifications.len(), 1);
+    assert!(notifications.subscriptions.contains_key(&new_user_id));
+}
+
+#[test]
 fn blocked_user_pairs_are_moved_onto_a_migrated_users_new_id() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -731,6 +820,90 @@ fn blocked_user_pairs_are_moved_onto_a_migrated_users_new_id() {
     tick_many(env, 10);
     let recipients = group_message_notification_recipients(env, *controller, group_local_user_index, &user1, group_id);
     assert_eq!(recipients, vec![user2.user_id]);
+}
+
+#[test]
+fn migrated_user_is_not_rewarded_again_to_their_referrer() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let referrer = client::register_user(env, canister_ids);
+    let user = client::register_user_with_referrer(env, canister_ids, Some(referrer.user_id.to_string()));
+    client::upgrade_user(
+        &user,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+        false,
+    );
+    tick_many(env, 3);
+    let chit_balance = client::user::happy_path::initial_state(env, &referrer).chit_balance;
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+    assert!(matches!(
+        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+        Some(UserMigrationStatus::Imported { .. })
+    ));
+
+    // The user now pays from their own wallet, having approved their MultiUser canister to charge it
+    let icp = canister_ids.icp_ledger;
+    client::ledger::happy_path::transfer(env, *controller, icp, user.principal, 1_000_000_000);
+    client::ledger::happy_path::approve(
+        env,
+        user.principal,
+        icp,
+        icrc_ledger_types::icrc1::account::Account {
+            owner: multi_user_canister,
+            subaccount: Some(ledger_utils::spender_subaccount(user.principal)),
+        },
+        900_000_000,
+    );
+    let pay = |env: &mut PocketIc, duration| {
+        client::user_index::happy_path::pay_for_diamond_membership(
+            env,
+            user.principal,
+            canister_ids.user_index,
+            duration,
+            false,
+            false,
+        );
+        tick_many(env, 10);
+        client::user::happy_path::initial_state(env, &referrer)
+    };
+
+    // Paying for Diamond again under their new id earns their referrer nothing more
+    let referrer_state = pay(env, DiamondMembershipPlanDuration::OneMonth);
+    assert_eq!(referrer_state.chit_balance, chit_balance);
+    assert_eq!(referrer_state.referrals.len(), 1);
+    assert_eq!(referrer_state.referrals[0].user_id, user.user_id);
+
+    // While upgrading to Lifetime Diamond earns them the difference, on the referral under the user's
+    // old id
+    let referrer_state = pay(env, DiamondMembershipPlanDuration::Lifetime);
+    assert_eq!(
+        referrer_state.chit_balance as u32,
+        chit_balance as u32 + ReferralStatus::LifetimeDiamond.chit_reward() - ReferralStatus::Diamond.chit_reward()
+    );
+    assert_eq!(referrer_state.referrals.len(), 1);
+    assert_eq!(referrer_state.referrals[0].user_id, user.user_id);
+    assert!(matches!(referrer_state.referrals[0].status, ReferralStatus::LifetimeDiamond));
 }
 
 #[test]

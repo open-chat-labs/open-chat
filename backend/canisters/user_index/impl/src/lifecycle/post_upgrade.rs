@@ -6,6 +6,9 @@ use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
+use notifications_index_canister::{
+    UserIdMigrated as NotificationsIndexUserIdMigrated, UserIndexEvent as NotificationsIndexEvent,
+};
 use online_users_canister::{UserDeleted, UserIdMigrated, UserIndexEvent as OnlineUsersEvent};
 use stable_memory::get_reader;
 use std::time::Duration;
@@ -52,6 +55,38 @@ fn post_upgrade(args: Args) {
         for (bot_id, from, to) in state.data.users.repair_misrecorded_direct_chat_bot_installations(now) {
             info!(%bot_id, ?from, ?to, "Moved misrecorded bot installation");
         }
+    });
+
+    // One-off: point the new NotificationsIndex event queue, which was created with a placeholder
+    // target, at the NotificationsIndex, then tell it the new id of each user migrated so far, so that
+    // it stops knowing them by their old one. The events are pushed from a timer because pushing them
+    // starts sending them, which makes c2c calls, which can't be made from post_upgrade.
+    // TODO remove after the release containing this has been deployed, along with the queue's serde default
+    mutate_state(|state| {
+        let notifications_index_canister_id = state.data.notifications_index_canister_id;
+        state
+            .data
+            .notifications_index_event_sync_queue
+            .set_state(notifications_index_canister_id);
+    });
+    ic_cdk_timers::set_timer(Duration::ZERO, async {
+        mutate_state(|state| {
+            let migrated_users = migrated_users(&state.data);
+
+            info!(
+                count = migrated_users.len(),
+                "Telling the NotificationsIndex about previously migrated users"
+            );
+            for (user_principal, old_user_id, new_user_id) in migrated_users {
+                state.push_event_to_notifications_index(NotificationsIndexEvent::UserIdMigrated(
+                    NotificationsIndexUserIdMigrated {
+                        user_principal,
+                        old_user_id,
+                        new_user_id,
+                    },
+                ));
+            }
+        });
     });
 
     // One-off: point the new OnlineUsers event queue, which was created with a placeholder target, at

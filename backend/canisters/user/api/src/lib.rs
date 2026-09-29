@@ -199,6 +199,7 @@ pub enum UserCanisterEvent {
     JoinVideoCall(Box<JoinVideoCall>),
     SetReferralStatus(Box<ReferralStatus>),
     SetEventsTtl(Box<SetEventsTtl>),
+    SetReferralStatusV2(Box<SetReferralStatusV2>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -305,6 +306,15 @@ pub struct JoinVideoCall {
 pub struct SetEventsTtl {
     pub events_ttl: Option<Milliseconds>,
     pub timestamp: TimestampMillis,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SetReferralStatusV2 {
+    pub status: ReferralStatus,
+    // The ids the referred user had before being migrated to a MultiUser canister, oldest first, any
+    // of which the referrer may hold their referral under
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub previous_user_ids: Vec<UserId>,
 }
 
 // Identifies a migration of a user to a MultiUser canister: the hash of the user as serialized when
