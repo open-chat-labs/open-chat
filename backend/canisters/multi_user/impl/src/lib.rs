@@ -2,10 +2,10 @@ use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::model::user_imports::UserImports;
 use crate::model::users::Users;
-use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
-use canister_timer_jobs::TimerJobs;
+use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::EventPusher;
 use constants::OPENCHAT_BOT_USER_ID;
 use direct_chat::DirectChat;
@@ -518,9 +518,10 @@ impl RuntimeState {
     // the job to run again when their next event expires
     pub fn run_event_expiry_job(&mut self, user_index: u16) {
         let now = self.env.now();
-        let Some((next_event_expiry, thread_prefixes)) = self.data.users.with_user_mut(user_index, |user| {
+        let Some((next_event_expiry, thread_prefixes, files_to_delete)) = self.data.users.with_user_mut(user_index, |user| {
             let mut next_event_expiry = None;
             let mut thread_prefixes = Vec::new();
+            let mut files_to_delete = Vec::new();
             for chat in user.direct_chats.iter_mut() {
                 let result = chat.remove_expired_events(now);
                 if let Some(expiry) = chat.events().next_event_expiry()
@@ -528,9 +529,7 @@ impl RuntimeState {
                 {
                     next_event_expiry = Some(expiry);
                 }
-                // TODO: Delete the files referenced by the expired messages (`result.files`), as
-                // the User canister does
-                //
+                files_to_delete.extend(result.files);
                 // Threads aren't currently enabled for direct chats, but if a thread's root message
                 // expires then its entries in stable memory must be garbage collected
                 for thread in result.threads {
@@ -538,13 +537,18 @@ impl RuntimeState {
                 }
             }
             user.next_event_expiry = next_event_expiry;
-            (next_event_expiry, thread_prefixes)
+            (next_event_expiry, thread_prefixes, files_to_delete)
         }) else {
             return;
         };
 
         if !thread_prefixes.is_empty() {
             self.garbage_collect_stable_memory_keys(user_index, thread_prefixes);
+        }
+        // As in the User canister, each copy of the chat deletes the files of its expired messages.
+        // A file already deleted from the other copy is simply not found.
+        if !files_to_delete.is_empty() {
+            DeleteFileReferencesJob { files: files_to_delete }.execute();
         }
         if let Some(expiry) = next_event_expiry {
             self.data.timer_jobs.enqueue_job(
