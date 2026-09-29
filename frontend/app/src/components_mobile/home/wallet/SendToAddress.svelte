@@ -41,6 +41,7 @@
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { Debouncer } from "../../../utils/debouncer";
+    import { LatestOnly } from "../../../utils/latestOnly";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "../../Translatable.svelte";
     import NetworkSelector from "../NetworkSelector.svelte";
@@ -186,10 +187,15 @@
         }
     });
 
+    // The minter can answer an old amount after a newer one (a rejected amount falls back only
+    // after the agent's retries), so only the latest request may set the info
+    const ckbtcMinterInfoRequests = new LatestOnly();
+
     function getCkbtcMinterWithdrawalInfo(amountToSend: bigint) {
-        client
-            .getCkbtcMinterWithdrawalInfo(amountToSend)
-            .then((i) => (ckbtcMinterWithdrawalInfo = i));
+        ckbtcMinterInfoRequests.run(
+            () => client.getCkbtcMinterWithdrawalInfo(amountToSend),
+            (i) => (ckbtcMinterWithdrawalInfo = i),
+        );
     }
 
     function scan() {
