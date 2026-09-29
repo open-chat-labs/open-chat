@@ -6478,6 +6478,7 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
     // `check_cycles_balance` counts it as low.
     let balance = env.cycle_balance(canister_id);
     let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
+    let original_freezing_threshold = status.settings.freezing_threshold.clone();
     let burned_per_day: u128 = status.idle_cycles_burned_per_day.0.try_into().unwrap();
     assert!(burned_per_day > 0);
     let freezing_threshold_secs = balance * 3 / 4 * 24 * 60 * 60 / burned_per_day;
@@ -6494,4 +6495,16 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
     update_once_check_due(env);
     // Less a margin for the cycles the update and the check themselves use
     assert!(env.cycle_balance(canister_id) > balance + TOP_UP_AMOUNT - 10_000_000_000);
+
+    // Put the freezing threshold back, since the environment, and so this canister, is shared with
+    // later tests
+    env.update_canister_settings(
+        canister_id,
+        Some(local_user_index),
+        pocket_ic::CanisterSettings {
+            freezing_threshold: Some(original_freezing_threshold),
+            ..Default::default()
+        },
+    )
+    .unwrap();
 }
