@@ -61,7 +61,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `c2c_abandon_user_import`, after which a cancelled migration is never imported ([#9610](https://github.com/open-chat-labs/open-chat/pull/9610))
 - Push sent, edited and tipped messages, reactions and OpenChat bot messages to the event store, as User canisters do ([#9625](https://github.com/open-chat-labs/open-chat/pull/9625))
 - Send the OpenChat bot's welcome messages to each user created by `c2c_create_user`, as a User canister does when installed ([#9643](https://github.com/open-chat-labs/open-chat/pull/9643))
-- Support direct chats with bots: messages to a legacy bot are sent to its canister and its replies added to the chat, and crypto sent to a bot goes to the bot's subaccount for the sender, as from a User canister ([#9648](https://github.com/open-chat-labs/open-chat/pull/9648))
+- Support direct chats with bots registered with the UserIndex, refusing crypto and P2P swaps sent to them and chats with bots that have canisters of their own ([#9648](https://github.com/open-chat-labs/open-chat/pull/9648))
 
 ### Changed
 

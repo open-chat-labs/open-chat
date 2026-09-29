@@ -4,8 +4,8 @@ use crate::timer_job_types::{
     CancelP2PSwapInEscrowCanisterJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, TimerJob,
 };
 use crate::{
-    MultiUserEventPusher, RuntimeState, execute_update, execute_update_async, look_up_direct_chat_user, mutate_state,
-    read_state,
+    MultiUserEventPusher, RuntimeState, check_can_chat_with, execute_update, execute_update_async, look_up_direct_chat_user,
+    mutate_state, read_state,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -17,10 +17,9 @@ use ledger_utils::UserTransfer;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
-    CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, DirectChatUserNotificationPayload,
+    CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoContent, DirectChatUserNotificationPayload,
     DirectMessageNotification, MessageContentInitial, MessageId, MessageIndex, OCResult, OgPreview, P2PSwapContentInitial,
-    P2PSwapLocation, PendingCryptoTransaction, PinNumberWrapper, ReplyContext, TimestampMillis, UserId, UserType, certified,
-    icrc1, icrc2,
+    P2PSwapLocation, PinNumberWrapper, ReplyContext, TimestampMillis, UserId, UserType, certified, icrc1, icrc2,
 };
 use user_canister::send_message_v2::{Response::*, *};
 use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
@@ -61,13 +60,22 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
         }
     };
 
+    // Crypto and P2P swaps aren't sent to bots, as in the User canister
+    if recipient.user_type().is_bot()
+        && matches!(
+            args.content,
+            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_)
+        )
+    {
+        return Error(OCErrorCode::InvalidRequest.with_message("Crypto can't be sent to bots"));
+    }
+
     let content = match MessageContentInternal::validate_new_message(args.content, true, UserType::User, args.forwarding, now) {
         ValidateNewMessageContentResult::Success(content) => MessageContent::Other(content),
         ValidateNewMessageContentResult::SuccessCrypto(content) => {
             match prepare_crypto_transfer(
                 &content,
                 my_index,
-                my_user_id,
                 args.recipient,
                 recipient,
                 local_user_index_canister_id,
@@ -206,7 +214,6 @@ enum CryptoTransfer {
 async fn prepare_crypto_transfer(
     content: &CryptoContent,
     my_index: u16,
-    my_user_id: UserId,
     them: UserId,
     recipient: Recipient,
     local_user_index_canister_id: CanisterId,
@@ -230,24 +237,6 @@ async fn prepare_crypto_transfer(
         Recipient::OtherCanister(_) => user_wallet(content.recipient, local_user_index_canister_id).await?,
     };
 
-    // As in the User canister, crypto sent to a bot goes to the bot's subaccount for the sender, so
-    // that the bot can easily keep track of each user's funds. A transfer this canister makes is
-    // checked to be to the bot's wallet and then redirected there, while a certified transfer has
-    // already been made, so must have been made there.
-    let bot_subaccount_for_sender =
-        matches!(recipient, Recipient::OtherCanister(user_type) if user_type.is_bot()).then(|| icrc1::Account {
-            owner: them.as_principal(),
-            subaccount: Some(ic_ledger_types::Subaccount::from(my_user_id.as_principal()).0),
-        });
-    let is_certified = matches!(
-        &content.transfer,
-        CryptoTransaction::Pending(PendingCryptoTransaction::Certified(_))
-    );
-    let recipient_wallet = match bot_subaccount_for_sender {
-        Some(account) if is_certified => account,
-        _ => recipient_wallet,
-    };
-
     mutate_state(|state| {
         let now = state.env.now();
         // The sender approved any transfer this canister pulls for them under the spender subaccount
@@ -260,15 +249,12 @@ async fn prepare_crypto_transfer(
             })
             .ok_or(OCErrorCode::InitiatorNotFound)??;
 
-        let mut transfer = UserTransfer::new(
+        let transfer = UserTransfer::new(
             content.transfer.clone(),
             recipient_wallet,
             &MEMO_MESSAGE,
             state.env.canister_id(),
         )?;
-        if let (Some(account), UserTransfer::Icrc2(t)) = (bot_subaccount_for_sender, &mut transfer) {
-            t.to = account;
-        }
         Ok((transfer, ledger_utils::spender_subaccount(my_principal)))
     })
 }
@@ -498,7 +484,13 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
                 // An index in this canister which holds no user
                 return Err(OCErrorCode::TargetUserNotFound.into());
             } else {
-                chat.map(|chat| Recipient::OtherCanister(chat.user_type))
+                match chat {
+                    Some(chat) => {
+                        check_can_chat_with(args.recipient, chat.user_type)?;
+                        Some(Recipient::OtherCanister(chat.user_type))
+                    }
+                    None => None,
+                }
             })
         })?
         .map(|maybe_recipient| PrepareOk {
@@ -606,29 +598,18 @@ fn send_message_impl(
         None => return Error(OCErrorCode::InitiatorNotFound.into()),
     };
 
-    if recipient_kind.user_type().is_bot() {
-        // As in the User canister, a bot is sent the message by calling its canister, whose replies
-        // are then added to the chat
-        utils::async_work::spawn_tracked(send_to_bot_canister(
-            my_index,
-            recipient,
-            message_event.event.message_index,
-            legacy_bot_api::handle_direct_message::Args::new(message_for_recipient, sender_details.name),
-        ));
-    } else {
-        // The recipient is sent the message, which one in this canister gets straight away. A chat
-        // with yourself has a single copy, so nothing is sent for it.
-        state.send_user_canister_event(
-            my_index,
-            recipient,
-            UserCanisterEvent::SendMessages(Box::new(SendMessagesArgs {
-                messages: vec![message_for_recipient],
-                sender_name: sender_details.name,
-                sender_display_name: sender_details.display_name,
-                sender_avatar_id: sender_details.avatar_id,
-            })),
-        );
-    }
+    // The recipient is sent the message, which one in this canister gets straight away. A chat with
+    // yourself has a single copy, and a bot is sent nothing (see `send_user_canister_event`).
+    state.send_user_canister_event(
+        my_index,
+        recipient,
+        UserCanisterEvent::SendMessages(Box::new(SendMessagesArgs {
+            messages: vec![message_for_recipient],
+            sender_name: sender_details.name,
+            sender_display_name: sender_details.display_name,
+            sender_avatar_id: sender_details.avatar_id,
+        })),
+    );
 
     // As in the User canister, messages sent to yourself earn no achievements
     if !matches!(recipient_kind, Recipient::Me) {
@@ -685,7 +666,7 @@ enum Recipient {
     Me,
     // Another user in this canister
     SameCanister(u16),
-    // A user or bot in another canister
+    // A user or bot outside this canister
     OtherCanister(UserType),
 }
 
@@ -696,73 +677,6 @@ impl Recipient {
             Recipient::Me | Recipient::SameCanister(_) => UserType::User,
         }
     }
-}
-
-// Sends the message to the bot's canister, then adds the bot's replies to the sender's copy of the
-// chat, as the User canister's `send_to_bot_canister` does. As there, a failure is ignored.
-async fn send_to_bot_canister(
-    my_index: u16,
-    bot: UserId,
-    message_index: MessageIndex,
-    args: legacy_bot_api::handle_direct_message::Args,
-) {
-    let block_level_markdown = args.block_level_markdown;
-    let Ok(legacy_bot_api::handle_direct_message::Response::Success(result)) =
-        legacy_bot_c2c_client::handle_direct_message(bot.canister_id(), &args).await
-    else {
-        return;
-    };
-
-    mutate_state(|state| {
-        let my_user_id = state.user_id(my_index);
-        let now = state.env.now();
-        // Drawn up front, since the user is borrowed for the whole of the closure below
-        let messages: Vec<_> = result
-            .messages
-            .into_iter()
-            .map(|message| {
-                let message_id = message.message_id.unwrap_or_else(|| state.env.rng().random());
-                (message, message_id)
-            })
-            .collect();
-        let rng = state.env.rng();
-        let queue = &mut state.data.local_user_index_event_sync_queue;
-
-        // Nothing is added if the user has since been deleted, or has deleted the chat
-        state.data.users.with_user_mut(my_index, |user| {
-            let Some(chat) = user.direct_chats.get_mut(&bot.into()) else {
-                return;
-            };
-            for (message, message_id) in messages {
-                chat.push_message(
-                    PushMessageArgs {
-                        sender: bot,
-                        thread_root_message_index: None,
-                        message_id,
-                        content: message.content.into(),
-                        mentioned: Vec::new(),
-                        replies_to: None,
-                        forwarded: false,
-                        sender_is_bot: false,
-                        block_level_markdown,
-                        og_previews: message.og_previews.unwrap_or_default(),
-                        now,
-                        sender_context: None,
-                    },
-                    None,
-                    Some(MultiUserEventPusher {
-                        user_id: my_user_id,
-                        now,
-                        rng: &mut *rng,
-                        queue: &mut *queue,
-                    }),
-                );
-
-                // Mark that the bot has read the message it has replied to
-                chat.mark_read_by_them_up_to(message_index, now);
-            }
-        });
-    });
 }
 
 // Pushes a message from `sender` to the recipient's copy of the chat between them, creating the chat

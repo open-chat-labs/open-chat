@@ -5247,13 +5247,8 @@ fn multi_user_canister_count(env: &PocketIc, local_user_index: CanisterId) -> u6
     serde_json::from_value(metrics(env, local_user_index)["multi_user_canister_count"].clone()).unwrap()
 }
 
-// Users hold their own funds in their own wallets, so crypto is sent via ICRC2, pulled from the
-// sender's wallet against an approval made under their own spender subaccount, to either a user in
-// the same canister, whose wallet is under their principal, or one in a User canister, whose wallet
-// is under their user id. An ICRC1 transfer would be made from the canister's own account, so is
-// refused.
 #[test]
-fn users_can_message_bots_and_send_them_crypto() {
+fn users_can_chat_with_bots_but_not_send_them_crypto() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -5265,7 +5260,6 @@ fn users_can_message_bots_and_send_them_crypto() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
     let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
-    let (bob, _) = create_user(env, canister_ids, local_user_index, canister_id);
     let (bot_id, _) = client::user_index::happy_path::register_bot(
         env,
         alice,
@@ -5283,19 +5277,21 @@ fn users_can_message_bots_and_send_them_crypto() {
     );
     tick_many(env, 3);
 
-    // Bob, who has no chat with the ProposalsBot, a bot with a canister of its own, messages it,
-    // which creates his chat with it
-    let proposals_bot: UserId = canister_ids.proposals_bot.into();
-    send_text_message(env, bob, canister_id, proposals_bot, "hello bot", random_from_u128());
+    // A bot with a canister of its own, such as the ProposalsBot, can't be chatted with
+    let response = client::user::send_message_v2(
+        env,
+        alice,
+        canister_id,
+        &send_message_args(canister_ids.proposals_bot.into(), "hello", random_from_u128()),
+    );
     assert!(
-        initial_state(env, bob, canister_id)
-            .direct_chats
-            .summaries
-            .iter()
-            .any(|c| c.them == proposals_bot)
+        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        "{response:?}"
     );
 
-    // Alice installs the bot she registered, which creates her chat with it
+    // A bot registered with the UserIndex can be. Installing it creates Alice's chat with it, in
+    // which she can send and edit messages, none of which is sent on to the bot, since no bot handles
+    // the events users send each other.
     client::local_user_index::happy_path::install_bot(
         env,
         alice,
@@ -5305,8 +5301,12 @@ fn users_can_message_bots_and_send_them_crypto() {
         BotPermissions::text_only(),
         None,
     );
+    let message_id = random_from_u128();
+    send_text_message(env, alice, canister_id, bot_id, "hello bot", message_id);
+    edit_message(env, alice, canister_id, bot_id, None, message_id, "hello bot, edited");
+    assert_eq!(queued_user_canister_events(env, canister_id), 0);
 
-    // Crypto sent to the bot goes to the bot's subaccount for Alice, as from a User canister
+    // But she can't send it crypto, which it would have no way of spending
     let amount = 1_000_000;
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, alice, 1_000_000_000);
     client::ledger::happy_path::approve(
@@ -5342,27 +5342,20 @@ fn users_can_message_bots_and_send_them_crypto() {
         },
     );
     assert!(
-        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{response:?}"
     );
-    let alices_subaccount = ic_ledger_types::Subaccount::from(alice_id.as_principal()).0;
     assert_eq!(
-        client::ledger::happy_path::balance_of(
-            env,
-            canister_ids.icp_ledger,
-            icrc_ledger_types::icrc1::account::Account {
-                owner: bot_id.as_principal(),
-                subaccount: Some(alices_subaccount),
-            }
-        ),
-        amount
-    );
-    assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, bot_id.as_principal()),
-        0
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, alice),
+        1_000_000_000
     );
 }
 
+// Users hold their own funds in their own wallets, so crypto is sent via ICRC2, pulled from the
+// sender's wallet against an approval made under their own spender subaccount, to either a user in
+// the same canister, whose wallet is under their principal, or one in a User canister, whose wallet
+// is under their user id. An ICRC1 transfer would be made from the canister's own account, so is
+// refused.
 #[test]
 fn users_send_crypto_from_their_own_wallets() {
     let mut wrapper = ENV.deref().get();

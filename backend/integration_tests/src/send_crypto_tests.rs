@@ -237,3 +237,57 @@ fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool, icrc2: boo
         panic!("{event:?}");
     }
 }
+
+#[test]
+fn send_crypto_to_a_bot_is_refused() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, 1_000_000_000);
+    let bot: types::UserId = canister_ids.proposals_bot.into();
+
+    let response = client::user::send_message_v2(
+        env,
+        user.principal,
+        user.user_id.canister_id(),
+        &user_canister::send_message_v2::Args {
+            recipient: bot,
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content: MessageContentInitial::Crypto(CryptoContent {
+                recipient: bot,
+                transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
+                    ledger: ICP_LEDGER_CANISTER_ID,
+                    fee: ICP_TRANSFER_FEE,
+                    token_symbol: ICP_SYMBOL.to_string(),
+                    amount: 1_000_000,
+                    to: bot.as_principal().into(),
+                    memo: None,
+                    created: now_nanos(env),
+                })),
+                caption: None,
+            }),
+            replies_to: None,
+            forwarding: false,
+            block_level_markdown: false,
+            message_filter_failed: None,
+            pin: None,
+            og_previews: Vec::new(),
+        },
+    );
+
+    assert!(
+        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(oc_error_codes::OCErrorCode::InvalidRequest)),
+        "{response:?}"
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id),
+        1_000_000_000
+    );
+}
