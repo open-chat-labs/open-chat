@@ -276,7 +276,7 @@ dependencies = [
  "nom",
  "num-traits",
  "rusticata-macros",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "time",
 ]
 
@@ -1010,17 +1010,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "backoff"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b62ddb9cb1ec0a098ad4bbf9344d0713fa193ae1a80af55febcff2627b6a00c1"
-dependencies = [
- "getrandom 0.2.17",
- "instant",
- "rand 0.8.7",
-]
-
-[[package]]
 name = "backon"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1117,7 +1106,7 @@ dependencies = [
  "candid",
  "chat_events",
  "event_store_types",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-stable-structures",
  "stable_memory_map",
  "types",
@@ -1382,7 +1371,7 @@ dependencies = [
  "ahash",
  "hashbrown 0.15.5",
  "once_cell",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "web-time",
 ]
 
@@ -1428,7 +1417,7 @@ checksum = "11eef0544778ff515f65fbe5427807009a9cf44eb898404380f6f13c9af20025"
 dependencies = [
  "canbench-rs-macros",
  "candid",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "serde",
 ]
 
@@ -1445,9 +1434,9 @@ dependencies = [
 
 [[package]]
 name = "candid"
-version = "0.10.34"
+version = "0.10.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cdec808f2220b263bbc88557a2a44fb6b2db5875c99731ad00aae575ad59215c"
+checksum = "a4dda5edb2bfa2d7703219ba0fd6ec712343fcd03867b76b87405feaa9aae7a0"
 dependencies = [
  "anyhow",
  "binrw",
@@ -1468,9 +1457,9 @@ dependencies = [
 
 [[package]]
 name = "candid_derive"
-version = "0.10.34"
+version = "0.10.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ee4839d8e442990b2853556e57ee9f6f4527371bbbfd7b4dcdd4f3c7d910964"
+checksum = "45e094bb111b7a9b70174aaa66f80f1a6751a2e66d2a99eef797c8ab6d0933d3"
 dependencies = [
  "lazy_static",
  "proc-macro2",
@@ -1514,7 +1503,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client_macros",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "tracing",
  "types",
 ]
@@ -1722,7 +1711,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -1805,7 +1794,7 @@ dependencies = [
  "constants",
  "event_store_types",
  "hex",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-ledger-types",
  "ic-stable-structures",
  "itertools 0.15.0",
@@ -1877,7 +1866,7 @@ dependencies = [
  "candid",
  "canister_client",
  "ckbtc_minter_canister",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "types",
 ]
 
@@ -2085,7 +2074,7 @@ dependencies = [
  "candid",
  "canister_client",
  "community_canister",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "msgpack",
  "tracing",
  "types",
@@ -2122,7 +2111,7 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
  "ic_principal",
@@ -2615,7 +2604,7 @@ dependencies = [
  "candid",
  "canister_client",
  "cycles_dispenser_canister",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "tracing",
  "types",
 ]
@@ -2636,7 +2625,7 @@ dependencies = [
  "cycles_minting_canister_c2c_client",
  "git_commit_id",
  "human_readable",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
@@ -2661,7 +2650,7 @@ version = "0.1.0"
 dependencies = [
  "cycles_dispenser_canister",
  "cycles_dispenser_canister_c2c_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "tracing",
  "types",
@@ -2683,7 +2672,7 @@ dependencies = [
  "candid",
  "canister_client",
  "cycles_minting_canister",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "types",
 ]
 
@@ -2708,7 +2697,7 @@ dependencies = [
  "candid",
  "canister_client",
  "daily_puzzle_canister",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "msgpack",
  "tracing",
  "types",
@@ -2730,7 +2719,7 @@ dependencies = [
  "futures",
  "git_commit_id",
  "http_request",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
  "light_up",
@@ -2845,7 +2834,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ccc2776f0c61eca1ca32528f85548abd1a4be8fb53d1b21c013e4f18da1e7090"
 dependencies = [
  "data-encoding",
- "syn 2.0.119",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -3456,7 +3445,7 @@ dependencies = [
  "email_magic_links",
  "email_sender_core",
  "http 1.4.2",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-management-canister",
  "ic_principal",
  "serde_json",
@@ -3640,7 +3629,7 @@ dependencies = [
  "candid",
  "canister_client",
  "escrow_canister",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "msgpack",
  "tracing",
  "types",
@@ -3662,7 +3651,7 @@ dependencies = [
  "git_commit_id",
  "hex",
  "http_request",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -3723,7 +3712,7 @@ dependencies = [
  "candid",
  "canister_client",
  "event_relay_canister",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "types",
 ]
 
@@ -3743,7 +3732,7 @@ dependencies = [
  "event_store_utils",
  "git_commit_id",
  "http_request",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -3786,7 +3775,7 @@ source = "git+https://github.com/open-chat-labs/event-store?tag=v0.12.0#b97b6ecd
 dependencies = [
  "event_store_canister",
  "event_store_producer",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic_principal",
  "rand 0.10.2",
@@ -3903,7 +3892,7 @@ dependencies = [
  "canister_time",
  "constants",
  "futures",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "per_round_timer",
  "serde",
  "serde_bytes",
@@ -4142,7 +4131,7 @@ dependencies = [
  "rustls-pki-types",
  "serde",
  "serde_json",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "tokio",
  "tracing",
  "tracing-futures",
@@ -4502,7 +4491,7 @@ dependencies = [
  "candid",
  "canister_client",
  "group_canister",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "msgpack",
  "tracing",
  "types",
@@ -4535,7 +4524,7 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
@@ -4601,11 +4590,12 @@ dependencies = [
  "constants",
  "escrow_canister",
  "escrow_canister_c2c_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-management-canister",
  "icrc-ledger-types",
  "ledger_utils",
  "local_user_index_canister_c2c_client",
+ "msgpack",
  "oc_error_codes",
  "serde",
  "serde_json",
@@ -4637,7 +4627,7 @@ version = "0.1.0"
 dependencies = [
  "canister_client",
  "group_index_canister",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "msgpack",
  "tracing",
  "types",
@@ -4679,7 +4669,7 @@ dependencies = [
  "hex",
  "http_request",
  "human_readable",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
  "local_user_index_canister",
@@ -5233,7 +5223,7 @@ dependencies = [
  "http-body-util",
  "ic-certification",
  "ic-ed25519",
- "ic-transport-types 0.49.2",
+ "ic-transport-types",
  "ic-verify-bls-signature",
  "ic_principal",
  "k256",
@@ -5251,7 +5241,7 @@ dependencies = [
  "serde_repr",
  "sha2 0.10.9",
  "stop-token",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "time",
  "tokio",
  "tower-service",
@@ -5274,7 +5264,7 @@ dependencies = [
  "serde_bytes",
  "serde_cbor",
  "sha2 0.10.9",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -5318,23 +5308,23 @@ dependencies = [
  "serde",
  "serde_bytes",
  "slotmap",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
 name = "ic-cdk"
-version = "0.20.2"
+version = "0.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a7971f4983db147afbbc4e7f87f60b09fcd60ac707af37ff3d2468dcddbf551"
+checksum = "fc6ad46670baa42b9d802e46cb0741e5da2d747b5b74b9ac8019aec9388b05b2"
 dependencies = [
  "candid",
  "ic-cdk-executor",
- "ic-cdk-macros 0.20.2",
+ "ic-cdk-macros 0.20.3",
  "ic-error-types",
  "ic0",
  "pin-project-lite",
  "serde",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -5363,9 +5353,9 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk-macros"
-version = "0.20.2"
+version = "0.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7c20c002200c720958f321bb78b4d4987fc2c380bf9ef69ed4404730810f45f"
+checksum = "9583454462627a6a816ffa91422c8ab7e6a21f75f63eb255d03f710248d45453"
 dependencies = [
  "candid",
  "darling 0.23.0",
@@ -5376,18 +5366,18 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk-management-canister"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92c1319a274caebf0ab70ab826b8905c29e8563498289356b9a59464f2a85c56"
+checksum = "af9840a7ba13c9c8f6e76114755c1645d1f72d99e9a16f3f102d704dfe0b3cd4"
 dependencies = [
  "candid",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-executor",
- "ic-management-canister-types 0.7.1",
+ "ic-management-canister-types 0.10.0",
  "serde",
  "serde_bytes",
  "slotmap",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -5439,7 +5429,7 @@ dependencies = [
  "ic_principal",
  "pem 3.0.6",
  "rand 0.8.7",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "zeroize",
 ]
 
@@ -5498,9 +5488,9 @@ dependencies = [
 
 [[package]]
 name = "ic-management-canister-types"
-version = "0.7.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "51705516ed4d23f24e8d714a70fe9d7ec17106cfd830d5434a1b29f583ef70ee"
+checksum = "3187ba94198a8df0e38a478f289812fcead6a86c658b9552b00f1f8081f06bb3"
 dependencies = [
  "candid",
  "serde",
@@ -5509,9 +5499,9 @@ dependencies = [
 
 [[package]]
 name = "ic-management-canister-types"
-version = "0.8.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3187ba94198a8df0e38a478f289812fcead6a86c658b9552b00f1f8081f06bb3"
+checksum = "98d6395878cedbecf0d7887521e6c3f62063b714c80c20efd046a89314fd2b59"
 dependencies = [
  "candid",
  "serde",
@@ -5553,24 +5543,6 @@ dependencies = [
 
 [[package]]
 name = "ic-transport-types"
-version = "0.40.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2e7706e55836e8104c98149ec0796d20d5213fef972ac01b544657d410f1883"
-dependencies = [
- "candid",
- "hex",
- "ic-certification",
- "leb128",
- "serde",
- "serde_bytes",
- "serde_cbor",
- "serde_repr",
- "sha2 0.10.9",
- "thiserror 2.0.19",
-]
-
-[[package]]
-name = "ic-transport-types"
 version = "0.49.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2d13d859ea481e8d5766a54a3b4dfcf4c11ff6f21d5e2aeaf9a44dd710a76ff"
@@ -5584,7 +5556,7 @@ dependencies = [
  "serde_cbor",
  "serde_repr",
  "sha2 0.10.9",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -5605,7 +5577,7 @@ dependencies = [
  "sha2 0.10.9",
  "strum 0.28.0",
  "strum_macros 0.28.0",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "time",
 ]
 
@@ -5617,7 +5589,7 @@ dependencies = [
  "base64 0.22.1",
  "candid",
  "ic-canister-sig-creation",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-certification",
  "ic-signature-verification",
  "identity_core",
@@ -5647,9 +5619,9 @@ dependencies = [
 
 [[package]]
 name = "ic0"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c77c8932bff1f09502d0d8c079d5a206a06afe523e35e816162cf4d30b5bf80d"
+checksum = "f05349d5c51ab6cc962c8963f877f826997ee6b737c6be3aafc9779eb8a4dd05"
 
 [[package]]
 name = "ic_bls12_381"
@@ -5695,7 +5667,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "icdex_canister",
  "types",
 ]
@@ -5706,7 +5678,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "hex",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "icdex_canister",
  "icdex_canister_c2c_client",
  "types",
@@ -5738,7 +5710,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "icp_ledger_canister",
  "types",
 ]
@@ -5758,7 +5730,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "icpswap_swap_pool_canister",
  "types",
 ]
@@ -5815,7 +5787,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "icrc_ledger_canister",
  "types",
 ]
@@ -5927,7 +5899,7 @@ name = "identity_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "identity_canister",
  "msgpack",
  "tracing",
@@ -5948,7 +5920,7 @@ dependencies = [
  "http_request",
  "ic-canister-sig-creation",
  "ic-captcha",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-management-canister",
  "ic-cdk-timers",
  "ic-certification",
@@ -6215,15 +6187,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "instant"
-version = "0.1.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0242819d153cba4b4b05a5a8f2a7e9bbf97b6055b2a002b395c96b5ff3c0222"
-dependencies = [
- "cfg-if",
-]
-
-[[package]]
 name = "instruction_counts_log"
 version = "0.1.0"
 dependencies = [
@@ -6423,7 +6386,7 @@ dependencies = [
  "jni-sys 0.4.1",
  "log",
  "simd_cesu8",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "walkdir",
  "windows-link 0.2.1",
 ]
@@ -6590,7 +6553,7 @@ dependencies = [
  "serde",
  "serde_json",
  "superboring",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "zeroize",
 ]
 
@@ -6668,7 +6631,7 @@ dependencies = [
  "escrow_canister",
  "hex",
  "ic-cbor",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-certificate-verification",
  "ic-certification",
  "ic-ledger-types",
@@ -6702,7 +6665,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "legacy_bot_api",
  "msgpack",
  "tracing",
@@ -6808,12 +6771,13 @@ dependencies = [
 name = "local_canister_creator"
 version = "0.1.0"
 dependencies = [
+ "base64 0.23.0",
  "canister_agent_utils",
  "clap 4.6.3",
  "futures",
  "ic-agent",
  "ic-utils",
- "pocket-ic",
+ "reqwest 0.13.4",
  "serde",
  "serde_json",
  "tokio",
@@ -6848,7 +6812,7 @@ dependencies = [
  "candid",
  "canister_client",
  "constants",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "local_user_index_canister",
  "msgpack",
  "tracing",
@@ -6895,7 +6859,7 @@ dependencies = [
  "group_canister_c2c_client",
  "group_community_common",
  "http_request",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-management-canister",
  "ic-cdk-timers",
  "ic-stable-structures",
@@ -7041,7 +7005,7 @@ dependencies = [
  "git_commit_id",
  "hex",
  "http_request",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icdex_canister",
@@ -7251,7 +7215,7 @@ dependencies = [
  "once_cell",
  "png 0.18.1",
  "serde",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "windows-sys 0.61.2",
 ]
 
@@ -7271,7 +7235,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "msgpack",
  "multi_user_canister",
  "tracing",
@@ -7303,7 +7267,7 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -7452,12 +7416,12 @@ dependencies = [
  "hex",
  "http_request",
  "human_readable",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-management-canister",
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
- "ic-transport-types 0.49.2",
+ "ic-transport-types",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
  "k256",
@@ -7500,7 +7464,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "nns_governance_canister",
  "types",
 ]
@@ -7587,7 +7551,7 @@ name = "notifications_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "msgpack",
  "notifications_index_canister",
  "tracing",
@@ -7621,7 +7585,7 @@ dependencies = [
  "git_commit_id",
  "http_request",
  "human_readable",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
  "local_user_index_canister",
@@ -8047,7 +8011,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "one_sec_minter_canister",
  "types",
 ]
@@ -8069,7 +8033,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "msgpack",
  "online_users_canister",
  "tracing",
@@ -8090,7 +8054,7 @@ dependencies = [
  "event_store_producer_cdk_runtime",
  "git_commit_id",
  "http_request",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
  "msgpack",
@@ -8169,7 +8133,7 @@ dependencies = [
  "hex",
  "http_request",
  "human_readable",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-management-canister",
  "ic-cdk-timers",
  "ic-stable-structures",
@@ -8658,23 +8622,22 @@ dependencies = [
 
 [[package]]
 name = "pocket-ic"
-version = "11.0.0"
+version = "16.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67394a1de5e9bd67e92eef90c9034fbd28f26cfcb64854f187f3979191d6380c"
+checksum = "882559a1eea632f42b10a408d1f06f9c72a36fec6b0b9daa2eed0095a6fef593"
 dependencies = [
- "backoff",
+ "backon",
  "base64 0.13.1",
  "candid",
  "flate2",
  "hex",
  "ic-certification",
- "ic-management-canister-types 0.5.0",
- "ic-transport-types 0.40.1",
- "reqwest 0.12.28",
+ "ic-management-canister-types 0.8.0",
+ "ic-transport-types",
+ "reqwest 0.13.4",
  "schemars 0.8.22",
  "semver",
  "serde",
- "serde_bytes",
  "serde_cbor",
  "serde_json",
  "sha2 0.10.9",
@@ -8682,7 +8645,7 @@ dependencies = [
  "strum 0.26.3",
  "strum_macros 0.26.4",
  "tempfile",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "tokio",
  "tracing",
  "tracing-appender",
@@ -8900,7 +8863,7 @@ dependencies = [
  "memchr",
  "parking_lot",
  "protobuf",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -8926,7 +8889,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_api_macros",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "proposal_validation_canister",
  "serde_json",
 ]
@@ -8970,7 +8933,7 @@ dependencies = [
  "hex",
  "http_request",
  "human_readable",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -9116,7 +9079,7 @@ dependencies = [
  "rustc-hash",
  "rustls 0.23.42",
  "socket2 0.6.5",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "tokio",
  "tracing",
  "web-time",
@@ -9139,7 +9102,7 @@ dependencies = [
  "rustls 0.23.42",
  "rustls-pki-types",
  "slab",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "tinyvec",
  "tracing",
  "web-time",
@@ -9395,7 +9358,7 @@ checksum = "a4e608c6638b9c18977b00b475ac1f28d14e84b27d8d42f70e0bf1e3dec127ac"
 dependencies = [
  "getrandom 0.2.17",
  "libredox",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -9471,7 +9434,7 @@ name = "registry_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "msgpack",
  "registry_canister",
  "tracing",
@@ -9516,7 +9479,7 @@ dependencies = [
  "hex",
  "http_request",
  "human_readable",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
@@ -9557,10 +9520,8 @@ checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
 dependencies = [
  "base64 0.22.1",
  "bytes",
- "futures-channel",
  "futures-core",
  "futures-util",
- "h2 0.4.15",
  "http 1.4.2",
  "http-body 1.1.0",
  "http-body-util",
@@ -9569,12 +9530,10 @@ dependencies = [
  "hyper-util",
  "js-sys",
  "log",
- "mime_guess",
  "percent-encoding",
  "pin-project-lite",
  "quinn",
  "rustls 0.23.42",
- "rustls-native-certs",
  "rustls-pki-types",
  "serde",
  "serde_json",
@@ -9616,6 +9575,7 @@ dependencies = [
  "js-sys",
  "log",
  "mime",
+ "mime_guess",
  "percent-encoding",
  "pin-project-lite",
  "quinn",
@@ -10469,7 +10429,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "sign_in_with_email_canister",
  "tracing",
  "types",
@@ -10489,7 +10449,7 @@ dependencies = [
  "getrandom 0.4.3",
  "hex",
  "ic-canister-sig-creation",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-management-canister",
  "ic-cdk-timers",
  "ic-certification",
@@ -10641,7 +10601,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "sns_archive_canister",
  "types",
 ]
@@ -10663,7 +10623,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "sns_governance_canister",
  "types",
 ]
@@ -10684,7 +10644,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "sns_ledger_canister",
  "types",
 ]
@@ -10705,7 +10665,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "sns_root_canister",
  "types",
 ]
@@ -10726,7 +10686,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "sns_swap_canister",
  "types",
 ]
@@ -10747,7 +10707,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "sns_wasm_canister",
  "types",
 ]
@@ -10862,7 +10822,7 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 name = "stable_memory"
 version = "0.1.0"
 dependencies = [
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-stable-structures",
 ]
 
@@ -10870,7 +10830,7 @@ dependencies = [
 name = "stable_memory_map"
 version = "0.1.0"
 dependencies = [
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-stable-structures",
  "ic_principal",
  "msgpack",
@@ -10925,7 +10885,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "storage_bucket_canister",
  "tracing",
  "types",
@@ -10944,7 +10904,7 @@ dependencies = [
  "git_commit_id",
  "hex",
  "http_request",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
  "json",
@@ -11002,7 +10962,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "storage_index_canister",
  "tracing",
  "types",
@@ -11037,7 +10997,7 @@ dependencies = [
  "git_commit_id",
  "http_request",
  "human_readable",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-management-canister",
  "ic-cdk-timers",
  "ic-ledger-types",
@@ -11483,7 +11443,7 @@ dependencies = [
  "tauri-runtime",
  "tauri-runtime-wry",
  "tauri-utils",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "tokio",
  "tracing",
  "tray-icon",
@@ -11535,7 +11495,7 @@ dependencies = [
  "sha2 0.10.9",
  "syn 2.0.119",
  "tauri-utils",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "time",
  "url",
  "uuid",
@@ -11588,7 +11548,7 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "tauri-plugin-fs",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -11605,7 +11565,7 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "tauri-utils",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "tracing",
  "url",
  "windows-registry 0.5.3",
@@ -11658,7 +11618,7 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "tauri-utils",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "toml 1.1.3+spec-1.1.0",
  "url",
 ]
@@ -11677,7 +11637,7 @@ dependencies = [
  "serde_repr",
  "tauri",
  "tauri-plugin",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "time",
  "url",
 ]
@@ -11695,7 +11655,7 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "tauri-plugin-android-fs",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "tokio",
  "zip",
 ]
@@ -11718,7 +11678,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tauri-utils",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "url",
  "webkit2gtk",
  "webview2-com",
@@ -11782,7 +11742,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "swift-rs",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "toml 1.1.3+spec-1.1.0",
  "url",
  "urlpattern",
@@ -11807,7 +11767,7 @@ version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ed071c670382e85fc2f48ae706492d8c338f4f89bf72520d32f8abfe880aade"
 dependencies = [
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "windows",
  "windows-version",
 ]
@@ -11931,11 +11891,11 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "2.0.19"
+version = "2.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09a43598840e33d5b0331f38c5e30d13bb11c11210a4b58f0d9b18a5a5eefcd9"
+checksum = "4288b5bcbc7920c07a1149a35cf9590a2aa808e0bc1eafaade0b80947865fbc4"
 dependencies = [
- "thiserror-impl 2.0.19",
+ "thiserror-impl 2.0.18",
 ]
 
 [[package]]
@@ -11951,13 +11911,13 @@ dependencies = [
 
 [[package]]
 name = "thiserror-impl"
-version = "2.0.19"
+version = "2.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43cbfe0cf76104d42a574802844187e84a305e531ed54455f11fbde0f10541cd"
+checksum = "ebc4ee7f67670e9b64d05fa4253e753e016c6c95ff35b89b7941d6b856dec1d5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 3.0.2",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -12004,7 +11964,7 @@ name = "timer_job_queues"
 version = "0.1.0"
 dependencies = [
  "futures",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "per_round_timer",
  "serde",
  "types",
@@ -12428,7 +12388,7 @@ checksum = "050686193eb999b4bb3bc2acfa891a13da00f79734704c4b8b4ef1a10b368a3c"
 dependencies = [
  "crossbeam-channel",
  "symlink",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "time",
  "tracing-subscriber",
 ]
@@ -12556,7 +12516,7 @@ dependencies = [
  "fire_and_forget_handler",
  "git_commit_id",
  "http_request",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -12594,7 +12554,7 @@ dependencies = [
  "once_cell",
  "png 0.18.1",
  "serde",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "windows-sys 0.61.2",
 ]
 
@@ -12609,7 +12569,7 @@ name = "ts-rs"
 version = "11.1.0"
 source = "git+https://github.com/hpeebles/ts-rs?rev=96e2b23ee8fb6131fefb504a0795af38fb2d01fb#96e2b23ee8fb6131fefb504a0795af38fb2d01fb"
 dependencies = [
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "ts-rs-macros",
 ]
 
@@ -12686,7 +12646,7 @@ dependencies = [
  "getrandom 0.2.17",
  "getrandom 0.4.3",
  "hex",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-ledger-types",
  "icrc-ledger-types",
  "msgpack",
@@ -12874,7 +12834,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "msgpack",
  "tracing",
  "types",
@@ -12923,7 +12883,7 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
@@ -12978,7 +12938,7 @@ dependencies = [
  "escrow_canister",
  "escrow_canister_c2c_client",
  "group_index_canister",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-ledger-types",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -13006,6 +12966,7 @@ dependencies = [
 name = "user_ids_set"
 version = "0.1.0"
 dependencies = [
+ "ic-stable-structures",
  "ic_principal",
  "serde",
  "stable_memory_map",
@@ -13036,7 +12997,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "msgpack",
  "tracing",
  "types",
@@ -13086,7 +13047,7 @@ dependencies = [
  "hex",
  "http_request",
  "human_readable",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-management-canister",
  "ic-cdk-timers",
  "ic-ledger-types",
@@ -13103,6 +13064,8 @@ dependencies = [
  "msgpack",
  "multi_user_canister",
  "multi_user_canister_c2c_client",
+ "notifications_index_canister",
+ "notifications_index_canister_c2c_client",
  "oc_error_codes",
  "online_users_canister",
  "online_users_canister_c2c_client",
@@ -13156,10 +13119,10 @@ dependencies = [
  "dataurl",
  "futures",
  "getrandom 0.4.3",
- "ic-cdk 0.20.2",
+ "ic-cdk 0.20.3",
  "ic-cdk-management-canister",
  "ic-cdk-timers",
- "ic-management-canister-types 0.8.0",
+ "ic-management-canister-types 0.10.0",
  "itertools 0.15.0",
  "msgpack",
  "oc_error_codes",
@@ -13572,7 +13535,7 @@ version = "0.38.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "381336cfffd772377d291702245447a5251a2ffa5bad679c99e61bc48bacbf9c"
 dependencies = [
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "windows",
  "windows-core 0.61.2",
 ]
@@ -14125,7 +14088,7 @@ dependencies = [
  "sha2 0.10.9",
  "soup3",
  "tao-macros",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "tracing",
  "url",
  "webkit2gtk",
@@ -14186,7 +14149,7 @@ dependencies = [
  "nom",
  "oid-registry",
  "rusticata-macros",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "time",
 ]
 
@@ -14405,7 +14368,7 @@ dependencies = [
  "memchr",
  "pbkdf2",
  "sha1",
- "thiserror 2.0.19",
+ "thiserror 2.0.18",
  "time",
  "xz2",
  "zeroize",

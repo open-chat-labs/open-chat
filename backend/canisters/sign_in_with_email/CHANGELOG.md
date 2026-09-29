@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
+- Pay for HTTPS outcalls using the pay-as-you-go pricing model ([#9618](https://github.com/open-chat-labs/open-chat/pull/9618))
 
 ## [[0.14.0](https://github.com/open-chat-labs/ic-sign-in-with-email/releases/tag/v0.14.0)] - 2025-11-25
 

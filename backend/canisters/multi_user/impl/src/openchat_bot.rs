@@ -1,5 +1,5 @@
-use crate::RuntimeState;
-use chat_events::{MessageContentInternal, NullEventPusher, TextContentInternal};
+use crate::{MultiUserEventPusher, RuntimeState};
+use chat_events::{MessageContentInternal, TextContentInternal};
 use constants::{OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
 use rand::RngExt;
 use types::{EventWrapper, Message, User, UserId, UserType};
@@ -90,18 +90,25 @@ pub(crate) fn send_message_with_reply(
         mute_notification,
     };
 
+    // As in the User canister, the OpenChat bot's messages are pushed to the event store
+    let event_pusher = MultiUserEventPusher {
+        user_id: my_user_id,
+        now,
+        rng: state.env.rng(),
+        queue: &mut state.data.local_user_index_event_sync_queue,
+    };
+
     // Its id is freshly drawn, so it can't already be in the chat, and it isn't in a thread, so this
     // is None only if there is no such user
     let received = state
         .data
         .users
         .with_user_mut(user_index, |user| {
-            user_core::updates::c2c_user_canister::receive_message::<NullEventPusher>(
+            user_core::updates::c2c_user_canister::receive_message(
                 user,
                 my_user_id,
                 args,
-                // TODO: Push the message to the event store (`UserEventPusher` in the User canister)
-                None,
+                Some(event_pusher),
                 anonymized_id,
                 now,
             )

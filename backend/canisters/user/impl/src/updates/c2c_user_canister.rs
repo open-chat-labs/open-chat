@@ -149,7 +149,16 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
             );
         }
         UserCanisterEvent::SetReferralStatus(status) => {
-            if state.data.user.set_referral_status(caller_user_id, *status, now) {
+            if state.data.user.set_referral_status(caller_user_id, &[], *status, now) {
+                state.notify_user_index_of_chit(now);
+            }
+        }
+        UserCanisterEvent::SetReferralStatusV2(args) => {
+            if state
+                .data
+                .user
+                .set_referral_status(caller_user_id, &args.previous_user_ids, args.status, now)
+            {
                 state.notify_user_index_of_chit(now);
             }
         }

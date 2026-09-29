@@ -524,6 +524,13 @@ fn send_message_impl(
     // borrowed for the whole of the closure below
     let anonymized_id: u128 = state.env.rng().random();
 
+    let event_pusher = MultiUserEventPusher {
+        user_id: my_user_id,
+        now,
+        rng: state.env.rng(),
+        queue: &mut state.data.local_user_index_event_sync_queue,
+    };
+
     // Push the message to the sender's copy of the chat, creating the chat if they have none
     let result = state.data.users.with_user_mut(my_index, |user| {
         let chat = user
@@ -533,8 +540,7 @@ fn send_message_impl(
         // Checked before the message is pushed, since pushing a message to a thread creates the thread
         let thread_root_message_id = chat.thread_root_message_id(thread_root_message_index)?;
 
-        // TODO: Push the message to the event store (`UserEventPusher` in the User canister)
-        let message_event = chat.push_message::<NullEventPusher>(push_message_args, None, None);
+        let message_event = chat.push_message(push_message_args, None, Some(event_pusher));
 
         // The message as the recipient's copy of the chat receives it: message ids are the same in
         // both copies while the indexes are not, so what the reply is to and which thread it is in

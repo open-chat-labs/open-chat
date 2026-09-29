@@ -18,7 +18,7 @@ fn send_message_succeeds() {
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
 
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     let events_response1 =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_result.event_index]);
@@ -137,12 +137,14 @@ fn send_message_retries_if_fails() {
     stop_canister(env, user2.local_user_index, user2.user_id.canister_id());
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
-    tick_many(env, 3);
+    // Long enough for the message to reach the stopped canister and the failure to come back, even
+    // if the canisters are on different subnets
+    tick_many(env, 25);
 
     start_canister(env, user2.local_user_index, user2.user_id.canister_id());
 
     env.advance_time(Duration::from_secs(10));
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     let events_response =
         client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![send_message_result.event_index]);
@@ -163,12 +165,15 @@ fn messages_arrive_in_order_even_if_some_fail_originally() {
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "1", None);
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "2", None);
+    // Long enough for the messages to reach the stopped canister and the failures to come back, even
+    // if the canisters are on different subnets
+    tick_many(env, 25);
 
     start_canister(env, user2.local_user_index, user2.user_id.canister_id());
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "3", None);
 
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     let events_response = client::user::happy_path::events(env, &user2, user1.user_id, EventIndex::default(), true, 100, 100);
 

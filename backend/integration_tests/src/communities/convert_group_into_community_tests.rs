@@ -74,7 +74,7 @@ fn convert_into_community_succeeds() {
     );
 
     if let group_canister::convert_into_community::Response::Success(result) = convert_into_community_response {
-        tick_many(env, 20);
+        tick_many(env, 30);
 
         let expected_channel_names = vec![group_name];
 
@@ -246,7 +246,7 @@ fn disappearing_messages_still_expire_after_conversion() {
     let group_canister::convert_into_community::Response::Success(result) = convert_into_community_response else {
         panic!("'convert_into_community' error: {convert_into_community_response:?}");
     };
-    tick_many(env, 20);
+    tick_many(env, 30);
 
     // The expiring events should have been written to stable memory as the events were imported
     assert_eq!(

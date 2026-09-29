@@ -5,6 +5,7 @@ use ic_cdk::update;
 use online_users_canister::c2c_remove_user::*;
 use stable_memory_map::StableMemoryMap;
 
+// TODO remove once the UserIndex has been upgraded to send `UserDeleted` events to `c2c_user_index` instead
 #[update(guard = "caller_is_user_index_canister")]
 #[trace]
 fn c2c_remove_user(args: Args) -> Response {

@@ -2,8 +2,9 @@ use crate::client::{register_user, register_user_and_include_auth};
 use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{T, TestEnv, User, UserAuth, client};
-use candid::Principal;
+use candid::{CandidType, Nat, Principal};
 use oc_error_codes::OCErrorCode;
+use pocket_ic::common::rest::RawEffectivePrincipal;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -43,7 +44,7 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
         ));
     }
 
-    tick_many(env, 5);
+    tick_many(env, 20);
 
     let current_user_response = client::user_index::current_user(env, user.principal, canister_ids.user_index, &Empty {});
 
@@ -101,8 +102,10 @@ fn cycles_of_users_deleted_previously_can_be_refunded_by_a_platform_operator() {
     delete_user(env, &user_auth, canister_ids.identity);
     wait_for_cycles_to_be_refunded(env, &user);
 
-    // Simulate a user deleted before cycles were refunded on deletion
+    // Simulate a user deleted before cycles were refunded on deletion, whose canister still has
+    // the default freezing threshold
     env.add_cycles(user.canister(), T);
+    set_default_freezing_threshold(env, &user);
     let refunded_before = cycles_refunded_metric(env, user.local_user_index);
 
     let response = client::user_index::refund_deleted_user_cycles(
@@ -124,7 +127,55 @@ fn cycles_of_users_deleted_previously_can_be_refunded_by_a_platform_operator() {
     let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
     assert!(canister_status.module_hash.is_none());
 
+    // Queueing it again leaves it untouched, since what remains isn't worth refunding
+    set_default_freezing_threshold(env, &user);
+    let refunded_before = cycles_refunded_metric(env, user.local_user_index);
+    client::user_index::refund_deleted_user_cycles(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        &user_index_canister::refund_deleted_user_cycles::Args {},
+    );
+    tick_many(env, 20);
+    wait_for_refund_queue_to_empty(env, user.local_user_index);
+    assert_eq!(cycles_refunded_metric(env, user.local_user_index), refunded_before);
+    let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
+    assert_eq!(canister_status.settings.freezing_threshold, DEFAULT_FREEZING_THRESHOLD);
+
     wrapper.discard();
+}
+
+// 30 days, in seconds
+const DEFAULT_FREEZING_THRESHOLD: u64 = 2_592_000;
+
+// Calls the management canister directly, since the pocket-ic crate doesn't export the settings
+// type which `PocketIc::update_canister_settings` takes
+fn set_default_freezing_threshold(env: &pocket_ic::PocketIc, user: &User) {
+    #[derive(CandidType)]
+    struct UpdateSettingsArgs {
+        canister_id: Principal,
+        settings: Settings,
+    }
+
+    #[derive(CandidType)]
+    struct Settings {
+        freezing_threshold: Option<Nat>,
+    }
+
+    env.update_call_with_effective_principal(
+        Principal::management_canister(),
+        RawEffectivePrincipal::CanisterId(user.canister().as_slice().to_vec()),
+        user.local_user_index,
+        "update_settings",
+        candid::encode_one(UpdateSettingsArgs {
+            canister_id: user.canister(),
+            settings: Settings {
+                freezing_threshold: Some(DEFAULT_FREEZING_THRESHOLD.into()),
+            },
+        })
+        .unwrap(),
+    )
+    .unwrap();
 }
 
 #[test]
@@ -295,15 +346,15 @@ fn cycles_refund_leaves_a_canister_with_other_code_untouched() {
     wrapper.discard();
 }
 
-// See backend/canisters/cycles_refunder/README.md for why ~80B cycles can't be recovered
-const MAX_RESIDUAL_CYCLES: u128 = 100_000_000_000;
+// See backend/canisters/cycles_refunder/README.md for why ~110B cycles can't be recovered
+const MAX_RESIDUAL_CYCLES: u128 = 125_000_000_000;
 
 fn cycles_refunded_metric(env: &pocket_ic::PocketIc, local_user_index: types::CanisterId) -> u128 {
     let metrics = crate::utils::metrics(env, local_user_index);
     metrics["cycles_refunded_from_deleted_users"].as_u64().unwrap().into()
 }
 
-fn upgrade_user_index(env: &mut pocket_ic::PocketIc, canister_ids: &crate::CanisterIds) {
+pub(crate) fn upgrade_user_index(env: &mut pocket_ic::PocketIc, canister_ids: &crate::CanisterIds) {
     let wasm = crate::wasms::USER_INDEX.clone();
     let args = candid::encode_one(user_index_canister::post_upgrade::Args {
         wasm_version: wasm.version,
@@ -339,13 +390,10 @@ fn wait_for_refund_queue_to_empty(env: &mut pocket_ic::PocketIc, local_user_inde
 pub(crate) fn wait_for_cycles_to_be_refunded(env: &mut pocket_ic::PocketIc, user: &User) {
     for _ in 0..200 {
         // The balance drops once `refund` completes, and the refunder is uninstalled after that
-        if env.cycle_balance(user.canister()) < MAX_RESIDUAL_CYCLES
-            && env
-                .canister_status(user.canister(), Some(user.local_user_index))
-                .unwrap()
-                .module_hash
-                .is_none()
-        {
+        let status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
+        if env.cycle_balance(user.canister()) < MAX_RESIDUAL_CYCLES && status.module_hash.is_none() {
+            // Zeroed so that the cycles its freezing threshold held back were refunded too
+            assert_eq!(status.settings.freezing_threshold, 0u32);
             return;
         }
         env.advance_time(Duration::from_secs(60));
