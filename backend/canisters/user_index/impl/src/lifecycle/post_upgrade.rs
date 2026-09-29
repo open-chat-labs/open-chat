@@ -2,6 +2,7 @@ use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
 use crate::updates::{refund_deleted_user_cycles, set_daily_puzzle_canister_id};
 use crate::{Data, mutate_state, read_state};
+use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -9,7 +10,7 @@ use online_users_canister::{UserDeleted, UserIdMigrated, UserIndexEvent as Onlin
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
-use types::CanisterId;
+use types::{CanisterId, UserId};
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
 use utils::env::canister::CanisterEnv;
@@ -69,19 +70,7 @@ fn post_upgrade(args: Args) {
     ic_cdk_timers::set_timer(Duration::ZERO, async {
         mutate_state(|state| {
             let users_to_remove: Vec<_> = state.data.remove_from_online_users_queue.drain(..).collect();
-            let migrated_users: Vec<_> = state
-                .data
-                .migrated_user_ids
-                .iter()
-                .filter_map(|(old_user_id, _)| {
-                    let new_user_id = state.data.migrated_user_ids.latest(old_user_id);
-                    state
-                        .data
-                        .users
-                        .get_by_user_id(&new_user_id)
-                        .map(|u| (u.principal, old_user_id, new_user_id))
-                })
-                .collect();
+            let migrated_users = migrated_users(&state.data);
 
             info!(
                 users_to_remove = users_to_remove.len(),
@@ -120,4 +109,63 @@ fn post_upgrade(args: Args) {
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
+}
+
+// Each of the old ids of every migrated user, mapped straight to their latest id, along with their
+// principal. Users who have since been deleted are left out.
+fn migrated_users(data: &Data) -> Vec<(Principal, UserId, UserId)> {
+    data.migrated_user_ids
+        .iter()
+        .filter_map(|(old_user_id, _)| {
+            let new_user_id = data.migrated_user_ids.latest(old_user_id);
+            data.users
+                .get_by_user_id(&new_user_id)
+                .map(|u| (u.principal, old_user_id, new_user_id))
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::user::User;
+
+    // User 1 has been migrated to user 2, user 3 to user 4 then to user 5, and user 6 to user 7,
+    // who has since been deleted. User 8 hasn't been migrated.
+    #[test]
+    fn migrated_users_maps_each_old_id_to_the_latest_id() {
+        let mut data = Data::default();
+        for i in [2, 5, 7, 8] {
+            data.users.add_test_user(User {
+                principal: principal(i),
+                user_id: user_id(i),
+                username: format!("user{i}"),
+                ..Default::default()
+            });
+        }
+        data.users.delete_user(user_id(7), 0);
+        for (old, new) in [(1, 2), (3, 4), (4, 5), (6, 7)] {
+            data.migrated_user_ids.insert(user_id(old), user_id(new));
+        }
+
+        let mut result = migrated_users(&data);
+        result.sort();
+
+        assert_eq!(
+            result,
+            vec![
+                (principal(2), user_id(1), user_id(2)),
+                (principal(5), user_id(3), user_id(5)),
+                (principal(5), user_id(4), user_id(5)),
+            ]
+        );
+    }
+
+    fn principal(i: u8) -> Principal {
+        Principal::from_slice(&[i, 1])
+    }
+
+    fn user_id(i: u8) -> UserId {
+        Principal::from_slice(&[i]).into()
+    }
 }

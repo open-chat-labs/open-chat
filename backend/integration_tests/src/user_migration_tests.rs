@@ -1004,6 +1004,9 @@ fn online_users_knows_migrated_user_by_their_new_id() {
         ),
         result.minutes_online
     );
+
+    // Upgrading the UserIndex runs its one-offs, which would break later tests which draw this env
+    wrapper.discard();
 }
 
 fn cancel_user_migration(
