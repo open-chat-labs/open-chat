@@ -1,10 +1,12 @@
 use crate::RuntimeState;
-use crate::updates::send_message::{HandleMessageArgs, handle_message_impl};
+use crate::updates::send_message::receive_message;
 use chat_events::{MessageContentInternal, TextContentInternal};
 use constants::{OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
+use rand::RngExt;
 use types::{EventWrapper, Message, User, UserId, UserType};
 use user_canister::C2CReplyContext;
 use user_core::openchat_bot;
+use user_core::updates::c2c_user_canister::ReceiveMessageArgs;
 
 pub(crate) fn send_community_deleted_message(deleted_by: UserId, name: String, public: bool, state: &mut RuntimeState) {
     send_text_message(
@@ -54,25 +56,24 @@ pub(crate) fn send_message_with_reply(
     mute_notification: bool,
     state: &mut RuntimeState,
 ) -> EventWrapper<Message> {
-    let args = HandleMessageArgs {
+    let args = ReceiveMessageArgs {
         sender: OPENCHAT_BOT_USER_ID,
-        thread_root_message_index: None,
-        message_id: None,
-        sender_message_index: None,
+        sender_user_type: UserType::OcControlledBot,
         sender_name: OPENCHAT_BOT_USERNAME.to_string(),
         sender_display_name: None,
+        sender_avatar_id: None,
+        thread_root_message_id: None,
+        message_id: state.env.rng().random(),
+        sender_message_index: None,
         content,
         replies_to,
         forwarding: false,
-        sender_user_type: UserType::OcControlledBot,
-        sender_avatar_id: None,
-        push_message_sent_event: true,
-        mute_notification,
-        mentioned,
         block_level_markdown: false,
         og_previews: Vec::new(),
-        now: state.env.now(),
+        mentioned,
+        mute_notification,
     };
 
-    handle_message_impl(args, state)
+    // Its id is freshly drawn, so it can't already be in the chat, and it isn't in a thread
+    receive_message(args, true, state).expect("The OpenChat bot's message is never skipped")
 }

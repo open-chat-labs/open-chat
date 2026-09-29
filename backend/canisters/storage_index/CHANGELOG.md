@@ -8,9 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Decode only the `canister_status` fields needed when checking whether buckets are full ([#9618](https://github.com/open-chat-labs/open-chat/pull/9618))
+
+## [[2.0.2067](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2067-storage_index)] - 2026-09-29
+
+### Changed
+
 - Update `ic-stable-structures` to a fork which supports choosing the page size of a map ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
-- Decode only the `canister_status` fields needed when checking whether buckets are full ([#9618](https://github.com/open-chat-labs/open-chat/pull/9618))
 
 ### Removed
 

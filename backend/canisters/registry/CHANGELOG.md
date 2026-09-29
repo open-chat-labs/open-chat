@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2071](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2071-registry)] - 2026-09-29
+
 ### Changed
 
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))

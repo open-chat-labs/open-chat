@@ -18,16 +18,14 @@ use ledger_utils::UserTransfer;
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
-    CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoContent, DirectChatUserNotificationPayload,
-    DirectMessageNotification, MessageContentInitial, MessageId, MessageIndex, OCResult, OgPreview, P2PSwapContentInitial,
-    P2PSwapLocation, PinNumberWrapper, ReplyContext, TimestampMillis, UserId, UserType, certified, icrc1, icrc2,
+    CanisterId, Chat, ChatId, CompletedCryptoTransaction, CryptoContent, MessageContentInitial, MessageId, MessageIndex,
+    OCResult, OgPreview, P2PSwapContentInitial, P2PSwapLocation, PinNumberWrapper, ReplyContext, TimestampMillis, UserId,
+    UserType, certified, icrc1, icrc2,
 };
 use user_canister::send_message_v2::{Response::*, *};
-use user_canister::{
-    C2CReplyContext, MessageActivity, MessageActivityEvent, SendMessageArgs, SendMessagesArgs, UserCanisterEvent,
-    c2c_bot_send_message,
-};
+use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
 use user_core::updates::c2c_bot_send_message::Sent;
+use user_core::updates::c2c_user_canister::ReceiveMessageArgs;
 use user_core::updates::offer_p2p_swap;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
@@ -690,11 +688,9 @@ impl Recipient {
     }
 }
 
-// Pushes a message from `sender` to the recipient's copy of the chat between them, creating the chat
-// if they have none. This is the User canister's handling of the `SendMessages` event it receives
-// from the sender's canister, and is only reached once the recipient is known not to have blocked
-// the sender. As there, a message the recipient doesn't receive (because it is in a thread their
-// copy of the chat doesn't have) stays on the sender's side alone.
+// Pushes a message from `sender` to the recipient's copy of the chat between them, via `user_core`,
+// as the User canister does for the `SendMessages` event it receives from the sender's canister.
+// Only reached once the recipient is known not to have blocked the sender.
 pub(crate) fn receive_message(
     their_index: u16,
     sender: UserId,
@@ -704,138 +700,51 @@ pub(crate) fn receive_message(
     state: &mut RuntimeState,
 ) {
     let their_user_id = state.user_id(their_index);
-    let chat_id = sender.into();
     let anonymized_id: u128 = state.env.rng().random();
-    let mute_notification = message.message_filter_failed.is_some();
     let message_id = message.message_id;
+    let args = ReceiveMessageArgs {
+        sender,
+        sender_user_type: UserType::User,
+        sender_name: sender_details.name,
+        sender_display_name: sender_details.display_name,
+        sender_avatar_id: sender_details.avatar_id,
+        thread_root_message_id: message.thread_root_message_id,
+        message_id,
+        sender_message_index: Some(message.sender_message_index),
+        content: message.content,
+        replies_to: message.replies_to,
+        forwarding: message.forwarding,
+        block_level_markdown: message.block_level_markdown,
+        og_previews: message.og_previews,
+        mentioned: Vec::new(),
+        mute_notification: message.message_filter_failed.is_some(),
+    };
 
-    let received = state.data.users.with_user_mut(their_index, |user| {
-        let existing_chat = user.direct_chats.get(&chat_id);
-
-        // Which thread the message is in and what it replies to are translated from ids to the
-        // indexes they have in this copy of the chat
-        let thread_root_message_index = match existing_chat {
-            Some(chat) => chat.thread_root_message_index(message.thread_root_message_id),
-            None if message.thread_root_message_id.is_none() => Ok(None),
-            None => Err(OCErrorCode::ThreadNotFound.into()),
-        };
-        let Ok(thread_root_message_index) = thread_root_message_index else {
-            return None;
-        };
-
-        // The sender can only reuse a message id in a chat they have deleted their copy of, in
-        // which case this copy may still hold the id
-        if existing_chat.is_some_and(|chat| {
-            chat.events()
-                .message_already_finalised(thread_root_message_index, message.message_id, false)
-        }) {
-            return None;
-        }
-
-        let replies_to = match message.replies_to {
-            Some(C2CReplyContext::ThisChat(message_id)) => existing_chat
-                .and_then(|chat| chat.main_events_reader().event_index(message_id.into()))
-                .map(|event_index| ReplyContextInternal {
-                    chat_if_other: None,
-                    event_index,
-                }),
-            Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, event_index)) => Some(ReplyContextInternal {
-                chat_if_other: Some((chat.into(), thread_root_message_index)),
-                event_index,
-            }),
-            None => None,
-        };
-        let chat_private_replying_to = private_reply_chat(replies_to.as_ref().and_then(|r| r.chat_if_other));
-
-        let chat = user
-            .direct_chats
-            .get_or_create(their_user_id, sender, UserType::User, || anonymized_id, now);
-
-        let message_event = chat.push_message::<NullEventPusher>(
-            PushMessageArgs {
-                thread_root_message_index,
-                message_id: message.message_id,
-                sender,
-                content: message.content,
-                mentioned: Vec::new(),
-                replies_to,
-                forwarded: message.forwarding,
-                sender_is_bot: false,
-                block_level_markdown: message.block_level_markdown,
-                og_previews: message.og_previews,
+    let Some(received) = state
+        .data
+        .users
+        .with_user_mut(their_index, |user| {
+            user_core::updates::c2c_user_canister::receive_message::<NullEventPusher>(
+                user,
+                their_user_id,
+                args,
+                None,
+                anonymized_id,
                 now,
-                sender_context: None,
-            },
-            Some(message.sender_message_index),
-            None,
-        );
-
-        let notification = if mute_notification || chat.notifications_muted.value || user.suspended.value {
-            None
-        } else {
-            let content = &message_event.event.content;
-            Some(DirectChatUserNotificationPayload::DirectMessage(DirectMessageNotification {
-                sender,
-                thread_root_message_index,
-                message_index: message_event.event.message_index,
-                event_index: message_event.index,
-                sender_name: sender_details.name,
-                sender_display_name: sender_details.display_name,
-                message_type: content.content_type().to_string(),
-                message_text: content.notification_text(&[], &[]),
-                image_url: content.notification_image_url(),
-                file_name: content.notification_file_name(),
-                sender_avatar_id: sender_details.avatar_id,
-                crypto_transfer: content.notification_crypto_transfer_details(&[]),
-                call: None,
-            }))
-        };
-
-        // As in the User canister, crypto received is recorded as message activity, and a reply to
-        // a message in a group is recorded against the group
-        if matches!(message_event.event.content, types::MessageContent::Crypto(_)) {
-            user.push_message_activity(
-                MessageActivityEvent {
-                    chat: Chat::Direct(chat_id),
-                    thread_root_message_index,
-                    message_index: message_event.event.message_index,
-                    message_id: message_event.event.message_id,
-                    event_index: message_event.index,
-                    activity: MessageActivity::Crypto,
-                    timestamp: now,
-                    user_id: Some(sender),
-                },
-                now,
-            );
-        }
-        if let Some(chat) = chat_private_replying_to {
-            user.direct_chats
-                .mark_private_reply(sender, chat, message_event.event.message_index);
-        }
-
-        let p2p_swap_expires_at = match &message_event.event.content {
-            types::MessageContent::P2PSwap(c) => Some(c.expires_at),
-            _ => None,
-        };
-        Some((
-            message_event.expires_at,
-            notification,
-            thread_root_message_index,
-            p2p_swap_expires_at,
-        ))
-    });
-
-    let Some((expires_at, notification, thread_root_message_index, p2p_swap_expires_at)) = received.flatten() else {
+            )
+        })
+        .flatten()
+    else {
         return;
     };
 
-    if let Some(p2p_swap_expires_at) = p2p_swap_expires_at {
+    if let types::MessageContent::P2PSwap(c) = &received.message_event.event.content {
         register_p2p_swap_expiry(
             their_index,
-            chat_id,
-            thread_root_message_index,
+            sender.into(),
+            received.thread_root_message_index,
             message_id,
-            p2p_swap_expires_at,
+            c.expires_at,
             now,
             state,
         );
@@ -843,11 +752,11 @@ pub(crate) fn receive_message(
 
     // The recipient's copy of the chat has its own time to live, so the message may expire at a
     // different time in each copy
-    if let Some(expiry) = expires_at {
+    if let Some(expiry) = received.message_event.expires_at {
         state.handle_event_expiry(their_index, expiry);
     }
 
-    if let Some(notification) = notification {
+    if let Some(notification) = received.notification {
         state.push_notification(Some(sender), their_index, notification, now);
     }
 }

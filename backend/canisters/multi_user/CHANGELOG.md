@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Record P2P swaps users create directly in groups and communities ([#9563](https://github.com/open-chat-labs/open-chat/pull/9563))
 - Add the MultiUser canister skeleton with its lifecycle endpoints ([#9310](https://github.com/open-chat-labs/open-chat/pull/9310))
 - Initialise the stable memory map, alongside a second map with 256 byte pages for small entries ([#9347](https://github.com/open-chat-labs/open-chat/pull/9347))
 - Add an unimplemented stub for every User canister endpoint, sharing the User canister's API types ([#9400](https://github.com/open-chat-labs/open-chat/pull/9400))
@@ -54,6 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Retry sending events for migrated users to their new canister ([#9551](https://github.com/open-chat-labs/open-chat/pull/9551))
 - Serve each user's avatar and profile background over HTTP at `/user/{user_index}/avatar` and `/user/{user_index}/profile_background` ([#9555](https://github.com/open-chat-labs/open-chat/pull/9555))
 - Tell the UserIndex a user's new avatar id when they set or remove their avatar, as the User canister does ([#9560](https://github.com/open-chat-labs/open-chat/pull/9560))
+- Record P2P swaps users create directly in groups and communities ([#9563](https://github.com/open-chat-labs/open-chat/pull/9563))
 - Add `c2c_import_user` which starts the `import_user` job for the given user, callable by the LocalUserIndex ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
 - Add `inspect_message`, accepting ingress messages only from the canister's users and the video call operators ([#9597](https://github.com/open-chat-labs/open-chat/pull/9597))
 - Include the imported user's groups and communities in `UserImported`, for them to be told of the user's new id ([#9602](https://github.com/open-chat-labs/open-chat/pull/9602))
@@ -93,8 +93,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
 - Rename `send_message` back to `send_message_v2`, the name the User canister gives the endpoint whose args and response it takes, so that clients call both canisters the same way ([#9590](https://github.com/open-chat-labs/open-chat/pull/9590))
-- Apply direct chat events between users in the same canister as those from other canisters, so their recipients get the same achievements and notifications ([#9594](https://github.com/open-chat-labs/open-chat/pull/9594))
 - Return an error rather than trapping from `swap_tokens` and `c2c_withdraw_from_icpswap`, which aren't supported yet ([#9593](https://github.com/open-chat-labs/open-chat/pull/9593))
+- Apply direct chat events between users in the same canister as those from other canisters, so their recipients get the same achievements and notifications ([#9594](https://github.com/open-chat-labs/open-chat/pull/9594))
+- Receive direct messages via `user_core`'s `receive_message`, shared with the User canister ([#9631](https://github.com/open-chat-labs/open-chat/pull/9631))
 - Run every update through `execute_update` or `execute_update_async`, which flush the queued events once the update is done ([#9642](https://github.com/open-chat-labs/open-chat/pull/9642))
 
 ### Fixed
