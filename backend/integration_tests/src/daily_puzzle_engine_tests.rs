@@ -258,6 +258,10 @@ fn daily_puzzle_start_submit_and_streak() {
     );
     assert!(result.is_err(), "push from a user should be rejected");
     assert_eq!(fetch(env, &user, local_user_index).puzzles.len(), 1);
+
+    // The LUI now holds this test's made up puzzles for today, which would shadow the real ones in
+    // any later test which draws this env on the same day
+    wrapper.discard();
 }
 
 fn ensure_time_at_least_day0(env: &mut PocketIc) {

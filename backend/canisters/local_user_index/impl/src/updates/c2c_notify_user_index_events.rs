@@ -249,8 +249,13 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::RefundDeletedUserCycles(canister_ids) => {
             let mut queued: HashSet<CanisterId> = state.data.cycles_refund_queue.iter().map(|c| c.canister_id).collect();
             for canister_id in canister_ids {
-                // Belt and braces, the job also refuses to touch any canister with code installed
-                if !state.data.local_users.contains(&canister_id.into()) && queued.insert(canister_id) {
+                // Belt and braces, the job also refuses to touch any canister with code installed.
+                // Deleted users' canisters used to be added to the canister pool, from which they
+                // may yet become live canisters, so any still in it are left alone.
+                if !state.data.local_users.contains(&canister_id.into())
+                    && !state.data.canister_pool.contains(&canister_id)
+                    && queued.insert(canister_id)
+                {
                     state.data.cycles_refund_queue.push_back(CanisterToRefund {
                         canister_id,
                         attempt: 0,

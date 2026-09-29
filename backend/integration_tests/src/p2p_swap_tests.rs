@@ -61,7 +61,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
-    env.tick();
+    tick_many(env, 10);
 
     let accept_offer_response = client::user::accept_p2p_swap(
         env,
@@ -276,7 +276,7 @@ fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
-    env.tick();
+    tick_many(env, 10);
 
     let accept_offer_response = client::user::accept_p2p_swap(
         env,
@@ -854,8 +854,14 @@ fn deposit_refunded_if_swap_expires() {
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
-    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    // Let the offer reach user2's canister before jumping ahead, else the call delivering it, which
+    // is bounded wait, may still be in flight across subnets and so pass its deadline
     tick_many(env, 10);
+
+    env.advance_time(Duration::from_millis(DAY_IN_MS));
+    // Long enough for the refund to be made and then user2's and user1's canisters to be notified,
+    // even across subnets
+    tick_many(env, 30);
 
     assert_eq!(
         client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
