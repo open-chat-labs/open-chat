@@ -51,11 +51,22 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
         }
     };
 
+    // Crypto and P2P swaps aren't sent to bots, since the funds wouldn't reach anyone who could spend
+    // them: a bot registered with the UserIndex has an id which isn't its principal
+    if recipient_type.user_type().is_bot()
+        && matches!(
+            args.content,
+            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_)
+        )
+    {
+        return Error(OCErrorCode::InvalidRequest.with_message("Crypto can't be sent to bots"));
+    }
+
     let (content, completed_transfer) =
         match MessageContentInternal::validate_new_message(args.content, true, UserType::User, args.forwarding, now) {
             ValidateNewMessageContentResult::Success(content) => (content, None),
             ValidateNewMessageContentResult::SuccessCrypto(content) => {
-                let mut pending_transfer = match &content.transfer {
+                let pending_transfer = match &content.transfer {
                     CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
                     _ => unreachable!(),
                 };
@@ -70,12 +81,6 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
 
                 if let Err(error) = mutate_state(|state| state.data.user.pin_number.verify(args.pin.as_mut(), now)) {
                     return Error(error.into());
-                }
-
-                // When transferring to bot users, each user transfers to their own subaccount, this way it
-                // is trivial for the bots to keep track of each user's funds
-                if recipient_type.user_type().is_bot() {
-                    pending_transfer.set_recipient(args.recipient.as_principal(), my_user_id.as_principal().into());
                 }
 
                 // We have to use `process_transaction_without_caller_check` because we may be within a

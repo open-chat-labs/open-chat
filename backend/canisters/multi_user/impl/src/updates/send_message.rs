@@ -4,8 +4,8 @@ use crate::timer_job_types::{
     CancelP2PSwapInEscrowCanisterJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, TimerJob,
 };
 use crate::{
-    MultiUserEventPusher, RuntimeState, execute_update, execute_update_async, look_up_direct_chat_user, mutate_state,
-    read_state,
+    MultiUserEventPusher, RuntimeState, check_can_chat_with, execute_update, execute_update_async, look_up_direct_chat_user,
+    mutate_state, read_state,
 };
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -57,10 +57,20 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
         recipient
     } else {
         match look_up_direct_chat_user(local_user_index_canister_id, args.recipient).await {
-            Ok(()) => Recipient::OtherCanister,
+            Ok(user_type) => Recipient::OtherCanister(user_type),
             Err(error) => return Error(error),
         }
     };
+
+    // Crypto and P2P swaps aren't sent to bots, as in the User canister
+    if recipient.user_type().is_bot()
+        && matches!(
+            args.content,
+            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_)
+        )
+    {
+        return Error(OCErrorCode::InvalidRequest.with_message("Crypto can't be sent to bots"));
+    }
 
     let content = match MessageContentInternal::validate_new_message(args.content, true, UserType::User, args.forwarding, now) {
         ValidateNewMessageContentResult::Success(content) => MessageContent::Other(content),
@@ -226,7 +236,7 @@ async fn prepare_crypto_transfer(
                 .ok_or(OCErrorCode::TargetUserNotFound)?
                 .into()
         }
-        Recipient::OtherCanister => user_wallet(content.recipient, local_user_index_canister_id).await?,
+        Recipient::OtherCanister(_) => user_wallet(content.recipient, local_user_index_canister_id).await?,
     };
 
     mutate_state(|state| {
@@ -476,7 +486,13 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
                 // An index in this canister which holds no user
                 return Err(OCErrorCode::TargetUserNotFound.into());
             } else {
-                chat.is_some().then_some(Recipient::OtherCanister)
+                match chat {
+                    Some(chat) => {
+                        check_can_chat_with(args.recipient, chat.user_type)?;
+                        Some(Recipient::OtherCanister(chat.user_type))
+                    }
+                    None => None,
+                }
             })
         })?
         .map(|maybe_recipient| PrepareOk {
@@ -542,7 +558,7 @@ fn send_message_impl(
     let result = state.data.users.with_user_mut(my_index, |user| {
         let chat = user
             .direct_chats
-            .get_or_create(my_user_id, recipient, UserType::User, || anonymized_id, now);
+            .get_or_create(my_user_id, recipient, recipient_kind.user_type(), || anonymized_id, now);
 
         // Checked before the message is pushed, since pushing a message to a thread creates the thread
         let thread_root_message_id = chat.thread_root_message_id(thread_root_message_index)?;
@@ -592,7 +608,7 @@ fn send_message_impl(
     };
 
     // The recipient is sent the message, which one in this canister gets straight away. A chat with
-    // yourself has a single copy, so nothing is sent for it.
+    // yourself has a single copy, and a bot is sent nothing (see `send_user_canister_event`).
     state.send_user_canister_event(
         my_index,
         recipient,
@@ -659,8 +675,17 @@ enum Recipient {
     Me,
     // Another user in this canister
     SameCanister(u16),
-    // A user in another canister
-    OtherCanister,
+    // A user or bot outside this canister
+    OtherCanister(UserType),
+}
+
+impl Recipient {
+    fn user_type(self) -> UserType {
+        match self {
+            Recipient::OtherCanister(user_type) => user_type,
+            Recipient::Me | Recipient::SameCanister(_) => UserType::User,
+        }
+    }
 }
 
 // Pushes a message from `sender` to the recipient's copy of the chat between them, via `user_core`,

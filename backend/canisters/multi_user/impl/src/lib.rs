@@ -47,17 +47,28 @@ mod regular_jobs;
 mod timer_job_types;
 mod updates;
 
-// Checks that `user_id` is a user who can be sent direct messages, by looking them up in the
-// LocalUserIndex. Bots can't be messaged from a MultiUser canister yet.
-async fn look_up_direct_chat_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> OCResult {
+// Looks `user_id` up in the LocalUserIndex, returning whether they are a user or a bot, which a direct
+// chat with them is created as
+async fn look_up_direct_chat_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> OCResult<UserType> {
     match local_user_index_canister_c2c_client::lookup_user(user_id.as_principal(), local_user_index_canister_id).await? {
         // The lookup also resolves the principal a user signs in with, which isn't their user id
         Some(user) if user.user_id != user_id => Err(OCErrorCode::TargetUserNotFound.into()),
-        Some(user) if user.user_type == UserType::User => Ok(()),
-        Some(_) => {
-            Err(OCErrorCode::InvalidRequest.with_message("Chats with bots are not yet supported by the MultiUser canister"))
+        Some(user) => {
+            check_can_chat_with(user_id, user.user_type)?;
+            Ok(user.user_type)
         }
         None => Err(OCErrorCode::TargetUserNotFound.into()),
+    }
+}
+
+// A bot with a canister of its own can't be chatted with from this canister, since such a bot takes
+// the calling canister to be the user messaging it, whereas this canister calls it on behalf of all
+// its users. Bots registered with the UserIndex, whose ids aren't canisters, can be.
+fn check_can_chat_with(user_id: UserId, user_type: UserType) -> OCResult {
+    if user_type.is_bot() && user_id.is_canister() {
+        Err(OCErrorCode::InvalidRequest.with_message("Chats with bots which have canisters of their own are not supported"))
+    } else {
+        Ok(())
     }
 }
 
@@ -232,10 +243,20 @@ impl RuntimeState {
     // exactly as if it had come from another canister, while any other is sent it via the canister
     // holding their latest id (which is this one for a user migrated here since having `recipient`,
     // keeping the order of any events already queued for them). Nothing is sent to the sender
-    // themselves or to the OpenChat bot.
+    // themselves or to a bot, since no bot handles these events, and they would be retried forever.
     pub fn send_user_canister_event(&mut self, sender_index: u16, recipient: UserId, event: UserCanisterEvent) {
         let sender = self.user_id(sender_index);
-        if recipient == sender || recipient == OPENCHAT_BOT_USER_ID {
+        let recipient_is_bot = recipient == OPENCHAT_BOT_USER_ID
+            || self
+                .data
+                .users
+                .with_user(sender_index, |user| {
+                    user.direct_chats
+                        .get(&recipient.into())
+                        .is_some_and(|chat| chat.user_type.is_bot())
+                })
+                .unwrap_or_default();
+        if recipient == sender || recipient_is_bot {
             return;
         }
         if self.user_index(recipient).is_some() {
