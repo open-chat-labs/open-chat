@@ -15,6 +15,17 @@ pub async fn set_controllers(canister_id: CanisterId, controllers: Vec<Principal
     .await
 }
 
+pub async fn set_freezing_threshold(canister_id: CanisterId, seconds: u64) -> Result<(), C2CError> {
+    update_settings(
+        canister_id,
+        CanisterSettings {
+            freezing_threshold: Some(seconds.into()),
+            ..Default::default()
+        },
+    )
+    .await
+}
+
 pub async fn set_reserved_cycles_limit(canister_id: CanisterId, cycles: Cycles) -> Result<(), C2CError> {
     update_settings(
         canister_id,

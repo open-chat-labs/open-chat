@@ -220,6 +220,15 @@ impl RuntimeState {
         }
         self.data.chit_leaderboard.migrate_user_id(old_user_id, new_user_id);
         self.data.external_achievements.migrate_user_id(old_user_id, new_user_id);
+        // Finding the users they've blocked means scanning every blocked-user pair (~55M instructions
+        // for 7.6k pairs). That is only done here, where no more users are switched over in a batch
+        // than the migration concurrency, which must be kept well below the ~700 at which a batch
+        // would run out of instructions, and not by each LocalUserIndex, which may be sent up to 1000
+        // switch-overs in one batch
+        let blocked_users: Vec<UserId> = self.data.blocked_users.all_users_linked_to(old_user_id);
+        self.data
+            .blocked_users
+            .migrate_user_id(old_user_id, new_user_id, &blocked_users);
         for (_, job) in self.data.timer_jobs.iter() {
             if let Some(job) = job.borrow_mut().as_mut() {
                 job.migrate_user_id(old_user_id, new_user_id);
@@ -239,14 +248,21 @@ impl RuntimeState {
             new_user_id,
         }));
 
-        self.record_user_id_migrated(old_user_id, new_user_id, canisters_to_notify);
+        self.record_user_id_migrated(old_user_id, new_user_id, canisters_to_notify, blocked_users);
         true
     }
 
     // Records that a user migrated to a MultiUser canister has been given a new id, and tells every
-    // LocalUserIndex, each of which tells whichever of the user's groups and communities it controls.
-    // Only the first call for a migration is acted on, so it must list all of them.
-    fn record_user_id_migrated(&mut self, old_user_id: UserId, new_user_id: UserId, canisters_to_notify: Vec<CanisterId>) {
+    // LocalUserIndex, each of which tells whichever of the user's groups and communities it controls,
+    // and moves the pairs of the user and those they've blocked onto their new id. Only the first
+    // call for a migration is acted on, so it must list all of them.
+    fn record_user_id_migrated(
+        &mut self,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        canisters_to_notify: Vec<CanisterId>,
+        blocked_users: Vec<UserId>,
+    ) {
         if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
             self.data.multi_user_canisters.on_user_removed(&old_user_id);
             self.data.multi_user_canisters.on_user_added(&new_user_id);
@@ -255,6 +271,7 @@ impl RuntimeState {
                     old_user_id,
                     new_user_id,
                     canisters_to_notify,
+                    blocked_users,
                 }),
                 None,
             );
