@@ -53,10 +53,11 @@ export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
     async getWithdrawalInfo(amount: bigint): Promise<CkbtcMinterWithdrawalInfo> {
         const { minWithdrawalAmount } = await this.getMinterInfoCached();
 
-        // The minter traps on an amount below its minimum ("withdrawal amount is too low") or
-        // beyond what its UTXOs can cover ("withdrawal amount is too large"). The send form asks
-        // for an estimate on open with 0 and again on every keystroke, so those amounts are
-        // routine. Fall back to the minter's amount-independent estimate for them.
+        // The minter traps on 0 ("withdrawal amount is too large", as no UTXOs are selected), on
+        // a small amount under its minimum ("withdrawal amount is too low") and on more than all
+        // its UTXOs together ("withdrawal amount is too large"). The send form asks for an
+        // estimate with 0 on open and again on every keystroke, so those amounts are routine.
+        // Fall back to the minter's amount-independent estimate for them.
         const feeEstimate = await (amount >= minWithdrawalAmount
             ? this.estimateWithdrawalFee(amount).catch((err) => {
                   if (String(err?.message).includes("withdrawal amount is too large")) {
