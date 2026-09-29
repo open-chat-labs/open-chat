@@ -2,8 +2,8 @@ use candid::Principal;
 use identity_canister::remove_identity_link::Response as RemovePrincipalResponse;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
+use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{HashMap, HashSet};
 use types::{CanisterId, PushIfNotContains, TimestampMillis, UserId, is_default};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -226,14 +226,6 @@ impl UserPrincipals {
         Some(removed)
     }
 
-    /// The credential id of every WebAuthn key an auth principal refers to
-    pub fn webauthn_credential_ids(&self) -> HashSet<&ByteBuf> {
-        self.auth_principals
-            .values()
-            .filter_map(|a| a.webauthn_credential_id.as_ref())
-            .collect()
-    }
-
     pub fn next_index(&self) -> u32 {
         self.user_principals.len().try_into().unwrap()
     }
@@ -449,7 +441,6 @@ mod tests {
             vec![active]
         );
         assert!(!user_principals.temp_keys.contains_key(&temp_key));
-        assert!(user_principals.webauthn_credential_ids().is_empty());
         assert_eq!(user_principals.originating_canisters().get(&canister), Some(&1));
         assert!(matches!(
             user_principals.remove_auth_principal(active, passkey),
