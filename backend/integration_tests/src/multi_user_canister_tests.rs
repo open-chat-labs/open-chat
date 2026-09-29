@@ -5320,6 +5320,7 @@ fn users_can_chat_with_bots_but_not_send_them_crypto() {
         },
         amount + ICP_TRANSFER_FEE,
     );
+    let balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, alice);
     let response = client::user::send_message_v2(
         env,
         alice,
@@ -5348,7 +5349,7 @@ fn users_can_chat_with_bots_but_not_send_them_crypto() {
     );
     assert_eq!(
         client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, alice),
-        1_000_000_000
+        balance
     );
 }
 
