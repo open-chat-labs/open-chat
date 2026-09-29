@@ -60,6 +60,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Clear an imported user's BTC and OneSec deposit addresses, which were for their old canister's account ([#9607](https://github.com/open-chat-labs/open-chat/pull/9607))
 - Add `c2c_abandon_user_import`, after which a cancelled migration is never imported ([#9610](https://github.com/open-chat-labs/open-chat/pull/9610))
 - Push sent, edited and tipped messages, reactions and OpenChat bot messages to the event store, as User canisters do ([#9625](https://github.com/open-chat-labs/open-chat/pull/9625))
+- Send the OpenChat bot's welcome messages to each user created by `c2c_create_user`, as a User canister does when installed ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
 
 ### Changed
 

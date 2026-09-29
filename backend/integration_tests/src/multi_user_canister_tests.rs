@@ -143,6 +143,38 @@ fn register_user_with_flag_places_user_in_multi_user_canister() {
 }
 
 #[test]
+fn users_registered_in_a_multi_user_canister_are_sent_the_welcome_messages() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (principal, user_id) = create_user(env, canister_ids, local_user_index, canister_id);
+    let user_in_own_canister = client::register_user(env, canister_ids);
+
+    // The OpenChat bot sends the same welcome messages as it does to a user in a canister of their own
+    let expected = messages(&client::user::happy_path::events(
+        env,
+        &user_in_own_canister,
+        OPENCHAT_BOT_USER_ID,
+        0.into(),
+        true,
+        10,
+        10,
+    ));
+    assert!(!expected.is_empty());
+    assert_eq!(
+        messages(&events(env, principal, canister_id, user_id, OPENCHAT_BOT_USER_ID)),
+        expected
+    );
+}
+
+#[test]
 fn deleting_a_user_decrements_their_multi_user_canisters_user_count() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
@@ -284,6 +316,7 @@ fn users_created_in_multi_user_canister_are_addressed_by_indexed_user_id() {
                 principal,
                 username: random_string(),
                 referred_by: None,
+                openchat_bot_messages: Vec::new(),
             },
         )
     };
@@ -1038,12 +1071,16 @@ fn contacts(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> Vec<(
     result.contacts.into_iter().map(|c| (c.user_id, c.nickname)).collect()
 }
 
+// Leaves out the user's chat with the OpenChat bot, which every user has from being sent the
+// welcome messages when they registered
 fn initial_state(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> user_canister::initial_state::SuccessResult {
-    let user_canister::initial_state::Response::Success(result) =
+    let user_canister::initial_state::Response::Success(mut result) =
         client::user::initial_state(env, sender, canister_id, &user_canister::initial_state::Args {});
+    result.direct_chats.summaries.retain(|c| c.them != OPENCHAT_BOT_USER_ID);
     result
 }
 
+// Leaves out the user's chat with the OpenChat bot, as `initial_state` does
 fn updates(
     env: &PocketIc,
     sender: Principal,
@@ -1051,7 +1088,14 @@ fn updates(
     updates_since: TimestampMillis,
 ) -> Option<user_canister::updates::SuccessResult> {
     match client::user::updates(env, sender, canister_id, &user_canister::updates::Args { updates_since }) {
-        user_canister::updates::Response::Success(result) => Some(result),
+        user_canister::updates::Response::Success(mut result) => {
+            result.direct_chats.added.retain(|c| c.them != OPENCHAT_BOT_USER_ID);
+            result
+                .direct_chats
+                .updated
+                .retain(|c| c.chat_id != ChatId::from(OPENCHAT_BOT_USER_ID));
+            Some(result)
+        }
         user_canister::updates::Response::SuccessNoUpdates => None,
     }
 }
@@ -1445,6 +1489,8 @@ fn message_events_are_pushed_to_the_event_store_as_by_user_canisters() {
     let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
     let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
+    // Past when the welcome messages were sent, so that they aren't counted as the message sent below
+    env.advance_time(Duration::from_millis(1000));
     let message_id = random_from_u128();
     let sent = now_millis(env);
     send_text_message(env, a_principal, canister_id, b, "hello", message_id);
@@ -2441,6 +2487,7 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
 
     let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
     let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+    let welcome_messages = bot_messages(env, a_principal, canister_id, a).len();
 
     let now = now_millis(env);
     let notes = random_string();
@@ -2484,7 +2531,7 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
 
     env.advance_time(Duration::from_millis(999));
     env.tick();
-    assert_eq!(bot_messages(env, a_principal, canister_id, a).len(), 2);
+    assert_eq!(bot_messages(env, a_principal, canister_id, a).len(), welcome_messages + 2);
 
     env.advance_time(Duration::from_millis(1));
     env.tick();
@@ -2492,7 +2539,10 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
     // The OpenChat bot sent a message when each reminder was set, both of which are now hidden (the
     // first as its reminder has been sent and the second as its reminder was cancelled), followed by
     // the one reminder which wasn't cancelled
-    let [created1, created2, reminder]: [Message; 3] = bot_messages(env, a_principal, canister_id, a).try_into().unwrap();
+    let [created1, created2, reminder]: [Message; 3] = bot_messages(env, a_principal, canister_id, a)
+        .split_off(welcome_messages)
+        .try_into()
+        .unwrap();
     for (message, reminder_id) in [(created1, reminder1), (created2, reminder2)] {
         assert_eq!(message.sender, OPENCHAT_BOT_USER_ID);
         let MessageContent::MessageReminderCreated(created) = message.content else {
@@ -4458,6 +4508,7 @@ fn a_user_is_deleted_from_a_multi_user_canister_without_affecting_the_others() {
             principal: alice,
             username: random_string(),
             referred_by: None,
+            openchat_bot_messages: Vec::new(),
         },
     );
     let multi_user_canister::c2c_create_user::Response::Success(new_alice_id) = response else {
