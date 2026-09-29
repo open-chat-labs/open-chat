@@ -13,13 +13,14 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    Achievement, AutonomousConfig, BotChatContext, BotDefinition, BotInitiator, BotInstallationLocation, BotMessageContent,
-    BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex, Chat, ChatEvent, ChatId,
-    ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent, CryptoTransaction, DeletedCommunityInfo,
-    DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty,
-    EventsResponse, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    NotificationEnvelope, OptionUpdate, P2PSwapContentInitial, P2PSwapStatus, PendingCryptoTransaction, PinNumberSettings,
-    Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
+    Achievement, AutonomousConfig, BlobReference, BotChatContext, BotDefinition, BotInitiator, BotInstallationLocation,
+    BotMessageContent, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex, Chat,
+    ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent, CryptoTransaction,
+    DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates,
+    Document, Empty, EventIndex, EventsResponse, FileContent, IdempotentEnvelope, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, Milliseconds, NotificationEnvelope, OptionUpdate, P2PSwapContentInitial,
+    P2PSwapStatus, PendingCryptoTransaction, PinNumberSettings, Reaction, ReferralStatus, ReplyContext, TextContent,
+    TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -5434,6 +5435,13 @@ fn users_send_crypto_from_their_own_wallets() {
         &initial_state(env, b_principal, canister_id),
         Achievement::ReceivedCrypto
     ));
+    // And it appears in B's message activity feed, as it would were B in a User canister
+    assert!(
+        message_activity_feed(env, b_principal, canister_id, 0)
+            .events
+            .iter()
+            .any(|e| matches!(e.activity, MessageActivity::Crypto) && e.user_id == Some(a))
+    );
 
     // To Carol, in a User canister
     let transfer = icrc2_transfer(env, icrc1::Account::legacy_for_user(carol.user_id));
@@ -6539,4 +6547,161 @@ fn token_swaps_return_errors_rather_than_trapping() {
         matches!(&withdraw_response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{withdraw_response:?}"
     );
+}
+
+// The files in a direct message are deleted by the canister holding the sender once the message is
+// deleted for good, or by the canisters holding each user when it expires, as a User canister does.
+// The frontend names the canisters holding the two users as the files' accessors, which is what lets
+// them delete the files.
+#[test]
+fn files_in_direct_messages_are_deleted_along_with_the_messages() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let send_file = |env: &mut PocketIc| {
+        let blob_reference = client::storage_index::happy_path::upload_file(
+            env,
+            a_principal,
+            canister_ids.storage_index,
+            100,
+            vec![canister_id],
+        );
+        let message_id = random_from_u128();
+        let response = client::user::send_message_v2(
+            env,
+            a_principal,
+            canister_id,
+            &user_canister::send_message_v2::Args {
+                content: MessageContentInitial::File(FileContent {
+                    name: random_string(),
+                    caption: None,
+                    mime_type: random_string(),
+                    file_size: 100,
+                    blob_reference: Some(blob_reference.clone()),
+                }),
+                ..send_message_args(b, "", message_id)
+            },
+        );
+        assert!(
+            matches!(response, user_canister::send_message_v2::Response::Success(_)),
+            "{response:?}"
+        );
+        (blob_reference, message_id)
+    };
+    let file_exists = |env: &PocketIc, blob_reference: &BlobReference| {
+        client::storage_bucket::happy_path::file_exists(env, a_principal, blob_reference.canister_id, blob_reference.blob_id)
+    };
+
+    // B deleting A's message from their copy of the chat leaves the file, which A's copy references
+    let (blob_reference, message_id) = send_file(env);
+    delete_messages(env, b_principal, canister_id, a, None, vec![message_id]);
+    env.advance_time(Duration::from_secs(301));
+    tick_many(env, 3);
+    assert!(file_exists(env, &blob_reference));
+
+    // A deleting it deletes the file once the message can no longer be undeleted
+    delete_messages(env, a_principal, canister_id, b, None, vec![message_id]);
+    env.advance_time(Duration::from_secs(301));
+    tick_many(env, 3);
+    assert!(!file_exists(env, &blob_reference));
+
+    // A message which disappears has its file deleted when it does
+    update_chat_settings(env, a_principal, canister_id, b, OptionUpdate::SetToSome(1000));
+    let (blob_reference, _) = send_file(env);
+    env.advance_time(Duration::from_millis(999));
+    tick_many(env, 5);
+    assert!(file_exists(env, &blob_reference));
+    env.advance_time(Duration::from_millis(1));
+    tick_many(env, 5);
+    assert!(!file_exists(env, &blob_reference));
+}
+
+// A reply in a direct chat to a message in a group is recorded against the group, in both users'
+// copies of the chat, so that when the group is imported into a community the reply is pointed at
+// the channel it became, as in the User canister
+#[test]
+fn private_replies_to_a_group_follow_it_into_a_community() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let group: ChatId = random_principal().into();
+    let community: CommunityId = random_principal().into();
+    let channel_id: ChannelId = 7u32.into();
+    let replied_to_event_index: EventIndex = 5.into();
+
+    let response = client::user::send_message_v2(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::send_message_v2::Args {
+            replies_to: Some(ReplyContext {
+                chat_if_other: Some((Chat::Group(group), None)),
+                event_index: replied_to_event_index,
+            }),
+            ..send_message_args(b, "A private reply", random_from_u128())
+        },
+    );
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::Success(_)),
+        "{response:?}"
+    );
+
+    let now = now_millis(env);
+    for user_id in [a, b] {
+        client::user::c2c_notify_group_deleted(
+            env,
+            canister_ids.group_index,
+            canister_id,
+            &user_canister::c2c_notify_group_deleted::Args {
+                user_id,
+                deleted_group: DeletedGroupInfoInternal {
+                    id: group,
+                    timestamp: now,
+                    deleted_by: random_principal().into(),
+                    group_name: "Group".to_string(),
+                    name: "Group".to_string(),
+                    public: false,
+                    community_imported_into: Some(CommunityImportedInto {
+                        community_name: "Community".to_string(),
+                        community_id: community,
+                        local_user_index_canister_id: local_user_index,
+                        channel: ChannelLatestMessageIndex {
+                            channel_id,
+                            latest_message_index: None,
+                        },
+                        other_default_channels: Vec::new(),
+                    }),
+                },
+            },
+        );
+    }
+
+    for (principal, me, them) in [(a_principal, a, b), (b_principal, b, a)] {
+        let ChatEvent::Message(message) = events(env, principal, canister_id, me, them).events.pop().unwrap().event else {
+            panic!("Expected a message");
+        };
+        let replies_to = message.replies_to.unwrap();
+        assert_eq!(replies_to.chat_if_other, Some((Chat::Channel(community, channel_id), None)));
+        assert_eq!(replies_to.event_index, replied_to_event_index);
+    }
 }
