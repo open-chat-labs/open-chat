@@ -1,11 +1,10 @@
-#![allow(deprecated)]
 use async_trait::async_trait;
 use email_magic_links::SignedMagicLink;
 use email_sender_core::EmailSender;
 use http::HeaderMap;
 use ic_cdk::query;
 use ic_cdk_management_canister::{
-    HttpHeader, HttpMethod, HttpRequestArgs, HttpRequestResult, TransformArgs, TransformContext, TransformFunc,
+    HttpHeader, HttpMethod, HttpRequest, HttpRequestResult, TransformArgs, TransformContext, TransformFunc,
 };
 use time::OffsetDateTime;
 use time::format_description::BorrowedFormatItem;
@@ -30,7 +29,7 @@ impl AwsEmailSender {
         }
     }
 
-    fn build_args(&self, magic_link: SignedMagicLink, now_millis: u64) -> HttpRequestArgs {
+    fn build_request(&self, magic_link: SignedMagicLink, now_millis: u64) -> HttpRequest {
         let datetime = OffsetDateTime::from_unix_timestamp_nanos(now_millis as i128 * 1_000_000).unwrap();
 
         let host = self.function_url.trim_start_matches("https://");
@@ -66,31 +65,30 @@ impl AwsEmailSender {
             })
             .collect();
 
-        HttpRequestArgs {
-            url,
-            max_response_bytes: Some(5 * 1024), // 5KB
-            method: HttpMethod::POST,
-            headers,
-            body: Some(body.as_bytes().to_vec()),
-            transform: Some(TransformContext {
+        HttpRequest::new(url)
+            .with_method(HttpMethod::POST)
+            .with_headers(headers)
+            .with_body(body.into_bytes())
+            .with_max_response_bytes(5 * 1024) // 5KB
+            .with_transform(TransformContext {
                 function: TransformFunc::new(
                     ic_cdk::api::canister_self(),
                     "aws_email_sender_transform_http_response".to_string(),
                 ),
                 context: Vec::new(),
-            }),
-            // `None` keeps the default behaviour of the request being made by all nodes in the subnet
-            is_replicated: None,
-        }
+            })
+            // The transform only copies the status, so this is still far more than it needs, but
+            // without it the cycles held for each email would be sized for the query instruction limit
+            .with_expected_transform_instructions(100_000_000)
     }
 }
 
 #[async_trait]
 impl EmailSender for AwsEmailSender {
     async fn send(&self, magic_link: SignedMagicLink, now_millis: u64) -> Result<(), String> {
-        let args = self.build_args(magic_link, now_millis);
-
-        let resp = ic_cdk_management_canister::http_request(&args)
+        let resp = self
+            .build_request(magic_link, now_millis)
+            .send()
             .await
             .map_err(|e| format!("{e:?}"))?;
 
