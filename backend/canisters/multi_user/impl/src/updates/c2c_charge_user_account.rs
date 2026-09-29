@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index;
-use crate::{RuntimeState, read_state};
+use crate::{RuntimeState, execute_update_async, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ledger_utils::Payer;
@@ -13,6 +13,10 @@ use user_canister::c2c_charge_user_account::*;
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]
 async fn c2c_charge_user_account(args: Args) -> Response {
+    execute_update_async(|| c2c_charge_user_account_impl(args)).await
+}
+
+async fn c2c_charge_user_account_impl(args: Args) -> Response {
     let (payer, user_index_canister_id) = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(error) => return Response::Error(error),

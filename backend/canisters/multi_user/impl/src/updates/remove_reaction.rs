@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{MultiUserEventPusher, RuntimeState, mutate_state};
+use crate::{MultiUserEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::AddRemoveReactionArgs;
@@ -11,7 +11,7 @@ use user_canister::{ToggleReactionArgs, UserCanisterEvent};
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn remove_reaction(args: Args) -> Response {
-    mutate_state(|state| {
+    execute_update(|state| {
         toggle_reaction(
             args.user_id,
             args.thread_root_message_index,

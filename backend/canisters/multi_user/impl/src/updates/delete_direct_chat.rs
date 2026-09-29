@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
@@ -9,7 +9,7 @@ use user_canister::delete_direct_chat::*;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn delete_direct_chat(args: Args) -> Response {
-    mutate_state(|state| delete_direct_chat_impl(args, state))
+    execute_update(|state| delete_direct_chat_impl(args, state))
 }
 
 // Removes the caller's copy of the chat, as the User canister does. The other user's copy, if they

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_local_user_index;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
@@ -9,7 +9,7 @@ use types::{OCResult, c2c_install_bot::*};
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_install_bot(args: Args) -> Response {
-    mutate_state(|state| c2c_install_bot_impl(args, state)).into()
+    execute_update(|state| c2c_install_bot_impl(args, state)).into()
 }
 
 // The user installing the bot is `args.caller`, who must be one of this canister's users

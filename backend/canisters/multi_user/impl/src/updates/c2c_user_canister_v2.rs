@@ -2,7 +2,7 @@ use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::updates::delete_messages::enqueue_hard_delete_jobs;
 use crate::updates::send_message::{SenderDetails, receive_message};
 use crate::updates::start_video_call::handle_start_video_call;
-use crate::{RuntimeState, mutate_state, read_state};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
@@ -22,6 +22,10 @@ use utils::migrated_user_ids::MigratedUserIds;
 #[update(msgpack = true)]
 #[trace]
 async fn c2c_user_canister_v2(args: Args) -> Response {
+    execute_update_async(|| c2c_user_canister_v2_impl(args)).await
+}
+
+async fn c2c_user_canister_v2_impl(args: Args) -> Response {
     // As in the User canister, the caller must be a User or MultiUser canister, and each event is
     // only applied if it is from a user that kind of canister can act for
     let caller_kind = verify_caller(&args).await;
