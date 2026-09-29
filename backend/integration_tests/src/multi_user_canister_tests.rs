@@ -6706,3 +6706,75 @@ fn private_replies_to_a_group_follow_it_into_a_community() {
         assert_eq!(replies_to.event_index, replied_to_event_index);
     }
 }
+
+// A MultiUser canister checks its cycles balance as it handles updates, as a User canister does, and
+// asks the LocalUserIndex for a top up once it runs low
+#[test]
+fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
+    const TOP_UP_AMOUNT: u128 = 200_000_000_000;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    // Runs an update once the check is due again, then gives the top up time to arrive
+    let update_once_check_due = |env: &mut PocketIc| {
+        env.advance_time(Duration::from_secs(6 * 60));
+        let response = client::user::set_bio(
+            env,
+            principal,
+            canister_id,
+            &user_canister::set_bio::Args { text: random_string() },
+        );
+        assert!(matches!(response, user_canister::set_bio::Response::Success));
+        tick_many(env, 5);
+    };
+
+    // While the balance is healthy there's no top up
+    let balance = env.cycle_balance(canister_id);
+    update_once_check_due(env);
+    assert!(env.cycle_balance(canister_id) <= balance);
+
+    // Raise the freezing threshold until the cycles it reserves are three quarters of the balance.
+    // The canister still runs, but its balance is now less than twice the reserve, which is when
+    // `check_cycles_balance` counts it as low.
+    let balance = env.cycle_balance(canister_id);
+    let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
+    let original_freezing_threshold = status.settings.freezing_threshold.clone();
+    let burned_per_day: u128 = status.idle_cycles_burned_per_day.0.try_into().unwrap();
+    assert!(burned_per_day > 0);
+    let freezing_threshold_secs = balance * 3 / 4 * 24 * 60 * 60 / burned_per_day;
+    env.update_canister_settings(
+        canister_id,
+        Some(local_user_index),
+        pocket_ic::CanisterSettings {
+            freezing_threshold: Some(freezing_threshold_secs.into()),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    update_once_check_due(env);
+    // Less a margin for the cycles the update and the check themselves use
+    assert!(env.cycle_balance(canister_id) > balance + TOP_UP_AMOUNT - 10_000_000_000);
+
+    // Put the freezing threshold back, since the environment, and so this canister, is shared with
+    // later tests
+    env.update_canister_settings(
+        canister_id,
+        Some(local_user_index),
+        pocket_ic::CanisterSettings {
+            freezing_threshold: Some(original_freezing_threshold),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+}

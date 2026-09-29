@@ -62,6 +62,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Push sent, edited and tipped messages, reactions and OpenChat bot messages to the event store, as User canisters do ([#9625](https://github.com/open-chat-labs/open-chat/pull/9625))
 - Send the OpenChat bot's welcome messages to each user created by `c2c_create_user`, as a User canister does when installed ([#9643](https://github.com/open-chat-labs/open-chat/pull/9643))
 - Delete the files of direct messages which are deleted or expire, record private replies to group messages, and record crypto received as message activity, as the User canister does ([#9644](https://github.com/open-chat-labs/open-chat/pull/9644))
+- Ask the LocalUserIndex for a top up when the cycles balance runs low, checked as updates run ([#9646](https://github.com/open-chat-labs/open-chat/pull/9646))
 - Support direct chats with bots, but refuse crypto and P2P swaps sent to them ([#9648](https://github.com/open-chat-labs/open-chat/pull/9648))
 
 ### Changed
