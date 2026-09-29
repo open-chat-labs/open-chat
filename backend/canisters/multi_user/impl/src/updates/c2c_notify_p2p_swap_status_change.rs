@@ -1,5 +1,5 @@
 use crate::guards::caller_is_escrow_canister;
-use crate::{MultiUserEventPusher, mutate_state, read_state};
+use crate::{MultiUserEventPusher, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::SwapStatusChange as Args;
@@ -13,6 +13,10 @@ use user_core::updates::c2c_notify_p2p_swap_status_change::{apply_status_change,
 #[update(guard = "caller_is_escrow_canister", msgpack = true)]
 #[trace]
 async fn c2c_notify_p2p_swap_status_change(args: Args) {
+    execute_update_async(|| c2c_notify_p2p_swap_status_change_impl(args)).await
+}
+
+async fn c2c_notify_p2p_swap_status_change_impl(args: Args) {
     let P2PSwapLocation::Message(m) = &args.location else {
         return;
     };

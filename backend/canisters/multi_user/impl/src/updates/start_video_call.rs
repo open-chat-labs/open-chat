@@ -1,6 +1,6 @@
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::{MarkVideoCallEndedJob, TimerJob};
-use crate::{MultiUserEventPusher, RuntimeState, mutate_state};
+use crate::{MultiUserEventPusher, RuntimeState, execute_update};
 use canister_tracing_macros::trace;
 use constants::HOUR_IN_MS;
 use ic_cdk::update;
@@ -16,7 +16,7 @@ use user_core::updates::start_video_call::{Started, notification, prepare};
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
 fn start_video_call_v2(args: Args) -> Response {
-    mutate_state(|state| start_video_call_impl(args, state)).into()
+    execute_update(|state| start_video_call_impl(args, state)).into()
 }
 
 fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {

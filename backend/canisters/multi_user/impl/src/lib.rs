@@ -28,6 +28,7 @@ use types::{
 use user_canister::UserCanisterEvent;
 use user_core::User;
 use user_core::{Community, GroupChat};
+use utils::async_work::AsyncWorkGuard;
 use utils::env::Environment;
 use utils::idempotency_checker::IdempotencyChecker;
 use utils::migrated_user_ids::MigratedUserIds;
@@ -62,6 +63,23 @@ thread_local! {
 }
 
 canister_state!(RuntimeState);
+
+// Runs an update call. Every update goes through this or `execute_update_async`, so that anything
+// which must happen around each update is done in one place
+fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
+    mutate_state(|state| {
+        let result = f(state);
+        state.data.flush_pending_events();
+        result
+    })
+}
+
+async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
+    let _guard = AsyncWorkGuard::new();
+    let result = f().await;
+    mutate_state(|state| state.data.flush_pending_events());
+    result
+}
 
 struct RuntimeState {
     pub env: Box<dyn Environment>,
@@ -607,6 +625,12 @@ struct Data {
 }
 
 impl Data {
+    // Starts sending the events queued by the update, rather than waiting for the queues' timers
+    pub fn flush_pending_events(&mut self) {
+        self.user_canister_events_queue.flush();
+        self.local_user_index_event_sync_queue.flush();
+    }
+
     #[expect(clippy::too_many_arguments)]
     pub fn new(
         user_index_canister_id: CanisterId,

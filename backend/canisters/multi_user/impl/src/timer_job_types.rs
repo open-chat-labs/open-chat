@@ -1,5 +1,5 @@
 use crate::updates::end_video_call::end_video_call_impl;
-use crate::{mutate_state, openchat_bot, read_state};
+use crate::{can_borrow_state, mutate_state, openchat_bot, read_state};
 use candid::Principal;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{MessageContentInternal, MessageReminderContentInternal, ReplyContextInternal};
@@ -139,6 +139,9 @@ impl HardDeleteMessageContentJob {
 
 impl Job for TimerJob {
     fn execute(self) {
+        // Timer jobs which run within an update have their events flushed by it
+        let can_borrow_state = can_borrow_state();
+
         match self {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
@@ -148,6 +151,10 @@ impl Job for TimerJob {
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
+        }
+
+        if can_borrow_state {
+            mutate_state(|state| state.data.flush_pending_events());
         }
     }
 }
