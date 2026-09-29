@@ -509,13 +509,9 @@ fn send_message_impl(
 ) -> Response {
     let now = state.env.now();
 
+    let reply_context = replies_to.as_ref().map(ReplyContextInternal::from);
     // A reply to a message in a group is recorded against the group, as in the User canister
-    let chat_private_replying_to = private_reply_chat(
-        replies_to
-            .as_ref()
-            .map(ReplyContextInternal::from)
-            .and_then(|r| r.chat_if_other),
-    );
+    let chat_private_replying_to = private_reply_chat(reply_context.as_ref().and_then(|r| r.chat_if_other));
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index,
@@ -523,7 +519,7 @@ fn send_message_impl(
         sender: my_user_id,
         content: content.clone(),
         mentioned: Vec::new(),
-        replies_to: replies_to.as_ref().map(ReplyContextInternal::from),
+        replies_to: reply_context,
         forwarded: forwarding,
         sender_is_bot: false,
         block_level_markdown,

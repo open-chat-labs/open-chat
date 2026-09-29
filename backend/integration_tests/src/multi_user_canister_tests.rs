@@ -17,10 +17,10 @@ use types::{
     BotMessageContent, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex, Chat,
     ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent, CryptoTransaction,
     DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates,
-    Document, Empty, EventsResponse, FileContent, IdempotentEnvelope, Message, MessageContent, MessageContentInitial,
-    MessageId, MessageIndex, Milliseconds, NotificationEnvelope, OptionUpdate, P2PSwapContentInitial, P2PSwapStatus,
-    PendingCryptoTransaction, PinNumberSettings, Reaction, ReferralStatus, TextContent, TimestampMillis, UnitResult,
-    UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
+    Document, Empty, EventIndex, EventsResponse, FileContent, IdempotentEnvelope, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, Milliseconds, NotificationEnvelope, OptionUpdate, P2PSwapContentInitial,
+    P2PSwapStatus, PendingCryptoTransaction, PinNumberSettings, Reaction, ReferralStatus, ReplyContext, TextContent,
+    TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -6520,4 +6520,84 @@ fn files_in_direct_messages_are_deleted_along_with_the_messages() {
     env.advance_time(Duration::from_millis(1));
     tick_many(env, 5);
     assert!(!file_exists(env, &blob_reference));
+}
+
+// A reply in a direct chat to a message in a group is recorded against the group, in both users'
+// copies of the chat, so that when the group is imported into a community the reply is pointed at
+// the channel it became, as in the User canister
+#[test]
+fn private_replies_to_a_group_follow_it_into_a_community() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let group: ChatId = random_principal().into();
+    let community: CommunityId = random_principal().into();
+    let channel_id: ChannelId = 7u32.into();
+    let replied_to_event_index: EventIndex = 5.into();
+
+    let response = client::user::send_message_v2(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::send_message_v2::Args {
+            replies_to: Some(ReplyContext {
+                chat_if_other: Some((Chat::Group(group), None)),
+                event_index: replied_to_event_index,
+            }),
+            ..send_message_args(b, "A private reply", random_from_u128())
+        },
+    );
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::Success(_)),
+        "{response:?}"
+    );
+
+    let now = now_millis(env);
+    for user_id in [a, b] {
+        client::user::c2c_notify_group_deleted(
+            env,
+            canister_ids.group_index,
+            canister_id,
+            &user_canister::c2c_notify_group_deleted::Args {
+                user_id,
+                deleted_group: DeletedGroupInfoInternal {
+                    id: group,
+                    timestamp: now,
+                    deleted_by: random_principal().into(),
+                    group_name: "Group".to_string(),
+                    name: "Group".to_string(),
+                    public: false,
+                    community_imported_into: Some(CommunityImportedInto {
+                        community_name: "Community".to_string(),
+                        community_id: community,
+                        local_user_index_canister_id: local_user_index,
+                        channel: ChannelLatestMessageIndex {
+                            channel_id,
+                            latest_message_index: None,
+                        },
+                        other_default_channels: Vec::new(),
+                    }),
+                },
+            },
+        );
+    }
+
+    for (principal, me, them) in [(a_principal, a, b), (b_principal, b, a)] {
+        let ChatEvent::Message(message) = events(env, principal, canister_id, me, them).events.pop().unwrap().event else {
+            panic!("Expected a message");
+        };
+        let replies_to = message.replies_to.unwrap();
+        assert_eq!(replies_to.chat_if_other, Some((Chat::Channel(community, channel_id), None)));
+        assert_eq!(replies_to.event_index, replied_to_event_index);
+    }
 }
