@@ -6780,3 +6780,50 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
     )
     .unwrap();
 }
+
+// The LocalUserIndex issues a token to start a video call with a user in a MultiUser canister once
+// that canister confirms the user hasn't blocked the caller, naming the user it is asking about
+#[test]
+fn video_call_tokens_are_issued_for_direct_chats_with_users_in_multi_user_canisters() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let request_token = |env: &mut PocketIc| {
+        client::local_user_index::access_token_v2(
+            env,
+            a_principal,
+            local_user_index,
+            &local_user_index_canister::access_token_v2::Args::StartVideoCall(
+                local_user_index_canister::access_token_v2::StartVideoCallArgs {
+                    chat: Chat::Direct(b.into()),
+                    call_type: VideoCallType::Default,
+                    audio_only: false,
+                },
+            ),
+        )
+    };
+
+    let response = request_token(env);
+    assert!(
+        matches!(response, local_user_index_canister::access_token_v2::Response::Success(_)),
+        "{response:?}"
+    );
+
+    // Once B has blocked A, B's canister says no
+    block_user(env, b_principal, canister_id, a);
+    let response = request_token(env);
+    assert!(
+        matches!(response, local_user_index_canister::access_token_v2::Response::NotAuthorized),
+        "{response:?}"
+    );
+}
