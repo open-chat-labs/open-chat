@@ -1,6 +1,7 @@
 //! Applying another user's events to the recipient's copy of their direct chat, and which senders
-//! a caller may send them for. The OpenChat bot's messages are received the same way. Each function is given the chat (or user) and returns what the
-//! canister then has to do: enqueue or cancel hard-delete jobs, and notify or reward the recipient.
+//! a caller may send them for. The OpenChat bot's messages are received the same way. Each function
+//! is given the chat (or user) and returns what the canister then has to do: enqueue or cancel
+//! hard-delete jobs, and notify or reward the recipient.
 
 use crate::User;
 use chat_events::{
