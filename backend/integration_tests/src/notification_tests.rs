@@ -100,6 +100,12 @@ fn direct_message_notification_muted() {
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+
+    // Long enough for the message to reach user2's canister, so that the chat exists there to be
+    // muted, and for its notification to reach their LocalUserIndex, even if the users are on
+    // different subnets
+    tick_many(env, 10);
+
     client::user::mute_notifications(
         env,
         user2.principal,
@@ -114,6 +120,9 @@ fn direct_message_notification_muted() {
         client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index_canister);
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+
+    // Long enough for a notification to have arrived were the chat not muted
+    tick_many(env, 10);
 
     let notifications_response = client::local_user_index::happy_path::notifications(
         env,
@@ -245,7 +254,9 @@ fn only_store_up_to_10_subscriptions_per_user() {
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
-    tick_many(env, 3);
+    // Long enough for the message to reach user2's canister and the notification to reach their
+    // LocalUserIndex, even if the users are on different subnets
+    tick_many(env, 10);
 
     let mut notifications_response = client::local_user_index::happy_path::notifications(
         env,

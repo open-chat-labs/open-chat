@@ -3,14 +3,15 @@ use crate::{can_borrow_state, mutate_state, openchat_bot, read_state};
 use candid::Principal;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{MessageContentInternal, MessageReminderContentInternal, ReplyContextInternal};
-use constants::{OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
+use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{Chat, ChatId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
+use types::{BlobReference, Chat, ChatId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
+    DeleteFileReferences(DeleteFileReferencesJob),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     MessageReminder(Box<MessageReminderJob>),
     ClaimOrResetStreakInsurance(ClaimOrResetStreakInsuranceJob),
@@ -29,6 +30,13 @@ pub struct HardDeleteMessageContentJob {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
+}
+
+// Deletes files from the storage buckets holding them, which the canister may do as an accessor of
+// each file (the frontend names the canister holding each user in a direct chat as an accessor)
+#[derive(Serialize, Deserialize, Clone)]
+pub struct DeleteFileReferencesJob {
+    pub files: Vec<BlobReference>,
 }
 
 // Removes the expired events from the direct chats of one user, each user having their own job,
@@ -96,7 +104,7 @@ pub struct MarkP2PSwapExpiredJob {
 
 impl TimerJob {
     // The index of the user the job is for, if it is for one user's state rather than the escrow
-    // canister's
+    // canister's or the storage buckets'
     pub fn user_index(&self) -> Option<u16> {
         match self {
             TimerJob::HardDeleteMessageContent(job) => Some(job.user_index),
@@ -105,7 +113,9 @@ impl TimerJob {
             TimerJob::ClaimOrResetStreakInsurance(job) => Some(job.user_index),
             TimerJob::MarkVideoCallEnded(job) => Some(job.user_index),
             TimerJob::MarkP2PSwapExpired(job) => Some(job.user_index),
-            TimerJob::NotifyEscrowCanisterOfDeposit(_) | TimerJob::CancelP2PSwapInEscrowCanister(_) => None,
+            TimerJob::NotifyEscrowCanisterOfDeposit(_)
+            | TimerJob::CancelP2PSwapInEscrowCanister(_)
+            | TimerJob::DeleteFileReferences(_) => None,
         }
     }
 }
@@ -147,6 +157,7 @@ impl Job for TimerJob {
 
         match self {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
+            TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::MessageReminder(job) => job.execute(),
             TimerJob::ClaimOrResetStreakInsurance(job) => job.execute(),
@@ -164,7 +175,7 @@ impl Job for TimerJob {
 
 impl Job for HardDeleteMessageContentJob {
     fn execute(self) {
-        let p2p_swap_to_cancel = mutate_state(|state| {
+        let Some((files_to_delete, p2p_swap_to_cancel)) = mutate_state(|state| {
             let now = state.env.now();
             let my_user_id = state.user_id(self.user_index);
             let (content, sender) = state
@@ -176,24 +187,51 @@ impl Job for HardDeleteMessageContentJob {
                     })
                 })
                 .flatten()?;
-            // TODO: If the message is the user's own, delete the files it references, as the User
-            // canister does. Each copy of the chat references the same files, so they must only be
-            // deleted once, from the sender's copy.
-            // A swap the user offered which is still open is cancelled, as in the User canister
-            // Including a swap they offered under an earlier id, from before they were migrated
-            if state.data.migrated_user_ids.is_same_user(sender, my_user_id)
-                && let MessageContentInternal::P2PSwap(s) = content
+            // Only the sender's copy of the message deletes its files and cancels its swap, as in the
+            // User canister, since each copy of the chat references the same files and swap.
+            // Including a message the user sent under an earlier id, from before they were migrated.
+            if !state.data.migrated_user_ids.is_same_user(sender, my_user_id) {
+                return Some((Vec::new(), None));
+            }
+            let files_to_delete = content.blob_references();
+            // A swap the user offered which is still open is cancelled
+            let p2p_swap_to_cancel = if let MessageContentInternal::P2PSwap(s) = content
                 && matches!(s.status, P2PSwapStatus::Open)
             {
                 Some(s.swap_id)
             } else {
                 None
-            }
-        });
+            };
+            Some((files_to_delete, p2p_swap_to_cancel))
+        }) else {
+            return;
+        };
 
+        if !files_to_delete.is_empty() {
+            DeleteFileReferencesJob { files: files_to_delete }.execute();
+        }
         if let Some(swap_id) = p2p_swap_to_cancel {
             CancelP2PSwapInEscrowCanisterJob::run(swap_id);
         }
+    }
+}
+
+impl Job for DeleteFileReferencesJob {
+    fn execute(self) {
+        utils::async_work::spawn_tracked(async move {
+            let to_retry = storage_bucket_client::delete_files(self.files).await;
+
+            if !to_retry.is_empty() {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    state.data.timer_jobs.enqueue_job(
+                        TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: to_retry }),
+                        now + MINUTE_IN_MS,
+                        now,
+                    );
+                });
+            }
+        });
     }
 }
 
