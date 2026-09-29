@@ -1,6 +1,6 @@
 use crate::guards::caller_is_local_user_index;
 use crate::model::users::AddUserError;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, mutate_state, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use multi_user_canister::c2c_create_user::{Response::*, *};
@@ -26,6 +26,11 @@ fn c2c_create_user_impl(args: Args, state: &mut RuntimeState) -> OCResult<UserId
             AddUserError::PrincipalAlreadyRegistered => OCErrorCode::AlreadyRegistered,
             AddUserError::CanisterFull => OCErrorCode::UserLimitReached,
         })?;
+
+    // As a User canister does once it is installed
+    for message in args.openchat_bot_messages {
+        openchat_bot::send_message(index, message.into(), Vec::new(), true, state);
+    }
 
     Ok(state.user_id(index))
 }
