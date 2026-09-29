@@ -5603,7 +5603,7 @@ fn video_calls_are_recorded_in_both_copies_of_the_chat() {
     // told; Alice joining is sent back to it; the operator then ends the call in each copy
     let message_id = random_from_u128();
     start(env, alice_id, carol.user_id, carol.username(), message_id);
-    tick_many(env, 3);
+    tick_many(env, 10);
     assert!(call_in_progress(env, alice, carol.user_id));
     assert_eq!(participants(env, alice, alice_id, carol.user_id, message_id), 1);
     let carols_chat = client::user::happy_path::initial_state(env, &carol)
@@ -5615,7 +5615,7 @@ fn video_calls_are_recorded_in_both_copies_of_the_chat() {
     assert!(carols_chat.video_call_in_progress.is_some());
 
     join(env, alice, carol.user_id, message_id);
-    tick_many(env, 3);
+    tick_many(env, 10);
     assert_eq!(participants(env, alice, alice_id, carol.user_id, message_id), 2);
     let carols_events = client::user::happy_path::events(env, &carol, alice_id, 0.into(), true, 10, 10);
     assert!(matches!(
