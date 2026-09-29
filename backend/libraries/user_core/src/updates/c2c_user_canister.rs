@@ -1,5 +1,5 @@
 //! Applying another user's events to the recipient's copy of their direct chat, and which senders
-//! a caller may send them for. Each function is given the chat (or user) and returns what the
+//! a caller may send them for. The OpenChat bot's messages are received the same way. Each function is given the chat (or user) and returns what the
 //! canister then has to do: enqueue or cancel hard-delete jobs, and notify or reward the recipient.
 
 use crate::User;
@@ -498,6 +498,47 @@ mod tests {
 
     fn user_id(i: u8) -> UserId {
         Principal::from_slice(&[i]).into()
+    }
+
+    fn text_message(sender: UserId, message_id: u64, replies_to: Option<C2CReplyContext>) -> ReceiveMessageArgs {
+        ReceiveMessageArgs {
+            sender,
+            sender_user_type: UserType::User,
+            sender_name: "sender".to_string(),
+            sender_display_name: None,
+            sender_avatar_id: None,
+            thread_root_message_id: None,
+            message_id: message_id.into(),
+            sender_message_index: None,
+            content: MessageContentInternal::Text(chat_events::TextContentInternal { text: "hi".to_string() }),
+            replies_to,
+            forwarding: false,
+            block_level_markdown: false,
+            og_previews: Vec::new(),
+            mentioned: Vec::new(),
+            mute_notification: false,
+        }
+    }
+
+    #[test]
+    fn reply_to_a_group_message_is_recorded_as_a_private_reply_once() {
+        let (me, sender) = (user_id(1), user_id(2));
+        let group: types::ChatId = Principal::from_slice(&[3; 10]).into();
+        let replies_to = Some(C2CReplyContext::OtherChat(Chat::Group(group), None, 5.into()));
+        let mut user = user();
+
+        let received =
+            receive_message::<NullEventPusher>(&mut user, me, text_message(sender, 1, replies_to.clone()), None, 1, 100)
+                .unwrap();
+
+        assert_eq!(
+            direct_chat::private_replies::take(group),
+            vec![(sender, received.message_event.event.message_index)]
+        );
+
+        // The same message, retried, is skipped
+        assert!(receive_message::<NullEventPusher>(&mut user, me, text_message(sender, 1, replies_to), None, 1, 101).is_none());
+        assert!(direct_chat::private_replies::take(group).is_empty());
     }
 
     fn events_ttl(user: &User, them: UserId) -> Option<u64> {

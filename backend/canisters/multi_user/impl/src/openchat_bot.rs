@@ -90,8 +90,8 @@ pub(crate) fn send_message_with_reply(
         mute_notification,
     };
 
-    // TODO: Push the message to the event store (`UserEventPusher` in the User canister)
-    // A new message outside any thread is never skipped, so this is None only if there is no such user
+    // Its id is freshly drawn, so it can't already be in the chat, and it isn't in a thread, so this
+    // is None only if there is no such user
     let received = state
         .data
         .users
@@ -100,6 +100,7 @@ pub(crate) fn send_message_with_reply(
                 user,
                 my_user_id,
                 args,
+                // TODO: Push the message to the event store (`UserEventPusher` in the User canister)
                 None,
                 anonymized_id,
                 now,

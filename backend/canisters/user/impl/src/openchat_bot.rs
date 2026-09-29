@@ -74,6 +74,6 @@ pub(crate) fn send_message_with_reply(
         mute_notification,
     };
 
-    // A new message outside any thread is never skipped
-    receive_message(args, true, state).unwrap()
+    // Its id is freshly drawn, so it can't already be in the chat, and it isn't in a thread
+    receive_message(args, true, state).expect("The OpenChat bot's message is never skipped")
 }
