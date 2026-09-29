@@ -40,7 +40,7 @@
     import SendOutline from "svelte-material-icons/SendOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
-    import { Debouncer } from "../../../utils/debouncer";
+    import { CkbtcWithdrawalInfoRequests } from "../../../utils/ckbtcWithdrawalInfo";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "../../Translatable.svelte";
     import NetworkSelector from "../NetworkSelector.svelte";
@@ -73,7 +73,10 @@
     let namedAccount = $derived($namedAccountsStore.find((a) => a.account === targetAccount));
 
     let scanner: Scanner;
-    const ckbtcMinterInfoDebouncer = new Debouncer(getCkbtcMinterWithdrawalInfo, 500);
+    const ckbtcMinterInfoRequests = new CkbtcWithdrawalInfoRequests(
+        (amount) => client.getCkbtcMinterWithdrawalInfo(amount),
+        (info) => (ckbtcMinterWithdrawalInfo = info),
+    );
 
     // The user's own wallet, which they can't send to
     let account = $derived(
@@ -156,11 +159,11 @@
 
     onMount(async () => {
         if (isBtc) {
-            getCkbtcMinterWithdrawalInfo(0n);
+            ckbtcMinterInfoRequests.now(0n);
         }
     });
 
-    onDestroy(() => ckbtcMinterInfoDebouncer.cancel());
+    onDestroy(() => ckbtcMinterInfoRequests.cancel());
 
     // Whenever the networks list changes, autoselect the first one
     $effect(() => {
@@ -170,7 +173,7 @@
     const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees());
     $effect(() => {
         if (isBtcNetwork) {
-            ckbtcMinterInfoDebouncer.execute(tokenState.draftAmount);
+            ckbtcMinterInfoRequests.debounced(tokenState.draftAmount);
         } else if (isOneSecNetwork) {
             // Filter to where source token equals destination token since we're dealing with cross-chain withdrawals
             oneSecFeesPromise
@@ -186,11 +189,6 @@
         }
     });
 
-    function getCkbtcMinterWithdrawalInfo(amountToSend: bigint) {
-        client
-            .getCkbtcMinterWithdrawalInfo(amountToSend)
-            .then((i) => (ckbtcMinterWithdrawalInfo = i));
-    }
 
     function scan() {
         scanner?.scan();
