@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - On `UserIdMigrated`, move the user onto their new id, and start tracking them as a local user if this LocalUserIndex controls their MultiUser canister ([#9602](https://github.com/open-chat-labs/open-chat/pull/9602))
 - Once a migrated user is switched over, uninstall their old canister and refund its cycles ([#9607](https://github.com/open-chat-labs/open-chat/pull/9607))
 - Pass on the migration's hash with a failed import, and let a later migration's import replace an earlier one still waiting ([#9610](https://github.com/open-chat-labs/open-chat/pull/9610))
+- Pass the OpenChat bot's welcome messages to the MultiUser canister when registering a user into one ([#9643](https://github.com/open-chat-labs/open-chat/pull/9643))
 
 ### Changed
 

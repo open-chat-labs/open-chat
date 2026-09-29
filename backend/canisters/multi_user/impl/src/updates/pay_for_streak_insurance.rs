@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ledger_utils::Payer;
@@ -11,7 +11,11 @@ use user_canister::pay_for_streak_insurance::*;
 // spender under the user's own spender subaccount
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-async fn pay_for_streak_insurance(mut args: Args) -> Response {
+async fn pay_for_streak_insurance(args: Args) -> Response {
+    execute_update_async(|| pay_for_streak_insurance_impl(args)).await
+}
+
+async fn pay_for_streak_insurance_impl(mut args: Args) -> Response {
     let PrepareOk {
         my_index,
         days_currently_insured,

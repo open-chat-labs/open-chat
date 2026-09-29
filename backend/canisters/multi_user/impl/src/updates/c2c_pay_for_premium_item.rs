@@ -1,5 +1,5 @@
 use crate::guards::caller_is_local_user_index;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
@@ -8,7 +8,7 @@ use user_canister::c2c_pay_for_premium_item::{Response::*, *};
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_pay_for_premium_item(args: Args) -> Response {
-    mutate_state(|state| c2c_pay_for_premium_item_impl(args, state))
+    execute_update(|state| c2c_pay_for_premium_item_impl(args, state))
 }
 
 fn c2c_pay_for_premium_item_impl(args: Args, state: &mut RuntimeState) -> Response {

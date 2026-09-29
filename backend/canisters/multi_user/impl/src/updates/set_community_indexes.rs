@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::set_community_indexes::*;
@@ -7,7 +7,7 @@ use user_canister::set_community_indexes::*;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn set_community_indexes(args: Args) -> Response {
-    mutate_state(|state| set_community_indexes_impl(args, state))
+    execute_update(|state| set_community_indexes_impl(args, state))
 }
 
 fn set_community_indexes_impl(args: Args, state: &mut RuntimeState) -> Response {

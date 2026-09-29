@@ -1,6 +1,6 @@
 use crate::guards::caller_is_hosted_user;
 use crate::timer_job_types::CancelP2PSwapInEscrowCanisterJob;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{OCResult, UserId};
@@ -11,7 +11,7 @@ use user_canister::cancel_p2p_swap::*;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn cancel_p2p_swap(args: Args) -> Response {
-    match mutate_state(|state| cancel_p2p_swap_impl(args, state)) {
+    match execute_update(|state| cancel_p2p_swap_impl(args, state)) {
         Ok(swap_id) => {
             CancelP2PSwapInEscrowCanisterJob::run(swap_id);
             Response::Success

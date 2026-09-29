@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
@@ -9,7 +9,7 @@ use user_canister::{MarkMessagesReadArgs, UserCanisterEvent};
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn mark_read(args: Args) -> Response {
-    mutate_state(|state| mark_read_impl(args, state))
+    execute_update(|state| mark_read_impl(args, state))
 }
 
 fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {

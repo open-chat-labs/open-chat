@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{Achievement, OCResult, UserId};
@@ -8,7 +8,7 @@ use user_canister::{JoinVideoCall, UserCanisterEvent, join_video_call::*};
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn join_video_call(args: Args) -> Response {
-    mutate_state(|state| join_video_call_impl(args, state)).into()
+    execute_update(|state| join_video_call_impl(args, state)).into()
 }
 
 fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
