@@ -29,6 +29,7 @@ fn init(args: Args) {
         args.escrow_canister_id,
         args.event_relay_canister_id,
         args.online_users_canister_id,
+        args.registry_canister_id,
         args.internet_identity_canister_id,
         args.website_canister_id,
         canister_pool_target_size,
@@ -39,7 +40,6 @@ fn init(args: Args) {
         args.media_scan_config,
         args.multi_user_canisters_enabled,
         args.call_push_enabled,
-        args.registry_canister_id,
         args.test_mode,
     );
 

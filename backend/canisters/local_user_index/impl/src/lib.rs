@@ -721,7 +721,6 @@ impl RuntimeState {
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
             cycles_topped_up_for_refunds: self.data.cycles_topped_up_for_refunds,
             registry_tokens: self.data.registry_tokens.len(),
-            registry_tokens_last_refreshed: self.data.registry_tokens.last_refreshed(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
             notification_pushers: self.data.notification_pushers.iter().copied().collect(),
@@ -957,6 +956,7 @@ impl Data {
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
         online_users_canister_id: CanisterId,
+        registry_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         website_canister_id: CanisterId,
         canister_pool_target_size: u16,
@@ -967,7 +967,6 @@ impl Data {
         media_scan_config: MediaScanConfig,
         multi_user_canisters_enabled: bool,
         call_push_enabled: bool,
-        registry_canister_id: Option<CanisterId>,
         test_mode: bool,
     ) -> Self {
         Data {
@@ -1045,7 +1044,7 @@ impl Data {
             users_to_migrate: UsersToMigrate::default(),
             users_to_import: UsersToMigrate::default(),
             users_to_close_out: UsersToMigrate::default(),
-            registry_canister_id,
+            registry_canister_id: Some(registry_canister_id),
             registry_tokens: RegistryTokens::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
@@ -1114,7 +1113,6 @@ pub struct Metrics {
     pub cycles_refunded_from_deleted_users: Cycles,
     pub cycles_topped_up_for_refunds: Cycles,
     pub registry_tokens: usize,
-    pub registry_tokens_last_refreshed: TimestampMillis,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,
     pub user_versions: BTreeMap<String, u32>,

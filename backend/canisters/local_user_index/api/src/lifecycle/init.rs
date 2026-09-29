@@ -15,6 +15,7 @@ pub struct Args {
     pub escrow_canister_id: CanisterId,
     pub event_relay_canister_id: CanisterId,
     pub online_users_canister_id: CanisterId,
+    pub registry_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub website_canister_id: CanisterId,
     pub video_call_operators: Vec<Principal>,
@@ -30,7 +31,5 @@ pub struct Args {
     pub multi_user_canisters_enabled: bool,
     #[serde(default)]
     pub call_push_enabled: bool,
-    #[serde(default)]
-    pub registry_canister_id: Option<CanisterId>,
     pub test_mode: bool,
 }

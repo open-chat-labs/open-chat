@@ -720,8 +720,8 @@ fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
     // the relay to be installed on it
     crate::delete_user_tests::wait_for_cycles_to_be_refunded(env, &user);
 
-    // The LocalUserIndexes refresh the tokens from the Registry once they are a day old, after
-    // which the fees of ABC and XYZ are raised, leaving the LocalUserIndexes with the old ones
+    // The LocalUserIndexes refresh the tokens from the Registry daily, after which the fees of ABC
+    // and XYZ are raised, leaving the LocalUserIndexes with the old ones
     env.advance_time(Duration::from_secs(25 * 60 * 60));
     tick_many(env, 10);
     set_ledger_fee(env, *controller, abc_ledger, 20_000);
