@@ -20,10 +20,9 @@ cd wasms
 
 echo "Downloading $CANISTER_NAME wasm"
 
-HTTP_CODE=$(curl -sL $URL -o ${CANISTER_NAME}.wasm.gz --write-out "%{http_code}")
-
-if [[ ${HTTP_CODE} -ne 200 ]] ; then
-    echo "Failed to download wasm: ${CANISTER_NAME}. Response code: ${HTTP_CODE}"
+if ! ../scripts/cached-download.sh "$URL" ${CANISTER_NAME}.wasm.gz
+then
+    echo "Failed to download wasm: ${CANISTER_NAME}"
     exit 1
 fi
 

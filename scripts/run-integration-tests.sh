@@ -22,7 +22,9 @@ fi
 
 if [[ $WASM_SRC == "build" ]]
 then
-    ./scripts/generate-all-canister-wasms.sh || exit 1
+    # Locally this only rebuilds the canisters which have changed since they were last built in
+    # any worktree (see the script). On CI it builds them all.
+    ./scripts/generate-test-wasms.sh || exit 1
 elif [[ $WASM_SRC != "local" ]]
 then
     ./scripts/download-all-canister-wasms.sh $WASM_SRC || exit 1
@@ -30,7 +32,7 @@ fi
 
 cd backend/integration_tests
 echo "PocketIC download starting"
-curl -Ls https://github.com/dfinity/pocketic/releases/download/${POCKET_IC_SERVER_VERSION}/pocket-ic-x86_64-${PLATFORM}.gz -o pocket-ic.gz || exit 1
+../../scripts/cached-download.sh https://github.com/dfinity/pocketic/releases/download/${POCKET_IC_SERVER_VERSION}/pocket-ic-x86_64-${PLATFORM}.gz pocket-ic.gz || exit 1
 gzip -df pocket-ic.gz || exit 1
 chmod +x pocket-ic
 echo "PocketIC download completed"
@@ -43,7 +45,16 @@ cd ../..
 
 # The User canister wasm currently in production, for testing upgrades from it. The release tags are
 # needed to find it, but aren't included in shallow checkouts.
-git fetch --quiet --depth=1 origin "refs/tags/*-user:refs/tags/*-user" || exit 1
+# Worktrees share the repository, so this can fail on its lock while another worktree is fetching,
+# in which case the tags fetched before are used
+if ! git fetch --quiet --depth=1 origin "refs/tags/*-user:refs/tags/*-user"
+then
+  if [ -z "$(git tag -l '*-user')" ]
+  then
+    exit 1
+  fi
+  echo "Failed to fetch the User canister's release tags, so using the latest already fetched: $(git tag -l --sort=-version:refname '*-user' | head -n 1)"
+fi
 ./scripts/download-canister-wasm.sh user prod user_prod || exit 1
 
 function cleanup() {
