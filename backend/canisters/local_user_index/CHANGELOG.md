@@ -41,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Serve a daily puzzle hint's premise first: an earlier negatives-only step that rules out a key the hint looks at, and is not yet marked on the board, rather than a hint whose reasoning doesn't hold on the player's board, but never in place of a hint already bought ([#9614](https://github.com/open-chat-labs/open-chat/pull/9614))
 - Move the blocked-user pairs naming a migrated user onto their new id, including those blocked or unblocked by their old id afterwards ([#9630](https://github.com/open-chat-labs/open-chat/pull/9630))
 - Fix reading direct chat events via `chat_events` and `bot_chat_events` for users in MultiUser canisters ([#9652](https://github.com/open-chat-labs/open-chat/pull/9652))
+- Fix issuing access tokens for direct chats with users in MultiUser canisters ([#9654](https://github.com/open-chat-labs/open-chat/pull/9654))
 
 ## [[2.0.2063](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2063-local_user_index)] - 2026-09-23
 
