@@ -21,7 +21,9 @@ fn edit_message_succeeds() {
     let new_text = "TEXT!";
     client::user::happy_path::edit_text_message(env, &user1, user2.user_id, message_id, new_text, None);
 
-    tick_many(env, 10);
+    // The edit is sent after the message, so this is long enough for both to reach user2's canister,
+    // one after the other, even if the users are on different subnets
+    tick_many(env, 20);
 
     let user1_event =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_result.event_index])
@@ -80,7 +82,9 @@ fn update_block_level_markdown_succeeds(starting_value: bool) {
     let new_value = !starting_value;
     client::user::happy_path::edit_text_message(env, &user1, user2.user_id, message_id, "TEXT", Some(new_value));
 
-    tick_many(env, 10);
+    // The edit is sent after the message, so this is long enough for both to reach user2's canister,
+    // one after the other, even if the users are on different subnets
+    tick_many(env, 20);
 
     let user1_event =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_result.event_index])
