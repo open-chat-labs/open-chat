@@ -7,8 +7,8 @@ use user_canister::generate_one_sec_address::{Response::*, *};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-async fn generate_one_sec_address(_args: Args) -> Response {
-    execute_update_async(|| generate_one_sec_address_impl(_args)).await
+async fn generate_one_sec_address(args: Args) -> Response {
+    execute_update_async(|| generate_one_sec_address_impl(args)).await
 }
 
 async fn generate_one_sec_address_impl(_args: Args) -> Response {
