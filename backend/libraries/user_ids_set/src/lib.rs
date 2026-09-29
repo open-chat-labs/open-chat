@@ -54,22 +54,36 @@ impl UserIdsSet {
         })
     }
 
-    // Moves every pair naming the user onto the new id they were given when migrated to a MultiUser
-    // canister. The pairs are keyed by the first user only, so those in which the user is second can
-    // only be found by scanning the whole set.
-    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+    // The users paired with the given user when they are second in the pair. Pairs are keyed by the
+    // first user, so this scans the whole set.
+    pub fn all_users_linked_to<I: FromIterator<UserId>>(&self, user_id2: UserId) -> I {
         let min_user_id = UserId::new(CanisterId::from_slice(&[]));
-        let pairs: Vec<(UserId, UserId)> = with_map(|m| {
+        with_map(|m| {
             m.range(self.prefix.create_key(&(min_user_id, min_user_id))..)
-                .map(|(key, _)| key.user_ids())
-                .filter(|(user_id1, user_id2)| *user_id1 == old_user_id || *user_id2 == old_user_id)
+                .filter_map(|(key, _)| {
+                    let (user_id1, u) = key.user_ids();
+                    (u == user_id2).then_some(user_id1)
+                })
                 .collect()
-        });
+        })
+    }
 
+    // Moves every pair naming the user onto the new id they were given when migrated to a MultiUser
+    // canister. The pairs in which they are first are found by their key, whereas those in which they
+    // are second would take a scan of the whole set to find, so the users paired with them in those,
+    // as returned by `all_users_linked_to`, are passed in.
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, users_linked_to_old_user_id: &[UserId]) {
         let migrate = |user_id| if user_id == old_user_id { new_user_id } else { user_id };
-        for (user_id1, user_id2) in pairs {
-            self.remove(&(user_id1, user_id2));
-            self.insert((migrate(user_id1), migrate(user_id2)), ());
+
+        let linked_users: Vec<UserId> = self.all_linked_users(old_user_id);
+        for user_id2 in linked_users {
+            self.remove(&(old_user_id, user_id2));
+            self.insert((new_user_id, migrate(user_id2)), ());
+        }
+        for &user_id1 in users_linked_to_old_user_id {
+            if self.remove(&(user_id1, old_user_id)).is_some() {
+                self.insert((migrate(user_id1), new_user_id), ());
+            }
         }
     }
 
@@ -108,7 +122,10 @@ mod tests {
         set.insert((old_user_id, user3), ());
         set.insert((user3, user2), ());
 
-        set.migrate_user_id(old_user_id, new_user_id);
+        let users_linked_to_old_user_id: Vec<_> = set.all_users_linked_to(old_user_id);
+        assert_eq!(users_linked_to_old_user_id, vec![user2]);
+        // user3, who isn't paired with the migrated user that way round, is ignored
+        set.migrate_user_id(old_user_id, new_user_id, &[user2, user3]);
 
         let mut pairs: Vec<_> = set
             .collect_all()
@@ -126,5 +143,6 @@ mod tests {
         assert_eq!(pairs, expected);
         assert_eq!(set.len(), 4);
         assert!(set.all_linked_users::<Vec<_>>(old_user_id).is_empty());
+        assert!(set.all_users_linked_to::<Vec<_>>(old_user_id).is_empty());
     }
 }
