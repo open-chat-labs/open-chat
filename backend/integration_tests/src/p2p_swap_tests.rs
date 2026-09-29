@@ -62,7 +62,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
-    tick_many(env, 10);
+    wait_for_direct_chat(env, &user2, user1.user_id);
 
     let accept_offer_response = client::user::accept_p2p_swap(
         env,
@@ -277,7 +277,7 @@ fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
-    tick_many(env, 10);
+    wait_for_direct_chat(env, &user2, user1.user_id);
 
     let accept_offer_response = client::user::accept_p2p_swap(
         env,
@@ -858,8 +858,9 @@ fn deposit_refunded_if_swap_expires() {
     ));
 
     // Let the offer reach user2's canister before jumping ahead, else the call delivering it, which
-    // is bounded wait, may still be in flight across subnets and so pass its deadline
-    tick_many(env, 10);
+    // is bounded wait, may still be in flight across subnets and so pass its deadline. user2's
+    // canister would also then ignore the escrow canister's notification that the swap expired.
+    wait_for_direct_chat(env, &user2, user1.user_id);
 
     env.advance_time(Duration::from_millis(DAY_IN_MS));
     // Long enough for the refund to be made and then user2's and user1's canisters to be notified,
@@ -892,6 +893,9 @@ fn deposit_refunded_if_swap_expires() {
         user2_event,
         |status| matches!(status, P2PSwapStatus::Expired(e) if e.token0_txn_out.is_some()),
     );
+
+    // The clock was advanced by a day
+    wrapper.discard();
 }
 
 #[test_case(false)]
@@ -1378,8 +1382,8 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
 
 // Ticks until the user's canister lists their direct chat with `them`, ie. the first message sent in
 // it has been delivered. This can take many rounds, since the first User canister to run on a subnet
-// only handles its first message around 10 rounds after it's installed (seemingly while the wasm is
-// compiled there), a number which grows with the size of the wasm.
+// takes around 10 rounds to handle its first message (seemingly while the wasm is compiled there),
+// a number which grows with the size of the wasm.
 fn wait_for_direct_chat(env: &mut PocketIc, user: &User, them: UserId) {
     for _ in 0..30 {
         let initial_state = client::user::happy_path::initial_state(env, user);
