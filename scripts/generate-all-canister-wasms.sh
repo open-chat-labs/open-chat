@@ -9,12 +9,19 @@ then
   export CARGO_HOME="${HOME}/.cargo"
 fi
 
-if [ -z "${GIT_COMMIT_ID}" ]
+# With TEST_BUILD=1 (see generate-test-wasms.sh) the wasms are built for the integration tests
+# rather than for release: the commit id they embed is fixed, so that a new commit doesn't rebuild
+# every canister, and the flags below don't name the worktree, so that sccache can share compiled
+# crates between worktrees. No test reads either
+if [ "${TEST_BUILD}" == "1" ]
+then
+  export GIT_COMMIT_ID="test-build"
+elif [ -z "${GIT_COMMIT_ID}" ]
 then
   export GIT_COMMIT_ID=$(git rev-parse HEAD)
 fi
 
-CANISTERS=(
+ALL_CANISTERS=(
   community
   cycles_dispenser
   daily_puzzle
@@ -41,6 +48,18 @@ CANISTERS=(
   user_index
 )
 
+# Builds the canisters given as arguments, or all of them if there are none. `--list` prints them.
+if [ "$1" == "--list" ]
+then
+  printf '%s\n' "${ALL_CANISTERS[@]}"
+  exit 0
+elif [ $# -gt 0 ]
+then
+  CANISTERS=("$@")
+else
+  CANISTERS=("${ALL_CANISTERS[@]}")
+fi
+
 # Install ic-wasm before RUSTFLAGS is set below: those flags are for the wasm target only, and
 # the `getrandom_backend="custom"` cfg in particular makes a native build fail to link. This checks
 # the binary itself rather than `cargo install --list`, since the Dockerfile installs the release
@@ -55,7 +74,12 @@ echo Building wasms
 # `--cfg getrandom_backend="custom"` selects getrandom's custom backend on wasm (see
 # .cargo/config.toml). Setting RUSTFLAGS here means cargo ignores that config file, so the cfg has
 # to be repeated in the flags below.
-export RUSTFLAGS="--cfg getrandom_backend=\"custom\" --remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git"
+if [ "${TEST_BUILD}" == "1" ]
+then
+  export RUSTFLAGS="--cfg getrandom_backend=\"custom\" --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git"
+else
+  export RUSTFLAGS="--cfg getrandom_backend=\"custom\" --remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git"
+fi
 # The remap below depends on the registry sources being unpacked. On a fresh machine they aren't
 # until something is built, and a restored CI cache holds the directory but not its contents, so
 # without this the flags (and hence every cached artifact's fingerprint) would differ between runs.
@@ -65,8 +89,13 @@ do
   export RUSTFLAGS="--remap-path-prefix ${CARGO_HOME}/registry/src/${l}=/cargo/registry/src/github ${RUSTFLAGS}"
 done
 
+# Cargo unifies the features of the dependencies of every package in a build, so building only
+# some canisters can give them different features, and so different wasms, from building them all
+# (eg. the LocalUserIndex built alone is over the size limit). So every canister is always
+# compiled, and only those asked for are optimised, so that a canister's wasm is the same however
+# it was built, and matches the released wasm (see docker-build-all-wasms.sh).
 PACKAGES=()
-for CANISTER in "${CANISTERS[@]}"; do
+for CANISTER in "${ALL_CANISTERS[@]}"; do
   PACKAGES+=(--package "${CANISTER}_canister_impl")
 done
 cargo build --locked --target wasm32-unknown-unknown --release "${PACKAGES[@]}" || exit 1
