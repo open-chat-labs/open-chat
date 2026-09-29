@@ -318,7 +318,7 @@ fn invariants_3_and_4_direct_call_reports_the_kind_it_was_started_as(audio_only:
     // the chat has to exist before the call, or the updates answer reports it as a new chat
     // with a full summary and the call in progress update is never exercised
     client::user::happy_path::send_text_message(env, &caller, callee.user_id, random_string(), None);
-    tick_many(env, 3);
+    tick_many(env, 10);
     env.advance_time(Duration::from_secs(1));
     let before_call = now_millis(env) - 1;
 
@@ -327,7 +327,7 @@ fn invariants_3_and_4_direct_call_reports_the_kind_it_was_started_as(audio_only:
         UnitResult::Success
     ));
 
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     // the callee's canister is told by the bridge, the caller's copy arrives user to user
     for (me, them) in [(&callee, caller.user_id), (&caller, callee.user_id)] {
@@ -515,7 +515,9 @@ fn invariant_17_participant_token_names_the_caller_and_chat_under_its_own_claim_
         local_user_index: Option<CanisterId>,
     }
 
-    let mut wrapper = ENV.deref().get();
+    // A fresh env, since the clock is set to the current time below so that the tokens verify, and a
+    // pooled env's clock may have been moved past it
+    let mut wrapper = ENV.deref().create_new();
     let TestEnv {
         env,
         canister_ids,
