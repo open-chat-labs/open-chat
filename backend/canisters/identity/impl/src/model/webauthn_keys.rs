@@ -238,6 +238,27 @@ mod tests {
     }
 
     #[test]
+    fn keys_are_added_looked_up_and_removed_by_credential_id() {
+        let mut keys = WebAuthnKeys::default();
+        keys.add(
+            WebAuthnKey {
+                public_key: valid_key(),
+                credential_id: vec![1],
+                origin: "oc.app".to_string(),
+                cross_platform: true,
+                aaguid: [0; 16],
+            },
+            1,
+        );
+
+        assert_eq!(keys.get(vec![1]).unwrap().public_key, valid_key());
+        assert!(keys.get(vec![2]).is_none());
+        assert!(keys.remove(vec![1]));
+        assert!(!keys.remove(vec![1]));
+        assert!(keys.get(vec![1]).is_none());
+    }
+
+    #[test]
     fn der_wrap_round_trips() {
         let cose_with_extension = hex(&format!("{ES256_COSE_KEY}{CRED_PROTECT_EXTENSION}"));
         assert_eq!(der_wrap_cose_key(&cose_with_extension), malformed_key());
