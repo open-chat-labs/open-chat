@@ -9,7 +9,8 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    Chat, ChatEvent, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapLocation, P2PSwapStatus, icrc1,
+    Chat, ChatEvent, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapLocation, P2PSwapStatus, UserId,
+    icrc1,
 };
 
 #[test]
@@ -607,7 +608,9 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
-    tick_many(env, 3);
+    // user2's canister ignores the escrow canister's notification of the cancellation if it arrives
+    // before the message, so wait for the message to get there first
+    wait_for_direct_chat(env, &user2, user1.user_id);
 
     if delete_message {
         let delete_message_response = client::user::delete_messages(
@@ -1371,6 +1374,21 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
             |status| matches!(status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id),
         );
     }
+}
+
+// Ticks until the user's canister lists their direct chat with `them`, ie. the first message sent in
+// it has been delivered. This can take many rounds, since the first User canister to run on a subnet
+// only handles its first message around 10 rounds after it's installed (seemingly while the wasm is
+// compiled there), a number which grows with the size of the wasm.
+fn wait_for_direct_chat(env: &mut PocketIc, user: &User, them: UserId) {
+    for _ in 0..30 {
+        let initial_state = client::user::happy_path::initial_state(env, user);
+        if initial_state.direct_chats.summaries.iter().any(|c| c.them == them) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("User {} did not receive the message from user {them}", user.user_id);
 }
 
 pub(crate) fn verify_swap_status<F: FnOnce(&P2PSwapStatus) -> bool>(event: ChatEvent, predicate: F) {
