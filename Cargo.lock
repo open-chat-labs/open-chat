@@ -12965,6 +12965,7 @@ dependencies = [
 name = "user_ids_set"
 version = "0.1.0"
 dependencies = [
+ "ic-stable-structures",
  "ic_principal",
  "serde",
  "stable_memory_map",
