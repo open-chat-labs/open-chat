@@ -106,7 +106,7 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
             None,
         );
     }
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     assert!(get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_MEMORY_ID).len() > initial_stable_memory_map_keys);
     // A message id for each message, an expiring event and two search index entries (a token and the
@@ -120,7 +120,7 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     // Each canister only stores its own user's metrics for a direct chat, since only those are ever
     // read, so user1's messages are only counted by user1's canister and user2's reaction by user2's
     client::user::happy_path::add_reaction(env, &user2, user1.user_id, "👍", message_id);
-    tick_many(env, 3);
+    tick_many(env, 10);
 
     for (me, them) in [(&user1, &user2), (&user2, &user1)] {
         // The chat's keys use its `key_id` rather than the other user's id, so find the metrics

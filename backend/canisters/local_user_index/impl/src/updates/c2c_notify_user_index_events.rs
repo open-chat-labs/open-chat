@@ -369,7 +369,8 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             jobs::start_user_migrations::start_job_if_required(state);
         }
         UserIndexEvent::ImportUser(ev) => {
-            state.data.users_to_import.push(UserToImport {
+            // A later migration of the user replaces any earlier one still waiting to be imported
+            state.data.users_to_import.replace(UserToImport {
                 user_id: ev.user_id,
                 multi_user_canister_id: ev.multi_user_canister_id,
                 user_hash: ev.user_hash,

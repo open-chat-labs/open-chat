@@ -79,6 +79,7 @@ async fn process_user(user: UserToImport) {
                     UserIndexEvent::UserImportFailed(Box::new(UserImportFailed {
                         user_id,
                         multi_user_canister_id,
+                        user_hash: user.user_hash,
                         error,
                     })),
                     now,

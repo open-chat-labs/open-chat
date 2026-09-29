@@ -9,6 +9,9 @@ on:
       - "**.rs"
       - "**.toml"
       - "**/Cargo.lock"
+      # The tiny canisters written in wat, whose committed wasms are checked against them
+      - "**.wat"
+      - "**.wasm"
       - "scripts/run-integration-tests.sh"
       - "scripts/generate-all-canister-wasms.sh"
       - ".github/workflows/setup-rust/**"
