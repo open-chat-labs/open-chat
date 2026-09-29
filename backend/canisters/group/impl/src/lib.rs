@@ -13,7 +13,7 @@ use gated_groups::{GatePayment, calculate_gate_payments};
 use group_canister::c2c_export_group::ExportExtras;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersSuccess, UserInvitation};
 use group_community_common::{
-    Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
+    Achievements, ExpiringMemberActions, ExpiringMembers, FormerMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use ic_principal::Principal;
@@ -32,7 +32,7 @@ use serde_bytes::ByteBuf;
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix, StableMemoryMap};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
@@ -376,7 +376,7 @@ impl RuntimeState {
 
         if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
             self.data.principal_to_user_id_map.insert(args.principal, args.user_id);
-            self.data.former_members.remove(&args.user_id);
+            self.data.former_members.on_member_added(args.user_id);
         }
 
         result
@@ -400,7 +400,7 @@ impl RuntimeState {
             // The channel's events still refer to users by their ids from before any migrations to
             // MultiUser canisters, so the community needs these to recognise them
             let extras = ExportExtras {
-                former_members: self.data.former_members.iter().copied().collect(),
+                former_members: self.data.former_members.iter().collect(),
                 migrated_user_ids: self.data.migrated_user_ids.iter().collect(),
             };
             msgpack::serialize(&extras, &mut serialized).unwrap();
@@ -719,11 +719,8 @@ struct Data {
     // have changed
     #[serde(default)]
     migrated_user_ids: MigratedUserIds,
-    // Users who were members of the group but no longer are. A user who rejoins is removed again. Recorded so
-    // that a user who rejoins under a new id, having been migrated to a MultiUser canister, can be recognised as
-    // having events under their earlier ids.
     #[serde(default)]
-    former_members: BTreeSet<UserId>,
+    former_members: FormerMembers,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -841,7 +838,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
-            former_members: BTreeSet::new(),
+            former_members: FormerMembers::default(),
         }
     }
 
@@ -938,7 +935,7 @@ impl Data {
         false
     }
 
-    pub fn remove_user(&mut self, user_id: UserId, principal: Option<Principal>) {
+    pub fn remove_user(&mut self, user_id: UserId, principal: Option<Principal>, user_deleted: bool) {
         if let Some(principal) = principal {
             let user_id_removed = self.principal_to_user_id_map.remove(&principal).map(|v| v.into_value());
             assert_eq!(user_id_removed, Some(user_id));
@@ -948,7 +945,7 @@ impl Data {
         self.expiring_member_actions.remove_member(user_id, None);
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
-        self.former_members.insert(user_id);
+        self.former_members.on_member_removed(user_id, user_deleted);
     }
 
     // Moves everything held under the previous ids of a user migrated to a MultiUser canister (their
@@ -999,6 +996,7 @@ impl Data {
             self.remove_user(
                 old_user_id,
                 member_principal.filter(|p| self.principal_to_user_id_map.get(p) == Some(old_user_id)),
+                false,
             );
         }
         for principal in [old_member_principal.flatten(), principal].into_iter().flatten() {
@@ -1007,15 +1005,7 @@ impl Data {
                 migrated = true;
             }
         }
-        if self.former_members.remove(&old_user_id) {
-            if !is_member {
-                self.former_members.insert(new_user_id);
-            }
-            migrated = true;
-        }
-        if is_member {
-            self.former_members.remove(&new_user_id);
-        }
+        migrated |= self.former_members.migrate_user_id(old_user_id, new_user_id, is_member);
         self.expiring_members.migrate_user_id(old_user_id, new_user_id);
         self.expiring_member_actions.migrate_user_id(old_user_id, new_user_id);
         self.achievements.migrate_user_id(old_user_id, new_user_id);
