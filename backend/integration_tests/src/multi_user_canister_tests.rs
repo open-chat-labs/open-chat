@@ -13,14 +13,15 @@ use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    Achievement, AutonomousConfig, BlobReference, BotChatContext, BotDefinition, BotInitiator, BotInstallationLocation,
-    BotMessageContent, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, ChannelLatestMessageIndex, Chat,
-    ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId, CommunityImportedInto, CryptoContent, CryptoTransaction,
-    DeletedCommunityInfo, DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates,
-    Document, Empty, EventIndex, EventsResponse, FileContent, IdempotentEnvelope, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, Milliseconds, NotificationEnvelope, OptionUpdate, P2PSwapContentInitial,
-    P2PSwapStatus, PendingCryptoTransaction, PinNumberSettings, Reaction, ReferralStatus, ReplyContext, TextContent,
-    TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
+    Achievement, AutonomousConfig, BlobReference, BotActionChatDetails, BotActionScope, BotChatContext, BotCommandDefinition,
+    BotDefinition, BotInitiator, BotInstallationLocation, BotMessageContent, BotPermissions, BuildVersion, CanisterId,
+    CanisterWasm, ChannelId, ChannelLatestMessageIndex, Chat, ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId,
+    CommunityImportedInto, CryptoContent, CryptoTransaction, DeletedCommunityInfo, DeletedGroupInfoInternal,
+    DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty, EventIndex, EventsResponse,
+    FileContent, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
+    NotificationEnvelope, OptionUpdate, P2PSwapContentInitial, P2PSwapStatus, PendingCryptoTransaction, PinNumberSettings,
+    Reaction, ReferralStatus, ReplyContext, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType,
+    icrc1, icrc2,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -6923,13 +6924,14 @@ fn video_call_tokens_are_issued_for_direct_chats_with_users_in_multi_user_canist
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    // A is in a User canister of their own, calling B in the MultiUser canister
+    let a = client::register_user(env, canister_ids);
     let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
     let request_token = |env: &mut PocketIc| {
         client::local_user_index::access_token_v2(
             env,
-            a_principal,
+            a.principal,
             local_user_index,
             &local_user_index_canister::access_token_v2::Args::StartVideoCall(
                 local_user_index_canister::access_token_v2::StartVideoCallArgs {
@@ -6948,8 +6950,100 @@ fn video_call_tokens_are_issued_for_direct_chats_with_users_in_multi_user_canist
     );
 
     // Once B has blocked A, B's canister says no
-    block_user(env, b_principal, canister_id, a);
+    block_user(env, b_principal, canister_id, a.user_id);
     let response = request_token(env);
+    assert!(
+        matches!(response, local_user_index_canister::access_token_v2::Response::NotAuthorized),
+        "{response:?}"
+    );
+}
+
+// The LocalUserIndex issues a token for a bot command in a direct chat with a user in a MultiUser
+// canister once that canister confirms the user installed the bot, naming the user it is asking
+// about, so a user in the same canister who hasn't installed it is refused
+#[test]
+fn bot_command_tokens_are_issued_for_direct_chats_with_users_in_multi_user_canisters() {
+    use local_user_index_canister::access_token_v2::{BotActionByCommandArgs, BotCommandInitial};
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    let command_name = random_string();
+    let (bot_id, _) = client::user_index::happy_path::register_bot(
+        env,
+        // Registered by A, since a bot is private until published, so only its owner can install it
+        a_principal,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        BotDefinition {
+            description: random_string(),
+            commands: vec![BotCommandDefinition {
+                name: command_name.clone(),
+                description: None,
+                placeholder: None,
+                params: Vec::new(),
+                permissions: BotPermissions::from_chat_permission(ChatPermission::ReadMessages),
+                default_role: None,
+                direct_messages: None,
+            }],
+            autonomous_config: None,
+            default_subscriptions: None,
+            data_encoding: None,
+            restricted_locations: None,
+        },
+    );
+    client::local_user_index::happy_path::install_bot(
+        env,
+        a_principal,
+        local_user_index,
+        BotInstallationLocation::User(a.into()),
+        bot_id,
+        BotPermissions::from_chat_permission(ChatPermission::ReadMessages),
+        None,
+    );
+    tick_many(env, 3);
+
+    let request_token = |env: &mut PocketIc, principal: Principal, user_id: UserId| {
+        client::local_user_index::access_token_v2(
+            env,
+            principal,
+            local_user_index,
+            &local_user_index_canister::access_token_v2::Args::BotActionByCommand(BotActionByCommandArgs {
+                bot_id,
+                command: BotCommandInitial {
+                    name: command_name.clone(),
+                    args: Vec::new(),
+                    meta: None,
+                },
+                scope: BotActionScope::Chat(BotActionChatDetails {
+                    chat: Chat::Direct(user_id.into()),
+                    thread: None,
+                    message_id: random_from_u128(),
+                    user_message_id: None,
+                }),
+            }),
+        )
+    };
+
+    let response = request_token(env, a_principal, a);
+    assert!(
+        matches!(response, local_user_index_canister::access_token_v2::Response::Success(_)),
+        "{response:?}"
+    );
+
+    // B, in the same canister, hasn't installed the bot
+    let response = request_token(env, b_principal, b);
     assert!(
         matches!(response, local_user_index_canister::access_token_v2::Response::NotAuthorized),
         "{response:?}"
