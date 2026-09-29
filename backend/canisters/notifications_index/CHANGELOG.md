@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Update the cached id of a user migrated to a MultiUser canister, when told by the UserIndex ([#9627](https://github.com/open-chat-labs/open-chat/pull/9627))
+
+## [[2.0.2068](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2068-notifications_index)] - 2026-09-29
+
 ### Added
 
 - Add `remove_fcm_tokens` endpoint so the notification pusher can drop FCM tokens that Firebase reports as `UNREGISTERED` ([#9044](https://github.com/open-chat-labs/open-chat/pull/9044))
@@ -18,7 +24,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Fix detection of when to retry c2c calls ([#9106](https://github.com/open-chat-labs/open-chat/pull/9106))
 - Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
-- Update the cached id of a user migrated to a MultiUser canister, when told by the UserIndex ([#9627](https://github.com/open-chat-labs/open-chat/pull/9627))
 
 ## [[2.0.1954](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1954-notifications_index)] - 2026-01-14
 
