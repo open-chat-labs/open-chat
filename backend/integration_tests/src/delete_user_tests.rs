@@ -62,7 +62,8 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
 
     if should_delete_user {
         // The uninstalled canister's cycles are sent to the CyclesDispenser, for which the cycles
-        // refunder is briefly installed on it, so wait for that to finish before checking it's empty
+        // refunder is briefly installed on it, so wait for that to finish before checking it's
+        // uninstalled
         wait_for_cycles_to_be_refunded(env, &user);
     }
 
