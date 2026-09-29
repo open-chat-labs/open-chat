@@ -39,7 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 - Move bot installations in a user's direct chat which were recorded under a `Group` or `Community` location back to the `User` location, since their events were being routed to a group or community that doesn't exist ([#9522](https://github.com/open-chat-labs/open-chat/pull/9522))
-- Move the blocked-user pairs naming a migrated user onto their new id when they are switched over, passing the users they've blocked on to the LocalUserIndexes in `UserIdMigrated` ([#9630](https://github.com/open-chat-labs/open-chat/pull/9630))
+- Move the blocked-user pairs naming a migrated user onto their new id, including those blocked or unblocked by their old id afterwards ([#9630](https://github.com/open-chat-labs/open-chat/pull/9630))
 
 ## [[2.0.2064](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2064-user_index)] - 2026-09-23
 

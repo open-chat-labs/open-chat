@@ -725,6 +725,12 @@ fn blocked_user_pairs_are_moved_onto_a_migrated_users_new_id() {
     let recipients = group_message_notification_recipients(env, *controller, group_local_user_index, &user3, group_id);
     assert!(!recipients.contains(&new_user_id));
     assert_eq!(recipients, vec![user2.user_id]);
+
+    // Once user2 unblocks user1, by the old id their canister still holds, they are notified again
+    client::user::happy_path::unblock_user(env, &user2, user1.user_id);
+    tick_many(env, 10);
+    let recipients = group_message_notification_recipients(env, *controller, group_local_user_index, &user1, group_id);
+    assert_eq!(recipients, vec![user2.user_id]);
 }
 
 #[test]

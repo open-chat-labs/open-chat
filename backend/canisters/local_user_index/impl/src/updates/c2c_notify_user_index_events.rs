@@ -326,10 +326,15 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 state.push_event_to_user(user_id.into(), UserEvent::BotUpdated(Box::new(ev)), **now);
             }
         },
+        // The UserIndex names users by their latest ids, but a migration may not have reached here yet
         UserIndexEvent::UserBlocked(user_id, blocked) => {
+            let user_id = state.data.migrated_user_ids.latest(user_id);
+            let blocked = state.data.migrated_user_ids.latest(blocked);
             state.data.blocked_users.insert((blocked, user_id), ());
         }
         UserIndexEvent::UserUnblocked(user_id, unblocked) => {
+            let user_id = state.data.migrated_user_ids.latest(user_id);
+            let unblocked = state.data.migrated_user_ids.latest(unblocked);
             state.data.blocked_users.remove(&(unblocked, user_id));
         }
         UserIndexEvent::SetPremiumItemCost(ev) => state.data.premium_items.set(ev.item_id, ev.chit_cost),

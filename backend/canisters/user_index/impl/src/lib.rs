@@ -206,9 +206,11 @@ impl RuntimeState {
         }
         self.data.chit_leaderboard.migrate_user_id(old_user_id, new_user_id);
         self.data.external_achievements.migrate_user_id(old_user_id, new_user_id);
-        // Finding the users they've blocked means scanning every blocked-user pair, which is only done
-        // here, where no more users are switched over at once than are being migrated, and not by
-        // each LocalUserIndex, which may be sent many switch-overs in one batch
+        // Finding the users they've blocked means scanning every blocked-user pair (~55M instructions
+        // for 7.6k pairs). That is only done here, where no more users are switched over in a batch
+        // than the migration concurrency, which must be kept well below the ~700 at which a batch
+        // would run out of instructions, and not by each LocalUserIndex, which may be sent up to 1000
+        // switch-overs in one batch
         let blocked_users: Vec<UserId> = self.data.blocked_users.all_users_linked_to(old_user_id);
         self.data
             .blocked_users
