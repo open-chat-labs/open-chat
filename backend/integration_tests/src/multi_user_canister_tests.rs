@@ -5331,12 +5331,14 @@ fn users_send_crypto_from_their_own_wallets() {
         &initial_state(env, b_principal, canister_id),
         Achievement::ReceivedCrypto
     ));
-    // And it appears in B's message activity feed, as it would were B in a User canister
-    assert!(
-        message_activity_feed(env, b_principal, canister_id, 0)
-            .events
+    // And it appears once in B's message activity feed, as it would were B in a User canister
+    let feed = message_activity_feed(env, b_principal, canister_id, 0);
+    assert_eq!(
+        feed.events
             .iter()
-            .any(|e| matches!(e.activity, MessageActivity::Crypto) && e.user_id == Some(a))
+            .filter(|e| e.activity == MessageActivity::Crypto && e.user_id == Some(a))
+            .count(),
+        1
     );
 
     // To Carol, in a User canister

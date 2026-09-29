@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Record P2P swaps the user creates directly in groups and communities ([#9563](https://github.com/open-chat-labs/open-chat/pull/9563))
 - Support leaving tips from external wallets using ICRC2 ([#9263](https://github.com/open-chat-labs/open-chat/pull/9263))
 - Support funding P2P swaps from external wallets using ICRC2 ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
 - Return a distinct `InsufficientAllowance` error when an ICRC-2 transfer exceeds the approval ([#9264](https://github.com/open-chat-labs/open-chat/pull/9264))
@@ -26,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Retry sending events for migrated users to their new canister ([#9551](https://github.com/open-chat-labs/open-chat/pull/9551))
 - Add `c2c_cancel_migration`, through which the UserIndex or the MultiUser canister the user is being migrated to cancels the migration to that canister, unfreezing the canister and scheduling again the timer jobs cancelled when it started ([#9553](https://github.com/open-chat-labs/open-chat/pull/9553))
 - Don't migrate users until their P2P swaps have expired ([#9561](https://github.com/open-chat-labs/open-chat/pull/9561), [#9603](https://github.com/open-chat-labs/open-chat/pull/9603))
+- Record P2P swaps the user creates directly in groups and communities ([#9563](https://github.com/open-chat-labs/open-chat/pull/9563))
 - Only allow the LocalUserIndex to call `c2c_try_start_migration`, rather than the UserIndex ([#9582](https://github.com/open-chat-labs/open-chat/pull/9582))
 - Return the size and hash of the serialized user with each page from `c2c_export_user`, for the MultiUser canister to check once it has pulled them all ([#9587](https://github.com/open-chat-labs/open-chat/pull/9587))
 - Include when a migration started in its hash, so that each migration of a user is told apart ([#9610](https://github.com/open-chat-labs/open-chat/pull/9610))
@@ -105,6 +105,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Skip running the regular jobs while frozen ([#9548](https://github.com/open-chat-labs/open-chat/pull/9548))
 - Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
+- Receive direct messages via `user_core`'s `receive_message`, shared with the MultiUser canister ([#9631](https://github.com/open-chat-labs/open-chat/pull/9631))
 
 ### Removed
 
