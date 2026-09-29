@@ -112,6 +112,9 @@ async fn process_canister(canister: CanisterToRefund) {
             Err(RefundError::CanisterHasCode) => {
                 error!(%canister_id, "Cycles not refunded, the canister has code installed");
             }
+            Err(RefundError::InCanisterPool) => {
+                info!(%canister_id, "Cycles not refunded, the canister is in the canister pool");
+            }
             Err(RefundError::TooFewCycles(cycles)) => {
                 info!(%canister_id, cycles, "Cycles not refunded, too few to be worth it");
             }
@@ -149,6 +152,7 @@ fn retry_delay(error: &C2CError) -> Option<Milliseconds> {
 enum RefundError {
     NotController,
     CanisterHasCode,
+    InCanisterPool,
     TooFewCycles(Cycles),
     C2C(C2CError),
 }
@@ -160,7 +164,18 @@ impl From<C2CError> for RefundError {
 }
 
 async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
-    let cycles_dispenser_canister_id = read_state(|state| state.data.cycles_dispenser_canister_id);
+    let (cycles_dispenser_canister_id, in_canister_pool) = read_state(|state| {
+        (
+            state.data.cycles_dispenser_canister_id,
+            state.data.canister_pool.contains(&canister_id),
+        )
+    });
+
+    // A pool canister may yet become a live canister, so it must be left as it is, in particular
+    // without its freezing threshold having been set to 0 (see below)
+    if in_canister_pool {
+        return Err(RefundError::InCanisterPool);
+    }
     let wasm = CanisterWasmBytes(CYCLES_REFUNDER_WASM.to_vec());
 
     let status = utils::canister::canister_status(canister_id).await?;
