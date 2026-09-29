@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::add_hot_group_exclusions::*;
@@ -7,13 +7,13 @@ use user_canister::add_hot_group_exclusions::*;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn add_hot_group_exclusions(args: Args) -> Response {
-    mutate_state(|state| add_hot_group_exclusions_impl(args, state))
+    execute_update(|state| add_hot_group_exclusions_impl(args, state))
 }
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn add_recommended_group_exclusions(args: Args) -> Response {
-    mutate_state(|state| add_hot_group_exclusions_impl(args, state))
+    execute_update(|state| add_hot_group_exclusions_impl(args, state))
 }
 
 fn add_hot_group_exclusions_impl(args: Args, state: &mut RuntimeState) -> Response {

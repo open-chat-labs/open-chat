@@ -7287,6 +7287,7 @@ dependencies = [
  "sha256",
  "stable_memory",
  "stable_memory_map",
+ "storage_bucket_client",
  "timer_job_queues",
  "tracing",
  "types",

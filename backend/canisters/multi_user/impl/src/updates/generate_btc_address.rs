@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{mutate_state, read_state};
+use crate::{execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::{Timestamped, UserIdAndPrincipal};
@@ -7,7 +7,11 @@ use user_canister::generate_btc_address::{Response::*, *};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-async fn generate_btc_address(_args: Args) -> Response {
+async fn generate_btc_address(args: Args) -> Response {
+    execute_update_async(|| generate_btc_address_impl(args)).await
+}
+
+async fn generate_btc_address_impl(_args: Args) -> Response {
     let (my_index, me, cached) = read_state(|state| {
         state.with_caller_user(|my_index, user| {
             (

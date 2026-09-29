@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::mark_achievements_seen::*;
@@ -7,7 +7,7 @@ use user_canister::mark_achievements_seen::*;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn mark_achievements_seen(args: Args) -> Response {
-    mutate_state(|state| mark_achievements_seen_impl(args, state))
+    execute_update(|state| mark_achievements_seen_impl(args, state))
 }
 
 fn mark_achievements_seen_impl(args: Args, state: &mut RuntimeState) -> Response {

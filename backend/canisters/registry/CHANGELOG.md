@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add the `c2c_tokens` query, returning the ledger and fee of each installed token, which the LocalUserIndexes refresh daily ([#9623](https://github.com/open-chat-labs/open-chat/pull/9623))
 
+## [[2.0.2071](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2071-registry)] - 2026-09-29
+
 ### Changed
 
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))

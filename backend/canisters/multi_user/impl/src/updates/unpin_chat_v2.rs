@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use types::OCResult;
@@ -8,7 +8,7 @@ use user_canister::unpin_chat_v2::*;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn unpin_chat_v2(args: Args) -> Response {
-    mutate_state(|state| unpin_chat_impl(args, state)).into()
+    execute_update(|state| unpin_chat_impl(args, state)).into()
 }
 
 fn unpin_chat_impl(args: Args, state: &mut RuntimeState) -> OCResult {

@@ -1,4 +1,4 @@
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use std::collections::BTreeSet;
@@ -8,7 +8,7 @@ use user_canister::c2c_community_canister_v2::*;
 #[update(msgpack = true)]
 #[trace]
 fn c2c_community_canister_v2(args: Args) -> Response {
-    mutate_state(|state| c2c_community_canister_v2_impl(args, state))
+    execute_update(|state| c2c_community_canister_v2_impl(args, state))
 }
 
 // Handles the events a community sends this canister's users, in order, as the User canister does for

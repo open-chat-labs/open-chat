@@ -1,6 +1,6 @@
 use crate::guards::caller_is_video_call_operator;
 use crate::timer_job_types::TimerJob;
-use crate::{MultiUserEventPusher, RuntimeState, mutate_state};
+use crate::{MultiUserEventPusher, RuntimeState, execute_update};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
 use oc_error_codes::OCErrorCode;
@@ -12,7 +12,7 @@ use user_canister::end_video_call_v2::*;
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
 fn end_video_call_v2(args: Args) -> Response {
-    mutate_state(|state| {
+    execute_update(|state| {
         let Some(user_index) = state.index_of_local_user(args.user_id) else {
             return Err(OCErrorCode::TargetUserNotFound.into());
         };
