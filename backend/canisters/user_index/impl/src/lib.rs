@@ -272,17 +272,39 @@ impl RuntimeState {
             new_user_id,
         }));
 
-        // Those the user has a direct chat with, and those who have blocked them, each move what they
-        // hold under the user's old id onto the new one
-        let users_to_notify = direct_chat_user_ids.into_iter().chain(blocked_by).collect();
-        self.record_user_id_migrated(old_user_id, new_user_id, canisters_to_notify, blocked_users, users_to_notify);
+        // Those the user has, or had, a direct chat with and those they have blocked may have been
+        // migrated before them, in which case the user's canister may not have been told, eg. if it
+        // was being migrated itself at the time, so it is told now
+        let mut migrated_earlier = HashMap::new();
+        for &user_id in direct_chat_user_ids.iter().chain(blocked_users.iter()) {
+            let latest = self.data.migrated_user_ids.latest(user_id);
+            if latest != user_id {
+                migrated_earlier.insert(user_id, latest);
+            }
+        }
+        // Those the user has a direct chat with, those who have blocked them and those they have
+        // blocked each move what they hold under the user's old id onto the new one
+        let users_to_notify = direct_chat_user_ids
+            .into_iter()
+            .chain(blocked_by)
+            .chain(blocked_users.iter().copied())
+            .collect();
+        self.record_user_id_migrated(
+            old_user_id,
+            new_user_id,
+            canisters_to_notify,
+            blocked_users,
+            users_to_notify,
+            migrated_earlier.into_iter().collect(),
+        );
         true
     }
 
     // Records that a user migrated to a MultiUser canister has been given a new id, and tells every
     // LocalUserIndex, each of which tells whichever of the user's groups and communities it controls,
     // and of `users_to_notify` it holds, and moves the pairs of the user and those they've blocked
-    // onto their new id. Only the first call for a migration is acted on, so it must list all of them.
+    // onto their new id. The LocalUserIndex holding the new id tells the user of `migrated_earlier`.
+    // Only the first call for a migration is acted on, so it must list all of them.
     fn record_user_id_migrated(
         &mut self,
         old_user_id: UserId,
@@ -290,6 +312,7 @@ impl RuntimeState {
         canisters_to_notify: Vec<CanisterId>,
         blocked_users: Vec<UserId>,
         users_to_notify: Vec<UserId>,
+        migrated_earlier: Vec<(UserId, UserId)>,
     ) {
         if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
             self.data.multi_user_canisters.on_user_removed(&old_user_id);
@@ -305,6 +328,7 @@ impl RuntimeState {
                     users_by_local_user_index.entry(local_user_index).or_default().insert(user_id);
                 }
             }
+            let new_user_local_user_index = self.data.local_index_map.get_index_canister(&new_user_id);
             let local_user_indexes: Vec<CanisterId> = self.data.local_index_map.canisters().copied().collect();
             for local_user_index in local_user_indexes {
                 let users_to_notify = users_by_local_user_index
@@ -319,6 +343,11 @@ impl RuntimeState {
                         canisters_to_notify: canisters_to_notify.clone(),
                         blocked_users: blocked_users.clone(),
                         users_to_notify,
+                        migrated_earlier: if new_user_local_user_index == Some(local_user_index) {
+                            migrated_earlier.clone()
+                        } else {
+                            Vec::new()
+                        },
                     }),
                 );
             }

@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::RemovedChatKeyPrefix;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use types::{Chat, ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
@@ -237,6 +238,18 @@ impl DirectChats {
         let old_chat_id: ChatId = old_user_id.into();
         removed_chats::add(&RemovedChatKeyPrefix::new_for_direct_chats(), old_chat_id.into(), now);
         true
+    }
+
+    // The id of the other user in the chat recorded as being with `user_id`: `user_id` itself, or, if
+    // the chat has since been moved onto their new id after they were migrated to a MultiUser
+    // canister, that id. For what was recorded against the chat before it moved, such as timer jobs
+    // and the locations of P2P swaps.
+    pub fn latest_user_id(&self, user_id: UserId, migrated_user_ids: &MigratedUserIds) -> UserId {
+        if self.direct_chats.contains_key(&user_id.into()) {
+            user_id
+        } else {
+            migrated_user_ids.latest(user_id)
+        }
     }
 
     pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<DirectChat> {

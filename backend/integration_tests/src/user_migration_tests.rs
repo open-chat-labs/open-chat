@@ -1068,6 +1068,32 @@ fn users_with_a_direct_chat_with_or_a_block_of_a_migrated_user_hold_it_under_the
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     client::user::happy_path::send_text_message(env, &user3, user1.user_id, random_string(), None);
     client::user::happy_path::block_user(env, &user4, user1.user_id);
+    // user5, held by a LocalUserIndex other than user2's, has a direct chat with user1, which user1
+    // has deleted
+    let user2_subnet = env.get_subnet(user2.canister()).unwrap();
+    let other_subnet = canister_ids
+        .subnets
+        .iter()
+        .map(|s| s.subnet_id)
+        .find(|s| *s != user2_subnet)
+        .unwrap();
+    let user5 = client::register_user_on_subnet(env, canister_ids, other_subnet);
+    assert_ne!(user5.local_user_index, user2.local_user_index);
+    client::user::happy_path::send_text_message(env, &user5, user1.user_id, random_string(), None);
+    tick_many(env, 10);
+    let response = client::user::delete_direct_chat(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::delete_direct_chat::Args {
+            user_id: user5.user_id,
+            block_user: false,
+        },
+    );
+    assert!(
+        matches!(response, user_canister::delete_direct_chat::Response::Success),
+        "{response:?}"
+    );
     tick_many(env, 10);
     let before_migration = now_millis(env);
     env.advance_time(Duration::from_millis(1));
@@ -1079,16 +1105,13 @@ fn users_with_a_direct_chat_with_or_a_block_of_a_migrated_user_hold_it_under_the
         vec![user1.user_id],
         Some(multi_user_canister),
     );
-    tick_many(env, 30);
-    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id) {
-        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
-        status => panic!("User not imported: {status:?}"),
-    };
+    // The migration is retried until user1's canister has garbage collected the chat they deleted
+    let new_user_id = wait_until_imported(env, operator.principal, canister_ids.user_index, user1.user_id);
     tick_many(env, 10);
 
     // Each peer has a single chat with user1, now under their new id, with its history. Their
     // clients are told the chat under the old id was removed and sent it under the new one.
-    for (peer, message_count) in [(&user2, 2), (&user3, 1)] {
+    for (peer, message_count) in [(&user2, 2), (&user3, 1), (&user5, 1)] {
         let state = client::user::happy_path::initial_state(env, peer);
         let chats: Vec<_> = state
             .direct_chats
@@ -1135,6 +1158,69 @@ fn users_with_a_direct_chat_with_or_a_block_of_a_migrated_user_hold_it_under_the
     }
     let state = client::user::happy_path::initial_state(env, &user4);
     assert!(state.direct_chats.summaries.iter().all(|c| c.them != new_user_id));
+}
+
+// Each user's canister is frozen while they are being migrated, so neither hears of the other's new
+// id then, and is told once they are switched over themselves
+#[test]
+fn direct_chat_between_users_migrated_together_is_held_under_their_new_ids() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+    client::user::happy_path::send_text_message(env, &user2, user1.user_id, random_string(), None);
+    tick_many(env, 10);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id, user2.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 40);
+    let new_user_id = |user: &User| match user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id)
+    {
+        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
+        status => panic!("User not imported: {status:?}"),
+    };
+    let (new_user_id1, new_user_id2) = (new_user_id(&user1), new_user_id(&user2));
+    tick_many(env, 10);
+
+    let old_user_ids = [user1.user_id, user2.user_id];
+    let user1 = User {
+        user_id: new_user_id1,
+        local_user_index,
+        ..user1
+    };
+    let user2 = User {
+        user_id: new_user_id2,
+        local_user_index,
+        ..user2
+    };
+    for (user, other) in [(&user1, new_user_id2), (&user2, new_user_id1)] {
+        let state = client::user::happy_path::initial_state(env, user);
+        let chats: Vec<_> = state
+            .direct_chats
+            .summaries
+            .iter()
+            .filter(|c| c.them == other || old_user_ids.contains(&c.them))
+            .collect();
+        assert_eq!(chats.len(), 1, "{chats:?}");
+        assert_eq!(chats[0].them, other);
+        assert_eq!(chats[0].latest_message_index, Some(1.into()));
+    }
 }
 
 #[test]
@@ -1610,6 +1696,22 @@ fn platform_operator(env: &mut PocketIc, canister_ids: &CanisterIds, controller:
     );
     assert!(matches!(response, types::SuccessOnly::Success), "{response:?}");
     operator
+}
+
+// Waits for the user's migration to be imported, returning their new id
+fn wait_until_imported(env: &mut PocketIc, sender: Principal, user_index: CanisterId, user_id: UserId) -> UserId {
+    for _ in 0..20 {
+        tick_many(env, 10);
+        if let Some(UserMigrationStatus::Imported { new_user_id, .. }) = user_migration_status(env, sender, user_index, user_id)
+        {
+            return new_user_id;
+        }
+        env.advance_time(Duration::from_secs(60));
+    }
+    panic!(
+        "User not imported: {:?}",
+        user_migration_status(env, sender, user_index, user_id)
+    );
 }
 
 fn migrate_users(

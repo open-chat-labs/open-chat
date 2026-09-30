@@ -190,6 +190,22 @@ mod tests {
     }
 
     #[test]
+    fn contact_for_a_migrated_user_is_moved_onto_their_new_id() {
+        init_stable_memory_map();
+        let mut contacts = Contacts::default();
+        contacts.set_contact(set_nickname(1, "one"));
+        contacts.set_contact(set_nickname(2, "two"));
+        contacts.set_contact(set_nickname(3, "three"));
+
+        contacts.migrate_user_id(user_id(1), user_id(4));
+        assert_eq!(nicknames(&contacts), owned(&[(2, "two"), (3, "three"), (4, "one")]));
+
+        // A contact already held for the new id is kept
+        contacts.migrate_user_id(user_id(2), user_id(3));
+        assert_eq!(nicknames(&contacts), owned(&[(2, "two"), (3, "three"), (4, "one")]));
+    }
+
+    #[test]
     fn invalid_nicknames_are_rejected() {
         init_stable_memory_map();
         let mut contacts = Contacts::default();

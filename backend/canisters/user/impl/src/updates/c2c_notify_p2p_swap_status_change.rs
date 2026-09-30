@@ -42,6 +42,12 @@ async fn c2c_notify_p2p_swap_status_change_impl(args: Args) {
             rng: state.env.rng(),
             queue: &mut state.data.local_user_index_event_sync_queue,
         };
+        // The location names the chat by the other user's id when the swap was offered
+        let them = state
+            .data
+            .user
+            .direct_chats
+            .latest_user_id(them, &state.data.migrated_user_ids);
         if let Some(change) = apply_status_change(&mut state.data.user, them, args, now, event_pusher) {
             state.push_user_canister_event(them, UserCanisterEvent::P2PSwapStatusChange(Box::new(change)));
         }

@@ -183,7 +183,11 @@ impl Job for HardDeleteMessageContentJob {
                 .data
                 .users
                 .with_user_mut(self.user_index, |user| {
-                    user.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
+                    let chat_id = user
+                        .direct_chats
+                        .latest_user_id(self.chat_id.into(), &state.data.migrated_user_ids)
+                        .into();
+                    user.direct_chats.get_mut(&chat_id).and_then(|chat| {
                         chat.remove_deleted_message_content(self.thread_root_message_index, self.message_id, now)
                     })
                 })
@@ -393,8 +397,13 @@ impl Job for MarkP2PSwapExpiredJob {
         mutate_state(|state| {
             let now = state.env.now();
             // Does nothing if the user no longer exists
+            let migrated_user_ids = &state.data.migrated_user_ids;
             state.data.users.with_user_mut(self.user_index, |user| {
-                if let Some(chat) = user.direct_chats.get_mut(&self.chat_id) {
+                let chat_id = user
+                    .direct_chats
+                    .latest_user_id(self.chat_id.into(), migrated_user_ids)
+                    .into();
+                if let Some(chat) = user.direct_chats.get_mut(&chat_id) {
                     let _ = chat.mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, now);
                 }
             });

@@ -134,4 +134,26 @@ mod tests {
         assert_eq!(favourites.chats.value, vec![other_chat, new_self_chat]);
         assert_eq!(favourites.pinned.value, HashMap::from([(new_self_chat, 3)]));
     }
+
+    #[test]
+    fn chat_with_a_migrated_user_is_moved_onto_their_new_id() {
+        let mut favourites = FavouriteChats::default();
+        let chat = Chat::Direct(user_id(2).into());
+        let other_chat = Chat::Direct(user_id(4).into());
+        favourites.add(chat, 1);
+        favourites.add(other_chat, 2);
+        favourites.pin(chat, 3);
+
+        favourites.migrate_their_user_id(user_id(2), user_id(5), 10);
+
+        let new_chat = Chat::Direct(user_id(5).into());
+        assert_eq!(favourites.chats.value, vec![other_chat, new_chat]);
+        assert_eq!(favourites.pinned.value, HashMap::from([(new_chat, 3)]));
+        // Clients are sent the favourites again
+        assert!(favourites.any_updated(9));
+
+        // Nothing changes for a user who isn't a favourite
+        favourites.migrate_their_user_id(user_id(6), user_id(7), 20);
+        assert!(!favourites.any_updated(10));
+    }
 }

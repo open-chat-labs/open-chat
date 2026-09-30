@@ -277,9 +277,15 @@ pub struct UserIdMigrated {
     #[serde(rename = "b", default, skip_serializing_if = "Vec::is_empty")]
     pub blocked_users: Vec<UserId>,
     // The users held by this LocalUserIndex who are told of the user's new id: those the user has,
-    // or had, a direct chat with, and those who have blocked them
+    // or had, a direct chat with, those who have blocked them and those they have blocked
     #[serde(rename = "u", default, skip_serializing_if = "Vec::is_empty")]
     pub users_to_notify: Vec<UserId>,
+    // Only sent to the LocalUserIndex holding the user's new id: those the user has, or had, a direct
+    // chat with, or has blocked, who were migrated before them, by their old and new ids. The user is
+    // told of each, since they may not have been when it happened, eg. if they were being migrated
+    // themselves at the time.
+    #[serde(rename = "e", default, skip_serializing_if = "Vec::is_empty")]
+    pub migrated_earlier: Vec<(UserId, UserId)>,
 }
 
 // Tells the LocalUserIndex controlling a user's canister to start migrating the user to the given
