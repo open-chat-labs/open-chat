@@ -585,13 +585,13 @@ export class GroupClient
     // to date as `detailsSyncedUpTo`, and is told only that they still are, unless they have changed
     getGroupDetails(
         groupId: string,
-        chatLastUpdated: bigint,
+        detailsLastUpdated: bigint,
         detailsSyncedUpTo?: bigint,
     ): Promise<GroupChatDetailsResponse> {
         return loadGroupDetails(
             this.chatsDb,
             groupId,
-            chatLastUpdated,
+            detailsLastUpdated,
             detailsSyncedUpTo,
             () =>
                 this.query(

@@ -1132,7 +1132,9 @@ type GetChannelSummary = {
 type GetCommunityDetails = {
     kind: "getCommunityDetails";
     id: CommunityIdentifier;
-    communityLastUpdated: bigint;
+    // When the details last changed, according to the summary. If the canister doesn't yet say,
+    // this is when the summary was last updated at all.
+    detailsLastUpdated: bigint;
     // If the caller already holds the details, the time up to which they are known to be up to
     // date. That isn't when they last changed: it moves on each time the canister confirms that
     // they haven't. If they still haven't, the response only says so, rather than carrying every
@@ -1652,8 +1654,8 @@ type MarkMessagesRead = {
 
 type GetGroupDetails = {
     chatId: MultiUserChatIdentifier;
-    chatLastUpdated: bigint;
-    // As for `GetCommunityDetails`
+    // Both as for `GetCommunityDetails`
+    detailsLastUpdated: bigint;
     detailsSyncedUpTo?: bigint;
     kind: "getGroupDetails";
 };

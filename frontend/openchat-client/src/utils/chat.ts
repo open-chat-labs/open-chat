@@ -109,6 +109,16 @@ import { compareUsername, nullUser } from "./user";
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
+// The timestamp which the details held for a chat or community (its members, rules, etc) must have
+// reached for them to be up to date. A canister which doesn't yet say when its details last changed
+// leaves only when it was last updated at all, which moves on with each message.
+export function detailsLastUpdated(summary: {
+    lastUpdated: bigint;
+    detailsLastUpdated?: bigint;
+}): bigint {
+    return summary.detailsLastUpdated ?? summary.lastUpdated;
+}
+
 export function isPreviewing(chat: ChatSummary): boolean {
     return chat.membership.role === ROLE_NONE;
 }

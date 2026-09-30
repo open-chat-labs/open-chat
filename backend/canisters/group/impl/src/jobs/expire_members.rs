@@ -15,6 +15,7 @@ thread_local! {
 
 pub const MEMBER_ACCESS_EXPIRY_DELAY: Milliseconds = 5 * 60 * 1000;
 const USER_DETAILS_BATCH_SIZE: usize = 1000;
+const MAX_INSTRUCTIONS_PER_RUN: u64 = 2_000_000_000;
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none()
@@ -49,8 +50,20 @@ fn run() {
         let mut users_to_lookup = Vec::new();
         let mut check_gate_actions = Vec::new();
         let mut any_lapsed = false;
+        let mut processed = 0u32;
 
-        while let Some(member) = state.data.expiring_members.pop_if_expires_before(now) {
+        loop {
+            // Many members can fall due together (eg. those who were already members when an
+            // expiring gate was added), so once the instructions for this run are used up the
+            // rest are left for the next
+            if processed > 0 && processed.is_multiple_of(100) && ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_PER_RUN {
+                break;
+            }
+            let Some(member) = state.data.expiring_members.pop_if_expires_before(now) else {
+                break;
+            };
+            processed += 1;
+
             // If there is no longer a gate then continue
             let Some(gate_config) = state.data.chat.gate_config.value.as_ref() else {
                 continue;
