@@ -1,4 +1,4 @@
-use crate::communities::join_community_tests::{wait_for_community_membership, wait_for_invitation};
+use crate::communities::join_community_tests::wait_for_invitation;
 use crate::env::ENV;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
@@ -6,7 +6,7 @@ use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::random_string;
-use types::{ChannelId, CommunityId, MessageIndex};
+use types::{ChannelId, CommunityId};
 
 #[test]
 fn join_public_channel_succeeds() {
@@ -34,7 +34,7 @@ fn join_public_channel_succeeds() {
 
     assert!(summary.channels.iter().any(|c| c.channel_id == channel_id));
 
-    wait_for_community_membership(env, &user2, community_id);
+    wait_for_channel_membership(env, &user2, community_id, channel_id);
 }
 
 #[test]
@@ -261,13 +261,10 @@ fn channel_marked_as_read_after_joining() {
     client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
     client::community::happy_path::join_channel(env, user3.principal, community_id, channel_id);
 
-    // user2 was already in the community, so their canister only has the channel to mark as read,
-    // whereas user3's adds the community and marks its channels as read on handling the same event
-    let user2_read_up_to = wait_for_channel_marked_as_read(env, &user2, community_id, channel_id);
-    let user3_community = wait_for_community_membership(env, &user3, community_id);
-    let user3_channel = user3_community.channels.iter().find(|c| c.channel_id == channel_id).unwrap();
+    let user2_channel = wait_for_channel_membership(env, &user2, community_id, channel_id);
+    let user3_channel = wait_for_channel_membership(env, &user3, community_id, channel_id);
 
-    assert_eq!(user2_read_up_to, 2.into());
+    assert_eq!(user2_channel.read_by_me_up_to, Some(2.into()));
     assert_eq!(user3_channel.read_by_me_up_to, Some(2.into()));
 }
 
@@ -295,25 +292,25 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     }
 }
 
-// Ticks until the user's canister has marked the channel as read, which it does on being told that the
-// user has joined the channel, and returns the index of the message it has read up to
-fn wait_for_channel_marked_as_read(
+// Ticks until the user's canister lists the channel, ie. the event telling it that the user joined
+// the channel has been delivered, and returns the user's copy of it. That event adds the community too
+// if the user was not yet in it, and marks the channel as read, so neither needs a wait of its own.
+fn wait_for_channel_membership(
     env: &mut PocketIc,
     user: &User,
     community_id: CommunityId,
     channel_id: ChannelId,
-) -> MessageIndex {
+) -> user_canister::ChannelSummary {
     for _ in 0..30 {
         let initial_state = client::user::happy_path::initial_state(env, user);
-        if let Some(read_up_to) = initial_state
+        if let Some(channel) = initial_state
             .communities
             .summaries
-            .iter()
+            .into_iter()
             .find(|c| c.community_id == community_id)
-            .and_then(|c| c.channels.iter().find(|c| c.channel_id == channel_id))
-            .and_then(|c| c.read_by_me_up_to)
+            .and_then(|c| c.channels.into_iter().find(|c| c.channel_id == channel_id))
         {
-            return read_up_to;
+            return channel;
         }
         env.tick();
     }
