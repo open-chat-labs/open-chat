@@ -533,16 +533,24 @@ export class OpenChatAgent extends EventTarget {
     // does a payment from another account (`fromAccount`), whose owner has approved it already.
     //
     // `amount` is all that the payment takes from the wallet, so includes the fee of each transfer
-    // the canister makes, and `fee` is what the ledger charges for the approval itself.
+    // the canister makes, and `fee` is what the ledger charges for the approval itself. Without
+    // knowing that, there is no telling whether the wallet can afford both, so nothing is approved.
+    //
+    // The approval is made, and paid for, before the canister has checked anything, so a payment it
+    // then refuses, such as one with the wrong PIN, still costs the approval's fee, and leaves the
+    // canister approved for the payment until the approval lapses.
     private async approveUserCanisterToPull(
         ledger: string,
         amount: bigint,
-        fee: bigint,
+        fee: bigint | undefined,
         fromAccount: string | undefined,
     ): Promise<OCError | undefined> {
         const userId = this._userClient.userId;
         if (fromAccount !== undefined || !isMultiUserCanisterUser(userId)) {
             return undefined;
+        }
+        if (fee === undefined) {
+            return { kind: "error", code: ErrorCode.ApprovalFailed, message: undefined };
         }
 
         const spender = userCanisterSpenderAccount(userId, () => this.principal.toText());
@@ -874,7 +882,23 @@ export class OpenChatAgent extends EventTarget {
     // the escrow canister along with the fee for paying it out, so costs two fees.
     private approveTransferInMessage(content: MessageContent): Promise<OCError | undefined> {
         if (content.kind === "crypto_content" && content.transfer.kind === "pending") {
-            const { ledger, amountE8s, feeE8s = 0n, fromAccount } = content.transfer;
+            const { ledger, amountE8s, feeE8s = 0n, fromAccount, recipient } = content.transfer;
+
+            // Crypto for a user in a MultiUser canister has to be addressed to their wallet, which
+            // isn't known here, so a MultiUser canister refuses it as it is addressed now. It is
+            // refused here instead, before an approval is paid for.
+            // TODO: Remove this once crypto can be sent to users in MultiUser canisters
+            if (
+                isMultiUserCanisterUser(recipient) &&
+                isMultiUserCanisterUser(this._userClient.userId)
+            ) {
+                return Promise.resolve({
+                    kind: "error",
+                    code: ErrorCode.RecipientMismatch,
+                    message: undefined,
+                });
+            }
+
             return this.approveUserCanisterToPull(ledger, amountE8s + feeE8s, feeE8s, fromAccount);
         }
         if (content.kind === "p2p_swap_content_initial") {
@@ -3866,7 +3890,7 @@ export class OpenChatAgent extends EventTarget {
         const error = await this.approveUserCanisterToPull(
             ledger,
             expectedPriceE8s,
-            this.ledgerFee(ledger) ?? 0n,
+            this.ledgerFee(ledger),
             fromAccount,
         );
         if (error !== undefined) {
@@ -5062,7 +5086,7 @@ export class OpenChatAgent extends EventTarget {
         const error = await this.approveUserCanisterToPull(
             LEDGER_CANISTER_CHAT,
             expectedPrice,
-            this.ledgerFee(LEDGER_CANISTER_CHAT) ?? 0n,
+            this.ledgerFee(LEDGER_CANISTER_CHAT),
             undefined,
         );
         if (error !== undefined) {

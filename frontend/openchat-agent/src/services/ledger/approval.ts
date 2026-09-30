@@ -1,6 +1,4 @@
-// How long an approval made for a single payment lasts. The payment is pulled straight after it is
-// approved, so this only has to outlast that call.
-export const APPROVAL_VALIDITY_MS = 10 * 60 * 1000;
+import { APPROVAL_VALIDITY_MS } from "@shared";
 
 const NANOS_PER_MILLISECOND = 1_000_000n;
 
@@ -25,10 +23,11 @@ export type Approval = {
 // allowance, which is given as the `expectedAllowance` so that the ledger rejects the approval if
 // the allowance has changed since it was read.
 //
-// An approval made here lasts just long enough for its payment to be pulled, but never cuts the
-// current allowance short: one which lapses later, or never, is left to.
-export function approvalToAdd(current: Allowance, amount: bigint, nowMs: number): Approval {
-    const expiresAt = BigInt(nowMs + APPROVAL_VALIDITY_MS) * NANOS_PER_MILLISECOND;
+// An approval made here lasts just long enough for its payment to be pulled (`APPROVAL_VALIDITY_MS`
+// from `nowNanos`), but never cuts the current allowance short: one which lapses later, or never,
+// is left to.
+export function approvalToAdd(current: Allowance, amount: bigint, nowNanos: bigint): Approval {
+    const expiresAt = nowNanos + BigInt(APPROVAL_VALIDITY_MS) * NANOS_PER_MILLISECOND;
 
     if (current.allowance === 0n) {
         return { amount, expectedAllowance: 0n, expiresAt };

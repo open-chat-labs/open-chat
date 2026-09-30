@@ -23,10 +23,16 @@ const ME = Principal.fromText("2vxsx-fae");
 const THEM = "rrkah-fqaaa-aaaaa-aaaaq-cai";
 const MULTI_USER_CANISTER = Principal.fromText("dfdal-2uaaa-aaaaa-qaama-cai");
 const MULTI_USER_CANISTER_USER = indexedUserId(MULTI_USER_CANISTER, 3);
+const OTHER_MULTI_USER_CANISTER_USER = indexedUserId(MULTI_USER_CANISTER, 4);
 const USER_CANISTER_USER = "renrk-eyaaa-aaaaa-aaada-cai";
 const EXTERNAL_ACCOUNT = "rno2w-sqaaa-aaaaa-aaacq-cai";
 const DIRECT = { kind: "direct_chat", userId: THEM } as const;
 const GROUP = { kind: "group_chat", groupId: "rdmx6-jaaaa-aaaaa-aaadq-cai" } as const;
+const CHANNEL = {
+    kind: "channel",
+    communityId: "rdmx6-jaaaa-aaaaa-aaadq-cai",
+    channelId: 1,
+} as const;
 
 function transfer(fromAccount?: string): PendingCryptocurrencyTransfer {
     return {
@@ -41,8 +47,12 @@ function transfer(fromAccount?: string): PendingCryptocurrencyTransfer {
     };
 }
 
-function crypto(fromAccount?: string): CryptocurrencyContent {
-    return { kind: "crypto_content", caption: undefined, transfer: transfer(fromAccount) };
+function crypto(fromAccount?: string, recipient = THEM): CryptocurrencyContent {
+    return {
+        kind: "crypto_content",
+        caption: undefined,
+        transfer: { ...transfer(fromAccount), recipient },
+    };
 }
 
 function swapOffer(fromAccount?: string): P2PSwapContentInitial {
@@ -65,7 +75,7 @@ function message(content: MessageContent): EventWrapper<Message> {
 // MultiUser canister has to approve it for first
 describe("OpenChatAgent paying from the user's wallet", () => {
     let approvals: unknown[][];
-    let approveResponse: "success" | "insufficient_funds" | "failure";
+    let approveResponse: "success" | "insufficient_funds" | "failure" | "throws";
     let calls: string[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let agent: any;
@@ -86,7 +96,9 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         agent._ledgerClient = {
             approveSpending: (...args: unknown[]) => {
                 approvals.push(args);
-                return Promise.resolve(approveResponse);
+                return approveResponse === "throws"
+                    ? Promise.reject(new Error("The ledger couldn't be reached"))
+                    : Promise.resolve(approveResponse);
             },
         };
         agent._userClient = {
@@ -97,6 +109,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             payForStreakInsurance: called("payForStreakInsurance"),
         };
         agent._groupClient = { acceptP2PSwap: called("groupAcceptP2PSwap") };
+        agent._communityClient = { acceptP2PSwap: called("communityAcceptP2PSwap") };
         agent._userIndexClient = { payForDiamondMembership: called("payForDiamondMembership") };
     }
 
@@ -130,12 +143,18 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             ICP_LEDGER,
             110n,
         ],
-        [
-            "swap accepted in a group",
-            (from) => agent.acceptP2PSwap(GROUP, undefined, 1n, ICP, 100n, undefined, false, from),
+        ...(
+            [
+                ["a direct chat", DIRECT],
+                ["a group", GROUP],
+                ["a channel", CHANNEL],
+            ] as const
+        ).map(([where, chat]): (typeof payments)[number] => [
+            `swap accepted in ${where}`,
+            (from) => agent.acceptP2PSwap(chat, undefined, 1n, ICP, 100n, undefined, false, from),
             ICP_LEDGER,
             120n,
-        ],
+        ]),
         [
             "Diamond membership",
             (from) => agent.payForDiamondMembership("", ICP_LEDGER, "one_month", false, 100n, from),
@@ -190,6 +209,65 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             expect(calls).toEqual([]);
         });
 
+        test.each(payments)("%s is not made if the ledger can't be reached", async (_, pay) => {
+            approveResponse = "throws";
+
+            const response = await pay();
+
+            expect([response].flat()[0]).toEqual({
+                kind: "error",
+                code: ErrorCode.ApprovalFailed,
+                message: undefined,
+            });
+            expect(calls).toEqual([]);
+        });
+
+        test("streak insurance is not paid for if it can't be approved", async () => {
+            approveResponse = "failure";
+
+            expect(await agent.payForStreakInsurance(1, 5_000n, undefined)).toEqual({
+                kind: "error",
+                code: ErrorCode.ApprovalFailed,
+                message: undefined,
+            });
+            expect(calls).toEqual([]);
+        });
+
+        test("nothing is approved while the ledger's fee isn't known", async () => {
+            agent._registryValue = undefined;
+
+            const response = await agent.payForDiamondMembership(
+                "",
+                ICP_LEDGER,
+                "one_month",
+                false,
+                100n,
+                undefined,
+            );
+
+            expect(response).toEqual({
+                kind: "error",
+                code: ErrorCode.ApprovalFailed,
+                message: undefined,
+            });
+            expect(approvals).toEqual([]);
+            expect(calls).toEqual([]);
+        });
+
+        test("crypto for another user in a MultiUser canister is refused before it is approved", async () => {
+            const [response] = await sendDirectMessage(
+                crypto(undefined, OTHER_MULTI_USER_CANISTER_USER),
+            );
+
+            expect(response).toEqual({
+                kind: "error",
+                code: ErrorCode.RecipientMismatch,
+                message: undefined,
+            });
+            expect(approvals).toEqual([]);
+            expect(calls).toEqual([]);
+        });
+
         test("a payment the wallet can't afford is reported as such", async () => {
             approveResponse = "insufficient_funds";
 
@@ -225,6 +303,13 @@ describe("OpenChatAgent paying from the user's wallet", () => {
 
             expect(approvals).toEqual([]);
             expect(calls.length).toEqual(1);
+        });
+
+        test("crypto for a user in a MultiUser canister is left to their canister to refuse", async () => {
+            await sendDirectMessage(crypto(undefined, OTHER_MULTI_USER_CANISTER_USER));
+
+            expect(approvals).toEqual([]);
+            expect(calls).toEqual(["sendMessage"]);
         });
 
         test("streak insurance needs no approval", async () => {

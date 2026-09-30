@@ -49,9 +49,12 @@ export class LedgerClient extends CandidCanisterAgent<LedgerService> {
         fee: bigint,
     ): Promise<ApproveSpendingResponse> {
         const account = { owner: this.principal };
+        let now = BigInt(Date.now()) * 1_000_000n;
 
-        // A second attempt is only made if the allowance changed between reading it and adding
-        // to it, which takes another payment being approved at that very moment
+        // A second attempt is only made if the allowance changed between reading it and adding to
+        // it, which takes another payment being approved at that very moment, or if this device's
+        // clock is so slow that the ledger found the approval to have expired already, in which
+        // case the ledger's own time is used instead
         for (let attempt = 0; attempt < 2; attempt++) {
             const [current, balance] = await Promise.all([
                 this.allowance(ledger, account, spender),
@@ -61,7 +64,7 @@ export class LedgerClient extends CandidCanisterAgent<LedgerService> {
                 return "insufficient_funds";
             }
 
-            const approval = approvalToAdd(current, amount, Date.now());
+            const approval = approvalToAdd(current, amount, now);
             const response = await this.handleResponse(
                 this.service.icrc2_approve.withOptions({ canisterId: ledger })({
                     spender: apiIcrcAccount(spender),
@@ -82,11 +85,14 @@ export class LedgerClient extends CandidCanisterAgent<LedgerService> {
             if ("InsufficientFunds" in response.Err) {
                 return "insufficient_funds";
             }
-            if (!("AllowanceChanged" in response.Err)) {
+            if ("Expired" in response.Err) {
+                now = response.Err.Expired.ledger_time;
+            } else if (!("AllowanceChanged" in response.Err)) {
                 console.warn("Failed to approve spending", ledger, response.Err);
                 return "failure";
             }
         }
+        console.warn("Gave up approving spending after a second attempt", ledger);
         return "failure";
     }
 }

@@ -1,6 +1,6 @@
 import { Principal } from "@icp-sdk/core/principal";
+import { APPROVAL_VALIDITY_MS } from "@shared";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { APPROVAL_VALIDITY_MS } from "./approval";
 import type { Allowance, ApproveArgs, ApproveResult } from "./candid/types";
 import { LedgerClient } from "./ledger.client";
 
@@ -117,6 +117,21 @@ describe("LedgerClient.approveSpending", () => {
 
         expect(await client.approveSpending(LEDGER, SPENDER, 100n, FEE)).toEqual("failure");
         expect(approvals.length).toEqual(2);
+    });
+
+    test("an approval which a slow clock had expire already is made again by the ledger's time", async () => {
+        const ledgerTime = BigInt(NOW_MS + 60 * 60 * 1000) * 1_000_000n;
+        allowances = [
+            { allowance: 0n, expires_at: [] },
+            { allowance: 0n, expires_at: [] },
+        ];
+        responses = [{ Err: { Expired: { ledger_time: ledgerTime } } }, { Ok: 1n }];
+
+        expect(await client.approveSpending(LEDGER, SPENDER, 100n, FEE)).toEqual("success");
+        expect(approvals.map((a) => a.expires_at)).toEqual([
+            [EXPIRY],
+            [ledgerTime + BigInt(APPROVAL_VALIDITY_MS) * 1_000_000n],
+        ]);
     });
 
     test("an approval the ledger rejects is not retried", async () => {
