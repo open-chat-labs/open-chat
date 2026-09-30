@@ -1,12 +1,12 @@
+use crate::communities::join_community_tests::{wait_for_community_membership, wait_for_invitation};
 use crate::env::ENV;
-use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::random_string;
-use types::{ChannelId, CommunityId, MessageContent};
+use types::{ChannelId, CommunityId, MessageIndex};
 
 #[test]
 fn join_public_channel_succeeds() {
@@ -30,21 +30,11 @@ fn join_public_channel_succeeds() {
 
     client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
 
-    tick_many(env, 3);
-
     let summary = client::community::happy_path::summary(env, user2.principal, community_id);
 
     assert!(summary.channels.iter().any(|c| c.channel_id == channel_id));
 
-    let initial_state = client::user::happy_path::initial_state(env, &user2);
-
-    assert!(
-        initial_state
-            .communities
-            .summaries
-            .iter()
-            .any(|c| c.community_id == community_id)
-    );
+    wait_for_community_membership(env, &user2, community_id);
 }
 
 #[test]
@@ -239,17 +229,7 @@ fn invite_to_channel_oc_bot_message_received() {
         vec![user2.user_id],
     );
 
-    tick_many(env, 3);
-
-    let initial_state = client::user::happy_path::initial_state(env, &user2);
-
-    assert!(initial_state.direct_chats.summaries.iter().any(|dc| {
-        if let MessageContent::Text(content) = &dc.latest_message.as_ref().unwrap().event.content {
-            content.text.contains("You have been invited to the channel") && content.text.contains(&channel_id.to_string())
-        } else {
-            false
-        }
-    }));
+    wait_for_invitation(env, &user2, "channel", channel_id);
 }
 
 #[test]
@@ -281,29 +261,13 @@ fn channel_marked_as_read_after_joining() {
     client::community::happy_path::join_channel(env, user2.principal, community_id, channel_id);
     client::community::happy_path::join_channel(env, user3.principal, community_id, channel_id);
 
-    tick_many(env, 3);
-
-    let user2_initial_state = client::user::happy_path::initial_state(env, &user2);
-    let user3_initial_state = client::user::happy_path::initial_state(env, &user3);
-
-    let user2_community = user2_initial_state
-        .communities
-        .summaries
-        .iter()
-        .find(|c| c.community_id == community_id)
-        .unwrap();
-
-    let user3_community = user3_initial_state
-        .communities
-        .summaries
-        .iter()
-        .find(|c| c.community_id == community_id)
-        .unwrap();
-
-    let user2_channel = user2_community.channels.iter().find(|c| c.channel_id == channel_id).unwrap();
+    // user2 was already in the community, so their canister only has the channel to mark as read,
+    // whereas user3's adds the community and marks its channels as read on handling the same event
+    let user2_read_up_to = wait_for_channel_marked_as_read(env, &user2, community_id, channel_id);
+    let user3_community = wait_for_community_membership(env, &user3, community_id);
     let user3_channel = user3_community.channels.iter().find(|c| c.channel_id == channel_id).unwrap();
 
-    assert_eq!(user2_channel.read_by_me_up_to, Some(2.into()));
+    assert_eq!(user2_read_up_to, 2.into());
     assert_eq!(user3_channel.read_by_me_up_to, Some(2.into()));
 }
 
@@ -329,6 +293,31 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         community_id,
         channel_id,
     }
+}
+
+// Ticks until the user's canister has marked the channel as read, which it does on being told that the
+// user has joined the channel, and returns the index of the message it has read up to
+fn wait_for_channel_marked_as_read(
+    env: &mut PocketIc,
+    user: &User,
+    community_id: CommunityId,
+    channel_id: ChannelId,
+) -> MessageIndex {
+    for _ in 0..30 {
+        let initial_state = client::user::happy_path::initial_state(env, user);
+        if let Some(read_up_to) = initial_state
+            .communities
+            .summaries
+            .iter()
+            .find(|c| c.community_id == community_id)
+            .and_then(|c| c.channels.iter().find(|c| c.channel_id == channel_id))
+            .and_then(|c| c.read_by_me_up_to)
+        {
+            return read_up_to;
+        }
+        env.tick();
+    }
+    panic!("User {} was not notified of joining the channel", user.user_id);
 }
 
 struct TestData {
