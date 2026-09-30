@@ -12,9 +12,10 @@ use utils::canister::{
     is_out_of_cycles_error,
 };
 
-// Sends the cycles held by uninstalled canisters (those of deleted users, groups and communities,
-// and of migrated users) to the CyclesDispenser, by installing a tiny canister on each which does
-// just that, then uninstalling it again.
+// Sends the cycles held by uninstalled canisters (those of deleted and migrated users) to the
+// CyclesDispenser, by installing a tiny canister on each which does just that, then uninstalling it
+// again. The canisters of deleted groups and communities are uninstalled here first, then deleted
+// once their cycles have been refunded.
 // See backend/canisters/cycles_refunder, which is where this wasm is built from.
 const CYCLES_REFUNDER_WASM: &[u8] = include_bytes!("../../../../cycles_refunder/cycles_refunder.wasm");
 
@@ -108,7 +109,7 @@ fn get_next(state: &mut RuntimeState) -> Result<CanisterToRefund, Option<Millise
 
 async fn process_canister(canister: CanisterToRefund) {
     let canister_id = canister.canister_id;
-    let result = refund_cycles(canister_id).await;
+    let result = refund_cycles(canister_id, canister.delete_canister).await;
 
     mutate_state(|state| {
         IN_PROGRESS.set(false);
@@ -192,7 +193,7 @@ impl From<C2CError> for RefundError {
     }
 }
 
-async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
+async fn refund_cycles(canister_id: CanisterId, delete_canister: bool) -> Result<Cycles, RefundError> {
     let (cycles_dispenser_canister_id, in_canister_pool) = read_state(|state| {
         (
             state.data.cycles_dispenser_canister_id,
@@ -214,9 +215,15 @@ async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
         return Err(RefundError::NotController);
     }
 
-    // The call relay, left installed by a move of the canister's funds which failed to uninstall it
     let mut module_hash = status.module_hash.clone();
-    if module_hash.as_ref().is_some_and(|hash| *hash == call_relay::wasm().hash()) {
+    if module_hash.as_ref().is_some_and(|hash| {
+        // The call relay, left installed by a move of the canister's funds which failed to
+        // uninstall it
+        *hash == call_relay::wasm().hash()
+            // A deleted group's or community's code, which is uninstalled here rather than when
+            // the group or community is deleted so that a failure to uninstall it is retried
+            || (delete_canister && *hash != wasm.hash())
+    }) {
         utils::canister::uninstall(canister_id).await?;
         module_hash = None;
     }
