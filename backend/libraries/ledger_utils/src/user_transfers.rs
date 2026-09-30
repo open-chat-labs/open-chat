@@ -42,7 +42,7 @@ impl UserTransfer {
             return Err(OCErrorCode::TransferCannotBeZero.into());
         }
         let is_to_recipient = match recipient {
-            TransferRecipient::User { user_id, wallet } => pending.send_to_wallet(user_id, wallet.into()),
+            TransferRecipient::User { user_id, wallet } => pending.send_to_wallet(user_id, wallet),
             TransferRecipient::Account(account) => pending.is_to(account.into()),
         };
         if !is_to_recipient {

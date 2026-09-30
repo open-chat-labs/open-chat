@@ -1,4 +1,4 @@
-use crate::crypto::validate_from_account;
+use crate::crypto::{process_transaction_without_caller_check, user_wallet, validate_from_account};
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, SendMessageToChannelJob, SendMessageToGroupJob, TimerJob};
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
@@ -48,7 +48,10 @@ async fn send_message_with_transfer_to_channel_impl(
             state,
         )
     }) {
-        Ok(PrepareResult::Success(t)) => (t, None),
+        Ok(PrepareResult::Success(t)) => match send_to_recipients_wallet(&args.content, t).await {
+            Ok(t) => (t, None),
+            Err(error) => return Error(error),
+        },
         Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args, from_account)) => {
             match set_up_p2p_swap(escrow_canister_id, *create_swap_args, from_account).await {
                 Ok((id, t)) => (t, Some(id)),
@@ -157,7 +160,10 @@ async fn send_message_with_transfer_to_group_impl(
             state,
         )
     }) {
-        Ok(PrepareResult::Success(t)) => (t, None),
+        Ok(PrepareResult::Success(t)) => match send_to_recipients_wallet(&args.content, t).await {
+            Ok(t) => (t, None),
+            Err(error) => return Error(error),
+        },
         Ok(PrepareResult::P2PSwap(escrow_canister_id, create_swap_args, from_account)) => {
             match set_up_p2p_swap(escrow_canister_id, *create_swap_args, from_account).await {
                 Ok((id, t)) => (t, Some(id)),
@@ -266,15 +272,6 @@ fn prepare(
             if state.data.user.blocked_users.contains(&c.recipient) {
                 return Err(OCErrorCode::TargetUserBlocked.into());
             }
-            // A user in a MultiUser canister holds their funds under their principal, which isn't
-            // known here, so the transfer can't be checked to be to their wallet. One addressed to
-            // their user id, as clients address them, would be lost, since no one can spend from
-            // that account. Crypto for them is sent via the group or community instead, which knows
-            // each member's wallet.
-            if c.recipient.is_indexed() {
-                return Err(OCErrorCode::RecipientMismatch
-                    .with_message("Crypto for a user in a MultiUser canister must be sent via the group or community"));
-            }
             match &c.transfer {
                 CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
                 _ => return Err(OCErrorCode::InvalidRequest.with_message("Transaction must be of type 'Pending'")),
@@ -348,13 +345,35 @@ fn prepare(
     }
 }
 
+// Sends the crypto a message holds to its recipient's wallet. The client addresses it to the account
+// of their user id, which for a user in a MultiUser canister is one no one can spend from, so their
+// wallet is looked up. A prize is left as it is, since it is held by the group or community.
+async fn send_to_recipients_wallet(
+    content: &MessageContentInitial,
+    mut pending_transaction: PendingCryptoTransaction,
+) -> OCResult<PendingCryptoTransaction> {
+    let MessageContentInitial::Crypto(c) = content else {
+        return Ok(pending_transaction);
+    };
+    let local_user_index_canister_id = read_state(|state| state.data.local_user_index_canister_id);
+    let recipient = user_wallet(c.recipient, local_user_index_canister_id).await?;
+
+    if pending_transaction.send_to_wallet(recipient.user_id, recipient.into()) {
+        Ok(pending_transaction)
+    } else {
+        Err(OCErrorCode::RecipientMismatch.into())
+    }
+}
+
 async fn process_transaction(
     content: MessageContentInitial,
     pending_transaction: PendingCryptoTransaction,
     p2p_swap_id: Option<u32>,
     now: TimestampMillis,
 ) -> Result<Result<(MessageContentInternal, CompletedCryptoTransaction), OCError>, C2CError> {
-    match crate::crypto::process_transaction(pending_transaction).await {
+    // The caller was checked by the guard, and isn't available once the recipient's wallet has been
+    // looked up or a swap set up
+    match process_transaction_without_caller_check(pending_transaction).await {
         Ok(Ok(completed)) => {
             if let Some(id) = p2p_swap_id {
                 NotifyEscrowCanisterOfDepositJob::run(id);

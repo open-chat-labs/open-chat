@@ -66,6 +66,10 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
         match MessageContentInternal::validate_new_message(args.content, true, UserType::User, args.forwarding, now) {
             ValidateNewMessageContentResult::Success(content) => (content, None),
             ValidateNewMessageContentResult::SuccessCrypto(content) => {
+                // Crypto in a direct chat can only be sent to the other user in the chat
+                if content.recipient != args.recipient {
+                    return Error(OCErrorCode::RecipientMismatch.into());
+                }
                 let mut pending_transfer = match &content.transfer {
                     CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
                     _ => unreachable!(),

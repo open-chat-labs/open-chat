@@ -11,17 +11,18 @@ use sha256::sha256;
 use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Deref;
 use std::time::Duration;
+use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     Achievement, AutonomousConfig, BlobReference, BotActionChatDetails, BotActionScope, BotChatContext, BotCommandDefinition,
     BotDefinition, BotInitiator, BotInstallationLocation, BotMessageContent, BotPermissions, BuildVersion, CanisterId,
     CanisterWasm, ChannelId, ChannelLatestMessageIndex, Chat, ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId,
-    CommunityImportedInto, CryptoContent, CryptoTransaction, DeletedCommunityInfo, DeletedGroupInfoInternal,
-    DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty, EventIndex, EventsResponse,
-    FileContent, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    NotificationEnvelope, OptionUpdate, P2PSwapContentInitial, P2PSwapStatus, PendingCryptoTransaction, PinNumberSettings,
-    Reaction, ReferralStatus, ReplyContext, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType,
-    icrc1, icrc2,
+    CommunityImportedInto, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, DeletedCommunityInfo,
+    DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty,
+    EventIndex, EventsResponse, FileContent, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId,
+    MessageIndex, Milliseconds, NotificationEnvelope, OptionUpdate, P2PSwapContentInitial, P2PSwapStatus,
+    PendingCryptoTransaction, PinNumberSettings, Reaction, ReferralStatus, ReplyContext, TextContent, TimestampMillis,
+    UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
@@ -5561,10 +5562,10 @@ fn users_send_crypto_from_their_own_wallets() {
 
 // A client only knows the principal of its own user, so it addresses crypto to the recipient's user
 // id, which isn't where a user in a MultiUser canister holds their funds. Whichever canister makes
-// the transfer sends it to their wallet instead, and the one path which can't know their wallet
-// refuses to make it, rather than send it to an account no one can spend from.
-#[test]
-fn crypto_addressed_to_a_users_id_reaches_their_wallet_or_is_refused() {
+// the transfer sends it to their wallet instead, never to an account no one can spend from.
+#[test_case(false; "group")]
+#[test_case(true; "channel")]
+fn crypto_addressed_to_a_users_id_is_sent_to_their_wallet(in_channel: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -5578,7 +5579,7 @@ fn crypto_addressed_to_a_users_id_reaches_their_wallet_or_is_refused() {
 
     let alice = client::register_user_in_multi_user_canister_on(env, canister_ids, local_user_index, canister_id, None);
     let bob = client::register_user_in_multi_user_canister_on(env, canister_ids, local_user_index, canister_id, None);
-    // A Diamond member, so that she can create a public group for the others to join
+    // A Diamond member, so that she can create a public group or community for the others to join
     let carol = client::register_diamond_user(env, canister_ids, *controller);
 
     let ledger = canister_ids.icp_ledger;
@@ -5587,12 +5588,12 @@ fn crypto_addressed_to_a_users_id_reaches_their_wallet_or_is_refused() {
     client::ledger::happy_path::transfer(env, *controller, ledger, alice.principal, 1_000_000_000);
     client::ledger::happy_path::transfer(env, *controller, ledger, carol.user_id, 1_000_000_000);
 
-    let icrc1_transfer = |env: &PocketIc| {
+    let icrc1_transfer = |env: &PocketIc, to: icrc1::Account| {
         PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
             ledger: ICP_LEDGER_CANISTER_ID,
             token_symbol: ICP_SYMBOL.to_string(),
             amount,
-            to: bobs_user_id,
+            to,
             fee: ICP_TRANSFER_FEE,
             memo: None,
             created: now_millis(env) * 1_000_000,
@@ -5617,123 +5618,261 @@ fn crypto_addressed_to_a_users_id_reaches_their_wallet_or_is_refused() {
             caption: None,
         })
     };
+    // Where the transfer recorded against a message went
+    let paid_to = |transfer: &CompletedCryptoTransaction| match transfer {
+        CompletedCryptoTransaction::ICRC1(icrc1::CompletedCryptoTransaction {
+            to: icrc1::CryptoAccount::Account(to),
+            ..
+        })
+        | CompletedCryptoTransaction::ICRC2(icrc2::CompletedCryptoTransaction {
+            to: icrc1::CryptoAccount::Account(to),
+            ..
+        }) => icrc_ledger_types::icrc1::account::Account::from(*to),
+        transfer => panic!("{transfer:?}"),
+    };
+    let bobs_wallet = icrc_ledger_types::icrc1::account::Account::from(bob.principal);
+    // Bob's wallet holds each payment made so far, and the account of his user id nothing
+    let assert_bob_paid = |env: &PocketIc, payments: u128| {
+        assert_eq!(
+            client::ledger::happy_path::balance_of(env, ledger, bob.principal),
+            payments * amount
+        );
+        assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.user_id), 0);
+    };
 
-    // Carol's User canister makes the transfer in a direct chat, and looks up Bob's wallet
+    // Carol's User canister makes the transfer in a direct chat, having looked up Bob's wallet
     let response = client::user::send_message_v2(
         env,
         carol.principal,
         carol.canister(),
         &user_canister::send_message_v2::Args {
-            content: crypto(icrc1_transfer(env)),
+            content: crypto(icrc1_transfer(env, bobs_user_id)),
             ..send_message_args(bob.user_id, "", random_from_u128())
         },
     );
-    assert!(
-        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
-        "{response:?}"
-    );
-    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.principal), amount);
-    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.user_id), 0);
+    let user_canister::send_message_v2::Response::TransferSuccessV2(result) = response else {
+        panic!("{response:?}");
+    };
+    assert_eq!(paid_to(&result.transfer), bobs_wallet);
+    assert_bob_paid(env, 1);
 
-    let group_id = client::user::happy_path::create_group(env, &carol, &random_string(), true, true);
-    client::group::happy_path::join_group(env, alice.principal, group_id);
-    client::group::happy_path::join_group(env, bob.principal, group_id);
+    // A group, or a channel in a community, which all three are members of
+    let (chat_canister_id, channel_id) = if in_channel {
+        let community_id =
+            client::user::happy_path::create_community(env, &carol, &random_string(), true, vec![random_string()]);
+        let channel_id =
+            client::community::happy_path::create_channel(env, carol.principal, community_id, true, random_string());
+        for user in [&alice, &bob] {
+            client::community::happy_path::join_community(env, user.principal, community_id);
+            client::community::happy_path::join_channel(env, user.principal, community_id, channel_id);
+        }
+        (CanisterId::from(community_id), Some(channel_id))
+    } else {
+        let group_id = client::user::happy_path::create_group(env, &carol, &random_string(), true, true);
+        for user in [&alice, &bob] {
+            client::group::happy_path::join_group(env, user.principal, group_id);
+        }
+        (CanisterId::from(group_id), None)
+    };
     tick_many(env, 3);
 
-    // In a group Carol's User canister makes the transfer before the group hears of it, and can't
-    // know Bob's wallet, so it refuses rather than send the funds to the account of Bob's user id
+    // There too Carol's User canister makes the transfer itself, before the group or community
+    // hears of it, and looks up Bob's wallet. The result is either the transfer made, or the error.
+    let carol_sends = |env: &mut PocketIc, transfer: PendingCryptoTransaction| match channel_id {
+        Some(channel_id) => {
+            use user_canister::send_message_with_transfer_to_channel::*;
+            let response = client::user::send_message_with_transfer_to_channel(
+                env,
+                carol.principal,
+                carol.canister(),
+                &Args {
+                    community_id: chat_canister_id.into(),
+                    channel_id,
+                    thread_root_message_index: None,
+                    message_id: random_from_u128(),
+                    content: crypto(transfer),
+                    sender_name: carol.username(),
+                    sender_display_name: None,
+                    replies_to: None,
+                    mentioned: Vec::new(),
+                    block_level_markdown: false,
+                    community_rules_accepted: None,
+                    channel_rules_accepted: None,
+                    message_filter_failed: None,
+                    pin: None,
+                    og_previews: Vec::new(),
+                },
+            );
+            match response {
+                Response::Success(result) => Ok(result.transfer),
+                Response::Error(error) => Err(error),
+                response => panic!("{response:?}"),
+            }
+        }
+        None => {
+            use user_canister::send_message_with_transfer_to_group::*;
+            let response = client::user::send_message_with_transfer_to_group(
+                env,
+                carol.principal,
+                carol.canister(),
+                &Args {
+                    group_id: chat_canister_id.into(),
+                    thread_root_message_index: None,
+                    message_id: random_from_u128(),
+                    content: crypto(transfer),
+                    sender_name: carol.username(),
+                    sender_display_name: None,
+                    replies_to: None,
+                    mentioned: Vec::new(),
+                    block_level_markdown: false,
+                    rules_accepted: None,
+                    message_filter_failed: None,
+                    pin: None,
+                    og_previews: Vec::new(),
+                },
+            );
+            match response {
+                Response::Success(result) => Ok(result.transfer),
+                Response::Error(error) => Err(error),
+                response => panic!("{response:?}"),
+            }
+        }
+    };
+    // Made later than the one in the direct chat, which the ledger would otherwise take it for a
+    // duplicate of
+    env.advance_time(Duration::from_secs(1));
+    let transfer = icrc1_transfer(env, bobs_user_id);
+    let completed = carol_sends(env, transfer).unwrap();
+    assert_eq!(paid_to(&completed), bobs_wallet);
+    assert_bob_paid(env, 2);
+
+    // Crypto which says it is for Bob, but is addressed to Alice, is refused, and nothing moves
     let carols_balance = client::ledger::happy_path::balance_of(env, ledger, carol.user_id);
-    let response = client::user::send_message_with_transfer_to_group(
-        env,
-        carol.principal,
-        carol.canister(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
-            thread_root_message_index: None,
-            message_id: random_from_u128(),
-            content: crypto(icrc1_transfer(env)),
-            sender_name: carol.username(),
-            sender_display_name: None,
-            replies_to: None,
-            mentioned: Vec::new(),
-            block_level_markdown: false,
-            rules_accepted: None,
-            message_filter_failed: None,
-            pin: None,
-            og_previews: Vec::new(),
-        },
-    );
-    assert!(
-        matches!(
-            &response,
-            user_canister::send_message_with_transfer_to_group::Response::Error(e)
-                if e.matches_code(OCErrorCode::RecipientMismatch)
-        ),
-        "{response:?}"
-    );
+    let transfer = icrc1_transfer(env, alice.principal.into());
+    let error = carol_sends(env, transfer).unwrap_err();
+    assert!(error.matches_code(OCErrorCode::RecipientMismatch), "{error:?}");
     assert_eq!(
         client::ledger::happy_path::balance_of(env, ledger, carol.user_id),
         carols_balance
     );
-    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.user_id), 0);
 
-    // The group knows each member's wallet, so crypto and a tip sent to it directly, which it pulls
-    // from Alice's wallet, both reach Bob's
+    // The group or community knows each member's wallet, so crypto and a tip sent to it directly,
+    // which it pulls from Alice's wallet, both reach Bob's
     client::ledger::happy_path::approve(
         env,
         alice.principal,
         ledger,
         icrc_ledger_types::icrc1::account::Account {
-            owner: group_id.into(),
+            owner: chat_canister_id,
             subaccount: Some(ledger_utils::spender_subaccount(alice.principal)),
         },
         2 * (amount + ICP_TRANSFER_FEE),
     );
-    let response = client::group::send_message_v2(
-        env,
-        alice.principal,
-        group_id.into(),
-        &group_canister::send_message_v2::Args {
-            thread_root_message_index: None,
-            message_id: random_from_u128(),
-            content: crypto(icrc2_transfer(env)),
-            sender_name: alice.username(),
-            sender_display_name: None,
-            replies_to: None,
-            mentioned: Vec::new(),
-            forwarding: false,
-            block_level_markdown: false,
-            rules_accepted: None,
-            message_filter_failed: None,
-            new_achievement: false,
-            og_previews: Vec::new(),
-        },
-    );
-    assert!(
-        matches!(&response, group_canister::send_message_v2::Response::Success(r) if r.transfer.is_some()),
-        "{response:?}"
-    );
-    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.principal), 2 * amount);
-
     let message_id = random_from_u128();
-    client::group::happy_path::send_text_message(env, &bob, group_id, None, "tip me", Some(message_id));
-    let response = client::group::tip_message(
-        env,
-        alice.principal,
-        group_id.into(),
-        &group_canister::tip_message::Args {
-            thread_root_message_index: None,
-            message_id,
-            transfer: icrc2_transfer(env),
-            decimals: 8,
-            username: alice.username(),
-            display_name: None,
-            new_achievement: false,
-        },
-    );
+    let completed = match channel_id {
+        Some(channel_id) => {
+            use community_canister::send_message::*;
+            let response = client::community::send_message(
+                env,
+                alice.principal,
+                chat_canister_id,
+                &Args {
+                    channel_id,
+                    thread_root_message_index: None,
+                    message_id: random_from_u128(),
+                    content: crypto(icrc2_transfer(env)),
+                    sender_name: alice.username(),
+                    sender_display_name: None,
+                    replies_to: None,
+                    mentioned: Vec::new(),
+                    forwarding: false,
+                    block_level_markdown: false,
+                    community_rules_accepted: None,
+                    channel_rules_accepted: None,
+                    message_filter_failed: None,
+                    new_achievement: false,
+                    og_previews: Vec::new(),
+                },
+            );
+            let Response::Success(result) = response else {
+                panic!("{response:?}");
+            };
+            client::community::happy_path::send_text_message(
+                env,
+                &bob,
+                chat_canister_id.into(),
+                channel_id,
+                None,
+                "tip me",
+                Some(message_id),
+            );
+            result.transfer
+        }
+        None => {
+            use group_canister::send_message_v2::*;
+            let response = client::group::send_message_v2(
+                env,
+                alice.principal,
+                chat_canister_id,
+                &Args {
+                    thread_root_message_index: None,
+                    message_id: random_from_u128(),
+                    content: crypto(icrc2_transfer(env)),
+                    sender_name: alice.username(),
+                    sender_display_name: None,
+                    replies_to: None,
+                    mentioned: Vec::new(),
+                    forwarding: false,
+                    block_level_markdown: false,
+                    rules_accepted: None,
+                    message_filter_failed: None,
+                    new_achievement: false,
+                    og_previews: Vec::new(),
+                },
+            );
+            let Response::Success(result) = response else {
+                panic!("{response:?}");
+            };
+            client::group::happy_path::send_text_message(env, &bob, chat_canister_id.into(), None, "tip me", Some(message_id));
+            result.transfer
+        }
+    };
+    assert_eq!(paid_to(&completed.unwrap()), bobs_wallet);
+    assert_bob_paid(env, 3);
+
+    let response = match channel_id {
+        Some(channel_id) => client::community::tip_message(
+            env,
+            alice.principal,
+            chat_canister_id,
+            &community_canister::tip_message::Args {
+                channel_id,
+                thread_root_message_index: None,
+                message_id,
+                transfer: icrc2_transfer(env),
+                decimals: 8,
+                username: alice.username(),
+                display_name: None,
+                new_achievement: false,
+            },
+        ),
+        None => client::group::tip_message(
+            env,
+            alice.principal,
+            chat_canister_id,
+            &group_canister::tip_message::Args {
+                thread_root_message_index: None,
+                message_id,
+                transfer: icrc2_transfer(env),
+                decimals: 8,
+                username: alice.username(),
+                display_name: None,
+                new_achievement: false,
+            },
+        ),
+    };
     assert!(matches!(response, UnitResult::Success), "{response:?}");
-    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.principal), 3 * amount);
-    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.user_id), 0);
+    assert_bob_paid(env, 4);
 }
 
 #[test]

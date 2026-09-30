@@ -182,17 +182,18 @@ impl PendingCryptoTransaction {
     // can spend from. So a transfer addressed to either is sent to the wallet, and one addressed
     // anywhere else is refused. A certified transfer has been made already, so can only be accepted
     // if it was made to the wallet.
-    pub fn send_to_wallet(&mut self, user_id: UserId, wallet: Account) -> bool {
-        if self.is_to(wallet) {
+    #[must_use]
+    pub fn send_to_wallet(&mut self, user_id: UserId, wallet: icrc1::Account) -> bool {
+        if self.is_to(wallet.into()) {
             return true;
         }
         if !self.is_to(icrc1::Account::legacy_for_user(user_id).into()) {
             return false;
         }
         match self {
-            PendingCryptoTransaction::NNS(t) => t.to = UserOrAccount::Account(crate::account_identifier(wallet)),
-            PendingCryptoTransaction::ICRC1(t) => t.to = wallet.into(),
-            PendingCryptoTransaction::ICRC2(t) => t.to = wallet.into(),
+            PendingCryptoTransaction::NNS(t) => t.to = UserOrAccount::Account(crate::account_identifier(wallet.into())),
+            PendingCryptoTransaction::ICRC1(t) => t.to = wallet,
+            PendingCryptoTransaction::ICRC2(t) => t.to = wallet,
             PendingCryptoTransaction::Certified(_) => return false,
         }
         true
@@ -1067,8 +1068,7 @@ mod tests {
 
     // Whether the transfer was sent to the user's wallet
     fn sent_to_wallet(mut transfer: PendingCryptoTransaction, recipient: UserIdAndPrincipal) -> bool {
-        let wallet = Account::from(recipient);
-        transfer.send_to_wallet(recipient.user_id, wallet) && transfer.is_to(wallet)
+        transfer.send_to_wallet(recipient.user_id, recipient.into()) && transfer.is_to(Account::from(recipient))
     }
 
     #[test]
