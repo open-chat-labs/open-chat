@@ -1,5 +1,5 @@
 use crate::guards::caller_is_group_index;
-use crate::{RuntimeState, jobs, mutate_state};
+use crate::{CanisterToRefund, RuntimeState, jobs, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_delete_group::*;
@@ -34,7 +34,15 @@ pub(crate) fn spawn_uninstall_canister(canister_id: CanisterId) {
         let _ = stop(canister_id).await;
 
         if uninstall(canister_id).await.is_ok() {
-            mutate_state(|state| jobs::refund_cycles::queue_then_delete(canister_id, state));
+            mutate_state(|state| {
+                state.data.cycles_refund_queue.push_back(CanisterToRefund {
+                    canister_id,
+                    attempt: 0,
+                    retry_after: 0,
+                    delete_canister: true,
+                });
+                jobs::refund_cycles::start_job_if_required(state, None);
+            });
         } else {
             // Its cycles can't be refunded while it has its code, so they go with the canister
             let _ = delete(canister_id).await;

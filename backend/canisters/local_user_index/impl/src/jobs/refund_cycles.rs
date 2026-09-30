@@ -49,24 +49,6 @@ pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Millisec
     }
 }
 
-// Queues the uninstalled canister of a deleted group or community to have its cycles refunded,
-// after which it is deleted. It is refunded ahead of any other canisters waiting (see `get_next`),
-// since callers only find that the group or community is gone once its canister is deleted.
-pub(crate) fn queue_then_delete(canister_id: CanisterId, state: &mut RuntimeState) {
-    state.data.canisters_to_delete_once_refunded.insert(canister_id);
-    state.data.cycles_refund_queue.push_back(CanisterToRefund {
-        canister_id,
-        attempt: 0,
-        retry_after: 0,
-    });
-
-    // Run now, rather than once a timer set for canisters waiting to be retried is due
-    if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-    }
-    start_job_if_required(state, None);
-}
-
 // Whether the canister's cycles are being refunded right now, which is when the canister being
 // processed is kept at the front of the queue
 pub(crate) fn is_in_progress(state: &RuntimeState, canister_id: CanisterId) -> bool {
@@ -101,22 +83,9 @@ fn run() {
 // Returns the next canister whose retry delay (if any) has elapsed, having rotated it to the
 // front of the queue where it stays until it has been processed, else how long until the first
 // of them is due. A canister reserved for the call relay is left until the relay is done with it.
-// A deleted group's or community's canister which is due goes first.
 fn get_next(state: &mut RuntimeState) -> Result<CanisterToRefund, Option<Milliseconds>> {
     let now = state.env.now();
-    let data = &mut state.data;
-    let queue = &mut data.cycles_refund_queue;
-
-    if !data.canisters_to_delete_once_refunded.is_empty()
-        && let Some(index) = queue
-            .iter()
-            .position(|c| c.retry_after <= now && data.canisters_to_delete_once_refunded.contains(&c.canister_id))
-        && let Some(canister) = queue.remove(index)
-    {
-        queue.push_front(canister.clone());
-        return Ok(canister);
-    }
-
+    let queue = &mut state.data.cycles_refund_queue;
     for _ in 0..queue.len() {
         if let Some(front) = queue.front()
             && front.retry_after <= now
@@ -179,6 +148,7 @@ async fn process_canister(canister: CanisterToRefund) {
                         canister_id,
                         attempt,
                         retry_after: state.env.now() + delay,
+                        delete_canister: canister.delete_canister,
                     });
                     retrying = true;
                 } else {
@@ -189,7 +159,7 @@ async fn process_canister(canister: CanisterToRefund) {
 
         // A deleted group's or community's canister is deleted once nothing more is to be
         // refunded from it
-        if !retrying && state.data.canisters_to_delete_once_refunded.remove(&canister_id) {
+        if canister.delete_canister && !retrying {
             spawn_delete_canister(canister_id);
         }
         start_job_if_required(state, None);
