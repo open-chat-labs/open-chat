@@ -1,7 +1,7 @@
 use crate::client::{start_canister, stop_canister};
 use crate::communities::join_community_tests::wait_for_community_membership;
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{tick_many, wait_for_canister_to_be_uninstalled};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
@@ -33,9 +33,10 @@ fn delete_community_succeeds() {
         "{delete_community_response:?}",
     );
 
-    tick_many(env, 5);
-
-    assert!(!env.canister_exists(community_id.into()));
+    // The community's canister is uninstalled rather than deleted, so that any cycles it still
+    // holds can be refunded
+    wait_for_canister_to_be_uninstalled(env, community_id.into(), canister_ids.local_user_index(env, community_id));
+    assert!(env.canister_exists(community_id.into()));
 }
 
 #[test]

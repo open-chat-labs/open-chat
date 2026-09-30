@@ -11,8 +11,9 @@ use utils::canister::{
     is_out_of_cycles_error,
 };
 
-// Sends the cycles held by deleted users' uninstalled canisters to the CyclesDispenser, by
-// installing a tiny canister on each which does just that, then uninstalling it again.
+// Sends the cycles held by uninstalled canisters (those of deleted users, groups and communities,
+// and of migrated users) to the CyclesDispenser, by installing a tiny canister on each which does
+// just that, then uninstalling it again.
 // See backend/canisters/cycles_refunder, which is where this wasm is built from.
 const CYCLES_REFUNDER_WASM: &[u8] = include_bytes!("../../../../cycles_refunder/cycles_refunder.wasm");
 
@@ -122,7 +123,7 @@ async fn process_canister(canister: CanisterToRefund) {
         match result {
             Ok(cycles) => {
                 state.data.cycles_refunded_from_deleted_users += cycles;
-                info!(%canister_id, cycles, "Refunded cycles from deleted user's canister");
+                info!(%canister_id, cycles, "Refunded cycles from uninstalled canister");
             }
             Err(RefundError::NotController) => {
                 error!(%canister_id, "Cycles not refunded, this canister is not a controller");

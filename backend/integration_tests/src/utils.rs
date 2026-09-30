@@ -77,6 +77,19 @@ pub fn try_metrics(env: &PocketIc, canister_id: CanisterId) -> Option<serde_json
     serde_json::from_slice(&response.body).ok()
 }
 
+// Ticks until the canister of a deleted group or community has been uninstalled, which is done by
+// the LocalUserIndex controlling it. The canister itself is kept.
+pub fn wait_for_canister_to_be_uninstalled(env: &mut PocketIc, canister_id: CanisterId, local_user_index: CanisterId) {
+    for _ in 0..50 {
+        let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
+        if status.module_hash.is_none() {
+            return;
+        }
+        env.tick();
+    }
+    panic!("Canister {canister_id} was not uninstalled");
+}
+
 pub fn metrics(env: &PocketIc, canister_id: CanisterId) -> serde_json::Value {
     let response = client::http_request(
         env,
