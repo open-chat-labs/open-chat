@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove the one-off `post_upgrade` jobs now that they have run on prod, along with the state only they used ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))
 - Remove the one-off job which fetched each user's last online date, now that it has finished on prod ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))
 
+### Fixed
+
+- Tell each LocalUserIndex which of its users have a direct chat with, or have blocked, a migrated user ([#9697](https://github.com/open-chat-labs/open-chat/pull/9697))
+
 ## [[2.0.2080](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2080-user_index)] - 2026-09-30
 
 ### Added

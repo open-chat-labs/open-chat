@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the legacy user event queue now that every LocalUserIndex has drained it ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))
 
+### Fixed
+
+- Tell a migrated user's direct chat peers and those who have blocked them of the user's new id ([#9697](https://github.com/open-chat-labs/open-chat/pull/9697))
+
 ## [[2.0.2077](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2077-local_user_index)] - 2026-09-30
 
 ### Added
