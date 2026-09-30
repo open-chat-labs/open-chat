@@ -55,6 +55,11 @@ export type CommunitySummary = AccessControlled &
         id: CommunityIdentifier;
         latestEventIndex: number;
         lastUpdated: bigint;
+        // When the details of the community (its members, rules, user groups, etc) last changed.
+        // Unlike `lastUpdated` this doesn't move on with each message in each channel, so it says
+        // whether the details already held are still up to date. Undefined if the canister
+        // predates it.
+        detailsLastUpdated?: bigint;
         description: string;
         memberCount: number;
         avatar: DataContent;
@@ -165,6 +170,7 @@ export type CommunityCanisterCommunitySummaryUpdates = {
     name: string | undefined;
     description: string | undefined;
     lastUpdated: bigint;
+    detailsLastUpdated?: bigint;
     channelsRemoved: ChannelIdentifier[];
     avatarId: OptionUpdate<bigint>;
     channelsAdded: ChannelSummary[];
@@ -191,6 +197,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     name: string | undefined;
     description: string | undefined;
     lastUpdated: bigint;
+    detailsLastUpdated?: bigint;
     avatarId: OptionUpdate<bigint>;
     membership: GroupMembershipUpdates | undefined;
     latestEventIndex: number | undefined;

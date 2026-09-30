@@ -177,6 +177,23 @@ impl GroupChatCore {
         .unwrap()
     }
 
+    // When anything returned by `selected_group_updates` last changed. Unlike `details_last_updated`
+    // this doesn't move on with each event, so a client can tell from the chat's summary whether the
+    // details it holds are still up to date.
+    pub fn selected_details_last_updated(&self) -> TimestampMillis {
+        [
+            self.invited_users.last_updated(),
+            self.members.last_updated().unwrap_or_default(),
+            self.webhooks.last_updated(),
+            self.rules.timestamp,
+            self.pinned_messages.last().map_or(0, |(ts, _)| *ts),
+            self.pinned_messages_removed.last().map_or(0, |(ts, _)| *ts),
+        ]
+        .into_iter()
+        .max()
+        .unwrap()
+    }
+
     pub fn last_updated(&self, user_id: Option<UserId>) -> TimestampMillis {
         max(
             self.details_last_updated(),
