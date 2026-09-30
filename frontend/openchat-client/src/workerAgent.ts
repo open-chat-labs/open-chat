@@ -15,6 +15,23 @@ import { messagesRead, storageStore } from "./state";
 import { userStore } from "./state/users/state";
 import { withPausedStores } from "./utils/stores";
 
+declare global {
+    interface Window {
+        OC_PRESTARTED_WORKER?: Worker;
+    }
+}
+
+// The production index.html starts the worker from an inline script (`generateStartupScript` in
+// rollup.extras.mjs), so that it is downloaded, compiled and running by the time this code has
+// loaded. Messages posted before it is ready are queued. That index.html and this code always
+// come from the same build, so it is the worker this version would have started. The dev server
+// and the tests don't prestart one.
+function takePrestartedWorker(): Worker | undefined {
+    const prestarted = window.OC_PRESTARTED_WORKER;
+    window.OC_PRESTARTED_WORKER = undefined;
+    return prestarted;
+}
+
 export class WorkerAgent {
     readonly #worker: Worker;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,9 +47,11 @@ export class WorkerAgent {
         console.debug("WORKER_CLIENT: loading worker with version: ", config.websiteVersion);
 
         const workerUrl = `/worker.js?v=${config.websiteVersion}`;
-        this.#worker = new Worker(new URL(workerUrl, import.meta.url), {
-            type: "module",
-        });
+        this.#worker =
+            takePrestartedWorker() ??
+            new Worker(new URL(workerUrl, import.meta.url), {
+                type: "module",
+            });
         this.#logger = config.logger;
 
         this.#worker.onmessage = (ev: MessageEvent<FromWorker>) => {
