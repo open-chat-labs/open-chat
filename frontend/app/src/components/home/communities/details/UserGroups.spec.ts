@@ -47,7 +47,8 @@ import UserGroups from "./UserGroups.svelte";
 const communityId: CommunityIdentifier = { kind: "community", communityId: "community" };
 const community = { id: communityId } as CommunitySummary;
 const GROUP_ID = 1;
-const USER_IDS = ["alice", "bob", "carol"];
+const NEW_GROUP_ID = 2;
+const USER_IDS = ["alice", "bob", "carol", "dave"];
 
 function user(userId: string): UserSummary {
     return {
@@ -71,29 +72,31 @@ function member(userId: string): Member {
     return { role: ROLE_MEMBER, userId, displayName: undefined, lapsed: false };
 }
 
-// The members of the group as the store holds them, which is what the list shows once any
-// local updates have been applied
+// The members of the group as the store holds them, before any local updates are applied
 function serverMembers(): string[] {
     const group = selectedServerCommunityStore.value?.userGroups.get(GROUP_ID);
     return [...(group?.members ?? [])].sort();
 }
 
-type UpdateUserGroup = OpenChat["updateUserGroup"];
-
-// `updateUserGroup` answers with whatever the test says the canister said, and on success
-// records the local update just as `OpenChat.updateUserGroup` does
-function fakeClient(response: UpdateUserGroupResponse) {
-    const updateUserGroup = vi.fn<UpdateUserGroup>(async (id, userGroup) => {
-        if (response.kind === "success") {
+// `updateUserGroup` answers with whatever the test says the canister said. A successful
+// create or update records the local update just as the real client does.
+function fakeClient(updateResponse: UpdateUserGroupResponse = { kind: "success" }) {
+    const updateUserGroup = vi.fn<OpenChat["updateUserGroup"]>(async (id, userGroup) => {
+        if (updateResponse.kind === "success") {
             localUpdates.addOrUpdateUserGroup(id, userGroup);
         }
-        return response;
+        return updateResponse;
+    });
+    const createUserGroup = vi.fn<OpenChat["createUserGroup"]>(async (id, userGroup) => {
+        localUpdates.addOrUpdateUserGroup(id, { ...userGroup, id: NEW_GROUP_ID });
+        return { kind: "success", userGroupId: NEW_GROUP_ID };
     });
     const known: Record<string, unknown> = {
         canManageUserGroups: () => true,
         getDisplayName: (userId: string) => userId,
         userAvatarUrl: () => "",
         updateUserGroup,
+        createUserGroup,
     };
     const client = new Proxy(known, {
         get: (target, prop) =>
@@ -103,7 +106,7 @@ function fakeClient(response: UpdateUserGroupResponse) {
                   ? target[prop]
                   : () => Promise.resolve(undefined),
     }) as unknown as OpenChat;
-    return { client, updateUserGroup };
+    return { client, updateUserGroup, createUserGroup };
 }
 
 describe("desktop user groups", () => {
@@ -164,57 +167,95 @@ describe("desktop user groups", () => {
         }
     }
 
-    function click(selector: string) {
-        const el = target.querySelector(selector);
+    function click(selector: string, within: Element = target) {
+        const el = within.querySelector(selector);
         expect(el, selector).not.toBeNull();
         el!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
         flushSync();
     }
 
-    // The number of members the list shows against the group
-    function listedMemberCount(): string | undefined {
-        return target.querySelector(".user-group-card .members .num")?.textContent?.trim();
+    function type(selector: string, text: string) {
+        const input = target.querySelector(selector) as HTMLInputElement | null;
+        expect(input, selector).not.toBeNull();
+        input!.value = text;
+        input!.dispatchEvent(new Event("input", { bubbles: true }));
+        flushSync();
     }
+
+    // The number of members the list shows against each group, by the group's name
+    function listed(): Record<string, string> {
+        return Object.fromEntries(
+            [...target.querySelectorAll(".user-group-card")].map((card) => [
+                card.querySelector(".name-text")?.textContent?.trim(),
+                card.querySelector(".members .num")?.textContent?.trim(),
+            ]),
+        );
+    }
+
+    function editedUsers(): Element[] {
+        return [...target.querySelectorAll(".user-group .users .user")];
+    }
+
+    const username = (el: Element) => el.querySelector(".username")?.textContent?.trim() ?? "";
 
     // The usernames the editor shows as the group's members
     function editedMembers(): string[] {
-        return [...target.querySelectorAll(".user-group .users .user .username")]
-            .map((u) => u.textContent?.trim() ?? "")
-            .sort();
+        return editedUsers().map(username).sort();
     }
 
     function editing(): boolean {
         return target.querySelector(".user-group .buttons") !== null;
     }
 
-    // Opens the group's editor, removes alice from it and adds carol to it
+    const cancel = () => click(".user-group .buttons button:first-child");
+
+    async function save() {
+        click(".user-group .buttons button:last-child");
+        await settle();
+    }
+
+    function removeMember(userId: string) {
+        const row = editedUsers().find((u) => username(u) === `@${userId}`);
+        expect(row, userId).toBeDefined();
+        click(".delete", row);
+    }
+
+    async function addMember(userId: string) {
+        type(".user-group .search input", userId.slice(0, 3));
+        await settle();
+        click(".user-group .searched-users .member");
+    }
+
+    // Opens the group's editor, removes alice from it and adds carol and dave to it
     async function editMembers() {
+        click(".user-group-card .edit");
+        removeMember("alice");
+        await addMember("carol");
+        await addMember("dave");
+    }
+
+    test("the editor shows the members as they are added and removed", async () => {
+        render(fakeClient().client);
+
         click(".user-group-card .edit");
         expect(editedMembers()).toEqual(["@alice", "@bob"]);
 
-        click(".user-group .users .user .delete");
+        removeMember("alice");
+        expect(editedMembers()).toEqual(["@bob"]);
 
-        const search = target.querySelector(".user-group .search input") as HTMLInputElement;
-        search.value = "car";
-        search.dispatchEvent(new Event("input", { bubbles: true }));
-        flushSync();
-        await settle();
-        click(".user-group .searched-users .member");
-
+        await addMember("carol");
         expect(editedMembers()).toEqual(["@bob", "@carol"]);
-    }
+    });
 
     test("cancelling an edit leaves the group's members as they were", async () => {
-        render(fakeClient({ kind: "success" }).client);
-        expect(listedMemberCount()).toEqual("2");
+        render(fakeClient().client);
+        expect(listed()).toEqual({ devs: "2" });
 
         await editMembers();
-        expect(serverMembers()).toEqual(["alice", "bob"]);
-
-        click(".user-group .buttons button:first-child");
+        cancel();
 
         expect(editing()).toBe(false);
-        expect(listedMemberCount()).toEqual("2");
+        expect(listed()).toEqual({ devs: "2" });
         expect(serverMembers()).toEqual(["alice", "bob"]);
 
         // and the editor starts again from the group's real members
@@ -231,45 +272,71 @@ describe("desktop user groups", () => {
         render(client);
 
         await editMembers();
-        click(".user-group .buttons button:last-child");
-        await settle();
+        await save();
 
         expect(updateUserGroup).toHaveBeenCalledTimes(1);
         // the editor stays open on what was entered so that it can be corrected
         expect(editing()).toBe(true);
-        expect(editedMembers()).toEqual(["@bob", "@carol"]);
+        expect(editedMembers()).toEqual(["@bob", "@carol", "@dave"]);
         expect(serverMembers()).toEqual(["alice", "bob"]);
 
-        click(".user-group .buttons button:first-child");
+        cancel();
 
-        expect(listedMemberCount()).toEqual("2");
+        expect(listed()).toEqual({ devs: "2" });
         expect(serverMembers()).toEqual(["alice", "bob"]);
     });
 
     test("a save sends the changes, and the list shows them once it succeeds", async () => {
-        const { client, updateUserGroup } = fakeClient({ kind: "success" });
+        const { client, updateUserGroup } = fakeClient();
         render(client);
 
         await editMembers();
-        click(".user-group .buttons button:last-child");
-        await settle();
+        await save();
 
         expect(updateUserGroup).toHaveBeenCalledTimes(1);
         const [id, userGroup, added, removed] = updateUserGroup.mock.calls[0];
         expect(id).toEqual(communityId);
         expect(userGroup.id).toEqual(GROUP_ID);
         expect(userGroup.name).toEqual("devs");
-        expect([...userGroup.members].sort()).toEqual(["bob", "carol"]);
-        expect([...added]).toEqual(["carol"]);
+        expect([...userGroup.members].sort()).toEqual(["bob", "carol", "dave"]);
+        expect([...added].sort()).toEqual(["carol", "dave"]);
         expect([...removed]).toEqual(["alice"]);
-
-        expect(editing()).toBe(false);
-        expect(listedMemberCount()).toEqual("2");
-        click(".user-group-card .edit");
-        expect(editedMembers()).toEqual(["@bob", "@carol"]);
 
         // the list shows the local update until the community details are next loaded; what
         // the store holds for the group only changes then
+        expect(editing()).toBe(false);
+        expect(listed()).toEqual({ devs: "3" });
         expect(serverMembers()).toEqual(["alice", "bob"]);
+
+        // the saved members are in turn left alone by an edit which is then cancelled
+        click(".user-group-card .edit");
+        expect(editedMembers()).toEqual(["@bob", "@carol", "@dave"]);
+        removeMember("bob");
+        cancel();
+
+        expect(listed()).toEqual({ devs: "3" });
+        click(".user-group-card .edit");
+        expect(editedMembers()).toEqual(["@bob", "@carol", "@dave"]);
+    });
+
+    test("a new group is sent with its members, and is listed once it is created", async () => {
+        const { client, createUserGroup } = fakeClient();
+        render(client);
+
+        click(".user-groups .add [role='button']");
+        type(".user-group .header input", "ops");
+        await addMember("carol");
+        await addMember("dave");
+        removeMember("dave");
+        await save();
+
+        expect(createUserGroup).toHaveBeenCalledTimes(1);
+        const [id, userGroup] = createUserGroup.mock.calls[0];
+        expect(id).toEqual(communityId);
+        expect(userGroup.name).toEqual("ops");
+        expect([...userGroup.members]).toEqual(["carol"]);
+
+        expect(editing()).toBe(false);
+        expect(listed()).toEqual({ devs: "2", ops: "1" });
     });
 });

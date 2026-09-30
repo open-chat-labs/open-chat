@@ -98,7 +98,8 @@
     }
 
     // the members are edited in a copy of the set, because the original's set belongs to the
-    // store and so must only change once a save has succeeded
+    // store and so must not be changed here. A successful save reaches the list through the
+    // local update which the client records.
     function workingCopy(): UserGroupDetails {
         return { ...original, members: new SvelteSet(original.members) };
     }
