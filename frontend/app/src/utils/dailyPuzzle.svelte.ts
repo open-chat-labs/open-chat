@@ -273,13 +273,10 @@ export class DailyPuzzleGame {
         const level = this.nextHintLevel;
         const hintsLeft = this.hintsLeft;
         if (this.#outOfHints) return { kind: "noneLeft" };
-        // With every step used, the only hint left is the next level of the last one, and only
-        // while the board still shows it unfinished. Once its moves are made the server moves on
-        // to a new step, which it refuses at the cap: offering that tap is offering a failure.
-        const last = this.lastHint;
-        if (hintsLeft === 0 && (level === 1 || (last !== undefined && this.#finished(last)))) {
-            return { kind: "noneLeft" };
-        }
+        // With every step used nothing is offered, not even the next level of the last step: the
+        // server picks the step from the board, and once the last one's moves are made it moves
+        // on to a new step, which it refuses at the cap. The client cannot see which it will be.
+        if (hintsLeft === 0) return { kind: "noneLeft" };
         const checksLeft = this.freeChecksLeft;
         return {
             kind: "hint",
@@ -373,17 +370,6 @@ export class DailyPuzzleGame {
         }
         this.focus = new Set([...this.focus].filter((k) => subject.has(k) || status(k) !== "done"));
         this.target = new Set([...this.target].filter((k) => this.focus.has(k)));
-    }
-
-    // Whether the board already shows every move a served hint asked for: the cells it looked at,
-    // less the subject its sentence points at and anything that takes no mark. The same test
-    // #trimHint retires a hint on, read from the hint itself so it holds after a reload too.
-    #finished(hint: ServedHint): boolean {
-        const filled = new Set(this.#filled().map(([k]) => k));
-        const subject = new Set(hint.hint.target);
-        return hint.hint.focus
-            .filter((k) => !subject.has(k))
-            .every((k) => this.#keyStatus(k, filled) !== "todo");
     }
 
     #markable(key: number): boolean {

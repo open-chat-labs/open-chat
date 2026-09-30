@@ -452,14 +452,20 @@ describe("out of hints", () => {
     // three steps used, the last served at level 1: it asked for cells 1 and 2 to be lit
     const threeSteps = [served([4]), served([8]), served([1, 2])];
 
-    // invariant 18
-    test("once the last hint's moves are on the board, no hint is offered", () => {
+    // invariant 18. The client cannot tell whether the server would climb the last step or move
+    // on to a new one, which it refuses at the cap, so once every step is used nothing is offered:
+    // not a new step, and not the next level of the last one, whatever the board shows
+    test("with every hint step used, no hint is offered, not even the next level of the last one", () => {
         const g = build(userState({ hints: threeSteps }));
-        // cells 1 and 2 still dark: the next level of the last step is still worth asking for
-        expect(g.hintButton).toMatchObject({ kind: "hint", level: 2 });
-        // a bulb at 0 lights 1 and 2, so that step is done and the server would move on
+        // the last step was served at level 1 and cells 1 and 2 are still dark
+        expect(g.hintButton).toEqual({ kind: "noneLeft" });
         g.tap(0);
         expect(g.hintButton).toEqual({ kind: "noneLeft" });
+    });
+
+    test("with a step left, the next level of the last one is still offered", () => {
+        const g = build(userState({ hints: threeSteps.slice(1) }));
+        expect(g.hintButton).toMatchObject({ kind: "hint", level: 2, hintsLeft: 1 });
     });
 
     // invariant 19
