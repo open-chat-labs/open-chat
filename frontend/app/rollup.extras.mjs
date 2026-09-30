@@ -304,10 +304,7 @@ export function generateStartupScript({ chunks, version, mobileLayout }) {
     preload(locales.en);
     if (locale !== "en" && locales[locale]) preload(locales[locale]);
     try {
-        window.OC_PRESTARTED_WORKER = {
-            version: ${JSON.stringify(version)},
-            worker: new Worker(${JSON.stringify(`/worker.js?v=${version}`)}, { type: "module" }),
-        };
+        window.OC_PRESTARTED_WORKER = new Worker(${JSON.stringify(`/worker.js?v=${version}`)}, { type: "module" });
     } catch (e) {}
 })();`;
 }

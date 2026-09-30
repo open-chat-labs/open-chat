@@ -17,21 +17,19 @@ import { withPausedStores } from "./utils/stores";
 
 declare global {
     interface Window {
-        OC_PRESTARTED_WORKER?: { version: string; worker: Worker };
+        OC_PRESTARTED_WORKER?: Worker;
     }
 }
 
 // The production index.html starts the worker from an inline script (`generateStartupScript` in
 // rollup.extras.mjs), so that it is downloaded, compiled and running by the time this code has
-// loaded. Messages posted before it is ready are queued. The dev server and the tests don't
-// prestart one, and a worker from another version is no use.
-function takePrestartedWorker(version: string): Worker | undefined {
+// loaded. Messages posted before it is ready are queued. That index.html and this code always
+// come from the same build, so it is the worker this version would have started. The dev server
+// and the tests don't prestart one.
+function takePrestartedWorker(): Worker | undefined {
     const prestarted = window.OC_PRESTARTED_WORKER;
-    if (prestarted === undefined) return undefined;
     window.OC_PRESTARTED_WORKER = undefined;
-    if (prestarted.version === version) return prestarted.worker;
-    prestarted.worker.terminate();
-    return undefined;
+    return prestarted;
 }
 
 export class WorkerAgent {
@@ -50,7 +48,7 @@ export class WorkerAgent {
 
         const workerUrl = `/worker.js?v=${config.websiteVersion}`;
         this.#worker =
-            takePrestartedWorker(config.websiteVersion) ??
+            takePrestartedWorker() ??
             new Worker(new URL(workerUrl, import.meta.url), {
                 type: "module",
             });

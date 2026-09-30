@@ -6,15 +6,11 @@ class FakeWorker {
     static instance: FakeWorker | undefined;
     onmessage: ((ev: MessageEvent) => void) | undefined;
     posted: unknown[] = [];
-    terminated = false;
     constructor() {
         FakeWorker.instance = this;
     }
     postMessage(msg: unknown) {
         this.posted.push(msg);
-    }
-    terminate() {
-        this.terminated = true;
     }
 }
 
@@ -25,9 +21,9 @@ function createAgent(): WorkerAgent {
     } as unknown as OpenChatConfig);
 }
 
-function prestartWorker(version: string): FakeWorker {
+function prestartWorker(): FakeWorker {
     const worker = new FakeWorker();
-    window.OC_PRESTARTED_WORKER = { version, worker: worker as unknown as Worker };
+    window.OC_PRESTARTED_WORKER = worker as unknown as Worker;
     FakeWorker.instance = undefined;
     return worker;
 }
@@ -68,7 +64,7 @@ describe("WorkerAgent", () => {
     });
 
     test("the worker index.html prestarted is used instead of starting another", () => {
-        const prestarted = prestartWorker("test");
+        const prestarted = prestartWorker();
 
         createAgent();
 
@@ -79,22 +75,12 @@ describe("WorkerAgent", () => {
     });
 
     test("a prestarted worker is only used once", () => {
-        const prestarted = prestartWorker("test");
+        const prestarted = prestartWorker();
 
         createAgent();
         createAgent();
 
         expect(prestarted.posted).toHaveLength(1);
-        expect(FakeWorker.instance!.posted).toEqual([expect.objectContaining({ kind: "init" })]);
-    });
-
-    test("a worker prestarted by another version is terminated and replaced", () => {
-        const prestarted = prestartWorker("another version");
-
-        createAgent();
-
-        expect(prestarted.terminated).toBe(true);
-        expect(prestarted.posted).toEqual([]);
         expect(FakeWorker.instance!.posted).toEqual([expect.objectContaining({ kind: "init" })]);
     });
 });
