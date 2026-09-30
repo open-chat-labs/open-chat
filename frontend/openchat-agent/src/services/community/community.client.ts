@@ -900,7 +900,10 @@ export class CommunityClient
         const response = await this.query(
             communityId,
             "lookup_members",
-            { user_ids: userIds.map(principalStringToBytes) },
+            {
+                invite_code: this.inviteCode(communityId),
+                user_ids: userIds.map(principalStringToBytes),
+            },
             lookupCommunityMembersResponse,
             CommunityLookupMembersArgs,
             CommunityLookupMembersResponse,
