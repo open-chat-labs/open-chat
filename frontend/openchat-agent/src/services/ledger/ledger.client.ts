@@ -1,11 +1,30 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { idlFactory, type LedgerService } from "./candid/idl";
+import type { IcpTransferResult, TransferResult } from "./candid/types";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
-import type { IcrcAccount } from "@shared";
+import {
+    decodeIcrcAccount,
+    ErrorCode,
+    ICP_SYMBOL,
+    isAccountIdentifierValid,
+    type IcrcAccount,
+    type PendingCryptocurrencyWithdrawal,
+    type WithdrawCryptocurrencyResponse,
+} from "@shared";
 import { apiIcrcAccount } from "../../utils/icrcAccount";
+import { bytesToBigint, hexStringToBytes } from "../../utils/mapping";
 import { approvalToAdd, type Allowance } from "./approval";
 
 export type ApproveSpendingResponse = "success" | "insufficient_funds" | "failure";
+
+// The memo the User canister gives each withdrawal it makes, "OC_SEND" (`MEMO_SEND` in the backend's
+// constants), which the ICP ledger's `transfer` takes as a number, as its big-endian bytes
+const MEMO_SEND = new TextEncoder().encode("OC_SEND");
+const MEMO_SEND_NUMBER = bytesToBigint(MEMO_SEND);
+
+// What the ICP ledger charges for a transfer, which is what the User canister pays for one to an
+// account identifier, so is paid here if the withdrawal doesn't say
+const ICP_TRANSFER_FEE = 10_000n;
 
 export class LedgerClient extends CandidCanisterAgent<LedgerService> {
     constructor(identity: Identity, agent: HttpAgent) {
@@ -95,4 +114,81 @@ export class LedgerClient extends CandidCanisterAgent<LedgerService> {
         console.warn("Gave up approving spending after a second attempt", ledger);
         return "failure";
     }
+
+    // Sends a withdrawal from the caller's own account, the one held by the principal they sign in
+    // with, as the User canister's `withdraw_crypto_v2` sends one from its own: ICP to an account
+    // identifier through the ICP ledger's `transfer`, and anything else to an ICRC-1 account, paying
+    // the fee given and with the same memo.
+    async withdraw(
+        domain: PendingCryptocurrencyWithdrawal,
+    ): Promise<WithdrawCryptocurrencyResponse> {
+        if (domain.token === ICP_SYMBOL && isAccountIdentifierValid(domain.to)) {
+            const fee = domain.feeE8s ?? ICP_TRANSFER_FEE;
+            const response = await this.handleResponse(
+                this.service.transfer.withOptions({ canisterId: domain.ledger })({
+                    to: hexStringToBytes(domain.to),
+                    amount: { e8s: domain.amountE8s },
+                    fee: { e8s: fee },
+                    memo: MEMO_SEND_NUMBER,
+                    from_subaccount: [],
+                    created_at_time: [{ timestamp_nanos: domain.createdAtNanos }],
+                }),
+                (resp) => resp,
+            );
+            return withdrawalResponse(domain, fee, response);
+        }
+
+        const fee = domain.feeE8s ?? 0n;
+        const response = await this.handleResponse(
+            this.service.icrc1_transfer.withOptions({ canisterId: domain.ledger })({
+                to: apiIcrcAccount(decodeIcrcAccount(domain.to)),
+                amount: domain.amountE8s,
+                fee: [fee],
+                memo: [MEMO_SEND],
+                from_subaccount: [],
+                created_at_time: [domain.createdAtNanos],
+            }),
+            (resp) => resp,
+        );
+        return withdrawalResponse(domain, fee, response);
+    }
+}
+
+// Maps what the ledger made of a withdrawal to what the User canister's `withdraw_crypto_v2` would
+// have answered
+function withdrawalResponse(
+    domain: PendingCryptocurrencyWithdrawal,
+    fee: bigint,
+    result: TransferResult | IcpTransferResult,
+): WithdrawCryptocurrencyResponse {
+    const completed = (blockIndex: bigint): WithdrawCryptocurrencyResponse => ({
+        kind: "completed",
+        ledger: domain.ledger,
+        to: domain.to,
+        amountE8s: domain.amountE8s,
+        feeE8s: fee,
+        memo: MEMO_SEND_NUMBER,
+        blockIndex,
+    });
+
+    if ("Ok" in result) {
+        return completed(result.Ok);
+    }
+
+    const error = result.Err;
+    // The same transfer, down to its creation time, was made already, so this one has been
+    if ("Duplicate" in error) {
+        return completed(error.Duplicate.duplicate_of);
+    }
+    if ("TxDuplicate" in error) {
+        return completed(error.TxDuplicate.duplicate_of);
+    }
+    if ("InsufficientFunds" in error) {
+        return { kind: "error", code: ErrorCode.InsufficientFunds, message: undefined };
+    }
+
+    const details = JSON.stringify(error, (_, v) => (typeof v === "bigint" ? v.toString() : v));
+    const message = `Transfer failed. ${details}`;
+    console.warn(message, domain.ledger);
+    return { kind: "error", code: ErrorCode.TransferFailed, message };
 }
