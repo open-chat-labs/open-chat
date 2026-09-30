@@ -967,22 +967,6 @@ export class OpenChatAgent extends EventTarget {
     // Approves the user's canister to pull whatever a message in a direct chat takes from the
     // user's wallet
     private approveTransferInMessage(content: MessageContent): Promise<OCError | undefined> {
-        // Crypto for a user in a MultiUser canister has to be addressed to their wallet, which
-        // isn't known here, so a MultiUser canister refuses it as it is addressed now. It is
-        // refused here instead, before an approval is paid for.
-        // TODO: Remove this once crypto can be sent to users in MultiUser canisters
-        if (
-            content.kind === "crypto_content" &&
-            isMultiUserCanisterUser(content.transfer.recipient) &&
-            this.holdsOwnFunds()
-        ) {
-            return Promise.resolve({
-                kind: "error",
-                code: ErrorCode.RecipientMismatch,
-                message: undefined,
-            });
-        }
-
         const payment = this.paymentInMessage(content);
         return payment === undefined
             ? Promise.resolve(undefined)

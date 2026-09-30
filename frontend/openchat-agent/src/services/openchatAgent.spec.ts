@@ -314,18 +314,11 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             expect(calls).toEqual([]);
         });
 
-        test("crypto for another user in a MultiUser canister is refused before it is approved", async () => {
-            const [response] = await sendDirectMessage(
-                crypto(undefined, OTHER_MULTI_USER_CANISTER_USER),
-            );
+        test("crypto for another user in a MultiUser canister is approved and sent like any other", async () => {
+            await sendDirectMessage(crypto(undefined, OTHER_MULTI_USER_CANISTER_USER));
 
-            expect(response).toEqual({
-                kind: "error",
-                code: ErrorCode.RecipientMismatch,
-                message: undefined,
-            });
-            expect(approvals).toEqual([]);
-            expect(calls).toEqual([]);
+            expect(approvals).toEqual([[ICP_LEDGER, spender, 110n, FEE]]);
+            expect(calls).toEqual(["sendMessage"]);
         });
 
         test("a payment the wallet can't afford is reported as such", async () => {
@@ -456,13 +449,6 @@ describe("OpenChatAgent paying from the user's wallet", () => {
 
             expect(approvals).toEqual([]);
             expect(calls.length).toEqual(1);
-        });
-
-        test("crypto for a user in a MultiUser canister is left to their canister to refuse", async () => {
-            await sendDirectMessage(crypto(undefined, OTHER_MULTI_USER_CANISTER_USER));
-
-            expect(approvals).toEqual([]);
-            expect(calls).toEqual(["sendMessage"]);
         });
 
         test.each(transferMessages)(
