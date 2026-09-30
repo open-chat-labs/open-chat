@@ -11,7 +11,7 @@ import "./web-components/spoiler";
 import { mobileWidth } from "@client";
 import "svelte";
 import { mount } from "svelte";
-import { setNativeTheme, writeNativeCssVariables } from "./theme/themes";
+import { clearStartupBackground, setNativeTheme, writeNativeCssVariables } from "./theme/themes";
 import { selectLayout } from "./utils/layout";
 
 // Picks the app variant once at startup. The native Android build ships
@@ -38,6 +38,10 @@ const app = (
     layout === "v2"
         ? import("./components_mobile/App.svelte")
         : import("./components/App.svelte")
-).then(({ default: App }) => mount(App, { target: document.body }));
+).then(({ default: App }) => {
+    const mounted = mount(App, { target: document.body });
+    clearStartupBackground();
+    return mounted;
+});
 
 export default app;

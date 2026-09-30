@@ -3,9 +3,9 @@
     import { onMount } from "svelte";
     import PauseCircleOutline from "svelte-material-icons/PauseCircleOutline.svelte";
     import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
-    import WaveSurfer from "wavesurfer.js";
     import { Ringtone, selectedRingtone } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
+    import { loadWaveSurfer, waveSurferFailedToLoad } from "../../../utils/wavesurfer";
     import Radio from "../../Radio.svelte";
 
     interface Props {
@@ -15,6 +15,9 @@
 
     let { ringtone, onTogglePlay }: Props = $props();
 
+    // reserved from the start, as the waveform only arrives once wavesurfer has loaded
+    const WAVEFORM_HEIGHT = 30;
+
     let waveform: HTMLDivElement | undefined = $state();
 
     let checked = $derived($selectedRingtone === ringtone.key);
@@ -22,23 +25,33 @@
     onMount(() => {
         if (!waveform) return;
 
-        const wavesurfer = WaveSurfer.create({
-            height: 30,
-            cursorWidth: 0,
-            barWidth: 2,
-            barRadius: 4,
-            barGap: 2,
-            container: waveform,
-            waveColor: $currentTheme["txt-light"],
-            progressColor: $currentTheme.accent,
-            media: ringtone.audio,
-        });
+        let unmounted = false;
 
-        wavesurfer.on("click", () => {
-            if (!ringtone.playing) {
-                togglePlay();
-            }
-        });
+        loadWaveSurfer().then((WaveSurfer) => {
+            if (unmounted || !waveform) return;
+
+            const wavesurfer = WaveSurfer.create({
+                height: WAVEFORM_HEIGHT,
+                cursorWidth: 0,
+                barWidth: 2,
+                barRadius: 4,
+                barGap: 2,
+                container: waveform,
+                waveColor: $currentTheme["txt-light"],
+                progressColor: $currentTheme.accent,
+                media: ringtone.audio,
+            });
+
+            wavesurfer.on("click", () => {
+                if (!ringtone.playing) {
+                    togglePlay();
+                }
+            });
+        }, waveSurferFailedToLoad);
+
+        return () => {
+            unmounted = true;
+        };
     });
 
     function togglePlay(e?: Event) {
@@ -64,7 +77,7 @@
             </div>
         </div>
     </Radio>
-    <div bind:this={waveform} class="waveform"></div>
+    <div bind:this={waveform} class="waveform" style:min-height="{WAVEFORM_HEIGHT}px"></div>
 </div>
 
 <style lang="scss">

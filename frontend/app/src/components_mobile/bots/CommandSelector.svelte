@@ -27,11 +27,17 @@
         selectedCommunityBotsStore,
         threadPermissionsForSelectedChatStore,
     } from "@client";
-    import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "@shared";
+    import {
+        hasEveryRequiredPermission,
+        loadDateParser,
+        random64,
+        type FlattenedCommand,
+    } from "@shared";
     import { getContext, onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
+    import { dateAwareSelection } from "@src/utils/commandSelection";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Logo from "@shared_components/Logo.svelte";
     import Translatable from "../Translatable.svelte";
@@ -147,9 +153,13 @@
         }
     }
 
-    function selectCommand(command: FlattenedCommand) {
+    const selection = dateAwareSelection((command: FlattenedCommand | undefined) => {
         botState.setSelectedCommand(messageContext, commands, command);
         sendCommandIfValid();
+    });
+
+    function selectCommand(command = commands[botState.focusedCommandIndex]) {
+        selection.select(command);
     }
 
     function sendCommandIfValid() {
@@ -176,9 +186,12 @@
     }
 
     onMount(() => {
+        // on its way by the time a command is selected
+        loadDateParser();
         botState.error = undefined;
         document.addEventListener("keydown", onkeydown);
         return () => {
+            selection.stop();
             document.removeEventListener("keydown", onkeydown);
         };
     });
@@ -199,8 +212,7 @@
                 break;
             case "Enter":
                 if (!botState.showingBuilder) {
-                    botState.setSelectedCommand(messageContext, commands);
-                    sendCommandIfValid();
+                    selectCommand();
                     ev.preventDefault();
                 }
                 break;
