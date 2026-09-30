@@ -2422,7 +2422,7 @@ impl ChatEvents {
                     // If the last event is of type `MembersAddedToPublicChannel` then add these members to
                     // that event's count and mark the event as updated, else push a new event
                     if let ChatEventInternal::MembersAddedToPublicChannel(m) = &mut event.event {
-                        m.add(count);
+                        m.count = m.count.saturating_add(count);
                         event.timestamp = now;
                         Ok(())
                     } else {
@@ -2435,7 +2435,7 @@ impl ChatEvents {
         };
 
         self.push_main_event(
-            ChatEventInternal::MembersAddedToPublicChannel(Box::new(MembersAddedToPublicChannelInternal::new(count))),
+            ChatEventInternal::MembersAddedToPublicChannel(Box::new(MembersAddedToPublicChannelInternal { count })),
             now,
         )
         .bot_notification
@@ -3904,7 +3904,7 @@ mod tests {
         let ChatEventInternal::MembersAddedToPublicChannel(m) = events.main.last().unwrap().event else {
             panic!("Expected the latest event to be `MembersAddedToPublicChannel`");
         };
-        m.count()
+        m.count
     }
 
     fn setup_events() -> (ChatEvents, MessageIndex, MessageIndex) {
