@@ -1,13 +1,16 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{TestEnv, client};
+use crate::{TestEnv, User, client};
 use constants::MINUTE_IN_MS;
 use oc_error_codes::OCErrorCode;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
-use types::{ChatEvent, FileContent, MessageContent, MessageContentInitial};
+use types::{
+    BlobReference, ChatEvent, EventIndex, FileContent, MessageContent, MessageContentInitial, MessageId, MessageIndex, UserId,
+};
 
 #[test]
 fn delete_direct_message_succeeds() {
@@ -37,8 +40,6 @@ fn delete_direct_message_succeeds() {
         user_canister::delete_messages::Response::Success
     ));
 
-    tick_many(env, 10);
-
     let user1_events_response =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_response.event_index]);
     if let Some(ChatEvent::Message(m)) = user1_events_response.events.first().map(|e| &e.event) {
@@ -47,13 +48,8 @@ fn delete_direct_message_succeeds() {
         panic!("Unexpected response from `events_by_index`: {user1_events_response:?}");
     }
 
-    let user2_events_response =
-        client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![send_message_response.event_index]);
-    if let Some(ChatEvent::Message(m)) = user2_events_response.events.first().map(|e| &e.event) {
-        assert!(matches!(m.content, MessageContent::Deleted(_)));
-    } else {
-        panic!("Unexpected response from `events_by_index`: {user2_events_response:?}");
-    }
+    // The message and then its deletion have to reach user2's canister
+    wait_for_message(env, &user2, user1.user_id, None, message_id, is_deleted);
 }
 
 #[test]
@@ -121,14 +117,7 @@ fn file_deleted_after_direct_message_deleted() {
     ));
 
     env.advance_time(Duration::from_secs(300));
-    tick_many(env, 3);
-
-    assert!(!client::storage_bucket::happy_path::file_exists(
-        env,
-        user1.principal,
-        blob_reference.canister_id,
-        blob_reference.blob_id
-    ));
+    wait_for_file_to_be_deleted(env, &user1, &blob_reference);
 }
 
 #[test]
@@ -166,7 +155,8 @@ fn delete_thread_reply_in_direct_chat_succeeds() {
         Some(message_id),
     );
 
-    tick_many(env, 10);
+    // Let the reply reach user2's canister before it is deleted
+    wait_for_message(env, &user2, user1.user_id, Some(root.message_index), message_id, is_file);
 
     let delete_messages_response = client::user::delete_messages(
         env,
@@ -183,12 +173,11 @@ fn delete_thread_reply_in_direct_chat_succeeds() {
         "{delete_messages_response:?}"
     );
 
-    tick_many(env, 10);
+    let message = client::user::happy_path::thread_message(env, &user1, user2.user_id, root.message_index, message_id);
+    assert!(matches!(message.content, MessageContent::Deleted(_)));
 
-    for (user, them) in [(&user1, user2.user_id), (&user2, user1.user_id)] {
-        let message = client::user::happy_path::thread_message(env, user, them, root.message_index, message_id);
-        assert!(matches!(message.content, MessageContent::Deleted(_)));
-    }
+    // The deletion has to reach user2's canister
+    wait_for_message(env, &user2, user1.user_id, Some(root.message_index), message_id, is_deleted);
 
     // The root message must be unaffected
     let root_events = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![root.event_index]);
@@ -205,15 +194,9 @@ fn delete_thread_reply_in_direct_chat_succeeds() {
     ));
 
     env.advance_time(Duration::from_secs(300));
-    tick_many(env, 3);
 
     // The deleted content is hard deleted, which removes the file
-    assert!(!client::storage_bucket::happy_path::file_exists(
-        env,
-        user1.principal,
-        blob_reference.canister_id,
-        blob_reference.blob_id
-    ));
+    wait_for_file_to_be_deleted(env, &user1, &blob_reference);
 }
 
 #[test]
@@ -229,7 +212,8 @@ fn delete_their_direct_message_succeeds() {
     let send_message_response =
         client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
 
-    tick_many(env, 10);
+    // user2 can't delete the message until it has reached their canister
+    wait_for_message(env, &user2, user1.user_id, None, message_id, is_text);
 
     let delete_messages_response = client::user::delete_messages(
         env,
@@ -246,6 +230,7 @@ fn delete_their_direct_message_succeeds() {
         user_canister::delete_messages::Response::Success
     ));
 
+    // Long enough for the deletion to have reached user1's canister, had it been sent there
     tick_many(env, 10);
 
     // The message should only be deleted for user2
@@ -332,9 +317,12 @@ fn delete_then_undelete_direct_message(delay: bool) {
         user_canister::delete_messages::Response::Success
     ));
 
+    // The message and then its deletion have to reach user2's canister
+    wait_for_message(env, &user2, user1.user_id, None, message_id, is_deleted);
+
     if delay {
         env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS));
-        env.tick();
+        wait_for_content_to_be_removed(env, &user1, user2.user_id, message_id);
     }
 
     let undelete_messages_response = client::user::undelete_messages(
@@ -353,7 +341,13 @@ fn delete_then_undelete_direct_message(delay: bool) {
         panic!("Unexpected response from `undelete_messages`: {undelete_messages_response:?}");
     }
 
-    tick_many(env, 10);
+    if delay {
+        // Nothing was undeleted, so this is long enough for an undeletion to have reached user2's
+        // canister, had one been sent there
+        tick_many(env, 10);
+    } else {
+        wait_for_message(env, &user2, user1.user_id, None, message_id, is_text);
+    }
 
     let events_response1 =
         client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_response.event_index]);
@@ -392,7 +386,9 @@ fn deleting_an_undeleted_direct_message_again_gives_a_full_undelete_window() {
     let send_message_response =
         client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
 
-    let delete = |env: &mut pocket_ic::PocketIc| {
+    // Each waits for user2's canister to catch up, so that the message is deleted and undeleted there
+    // at the same times as in user1's canister
+    let delete = |env: &mut PocketIc| {
         let response = client::user::delete_messages(
             env,
             user1.principal,
@@ -404,9 +400,9 @@ fn deleting_an_undeleted_direct_message_again_gives_a_full_undelete_window() {
             },
         );
         assert!(matches!(response, user_canister::delete_messages::Response::Success));
-        tick_many(env, 3);
+        wait_for_message(env, &user2, user1.user_id, None, message_id, is_deleted);
     };
-    let undelete = |env: &mut pocket_ic::PocketIc| {
+    let undelete = |env: &mut PocketIc| {
         let response = client::user::undelete_messages(
             env,
             user1.principal,
@@ -417,15 +413,15 @@ fn deleting_an_undeleted_direct_message_again_gives_a_full_undelete_window() {
                 message_ids: vec![message_id],
             },
         );
-        tick_many(env, 3);
         match response {
-            user_canister::undelete_messages::Response::Success(result) => result.messages.len(),
+            user_canister::undelete_messages::Response::Success(result) => assert_eq!(result.messages.len(), 1),
             response => panic!("Unexpected response from `undelete_messages`: {response:?}"),
         }
+        wait_for_message(env, &user2, user1.user_id, None, message_id, is_text);
     };
 
     delete(env);
-    assert_eq!(undelete(env), 1);
+    undelete(env);
 
     // The job queued by the first deletion is cancelled by the undelete, so it doesn't remove the
     // content of the message deleted again, which can still be undeleted for the full 5 minutes
@@ -433,7 +429,7 @@ fn deleting_an_undeleted_direct_message_again_gives_a_full_undelete_window() {
     delete(env);
     env.advance_time(Duration::from_millis(3 * MINUTE_IN_MS));
     tick_many(env, 3);
-    assert_eq!(undelete(env), 1);
+    undelete(env);
 
     for (user, them) in [(&user1, user2.user_id), (&user2, user1.user_id)] {
         let events_response =
@@ -558,4 +554,121 @@ fn platform_operators_can_delete_messages(is_platform_moderator: bool) {
             group_canister::delete_messages::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)
         ));
     }
+}
+
+fn is_text(content: &MessageContent) -> bool {
+    matches!(content, MessageContent::Text(_))
+}
+
+fn is_file(content: &MessageContent) -> bool {
+    matches!(content, MessageContent::File(_))
+}
+
+fn is_deleted(content: &MessageContent) -> bool {
+    matches!(content, MessageContent::Deleted(_))
+}
+
+// Ticks until the message in the user's direct chat with `them` has reached their canister and its
+// content there satisfies the predicate. This can take many rounds, since the first User canister to
+// run on a subnet takes around 10 rounds to handle its first message (seemingly while the wasm is
+// compiled there), a number which grows with the size of the wasm.
+fn wait_for_message(
+    env: &mut PocketIc,
+    user: &User,
+    them: UserId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    predicate: fn(&MessageContent) -> bool,
+) {
+    let mut content = None;
+    for _ in 0..30 {
+        content = message_content(env, user, them, thread_root_message_index, message_id);
+        if content.as_ref().is_some_and(predicate) {
+            return;
+        }
+        env.tick();
+    }
+    panic!(
+        "Unexpected content of message {message_id:?} in user {}'s canister: {content:?}",
+        user.user_id
+    );
+}
+
+// The content of the message in the user's direct chat with `them`, if it has reached their canister
+fn message_content(
+    env: &PocketIc,
+    user: &User,
+    them: UserId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+) -> Option<MessageContent> {
+    let response = client::user::events(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::events::Args {
+            user_id: user.user_id,
+            them,
+            thread_root_message_index,
+            start_index: EventIndex::default(),
+            ascending: true,
+            max_messages: 100,
+            max_events: 100,
+            latest_known_update: None,
+        },
+    );
+
+    let user_canister::events::Response::Success(result) = response else {
+        return None;
+    };
+
+    result.events.into_iter().find_map(|e| match e.event {
+        ChatEvent::Message(m) if m.message_id == message_id => Some(m.content),
+        _ => None,
+    })
+}
+
+// Ticks until the user's canister has removed the content of the message they deleted, which it does
+// once the message has been deleted for 5 minutes. The job doing so runs in a call which the canister
+// makes to itself when its timer fires, so it can take more than one round.
+fn wait_for_content_to_be_removed(env: &mut PocketIc, user: &User, them: UserId, message_id: MessageId) {
+    for _ in 0..10 {
+        let response = client::user::deleted_message(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::deleted_message::Args {
+                user_id: them,
+                message_id,
+            },
+        );
+        if matches!(
+            response,
+            user_canister::deleted_message::Response::Error(e) if e.matches_code(OCErrorCode::MessageHardDeleted)
+        ) {
+            return;
+        }
+        env.tick();
+    }
+    panic!(
+        "User {}'s canister did not remove the content of message {message_id:?}",
+        user.user_id
+    );
+}
+
+// Ticks until the file has been deleted from its storage bucket, which the canister of the user who
+// uploaded it asks for once it has removed the content of the message
+fn wait_for_file_to_be_deleted(env: &mut PocketIc, user: &User, blob_reference: &BlobReference) {
+    for _ in 0..10 {
+        if !client::storage_bucket::happy_path::file_exists(
+            env,
+            user.principal,
+            blob_reference.canister_id,
+            blob_reference.blob_id,
+        ) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("File {} was not deleted", blob_reference.blob_id);
 }
