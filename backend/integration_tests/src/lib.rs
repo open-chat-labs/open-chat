@@ -51,6 +51,7 @@ mod p2p_swap_tests;
 mod pin_number_tests;
 mod poll_tests;
 mod prize_message_tests;
+mod proposals_bot_tests;
 mod register_user_tests;
 mod registry_tests;
 mod remove_from_group_tests;

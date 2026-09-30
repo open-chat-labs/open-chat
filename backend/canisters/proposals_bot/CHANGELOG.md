@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Only take a proposal's fee from the caller's own wallet, into the ProposalsBot's own account ([#PR_B](https://github.com/open-chat-labs/open-chat/pull/PR_B))
+
 ## [[2.0.2070](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2070-proposals_bot)] - 2026-09-29
 
 ### Added
