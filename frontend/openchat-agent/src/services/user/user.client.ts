@@ -213,6 +213,7 @@ import {
     isSuccess,
     mapResult,
     throwIfReplicaNotUpToDate,
+    transferFrom,
     undeleteMessageSuccess,
     unitResult,
     apiOgPreview,
@@ -659,16 +660,9 @@ export class UserClient
     // from their wallet, the account of the principal they sign in with, unless they chose another
     // account to send it from.
     private transferFromWallet(content: MessageContent): MessageContent {
-        if (
-            content.kind !== "crypto_content" ||
-            content.transfer.kind !== "pending" ||
-            content.transfer.fromAccount !== undefined ||
-            !isMultiUserCanisterUser(this.userId)
-        ) {
-            return content;
-        }
-        const fromAccount = encodeIcrcAccount({ owner: this.principal });
-        return { ...content, transfer: { ...content.transfer, fromAccount } };
+        return isMultiUserCanisterUser(this.userId)
+            ? transferFrom(content, encodeIcrcAccount({ owner: this.principal }))
+            : content;
     }
 
     sendMessageWithTransferToGroup(
