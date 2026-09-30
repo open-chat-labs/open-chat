@@ -266,6 +266,15 @@ fn prepare(
             if state.data.user.blocked_users.contains(&c.recipient) {
                 return Err(OCErrorCode::TargetUserBlocked.into());
             }
+            // A user in a MultiUser canister holds their funds under their principal, which isn't
+            // known here, so the transfer can't be checked to be to their wallet. One addressed to
+            // their user id, as clients address them, would be lost, since no one can spend from
+            // that account. Crypto for them is sent via the group or community instead, which knows
+            // each member's wallet.
+            if c.recipient.is_indexed() {
+                return Err(OCErrorCode::RecipientMismatch
+                    .with_message("Crypto for a user in a MultiUser canister must be sent via the group or community"));
+            }
             match &c.transfer {
                 CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
                 _ => return Err(OCErrorCode::InvalidRequest.with_message("Transaction must be of type 'Pending'")),

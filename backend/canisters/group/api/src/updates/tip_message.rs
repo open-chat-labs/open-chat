@@ -5,7 +5,8 @@ use types::{MessageId, MessageIndex, PendingCryptoTransaction, UnitResult};
 // Tips a message with a transfer the caller makes from their own funds to the wallet of the
 // message's sender. As with messages holding transfers, the transfer must be ICRC2 or Certified,
 // a certified tip carrying the memo `ledger_utils::certified::required_memo` builds from OC_TIP and
-// the group's canister id.
+// the group's canister id, and one addressed to the account of the sender's user id is pulled into
+// their wallet instead.
 #[ts_export(group, tip_message)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {

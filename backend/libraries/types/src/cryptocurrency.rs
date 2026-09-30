@@ -172,10 +172,30 @@ impl PendingCryptoTransaction {
         }
     }
 
-    // Checks the transfer is to the recipient's wallet. `recipient` must hold their actual principal,
-    // from the canister's own data or a lookup, never a caller's claim.
-    pub fn validate_recipient(&self, recipient: UserIdAndPrincipal) -> bool {
-        self.is_to(Account::from(recipient))
+    // Sends the transfer to the wallet of the user it is for, returning false if it isn't for them,
+    // in which case it must not be made. `wallet` must be where the user actually holds their funds,
+    // taken from the canister's own data or a lookup, never from a caller's claim.
+    //
+    // A client only knows the principal of its own user, so it addresses a transfer to the account of
+    // the recipient's user id. That is the wallet of a user alone in their canister, but for a user
+    // in a MultiUser canister, who holds their funds under their principal, it is an account no one
+    // can spend from. So a transfer addressed to either is sent to the wallet, and one addressed
+    // anywhere else is refused. A certified transfer has been made already, so can only be accepted
+    // if it was made to the wallet.
+    pub fn send_to_wallet(&mut self, user_id: UserId, wallet: Account) -> bool {
+        if self.is_to(wallet) {
+            return true;
+        }
+        if !self.is_to(icrc1::Account::legacy_for_user(user_id).into()) {
+            return false;
+        }
+        match self {
+            PendingCryptoTransaction::NNS(t) => t.to = UserOrAccount::Account(crate::account_identifier(wallet)),
+            PendingCryptoTransaction::ICRC1(t) => t.to = wallet.into(),
+            PendingCryptoTransaction::ICRC2(t) => t.to = wallet.into(),
+            PendingCryptoTransaction::Certified(_) => return false,
+        }
+        true
     }
 
     // Checks the transfer is to exactly `account`. The whole account, not just the owner, since once
@@ -998,39 +1018,130 @@ mod tests {
         Principal::from_slice(&[9; 29])
     }
 
+    fn icrc2_transfer_to(to: icrc1::Account) -> PendingCryptoTransaction {
+        PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
+            ledger: CanisterId::from_slice(&[1; 10]),
+            token_symbol: "CHAT".to_string(),
+            amount: 1,
+            from: Principal::from_slice(&[8; 29]).into(),
+            to,
+            fee: 0,
+            memo: None,
+            created: 0,
+        })
+    }
+
+    fn nns_transfer_to(to: AccountIdentifier) -> PendingCryptoTransaction {
+        PendingCryptoTransaction::NNS(nns::PendingCryptoTransaction {
+            ledger: CanisterId::from_slice(&[1; 10]),
+            token_symbol: "ICP".to_string(),
+            amount: nns::Tokens::from_e8s(1),
+            to: UserOrAccount::Account(to),
+            fee: None,
+            memo: None,
+            created: 0,
+        })
+    }
+
+    fn certified_transfer_to(to: icrc1::Account) -> PendingCryptoTransaction {
+        PendingCryptoTransaction::Certified(certified::PendingCryptoTransaction {
+            ledger: CanisterId::from_slice(&[1; 10]),
+            token_symbol: "CHAT".to_string(),
+            amount: 1,
+            to,
+            fee: 0,
+            memo: None,
+            created: 0,
+            call: certified::CertifiedCall {
+                arg: Vec::new(),
+                ingress_expiry: 0,
+                nonce: None,
+                certificate: Vec::new(),
+            },
+        })
+    }
+
+    fn indexed_user() -> UserId {
+        UserId::new_indexed(canister_user().canister_id(), 7)
+    }
+
+    // Whether the transfer was sent to the user's wallet
+    fn sent_to_wallet(mut transfer: PendingCryptoTransaction, recipient: UserIdAndPrincipal) -> bool {
+        let wallet = Account::from(recipient);
+        transfer.send_to_wallet(recipient.user_id, wallet) && transfer.is_to(wallet)
+    }
+
     #[test]
     fn transfer_to_user_alone_in_their_canister_is_to_their_user_id() {
         let recipient = UserIdAndPrincipal::new(canister_user(), principal());
 
-        assert!(icrc1_transfer_to(canister_user().as_principal().into()).validate_recipient(recipient));
-        assert!(!icrc1_transfer_to(principal().into()).validate_recipient(recipient));
+        assert!(sent_to_wallet(
+            icrc1_transfer_to(canister_user().as_principal().into()),
+            recipient
+        ));
+        assert!(!sent_to_wallet(icrc1_transfer_to(principal().into()), recipient));
     }
 
     #[test]
     fn transfer_to_indexed_user_is_to_their_principal() {
-        let user_id = UserId::new_indexed(canister_user().canister_id(), 7);
-        let recipient = UserIdAndPrincipal::new(user_id, principal());
+        let recipient = UserIdAndPrincipal::new(indexed_user(), principal());
 
-        assert!(icrc1_transfer_to(principal().into()).validate_recipient(recipient));
-        assert!(!icrc1_transfer_to(icrc1::Account::legacy_for_user(user_id)).validate_recipient(recipient));
+        assert!(sent_to_wallet(icrc1_transfer_to(principal().into()), recipient));
+        assert!(sent_to_wallet(icrc2_transfer_to(principal().into()), recipient));
+        assert!(sent_to_wallet(nns_transfer_to(AccountIdentifier::from(recipient)), recipient));
+        assert!(sent_to_wallet(certified_transfer_to(principal().into()), recipient));
+    }
+
+    #[test]
+    fn transfer_addressed_to_indexed_users_id_is_sent_to_their_principal_instead() {
+        let user_id = indexed_user();
+        let recipient = UserIdAndPrincipal::new(user_id, principal());
+        let addressed_to_user_id = icrc1::Account::legacy_for_user(user_id);
+
+        assert!(sent_to_wallet(icrc1_transfer_to(addressed_to_user_id), recipient));
+        assert!(sent_to_wallet(icrc2_transfer_to(addressed_to_user_id), recipient));
+        assert!(sent_to_wallet(
+            nns_transfer_to(crate::account_identifier(addressed_to_user_id.into())),
+            recipient
+        ));
+    }
+
+    #[test]
+    fn certified_transfer_addressed_to_indexed_users_id_is_refused() {
+        let user_id = indexed_user();
+        let recipient = UserIdAndPrincipal::new(user_id, principal());
+        let mut transfer = certified_transfer_to(icrc1::Account::legacy_for_user(user_id));
+
+        assert!(!transfer.send_to_wallet(user_id, recipient.into()));
+        assert!(transfer.is_to(icrc1::Account::legacy_for_user(user_id).into()));
+    }
+
+    #[test]
+    fn transfer_addressed_to_anyone_else_is_refused() {
+        let user_id = indexed_user();
+        let recipient = UserIdAndPrincipal::new(user_id, principal());
+        let someone_else: icrc1::Account = Principal::from_slice(&[7; 29]).into();
+        let subaccount_of_wallet = icrc1::Account {
+            owner: principal(),
+            subaccount: Some([1; 32]),
+        };
+
+        for to in [someone_else, subaccount_of_wallet] {
+            for mut transfer in [icrc1_transfer_to(to), icrc2_transfer_to(to), certified_transfer_to(to)] {
+                assert!(!transfer.send_to_wallet(user_id, recipient.into()));
+                assert!(transfer.is_to(to.into()));
+            }
+        }
     }
 
     #[test]
     fn nns_transfer_to_recipients_account_identifier_is_accepted() {
         let recipient = UserIdAndPrincipal::new(canister_user(), principal());
-        let transfer = |to| {
-            PendingCryptoTransaction::NNS(nns::PendingCryptoTransaction {
-                ledger: CanisterId::from_slice(&[1; 10]),
-                token_symbol: "ICP".to_string(),
-                amount: nns::Tokens::from_e8s(1),
-                to: UserOrAccount::Account(to),
-                fee: None,
-                memo: None,
-                created: 0,
-            })
-        };
 
-        assert!(transfer(AccountIdentifier::from(recipient)).validate_recipient(recipient));
-        assert!(!transfer(AccountIdentifier::new(&principal(), &Subaccount([0; 32]))).validate_recipient(recipient));
+        assert!(sent_to_wallet(nns_transfer_to(AccountIdentifier::from(recipient)), recipient));
+        assert!(!sent_to_wallet(
+            nns_transfer_to(AccountIdentifier::new(&principal(), &Subaccount([0; 32]))),
+            recipient
+        ));
     }
 }

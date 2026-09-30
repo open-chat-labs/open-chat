@@ -5386,7 +5386,7 @@ fn users_send_crypto_from_their_own_wallets() {
             owner: canister_id,
             subaccount: Some(ledger_utils::spender_subaccount(a_principal)),
         },
-        2 * (amount + ICP_TRANSFER_FEE),
+        3 * (amount + ICP_TRANSFER_FEE),
     );
 
     let send_crypto = |env: &mut PocketIc, recipient: UserId, transfer: PendingCryptoTransaction| {
@@ -5475,10 +5475,26 @@ fn users_send_crypto_from_their_own_wallets() {
         "{response:?}"
     );
 
+    // To B, but addressed to B's user id, as a client which doesn't know B's principal addresses
+    // it. That isn't where B holds their funds, so it is sent to B's wallet instead. It is made
+    // later than the first to B, which the ledger would otherwise take it for a duplicate of.
+    env.advance_time(Duration::from_secs(1));
+    let transfer = icrc2_transfer(env, icrc1::Account::legacy_for_user(b));
+    let response = send_crypto(env, b, transfer);
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, b_principal),
+        2 * amount
+    );
+    assert_eq!(client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, b), 0);
+
     let a_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, a_principal);
 
-    // To B, but addressed to B's user id, which isn't where B holds their funds
-    let transfer = icrc2_transfer(env, icrc1::Account::legacy_for_user(b));
+    // To B, but addressed to Carol's account
+    let transfer = icrc2_transfer(env, icrc1::Account::legacy_for_user(carol.user_id));
     let response = send_crypto(env, b, transfer);
     assert!(
         matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::RecipientMismatch)),
@@ -5541,6 +5557,183 @@ fn users_send_crypto_from_their_own_wallets() {
         client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, b_principal),
         b_balance
     );
+}
+
+// A client only knows the principal of its own user, so it addresses crypto to the recipient's user
+// id, which isn't where a user in a MultiUser canister holds their funds. Whichever canister makes
+// the transfer sends it to their wallet instead, and the one path which can't know their wallet
+// refuses to make it, rather than send it to an account no one can spend from.
+#[test]
+fn crypto_addressed_to_a_users_id_reaches_their_wallet_or_is_refused() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+
+    let alice = client::register_user_in_multi_user_canister_on(env, canister_ids, local_user_index, canister_id, None);
+    let bob = client::register_user_in_multi_user_canister_on(env, canister_ids, local_user_index, canister_id, None);
+    // A Diamond member, so that she can create a public group for the others to join
+    let carol = client::register_diamond_user(env, canister_ids, *controller);
+
+    let ledger = canister_ids.icp_ledger;
+    let amount = 1_000_000;
+    let bobs_user_id = icrc1::Account::legacy_for_user(bob.user_id);
+    client::ledger::happy_path::transfer(env, *controller, ledger, alice.principal, 1_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, ledger, carol.user_id, 1_000_000_000);
+
+    let icrc1_transfer = |env: &PocketIc| {
+        PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+            ledger: ICP_LEDGER_CANISTER_ID,
+            token_symbol: ICP_SYMBOL.to_string(),
+            amount,
+            to: bobs_user_id,
+            fee: ICP_TRANSFER_FEE,
+            memo: None,
+            created: now_millis(env) * 1_000_000,
+        })
+    };
+    let icrc2_transfer = |env: &PocketIc| {
+        PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
+            ledger: ICP_LEDGER_CANISTER_ID,
+            token_symbol: ICP_SYMBOL.to_string(),
+            amount,
+            from: alice.principal.into(),
+            to: bobs_user_id,
+            fee: ICP_TRANSFER_FEE,
+            memo: None,
+            created: now_millis(env) * 1_000_000,
+        })
+    };
+    let crypto = |transfer: PendingCryptoTransaction| {
+        MessageContentInitial::Crypto(CryptoContent {
+            recipient: bob.user_id,
+            transfer: CryptoTransaction::Pending(transfer),
+            caption: None,
+        })
+    };
+
+    // Carol's User canister makes the transfer in a direct chat, and looks up Bob's wallet
+    let response = client::user::send_message_v2(
+        env,
+        carol.principal,
+        carol.canister(),
+        &user_canister::send_message_v2::Args {
+            content: crypto(icrc1_transfer(env)),
+            ..send_message_args(bob.user_id, "", random_from_u128())
+        },
+    );
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.principal), amount);
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.user_id), 0);
+
+    let group_id = client::user::happy_path::create_group(env, &carol, &random_string(), true, true);
+    client::group::happy_path::join_group(env, alice.principal, group_id);
+    client::group::happy_path::join_group(env, bob.principal, group_id);
+    tick_many(env, 3);
+
+    // In a group Carol's User canister makes the transfer before the group hears of it, and can't
+    // know Bob's wallet, so it refuses rather than send the funds to the account of Bob's user id
+    let carols_balance = client::ledger::happy_path::balance_of(env, ledger, carol.user_id);
+    let response = client::user::send_message_with_transfer_to_group(
+        env,
+        carol.principal,
+        carol.canister(),
+        &user_canister::send_message_with_transfer_to_group::Args {
+            group_id,
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content: crypto(icrc1_transfer(env)),
+            sender_name: carol.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            pin: None,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(
+            &response,
+            user_canister::send_message_with_transfer_to_group::Response::Error(e)
+                if e.matches_code(OCErrorCode::RecipientMismatch)
+        ),
+        "{response:?}"
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, ledger, carol.user_id),
+        carols_balance
+    );
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.user_id), 0);
+
+    // The group knows each member's wallet, so crypto and a tip sent to it directly, which it pulls
+    // from Alice's wallet, both reach Bob's
+    client::ledger::happy_path::approve(
+        env,
+        alice.principal,
+        ledger,
+        icrc_ledger_types::icrc1::account::Account {
+            owner: group_id.into(),
+            subaccount: Some(ledger_utils::spender_subaccount(alice.principal)),
+        },
+        2 * (amount + ICP_TRANSFER_FEE),
+    );
+    let response = client::group::send_message_v2(
+        env,
+        alice.principal,
+        group_id.into(),
+        &group_canister::send_message_v2::Args {
+            thread_root_message_index: None,
+            message_id: random_from_u128(),
+            content: crypto(icrc2_transfer(env)),
+            sender_name: alice.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            new_achievement: false,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(&response, group_canister::send_message_v2::Response::Success(r) if r.transfer.is_some()),
+        "{response:?}"
+    );
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.principal), 2 * amount);
+
+    let message_id = random_from_u128();
+    client::group::happy_path::send_text_message(env, &bob, group_id, None, "tip me", Some(message_id));
+    let response = client::group::tip_message(
+        env,
+        alice.principal,
+        group_id.into(),
+        &group_canister::tip_message::Args {
+            thread_root_message_index: None,
+            message_id,
+            transfer: icrc2_transfer(env),
+            decimals: 8,
+            username: alice.username(),
+            display_name: None,
+            new_achievement: false,
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.principal), 3 * amount);
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.user_id), 0);
 }
 
 #[test]
