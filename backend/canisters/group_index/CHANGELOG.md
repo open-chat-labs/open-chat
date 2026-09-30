@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2081](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2081-group_index)] - 2026-09-30
+
 ### Added
 
 - Accept a `user_id` in `c2c_create_group` and `c2c_create_community`, so a MultiUser canister can act for one of its users ([#9448](https://github.com/open-chat-labs/open-chat/pull/9448))

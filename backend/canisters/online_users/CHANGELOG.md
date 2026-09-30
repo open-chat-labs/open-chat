@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove `c2c_remove_user` now that the UserIndex sends `UserDeleted` events to `c2c_user_index` instead ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))
+
+## [[2.0.2078](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2078-online_users)] - 2026-09-30
+
 ### Added
 
 - Add `c2c_user_index`, through which the UserIndex says when a user is deleted or migrated ([#9632](https://github.com/open-chat-labs/open-chat/pull/9632))
