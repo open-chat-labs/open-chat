@@ -146,15 +146,20 @@ describe("OpenChatAgent paying from the user's wallet", () => {
     }
 
     // Sends a message to a group or channel, giving the response once it is final
-    const send = (chatId: typeof GROUP | typeof CHANNEL, content: MessageContent) =>
+    const send = (
+        chatId: typeof GROUP | typeof CHANNEL,
+        content: MessageContent,
+        threadRootMessageIndex?: number,
+        acceptedRules?: { chat: number; community: number },
+    ) =>
         new Promise((resolve, reject) =>
             agent
                 .sendMessage(
-                    { chatId },
+                    { chatId, threadRootMessageIndex },
                     { username: "me", displayName: undefined },
                     [],
                     message(content),
-                    undefined,
+                    acceptedRules,
                     undefined,
                     undefined,
                     false,
@@ -376,7 +381,45 @@ describe("OpenChatAgent paying from the user's wallet", () => {
                 expect(calls).toEqual([]);
             });
 
-            test("a transfer from another account is pulled by the group without an approval", async () => {
+            test("a transfer in a thread is sent to the group in that thread, with the rules accepted", async () => {
+                await send(GROUP, crypto(), 7, { chat: 2, community: 3 });
+
+                expect(callArgs[0]).toEqual([
+                    GROUP.groupId,
+                    "me",
+                    undefined,
+                    [],
+                    message(crypto()),
+                    7,
+                    2,
+                    undefined,
+                    false,
+                    expect.any(Function),
+                    ME.toText(),
+                ]);
+            });
+
+            test("a transfer in a thread is sent to the community in that thread, with the rules accepted", async () => {
+                await send(CHANNEL, crypto(), 7, { chat: 2, community: 3 });
+
+                expect(callArgs[0]).toEqual([
+                    CHANNEL,
+                    "me",
+                    undefined,
+                    [],
+                    message(crypto()),
+                    7,
+                    3,
+                    2,
+                    undefined,
+                    false,
+                    expect.any(Function),
+                    ME.toText(),
+                ]);
+            });
+
+            // The wallet isn't asked to approve anything, since the transfer isn't from it
+            test("a transfer from another account is left to the group to pull", async () => {
                 await send(GROUP, crypto(EXTERNAL_ACCOUNT));
 
                 expect(approvals).toEqual([]);
@@ -413,6 +456,54 @@ describe("OpenChatAgent paying from the user's wallet", () => {
                     expect(callArgs[0][3]).toEqual({ ...transfer(), fromAccount: ME.toText() });
                 },
             );
+
+            test.each([
+                ["group", GROUP, GROUP.groupId, "groupTipMessage"],
+                ["channel", CHANNEL, CHANNEL, "communityTipMessage"],
+            ] as const)(
+                "a tip in a thread in a %s is given in that thread",
+                async (_, chatId, to, call) => {
+                    await agent.tipMessage(
+                        { chatId, threadRootMessageIndex: 7 },
+                        1n,
+                        transfer(),
+                        8,
+                        undefined,
+                        "me",
+                        "Me",
+                        true,
+                    );
+
+                    expect(calls).toEqual([call]);
+                    expect(callArgs[0]).toEqual([
+                        to,
+                        7,
+                        1n,
+                        { ...transfer(), fromAccount: ME.toText() },
+                        8,
+                        "me",
+                        "Me",
+                        true,
+                    ]);
+                },
+            );
+
+            test("a tip from another account is left to the group to pull", async () => {
+                await agent.tipMessage(
+                    { chatId: GROUP },
+                    1n,
+                    transfer(EXTERNAL_ACCOUNT),
+                    8,
+                    undefined,
+                    "me",
+                    undefined,
+                    true,
+                );
+
+                expect(approvals).toEqual([]);
+                expect(calls).toEqual(["groupTipMessage"]);
+                expect(callArgs[0][3]).toEqual(transfer(EXTERNAL_ACCOUNT));
+            });
 
             test("a tip isn't given if it can't be approved", async () => {
                 approveResponse = "insufficient_funds";
@@ -461,28 +552,37 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             },
         );
 
-        test("crypto in a channel is sent via their canister, which makes the transfer", async () => {
-            await send(CHANNEL, crypto());
+        test.each(transferMessages)(
+            "%s in a channel is sent via their canister, which makes the transfer",
+            async (_, content) => {
+                await send(CHANNEL, content());
 
-            expect(approvals).toEqual([]);
-            expect(calls).toEqual(["sendMessageWithTransferToChannel"]);
-        });
+                expect(approvals).toEqual([]);
+                expect(calls).toEqual(["sendMessageWithTransferToChannel"]);
+            },
+        );
 
-        test("a tip in a group is given via their canister, which makes the transfer", async () => {
-            await agent.tipMessage(
-                { chatId: GROUP },
-                1n,
-                transfer(),
-                8,
-                undefined,
-                "me",
-                undefined,
-                true,
-            );
+        test.each([
+            ["group", GROUP],
+            ["channel", CHANNEL],
+        ] as const)(
+            "a tip in a %s is given via their canister, which makes the transfer",
+            async (_, chatId) => {
+                await agent.tipMessage(
+                    { chatId },
+                    1n,
+                    transfer(),
+                    8,
+                    undefined,
+                    "me",
+                    undefined,
+                    true,
+                );
 
-            expect(approvals).toEqual([]);
-            expect(calls).toEqual(["tipMessage"]);
-        });
+                expect(approvals).toEqual([]);
+                expect(calls).toEqual(["tipMessage"]);
+            },
+        );
 
         test("streak insurance needs no approval", async () => {
             await agent.payForStreakInsurance(1, 5_000n, undefined);

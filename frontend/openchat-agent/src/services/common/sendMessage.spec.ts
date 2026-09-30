@@ -1,13 +1,15 @@
 import { Principal } from "@icp-sdk/core/principal";
 import type {
     ChannelIdentifier,
+    CryptocurrencyContent,
     EventWrapper,
     Message,
     MessageContent,
     P2PSwapContentInitial,
+    PendingCryptocurrencyTransfer,
     PrizeContentInitial,
 } from "@shared";
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ChatsDb } from "../../utils/chatsDb";
 import { CommunityClient } from "../community/community.client";
 import { GroupClient } from "../group/group.client";
@@ -27,7 +29,21 @@ const WALLET = Principal.selfAuthenticating(new Uint8Array(32).fill(7)).toText()
 const ICP = { fee: 10_000n, decimals: 8, symbol: "ICP", ledger: LEDGER };
 const CHAT = { fee: 100_000n, decimals: 8, symbol: "CHAT", ledger: "2ouva-viaaa-aaaaq-aaamq-cai" };
 
+const RECIPIENT = "rdmx6-jaaaa-aaaaa-aaadq-cai";
+
 const text: MessageContent = { kind: "text_content", text: "hello" };
+
+const transfer: PendingCryptocurrencyTransfer = {
+    kind: "pending",
+    ledger: LEDGER,
+    token: "ICP",
+    recipient: RECIPIENT,
+    amountE8s: 100_000_000n,
+    feeE8s: 10_000n,
+    createdAtNanos: 0n,
+};
+
+const crypto: CryptocurrencyContent = { kind: "crypto_content", caption: undefined, transfer };
 
 const prize: PrizeContentInitial = {
     kind: "prize_content_initial",
@@ -38,15 +54,7 @@ const prize: PrizeContentInitial = {
     minChitEarned: 0,
     endDate: 1_000n,
     caption: "a prize",
-    transfer: {
-        kind: "pending",
-        ledger: LEDGER,
-        token: "ICP",
-        recipient: CANISTER,
-        amountE8s: 100_000_000n,
-        feeE8s: 10_000n,
-        createdAtNanos: 0n,
-    },
+    transfer: { ...transfer, recipient: CANISTER },
     prizes: [40_000_000n, 60_000_000n],
     requiresCaptcha: false,
     fees: 20_000n,
@@ -86,15 +94,23 @@ function event(content: MessageContent): EventWrapper<Message> {
     };
 }
 
+// What each call made to the canister was sent with
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let sent: [string, string, any][];
+
+beforeEach(() => {
+    sent = [];
+});
+
 // A client whose canister answers that it sent the message, having made the transfer it holds
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function client(prototype: object, content: MessageContent): any {
+function client(prototype: object, content?: MessageContent): any {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const chatsDb = Object.create(ChatsDb.prototype) as any;
     chatsDb.removeFailedMessage = () => Promise.resolve();
     chatsDb.setCachedMessageIfNotExists = () => Promise.resolve();
 
-    const transfer = {
+    const completed = {
         ICRC2: {
             ledger: Principal.fromText(LEDGER).toUint8Array(),
             token_symbol: "ICP",
@@ -108,34 +124,37 @@ function client(prototype: object, content: MessageContent): any {
             block_index: 7n,
         },
     };
-    const sent = {
+    const success = {
         event_index: 3,
         message_index: 2,
         timestamp: 10n,
         expires_at: undefined,
-        transfer: content === text ? undefined : transfer,
+        transfer: content === undefined || content === text ? undefined : completed,
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const client = Object.create(prototype) as any;
     client.chatsDb = chatsDb;
     client.update = (
-        _canisterId: string,
-        _method: string,
-        _args: unknown,
+        canisterId: string,
+        method: string,
+        args: unknown,
         mapper: (resp: unknown) => unknown,
-    ) => Promise.resolve(mapper({ Success: sent }));
+    ) => {
+        sent.push([canisterId, method, args]);
+        return Promise.resolve(mapper(content === undefined ? "Success" : { Success: success }));
+    };
     return client;
 }
 
-function sendToGroup(content: MessageContent): Promise<[unknown, Message]> {
+function sendToGroup(content: MessageContent, thread?: number): Promise<[unknown, Message]> {
     return client(GroupClient.prototype, content).sendMessage(
         CANISTER,
         "sender",
         undefined,
         [],
         event(content),
-        undefined,
+        thread,
         undefined,
         undefined,
         false,
@@ -144,14 +163,14 @@ function sendToGroup(content: MessageContent): Promise<[unknown, Message]> {
     );
 }
 
-function sendToChannel(content: MessageContent): Promise<[unknown, Message]> {
+function sendToChannel(content: MessageContent, thread?: number): Promise<[unknown, Message]> {
     return client(CommunityClient.prototype, content).sendMessage(
         CHANNEL,
         "sender",
         undefined,
         [],
         event(content),
-        undefined,
+        thread,
         undefined,
         undefined,
         undefined,
@@ -164,9 +183,42 @@ function sendToChannel(content: MessageContent): Promise<[unknown, Message]> {
 // A group or community makes a prize or swap offer from the content it is sent, and the message
 // is only read again once it changes, so what comes back is what its sender sees until then
 describe.each([
-    ["a group", sendToGroup],
-    ["a channel", sendToChannel],
-])("sending a message straight to %s", (_, send) => {
+    ["a group", sendToGroup, "send_message_v2"],
+    ["a channel", sendToChannel, "send_message"],
+])("sending a message straight to %s", (_, send, method) => {
+    const from = { ICRC2: { from: addressToIcrcAccount(WALLET) } };
+
+    test("crypto is sent as pulled from the wallet, in its thread", async () => {
+        await send(crypto, 7);
+
+        expect(sent).toMatchObject([
+            [
+                CANISTER,
+                method,
+                {
+                    thread_root_message_index: 7,
+                    content: { Crypto: { transfer: { Pending: from } } },
+                },
+            ],
+        ]);
+    });
+
+    test("a prize is sent as pulled from the wallet", async () => {
+        await send(prize);
+
+        expect(sent).toMatchObject([
+            [CANISTER, method, { content: { Prize: { transfer: { Pending: from } } } }],
+        ]);
+    });
+
+    // The group or community pulls a swap offer from the wallet of the member offering it
+    test("a swap offer names no account to be pulled from", async () => {
+        await send(swap);
+
+        expect(sent).toMatchObject([[CANISTER, method, { content: { P2PSwap: {} } }]]);
+        expect(sent[0][2].content.P2PSwap.from_account).toBeUndefined();
+    });
+
     test("a prize whose transfer was made comes back as the prize", async () => {
         const [resp, message] = await send(prize);
 
@@ -203,5 +255,66 @@ describe.each([
 
         expect(resp).toMatchObject({ kind: "success", eventIndex: 3 });
         expect(message).toMatchObject({ content: text });
+    });
+});
+
+describe.each([
+    [
+        "a group",
+        (thread?: number) =>
+            client(GroupClient.prototype).tipMessage(
+                CANISTER,
+                thread,
+                1n,
+                { ...transfer, fromAccount: WALLET },
+                8,
+                "sender",
+                "Sender",
+                true,
+            ),
+        {},
+    ],
+    [
+        "a channel",
+        (thread?: number) =>
+            client(CommunityClient.prototype).tipMessage(
+                CHANNEL,
+                thread,
+                1n,
+                { ...transfer, fromAccount: WALLET },
+                8,
+                "sender",
+                "Sender",
+                true,
+            ),
+        { channel_id: 5n },
+    ],
+])("tipping a message straight in %s", (_, tip, channel) => {
+    test("the tip is sent as pulled from the wallet, to the message's author, in its thread", async () => {
+        expect(await tip(7)).toMatchObject({ kind: "success" });
+
+        expect(sent).toMatchObject([
+            [
+                CANISTER,
+                "tip_message",
+                {
+                    ...channel,
+                    thread_root_message_index: 7,
+                    message_id: 1n,
+                    transfer: {
+                        ICRC2: {
+                            from: addressToIcrcAccount(WALLET),
+                            to: addressToIcrcAccount(RECIPIENT),
+                            amount: 100_000_000n,
+                            fee: 10_000n,
+                        },
+                    },
+                    decimals: 8,
+                    username: "sender",
+                    display_name: "Sender",
+                    new_achievement: true,
+                },
+            ],
+        ]);
     });
 });

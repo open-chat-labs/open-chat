@@ -751,28 +751,36 @@ export class OpenChatAgent extends EventTarget {
                 return resolve([CommonResponses.offline(), event.event], true);
             }
 
+            // A user who holds their own funds can't have their canister make a transfer for them
+            if (
+                chatId.kind !== "direct_chat" &&
+                this.holdsOwnFunds() &&
+                (event.event.content.kind === "crypto_content" ||
+                    event.event.content.kind === "prize_content_initial" ||
+                    event.event.content.kind === "p2p_swap_content_initial")
+            ) {
+                return resolve(
+                    await this.sendMessageWithTransferDirectly(
+                        chatId,
+                        user,
+                        mentioned,
+                        event,
+                        threadRootMessageIndex,
+                        acceptedRules,
+                        messageFilterFailed,
+                        newAchievement,
+                        onRequestAccepted,
+                    ),
+                    true,
+                );
+            }
+
             if (chatId.kind === "channel") {
                 if (
                     event.event.content.kind === "crypto_content" ||
                     event.event.content.kind === "prize_content_initial" ||
                     event.event.content.kind === "p2p_swap_content_initial"
                 ) {
-                    if (this.holdsOwnFunds()) {
-                        return resolve(
-                            await this.sendMessageWithTransferDirectly(
-                                chatId,
-                                user,
-                                mentioned,
-                                event,
-                                threadRootMessageIndex,
-                                acceptedRules,
-                                messageFilterFailed,
-                                newAchievement,
-                                onRequestAccepted,
-                            ),
-                            true,
-                        );
-                    }
                     return resolve(
                         await this.userClient.sendMessageWithTransferToChannel(
                             chatId,
@@ -813,22 +821,6 @@ export class OpenChatAgent extends EventTarget {
                     event.event.content.kind === "prize_content_initial" ||
                     event.event.content.kind === "p2p_swap_content_initial"
                 ) {
-                    if (this.holdsOwnFunds()) {
-                        return resolve(
-                            await this.sendMessageWithTransferDirectly(
-                                chatId,
-                                user,
-                                mentioned,
-                                event,
-                                threadRootMessageIndex,
-                                acceptedRules,
-                                messageFilterFailed,
-                                newAchievement,
-                                onRequestAccepted,
-                            ),
-                            true,
-                        );
-                    }
                     return resolve(
                         await this.userClient.sendMessageWithTransferToGroup(
                             chatId,
@@ -981,8 +973,11 @@ export class OpenChatAgent extends EventTarget {
     // Sends a message holding a transfer straight to its group or community, which pulls the
     // transfer from the sender's wallet, once approved to, into the wallet it knows the recipient
     // by. This is how a user who holds their own funds sends one, since their canister can't make
-    // the transfer for them. A transfer from another account is pulled from that instead, whose
-    // owner has approved it already.
+    // the transfer for them. A transfer from another account is pulled from that instead, which
+    // its owner has to have approved the group or community to spend from.
+    // TODO: An external wallet is asked to approve the user's canister (see
+    // `approveExternalWalletSpending`), so can't pay this way until it is asked to approve the
+    // group or community instead
     private async sendMessageWithTransferDirectly(
         chatId: GroupChatIdentifier | ChannelIdentifier,
         user: CreatedUser,
