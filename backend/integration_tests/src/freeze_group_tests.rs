@@ -1,4 +1,4 @@
-use crate::delete_user_tests::{MAX_RESIDUAL_CYCLES, cycles_refunded_metric};
+use crate::delete_user_tests::{MAX_RESIDUAL_CYCLES, cycles_refunded_metric, wait_for_refund_queue_to_empty};
 use crate::env::ENV;
 use crate::utils::{tick_many, wait_for_canister_to_be_deleted};
 use crate::{CanisterIds, TestEnv, User, client};
@@ -317,6 +317,8 @@ fn delete_frozen_group() {
         },
     );
 
+    // So that the refunds counted below are only this group's
+    wait_for_refund_queue_to_empty(env, local_user_index);
     let balance_before = env.cycle_balance(canister_id);
     let refunded_before = cycles_refunded_metric(env, local_user_index);
 
@@ -340,6 +342,9 @@ fn delete_frozen_group() {
     // still in its canister, which the LocalUserIndex refunded them from before deleting it
     let refunded = cycles_refunded_metric(env, local_user_index) - refunded_before;
     assert!(refunded > balance_before - MAX_RESIDUAL_CYCLES, "{refunded}");
+
+    // Waiting out the IC's install_code rate limit on the group's canister advanced time
+    wrapper.discard();
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

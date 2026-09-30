@@ -322,7 +322,7 @@ pub(crate) fn cycles_refunded_metric(env: &pocket_ic::PocketIc, local_user_index
     metrics["cycles_refunded_from_deleted_users"].as_u64().unwrap().into()
 }
 
-fn wait_for_refund_queue_to_empty(env: &mut pocket_ic::PocketIc, local_user_index: types::CanisterId) {
+pub(crate) fn wait_for_refund_queue_to_empty(env: &mut pocket_ic::PocketIc, local_user_index: types::CanisterId) {
     for _ in 0..50 {
         let metrics = crate::utils::metrics(env, local_user_index);
         if metrics["cycles_refund_queue_length"] == 0 {

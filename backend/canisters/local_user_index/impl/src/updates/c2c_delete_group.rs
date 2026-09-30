@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_delete_group::*;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult};
-use utils::canister::{delete, start, stop, uninstall};
+use utils::canister::{delete, stop, uninstall};
 
 #[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
@@ -34,15 +34,7 @@ pub(crate) fn spawn_uninstall_canister(canister_id: CanisterId) {
         let _ = stop(canister_id).await;
 
         if uninstall(canister_id).await.is_ok() {
-            // The canister must be running for its cycles to be refunded
-            let _ = start(canister_id).await;
-
-            // It is refunded ahead of any users' canisters waiting, since callers only find that
-            // the group or community is gone once its canister has been deleted
-            mutate_state(|state| {
-                state.data.canisters_to_delete_once_refunded.insert(canister_id);
-                jobs::refund_cycles::queue_next(canister_id, state);
-            });
+            mutate_state(|state| jobs::refund_cycles::queue_then_delete(canister_id, state));
         } else {
             // Its cycles can't be refunded while it has its code, so they go with the canister
             let _ = delete(canister_id).await;
