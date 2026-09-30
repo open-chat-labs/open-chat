@@ -1,3 +1,4 @@
+use crate::queries::check_replica_up_to_date;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use constants::MAX_MEMBERS_PER_QUERY;
@@ -15,6 +16,10 @@ fn lookup_members(args: Args) -> Response {
 }
 
 fn lookup_members_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
+    if let Err(now) = check_replica_up_to_date(args.latest_known_update, state) {
+        return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
+    }
+
     state.get_calling_member(None, false)?;
 
     if args.user_ids.len() > MAX_MEMBERS_PER_QUERY as usize {

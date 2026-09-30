@@ -62,7 +62,7 @@
     // found are then held, so will be in the search results.
     $effect(() => {
         const searchFor = searchTerm;
-        if (searchFor.length === 0 || !client.membersIncomplete(collection.id)) return;
+        if (searchFor.length < 2 || !client.membersIncomplete(collection.id)) return;
         const timer = setTimeout(
             () => client.findMembers(collection.id, searchFor, MAX_SEARCH_RESULTS),
             FIND_MEMBERS_DELAY_MS,

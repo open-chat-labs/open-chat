@@ -3422,6 +3422,7 @@ export type CommunityLookupChannelMembersArgs = Static<typeof CommunityLookupCha
 export const CommunityLookupChannelMembersArgs = /* @__PURE__ */ Type.Object({
     channel_id: ChannelId,
     user_ids: Type.Array(UserId),
+    latest_known_update: Type.Optional(Type.BigInt()),
 });
 
 export type CommunityUnfollowThreadArgs = Static<typeof CommunityUnfollowThreadArgs>;
@@ -3640,6 +3641,7 @@ export const CommunityChannelMembersArgs = /* @__PURE__ */ Type.Object({
     channel_id: ChannelId,
     after: Type.Optional(UserId),
     max_results: Type.Number(),
+    latest_known_update: Type.Optional(Type.BigInt()),
 });
 
 export type CommunityBlockUserArgs = Static<typeof CommunityBlockUserArgs>;
@@ -3682,6 +3684,7 @@ export const CommunityMembersArgs = /* @__PURE__ */ Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
     after: Type.Optional(UserId),
     max_results: Type.Number(),
+    latest_known_update: Type.Optional(Type.BigInt()),
 });
 
 export type CommunityMembersResponse = Static<typeof CommunityMembersResponse>;
@@ -3746,6 +3749,7 @@ export type CommunityLookupMembersArgs = Static<typeof CommunityLookupMembersArg
 export const CommunityLookupMembersArgs = /* @__PURE__ */ Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
     user_ids: Type.Array(UserId),
+    latest_known_update: Type.Optional(Type.BigInt()),
 });
 
 export type CommunityLocalUserIndexResponse = Static<typeof CommunityLocalUserIndexResponse>;
@@ -4698,6 +4702,7 @@ export type GroupMembersArgs = Static<typeof GroupMembersArgs>;
 export const GroupMembersArgs = /* @__PURE__ */ Type.Object({
     after: Type.Optional(UserId),
     max_results: Type.Number(),
+    latest_known_update: Type.Optional(Type.BigInt()),
 });
 
 export type GroupVideoCallParticipantsArgs = Static<typeof GroupVideoCallParticipantsArgs>;
@@ -4723,6 +4728,7 @@ export const GroupEventsByIndexArgs = /* @__PURE__ */ Type.Object({
 export type GroupLookupMembersArgs = Static<typeof GroupLookupMembersArgs>;
 export const GroupLookupMembersArgs = /* @__PURE__ */ Type.Object({
     user_ids: Type.Array(UserId),
+    latest_known_update: Type.Optional(Type.BigInt()),
 });
 
 export type GroupUnpinMessageArgs = Static<typeof GroupUnpinMessageArgs>;

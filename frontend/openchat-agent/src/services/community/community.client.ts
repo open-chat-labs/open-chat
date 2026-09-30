@@ -67,16 +67,8 @@ import type {
     VideoCallParticipantsResponse,
     VideoCallPresence,
     LookupMembersResponse,
-    MembersPageResponse,
 } from "@shared";
-import {
-    DestinationInvalidError,
-    MAX_EVENTS,
-    MAX_MESSAGES,
-    MEMBERS_PAGE_SIZE,
-    random32,
-    toBigInt32,
-} from "@shared";
+import { DestinationInvalidError, MAX_EVENTS, MAX_MESSAGES, random32, toBigInt32 } from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,
@@ -172,12 +164,8 @@ import {
     CommunitySummaryUpdatesResponse as TCommunitySummaryUpdatesResponse,
     Empty as TEmpty,
     UnitResult,
-    CommunityMembersArgs,
-    CommunityMembersResponse,
     CommunityLookupMembersArgs,
     CommunityLookupMembersResponse,
-    CommunityChannelMembersArgs,
-    CommunityChannelMembersResponse,
     CommunityLookupChannelMembersArgs,
     CommunityLookupChannelMembersResponse,
 } from "../../typebox";
@@ -216,7 +204,6 @@ import {
     getMessagesSuccess,
     groupDetailsSuccess,
     groupDetailsUpdatesResponse,
-    groupMembersPage,
     lookupGroupMembersSuccess,
     inviteCodeSuccess,
     isSuccess,
@@ -243,7 +230,6 @@ import {
     communityChannelSummaryResponse,
     communityDetailsResponse,
     communityDetailsUpdatesResponse,
-    communityMembersPage,
     lookupCommunityMembersResponse,
     createUserGroupSuccess,
     exploreChannelsResponse,
@@ -876,71 +862,31 @@ export class CommunityClient
         );
     }
 
-    // The next page of members after those already held, which are added to the cached details
-    async getMembersPage(communityId: string, after: string): Promise<MembersPageResponse> {
-        const response = await this.query(
-            communityId,
-            "members",
-            {
-                invite_code: this.inviteCode(communityId),
-                after: principalStringToBytes(after),
-                max_results: MEMBERS_PAGE_SIZE,
-            },
-            communityMembersPage,
-            CommunityMembersArgs,
-            CommunityMembersResponse,
-        );
-        if (response.kind === "success") {
-            await addMembersToCachedCommunityDetails(this.chatsDb, communityId, response.members, {
-                after,
-                moreMembersAfter: response.moreMembersAfter,
-            });
-        }
-        return response;
-    }
-
-    // Those of the users who are members, who are added to the cached details
-    async lookupMembers(communityId: string, userIds: string[]): Promise<LookupMembersResponse> {
+    // Those of the users who are members, who are added to the cached details.
+    // `latestKnownUpdate` is the time up to which the details held are known to be up to date.
+    async lookupMembers(
+        communityId: string,
+        userIds: string[],
+        latestKnownUpdate: bigint,
+    ): Promise<LookupMembersResponse> {
         const response = await this.query(
             communityId,
             "lookup_members",
             {
                 invite_code: this.inviteCode(communityId),
                 user_ids: userIds.map(principalStringToBytes),
+                latest_known_update: latestKnownUpdate,
             },
             lookupCommunityMembersResponse,
             CommunityLookupMembersArgs,
             CommunityLookupMembersResponse,
         );
         if (response.kind === "success") {
-            await addMembersToCachedCommunityDetails(this.chatsDb, communityId, response.members);
-        }
-        return response;
-    }
-
-    // As for `getMembersPage`, but of the members of a channel
-    async getChannelMembersPage(
-        chatId: ChannelIdentifier,
-        after: string,
-    ): Promise<MembersPageResponse> {
-        const response = await this.query(
-            chatId.communityId,
-            "channel_members",
-            {
-                channel_id: toBigInt32(chatId.channelId),
-                after: principalStringToBytes(after),
-                max_results: MEMBERS_PAGE_SIZE,
-            },
-            (resp) => mapResult(resp, groupMembersPage),
-            CommunityChannelMembersArgs,
-            CommunityChannelMembersResponse,
-        );
-        if (response.kind === "success") {
-            await addMembersToCachedGroupDetails(
+            await addMembersToCachedCommunityDetails(
                 this.chatsDb,
-                channelDetailsCacheKey(chatId),
+                communityId,
                 response.members,
-                { after, moreMembersAfter: response.moreMembersAfter },
+                latestKnownUpdate,
             );
         }
         return response;
@@ -950,6 +896,7 @@ export class CommunityClient
     async lookupChannelMembers(
         chatId: ChannelIdentifier,
         userIds: string[],
+        latestKnownUpdate: bigint,
     ): Promise<LookupMembersResponse> {
         const response = await this.query(
             chatId.communityId,
@@ -957,6 +904,7 @@ export class CommunityClient
             {
                 channel_id: toBigInt32(chatId.channelId),
                 user_ids: userIds.map(principalStringToBytes),
+                latest_known_update: latestKnownUpdate,
             },
             (resp) => mapResult(resp, lookupGroupMembersSuccess),
             CommunityLookupChannelMembersArgs,
@@ -967,6 +915,7 @@ export class CommunityClient
                 this.chatsDb,
                 channelDetailsCacheKey(chatId),
                 response.members,
+                latestKnownUpdate,
             );
         }
         return response;
