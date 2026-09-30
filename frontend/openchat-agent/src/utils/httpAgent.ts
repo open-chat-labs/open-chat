@@ -1,4 +1,10 @@
-import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
+import {
+    AgentError,
+    HttpAgent,
+    type Identity,
+    IngressExpiryInvalidErrorCode,
+} from "@icp-sdk/core/agent";
+import { Principal } from "@icp-sdk/core/principal";
 import { isMainnet, offline } from "@shared";
 
 // How long a query may wait for its response to start arriving. Queries normally answer well
@@ -136,6 +142,107 @@ export function createQueryAwareFetch(
     };
 }
 
+// The least time between two resyncs of an agent's clock. A resync costs three requests, and
+// while the replicas keep rejecting requests every one of them would otherwise ask for another.
+export const TIME_RESYNC_MIN_INTERVAL_MS = 5_000;
+
+function isExpiryRejection(err: unknown): err is AgentError {
+    return err instanceof AgentError && err.hasCode(IngressExpiryInvalidErrorCode);
+}
+
+// True for the rejection `createQueryAwareFetch` answers with on the replica's behalf. It says
+// nothing about the agent's clock, so the request only needs building again.
+function isExpiredBeforeResend(err: AgentError): boolean {
+    return (err.code as IngressExpiryInvalidErrorCode).message === EXPIRED_QUERY_RESPONSE_TEXT;
+}
+
+/**
+ * An `HttpAgent` which resyncs its clock with the IC whenever a replica rejects the expiry of one
+ * of its requests.
+ *
+ * The agent gives each request an expiry worked out from the device's clock plus an offset, which
+ * it measures by asking a replica for the time. It only ever measures that offset once: the first
+ * time an expiry is rejected or a certificate looks too old. After that a rejected expiry is simply
+ * thrown, so if the offset is wrong (the replica it asked was behind, or the device's clock has
+ * been corrected since) every request the agent sends is rejected until the page is reloaded.
+ *
+ * Here a rejected expiry makes the agent measure the offset again and send the request once more.
+ * That is safe for an update call too, since a replica rejects the expiry before accepting the
+ * call.
+ */
+export class ResyncingHttpAgent extends HttpAgent {
+    #resync: Promise<boolean> | undefined;
+    #resyncCount = 0;
+    #nextResyncAllowedAt = 0;
+
+    override query(...args: Parameters<HttpAgent["query"]>): ReturnType<HttpAgent["query"]> {
+        const [canisterId, fields] = args;
+        return this.#resyncIfExpiryRejected(fields.effectiveCanisterId ?? canisterId, () =>
+            super.query(...args),
+        );
+    }
+
+    override call(...args: Parameters<HttpAgent["call"]>): ReturnType<HttpAgent["call"]> {
+        const [canisterId, options] = args;
+        return this.#resyncIfExpiryRejected(options.effectiveCanisterId ?? canisterId, () =>
+            super.call(...args),
+        );
+    }
+
+    async #resyncIfExpiryRejected<T>(
+        canisterId: Principal | string,
+        send: () => Promise<T>,
+    ): Promise<T> {
+        const resyncCount = this.#resyncCount;
+        try {
+            return await send();
+        } catch (err) {
+            if (!isExpiryRejection(err)) {
+                throw err;
+            }
+            // If the clock has been resynced since this request was built then it was built with
+            // the old offset, so it only needs sending again
+            const resynced =
+                isExpiredBeforeResend(err) ||
+                resyncCount !== this.#resyncCount ||
+                (await this.#resyncTime(canisterId));
+            if (!resynced) {
+                throw err;
+            }
+            return send();
+        }
+    }
+
+    // Resolves to whether the clock was resynced. Requests rejected together share one resync.
+    #resyncTime(canisterId: Principal | string): Promise<boolean> {
+        if (this.#resync === undefined) {
+            if (Date.now() < this.#nextResyncAllowedAt) {
+                return Promise.resolve(false);
+            }
+            const previousOffset = this.getTimeDiffMsecs();
+            this.#resync = this.syncTime(Principal.from(canisterId))
+                .then(
+                    () => {
+                        this.#resyncCount++;
+                        console.warn(
+                            `Resynced the agent's clock with the IC after a request's expiry was rejected. Offset was ${previousOffset}ms, now ${this.getTimeDiffMsecs()}ms`,
+                        );
+                        return true;
+                    },
+                    (err) => {
+                        console.warn("Unable to resync the agent's clock with the IC", err);
+                        return false;
+                    },
+                )
+                .finally(() => {
+                    this.#nextResyncAllowedAt = Date.now() + TIME_RESYNC_MIN_INTERVAL_MS;
+                    this.#resync = undefined;
+                });
+        }
+        return this.#resync;
+    }
+}
+
 export function createHttpAgentSync(identity: Identity, icUrl: string): HttpAgent {
     const [agent] = createHttpAgentInternal(identity, icUrl);
     return agent;
@@ -148,7 +255,7 @@ export async function createHttpAgent(identity: Identity, icUrl: string): Promis
 }
 
 function createHttpAgentInternal(identity: Identity, icUrl: string): [HttpAgent, Promise<void>] {
-    const agent = HttpAgent.createSync({
+    const agent = ResyncingHttpAgent.createSync({
         identity,
         host: icUrl,
         verifyQuerySignatures: false,
