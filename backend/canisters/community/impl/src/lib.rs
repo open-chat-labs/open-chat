@@ -355,6 +355,7 @@ impl RuntimeState {
             community_id: self.env.canister_id().into(),
             local_user_index_canister_id: self.data.local_user_index_canister_id,
             last_updated,
+            details_last_updated: data.details_last_updated(),
             name: data.name.value.clone(),
             description: data.description.value.clone(),
             avatar_id: Document::id(&data.avatar),
