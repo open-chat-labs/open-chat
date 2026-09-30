@@ -70,7 +70,7 @@ fn missing_chunks_are_uploaded_when_the_local_user_index_is_upgraded() {
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
 
-    // Earlier versions of the LocalUserIndex cleared the chunk store but kept the chunk hashes
+    // The current wasms' chunks go missing from the store, while their hashes are still recorded
     env.clear_chunk_store(local_user_index, Some(canister_ids.user_index))
         .unwrap();
     let stale_chunk: Hash = env

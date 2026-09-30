@@ -1,7 +1,7 @@
 import { Principal } from "@icp-sdk/core/principal";
+import { APPROVAL_VALIDITY_MS } from "@shared";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
-    APPROVAL_VALIDITY_MS,
     approveFromExternalWallet,
     buildApproveArgs,
     missingScopes,

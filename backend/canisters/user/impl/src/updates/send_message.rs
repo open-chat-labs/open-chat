@@ -66,16 +66,22 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
         match MessageContentInternal::validate_new_message(args.content, true, UserType::User, args.forwarding, now) {
             ValidateNewMessageContentResult::Success(content) => (content, None),
             ValidateNewMessageContentResult::SuccessCrypto(content) => {
-                let pending_transfer = match &content.transfer {
+                // Crypto in a direct chat can only be sent to the other user in the chat
+                if content.recipient != args.recipient {
+                    return Error(OCErrorCode::RecipientMismatch.into());
+                }
+                let mut pending_transfer = match &content.transfer {
                     CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
                     _ => unreachable!(),
                 };
 
+                // The client addresses the transfer to the recipient's user id, which isn't where a
+                // user in a MultiUser canister holds their funds, so it is sent to their wallet
                 let recipient = match user_wallet(args.recipient, local_user_index_canister_id).await {
                     Ok(recipient) => recipient,
                     Err(error) => return Error(error),
                 };
-                if !pending_transfer.validate_recipient(recipient) {
+                if !pending_transfer.send_to_wallet(recipient.user_id, recipient.into()) {
                     return Error(OCErrorCode::InvalidRequest.with_message("Transaction is not to the user's account"));
                 }
 
