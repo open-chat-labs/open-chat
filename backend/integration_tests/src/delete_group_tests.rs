@@ -1,6 +1,6 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::utils::wait_for_canister_to_be_uninstalled;
+use crate::utils::wait_for_canister_to_be_deleted;
 use crate::{CanisterIds, TestEnv, User, client};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -27,10 +27,7 @@ fn delete_group_succeeds() {
         "{delete_group_response:?}",
     );
 
-    // The group's canister is uninstalled rather than deleted, so that any cycles it still holds
-    // can be refunded
-    wait_for_canister_to_be_uninstalled(env, group_id.into(), canister_ids.local_user_index(env, group_id));
-    assert!(env.canister_exists(group_id.into()));
+    wait_for_canister_to_be_deleted(env, group_id.into());
 }
 
 #[test]

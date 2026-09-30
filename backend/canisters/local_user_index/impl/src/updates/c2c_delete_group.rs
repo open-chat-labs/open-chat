@@ -1,11 +1,11 @@
 use crate::guards::caller_is_group_index;
-use crate::{CanisterToRefund, RuntimeState, jobs, mutate_state};
+use crate::{RuntimeState, jobs, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_delete_group::*;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult};
-use utils::canister::{start, stop, uninstall};
+use utils::canister::{delete, start, stop, uninstall};
 
 #[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]
@@ -23,8 +23,8 @@ fn c2c_delete_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 }
 
 // Uninstalls the canister of a deleted group or community, then queues it to have its cycles
-// refunded to the CyclesDispenser, as is done for a deleted user's canister. The canister is kept
-// rather than deleted, which would destroy the cycles it holds.
+// refunded to the CyclesDispenser, as is done for a deleted user's canister. Deleting a canister
+// destroys the cycles it holds, so that is left until they have been refunded.
 // TODO make this retry upon failure
 pub(crate) fn spawn_uninstall_canister(canister_id: CanisterId) {
     utils::async_work::spawn_tracked(async move {
@@ -37,14 +37,24 @@ pub(crate) fn spawn_uninstall_canister(canister_id: CanisterId) {
             // The canister must be running for its cycles to be refunded
             let _ = start(canister_id).await;
 
+            // It is refunded ahead of any users' canisters waiting, since callers only find that
+            // the group or community is gone once its canister has been deleted
             mutate_state(|state| {
-                state.data.cycles_refund_queue.push_back(CanisterToRefund {
-                    canister_id,
-                    attempt: 0,
-                    retry_after: 0,
-                });
-                jobs::refund_cycles::start_job_if_required(state, None);
+                state.data.canisters_to_delete_once_refunded.insert(canister_id);
+                jobs::refund_cycles::queue_next(canister_id, state);
             });
+        } else {
+            // Its cycles can't be refunded while it has its code, so they go with the canister
+            let _ = delete(canister_id).await;
         }
+    });
+}
+
+// Deletes a canister whose cycles have been refunded. Until then callers find it has no code,
+// and from then on that it doesn't exist, which is what tells them the group or community is gone.
+pub(crate) fn spawn_delete_canister(canister_id: CanisterId) {
+    utils::async_work::spawn_tracked(async move {
+        let _ = stop(canister_id).await;
+        let _ = delete(canister_id).await;
     });
 }

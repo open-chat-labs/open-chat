@@ -5,6 +5,7 @@ use types::{BuildVersion, C2CError, C2CRetryPolicy, CanisterId, Milliseconds, Up
 mod canisters_requiring_upgrade;
 mod chunk_store;
 mod create;
+mod delete;
 mod deposit_cycles;
 mod filtered_upgrades;
 mod install;
@@ -20,6 +21,7 @@ pub use canisters_requiring_upgrade::*;
 pub use chunk_store::*;
 use constants::{MINUTE_IN_MS, SECOND_IN_MS};
 pub use create::*;
+pub use delete::*;
 pub use deposit_cycles::*;
 pub use filtered_upgrades::*;
 pub use install::*;

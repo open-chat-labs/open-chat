@@ -1,3 +1,4 @@
+use crate::updates::c2c_delete_group::spawn_delete_canister;
 use crate::{CanisterToRefund, RuntimeState, call_relay, mutate_state, read_state};
 use constants::{B, CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
 use ic_cdk_management_canister::CanisterInstallMode;
@@ -46,6 +47,22 @@ pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Millisec
     } else {
         false
     }
+}
+
+// Queues a canister to be refunded next, ahead of those already waiting
+pub(crate) fn queue_next(canister_id: CanisterId, state: &mut RuntimeState) {
+    let queue = &mut state.data.cycles_refund_queue;
+    // The canister being processed is kept at the front of the queue
+    let index = if IN_PROGRESS.get() { queue.len().min(1) } else { 0 };
+    queue.insert(
+        index,
+        CanisterToRefund {
+            canister_id,
+            attempt: 0,
+            retry_after: 0,
+        },
+    );
+    start_job_if_required(state, None);
 }
 
 // Whether the canister's cycles are being refunded right now, which is when the canister being
@@ -120,6 +137,7 @@ async fn process_canister(canister: CanisterToRefund) {
             state.data.cycles_refund_queue.pop_front();
         }
 
+        let mut retrying = false;
         match result {
             Ok(cycles) => {
                 state.data.cycles_refunded_from_deleted_users += cycles;
@@ -147,10 +165,17 @@ async fn process_canister(canister: CanisterToRefund) {
                         attempt,
                         retry_after: state.env.now() + delay,
                     });
+                    retrying = true;
                 } else {
                     error!(%canister_id, ?error, "Cycles not refunded, giving up");
                 }
             }
+        }
+
+        // A deleted group's or community's canister is deleted once nothing more is to be
+        // refunded from it
+        if !retrying && state.data.canisters_to_delete_once_refunded.remove(&canister_id) {
+            spawn_delete_canister(canister_id);
         }
         start_job_if_required(state, None);
     });

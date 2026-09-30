@@ -391,19 +391,10 @@ fn wait_for_refund_queue_to_empty(env: &mut pocket_ic::PocketIc, local_user_inde
 // canister was itself installed only moments ago though, so the IC's install_code rate limit
 // applies and the LocalUserIndex has to retry after a delay, hence time is advanced too.
 pub(crate) fn wait_for_cycles_to_be_refunded(env: &mut pocket_ic::PocketIc, user: &User) {
-    wait_for_canister_cycles_to_be_refunded(env, user.canister(), user.local_user_index);
-}
-
-// As above, for any canister which the LocalUserIndex has uninstalled and queued for a refund
-pub(crate) fn wait_for_canister_cycles_to_be_refunded(
-    env: &mut pocket_ic::PocketIc,
-    canister_id: types::CanisterId,
-    local_user_index: types::CanisterId,
-) {
     for _ in 0..200 {
         // The balance drops once `refund` completes, and the refunder is uninstalled after that
-        let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
-        if env.cycle_balance(canister_id) < MAX_RESIDUAL_CYCLES && status.module_hash.is_none() {
+        let status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
+        if env.cycle_balance(user.canister()) < MAX_RESIDUAL_CYCLES && status.module_hash.is_none() {
             // Zeroed so that the cycles its freezing threshold held back were refunded too
             assert_eq!(status.settings.freezing_threshold, 0u32);
             return;
@@ -411,11 +402,11 @@ pub(crate) fn wait_for_canister_cycles_to_be_refunded(
         env.advance_time(Duration::from_secs(60));
         tick_many(env, 5);
     }
-    let metrics = crate::utils::metrics(env, local_user_index);
+    let metrics = crate::utils::metrics(env, user.local_user_index);
     let errors = client::http_request(
         env,
         candid::Principal::anonymous(),
-        local_user_index,
+        user.local_user_index,
         &types::HttpRequest {
             method: "GET".to_string(),
             url: "/errors".to_string(),
@@ -425,7 +416,7 @@ pub(crate) fn wait_for_canister_cycles_to_be_refunded(
     );
     panic!(
         "Cycles not refunded, balance: {}, queue: {}, refunded: {}, errors: {}",
-        env.cycle_balance(canister_id),
+        env.cycle_balance(user.canister()),
         metrics["cycles_refund_queue_length"],
         metrics["cycles_refunded_from_deleted_users"],
         String::from_utf8_lossy(&errors.body)

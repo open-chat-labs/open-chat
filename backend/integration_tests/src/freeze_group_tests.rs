@@ -1,6 +1,6 @@
-use crate::delete_user_tests::{MAX_RESIDUAL_CYCLES, cycles_refunded_metric, wait_for_canister_cycles_to_be_refunded};
+use crate::delete_user_tests::{MAX_RESIDUAL_CYCLES, cycles_refunded_metric};
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{tick_many, wait_for_canister_to_be_deleted};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use group_index_canister::freeze_group::SuspensionDetails;
@@ -334,14 +334,12 @@ fn delete_frozen_group() {
         "{delete_group_response:?}"
     );
 
-    // A frozen group can't refund its own cycles as a group deleting itself does, so they are all
-    // still in its canister, which the LocalUserIndex uninstalls and then refunds them from
-    wait_for_canister_cycles_to_be_refunded(env, canister_id, local_user_index);
+    wait_for_canister_to_be_deleted(env, canister_id);
+
+    // A frozen group can't refund its own cycles as a group deleting itself does, so they were all
+    // still in its canister, which the LocalUserIndex refunded them from before deleting it
     let refunded = cycles_refunded_metric(env, local_user_index) - refunded_before;
     assert!(refunded > balance_before - MAX_RESIDUAL_CYCLES, "{refunded}");
-
-    // The canister itself is kept
-    assert!(env.canister_exists(canister_id));
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

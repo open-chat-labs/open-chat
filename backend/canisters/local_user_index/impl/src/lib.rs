@@ -826,6 +826,10 @@ struct Data {
     pub users_to_delete_queue: VecDeque<UserToDelete>,
     #[serde(default)]
     pub cycles_refund_queue: VecDeque<CanisterToRefund>,
+    // The canisters in `cycles_refund_queue` which are those of deleted groups and communities,
+    // each of which is deleted once its cycles have been refunded
+    #[serde(default)]
+    pub canisters_to_delete_once_refunded: HashSet<CanisterId>,
     #[serde(default)]
     pub cycles_refunded_from_deleted_users: Cycles,
     #[serde(default)]
@@ -1016,6 +1020,7 @@ impl Data {
             event_deduper: EventDeduper::default(),
             users_to_delete_queue: VecDeque::new(),
             cycles_refund_queue: VecDeque::new(),
+            canisters_to_delete_once_refunded: HashSet::new(),
             cycles_refunded_from_deleted_users: 0,
             cycles_topped_up_for_refunds: 0,
             events_for_remote_users: Vec::new(),

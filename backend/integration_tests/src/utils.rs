@@ -5,7 +5,7 @@ use constants::{
 };
 use pocket_ic::PocketIc;
 use rand::{RngExt, SeedableRng, rngs::StdRng};
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 use std::{path::PathBuf, time::UNIX_EPOCH};
 use types::{CanisterId, Hash, HttpRequest, HttpResponse, TimestampMillis, TimestampNanos, TokenInfo};
 
@@ -77,17 +77,19 @@ pub fn try_metrics(env: &PocketIc, canister_id: CanisterId) -> Option<serde_json
     serde_json::from_slice(&response.body).ok()
 }
 
-// Ticks until the canister of a deleted group or community has been uninstalled, which is done by
-// the LocalUserIndex controlling it. The canister itself is kept.
-pub fn wait_for_canister_to_be_uninstalled(env: &mut PocketIc, canister_id: CanisterId, local_user_index: CanisterId) {
-    for _ in 0..50 {
-        let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
-        if status.module_hash.is_none() {
+// Waits for the canister of a deleted group or community to be deleted, which its LocalUserIndex
+// does once it has uninstalled the canister and refunded its cycles. The refund can be held up by
+// the IC's install_code rate limit if the canister was installed only moments ago, in which case
+// the LocalUserIndex retries after a delay, hence time is advanced too.
+pub fn wait_for_canister_to_be_deleted(env: &mut PocketIc, canister_id: CanisterId) {
+    for _ in 0..200 {
+        if !env.canister_exists(canister_id) {
             return;
         }
-        env.tick();
+        env.advance_time(Duration::from_secs(60));
+        tick_many(env, 5);
     }
-    panic!("Canister {canister_id} was not uninstalled");
+    panic!("Canister {canister_id} was not deleted");
 }
 
 pub fn metrics(env: &PocketIc, canister_id: CanisterId) -> serde_json::Value {

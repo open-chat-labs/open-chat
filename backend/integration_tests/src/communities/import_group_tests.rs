@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::utils::{now_millis, now_nanos, tick_many, wait_for_canister_to_be_uninstalled};
+use crate::utils::{now_millis, now_nanos, tick_many, wait_for_canister_to_be_deleted};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
@@ -94,8 +94,8 @@ fn import_group_succeeds() {
     );
     assert!(events.events.len() > 10);
 
-    // Check that the group has been deleted, which leaves its canister uninstalled
-    wait_for_canister_to_be_uninstalled(env, group_id.into(), canister_ids.local_user_index(env, group_id));
+    // Check that the group has been deleted
+    wait_for_canister_to_be_deleted(env, group_id.into());
 }
 
 #[test]
