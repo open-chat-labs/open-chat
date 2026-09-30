@@ -39,15 +39,13 @@ pub(crate) fn remove_stale_chunks_if_no_pending_upgrades() {
     }
 }
 
-// Run on start up, after `clear_chunk_hashes` in `post_upgrade`, to record the hashes of the
-// current wasms' chunks again, uploading any which are missing from the store
+// Run on start up, to upload any of the current wasms' chunks which are missing from the store and
+// record their hashes
 pub(crate) fn start_job() {
     ic_cdk_timers::set_timer(Duration::ZERO, async { start(false) });
 }
 
-// Called in `post_upgrade`, since earlier versions of this canister cleared the chunk store without
-// clearing the chunk hashes, so they can't be relied on until the chunks are checked
-pub(crate) fn clear_chunk_hashes(state: &mut RuntimeState) {
+fn clear_chunk_hashes(state: &mut RuntimeState) {
     for canister_type in CHILD_CANISTER_TYPES {
         if !state.data.child_canister_wasms.get(canister_type).chunks.is_empty() {
             state.data.child_canister_wasms.set_chunk_hashes(canister_type, Vec::new());
