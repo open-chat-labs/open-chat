@@ -24,6 +24,7 @@ import {
     __dirname,
     copyFile,
     generateCspForScripts,
+    generateStartupScript,
     initEnv,
     manualChunks,
     maybeStringify,
@@ -126,12 +127,6 @@ export default {
                 },
                 { find: "@dfinity/agent", replacement: "@icp-sdk/core/agent" },
                 { find: "@dfinity/auth-client", replacement: "@icp-sdk/auth/client" },
-                // svelte-i18n pulls in a ~250 KB Intl.getCanonicalLocales polyfill;
-                // every runtime we target has it natively.
-                {
-                    find: "@formatjs/intl-getcanonicallocales",
-                    replacement: path.resolve(__dirname, "src/utils/intlGetCanonicalLocales.ts"),
-                },
                 { find: "@src", replacement: path.resolve(__dirname, "src") },
                 { find: "@actions", replacement: path.resolve(__dirname, "src/actions") },
                 { find: "@i18n", replacement: path.resolve(__dirname, "src/i18n") },
@@ -332,12 +327,23 @@ export default {
                         : `window.dataLayer = window.dataLayer || [];
                     function gtag(){dataLayer.push(arguments);}`;
 
+                // Goes ahead of the font stylesheet in the <head>, as a script placed after a
+                // stylesheet does not run until that stylesheet has loaded, but behind the
+                // entry's preloads, so that what has to run first is asked for first.
+                const startupScript = generateStartupScript({
+                    chunks: files.js.filter((f) => f.type === "chunk"),
+                    version,
+                    mobileLayout: override(
+                        "OC_MOBILE_LAYOUT",
+                        JSON.stringify(process.env.OC_MOBILE_LAYOUT),
+                    ),
+                });
                 const inlineScripts = [
                     `window.OC_WEBSITE_VERSION = "${version}";`,
                     `var parcelRequire;`,
                     analyticsBody,
                 ];
-                const csp = generateCspForScripts(inlineScripts);
+                const csp = generateCspForScripts([startupScript, ...inlineScripts]);
 
                 const analyticsNoscript =
                     production && gaEnabled
@@ -372,13 +378,14 @@ export default {
                                 <link rel="apple-touch-startup-image" href="/_/raw/apple-touch-icon.png" />
                                 <link rel="apple-touch-icon" href="/_/raw/apple-touch-icon.png" />
                                 <link rel="icon" type="image/png" href="/icon.png" />
+                                ${modulePreloads}
+                                <script>${startupScript}</script>
                                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
                                 <link
                                     href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap"
                                     rel="stylesheet"
                                 />
-                                ${modulePreloads}
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
