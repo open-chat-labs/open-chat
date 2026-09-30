@@ -104,6 +104,14 @@ export function languageCode(locale: string | null | undefined): string {
     return (locale || "en").split("-")[0];
 }
 
+// Whether a svelte-i18n locale has translations a user could suggest corrections to. English is
+// what the translations are made from, and a language we have no translations for (eg. "sv-SE",
+// which a browser set to Swedish starts on) shows nothing but the English fallback.
+export function hasEditableTranslations(locale: string | null | undefined): boolean {
+    const code = languageCode(locale);
+    return code !== "en" && supportedLanguagesByCode[code] !== undefined;
+}
+
 // this can't be done in a loop from supportedLanguages because rollup won't understand that
 function registerLocaleLoaders() {
     register("en", () => import("./en.json"));
