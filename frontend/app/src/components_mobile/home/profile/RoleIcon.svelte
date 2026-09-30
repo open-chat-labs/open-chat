@@ -9,7 +9,7 @@
     }
 
     let { level, role, popup = false }: Props = $props();
-    let roleText = role !== undefined ? roleAsText(role) : undefined;
+    let roleText = $derived(role !== undefined ? roleAsText(role) : undefined);
 </script>
 
 {#if role !== undefined && role > ROLE_MEMBER}
