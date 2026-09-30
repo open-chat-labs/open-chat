@@ -6,10 +6,11 @@ import {
     type PublicDailyPuzzle,
     type ServedHint,
 } from "@client";
+import { flushSync } from "svelte";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import en from "../i18n/en.json";
 import { toastStore } from "../stores/toast";
-import { DailyPuzzleGame } from "./dailyPuzzle.svelte";
+import { DailyPuzzleGame, type HintButton } from "./dailyPuzzle.svelte";
 import { dailyPuzzleGame } from "./dailyPuzzleGames";
 
 const NUMBER = 20706;
@@ -475,6 +476,27 @@ describe("out of hints", () => {
     test("with a step left, a hint is still offered", () => {
         const g = build(userState({ hints: threeSteps.slice(1) }));
         expect(g.hintButton).toMatchObject({ kind: "hint", price: 25, hintsLeft: 1 });
+    });
+
+    // invariant 28. The screen reads the button through a $derived. The count comes from the
+    // server's state, which lands in the store after the hint call returns, so the button must
+    // follow the store: bought the last step, and it is off with nothing else on the board moving.
+    test("the hint button follows the server's count as it lands, with no other change", () => {
+        const g = build(userState({ hints: threeSteps.slice(1) }));
+        let screen: { readonly button: HintButton } | undefined;
+        const stop = $effect.root(() => {
+            const button = $derived(g.hintButton);
+            screen = {
+                get button() {
+                    return button;
+                },
+            };
+        });
+        expect(screen!.button).toMatchObject({ kind: "hint", hintsLeft: 1 });
+        dailyPuzzleStore.set({ puzzles: [puzzle], states: [userState({ hints: threeSteps })] });
+        flushSync();
+        expect(screen!.button).toEqual({ kind: "noneLeft" });
+        stop();
     });
 
     // invariant 19

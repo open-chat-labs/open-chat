@@ -176,6 +176,10 @@ export class DailyPuzzleGame {
     });
     solvedLocally = $derived.by(() => this.game.solved(this.model, this.state));
 
+    // The store's `.value` is not tracked by Svelte, so a $derived reading it straight would keep
+    // a stale hint count after a hint is bought (#9675 invariant 28): mirror it into state
+    #store = $state.raw(dailyPuzzleStore.value);
+    #unsubscribe: () => void;
     #dirty = false;
     #saveTimer: number | undefined;
     #disposed = false;
@@ -196,16 +200,18 @@ export class DailyPuzzleGame {
         this.state = this.#resume(userState);
         this.lastHint = [...(userState?.hints ?? [])].reverse().find((h) => !h.mistake);
         document.addEventListener("visibilitychange", this.#onVisibility);
+        this.#unsubscribe = dailyPuzzleStore.subscribe((v) => (this.#store = v));
     }
 
     dispose(): void {
         this.#disposed = true;
         document.removeEventListener("visibilitychange", this.#onVisibility);
+        this.#unsubscribe();
         this.flushSave();
     }
 
     get userState(): DailyPuzzleUserState | undefined {
-        return stateFor(dailyPuzzleStore.value, this.puzzle.gameId);
+        return stateFor(this.#store, this.puzzle.gameId);
     }
 
     get started(): boolean {
