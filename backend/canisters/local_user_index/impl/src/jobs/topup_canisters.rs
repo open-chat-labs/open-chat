@@ -1,7 +1,8 @@
 use crate::updates::c2c_notify_low_balance::top_up_child_canister;
-use crate::{RuntimeState, mutate_state, read_state};
+use crate::{CanisterToRefund, RuntimeState, jobs, mutate_state, read_state};
 use candid::Nat;
 use constants::DAY_IN_MS;
+use oc_error_codes::OCErrorCode;
 use per_round_timer::PerRoundTimer;
 use std::cell::RefCell;
 use std::time::Duration;
@@ -127,7 +128,7 @@ async fn run_async(canister_id: CanisterId) {
         Ok(status) => {
             // A community's canister only loses its code by being uninstalled, which the IC does
             // once a canister runs out of cycles. Topping it up can't bring its state back, so
-            // the community is deleted instead.
+            // the community is removed instead.
             if status.module_hash.is_none() && read_state(|state| state.data.local_communities.contains(&canister_id.into())) {
                 notify_community_uninstalled(canister_id.into()).await;
             } else if status.cycles < utils::cycles::MIN_CYCLES_BALANCE
@@ -140,7 +141,9 @@ async fn run_async(canister_id: CanisterId) {
     }
 }
 
-// Tells the GroupIndex, which deletes the community by calling back into `c2c_delete_community`
+// Tells the GroupIndex, which stops listing the community, then stops tracking it here. The
+// canister itself is kept, empty and still controlled by this canister, since it may hold tokens
+// (eg. unclaimed prizes) which deleting it would put beyond reach for good.
 async fn notify_community_uninstalled(community_id: CommunityId) {
     let (group_index_canister_id, upgrade_in_progress) = read_state(|state| {
         (
@@ -149,15 +152,37 @@ async fn notify_community_uninstalled(community_id: CommunityId) {
         )
     });
 
-    // An upgrade restarts the canister once it has failed, which would stop the canister being
-    // deleted, so this is left until the next check
+    // An upgrade of the community would record its failure after the community's failed upgrades
+    // had been cleared, so this is left until the next check. An upgrade can still start while the
+    // GroupIndex is being called, which is rare enough to live with.
     if upgrade_in_progress {
         return;
     }
 
     let args = group_index_canister::c2c_notify_community_uninstalled::Args { community_id };
     match group_index_canister_c2c_client::c2c_notify_community_uninstalled(group_index_canister_id, &args).await {
-        Ok(UnitResult::Success) => info!(%community_id, "Uninstalled community deleted"),
-        response => error!(%community_id, ?response, "Failed to delete uninstalled community"),
+        Ok(UnitResult::Success) => {}
+        // The GroupIndex removed the community on an earlier notification
+        Ok(UnitResult::Error(error)) if error.matches_code(OCErrorCode::CommunityNotFound) => {}
+        response => {
+            error!(%community_id, ?response, "Failed to notify the GroupIndex of an uninstalled community");
+            return;
+        }
     }
+
+    mutate_state(|state| {
+        if state.data.local_communities.delete(&community_id) {
+            let canister_id = community_id.into();
+            state.data.communities_requiring_upgrade.remove_failed(&canister_id);
+
+            // Any cycles the canister still holds are refunded, as for a deleted user's canister
+            state.data.cycles_refund_queue.push_back(CanisterToRefund {
+                canister_id,
+                attempt: 0,
+                retry_after: 0,
+            });
+            jobs::refund_cycles::start_job_if_required(state, None);
+            info!(%community_id, "Uninstalled community removed");
+        }
+    });
 }

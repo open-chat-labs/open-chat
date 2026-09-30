@@ -15,9 +15,7 @@ fn c2c_delete_community(args: Args) -> Response {
 
 fn c2c_delete_community_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if state.data.local_communities.delete(&args.community_id) {
-        let canister_id = args.community_id.into();
-        state.data.communities_requiring_upgrade.remove_failed(&canister_id);
-        spawn_delete_canister(canister_id);
+        spawn_delete_canister(args.community_id.into());
         Ok(())
     } else {
         Err(OCErrorCode::CommunityNotFound.into())

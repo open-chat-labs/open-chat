@@ -6,6 +6,7 @@ use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
+use test_case::test_case;
 use testing::rng::random_string;
 use types::{CanisterId, CommunityId, HttpRequest};
 
@@ -121,8 +122,9 @@ fn user_canister_notified_of_community_deleted() {
     );
 }
 
-#[test]
-fn uninstalled_community_is_deleted() {
+#[test_case(true; "public")]
+#[test_case(false; "private")]
+fn uninstalled_community_is_removed(is_public: bool) {
     use local_user_index_canister::group_and_community_summary_updates_v2 as summary_updates;
 
     let mut wrapper = ENV.deref().get();
@@ -134,12 +136,11 @@ fn uninstalled_community_is_deleted() {
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
     let name = random_string();
-    let live_name = random_string();
-    let community_id = client::user::happy_path::create_community(env, &owner, &name, true, vec![random_string()]);
-    let live_community_id = client::user::happy_path::create_community(env, &owner, &live_name, true, vec![random_string()]);
+    let community_id = client::user::happy_path::create_community(env, &owner, &name, is_public, vec![random_string()]);
+    let live_community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), is_public, vec![random_string()]);
     let local_user_index = canister_ids.local_user_index(env, community_id);
-
-    assert!(is_listed(env, &owner, canister_ids.group_index, &name, community_id));
+    let group_index = canister_ids.group_index;
 
     // This is the state the IC leaves a canister in once it has run out of cycles
     env.uninstall_canister(community_id.into(), Some(local_user_index)).unwrap();
@@ -152,19 +153,20 @@ fn uninstalled_community_is_deleted() {
         env.advance_time(Duration::from_secs(8 * 24 * 60 * 60));
         for _ in 0..3000 {
             env.tick();
-            if !env.canister_exists(community_id.into()) {
+            if is_deleted(env, group_index, community_id) {
                 deleted = true;
                 break 'outer;
             }
         }
     }
-    assert!(deleted, "The uninstalled community's canister was not deleted");
+    assert!(deleted, "The GroupIndex was not told that the community had been uninstalled");
+    if is_public {
+        assert!(!is_listed(env, &owner, group_index, &name, community_id));
+    }
+
+    // The LocalUserIndex stops tracking the community once the GroupIndex has answered. Reporting
+    // it as not found is what has its members' apps drop it.
     tick_many(env, 5);
-
-    // The GroupIndex no longer lists the community
-    assert!(!is_listed(env, &owner, canister_ids.group_index, &name, community_id));
-
-    // The LocalUserIndex reporting the community as not found is what has its members' apps drop it
     let summary_updates::Response::Success(result) = client::local_user_index::group_and_community_summary_updates_v2(
         env,
         owner.principal,
@@ -181,15 +183,11 @@ fn uninstalled_community_is_deleted() {
     );
     assert_eq!(result.not_found, vec![CanisterId::from(community_id)]);
 
+    // The canister is kept, since it may hold tokens which deleting it would strand
+    assert!(env.canister_exists(community_id.into()));
+
     // A community whose canister still has its code is left alone
-    assert!(env.canister_exists(live_community_id.into()));
-    assert!(is_listed(
-        env,
-        &owner,
-        canister_ids.group_index,
-        &live_name,
-        live_community_id
-    ));
+    assert!(!is_deleted(env, group_index, live_community_id));
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
@@ -313,4 +311,20 @@ fn is_listed(env: &PocketIc, user: &User, group_index: Principal, name: &str, co
         }
         response => panic!("'explore_communities' error: {response:?}"),
     }
+}
+
+// Whether the GroupIndex has recorded the community as deleted
+fn is_deleted(env: &PocketIc, group_index: Principal, community_id: CommunityId) -> bool {
+    let group_index_canister::active_groups::Response::Success(result) = client::group_index::active_groups(
+        env,
+        Principal::anonymous(),
+        group_index,
+        &group_index_canister::active_groups::Args {
+            group_ids: Vec::new(),
+            community_ids: vec![community_id],
+            active_since: None,
+        },
+    );
+
+    result.deleted_communities.iter().any(|c| c.id == community_id)
 }
