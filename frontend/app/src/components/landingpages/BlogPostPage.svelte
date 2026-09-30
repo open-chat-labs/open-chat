@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Loading from "@shared_components/Loading.svelte";
     import BlogPost from "./blog/BlogPost.svelte";
     import { postsBySlug } from "./blog/posts";
 
@@ -16,7 +17,13 @@
         <BlogPost>
             <h1>{post.title}</h1>
             <div class="who_when">by {post.author}, on {post.date.toLocaleDateString()}</div>
-            <post.component />
+            {#await post.load()}
+                <div class="loading">
+                    <Loading />
+                </div>
+            {:then { default: Body }}
+                <Body />
+            {/await}
         </BlogPost>
     {:else}
         <div class="not-found">
@@ -45,6 +52,10 @@
         .who_when {
             margin-bottom: $sp5;
         }
+    }
+
+    .loading {
+        height: 30vh;
     }
 
     .not-found {

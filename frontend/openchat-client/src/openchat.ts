@@ -314,6 +314,7 @@ import {
     type ThreadSummary,
     type ThreadSyncDetails,
     type TipMessageResponse,
+    type TokenInfo,
     type TokenSwapStatusResponse,
     type TransferSuccess,
     type UpdateGroupResponse,
@@ -540,6 +541,7 @@ import {
     confirmedEventIndexesLoaded,
     containsReaction,
     createMessage,
+    detailsLastUpdated,
     diffGroupPermissions,
     doesMessageFailFilter,
     eventIndexesLoaded,
@@ -867,7 +869,7 @@ export class OpenChat {
         return (
             details === undefined ||
             !chatIdentifiersEqual(details.chatId, serverChat.id) ||
-            details.timestamp < serverChat.lastUpdated
+            details.timestamp < detailsLastUpdated(serverChat)
         );
     }
 
@@ -4009,11 +4011,24 @@ export class OpenChat {
 
     async #loadCommunityDetails(community: CommunitySummary): Promise<void> {
         const id = community.id;
+        const held = selectedServerCommunityStore.value;
+        const detailsSyncedUpTo =
+            held !== undefined && communityIdentifiersEqual(held.communityId, id)
+                ? held.timestamp
+                : undefined;
+        const lastUpdated = detailsLastUpdated(community);
+        if (detailsSyncedUpTo !== undefined && detailsSyncedUpTo >= lastUpdated) {
+            // The details held are already up to date
+            return;
+        }
+        // If the details are already held the worker only says whether they have changed, rather
+        // than sending every member across to be rebuilt into the stores
         const resp: CommunityDetailsResponse = await this.#worker
             .send({
                 kind: "getCommunityDetails",
                 id,
-                communityLastUpdated: community.lastUpdated,
+                detailsLastUpdated: lastUpdated,
+                detailsSyncedUpTo,
             })
             .catch(() => ({ kind: "failure" }));
         if (resp.kind !== "failure") {
@@ -4035,15 +4050,15 @@ export class OpenChat {
                 return;
             }
 
-            // this should not actually happen because we should just get back the previous value
-            // is there were no updates
             if (resp.kind === "success_no_updates") {
-                selectedServerCommunityStore.update((state) => {
-                    if (state) {
-                        state.timestamp = resp.lastUpdated;
-                    }
-                    return state;
-                });
+                // Nothing reads the timestamp reactively, so it is set without the store telling
+                // its subscribers, which would have everything showing a member work out again
+                if (
+                    currentStoreValue !== undefined &&
+                    communityIdentifiersEqual(currentStoreValue.communityId, community.id)
+                ) {
+                    currentStoreValue.timestamp = resp.lastUpdated;
+                }
             } else {
                 const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
 
@@ -4073,14 +4088,27 @@ export class OpenChat {
         switch (serverChat.kind) {
             case "group_chat":
             case "channel":
+                const held = selectedServerChatStore.value;
+                const detailsSyncedUpTo =
+                    held !== undefined && chatIdentifiersEqual(held.chatId, serverChat.id)
+                        ? held.timestamp
+                        : undefined;
+                const lastUpdated = detailsLastUpdated(serverChat);
+                if (detailsSyncedUpTo !== undefined && detailsSyncedUpTo >= lastUpdated) {
+                    // The details held are already up to date
+                    return;
+                }
+                // As for the community's details, if these are already held the worker only says
+                // whether they have changed
                 const resp: GroupChatDetailsResponse = await this.#worker
                     .send({
                         kind: "getGroupDetails",
                         chatId: serverChat.id,
-                        chatLastUpdated: serverChat.lastUpdated,
+                        detailsLastUpdated: lastUpdated,
+                        detailsSyncedUpTo,
                     })
                     .catch(CommonResponses.failure);
-                if ("members" in resp) {
+                if ("members" in resp || resp.kind === "success_no_updates") {
                     if (!chatIdentifiersEqual(serverChat.id, selectedChatIdStore.value)) {
                         console.warn(
                             "Attempting to set chat details on the wrong chat - probably a stale response",
@@ -4096,6 +4124,16 @@ export class OpenChat {
                         resp.timestamp <= currentStoreValue.timestamp
                     ) {
                         // The store already has the latest updates, exiting
+                        return;
+                    }
+                    if (!("members" in resp)) {
+                        // Set without the store telling its subscribers, as for the community
+                        if (
+                            currentStoreValue !== undefined &&
+                            chatIdentifiersEqual(currentStoreValue.chatId, serverChat.id)
+                        ) {
+                            currentStoreValue.timestamp = resp.timestamp;
+                        }
                         return;
                     }
                     const members = resp.members.filter((m) => !m.lapsed);
@@ -7531,10 +7569,13 @@ export class OpenChat {
             .catch(() => false);
     }
 
+    // `token1` and `token1Amount` are what accepting the swap costs, as the swap's message has them
     async acceptP2PSwap(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
+        token1: TokenInfo,
+        token1Amount: bigint,
         fromAccount?: string,
     ): Promise<AcceptP2PSwapResponse> {
         let pin: string | undefined = undefined;
@@ -7556,6 +7597,8 @@ export class OpenChat {
                 chatId,
                 threadRootMessageIndex,
                 messageId,
+                token1,
+                token1Amount,
                 pin,
                 newAchievement,
                 fromAccount,

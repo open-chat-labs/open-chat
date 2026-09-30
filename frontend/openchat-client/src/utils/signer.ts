@@ -9,7 +9,7 @@ import { Principal } from "@icp-sdk/core/principal";
 import { Signer, type PermissionScope, type PermissionState } from "@icp-sdk/signer";
 import { SignerAgent } from "@icp-sdk/signer/agent";
 import { PostMessageTransport } from "@icp-sdk/signer/web";
-import { encodeIcrcAccount, isMainnet, type IcrcAccount } from "@shared";
+import { APPROVAL_VALIDITY_MS, encodeIcrcAccount, isMainnet, type IcrcAccount } from "@shared";
 
 export type SignerWalletId = "oisy" | "nfid";
 
@@ -43,11 +43,6 @@ const REQUIRED_SCOPES: PermissionScope[] = [
     { method: "icrc27_accounts" },
     { method: "icrc49_call_canister" },
 ];
-
-// How long an approval we request stays spendable. The allowance is the whole of the access the
-// user grants us, so it should outlive the payment it is for and nothing more - an approval left
-// standing is one we could spend at any point later.
-export const APPROVAL_VALIDITY_MS = 10 * 60 * 1000;
 
 const NANOS_PER_MILLISECOND = 1_000_000n;
 

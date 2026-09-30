@@ -44,6 +44,37 @@ pub struct UserNotification<T = UserNotificationPayload> {
     pub notification: T,
 }
 
+// The most recipients a single notification is sent to
+const MAX_RECIPIENTS_PER_USER_NOTIFICATION: usize = 5_000;
+
+impl<T: Clone> UserNotification<T> {
+    // A notification in a large chat can have as many recipients as the chat has members (eg. an
+    // @everyone mention), so it is split into several, each with a bounded number of recipients,
+    // so that the size of a call carrying them doesn't grow with the size of the chat
+    pub fn split_by_recipients(sender: Option<UserId>, recipients: Vec<UserId>, notification: T) -> Vec<Self> {
+        if recipients.is_empty() {
+            Vec::new()
+        } else if recipients.len() <= MAX_RECIPIENTS_PER_USER_NOTIFICATION {
+            vec![UserNotification {
+                sender,
+                recipients,
+                notification,
+            }]
+        } else {
+            // Each part is copied into a vec of its own size, rather than being split off the
+            // original, which would leave it holding the capacity of everything not yet split off
+            recipients
+                .chunks(MAX_RECIPIENTS_PER_USER_NOTIFICATION)
+                .map(|chunk| UserNotification {
+                    sender,
+                    recipients: chunk.to_vec(),
+                    notification: notification.clone(),
+                })
+                .collect()
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BotNotification {
     #[serde(rename = "e")]
@@ -634,6 +665,45 @@ impl Debug for UserNotificationEnvelope {
             .field("notification_bytes", &self.notification_bytes.len())
             .field("timestamp", &self.timestamp)
             .finish()
+    }
+}
+
+#[cfg(test)]
+mod split_by_recipients_tests {
+    use super::*;
+
+    const MAX: usize = MAX_RECIPIENTS_PER_USER_NOTIFICATION;
+
+    #[test]
+    fn each_recipient_is_in_exactly_one_notification() {
+        for (count, expected_sizes) in [
+            (0, vec![]),
+            (1, vec![1]),
+            (MAX, vec![MAX]),
+            (MAX + 1, vec![MAX, 1]),
+            (3 * MAX, vec![MAX, MAX, MAX]),
+        ] {
+            let sender: UserId = Principal::from_slice(&[0]).into();
+            let recipients: Vec<UserId> = (1..=count as u32)
+                .map(|i| Principal::from_slice(&i.to_be_bytes()).into())
+                .collect();
+
+            let notifications = UserNotification::split_by_recipients(Some(sender), recipients.clone(), "payload");
+
+            let sizes: Vec<_> = notifications.iter().map(|n| n.recipients.len()).collect();
+            assert_eq!(sizes, expected_sizes);
+            // No part holds on to the memory of the recipients in the other parts
+            if count > MAX {
+                assert!(notifications.iter().all(|n| n.recipients.capacity() <= MAX));
+            }
+            assert!(
+                notifications
+                    .iter()
+                    .all(|n| n.sender == Some(sender) && n.notification == "payload")
+            );
+            let all_recipients: Vec<_> = notifications.into_iter().flat_map(|n| n.recipients).collect();
+            assert_eq!(all_recipients, recipients);
+        }
     }
 }
 

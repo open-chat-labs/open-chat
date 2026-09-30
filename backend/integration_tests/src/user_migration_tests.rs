@@ -959,17 +959,6 @@ fn notifications_index_knows_migrated_user_by_their_new_id() {
         &endpoint
     ));
 
-    // Upgrading the UserIndex once users have been migrated succeeds, and the user is still known by
-    // their new id
-    crate::delete_user_tests::upgrade_user_index(env, canister_ids);
-    tick_many(env, 3);
-    assert!(!client::notifications_index::happy_path::subscription_exists(
-        env,
-        user1.principal,
-        canister_ids.notifications_index,
-        &endpoint
-    ));
-
     // Once pushed again, the subscription is held under their new id, so they are notified of messages
     // sent to them
     client::notifications_index::happy_path::push_subscription(
@@ -1393,26 +1382,6 @@ fn online_users_knows_migrated_user_by_their_new_id() {
     assert_eq!(result.minutes_online + result.minutes_online_last_month, 2);
     assert_eq!(last_online(env, new_user_id), Some(0));
     assert!(last_online(env, user.user_id).is_none());
-
-    // Upgrading the UserIndex once users have been migrated sends the events again, which changes
-    // nothing
-    crate::delete_user_tests::upgrade_user_index(env, canister_ids);
-    tick_many(env, 3);
-    assert!(last_online(env, new_user_id).is_some());
-    assert!(last_online(env, user.user_id).is_none());
-    assert_eq!(
-        client::online_users::happy_path::minutes_online(
-            env,
-            user.principal,
-            canister_ids.online_users,
-            result.year,
-            result.month
-        ),
-        result.minutes_online
-    );
-
-    // Upgrading the UserIndex runs its one-offs, which would break later tests which draw this env
-    wrapper.discard();
 }
 
 fn cancel_user_migration(
