@@ -4026,7 +4026,7 @@ export class OpenChat {
             .send({
                 kind: "getCommunityDetails",
                 id,
-                communityLastUpdated: lastUpdated,
+                detailsLastUpdated: lastUpdated,
                 detailsSyncedUpTo,
             })
             .catch(() => ({ kind: "failure" }));
@@ -4103,7 +4103,7 @@ export class OpenChat {
                     .send({
                         kind: "getGroupDetails",
                         chatId: serverChat.id,
-                        chatLastUpdated: lastUpdated,
+                        detailsLastUpdated: lastUpdated,
                         detailsSyncedUpTo,
                     })
                     .catch(CommonResponses.failure);

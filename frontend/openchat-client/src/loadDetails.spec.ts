@@ -254,7 +254,7 @@ describe("loading the selected community's details", () => {
         setSummary(community(10n));
         responses.push(details(10n, [member("a"), member("b")]));
         await load();
-        expect(requests[0].communityLastUpdated).toBe(10n);
+        expect(requests[0].detailsLastUpdated).toBe(10n);
 
         // The community has been updated since, by a message say, but not its details
         await load();
@@ -271,7 +271,7 @@ describe("loading the selected community's details", () => {
         responses.push(details(20n, [member("a"), member("b"), member("c")]));
         await load();
 
-        expect(requests[1].communityLastUpdated).toBe(20n);
+        expect(requests[1].detailsLastUpdated).toBe(20n);
         expect(requests[1].detailsSyncedUpTo).toBe(10n);
         expect([...selectedCommunityMembersStore.value.keys()]).toEqual(["a", "b", "c"]);
     });
@@ -385,7 +385,7 @@ describe("loading the selected chat's details", () => {
         setSummary(groupChat(10n));
         responses.push(chatDetails(10n, [member("a"), member("b")]));
         await load();
-        expect(requests[0].chatLastUpdated).toBe(10n);
+        expect(requests[0].detailsLastUpdated).toBe(10n);
 
         // The chat has been updated since, by a message say, but not its details
         await load();
@@ -402,7 +402,7 @@ describe("loading the selected chat's details", () => {
         responses.push(chatDetails(20n, [member("a"), member("b"), member("c")]));
         await load();
 
-        expect(requests[1].chatLastUpdated).toBe(20n);
+        expect(requests[1].detailsLastUpdated).toBe(20n);
         expect(requests[1].detailsSyncedUpTo).toBe(10n);
         expect([...selectedChatMembersStore.value.keys()]).toEqual(["a", "b", "c"]);
     });
