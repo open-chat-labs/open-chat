@@ -213,7 +213,7 @@ describe("loading the selected community's details", () => {
         await load();
 
         expect(requests).toHaveLength(1);
-        expect(requests[0].heldTimestamp).toBeUndefined();
+        expect(requests[0].detailsSyncedUpTo).toBeUndefined();
         expect([...selectedCommunityMembersStore.value.keys()]).toEqual(["a", "b"]);
         expect(selectedServerCommunityStore.value?.timestamp).toBe(10n);
     });
@@ -230,7 +230,7 @@ describe("loading the selected community's details", () => {
         responses.push({ kind: "success_no_updates", lastUpdated: 20n });
         await load();
 
-        expect(requests[1].heldTimestamp).toBe(10n);
+        expect(requests[1].detailsSyncedUpTo).toBe(10n);
         expect(published).toBe(1);
         expect(selectedCommunityMembersStore.value).toBe(members);
         // but they are now known to be good up to the later timestamp
@@ -245,7 +245,7 @@ describe("loading the selected community's details", () => {
         responses.push(details(20n, [member("a"), member("b"), member("c")]));
         await load();
 
-        expect(requests[1].heldTimestamp).toBe(10n);
+        expect(requests[1].detailsSyncedUpTo).toBe(10n);
         expect([...selectedCommunityMembersStore.value.keys()]).toEqual(["a", "b", "c"]);
         expect(selectedServerCommunityStore.value?.timestamp).toBe(20n);
     });
@@ -272,7 +272,7 @@ describe("loading the selected community's details", () => {
         await load();
 
         expect(requests[1].communityLastUpdated).toBe(20n);
-        expect(requests[1].heldTimestamp).toBe(10n);
+        expect(requests[1].detailsSyncedUpTo).toBe(10n);
         expect([...selectedCommunityMembersStore.value.keys()]).toEqual(["a", "b", "c"]);
     });
 });
@@ -344,7 +344,7 @@ describe("loading the selected chat's details", () => {
         await load();
 
         expect(requests).toHaveLength(1);
-        expect(requests[0].heldTimestamp).toBeUndefined();
+        expect(requests[0].detailsSyncedUpTo).toBeUndefined();
         expect([...selectedChatMembersStore.value.keys()]).toEqual(["a", "b"]);
         expect(selectedServerChatStore.value?.timestamp).toBe(10n);
     });
@@ -361,7 +361,7 @@ describe("loading the selected chat's details", () => {
         responses.push({ kind: "success_no_updates", timestamp: 20n });
         await load();
 
-        expect(requests[1].heldTimestamp).toBe(10n);
+        expect(requests[1].detailsSyncedUpTo).toBe(10n);
         expect(published).toBe(1);
         expect(selectedChatMembersStore.value).toBe(members);
         // but they are now known to be good up to the later timestamp
@@ -376,7 +376,7 @@ describe("loading the selected chat's details", () => {
         responses.push(chatDetails(20n, [member("a"), member("b"), member("c")]));
         await load();
 
-        expect(requests[1].heldTimestamp).toBe(10n);
+        expect(requests[1].detailsSyncedUpTo).toBe(10n);
         expect([...selectedChatMembersStore.value.keys()]).toEqual(["a", "b", "c"]);
         expect(selectedServerChatStore.value?.timestamp).toBe(20n);
     });
@@ -403,7 +403,7 @@ describe("loading the selected chat's details", () => {
         await load();
 
         expect(requests[1].chatLastUpdated).toBe(20n);
-        expect(requests[1].heldTimestamp).toBe(10n);
+        expect(requests[1].detailsSyncedUpTo).toBe(10n);
         expect([...selectedChatMembersStore.value.keys()]).toEqual(["a", "b", "c"]);
     });
 
@@ -417,7 +417,7 @@ describe("loading the selected chat's details", () => {
         let reply: (resp: GroupChatDetailsResponse) => void = () => {};
         responses.push(new Promise((resolve) => (reply = resolve)) as never);
         await load();
-        expect(requests[1].heldTimestamp).toBe(10n);
+        expect(requests[1].detailsSyncedUpTo).toBe(10n);
         selectedServerChatStore.update((state) => {
             if (state !== undefined) state.chatId = other;
             return state;
@@ -441,7 +441,7 @@ describe("loading the selected chat's details", () => {
         responses.push(chatDetails(5n, [member("b")]));
         await load();
 
-        expect(requests[1].heldTimestamp).toBeUndefined();
+        expect(requests[1].detailsSyncedUpTo).toBeUndefined();
         expect([...selectedChatMembersStore.value.keys()]).toEqual(["b"]);
     });
 });

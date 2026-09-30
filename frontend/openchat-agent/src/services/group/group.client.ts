@@ -581,18 +581,18 @@ export class GroupClient
         );
     }
 
-    // A caller which already holds the details passes the timestamp they were good up to as
-    // `heldTimestamp`, and is told only that they still are, unless they have changed
+    // A caller which already holds the details passes the time up to which they are known to be up
+    // to date as `detailsSyncedUpTo`, and is told only that they still are, unless they have changed
     getGroupDetails(
         groupId: string,
         chatLastUpdated: bigint,
-        heldTimestamp?: bigint,
+        detailsSyncedUpTo?: bigint,
     ): Promise<GroupChatDetailsResponse> {
         return loadGroupDetails(
             this.chatsDb,
             groupId,
             chatLastUpdated,
-            heldTimestamp,
+            detailsSyncedUpTo,
             () =>
                 this.query(
                     groupId,

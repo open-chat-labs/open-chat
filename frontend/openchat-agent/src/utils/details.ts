@@ -26,22 +26,22 @@ type Updated<T> = Extract<T, { kind: "success" }>;
  * else from the cache plus whatever the canister says has changed since, else in full from the
  * canister.
  *
- * A caller which already holds the details passes the timestamp they were good up to as
- * `heldTimestamp`, and is told only that they still are, unless they have changed. The details can
- * run to tens of thousands of members and an active chat asks after every message, so in that case
- * the cached details are neither read nor written, and nothing is handed back to be copied to the
- * main thread and rebuilt into its stores.
+ * A caller which already holds the details passes the time up to which they are known to be up to
+ * date as `detailsSyncedUpTo`, and is told only that they still are, unless they have changed. The
+ * details can run to tens of thousands of members and an active chat asks after every message, so
+ * in that case the cached details are neither read nor written, and nothing is handed back to be
+ * copied to the main thread and rebuilt into its stores.
  *
- * What the caller holds is taken to be the cached details only if `heldTimestamp` is no earlier
- * than theirs. It was given them when they were cached, and may since have been told they were
- * still good at some later time. Otherwise it holds something else (the response with the cached
- * details never reached it, say) and is given the details in full.
+ * What the caller holds is taken to be the cached details only if `detailsSyncedUpTo` is no
+ * earlier than their timestamp. It was given them when they were cached, and may since have been
+ * told they were still up to date at some later time. Otherwise it holds something else (the
+ * response with the cached details never reached it, say) and is given the details in full.
  */
 export async function loadGroupDetails(
     cache: GroupDetailsCache,
     cacheKey: string,
     chatLastUpdated: bigint,
-    heldTimestamp: bigint | undefined,
+    detailsSyncedUpTo: bigint | undefined,
     initial: () => Promise<GroupChatDetailsResponse>,
     updatesSince: (since: bigint) => Promise<GroupChatDetailsUpdatesResponse>,
 ): Promise<GroupChatDetailsResponse> {
@@ -50,21 +50,21 @@ export async function loadGroupDetails(
     const cachedTimestamp = cache.cachedGroupDetailsTimestamp(cacheKey);
 
     if (
-        heldTimestamp !== undefined &&
+        detailsSyncedUpTo !== undefined &&
         cachedTimestamp !== undefined &&
-        heldTimestamp >= cachedTimestamp
+        detailsSyncedUpTo >= cachedTimestamp
     ) {
-        if (heldTimestamp >= chatLastUpdated || offline()) {
-            return { kind: "success_no_updates", timestamp: heldTimestamp };
+        if (detailsSyncedUpTo >= chatLastUpdated || offline()) {
+            return { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
         }
         const updates = await updatesSince(cachedTimestamp);
         if (updates.kind === "failure") {
-            return { kind: "success_no_updates", timestamp: heldTimestamp };
+            return { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
         }
         if (updates.kind === "success_no_updates") {
             return {
                 kind: "success_no_updates",
-                timestamp: later(heldTimestamp, updates.timestamp),
+                timestamp: later(detailsSyncedUpTo, updates.timestamp),
             };
         }
         fetched = updates;
@@ -111,7 +111,7 @@ export async function loadCommunityDetails(
     cache: CommunityDetailsCache,
     communityId: string,
     communityLastUpdated: bigint,
-    heldTimestamp: bigint | undefined,
+    detailsSyncedUpTo: bigint | undefined,
     initial: () => Promise<CommunityDetailsResponse>,
     updatesSince: (since: bigint) => Promise<CommunityDetailsUpdatesResponse>,
 ): Promise<CommunityDetailsResponse> {
@@ -119,21 +119,21 @@ export async function loadCommunityDetails(
     const cachedTimestamp = cache.cachedCommunityDetailsTimestamp(communityId);
 
     if (
-        heldTimestamp !== undefined &&
+        detailsSyncedUpTo !== undefined &&
         cachedTimestamp !== undefined &&
-        heldTimestamp >= cachedTimestamp
+        detailsSyncedUpTo >= cachedTimestamp
     ) {
-        if (heldTimestamp >= communityLastUpdated || offline()) {
-            return { kind: "success_no_updates", lastUpdated: heldTimestamp };
+        if (detailsSyncedUpTo >= communityLastUpdated || offline()) {
+            return { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
         }
         const updates = await updatesSince(cachedTimestamp);
         if (updates.kind === "failure") {
-            return { kind: "success_no_updates", lastUpdated: heldTimestamp };
+            return { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
         }
         if (updates.kind === "success_no_updates") {
             return {
                 kind: "success_no_updates",
-                lastUpdated: later(heldTimestamp, updates.lastUpdated),
+                lastUpdated: later(detailsSyncedUpTo, updates.lastUpdated),
             };
         }
         fetched = updates;
