@@ -760,13 +760,13 @@ export class CommunityClient
     // to date as `detailsSyncedUpTo`, and is told only that they still are, unless they have changed
     getCommunityDetails(
         communityId: string,
-        communityLastUpdated: bigint,
+        detailsLastUpdated: bigint,
         detailsSyncedUpTo?: bigint,
     ): Promise<CommunityDetailsResponse> {
         return loadCommunityDetails(
             this.chatsDb,
             communityId,
-            communityLastUpdated,
+            detailsLastUpdated,
             detailsSyncedUpTo,
             () =>
                 this.query(
@@ -798,13 +798,13 @@ export class CommunityClient
     // `detailsSyncedUpTo`
     getChannelDetails(
         chatId: ChannelIdentifier,
-        chatLastUpdated: bigint,
+        detailsLastUpdated: bigint,
         detailsSyncedUpTo?: bigint,
     ): Promise<GroupChatDetailsResponse> {
         return loadGroupDetails(
             this.chatsDb,
             `${chatId.communityId}_${chatId.channelId}`,
-            chatLastUpdated,
+            detailsLastUpdated,
             detailsSyncedUpTo,
             () =>
                 this.query(

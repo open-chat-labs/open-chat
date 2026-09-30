@@ -436,7 +436,7 @@ function getAction(
         case "getGroupDetails":
             return agent.getGroupDetails(
                 payload.chatId,
-                payload.chatLastUpdated,
+                payload.detailsLastUpdated,
                 payload.detailsSyncedUpTo,
             );
 
@@ -1028,7 +1028,7 @@ function getAction(
         case "getCommunityDetails":
             return agent.communityClient.getCommunityDetails(
                 payload.id.communityId,
-                payload.communityLastUpdated,
+                payload.detailsLastUpdated,
                 payload.detailsSyncedUpTo,
             );
 

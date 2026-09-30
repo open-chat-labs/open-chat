@@ -540,6 +540,7 @@ import {
     confirmedEventIndexesLoaded,
     containsReaction,
     createMessage,
+    detailsLastUpdated,
     diffGroupPermissions,
     doesMessageFailFilter,
     eventIndexesLoaded,
@@ -867,7 +868,7 @@ export class OpenChat {
         return (
             details === undefined ||
             !chatIdentifiersEqual(details.chatId, serverChat.id) ||
-            details.timestamp < serverChat.lastUpdated
+            details.timestamp < detailsLastUpdated(serverChat)
         );
     }
 
@@ -4009,18 +4010,24 @@ export class OpenChat {
 
     async #loadCommunityDetails(community: CommunitySummary): Promise<void> {
         const id = community.id;
+        const held = selectedServerCommunityStore.value;
+        const detailsSyncedUpTo =
+            held !== undefined && communityIdentifiersEqual(held.communityId, id)
+                ? held.timestamp
+                : undefined;
+        const lastUpdated = detailsLastUpdated(community);
+        if (detailsSyncedUpTo !== undefined && detailsSyncedUpTo >= lastUpdated) {
+            // The details held are already up to date
+            return;
+        }
         // If the details are already held the worker only says whether they have changed, rather
         // than sending every member across to be rebuilt into the stores
-        const held = selectedServerCommunityStore.value;
         const resp: CommunityDetailsResponse = await this.#worker
             .send({
                 kind: "getCommunityDetails",
                 id,
-                communityLastUpdated: community.lastUpdated,
-                detailsSyncedUpTo:
-                    held !== undefined && communityIdentifiersEqual(held.communityId, id)
-                        ? held.timestamp
-                        : undefined,
+                detailsLastUpdated: lastUpdated,
+                detailsSyncedUpTo,
             })
             .catch(() => ({ kind: "failure" }));
         if (resp.kind !== "failure") {
@@ -4080,18 +4087,24 @@ export class OpenChat {
         switch (serverChat.kind) {
             case "group_chat":
             case "channel":
+                const held = selectedServerChatStore.value;
+                const detailsSyncedUpTo =
+                    held !== undefined && chatIdentifiersEqual(held.chatId, serverChat.id)
+                        ? held.timestamp
+                        : undefined;
+                const lastUpdated = detailsLastUpdated(serverChat);
+                if (detailsSyncedUpTo !== undefined && detailsSyncedUpTo >= lastUpdated) {
+                    // The details held are already up to date
+                    return;
+                }
                 // As for the community's details, if these are already held the worker only says
                 // whether they have changed
-                const held = selectedServerChatStore.value;
                 const resp: GroupChatDetailsResponse = await this.#worker
                     .send({
                         kind: "getGroupDetails",
                         chatId: serverChat.id,
-                        chatLastUpdated: serverChat.lastUpdated,
-                        detailsSyncedUpTo:
-                            held !== undefined && chatIdentifiersEqual(held.chatId, serverChat.id)
-                                ? held.timestamp
-                                : undefined,
+                        detailsLastUpdated: lastUpdated,
+                        detailsSyncedUpTo,
                     })
                     .catch(CommonResponses.failure);
                 if ("members" in resp || resp.kind === "success_no_updates") {

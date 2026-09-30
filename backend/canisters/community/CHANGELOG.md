@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Accept the `previous_user_ids` of a user joining via `c2c_join_community` or `c2c_join_channel`, and if the user was a member of the community under any of them, cache their migrations to the user's current id ([#9565](https://github.com/open-chat-labs/open-chat/pull/9565))
 - Act on `UserIdMigrated`, moving everything held under the user's old id (their membership of the community and its channels, block, invitations, metrics, etc) onto their new id ([#9572](https://github.com/open-chat-labs/open-chat/pull/9572))
 - Carry over an imported group's former members, other than those in the community, and its cached migrated user ids, if the group exported them ([#9571](https://github.com/open-chat-labs/open-chat/pull/9571))
+- Tell clients when the details of the community, and of each channel, last changed ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 
 ### Changed
 
@@ -67,6 +68,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Ignore swap status notifications whose swap id doesn't match the swap on the message they name, since anyone can create a swap in the escrow canister naming any message and then cancel it ([#9530](https://github.com/open-chat-labs/open-chat/pull/9530))
 - Stop the `suppressed` and `@everyone` flags being swapped when a bot finalises a message, which made suppressed messages notify everyone and `@everyone` messages notify no one ([#9573](https://github.com/open-chat-labs/open-chat/pull/9573))
 - Process the jobs which expire members or join them to new public channels in batches to avoid exceeding the instruction limit in large communities ([#9659](https://github.com/open-chat-labs/open-chat/pull/9659))
+- Tell clients that a pinned message is no longer pinned when it is deleted ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 
 ## [[2.0.2045](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2045-community)] - 2026-08-26
 

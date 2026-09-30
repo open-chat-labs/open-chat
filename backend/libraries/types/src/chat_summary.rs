@@ -100,6 +100,12 @@ pub struct GroupCanisterGroupChatSummary {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
     pub last_updated: TimestampMillis,
+    // When the details returned by `selected_initial` last changed. Unlike `last_updated` this
+    // doesn't move on with each message, so a client can tell whether the details it holds are
+    // still up to date. Not set by canisters which predate it.
+    #[serde(default, skip_serializing_if = "is_default")]
+    #[ts(as = "Option<TimestampMillis>", optional)]
+    pub details_last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
     pub subtype: Option<GroupSubtype>,
@@ -149,6 +155,8 @@ pub struct GroupCanisterGroupChatSummary {
 pub struct GroupCanisterGroupChatSummaryUpdates {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
+    // As in `GroupCanisterGroupChatSummary`. Always sent by canisters which support it.
+    pub details_last_updated: Option<TimestampMillis>,
     pub name: Option<String>,
     pub description: Option<String>,
     #[serde(default, skip_serializing_if = "OptionUpdate::is_empty")]
