@@ -19,6 +19,7 @@ fn accept_if_valid(state: &RuntimeState) {
         "upload_wasm_chunk" => state.can_caller_upload_wasm_chunks(),
         "add_hot_group_exclusion"
         | "delete_frozen_group"
+        | "delete_uninstalled_community"
         | "freeze_community"
         | "freeze_group"
         | "mark_local_index_full"

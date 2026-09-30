@@ -17,6 +17,7 @@ pub mod c2c_update_community;
 pub mod c2c_update_group;
 pub mod c2c_user_index;
 pub mod delete_frozen_group;
+pub mod delete_uninstalled_community;
 pub mod freeze_community;
 pub mod freeze_group;
 pub mod mark_local_index_full;

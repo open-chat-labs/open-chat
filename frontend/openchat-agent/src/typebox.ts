@@ -1650,6 +1650,26 @@ export const GroupIndexAddHotGroupExclusionResponse = /* @__PURE__ */ Type.Union
     }),
 ]);
 
+export type GroupIndexDeleteUninstalledCommunityResponse = Static<
+    typeof GroupIndexDeleteUninstalledCommunityResponse
+>;
+export const GroupIndexDeleteUninstalledCommunityResponse = /* @__PURE__ */ Type.Union([
+    Type.Literal("Success"),
+    Type.Literal("CommunityNotFound"),
+    Type.Literal("CommunityNotUninstalled"),
+    Type.Literal("NotAuthorized"),
+    Type.Object({
+        InternalError: Type.String(),
+    }),
+]);
+
+export type GroupIndexDeleteUninstalledCommunityArgs = Static<
+    typeof GroupIndexDeleteUninstalledCommunityArgs
+>;
+export const GroupIndexDeleteUninstalledCommunityArgs = /* @__PURE__ */ Type.Object({
+    community_id: CommunityId,
+});
+
 export type GroupIndexLookupChannelByGroupIdSuccessResult = Static<
     typeof GroupIndexLookupChannelByGroupIdSuccessResult
 >;

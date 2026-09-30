@@ -40,6 +40,10 @@ impl CanistersRequiringUpgrade {
         self.failed.retain(|f| f.to_version >= older_than);
     }
 
+    pub fn remove_failed(&mut self, canister_id: &CanisterId) {
+        self.failed.retain(|f| f.canister_id != *canister_id);
+    }
+
     pub fn mark_success(&mut self, canister_id: &CanisterId) {
         self.mark_upgrade_no_longer_in_progress(canister_id);
         while self.recently_competed.len() > 10 {

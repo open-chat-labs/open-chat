@@ -55,6 +55,7 @@ import type {
     DeclineInvitationResponse,
     DeleteFrozenGroupResponse,
     DeleteGroupResponse,
+    DeleteUninstalledCommunityResponse,
     DeleteMessageResponse,
     DeleteUserGroupsResponse,
     DeletedDirectMessageResponse,
@@ -3705,6 +3706,12 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.deleteFrozenGroup(chatId.groupId);
+    }
+
+    deleteUninstalledCommunity(communityId: string): Promise<DeleteUninstalledCommunityResponse> {
+        if (offline()) return Promise.resolve("offline");
+
+        return this._groupIndexClient.deleteUninstalledCommunity(communityId);
     }
 
     addHotGroupExclusion(chatId: GroupChatIdentifier): Promise<AddHotGroupExclusionResponse> {

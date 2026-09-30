@@ -12,6 +12,7 @@ pub mod c2c_create_multi_user_canister;
 pub mod c2c_daily_puzzle_push;
 pub mod c2c_delete_community;
 pub mod c2c_delete_group;
+pub mod c2c_delete_uninstalled_community;
 pub mod c2c_group_index;
 pub mod c2c_group_or_community_canister;
 pub mod c2c_notifications_index;

@@ -2,6 +2,7 @@ import { mapOptional, principalBytesToString } from "../../utils/mapping";
 import type {
     AddHotGroupExclusionResponse,
     DeleteFrozenGroupResponse,
+    DeleteUninstalledCommunityResponse,
     FreezeGroupResponse,
     GroupChatSummary,
     GroupMatch,
@@ -24,6 +25,7 @@ import type {
     CommunityMatch as TCommunityMatch,
     GroupIndexAddHotGroupExclusionResponse,
     GroupIndexDeleteFrozenGroupResponse,
+    GroupIndexDeleteUninstalledCommunityResponse,
     GroupIndexExploreCommunitiesResponse,
     GroupIndexExploreGroupsResponse,
     GroupIndexFreezeGroupResponse,
@@ -233,6 +235,30 @@ export function deleteFrozenGroupResponse(
         return "internal_error";
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteFrozenGroupResponse type received", value);
+}
+
+export function deleteUninstalledCommunityResponse(
+    value: GroupIndexDeleteUninstalledCommunityResponse,
+): DeleteUninstalledCommunityResponse {
+    if (value === "Success") {
+        return "success";
+    }
+    if (value === "CommunityNotFound") {
+        return "community_not_found";
+    }
+    if (value === "CommunityNotUninstalled") {
+        return "community_not_uninstalled";
+    }
+    if (value === "NotAuthorized") {
+        return "not_authorized";
+    }
+    if ("InternalError" in value) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiDeleteUninstalledCommunityResponse type received",
+        value,
+    );
 }
 
 export function addHotGroupExclusionResponse(

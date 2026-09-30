@@ -37,6 +37,7 @@
     let communityUpgradeConcurrency = $state("10");
     let userUpgradeConcurrency = $state("10");
     let multiUserCanisterLocalUserIndex = $state("");
+    let uninstalledCommunityId = $state("");
     let busy = $state(new SvelteSet<number>());
     let governanceCanisterId = $state("");
     let stake = $state("0");
@@ -88,6 +89,9 @@
     let multiUserCanisterLocalUserIndexInvalid = $derived(
         multiUserCanisterLocalUserIndex.trim() === "" ||
             !isValidPrincipal(multiUserCanisterLocalUserIndex.trim()),
+    );
+    let uninstalledCommunityIdInvalid = $derived(
+        uninstalledCommunityId.trim() === "" || !isValidPrincipal(uninstalledCommunityId.trim()),
     );
     let exchangeIdInvalid = $derived(isNaN(parseInt(exchangeId, 0)));
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
@@ -364,6 +368,34 @@
             })
             .finally(() => {
                 removeBusy(16);
+            });
+    }
+
+    // For a community whose canister the IC has uninstalled (eg. it ran out of cycles), which
+    // can't delete itself. The backend refuses unless the canister really is empty.
+    function deleteUninstalledCommunity(): void {
+        error = undefined;
+        const communityId = uninstalledCommunityId.trim();
+        addBusy(17);
+        client
+            .deleteUninstalledCommunity(communityId)
+            .then((resp) => {
+                if (resp === "success") {
+                    toastStore.showSuccessToast(i18nKey(`Community deleted: ${communityId}`));
+                    uninstalledCommunityId = "";
+                } else {
+                    error = i18nKey(
+                        resp === "community_not_found"
+                            ? `Community not found: ${communityId}`
+                            : resp === "community_not_uninstalled"
+                              ? `Community's canister still has code installed: ${communityId}`
+                              : `Failed to delete community ${communityId}: ${resp}`,
+                    );
+                    toastStore.showFailureToast(error);
+                }
+            })
+            .finally(() => {
+                removeBusy(17);
             });
     }
 
@@ -845,6 +877,21 @@
                 disabled={busy.has(16)}
                 loading={busy.has(16)}
                 onClick={() => setMultiUserCanistersEnabled(false)}>Disable</Button>
+        </ButtonGroup>
+    </section>
+
+    <section class="operator-function">
+        <div class="title">Delete uninstalled community</div>
+        <ButtonGroup align="fill">
+            <Input
+                invalid={uninstalledCommunityIdInvalid}
+                placeholder={i18nKey("Community id")}
+                bind:value={uninstalledCommunityId} />
+            <Button
+                tiny
+                disabled={busy.has(17) || uninstalledCommunityIdInvalid}
+                loading={busy.has(17)}
+                onClick={deleteUninstalledCommunity}>Delete</Button>
         </ButtonGroup>
     </section>
 
