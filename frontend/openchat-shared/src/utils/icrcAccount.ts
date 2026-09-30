@@ -1,4 +1,3 @@
-import { AccountIdentifier, isIcpAccountIdentifier } from "@icp-sdk/canisters/ledger/icp";
 import { Principal } from "@icp-sdk/core/principal";
 import { isCanisterId, isMultiUserCanisterUser, userCanisterId } from "./userId";
 
@@ -141,38 +140,18 @@ export function userWalletAccount(userId: string, principal: () => string): Icrc
 }
 
 // Whether `address` is an account of the id of a user in a MultiUser canister, under any subaccount,
-// rather than their wallet (see `userWalletAccount`). No one can sign as such an id, so anything sent
-// there is lost. Mirrors `PendingCryptoTransaction::is_to_indexed_user_id` in
-// backend/libraries/types/src/cryptocurrency.rs. An ICP account identifier is a hash of the account,
-// so its owner can't be read from it, and it is instead compared with the default accounts of
-// `knownUserIds`, which is only called for one.
-export function isAccountOfMultiUserCanisterUserId(
-    address: string,
-    knownUserIds: () => Iterable<string>,
-): boolean {
-    let owner: Principal | undefined;
+// as it is if the user id is entered as the address, rather than their wallet (see
+// `userWalletAccount`). No one can sign as such an id, so anything sent there is lost. Mirrors
+// `PendingCryptoTransaction::is_to_indexed_user_id` in backend/libraries/types/src/cryptocurrency.rs.
+// An ICP account identifier is a hash, from which the owner can't be read, so it is never refused.
+export function isAccountOfMultiUserCanisterUserId(address: string): boolean {
+    let owner: Principal;
     try {
         owner = decodeIcrcAccount(address).owner;
     } catch {
-        owner = undefined;
-    }
-    if (owner !== undefined) {
-        return isMultiUserCanisterUser(owner.toText());
-    }
-    if (!isIcpAccountIdentifier(address)) {
         return false;
     }
-    const accountIdentifier = address.toLowerCase();
-    for (const userId of knownUserIds()) {
-        if (
-            isMultiUserCanisterUser(userId) &&
-            AccountIdentifier.fromPrincipal({ principal: Principal.fromText(userId) }).toHex() ===
-                accountIdentifier
-        ) {
-            return true;
-        }
-    }
-    return false;
+    return isMultiUserCanisterUser(owner.toText());
 }
 
 // The account a user's canister spends as when it pulls funds the user has approved via ICRC-2, so

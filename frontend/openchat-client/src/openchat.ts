@@ -2344,6 +2344,7 @@ export class OpenChat {
     userAvatarUrl = userAvatarUrl;
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
+    isAccountOfMultiUserCanisterUserId = isAccountOfMultiUserCanisterUserId;
     parseBigInt = parseBigInt;
     userIdsFromEvents = userIdsFromEvents;
     userOrUserGroupName = userOrUserGroupName;
@@ -8242,16 +8243,6 @@ export class OpenChat {
                 account,
             })
             .catch(() => ({ kind: "failure" }));
-    }
-
-    // Whether `address` is an account of a MultiUser user's id rather than their wallet, which no
-    // one can spend from, so anything sent there would be lost. An ICP account identifier can only be
-    // recognised as one of a user this client knows of.
-    isAccountOfMultiUserCanisterUserId(address: string): boolean {
-        return isAccountOfMultiUserCanisterUserId(address, () => [
-            currentUserIdStore.value,
-            ...userStore.allUsers.keys(),
-        ]);
     }
 
     async #updateRegistry(): Promise<void> {

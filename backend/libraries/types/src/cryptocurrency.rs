@@ -200,21 +200,14 @@ impl PendingCryptoTransaction {
     }
 
     // Whether the transfer is to an account of the id of a user in a MultiUser canister (see
-    // `UserId::is_indexed`), under any subaccount. No one can sign as such an id, so anything sent
-    // there can never be spent, the user holding their funds under the principal they sign in with.
-    //
-    // An ICP account identifier is a hash of the account, so its owner can't be read from it. It is
-    // instead compared with the default accounts of `known_user_ids`, which is the account a client
-    // addresses a user's id as (see `icrc1::Account::legacy_for_user`).
-    pub fn is_to_indexed_user_id(&self, known_user_ids: impl IntoIterator<Item = UserId>) -> bool {
+    // `UserId::is_indexed`), under any subaccount, as it is if the user id is given as the recipient.
+    // No one can sign as such an id, so anything sent there can never be spent, the user holding
+    // their funds under the principal they sign in with. An NNS transfer is never flagged: its ICP
+    // account identifier is a hash, from which the owner can't be read, and no one derives one from
+    // a user id.
+    pub fn is_to_indexed_user_id(&self) -> bool {
         let to = match self {
-            PendingCryptoTransaction::NNS(t) => {
-                let UserOrAccount::Account(to) = t.to;
-                return known_user_ids
-                    .into_iter()
-                    .filter(UserId::is_indexed)
-                    .any(|user_id| crate::account_identifier(icrc1::Account::legacy_for_user(user_id).into()) == to);
-            }
+            PendingCryptoTransaction::NNS(_) => return false,
             PendingCryptoTransaction::ICRC1(t) => t.to,
             PendingCryptoTransaction::ICRC2(t) => t.to,
             PendingCryptoTransaction::Certified(t) => t.to,
@@ -1168,7 +1161,7 @@ mod tests {
 
         for to in [default_account, subaccount] {
             for transfer in [icrc1_transfer_to(to), icrc2_transfer_to(to), certified_transfer_to(to)] {
-                assert!(transfer.is_to_indexed_user_id([]));
+                assert!(transfer.is_to_indexed_user_id());
             }
         }
     }
@@ -1180,20 +1173,10 @@ mod tests {
 
         for to in wallets {
             for transfer in [icrc1_transfer_to(to), icrc2_transfer_to(to), certified_transfer_to(to)] {
-                assert!(!transfer.is_to_indexed_user_id([indexed_user(), canister_user()]));
+                assert!(!transfer.is_to_indexed_user_id());
             }
-            let nns_transfer = nns_transfer_to(crate::account_identifier(to.into()));
-            assert!(!nns_transfer.is_to_indexed_user_id([indexed_user(), canister_user()]));
+            assert!(!nns_transfer_to(crate::account_identifier(to.into())).is_to_indexed_user_id());
         }
-    }
-
-    #[test]
-    fn nns_transfer_to_an_indexed_user_id_is_only_detected_if_the_id_is_known() {
-        let user_id = indexed_user();
-        let transfer = nns_transfer_to(crate::account_identifier(icrc1::Account::legacy_for_user(user_id).into()));
-
-        assert!(transfer.is_to_indexed_user_id([canister_user(), user_id]));
-        assert!(!transfer.is_to_indexed_user_id([canister_user()]));
     }
 
     #[test]

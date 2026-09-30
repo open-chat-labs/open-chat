@@ -5893,10 +5893,6 @@ fn withdrawals_to_an_account_of_a_multi_user_users_id_are_refused() {
     let amount = 1_000_000;
     client::ledger::happy_path::transfer(env, *controller, ledger, carol.user_id, 1_000_000_000);
 
-    // An ICP account identifier is a hash, so Carol's canister can only recognise one of Bob's user
-    // id once it knows Bob, as it does once they have a direct chat
-    send_text_message(env, carol.principal, carol.canister(), bob.user_id, "hi", random_from_u128());
-
     let icrc1_withdrawal = |env: &PocketIc, to: icrc1::Account| {
         PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
             ledger,
@@ -5935,12 +5931,9 @@ fn withdrawals_to_an_account_of_a_multi_user_users_id_are_refused() {
     };
     let carols_balance = client::ledger::happy_path::balance_of(env, ledger, carol.user_id);
 
-    for withdrawal in [
-        icrc1_withdrawal(env, bobs_user_id),
-        icrc1_withdrawal(env, subaccount_of_bobs_user_id),
-        nns_withdrawal(env, bobs_user_id),
-    ] {
-        let response = withdraw(env, withdrawal);
+    // Bob's user id, given as the recipient, under any subaccount
+    for to in [bobs_user_id, subaccount_of_bobs_user_id] {
+        let response = withdraw(env, icrc1_withdrawal(env, to));
         assert!(
             matches!(&response, user_canister::withdraw_crypto_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
             "{response:?}"
