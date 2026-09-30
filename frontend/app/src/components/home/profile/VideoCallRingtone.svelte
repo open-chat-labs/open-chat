@@ -3,9 +3,9 @@
     import { onMount } from "svelte";
     import PauseCircleOutline from "svelte-material-icons/PauseCircleOutline.svelte";
     import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
-    import WaveSurfer from "wavesurfer.js";
     import { Ringtone, selectedRingtone } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
+    import { loadWaveSurfer } from "../../../utils/wavesurfer";
     import Radio from "../../Radio.svelte";
 
     interface Props {
@@ -20,25 +20,33 @@
     let checked = $derived($selectedRingtone === ringtone.key);
 
     onMount(() => {
-        if (!waveform) return;
+        let unmounted = false;
 
-        const wavesurfer = WaveSurfer.create({
-            height: 30,
-            cursorWidth: 0,
-            barWidth: 2,
-            barRadius: 4,
-            barGap: 2,
-            container: waveform,
-            waveColor: $currentTheme["txt-light"],
-            progressColor: $currentTheme.accent,
-            media: ringtone.audio,
+        loadWaveSurfer().then((WaveSurfer) => {
+            if (unmounted || !waveform) return;
+
+            const wavesurfer = WaveSurfer.create({
+                height: 30,
+                cursorWidth: 0,
+                barWidth: 2,
+                barRadius: 4,
+                barGap: 2,
+                container: waveform,
+                waveColor: $currentTheme["txt-light"],
+                progressColor: $currentTheme.accent,
+                media: ringtone.audio,
+            });
+
+            wavesurfer.on("click", () => {
+                if (!ringtone.playing) {
+                    togglePlay();
+                }
+            });
         });
 
-        wavesurfer.on("click", () => {
-            if (!ringtone.playing) {
-                togglePlay();
-            }
-        });
+        return () => {
+            unmounted = true;
+        };
     });
 
     function togglePlay(e?: Event) {

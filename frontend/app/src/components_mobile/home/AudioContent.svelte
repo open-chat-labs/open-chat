@@ -34,7 +34,8 @@
     import MicrophoneOutline from "svelte-material-icons/MicrophoneOutline.svelte";
     import Pause from "svelte-material-icons/PauseCircleOutline.svelte";
     import Play from "svelte-material-icons/PlayCircleOutline.svelte";
-    import WaveSurfer from "wavesurfer.js";
+    import type WaveSurfer from "wavesurfer.js";
+    import { loadWaveSurfer } from "../../utils/wavesurfer";
     import Translatable from "../Translatable.svelte";
     import TextContent from "./TextContent.svelte";
 
@@ -121,7 +122,11 @@
     const chatMetadataSentColor = getColor("--chat-metadata-sent");
 
     onMount(() => {
-        if (waveformDiv !== undefined) {
+        let unmounted = false;
+
+        loadWaveSurfer().then((WaveSurfer) => {
+            if (unmounted || waveformDiv === undefined) return;
+
             wavesurfer = WaveSurfer.create({
                 height: 42,
                 barHeight: 0.65,
@@ -162,7 +167,11 @@
             wavesurfer.on("pause", () => (playing = false));
 
             register(wavesurfer);
-        }
+        });
+
+        return () => {
+            unmounted = true;
+        };
     });
 </script>
 

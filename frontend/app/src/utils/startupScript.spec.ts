@@ -5,7 +5,24 @@ import { selectLayout } from "./layout";
 // rollup.extras.mjs to a polyfill without fileURLToPath.
 vi.mock("url", () => import("node:url"));
 
-import { generateStartupScript } from "../../rollup.extras.mjs";
+// jsdom has no matchMedia, which the themes read as they are imported and the startup script
+// reads as it runs. Hoisted so it is in place before the imports below.
+const osPrefersDark = vi.hoisted(() => {
+    const prefers = { dark: false };
+    window.matchMedia = ((query: string) =>
+        ({
+            matches: query === "(prefers-color-scheme: dark)" && prefers.dark,
+            media: query,
+            addEventListener() {},
+            removeEventListener() {},
+            addListener() {},
+            removeListener() {},
+        }) as unknown as MediaQueryList) as typeof window.matchMedia;
+    return prefers;
+});
+
+import { STARTUP_DARK_BACKGROUND, generateStartupScript } from "../../rollup.extras.mjs";
+import { themes } from "../theme/themes";
 
 type Chunk = { fileName: string; moduleIds: string[]; imports: string[]; isEntry: boolean };
 
@@ -61,8 +78,44 @@ describe("the startup script in index.html", () => {
         vi.unstubAllGlobals();
         vi.restoreAllMocks();
         document.head.innerHTML = "";
+        document.documentElement.style.removeProperty("background-color");
+        osPrefersDark.dark = false;
         localStorage.clear();
         window.OC_PRESTARTED_WORKER = undefined;
+    });
+
+    function startupBackground(): string {
+        run();
+        return document.documentElement.style.backgroundColor;
+    }
+
+    test("paints the page dark when the theme last used was a dark one", () => {
+        localStorage.setItem("openchat_startup_theme_mode", "dark");
+        expect(startupBackground()).not.toBe("");
+    });
+
+    test("leaves the page alone when the theme last used was a light one, whatever the OS prefers", () => {
+        localStorage.setItem("openchat_startup_theme_mode", "light");
+        osPrefersDark.dark = true;
+        expect(startupBackground()).toBe("");
+    });
+
+    test("goes by the OS preference on a first visit", () => {
+        expect(startupBackground()).toBe("");
+        osPrefersDark.dark = true;
+        expect(startupBackground()).not.toBe("");
+    });
+
+    test("goes by the OS preference when localStorage is unavailable", () => {
+        vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+            throw new Error("denied");
+        });
+        osPrefersDark.dark = true;
+        expect(startupBackground()).not.toBe("");
+    });
+
+    test("paints the default dark theme's background", () => {
+        expect(STARTUP_DARK_BACKGROUND).toBe(themes.dark.bg.toLowerCase());
     });
 
     test("preloads the desktop App chunk and everything it statically imports", () => {

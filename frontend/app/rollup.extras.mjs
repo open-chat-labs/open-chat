@@ -249,10 +249,18 @@ function staticImports(chunk, chunksByFileName, found = new Set()) {
     return found;
 }
 
+// What index.html paints behind a dark theme until the app's own styles arrive: the background of
+// the default dark theme (theme/defaultDark.ts), which is near enough to every dark theme's.
+export const STARTUP_DARK_BACKGROUND = "#1b1c21";
+
 // The inline script which gets the rest of the startup path downloading while the entry chunks are
 // still in flight. Left to itself the browser discovers that path one round trip at a time: the
 // entry chunks import the App chunk, which imports its shared chunks, and running that asks for
 // the locale and only then starts the worker.
+//
+// First it paints the page dark if the theme last used was a dark one (themes.ts records it), or
+// on a first visit if the OS prefers dark, which is what the app then defaults to. Otherwise the
+// page stays white until the app's styles have been downloaded and run.
 //
 // It has to be a script rather than <link> tags because which App tree and which locale get loaded
 // is only known in the browser. Both choices mirror what the app goes on to do (`selectLayout` in
@@ -287,6 +295,13 @@ export function generateStartupScript({ chunks, version, mobileLayout }) {
     }
 
     return `(function () {
+    var mode;
+    try {
+        mode = localStorage.getItem("openchat_startup_theme_mode");
+    } catch (e) {}
+    if (mode ? mode === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.documentElement.style.backgroundColor = "${STARTUP_DARK_BACKGROUND}";
+    }
     function preload(file) {
         var link = document.createElement("link");
         link.rel = "modulepreload";

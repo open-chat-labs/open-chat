@@ -18,7 +18,12 @@
         selectedCommunityBotsStore,
         threadPermissionsForSelectedChatStore,
     } from "@client";
-    import { hasEveryRequiredPermission, random64, type FlattenedCommand } from "@shared";
+    import {
+        hasEveryRequiredPermission,
+        loadDateParser,
+        random64,
+        type FlattenedCommand,
+    } from "@shared";
     import { getContext, onMount } from "svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -140,9 +145,27 @@
         }
     }
 
-    function selectCommand(command: FlattenedCommand) {
-        botState.setSelectedCommand(messageContext, commands, command);
-        sendCommandIfValid();
+    // Set while a selection is waiting for the date parser, so that it is not made twice
+    let selecting = false;
+
+    function selectCommand(command = commands[botState.focusedCommandIndex]) {
+        if (selecting) return;
+
+        const select = () => {
+            botState.setSelectedCommand(messageContext, commands, command);
+            sendCommandIfValid();
+        };
+        if (command?.params.some((p) => p.kind === "dateTime")) {
+            // a date typed in words can only be read once the date parser has arrived
+            selecting = true;
+            loadDateParser().then(() => {
+                selecting = false;
+                // the selector goes when the command is cancelled
+                if (!destroyed) select();
+            });
+        } else {
+            select();
+        }
     }
 
     function sendCommandIfValid() {
@@ -168,10 +191,14 @@
         }
     }
 
+    let destroyed = false;
+
     onMount(() => {
+        loadDateParser();
         botState.error = undefined;
         document.addEventListener("keydown", onkeydown);
         return () => {
+            destroyed = true;
             document.removeEventListener("keydown", onkeydown);
         };
     });
@@ -192,8 +219,7 @@
                 break;
             case "Enter":
                 if (!botState.showingBuilder) {
-                    botState.setSelectedCommand(messageContext, commands);
-                    sendCommandIfValid();
+                    selectCommand();
                     ev.preventDefault();
                 }
                 break;
