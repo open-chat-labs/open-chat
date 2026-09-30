@@ -6,6 +6,7 @@ use types::{GroupMember, UserId};
 #[ts_export(group, lookup_members)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
+    // At most 1000
     pub user_ids: Vec<UserId>,
 }
 

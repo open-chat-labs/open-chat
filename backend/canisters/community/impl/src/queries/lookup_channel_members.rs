@@ -1,7 +1,9 @@
+use crate::queries::verify_channel_is_accessible;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use community_canister::lookup_channel_members::{Response::*, *};
 use constants::MAX_MEMBERS_PER_QUERY;
+use itertools::Itertools;
 use oc_error_codes::OCErrorCode;
 use types::{GroupMember, OCResult};
 
@@ -14,21 +16,21 @@ fn lookup_channel_members(args: Args) -> Response {
 }
 
 fn lookup_channel_members_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
-    let caller = state.env.caller();
-    state.data.verify_is_accessible(caller, None)?;
-
     let channel = state.data.channels.get_or_err(&args.channel_id)?;
-    let user_id = state.data.members.lookup_user_id(caller);
-    channel.chat.verify_is_accessible(user_id)?;
+    verify_channel_is_accessible(channel, state)?;
 
     if args.user_ids.len() > MAX_MEMBERS_PER_QUERY as usize {
         return Err(OCErrorCode::TooManyUsers.with_message(MAX_MEMBERS_PER_QUERY));
     }
 
+    let members = &channel.chat.members;
     let members = args
         .user_ids
         .iter()
-        .filter_map(|user_id| channel.chat.members.get(user_id))
+        .unique()
+        // So that the details are only read for users who are members
+        .filter(|user_id| members.contains(user_id))
+        .filter_map(|user_id| members.get(user_id))
         .map(|member| GroupMember::from(&member))
         .collect();
 

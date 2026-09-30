@@ -7,6 +7,7 @@ use types::{ChannelId, GroupMember, UserId};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
+    // At most 1000
     pub user_ids: Vec<UserId>,
 }
 

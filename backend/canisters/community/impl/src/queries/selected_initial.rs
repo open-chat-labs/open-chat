@@ -1,6 +1,7 @@
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use community_canister::selected_initial::{Response::*, *};
+use constants::MAX_MEMBERS_PER_QUERY;
 use types::{InstalledBotDetails, OCResult};
 
 #[query(msgpack = true)]
@@ -22,7 +23,9 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessRe
         .get(caller)
         .map_or(Vec::new(), |m| m.referrals().iter().copied().collect());
 
-    let members = data.members.page(None, args.max_members);
+    let members = data
+        .members
+        .page(None, args.max_members.map(|max| max.min(MAX_MEMBERS_PER_QUERY)));
 
     let bots = data
         .bots

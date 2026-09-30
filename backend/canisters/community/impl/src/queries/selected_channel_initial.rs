@@ -1,6 +1,7 @@
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use community_canister::selected_channel_initial::{Response::*, *};
+use constants::MAX_MEMBERS_PER_QUERY;
 use types::OCResult;
 
 #[query(msgpack = true)]
@@ -26,7 +27,9 @@ fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> OCResult<S
         .map(|m| m.min_visible_message_index())
         .unwrap_or_default();
 
-    let members = chat.members.page(None, args.max_members);
+    let members = chat
+        .members
+        .page(None, args.max_members.map(|max| max.min(MAX_MEMBERS_PER_QUERY)));
 
     Ok(SuccessResult {
         timestamp: last_updated,

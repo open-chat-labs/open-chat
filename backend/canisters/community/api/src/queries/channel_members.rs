@@ -9,7 +9,13 @@ pub struct Args {
     pub channel_id: ChannelId,
     // The members are returned in order of user id, starting from the first after this. The owners,
     // admins and moderators are instead all returned with the first page, where this is not set.
+    //
+    // The pages aren't a snapshot: a member who joins, or is given or loses a role, part way
+    // through them can be missed or returned twice. So the updates since the first page was
+    // returned (by `selected_channel_initial`) must also be applied, using
+    // `selected_channel_updates_v2`.
     pub after: Option<UserId>,
+    // Capped at 1000
     pub max_results: u32,
 }
 

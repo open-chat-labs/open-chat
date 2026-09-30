@@ -7,8 +7,8 @@ use types::{CommunityMember, EventIndex, InstalledBotDetails, TimestampMillis, U
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub invite_code: Option<u64>,
-    // If set, only the first page of members is returned, holding up to this many of them in
-    // addition to every owner and admin. The rest can be got from `members`.
+    // If set, only the first page of members is returned, holding up to this many of them (capped
+    // at 1000) in addition to every owner and admin. The rest can be got from `members`.
     pub max_members: Option<u32>,
 }
 
@@ -53,4 +53,23 @@ pub struct SuccessResult {
     #[ts(as = "Option<Vec<UserId>>", optional)]
     pub referrals: Vec<UserId>,
     pub public_channel_list_updated: TimestampMillis,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // `Args` as sent by clients which predate `max_members`
+    #[derive(Serialize)]
+    struct PreviousArgs {
+        invite_code: Option<u64>,
+    }
+
+    #[test]
+    fn args_without_max_members_are_read() {
+        let bytes = msgpack::serialize_then_unwrap(PreviousArgs { invite_code: Some(1) });
+        let args: Args = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(args.invite_code, Some(1));
+        assert!(args.max_members.is_none());
+    }
 }

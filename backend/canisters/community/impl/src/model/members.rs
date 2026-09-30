@@ -1,7 +1,7 @@
 use crate::model::members::stable_memory::MembersStableStorage;
 use crate::model::user_groups::{UserGroup, UserGroups};
 use constants::calculate_summary_updates_data_removal_cutoff;
-use group_community_common::{FormerMembers, Member, MemberUpdate, Members};
+use group_community_common::{FormerMembers, Member, MemberUpdate, Members, MembersPage, members_page};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
@@ -601,50 +601,25 @@ impl CommunityMembers {
     }
 
     // A page of the members in order of user id, starting from the first after `after`, and holding
-    // up to `max_results` of them, or all of them if `max_results` is None.
-    //
-    // The owners and admins are instead all returned with the first page (where `after` is None),
-    // whatever their user ids, and aren't counted towards `max_results`. So a client which holds
-    // only the first page knows every member who has a role.
-    pub fn page(&self, after: Option<UserId>, max_results: Option<u32>) -> CommunityMembersPage {
-        let has_role = |user_id: &UserId| self.owners.contains(user_id) || self.admins.contains(user_id);
-        let is_basic = |user_id: &UserId| {
-            !self.lapsed.contains(user_id)
-                && !self.suspended.contains(user_id)
-                && !self.members_with_display_names.contains(user_id)
-                && !self.members_with_referrals.contains(user_id)
-        };
-        let full_member = |user_id: &UserId| self.members_map.get(user_id).map(CommunityMember::from);
-
-        let mut page = CommunityMembersPage::default();
-        if after.is_none() {
-            page.members
-                .extend(self.owners.iter().chain(&self.admins).filter_map(full_member));
-        }
-
-        let mut count = 0;
+    // up to `max_results` of them, or all of them if `max_results` is None. The owners and admins
+    // are instead all returned with the first page (where `after` is None). See `members_page`.
+    pub fn page(&self, after: Option<UserId>, max_results: Option<u32>) -> MembersPage<CommunityMember> {
         let start = after.map_or(Bound::Unbounded, Bound::Excluded);
-        let mut iter = self
-            .members_and_channels
-            .range((start, Bound::Unbounded))
-            .map(|(user_id, _)| user_id)
-            .filter(|user_id| !has_role(user_id));
-
-        while let Some(user_id) = iter.next() {
-            if is_basic(user_id) {
-                page.basic_members.push(*user_id);
-            } else {
-                page.members.extend(full_member(user_id));
-            }
-            count += 1;
-            if max_results.is_some_and(|max| count >= max) {
-                if iter.next().is_some() {
-                    page.more_members_after = Some(*user_id);
-                }
-                break;
-            }
-        }
-        page
+        members_page(
+            &[&self.owners, &self.admins],
+            self.members_and_channels
+                .range((start, Bound::Unbounded))
+                .map(|(user_id, _)| user_id),
+            after.is_none(),
+            max_results,
+            |user_id| {
+                !self.lapsed.contains(user_id)
+                    && !self.suspended.contains(user_id)
+                    && !self.members_with_display_names.contains(user_id)
+                    && !self.members_with_referrals.contains(user_id)
+            },
+            |user_id| self.members_map.get(user_id).map(CommunityMember::from),
+        )
     }
 
     pub fn is_former_member(&self, user_id: &UserId) -> bool {
@@ -702,10 +677,6 @@ impl CommunityMembers {
         &self.lapsed
     }
 
-    pub fn suspended(&self) -> &BTreeSet<UserId> {
-        &self.suspended
-    }
-
     pub fn member_ids(&self) -> impl Iterator<Item = &UserId> {
         self.members_and_channels.keys()
     }
@@ -720,14 +691,6 @@ impl CommunityMembers {
         } else {
             None
         }
-    }
-
-    pub fn members_with_display_names(&self) -> &BTreeSet<UserId> {
-        &self.members_with_display_names
-    }
-
-    pub fn members_with_referrals(&self) -> &BTreeSet<UserId> {
-        &self.members_with_referrals
     }
 
     pub fn set_display_name(&mut self, user_id: UserId, display_name: Option<String>, now: TimestampMillis) {
@@ -1031,16 +994,6 @@ impl Member for CommunityMemberInternal {
     }
 }
 
-#[derive(Default)]
-pub struct CommunityMembersPage {
-    // The members whose details aren't all the defaults, eg. those with a role or a display name
-    pub members: Vec<CommunityMember>,
-    // The rest of the members
-    pub basic_members: Vec<UserId>,
-    // The user id to pass as `after` to get the next page, if there are any more members
-    pub more_members_after: Option<UserId>,
-}
-
 pub enum AddResult {
     Success(Box<CommunityMemberInternal>),
     AlreadyInCommunity,
@@ -1214,9 +1167,9 @@ mod tests {
         // So that the referrer's client is told the referral under the old id has gone
         assert!(referrer_member.referrals_removed().contains(&old));
         assert_eq!(members.get_by_user_id(&referred).unwrap().referred_by, Some(new));
-        assert!(members.suspended().contains(&new));
-        assert!(members.members_with_display_names().contains(&new));
-        assert!(members.members_with_referrals().contains(&new));
+        assert!(members.suspended.contains(&new));
+        assert!(members.members_with_display_names.contains(&new));
+        assert!(members.members_with_referrals.contains(&new));
 
         assert!(members.migrate_user_id(blocked_old, blocked_new, None, 10));
         assert!(!members.is_blocked(&blocked_old));
@@ -1313,52 +1266,29 @@ mod tests {
     }
 
     #[test]
-    fn page_holds_every_member_if_not_limited() {
-        let mut members = members_for_page_tests(6);
-        make_admin(&mut members, 4);
-        members.set_display_name(test_user_id(5), Some("five".to_string()), 3);
-
-        let page = members.page(None, None);
-
-        // Those with roles, then the others in order of user id, of whom the member with a display
-        // name is returned in full
-        assert_eq!(member_ids(&page.members), user_ids([1, 4, 5]));
-        assert_eq!(page.members[2].display_name.as_deref(), Some("five"));
-        assert_eq!(page.basic_members, user_ids([2, 3, 6]));
-        assert_eq!(page.more_members_after, None);
-    }
-
-    #[test]
     fn pages_hold_each_member_once_with_those_with_roles_in_the_first() {
         let mut members = members_for_page_tests(9);
         make_admin(&mut members, 8);
         members.update_lapsed(test_user_id(3), true, 3);
+        members.set_display_name(test_user_id(5), Some("five".to_string()), 3);
 
-        let page1 = members.page(None, Some(3));
-        assert_eq!(member_ids(&page1.members), user_ids([1, 8, 3]));
+        // The owner and admin, then the others in order of user id, of whom the lapsed member and
+        // the member with a display name are returned in full
+        let page1 = members.page(None, Some(4));
+        assert_eq!(member_ids(&page1.members), user_ids([1, 8, 3, 5]));
+        assert_eq!(page1.members[3].display_name.as_deref(), Some("five"));
         assert_eq!(page1.basic_members, user_ids([2, 4]));
-        assert_eq!(page1.more_members_after, Some(test_user_id(4)));
+        assert_eq!(page1.more_members_after, Some(test_user_id(5)));
 
-        let page2 = members.page(page1.more_members_after, Some(3));
+        let page2 = members.page(page1.more_members_after, Some(4));
         assert!(page2.members.is_empty());
-        assert_eq!(page2.basic_members, user_ids([5, 6, 7]));
-        assert_eq!(page2.more_members_after, Some(test_user_id(7)));
+        assert_eq!(page2.basic_members, user_ids([6, 7, 9]));
+        assert_eq!(page2.more_members_after, None);
 
-        // The admin has already been returned, so isn't again
-        let page3 = members.page(page2.more_members_after, Some(3));
-        assert!(page3.members.is_empty());
-        assert_eq!(page3.basic_members, user_ids([9]));
-        assert_eq!(page3.more_members_after, None);
-    }
-
-    #[test]
-    fn page_which_reaches_the_last_member_is_the_last() {
-        let members = members_for_page_tests(4);
-
-        let page = members.page(None, Some(3));
-
-        assert_eq!(page.basic_members, user_ids([2, 3, 4]));
-        assert_eq!(page.more_members_after, None);
+        let all = members.page(None, None);
+        assert_eq!(member_ids(&all.members), user_ids([1, 8, 3, 5]));
+        assert_eq!(all.basic_members, user_ids([2, 4, 6, 7, 9]));
+        assert_eq!(all.more_members_after, None);
     }
 
     // Holds users 1 to `count`, of whom user 1 is the owner

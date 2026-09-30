@@ -1,5 +1,6 @@
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
+use constants::MAX_MEMBERS_PER_QUERY;
 use group_canister::selected_initial::{Response::*, *};
 use types::{InstalledBotDetails, OCResult};
 
@@ -17,7 +18,9 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessRe
     let last_updated = state.data.details_last_updated();
 
     let chat = &state.data.chat;
-    let members = chat.members.page(None, args.max_members);
+    let members = chat
+        .members
+        .page(None, args.max_members.map(|max| max.min(MAX_MEMBERS_PER_QUERY)));
 
     let bots = state
         .data
