@@ -51,25 +51,27 @@ impl<T: Clone> UserNotification<T> {
     // A notification in a large chat can have as many recipients as the chat has members (eg. an
     // @everyone mention), so it is split into several, each with a bounded number of recipients,
     // so that the size of a call carrying them doesn't grow with the size of the chat
-    pub fn split_by_recipients(sender: Option<UserId>, mut recipients: Vec<UserId>, notification: T) -> Vec<Self> {
-        let mut notifications = Vec::new();
-        while recipients.len() > MAX_RECIPIENTS_PER_USER_NOTIFICATION {
-            let remaining = recipients.split_off(MAX_RECIPIENTS_PER_USER_NOTIFICATION);
-            notifications.push(UserNotification {
-                sender,
-                recipients,
-                notification: notification.clone(),
-            });
-            recipients = remaining;
-        }
-        if !recipients.is_empty() {
-            notifications.push(UserNotification {
+    pub fn split_by_recipients(sender: Option<UserId>, recipients: Vec<UserId>, notification: T) -> Vec<Self> {
+        if recipients.is_empty() {
+            Vec::new()
+        } else if recipients.len() <= MAX_RECIPIENTS_PER_USER_NOTIFICATION {
+            vec![UserNotification {
                 sender,
                 recipients,
                 notification,
-            });
+            }]
+        } else {
+            // Each part is copied into a vec of its own size, rather than being split off the
+            // original, which would leave it holding the capacity of everything not yet split off
+            recipients
+                .chunks(MAX_RECIPIENTS_PER_USER_NOTIFICATION)
+                .map(|chunk| UserNotification {
+                    sender,
+                    recipients: chunk.to_vec(),
+                    notification: notification.clone(),
+                })
+                .collect()
         }
-        notifications
     }
 }
 
@@ -690,6 +692,10 @@ mod split_by_recipients_tests {
 
             let sizes: Vec<_> = notifications.iter().map(|n| n.recipients.len()).collect();
             assert_eq!(sizes, expected_sizes);
+            // No part holds on to the memory of the recipients in the other parts
+            if count > MAX {
+                assert!(notifications.iter().all(|n| n.recipients.capacity() <= MAX));
+            }
             assert!(
                 notifications
                     .iter()
