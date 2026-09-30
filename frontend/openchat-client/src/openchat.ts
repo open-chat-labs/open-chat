@@ -8487,7 +8487,7 @@ export class OpenChat {
     }
 
     proposeTranslationCorrection(
-        locale: string,
+        language: string,
         key: string,
         value: string,
     ): Promise<ProposeResponse> {
@@ -8499,7 +8499,7 @@ export class OpenChat {
         return this.#worker
             .send({
                 kind: "proposeTranslation",
-                locale,
+                locale: language,
                 key,
                 value,
             })
