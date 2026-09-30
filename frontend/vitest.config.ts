@@ -30,6 +30,7 @@ export default defineConfig({
             { find: /^tauri-plugin-oc-api$/, replacement: src("./tauri-plugin-oc/guest-js/index.ts") },
             { find: "usergeek-ic-js", replacement: src("./app/test-stubs/usergeek-ic-js.ts") },
             { find: "@src", replacement: src("./app/src") },
+            { find: "@shared_components", replacement: src("./app/src/components_shared") },
             { find: "@stores", replacement: src("./app/src/stores") },
             { find: "@utils", replacement: src("./app/src/utils") },
         ],
