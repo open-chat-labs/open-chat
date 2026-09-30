@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove the legacy user event queue now that every LocalUserIndex has drained it ([#XXXX](https://github.com/open-chat-labs/open-chat/pull/XXXX))
+- Remove the legacy user event queue now that every LocalUserIndex has drained it ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))
 
 ## [[2.0.2077](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2077-local_user_index)] - 2026-09-30
 
