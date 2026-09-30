@@ -605,12 +605,13 @@ export class GroupClient
                 this.query(
                     groupId,
                     "selected_initial",
-                    {},
+                    // The rest of the members are only loaded when they are needed
+                    { max_members: MEMBERS_PAGE_SIZE },
                     (resp) =>
                         mapResult(resp, (value) =>
                             groupDetailsSuccess(value, this.config.blobUrlPattern, groupId),
                         ),
-                    TEmpty,
+                    GroupSelectedInitialArgs,
                     GroupSelectedInitialResponse,
                 ),
             (since) =>

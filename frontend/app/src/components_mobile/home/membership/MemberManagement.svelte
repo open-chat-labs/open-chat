@@ -107,7 +107,9 @@
                     direction={"vertical"}>
                     <Body fontWeight={"bold"}>
                         <Translatable
-                            resourceKey={i18nKey(`Current members (${members.length})`)} />
+                            resourceKey={i18nKey(
+                                `Current members (${collection.memberCount})`,
+                            )} />
                     </Body>
                     <MemberList
                         searchTerm={searchTermEntered}

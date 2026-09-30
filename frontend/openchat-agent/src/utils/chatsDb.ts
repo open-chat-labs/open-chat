@@ -73,7 +73,7 @@ import {
     type SyncTouched,
 } from "./sync";
 
-const CACHE_VERSION = 152;
+const CACHE_VERSION = 153;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -251,6 +251,17 @@ async function clearChatsStore(
 // ) {
 //     await tx.objectStore("group_details").clear();
 // }
+// The cached details of large chats and communities hold every member, which from now on they only
+// do for those with fewer than a page of members. Clearing them means only the first page is loaded
+// in their place.
+async function clearDetailsStores(
+    _db: IDBPDatabase<ChatSchema>,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("group_details").clear();
+    await tx.objectStore("community_details").clear();
+}
+
 async function clearCachePrimerStore(
     _db: IDBPDatabase<ChatSchema>,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
@@ -413,7 +424,8 @@ export class ChatsDb {
             .withMigration(148, clearChatsStore)
             .withMigration(149, clearChatsStore)
             .withMigration(150, createSyncStore)
-            .withMigration(151, createChatRowStores);
+            .withMigration(151, createChatRowStores)
+            .withMigration(153, clearDetailsStores);
     }
 
     getDb(): Database {
