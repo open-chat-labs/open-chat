@@ -1,5 +1,3 @@
-import { APPROVAL_VALIDITY_MS } from "@shared";
-
 const NANOS_PER_MILLISECOND = 1_000_000n;
 
 // What a spender may still pull from an account, and when that lapses, if ever
@@ -24,13 +22,13 @@ export type Approval = {
 // the allowance has changed since it was read.
 //
 // An approval made here lasts just long enough for its payment to be pulled (`validityMs` from
-// `nowNanos`, which by default allows for a payment pulled at once), but never cuts the current
-// allowance short: one which lapses later, or never, is left to.
+// `nowNanos`), but never cuts the current allowance short: one which lapses later, or never, is
+// left to.
 export function approvalToAdd(
     current: Allowance,
     amount: bigint,
     nowNanos: bigint,
-    validityMs: number = APPROVAL_VALIDITY_MS,
+    validityMs: number,
 ): Approval {
     const expiresAt = nowNanos + BigInt(validityMs) * NANOS_PER_MILLISECOND;
 

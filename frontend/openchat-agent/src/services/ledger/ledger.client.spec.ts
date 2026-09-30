@@ -56,7 +56,9 @@ describe("LedgerClient.approveSpending", () => {
         allowances = [{ allowance: 0n, expires_at: [] }];
         responses = [{ Ok: 1n }];
 
-        expect(await client.approveSpending(LEDGER, SPENDER, 100n, FEE)).toEqual("success");
+        expect(
+            await client.approveSpending(LEDGER, SPENDER, 100n, FEE, APPROVAL_VALIDITY_MS),
+        ).toEqual("success");
         expect(approvals).toEqual([
             {
                 spender: { owner: SPENDER.owner, subaccount: [SPENDER.subaccount] },
@@ -88,7 +90,9 @@ describe("LedgerClient.approveSpending", () => {
         allowances = [{ allowance: 500n, expires_at: [] }];
         responses = [{ Ok: 1n }];
 
-        expect(await client.approveSpending(LEDGER, SPENDER, 100n, FEE)).toEqual("success");
+        expect(
+            await client.approveSpending(LEDGER, SPENDER, 100n, FEE, APPROVAL_VALIDITY_MS),
+        ).toEqual("success");
         expect(approvals.map((a) => [a.amount, a.expected_allowance, a.expires_at])).toEqual([
             [600n, [500n], []],
         ]);
@@ -98,9 +102,9 @@ describe("LedgerClient.approveSpending", () => {
         balance = 100n + FEE - 1n;
         allowances = [{ allowance: 0n, expires_at: [] }];
 
-        expect(await client.approveSpending(LEDGER, SPENDER, 100n, FEE)).toEqual(
-            "insufficient_funds",
-        );
+        expect(
+            await client.approveSpending(LEDGER, SPENDER, 100n, FEE, APPROVAL_VALIDITY_MS),
+        ).toEqual("insufficient_funds");
         expect(approvals).toEqual([]);
     });
 
@@ -111,7 +115,9 @@ describe("LedgerClient.approveSpending", () => {
         ];
         responses = [{ Err: { AllowanceChanged: { current_allowance: 40n } } }, { Ok: 1n }];
 
-        expect(await client.approveSpending(LEDGER, SPENDER, 100n, FEE)).toEqual("success");
+        expect(
+            await client.approveSpending(LEDGER, SPENDER, 100n, FEE, APPROVAL_VALIDITY_MS),
+        ).toEqual("success");
         expect(approvals.map((a) => [a.amount, a.expected_allowance])).toEqual([
             [100n, [0n]],
             [140n, [40n]],
@@ -128,7 +134,9 @@ describe("LedgerClient.approveSpending", () => {
             { Err: { AllowanceChanged: { current_allowance: 80n } } },
         ];
 
-        expect(await client.approveSpending(LEDGER, SPENDER, 100n, FEE)).toEqual("failure");
+        expect(
+            await client.approveSpending(LEDGER, SPENDER, 100n, FEE, APPROVAL_VALIDITY_MS),
+        ).toEqual("failure");
         expect(approvals.length).toEqual(2);
     });
 
@@ -140,7 +148,9 @@ describe("LedgerClient.approveSpending", () => {
         ];
         responses = [{ Err: { Expired: { ledger_time: ledgerTime } } }, { Ok: 1n }];
 
-        expect(await client.approveSpending(LEDGER, SPENDER, 100n, FEE)).toEqual("success");
+        expect(
+            await client.approveSpending(LEDGER, SPENDER, 100n, FEE, APPROVAL_VALIDITY_MS),
+        ).toEqual("success");
         expect(approvals.map((a) => a.expires_at)).toEqual([
             [EXPIRY],
             [ledgerTime + BigInt(APPROVAL_VALIDITY_MS) * 1_000_000n],
@@ -151,7 +161,9 @@ describe("LedgerClient.approveSpending", () => {
         allowances = [{ allowance: 0n, expires_at: [] }];
         responses = [{ Err: { TemporarilyUnavailable: null } }];
 
-        expect(await client.approveSpending(LEDGER, SPENDER, 100n, FEE)).toEqual("failure");
+        expect(
+            await client.approveSpending(LEDGER, SPENDER, 100n, FEE, APPROVAL_VALIDITY_MS),
+        ).toEqual("failure");
         expect(approvals.length).toEqual(1);
     });
 
@@ -159,8 +171,8 @@ describe("LedgerClient.approveSpending", () => {
         allowances = [{ allowance: 0n, expires_at: [] }];
         responses = [{ Err: { InsufficientFunds: { balance: 0n } } }];
 
-        expect(await client.approveSpending(LEDGER, SPENDER, 100n, FEE)).toEqual(
-            "insufficient_funds",
-        );
+        expect(
+            await client.approveSpending(LEDGER, SPENDER, 100n, FEE, APPROVAL_VALIDITY_MS),
+        ).toEqual("insufficient_funds");
     });
 });

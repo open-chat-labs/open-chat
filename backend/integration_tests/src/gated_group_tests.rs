@@ -330,13 +330,20 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
     assert_eq!(balance - original_balance, (amount * 98) / 100);
 }
 
+enum Gated {
+    Group,
+    Community,
+    Channel,
+}
+
 // A user in a MultiUser canister holds their own funds, in their principal's account, so the
 // website approves the group or community to pull a gate's payment from there, on the ledger
-// itself, as the user's canister does for a user alone in it. The group or community then pulls it
-// when they join, just as from a User canister.
-#[test_case(false; "group")]
-#[test_case(true; "community")]
-fn user_in_multi_user_canister_pays_payment_gate_from_their_wallet(community: bool) {
+// itself, as the user's canister does for a user alone in it. The group or community (for a
+// channel too) then pulls it when they join, just as from a User canister.
+#[test_case(Gated::Group; "group")]
+#[test_case(Gated::Community; "community")]
+#[test_case(Gated::Channel; "channel")]
+fn user_in_multi_user_canister_pays_payment_gate_from_their_wallet(gated: Gated) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -357,8 +364,9 @@ fn user_in_multi_user_canister_pays_payment_gate_from_their_wallet(community: bo
     });
     let name = random_string();
 
-    let spender = if community {
-        match client::user::create_community(
+    // The canister which pulls the payment, and the gated channel if it is a channel's gate
+    let (spender, channel_id) = match gated {
+        Gated::Community => match client::user::create_community(
             env,
             owner.principal,
             owner.canister(),
@@ -377,11 +385,16 @@ fn user_in_multi_user_canister_pays_payment_gate_from_their_wallet(community: bo
                 primary_language: "en".to_string(),
             },
         ) {
-            user_canister::create_community::Response::Success(result) => Principal::from(result.community_id),
+            user_canister::create_community::Response::Success(result) => (Principal::from(result.community_id), None),
             response => panic!("'create_community' error: {response:?}"),
+        },
+        Gated::Channel => {
+            let community_id = client::user::happy_path::create_community(env, &owner, &name, true, vec![random_string()]);
+            let channel_id =
+                client::community::happy_path::create_gated_channel(env, owner.principal, community_id, true, name, gate);
+            (Principal::from(community_id), Some(channel_id))
         }
-    } else {
-        match client::user::create_group(
+        Gated::Group => match client::user::create_group(
             env,
             owner.principal,
             owner.canister(),
@@ -398,9 +411,9 @@ fn user_in_multi_user_canister_pays_payment_gate_from_their_wallet(community: bo
                 messages_visible_to_non_members: None,
             },
         ) {
-            user_canister::create_group::Response::Success(result) => Principal::from(result.chat_id),
+            user_canister::create_group::Response::Success(result) => (Principal::from(result.chat_id), None),
             response => panic!("'create_group' error: {response:?}"),
-        }
+        },
     };
 
     let owner_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id);
@@ -409,10 +422,15 @@ fn user_in_multi_user_canister_pays_payment_gate_from_their_wallet(community: bo
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.principal, amount);
     client::ledger::happy_path::approve(env, user.principal, canister_ids.icp_ledger, spender, amount - fee);
 
-    if community {
-        client::community::happy_path::join_community(env, user.principal, spender.into());
-    } else {
-        client::group::happy_path::join_group(env, user.principal, spender.into());
+    match gated {
+        Gated::Group => client::group::happy_path::join_group(env, user.principal, spender.into()),
+        Gated::Community => {
+            client::community::happy_path::join_community(env, user.principal, spender.into());
+        }
+        Gated::Channel => {
+            client::community::happy_path::join_community(env, user.principal, spender.into());
+            client::community::happy_path::join_channel(env, user.principal, spender.into(), channel_id.unwrap());
+        }
     }
 
     tick_many(env, 3);
