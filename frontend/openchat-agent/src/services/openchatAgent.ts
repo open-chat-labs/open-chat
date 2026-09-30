@@ -121,6 +121,7 @@ import type {
     PayForDiamondMembershipResponse,
     PayForPremiumItemResponse,
     PayForStreakInsuranceResponse,
+    PendingCryptocurrencyTransfer,
     PendingCryptocurrencyWithdrawal,
     PinChatResponse,
     PinMessageResponse,
@@ -173,8 +174,10 @@ import type {
     ThreadPreview,
     ThreadPreviewsResponse,
     ThreadSyncDetails,
+    TipMessageResponse,
     ToggleMuteNotificationResponse,
     TokenExchangeRates,
+    TokenInfo,
     TokenSwapPool,
     TokenSwapStatusResponse,
     TopUpNeuronResponse,
@@ -228,6 +231,7 @@ import {
     CommonResponses,
     DestinationInvalidError,
     ErrorCode,
+    LEDGER_CANISTER_CHAT,
     Lazy,
     MAX_ACTIVITY_EVENTS,
     ONE_MINUTE_MILLIS,
@@ -247,6 +251,7 @@ import {
     messageContextsEqual,
     offline,
     textToCode,
+    userCanisterSpenderAccount,
     userWalletAccount,
     waitAll,
 } from "@shared";
@@ -516,6 +521,59 @@ export class OpenChatAgent extends EventTarget {
             throw new Error(`Only the current user's wallet is known, not ${userId}'s`);
         }
         return userWalletAccount(userId, () => this.principal.toText());
+    }
+
+    // Approves the user's canister to pull a payment from the user's wallet, returning the error to
+    // report if it couldn't be, or undefined once it has been, or if it didn't need to be.
+    //
+    // A user in a MultiUser canister holds their own funds, in the account of the principal they
+    // sign in with, which their canister can only pull from once they have approved it as spender.
+    // So it is approved here, as the user, just before each payment it will pull. A user alone in
+    // their canister needs no approval, since the canister holds their funds itself, and neither
+    // does a payment from another account (`fromAccount`), whose owner has approved it already.
+    //
+    // `amount` is all that the payment takes from the wallet, so includes the fee of each transfer
+    // the canister makes, and `fee` is what the ledger charges for the approval itself. Without
+    // knowing that, there is no telling whether the wallet can afford both, so nothing is approved.
+    //
+    // The approval is made, and paid for, before the canister has checked anything, so a payment it
+    // then refuses, such as one with the wrong PIN, still costs the approval's fee, and leaves the
+    // canister approved for the payment until the approval lapses.
+    private async approveUserCanisterToPull(
+        ledger: string,
+        amount: bigint,
+        fee: bigint | undefined,
+        fromAccount: string | undefined,
+    ): Promise<OCError | undefined> {
+        const userId = this._userClient.userId;
+        if (fromAccount !== undefined || !isMultiUserCanisterUser(userId)) {
+            return undefined;
+        }
+        if (fee === undefined) {
+            return { kind: "error", code: ErrorCode.ApprovalFailed, message: undefined };
+        }
+
+        const spender = userCanisterSpenderAccount(userId, () => this.principal.toText());
+        const response = await this._ledgerClient
+            .approveSpending(ledger, spender, amount, fee)
+            .catch((err) => {
+                console.warn("Failed to approve the user's canister to pull a payment", err);
+                return "failure" as const;
+            });
+
+        switch (response) {
+            case "success":
+                return undefined;
+            case "insufficient_funds":
+                return { kind: "error", code: ErrorCode.InsufficientFunds, message: undefined };
+            case "failure":
+                return { kind: "error", code: ErrorCode.ApprovalFailed, message: undefined };
+        }
+    }
+
+    // The fee the ledger charges for a transfer or an approval, if the token is a registered one
+    private ledgerFee(ledger: string): bigint | undefined {
+        return this._registryValue?.tokenDetails.find((t) => t.ledger === ledger)?.transferFee;
     }
 
     getAllCachedUsers(): Promise<UserSummary[]> {
@@ -819,7 +877,27 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    private sendDirectMessage(
+    // Approves the user's canister to pull whatever a message in a direct chat takes from the
+    // user's wallet: the crypto it sends, or the token0 of the swap it offers, which is deposited in
+    // the escrow canister along with the fee for paying it out, so costs two fees.
+    private approveTransferInMessage(content: MessageContent): Promise<OCError | undefined> {
+        if (content.kind === "crypto_content" && content.transfer.kind === "pending") {
+            const { ledger, amountE8s, feeE8s = 0n, fromAccount } = content.transfer;
+            return this.approveUserCanisterToPull(ledger, amountE8s + feeE8s, feeE8s, fromAccount);
+        }
+        if (content.kind === "p2p_swap_content_initial") {
+            const { ledger, fee } = content.token0;
+            return this.approveUserCanisterToPull(
+                ledger,
+                content.token0Amount + 2n * fee,
+                fee,
+                content.fromAccount,
+            );
+        }
+        return Promise.resolve(undefined);
+    }
+
+    private async sendDirectMessage(
         chatId: DirectChatIdentifier,
         event: EventWrapper<Message>,
         messageFilterFailed: bigint | undefined,
@@ -827,6 +905,11 @@ export class OpenChatAgent extends EventTarget {
         pin: string | undefined,
         onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
+        const error = await this.approveTransferInMessage(event.event.content);
+        if (error !== undefined) {
+            return [error, event.event];
+        }
+
         return this.userClient.sendMessage(
             chatId,
             event,
@@ -3786,7 +3869,7 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    payForDiamondMembership(
+    async payForDiamondMembership(
         userId: string,
         ledger: string,
         duration: DiamondMembershipDuration,
@@ -3795,6 +3878,17 @@ export class OpenChatAgent extends EventTarget {
         fromAccount: string | undefined,
     ): Promise<PayForDiamondMembershipResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
+
+        // The UserIndex has the user's canister pull the price, which includes the transfer's fee
+        const error = await this.approveUserCanisterToPull(
+            ledger,
+            expectedPriceE8s,
+            this.ledgerFee(ledger),
+            fromAccount,
+        );
+        if (error !== undefined) {
+            return error;
+        }
 
         return this._userIndexClient.payForDiamondMembership(
             userId,
@@ -4352,14 +4446,52 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.reportedMessages(userId);
     }
 
-    acceptP2PSwap(
+    async tipMessage(
+        messageContext: MessageContext,
+        messageId: bigint,
+        transfer: PendingCryptocurrencyTransfer,
+        decimals: number,
+        pin: string | undefined,
+    ): Promise<TipMessageResponse> {
+        // Only a tip in a direct chat is pulled by the user's canister
+        if (messageContext.chatId.kind === "direct_chat") {
+            const fee = transfer.feeE8s ?? 0n;
+            const error = await this.approveUserCanisterToPull(
+                transfer.ledger,
+                transfer.amountE8s + fee,
+                fee,
+                transfer.fromAccount,
+            );
+            if (error !== undefined) {
+                return error;
+            }
+        }
+
+        return this.userClient.tipMessage(messageContext, messageId, transfer, decimals, pin);
+    }
+
+    async acceptP2PSwap(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
+        token1: TokenInfo,
+        token1Amount: bigint,
         pin: string | undefined,
         newAchievement: boolean,
         fromAccount: string | undefined,
     ): Promise<AcceptP2PSwapResponse> {
+        // Whichever kind of chat the swap is in, it is the user's canister which deposits token1 in
+        // the escrow canister, along with the fee for paying it out, so it costs two fees
+        const error = await this.approveUserCanisterToPull(
+            token1.ledger,
+            token1Amount + 2n * token1.fee,
+            token1.fee,
+            fromAccount,
+        );
+        if (error !== undefined) {
+            return error;
+        }
+
         if (chatId.kind === "channel") {
             return this._communityClient.acceptP2PSwap(
                 chatId,
@@ -4937,11 +5069,23 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    payForStreakInsurance(
+    async payForStreakInsurance(
         additionalDays: number,
         expectedPrice: bigint,
         pin: string | undefined,
     ): Promise<PayForStreakInsuranceResponse> {
+        // The price is paid in CHAT to the SNS governance canister, which is the CHAT ledger's
+        // minting account, so it is burned, and the ledger charges no fee for a burn
+        const error = await this.approveUserCanisterToPull(
+            LEDGER_CANISTER_CHAT,
+            expectedPrice,
+            this.ledgerFee(LEDGER_CANISTER_CHAT),
+            undefined,
+        );
+        if (error !== undefined) {
+            return error;
+        }
+
         return this.userClient.payForStreakInsurance(additionalDays, expectedPrice, pin);
     }
 

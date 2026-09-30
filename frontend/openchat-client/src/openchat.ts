@@ -314,6 +314,7 @@ import {
     type ThreadSummary,
     type ThreadSyncDetails,
     type TipMessageResponse,
+    type TokenInfo,
     type TokenSwapStatusResponse,
     type TransferSuccess,
     type UpdateGroupResponse,
@@ -7568,10 +7569,13 @@ export class OpenChat {
             .catch(() => false);
     }
 
+    // `token1` and `token1Amount` are what accepting the swap costs, as the swap's message has them
     async acceptP2PSwap(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
+        token1: TokenInfo,
+        token1Amount: bigint,
         fromAccount?: string,
     ): Promise<AcceptP2PSwapResponse> {
         let pin: string | undefined = undefined;
@@ -7593,6 +7597,8 @@ export class OpenChat {
                 chatId,
                 threadRootMessageIndex,
                 messageId,
+                token1,
+                token1Amount,
                 pin,
                 newAchievement,
                 fromAccount,
