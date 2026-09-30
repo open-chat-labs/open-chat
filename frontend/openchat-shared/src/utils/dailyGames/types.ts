@@ -54,6 +54,13 @@ export interface DailyGame<M, S> {
      * skipped, and used by the shell to save and restore marks locally.
      */
     filled(model: M, state: S): Array<[number, number]>;
+    /**
+     * Optional. The pairs sent with a hint request, when the board shows the player more than
+     * their own marks: CHAT Rooms crosses out for them every cell a placed CHAT rules out, and a
+     * hint must not sell them a step that is already drawn. Absent, `filled`. Never saved: a
+     * resume replays `filled` only.
+     */
+    hintFilled?(model: M, state: S): Array<[number, number]>;
     /** Broken rules, for painting. */
     check(model: M, state: S): Violation[];
     /** No violations and complete. */

@@ -665,6 +665,7 @@ fn solution_value(game_id: &str, description: &[u8], solution: &[u8], key: u16) 
         tents::GAME_ID => tents::solution_pairs(description, solution),
         loopy::GAME_ID => loopy::solution_pairs(description, solution),
         unruly::GAME_ID => unruly::solution_pairs(description, solution),
+        chat_rooms::GAME_ID => chat_rooms::solution_pairs(description, solution),
         slant::GAME_ID => slant::solution_pairs(description, solution),
         bridges::GAME_ID => bridges::solution_pairs(description, solution),
         other => panic!("no solution pairs for game {other}"),
@@ -772,6 +773,7 @@ fn solve(game_id: &str, description: &[u8], tier: u8) -> (Vec<Vec<(u16, u8)>>, V
         bridges::GAME_ID => solve_with!(bridges),
         loopy::GAME_ID => solve_with!(loopy),
         unruly::GAME_ID => solve_with!(unruly),
+        chat_rooms::GAME_ID => solve_with!(chat_rooms),
         other => panic!("no solver for game {other}"),
     }
 }
@@ -804,6 +806,10 @@ fn wrong_pair(game_id: &str, description: &[u8], solution: &[u8]) -> (u16, u8) {
         bridges::GAME_ID => (
             bridges::solution_pairs(description, solution).expect("valid description"),
             |v| (v + 1) % 3,
+        ),
+        chat_rooms::GAME_ID => (
+            chat_rooms::solution_pairs(description, solution).expect("valid description"),
+            |v| v ^ 1,
         ),
         other => panic!("no solution pairs for game {other}"),
     };

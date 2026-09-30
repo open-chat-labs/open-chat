@@ -626,6 +626,13 @@ fn generate(params: &PuzzleParams, seed: u64) -> Option<Result<Generated, Genera
                 unruly::Params::default_for(w, h, if easy { unruly::Tier::Easy } else { unruly::Tier::Tricky }),
             )
         ),
+        chat_rooms::GAME_ID => into_generated!(
+            chat_rooms::GAME_ID,
+            chat_rooms::generate(
+                seed,
+                chat_rooms::Params::default_for(w, h, if easy { chat_rooms::Tier::Easy } else { chat_rooms::Tier::Tricky }),
+            )
+        ),
         _ => return None,
     };
     Some(Ok(generated))
@@ -696,8 +703,8 @@ mod tests {
     use crate::model::seed::puzzle_seed;
 
     const LU: &str = light_up::GAME_ID;
-    /// Numbers on the rota's Monday (light_up 7x7) and Tuesday (tents 8x8), so tests generate
-    /// small easy boards
+    const CR: &str = chat_rooms::GAME_ID;
+    /// Numbers on the rota's Monday (chat_rooms 9x9 tricky) and Tuesday (tents 8x8 easy)
     const MONDAY: PuzzleNumber = 102;
     const TUESDAY: PuzzleNumber = 103;
 
@@ -710,7 +717,7 @@ mod tests {
     /// Expected byte lengths of (description, solution) for a game's wire format
     fn wire_lengths(game_id: &str, w: usize, h: usize) -> (usize, usize) {
         match game_id {
-            light_up::GAME_ID | bridges::GAME_ID | unruly::GAME_ID => (3 + w * h, w * h),
+            light_up::GAME_ID | bridges::GAME_ID | unruly::GAME_ID | chat_rooms::GAME_ID => (3 + w * h, w * h),
             tents::GAME_ID => (3 + w * h + h + w, w * h),
             slant::GAME_ID => (3 + (w + 1) * (h + 1), w * h),
             loopy::GAME_ID => (3 + w * h, (h + 1) * w + h * (w + 1)),
@@ -820,8 +827,9 @@ mod tests {
         assert_eq!(weekday(11), 0);
 
         let d = data();
-        assert_eq!(d.params_for(4).game_id, LU); // Monday
-        assert_eq!(d.params_for(4).width, 7);
+        assert_eq!(d.params_for(4).game_id, CR); // Monday tricky
+        assert_eq!(d.params_for(4).width, 9);
+        assert_eq!(d.params_for(4).tier, 1);
         assert_eq!(d.params_for(7).game_id, bridges::GAME_ID); // Thursday
         assert_eq!(d.params_for(9).game_id, tents::GAME_ID); // Saturday tricky
         assert_eq!(d.params_for(9).tier, 1);
@@ -839,7 +847,7 @@ mod tests {
         d.generate_candidate(MONDAY).unwrap();
         d.generate_candidate(MONDAY).unwrap();
         d.generate_candidate(MONDAY).unwrap();
-        assert!(d.veto_candidate(MONDAY, LU, 0));
+        assert!(d.veto_candidate(MONDAY, CR, 0));
         let expected = pool(&d, MONDAY)[1].puzzle.description.clone();
 
         assert!(d.ensure_puzzles(now));
@@ -855,7 +863,7 @@ mod tests {
         let mut d = data();
         let now = MONDAY as u64 * DAY_IN_MS + 1;
         d.generate_candidate(MONDAY).unwrap();
-        assert!(d.veto_candidate(MONDAY, LU, 0));
+        assert!(d.veto_candidate(MONDAY, CR, 0));
         assert!(!d.ensure_puzzles(now));
         assert!(!d.puzzles.contains_key(&MONDAY));
         assert!(d.current_puzzles(now).is_empty());
@@ -898,7 +906,7 @@ mod tests {
         for i in 0..MAX_CANDIDATE_POOL {
             assert_eq!(d.generation_needed(now), Some(MONDAY));
             assert_eq!(d.generate_candidate(MONDAY).unwrap(), i as u8);
-            assert!(d.veto_candidate(MONDAY, LU, i as u8));
+            assert!(d.veto_candidate(MONDAY, CR, i as u8));
         }
         // Today is given up on rather than generated forever; tomorrow still gets its pool
         assert_eq!(d.generation_needed(now), Some(TUESDAY));
@@ -916,23 +924,23 @@ mod tests {
     #[test]
     fn rota_generates_per_weekday() {
         let mut d = data();
-        // Monday and Sunday are both light_up, at different sizes and tiers
+        // Monday is chat_rooms and Sunday light_up, both tricky, at different sizes
         let sunday = MONDAY + 6;
         assert_eq!(weekday(sunday), 6);
         d.generate_candidate(MONDAY).unwrap();
         d.generate_candidate(sunday).unwrap();
         let mon = &pool(&d, MONDAY)[0].puzzle;
         let sun = &pool(&d, sunday)[0].puzzle;
-        assert_eq!(mon.game_id, LU);
+        assert_eq!(mon.game_id, CR);
         assert_eq!(sun.game_id, LU);
-        assert_eq!(mon.description[1], 7);
+        assert_eq!(mon.description[1], 9);
         assert_eq!(sun.description[1], 10);
-        assert_eq!(mon.tier, 0);
+        assert_eq!(mon.tier, 1);
         assert_eq!(sun.tier, 1);
 
         let now = MONDAY as u64 * DAY_IN_MS + 1;
         assert!(d.ensure_puzzles(now));
-        assert_eq!(d.current_puzzles(now)[0].description[1], 7);
+        assert_eq!(d.current_puzzles(now)[0].description[1], 9);
         let now = sunday as u64 * DAY_IN_MS + 1;
         assert!(d.ensure_puzzles(now));
         assert_eq!(d.current_puzzles(now)[0].description[1], 10);
@@ -954,7 +962,7 @@ mod tests {
         let now = MONDAY as u64 * DAY_IN_MS + 1;
 
         run_generation(&mut d, now);
-        assert_eq!(d.current_puzzles(now)[0].game_id, LU);
+        assert_eq!(d.current_puzzles(now)[0].game_id, CR);
 
         d.regenerate_today(Some(tents::GAME_ID.to_string()), now).unwrap();
         assert!(!d.puzzles.contains_key(&MONDAY));
@@ -973,7 +981,7 @@ mod tests {
         assert_eq!(d.generation_needed(now), Some(TUESDAY));
         d.generate_candidate(TUESDAY).unwrap();
         assert_eq!(d.candidates[&TUESDAY].keys().next().unwrap(), tents::GAME_ID);
-        assert_eq!(d.params_for(MONDAY + 7).game_id, LU);
+        assert_eq!(d.params_for(MONDAY + 7).game_id, CR);
 
         // The override goes with the day
         d.prune(now + DAY_IN_MS);
@@ -1074,14 +1082,14 @@ mod tests {
             reward_by_streak: vec![1],
             ..enabled.clone()
         };
-        d.puzzles.get_mut(&MONDAY).unwrap().get_mut(LU).unwrap().config = stale.clone();
+        d.puzzles.get_mut(&MONDAY).unwrap().get_mut(CR).unwrap().config = stale.clone();
         d.candidates.get_mut(&TUESDAY).unwrap().get_mut(tents::GAME_ID).unwrap()[0]
             .puzzle
             .config = stale;
         d.puzzles
             .get_mut(&MONDAY)
             .unwrap()
-            .get_mut(LU)
+            .get_mut(CR)
             .unwrap()
             .game_config
             .hint_prices = vec![1];
@@ -1215,9 +1223,34 @@ mod tests {
             ),
             (0, Box::new(|p: &mut PuzzleParams| p.height = 15)),
             (0, Box::new(|p: &mut PuzzleParams| p.tier = 2)),
-            (0, Box::new(|p: &mut PuzzleParams| p.black_pct = 61)),
+            (6, Box::new(|p: &mut PuzzleParams| p.black_pct = 61)),
             (3, Box::new(|p: &mut PuzzleParams| p.game_id = "sudoku".to_string())),
             (4, Box::new(|p: &mut PuzzleParams| p.width = 7)),
+            (
+                5,
+                Box::new(|p: &mut PuzzleParams| {
+                    p.game_id = chat_rooms::GAME_ID.to_string();
+                    p.width = 9;
+                    p.height = 8;
+                }),
+            ),
+            (
+                6,
+                Box::new(|p: &mut PuzzleParams| {
+                    p.game_id = chat_rooms::GAME_ID.to_string();
+                    p.width = 12;
+                    p.height = 12;
+                }),
+            ),
+            (
+                2,
+                Box::new(|p: &mut PuzzleParams| {
+                    p.game_id = chat_rooms::GAME_ID.to_string();
+                    p.width = 9;
+                    p.height = 9;
+                    p.tier = 0;
+                }),
+            ),
         ] {
             let mut schedule = schedule();
             mutate(&mut schedule[i]);
@@ -1229,6 +1262,17 @@ mod tests {
         schedule[1].black_pct = 0;
         schedule[2].black_pct = 255;
         assert!(validate_schedule(&schedule).is_ok());
+    }
+
+    /// Invariant 20 of the CHAT Rooms branch: CHAT Rooms is only ever served Tricky. Forcing it
+    /// takes its default params, and a rota entry that names it at Easy fails the launch checks
+    /// (see `config_checks_reject_bad_numbers`).
+    #[test]
+    fn chat_rooms_is_always_tricky() {
+        let forced = forced_params(chat_rooms::GAME_ID).unwrap();
+        assert_eq!(forced.tier, 1);
+        let generated = generate(&forced, 7).unwrap().unwrap();
+        assert_eq!(generated.tier, 1);
     }
 
     #[test]
@@ -1302,7 +1346,7 @@ mod tests {
             },
             game_configs: BTreeMap::new(),
             schedule: vec![scheduled(MONDAY); 7],
-            puzzles: BTreeMap::from([(MONDAY, BTreeMap::from([(LU.to_string(), stale.clone())]))]),
+            puzzles: BTreeMap::from([(MONDAY, BTreeMap::from([(CR.to_string(), stale.clone())]))]),
             candidates: BTreeMap::new(),
             results: BTreeMap::new(),
             local_user_indexes: HashSet::new(),

@@ -22,6 +22,7 @@ pub fn generators() -> &'static [&'static str] {
         bridges::GAME_ID,
         loopy::GAME_ID,
         unruly::GAME_ID,
+        chat_rooms::GAME_ID,
     ]
 }
 
@@ -42,9 +43,11 @@ fn params(game_id: &str, width: u8, height: u8, tier: u8) -> PuzzleParams {
 }
 
 /// The rota, Mon..Sun. Loopy is benched: far harder than the rest, still generated on demand.
+/// CHAT Rooms took Monday from Easy Light Up, which was too easy (Julian, 2026-09-30). A website
+/// that predates CHAT Rooms cannot draw it, so this release must follow the website's.
 pub fn schedule() -> [PuzzleParams; 7] {
     [
-        params(light_up::GAME_ID, 7, 7, EASY),
+        params(chat_rooms::GAME_ID, 9, 9, TRICKY),
         params(tents::GAME_ID, 8, 8, EASY),
         params(slant::GAME_ID, 6, 6, EASY),
         params(bridges::GAME_ID, 7, 7, EASY),
@@ -70,6 +73,8 @@ fn default_params(game_id: &str) -> Option<PuzzleParams> {
         bridges::GAME_ID => Some(params(bridges::GAME_ID, 7, 7, EASY)),
         loopy::GAME_ID => Some(params(loopy::GAME_ID, 6, 6, EASY)),
         unruly::GAME_ID => Some(params(unruly::GAME_ID, 8, 8, EASY)),
+        // Always Tricky: its Easy tier is too easy to be worth a day (Julian, 2026-09-30)
+        chat_rooms::GAME_ID => Some(params(chat_rooms::GAME_ID, 9, 9, TRICKY)),
         _ => None,
     }
 }
@@ -109,6 +114,17 @@ pub mod launch_checks {
             // has no solution at all and the generator would spin.
             if p.game_id == unruly::GAME_ID && (p.width % 2 != 0 || p.height % 2 != 0) {
                 return Err(format!("entry {i}: unruly needs an even width and height"));
+            }
+            // CHAT Rooms boards are square, none bigger than its generator can produce, and
+            // always Tricky
+            if p.game_id == chat_rooms::GAME_ID && (p.width != p.height || p.width as usize > chat_rooms::MAX_SIZE) {
+                return Err(format!(
+                    "entry {i}: chat_rooms needs a square board of at most {}",
+                    chat_rooms::MAX_SIZE
+                ));
+            }
+            if p.game_id == chat_rooms::GAME_ID && p.tier != TRICKY {
+                return Err(format!("entry {i}: chat_rooms is only ever scheduled Tricky"));
             }
             if p.game_id == light_up::GAME_ID && !(10..=60).contains(&p.black_pct) {
                 return Err(format!("entry {i}: black_pct must be within 10..=60"));
@@ -170,5 +186,17 @@ pub mod launch_checks {
             }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Invariant 20 of the CHAT Rooms branch, the default half: `forced_params` prefers the rota
+    /// entry, so this is the only thing that pins the default CHAT Rooms falls back to off the rota
+    #[test]
+    fn chat_rooms_default_is_tricky() {
+        assert_eq!(default_params(chat_rooms::GAME_ID).map(|p| p.tier), Some(TRICKY));
     }
 }

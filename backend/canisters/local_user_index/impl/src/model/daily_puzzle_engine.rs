@@ -607,6 +607,11 @@ impl DailyPuzzleEngine {
         // for nothing, bypassing the priced ladder entirely. One key per call keeps "check my
         // work" useful and makes walking the board a deliberate key-by-key exercise rather than a
         // single request.
+        //
+        // A wrong placement (a non-zero value: a line, bulb, tent, bridge or CHAT) is named before
+        // a wrong "no" mark, whatever their keys. The placement is usually the cause and the "no"
+        // its consequence: CHAT Rooms sends the cells a placed CHAT rules out as "no" marks, so a
+        // wrong CHAT puts a false "no" on the true CHAT beside it (CHAT Rooms invariant 21).
         let wrong: Option<u16> = filled
             .iter()
             .filter(|(k, v)| {
@@ -620,8 +625,8 @@ impl DailyPuzzleEngine {
                     }
                 }
             })
-            .map(|(k, _)| *k)
-            .min();
+            .min_by_key(|(k, v)| (*v == 0, *k))
+            .map(|(k, _)| *k);
         if let Some(wrong) = wrong {
             return Ok(HintPrepared::Mistake(HintResult {
                 hint: ServedHint {
@@ -2559,6 +2564,34 @@ mod tests {
                 assert_eq!(r.hint.hint.focus, vec![1]);
                 assert_eq!(r.hints_used, 0);
             }
+            _ => panic!("expected a mistake hint"),
+        }
+    }
+
+    // A wrong placement is usually the cause and a wrong "no" its consequence: CHAT Rooms sends the
+    // cells a placed CHAT rules out as "no" marks, so a wrong CHAT puts a false "no" on the true
+    // CHAT beside it, often at a lower key. The check names the placement, which is what the
+    // player can act on, and names a "no" mark only when no placement is wrong (CHAT Rooms
+    // invariant 21).
+    #[test]
+    fn hint_mistake_names_a_wrong_placement_before_a_wrong_no_mark() {
+        let mut engine = new_engine();
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        // Solution is [1, 0, 0, 0, 0, 0, 1, 0, 1]: the "no" at 0 and the placement at 1 are both
+        // wrong, and 0 is the lower key
+        match engine
+            .reserve_hint(u, GAME, NUMBER, 1, &[(0, 0), (1, 1), (2, 0)], 0, START)
+            .unwrap()
+        {
+            HintPrepared::Mistake(r) => assert_eq!(r.hint.hint.focus, vec![1]),
+            _ => panic!("expected a mistake hint"),
+        }
+
+        // With no placement wrong, the lowest wrong "no" mark is named
+        match engine.reserve_hint(u, GAME, NUMBER, 1, &[(8, 0), (6, 0), (2, 0)], 0, START).unwrap() {
+            HintPrepared::Mistake(r) => assert_eq!(r.hint.hint.focus, vec![6]),
             _ => panic!("expected a mistake hint"),
         }
     }

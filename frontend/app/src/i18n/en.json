@@ -819,6 +819,24 @@
                     "4": "Two oranges with a gap. Orange in between would make three, so it has to be purple.",
                     "5": "Every cell filled, no run of three, and three of each colour in every row and column."
                 }
+            },
+            "chat_rooms": {
+                "name": "CHAT Rooms",
+                "rules": "Place one CHAT in every row, every column and every coloured room. No two CHATs may touch, not even at the corners.",
+                "technique": {
+                    "1": "A CHAT rules out every other cell in its row, its column and its room, and the eight cells around it.",
+                    "2": "This row, column or room has only one cell left that can take its CHAT, so the CHAT goes there.",
+                    "3": "These are the only cells left for one room, and they all sit in one row or column, so that line's CHAT has to be among them and the rest of the line is ruled out. It works the other way round too: a row or column whose open cells all sit in one room rules out the rest of that room.",
+                    "4": "These rooms can only use these rows or columns, and there are as many rooms as lines, so those lines' CHATs all belong to these rooms and nothing else in the lines can take one.",
+                    "5": "A CHAT in this cell would rule out every cell this row, column or room has left, so this cell cannot take one."
+                },
+                "demo": {
+                    "1": "Place one CHAT in every row, every column and every coloured room. Tap once to cross a cell out, twice for a CHAT.",
+                    "2": "No two CHATs may touch, not even at the corners.",
+                    "3": "Every room holds one CHAT. The top room has two.",
+                    "4": "This room is a single cell, so its CHAT goes there. Every cell it rules out is crossed off for you.",
+                    "5": "One CHAT in every row, column and room, and none touching."
+                }
             }
         }
     },

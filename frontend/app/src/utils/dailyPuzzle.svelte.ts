@@ -137,6 +137,9 @@ export class DailyPuzzleGame {
     resetArmed = $state(false);
     // the most recent hint step served for this puzzle (a mistake hint is not a step)
     lastHint = $state<ServedHint | undefined>(undefined);
+    // The server refused a hint for `max_hints`: it has the last word on which step is next, so
+    // once it says none are left, none are offered
+    #outOfHints = $state(false);
 
     marks = $derived.by(() => this.game.marks(this.model, this.state));
     lit = $derived.by(() => this.game.lit?.(this.model, this.state) ?? new Set<number>());
@@ -269,7 +272,14 @@ export class DailyPuzzleGame {
         if (this.mistakeStands) return { kind: "mistake" };
         const level = this.nextHintLevel;
         const hintsLeft = this.hintsLeft;
-        if (level === 1 && hintsLeft === 0) return { kind: "noneLeft" };
+        if (this.#outOfHints) return { kind: "noneLeft" };
+        // With every step used, the only hint left is the next level of the last one, and only
+        // while the board still shows it unfinished. Once its moves are made the server moves on
+        // to a new step, which it refuses at the cap: offering that tap is offering a failure.
+        const last = this.lastHint;
+        if (hintsLeft === 0 && (level === 1 || (last !== undefined && this.#finished(last)))) {
+            return { kind: "noneLeft" };
+        }
         const checksLeft = this.freeChecksLeft;
         return {
             kind: "hint",
@@ -365,6 +375,17 @@ export class DailyPuzzleGame {
         this.target = new Set([...this.target].filter((k) => this.focus.has(k)));
     }
 
+    // Whether the board already shows every move a served hint asked for: the cells it looked at,
+    // less the subject its sentence points at and anything that takes no mark. The same test
+    // #trimHint retires a hint on, read from the hint itself so it holds after a reload too.
+    #finished(hint: ServedHint): boolean {
+        const filled = new Set(this.#filled().map(([k]) => k));
+        const subject = new Set(hint.hint.target);
+        return hint.hint.focus
+            .filter((k) => !subject.has(k))
+            .every((k) => this.#keyStatus(k, filled) !== "todo");
+    }
+
     #markable(key: number): boolean {
         return this.game.tap(this.model, this.state, key) !== this.state;
     }
@@ -453,6 +474,10 @@ export class DailyPuzzleGame {
         return this.game.filled(this.model, this.state);
     }
 
+    #hintFilled(): [number, number][] {
+        return this.game.hintFilled?.(this.model, this.state) ?? this.#filled();
+    }
+
     #filledKey(): string {
         return JSON.stringify(this.#filled());
     }
@@ -495,7 +520,7 @@ export class DailyPuzzleGame {
     // invariant 2).
     #requestHint(level: number, price: number, retried: boolean): Promise<void> {
         return this.client
-            .dailyPuzzleHint(this.puzzle.gameId, level, this.#filled(), price)
+            .dailyPuzzleHint(this.puzzle.gameId, level, this.#hintFilled(), price)
             .then((resp) => {
                 if (resp.kind === "error") {
                     const quoted = Number(resp.message);
@@ -507,11 +532,16 @@ export class DailyPuzzleGame {
                     ) {
                         return this.#requestHint(level, quoted, true);
                     }
+                    const outOfHints =
+                        resp.code === ErrorCode.Throttled && resp.message === "max_hints";
+                    if (outOfHints) this.#outOfHints = true;
                     toastStore.showFailureToast(
                         i18nKey(
-                            resp.code === ErrorCode.Throttled
-                                ? "dailyPuzzle.noFreeChecks"
-                                : "dailyPuzzle.failedHint",
+                            outOfHints
+                                ? "dailyPuzzle.noHintsLeft"
+                                : resp.code === ErrorCode.Throttled
+                                  ? "dailyPuzzle.noFreeChecks"
+                                  : "dailyPuzzle.failedHint",
                         ),
                         resp,
                     );

@@ -446,6 +446,73 @@ describe("DailyPuzzleGame", () => {
     });
 });
 
+// With every hint step used, the button offers only what the server will serve, and a refusal
+// for the cap says so rather than blaming free checks
+describe("out of hints", () => {
+    // three steps used, the last served at level 1: it asked for cells 1 and 2 to be lit
+    const threeSteps = [served([4]), served([8]), served([1, 2])];
+
+    // invariant 18
+    test("once the last hint's moves are on the board, no hint is offered", () => {
+        const g = build(userState({ hints: threeSteps }));
+        // cells 1 and 2 still dark: the next level of the last step is still worth asking for
+        expect(g.hintButton).toMatchObject({ kind: "hint", level: 2 });
+        // a bulb at 0 lights 1 and 2, so that step is done and the server would move on
+        g.tap(0);
+        expect(g.hintButton).toEqual({ kind: "noneLeft" });
+    });
+
+    // invariant 19
+    test("a max_hints refusal turns the button off and says no hints are left", async () => {
+        const client = fakeClient({
+            dailyPuzzleHint: vi.fn(async () => ({
+                kind: "error",
+                code: 320,
+                message: "max_hints",
+            })),
+        });
+        const g = build(userState(), client);
+        g.tap(0);
+        await g.hint();
+        expect(g.hintButton).toEqual({ kind: "noneLeft" });
+        expect(toastStore.showFailureToast).toHaveBeenCalledWith(
+            expect.objectContaining({ key: "dailyPuzzle.noHintsLeft" }),
+            expect.anything(),
+        );
+    });
+});
+
+// CHAT Rooms crosses out, for the player, every cell a placed CHAT rules out. A hint request
+// carries those crosses; the saved marks never do.
+describe("a game that shows more than the player's marks (chat_rooms)", () => {
+    const rooms = [0, 0, 0, 0, 1, 2, 0, 0, 2, 1, 2, 2, 2, 2, 1, 2, 2, 2, 3, 3, 4, 2, 3, 3, 3];
+    const roomsPuzzle: PublicDailyPuzzle = {
+        ...puzzle,
+        gameId: "chat_rooms",
+        number: 20726,
+        description: Uint8Array.from([1, 5, 5, ...rooms]),
+    };
+    const chatRooms = dailyPuzzleGame("chat_rooms")!.game;
+
+    // Invariants 14 and 15: the request sends `hintFilled`, the local save `filled`
+    test("hint requests send the automatic crosses, and the saved marks leave them out", async () => {
+        const client = hintClient(served([1]));
+        const state = userState({ gameId: "chat_rooms", number: 20726 });
+        dailyPuzzleStore.set({ puzzles: [roomsPuzzle], states: [state] });
+        const g = new DailyPuzzleGame(client, roomsPuzzle, state, USER, chatRooms);
+        g.tap(20);
+        g.tap(20);
+        await g.hint();
+
+        const sent: [number, number][] = client.dailyPuzzleHint.mock.calls[0][2];
+        expect(sent).toContainEqual([20, 1]);
+        for (const k of [0, 5, 10, 15, 16, 21, 22, 23, 24]) expect(sent).toContainEqual([k, 0]);
+
+        const saved = JSON.parse(localStorage.getItem(`daily_puzzle_${USER}_20726`)!);
+        expect(saved.filled).toEqual([[20, 1]]);
+    });
+});
+
 // #9360: the hint button and caption follow the state the engine is in
 describe("hint states (#9360)", () => {
     const mistake: ServedHint = {
