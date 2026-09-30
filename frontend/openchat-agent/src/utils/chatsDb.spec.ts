@@ -165,3 +165,68 @@ describe("loadMessagesByMessageIndex", () => {
         expect([...dirty]).toEqual([100]);
     });
 });
+
+describe("the timestamps of cached details", () => {
+    function chatsDbWithDetails() {
+        const stores: Record<string, Map<string, unknown>> = {
+            group_details: new Map(),
+            community_details: new Map(),
+        };
+        const db = {
+            get: (store: string, key: string) => Promise.resolve(stores[store].get(key)),
+            put: (store: string, value: unknown, key: string) => {
+                stores[store].set(key, value);
+                return Promise.resolve(key);
+            },
+        };
+        const chatsDb = new ChatsDb({ toString: () => "principal" } as Principal);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (chatsDb as any).getDb = () => Promise.resolve(db);
+        return { chatsDb, stores };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const groupDetails = (timestamp: bigint): any => ({ timestamp, members: [] });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const communityDetails = (lastUpdated: bigint): any => ({ lastUpdated, members: [] });
+
+    test("aren't known until the details have been read or written here", async () => {
+        const { chatsDb, stores } = chatsDbWithDetails();
+        stores.group_details.set("g", groupDetails(10n));
+        stores.community_details.set("c", communityDetails(11n));
+
+        expect(chatsDb.cachedGroupDetailsTimestamp("g")).toBeUndefined();
+        expect(chatsDb.cachedCommunityDetailsTimestamp("c")).toBeUndefined();
+
+        await chatsDb.getCachedGroupDetails("g");
+        await chatsDb.getCachedCommunityDetails("c");
+
+        expect(chatsDb.cachedGroupDetailsTimestamp("g")).toBe(10n);
+        expect(chatsDb.cachedCommunityDetailsTimestamp("c")).toBe(11n);
+    });
+
+    test("follow the details as they are written, and as another tab's writes are read", async () => {
+        const { chatsDb, stores } = chatsDbWithDetails();
+
+        await chatsDb.setCachedGroupDetails("g", groupDetails(10n));
+        await chatsDb.setCachedCommunityDetails("c", communityDetails(11n));
+        expect(chatsDb.cachedGroupDetailsTimestamp("g")).toBe(10n);
+        expect(chatsDb.cachedCommunityDetailsTimestamp("c")).toBe(11n);
+
+        // Written by another tab, which this one only finds out about when it next reads them
+        stores.group_details.set("g", groupDetails(20n));
+        expect(chatsDb.cachedGroupDetailsTimestamp("g")).toBe(10n);
+        await chatsDb.getCachedGroupDetails("g");
+        expect(chatsDb.cachedGroupDetailsTimestamp("g")).toBe(20n);
+    });
+
+    test("are forgotten if the details turn out no longer to be cached", async () => {
+        const { chatsDb, stores } = chatsDbWithDetails();
+        await chatsDb.setCachedGroupDetails("g", groupDetails(10n));
+
+        stores.group_details.delete("g");
+        await chatsDb.getCachedGroupDetails("g");
+
+        expect(chatsDb.cachedGroupDetailsTimestamp("g")).toBeUndefined();
+    });
+});

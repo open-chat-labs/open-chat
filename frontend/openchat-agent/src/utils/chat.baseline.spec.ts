@@ -246,6 +246,25 @@ describe("mergeGroupChatUpdates", () => {
         ]);
     });
 
+    test("takes when the details last changed from the group update, else keeps it", () => {
+        const chat = group("a", { detailsLastUpdated: 10n });
+
+        const changed = mergeGroupChatUpdates(
+            [chat],
+            [],
+            [groupUpdate("a", { detailsLastUpdated: 20n })],
+        );
+        expect(changed[0].detailsLastUpdated).toBe(20n);
+
+        // An update from a canister which doesn't yet send it
+        const unchanged = mergeGroupChatUpdates(
+            [chat],
+            [],
+            [groupUpdate("a", { name: "changed" })],
+        );
+        expect(unchanged[0].detailsLastUpdated).toBe(10n);
+    });
+
     test("does not mutate the input chat", () => {
         const chat = group("a");
         const snap = JSON.stringify(chat, (_, v) => (typeof v === "bigint" ? v.toString() : v));
@@ -272,6 +291,7 @@ describe("mergeGroupChatUpdates", () => {
                     latestEventIndex: 6,
                     memberCount: 4,
                     dateLastPinned: 55n,
+                    detailsLastUpdated: 44n,
                     eventsTTL: { value: 1000n },
                     eventsTtlLastUpdated: 20n,
                     membership: {

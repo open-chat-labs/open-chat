@@ -80,6 +80,7 @@ fn summary_updates_impl(updates_since: TimestampMillis, on_behalf_of: Option<Pri
         updates: GroupCanisterGroupChatSummaryUpdates {
             chat_id: state.env.canister_id().into(),
             last_updated: chat_last_updated,
+            details_last_updated: Some(state.data.selected_details_last_updated()),
             name: updates.name,
             description: updates.description,
             subtype: updates.subtype,
