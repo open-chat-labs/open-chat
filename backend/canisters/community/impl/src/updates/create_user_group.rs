@@ -1,5 +1,4 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::model::user_groups::CreateUserGroupResult;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -32,13 +31,8 @@ fn create_user_group_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         let now = state.env.now();
         let rng = state.env.rng();
 
-        match state.data.members.create_user_group(args.name, args.user_ids, rng, now) {
-            CreateUserGroupResult::Success(user_group_id) => {
-                handle_activity_notification(state);
-                Ok(SuccessResult { user_group_id })
-            }
-            CreateUserGroupResult::NameTaken => Err(OCErrorCode::NameTaken.into()),
-            CreateUserGroupResult::TooManyMembers(max) => Err(OCErrorCode::TooManyUsers.with_message(max)),
-        }
+        let user_group_id = state.data.members.create_user_group(args.name, args.user_ids, rng, now)?;
+        handle_activity_notification(state);
+        Ok(SuccessResult { user_group_id })
     }
 }

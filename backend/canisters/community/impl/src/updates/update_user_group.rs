@@ -1,5 +1,4 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::model::user_groups::UpdateUserGroupResult;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -28,17 +27,11 @@ fn update_user_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     } else {
         let now = state.env.now();
 
-        match state
+        state
             .data
             .members
-            .update_user_group(args.user_group_id, args.name, args.users_to_add, args.users_to_remove, now)
-        {
-            UpdateUserGroupResult::Success => {
-                handle_activity_notification(state);
-                Ok(())
-            }
-            UpdateUserGroupResult::NotFound => Err(OCErrorCode::UserGroupNotFound.into()),
-            UpdateUserGroupResult::TooManyMembers(max) => Err(OCErrorCode::TooManyUsers.with_message(max)),
-        }
+            .update_user_group(args.user_group_id, args.name, args.users_to_add, args.users_to_remove, now)?;
+        handle_activity_notification(state);
+        Ok(())
     }
 }
