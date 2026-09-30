@@ -31,11 +31,8 @@ fn create_user_group_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         let now = state.env.now();
         let rng = state.env.rng();
 
-        if let Some(user_group_id) = state.data.members.create_user_group(args.name, args.user_ids, rng, now) {
-            handle_activity_notification(state);
-            Ok(SuccessResult { user_group_id })
-        } else {
-            Err(OCErrorCode::NameTaken.into())
-        }
+        let user_group_id = state.data.members.create_user_group(args.name, args.user_ids, rng, now)?;
+        handle_activity_notification(state);
+        Ok(SuccessResult { user_group_id })
     }
 }

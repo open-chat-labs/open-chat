@@ -72,6 +72,13 @@
                         toastStore.showFailureToast(
                             i18nKey("communities.errors.userGroupNameTaken"),
                         );
+                    } else if (resp.kind === "error" && resp.code === ErrorCode.TooManyUsers) {
+                        // The canister sends the limit as the error's message
+                        toastStore.showFailureToast(
+                            i18nKey("communities.errors.userGroupTooManyMembers", {
+                                max: resp.message,
+                            }),
+                        );
                     } else {
                         toastStore.showFailureToast(
                             i18nKey(
