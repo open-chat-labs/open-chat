@@ -1,8 +1,10 @@
+import { AccountIdentifier } from "@icp-sdk/canisters/ledger/icp";
 import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, test } from "vitest";
 import {
     encodeIcrcAccount,
     icrcAccountToUserId,
+    isAccountOfMultiUserCanisterUserId,
     spenderSubaccount,
     userCanisterSpenderAccount,
     userWalletAccount,
@@ -101,6 +103,56 @@ describe("icrcAccountToUserId", () => {
         const owner = Principal.fromText(canisterId);
 
         expect(icrcAccountToUserId({ owner, subaccount: new Uint8Array(31) })).toBeUndefined();
+    });
+});
+
+describe("isAccountOfMultiUserCanisterUserId", () => {
+    const icpAccountIdentifier = (owner: string) =>
+        AccountIdentifier.fromPrincipal({ principal: Principal.fromText(owner) }).toHex();
+    const knownUsers = () => [canisterId, indexedUserId];
+    // An ICRC-1 account names its owner, so there is no need to look through the users known
+    const noKnownUsers = (): string[] => {
+        throw new Error("The known users were asked for");
+    };
+
+    test("any account of a MultiUser user's id is refused", () => {
+        const subaccount = new Uint8Array(32);
+        subaccount[31] = 1;
+        const withSubaccount = encodeIcrcAccount({
+            owner: Principal.fromText(indexedUserId),
+            subaccount,
+        });
+
+        expect(isAccountOfMultiUserCanisterUserId(indexedUserId, noKnownUsers)).toBe(true);
+        expect(isAccountOfMultiUserCanisterUserId(withSubaccount, noKnownUsers)).toBe(true);
+    });
+
+    test("a wallet is not refused", () => {
+        expect(isAccountOfMultiUserCanisterUserId(canisterId, noKnownUsers)).toBe(false);
+        expect(isAccountOfMultiUserCanisterUserId(principal, noKnownUsers)).toBe(false);
+        expect(
+            isAccountOfMultiUserCanisterUserId(icpAccountIdentifier(canisterId), knownUsers),
+        ).toBe(false);
+        expect(
+            isAccountOfMultiUserCanisterUserId(icpAccountIdentifier(principal), knownUsers),
+        ).toBe(false);
+    });
+
+    test("the ICP account identifier of a MultiUser user's id is refused if the user is known", () => {
+        const accountIdentifier = icpAccountIdentifier(indexedUserId);
+
+        expect(isAccountOfMultiUserCanisterUserId(accountIdentifier, knownUsers)).toBe(true);
+        expect(
+            isAccountOfMultiUserCanisterUserId(accountIdentifier.toUpperCase(), knownUsers),
+        ).toBe(true);
+        expect(isAccountOfMultiUserCanisterUserId(accountIdentifier, () => [canisterId])).toBe(
+            false,
+        );
+    });
+
+    test("anything else is not refused", () => {
+        expect(isAccountOfMultiUserCanisterUserId("", knownUsers)).toBe(false);
+        expect(isAccountOfMultiUserCanisterUserId("not an address", knownUsers)).toBe(false);
     });
 });
 
