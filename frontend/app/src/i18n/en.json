@@ -837,6 +837,43 @@
                     "3": "Every room holds one CHAT. The top room has two.",
                     "4": "This room is a single cell, so its CHAT goes there. Every cell it rules out is crossed off for you.",
                     "5": "One CHAT in every row, column and room, and none touching."
+                },
+                "hint": {
+                    "shadow": "The CHAT in row {row}, column {column} rules out every other cell in its row, its column and {room}, and every cell touching it, so the ? cells can't hold a CHAT.",
+                    "lastCell": {
+                        "row": "Every other cell in row {line} is ruled out, so row {line}'s CHAT must go in the ? cell.",
+                        "column": "Every other cell in column {line} is ruled out, so column {line}'s CHAT must go in the ? cell.",
+                        "room": "Every other cell in {room} is ruled out, so that room's CHAT must go in the ? cell.",
+                        "single": "The outlined cell is the whole of {room}, so that room's CHAT goes there."
+                    },
+                    "confined": {
+                        "roomInRow": "The only cells left for {room} are the outlined ones, and they all sit in row {line}. So row {line}'s CHAT must come from that room, and the ? cells can't hold one.",
+                        "roomInColumn": "The only cells left for {room} are the outlined ones, and they all sit in column {line}. So column {line}'s CHAT must come from that room, and the ? cells can't hold one.",
+                        "rowInRoom": "The only cells left in row {line} are the outlined ones, and they are all in {room}. So that room's CHAT must be in row {line}, and the ? cells can't hold one.",
+                        "columnInRoom": "The only cells left in column {line} are the outlined ones, and they are all in {room}. So that room's CHAT must be in column {line}, and the ? cells can't hold one."
+                    },
+                    "pigeonhole": {
+                        "roomsInRows": "The only cells left for these {count} rooms are the outlined ones, and they all sit in rows {lines}. So those rows' CHATs must all come from these rooms, and the ? cells can't hold one.",
+                        "roomsInColumns": "The only cells left for these {count} rooms are the outlined ones, and they all sit in columns {lines}. So those columns' CHATs must all come from these rooms, and the ? cells can't hold one.",
+                        "rowsInRooms": "The only cells left in rows {lines} are the outlined ones, and they are all in just {count} rooms. So those rooms' CHATs must all be in these rows, and the ? cells can't hold one.",
+                        "columnsInRooms": "The only cells left in columns {lines} are the outlined ones, and they are all in just {count} rooms. So those rooms' CHATs must all be in these columns, and the ? cells can't hold one."
+                    },
+                    "blocked": {
+                        "row": "The outlined cells are all row {line} has left. A CHAT in the ? cell would rule out every one of them, by touching it or by sharing its row, column or room, leaving row {line} nowhere for its CHAT. So the ? cell can't hold a CHAT.",
+                        "column": "The outlined cells are all column {line} has left. A CHAT in the ? cell would rule out every one of them, by touching it or by sharing its row, column or room, leaving column {line} nowhere for its CHAT. So the ? cell can't hold a CHAT.",
+                        "room": "The outlined cells are all {room} has left. A CHAT in the ? cell would rule out every one of them, by touching it or by sharing its row, column or room, leaving that room nowhere for its CHAT. So the ? cell can't hold a CHAT."
+                    }
+                },
+                "room": {
+                    "0": "the purple room",
+                    "1": "the orange room",
+                    "2": "the blue room",
+                    "3": "the green room",
+                    "4": "the grey room",
+                    "5": "the red room",
+                    "6": "the yellow room",
+                    "7": "the brown room",
+                    "8": "the pink room"
                 }
             }
         }

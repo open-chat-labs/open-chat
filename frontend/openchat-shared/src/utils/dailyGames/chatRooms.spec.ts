@@ -2,12 +2,14 @@ import { describe, expect, test } from "vitest";
 import {
     chatRooms,
     checkRules,
+    hintCaption,
     cycleCell,
     parseDescription,
     ruledOut,
     type ChatRoomsCell,
     type ChatRoomsDescription,
 } from "./chatRooms";
+import fixture from "./chatRoomsHints.json";
 
 // Rows of size letters, one room per letter: 'a' is room 0, 'b' room 1 and so on.
 function descBytes(rows: string[]): number[] {
@@ -198,4 +200,118 @@ describe("automatic crosses", () => {
         expect(chatRooms.hintKeyStatus!(puzzle, oneLogo, 0)).toBe("done");
         expect(chatRooms.hintKeyStatus!(puzzle, oneLogo, 7)).toBe("todo");
     });
+});
+
+// Invariant 24: every step of a generated trace, as the server serves it at level 2, gets a
+// sentence that names the row, column or room its outlined cells are in, and the cells it rules
+// out (or, for the last cell, fills) lie where the sentence says. The fixture is written by the
+// Rust test `write_hint_fixture` from real generated puzzles.
+describe("hint sentences", () => {
+    const bytes = (hex: string) => Uint8Array.from(hex.match(/../g)!.map((b) => parseInt(b, 16)));
+
+    for (const [p, entry] of fixture.entries()) {
+        test(`puzzle ${p}: every step names where it is`, () => {
+            const desc = parseDescription(bytes(entry.description));
+            const n = desc.size;
+            const row = (k: number) => Math.floor(k / n);
+            const column = (k: number) => k % n;
+            const inLine = (kind: string, line: number, k: number) =>
+                (kind === "row" ? row(k) : column(k)) === line - 1;
+            const inRoom = (room: { key: string }, k: number) =>
+                `room.${desc.rooms[k]}` === room.key;
+
+            // The board as the solver left it before each step: the server serves a step only
+            // once what it rests on is on the board
+            let grid = chatRooms.empty(desc);
+            for (const [i, step] of entry.steps.entries()) {
+                const concluded = step.conclusions.map(([k]) => k);
+                // hint_at_level in the LocalUserIndex: below level 3 the target is sent only when
+                // it names no concluded key
+                const target = step.target.some((k) => concluded.includes(k)) ? [] : step.target;
+                const caption = hintCaption(desc, grid, { ...step, target });
+                for (const [k, v] of step.conclusions) grid = chatRooms.apply(desc, grid, k, v);
+                const where = `step ${i} (technique ${step.technique})`;
+                expect(caption, where).toBeDefined();
+                const { key, params = {} } = caption!;
+                const room = params.room as { key: string };
+                const line = params.line as number;
+                const lines = params.lines as number[];
+
+                if (key === "hint.shadow") {
+                    expect([params.row, params.column], where).toEqual([
+                        row(target[0]) + 1,
+                        column(target[0]) + 1,
+                    ]);
+                } else if (key === "hint.lastCell.row" || key === "hint.lastCell.column") {
+                    const kind = key.split(".")[2];
+                    expect(
+                        step.focus.every((k) => inLine(kind, line, k)),
+                        where,
+                    ).toBe(true);
+                } else if (key === "hint.lastCell.room" || key === "hint.lastCell.single") {
+                    expect(
+                        step.focus.every((k) => inRoom(room, k)),
+                        where,
+                    ).toBe(true);
+                } else if (key.startsWith("hint.confined.roomIn")) {
+                    const kind = key.endsWith("Row") ? "row" : "column";
+                    expect(
+                        target.every((k) => inRoom(room, k) && inLine(kind, line, k)),
+                        where,
+                    ).toBe(true);
+                    expect(
+                        concluded.every((k) => inLine(kind, line, k) && !inRoom(room, k)),
+                        where,
+                    ).toBe(true);
+                } else if (key.startsWith("hint.confined.") && key.endsWith("InRoom")) {
+                    const kind = key.includes(".row") ? "row" : "column";
+                    expect(
+                        target.every((k) => inRoom(room, k) && inLine(kind, line, k)),
+                        where,
+                    ).toBe(true);
+                    expect(
+                        concluded.every((k) => inRoom(room, k) && !inLine(kind, line, k)),
+                        where,
+                    ).toBe(true);
+                } else if (key.startsWith("hint.pigeonhole.roomsIn")) {
+                    const kind = key.endsWith("Rows") ? "row" : "column";
+                    expect(lines.length, where).toBe(params.count);
+                    const covered = (k: number) => lines.some((l) => inLine(kind, l, k));
+                    expect(target.every(covered) && concluded.every(covered), where).toBe(true);
+                } else if (key.startsWith("hint.pigeonhole.") && key.endsWith("InRooms")) {
+                    const kind = key.includes(".rows") ? "row" : "column";
+                    expect(lines.length, where).toBe(params.count);
+                    expect(
+                        target.every((k) => lines.some((l) => inLine(kind, l, k))),
+                        where,
+                    ).toBe(true);
+                    expect(
+                        concluded.every((k) => !lines.some((l) => inLine(kind, l, k))),
+                        where,
+                    ).toBe(true);
+                } else if (key === "hint.blocked.room") {
+                    expect(
+                        target.every((k) => inRoom(room, k)),
+                        where,
+                    ).toBe(true);
+                    expect(
+                        concluded.every((k) => !inRoom(room, k)),
+                        where,
+                    ).toBe(true);
+                } else if (key === "hint.blocked.row" || key === "hint.blocked.column") {
+                    const kind = key.split(".")[2];
+                    expect(
+                        target.every((k) => inLine(kind, line, k)),
+                        where,
+                    ).toBe(true);
+                    expect(
+                        concluded.every((k) => !inLine(kind, line, k)),
+                        where,
+                    ).toBe(true);
+                } else {
+                    throw new Error(`${where}: unexpected sentence ${key}`);
+                }
+            }
+        });
+    }
 });

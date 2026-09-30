@@ -5,7 +5,15 @@
 // and conclusion values are 1 (logo) or 0 (no logo). The player's crosses are their own notes:
 // they submit as 0, the same as a cell left alone.
 
-import type { DailyGame, GameElement, HintKeyStatus, Violation } from "./types";
+import type {
+    DailyGame,
+    GameElement,
+    HintCaption,
+    HintCaptionParam,
+    HintKeyStatus,
+    HintStep,
+    Violation,
+} from "./types";
 
 export type ChatRoomsCell = "empty" | "cross" | "logo";
 export type ChatRoomsDescription = {
@@ -162,6 +170,148 @@ export function cycleCell(cell: ChatRoomsCell): ChatRoomsCell {
     }
 }
 
+type GroupKind = "row" | "column" | "room";
+type Group = { kind: GroupKind; index: number; cells: number[] };
+
+function groups(desc: ChatRoomsDescription): Group[] {
+    const n = desc.size;
+    const out: Group[] = [];
+    for (let i = 0; i < n; i++) {
+        out.push({ kind: "row", index: i, cells: Array.from({ length: n }, (_, c) => i * n + c) });
+        out.push({
+            kind: "column",
+            index: i,
+            cells: Array.from({ length: n }, (_, r) => r * n + i),
+        });
+        out.push({
+            kind: "room",
+            index: i,
+            cells: desc.rooms.flatMap((room, k) => (room === i ? [k] : [])),
+        });
+    }
+    return out;
+}
+
+/** The room's colour, named for the sentence: "the orange room". */
+function roomName(room: number): HintCaptionParam {
+    return { key: `room.${room}` };
+}
+
+const upper = (kind: GroupKind) => kind.charAt(0).toUpperCase() + kind.slice(1);
+
+/**
+ * The sentence for a served step, naming the row, column or room it is about. The step's focus
+ * holds every cell of the groups it reasons about (invariant 23), so those groups are found as
+ * the ones holding its outlined cells and lying whole in its focus. Undefined for a step that
+ * cannot be read that way, which then gets the technique's fixed sentence.
+ */
+export function hintCaption(
+    desc: ChatRoomsDescription,
+    grid: ChatRoomsCell[],
+    step: HintStep,
+): HintCaption | undefined {
+    const n = desc.size;
+    const focus = new Set(step.focus);
+    const target = step.target;
+    const all = groups(desc);
+    const whole = (g: Group) => g.cells.every((k) => focus.has(k));
+    const touched = (kind: GroupKind) =>
+        all.filter((g) => g.kind === kind && g.cells.some((k) => target.includes(k)));
+    const line = (g: Group): HintCaptionParam => g.index + 1;
+
+    switch (step.technique) {
+        case 1: {
+            // Shadow: the target is the CHAT
+            if (target.length !== 1) return undefined;
+            const l = target[0];
+            return {
+                key: "hint.shadow",
+                params: {
+                    row: Math.floor(l / n) + 1,
+                    column: (l % n) + 1,
+                    room: roomName(desc.rooms[l]),
+                },
+            };
+        }
+        case 2: {
+            // LastCell: the focus is the whole row, column or room
+            const g = all.find((g) => g.cells.length === focus.size && whole(g));
+            if (g === undefined) return undefined;
+            // A one-cell room's only cell is its conclusion, which the server withholds as target
+            if (target.length === 0)
+                return { key: "hint.lastCell.single", params: { room: roomName(g.index) } };
+            return g.kind === "room"
+                ? { key: "hint.lastCell.room", params: { room: roomName(g.index) } }
+                : { key: `hint.lastCell.${g.kind}`, params: { line: line(g) } };
+        }
+        case 3:
+        case 4: {
+            // Confined and Pigeonhole: some rooms (or lines) hold the outlined cells and are listed
+            // whole; their outlined cells sit in as many lines (or rooms); the rest of the focus is
+            // what the step rules out, and lies in those lines (or rooms)
+            if (target.length === 0) return undefined;
+            // Both readings can fit the same focus ("room 4's open cells are all in row 3" and
+            // "row 3's open cells are all in room 4"). The server serves a step only once what it
+            // rests on is on the board, so the groups it is about have every cell but the outlined
+            // ones marked or crossed out already: the other reading's groups still have open cells.
+            const auto = ruledOut(desc, grid);
+            const closed = (k: number) => grid[k] !== "empty" || auto.has(k);
+            for (const setKind of ["room", "row", "column"] as GroupKind[]) {
+                const set = touched(setKind);
+                if (set.length === 0 || !set.every(whole)) continue;
+                if (!set.every((g) => g.cells.every((k) => target.includes(k) || closed(k))))
+                    continue;
+                const inSet = new Set(set.flatMap((g) => g.cells));
+                const ruled = step.focus.filter((k) => !inSet.has(k));
+                for (const lineKind of (setKind === "room"
+                    ? ["row", "column"]
+                    : ["room"]) as GroupKind[]) {
+                    const lines = touched(lineKind);
+                    if (lines.length !== set.length) continue;
+                    if (!ruled.every((k) => lines.some((g) => g.cells.includes(k)))) continue;
+                    const name = step.technique === 3 ? "confined" : "pigeonhole";
+                    if (step.technique === 3) {
+                        return setKind === "room"
+                            ? {
+                                  key: `hint.${name}.roomIn${upper(lineKind)}`,
+                                  params: { room: roomName(set[0].index), line: line(lines[0]) },
+                              }
+                            : {
+                                  key: `hint.${name}.${setKind}InRoom`,
+                                  params: { line: line(set[0]), room: roomName(lines[0].index) },
+                              };
+                    }
+                    return setKind === "room"
+                        ? {
+                              key: `hint.${name}.roomsIn${upper(lineKind)}s`,
+                              params: { count: set.length, lines: lines.map((g) => g.index + 1) },
+                          }
+                        : {
+                              key: `hint.${name}.${setKind}sInRooms`,
+                              params: { count: set.length, lines: set.map((g) => g.index + 1) },
+                          };
+                }
+            }
+            return undefined;
+        }
+        case 5: {
+            // Blocked: the focus is the whole group the ? cell would empty, and the ? cell
+            const g = all.find(
+                (g) =>
+                    g.cells.length === focus.size - 1 &&
+                    whole(g) &&
+                    target.length > 0 &&
+                    target.every((k) => g.cells.includes(k)),
+            );
+            if (g === undefined) return undefined;
+            return g.kind === "room"
+                ? { key: "hint.blocked.room", params: { room: roomName(g.index) } }
+                : { key: `hint.blocked.${g.kind}`, params: { line: line(g) } };
+        }
+    }
+    return undefined;
+}
+
 /** The player's own marks as (key, value) pairs: 1 for a logo, 0 for their cross. */
 function filledPairs(grid: ChatRoomsCell[]): [number, number][] {
     const out: [number, number][] = [];
@@ -240,4 +390,5 @@ export const chatRooms: DailyGame<ChatRoomsDescription, ChatRoomsCell[]> = {
         return out;
     },
     lit: ruledOut,
+    hintCaption,
 };

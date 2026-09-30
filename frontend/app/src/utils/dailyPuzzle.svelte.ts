@@ -3,6 +3,7 @@ import {
     type DailyGame,
     type DailyPuzzleUserState,
     type DailyResultContent,
+    type HintCaption,
     type HintKeyStatus,
     type OpenChat,
     type PublicDailyPuzzle,
@@ -16,9 +17,32 @@ import {
     puzzleFingerprint,
     stateFor,
 } from "@client";
+import { _, locale } from "svelte-i18n";
+import { get } from "svelte/store";
 import { i18nKey } from "../i18n/i18n";
 import { toastStore } from "../stores/toast";
 import { gameI18nPrefix } from "./dailyPuzzleGames";
+
+// A game's own sentence for a step, with its values made readable: a string of the game's
+// translated first (a room's colour, "the orange room"), a list joined as the player's language
+// joins one ("3 and 5")
+function captionKey(prefix: string, caption: HintCaption): ResourceKey {
+    const params: Record<string, string | number> = {};
+    for (const [name, value] of Object.entries(caption.params ?? {})) {
+        if (typeof value === "number") params[name] = value;
+        else if (Array.isArray(value)) params[name] = joinList(value.map(String));
+        else params[name] = get(_)(`${prefix}.${value.key}`);
+    }
+    return i18nKey(`${prefix}.${caption.key}`, params);
+}
+
+function joinList(items: string[]): string {
+    try {
+        return new Intl.ListFormat(get(locale) ?? "en", { type: "conjunction" }).format(items);
+    } catch {
+        return items.join(", ");
+    }
+}
 
 const SERVER_SAVE_INTERVAL = 5000;
 
@@ -586,10 +610,15 @@ export class DailyPuzzleGame {
         this.focus = new Set([...show(hint.hint.focus), ...subject]);
         // no target: point at everything in focus
         this.target = subject.size > 0 ? subject : new Set(this.focus);
+        const prefix = gameI18nPrefix(this.puzzle.gameId);
+        const own =
+            hint.level >= 2 ? this.game.hintCaption?.(this.model, this.state, hint.hint) : undefined;
         this.#caption =
-            hint.level >= 2
-                ? i18nKey(`${gameI18nPrefix(this.puzzle.gameId)}.technique.${hint.hint.technique}`)
-                : undefined;
+            own !== undefined
+                ? captionKey(prefix, own)
+                : hint.level >= 2
+                  ? i18nKey(`${prefix}.technique.${hint.hint.technique}`)
+                  : undefined;
     }
 
     resultCard(): DailyResultContent | undefined {

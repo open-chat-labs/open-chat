@@ -443,3 +443,39 @@ fn the_solver_never_claims_an_unsound_grid() {
     let claimed = must_only_claim_sound_solutions::<ChatRooms>(unsatisfiable_descriptions());
     assert!(claimed > 20, "only {claimed} of the corpus reached the solver");
 }
+
+/// Writes the hint steps of a spread of generated puzzles to the client's fixture, which
+/// `chatRooms.spec.ts` reads to check every step gets a sentence naming the right row, column or
+/// room (invariant 24). Run by hand when the solver's steps change:
+/// `cargo test -p chat_rooms --test chat_rooms write_hint_fixture -- --ignored`
+#[test]
+#[ignore]
+fn write_hint_fixture() {
+    let mut entries = Vec::new();
+    for (size, tier, seeds) in [(6u8, Tier::Easy, 0..3u64), (8, Tier::Tricky, 0..3), (9, Tier::Tricky, 0..6)] {
+        for seed in seeds {
+            let g = generate(seed, params(size, tier)).unwrap();
+            let steps: Vec<String> = g
+                .hints
+                .iter()
+                .map(|h| {
+                    format!(
+                        "{{\"technique\":{},\"focus\":{:?},\"target\":{:?},\"conclusions\":{:?}}}",
+                        u8::from(h.technique),
+                        h.focus,
+                        h.target,
+                        h.conclusions.iter().map(|&(k, v)| [k as u32, v as u32]).collect::<Vec<_>>()
+                    )
+                })
+                .collect();
+            entries.push(format!(
+                "{{\"description\":\"{}\",\"steps\":[{}]}}",
+                hex(&g.description),
+                steps.join(",")
+            ));
+        }
+    }
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../../frontend/openchat-shared/src/utils/dailyGames/chatRoomsHints.json");
+    std::fs::write(path, format!("[{}]\n", entries.join(","))).unwrap();
+}
