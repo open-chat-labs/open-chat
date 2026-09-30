@@ -319,10 +319,14 @@ describe("LedgerClient.withdraw", () => {
         });
     });
 
-    test("ICP sent to an account identifier with no fee given pays the ICP ledger's fee", async () => {
+    test("ICP sent to an account identifier pays the ICP ledger's fee, whatever fee is given", async () => {
         await client.withdraw(icpToAccountId({ feeE8s: undefined }));
+        await client.withdraw(icpToAccountId({ feeE8s: 0n }));
 
-        expect(icpTransfers.map(([, args]) => args.fee)).toEqual([{ e8s: 10_000n }]);
+        expect(icpTransfers.map(([, args]) => args.fee)).toEqual([
+            { e8s: 10_000n },
+            { e8s: 10_000n },
+        ]);
     });
 
     test("an account identifier isn't sent to for any token but ICP", async () => {

@@ -22,8 +22,8 @@ export type ApproveSpendingResponse = "success" | "insufficient_funds" | "failur
 const MEMO_SEND = new TextEncoder().encode("OC_SEND");
 const MEMO_SEND_NUMBER = bytesToBigint(MEMO_SEND);
 
-// What the ICP ledger charges for a transfer, which is what the User canister pays for one to an
-// account identifier, so is paid here if the withdrawal doesn't say
+// What the ICP ledger charges for a transfer, which the User canister always pays for one to an
+// account identifier, whatever fee the withdrawal gives (`Tokens::DEFAULT_FEE`)
 const ICP_TRANSFER_FEE = 10_000n;
 
 export class LedgerClient extends CandidCanisterAgent<LedgerService> {
@@ -117,13 +117,13 @@ export class LedgerClient extends CandidCanisterAgent<LedgerService> {
 
     // Sends a withdrawal from the caller's own account, the one held by the principal they sign in
     // with, as the User canister's `withdraw_crypto_v2` sends one from its own: ICP to an account
-    // identifier through the ICP ledger's `transfer`, and anything else to an ICRC-1 account, paying
-    // the fee given and with the same memo.
+    // identifier through the ICP ledger's `transfer`, and anything else to an ICRC-1 account, with
+    // the same fee and memo.
     async withdraw(
         domain: PendingCryptocurrencyWithdrawal,
     ): Promise<WithdrawCryptocurrencyResponse> {
         if (domain.token === ICP_SYMBOL && isAccountIdentifierValid(domain.to)) {
-            const fee = domain.feeE8s ?? ICP_TRANSFER_FEE;
+            const fee = ICP_TRANSFER_FEE;
             const response = await this.handleResponse(
                 this.service.transfer.withOptions({ canisterId: domain.ledger })({
                     to: hexStringToBytes(domain.to),
