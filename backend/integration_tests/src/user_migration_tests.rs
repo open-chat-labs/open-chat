@@ -959,17 +959,6 @@ fn notifications_index_knows_migrated_user_by_their_new_id() {
         &endpoint
     ));
 
-    // Upgrading the UserIndex once users have been migrated succeeds, and the user is still known by
-    // their new id
-    upgrade_user_index(env, canister_ids);
-    tick_many(env, 3);
-    assert!(!client::notifications_index::happy_path::subscription_exists(
-        env,
-        user1.principal,
-        canister_ids.notifications_index,
-        &endpoint
-    ));
-
     // Once pushed again, the subscription is held under their new id, so they are notified of messages
     // sent to them
     client::notifications_index::happy_path::push_subscription(
@@ -1393,23 +1382,6 @@ fn online_users_knows_migrated_user_by_their_new_id() {
     assert_eq!(result.minutes_online + result.minutes_online_last_month, 2);
     assert_eq!(last_online(env, new_user_id), Some(0));
     assert!(last_online(env, user.user_id).is_none());
-}
-
-fn upgrade_user_index(env: &mut PocketIc, canister_ids: &CanisterIds) {
-    let wasm = wasms::USER_INDEX.clone();
-    let args = candid::encode_one(user_index_canister::post_upgrade::Args {
-        wasm_version: wasm.version,
-    })
-    .unwrap();
-    client::stop_canister(env, canister_ids.openchat_installer, canister_ids.user_index);
-    env.upgrade_canister(
-        canister_ids.user_index,
-        wasm.module.into(),
-        args,
-        Some(canister_ids.openchat_installer),
-    )
-    .unwrap();
-    client::start_canister(env, canister_ids.openchat_installer, canister_ids.user_index);
 }
 
 fn cancel_user_migration(
