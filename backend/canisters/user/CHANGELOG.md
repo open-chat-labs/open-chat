@@ -129,6 +129,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix bug where disappearing message TTL could skip being set in new direct chats ([#9584](https://github.com/open-chat-labs/open-chat/pull/9584))
 - Fix bug where a disappearing message TTL changed twice before the other user received the changes could leave their copy of the direct chat with the earlier TTL ([#9585](https://github.com/open-chat-labs/open-chat/pull/9585))
 - Fix bug where a referrer could be rewarded again for a user migrated to a MultiUser canister ([#9628](https://github.com/open-chat-labs/open-chat/pull/9628))
+- Send crypto addressed to the recipient's user id to their wallet, so that it reaches a user in a MultiUser canister ([#9674](https://github.com/open-chat-labs/open-chat/pull/9674))
+- Refuse to send crypto to a user in a MultiUser canister via `send_message_with_transfer_to_group` and `send_message_with_transfer_to_channel`, which can't know their wallet ([#9674](https://github.com/open-chat-labs/open-chat/pull/9674))
 
 ## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-12
 
