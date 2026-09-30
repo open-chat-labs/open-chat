@@ -145,19 +145,7 @@ async fn run_async(canister_id: CanisterId) {
 // canister itself is kept, empty and still controlled by this canister, since it may hold tokens
 // (eg. unclaimed prizes) which deleting it would put beyond reach for good.
 async fn notify_community_uninstalled(community_id: CommunityId) {
-    let (group_index_canister_id, upgrade_in_progress) = read_state(|state| {
-        (
-            state.data.group_index_canister_id,
-            state.data.communities_requiring_upgrade.is_in_progress(&community_id.into()),
-        )
-    });
-
-    // An upgrade of the community would record its failure after the community's failed upgrades
-    // had been cleared, so this is left until the next check. An upgrade can still start while the
-    // GroupIndex is being called, which is rare enough to live with.
-    if upgrade_in_progress {
-        return;
-    }
+    let group_index_canister_id = read_state(|state| state.data.group_index_canister_id);
 
     let args = group_index_canister::c2c_notify_community_uninstalled::Args { community_id };
     match group_index_canister_c2c_client::c2c_notify_community_uninstalled(group_index_canister_id, &args).await {
