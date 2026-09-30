@@ -1,12 +1,12 @@
 use crate::env::ENV;
-use crate::utils::{now_millis, tick_many};
+use crate::utils::now_millis;
 use crate::{TestEnv, User, client};
 use pocket_ic::PocketIc;
 use rand::random;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
-use types::{Document, OptionUpdate, TimestampMillis};
+use types::{CanisterId, Document, OptionUpdate, TimestampMillis};
 
 #[test]
 fn update_username_succeeds() {
@@ -84,13 +84,8 @@ fn update_profile_background_succeeds() {
         },
     );
 
-    tick_many(env, 5);
-
     // Check that the user index is updated
-    let user_summary = client::user_index::happy_path::users(env, user.principal, canister_ids.user_index, vec![user.user_id])
-        .current_user
-        .unwrap();
-    assert_eq!(user_summary.profile_background_id, Some(id));
+    wait_for_profile_background(env, &user, canister_ids.user_index, id);
 }
 
 // Ticks until the user's canister reports updates since the given time which satisfy the predicate.
@@ -110,4 +105,18 @@ fn wait_for_updates(
         env.tick();
     }
     panic!("User {}'s canister was not told of the update", user.user_id);
+}
+
+// Ticks until the UserIndex has been told of the user's new profile background by their canister
+fn wait_for_profile_background(env: &mut PocketIc, user: &User, user_index: CanisterId, id: u128) {
+    for _ in 0..10 {
+        let user_summary = client::user_index::happy_path::users(env, user.principal, user_index, vec![user.user_id])
+            .current_user
+            .unwrap();
+        if user_summary.profile_background_id == Some(id) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("The UserIndex was not told of user {}'s profile background", user.user_id);
 }

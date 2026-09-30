@@ -9,7 +9,8 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
-    BlobReference, ChatEvent, EventIndex, FileContent, MessageContent, MessageContentInitial, MessageId, MessageIndex, UserId,
+    BlobReference, ChatEvent, ChatId, EventIndex, FileContent, MessageContent, MessageContentInitial, MessageId, MessageIndex,
+    UserId,
 };
 
 #[test]
@@ -322,7 +323,7 @@ fn delete_then_undelete_direct_message(delay: bool) {
 
     if delay {
         env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS));
-        wait_for_content_to_be_removed(env, &user1, user2.user_id, message_id);
+        wait_for_direct_message_content_to_be_removed(env, &user1, user2.user_id, message_id);
     }
 
     let undelete_messages_response = client::user::undelete_messages(
@@ -428,6 +429,8 @@ fn deleting_an_undeleted_direct_message_again_gives_a_full_undelete_window() {
     env.advance_time(Duration::from_millis(3 * MINUTE_IN_MS));
     delete(env);
     env.advance_time(Duration::from_millis(3 * MINUTE_IN_MS));
+    // Long enough for the first deletion's job, which would now be due, to have run had it not been
+    // cancelled
     tick_many(env, 3);
     undelete(env);
 
@@ -472,7 +475,7 @@ fn delete_then_undelete_group_message(delay: bool) {
 
     if delay {
         env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS));
-        env.tick();
+        wait_for_group_message_content_to_be_removed(env, &user, group, message_id);
     }
 
     let undelete_messages_response = client::group::undelete_messages(
@@ -631,7 +634,7 @@ fn message_content(
 // Ticks until the user's canister has removed the content of the message they deleted, which it does
 // once the message has been deleted for 5 minutes. The job doing so runs in a call which the canister
 // makes to itself when its timer fires, so it can take more than one round.
-fn wait_for_content_to_be_removed(env: &mut PocketIc, user: &User, them: UserId, message_id: MessageId) {
+fn wait_for_direct_message_content_to_be_removed(env: &mut PocketIc, user: &User, them: UserId, message_id: MessageId) {
     for _ in 0..10 {
         let response = client::user::deleted_message(
             env,
@@ -654,6 +657,29 @@ fn wait_for_content_to_be_removed(env: &mut PocketIc, user: &User, them: UserId,
         "User {}'s canister did not remove the content of message {message_id:?}",
         user.user_id
     );
+}
+
+// As above, but for a message the user deleted in a group
+fn wait_for_group_message_content_to_be_removed(env: &mut PocketIc, user: &User, group_id: ChatId, message_id: MessageId) {
+    for _ in 0..10 {
+        let response = client::group::deleted_message(
+            env,
+            user.principal,
+            group_id.into(),
+            &group_canister::deleted_message::Args {
+                thread_root_message_index: None,
+                message_id,
+            },
+        );
+        if matches!(
+            response,
+            group_canister::deleted_message::Response::Error(e) if e.matches_code(OCErrorCode::MessageHardDeleted)
+        ) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("Group {group_id} did not remove the content of message {message_id:?}");
 }
 
 // Ticks until the file has been deleted from its storage bucket, which the canister of the user who
