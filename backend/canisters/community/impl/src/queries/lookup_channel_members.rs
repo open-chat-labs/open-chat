@@ -1,4 +1,4 @@
-use crate::queries::verify_channel_is_accessible;
+use crate::queries::{check_replica_up_to_date, verify_channel_is_accessible};
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use community_canister::lookup_channel_members::{Response::*, *};
@@ -16,6 +16,10 @@ fn lookup_channel_members(args: Args) -> Response {
 }
 
 fn lookup_channel_members_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
+    if let Err(now) = check_replica_up_to_date(args.latest_known_update, state) {
+        return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
+    }
+
     let channel = state.data.channels.get_or_err(&args.channel_id)?;
     verify_channel_is_accessible(channel, state)?;
 

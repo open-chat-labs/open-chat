@@ -1,4 +1,5 @@
 use crate::env::ENV;
+use crate::utils::now_millis;
 use crate::{TestEnv, client};
 use candid::Principal;
 use oc_error_codes::OCErrorCode;
@@ -56,6 +57,7 @@ fn group_members_are_returned_a_page_at_a_time() {
         &group_canister::members::Args {
             after: first.more_members_after,
             max_results: 3,
+            latest_known_update: None,
         },
     ) else {
         panic!("'members' failed");
@@ -80,6 +82,7 @@ fn group_members_are_returned_a_page_at_a_time() {
         group_id.into(),
         &group_canister::lookup_members::Args {
             user_ids: vec![others[0].user_id, non_member.user_id, owner.user_id],
+            latest_known_update: None,
         },
     ) else {
         panic!("'lookup_members' failed");
@@ -97,6 +100,7 @@ fn group_members_are_returned_a_page_at_a_time() {
         &group_canister::members::Args {
             after: None,
             max_results: 0,
+            latest_known_update: None,
         },
     ) else {
         panic!("'members' failed");
@@ -112,9 +116,25 @@ fn group_members_are_returned_a_page_at_a_time() {
             group_id.into(),
             &group_canister::lookup_members::Args {
                 user_ids: (0..1001u32).map(|i| Principal::from_slice(&i.to_be_bytes()).into()).collect(),
+                latest_known_update: None
             },
         ),
         group_canister::lookup_members::Response::Error(e) if e.matches_code(OCErrorCode::TooManyUsers)
+    ));
+
+    // A replica which is behind the details the caller holds says so, rather than returning members
+    // who may have since left
+    assert!(matches!(
+        client::group::lookup_members(
+            env,
+            owner.principal,
+            group_id.into(),
+            &group_canister::lookup_members::Args {
+                user_ids: vec![owner.user_id],
+                latest_known_update: Some(now_millis(env) + 1_000_000),
+            },
+        ),
+        group_canister::lookup_members::Response::Error(e) if e.matches_code(OCErrorCode::ReplicaNotUpToDate)
     ));
 
     // Only members can page through or look up the members
@@ -126,6 +146,7 @@ fn group_members_are_returned_a_page_at_a_time() {
             &group_canister::members::Args {
                 after: None,
                 max_results: 3,
+                latest_known_update: None
             },
         ),
         group_canister::members::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotInChat)
@@ -137,6 +158,7 @@ fn group_members_are_returned_a_page_at_a_time() {
             group_id.into(),
             &group_canister::lookup_members::Args {
                 user_ids: vec![owner.user_id],
+                latest_known_update: None
             },
         ),
         group_canister::lookup_members::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotInChat)
@@ -193,6 +215,7 @@ fn community_and_channel_members_are_returned_a_page_at_a_time() {
             invite_code: None,
             after: first.more_members_after,
             max_results: 3,
+            latest_known_update: None,
         },
     ) else {
         panic!("'members' failed");
@@ -216,6 +239,7 @@ fn community_and_channel_members_are_returned_a_page_at_a_time() {
         &community_canister::lookup_members::Args {
             invite_code: None,
             user_ids: vec![others[0].user_id, non_member.user_id, others[0].user_id],
+            latest_known_update: None,
         },
     ) else {
         panic!("'lookup_members' failed");
@@ -250,6 +274,7 @@ fn community_and_channel_members_are_returned_a_page_at_a_time() {
             channel_id,
             after: first.more_members_after,
             max_results: 3,
+            latest_known_update: None,
         },
     ) else {
         panic!("'channel_members' failed");
@@ -273,6 +298,7 @@ fn community_and_channel_members_are_returned_a_page_at_a_time() {
         &community_canister::lookup_channel_members::Args {
             channel_id,
             user_ids: vec![others[0].user_id, non_member.user_id],
+            latest_known_update: None,
         },
     ) else {
         panic!("'lookup_channel_members' failed");
@@ -308,6 +334,7 @@ fn members_of_a_private_community_can_only_be_got_by_its_members() {
                 invite_code: None,
                 after: None,
                 max_results: 3,
+                latest_known_update: None
             },
         ),
         community_canister::members::Response::Success(_)
@@ -321,6 +348,7 @@ fn members_of_a_private_community_can_only_be_got_by_its_members() {
                 channel_id,
                 after: None,
                 max_results: 3,
+                latest_known_update: None
             },
         ),
         community_canister::channel_members::Response::Success(_)
@@ -336,6 +364,7 @@ fn members_of_a_private_community_can_only_be_got_by_its_members() {
                 invite_code: None,
                 after: None,
                 max_results: 3,
+                latest_known_update: None
             },
         ),
         community_canister::members::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotInCommunity)
@@ -348,6 +377,7 @@ fn members_of_a_private_community_can_only_be_got_by_its_members() {
             &community_canister::lookup_members::Args {
                 invite_code: None,
                 user_ids: vec![owner.user_id],
+                latest_known_update: None
             },
         ),
         community_canister::lookup_members::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotInCommunity)
@@ -361,6 +391,7 @@ fn members_of_a_private_community_can_only_be_got_by_its_members() {
                 channel_id,
                 after: None,
                 max_results: 3,
+                latest_known_update: None
             },
         ),
         community_canister::channel_members::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotInCommunity)
@@ -373,6 +404,7 @@ fn members_of_a_private_community_can_only_be_got_by_its_members() {
             &community_canister::lookup_channel_members::Args {
                 channel_id,
                 user_ids: vec![owner.user_id],
+                latest_known_update: None
             },
         ),
         community_canister::lookup_channel_members::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotInCommunity)
