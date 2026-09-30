@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
+    import { i18nKey, languageCode, setLocale, supportedLanguages } from "@src/i18n/i18n";
     import { anonUserStore, identityStateStore, OpenChat, type CreatedUser } from "@client";
     import { ErrorCode } from "@shared";
     import { getContext } from "svelte";
@@ -32,7 +32,7 @@
     let linkingInProgress = $state(false);
     let error: string | undefined = $state(undefined);
     let signUpError: string | undefined = $state(undefined);
-    let selectedLocale = $state(($locale as string).substring(0, 2));
+    let selectedLocale = $state(languageCode($locale));
 
     $effect(() => {
         setLocale(selectedLocale);

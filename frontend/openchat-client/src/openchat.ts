@@ -8500,7 +8500,9 @@ export class OpenChat {
             })
             .then((res) => {
                 if (res === "success") {
-                    applyTranslationCorrection(locale, key, value);
+                    // The suggestion is for the language in use, whose svelte-i18n locale can
+                    // differ from the language code sent to the Translations canister
+                    applyTranslationCorrection(this.#locale, key, value);
                 }
                 return res;
             })

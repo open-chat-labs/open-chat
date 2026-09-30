@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
+    import { i18nKey, languageCode, setLocale, supportedLanguages } from "@src/i18n/i18n";
     import { setThemeV2Appearance, themeV2Appearance } from "@src/theme/themeV2";
     import { Body, BodySmall, Chip, Container, Row, type ThemeAppearance } from "component-lib";
     import { locale } from "svelte-i18n";
@@ -18,7 +18,7 @@
         light: "Light",
     };
 
-    let selectedLocale = $state(($locale as string).substring(0, 2));
+    let selectedLocale = $state(languageCode($locale));
     let selectedLanguage = $state(supportedLanguages.find((l) => l.code === selectedLocale));
 
     $effect(() => {

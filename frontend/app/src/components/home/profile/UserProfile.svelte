@@ -36,6 +36,7 @@
         editmode,
         i18nKey,
         interpolate,
+        languageCode,
         setLocale,
         supportedLanguages,
     } from "../../../i18n/i18n";
@@ -103,7 +104,7 @@
     let { user, onCloseProfile, onUnsubscribeNotifications }: Props = $props();
 
     let userbio = $state("");
-    let selectedLocale = $state(($locale as string).substring(0, 2));
+    let selectedLocale = $state(languageCode($locale));
     let usernameError: string | undefined = $state(undefined);
     let displayNameError: string | undefined = $state(undefined);
     let bioError: string | undefined = $state(undefined);

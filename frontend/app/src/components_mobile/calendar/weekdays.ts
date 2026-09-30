@@ -1,6 +1,6 @@
 import { locale } from "svelte-i18n";
 import { derived } from "svelte/store";
-import { translationCodes } from "../../i18n/i18n";
+import { languageCode, translationCodes } from "../../i18n/i18n";
 
 type WeekDay = [string, string];
 type WeekDayMap = Record<string, WeekDay[]>;
@@ -117,6 +117,6 @@ const map: WeekDayMap = {
 };
 
 export const weekDays = derived(locale, (locale) => {
-    const translated = translationCodes[locale || "en"] || "en";
+    const translated = translationCodes[languageCode(locale)] || "en";
     return map[translated] ?? map["en"];
 });
