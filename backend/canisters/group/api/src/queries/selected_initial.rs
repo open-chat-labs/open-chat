@@ -2,12 +2,20 @@ use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{
-    Empty, EventIndex, GroupMember, InstalledBotDetails, MessageIndex, TimestampMillis, UserId, VersionedRules, WebhookDetails,
+    EventIndex, GroupMember, InstalledBotDetails, MessageIndex, TimestampMillis, UserId, VersionedRules, WebhookDetails,
 };
 
-pub type Args = Empty;
+#[ts_export(group, selected_initial)]
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct Args {
+    // If set, only the first page of members is returned, holding up to this many of them in
+    // addition to every owner, admin and moderator. The rest can be got from `members`.
+    pub max_members: Option<u32>,
+}
 
 #[ts_export(group, selected_initial)]
+// Allow the large size difference because essentially all responses are the large variant anyway
+#[expect(clippy::large_enum_variant)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -28,6 +36,9 @@ pub struct SuccessResult {
     #[ts(as = "Option<Vec<WebhookDetails>>", optional)]
     pub webhooks: Vec<WebhookDetails>,
     pub basic_members: Vec<UserId>,
+    // Set if there are more members than were returned, to the `after` which `members` should be
+    // called with to get the next page of them
+    pub more_members_after: Option<UserId>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[ts(as = "Option<Vec<UserId>>", optional)]
     pub blocked_users: Vec<UserId>,

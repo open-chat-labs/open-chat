@@ -209,6 +209,11 @@ export const GroupPublicSummaryArgs = /* @__PURE__ */ Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
 });
 
+export type GroupSelectedInitialArgs = Static<typeof GroupSelectedInitialArgs>;
+export const GroupSelectedInitialArgs = /* @__PURE__ */ Type.Object({
+    max_members: Type.Optional(Type.Number()),
+});
+
 export type GroupActiveProposalTalliesArgs = Static<typeof GroupActiveProposalTalliesArgs>;
 export const GroupActiveProposalTalliesArgs = /* @__PURE__ */ Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
@@ -3357,6 +3362,7 @@ export type CommunitySelectedChannelInitialArgs = Static<
 >;
 export const CommunitySelectedChannelInitialArgs = /* @__PURE__ */ Type.Object({
     channel_id: ChannelId,
+    max_members: Type.Optional(Type.Number()),
 });
 
 export type CommunityInviteCodeSuccessResult = Static<typeof CommunityInviteCodeSuccessResult>;
@@ -3412,6 +3418,12 @@ export const CommunityEventsWindowArgs = /* @__PURE__ */ Type.Object({
     latest_known_update: Type.Optional(Type.BigInt()),
 });
 
+export type CommunityLookupChannelMembersArgs = Static<typeof CommunityLookupChannelMembersArgs>;
+export const CommunityLookupChannelMembersArgs = /* @__PURE__ */ Type.Object({
+    channel_id: ChannelId,
+    user_ids: Type.Array(UserId),
+});
+
 export type CommunityUnfollowThreadArgs = Static<typeof CommunityUnfollowThreadArgs>;
 export const CommunityUnfollowThreadArgs = /* @__PURE__ */ Type.Object({
     channel_id: ChannelId,
@@ -3457,18 +3469,6 @@ export const CommunityEnableInviteCodeResponse = /* @__PURE__ */ Type.Union([
         Error: OCError,
     }),
 ]);
-
-export type CommunityCommunityMembersArgs = Static<typeof CommunityCommunityMembersArgs>;
-export const CommunityCommunityMembersArgs = /* @__PURE__ */ Type.Object({
-    user_ids: Type.Array(UserId),
-});
-
-export type CommunityCommunityMembersSuccessResult = Static<
-    typeof CommunityCommunityMembersSuccessResult
->;
-export const CommunityCommunityMembersSuccessResult = /* @__PURE__ */ Type.Object({
-    members: Type.Array(CommunityMember),
-});
 
 export type CommunityUpdateWebhookArgs = Static<typeof CommunityUpdateWebhookArgs>;
 export const CommunityUpdateWebhookArgs = /* @__PURE__ */ Type.Object({
@@ -3608,6 +3608,7 @@ export const CommunityRemoveReactionArgs = /* @__PURE__ */ Type.Object({
 export type CommunitySelectedInitialArgs = Static<typeof CommunitySelectedInitialArgs>;
 export const CommunitySelectedInitialArgs = /* @__PURE__ */ Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
+    max_members: Type.Optional(Type.Number()),
 });
 
 export type CommunityAddReactionArgs = Static<typeof CommunityAddReactionArgs>;
@@ -3632,6 +3633,13 @@ export type CommunityActiveProposalTalliesArgs = Static<typeof CommunityActivePr
 export const CommunityActiveProposalTalliesArgs = /* @__PURE__ */ Type.Object({
     channel_id: ChannelId,
     invite_code: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityChannelMembersArgs = Static<typeof CommunityChannelMembersArgs>;
+export const CommunityChannelMembersArgs = /* @__PURE__ */ Type.Object({
+    channel_id: ChannelId,
+    after: Type.Optional(UserId),
+    max_results: Type.Number(),
 });
 
 export type CommunityBlockUserArgs = Static<typeof CommunityBlockUserArgs>;
@@ -3662,6 +3670,30 @@ export const CommunityChannelSummary = /* @__PURE__ */ Type.Object({
     name: Type.String(),
 });
 
+export type CommunityMembersSuccessResult = Static<typeof CommunityMembersSuccessResult>;
+export const CommunityMembersSuccessResult = /* @__PURE__ */ Type.Object({
+    members: Type.Array(CommunityMember),
+    basic_members: Type.Array(UserId),
+    more_members_after: Type.Optional(UserId),
+});
+
+export type CommunityMembersArgs = Static<typeof CommunityMembersArgs>;
+export const CommunityMembersArgs = /* @__PURE__ */ Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
+    after: Type.Optional(UserId),
+    max_results: Type.Number(),
+});
+
+export type CommunityMembersResponse = Static<typeof CommunityMembersResponse>;
+export const CommunityMembersResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: CommunityMembersSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type CommunityVideoCallParticipantsArgs = Static<typeof CommunityVideoCallParticipantsArgs>;
 export const CommunityVideoCallParticipantsArgs = /* @__PURE__ */ Type.Object({
     channel_id: ChannelId,
@@ -3691,6 +3723,28 @@ export const CommunityEventsByIndexArgs = /* @__PURE__ */ Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     events: Type.Array(EventIndex),
     latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type CommunityLookupMembersSuccessResult = Static<
+    typeof CommunityLookupMembersSuccessResult
+>;
+export const CommunityLookupMembersSuccessResult = /* @__PURE__ */ Type.Object({
+    members: Type.Array(CommunityMember),
+});
+
+export type CommunityLookupMembersResponse = Static<typeof CommunityLookupMembersResponse>;
+export const CommunityLookupMembersResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: CommunityLookupMembersSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type CommunityLookupMembersArgs = Static<typeof CommunityLookupMembersArgs>;
+export const CommunityLookupMembersArgs = /* @__PURE__ */ Type.Object({
+    user_ids: Type.Array(UserId),
 });
 
 export type CommunityLocalUserIndexResponse = Static<typeof CommunityLocalUserIndexResponse>;
@@ -4639,6 +4693,12 @@ export const GroupRemoveParticipantArgs = /* @__PURE__ */ Type.Object({
     user_id: UserId,
 });
 
+export type GroupMembersArgs = Static<typeof GroupMembersArgs>;
+export const GroupMembersArgs = /* @__PURE__ */ Type.Object({
+    after: Type.Optional(UserId),
+    max_results: Type.Number(),
+});
+
 export type GroupVideoCallParticipantsArgs = Static<typeof GroupVideoCallParticipantsArgs>;
 export const GroupVideoCallParticipantsArgs = /* @__PURE__ */ Type.Object({
     message_id: MessageId,
@@ -4657,6 +4717,11 @@ export const GroupEventsByIndexArgs = /* @__PURE__ */ Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     events: Type.Array(EventIndex),
     latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type GroupLookupMembersArgs = Static<typeof GroupLookupMembersArgs>;
+export const GroupLookupMembersArgs = /* @__PURE__ */ Type.Object({
+    user_ids: Type.Array(UserId),
 });
 
 export type GroupUnpinMessageArgs = Static<typeof GroupUnpinMessageArgs>;
@@ -7211,6 +7276,7 @@ export const CommunitySelectedChannelInitialSuccessResult = /* @__PURE__ */ Type
     latest_event_index: EventIndex,
     members: Type.Array(GroupMember),
     basic_members: Type.Array(UserId),
+    more_members_after: Type.Optional(UserId),
     blocked_users: Type.Optional(Type.Array(UserId)),
     invited_users: Type.Optional(Type.Array(UserId)),
     pinned_messages: Type.Optional(Type.Array(MessageIndex)),
@@ -7218,15 +7284,12 @@ export const CommunitySelectedChannelInitialSuccessResult = /* @__PURE__ */ Type
     webhooks: Type.Optional(Type.Array(WebhookDetails)),
 });
 
-export type CommunityCommunityMembersResponse = Static<typeof CommunityCommunityMembersResponse>;
-export const CommunityCommunityMembersResponse = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Success: CommunityCommunityMembersSuccessResult,
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
+export type CommunityLookupChannelMembersSuccessResult = Static<
+    typeof CommunityLookupChannelMembersSuccessResult
+>;
+export const CommunityLookupChannelMembersSuccessResult = /* @__PURE__ */ Type.Object({
+    members: Type.Array(GroupMember),
+});
 
 export type CommunityAddMembersToChannelResponse = Static<
     typeof CommunityAddMembersToChannelResponse
@@ -7254,12 +7317,22 @@ export const CommunitySelectedInitialSuccessResult = /* @__PURE__ */ Type.Object
     members: Type.Array(CommunityMember),
     bots: Type.Optional(Type.Array(InstalledBotDetails)),
     basic_members: Type.Optional(Type.Array(UserId)),
+    more_members_after: Type.Optional(UserId),
     blocked_users: Type.Optional(Type.Array(UserId)),
     invited_users: Type.Optional(Type.Array(UserId)),
     chat_rules: Type.Optional(VersionedRules),
     user_groups: Type.Optional(Type.Array(UserGroupDetails)),
     referrals: Type.Optional(Type.Array(UserId)),
     public_channel_list_updated: Type.BigInt(),
+});
+
+export type CommunityChannelMembersSuccessResult = Static<
+    typeof CommunityChannelMembersSuccessResult
+>;
+export const CommunityChannelMembersSuccessResult = /* @__PURE__ */ Type.Object({
+    members: Type.Array(GroupMember),
+    basic_members: Type.Array(UserId),
+    more_members_after: Type.Optional(UserId),
 });
 
 export type CommunityVideoCallParticipantsResponse = Static<
@@ -7465,6 +7538,7 @@ export const GroupSelectedInitialSuccessResult = /* @__PURE__ */ Type.Object({
     bots: Type.Optional(Type.Array(InstalledBotDetails)),
     webhooks: Type.Optional(Type.Array(WebhookDetails)),
     basic_members: Type.Array(UserId),
+    more_members_after: Type.Optional(UserId),
     blocked_users: Type.Optional(Type.Array(UserId)),
     invited_users: Type.Optional(Type.Array(UserId)),
     pinned_messages: Type.Optional(Type.Array(MessageIndex)),
@@ -7480,6 +7554,13 @@ export const GroupSelectedInitialResponse = /* @__PURE__ */ Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type GroupMembersSuccessResult = Static<typeof GroupMembersSuccessResult>;
+export const GroupMembersSuccessResult = /* @__PURE__ */ Type.Object({
+    members: Type.Array(GroupMember),
+    basic_members: Type.Array(UserId),
+    more_members_after: Type.Optional(UserId),
+});
 
 export type GroupVideoCallParticipantsResponse = Static<typeof GroupVideoCallParticipantsResponse>;
 export const GroupVideoCallParticipantsResponse = /* @__PURE__ */ Type.Union([
@@ -7500,6 +7581,11 @@ export const GroupRegisterWebhookResponse = /* @__PURE__ */ Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type GroupLookupMembersSuccessResult = Static<typeof GroupLookupMembersSuccessResult>;
+export const GroupLookupMembersSuccessResult = /* @__PURE__ */ Type.Object({
+    members: Type.Array(GroupMember),
+});
 
 export type GroupAcceptP2pSwapArgs = Static<typeof GroupAcceptP2pSwapArgs>;
 export const GroupAcceptP2pSwapArgs = /* @__PURE__ */ Type.Object({
@@ -8599,10 +8685,32 @@ export const CommunitySelectedChannelInitialResponse = /* @__PURE__ */ Type.Unio
     }),
 ]);
 
+export type CommunityLookupChannelMembersResponse = Static<
+    typeof CommunityLookupChannelMembersResponse
+>;
+export const CommunityLookupChannelMembersResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: CommunityLookupChannelMembersSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type CommunitySelectedInitialResponse = Static<typeof CommunitySelectedInitialResponse>;
 export const CommunitySelectedInitialResponse = /* @__PURE__ */ Type.Union([
     Type.Object({
         Success: CommunitySelectedInitialSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type CommunityChannelMembersResponse = Static<typeof CommunityChannelMembersResponse>;
+export const CommunityChannelMembersResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: CommunityChannelMembersSuccessResult,
     }),
     Type.Object({
         Error: OCError,
@@ -8705,6 +8813,16 @@ export const GroupTipMessageArgs = /* @__PURE__ */ Type.Object({
     new_achievement: Type.Boolean(),
 });
 
+export type GroupMembersResponse = Static<typeof GroupMembersResponse>;
+export const GroupMembersResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: GroupMembersSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
 export type GroupSendMessageSuccessResult = Static<typeof GroupSendMessageSuccessResult>;
 export const GroupSendMessageSuccessResult = /* @__PURE__ */ Type.Object({
     event_index: EventIndex,
@@ -8718,6 +8836,16 @@ export type GroupSendMessageResponse = Static<typeof GroupSendMessageResponse>;
 export const GroupSendMessageResponse = /* @__PURE__ */ Type.Union([
     Type.Object({
         Success: GroupSendMessageSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type GroupLookupMembersResponse = Static<typeof GroupLookupMembersResponse>;
+export const GroupLookupMembersResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: GroupLookupMembersSuccessResult,
     }),
     Type.Object({
         Error: OCError,

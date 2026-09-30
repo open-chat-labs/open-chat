@@ -9,6 +9,9 @@ use types::{
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
+    // If set, only the first page of members is returned, holding up to this many of them in
+    // addition to every owner, admin and moderator. The rest can be got from `channel_members`.
+    pub max_members: Option<u32>,
 }
 
 #[ts_export(community, selected_channel_initial)]
@@ -26,6 +29,9 @@ pub struct SuccessResult {
     pub latest_event_index: EventIndex,
     pub members: Vec<GroupMember>,
     pub basic_members: Vec<UserId>,
+    // Set if there are more members than were returned, to the `after` which `channel_members`
+    // should be called with to get the next page of them
+    pub more_members_after: Option<UserId>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[ts(as = "Option<Vec<UserId>>", optional)]
     pub blocked_users: Vec<UserId>,

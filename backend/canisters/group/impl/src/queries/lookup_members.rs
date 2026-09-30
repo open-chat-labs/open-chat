@@ -1,9 +1,9 @@
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
-use community_canister::lookup_members::{Response::*, *};
 use constants::MAX_MEMBERS_PER_QUERY;
+use group_canister::lookup_members::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use types::OCResult;
+use types::{GroupMember, OCResult};
 
 #[query(msgpack = true)]
 fn lookup_members(args: Args) -> Response {
@@ -14,10 +14,7 @@ fn lookup_members(args: Args) -> Response {
 }
 
 fn lookup_members_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
-    if !state.data.is_public.value {
-        let caller = state.env.caller();
-        state.data.verify_is_accessible(caller, None)?;
-    }
+    state.get_calling_member(None, false)?;
 
     if args.user_ids.len() > MAX_MEMBERS_PER_QUERY as usize {
         return Err(OCErrorCode::TooManyUsers.with_message(MAX_MEMBERS_PER_QUERY));
@@ -25,9 +22,9 @@ fn lookup_members_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResu
 
     let members = args
         .user_ids
-        .into_iter()
-        .filter_map(|user_id| state.data.members.get_by_user_id(&user_id))
-        .map(|member| member.clone().into())
+        .iter()
+        .filter_map(|user_id| state.data.chat.members.get(user_id))
+        .map(|member| GroupMember::from(&member))
         .collect();
 
     Ok(SuccessResult { members })

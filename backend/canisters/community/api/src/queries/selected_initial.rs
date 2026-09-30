@@ -7,9 +7,14 @@ use types::{CommunityMember, EventIndex, InstalledBotDetails, TimestampMillis, U
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub invite_code: Option<u64>,
+    // If set, only the first page of members is returned, holding up to this many of them in
+    // addition to every owner and admin. The rest can be got from `members`.
+    pub max_members: Option<u32>,
 }
 
 #[ts_export(community, selected_initial)]
+// Allow the large size difference because essentially all responses are the large variant anyway
+#[expect(clippy::large_enum_variant)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
@@ -29,6 +34,9 @@ pub struct SuccessResult {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[ts(as = "Option<Vec<UserId>>", optional)]
     pub basic_members: Vec<UserId>,
+    // Set if there are more members than were returned, to the `after` which `members` should be
+    // called with to get the next page of them
+    pub more_members_after: Option<UserId>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[ts(as = "Option<Vec<UserId>>", optional)]
     pub blocked_users: Vec<UserId>,

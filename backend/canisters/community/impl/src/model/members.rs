@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::ops::Bound;
 use types::{
     ChannelId, CommunityMember, CommunityPermissions, CommunityRole, OCResult, PushIfNotContains, TimestampMillis, Timestamped,
     UserId, UserIdAndPrincipal, UserType, Version, is_default,
@@ -599,6 +600,53 @@ impl CommunityMembers {
         self.members_and_channels.contains_key(user_id)
     }
 
+    // A page of the members in order of user id, starting from the first after `after`, and holding
+    // up to `max_results` of them, or all of them if `max_results` is None.
+    //
+    // The owners and admins are instead all returned with the first page (where `after` is None),
+    // whatever their user ids, and aren't counted towards `max_results`. So a client which holds
+    // only the first page knows every member who has a role.
+    pub fn page(&self, after: Option<UserId>, max_results: Option<u32>) -> CommunityMembersPage {
+        let has_role = |user_id: &UserId| self.owners.contains(user_id) || self.admins.contains(user_id);
+        let is_basic = |user_id: &UserId| {
+            !self.lapsed.contains(user_id)
+                && !self.suspended.contains(user_id)
+                && !self.members_with_display_names.contains(user_id)
+                && !self.members_with_referrals.contains(user_id)
+        };
+        let full_member = |user_id: &UserId| self.members_map.get(user_id).map(CommunityMember::from);
+
+        let mut page = CommunityMembersPage::default();
+        if after.is_none() {
+            page.members
+                .extend(self.owners.iter().chain(&self.admins).filter_map(full_member));
+        }
+
+        let mut count = 0;
+        let start = after.map_or(Bound::Unbounded, Bound::Excluded);
+        let mut iter = self
+            .members_and_channels
+            .range((start, Bound::Unbounded))
+            .map(|(user_id, _)| user_id)
+            .filter(|user_id| !has_role(user_id));
+
+        while let Some(user_id) = iter.next() {
+            if is_basic(user_id) {
+                page.basic_members.push(*user_id);
+            } else {
+                page.members.extend(full_member(user_id));
+            }
+            count += 1;
+            if max_results.is_some_and(|max| count >= max) {
+                if iter.next().is_some() {
+                    page.more_members_after = Some(*user_id);
+                }
+                break;
+            }
+        }
+        page
+    }
+
     pub fn is_former_member(&self, user_id: &UserId) -> bool {
         self.former_members.contains(user_id)
     }
@@ -983,6 +1031,16 @@ impl Member for CommunityMemberInternal {
     }
 }
 
+#[derive(Default)]
+pub struct CommunityMembersPage {
+    // The members whose details aren't all the defaults, eg. those with a role or a display name
+    pub members: Vec<CommunityMember>,
+    // The rest of the members
+    pub basic_members: Vec<UserId>,
+    // The user id to pass as `after` to get the next page, if there are any more members
+    pub more_members_after: Option<UserId>,
+}
+
 pub enum AddResult {
     Success(Box<CommunityMemberInternal>),
     AlreadyInCommunity,
@@ -1252,6 +1310,88 @@ mod tests {
 
         assert!(members.migrate_user_id(old, new, Some(principal), 10));
         assert_eq!(members.lookup_user_id(principal), Some(new));
+    }
+
+    #[test]
+    fn page_holds_every_member_if_not_limited() {
+        let mut members = members_for_page_tests(6);
+        make_admin(&mut members, 4);
+        members.set_display_name(test_user_id(5), Some("five".to_string()), 3);
+
+        let page = members.page(None, None);
+
+        // Those with roles, then the others in order of user id, of whom the member with a display
+        // name is returned in full
+        assert_eq!(member_ids(&page.members), user_ids([1, 4, 5]));
+        assert_eq!(page.members[2].display_name.as_deref(), Some("five"));
+        assert_eq!(page.basic_members, user_ids([2, 3, 6]));
+        assert_eq!(page.more_members_after, None);
+    }
+
+    #[test]
+    fn pages_hold_each_member_once_with_those_with_roles_in_the_first() {
+        let mut members = members_for_page_tests(9);
+        make_admin(&mut members, 8);
+        members.update_lapsed(test_user_id(3), true, 3);
+
+        let page1 = members.page(None, Some(3));
+        assert_eq!(member_ids(&page1.members), user_ids([1, 8, 3]));
+        assert_eq!(page1.basic_members, user_ids([2, 4]));
+        assert_eq!(page1.more_members_after, Some(test_user_id(4)));
+
+        let page2 = members.page(page1.more_members_after, Some(3));
+        assert!(page2.members.is_empty());
+        assert_eq!(page2.basic_members, user_ids([5, 6, 7]));
+        assert_eq!(page2.more_members_after, Some(test_user_id(7)));
+
+        // The admin has already been returned, so isn't again
+        let page3 = members.page(page2.more_members_after, Some(3));
+        assert!(page3.members.is_empty());
+        assert_eq!(page3.basic_members, user_ids([9]));
+        assert_eq!(page3.more_members_after, None);
+    }
+
+    #[test]
+    fn page_which_reaches_the_last_member_is_the_last() {
+        let members = members_for_page_tests(4);
+
+        let page = members.page(None, Some(3));
+
+        assert_eq!(page.basic_members, user_ids([2, 3, 4]));
+        assert_eq!(page.more_members_after, None);
+    }
+
+    // Holds users 1 to `count`, of whom user 1 is the owner
+    fn members_for_page_tests(count: u8) -> CommunityMembers {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let owner = test_user_id(1);
+        let mut members = CommunityMembers::new(test_principal(owner), owner, UserType::User, Vec::new(), 0);
+        for user_id in (2..=count).map(test_user_id) {
+            members.add(user_id, test_principal(user_id), UserType::User, None, 1);
+        }
+        members
+    }
+
+    fn make_admin(members: &mut CommunityMembers, user: u8) {
+        members
+            .change_role(
+                test_user_id(1),
+                test_user_id(user),
+                CommunityRole::Admin,
+                &CommunityPermissions::default(),
+                2,
+            )
+            .unwrap();
+    }
+
+    fn member_ids(members: &[CommunityMember]) -> Vec<UserId> {
+        members.iter().map(|m| m.user_id).collect()
+    }
+
+    fn user_ids<const N: usize>(ids: [u8; N]) -> Vec<UserId> {
+        ids.map(test_user_id).to_vec()
     }
 
     fn test_user_id(i: u8) -> UserId {
