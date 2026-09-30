@@ -57,7 +57,6 @@
                 return order[a.kind] - order[b.kind];
             },
         );
-        console.log("UsersAndGroups", usersAndGroups);
     });
 
     function mention(userOrGroup: UserOrUserGroup) {

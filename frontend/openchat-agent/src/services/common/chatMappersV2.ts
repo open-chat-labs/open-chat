@@ -2662,7 +2662,6 @@ export function groupDetailsSuccess(
     canisterId: string,
     channelId?: number,
 ): GroupChatDetailsResponse {
-    console.log("Group details: ", value);
     const members = ("participants" in value ? value.participants : value.members).map(member);
 
     const basicMembers = "basic_members" in value ? value.basic_members : [];

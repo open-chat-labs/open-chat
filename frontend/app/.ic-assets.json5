@@ -36,6 +36,10 @@
             "Cache-Control": "max-age=31536000, immutable",
             "X-Cacheable-Resource": "true",
         },
+        // Brotli makes these about a fifth smaller than gzip does. gzip is left out on purpose:
+        // the asset canister serves the first encoding in the request's Accept-Encoding which
+        // it holds, and browsers list gzip ahead of br, so holding both would never serve br.
+        encodings: ["identity", "br"],
     },
     {
         match: "{index.html,version}",
