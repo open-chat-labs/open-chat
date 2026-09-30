@@ -7,12 +7,7 @@ import {
     type Member,
 } from "@shared";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import {
-    confirmHeldDetails,
-    loadCommunityDetails,
-    loadGroupDetails,
-    type DetailsUpdatesOutcome,
-} from "./details";
+import { loadCommunityDetails, loadGroupDetails } from "./details";
 
 function member(userId: string): Member {
     return { userId, role: ROLE_MEMBER, displayName: undefined, lapsed: false };
@@ -57,18 +52,28 @@ describe("loadGroupDetails", () => {
         };
     }
 
+    // `stored` is what is in the cache, which another tab can also write to. Like `ChatsDb`, the
+    // cache remembers the timestamp of the details as they were when last read or written here.
     function setup(
         cached: GroupChatDetails | undefined,
         updates?: GroupChatDetailsUpdatesResponse,
     ) {
         const stored = new Map<string, GroupChatDetails>();
         if (cached !== undefined) stored.set(key, cached);
+        const seen = new Map<string, bigint>();
         const cache = {
-            getCachedGroupDetails: vi.fn((k: string) => Promise.resolve(stored.get(k))),
+            getCachedGroupDetails: vi.fn((k: string) => {
+                const d = stored.get(k);
+                if (d === undefined) seen.delete(k);
+                else seen.set(k, d.timestamp);
+                return Promise.resolve(d);
+            }),
             setCachedGroupDetails: vi.fn((k: string, d: GroupChatDetails) => {
                 stored.set(k, d);
+                seen.set(k, d.timestamp);
                 return Promise.resolve();
             }),
+            cachedGroupDetailsTimestamp: (k: string) => seen.get(k),
         };
         const initial = vi.fn(() => Promise.resolve(details(10n, ["a", "b"])));
         const updatesSince = vi.fn((_since: bigint) =>
@@ -76,7 +81,15 @@ describe("loadGroupDetails", () => {
         );
         const load = (chatLastUpdated: bigint, heldTimestamp?: bigint) =>
             loadGroupDetails(cache, key, chatLastUpdated, heldTimestamp, initial, updatesSince);
-        return { stored, cache, initial, updatesSince, load };
+        // Loads the details so that the caller holds them, as they were cached
+        const loadToHold = async () => {
+            await load(stored.get(key)?.timestamp ?? 0n);
+            cache.getCachedGroupDetails.mockClear();
+            cache.setCachedGroupDetails.mockClear();
+            initial.mockClear();
+            updatesSince.mockClear();
+        };
+        return { stored, cache, initial, updatesSince, load, loadToHold };
     }
 
     test("details which aren't cached are loaded in full and cached", async () => {
@@ -145,28 +158,114 @@ describe("loadGroupDetails", () => {
         expect(cache.setCachedGroupDetails).not.toHaveBeenCalled();
     });
 
-    test("held details which haven't changed are confirmed without touching the cache", async () => {
-        const { load, cache, updatesSince } = setup(details(10n, ["a"]), {
-            kind: "success_no_updates",
-            timestamp: 30n,
+    describe("when the caller holds the cached details", () => {
+        test("those which haven't changed are confirmed without touching the cache", async () => {
+            const { load, loadToHold, cache, updatesSince } = setup(details(10n, ["a"]), {
+                kind: "success_no_updates",
+                timestamp: 30n,
+            });
+            await loadToHold();
+
+            // The caller has since been told they were still good at 20
+            expect(await load(30n, 20n)).toEqual({ kind: "success_no_updates", timestamp: 30n });
+            // The canister is asked for the updates since they were cached, to which any it
+            // returns can be applied
+            expect(updatesSince.mock.calls).toEqual([[10n]]);
+            expect(cache.getCachedGroupDetails).not.toHaveBeenCalled();
+            expect(cache.setCachedGroupDetails).not.toHaveBeenCalled();
         });
 
-        expect(await load(30n, 20n)).toEqual({ kind: "success_no_updates", timestamp: 30n });
-        expect(updatesSince).toHaveBeenCalledWith(20n);
-        expect(cache.getCachedGroupDetails).not.toHaveBeenCalled();
-        expect(cache.setCachedGroupDetails).not.toHaveBeenCalled();
+        test("those as new as the summary are confirmed without asking the canister", async () => {
+            const { load, loadToHold, cache, updatesSince } = setup(details(10n, ["a"]));
+            await loadToHold();
+
+            expect(await load(20n, 20n)).toEqual({ kind: "success_no_updates", timestamp: 20n });
+            expect(updatesSince).not.toHaveBeenCalled();
+            expect(cache.getCachedGroupDetails).not.toHaveBeenCalled();
+        });
+
+        test("they are kept as they are while offline", async () => {
+            const { load, loadToHold, updatesSince } = setup(details(10n, ["a"]));
+            await loadToHold();
+            vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+
+            expect(await load(30n, 20n)).toEqual({ kind: "success_no_updates", timestamp: 20n });
+            expect(updatesSince).not.toHaveBeenCalled();
+        });
+
+        test("they are kept as they are if the canister can't be reached", async () => {
+            const { load, loadToHold, cache } = setup(details(10n, ["a"]), { kind: "failure" });
+            await loadToHold();
+
+            expect(await load(30n, 20n)).toEqual({ kind: "success_no_updates", timestamp: 20n });
+            expect(cache.getCachedGroupDetails).not.toHaveBeenCalled();
+        });
+
+        test("a lagging replica's timestamp doesn't move them backwards", async () => {
+            const { load, loadToHold } = setup(details(10n, ["a"]), {
+                kind: "success_no_updates",
+                timestamp: 15n,
+            });
+            await loadToHold();
+
+            expect(await load(30n, 20n)).toEqual({ kind: "success_no_updates", timestamp: 20n });
+        });
+
+        test("those which have changed are brought up to date by asking the canister once", async () => {
+            const { load, loadToHold, stored, updatesSince } = setup(
+                details(10n, ["a"]),
+                membersAdded(30n, ["b"]),
+            );
+            await loadToHold();
+
+            const resp = await load(30n, 20n);
+
+            expect(updatesSince.mock.calls).toEqual([[10n]]);
+            expect(memberIds(resp)).toEqual(["a", "b"]);
+            expect(memberIds(stored.get(key))).toEqual(["a", "b"]);
+            expect(stored.get(key)?.timestamp).toBe(30n);
+        });
+
+        test("updates aren't applied to cached details which another tab has since written", async () => {
+            const { load, loadToHold, stored, updatesSince } = setup(details(10n, ["a"]));
+            await loadToHold();
+            stored.set(key, details(25n, ["a", "b"]));
+            updatesSince.mockImplementation((since) =>
+                Promise.resolve(membersAdded(30n, since < 25n ? ["b", "c"] : ["c"])),
+            );
+
+            const resp = await load(30n, 20n);
+
+            // Asked again for the updates since the details now in the cache
+            expect(updatesSince.mock.calls).toEqual([[10n], [25n]]);
+            expect(memberIds(resp)).toEqual(["a", "b", "c"]);
+            expect(stored.get(key)?.timestamp).toBe(30n);
+        });
     });
 
-    test("held details which have changed are loaded from the cache and brought up to date", async () => {
-        const { load, stored, updatesSince } = setup(details(10n, ["a"]), membersAdded(30n, ["b"]));
+    test("a caller holding details older than those cached is given the details in full", async () => {
+        const { load, loadToHold, updatesSince } = setup(details(10n, ["a", "b"]), {
+            kind: "success_no_updates",
+            timestamp: 20n,
+        });
+        await loadToHold();
 
-        const resp = await load(30n, 20n);
+        // The caller never received the details which were cached at 10
+        const resp = await load(20n, 5n);
 
-        // First asked whether the held details have changed, then for the updates since the
-        // details were cached
-        expect(updatesSince.mock.calls).toEqual([[20n], [10n]]);
+        expect(updatesSince).toHaveBeenCalledWith(10n);
         expect(memberIds(resp)).toEqual(["a", "b"]);
-        expect(stored.get(key)?.timestamp).toBe(30n);
+    });
+
+    test("a caller holding details is given them in full if the cached details haven't been read", async () => {
+        const { load } = setup(details(10n, ["a", "b"]), {
+            kind: "success_no_updates",
+            timestamp: 20n,
+        });
+
+        const resp = await load(20n, 10n);
+
+        expect(memberIds(resp)).toEqual(["a", "b"]);
     });
 });
 
@@ -210,12 +309,20 @@ describe("loadCommunityDetails", () => {
     ) {
         const stored = new Map<string, CommunityDetails>();
         if (cached !== undefined) stored.set(id, cached);
+        const seen = new Map<string, bigint>();
         const cache = {
-            getCachedCommunityDetails: vi.fn((k: string) => Promise.resolve(stored.get(k))),
+            getCachedCommunityDetails: vi.fn((k: string) => {
+                const d = stored.get(k);
+                if (d === undefined) seen.delete(k);
+                else seen.set(k, d.lastUpdated);
+                return Promise.resolve(d);
+            }),
             setCachedCommunityDetails: vi.fn((k: string, d: CommunityDetails) => {
                 stored.set(k, d);
+                seen.set(k, d.lastUpdated);
                 return Promise.resolve();
             }),
+            cachedCommunityDetailsTimestamp: (k: string) => seen.get(k),
         };
         const initial = vi.fn(() => Promise.resolve(details(10n, ["a", "b"])));
         const updatesSince = vi.fn((_since: bigint) =>
@@ -230,7 +337,14 @@ describe("loadCommunityDetails", () => {
                 initial,
                 updatesSince,
             );
-        return { stored, cache, initial, updatesSince, load };
+        const loadToHold = async () => {
+            await load(stored.get(id)?.lastUpdated ?? 0n);
+            cache.getCachedCommunityDetails.mockClear();
+            cache.setCachedCommunityDetails.mockClear();
+            initial.mockClear();
+            updatesSince.mockClear();
+        };
+        return { stored, cache, initial, updatesSince, load, loadToHold };
     }
 
     test("details which aren't cached are loaded in full and cached", async () => {
@@ -266,71 +380,62 @@ describe("loadCommunityDetails", () => {
         expect(stored.get(id)?.lastUpdated).toBe(20n);
     });
 
-    test("held details which haven't changed are confirmed without touching the cache", async () => {
-        const { load, cache, updatesSince } = setup(details(10n, ["a"]), {
-            kind: "success_no_updates",
-            lastUpdated: 30n,
+    describe("when the caller holds the cached details", () => {
+        test("those which haven't changed are confirmed without touching the cache", async () => {
+            const { load, loadToHold, cache, updatesSince } = setup(details(10n, ["a"]), {
+                kind: "success_no_updates",
+                lastUpdated: 30n,
+            });
+            await loadToHold();
+
+            expect(await load(30n, 20n)).toEqual({
+                kind: "success_no_updates",
+                lastUpdated: 30n,
+            });
+            expect(updatesSince.mock.calls).toEqual([[10n]]);
+            expect(cache.getCachedCommunityDetails).not.toHaveBeenCalled();
+            expect(cache.setCachedCommunityDetails).not.toHaveBeenCalled();
         });
 
-        expect(await load(30n, 20n)).toEqual({ kind: "success_no_updates", lastUpdated: 30n });
-        expect(updatesSince).toHaveBeenCalledWith(20n);
-        expect(cache.getCachedCommunityDetails).not.toHaveBeenCalled();
-        expect(cache.setCachedCommunityDetails).not.toHaveBeenCalled();
+        test("those which have changed are brought up to date by asking the canister once", async () => {
+            const { load, loadToHold, stored, updatesSince } = setup(
+                details(10n, ["a"]),
+                membersAdded(30n, ["b"]),
+            );
+            await loadToHold();
+
+            const resp = await load(30n, 20n);
+
+            expect(updatesSince.mock.calls).toEqual([[10n]]);
+            expect(memberIds(resp)).toEqual(["a", "b"]);
+            expect(stored.get(id)?.lastUpdated).toBe(30n);
+        });
+
+        test("updates aren't applied to cached details which another tab has since written", async () => {
+            const { load, loadToHold, stored, updatesSince } = setup(details(10n, ["a"]));
+            await loadToHold();
+            stored.set(id, details(25n, ["a", "b"]));
+            updatesSince.mockImplementation((since) =>
+                Promise.resolve(membersAdded(30n, since < 25n ? ["b", "c"] : ["c"])),
+            );
+
+            const resp = await load(30n, 20n);
+
+            expect(updatesSince.mock.calls).toEqual([[10n], [25n]]);
+            expect(memberIds(resp)).toEqual(["a", "b", "c"]);
+            expect(stored.get(id)?.lastUpdated).toBe(30n);
+        });
     });
 
-    test("held details which have changed are loaded from the cache and brought up to date", async () => {
-        const { load, stored, updatesSince } = setup(details(10n, ["a"]), membersAdded(30n, ["b"]));
+    test("a caller holding details older than those cached is given the details in full", async () => {
+        const { load, loadToHold } = setup(details(10n, ["a", "b"]), {
+            kind: "success_no_updates",
+            lastUpdated: 20n,
+        });
+        await loadToHold();
 
-        const resp = await load(30n, 20n);
+        const resp = await load(20n, 5n);
 
-        expect(updatesSince.mock.calls).toEqual([[20n], [10n]]);
         expect(memberIds(resp)).toEqual(["a", "b"]);
-        expect(stored.get(id)?.lastUpdated).toBe(30n);
-    });
-});
-
-describe("confirmHeldDetails", () => {
-    function updatesSince(outcome: DetailsUpdatesOutcome) {
-        return vi.fn((_since: bigint) => Promise.resolve(outcome));
-    }
-
-    test("details already as new as the summary are good without asking the canister", async () => {
-        const query = updatesSince({ kind: "success" });
-
-        expect(await confirmHeldDetails(10n, 10n, query)).toEqual(10n);
-        expect(query).not.toHaveBeenCalled();
-    });
-
-    test("details are kept as they are while offline", async () => {
-        vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
-        const query = updatesSince({ kind: "success" });
-
-        expect(await confirmHeldDetails(10n, 20n, query)).toEqual(10n);
-        expect(query).not.toHaveBeenCalled();
-    });
-
-    test("unchanged details are good up to the canister's timestamp", async () => {
-        const query = updatesSince({ kind: "success_no_updates", timestamp: 20n });
-
-        expect(await confirmHeldDetails(10n, 20n, query)).toEqual(20n);
-        expect(query).toHaveBeenCalledWith(10n);
-    });
-
-    test("a lagging replica's timestamp doesn't move the details backwards", async () => {
-        const query = updatesSince({ kind: "success_no_updates", timestamp: 5n });
-
-        expect(await confirmHeldDetails(10n, 20n, query)).toEqual(10n);
-    });
-
-    test("details are kept as they are if the canister can't be reached", async () => {
-        const query = updatesSince({ kind: "failure" });
-
-        expect(await confirmHeldDetails(10n, 20n, query)).toEqual(10n);
-    });
-
-    test("changed details must be loaded in full", async () => {
-        const query = updatesSince({ kind: "success" });
-
-        expect(await confirmHeldDetails(10n, 20n, query)).toBeUndefined();
     });
 });
