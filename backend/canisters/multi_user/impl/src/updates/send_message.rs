@@ -40,6 +40,16 @@ async fn send_message_v2(args: Args) -> Response {
 }
 
 async fn send_message_v2_impl(mut args: Args) -> Response {
+    // A message for a user who has since been migrated to a MultiUser canister, eg. from a client
+    // which hasn't yet heard, goes to their new id, once the chat with them has been moved onto it
+    args.recipient = read_state(|state| {
+        if state.with_caller_user(|_, user| user.direct_chats.exists(&args.recipient.into())) {
+            args.recipient
+        } else {
+            state.data.migrated_user_ids.latest(args.recipient)
+        }
+    });
+
     let PrepareOk {
         my_index,
         my_user_id,

@@ -105,6 +105,34 @@ impl User {
         self.one_sec_address = None;
     }
 
+    // Moves what the user holds under the id of another user onto that user's new id once they are
+    // migrated to a MultiUser canister: their chat with them, their block of them and their contact
+    // for them. Messages keep the id they were sent under.
+    pub fn migrate_their_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) {
+        if self.blocked_users.unblock(old_user_id, now) {
+            self.blocked_users.block(new_user_id, now);
+        }
+        if self.direct_chats.migrate_their_user_id(old_user_id, new_user_id, now) {
+            self.favourite_chats.migrate_their_user_id(old_user_id, new_user_id, now);
+        }
+        self.contacts.migrate_user_id(old_user_id, new_user_id);
+    }
+
+    // The users the user has, or had, a direct chat with, other than themselves and bots, who are
+    // told of the user's new id once they are migrated to a MultiUser canister
+    pub fn direct_chat_user_ids(&self, my_user_id: UserId) -> Vec<UserId> {
+        let mut user_ids: HashSet<UserId> = self
+            .direct_chats
+            .iter()
+            .filter(|chat| !chat.user_type.is_bot())
+            .map(|chat| chat.them)
+            .collect();
+        // A chat removed by the user is still held by the other user
+        user_ids.extend(self.direct_chats.removed_since(0).into_iter().map(UserId::from));
+        user_ids.remove(&my_user_id);
+        user_ids.into_iter().collect()
+    }
+
     // The canisters of the groups and communities the user is in
     pub fn group_and_community_canisters(&self) -> Vec<CanisterId> {
         self.group_chats

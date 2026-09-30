@@ -1037,11 +1037,104 @@ fn blocked_user_pairs_are_moved_onto_a_migrated_users_new_id() {
     assert!(!recipients.contains(&new_user_id));
     assert_eq!(recipients, vec![user2.user_id]);
 
-    // Once user2 unblocks user1, by the old id their canister still holds, they are notified again
-    client::user::happy_path::unblock_user(env, &user2, user1.user_id);
+    // Once user2 unblocks user1, by the new id their canister now holds, they are notified again
+    client::user::happy_path::unblock_user(env, &user2, new_user_id);
     tick_many(env, 10);
     let recipients = group_message_notification_recipients(env, *controller, group_local_user_index, &user1, group_id);
     assert_eq!(recipients, vec![user2.user_id]);
+}
+
+#[test]
+fn users_with_a_direct_chat_with_or_a_block_of_a_migrated_user_hold_it_under_their_new_id() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    // user2 and user3 have direct chats with user1, user2 in a canister of their own and user3 in a
+    // MultiUser canister, while user4 has blocked user1, with whom they have no chat
+    let user2 = client::register_user(env, canister_ids);
+    let user3 = client::register_user_in_multi_user_canister(env, canister_ids);
+    let user4 = client::register_user(env, canister_ids);
+    client::user::happy_path::send_text_message(env, &user2, user1.user_id, random_string(), None);
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+    client::user::happy_path::send_text_message(env, &user3, user1.user_id, random_string(), None);
+    client::user::happy_path::block_user(env, &user4, user1.user_id);
+    tick_many(env, 10);
+    let before_migration = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id) {
+        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
+        status => panic!("User not imported: {status:?}"),
+    };
+    tick_many(env, 10);
+
+    // Each peer has a single chat with user1, now under their new id, with its history. Their
+    // clients are told the chat under the old id was removed and sent it under the new one.
+    for (peer, message_count) in [(&user2, 2), (&user3, 1)] {
+        let state = client::user::happy_path::initial_state(env, peer);
+        let chats: Vec<_> = state
+            .direct_chats
+            .summaries
+            .iter()
+            .filter(|c| c.them == new_user_id || c.them == user1.user_id)
+            .collect();
+        assert_eq!(chats.len(), 1, "{chats:?}");
+        assert_eq!(chats[0].them, new_user_id);
+        assert_eq!(chats[0].latest_message_index, Some((message_count - 1).into()));
+
+        let updates = client::user::happy_path::updates(env, peer, before_migration)
+            .unwrap_or_else(|| panic!("No updates for {}", peer.user_id));
+        assert!(updates.direct_chats.removed.contains(&user1.user_id.into()));
+        assert!(updates.direct_chats.added.iter().any(|c| c.them == new_user_id));
+    }
+    // user4 has blocked user1 under their new id
+    let state = client::user::happy_path::initial_state(env, &user4);
+    assert!(state.blocked_users.contains(&new_user_id));
+    assert!(!state.blocked_users.contains(&user1.user_id));
+
+    // A message from user1 under their new id is added to the same chat, while user4 doesn't get one
+    let user1 = User {
+        user_id: new_user_id,
+        local_user_index,
+        ..user1
+    };
+    let message = random_string();
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, message.clone(), None);
+    client::user::happy_path::send_text_message(env, &user1, user4.user_id, random_string(), None);
+    tick_many(env, 10);
+    let state = client::user::happy_path::initial_state(env, &user2);
+    let chats: Vec<_> = state
+        .direct_chats
+        .summaries
+        .iter()
+        .filter(|c| c.them == new_user_id || c.them == user1.user_id)
+        .collect();
+    assert_eq!(chats.len(), 1, "{chats:?}");
+    assert_eq!(chats[0].latest_message_index, Some(2.into()));
+    match &chats[0].latest_message.as_ref().unwrap().event.content {
+        MessageContent::Text(text) => assert_eq!(text.text, message),
+        content => panic!("Unexpected content: {content:?}"),
+    }
+    let state = client::user::happy_path::initial_state(env, &user4);
+    assert!(state.direct_chats.summaries.iter().all(|c| c.them != new_user_id));
 }
 
 #[test]

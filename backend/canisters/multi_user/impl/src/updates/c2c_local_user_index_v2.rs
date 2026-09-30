@@ -36,6 +36,10 @@ fn c2c_local_user_index_v2_impl(args: Args, state: &mut RuntimeState) -> Respons
 // Applies an event to the user at `user_index`, as the User canister does for its user
 fn process_event(user_index: u16, event: LocalUserIndexEvent, state: &mut RuntimeState) {
     let now = state.env.now();
+    // Events for the user's old id are then sent straight to their new one
+    if let LocalUserIndexEvent::UserIdMigrated(ev) = &event {
+        state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id);
+    }
     let Some(effects) = state.data.users.with_user_mut(user_index, |user| {
         user_core::updates::c2c_local_user_index::apply(user, event, now)
     }) else {

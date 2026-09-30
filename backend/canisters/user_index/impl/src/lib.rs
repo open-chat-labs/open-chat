@@ -213,6 +213,7 @@ impl RuntimeState {
         old_user_id: UserId,
         new_user_id: UserId,
         canisters_to_notify: Vec<CanisterId>,
+        direct_chat_user_ids: Vec<UserId>,
     ) -> bool {
         let now = self.env.now();
         let Some(principal) = self.data.users.migrate_user_id(old_user_id, new_user_id, now) else {
@@ -240,6 +241,9 @@ impl RuntimeState {
         // would run out of instructions, and not by each LocalUserIndex, which may be sent up to 1000
         // switch-overs in one batch
         let blocked_users: Vec<UserId> = self.data.blocked_users.all_users_linked_to(old_user_id);
+        // Each pair is keyed by the user who was blocked, so those who have blocked the user are found
+        // by their key
+        let blocked_by: Vec<UserId> = self.data.blocked_users.all_linked_users(old_user_id);
         self.data
             .blocked_users
             .migrate_user_id(old_user_id, new_user_id, &blocked_users);
@@ -268,33 +272,57 @@ impl RuntimeState {
             new_user_id,
         }));
 
-        self.record_user_id_migrated(old_user_id, new_user_id, canisters_to_notify, blocked_users);
+        // Those the user has a direct chat with, and those who have blocked them, each move what they
+        // hold under the user's old id onto the new one
+        let users_to_notify = direct_chat_user_ids.into_iter().chain(blocked_by).collect();
+        self.record_user_id_migrated(old_user_id, new_user_id, canisters_to_notify, blocked_users, users_to_notify);
         true
     }
 
     // Records that a user migrated to a MultiUser canister has been given a new id, and tells every
     // LocalUserIndex, each of which tells whichever of the user's groups and communities it controls,
-    // and moves the pairs of the user and those they've blocked onto their new id. Only the first
-    // call for a migration is acted on, so it must list all of them.
+    // and of `users_to_notify` it holds, and moves the pairs of the user and those they've blocked
+    // onto their new id. Only the first call for a migration is acted on, so it must list all of them.
     fn record_user_id_migrated(
         &mut self,
         old_user_id: UserId,
         new_user_id: UserId,
         canisters_to_notify: Vec<CanisterId>,
         blocked_users: Vec<UserId>,
+        users_to_notify: Vec<UserId>,
     ) {
         if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
             self.data.multi_user_canisters.on_user_removed(&old_user_id);
             self.data.multi_user_canisters.on_user_added(&new_user_id);
-            self.push_event_to_all_local_user_indexes(
-                LocalUserIndexEvent::UserIdMigrated(UserIdMigrated {
-                    old_user_id,
-                    new_user_id,
-                    canisters_to_notify,
-                    blocked_users,
-                }),
-                None,
-            );
+
+            // Each LocalUserIndex is only sent the users it holds, by their latest ids
+            let mut users_by_local_user_index: HashMap<CanisterId, HashSet<UserId>> = HashMap::new();
+            for user_id in users_to_notify {
+                let user_id = self.data.migrated_user_ids.latest(user_id);
+                if user_id != new_user_id
+                    && let Some(local_user_index) = self.data.local_index_map.get_index_canister(&user_id)
+                {
+                    users_by_local_user_index.entry(local_user_index).or_default().insert(user_id);
+                }
+            }
+            let local_user_indexes: Vec<CanisterId> = self.data.local_index_map.canisters().copied().collect();
+            for local_user_index in local_user_indexes {
+                let users_to_notify = users_by_local_user_index
+                    .remove(&local_user_index)
+                    .map(|user_ids| user_ids.into_iter().collect())
+                    .unwrap_or_default();
+                self.data.user_index_event_sync_queue.push(
+                    local_user_index,
+                    LocalUserIndexEvent::UserIdMigrated(UserIdMigrated {
+                        old_user_id,
+                        new_user_id,
+                        canisters_to_notify: canisters_to_notify.clone(),
+                        blocked_users: blocked_users.clone(),
+                        users_to_notify,
+                    }),
+                );
+            }
+            jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
         }
     }
 

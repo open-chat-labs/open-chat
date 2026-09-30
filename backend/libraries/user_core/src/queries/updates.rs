@@ -86,7 +86,7 @@ pub fn updates(
     let mut direct_chats_updated = Vec::new();
     let my_user = UserIdAndPrincipal::new(my_user_id, user.principal);
     for chat in user.direct_chats.updated_since(updates_since) {
-        if chat.date_created() > updates_since {
+        if chat.added_since(updates_since) {
             direct_chats_added.push(chat.to_summary(my_user));
         } else {
             direct_chats_updated.push(chat.to_summary_updates(updates_since, my_user));

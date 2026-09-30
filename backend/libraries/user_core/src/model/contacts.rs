@@ -80,6 +80,20 @@ impl Contacts {
         }
     }
 
+    // Moves the contact for another user onto their new id once they are migrated to a MultiUser
+    // canister, unless there is already one for their new id
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        let prefix = ContactKeyPrefix::new();
+        with_map_mut(|m| {
+            if m.contains_key(prefix.create_key(&new_user_id)) {
+                return;
+            }
+            if let Some(bytes) = m.remove(prefix.create_key(&old_user_id)) {
+                m.insert(prefix.create_key(&new_user_id), bytes);
+            }
+        });
+    }
+
     // Returns every contact, ordered by user id
     pub fn all(&self) -> Vec<(UserId, Contact)> {
         with_map(|m| {

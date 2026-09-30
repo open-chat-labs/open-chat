@@ -108,6 +108,7 @@ pub enum LocalUserIndexEvent {
     ReinstateMissedDailyClaims(Vec<u16>),
     BotUpdated(Box<BotDefinitionUpdate>),
     BotRemoved(UserId),
+    UserIdMigrated(Box<UserIdMigrated>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -138,6 +139,14 @@ pub struct StorageUpgraded {
 pub struct ReferredUserRegistered {
     pub user_id: UserId,
     pub username: String,
+}
+
+// Another user, whom the user has a direct chat with or has blocked, has been migrated to a
+// MultiUser canister, which gave them a new id
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserIdMigrated {
+    pub old_user_id: UserId,
+    pub new_user_id: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

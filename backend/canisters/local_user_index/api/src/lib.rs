@@ -276,6 +276,10 @@ pub struct UserIdMigrated {
     // moved onto the new one, since the LocalUserIndex could only find them by scanning every pair
     #[serde(rename = "b", default, skip_serializing_if = "Vec::is_empty")]
     pub blocked_users: Vec<UserId>,
+    // The users held by this LocalUserIndex who are told of the user's new id: those the user has,
+    // or had, a direct chat with, and those who have blocked them
+    #[serde(rename = "u", default, skip_serializing_if = "Vec::is_empty")]
+    pub users_to_notify: Vec<UserId>,
 }
 
 // Tells the LocalUserIndex controlling a user's canister to start migrating the user to the given
@@ -396,6 +400,9 @@ pub struct UserImported {
     pub old_user_id: UserId,
     // The groups and communities the user is in, each of which is told of the user's new id
     pub canisters_to_notify: Vec<CanisterId>,
+    // The users the user has, or had, a direct chat with, each of whom is told of the user's new id
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub users_to_notify: Vec<UserId>,
 }
 
 // An event along with the user it is from, as taken by `c2c_user_canister_v2`. A User canister

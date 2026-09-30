@@ -243,7 +243,10 @@ fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
             return;
         }
     };
-    with_key_scope(KeyScope::User(index), || user.migrate_own_user_id(old_user_id, new_user_id));
+    let users_to_notify = with_key_scope(KeyScope::User(index), || {
+        user.migrate_own_user_id(old_user_id, new_user_id);
+        user.direct_chat_user_ids(new_user_id)
+    });
     let next_event_expiry = user.next_event_expiry;
     let canisters_to_notify = user.group_and_community_canisters();
 
@@ -270,6 +273,7 @@ fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
         LocalUserIndexEvent::UserImported(UserImported {
             old_user_id,
             canisters_to_notify,
+            users_to_notify,
         }),
         now,
     );
