@@ -56,7 +56,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 }
 
-async fn delete_community(
+pub(crate) async fn delete_community(
     community_id: CommunityId,
     local_user_index_canister_id: CanisterId,
     deleted_by: UserId,
@@ -76,13 +76,7 @@ async fn delete_community(
     Ok(response)
 }
 
-pub(crate) fn commit(
-    community_id: CommunityId,
-    deleted_by: UserId,
-    name: String,
-    members: Vec<UserId>,
-    state: &mut RuntimeState,
-) {
+fn commit(community_id: CommunityId, deleted_by: UserId, name: String, members: Vec<UserId>, state: &mut RuntimeState) {
     let now = state.env.now();
 
     let public = if let Some(community) = state.data.public_communities.delete(&community_id) {

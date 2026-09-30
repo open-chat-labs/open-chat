@@ -179,7 +179,6 @@ import {
     type CurrentUserResponse,
     type DataContent,
     type DeleteCryptoAccountResponse,
-    type DeleteUninstalledCommunityResponse,
     type DexId,
     type DiamondMembershipDuration,
     type DiamondMembershipFees,
@@ -6838,14 +6837,6 @@ export class OpenChat {
             .send({ kind: "setUserUpgradeConcurrency", value })
             .then((resp) => resp === "success")
             .catch(() => false);
-    }
-
-    // Platform operators only. Deletes a community whose canister has been uninstalled (eg. by the
-    // IC once it ran out of cycles), which therefore can't delete itself
-    deleteUninstalledCommunity(communityId: string): Promise<DeleteUninstalledCommunityResponse> {
-        return this.#worker
-            .send({ kind: "deleteUninstalledCommunity", communityId })
-            .catch(() => "internal_error");
     }
 
     // Platform operators only

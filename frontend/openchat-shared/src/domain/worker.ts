@@ -37,7 +37,6 @@ import type {
     DeletedGroupMessageResponse,
     DeleteFrozenGroupResponse,
     DeleteGroupResponse,
-    DeleteUninstalledCommunityResponse,
     DeleteMessageResponse,
     DirectChatIdentifier,
     DisableInviteCodeResponse,
@@ -349,7 +348,6 @@ export type WorkerRequest =
     | FreezeCommunity
     | UnfreezeCommunity
     | DeleteFrozenGroup
-    | DeleteUninstalledCommunity
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
     | AddRemoveSwapProvider
@@ -1693,11 +1691,6 @@ type DeleteFrozenGroup = {
     kind: "deleteFrozenGroup";
 };
 
-type DeleteUninstalledCommunity = {
-    communityId: string;
-    kind: "deleteUninstalledCommunity";
-};
-
 type AddHotGroupExclusion = {
     chatId: GroupChatIdentifier;
     kind: "addHotGroupExclusion";
@@ -2128,7 +2121,6 @@ export type WorkerResponseInner =
     | FreezeCommunityResponse
     | UnfreezeCommunityResponse
     | DeleteFrozenGroupResponse
-    | DeleteUninstalledCommunityResponse
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
     | AddMessageFilter
@@ -2718,8 +2710,6 @@ export type WorkerResult<T> = T extends Init
     ? boolean
     : T extends DeleteFrozenGroup
     ? DeleteFrozenGroupResponse
-    : T extends DeleteUninstalledCommunity
-    ? DeleteUninstalledCommunityResponse
     : T extends SuspendUser
     ? SuspendUserResponse
     : T extends UnsuspendUser

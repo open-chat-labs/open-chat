@@ -818,9 +818,6 @@ function getAction(
         case "deleteFrozenGroup":
             return agent.deleteFrozenGroup(payload.chatId);
 
-        case "deleteUninstalledCommunity":
-            return agent.deleteUninstalledCommunity(payload.communityId);
-
         case "addHotGroupExclusion":
             return agent.addHotGroupExclusion(payload.chatId);
 

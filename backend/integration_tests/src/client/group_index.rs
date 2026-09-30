@@ -9,7 +9,6 @@ generate_msgpack_query_call!(search);
 // Updates
 generate_update_call!(notify_local_index_added);
 generate_msgpack_update_call!(delete_frozen_group);
-generate_msgpack_update_call!(delete_uninstalled_community);
 generate_msgpack_update_call!(freeze_group);
 generate_msgpack_update_call!(unfreeze_group);
 generate_update_call!(upgrade_community_canister_wasm);

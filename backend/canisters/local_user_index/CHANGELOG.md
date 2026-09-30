@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Pass the OpenChat bot's welcome messages to the MultiUser canister when registering a user into one ([#9643](https://github.com/open-chat-labs/open-chat/pull/9643))
 - Add `move_funds_from_old_canister`, which moves the funds held by a migrated user's old canister to their wallet, by installing the call relay on the canister ([#9623](https://github.com/open-chat-labs/open-chat/pull/9623))
 - Refresh the tokens known to the Registry daily, which are the only ledgers `move_funds_from_old_canister` moves funds from ([#9623](https://github.com/open-chat-labs/open-chat/pull/9623))
-- Add `c2c_delete_uninstalled_community`, which deletes a community once its canister is confirmed to have been uninstalled ([#9672](https://github.com/open-chat-labs/open-chat/pull/9672))
+- Report a community whose canister has been uninstalled to the GroupIndex, which deletes it ([#9672](https://github.com/open-chat-labs/open-chat/pull/9672))
 
 ### Changed
 

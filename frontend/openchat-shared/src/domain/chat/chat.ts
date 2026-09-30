@@ -2484,14 +2484,6 @@ export type DeleteFrozenGroupResponse =
     | "internal_error"
     | "offline";
 
-export type DeleteUninstalledCommunityResponse =
-    | "success"
-    | "community_not_found"
-    | "community_not_uninstalled"
-    | "not_authorized"
-    | "internal_error"
-    | "offline";
-
 export type AddHotGroupExclusionResponse =
     | "success"
     | "chat_already_excluded"

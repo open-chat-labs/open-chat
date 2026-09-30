@@ -31,7 +31,6 @@ fn main() {
 
     generate_ts_method!(group_index, add_hot_group_exclusion);
     generate_ts_method!(group_index, delete_frozen_group);
-    generate_ts_method!(group_index, delete_uninstalled_community);
     generate_ts_method!(group_index, freeze_community);
     generate_ts_method!(group_index, freeze_group);
     generate_ts_method!(group_index, mark_local_index_full);

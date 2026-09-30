@@ -1,12 +1,12 @@
 use crate::updates::c2c_notify_low_balance::top_up_child_canister;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, mutate_state, read_state};
 use candid::Nat;
 use constants::DAY_IN_MS;
 use per_round_timer::PerRoundTimer;
 use std::cell::RefCell;
 use std::time::Duration;
 use tracing::{error, info};
-use types::{CanisterId, Milliseconds, TimestampMillis};
+use types::{CanisterId, CommunityId, Milliseconds, TimestampMillis, UnitResult};
 use utils::canister_timers::run_now_then_interval;
 
 thread_local! {
@@ -125,12 +125,39 @@ fn next(state: &mut RuntimeState) -> GetNextResult {
 async fn run_async(canister_id: CanisterId) {
     match utils::canister::canister_status(canister_id).await {
         Ok(status) => {
-            if status.cycles < utils::cycles::MIN_CYCLES_BALANCE
+            // A community's canister only loses its code by being uninstalled, which the IC does
+            // once a canister runs out of cycles. Topping it up can't bring its state back, so
+            // the community is deleted instead.
+            if status.module_hash.is_none() && read_state(|state| state.data.local_communities.contains(&canister_id.into())) {
+                notify_community_uninstalled(canister_id.into()).await;
+            } else if status.cycles < utils::cycles::MIN_CYCLES_BALANCE
                 || status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day
             {
                 top_up_child_canister(Some(canister_id)).await;
             }
         }
         Err(error) => error!(%canister_id, ?error, "Error getting canister status"),
+    }
+}
+
+// Tells the GroupIndex, which deletes the community by calling back into `c2c_delete_community`
+async fn notify_community_uninstalled(community_id: CommunityId) {
+    let (group_index_canister_id, upgrade_in_progress) = read_state(|state| {
+        (
+            state.data.group_index_canister_id,
+            state.data.communities_requiring_upgrade.is_in_progress(&community_id.into()),
+        )
+    });
+
+    // An upgrade restarts the canister once it has failed, which would stop the canister being
+    // deleted, so this is left until the next check
+    if upgrade_in_progress {
+        return;
+    }
+
+    let args = group_index_canister::c2c_notify_community_uninstalled::Args { community_id };
+    match group_index_canister_c2c_client::c2c_notify_community_uninstalled(group_index_canister_id, &args).await {
+        Ok(UnitResult::Success) => info!(%community_id, "Uninstalled community deleted"),
+        response => error!(%community_id, ?response, "Failed to delete uninstalled community"),
     }
 }

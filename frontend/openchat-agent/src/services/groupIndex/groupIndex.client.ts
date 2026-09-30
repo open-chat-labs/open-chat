@@ -4,7 +4,6 @@ import type {
     ChannelIdentifier,
     CommunityIdentifier,
     DeleteFrozenGroupResponse,
-    DeleteUninstalledCommunityResponse,
     ExploreCommunitiesResponse,
     FreezeCommunityResponse,
     FreezeGroupResponse,
@@ -23,8 +22,6 @@ import {
     GroupIndexAddHotGroupExclusionResponse,
     GroupIndexDeleteFrozenGroupArgs,
     GroupIndexDeleteFrozenGroupResponse,
-    GroupIndexDeleteUninstalledCommunityArgs,
-    GroupIndexDeleteUninstalledCommunityResponse,
     GroupIndexExploreCommunitiesArgs,
     GroupIndexExploreCommunitiesResponse,
     GroupIndexExploreGroupsArgs,
@@ -59,7 +56,6 @@ import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import {
     addHotGroupExclusionResponse,
     deleteFrozenGroupResponse,
-    deleteUninstalledCommunityResponse,
     exploreCommunitiesResponse,
     exploreGroupsResponse,
     freezeCommunityResponse,
@@ -202,16 +198,6 @@ export class GroupIndexClient extends SingleCanisterMsgpackAgent {
             deleteFrozenGroupResponse,
             GroupIndexDeleteFrozenGroupArgs,
             GroupIndexDeleteFrozenGroupResponse,
-        );
-    }
-
-    deleteUninstalledCommunity(communityId: string): Promise<DeleteUninstalledCommunityResponse> {
-        return this.update(
-            "delete_uninstalled_community",
-            { community_id: principalStringToBytes(communityId) },
-            deleteUninstalledCommunityResponse,
-            GroupIndexDeleteUninstalledCommunityArgs,
-            GroupIndexDeleteUninstalledCommunityResponse,
         );
     }
 
