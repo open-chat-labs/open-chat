@@ -326,6 +326,7 @@ import {
     type UpdatesResult,
     type User,
     type UserGroupDetails,
+    type UserLookup,
     type UserOrUserGroup,
     type UserStatus,
     type UserSummary,
@@ -431,6 +432,7 @@ import {
     selectedChatExpandedDeletedMessageStore,
     selectedChatIdStore,
     selectedChatInvitedUsersStore,
+    selectedChatLapsedMembersStore,
     selectedChatMembersStore,
     selectedChatRulesStore,
     selectedChatSummaryStore,
@@ -439,6 +441,7 @@ import {
     selectedCommunityBlockedUsersStore,
     selectedCommunityIdStore,
     selectedCommunityInvitedUsersStore,
+    selectedCommunityLapsedMembersStore,
     selectedCommunityMembersStore,
     selectedCommunityReferralsStore,
     selectedCommunityRulesStore,
@@ -696,6 +699,9 @@ function describeError(err: unknown): string {
 // The users who have been looked up among the members of the chat or community with this key
 type MemberLookups = { key: string | undefined; userIds: Set<string> };
 
+// The most members found by searching to offer as mentions for what has been typed
+const MAX_MEMBERS_FOUND_TO_MENTION = 20;
+
 export class OpenChat {
     #mobileLayout: "v1" | "v2";
     #worker: WorkerAgent;
@@ -721,7 +727,16 @@ export class OpenChat {
     #membershipCheck: number | undefined;
     #currentUserIdChangedPublished = false;
     #referralCode: string | undefined = undefined;
-    #userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
+    #userLookupForMentions:
+        | {
+              lookup: Record<string, UserOrUserGroup>;
+              // What it was built from, so that it is rebuilt when any of them change, eg. when
+              // members who weren't held are found
+              members: ReadonlyMap<string, Member>;
+              communityMembers: ReadonlyMap<string, Member>;
+              users: UserLookup;
+          }
+        | undefined = undefined;
     // The users who have been looked up among the members of the selected community and of the
     // selected chat, whether or not they turned out to be members, so that they aren't looked up
     // again
@@ -3141,12 +3156,14 @@ export class OpenChat {
         }
     }
 
+    // Looks up those of the users who aren't held and haven't already been looked up, adding those
+    // who are members to the details. Returns the user ids of those found to be members.
     async #lookupMembers(
         id: MultiUserChatIdentifier | CommunityIdentifier,
         held: HeldMembers,
         lookups: MemberLookups,
         userIds: string[],
-    ): Promise<void> {
+    ): Promise<Set<string>> {
         const key = id.kind === "community" ? id.communityId : chatIdentifierToString(id);
         if (lookups.key !== key) {
             lookups.key = key;
@@ -3157,7 +3174,7 @@ export class OpenChat {
             .filter((u) => !held.members.has(u) && !held.lapsedMembers.has(u) && !lookedUp.has(u))
             .slice(0, MEMBERS_PAGE_SIZE);
         if (toLookUp.length === 0) {
-            return;
+            return new Set();
         }
         toLookUp.forEach((u) => lookedUp.add(u));
 
@@ -3168,9 +3185,95 @@ export class OpenChat {
             if (resp.members.length > 0) {
                 this.#addLoadedMembers(id, resp.members);
             }
+            return new Set(resp.members.map((m) => m.userId));
         } else {
             // So that they are looked up again when they are next seen
             toLookUp.forEach((u) => lookedUp.delete(u));
+            return new Set();
+        }
+    }
+
+    // The members held for the selected chat or community with this id, and the lookups made of
+    // those which aren't, or undefined if it isn't the one selected
+    #selectedMembers(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+    ): { held: HeldMembers; lookups: MemberLookups } | undefined {
+        if (id.kind === "community") {
+            const details = selectedServerCommunityStore.value;
+            return details !== undefined && communityIdentifiersEqual(details.communityId, id)
+                ? { held: details, lookups: this.#communityMemberLookups }
+                : undefined;
+        }
+        const details = selectedServerChatStore.value;
+        return details !== undefined && chatIdentifiersEqual(details.chatId, id)
+            ? { held: details, lookups: this.#chatMemberLookups }
+            : undefined;
+    }
+
+    // Whether the selected chat or community with this id holds only some of its members, because
+    // it has more than are loaded at once
+    membersIncomplete(id: MultiUserChatIdentifier | CommunityIdentifier): boolean {
+        return this.#selectedMembers(id)?.held.moreMembersAfter !== undefined;
+    }
+
+    // Of the users, those who are members of the selected chat or community with this id. If it
+    // holds only some of its members, those it doesn't hold are looked up.
+    async #membersAmong(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        userIds: string[],
+    ): Promise<Set<string>> {
+        const selected = this.#selectedMembers(id);
+        if (selected === undefined) {
+            return new Set();
+        }
+        // Held with any local updates applied, eg. a member just removed
+        const [members, lapsed] =
+            id.kind === "community"
+                ? [selectedCommunityMembersStore.value, selectedCommunityLapsedMembersStore.value]
+                : [selectedChatMembersStore.value, selectedChatLapsedMembersStore.value];
+        const found = new Set(userIds.filter((u) => members.has(u) || lapsed.has(u)));
+        if (selected.held.moreMembersAfter !== undefined) {
+            const lookedUp = await this.#lookupMembers(
+                id,
+                selected.held,
+                selected.lookups,
+                userIds,
+            );
+            lookedUp.forEach((u) => found.add(u));
+        }
+        return found;
+    }
+
+    // Searches for users by name, returning those who are members of the selected chat or community
+    // with this id. If it holds only some of its members, those found who are members but aren't
+    // held are looked up, so are then held.
+    async findMembers(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        searchTerm: string,
+        maxResults: number,
+    ): Promise<UserSummary[]> {
+        const users = await this.searchUsers(searchTerm, maxResults);
+        const members = await this.#membersAmong(
+            id,
+            users.map((u) => u.userId),
+        );
+        if (id.kind === "channel") {
+            // So that their display names in the community are known
+            this.#lookupMembersSeen(members);
+        }
+        return users.filter((u) => members.has(u.userId));
+    }
+
+    // Finds members of the selected chat to offer as mentions for what has been typed, if it holds
+    // only some of its members. Those found are then held, so are offered too.
+    async findMembersToMention(prefix: string): Promise<void> {
+        const chatId = selectedChatIdStore.value;
+        if (
+            chatId !== undefined &&
+            chatId.kind !== "direct_chat" &&
+            this.membersIncomplete(chatId)
+        ) {
+            await this.findMembers(chatId, prefix, MAX_MEMBERS_FOUND_TO_MENTION);
         }
     }
 
@@ -5656,7 +5759,7 @@ export class OpenChat {
         return allChatsStore.value.get(chatId);
     }
 
-    searchUsersForInvite(
+    async searchUsersForInvite(
         searchTerm: string,
         maxResults: number,
         level: Level,
@@ -5664,67 +5767,102 @@ export class OpenChat {
         canInviteUsers: boolean,
     ): Promise<[UserSummary[], UserSummary[]]> {
         if (level === "channel") {
+            const channelId = selectedChatIdStore.value;
+            const communityId = selectedCommunityIdStore.value;
+
             // Put the existing channel members into a map for quick lookup
             const channelMembers = newGroup ? undefined : selectedChatMembersStore.value;
 
             // First try searching the community members and return immediately if there are already enough matches
-            // or if the caller does not have permission to invite users to the community
+            // or if the caller does not have permission to invite users to the community. A community which holds
+            // only some of its members may have more matches among those it doesn't hold, so they are searched for too.
             const communityMatches = this.#searchCommunityUsersForChannelInvite(
                 searchTerm,
                 maxResults,
                 channelMembers,
             );
-            if (!canInviteUsers || communityMatches.length >= maxResults) {
-                return Promise.resolve([communityMatches, []]);
+            const communityIncomplete =
+                communityId !== undefined && this.membersIncomplete(communityId);
+            if (
+                communityMatches.length >= maxResults ||
+                (!canInviteUsers && !communityIncomplete)
+            ) {
+                return [communityMatches, []];
             }
 
             // Search the global user list and overfetch if there are existing members we might need to remove
             const maxToSearch = newGroup ? maxResults : maxResults * 2;
-            return this.searchUsers(searchTerm, maxToSearch).then((globalMatches) => {
-                if (!newGroup) {
-                    // Remove any existing members from the global matches until there are at most `maxResults`
-                    // TODO: Ideally we would return the total number of matches from the server and use that
-                    const maxToKeep = globalMatches.length < maxToSearch ? 0 : maxResults;
-                    keepMax(globalMatches, (u) => !channelMembers?.has(u.userId), maxToKeep);
-                }
+            const globalMatches = (await this.searchUsers(searchTerm, maxToSearch)).filter(
+                (u) => !communityMatches.some((m) => m.userId === u.userId),
+            );
 
-                const matches = [];
+            // Existing members of the channel are removed from the matches
+            const inChannel =
+                newGroup || channelId === undefined || channelId.kind === "direct_chat"
+                    ? new Set<string>()
+                    : await this.#membersAmong(
+                          channelId,
+                          globalMatches.map((u) => u.userId),
+                      );
 
-                // Add the global matches to the results, but only if they are not already in the community matches
-                for (const match of globalMatches) {
-                    if (matches.length >= maxResults) {
-                        break;
+            let candidates = globalMatches;
+            if (communityIncomplete) {
+                // Those found who are members of the community, but weren't among those it holds, are community
+                // matches too
+                const inCommunity = await this.#membersAmong(
+                    communityId,
+                    globalMatches.map((u) => u.userId),
+                );
+                for (const user of globalMatches) {
+                    if (
+                        communityMatches.length < maxResults &&
+                        inCommunity.has(user.userId) &&
+                        !inChannel.has(user.userId)
+                    ) {
+                        communityMatches.push(this.#withCommunityDisplayName(user));
                     }
-                    if (!communityMatches.some((m) => m.userId === match.userId)) {
-                        matches.push(match);
-                    }
                 }
+                candidates = globalMatches.filter((u) => !inCommunity.has(u.userId));
+            }
+            if (!canInviteUsers) {
+                return [communityMatches, []];
+            }
 
-                return [communityMatches, matches];
-            });
+            // Remove any existing members from the global matches until there are at most `maxResults`
+            // TODO: Ideally we would return the total number of matches from the server and use that
+            const maxToKeep = globalMatches.length < maxToSearch ? 0 : maxResults;
+            keepMax(candidates, (u) => !inChannel.has(u.userId), maxToKeep);
+
+            return [communityMatches, candidates.slice(0, maxResults)];
         } else {
             // Search the global user list and overfetch if there are existing members we might need to remove
             const maxToSearch = newGroup ? maxResults : maxResults * 2;
-            return this.searchUsers(searchTerm, maxToSearch).then((matches) => {
-                if (!newGroup) {
-                    // Put the existing users in a map for easy lookup - for communities the existing members
-                    // are already in a map
-                    const existing =
-                        level === "community"
-                            ? selectedCommunityMembersStore.value
-                            : selectedChatMembersStore.value;
+            const matches = await this.searchUsers(searchTerm, maxToSearch);
+            if (!newGroup) {
+                const id =
+                    level === "community"
+                        ? selectedCommunityIdStore.value
+                        : selectedChatIdStore.value;
 
-                    // Remove any existing members from the global matches until there are at most `maxResults`
-                    // TODO: Ideally we would return the total number of matches from the server and use that
-                    const maxToKeep = matches.length < maxToSearch ? 0 : maxResults;
-                    keepMax(matches, (u) => !existing?.has(u.userId), maxToKeep);
-                }
-                return [[], matches];
-            });
+                // The existing members, of whom those not held are looked up if only some are held
+                const existing =
+                    id === undefined || id.kind === "direct_chat"
+                        ? new Set<string>()
+                        : await this.#membersAmong(
+                              id,
+                              matches.map((u) => u.userId),
+                          );
+
+                // Remove any existing members from the global matches until there are at most `maxResults`
+                // TODO: Ideally we would return the total number of matches from the server and use that
+                const maxToKeep = matches.length < maxToSearch ? 0 : maxResults;
+                keepMax(matches, (u) => !existing.has(u.userId), maxToKeep);
+            }
+            return [[], matches];
         }
     }
 
-    searchCommunityMembersToAdd(
+    async searchCommunityMembersToAdd(
         searchTerm: string,
         maxResults: number,
     ): Promise<[UserSummary[], UserSummary[]]> {
@@ -5735,7 +5873,36 @@ export class OpenChat {
             selectedChatMembersStore.value,
         );
 
-        return Promise.resolve([communityMatches, []]);
+        // A community which holds only some of its members may have more among those it doesn't hold
+        const communityId = selectedCommunityIdStore.value;
+        const channelId = selectedChatIdStore.value;
+        if (
+            communityMatches.length < maxResults &&
+            communityId !== undefined &&
+            channelId?.kind === "channel" &&
+            this.membersIncomplete(communityId)
+        ) {
+            const found = (await this.findMembers(communityId, searchTerm, maxResults)).filter(
+                (u) => !communityMatches.some((m) => m.userId === u.userId),
+            );
+            const inChannel = await this.#membersAmong(
+                channelId,
+                found.map((u) => u.userId),
+            );
+            for (const user of found) {
+                if (communityMatches.length < maxResults && !inChannel.has(user.userId)) {
+                    communityMatches.push(this.#withCommunityDisplayName(user));
+                }
+            }
+        }
+
+        return [communityMatches, []];
+    }
+
+    // The user with their display name in the selected community, if they have one
+    #withCommunityDisplayName(user: UserSummary): UserSummary {
+        const displayName = selectedCommunityMembersStore.value.get(user.userId)?.displayName;
+        return displayName === undefined ? user : { ...user, displayName };
     }
 
     #searchCommunityUsersForChannelInvite(
@@ -8439,9 +8606,18 @@ export class OpenChat {
 
     // the key might be a username or it might be a user group name
     getUserLookupForMentions(): Record<string, UserOrUserGroup> {
-        if (this.#userLookupForMentions === undefined) {
+        const members = selectedChatMembersStore.value;
+        const communityMembers = selectedCommunityMembersStore.value;
+        const users = allUsersStore.value;
+        const cached = this.#userLookupForMentions;
+        if (
+            cached === undefined ||
+            cached.members !== members ||
+            cached.communityMembers !== communityMembers ||
+            cached.users !== users
+        ) {
             const lookup = {} as Record<string, UserOrUserGroup>;
-            for (const [userId] of selectedChatMembersStore.value) {
+            for (const [userId] of members) {
                 const user = userStore.get(userId);
                 if (user !== undefined) {
                     const displayName = this.getDisplayName(
@@ -8467,9 +8643,10 @@ export class OpenChat {
             ) {
                 lookup["everyone"] = { kind: "everyone" };
             }
-            this.#userLookupForMentions = lookup;
+            this.#userLookupForMentions = { lookup, members, communityMembers, users };
+            return lookup;
         }
-        return this.#userLookupForMentions;
+        return cached.lookup;
     }
 
     lookupUserForMention(username: string, includeSelf: boolean): UserOrUserGroup | undefined {

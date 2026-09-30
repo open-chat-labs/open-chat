@@ -5,11 +5,13 @@
         allUsersStore,
         AvatarSize,
         currentUserIdStore,
+        FIND_MEMBERS_DELAY_MS,
         iconSize,
         mobileWidth,
+        selectedChatMembersStore,
         selectedCommunityMembersStore,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Avatar from "../Avatar.svelte";
     import Menu from "../Menu.svelte";
@@ -44,15 +46,28 @@
     }: Props = $props();
 
     let index = $state(0);
-    let usersAndGroups: UserOrUserGroup[] = $state([]);
 
-    onMount(() => {
-        usersAndGroups = Object.values(client.getUserLookupForMentions()).sort(
+    // Rebuilt when the members change, which they do when those which weren't held are found
+    let usersAndGroups = $derived.by(() => {
+        void [$selectedChatMembersStore, $selectedCommunityMembersStore, $allUsersStore];
+        return Object.values(client.getUserLookupForMentions()).sort(
             (a: UserOrUserGroup, b: UserOrUserGroup) => {
                 const order = { everyone: 1, user_group: 2, user: 3, bot: 4 };
                 return order[a.kind] - order[b.kind];
             },
         );
+    });
+
+    // A chat which holds only some of its members is searched for those matching what has been
+    // typed
+    $effect(() => {
+        const searchFor = prefix;
+        if (searchFor === undefined || searchFor.length < 2) return;
+        const timer = setTimeout(
+            () => client.findMembersToMention(searchFor),
+            FIND_MEMBERS_DELAY_MS,
+        );
+        return () => clearTimeout(timer);
     });
 
     function mention(userOrGroup: UserOrUserGroup) {
