@@ -1,6 +1,7 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { Type } from "@sinclair/typebox";
 import {
+    isMultiUserCanisterUser,
     MAX_EVENTS,
     MAX_MESSAGES,
     offline,
@@ -389,17 +390,26 @@ export class UserClient
         );
     }
 
+    // The user whose copy of the direct chat `events`, `events_by_index` and `events_window` read.
+    // A MultiUser canister holds many users, so it is told whose copy in `user_id`, and the peer
+    // in `them`. User canisters on the previous wasm read the peer from `user_id`, so they are
+    // sent it in both fields until they have all been upgraded to read it from `them`
+    // TODO: Always send the user's own id once every User canister reads the peer from `them`
+    private chatOwner(chatId: DirectChatIdentifier): Uint8Array {
+        return principalStringToBytes(
+            isMultiUserCanisterUser(this.userId) ? this.userId : chatId.userId,
+        );
+    }
+
     chatEventsByIndex(
         chatId: DirectChatIdentifier,
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
-        // User canisters on the previous wasm read the peer from `user_id`, so it is sent in both
-        // fields until they have all been upgraded to read it from `them`
         const args = {
             thread_root_message_index: threadRootMessageIndex,
-            user_id: principalStringToBytes(chatId.userId),
+            user_id: this.chatOwner(chatId),
             them: principalStringToBytes(chatId.userId),
             events: eventIndexes,
             latest_known_update: latestKnownUpdate,
@@ -427,7 +437,7 @@ export class UserClient
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: threadRootMessageIndex,
-            user_id: principalStringToBytes(chatId.userId),
+            user_id: this.chatOwner(chatId),
             them: principalStringToBytes(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,
@@ -457,7 +467,7 @@ export class UserClient
     ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: threadRootMessageIndex,
-            user_id: principalStringToBytes(chatId.userId),
+            user_id: this.chatOwner(chatId),
             them: principalStringToBytes(chatId.userId),
             max_messages: MAX_MESSAGES,
             max_events: maxEvents,
