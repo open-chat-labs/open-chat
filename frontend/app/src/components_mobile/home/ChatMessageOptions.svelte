@@ -46,7 +46,7 @@
     import TranslateIcon from "svelte-material-icons/Translate.svelte";
     import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
     import VectorLink from "svelte-material-icons/VectorLink.svelte";
-    import { i18nKey, languageCode, translationCodes } from "../../i18n/i18n";
+    import { i18nKey, translationCodes } from "../../i18n/i18n";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
@@ -385,7 +385,7 @@
 
     function getTranslation(text: string, messageId: bigint) {
         client
-            .translateMessage(messageId, text, translationCodes[languageCode($locale)] || "en")
+            .translateMessage(messageId, text, translationCodes[$locale || "en"] || "en")
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast(i18nKey("unableToTranslate"));

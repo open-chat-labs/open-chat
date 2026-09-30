@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
  
 import { locale, dictionary } from "svelte-i18n";
-import { editmode, editingLabel, i18nLocale, languageCode } from "../i18n/i18n";
+import { editmode, editingLabel, languageCode } from "../i18n/i18n";
 import { derived, get } from "svelte/store";
 import { currentTheme } from "../theme/themes";
 import type { Theme } from "../theme/types";
@@ -33,7 +33,7 @@ function isTranslatable(
     if (!locale) return false;
     // Translations are registered per language, so a dialect (eg. "fr-CA") has no dictionary of
     // its own, other than one holding any corrections suggested during this session
-    const localeValues = dictionary[i18nLocale(languageCode(locale))];
+    const localeValues = dictionary[languageCode(locale)];
 
     if (!localeValues) return false;
 

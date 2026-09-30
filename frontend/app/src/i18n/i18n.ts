@@ -98,28 +98,10 @@ export const supportedLanguagesByCode = supportedLanguages.reduce(
     {} as Record<string, { name: string; code: string }>,
 );
 
-// svelte-i18n's init() canonicalises the initial locale, and the canonical form of "iw" is "he",
-// so svelte-i18n has to know Hebrew as "he" or a stored Hebrew preference loads nothing but the
-// English fallback. Everywhere else Hebrew stays "iw": that names its translations file, is what
-// gets stored as the user's locale, and is what communities and the Translations canister hold.
-
-// The locale svelte-i18n knows one of our language codes, or a dialect of one, by
-export function i18nLocale(code: string): string {
-    try {
-        return Intl.getCanonicalLocales(code)[0] ?? code;
-    } catch {
-        return code;
-    }
-}
-
-const languageCodesByI18nLocale = Object.fromEntries(
-    supportedLanguages.map(({ code }) => [i18nLocale(code), code]),
-);
-
-// Our code for the language of a svelte-i18n locale, eg. "fr" for "fr-CA" and "iw" for "he-IL"
+// The language of a locale, eg. "fr" for "fr-CA". Translations are registered per language, but
+// the locale is the browser's dialect when that is a dialect of the chosen language.
 export function languageCode(locale: string | null | undefined): string {
-    const language = (locale || "en").split("-")[0];
-    return languageCodesByI18nLocale[language] ?? language;
+    return (locale || "en").split("-")[0];
 }
 
 // this can't be done in a loop from supportedLanguages because rollup won't understand that
@@ -131,7 +113,7 @@ function registerLocaleLoaders() {
     register("fr", () => import("./fr.json"));
     register("hi", () => import("./hi.json"));
     register("it", () => import("./it.json"));
-    register("he", () => import("./iw.json"));
+    register("iw", () => import("./iw.json"));
     register("jp", () => import("./jp.json"));
     register("ru", () => import("./ru.json"));
     register("uk", () => import("./uk.json"));
@@ -158,9 +140,8 @@ export async function setLocale(code: string): Promise<void> {
 
     localStorage.setItem(configKeys.locale, code);
 
-    const newLocale = i18nLocale(code);
-    if (get(locale) !== newLocale) {
-        await locale.set(newLocale);
+    if (get(locale) !== code) {
+        await locale.set(code);
     }
 }
 
