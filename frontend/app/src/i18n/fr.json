@@ -841,6 +841,24 @@
                     "4": "Deux oranges avec un trou. Orange au milieu en ferait trois, donc ce doit être violet.",
                     "5": "Chaque case remplie, aucune série de trois, et trois de chaque couleur dans chaque ligne et colonne."
                 }
+            },
+            "chat_rooms": {
+                "name": "CHAT Rooms",
+                "rules": "Placez un CHAT dans chaque ligne, chaque colonne et chaque pièce colorée. Deux CHAT ne doivent jamais se toucher, même par un coin.",
+                "technique": {
+                    "1": "Un CHAT exclut toutes les autres cases de sa ligne, de sa colonne et de sa pièce, ainsi que les huit cases qui l'entourent.",
+                    "2": "Cette ligne, cette colonne ou cette pièce n'a plus qu'une case libre pour son CHAT, donc le CHAT va là.",
+                    "3": "Ce sont les seules cases qui restent pour une pièce, et elles sont toutes dans une même ligne ou colonne. Le CHAT de cette ligne doit donc être parmi elles, et le reste de la ligne est exclu. Cela marche aussi dans l'autre sens : une ligne ou une colonne dont toutes les cases libres sont dans une seule pièce exclut le reste de cette pièce.",
+                    "4": "Ces pièces ne peuvent utiliser que ces lignes ou colonnes, et il y a autant de pièces que de lignes. Les CHAT de ces lignes appartiennent donc tous à ces pièces, et rien d'autre dans ces lignes ne peut en recevoir un.",
+                    "5": "Un CHAT dans cette case exclurait toutes les cases qui restent à cette ligne, cette colonne ou cette pièce, donc cette case ne peut pas en recevoir."
+                },
+                "demo": {
+                    "1": "Placez un CHAT dans chaque ligne, chaque colonne et chaque pièce colorée. Touchez une fois pour barrer une case, deux fois pour un CHAT.",
+                    "2": "Deux CHAT ne doivent jamais se toucher, même par un coin.",
+                    "3": "Chaque pièce contient un CHAT. La pièce du haut en a deux.",
+                    "4": "Cette pièce ne fait qu'une case, donc son CHAT va là. Toutes les cases qu'il exclut sont barrées pour vous.",
+                    "5": "Un CHAT dans chaque ligne, colonne et pièce, et aucun ne se touche."
+                }
             }
         }
     },

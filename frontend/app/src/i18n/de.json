@@ -841,6 +841,24 @@
                     "4": "Zwei Orange mit einer Lücke. Orange dazwischen ergäbe drei, also muss es Violett sein.",
                     "5": "Jede Zelle ausgefüllt, keine Dreierreihe, und drei von jeder Farbe in jeder Zeile und Spalte."
                 }
+            },
+            "chat_rooms": {
+                "name": "CHAT Rooms",
+                "rules": "Setzen Sie in jede Zeile, jede Spalte und jeden farbigen Raum genau ein CHAT. Zwei CHATs dürfen sich nie berühren, auch nicht über Eck.",
+                "technique": {
+                    "1": "Ein CHAT schließt jede andere Zelle in seiner Zeile, seiner Spalte und seinem Raum aus, dazu die acht Zellen rundherum.",
+                    "2": "In dieser Zeile, Spalte oder diesem Raum ist nur noch eine Zelle für das CHAT frei, also kommt es dorthin.",
+                    "3": "Das sind die einzigen Zellen, die für einen Raum übrig sind, und sie liegen alle in einer Zeile oder Spalte. Das CHAT dieser Linie muss also darunter sein, und der Rest der Linie ist ausgeschlossen. Es geht auch umgekehrt: Liegen alle freien Zellen einer Zeile oder Spalte in einem Raum, ist der Rest dieses Raums ausgeschlossen.",
+                    "4": "Diese Räume können nur diese Zeilen oder Spalten nutzen, und es gibt genauso viele Räume wie Linien. Die CHATs dieser Linien gehören also alle zu diesen Räumen, und sonst kann nichts in diesen Linien ein CHAT aufnehmen.",
+                    "5": "Ein CHAT in dieser Zelle würde jede Zelle ausschließen, die dieser Zeile, Spalte oder diesem Raum noch bleibt. Diese Zelle kann also kein CHAT aufnehmen."
+                },
+                "demo": {
+                    "1": "Setzen Sie in jede Zeile, jede Spalte und jeden farbigen Raum ein CHAT. Einmal tippen streicht eine Zelle, zweimal setzt ein CHAT.",
+                    "2": "Zwei CHATs dürfen sich nie berühren, auch nicht über Eck.",
+                    "3": "Jeder Raum enthält ein CHAT. Der obere Raum hat zwei.",
+                    "4": "Dieser Raum ist eine einzelne Zelle, also kommt sein CHAT dorthin. Jede Zelle, die es ausschließt, wird für Sie gestrichen.",
+                    "5": "Ein CHAT in jeder Zeile, Spalte und jedem Raum, und keine berühren sich."
+                }
             }
         }
     },

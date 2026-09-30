@@ -2590,7 +2590,10 @@ mod tests {
         }
 
         // With no placement wrong, the lowest wrong "no" mark is named
-        match engine.reserve_hint(u, GAME, NUMBER, 1, &[(8, 0), (6, 0), (2, 0)], 0, START).unwrap() {
+        match engine
+            .reserve_hint(u, GAME, NUMBER, 1, &[(8, 0), (6, 0), (2, 0)], 0, START)
+            .unwrap()
+        {
             HintPrepared::Mistake(r) => assert_eq!(r.hint.hint.focus, vec![6]),
             _ => panic!("expected a mistake hint"),
         }

@@ -841,6 +841,24 @@
                     "4": "Due arancioni con uno spazio. Arancione in mezzo ne farebbe tre, quindi deve essere viola.",
                     "5": "Ogni cella piena, nessuna serie di tre e tre di ogni colore in ogni riga e colonna."
                 }
+            },
+            "chat_rooms": {
+                "name": "CHAT Rooms",
+                "rules": "Metti un CHAT in ogni riga, ogni colonna e ogni stanza colorata. Due CHAT non possono mai toccarsi, nemmeno in diagonale.",
+                "technique": {
+                    "1": "Un CHAT esclude tutte le altre celle della sua riga, della sua colonna e della sua stanza, più le otto celle intorno.",
+                    "2": "A questa riga, colonna o stanza resta una sola cella per il suo CHAT, quindi il CHAT va lì.",
+                    "3": "Queste sono le uniche celle rimaste a una stanza, e stanno tutte in una stessa riga o colonna, quindi il CHAT di quella linea deve essere tra queste e il resto della linea è escluso. Funziona anche al contrario: una riga o colonna le cui celle libere stanno tutte in una stanza esclude il resto di quella stanza.",
+                    "4": "Queste stanze possono usare solo queste righe o colonne, e le stanze sono tante quante le linee, quindi i CHAT di quelle linee appartengono tutti a queste stanze e nient'altro in quelle linee può averne uno.",
+                    "5": "Un CHAT in questa cella escluderebbe tutte le celle rimaste a questa riga, colonna o stanza, quindi questa cella non può averne uno."
+                },
+                "demo": {
+                    "1": "Metti un CHAT in ogni riga, ogni colonna e ogni stanza colorata. Tocca una volta per barrare una cella, due volte per un CHAT.",
+                    "2": "Due CHAT non possono mai toccarsi, nemmeno in diagonale.",
+                    "3": "Ogni stanza contiene un CHAT. La stanza in alto ne ha due.",
+                    "4": "Questa stanza è una sola cella, quindi il suo CHAT va lì. Ogni cella che esclude viene barrata per te.",
+                    "5": "Un CHAT in ogni riga, colonna e stanza, e nessuno si tocca."
+                }
             }
         }
     },

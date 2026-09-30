@@ -841,6 +841,24 @@
                     "4": "Dwa pomarańczowe z przerwą. Pomarańczowe pomiędzy dałoby trzy, więc musi być fioletowe.",
                     "5": "Każde pole wypełnione, żadnej trójki pod rząd i po trzy każdego koloru w każdym wierszu i kolumnie."
                 }
+            },
+            "chat_rooms": {
+                "name": "CHAT Rooms",
+                "rules": "Umieść jeden CHAT w każdym wierszu, każdej kolumnie i każdym kolorowym pokoju. Dwa CHAT-y nie mogą się stykać, nawet rogami.",
+                "technique": {
+                    "1": "CHAT wyklucza wszystkie inne pola w swoim wierszu, swojej kolumnie i swoim pokoju oraz osiem pól wokół siebie.",
+                    "2": "W tym wierszu, kolumnie lub pokoju zostało tylko jedno pole na CHAT, więc CHAT trafia tam.",
+                    "3": "To jedyne pola, jakie zostały dla jednego pokoju, i wszystkie leżą w jednym wierszu lub kolumnie, więc CHAT tej linii musi być wśród nich, a reszta linii jest wykluczona. Działa to też w drugą stronę: wiersz lub kolumna, której wolne pola leżą w jednym pokoju, wyklucza resztę tego pokoju.",
+                    "4": "Te pokoje mogą korzystać tylko z tych wierszy lub kolumn, a pokoi jest tyle samo co linii, więc CHAT-y tych linii należą do tych pokoi i nic innego w tych liniach nie może dostać CHAT-a.",
+                    "5": "CHAT w tym polu wykluczyłby każde pole, jakie zostało temu wierszowi, kolumnie lub pokojowi, więc to pole nie może dostać CHAT-a."
+                },
+                "demo": {
+                    "1": "Umieść jeden CHAT w każdym wierszu, każdej kolumnie i każdym kolorowym pokoju. Stuknij raz, aby skreślić pole, dwa razy, aby postawić CHAT.",
+                    "2": "Dwa CHAT-y nie mogą się stykać, nawet rogami.",
+                    "3": "Każdy pokój ma jeden CHAT. Górny pokój ma dwa.",
+                    "4": "Ten pokój to jedno pole, więc jego CHAT trafia tam. Każde pole, które wyklucza, zostaje skreślone za ciebie.",
+                    "5": "Jeden CHAT w każdym wierszu, kolumnie i pokoju, i żadne się nie stykają."
+                }
             }
         }
     },

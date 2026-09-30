@@ -841,6 +841,24 @@
                     "4": "Hai ô cam cách nhau một ô. Cam ở giữa sẽ thành ba, nên phải là tím.",
                     "5": "Mọi ô đều được tô, không có ba ô liên tiếp cùng màu, và mỗi hàng, mỗi cột có ba ô mỗi màu."
                 }
+            },
+            "chat_rooms": {
+                "name": "CHAT Rooms",
+                "rules": "Đặt một CHAT vào mỗi hàng, mỗi cột và mỗi phòng màu. Không được có hai CHAT chạm nhau, kể cả chạm góc.",
+                "technique": {
+                    "1": "Một CHAT loại trừ mọi ô khác trong hàng, cột và phòng của nó, cùng tám ô xung quanh nó.",
+                    "2": "Hàng, cột hoặc phòng này chỉ còn một ô có thể đặt CHAT, nên CHAT phải ở đó.",
+                    "3": "Đây là những ô duy nhất còn lại của một phòng, và tất cả nằm trên cùng một hàng hoặc cột, nên CHAT của hàng hoặc cột đó phải nằm trong số này và phần còn lại của hàng hoặc cột bị loại. Điều ngược lại cũng đúng: một hàng hoặc cột có mọi ô trống nằm trong một phòng sẽ loại phần còn lại của phòng đó.",
+                    "4": "Các phòng này chỉ có thể dùng những hàng hoặc cột này, và số phòng bằng số hàng hoặc cột, nên mọi CHAT của những hàng hoặc cột đó đều thuộc về các phòng này và không ô nào khác trong đó có thể đặt CHAT.",
+                    "5": "Đặt CHAT vào ô này sẽ loại mọi ô còn lại của hàng, cột hoặc phòng này, nên ô này không thể có CHAT."
+                },
+                "demo": {
+                    "1": "Đặt một CHAT vào mỗi hàng, mỗi cột và mỗi phòng màu. Chạm một lần để gạch một ô, hai lần để đặt CHAT.",
+                    "2": "Không được có hai CHAT chạm nhau, kể cả chạm góc.",
+                    "3": "Mỗi phòng có một CHAT. Phòng trên cùng đang có hai.",
+                    "4": "Phòng này chỉ có một ô, nên CHAT của nó ở đó. Mọi ô mà nó loại trừ đều được gạch sẵn cho bạn.",
+                    "5": "Một CHAT trong mỗi hàng, cột và phòng, và không cái nào chạm nhau."
+                }
             }
         }
     },

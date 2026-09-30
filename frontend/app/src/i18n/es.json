@@ -841,6 +841,24 @@
                     "4": "Dos naranjas con un hueco. Naranja en medio haría tres, así que tiene que ser morado.",
                     "5": "Todas las casillas rellenas, ninguna serie de tres y tres de cada color en cada fila y columna."
                 }
+            },
+            "chat_rooms": {
+                "name": "CHAT Rooms",
+                "rules": "Coloca un CHAT en cada fila, cada columna y cada habitación de color. Dos CHAT nunca pueden tocarse, ni siquiera por una esquina.",
+                "technique": {
+                    "1": "Un CHAT descarta todas las demás casillas de su fila, su columna y su habitación, y las ocho casillas que lo rodean.",
+                    "2": "A esta fila, columna o habitación solo le queda una casilla para su CHAT, así que el CHAT va ahí.",
+                    "3": "Estas son las únicas casillas que le quedan a una habitación, y todas están en una misma fila o columna, así que el CHAT de esa línea tiene que estar entre ellas y el resto de la línea queda descartado. También funciona al revés: una fila o columna cuyas casillas libres están todas en una habitación descarta el resto de esa habitación.",
+                    "4": "Estas habitaciones solo pueden usar estas filas o columnas, y hay tantas habitaciones como líneas, así que los CHAT de esas líneas pertenecen todos a estas habitaciones y nada más en esas líneas puede tener uno.",
+                    "5": "Un CHAT en esta casilla descartaría todas las casillas que le quedan a esta fila, columna o habitación, así que esta casilla no puede tener uno."
+                },
+                "demo": {
+                    "1": "Coloca un CHAT en cada fila, cada columna y cada habitación de color. Toca una vez para tachar una casilla y dos veces para poner un CHAT.",
+                    "2": "Dos CHAT nunca pueden tocarse, ni siquiera por una esquina.",
+                    "3": "Cada habitación tiene un CHAT. La habitación de arriba tiene dos.",
+                    "4": "Esta habitación es una sola casilla, así que su CHAT va ahí. Todas las casillas que descarta se tachan por ti.",
+                    "5": "Un CHAT en cada fila, columna y habitación, y ninguno se toca."
+                }
             }
         }
     },
