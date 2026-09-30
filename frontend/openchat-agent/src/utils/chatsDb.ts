@@ -251,9 +251,10 @@ async function clearChatsStore(
 // ) {
 //     await tx.objectStore("group_details").clear();
 // }
-// The cached details of large chats and communities hold every member, which from now on they only
-// do for those with fewer than a page of members. Clearing them means only the first page is loaded
-// in their place.
+
+// The cached details of a large chat or community hold every member, but from now on only those
+// of chats and communities with no more than a page of members do. Clearing them has only the
+// first page loaded in their place.
 async function clearDetailsStores(
     _db: IDBPDatabase<ChatSchema>,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
@@ -425,7 +426,7 @@ export class ChatsDb {
             .withMigration(149, clearChatsStore)
             .withMigration(150, createSyncStore)
             .withMigration(151, createChatRowStores)
-            .withMigration(153, clearDetailsStores);
+            .withMigration(152, clearDetailsStores);
     }
 
     getDb(): Database {

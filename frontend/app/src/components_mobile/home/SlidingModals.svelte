@@ -14,7 +14,6 @@
         OpenChat,
         routeForChatIdentifier,
         routeStore,
-        selectedChatMembersStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         subscribe,

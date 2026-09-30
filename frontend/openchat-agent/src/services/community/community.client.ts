@@ -68,7 +68,14 @@ import type {
     VideoCallPresence,
     LookupMembersResponse,
 } from "@shared";
-import { DestinationInvalidError, MAX_EVENTS, MAX_MESSAGES, random32, toBigInt32 } from "@shared";
+import {
+    DestinationInvalidError,
+    MAX_EVENTS,
+    MAX_MESSAGES,
+    MEMBERS_PAGE_SIZE,
+    random32,
+    toBigInt32,
+} from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,

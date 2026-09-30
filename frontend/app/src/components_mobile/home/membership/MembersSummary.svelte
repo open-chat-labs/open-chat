@@ -48,7 +48,7 @@
             onClick={() => membersState.showAllMembers()}
             size={"small_text"}
             mode={"active"}>
-            <Translatable resourceKey={i18nKey(`View all (${membersState.members.size})`)}
+            <Translatable resourceKey={i18nKey(`View all (${collection.memberCount})`)}
             ></Translatable>
         </CommonButton>
     </Container>

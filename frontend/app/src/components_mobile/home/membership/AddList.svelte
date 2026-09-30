@@ -8,7 +8,7 @@
         selectedCommunityMembersStore,
         type UserSummary,
     } from "@client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import ShareIcon from "svelte-material-icons/ShareOutline.svelte";
     import SelectUsers from "../SelectUsers.svelte";
     import AddUser from "./AddUser.svelte";
@@ -22,6 +22,12 @@
     let { membersState }: Props = $props();
     let communityMembers = $derived($selectedCommunityMembersStore);
     let channelMembers = $derived($selectedChatMembersStore);
+
+    onMount(() => {
+        // The community or channel may hold only some of its members, and so not say whether
+        // those you have direct chats with, who are offered below, are members
+        client.lookupDirectChatUsersAmongChannelMembers();
+    });
 
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         return client.searchCommunityMembersToAdd(term, 20);
