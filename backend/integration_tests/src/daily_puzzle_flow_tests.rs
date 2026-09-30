@@ -1,20 +1,22 @@
 //! End-to-end: daily_puzzle canister -> local user index -> user canister (CHIT) -> back to the
-//! daily_puzzle canister (results). Real generator, real pushes and pulls, no stand-ins.
+//! daily_puzzle canister (results). Real generator, real pushes and pulls, no stand-ins, except for
+//! the one test that pins a board and says so.
 
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use constants::DAY_IN_MS;
 use local_user_index_canister::{
-    daily_puzzle_fetch, daily_puzzle_hint, daily_puzzle_start, daily_puzzle_submit, set_daily_puzzle_canister_id,
+    c2c_daily_puzzle_push, daily_puzzle_fetch, daily_puzzle_hint, daily_puzzle_start, daily_puzzle_submit,
+    set_daily_puzzle_canister_id,
 };
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::{Duration, SystemTime};
 use types::{
-    CanisterId, ChitEventType, DAILY_PUZZLE_CHIT_GAME_ID, DailyPuzzleConfig, DailyPuzzleUserState, GameConfig,
-    LIGHT_UP_GAME_ID, PublicDailyPuzzle, PuzzleNumber, UnitResult,
+    CanisterId, ChitEventType, DAILY_PUZZLE_CHIT_GAME_ID, DailyPuzzle, DailyPuzzleConfig, DailyPuzzleUserState, GameConfig,
+    LIGHT_UP_GAME_ID, PublicDailyPuzzle, PuzzleHint, PuzzleNumber, UnitResult,
 };
 
 const DAY_ZERO: u64 = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
@@ -79,15 +81,6 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(started.chit_balance, None);
     assert_eq!(started.total_chit_earned, None);
 
-    // The step the engine will serve. It prefers the first step that puts a mark on the board over
-    // the earliest outstanding one, because the cheap rules run to a standstill first and their
-    // negatives-only conclusions cost a hint and teach nothing. Which generator today's schedule
-    // serves decides whether that is trace[0] or not, so derive it rather than assuming.
-    let expected_step = trace
-        .iter()
-        .find(|c| c.iter().any(|(_, value)| *value != 0))
-        .unwrap_or(&trace[0]);
-
     // Level 1 hint: highlights the step, and carries neither the technique nor the conclusions,
     // which are what levels 2 and 3 are sold for. Every level costs, so this one is debited like
     // any other.
@@ -107,9 +100,7 @@ fn daily_puzzle_end_to_end() {
 
     // Upgrading the same step to level 3: the only tier that hands over the conclusions, and the
     // step is still the one step used. The upgrade is priced at the difference, so climbing costs
-    // the same as jumping straight here. Hint keys are not grid indices in every game (bridges
-    // keys edges), so compare against the solver's trace rather than the solution bytes. Level 2's
-    // payload is covered by the engine's own tests.
+    // the same as jumping straight here. Level 2's payload is covered by the engine's own tests.
     let upgrade_price = puzzle.hint_prices[2] - level_1_price;
     let upgraded = hint(env, &user, local_user_index, game_id, number, 3, Vec::new(), upgrade_price);
     assert!(!upgraded.hint.mistake);
@@ -120,7 +111,7 @@ fn daily_puzzle_end_to_end() {
     let mut focus_at_3 = upgraded.hint.hint.focus.clone();
     focus_at_3.sort_unstable();
     assert_eq!(focus_at_3, first.hint.hint.focus);
-    assert_eq!(upgraded.hint.hint.conclusions, *expected_step);
+    assert_opening_step(&trace, &upgraded.hint.hint);
     assert_eq!(upgraded.hints_used, 1);
     assert_eq!(upgraded.state.hints.len(), 1);
     let balance_after_hint = balance_after_first - upgrade_price as i32;
@@ -287,6 +278,102 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(state.streak, 1);
 
     // The flag was flipped and the clock moved
+    wrapper.discard();
+}
+
+// `daily_puzzle_end_to_end` used to take the opening hint to be the first step that puts a mark on
+// the board, and failed whenever that step rests on a negatives-only step the engine serves first
+// (#9588). The real flow meets such a board only when the day's game and the daily canister's
+// seed produce one, so this one, an 8x8 easy Tents, is pushed by a stand-in for the daily
+// canister. The first tent is at 53, for the tree at 52, whose only other free neighbour is 44.
+// That is in column 4, which holds no tents, and the step before the tent clears the column. So
+// the engine opens with the column: not with the tent, and not with the corner grass the trace
+// starts with either, which is what serving the trace in order would give.
+#[test]
+fn daily_puzzle_opening_hint_is_a_premise_of_the_first_mark() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    ensure_time_at_least_day0(env);
+    keep_clear_of_midnight(env);
+
+    let user = client::register_user(env, canister_ids);
+    let local_user_index = canister_ids.local_user_index(env, user.canister());
+    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, user.user_id);
+
+    // Any principal the test can send as. The pull the LUI fires at it fails harmlessly.
+    let daily_puzzle_canister_id = client::create_canister(env, *controller);
+    set_canister_id(env, &user, local_user_index, daily_puzzle_canister_id);
+
+    let game_id = tents::GAME_ID;
+    let number = day_number(env);
+    #[rustfmt::skip]
+    let description = vec![
+        1, 8, 8,
+        0, 0, 0, 1, 0, 1, 0, 0,
+        0, 1, 0, 0, 0, 0, 1, 0,
+        0, 0, 0, 0, 1, 0, 0, 0,
+        0, 0, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        1, 0, 0, 1, 1, 0, 0, 1,
+        0, 0, 0, 0, 1, 0, 0, 0,
+        1, 3, 1, 1, 1, 1, 2, 2,
+        1, 2, 1, 3, 0, 2, 1, 2,
+    ];
+    let (trace, solution) = solve(game_id, &description, 0);
+    let first_mark = trace.iter().position(puts_a_mark).unwrap();
+    assert_eq!(trace[first_mark].conclusions, [(53, 1)]);
+    assert_eq!(trace[0].conclusions, [(0, 0)]);
+
+    let puzzle = DailyPuzzle {
+        game_id: game_id.to_string(),
+        number,
+        tier: 0,
+        solution_pairs: tents::solution_pairs(&description, &solution).expect("valid description"),
+        description,
+        solution,
+        hints: trace.clone(),
+        starts_at: number as u64 * DAY_IN_MS,
+        expires_at: (number as u64 + 1) * DAY_IN_MS,
+        config: DailyPuzzleConfig {
+            enabled: true,
+            ..DailyPuzzleConfig::default()
+        },
+        game_config: GameConfig::default(),
+    };
+    let hint_prices = puzzle.game_config.hint_prices.clone();
+    let response = client::local_user_index::c2c_daily_puzzle_push(
+        env,
+        daily_puzzle_canister_id,
+        local_user_index,
+        &c2c_daily_puzzle_push::Args { puzzles: vec![puzzle] },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    client::user::happy_path::claim_daily_chit(env, &user, None);
+    start(env, &user, local_user_index, game_id, number, 0);
+    hint(env, &user, local_user_index, game_id, number, 1, Vec::new(), hint_prices[0]);
+    let upgraded = hint(
+        env,
+        &user,
+        local_user_index,
+        game_id,
+        number,
+        3,
+        Vec::new(),
+        hint_prices[2] - hint_prices[0],
+    );
+
+    let step = assert_opening_step(&trace, &upgraded.hint.hint);
+    assert_eq!(step, first_mark - 1);
+    assert_eq!(upgraded.hint.hint.conclusions, [(4, 0), (12, 0), (28, 0), (36, 0), (44, 0)]);
+
+    // The LUI now holds a made up daily canister id and this test's puzzle for today
     wrapper.discard();
 }
 
@@ -745,9 +832,40 @@ fn state_of(fetched: daily_puzzle_fetch::FetchResult, game_id: &str) -> Option<D
     fetched.states.into_iter().find(|s| s.game_id == game_id)
 }
 
+// Whether the step concludes something the player draws: a bulb, a tent, a line, a bridge
+fn puts_a_mark(step: &PuzzleHint) -> bool {
+    step.conclusions.iter().any(|(_, value)| *value != 0)
+}
+
+// Checks that a level 3 hint bought against an untouched board is a step the engine may open
+// with, and returns its index in the trace. The engine starts from the first step that puts a
+// mark on the board, because the cheap rules run to a standstill first and their negatives-only
+// conclusions cost a hint and teach nothing. It then walks back through the negatives-only steps
+// that step rests on and serves the earliest (#9588), so the opening hint is either that first
+// step or one of the negatives-only steps ahead of it. Which of them is the engine's business and
+// is covered by its own tests: it depends on the board, and the board on the day's game and the
+// daily canister's seed, so a single step derived from the trace here is the right one on some
+// days and the wrong one on others. Hint keys are not grid indices in every game (bridges keys
+// edges), so the comparison is against the solver's trace rather than the solution bytes.
+fn assert_opening_step(trace: &[PuzzleHint], served: &PuzzleHint) -> usize {
+    let first_mark = trace.iter().position(puts_a_mark).unwrap_or(0);
+    // A key is concluded once, so its conclusions identify the step
+    let step = trace
+        .iter()
+        .position(|h| h.conclusions == served.conclusions)
+        .unwrap_or_else(|| panic!("not a step of the solver's trace: {served:?}"));
+    // Level 3 hands the step over whole
+    assert_eq!(*served, trace[step]);
+    assert!(
+        step <= first_mark,
+        "step {step} was served with step {first_mark}, the first to put a mark on the board, still to take"
+    );
+    step
+}
+
 // Solves with the generating crate's own solver and checks the answer against its rules.
-// Returns each trace step's conclusions and the solution.
-fn solve(game_id: &str, description: &[u8], tier: u8) -> (Vec<Vec<(u16, u8)>>, Vec<u8>) {
+// Returns the trace, as the daily canister pushes it, and the solution.
+fn solve(game_id: &str, description: &[u8], tier: u8) -> (Vec<PuzzleHint>, Vec<u8>) {
     macro_rules! solve_with {
         ($game:ident) => {{
             let tier = match tier {
@@ -762,7 +880,16 @@ fn solve(game_id: &str, description: &[u8], tier: u8) -> (Vec<Vec<(u16, u8)>>, V
                     .expect("valid grid")
                     .is_empty()
             );
-            (trace.into_iter().map(|h| h.conclusions).collect(), solution)
+            let trace = trace
+                .into_iter()
+                .map(|h| PuzzleHint {
+                    technique: h.technique as u8,
+                    focus: h.focus,
+                    target: h.target,
+                    conclusions: h.conclusions,
+                })
+                .collect();
+            (trace, solution)
         }};
     }
     match game_id {
