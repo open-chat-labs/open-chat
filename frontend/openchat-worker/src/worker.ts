@@ -437,7 +437,7 @@ function getAction(
             return agent.getGroupDetails(
                 payload.chatId,
                 payload.chatLastUpdated,
-                payload.heldTimestamp,
+                payload.detailsSyncedUpTo,
             );
 
         case "lastOnline":
@@ -1029,7 +1029,7 @@ function getAction(
             return agent.communityClient.getCommunityDetails(
                 payload.id.communityId,
                 payload.communityLastUpdated,
-                payload.heldTimestamp,
+                payload.detailsSyncedUpTo,
             );
 
         case "addToFavourites":

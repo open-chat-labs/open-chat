@@ -1133,9 +1133,11 @@ type GetCommunityDetails = {
     kind: "getCommunityDetails";
     id: CommunityIdentifier;
     communityLastUpdated: bigint;
-    // The timestamp of the details the caller already holds, if any. If they haven't changed the
-    // response only says so, rather than carrying every member across again.
-    heldTimestamp?: bigint;
+    // If the caller already holds the details, the time up to which they are known to be up to
+    // date. That isn't when they last changed: it moves on each time the canister confirms that
+    // they haven't. If they still haven't, the response only says so, rather than carrying every
+    // member across again.
+    detailsSyncedUpTo?: bigint;
 };
 
 type ExploreChannels = {
@@ -1652,7 +1654,7 @@ type GetGroupDetails = {
     chatId: MultiUserChatIdentifier;
     chatLastUpdated: bigint;
     // As for `GetCommunityDetails`
-    heldTimestamp?: bigint;
+    detailsSyncedUpTo?: bigint;
     kind: "getGroupDetails";
 };
 

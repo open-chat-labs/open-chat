@@ -4017,7 +4017,7 @@ export class OpenChat {
                 kind: "getCommunityDetails",
                 id,
                 communityLastUpdated: community.lastUpdated,
-                heldTimestamp:
+                detailsSyncedUpTo:
                     held !== undefined && communityIdentifiersEqual(held.communityId, id)
                         ? held.timestamp
                         : undefined,
@@ -4088,7 +4088,7 @@ export class OpenChat {
                         kind: "getGroupDetails",
                         chatId: serverChat.id,
                         chatLastUpdated: serverChat.lastUpdated,
-                        heldTimestamp:
+                        detailsSyncedUpTo:
                             held !== undefined && chatIdentifiersEqual(held.chatId, serverChat.id)
                                 ? held.timestamp
                                 : undefined,
