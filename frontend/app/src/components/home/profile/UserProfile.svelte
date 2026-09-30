@@ -34,6 +34,7 @@
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import {
         editmode,
+        hasEditableTranslations,
         i18nKey,
         interpolate,
         languageCode,
@@ -191,7 +192,7 @@
             !saving &&
             !readonly,
     );
-    let canEditTranslations = $derived(!$locale?.startsWith("en"));
+    let canEditTranslations = $derived(hasEditableTranslations($locale));
     let referredUserIds = $derived(new Set($referralsStore.map((r) => r.userId)));
 
     onMount(() => {

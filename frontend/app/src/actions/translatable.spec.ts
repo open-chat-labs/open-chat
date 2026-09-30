@@ -33,8 +33,10 @@ function markerCount(): number {
     return document.querySelectorAll(".is-translatable").length;
 }
 
+// Only a language we have translations for can be edited, so these are real language codes, and
+// setting one as the locale loads its real translations alongside the keys added here
 beforeEach(() => {
-    addMessages("xx", { some: { thing: "yes" }, top: "level" });
+    addMessages("fr", { some: { thing: "yes" }, top: "level" });
     addMessages("en", { some: { thing: "yes" } });
 });
 
@@ -48,13 +50,13 @@ afterEach(() => {
 
 describe("translatable action", () => {
     test("no marker while editmode is off", async () => {
-        await locale.set("xx");
+        await locale.set("fr");
         const node = mount("some.thing");
         expect(marker(node)).toBeNull();
     });
 
     test("marker appears when editmode is turned on and disappears when turned off", async () => {
-        await locale.set("xx");
+        await locale.set("fr");
         const node = mount("some.thing");
 
         editmode.set(true);
@@ -67,7 +69,7 @@ describe("translatable action", () => {
     });
 
     test("clicking the marker sets the label being edited", async () => {
-        await locale.set("xx");
+        await locale.set("fr");
         const node = mount("some.thing");
         editmode.set(true);
 
@@ -87,46 +89,46 @@ describe("translatable action", () => {
     });
 
     test("no marker when the key is missing from the dictionary", async () => {
-        await locale.set("xx");
+        await locale.set("fr");
         const node = mount("some.other.thing");
         editmode.set(true);
         expect(marker(node)).toBeNull();
     });
 
     test("a top level (non dotted) key resolves", async () => {
-        await locale.set("xx");
+        await locale.set("fr");
         const node = mount("top");
         editmode.set(true);
         expect(marker(node)).not.toBeNull();
     });
 
     test("switching to another non-english locale does not duplicate the marker", async () => {
-        addMessages("yy", { some: { thing: "oui" } });
-        await locale.set("xx");
+        addMessages("de", { some: { thing: "ja" } });
+        await locale.set("fr");
         const node = mount("some.thing");
         editmode.set(true);
         expect(markerCount()).toBe(1);
 
-        await locale.set("yy");
+        await locale.set("de");
         expect(markerCount()).toBe(1);
         expect(marker(node)).not.toBeNull();
     });
 
     test("switching to a locale that lacks the key removes the marker", async () => {
-        addMessages("zz", { other: "thing" });
-        await locale.set("xx");
+        addMessages("it", { other: "thing" });
+        await locale.set("fr");
         const node = mount("some.thing");
         editmode.set(true);
         expect(marker(node)).not.toBeNull();
 
-        await locale.set("zz");
+        await locale.set("it");
         expect(marker(node)).toBeNull();
         expect(markerCount()).toBe(0);
     });
 
     // Translations are registered per language, so a dialect has no dictionary of its own
     test("a dialect resolves to its language's dictionary", async () => {
-        await locale.set("xx-YY");
+        await locale.set("fr-CA");
         const node = mount("some.thing");
         const missing = mount("some.other.thing");
         editmode.set(true);
@@ -146,12 +148,12 @@ describe("translatable action", () => {
     // A successful suggestion is applied to the current locale, which for a dialect creates a
     // dictionary holding nothing but the corrected key
     test("keys stay translatable once a correction has been applied to the dialect", async () => {
-        await locale.set("xx-YY");
+        await locale.set("fr-CA");
         const corrected = mount("some.thing");
         const other = mount("top");
         editmode.set(true);
 
-        addMessages("xx-YY", { some: { thing: "corrected" } });
+        addMessages("fr-CA", { some: { thing: "corrected" } });
 
         expect(marker(corrected)).not.toBeNull();
         expect(marker(other)).not.toBeNull();
@@ -166,15 +168,40 @@ describe("translatable action", () => {
         expect(marker(node)).toBeNull();
     });
 
+    // The toggle for edit mode isn't offered for a language we have no translations for, so
+    // nothing is editable in one whatever svelte-i18n holds for it
+    test.each(["sv", "sv-SE"])(
+        "no marker for an unsupported language (%s)",
+        async (unsupported) => {
+            addMessages("sv", { some: { thing: "ja" } });
+            await locale.set(unsupported);
+            const node = mount("some.thing");
+            editmode.set(true);
+            expect(marker(node)).toBeNull();
+        },
+    );
+
+    // Chinese and Japanese are "cn" and "jp" to OpenChat
+    test.each(["cn", "jp"])(
+        "a marker for a language under OpenChat's own code (%s)",
+        async (code) => {
+            addMessages(code, { some: { thing: "yes" } });
+            await locale.set(code);
+            const node = mount("some.thing");
+            editmode.set(true);
+            expect(marker(node)).not.toBeNull();
+        },
+    );
+
     test("an undefined key means the action does nothing at all", async () => {
-        await locale.set("xx");
+        await locale.set("fr");
         const node = mount(undefined);
         editmode.set(true);
         expect(marker(node)).toBeNull();
     });
 
     test("update() swaps the key used for the next evaluation", async () => {
-        await locale.set("xx");
+        await locale.set("fr");
         const node = mount("some.other.thing");
         const handle = handles[handles.length - 1];
 
@@ -188,7 +215,7 @@ describe("translatable action", () => {
     // not remove an already inserted marker (Svelte removes the node the action is
     // attached to, but the marker is a *sibling* it does not own).
     test("destroy leaves an inserted marker in place", async () => {
-        await locale.set("xx");
+        await locale.set("fr");
         const node = mount("some.thing");
         editmode.set(true);
         expect(marker(node)).not.toBeNull();
@@ -201,7 +228,7 @@ describe("translatable action", () => {
     });
 
     test("many nodes all react to a single editmode toggle", async () => {
-        await locale.set("xx");
+        await locale.set("fr");
         for (let i = 0; i < 20; i++) {
             mount("some.thing");
         }
@@ -215,7 +242,7 @@ describe("translatable action", () => {
     });
 
     test("locale and dictionary are subscribed to once, not once per node", async () => {
-        await locale.set("xx");
+        await locale.set("fr");
         const localeSubs = vi.spyOn(locale, "subscribe");
         const dictionarySubs = vi.spyOn(dictionary, "subscribe");
 

@@ -19,6 +19,7 @@ async function loadPage(browserLanguage = "en-GB") {
         close: () => get(_)("close"),
         locale: () => get(locale),
         language: () => i18n.languageCode(get(locale)),
+        canEditTranslations: () => i18n.hasEditableTranslations(get(locale)),
         rtl: () => get(rtlStore),
     };
 }
@@ -156,6 +157,89 @@ describe("the stored locale", () => {
 
         expect(page.close()).toBe("Close");
         expect(page.rtl()).toBe(false);
+    });
+});
+
+// Whether the user's profile offers the toggle for suggesting corrections to the translations
+describe("editing translations", () => {
+    beforeEach(() => {
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        localStorage.clear();
+    });
+
+    test.each(codes)("is offered for %s unless it is English", async (code) => {
+        localStorage.setItem(configKeys.locale, code);
+
+        const page = await loadPage();
+
+        expect(page.canEditTranslations()).toBe(code !== "en");
+    });
+
+    test.each(["en", "en-GB", "en-US"])("is not offered to a browser set to %s", async (lang) => {
+        const page = await loadPage(lang);
+
+        expect(page.canEditTranslations()).toBe(false);
+    });
+
+    test.each(["fr", "fr-CA", "he-IL", "ar-SA"])(
+        "is offered to a browser set to %s",
+        async (browserLanguage) => {
+            const page = await loadPage(browserLanguage);
+
+            expect(page.close()).not.toBe("Close");
+            expect(page.canEditTranslations()).toBe(true);
+        },
+    );
+
+    // The locale is the browser's, but all there is to show is the English fallback
+    test.each(["sv", "sv-SE", "pt-BR"])(
+        "is not offered to a browser set to %s, which there are no translations for",
+        async (browserLanguage) => {
+            const page = await loadPage(browserLanguage);
+
+            expect(page.locale()).toBe(browserLanguage);
+            expect(page.close()).toBe("Close");
+            expect(page.canEditTranslations()).toBe(false);
+        },
+    );
+
+    // Chinese and Japanese are "cn" and "jp" to OpenChat, which no browser's language matches, so
+    // these users are in English until they pick their language
+    test.each([
+        ["zh-CN", "cn"],
+        ["zh", "cn"],
+        ["ja", "jp"],
+        ["ja-JP", "jp"],
+    ])(
+        "is offered to a browser set to %s only once %s is chosen",
+        async (browserLanguage, code) => {
+            const page = await loadPage(browserLanguage);
+
+            expect(page.close()).toBe("Close");
+            expect(page.canEditTranslations()).toBe(false);
+
+            await page.setLocale(code);
+
+            expect(page.close()).toBe(await translationOfClose(code));
+            expect(page.canEditTranslations()).toBe(true);
+
+            const reloaded = await loadPage(browserLanguage);
+
+            expect(reloaded.canEditTranslations()).toBe(true);
+        },
+    );
+
+    test("is withdrawn on switching to English", async () => {
+        const page = await loadPage("fr-FR");
+        expect(page.canEditTranslations()).toBe(true);
+
+        await page.setLocale("en");
+
+        expect(page.canEditTranslations()).toBe(false);
     });
 });
 

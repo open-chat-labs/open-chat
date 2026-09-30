@@ -1,7 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
  
 import { locale, dictionary } from "svelte-i18n";
-import { editmode, editingLabel, i18nLocale, languageCode } from "../i18n/i18n";
+import {
+    editmode,
+    editingLabel,
+    hasEditableTranslations,
+    i18nLocale,
+    languageCode,
+} from "../i18n/i18n";
 import { derived, get } from "svelte/store";
 import { currentTheme } from "../theme/themes";
 import type { Theme } from "../theme/types";
@@ -60,7 +66,7 @@ function isTranslatable(
 // no node does any dictionary lookup at all and locale / dictionary churn does not
 // even notify (the store dedupes undefined -> undefined).
 const editContext = derived([locale, dictionary, editmode], ([$locale, $dictionary, $editmode]) =>
-    $editmode && !$locale?.startsWith("en")
+    $editmode && hasEditableTranslations($locale)
         ? { locale: $locale, dictionary: $dictionary as LocalesDictionary }
         : undefined,
 );
