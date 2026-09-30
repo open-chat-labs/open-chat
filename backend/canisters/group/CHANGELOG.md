@@ -65,6 +65,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 - Ignore swap status notifications whose swap id doesn't match the swap on the message they name, since anyone can create a swap in the escrow canister naming any message and then cancel it ([#9530](https://github.com/open-chat-labs/open-chat/pull/9530))
 - Stop the `suppressed` and `@everyone` flags being swapped when a bot finalises a message, which made suppressed messages notify everyone and `@everyone` messages notify no one ([#9573](https://github.com/open-chat-labs/open-chat/pull/9573))
+- Stop the job which expires members exceeding the instruction limit in a large group ([#9659](https://github.com/open-chat-labs/open-chat/pull/9659))
 - Tell clients that a pinned message is no longer pinned when it is deleted ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 
 ## [[2.0.2036](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2036-group)] - 2026-08-20
