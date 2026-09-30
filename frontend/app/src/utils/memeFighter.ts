@@ -1,20 +1,61 @@
-import { MEME_MAKER_URL } from "@memefighter/maker-core";
-
+export const MEME_MAKER_URL = "https://maker.memefighter.app";
 export const MEME_MAKER_ORIGIN = new URL(MEME_MAKER_URL).origin;
 
-// @memefighter/maker-core's window "message" handler switches on `event.data.messageType`
-// without checking `event.origin`, so any window able to post to ours (an external content
-// frame, a popup, the parent when OpenChat is embedded) could feed it a MEME_CREATED url.
-// This guard is registered before maker-core's listener; listeners on the same target run in
-// registration order, so stopImmediatePropagation() keeps such messages from reaching it.
-// Returns the function that removes the guard.
-export function guardMemeFighterMessages(target: Window = window): () => void {
-    function guard(ev: MessageEvent) {
-        if (ev.origin === MEME_MAKER_ORIGIN) return;
-        if (typeof ev.data === "object" && ev.data !== null && "messageType" in ev.data) {
-            ev.stopImmediatePropagation();
+// How the maker is asked to look
+export type MemeMakerStyle = {
+    "--background-color"?: string;
+    "--foreground-color"?: string;
+    "--button-color"?: string;
+};
+
+// Loads the Meme Fighter maker into `iframe` and calls `onMemeCreated` with the url of the meme
+// the user makes there. Returns the function which stops listening for it.
+//
+// This speaks the protocol of @memefighter/maker-core, which it replaces: that package pulled
+// zod into the bundle to check three message shapes, and its listener took a MEME_CREATED url
+// from any window able to post to ours. The maker posts READY once it has loaded and is answered
+// with INIT carrying the style. It replies with INIT_RESPONSE, and posts MEME_CREATED with the
+// meme's url once the user has made one.
+export function startMemeMaker(
+    iframe: HTMLIFrameElement,
+    style: MemeMakerStyle,
+    onMemeCreated: (url: string) => void,
+): () => void {
+    function onMessage(ev: MessageEvent) {
+        // Only the maker, in the frame it was loaded into, gets a say. Other windows can post to
+        // ours too: an external content frame, a popup, the parent when OpenChat is embedded.
+        if (ev.origin !== MEME_MAKER_ORIGIN || ev.source !== iframe.contentWindow) return;
+
+        const data = ev.data;
+        if (typeof data !== "object" || data === null) return;
+
+        switch (data.messageType) {
+            case "READY":
+                iframe.contentWindow?.postMessage(
+                    { messageType: "INIT", payload: style },
+                    MEME_MAKER_ORIGIN,
+                );
+                break;
+            case "INIT_RESPONSE":
+                if (data.payload?.status !== "ok") {
+                    console.error("Meme Fighter failed to initialise", data.payload?.err);
+                }
+                break;
+            case "MEME_CREATED":
+                if (typeof data.payload === "string") {
+                    stop();
+                    onMemeCreated(data.payload);
+                }
+                break;
         }
     }
-    target.addEventListener("message", guard);
-    return () => target.removeEventListener("message", guard);
+
+    function stop() {
+        window.removeEventListener("message", onMessage);
+    }
+
+    window.addEventListener("message", onMessage);
+    // the maker sends the meme as soon as it is made rather than showing its own insert button
+    iframe.src = `${MEME_MAKER_URL}?skipInsertButton=true`;
+    return stop;
 }
