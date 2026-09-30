@@ -904,12 +904,16 @@ pub struct UserToDelete {
     pub attempt: usize,
 }
 
-// A deleted user's uninstalled canister whose cycles are to be sent to the CyclesDispenser
+// An uninstalled canister whose cycles are to be sent to the CyclesDispenser
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CanisterToRefund {
     pub canister_id: CanisterId,
     pub attempt: usize,
     pub retry_after: TimestampMillis,
+    // Set for a deleted group's or community's canister, which is deleted once its cycles have
+    // been refunded
+    #[serde(default)]
+    pub delete_canister: bool,
 }
 
 impl Data {

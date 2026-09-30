@@ -315,14 +315,14 @@ fn cycles_refund_leaves_a_canister_with_other_code_untouched() {
 }
 
 // See backend/canisters/cycles_refunder/README.md for why ~110B cycles can't be recovered
-const MAX_RESIDUAL_CYCLES: u128 = 125_000_000_000;
+pub(crate) const MAX_RESIDUAL_CYCLES: u128 = 125_000_000_000;
 
-fn cycles_refunded_metric(env: &pocket_ic::PocketIc, local_user_index: types::CanisterId) -> u128 {
+pub(crate) fn cycles_refunded_metric(env: &pocket_ic::PocketIc, local_user_index: types::CanisterId) -> u128 {
     let metrics = crate::utils::metrics(env, local_user_index);
     metrics["cycles_refunded_from_deleted_users"].as_u64().unwrap().into()
 }
 
-fn wait_for_refund_queue_to_empty(env: &mut pocket_ic::PocketIc, local_user_index: types::CanisterId) {
+pub(crate) fn wait_for_refund_queue_to_empty(env: &mut pocket_ic::PocketIc, local_user_index: types::CanisterId) {
     for _ in 0..50 {
         let metrics = crate::utils::metrics(env, local_user_index);
         if metrics["cycles_refund_queue_length"] == 0 {
