@@ -163,7 +163,7 @@ fn invite_to_community_oc_bot_message_received() {
         vec![user2.user_id],
     );
 
-    wait_for_community_invitation(env, &user2, community_id);
+    wait_for_invitation(env, &user2, "community", community_id);
 }
 
 #[test]
@@ -273,9 +273,9 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 }
 
 // Ticks until the user's canister lists the community, ie. the join event has been delivered, and
-// returns the user's copy of it. This can take many rounds, since the first User canister to run on
-// a subnet takes around 10 rounds to handle its first message, and the event goes via the UserIndex
-// if the user is on a different subnet from the community.
+// returns the user's copy of it. This can take many rounds, since a newly created User canister can
+// take around 10 rounds to handle its first message, and the event goes via the UserIndex if the user
+// is on a different subnet from the community.
 pub(super) fn wait_for_community_membership(
     env: &mut PocketIc,
     user: &User,
@@ -296,23 +296,24 @@ pub(super) fn wait_for_community_membership(
     panic!("User {} was not notified of joining the community", user.user_id);
 }
 
-// Ticks until the OpenChat bot's message inviting the user to the community has reached their canister
-fn wait_for_community_invitation(env: &mut PocketIc, user: &User, community_id: CommunityId) {
+// Ticks until the OpenChat bot's message inviting the user to the community or channel with the given
+// id has reached their canister, where `invited_to` is "community" or "channel"
+pub(super) fn wait_for_invitation(env: &mut PocketIc, user: &User, invited_to: &str, id: impl ToString) {
+    let text = format!("You have been invited to the {invited_to}");
+    let id = id.to_string();
     for _ in 0..30 {
         let initial_state = client::user::happy_path::initial_state(env, user);
         if initial_state.direct_chats.summaries.iter().any(|dc| {
             matches!(
                 dc.latest_message.as_ref().map(|m| &m.event.content),
-                Some(MessageContent::Text(content))
-                    if content.text.contains("You have been invited to the community")
-                        && content.text.contains(&community_id.to_string())
+                Some(MessageContent::Text(content)) if content.text.contains(&text) && content.text.contains(&id)
             )
         }) {
             return;
         }
         env.tick();
     }
-    panic!("User {} was not told of their invitation to the community", user.user_id);
+    panic!("User {} was not told of their invitation to the {invited_to}", user.user_id);
 }
 
 struct TestData {
