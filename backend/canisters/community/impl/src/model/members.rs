@@ -1,5 +1,5 @@
 use crate::model::members::stable_memory::MembersStableStorage;
-use crate::model::user_groups::{UserGroup, UserGroups};
+use crate::model::user_groups::{CreateUserGroupResult, UpdateUserGroupResult, UserGroup, UserGroups};
 use constants::calculate_summary_updates_data_removal_cutoff;
 use group_community_common::{FormerMembers, Member, MemberUpdate, Members};
 use ic_principal::Principal;
@@ -335,7 +335,7 @@ impl CommunityMembers {
         mut users: Vec<UserId>,
         rng: &mut R,
         now: TimestampMillis,
-    ) -> Option<u32> {
+    ) -> CreateUserGroupResult {
         users.retain(|u| self.members_and_channels.contains_key(u));
 
         self.user_groups.create(name, users, rng, now)
@@ -348,7 +348,7 @@ impl CommunityMembers {
         mut users_to_add: Vec<UserId>,
         users_to_remove: Vec<UserId>,
         now: TimestampMillis,
-    ) -> bool {
+    ) -> UpdateUserGroupResult {
         users_to_add.retain(|u| self.members_and_channels.contains_key(u));
 
         self.user_groups
@@ -1124,9 +1124,11 @@ mod tests {
         members.mark_member_joined_channel(old, channel1);
         members.mark_member_joined_channel(old, channel2);
         members.mark_member_left_channel(old, channel2, false, 6);
-        let user_group_id = members
-            .create_user_group("group".to_string(), vec![old, referred], &mut rand::rng(), 6)
-            .unwrap();
+        let CreateUserGroupResult::Success(user_group_id) =
+            members.create_user_group("group".to_string(), vec![old, referred], &mut rand::rng(), 6)
+        else {
+            panic!("Failed to create user group");
+        };
 
         assert!(members.migrate_user_id(old, new, None, 10));
         assert!(!members.contains(&old));
