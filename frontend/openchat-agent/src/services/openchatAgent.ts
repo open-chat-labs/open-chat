@@ -882,23 +882,7 @@ export class OpenChatAgent extends EventTarget {
     // the escrow canister along with the fee for paying it out, so costs two fees.
     private approveTransferInMessage(content: MessageContent): Promise<OCError | undefined> {
         if (content.kind === "crypto_content" && content.transfer.kind === "pending") {
-            const { ledger, amountE8s, feeE8s = 0n, fromAccount, recipient } = content.transfer;
-
-            // Crypto for a user in a MultiUser canister has to be addressed to their wallet, which
-            // isn't known here, so a MultiUser canister refuses it as it is addressed now. It is
-            // refused here instead, before an approval is paid for.
-            // TODO: Remove this once crypto can be sent to users in MultiUser canisters
-            if (
-                isMultiUserCanisterUser(recipient) &&
-                isMultiUserCanisterUser(this._userClient.userId)
-            ) {
-                return Promise.resolve({
-                    kind: "error",
-                    code: ErrorCode.RecipientMismatch,
-                    message: undefined,
-                });
-            }
-
+            const { ledger, amountE8s, feeE8s = 0n, fromAccount } = content.transfer;
             return this.approveUserCanisterToPull(ledger, amountE8s + feeE8s, feeE8s, fromAccount);
         }
         if (content.kind === "p2p_swap_content_initial") {
