@@ -29,15 +29,22 @@
     let img: HTMLImageElement | undefined = $state();
     let placeholder = "/assets/memefighter.svg";
 
-    let stopMaker: (() => void) | undefined;
+    let stopListening: (() => void) | undefined;
 
-    onDestroy(() => stopMaker?.());
+    function stopMaker() {
+        stopListening?.();
+        stopListening = undefined;
+    }
+
+    onDestroy(stopMaker);
 
     export function reset() {
         memeUrl = undefined;
         tick().then(() => {
-            stopMaker?.();
-            stopMaker = iframe ? startMemeMaker(iframe, styleVariables, onMemeCreated) : undefined;
+            stopMaker();
+            if (iframe) {
+                stopListening = startMemeMaker(iframe, styleVariables, onMemeCreated);
+            }
         });
     }
 
@@ -62,6 +69,7 @@
     }
 
     function close() {
+        stopMaker();
         open = false;
     }
 

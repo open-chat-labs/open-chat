@@ -1,4 +1,4 @@
-export const MEME_MAKER_URL = "https://maker.memefighter.app";
+const MEME_MAKER_URL = "https://maker.memefighter.app";
 export const MEME_MAKER_ORIGIN = new URL(MEME_MAKER_URL).origin;
 
 // How the maker is asked to look
@@ -24,17 +24,17 @@ export function startMemeMaker(
     function onMessage(ev: MessageEvent) {
         // Only the maker, in the frame it was loaded into, gets a say. Other windows can post to
         // ours too: an external content frame, a popup, the parent when OpenChat is embedded.
-        if (ev.origin !== MEME_MAKER_ORIGIN || ev.source !== iframe.contentWindow) return;
+        // A frame which has left the document has no window, and nor has a message whose sender
+        // has gone, so those two must not be taken to match.
+        const maker = iframe.contentWindow;
+        if (ev.origin !== MEME_MAKER_ORIGIN || maker === null || ev.source !== maker) return;
 
         const data = ev.data;
         if (typeof data !== "object" || data === null) return;
 
         switch (data.messageType) {
             case "READY":
-                iframe.contentWindow?.postMessage(
-                    { messageType: "INIT", payload: style },
-                    MEME_MAKER_ORIGIN,
-                );
+                maker.postMessage({ messageType: "INIT", payload: style }, MEME_MAKER_ORIGIN);
                 break;
             case "INIT_RESPONSE":
                 if (data.payload?.status !== "ok") {
@@ -42,7 +42,7 @@ export function startMemeMaker(
                 }
                 break;
             case "MEME_CREATED":
-                if (typeof data.payload === "string") {
+                if (typeof data.payload === "string" && data.payload !== "") {
                     stop();
                     onMemeCreated(data.payload);
                 }

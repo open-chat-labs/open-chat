@@ -86,12 +86,25 @@ describe("startMemeMaker", () => {
         other.remove();
     });
 
-    test("ignores a meme which is not a url string, and keeps listening", () => {
+    test("ignores a meme whose url is missing, empty or not a string, and keeps listening", () => {
         fromMaker({ messageType: "MEME_CREATED", payload: { url: "https://memefighter.app/x" } });
+        fromMaker({ messageType: "MEME_CREATED", payload: "" });
         fromMaker({ messageType: "MEME_CREATED" });
         expect(onMemeCreated).not.toHaveBeenCalled();
         fromMaker({ messageType: "MEME_CREATED", payload: "https://memefighter.app/meme.png" });
         expect(onMemeCreated).toHaveBeenCalledTimes(1);
+    });
+
+    // Invariant: a frame which has left the document, and so has no window, is not matched by a
+    // message with no source.
+    test("ignores the maker's origin once the frame has left the document", () => {
+        vi.spyOn(iframe, "contentWindow", "get").mockReturnValue(null);
+        post({
+            origin: MEME_MAKER_ORIGIN,
+            source: null,
+            data: { messageType: "MEME_CREATED", payload: "https://memefighter.app/meme.png" },
+        });
+        expect(onMemeCreated).not.toHaveBeenCalled();
     });
 
     test("ignores messages which are not part of the protocol", () => {

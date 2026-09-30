@@ -61,8 +61,16 @@ describe.each<[string, Component]>([
         return app;
     }
 
+    function cancelButton(): HTMLElement {
+        return [...document.querySelectorAll("button")].find(
+            (b) => b.textContent?.trim() === "Cancel",
+        )!;
+    }
+
     afterEach(() => {
         destroy?.();
+        // the mobile sheet is portalled to the body, where it outlives the unmount
+        document.body.innerHTML = "";
         vi.clearAllMocks();
     });
 
@@ -91,6 +99,32 @@ describe.each<[string, Component]>([
 
         expect(stopMaker).toHaveBeenCalledTimes(1);
         expect(startMemeMaker).toHaveBeenCalledTimes(2);
+    });
+
+    test("shows the meme the maker hands over in place of the maker", async () => {
+        const app = open();
+        app.reset();
+        await tick();
+
+        const onMemeCreated = startMemeMaker.mock.calls[0][2] as (url: string) => void;
+        onMemeCreated("https://memefighter.app/meme.png");
+        flushSync();
+
+        expect(document.querySelector("img.meme")?.getAttribute("src")).toBe(
+            "https://memefighter.app/meme.png",
+        );
+        expect(document.querySelector("iframe")).toBeNull();
+    });
+
+    test("stops the maker when closed without a meme", async () => {
+        const app = open();
+        app.reset();
+        await tick();
+
+        cancelButton().click();
+        flushSync();
+
+        expect(stopMaker).toHaveBeenCalledTimes(1);
     });
 
     test("stops the maker on unmount", async () => {
