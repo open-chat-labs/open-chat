@@ -5,6 +5,7 @@
         currentUserIdStore,
         OpenChat,
         routeForChatIdentifier,
+        selectedChatMembersStore,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
         type ChatIdentifier,
@@ -226,7 +227,7 @@
             {#if sender !== undefined && multiUserChat}
                 <WithRole
                     userId={sender.userId}
-                    chatMembers={$selectedCommunityMembersStore}
+                    chatMembers={$selectedChatMembersStore}
                     communityMembers={$selectedCommunityMembersStore}>
                     {#snippet children(communityRole, chatRole)}
                         <RoleIcon level="community" popup role={communityRole} />
