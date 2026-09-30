@@ -166,6 +166,46 @@ fn room_ids_follow_reading_order() {
     }
 }
 
+/// Invariant 23: a step lists every cell it relies on. Each cell a step points at (its target)
+/// lies in a row, column or room whose every cell is in the step's focus, so the cells the step
+/// relies on having been ruled out are listed with it. The LocalUserIndex serves the steps a hint
+/// rests on by following its focus (#9588), so a ruled-out cell left out of the focus is a
+/// premise the player can be missing while the hint reads as proven: "these are the only cells
+/// left for this room" with another of the room's cells still open on the player's board.
+#[test]
+fn every_step_lists_the_cells_it_relies_on() {
+    for size in [6u8, 8, 9] {
+        for tier in Tier::ALL {
+            for seed in 0..15 {
+                let g = generate(seed, params(size, tier)).unwrap();
+                let d = parse_description(&g.description).unwrap();
+                let n = size as usize;
+                let groups: Vec<Vec<u16>> = (0..n)
+                    .map(|r| (0..n).map(|c| (r * n + c) as u16).collect())
+                    .chain((0..n).map(|c| (0..n).map(|r| (r * n + c) as u16).collect()))
+                    .chain((0..n as u8).map(|room| (0..n * n).filter(|&i| d.rooms[i] == room).map(|i| i as u16).collect()))
+                    .collect();
+                for (s, hint) in g.hints.iter().enumerate() {
+                    if hint.technique == chat_rooms::Technique::Shadow {
+                        // A shadow rests on its logo alone, which is its target
+                        continue;
+                    }
+                    for &t in &hint.target {
+                        assert!(
+                            groups
+                                .iter()
+                                .any(|grp| grp.contains(&t) && grp.iter().all(|k| hint.focus.contains(k))),
+                            "{size}x{size} {tier:?} seed {seed} step {s} ({:?}): target cell {t} is in no row, column or room listed whole in the focus {:?}",
+                            hint.technique,
+                            hint.focus
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Invariant 7: each rule, broken alone, is reported, and an unfinished
 /// grid with nothing wrong is not.
 #[test]

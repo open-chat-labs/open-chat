@@ -179,9 +179,13 @@ fn confined(board: &Board, marks: &[Mark], k: usize) -> Option<Step> {
                 return None;
             }
             let target: Vec<usize> = set.iter().flat_map(|&g| open_cells(board, marks, g)).collect();
+            // Every cell of the groups reasoned about, not only their open ones: the step rests on
+            // the rest having been ruled out, and the LocalUserIndex finds those premises through
+            // the focus (#9588)
+            let whole: Vec<usize> = set.iter().flat_map(|&g| board.groups[g].iter().copied()).collect();
             Some(Step {
                 technique: if k == 1 { Technique::Confined } else { Technique::Pigeonhole },
-                focus: [target.clone(), ruled_out.clone()].concat(),
+                focus: [whole, ruled_out.clone()].concat(),
                 target,
                 conclusions: ruled_out.into_iter().map(|i| (i, Mark::No)).collect(),
             })
@@ -230,9 +234,10 @@ fn blocked(board: &Board, marks: &[Mark]) -> Option<Step> {
             .find_map(|g| {
                 let open: Vec<usize> = open_cells(board, marks, g).collect();
                 let emptied = !open.is_empty() && open.iter().all(|o| board.shadows[c].binary_search(o).is_ok());
+                // The whole group, as for Confined: the step rests on its other cells being out
                 emptied.then(|| Step {
                     technique: Technique::Blocked,
-                    focus: [open.clone(), vec![c]].concat(),
+                    focus: [board.groups[g].clone(), vec![c]].concat(),
                     target: open,
                     conclusions: vec![(c, Mark::No)],
                 })
