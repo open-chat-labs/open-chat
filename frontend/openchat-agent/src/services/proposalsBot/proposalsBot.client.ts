@@ -22,15 +22,16 @@ import {
     ProposalsBotTopUpNeuronArgs,
     ProposalsBotTopUpNeuronResponse,
 } from "../../typebox";
-import { principalToIcrcAccount } from "../common/chatMappersV2";
+import { addressToIcrcAccount, principalToIcrcAccount } from "../common/chatMappersV2";
 
 export class ProposalsBotClient extends SingleCanisterMsgpackAgent {
     constructor(identity: Identity, agent: HttpAgent, canisterId: string) {
         super(identity, agent, canisterId, "ProposalsBot");
     }
 
+    // The fee is pulled from `wallet`, the user's wallet, which must have approved this canister
     submitProposal(
-        userId: string,
+        wallet: string,
         governanceCanisterId: string,
         proposal: CandidateProposal,
         ledger: string,
@@ -45,7 +46,7 @@ export class ProposalsBotClient extends SingleCanisterMsgpackAgent {
                 ledger: principalStringToBytes(ledger),
                 token_symbol: token,
                 amount: proposalRejectionFee + transactionFee,
-                from: principalToIcrcAccount(userId),
+                from: addressToIcrcAccount(wallet),
                 to: principalToIcrcAccount(this.canisterId),
                 fee: transactionFee,
                 memo: undefined,

@@ -330,6 +330,104 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
     assert_eq!(balance - original_balance, (amount * 98) / 100);
 }
 
+// A user in a MultiUser canister holds their own funds, in their principal's account, so the
+// website approves the group or community to pull a gate's payment from there, on the ledger
+// itself, as the user's canister does for a user alone in it. The group or community then pulls it
+// when they join, just as from a User canister.
+#[test_case(false; "group")]
+#[test_case(true; "community")]
+fn user_in_multi_user_canister_pays_payment_gate_from_their_wallet(community: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::register_user_in_multi_user_canister(env, canister_ids);
+
+    let amount = 1_0000_0000;
+    let fee = 10_000;
+    let gate = AccessGate::Payment(PaymentGate {
+        ledger_canister_id: canister_ids.icp_ledger,
+        amount,
+        fee,
+    });
+    let name = random_string();
+
+    let spender = if community {
+        match client::user::create_community(
+            env,
+            owner.principal,
+            owner.canister(),
+            &user_canister::create_community::Args {
+                is_public: true,
+                name: name.clone(),
+                description: format!("{name}_description"),
+                rules: Rules::default(),
+                avatar: None,
+                banner: None,
+                history_visible_to_new_joiners: true,
+                permissions: None,
+                gate_config: Some(gate.into()),
+                default_channels: vec![random_string()],
+                default_channel_rules: None,
+                primary_language: "en".to_string(),
+            },
+        ) {
+            user_canister::create_community::Response::Success(result) => Principal::from(result.community_id),
+            response => panic!("'create_community' error: {response:?}"),
+        }
+    } else {
+        match client::user::create_group(
+            env,
+            owner.principal,
+            owner.canister(),
+            &user_canister::create_group::Args {
+                is_public: true,
+                name: name.clone(),
+                description: format!("{name}_description"),
+                avatar: None,
+                history_visible_to_new_joiners: true,
+                permissions_v2: None,
+                rules: Rules::default(),
+                events_ttl: None,
+                gate_config: Some(gate.into()),
+                messages_visible_to_non_members: None,
+            },
+        ) {
+            user_canister::create_group::Response::Success(result) => Principal::from(result.chat_id),
+            response => panic!("'create_group' error: {response:?}"),
+        }
+    };
+
+    let owner_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id);
+
+    // The wallet holds the gate's amount, and approves the gate's amount less the approval's fee
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.principal, amount);
+    client::ledger::happy_path::approve(env, user.principal, canister_ids.icp_ledger, spender, amount - fee);
+
+    if community {
+        client::community::happy_path::join_community(env, user.principal, spender.into());
+    } else {
+        client::group::happy_path::join_group(env, user.principal, spender.into());
+    }
+
+    tick_many(env, 3);
+
+    // The gate took exactly its amount from the wallet, of which the owner was paid their share
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.principal),
+        0
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id) - owner_balance,
+        (amount * 98) / 100
+    );
+}
+
 #[test]
 fn only_selected_composite_gate_checked_if_index_provided() {
     let mut wrapper = ENV.deref().get();

@@ -71,6 +71,19 @@ describe("LedgerClient.approveSpending", () => {
         ]);
     });
 
+    test("a payment pulled later is approved for as long as it is given", async () => {
+        const validityMs = 7 * 24 * 60 * 60 * 1000;
+        allowances = [{ allowance: 0n, expires_at: [] }];
+        responses = [{ Ok: 1n }];
+
+        expect(await client.approveSpending(LEDGER, SPENDER, 100n, FEE, validityMs)).toEqual(
+            "success",
+        );
+        expect(approvals.map((a) => a.expires_at)).toEqual([
+            [BigInt(NOW_MS + validityMs) * 1_000_000n],
+        ]);
+    });
+
     test("the amount is added to what the spender may already pull", async () => {
         allowances = [{ allowance: 500n, expires_at: [] }];
         responses = [{ Ok: 1n }];

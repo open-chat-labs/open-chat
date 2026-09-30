@@ -16,6 +16,30 @@ describe("approvalToAdd", () => {
         });
     });
 
+    test("a payment pulled later is approved until it has had time to be pulled", () => {
+        const validityMs = 7 * 24 * 60 * 60 * 1000;
+
+        expect(
+            approvalToAdd({ allowance: 0n, expiresAt: undefined }, 100n, NOW, validityMs),
+        ).toEqual({
+            amount: 100n,
+            expectedAllowance: 0n,
+            expiresAt: nanos(NOW_MS + validityMs),
+        });
+    });
+
+    test("an allowance which lapses sooner than a payment pulled later is extended to cover it", () => {
+        const validityMs = 7 * 24 * 60 * 60 * 1000;
+
+        expect(
+            approvalToAdd({ allowance: 50n, expiresAt: DEFAULT_EXPIRY }, 100n, NOW, validityMs),
+        ).toEqual({
+            amount: 150n,
+            expectedAllowance: 50n,
+            expiresAt: nanos(NOW_MS + validityMs),
+        });
+    });
+
     test("the amount is added to a standing allowance, which still never lapses", () => {
         expect(approvalToAdd({ allowance: 1_000n, expiresAt: undefined }, 100n, NOW)).toEqual({
             amount: 1_100n,
