@@ -88,47 +88,31 @@ fn daily_puzzle_end_to_end() {
         .find(|c| c.iter().any(|(_, value)| *value != 0))
         .unwrap_or(&trace[0]);
 
-    // Level 1 hint: highlights the step, and carries neither the technique nor the conclusions,
-    // which are what levels 2 and 3 are sold for. Every level costs, so this one is debited like
-    // any other.
-    let level_1_price = puzzle.hint_prices[0];
-    assert!(level_1_price > 0, "no hint level is free");
-    let first = hint(env, &user, local_user_index, game_id, number, 1, Vec::new(), level_1_price);
+    // One hint level (#9675): the step's outline and technique, never its conclusions. It costs
+    // the one price, and the step it serves is the one the solver's trace says comes next: the
+    // premise walk serves a step whose focus holds those conclusions' keys.
+    let price = puzzle.hint_prices[0];
+    assert!(price > 0, "a hint is never free");
+    let first = hint(env, &user, local_user_index, game_id, number, 1, Vec::new(), price);
     assert!(!first.hint.mistake);
-    assert_eq!(first.hint.level, 1);
-    assert_eq!(first.hint.hint.technique, 0);
-    assert!(first.hint.hint.target.is_empty());
+    assert_eq!(first.hint.level, 2);
+    assert_ne!(first.hint.hint.technique, 0);
     assert!(first.hint.hint.conclusions.is_empty());
     assert!(!first.hint.hint.focus.is_empty());
+    assert!(!expected_step.is_empty());
     assert_eq!(first.hints_used, 1);
-    let balance_after_first = DAILY_CHIT - level_1_price as i32;
-    assert_eq!(chit_balance(env, &user), balance_after_first);
-    assert_eq!(first.chit_balance, Some(balance_after_first));
-
-    // Upgrading the same step to level 3: the only tier that hands over the conclusions, and the
-    // step is still the one step used. The upgrade is priced at the difference, so climbing costs
-    // the same as jumping straight here. Hint keys are not grid indices in every game (bridges
-    // keys edges), so compare against the solver's trace rather than the solution bytes. Level 2's
-    // payload is covered by the engine's own tests.
-    let upgrade_price = puzzle.hint_prices[2] - level_1_price;
-    let upgraded = hint(env, &user, local_user_index, game_id, number, 3, Vec::new(), upgrade_price);
-    assert!(!upgraded.hint.mistake);
-    assert_eq!(upgraded.hint.level, 3);
-    assert_ne!(upgraded.hint.hint.technique, 0);
-    // Level 3 carries the generator's focus in deduction order; the lower levels sort it, so the
-    // position of the concluded key does not name it below the level that sells it
-    let mut focus_at_3 = upgraded.hint.hint.focus.clone();
-    focus_at_3.sort_unstable();
-    assert_eq!(focus_at_3, first.hint.hint.focus);
-    assert_eq!(upgraded.hint.hint.conclusions, *expected_step);
-    assert_eq!(upgraded.hints_used, 1);
-    assert_eq!(upgraded.state.hints.len(), 1);
-    let balance_after_hint = balance_after_first - upgrade_price as i32;
-    assert_eq!(balance_after_hint, DAILY_CHIT - puzzle.hint_prices[2] as i32);
+    let balance_after_hint = DAILY_CHIT - price as i32;
     assert_eq!(chit_balance(env, &user), balance_after_hint);
     // The debit landed in this call, so the response reports the user canister's balances
-    assert_eq!(upgraded.chit_balance, Some(balance_after_hint));
-    assert_eq!(upgraded.total_chit_earned, Some(total_chit_earned(env, &user)));
+    assert_eq!(first.chit_balance, Some(balance_after_hint));
+    assert_eq!(first.total_chit_earned, Some(total_chit_earned(env, &user)));
+
+    // An old client asking for "level 3" of the same step gets the same hint back, free
+    let again = hint(env, &user, local_user_index, game_id, number, 3, Vec::new(), price);
+    assert_eq!(again.hint, first.hint);
+    assert_eq!(again.hints_used, 1);
+    assert_eq!(again.state.hints.len(), 1);
+    assert_eq!(chit_balance(env, &user), balance_after_hint);
 
     // A wrong entry: free mistake hint focused on that key, nothing counted. The key is a real
     // hint key for this game (an edge for bridges and loopy, a cell otherwise) with a value that
@@ -191,8 +175,8 @@ fn daily_puzzle_end_to_end() {
         events.iter().any(|e| matches!(
             &e.reason,
             ChitEventType::Game { game_id: g, key }
-                if g == game_id && key.starts_with(&hint_prefix) && key.ends_with(":3")
-        ) && e.amount == -(upgrade_price as i32)),
+                if g == game_id && key.starts_with(&hint_prefix) && key.ends_with(":2")
+        ) && e.amount == -(price as i32)),
         "no hint debit event: {events:?}"
     );
     assert!(

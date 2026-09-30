@@ -27,7 +27,7 @@ const puzzle: PublicDailyPuzzle = {
     enabled: true,
     entryFee: 100,
     firstPlayFree: true,
-    hintPrices: [25, 75, 200],
+    hintPrices: [25],
     maxHints: 3,
     maxFreeChecks: 2,
     minCardedSolveMs: 0n,
@@ -274,34 +274,53 @@ describe("DailyPuzzleGame", () => {
         });
     });
 
-    // #9334 invariant 60
-    test("an upgrade of the served step is quoted at the difference between the levels", async () => {
+    // #9675 H3: one level, one price. Every tap asks for a new step at the puzzle's one price,
+    // whatever the last hint was.
+    test("every hint is quoted at the one price", async () => {
         const hint: ServedHint = {
             hint: { technique: 1, focus: [0, 1, 2], target: [0], conclusions: [] },
-            level: 1,
+            level: 2,
             mistake: false,
         };
-        const client = fakeClient({
-            dailyPuzzleHint: vi.fn(async () => ({
-                kind: "success",
-                hint,
-                hintsUsed: 1,
-                state: userState({ hints: [hint] }),
-            })),
-        });
+        const client = hintClient(hint);
         const g = build(userState(), client);
-        expect(g.nextHintLevel).toBe(1);
-        expect(g.nextHintPrice).toBe(25);
+        expect(g.hintButton).toMatchObject({ kind: "hint", price: 25 });
         await g.hint();
-        expect(g.nextHintLevel).toBe(2);
-        expect(g.nextHintPrice).toBe(75 - 25);
+        expect(g.hintButton).toMatchObject({ kind: "hint", price: 25 });
         await g.hint();
         expect(client.dailyPuzzleHint).toHaveBeenLastCalledWith(
             "light_up",
-            2,
+            1,
             expect.anything(),
-            50,
+            25,
         );
+    });
+
+    // #9675 H4: a step is drawn the same however it arrives: bought, re-served free, or re-served
+    // after a reload
+    test("a hint re-served for free draws exactly as when it was bought", async () => {
+        const hint: ServedHint = {
+            hint: { technique: 2, focus: [0, 1, 2, 3], target: [0], conclusions: [] },
+            level: 2,
+            mistake: false,
+        };
+        const drawn = (g: DailyPuzzleGame) => ({
+            focus: [...g.focus].sort(),
+            target: [...g.target].sort(),
+            caption: g.caption,
+        });
+        const g = build(userState(), hintClient(hint, { hints: [hint] }));
+        await g.hint();
+        const bought = drawn(g);
+        expect(bought.target).toEqual([0]);
+        expect(bought.caption).toBeDefined();
+
+        await g.hint();
+        expect(drawn(g)).toEqual(bought);
+
+        const reloaded = build(userState({ hints: [hint] }), hintClient(hint, { hints: [hint] }));
+        await reloaded.hint();
+        expect(drawn(reloaded)).toEqual(bought);
     });
 
     test("a price mismatch is retried once with the price the server quoted", async () => {
@@ -345,41 +364,16 @@ describe("DailyPuzzleGame", () => {
         expect(toastStore.showFailureToast).toHaveBeenCalled();
     });
 
-    // #9517 invariant 2. A tap that showed 125 on the button was retried at a quoted 200. The
-    // upgrade is the case that matters: the button shows the difference, which is below the
-    // level's full price, and the quote was the full price.
     test("a price mismatch quoting more than the button showed is not retried", async () => {
-        const hint: ServedHint = {
-            hint: { technique: 1, focus: [0, 1, 2], target: [], conclusions: [] },
-            level: 2,
-            mistake: false,
-        };
         const client = fakeClient({
-            dailyPuzzleHint: vi
-                .fn()
-                .mockResolvedValueOnce({
-                    kind: "success",
-                    hint,
-                    hintsUsed: 1,
-                    state: userState({ hints: [hint] }),
-                })
-                .mockResolvedValue({ kind: "error", code: 250, message: "200" }),
+            dailyPuzzleHint: vi.fn(async () => ({ kind: "error", code: 250, message: "200" })),
         });
         const g = build(userState(), client);
+        expect(g.hintButton).toMatchObject({ kind: "hint", price: 25 });
         await g.hint();
-        expect(g.nextHintLevel).toBe(3);
-        expect(g.nextHintPrice).toBe(125);
-        await g.hint();
-        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(2);
-        expect(client.dailyPuzzleHint).toHaveBeenLastCalledWith(
-            "light_up",
-            3,
-            expect.anything(),
-            125,
-        );
+        expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(1);
         expect(toastStore.showFailureToast).toHaveBeenCalled();
-        expect(g.lastHint).toEqual(hint);
-        expect(g.busy).toBe(false);
+        expect(g.lastHint).toBeUndefined();
     });
 
     // #9334 invariant 61. Slant #20709 step 9: the deduction looked at the four cells round the
@@ -463,9 +457,9 @@ describe("out of hints", () => {
         expect(g.hintButton).toEqual({ kind: "noneLeft" });
     });
 
-    test("with a step left, the next level of the last one is still offered", () => {
+    test("with a step left, a hint is still offered", () => {
         const g = build(userState({ hints: threeSteps.slice(1) }));
-        expect(g.hintButton).toMatchObject({ kind: "hint", level: 2, hintsLeft: 1 });
+        expect(g.hintButton).toMatchObject({ kind: "hint", price: 25, hintsLeft: 1 });
     });
 
     // invariant 19
@@ -669,58 +663,6 @@ describe("hint states (#9360)", () => {
         expect(rules).not.toMatch(/touch/);
     });
 
-    // invariant 6
-    test("after a level 3 reveal the caption is the reveal text and nothing is asked of the player", async () => {
-        const reveal: ServedHint = {
-            hint: { technique: 1, focus: [0, 1, 2], target: [0], conclusions: [[0, 1]] },
-            level: 3,
-            mistake: false,
-        };
-        const client = fakeClient({
-            dailyPuzzleHint: vi.fn(async () => ({
-                kind: "success",
-                hint: reveal,
-                hintsUsed: 1,
-                state: userState({ hints: [reveal] }),
-            })),
-        });
-        const g = build(userState(), client);
-        await g.hint();
-        expect(game.filled(model, g.state)).toContainEqual([0, 1]);
-        expect(g.caption).toEqual(expect.objectContaining({ key: "dailyPuzzle.revealed" }));
-        expect(g.target.size).toBe(0);
-        // the cell it filled is shown as context, not as a move still to make
-        expect(g.focus.has(0)).toBe(true);
-        // the next edit clears it
-        g.tap(4);
-        expect(g.focus.size).toBe(0);
-        expect(g.caption).toBeUndefined();
-    });
-
-    // invariant 6, the undo case: a reveal has nothing left to ask for, so undoing the cell it
-    // filled must not leave "Filled in for you." describing a fill no longer on the board
-    test("undoing a revealed cell retires the reveal caption and highlight", async () => {
-        const reveal: ServedHint = {
-            hint: { technique: 1, focus: [0, 1, 2], target: [0], conclusions: [[0, 1]] },
-            level: 3,
-            mistake: false,
-        };
-        const client = fakeClient({
-            dailyPuzzleHint: vi.fn(async () => ({
-                kind: "success",
-                hint: reveal,
-                hintsUsed: 1,
-                state: userState({ hints: [reveal] }),
-            })),
-        });
-        const g = build(userState(), client);
-        await g.hint();
-        expect(g.caption).toEqual(expect.objectContaining({ key: "dailyPuzzle.revealed" }));
-        g.tap(0);
-        expect(game.filled(model, g.state)).not.toContainEqual([0, 1]);
-        expect(g.caption).toBeUndefined();
-        expect(g.focus.size).toBe(0);
-    });
 });
 
 // #9361: a reset clears the board and nothing else
@@ -747,31 +689,6 @@ describe("reset (#9361)", () => {
         expect(g.resetArmed).toBe(false);
         g.reset();
         expect(g.resetArmed).toBe(true);
-        expect(game.filled(model, g.state).length).toBe(2);
-    });
-
-    // A reveal changes the board too, and it is paid for: the confirming tap must not wipe it
-    test("a level 3 reveal between the two taps disarms the reset", async () => {
-        const reveal: ServedHint = {
-            hint: { technique: 1, focus: [4], target: [4], conclusions: [[4, 1]] },
-            level: 3,
-            mistake: false,
-        };
-        const client = fakeClient({
-            dailyPuzzleHint: vi.fn(async () => ({
-                kind: "success",
-                hint: reveal,
-                hintsUsed: 1,
-                state: userState({ hints: [reveal] }),
-            })),
-        });
-        const g = build(userState(), client);
-        g.tap(0);
-        g.reset();
-        expect(g.resetArmed).toBe(true);
-        await g.hint();
-        expect(g.resetArmed).toBe(false);
-        g.reset();
         expect(game.filled(model, g.state).length).toBe(2);
     });
 
@@ -978,7 +895,7 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
         // the bridge over cell 1 settles that cell; cell 5 is still asked for
         g.tap(0);
         expect([...g.focus].sort()).toEqual([0, 2, 5, 8]);
-        expect(g.caption).toBeUndefined(); // level 1 has no sentence
+        expect(g.caption).toBeDefined(); // one level: every hint has its sentence
         g.tap(5);
         expect(g.focus.size).toBe(0);
     });

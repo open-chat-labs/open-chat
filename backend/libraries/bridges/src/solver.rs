@@ -63,11 +63,14 @@ pub(crate) fn solve(st: &mut State, tier: Tier, mut rec: Option<&mut Recorder>) 
     if st.solved() { Outcome::Solved } else { Outcome::Stuck }
 }
 
-/// Cells the deduction looked at: the island, then for each edge its water
-/// cells and the island at the far end.
-fn focus(st: &State, i: usize, edges: &[usize]) -> Vec<u16> {
+/// Cells the deduction looked at: the island, then for every gap around it
+/// its water cells and the island at the far end. Every gap, not just the
+/// ones the step fills: each technique reasons from the bridges on, and the
+/// room left in, all of them, so a gap an earlier step closed is a premise
+/// and must be in focus for the premise walk to find it (invariant 23).
+fn focus(st: &State, i: usize) -> Vec<u16> {
     let mut out = vec![st.islands[i].cell as u16];
-    for &e in edges {
+    for e in st.island_edges(i) {
         out.extend(st.edges[e].cells.iter().map(|&c| c as u16));
         out.push(st.islands[st.other_end(e, i)].cell as u16);
     }
@@ -176,7 +179,7 @@ fn stage1(st: &mut State, i: usize, rec: &mut Option<&mut Recorder>) -> Result<b
             rec,
             i,
             Technique::AllSpacesNeeded,
-            |st| focus(st, i, &touched),
+            |st| focus(st, i),
             |st| vec![st.islands[i].cell as u16],
         );
         Ok(true)
@@ -198,7 +201,7 @@ fn stage1(st: &mut State, i: usize, rec: &mut Option<&mut Recorder>) -> Result<b
             rec,
             i,
             Technique::OneEachWay,
-            |st| focus(st, i, &considered),
+            |st| focus(st, i),
             |st| vec![st.islands[i].cell as u16],
         );
         Ok(true)
@@ -231,7 +234,7 @@ fn stage2(st: &mut State, i: usize, rec: &mut Option<&mut Recorder>) -> bool {
         rec,
         i,
         Technique::NeedsNeighbour,
-        |st| focus(st, i, &considered),
+        |st| focus(st, i),
         |st| {
             let mut out = vec![st.islands[i].cell as u16];
             out.extend(forced.iter().map(|&e| st.islands[st.other_end(e, i)].cell as u16));

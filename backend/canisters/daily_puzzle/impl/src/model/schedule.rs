@@ -166,24 +166,19 @@ pub mod launch_checks {
     }
 
     pub fn validate_game_config(config: &GameConfig) -> Result<(), String> {
-        if !(1..=3).contains(&config.hint_prices.len()) {
-            return Err("hint_prices must have 1 to 3 entries (one per level)".to_string());
+        // One hint level, one price (#9675 H3)
+        if config.hint_prices.len() != 1 {
+            return Err("hint_prices must have exactly one entry".to_string());
         }
         if !(1..=10).contains(&config.max_hints) {
             return Err("max_hints must be within 1..=10".to_string());
         }
-        for (i, price) in config.hint_prices.iter().enumerate() {
-            validate_chit_amount(&format!("hint_prices[{i}]"), *price)?;
-            // Every level costs. A free level 1 is served with no debit and no idempotency key, and
-            // hands back the free check its call spent, so it is unmetered in both currencies.
-            if i == 0 && *price == 0 {
-                return Err("hint_prices[0] must be greater than 0".to_string());
-            }
-            // An upgrade is priced at the difference between the two levels, so a flat or descending
-            // entry costs nothing: buy level 1, then take the conclusions - the answer - for free.
-            if i > 0 && *price <= config.hint_prices[i - 1] {
-                return Err(format!("hint_prices[{i}] must be greater than hint_prices[{}]", i - 1));
-            }
+        let price = config.hint_prices[0];
+        validate_chit_amount("hint_prices[0]", price)?;
+        // A free hint is served with no debit and no idempotency key, and hands back the free check
+        // its call spent, so it is unmetered in both currencies
+        if price == 0 {
+            return Err("hint_prices[0] must be greater than 0".to_string());
         }
         Ok(())
     }

@@ -29,6 +29,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Track the spawned tasks in progress using `utils::async_work` ([#9546](https://github.com/open-chat-labs/open-chat/pull/9546))
 - Serve CHAT Rooms (9x9 Tricky) on Mondays in place of Easy Light Up (7x7). A website that predates CHAT Rooms cannot draw it, so this release must follow the website release ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+- Price a daily puzzle hint at 100 CHIT, with one hint level instead of three ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+- Store with each hint the cells each of its conclusions is drawn on, so the LocalUserIndex can compare them with the hint's cells ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+- Make every hint step in Light Up, Tents, Slant and Bridges list the cells it relies on, and outline what the step is about rather than the cell it decides ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 
 ### Fixed
 

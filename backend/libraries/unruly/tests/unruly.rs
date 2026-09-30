@@ -416,3 +416,139 @@ fn the_solver_never_claims_an_unsound_grid() {
     let claimed = must_only_claim_sound_solutions::<Unruly>(unsatisfiable_descriptions());
     assert!(claimed > 100, "only {claimed} of the corpus reached the solver");
 }
+
+/// Whether `values` (keyed by cell, `EMPTY` where unknown) breaks a rule
+/// that lies wholly inside `scope`: a window of three with all three the
+/// same, or a whole line with more than its share of a value.
+fn breaks_a_rule_in(w: usize, h: usize, scope: &[usize], values: &[u8]) -> bool {
+    let inside = |k: usize| scope.contains(&k);
+    for &k in scope {
+        let (x, y) = (k % w, k / w);
+        let v = values[k];
+        if v == EMPTY {
+            continue;
+        }
+        for (dx, dy) in [(1, 0), (0, 1)] {
+            if x + 2 * dx >= w || y + 2 * dy >= h {
+                continue;
+            }
+            let (k2, k3) = (k + dx + dy * w, k + 2 * (dx + dy * w));
+            if inside(k2) && inside(k3) && values[k2] == v && values[k3] == v {
+                return true;
+            }
+        }
+    }
+    let rows = (0..h).map(|y| (0..w).map(|x| y * w + x).collect::<Vec<_>>());
+    let cols = (0..w).map(|x| (0..h).map(|y| y * w + x).collect::<Vec<_>>());
+    rows.chain(cols).filter(|line| line.iter().all(|&k| inside(k))).any(|line| {
+        [VALUE_A, VALUE_B]
+            .iter()
+            .any(|&v| line.iter().filter(|&&k| values[k] == v).count() > line.len() / 2)
+    })
+}
+
+/// Every filling of the scope's empty cells that breaks no rule lying
+/// wholly inside the scope, by backtracking over them in order.
+fn fillings(w: usize, h: usize, scope: &[usize], values: &mut Vec<u8>, empty: &[usize], out: &mut Vec<Vec<u8>>) {
+    if breaks_a_rule_in(w, h, scope, values) {
+        return;
+    }
+    let Some((&k, rest)) = empty.split_first() else {
+        out.push(values.clone());
+        return;
+    };
+    for v in [VALUE_A, VALUE_B] {
+        values[k] = v;
+        fillings(w, h, scope, values, rest, out);
+    }
+    values[k] = EMPTY;
+}
+
+/// Invariant 23: every step lists in its focus every cell it relies on.
+/// The LocalUserIndex's premise walk (#9588) serves a hint's premises by
+/// following its focus, so a cell left out is one the player can be
+/// missing while the hint reads as proven. Checked structurally: with the
+/// board before the step cut down to the focus, and only the rules that
+/// lie wholly inside the focus (a window of three, a whole line's count),
+/// every filling of the focus's empty cells agrees with the conclusions.
+#[test]
+fn every_step_follows_from_its_focus() {
+    for p in playable() {
+        for seed in 0..5 {
+            let g = generate(seed, p).unwrap();
+            let d = parse_description(&g.description).unwrap();
+            let (w, h) = (d.width as usize, d.height as usize);
+            let mut board = d.givens.clone();
+            for (i, step) in g.hints.iter().enumerate() {
+                let ctx = format!("{p:?} seed {seed} step {i} ({:?})", step.technique);
+                let scope: Vec<usize> = step.focus.iter().map(|&k| k as usize).collect();
+                for &(k, _) in &step.conclusions {
+                    assert!(scope.contains(&(k as usize)), "{ctx}: conclusion {k} is outside the focus");
+                }
+                let mut values = vec![EMPTY; w * h];
+                for &k in &scope {
+                    values[k] = board[k];
+                }
+                let empty: Vec<usize> = scope.iter().copied().filter(|&k| board[k] == EMPTY).collect();
+                let mut out = Vec::new();
+                fillings(w, h, &scope, &mut values, &empty, &mut out);
+                assert!(!out.is_empty(), "{ctx}: the focus admits no filling at all");
+                for filling in &out {
+                    for &(k, v) in &step.conclusions {
+                        assert_eq!(
+                            filling[k as usize], v,
+                            "{ctx}: the focus alone does not force cell {k}; the step relies on a cell outside it"
+                        );
+                    }
+                }
+                for &(k, v) in &step.conclusions {
+                    board[k as usize] = v;
+                }
+            }
+        }
+    }
+}
+
+/// Writes the hint steps of a spread of generated puzzles to the client's
+/// fixture, which `unruly.spec.ts` reads to check every step gets a
+/// sentence naming the right row or column and colour (invariant 24). Run
+/// by hand when the solver's steps change:
+/// `cargo test -p unruly --test unruly write_hint_fixture -- --ignored`
+#[test]
+#[ignore]
+fn write_hint_fixture() {
+    let mut entries = Vec::new();
+    for (w, h, tier, seeds) in [
+        (6u8, 6u8, Tier::Easy, 0..2u64),
+        (8, 8, Tier::Easy, 0..4),
+        (8, 6, Tier::Tricky, 0..2),
+        (6, 8, Tier::Tricky, 0..2),
+        (8, 8, Tier::Tricky, 0..3),
+        (10, 10, Tier::Tricky, 0..2),
+    ] {
+        for seed in seeds {
+            let g = generate(seed, params(w, h, tier)).unwrap();
+            let steps: Vec<String> = g
+                .hints
+                .iter()
+                .map(|h| {
+                    format!(
+                        "{{\"technique\":{},\"focus\":{:?},\"target\":{:?},\"conclusions\":{:?}}}",
+                        u8::from(h.technique),
+                        h.focus,
+                        h.target,
+                        h.conclusions.iter().map(|&(k, v)| [k as u32, v as u32]).collect::<Vec<_>>()
+                    )
+                })
+                .collect();
+            entries.push(format!(
+                "{{\"description\":\"{}\",\"steps\":[{}]}}",
+                hex(&g.description),
+                steps.join(",")
+            ));
+        }
+    }
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../../frontend/openchat-shared/src/utils/dailyGames/unrulyHints.json");
+    std::fs::write(path, format!("[{}]\n", entries.join(","))).unwrap();
+}

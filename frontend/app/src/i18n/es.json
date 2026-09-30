@@ -686,9 +686,8 @@
         "unavailable": "Ahora mismo no hay ningún puzle disponible.",
         "startFree": "Empezar (el primer puzle es gratis)",
         "startFee": "Empezar por {fee} CHIT",
-        "hintFree": "Pista (nivel {level})",
-        "hintPrice": "Pista (nivel {level}, {price} CHIT)",
         "hintsUsed": "{count} pistas",
+        "hintCost": "Pista ({price} CHIT)",
         "hintsLeft": "Quedan {count}",
         "noHintsLeft": "No quedan pistas para el puzle de hoy",
         "streakDays": "Racha de {streak} días",
@@ -709,7 +708,6 @@
         "fixMistakeFirst": "Corrige primero las casillas rojas",
         "noFreeChecks": "No quedan comprobaciones gratis para el puzle de hoy",
         "checksLeft": "Quedan {count} comprobaciones",
-        "revealed": "Rellenado por ti.",
         "reset": "Reiniciar",
         "resetConfirm": "¿Vaciar el tablero?",
         "replaced": "Este puzle ha sido sustituido. Aquí tienes el nuevo.",
@@ -738,6 +736,24 @@
                     "4": "Ninguna isla puede pasarse de su número. Esta necesita tres puentes y tiene cuatro.",
                     "5": "Un puente por el lado en vez de dos, y ya tiene sus tres.",
                     "6": "Todos los números cuadran y todas las islas están unidas al resto. Con eso queda terminado."
+                },
+                "hint": {
+                    "allSpaces": {
+                        "plain": "El {n} de la fila {row}, columna {column} necesita todos los puentes que aún caben a su alrededor para llegar a {n}. Así que cada hueco ? que siga abierto lleva tantos puentes como quepan.",
+                        "fresh": "El {n} de la fila {row}, columna {column} necesita {n} puentes, y entre todos sus huecos no caben más de {n}. Así que cada hueco ? lleva tantos puentes como quepan.",
+                        "closed": "Alrededor del {n} de la fila {row}, columna {column}, los huecos que no están cruzados ni descartados ni terminan en una isla completa no admiten más de {n} puentes entre todos. Así que cada uno de esos huecos ? lleva tantos puentes como quepan.",
+                        "more": "Al {n} de la fila {row}, columna {column} aún le faltan {need} puentes, y los huecos a su alrededor que aún no están decididos ni cruzados ni terminan en una isla completa no admiten más de {need} entre todos. Así que cada uno de esos huecos ? lleva tantos puentes como quepan."
+                    },
+                    "oneEachWay": {
+                        "plain": "El {n} de la fila {row}, columna {column} es demasiado grande para dejar fuera a algún vecino al que aún puede llegar: los demás nunca llegarían a {n}. Así que cada hueco ? que siga abierto necesita al menos un puente.",
+                        "count": "El {n} de la fila {row}, columna {column} aún puede llegar a {count} vecinos. Si dejas fuera a cualquiera de ellos, los demás admiten como mucho {max} puentes, menos de {n}. Así que cada hueco ? que siga abierto necesita al menos un puente."
+                    },
+                    "needsNeighbour": {
+                        "many": "Algunos huecos alrededor del {n} de la fila {row}, columna {column} no pueden quedar vacíos: sin un puente en cualquiera de ellos, el resto no podría llegar a {n}. Así que cada uno de esos huecos ? necesita al menos un puente.",
+                        "one": "Sin un puente hacia el {m} de la fila {mrow}, columna {mcolumn}, los demás huecos alrededor del {n} de la fila {row}, columna {column} admiten como mucho {max} puentes, menos de {n}. Así que el hueco ? entre ellos necesita al menos un puente.",
+                        "onePlain": "Los demás huecos alrededor del {n} de la fila {row}, columna {column} no pueden llegar a {n} sin un puente hacia el {m} de la fila {mrow}, columna {mcolumn}. Así que el hueco ? entre ellos necesita al menos un puente.",
+                        "two": "Los demás huecos alrededor del {n} de la fila {row}, columna {column} no pueden llegar a {n} sin un puente hacia el {a} de la fila {arow}, columna {acolumn}, ni sin uno hacia el {b} de la fila {brow}, columna {bcolumn}. Así que esos dos huecos ? necesitan al menos un puente cada uno."
+                    }
                 }
             },
             "light_up": {
@@ -756,6 +772,22 @@
                     "4": "Esta esquina sigue a oscuras y nada más puede llegar a ella, así que necesita su propia bombilla.",
                     "5": "Ninguna bombilla puede alumbrar a otra. Estas dos están en la misma columna sin nada en medio.",
                     "6": "Todas las casillas blancas están iluminadas, el 4 tiene sus cuatro bombillas y ninguna bombilla alumbra a otra."
+                },
+                "hint": {
+                    "onlyWay": {
+                        "cell": "Todas las casillas que podrían iluminar la casilla recuadrada de la fila {row}, columna {column} ya están iluminadas o descartadas, salvo la casilla ?. Así que la casilla ? necesita una bombilla.",
+                        "self": "Todas las casillas que podrían iluminar la casilla recuadrada de la fila {row}, columna {column} ya están iluminadas o descartadas, así que necesita su propia bombilla."
+                    },
+                    "clueSatisfied": {
+                        "some": "El {number} de la fila {row}, columna {column} ya tiene junto a él todas las bombillas que pide, así que ninguna casilla ? junto a él puede tener una bombilla.",
+                        "zero": "El 0 de la fila {row}, columna {column} no puede tener ninguna bombilla junto a él, así que ninguna casilla ? junto a él puede tener una."
+                    },
+                    "clueForced": "Al {number} de la fila {row}, columna {column} le quedan junto a él justo las casillas necesarias para las bombillas que aún le faltan, así que cada casilla ? junto a él necesita una bombilla.",
+                    "setExclusion": {
+                        "dark": "Solo las casillas recuadradas pueden iluminar aún la casilla de la fila {row}, columna {column}, así que una de ellas debe tener una bombilla. Una bombilla en la casilla ? las descartaría todas, alumbrándolas o completando un número a su lado. Así que la casilla ? no puede tener una bombilla.",
+                        "clue": "Las casillas recuadradas junto al {number} de la fila {row}, columna {column} son todo lo que le queda para sus bombillas. Una bombilla en la casilla ? descartaría demasiadas, alumbrándolas o completando otro número, y al {number} le faltarían bombillas. Así que la casilla ? no puede tener una bombilla.",
+                        "clueBeside": "La casilla ? y las casillas recuadradas junto al {number} de la fila {row}, columna {column} son todo lo que le queda para sus bombillas. Una bombilla en la casilla ? descartaría demasiadas de las recuadradas, alumbrándolas o completando otro número, y al {number} le faltarían bombillas. Así que la casilla ? no puede tener una bombilla."
+                    }
                 }
             },
             "loopy": {
@@ -800,6 +832,30 @@
                     "4": "Esta esquina necesita cuatro, así que las cuatro casillas a su alrededor tienen que apuntar hacia ella. Solo hay una forma de hacerlo.",
                     "5": "Estas cuatro se han unido formando un anillo cerrado. Los anillos no están permitidos, así que una de ellas debe inclinarse hacia el otro lado.",
                     "6": "Todas las casillas rellenas, todos los números cumplidos y ningún anillo."
+                },
+                "hint": {
+                    "satisfied": {
+                        "some": "El {clue} recuadrado ya tiene todas las líneas que necesita, así que cada casilla ? a su alrededor debe inclinarse en sentido contrario a él.",
+                        "zero": "El {clue} recuadrado no puede tocar ninguna línea, así que cada casilla ? a su alrededor debe inclinarse en sentido contrario a él."
+                    },
+                    "forced": {
+                        "all": "El {clue} recuadrado necesita una línea de cada casilla a su alrededor, así que cada casilla ? debe inclinarse hacia él.",
+                        "one": "El {clue} recuadrado aún necesita 1 línea, y solo queda vacía una casilla a su alrededor, así que la casilla ? debe inclinarse hacia él.",
+                        "many": "El {clue} recuadrado aún necesita {needed} líneas, y solo quedan vacías {needed} casillas a su alrededor, así que cada casilla ? debe inclinarse hacia él."
+                    },
+                    "paired": {
+                        "away": "Las dos casillas recuadradas deben inclinarse igual, así que entre las dos le dan exactamente una línea al {clue} recuadrado. Es todo lo que aún necesita, así que cada casilla ? a su alrededor debe inclinarse en sentido contrario a él.",
+                        "towards": "Las dos casillas recuadradas deben inclinarse igual, así que entre las dos le dan exactamente una línea al {clue} recuadrado. Después de eso aún necesita {needed} más, así que cada casilla ? a su alrededor debe inclinarse hacia él."
+                    },
+                    "loop": {
+                        "backslash": "Las esquinas superior izquierda e inferior derecha de la casilla recuadrada ya están unidas por una cadena de líneas, así que una línea entre ellas cerraría un bucle. La casilla debe inclinarse de la esquina inferior izquierda a la superior derecha.",
+                        "slash": "Las esquinas inferior izquierda y superior derecha de la casilla recuadrada ya están unidas por una cadena de líneas, así que una línea entre ellas cerraría un bucle. La casilla debe inclinarse de la esquina superior izquierda a la inferior derecha."
+                    },
+                    "deadEnd": {
+                        "backslash": "Las esquinas recuadradas pertenecen a dos grupos de líneas, uno en la esquina superior izquierda de la casilla recuadrada y otro en su esquina inferior derecha. Ninguno llega al borde, y cada uno puede crecer como mucho una línea más. Unidos, formarían un grupo que nunca podría llegar al borde, y eso solo ocurre dentro de un bucle. Así que la casilla debe inclinarse de la esquina inferior izquierda a la superior derecha.",
+                        "slash": "Las esquinas recuadradas pertenecen a dos grupos de líneas, uno en la esquina inferior izquierda de la casilla recuadrada y otro en su esquina superior derecha. Ninguno llega al borde, y cada uno puede crecer como mucho una línea más. Unidos, formarían un grupo que nunca podría llegar al borde, y eso solo ocurre dentro de un bucle. Así que la casilla debe inclinarse de la esquina superior izquierda a la inferior derecha."
+                    },
+                    "equivalent": "Los números entre la casilla recuadrada y la casilla rellena de la fila {row}, columna {column} solo pueden cumplirse si las dos se inclinan igual, así que la casilla recuadrada debe copiarla."
                 }
             },
             "tents": {
@@ -822,6 +878,39 @@
                     "4": "Las tiendas nunca se tocan, ni siquiera por una esquina. Estas dos se tocan, así que una tiene que moverse.",
                     "5": "Solo queda libre una casilla junto a este árbol, así que su tienda va ahí.",
                     "6": "Cada árbol tiene una tienda al lado, ninguna tienda toca a otra y todos los números cuadran."
+                },
+                "hint": {
+                    "noFreeTree": {
+                        "none": "No hay ningún árbol justo encima, debajo o al lado de la casilla ?, así que una tienda ahí no tendría ningún árbol al que pertenecer.",
+                        "one": "El único árbol junto a la casilla ? ya tiene su propia tienda, así que una tienda en la casilla ? no tendría ningún árbol al que pertenecer.",
+                        "many": "Los {count} árboles junto a la casilla ? ya tienen todos su propia tienda, así que una tienda en la casilla ? no tendría ningún árbol al que pertenecer."
+                    },
+                    "tentTouches": {
+                        "one": "La casilla ? toca la tienda recuadrada, y las tiendas nunca se tocan, ni siquiera por una esquina. Así que la casilla ? no puede tener una tienda.",
+                        "many": "La casilla ? toca las tiendas recuadradas, y las tiendas nunca se tocan, ni siquiera por una esquina. Así que la casilla ? no puede tener una tienda."
+                    },
+                    "treeNeedsTent": "Todas las demás casillas junto al árbol recuadrado están ocupadas o descartadas, así que su tienda debe ir en la casilla ?.",
+                    "treeCorner": "La tienda del árbol recuadrado debe ir en una de las dos casillas recuadradas junto a él, y ambas tocan la casilla ?. Sea cual sea, la casilla ? no puede tener una tienda.",
+                    "lineCount": {
+                        "row": "El número de la fila {line} es {count}. Coloques como coloques las tiendas que le faltan en sus casillas vacías, sin que dos se toquen, cada casilla ? sale igual todas las veces, con tienda o sin ella. Así que puedes rellenarlas.",
+                        "column": "El número de la columna {line} es {count}. Coloques como coloques las tiendas que le faltan en sus casillas vacías, sin que dos se toquen, cada casilla ? sale igual todas las veces, con tienda o sin ella. Así que puedes rellenarlas."
+                    },
+                    "lineNeighbour": {
+                        "row": "El número de la fila {line} es {count}. Coloques como coloques las tiendas que le faltan en sus casillas vacías, sin que dos se toquen, una de ellas siempre toca cada casilla ?. Así que las casillas ? no pueden tener una tienda.",
+                        "column": "El número de la columna {line} es {count}. Coloques como coloques las tiendas que le faltan en sus casillas vacías, sin que dos se toquen, una de ellas siempre toca cada casilla ?. Así que las casillas ? no pueden tener una tienda."
+                    },
+                    "lineExact": {
+                        "row": "Todas las casillas de la fila {line} salvo las casillas ? ya tienen una tienda o no pueden tener una, y a la fila aún le faltan {missing} tiendas. Así que cada casilla ? es una tienda.",
+                        "rowOne": "Todas las casillas de la fila {line} salvo la casilla ? ya tienen una tienda o no pueden tener una, y a la fila aún le falta una tienda. Así que la casilla ? es una tienda.",
+                        "column": "Todas las casillas de la columna {line} salvo las casillas ? ya tienen una tienda o no pueden tener una, y a la columna aún le faltan {missing} tiendas. Así que cada casilla ? es una tienda.",
+                        "columnOne": "Todas las casillas de la columna {line} salvo la casilla ? ya tienen una tienda o no pueden tener una, y a la columna aún le falta una tienda. Así que la casilla ? es una tienda."
+                    },
+                    "lineFull": {
+                        "row": "El número de la fila {line} es {count}, y ya tiene esas tiendas. Así que ninguna de las casillas ? puede tener una.",
+                        "rowZero": "El número de la fila {line} es 0, así que ninguna de las casillas ? puede tener una tienda.",
+                        "column": "El número de la columna {line} es {count}, y ya tiene esas tiendas. Así que ninguna de las casillas ? puede tener una.",
+                        "columnZero": "El número de la columna {line} es 0, así que ninguna de las casillas ? puede tener una tienda."
+                    }
                 }
             },
             "unruly": {
@@ -840,6 +929,32 @@
                     "3": "Cada fila y columna acaba con tres de cada color. Esta fila tiene cuatro morados.",
                     "4": "Dos naranjas con un hueco. Naranja en medio haría tres, así que tiene que ser morado.",
                     "5": "Todas las casillas rellenas, ninguna serie de tres y tres de cada color en cada fila y columna."
+                },
+                "hint": {
+                    "pairEnd": {
+                        "row": "Las casillas recuadradas de la fila {line} están una al lado de la otra y ambas son de color {colour}. Si la casilla ? también fuera de color {colour}, habría tres de color {colour} seguidas, así que debe ser de color {other}.",
+                        "column": "Las casillas recuadradas de la columna {line} están una encima de la otra y ambas son de color {colour}. Si la casilla ? también fuera de color {colour}, habría tres de color {colour} seguidas, así que debe ser de color {other}."
+                    },
+                    "pairGap": {
+                        "row": "Las casillas recuadradas de la fila {line} son ambas de color {colour}, con la casilla ? entre ellas. Si también fuera de color {colour}, habría tres de color {colour} seguidas, así que debe ser de color {other}.",
+                        "column": "Las casillas recuadradas de la columna {line} son ambas de color {colour}, con la casilla ? entre ellas. Si también fuera de color {colour}, habría tres de color {colour} seguidas, así que debe ser de color {other}."
+                    },
+                    "lastGap": {
+                        "row": "La fila {line} ya tiene sus {count} casillas de color {colour} y le falta una de color {other}, así que su última casilla vacía debe ser de color {other}.",
+                        "column": "La columna {line} ya tiene sus {count} casillas de color {colour} y le falta una de color {other}, así que su última casilla vacía debe ser de color {other}."
+                    },
+                    "lineFull": {
+                        "row": "La fila {line} ya tiene sus {count} casillas de color {colour}, recuadradas, así que cada casilla ? en ella debe ser de color {other}.",
+                        "column": "La columna {line} ya tiene sus {count} casillas de color {colour}, recuadradas, así que cada casilla ? en ella debe ser de color {other}."
+                    },
+                    "lastInRun": {
+                        "row": "A la fila {line} solo le falta una casilla de color {colour}, y debe ir en las casillas recuadradas de las columnas {from} a {to}: en cualquier otro sitio, esas tres serían todas de color {other}. Así que cada casilla ? debe ser de color {other}.",
+                        "column": "A la columna {line} solo le falta una casilla de color {colour}, y debe ir en las casillas recuadradas de las filas {from} a {to}: en cualquier otro sitio, esas tres serían todas de color {other}. Así que cada casilla ? debe ser de color {other}."
+                    }
+                },
+                "colour": {
+                    "1": "naranja",
+                    "2": "morado"
                 }
             },
             "chat_rooms": {
@@ -858,6 +973,43 @@
                     "3": "Cada habitación tiene un CHAT. La habitación de arriba tiene dos.",
                     "4": "Esta habitación es una sola casilla, así que su CHAT va ahí. Todas las casillas que descarta se tachan por ti.",
                     "5": "Un CHAT en cada fila, columna y habitación, y ninguno se toca."
+                },
+                "hint": {
+                    "shadow": "El CHAT de la fila {row}, columna {column} descarta todas las demás casillas de su fila, su columna y {room}, y todas las casillas que lo tocan, así que las casillas ? no pueden tener un CHAT.",
+                    "lastCell": {
+                        "row": "Todas las demás casillas de la fila {line} están descartadas, así que el CHAT de la fila {line} debe ir en la casilla ?.",
+                        "column": "Todas las demás casillas de la columna {line} están descartadas, así que el CHAT de la columna {line} debe ir en la casilla ?.",
+                        "room": "Todas las demás casillas de {room} están descartadas, así que el CHAT de esa habitación debe ir en la casilla ?.",
+                        "single": "La casilla recuadrada ocupa por sí sola {room}, así que el CHAT de esa habitación va ahí."
+                    },
+                    "confined": {
+                        "roomInRow": "Las únicas casillas que le quedan a {room} son las recuadradas, y todas están en la fila {line}. Así que el CHAT de la fila {line} debe venir de esa habitación, y las casillas ? no pueden tener uno.",
+                        "roomInColumn": "Las únicas casillas que le quedan a {room} son las recuadradas, y todas están en la columna {line}. Así que el CHAT de la columna {line} debe venir de esa habitación, y las casillas ? no pueden tener uno.",
+                        "rowInRoom": "Las únicas casillas que le quedan a la fila {line} son las recuadradas, y todas están en {room}. Así que el CHAT de esa habitación debe estar en la fila {line}, y las casillas ? no pueden tener uno.",
+                        "columnInRoom": "Las únicas casillas que le quedan a la columna {line} son las recuadradas, y todas están en {room}. Así que el CHAT de esa habitación debe estar en la columna {line}, y las casillas ? no pueden tener uno."
+                    },
+                    "pigeonhole": {
+                        "roomsInRows": "Las únicas casillas que les quedan a estas {count} habitaciones son las recuadradas, y todas están en las filas {lines}. Así que los CHAT de esas filas deben venir todos de estas habitaciones, y las casillas ? no pueden tener uno.",
+                        "roomsInColumns": "Las únicas casillas que les quedan a estas {count} habitaciones son las recuadradas, y todas están en las columnas {lines}. Así que los CHAT de esas columnas deben venir todos de estas habitaciones, y las casillas ? no pueden tener uno.",
+                        "rowsInRooms": "Las únicas casillas que les quedan a las filas {lines} son las recuadradas, y todas están en solo {count} habitaciones. Así que los CHAT de esas habitaciones deben estar todos en estas filas, y las casillas ? no pueden tener uno.",
+                        "columnsInRooms": "Las únicas casillas que les quedan a las columnas {lines} son las recuadradas, y todas están en solo {count} habitaciones. Así que los CHAT de esas habitaciones deben estar todos en estas columnas, y las casillas ? no pueden tener uno."
+                    },
+                    "blocked": {
+                        "row": "Las casillas recuadradas son todo lo que le queda a la fila {line}. Un CHAT en la casilla ? las descartaría todas, tocándolas o compartiendo su fila, columna o habitación, y la fila {line} se quedaría sin sitio para su CHAT. Así que la casilla ? no puede tener un CHAT.",
+                        "column": "Las casillas recuadradas son todo lo que le queda a la columna {line}. Un CHAT en la casilla ? las descartaría todas, tocándolas o compartiendo su fila, columna o habitación, y la columna {line} se quedaría sin sitio para su CHAT. Así que la casilla ? no puede tener un CHAT.",
+                        "room": "Las casillas recuadradas son todo lo que le queda a {room}. Un CHAT en la casilla ? las descartaría todas, tocándolas o compartiendo su fila, columna o habitación, y esa habitación se quedaría sin sitio para su CHAT. Así que la casilla ? no puede tener un CHAT."
+                    }
+                },
+                "room": {
+                    "0": "la habitación morada",
+                    "1": "la habitación naranja",
+                    "2": "la habitación azul",
+                    "3": "la habitación verde",
+                    "4": "la habitación gris",
+                    "5": "la habitación roja",
+                    "6": "la habitación amarilla",
+                    "7": "la habitación marrón",
+                    "8": "la habitación rosa"
                 }
             }
         }

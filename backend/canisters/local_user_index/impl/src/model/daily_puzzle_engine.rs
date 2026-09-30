@@ -132,15 +132,14 @@ pub struct SubmitOutcome {
 pub enum HintPrepared {
     // Free, not recorded: the user has a wrong cell
     Mistake(HintResult),
-    // Already served at this level or higher: re-served free
+    // A step this user already has: re-served free, whatever level an old client asks for
     AlreadyServed(HintResult),
     // The step is already reserved against the user by the time this is returned, so the cap
     // cannot be walked past by calls that overlap on the debit's await. Only the reservation is
     // stored: the hint itself reaches state in `confirm_hint`, once it is paid for. The endpoint
-    // calls exactly one of `confirm_hint` / `release_hint` with the same step and level.
+    // calls exactly one of `confirm_hint` / `release_hint` with the same step.
     Serve {
         step: u16,
-        level: u8,
         result: HintResult,
         price: u32,
         // The CHIT idempotency key for the debit
@@ -174,33 +173,47 @@ fn not_available() -> OCError {
     OCErrorCode::NotInitialized.with_message("not available")
 }
 
-/// The hint as the client may see it at `level`, withholding everything the player has not paid
-/// for. Level 1 highlights the region the deduction looked at. Level 2 adds the technique, so the
-/// client can render the sentence, and the keys that sentence points at. Level 3 adds the
-/// conclusions, which are the answer.
-///
-/// `technique` 0 means withheld: no game's `Technique` enum uses 0, they all start at 1.
-///
-/// `target` is dropped below level 3 when it names a key the step concludes. In three of the six
-/// games it always does (slant's forced square, tents' line rules, loopy's premature loop all set
-/// `target` to the cells they fill), and sending it would hand over the level 3 answer at the
-/// level 2 price. An empty `target` already means "paint the whole of `focus`", so the client
-/// needs no new case. `focus` is never filtered: it is a region the player can usually
-/// reconstruct from the rules, so punching the answer out of it would point straight at the
-/// answer. It is sorted, though: the generators build it in deduction order, several with the
-/// concluded key first or last, and the order would name that key below the level that sells it.
-fn hint_at_level(hint: &PuzzleHint, level: u8) -> PuzzleHint {
-    if level >= 3 {
-        return hint.clone();
+/// The level every hint is served at now (see `ServedHint::level`): one level, the step's outline
+/// and its sentence, never its answer.
+pub const HINT_LEVEL: u8 = 2;
+
+/// The keys the board draws conclusion `key` of hint `step` on (`DailyPuzzle::hint_settles`). The
+/// conclusion key itself in every game but Bridges, whose conclusions are gaps between islands
+/// while its focus and target are cells; also the fallback for puzzles pushed without the mapping.
+fn drawn_on(puzzle: &DailyPuzzle, step: usize, key: u16) -> Vec<u16> {
+    match puzzle.hint_settles.get(step).filter(|s| !s.is_empty()) {
+        Some(settles) => settles.iter().filter(|(k, _)| *k == key).map(|(_, d)| *d).collect(),
+        None => vec![key],
     }
-    let concluded: BTreeSet<u16> = hint.conclusions.iter().map(|(k, _)| *k).collect();
-    let target = hint.target.clone();
+}
+
+/// Hint `step` as the client sees it: the region the deduction looked at, the technique so the
+/// client can render its sentence, and the keys that sentence points at. Never the conclusions,
+/// which are the answer (#9675 H1).
+///
+/// `technique` 0 (in records sold before hints had one level) means withheld: no game's
+/// `Technique` enum uses 0, they all start at 1.
+///
+/// `target` is dropped when it names a key the board draws a conclusion on (#9675 H5: compared as
+/// drawn keys, so Bridges' gap conclusions are matched against its cells). Some steps point at
+/// the cells they fill, and sending that would hand over the answer. An empty `target` already
+/// means "paint the whole of `focus`", so the client needs no new case. `focus` is never filtered:
+/// it is a region the player can usually reconstruct from the rules, so punching the answer out
+/// of it would point straight at the answer. It is sorted, though: the generators build it in
+/// deduction order, several with the concluded key first or last, and the order would name it.
+fn served_hint(puzzle: &DailyPuzzle, step: usize) -> PuzzleHint {
+    let hint = &puzzle.hints[step];
+    let drawn: BTreeSet<u16> = hint
+        .conclusions
+        .iter()
+        .flat_map(|(k, _)| drawn_on(puzzle, step, *k))
+        .collect();
     let mut focus = hint.focus.clone();
     focus.sort_unstable();
     PuzzleHint {
-        technique: if level >= 2 { hint.technique } else { 0 },
+        technique: hint.technique,
         focus,
-        target: if level >= 2 && !target.iter().any(|k| concluded.contains(k)) { target } else { Vec::new() },
+        target: if hint.target.iter().any(|k| drawn.contains(k)) { Vec::new() } else { hint.target.clone() },
         conclusions: Vec::new(),
     }
 }
@@ -680,37 +693,32 @@ impl DailyPuzzleEngine {
                 .iter()
                 .any(|e| e.step as usize == step && (e.served.is_some() || e.pending_level.is_some()))
         };
+        // The premise's conclusions are compared with this step's focus as the keys the board draws
+        // them on: in Bridges a conclusion is a gap while the focus is cells (#9675 H5)
         while !started(step)
-            && let Some(premise) = puzzle.hints[..step].iter().enumerate().find(|(_, h)| {
+            && let Some(premise) = puzzle.hints[..step].iter().enumerate().find(|(i, h)| {
                 h.conclusions.iter().all(|c| c.1 == 0)
                     && h.conclusions
                         .iter()
-                        .any(|c| !filled_set.contains(c) && hint.focus.contains(&c.0))
+                        .any(|c| !filled_set.contains(c) && drawn_on(puzzle, *i, c.0).iter().any(|k| hint.focus.contains(k)))
             })
         {
             (step, hint) = premise;
         }
 
-        // A step is climbed from where it was left, never entered above level 1 (#9517 invariant
-        // 1). The client cannot tell that a level 1 or 2 step is finished, because the
-        // conclusions that would show it are withheld, so it keeps asking for the next level of a
-        // step the player has already completed. The server has moved on to a new step by then,
-        // and serving that at the asked-for level reveals something nobody asked about.
-        let level = if started(step) { level } else { 1 };
+        // One level: a step this user already has is re-served free, whatever level an old client
+        // asks for (#9675 H2), and a new one costs the one price (#9675 H3)
+        let served_step = step;
         let step = step as u16;
-
-        let price_at = |level: u8| {
-            puzzle
-                .game_config
-                .hint_prices
-                .get(level as usize - 1)
-                .copied()
-                .ok_or_else(|| OCErrorCode::InvalidRequest.with_message("level"))
-        };
-        let mut price = price_at(level)?;
+        let price = puzzle
+            .game_config
+            .hint_prices
+            .first()
+            .copied()
+            .ok_or_else(|| OCErrorCode::InvalidRequest.with_message("hint_prices"))?;
 
         match record.hints.iter().find(|e| e.step == step).and_then(|e| e.served.as_ref()) {
-            Some(served) if level <= served.level => {
+            Some(served) => {
                 return Ok(HintPrepared::AlreadyServed(HintResult {
                     hint: served.clone(),
                     hints_used: hints_paid(record),
@@ -719,11 +727,6 @@ impl DailyPuzzleEngine {
                     total_chit_earned: None,
                 }));
             }
-            // Upgrading a step already served: pay the difference, and count no new step. Charging
-            // the new level in full would make climbing the ladder dearer than jumping to the top,
-            // which punishes exactly the player the cheap tiers are there for. `hint_prices` is
-            // validated as strictly increasing, so the difference is never zero.
-            Some(served) => price = price.saturating_sub(price_at(served.level)?),
             None => {
                 if record.hints.iter().all(|e| e.step != step) && record.hint_steps_used >= puzzle.game_config.max_hints {
                     return Err(OCErrorCode::Throttled.with_message("max_hints"));
@@ -740,16 +743,15 @@ impl DailyPuzzleEngine {
         }
 
         let served = ServedHint {
-            hint: hint_at_level(hint, level),
-            level,
+            hint: served_hint(puzzle, served_step),
+            level: HINT_LEVEL,
             mistake: false,
         };
-        let key = self.hint_key(game_id, number, step, level);
-        let result = self.reserve_step(user_id, game_id, number, step, level, &served, now)?;
+        let key = self.hint_key(game_id, number, step, HINT_LEVEL);
+        let result = self.reserve_step(user_id, game_id, number, step, &served, now)?;
 
         Ok(HintPrepared::Serve {
             step,
-            level,
             result,
             price,
             key,
@@ -773,14 +775,12 @@ impl DailyPuzzleEngine {
 
     // Claims the step against `max_hints` without putting the hint itself in state. The result is
     // for this caller alone, so it carries the reserved hint as though it were already paid for.
-    #[expect(clippy::too_many_arguments)]
     fn reserve_step(
         &mut self,
         user_id: UserId,
         game_id: &str,
         number: PuzzleNumber,
         step: u16,
-        level: u8,
         served: &ServedHint,
         now: TimestampMillis,
     ) -> OCResult<HintResult> {
@@ -792,19 +792,18 @@ impl DailyPuzzleEngine {
             .ok_or_else(not_started)?;
 
         if let Some(entry) = record.hints.iter_mut().find(|e| e.step == step) {
-            // A step holds one reservation. A second call would overwrite the level the first is
-            // paying for, so `confirm_hint` would find the wrong level and drop a paid hint, or
-            // `release_hint` would delete the entry the other call is about to confirm.
+            // A step holds one reservation. A second call could otherwise `release_hint` the entry
+            // the first is about to confirm.
             if entry.pending_level.is_some() {
                 return Err(OCErrorCode::Throttled.with_message("hint in flight"));
             }
-            entry.pending_level = Some(level);
+            entry.pending_level = Some(HINT_LEVEL);
             entry.pending_since = now;
         } else {
             record.hints.push(HintEntry {
                 step,
                 served: None,
-                pending_level: Some(level),
+                pending_level: Some(HINT_LEVEL),
                 pending_since: now,
             });
             record.hint_steps_used = record.hint_steps_used.saturating_add(1);
@@ -822,37 +821,27 @@ impl DailyPuzzleEngine {
         })
     }
 
-    // Writes the paid-for hint into state. `level` is the one this call reserved: a reservation
-    // another call has since replaced is left alone. `refund_check` is the `metered` flag from
+    // Writes the paid-for hint into state. `refund_check` is the `metered` flag from
     // the reservation: the check `reserve_hint` took is given back here, once the hint has been
     // paid for, so that a debit refused for want of CHIT stays metered like every other refusal.
-    pub fn confirm_hint(
-        &mut self,
-        user_id: UserId,
-        game_id: &str,
-        number: PuzzleNumber,
-        step: u16,
-        level: u8,
-        refund_check: bool,
-    ) {
+    pub fn confirm_hint(&mut self, user_id: UserId, game_id: &str, number: PuzzleNumber, step: u16, refund_check: bool) {
         let Some(hint) = self
             .puzzles
             .get(game_id)
             .filter(|p| p.number == number)
-            .and_then(|p| p.hints.get(step as usize))
-            .map(|h| hint_at_level(h, level))
+            .filter(|p| (step as usize) < p.hints.len())
+            .map(|p| served_hint(p, step as usize))
         else {
             return;
         };
-        let Some(entry) = self.entry_pending_at(user_id, game_id, number, step, level) else {
+        let Some(entry) = self.entry_pending_at(user_id, game_id, number, step) else {
             return;
         };
         entry.pending_level = None;
-        // An upgrade only ever raises the level, and a lower one landing late must not undo it
-        if entry.served.as_ref().is_none_or(|s| s.level < level) {
+        if entry.served.is_none() {
             entry.served = Some(ServedHint {
                 hint,
-                level,
+                level: HINT_LEVEL,
                 mistake: false,
             });
         }
@@ -861,11 +850,10 @@ impl DailyPuzzleEngine {
         }
     }
 
-    // Undoes `reserve_hint` when the debit did not go through. Only this call's own reservation
-    // is dropped: a step another call has since paid for, or reserved at a different level, keeps
-    // both its hint and its place in the count.
-    pub fn release_hint(&mut self, user_id: UserId, game_id: &str, number: PuzzleNumber, step: u16, level: u8) {
-        let Some(entry) = self.entry_pending_at(user_id, game_id, number, step, level) else {
+    // Undoes `reserve_hint` when the debit did not go through. Only the reservation is dropped: a
+    // step already paid for keeps both its hint and its place in the count.
+    pub fn release_hint(&mut self, user_id: UserId, game_id: &str, number: PuzzleNumber, step: u16) {
+        let Some(entry) = self.entry_pending_at(user_id, game_id, number, step) else {
             return;
         };
         entry.pending_level = None;
@@ -911,21 +899,14 @@ impl DailyPuzzleEngine {
         record.hint_steps_used = record.hint_steps_used.saturating_sub(dropped);
     }
 
-    fn entry_pending_at(
-        &mut self,
-        user_id: UserId,
-        game_id: &str,
-        number: PuzzleNumber,
-        step: u16,
-        level: u8,
-    ) -> Option<&mut HintEntry> {
+    fn entry_pending_at(&mut self, user_id: UserId, game_id: &str, number: PuzzleNumber, step: u16) -> Option<&mut HintEntry> {
         self.user_games
             .get_mut(&user_id)
             .and_then(|m| m.get_mut(game_id))
             .filter(|r| r.number == number)?
             .hints
             .iter_mut()
-            .find(|e| e.step == step && e.pending_level == Some(level))
+            .find(|e| e.step == step && e.pending_level.is_some())
     }
 
     pub fn save_grid(
@@ -1154,6 +1135,7 @@ mod tests {
             description: vec![1, 3, 3, 0, 0, 0, 0, 0x10, 0, 0, 0, 0],
             solution: vec![1, 0, 0, 0, 0, 0, 1, 0, 1],
             solution_pairs: Vec::new(),
+            hint_settles: Vec::new(),
             hints: vec![
                 PuzzleHint {
                     technique: 1,
@@ -1423,7 +1405,7 @@ mod tests {
         assert_eq!(outcome.result.unwrap().hints_used, 0);
 
         // And the debit then fails
-        engine.release_hint(u, GAME, NUMBER, step, 1);
+        engine.release_hint(u, GAME, NUMBER, step);
         assert_eq!(engine.record(u, GAME, NUMBER).unwrap().hint_steps_used, 0);
     }
 
@@ -1503,11 +1485,10 @@ mod tests {
         let u = user(1);
         started(&mut engine, u, START);
 
-        serve(&mut engine, u, 1, &[], 25);
-        let (step, _) = serve(&mut engine, u, 2, &[], 50);
+        let (step, _) = serve(&mut engine, u, 1, &[], 25);
         for _ in 0..engine.puzzle(GAME).unwrap().config.max_free_checks + 1 {
             match engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START).unwrap() {
-                HintPrepared::AlreadyServed(r) => assert_eq!(r.hint.level, 2),
+                HintPrepared::AlreadyServed(r) => assert_eq!(r.hint.level, HINT_LEVEL),
                 _ => panic!("expected a re-serve"),
             }
         }
@@ -1554,45 +1535,40 @@ mod tests {
         let u = user(1);
         started(&mut engine, u, START);
 
-        let (step, level, metered) = match engine.reserve_hint(u, GAME, NUMBER, 1, &[(0, 1)], 25, START).unwrap() {
-            HintPrepared::Serve {
-                step, level, metered, ..
-            } => (step, level, metered),
+        let (step, metered) = match engine.reserve_hint(u, GAME, NUMBER, 1, &[(0, 1)], 25, START).unwrap() {
+            HintPrepared::Serve { step, metered, .. } => (step, metered),
             _ => panic!("expected a serve"),
         };
         assert!(metered);
         assert_eq!(state(&engine, u, START).free_checks, 1);
 
-        engine.release_hint(u, GAME, NUMBER, step, level);
+        engine.release_hint(u, GAME, NUMBER, step);
         assert_eq!(state(&engine, u, START).free_checks, 1);
         assert!(state(&engine, u, START).hints.is_empty());
 
         // Paid for, the check comes back
-        let (step, level, metered) = match engine.reserve_hint(u, GAME, NUMBER, 1, &[(0, 1)], 25, START).unwrap() {
-            HintPrepared::Serve {
-                step, level, metered, ..
-            } => (step, level, metered),
+        let (step, metered) = match engine.reserve_hint(u, GAME, NUMBER, 1, &[(0, 1)], 25, START).unwrap() {
+            HintPrepared::Serve { step, metered, .. } => (step, metered),
             _ => panic!("expected a serve"),
         };
         assert_eq!(state(&engine, u, START).free_checks, 2);
-        engine.confirm_hint(u, GAME, NUMBER, step, level, metered);
+        engine.confirm_hint(u, GAME, NUMBER, step, metered);
         assert_eq!(state(&engine, u, START).free_checks, 1);
         assert_eq!(state(&engine, u, START).hints.len(), 1);
     }
 
     // Several generators put the concluded key at a fixed place in `focus`, so its order alone
-    // would name the key the lower levels are priced to withhold
+    // would name the key a hint withholds
     #[test]
-    fn focus_is_sorted_below_level_3() {
-        let hint = PuzzleHint {
+    fn served_focus_is_sorted() {
+        let mut p = puzzle(NUMBER, true);
+        p.hints = vec![PuzzleHint {
             technique: 2,
             focus: vec![8, 1, 5],
             target: Vec::new(),
             conclusions: vec![(8, 1)],
-        };
-        assert_eq!(hint_at_level(&hint, 1).focus, vec![1, 5, 8]);
-        assert_eq!(hint_at_level(&hint, 2).focus, vec![1, 5, 8]);
-        assert_eq!(hint_at_level(&hint, 3).focus, vec![8, 1, 5]);
+        }];
+        assert_eq!(served_hint(&p, 0).focus, vec![1, 5, 8]);
     }
 
     #[test]
@@ -1980,10 +1956,9 @@ mod tests {
         started(&mut engine, u, START);
         let solution = engine.puzzle(GAME).unwrap().solution.clone();
 
-        // Two steps, bought at different levels: the penalty does not care which
+        // Two steps: the penalty applies to each
         serve(&mut engine, u, 1, &[], 25);
         serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 25);
-        serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 50);
 
         let outcome = engine.submit(u, GAME, NUMBER, &solution, START + 10_000).unwrap();
         assert_eq!(outcome.solved.reward, 150);
@@ -2031,7 +2006,7 @@ mod tests {
             Ok(HintPrepared::AlreadyServed(_)) => panic!("unexpected re-serve"),
             Err(e) => panic!("{e:?}"),
         };
-        engine.confirm_hint(u, GAME, NUMBER, step, level, metered);
+        engine.confirm_hint(u, GAME, NUMBER, step, metered);
         (step, result)
     }
 
@@ -2043,7 +2018,7 @@ mod tests {
             Ok(_) => panic!("expected a serve"),
             Err(e) => panic!("{e:?}"),
         };
-        engine.release_hint(u, GAME, NUMBER, step, 1);
+        engine.release_hint(u, GAME, NUMBER, step);
         step
     }
 
@@ -2324,13 +2299,12 @@ mod tests {
 
         // The player takes the X at 3 back off: the premise is outstanding again
         match engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START).unwrap() {
-            HintPrepared::AlreadyServed(r) => assert_eq!(r.hint.level, 1),
+            HintPrepared::AlreadyServed(r) => {
+                assert_eq!(r.hint.hint.focus, vec![3, 5]);
+                assert_eq!(r.hints_used, 1);
+            }
             _ => panic!("expected the bought step re-served"),
         }
-        // And climbing it is still an upgrade of that step, not a new one
-        let (upgraded, r) = serve(&mut engine, u, 2, &[], 50);
-        assert_eq!(upgraded, 1);
-        assert_eq!(r.hints_used, 1);
 
         // A bought premise part way along the walk stops it there
         let mut engine = engine_with_hints(vec![
@@ -2367,84 +2341,25 @@ mod tests {
         assert_eq!(engine.record(u, GAME, NUMBER).unwrap().hint_steps_used, 1);
     }
 
-    /// #9588 invariant 4 with #9517 invariant 1: the level is settled on the step the walk ends
-    /// on, so a premise already bought climbs like any other step
     #[test]
-    fn hint_bought_premise_climbs_its_own_ladder() {
-        let mut engine = engine_with_hints(vec![hint(2, &[3], &[], &[(3, 0)]), hint(3, &[3, 5], &[], &[(5, 1)])]);
-        let u = user(1);
-        started(&mut engine, u, START);
-
-        let (step, _) = serve(&mut engine, u, 1, &[], 25);
-        assert_eq!(step, 0);
-        let (step, r) = serve(&mut engine, u, 2, &[], 50);
-        assert_eq!(step, 0);
-        assert_eq!(r.hint.level, 2);
-        assert_eq!(r.hints_used, 1);
-    }
-
-    #[test]
-    fn hint_upgrade_charges_the_difference_and_keeps_step_count() {
+    fn hint_new_step_after_cap_errors_but_a_step_already_served_is_re_served() {
         let mut engine = new_engine();
         let u = user(1);
         started(&mut engine, u, START);
 
-        let (step, r) = serve(&mut engine, u, 1, &[], 25);
-        assert_eq!(r.hints_used, 1);
-        assert_eq!(r.hint.level, 1);
-
-        // Upgrading that step to level 3 costs 200 - 25, not 200, and counts no new step
-        assert_err(
-            engine.reserve_hint(u, GAME, NUMBER, 3, &[], 200, START),
-            OCErrorCode::PriceMismatch,
-        );
-        let (upgraded, r) = serve(&mut engine, u, 3, &[], 175);
-        assert_eq!(upgraded, step);
-        assert_eq!(r.hints_used, 1);
-        assert_eq!(r.hint.level, 3);
-        let state = state(&engine, u, START);
-        assert_eq!(state.hints.len(), 1);
-        assert_eq!(state.hints[0].level, 3);
-
-        // Asking for a lower level of the same step re-serves it free, no price check
-        match engine.reserve_hint(u, GAME, NUMBER, 2, &[], 999, START).unwrap() {
-            HintPrepared::AlreadyServed(r) => assert_eq!(r.hint.level, 3),
-            _ => panic!("expected a re-serve"),
-        }
-    }
-
-    #[test]
-    fn hint_new_step_after_cap_errors_but_upgrades_still_work() {
-        let mut engine = new_engine();
-        let u = user(1);
-        started(&mut engine, u, START);
-
+        // max_hints is 2
         serve(&mut engine, u, 1, &[], 25);
         serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 25);
-
-        // max_hints = 2: a third step is refused, an upgrade of a served step still works
         assert_err(
             engine.reserve_hint(u, GAME, NUMBER, 1, &[(0, 1), (2, 0), (6, 1)], 25, START),
             OCErrorCode::Throttled,
         );
-        let (step, _) = serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 50);
-        assert_eq!(step, 1);
-
-        assert_err(
-            engine.reserve_hint(u, GAME, NUMBER, 0, &[], 0, START),
-            OCErrorCode::InvalidRequest,
-        );
-        assert_err(
-            engine.reserve_hint(u, GAME, NUMBER, 4, &[], 0, START),
-            OCErrorCode::InvalidRequest,
-        );
-        let too_many = vec![(0u16, 1u8); engine.puzzle(GAME).unwrap().solution.len() + 1];
-        assert_err(
-            engine.reserve_hint(u, GAME, NUMBER, 1, &too_many, 0, START),
-            OCErrorCode::InvalidRequest,
-        );
+        // Taking the marks back off asks for step 0 again, which the user already has
+        match engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START).unwrap() {
+            HintPrepared::AlreadyServed(r) => assert_eq!(r.hints_used, 2),
+            _ => panic!("expected a re-serve"),
+        }
     }
-
     #[test]
     fn hint_refused_before_start_and_after_solve() {
         let mut engine = new_engine();
@@ -2462,93 +2377,101 @@ mod tests {
         );
     }
 
+    /// #9675 H1: one purchase is the step's outline and sentence, whatever level an old client asks
+    /// for, and never its answer. A target naming a key the step concludes is withheld.
     #[test]
-    fn hint_levels_withhold_what_has_not_been_paid_for() {
+    fn a_hint_is_the_outline_and_sentence_never_the_answer() {
         let mut engine = DailyPuzzleEngine::default();
         let mut p = puzzle(NUMBER, true);
-        // Step 0's target points at its own conclusion, as slant, tents and loopy steps do; step
-        // 1's points elsewhere, as light_up's do
+        // Step 0's target points at its own conclusion; step 1's points elsewhere
         p.hints[0].target = vec![0];
         p.hints[1].target = vec![1];
         engine.set_puzzles(vec![p]);
         let u = user(1);
         started(&mut engine, u, START);
 
-        let (_, r) = serve(&mut engine, u, 1, &[], 25);
-        assert_eq!(r.hint.hint.technique, 0);
+        let (_, r) = serve(&mut engine, u, 3, &[], 25);
+        assert_eq!(r.hint.level, HINT_LEVEL);
+        assert_eq!(r.hint.hint.technique, 1);
         assert!(r.hint.hint.target.is_empty());
         assert!(r.hint.hint.conclusions.is_empty());
         assert_eq!(r.hint.hint.focus, vec![4]);
 
-        // Level 2 buys the technique, but not a target that names what the step concludes
-        let (_, r) = serve(&mut engine, u, 2, &[], 50);
-        assert_eq!(r.hint.hint.technique, 1);
-        assert!(r.hint.hint.target.is_empty());
-        assert!(r.hint.hint.conclusions.is_empty());
-
-        // Level 3 is the whole thing
-        let (_, r) = serve(&mut engine, u, 3, &[], 125);
-        assert_eq!(r.hint.hint.technique, 1);
-        assert_eq!(r.hint.hint.target, vec![0]);
-        assert_eq!(r.hint.hint.conclusions, vec![(0, 1), (2, 0)]);
-
-        // A target that names something other than the conclusion survives at level 2
-        serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 25);
-        let (_, r) = serve(&mut engine, u, 2, &[(0, 1), (2, 0)], 50);
+        let (_, r) = serve(&mut engine, u, 1, &[(0, 1), (2, 0)], 25);
         assert_eq!(r.hint.hint.technique, 2);
         assert_eq!(r.hint.hint.target, vec![1]);
         assert!(r.hint.hint.conclusions.is_empty());
+        for served in state(&engine, u, START).hints {
+            assert!(served.hint.conclusions.is_empty());
+            assert_eq!(served.level, HINT_LEVEL);
+        }
     }
 
-    /// #9517 invariant 1: a step is served above level 1 only once it has been served at a lower
-    /// level, or its level 1 is still being paid for. The client keeps climbing a finished step's
-    /// ladder because it cannot see that the step is done, and by then the server has picked a
-    /// new one. Both rungs are checked: level 3 after a level 2 step, level 2 after a level 1 one.
+    /// #9675 H2: a step the user already has is re-served free, whatever level is asked for, and
+    /// takes no new place against the cap.
     #[test]
-    fn hint_new_step_is_served_at_level_1_whatever_level_is_asked() {
-        for (asked, upgrade_price) in [(3u8, 125u32), (2, 50)] {
-            let mut engine = new_engine();
-            let u = user(1);
-            started(&mut engine, u, START);
-
-            // Step 0 served up to the level below the one asked for, then finished by the player
-            for level in 1..asked {
-                serve(&mut engine, u, level, &[], if level == 1 { 25 } else { 50 });
-            }
-            let finished = [(0, 1), (2, 0)];
-
-            // The client asks for the next level at the upgrade price. Step 1 is new, so it is
-            // level 1 and the quote says so.
-            let quoted = match engine.reserve_hint(u, GAME, NUMBER, asked, &finished, upgrade_price, START) {
-                Err(e) => e,
-                Ok(_) => panic!("expected a price mismatch asking for level {asked}"),
-            };
-            assert!(quoted.matches_code(OCErrorCode::PriceMismatch));
-            assert_eq!(quoted.message(), Some("25"), "asking for level {asked}");
-
-            let (step, r) = serve(&mut engine, u, asked, &finished, 25);
-            assert_eq!(step, 1);
-            assert_eq!(r.hint.level, 1, "asking for level {asked}");
-            assert_eq!(r.hint.hint.technique, 0);
-            assert!(r.hint.hint.conclusions.is_empty());
-            assert_eq!(r.hints_used, 2);
-        }
-
-        // A step whose level 1 is in flight counts as started: a second call for level 2 is not
-        // turned into a fresh level 1 purchase, it is refused as a reservation in flight
+    fn asking_again_for_a_step_is_free_whatever_the_level() {
         let mut engine = new_engine();
         let u = user(1);
         started(&mut engine, u, START);
-        assert!(matches!(
-            engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START),
-            Ok(HintPrepared::Serve { .. })
-        ));
-        assert_err(
-            engine.reserve_hint(u, GAME, NUMBER, 2, &[], 75, START),
-            OCErrorCode::Throttled,
-        );
+
+        let (step, first) = serve(&mut engine, u, 1, &[], 25);
+        for level in 1..=3 {
+            match engine.reserve_hint(u, GAME, NUMBER, level, &[], 25, START).unwrap() {
+                HintPrepared::AlreadyServed(r) => assert_eq!(r.hint, first.hint),
+                _ => panic!("expected step {step} re-served at level {level}"),
+            }
+        }
+        assert_eq!(engine.record(u, GAME, NUMBER).unwrap().hint_steps_used, 1);
     }
 
+    /// #9675 H3: every new step costs the one price, whatever level an old client asks for, and the
+    /// price quoted back on a mismatch is that price.
+    #[test]
+    fn every_new_step_costs_the_one_price_whatever_the_level() {
+        let mut engine = new_engine();
+        let u = user(1);
+        started(&mut engine, u, START);
+        let price = engine.puzzle(GAME).unwrap().game_config.hint_prices[0];
+
+        for level in [2, 3] {
+            let Err(error) = engine.reserve_hint(u, GAME, NUMBER, level, &[], price + 50, START) else {
+                panic!("a price other than the one price should be refused");
+            };
+            assert!(error.matches_code(OCErrorCode::PriceMismatch), "{error:?}");
+        }
+        let (_, r) = serve(&mut engine, u, 3, &[], price);
+        assert!(!r.hint.mistake);
+        let (_, _) = serve(&mut engine, u, 2, &[(0, 1), (2, 0)], price);
+        assert_eq!(engine.record(u, GAME, NUMBER).unwrap().hint_steps_used, 2);
+    }
+
+    /// #9675 H5: in Bridges a conclusion is a gap between islands while focus and target are
+    /// cells. Target withholding and the premise walk compare the cells the board draws a
+    /// conclusion on (`DailyPuzzle::hint_settles`), not the gap key itself.
+    #[test]
+    fn bridges_conclusions_are_compared_as_the_cells_they_are_drawn_on() {
+        let mut p = puzzle(NUMBER, true);
+        // Gap keys 100 and 101 are drawn on cells 1 and 3. Step 0 rules gap 100 out; step 1 rests
+        // on it (its focus holds cell 1) and puts a bridge on gap 101, drawn on cell 3, which is
+        // also its target.
+        p.hints = vec![hint(2, &[0, 1], &[0], &[(100, 0)]), hint(1, &[1, 3, 4], &[3, 4], &[(101, 1)])];
+        p.hint_settles = vec![vec![(100, 1)], vec![(101, 3)]];
+        p.solution_pairs = vec![(100, 0), (101, 1)];
+        let mut engine = DailyPuzzleEngine::default();
+        engine.set_puzzles(vec![p.clone()]);
+        let u = user(1);
+        started(&mut engine, u, START);
+
+        // The premise is outstanding, so it is served first, though its gap key is in no focus
+        assert_eq!(probe(&mut engine, u, &[]), 0);
+        // Step 1's target names cell 3, where its conclusion is drawn, so it is withheld
+        assert!(served_hint(&p, 1).target.is_empty());
+        // Without the mapping (a puzzle pushed before it existed) the gap keys are compared as they
+        // are, as before
+        p.hint_settles = Vec::new();
+        assert_eq!(served_hint(&p, 1).target, vec![3, 4]);
+    }
     // One wrong key, never the set: `filled` is client-supplied and can cover the whole board, so
     // returning every disagreement would answer the puzzle in a single free call
     #[test]
@@ -2625,7 +2548,7 @@ mod tests {
         );
 
         // A failed debit puts the step back, budget included
-        engine.release_hint(u, GAME, NUMBER, step, 1);
+        engine.release_hint(u, GAME, NUMBER, step);
         assert_eq!(state(&engine, u, START).hints.len(), 1);
         let (step, _) = serve(&mut engine, u, 1, &[(0, 1), (2, 0), (6, 1)], 25);
         assert_eq!(step, 2);
@@ -2639,82 +2562,46 @@ mod tests {
         let u = user(1);
         started(&mut engine, u, START);
 
-        serve(&mut engine, u, 1, &[], 25);
-        let (step, result) = match engine.reserve_hint(u, GAME, NUMBER, 3, &[], 175, START).unwrap() {
+        let (step, result) = match engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START).unwrap() {
             HintPrepared::Serve { step, result, .. } => (step, result),
             _ => panic!("expected a serve"),
         };
-        assert!(!result.hint.hint.conclusions.is_empty());
         assert_eq!(result.state.hints.len(), 1);
-        assert_eq!(result.state.hints[0].level, 3);
-        assert_eq!(state(&engine, u, START).hints[0].level, 1);
+        assert_eq!(result.state.hints[0].level, HINT_LEVEL);
+        assert!(state(&engine, u, START).hints.is_empty());
 
-        engine.confirm_hint(u, GAME, NUMBER, step, 3, false);
+        engine.confirm_hint(u, GAME, NUMBER, step, false);
         let hints = state(&engine, u, START).hints;
         assert_eq!(hints.len(), 1);
-        assert_eq!(hints[0].level, 3);
+        assert_eq!(hints[0].level, HINT_LEVEL);
     }
 
-    // A step holds one reservation. Letting a second call overwrite it loses whichever hint the
-    // first call was paying for: `confirm_hint` looks for its own level and finds another's.
+    // A step holds one reservation. A second call on it would let either call's release drop the
+    // hint the other is paying for.
     #[test]
     fn a_second_reservation_on_a_step_in_flight_is_refused() {
         let mut engine = new_engine();
         let u = user(1);
         started(&mut engine, u, START);
 
-        // Call A reserves the step at level 1 and its debit is still in flight
+        // Call A reserves the step and its debit is still in flight
         let step = match engine.reserve_hint(u, GAME, NUMBER, 1, &[], 25, START).unwrap() {
             HintPrepared::Serve { step, .. } => step,
             _ => panic!("expected a serve"),
         };
 
-        // Call B tries the same step at level 2 while A is unresolved. Nothing is served yet, so
-        // the price is the full level 2 one rather than the upgrade difference.
-        let Err(error) = engine.reserve_hint(u, GAME, NUMBER, 2, &[], 75, START) else {
+        // Call B asks for the same step while A is unresolved
+        let Err(error) = engine.reserve_hint(u, GAME, NUMBER, 2, &[], 25, START) else {
             panic!("a second reservation on the same step should be refused");
         };
         assert!(error.matches_code(OCErrorCode::Throttled), "{error:?}");
 
         // A's reservation is untouched, so its debit still confirms the hint it paid for
-        engine.confirm_hint(u, GAME, NUMBER, step, 1, false);
+        engine.confirm_hint(u, GAME, NUMBER, step, false);
         let hints = state(&engine, u, START).hints;
         assert_eq!(hints.len(), 1);
-        assert_eq!(hints[0].level, 1);
+        assert_eq!(hints[0].level, HINT_LEVEL);
         assert_eq!(engine.record(u, GAME, NUMBER).unwrap().hint_steps_used, 1);
-
-        // And the upgrade goes through once nothing is in flight
-        match engine.reserve_hint(u, GAME, NUMBER, 2, &[], 50, START).unwrap() {
-            HintPrepared::Serve {
-                step: s, level, metered, ..
-            } => engine.confirm_hint(u, GAME, NUMBER, s, level, metered),
-            _ => panic!("expected a serve"),
-        };
-        let hints = state(&engine, u, START).hints;
-        assert_eq!(hints.len(), 1);
-        assert_eq!(hints[0].level, 2);
-        assert_eq!(engine.record(u, GAME, NUMBER).unwrap().hint_steps_used, 1);
-    }
-
-    // An upgrade that fails to pay leaves the level the player already had, and never shows the
-    // level they were buying
-    #[test]
-    fn released_upgrade_leaves_the_level_already_paid_for() {
-        let mut engine = new_engine();
-        let u = user(1);
-        started(&mut engine, u, START);
-        serve(&mut engine, u, 1, &[], 25);
-
-        let step = match engine.reserve_hint(u, GAME, NUMBER, 3, &[], 175, START).unwrap() {
-            HintPrepared::Serve { step, .. } => step,
-            _ => panic!("expected an upgrade"),
-        };
-        assert_eq!(state(&engine, u, START).hints[0].level, 1);
-
-        engine.release_hint(u, GAME, NUMBER, step, 3);
-        let hints = state(&engine, u, START).hints;
-        assert_eq!(hints.len(), 1);
-        assert_eq!(hints[0].level, 1);
     }
 
     #[test]

@@ -32,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Hold the weekly cycles balance checks, as a one-off, until 09:00 UTC on 5 October 2026, rather than running them as soon as the LocalUserIndex is upgraded ([#9598](https://github.com/open-chat-labs/open-chat/pull/9598))
 - Set a canister's freezing threshold to 0 before refunding its cycles, so that those it held back are refunded too ([#9629](https://github.com/open-chat-labs/open-chat/pull/9629))
 - Name a wrong placement (line, bulb, tent, bridge or CHAT) before a wrong "no" mark in the free mistake check, since the placement is usually the cause ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+- Serve daily puzzle hints at one level for one price: the step's outline and technique, never its conclusions. A step the user already has is re-served free, whatever level an older client asks for ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 
 ### Fixed
 
@@ -43,6 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the blocked-user pairs naming a migrated user onto their new id, including those blocked or unblocked by their old id afterwards ([#9630](https://github.com/open-chat-labs/open-chat/pull/9630))
 - Fix reading direct chat events via `chat_events` and `bot_chat_events` for users in MultiUser canisters ([#9652](https://github.com/open-chat-labs/open-chat/pull/9652))
 - Fix issuing access tokens for direct chats with users in MultiUser canisters ([#9654](https://github.com/open-chat-labs/open-chat/pull/9654))
+- Compare a hint step's conclusions with its focus and target as the cells the board draws them on, so Bridges hints, whose conclusions are gaps between islands, no longer skip the steps they rest on or send an outline that names their answer ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 
 ## [[2.0.2063](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2063-local_user_index)] - 2026-09-23
 

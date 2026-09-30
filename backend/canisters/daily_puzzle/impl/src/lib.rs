@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use constants::DAY_IN_MS;
 use daily_puzzle_canister::{CandidateView, PuzzleParams};
-use puzzle_core::GenerateError;
+use puzzle_core::{GenerateError, Puzzle};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
@@ -330,6 +330,11 @@ impl Data {
             // The schedule entry is wrong, or names a game with no generator: no seed fixes either
             Some(Err(GenerateError::InvalidParams(_))) | None => return Err(GenerationFailure::Permanent),
         };
+        let hint_settles = generated
+            .hints
+            .iter()
+            .map(|h| hint_settles(&params.game_id, &generated.description, h))
+            .collect();
         let puzzle = DailyPuzzle {
             game_id: params.game_id.clone(),
             number,
@@ -337,6 +342,7 @@ impl Data {
             description: generated.description,
             solution: generated.solution,
             solution_pairs: generated.pairs,
+            hint_settles,
             hints: generated.hints,
             starts_at: number as u64 * DAY_IN_MS,
             expires_at: (number as u64 + 1) * DAY_IN_MS,
@@ -572,6 +578,26 @@ macro_rules! into_generated {
     }};
 }
 
+/// (conclusion key, key the board draws it on) for each of the hint's conclusions, through the
+/// game's own `Puzzle::display_keys`: see `DailyPuzzle::hint_settles`. Every game is listed, not
+/// only the one that differs today, so a game that starts drawing conclusions elsewhere is covered.
+fn hint_settles(game_id: &str, description: &[u8], hint: &PuzzleHint) -> Vec<(u16, u16)> {
+    let display: fn(&[u8], u16) -> Vec<u16> = match game_id {
+        light_up::GAME_ID => <light_up::LightUp as Puzzle>::display_keys,
+        tents::GAME_ID => <tents::Tents as Puzzle>::display_keys,
+        slant::GAME_ID => <slant::Slant as Puzzle>::display_keys,
+        bridges::GAME_ID => <bridges::Bridges as Puzzle>::display_keys,
+        loopy::GAME_ID => <loopy::Loopy as Puzzle>::display_keys,
+        unruly::GAME_ID => <unruly::Unruly as Puzzle>::display_keys,
+        chat_rooms::GAME_ID => <chat_rooms::ChatRooms as Puzzle>::display_keys,
+        _ => |_, key| vec![key],
+    };
+    hint.conclusions
+        .iter()
+        .flat_map(|&(key, _)| display(description, key).into_iter().map(move |drawn| (key, drawn)))
+        .collect()
+}
+
 /// Runs the generator registered for `params.game_id`; None when there isn't one. `black_pct`
 /// only applies to light_up; the other games use their crate's default density knobs.
 fn generate(params: &PuzzleParams, seed: u64) -> Option<Result<Generated, GenerateError>> {
@@ -723,6 +749,30 @@ mod tests {
             loopy::GAME_ID => (3 + w * h, (h + 1) * w + h * (w + 1)),
             other => panic!("unknown game {other}"),
         }
+    }
+
+    /// #9675 H5: each hint carries, for each conclusion, the keys its game draws it on, so the
+    /// LocalUserIndex can compare conclusions with focus and target cell for cell. Only Bridges
+    /// draws a conclusion (a gap) anywhere but its own key.
+    #[test]
+    fn puzzles_carry_where_each_conclusion_is_drawn() {
+        for game_id in generators() {
+            let params = forced_params(game_id).unwrap();
+            let g = generate(&params, 7).unwrap().unwrap();
+            let mut moved = false;
+            for h in &g.hints {
+                let settles = hint_settles(game_id, &g.description, h);
+                let keys: std::collections::BTreeSet<u16> = settles.iter().map(|(k, _)| *k).collect();
+                assert_eq!(keys, h.conclusions.iter().map(|(k, _)| *k).collect(), "{game_id}");
+                moved |= settles.iter().any(|(k, drawn)| k != drawn);
+            }
+            assert_eq!(moved, *game_id == bridges::GAME_ID, "{game_id}");
+        }
+
+        let mut d = data();
+        d.generate_candidate(MONDAY).unwrap();
+        let candidate = &pool(&d, MONDAY)[0].puzzle;
+        assert_eq!(candidate.hint_settles.len(), candidate.hints.len());
     }
 
     #[test]
@@ -1143,8 +1193,10 @@ mod tests {
     // #9357 acceptance: the launch numbers are constants, and the checks that used to guard the
     // setters hold over them. Solve rewards stay below the daily claim, so the puzzle is a
     // supplement to that habit and not a replacement; the entry fee stays below the streak-zero
-    // reward, so a first solve is never a net loss; and the entry fee plus three full hints
-    // costs more than the top reward, so hinting all the way through never pays.
+    // reward, so a first solve is never a net loss; and a solve with every hint used earns less
+    // than the entry fee and those hints cost, so hinting all the way through never pays. The
+    // reward counts its penalty per hint: with one hint level at 100 (#9675) the hints alone no
+    // longer outweigh the top reward, but net of the penalty the sum still never comes out ahead.
     #[test]
     fn launch_numbers_are_constants_that_pass_the_config_checks() {
         let config = DailyPuzzleConfig::default();
@@ -1156,8 +1208,9 @@ mod tests {
         let max_reward = *config.reward_by_streak.iter().max().unwrap();
         assert!(max_reward < MAX_DAILY_CLAIM, "{max_reward} vs {MAX_DAILY_CLAIM}");
         assert!(config.entry_fee < config.reward_by_streak[0]);
-        let full_hint = *game_config.hint_prices.last().unwrap();
-        assert!(config.entry_fee + 3 * full_hint > max_reward);
+        let hints = game_config.max_hints as u32;
+        let hinted_reward = max_reward.saturating_sub(hints * config.hint_penalty);
+        assert!(config.entry_fee + hints * game_config.hint_prices[0] > hinted_reward);
         assert_eq!(game_config.max_hints, 3);
 
         // What the canister serves is exactly these, plus the flag
@@ -1192,15 +1245,8 @@ mod tests {
         };
         assert!(validate_config(&config).is_err());
 
-        // Upgrades are priced at the difference, so a flat or descending table hands over the
-        // conclusions for nothing; a free level 1 is unmetered in CHIT and in free checks
-        for prices in [
-            vec![],
-            vec![0, 1, 2, 3],
-            vec![200, 75, 25],
-            vec![100, 100, 100],
-            vec![0, 1, 2],
-        ] {
+        // One hint level, one price (#9675 H3), and a free hint is unmetered in CHIT and free checks
+        for prices in [vec![], vec![0], vec![25, 75, 200], vec![100, 100], vec![100_001]] {
             let game_config = GameConfig {
                 hint_prices: prices,
                 ..Default::default()
