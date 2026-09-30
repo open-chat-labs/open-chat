@@ -217,13 +217,8 @@ impl RuntimeState {
         recipients: Vec<UserId>,
         notification: GroupChatUserNotificationPayload,
     ) {
-        if !recipients.is_empty() {
-            let notification = Notification::User(UserNotification {
-                sender,
-                recipients,
-                notification,
-            });
-            self.push_notification_inner(notification);
+        for notification in UserNotification::split_by_recipients(sender, recipients, notification) {
+            self.push_notification_inner(Notification::User(notification));
         }
     }
 

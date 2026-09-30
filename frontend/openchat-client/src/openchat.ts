@@ -8524,20 +8524,25 @@ export class OpenChat {
     }
 
     proposeTranslationCorrection(
-        locale: string,
+        language: string,
         key: string,
         value: string,
     ): Promise<ProposeResponse> {
+        // The correction is filed under the language, but is applied here to the locale in use,
+        // which can be a dialect of it. svelte-i18n caches the messages it has looked up per
+        // locale and adding a message only clears the cache of the locale it is added to, so a
+        // correction applied to the language would not show for a user on one of its dialects.
+        const currentLocale = this.#locale;
         return this.#worker
             .send({
                 kind: "proposeTranslation",
-                locale,
+                locale: language,
                 key,
                 value,
             })
             .then((res) => {
                 if (res === "success") {
-                    applyTranslationCorrection(locale, key, value);
+                    applyTranslationCorrection(currentLocale, key, value);
                 }
                 return res;
             })

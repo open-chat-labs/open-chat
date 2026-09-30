@@ -51,6 +51,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
 - Move anything held under a joining user's `previous_user_ids` onto their current id before checking whether they can join, so that a user blocked under an earlier id stays blocked ([#9567](https://github.com/open-chat-labs/open-chat/pull/9567))
 - Share the former members logic with the Group canister via `group_community_common` ([#9626](https://github.com/open-chat-labs/open-chat/pull/9626))
+- Within the chat event, store the count of members added to a public channel rather than listing each of them ([#9661](https://github.com/open-chat-labs/open-chat/pull/9661))
+- Limit user groups to 1,000 members ([#9662](https://github.com/open-chat-labs/open-chat/pull/9662))
+- Split a notification with more than 5,000 recipients into several ([#9658](https://github.com/open-chat-labs/open-chat/pull/9658))
 
 ### Removed
 

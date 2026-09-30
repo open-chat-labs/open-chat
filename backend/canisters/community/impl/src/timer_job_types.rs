@@ -596,7 +596,10 @@ impl JoinMembersToPublicChannelJob {
 
             info!("Joined {} members to channel {channel_id}", users_added.len());
 
-            let bot_notification = channel.chat.events.mark_members_added_to_public_channel(users_added, now);
+            let bot_notification = channel
+                .chat
+                .events
+                .mark_members_added_to_public_channel(users_added.len() as u32, now);
             state.push_bot_notification(bot_notification);
 
             if !self.members.is_empty() {
