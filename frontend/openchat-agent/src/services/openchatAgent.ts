@@ -222,7 +222,6 @@ import type {
     PublicDailyPuzzle,
     SyncSinceResponse,
     LookupMembersResponse,
-    MembersPageResponse,
 } from "@shared";
 import {
     ANON_USER_ID,
@@ -3105,31 +3104,22 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    getMembersPage(
-        id: MultiUserChatIdentifier | CommunityIdentifier,
-        after: string,
-    ): Promise<MembersPageResponse> {
-        switch (id.kind) {
-            case "group_chat":
-                return this._groupClient.getMembersPage(id.groupId, after);
-            case "channel":
-                return this._communityClient.getChannelMembersPage(id, after);
-            case "community":
-                return this._communityClient.getMembersPage(id.communityId, after);
-        }
-    }
-
     lookupMembers(
         id: MultiUserChatIdentifier | CommunityIdentifier,
         userIds: string[],
+        latestKnownUpdate: bigint,
     ): Promise<LookupMembersResponse> {
         switch (id.kind) {
             case "group_chat":
-                return this._groupClient.lookupMembers(id.groupId, userIds);
+                return this._groupClient.lookupMembers(id.groupId, userIds, latestKnownUpdate);
             case "channel":
-                return this._communityClient.lookupChannelMembers(id, userIds);
+                return this._communityClient.lookupChannelMembers(id, userIds, latestKnownUpdate);
             case "community":
-                return this._communityClient.lookupMembers(id.communityId, userIds);
+                return this._communityClient.lookupMembers(
+                    id.communityId,
+                    userIds,
+                    latestKnownUpdate,
+                );
         }
     }
 

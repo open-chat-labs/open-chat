@@ -12,7 +12,7 @@ import {
     addMembersToCachedGroupDetails,
     loadCommunityDetails,
     loadGroupDetails,
-    withMembers,
+    withLookedUpMembers,
 } from "./details";
 
 function member(userId: string): Member {
@@ -456,124 +456,187 @@ describe("loadCommunityDetails", () => {
     });
 });
 
-describe("withMembers", () => {
-    const held = (moreMembersAfter?: string) => ({
-        members: [member("a"), member("b")],
-        moreMembersAfter,
-        other: "unchanged",
-    });
+describe("withLookedUpMembers", () => {
+    test("members are added to those held, leaving any held already as they are", () => {
+        const held = { members: [member("a"), member("b")], other: "unchanged" };
 
-    test("members are added to those held, replacing any held already", () => {
-        const b = { ...member("b"), displayName: "B" };
+        const result = withLookedUpMembers(held, [
+            { ...member("b"), displayName: "B" },
+            member("c"),
+        ]);
 
-        const result = withMembers(held("b"), [b, member("c")]);
-
-        expect(result.members).toEqual([member("a"), b, member("c")]);
-        expect(result.moreMembersAfter).toBe("b");
+        expect(result.members).toEqual([member("a"), member("b"), member("c")]);
         expect(result.other).toBe("unchanged");
-    });
-
-    test("a page which carries on from the members held moves on where the rest start", () => {
-        const result = withMembers(held("b"), [member("c")], {
-            after: "b",
-            moreMembersAfter: "c",
-        });
-
-        expect(memberIds(result)).toEqual(["a", "b", "c"]);
-        expect(result.moreMembersAfter).toBe("c");
-    });
-
-    test("the last page leaves every member held", () => {
-        const result = withMembers(held("b"), [member("c")], {
-            after: "b",
-            moreMembersAfter: undefined,
-        });
-
-        expect(result.moreMembersAfter).toBeUndefined();
-    });
-
-    test("a page which arrives twice, or out of order, doesn't move where the rest start", () => {
-        const result = withMembers(held("c"), [member("c")], {
-            after: "b",
-            moreMembersAfter: "c",
-        });
-        expect(result.moreMembersAfter).toBe("c");
-
-        const later = withMembers(held("b"), [member("e")], {
-            after: "d",
-            moreMembersAfter: undefined,
-        });
-        expect(later.moreMembersAfter).toBe("b");
     });
 });
 
-describe("adding members to the cached details", () => {
-    test("members are added to the cached details of a group", async () => {
-        const stored = new Map<string, GroupChatDetails>();
-        stored.set("chat", {
-            members: [member("a")],
+describe("adding members who have been looked up to the cached details", () => {
+    function groupDetails(timestamp: bigint, members: string[]): GroupChatDetails {
+        return {
+            members: members.map(member),
             moreMembersAfter: "a",
             blockedUsers: new Set(),
             invitedUsers: new Set(),
             pinnedMessages: new Set(),
             rules: { text: "", enabled: false, version: 0 },
-            timestamp: 10n,
+            timestamp,
             bots: [],
             webhooks: [],
-        });
-        const cache = {
-            getCachedGroupDetails: (k: string) => Promise.resolve(stored.get(k)),
-            setCachedGroupDetails: (k: string, d: GroupChatDetails) => {
-                stored.set(k, d);
-                return Promise.resolve();
-            },
-            cachedGroupDetailsTimestamp: () => undefined,
         };
+    }
 
-        await addMembersToCachedGroupDetails(cache, "chat", [member("b")], {
-            after: "a",
-            moreMembersAfter: undefined,
-        });
-
-        expect(memberIds(stored.get("chat"))).toEqual(["a", "b"]);
-        expect(stored.get("chat")?.moreMembersAfter).toBeUndefined();
-        // The details themselves are no more up to date than they were
-        expect(stored.get("chat")?.timestamp).toBe(10n);
-
-        // Nothing is cached for a chat whose details aren't
-        await addMembersToCachedGroupDetails(cache, "other", [member("b")]);
-        expect(stored.has("other")).toBe(false);
-    });
-
-    test("members are added to the cached details of a community", async () => {
-        const stored = new Map<string, CommunityDetails>();
-        stored.set("community", {
+    function communityDetails(lastUpdated: bigint, members: string[]): CommunityDetails {
+        return {
             kind: "success",
-            members: [member("a")],
+            members: members.map(member),
             moreMembersAfter: "a",
             blockedUsers: new Set(),
             invitedUsers: new Set(),
             rules: { text: "", enabled: false, version: 0 },
-            lastUpdated: 10n,
+            lastUpdated,
             userGroups: new Map(),
             referrals: new Set(),
             bots: [],
-        });
-        const cache = {
-            getCachedCommunityDetails: (k: string) => Promise.resolve(stored.get(k)),
-            setCachedCommunityDetails: (k: string, d: CommunityDetails) => {
+        };
+    }
+
+    // Reading and writing the cache each take a tick, as they do in IndexedDB
+    const tick = () => new Promise((r) => setTimeout(r, 0));
+
+    function groupCache(stored: Map<string, GroupChatDetails>) {
+        return {
+            getCachedGroupDetails: async (k: string) => {
+                await tick();
+                return stored.get(k);
+            },
+            setCachedGroupDetails: async (k: string, d: GroupChatDetails) => {
+                await tick();
                 stored.set(k, d);
-                return Promise.resolve();
+            },
+            cachedGroupDetailsTimestamp: () => undefined,
+        };
+    }
+
+    function communityCache(stored: Map<string, CommunityDetails>) {
+        return {
+            getCachedCommunityDetails: async (k: string) => {
+                await tick();
+                return stored.get(k);
+            },
+            setCachedCommunityDetails: async (k: string, d: CommunityDetails) => {
+                await tick();
+                stored.set(k, d);
             },
             cachedCommunityDetailsTimestamp: () => undefined,
         };
+    }
 
-        await addMembersToCachedCommunityDetails(cache, "community", [
-            { ...member("b"), displayName: "B" },
-        ]);
+    function membersAdded(timestamp: bigint, members: string[]): GroupChatDetailsUpdatesResponse {
+        return {
+            kind: "success",
+            membersAddedOrUpdated: members.map(member),
+            membersRemoved: new Set(),
+            blockedUsersAdded: new Set(),
+            blockedUsersRemoved: new Set(),
+            pinnedMessagesRemoved: new Set(),
+            pinnedMessagesAdded: new Set(),
+            timestamp,
+            botsAddedOrUpdated: [],
+            botsRemoved: new Set(),
+        };
+    }
+
+    test("members are added to the cached details of a group", async () => {
+        const stored = new Map([["chat", groupDetails(10n, ["a"])]]);
+        const cache = groupCache(stored);
+
+        await addMembersToCachedGroupDetails(cache, "chat", [member("b")], 10n);
+
+        expect(memberIds(stored.get("chat"))).toEqual(["a", "b"]);
+        expect(stored.get("chat")?.moreMembersAfter).toBe("a");
+        // The details themselves are no more up to date than they were
+        expect(stored.get("chat")?.timestamp).toBe(10n);
+
+        // Nothing is cached for a chat whose details aren't
+        await addMembersToCachedGroupDetails(cache, "other", [member("b")], 10n);
+        expect(stored.has("other")).toBe(false);
+    });
+
+    test("members are added to the cached details of a community", async () => {
+        const stored = new Map([["community", communityDetails(10n, ["a"])]]);
+
+        await addMembersToCachedCommunityDetails(
+            communityCache(stored),
+            "community",
+            [{ ...member("b"), displayName: "B" }],
+            10n,
+        );
 
         expect(memberIds(stored.get("community"))).toEqual(["a", "b"]);
         expect(stored.get("community")?.moreMembersAfter).toBe("a");
         expect(stored.get("community")?.lastUpdated).toBe(10n);
+    });
+
+    // A member who was looked up may have left, or had their role changed, since the replica which
+    // answered had caught up with the details held when the lookup was sent
+    test("members aren't added to details which have been updated since the lookup", async () => {
+        const group = new Map([["chat", groupDetails(20n, ["a"])]]);
+        await addMembersToCachedGroupDetails(groupCache(group), "chat", [member("b")], 10n);
+        expect(memberIds(group.get("chat"))).toEqual(["a"]);
+
+        const community = new Map([["community", communityDetails(20n, ["a"])]]);
+        await addMembersToCachedCommunityDetails(
+            communityCache(community),
+            "community",
+            [member("b")],
+            10n,
+        );
+        expect(memberIds(community.get("community"))).toEqual(["a"]);
+    });
+
+    test("members looked up while the details are being loaded aren't lost", async () => {
+        const stored = new Map([["chat", groupDetails(10n, ["a"])]]);
+        const cache = groupCache(stored);
+        const updatesSince = async () => {
+            await tick();
+            await tick();
+            return membersAdded(20n, ["c"]);
+        };
+
+        // The load reads the details while the members are being added, and writes them back
+        // once it has the updates
+        await Promise.all([
+            addMembersToCachedGroupDetails(cache, "chat", [member("x")], 10n),
+            loadGroupDetails(
+                cache,
+                "chat",
+                20n,
+                undefined,
+                () => new Promise(() => {}),
+                updatesSince,
+            ),
+        ]);
+
+        expect(memberIds(stored.get("chat"))).toEqual(["a", "x", "c"]);
+        expect(stored.get("chat")?.timestamp).toBe(20n);
+    });
+
+    test("members looked up before a load which updates the details aren't added", async () => {
+        const stored = new Map([["chat", groupDetails(10n, ["a"])]]);
+        const cache = groupCache(stored);
+
+        await Promise.all([
+            loadGroupDetails(
+                cache,
+                "chat",
+                20n,
+                undefined,
+                () => new Promise(() => {}),
+                () => Promise.resolve(membersAdded(20n, ["c"])),
+            ),
+            addMembersToCachedGroupDetails(cache, "chat", [member("x")], 10n),
+        ]);
+
+        expect(memberIds(stored.get("chat"))).toEqual(["a", "c"]);
     });
 });
