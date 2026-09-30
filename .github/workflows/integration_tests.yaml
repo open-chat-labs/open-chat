@@ -14,6 +14,11 @@ on:
       - "**.wasm"
       - "scripts/run-integration-tests.sh"
       - "scripts/generate-all-canister-wasms.sh"
+      - "scripts/generate-test-wasms.sh"
+      - "scripts/cached-download.sh"
+      - "scripts/download-canister-wasm.sh"
+      - "scripts/download-canister-wasm-dfx.sh"
+      - "scripts/download-nns-canister-wasm.sh"
       - ".github/workflows/setup-rust/**"
       - ".github/workflows/integration_tests.yaml"
   workflow_dispatch:

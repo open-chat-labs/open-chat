@@ -510,7 +510,8 @@
             "name_taken": "Sorry - there is already a public community or group with this name",
             "saveFailed": "Sorry we were unable to save your updates",
             "updateGroupFailed": "Sorry we were unable to update the user group",
-            "userGroupNameTaken": "Sorry that user group name is already taken"
+            "userGroupNameTaken": "That user group name is already taken",
+            "userGroupTooManyMembers": "A user group can have at most {max} members"
         },
         "explore": "Explore communities",
         "exploreMobile": "Explore",

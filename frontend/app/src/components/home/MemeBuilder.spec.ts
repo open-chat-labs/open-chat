@@ -1,4 +1,4 @@
-import { flushSync, mount, unmount } from "svelte";
+import { flushSync, mount, tick, unmount } from "svelte";
 import { readable } from "svelte/store";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
@@ -21,7 +21,18 @@ vi.mock("@client", () => ({
     mobileWidth: readable(false),
 }));
 vi.mock("../../theme/themes", () => ({
-    currentTheme: readable({ name: "test", txt: "#fff", button: { bg: "#000" } }),
+    currentTheme: readable({
+        name: "test",
+        txt: "#fff",
+        button: { bg: "#000" },
+        toast: { failure: { bg: "#f00" } },
+    }),
+}));
+
+const stopMaker = vi.fn();
+const startMemeMaker = vi.fn((..._: unknown[]) => stopMaker);
+vi.mock("@src/utils/memeFighter", () => ({
+    startMemeMaker: (...args: unknown[]) => startMemeMaker(...args),
 }));
 
 import DesktopMemeBuilder from "./MemeBuilder.svelte";
@@ -29,56 +40,100 @@ import MobileMemeBuilder from "../../components_mobile/home/MemeBuilder.svelte";
 
 type Component = typeof DesktopMemeBuilder;
 
-function post(init: MessageEventInit) {
-    window.dispatchEvent(new MessageEvent("message", init));
-}
-
-// Desktop and mobile carry their own copy of the component, so the guard registration is pinned
-// on both. The guard itself is covered by utils/memeFighter.spec.ts.
+// Desktop and mobile carry their own copy of the component, so its use of the maker is pinned on
+// both. The maker client itself is covered by utils/memeFighter.spec.ts.
 describe.each<[string, Component]>([
     ["desktop", DesktopMemeBuilder],
     ["mobile", MobileMemeBuilder],
 ])("MemeBuilder (%s)", (_, MemeBuilder) => {
     let destroy: (() => void) | undefined;
-    afterEach(() => destroy?.());
 
-    // Invariant: a mounted MemeBuilder registers the origin guard ahead of any later listener,
-    // so a Meme Fighter protocol message from another origin never reaches maker-core.
-    test("registers the Meme Fighter origin guard on mount", () => {
+    function open() {
         const target = document.createElement("div");
         document.body.appendChild(target);
-        const app = mount(MemeBuilder, { target, props: { open: false, onSend: () => {} } });
+        const app = mount(MemeBuilder, { target, props: { open: true, onSend: () => {} } });
         flushSync();
         destroy = () => {
             unmount(app);
             target.remove();
+            destroy = undefined;
         };
+        return app;
+    }
 
-        // stands in for the listener maker-core adds when start() is called after mount
-        const later = vi.fn();
-        window.addEventListener("message", later);
-        post({
-            origin: "https://evil.example.com",
-            data: { messageType: "MEME_CREATED", payload: "https://evil.example.com/x.png" },
-        });
-        expect(later).not.toHaveBeenCalled();
-        post({ origin: "https://maker.memefighter.app", data: { messageType: "READY" } });
-        expect(later).toHaveBeenCalledTimes(1);
-        window.removeEventListener("message", later);
+    function cancelButton(): HTMLElement {
+        return [...document.querySelectorAll("button")].find(
+            (b) => b.textContent?.trim() === "Cancel",
+        )!;
+    }
+
+    afterEach(() => {
+        destroy?.();
+        // the mobile sheet is portalled to the body, where it outlives the unmount
+        document.body.innerHTML = "";
+        vi.clearAllMocks();
     });
 
-    test("removes the guard on unmount", () => {
-        const target = document.createElement("div");
-        document.body.appendChild(target);
-        const app = mount(MemeBuilder, { target, props: { open: false, onSend: () => {} } });
-        flushSync();
-        unmount(app);
-        target.remove();
+    test("starts the maker in its frame when reset", async () => {
+        const app = open();
+        expect(startMemeMaker).not.toHaveBeenCalled();
 
-        const later = vi.fn();
-        window.addEventListener("message", later);
-        post({ origin: "https://evil.example.com", data: { messageType: "MEME_CREATED" } });
-        expect(later).toHaveBeenCalledTimes(1);
-        window.removeEventListener("message", later);
+        app.reset();
+        await tick();
+
+        expect(startMemeMaker).toHaveBeenCalledTimes(1);
+        const [iframe, style] = startMemeMaker.mock.calls[0];
+        expect(iframe).toBe(document.querySelector("iframe"));
+        expect(style).toMatchObject({ "--foreground-color": "#fff", "--button-color": "#000" });
+    });
+
+    // Invariant: at most one maker is being listened to per builder.
+    test("stops the maker it had started before starting another", async () => {
+        const app = open();
+        app.reset();
+        await tick();
+        expect(stopMaker).not.toHaveBeenCalled();
+
+        app.reset();
+        await tick();
+
+        expect(stopMaker).toHaveBeenCalledTimes(1);
+        expect(startMemeMaker).toHaveBeenCalledTimes(2);
+    });
+
+    test("shows the meme the maker hands over in place of the maker", async () => {
+        const app = open();
+        app.reset();
+        await tick();
+
+        const onMemeCreated = startMemeMaker.mock.calls[0][2] as (url: string) => void;
+        onMemeCreated("https://memefighter.app/meme.png");
+        flushSync();
+
+        expect(document.querySelector("img.meme")?.getAttribute("src")).toBe(
+            "https://memefighter.app/meme.png",
+        );
+        expect(document.querySelector("iframe")).toBeNull();
+    });
+
+    test("stops the maker when closed without a meme", async () => {
+        const app = open();
+        app.reset();
+        await tick();
+
+        cancelButton().click();
+        flushSync();
+
+        expect(stopMaker).toHaveBeenCalledTimes(1);
+    });
+
+    test("stops the maker on unmount", async () => {
+        const app = open();
+        app.reset();
+        await tick();
+
+        destroy!();
+
+        expect(stopMaker).toHaveBeenCalledTimes(1);
     });
 });
