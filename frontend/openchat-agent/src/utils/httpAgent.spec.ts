@@ -200,42 +200,48 @@ describe("createQueryAwareFetch", () => {
 
 const MINUTE_MS = 60_000;
 
-// Stands in for the replicas behind a boundary node. Like a real one it rejects a request whose
-// expiry is not within the 5 minutes (plus 30 seconds of permitted drift) after its own clock,
-// which here is the test's clock, and answers a read of the time with a certificate. `staleByMs`
-// is how far the time it certifies is behind its clock, as it is on a replica which has fallen
-// behind.
+// Stands in for the replicas behind a boundary node. It rejects a query or call whose expiry is
+// not within the 5 minutes (plus 30 seconds of permitted drift) after its own clock, and answers
+// a read of the time with a certificate. A real replica only checks the expiry of a query when
+// its sender is not anonymous, but checking them all lets these tests use an anonymous identity.
 function fakeReplica() {
     const secretKey = bls12_381.utils.randomPrivateKey();
     const rootKey = wrapDER(bls12_381.getPublicKeyForShortSignatures(secretKey), BLS12_381_G2_OID);
+    let heldQuery: { arrive: () => void; released: Promise<void> } | undefined;
     const replica = {
         rootKey,
+        // how far its clock is ahead of the device's, which is the test's clock
+        aheadByMs: 0,
+        // how far the time it certifies is behind its clock, as on a replica which has fallen behind
         staleByMs: 0,
-        // while true, queries never answer until they are aborted
-        hangQueries: false,
-        queriesHanging: 0,
+        failTimeReads: false,
+        // run once a call has been accepted, before the response to it is sent
+        beforeCallResponse: undefined as (() => void) | undefined,
         queriesAnswered: 0,
         callsAccepted: 0,
         timeReads: 0,
+        // Makes the next query wait, before the replica looks at it, until `release` is called or
+        // the query is aborted. `arrived` resolves once that query has reached the replica.
+        holdNextQuery(): { arrived: Promise<void>; release: () => void } {
+            let arrive!: () => void;
+            let release!: () => void;
+            const arrived = new Promise<void>((resolve) => (arrive = resolve));
+            const released = new Promise<void>((resolve) => (release = resolve));
+            heldQuery = { arrive, released };
+            return { arrived, release };
+        },
         fetch: (async (input: RequestInfo | URL, init?: RequestInit) => {
             const path = new URL(input.toString()).pathname;
-            const { content } = Cbor.decode<{ content: { ingress_expiry: bigint } }>(
-                init!.body as Uint8Array,
-            );
-            const expiryMs = Number(BigInt(content.ingress_expiry) / 1_000_000n);
-            const now = Date.now();
-            if (expiryMs < now || expiryMs > now + 5.5 * MINUTE_MS) {
-                return new Response(
-                    `Invalid request expiry: Specified ingress_expiry not within expected range: Minimum allowed expiry: ${now}, Maximum allowed expiry: ${now + 5.5 * MINUTE_MS}, Provided expiry: ${expiryMs}`,
-                    { status: 400 },
-                );
-            }
             if (path.endsWith("/read_state")) {
                 replica.timeReads++;
+                if (replica.failTimeReads) {
+                    return new Response("unavailable", { status: 503 });
+                }
+                const certifiedMs = Date.now() + replica.aheadByMs - replica.staleByMs;
                 const tree = [
                     2,
                     utf8ToBytes("time"),
-                    [3, lebEncode(BigInt(now - replica.staleByMs) * 1_000_000n)],
+                    [3, lebEncode(BigInt(certifiedMs) * 1_000_000n)],
                 ] as unknown as HashTree;
                 const signature = bls12_381.signShortSignature(
                     new Uint8Array([
@@ -247,16 +253,34 @@ function fakeReplica() {
                 const certificate = Cbor.encode({ tree, signature });
                 return new Response(Cbor.encode({ certificate }) as Uint8Array<ArrayBuffer>);
             }
-            if (path.endsWith("/call")) {
-                replica.callsAccepted++;
-                return new Response(null, { status: 202 });
+
+            const isQuery = path.endsWith("/query");
+            if (isQuery && heldQuery !== undefined) {
+                const { arrive, released } = heldQuery;
+                heldQuery = undefined;
+                arrive();
+                const signal = init?.signal;
+                await new Promise<void>((resolve, reject) => {
+                    void released.then(resolve);
+                    signal?.addEventListener("abort", () => reject(signal.reason));
+                });
             }
-            if (replica.hangQueries) {
-                replica.queriesHanging++;
-                const signal = init!.signal!;
-                return new Promise<Response>((_, reject) =>
-                    signal.addEventListener("abort", () => reject(signal.reason)),
+
+            const { content } = Cbor.decode<{ content: { ingress_expiry: bigint } }>(
+                init!.body as Uint8Array,
+            );
+            const expiryMs = Number(BigInt(content.ingress_expiry) / 1_000_000n);
+            const now = Date.now() + replica.aheadByMs;
+            if (expiryMs < now || expiryMs > now + 5.5 * MINUTE_MS) {
+                return new Response(
+                    `Invalid request expiry: Specified ingress_expiry not within expected range: Minimum allowed expiry: ${now}, Maximum allowed expiry: ${now + 5.5 * MINUTE_MS}, Provided expiry: ${expiryMs}`,
+                    { status: 400 },
                 );
+            }
+            if (!isQuery) {
+                replica.callsAccepted++;
+                replica.beforeCallResponse?.();
+                return new Response(null, { status: 202 });
             }
             replica.queriesAnswered++;
             return new Response(
@@ -272,14 +296,23 @@ function fakeReplica() {
 }
 
 describe("ResyncingHttpAgent", () => {
-    // One resync reads the time from three replicas
+    // One sync reads the time from three replicas
     const READS_PER_SYNC = 3;
 
     let replica: ReturnType<typeof fakeReplica>;
     let agent: HttpAgent;
+    let warn: ReturnType<typeof vi.spyOn>;
 
     function query() {
         return agent.query(CANISTER_ID, { methodName: "m", arg: new Uint8Array() });
+    }
+
+    function call() {
+        return agent.call(CANISTER_ID, {
+            methodName: "m",
+            arg: new Uint8Array(),
+            effectiveCanisterId: CANISTER_ID,
+        });
     }
 
     // Leaves the agent as it is after syncing its clock with a replica which had fallen behind:
@@ -294,7 +327,7 @@ describe("ResyncingHttpAgent", () => {
 
     beforeEach(() => {
         vi.useFakeTimers({ toFake: ["Date"] });
-        vi.spyOn(console, "warn").mockImplementation(() => undefined);
+        warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
         replica = fakeReplica();
         agent = ResyncingHttpAgent.createSync({
             identity: new AnonymousIdentity(),
@@ -328,17 +361,33 @@ describe("ResyncingHttpAgent", () => {
         expect(replica.timeReads).toBe(READS_PER_SYNC);
     });
 
-    test("resyncs the clock and resubmits an update call whose expiry is rejected", async () => {
+    test("resyncs the clock when an update call's expiry is rejected, without resubmitting it", async () => {
         await syncWithReplicaWhichIsBehind();
 
-        const { response } = await agent.call(CANISTER_ID, {
-            methodName: "m",
-            arg: new Uint8Array(),
-            effectiveCanisterId: CANISTER_ID,
-        });
-        expect(response.status).toBe(202);
+        await expect(call()).rejects.toThrow("Invalid request expiry");
+        expect(replica.callsAccepted).toBe(0);
+        expect(agent.getTimeDiffMsecs()).toBe(0);
+
+        // the clock is right now, so the next call is accepted
+        expect((await call()).response.status).toBe(202);
         expect(replica.callsAccepted).toBe(1);
         expect(replica.timeReads).toBe(READS_PER_SYNC);
+    });
+
+    test("does not submit an update call again when it expires with its response lost", async () => {
+        // sync the clock, so that the agent hands a rejected expiry back rather than syncing
+        await agent.syncTime(CANISTER_ID);
+
+        // The call is accepted, but the machine sleeps before the response arrives and wakes to a
+        // dead connection. The agent sends the call again, by which time it has expired.
+        replica.beforeCallResponse = () => {
+            replica.beforeCallResponse = undefined;
+            vi.setSystemTime(Date.now() + 10 * MINUTE_MS);
+            throw new TypeError("Failed to fetch");
+        };
+
+        await expect(call()).rejects.toThrow("Invalid request expiry");
+        expect(replica.callsAccepted).toBe(1);
     });
 
     test("queries rejected together share one resync", async () => {
@@ -347,21 +396,49 @@ describe("ResyncingHttpAgent", () => {
         const results = await Promise.all([query(), query(), query(), query()]);
         expect(results.map((r) => r.status)).toEqual(Array(4).fill("replied"));
         expect(replica.timeReads).toBe(READS_PER_SYNC);
+        expect(warn).toHaveBeenCalledTimes(1);
+    });
+
+    test("resends a query built before a resync and rejected after it, without another", async () => {
+        await syncWithReplicaWhichIsBehind();
+
+        // this query is built with the wrong clock, but the replica is slow to reject it
+        const { arrived, release } = replica.holdNextQuery();
+        const early = query();
+        await arrived;
+
+        // meanwhile another query is rejected, and the clock is put right
+        await expect(query()).resolves.toMatchObject({ status: "replied" });
+        expect(replica.timeReads).toBe(READS_PER_SYNC);
+
+        // long enough later for another resync to be allowed
+        vi.setSystemTime(Date.now() + TIME_RESYNC_MIN_INTERVAL_MS);
+        release();
+        await expect(early).resolves.toMatchObject({ status: "replied" });
+        expect(replica.timeReads).toBe(READS_PER_SYNC);
     });
 
     test("recovers when the device's clock is corrected after the agent synced with it", async () => {
         // the device's clock is 10 minutes slow, which the agent finds out from the replica
-        const deviceTime = Date.now();
-        replica.staleByMs = -10 * MINUTE_MS;
+        replica.aheadByMs = 10 * MINUTE_MS;
         await agent.syncTime(CANISTER_ID);
         expect(agent.getTimeDiffMsecs()).toBe(10 * MINUTE_MS);
 
         // the device's clock is put right, leaving the agent's offset 10 minutes out
-        vi.setSystemTime(deviceTime + 10 * MINUTE_MS);
-        replica.staleByMs = 0;
+        vi.setSystemTime(Date.now() + 10 * MINUTE_MS);
+        replica.aheadByMs = 0;
 
         await expect(query()).resolves.toMatchObject({ status: "replied" });
         expect(agent.getTimeDiffMsecs()).toBe(0);
+    });
+
+    test("an agent which has never synced its clock still syncs it once and resends", async () => {
+        replica.aheadByMs = 10 * MINUTE_MS;
+
+        await expect(query()).resolves.toMatchObject({ status: "replied" });
+        expect(agent.getTimeDiffMsecs()).toBe(10 * MINUTE_MS);
+        expect(replica.timeReads).toBe(READS_PER_SYNC);
+        expect(replica.queriesAnswered).toBe(1);
     });
 
     test("does not resync again until the minimum interval has passed", async () => {
@@ -380,11 +457,24 @@ describe("ResyncingHttpAgent", () => {
         expect(replica.timeReads).toBe(2 * READS_PER_SYNC);
     });
 
-    test("throws the rejection when the clock cannot be resynced", async () => {
+    test("the device's clock being put back does not hold off the next resync", async () => {
         await syncWithReplicaWhichIsBehind();
-        vi.spyOn(agent, "syncTime").mockRejectedValue(new Error("offline"));
+        await expect(query()).resolves.toMatchObject({ status: "replied" });
+
+        // the device's clock was 6 minutes fast all along, and is now corrected
+        vi.setSystemTime(Date.now() - 6 * MINUTE_MS);
+        replica.aheadByMs = 6 * MINUTE_MS;
+
+        await expect(query()).resolves.toMatchObject({ status: "replied" });
+        expect(agent.getTimeDiffMsecs()).toBe(6 * MINUTE_MS);
+    });
+
+    test("throws the rejection when no replica gives the time", async () => {
+        await syncWithReplicaWhichIsBehind();
+        replica.failTimeReads = true;
 
         await expect(query()).rejects.toThrow("Invalid request expiry");
+        expect(replica.timeReads).toBe(READS_PER_SYNC);
         expect(replica.queriesAnswered).toBe(0);
     });
 
@@ -393,10 +483,9 @@ describe("ResyncingHttpAgent", () => {
         await agent.syncTime(CANISTER_ID);
         replica.timeReads = 0;
 
-        replica.hangQueries = true;
+        const { arrived } = replica.holdNextQuery();
         const result = query();
-        await vi.waitFor(() => expect(replica.queriesHanging).toBe(1));
-        replica.hangQueries = false;
+        await arrived;
 
         // the machine slept with the query in flight
         vi.setSystemTime(Date.now() + 10 * MINUTE_MS);

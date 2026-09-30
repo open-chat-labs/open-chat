@@ -142,8 +142,9 @@ export function createQueryAwareFetch(
     };
 }
 
-// The least time between two resyncs of an agent's clock. A resync costs three requests, and
-// while the replicas keep rejecting requests every one of them would otherwise ask for another.
+// The least time between two of the resyncs `ResyncingHttpAgent` makes of its clock. A resync
+// costs three requests, and while the replicas keep rejecting requests every one of them would
+// otherwise ask for another.
 export const TIME_RESYNC_MIN_INTERVAL_MS = 5_000;
 
 function isExpiryRejection(err: unknown): err is AgentError {
@@ -166,76 +167,77 @@ function isExpiredBeforeResend(err: AgentError): boolean {
  * thrown, so if the offset is wrong (the replica it asked was behind, or the device's clock has
  * been corrected since) every request the agent sends is rejected until the page is reloaded.
  *
- * Here a rejected expiry makes the agent measure the offset again and send the request once more.
- * That is safe for an update call too, since a replica rejects the expiry before accepting the
- * call.
+ * Here a rejected expiry makes the agent measure the offset again. A query is then sent once more.
+ * An update call is not: the rejection may be of a resend, made after the call was accepted but
+ * its response lost, and calling again would then run the update twice. It fails as before, but
+ * with the clock put right for the next request.
  */
 export class ResyncingHttpAgent extends HttpAgent {
-    #resync: Promise<boolean> | undefined;
-    #resyncCount = 0;
-    #nextResyncAllowedAt = 0;
+    #resync: Promise<void> | undefined;
+    #lastResyncAt = -Infinity;
 
-    override query(...args: Parameters<HttpAgent["query"]>): ReturnType<HttpAgent["query"]> {
+    override async query(...args: Parameters<HttpAgent["query"]>): ReturnType<HttpAgent["query"]> {
         const [canisterId, fields] = args;
-        return this.#resyncIfExpiryRejected(fields.effectiveCanisterId ?? canisterId, () =>
-            super.query(...args),
-        );
-    }
-
-    override call(...args: Parameters<HttpAgent["call"]>): ReturnType<HttpAgent["call"]> {
-        const [canisterId, options] = args;
-        return this.#resyncIfExpiryRejected(options.effectiveCanisterId ?? canisterId, () =>
-            super.call(...args),
-        );
-    }
-
-    async #resyncIfExpiryRejected<T>(
-        canisterId: Principal | string,
-        send: () => Promise<T>,
-    ): Promise<T> {
-        const resyncCount = this.#resyncCount;
+        const offset = this.getTimeDiffMsecs();
         try {
-            return await send();
+            return await super.query(...args);
         } catch (err) {
             if (!isExpiryRejection(err)) {
                 throw err;
             }
-            // If the clock has been resynced since this request was built then it was built with
-            // the old offset, so it only needs sending again
-            const resynced =
+            const rebuild =
                 isExpiredBeforeResend(err) ||
-                resyncCount !== this.#resyncCount ||
-                (await this.#resyncTime(canisterId));
-            if (!resynced) {
+                (await this.#clockChangedSince(offset, fields.effectiveCanisterId ?? canisterId));
+            if (!rebuild) {
                 throw err;
             }
-            return send();
+            return super.query(...args);
         }
     }
 
-    // Resolves to whether the clock was resynced. Requests rejected together share one resync.
-    #resyncTime(canisterId: Principal | string): Promise<boolean> {
+    override async call(...args: Parameters<HttpAgent["call"]>): ReturnType<HttpAgent["call"]> {
+        const [canisterId, options] = args;
+        const offset = this.getTimeDiffMsecs();
+        try {
+            return await super.call(...args);
+        } catch (err) {
+            if (isExpiryRejection(err)) {
+                await this.#clockChangedSince(offset, options.effectiveCanisterId ?? canisterId);
+            }
+            throw err;
+        }
+    }
+
+    // Resolves to whether the clock's offset differs from `offset`, the one in use when a rejected
+    // request was built. If it is still the same the clock is resynced first. If it has changed
+    // already, the request was only rejected for having been built before that.
+    async #clockChangedSince(offset: number, canisterId: Principal | string): Promise<boolean> {
+        if (this.getTimeDiffMsecs() === offset) {
+            await this.#resyncTime(canisterId);
+        }
+        return this.getTimeDiffMsecs() !== offset;
+    }
+
+    // Does nothing if the clock was last resynced too recently. Requests rejected together share
+    // one resync.
+    #resyncTime(canisterId: Principal | string): Promise<void> {
         if (this.#resync === undefined) {
-            if (Date.now() < this.#nextResyncAllowedAt) {
-                return Promise.resolve(false);
+            // `Math.abs` so that the device's clock being put back cannot hold off the next resync
+            if (Math.abs(Date.now() - this.#lastResyncAt) < TIME_RESYNC_MIN_INTERVAL_MS) {
+                return Promise.resolve();
             }
             const previousOffset = this.getTimeDiffMsecs();
+            // `syncTime` also resolves, leaving the offset as it was, if no replica gave the time
             this.#resync = this.syncTime(Principal.from(canisterId))
                 .then(
-                    () => {
-                        this.#resyncCount++;
+                    () =>
                         console.warn(
-                            `Resynced the agent's clock with the IC after a request's expiry was rejected. Offset was ${previousOffset}ms, now ${this.getTimeDiffMsecs()}ms`,
-                        );
-                        return true;
-                    },
-                    (err) => {
-                        console.warn("Unable to resync the agent's clock with the IC", err);
-                        return false;
-                    },
+                            `Asked the IC for the time after a request's expiry was rejected. The agent's clock offset was ${previousOffset}ms, now ${this.getTimeDiffMsecs()}ms`,
+                        ),
+                    (err) => console.warn("Unable to resync the agent's clock with the IC", err),
                 )
                 .finally(() => {
-                    this.#nextResyncAllowedAt = Date.now() + TIME_RESYNC_MIN_INTERVAL_MS;
+                    this.#lastResyncAt = Date.now();
                     this.#resync = undefined;
                 });
         }
