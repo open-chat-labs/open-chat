@@ -3542,12 +3542,18 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
+    // A user who holds their own funds sends them from their wallet on the ledger, as themselves,
+    // since their canister can't send them. Only their canister could check their PIN, so it isn't
+    // checked when they do.
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
         pin: string | undefined,
     ): Promise<WithdrawCryptocurrencyResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
+        if (this.holdsOwnFunds()) {
+            return this._ledgerClient.withdraw(domain);
+        }
         return this.userClient.withdrawCryptocurrency(domain, pin);
     }
 
