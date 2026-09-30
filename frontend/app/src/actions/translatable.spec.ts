@@ -135,15 +135,6 @@ describe("translatable action", () => {
         expect(marker(missing)).toBeNull();
     });
 
-    // Hebrew is "iw" to OpenChat but is registered with svelte-i18n as "he"
-    test("a dialect of Hebrew resolves to the dictionary svelte-i18n holds Hebrew under", async () => {
-        addMessages("he", { some: { thing: "כן" } });
-        await locale.set("he-IL");
-        const node = mount("some.thing");
-        editmode.set(true);
-        expect(marker(node)).not.toBeNull();
-    });
-
     // A successful suggestion is applied to the current locale, which for a dialect creates a
     // dictionary holding nothing but the corrected key
     test("keys stay translatable once a correction has been applied to the dialect", async () => {

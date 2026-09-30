@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { i18nKey, languageCode, setLocale, supportedLanguages } from "@src/i18n/i18n";
+    import { i18nKey, setLocale, supportedLanguages } from "@src/i18n/i18n";
     import { anonUserStore, identityStateStore, OpenChat, type CreatedUser } from "@client";
     import { getContext } from "svelte";
     import { locale } from "svelte-i18n";
@@ -22,7 +22,7 @@
 
     let { onClose, step = $bindable("select_mode") }: Props = $props();
     let error: string | undefined = $state(undefined);
-    let selectedLocale = $state(languageCode($locale));
+    let selectedLocale = $state(($locale as string).substring(0, 2));
     $effect(() => {
         setLocale(selectedLocale);
     });

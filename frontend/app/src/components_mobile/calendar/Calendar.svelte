@@ -4,7 +4,7 @@
     import { locale } from "svelte-i18n";
     import PrevIcon from "svelte-material-icons/ChevronLeft.svelte";
     import NextIcon from "svelte-material-icons/ChevronRight.svelte";
-    import { languageCode, translationCodes } from "../../i18n/i18n";
+    import { translationCodes } from "../../i18n/i18n";
     import { calendarState, type DateRange } from "./calendarState.svelte";
     import { getMonthCalendar, getTitleText, isSameDay } from "./utils";
     import { weekDays } from "./weekdays";
@@ -20,7 +20,7 @@
     let today = $state(new Date());
     let showDate = $state(new Date());
     let dates = $state<Date[][]>([]);
-    let translatedLocale = $derived(translationCodes[languageCode($locale)] || "en");
+    let translatedLocale = $derived(translationCodes[$locale || "en"] || "en");
 
     $effect(() => getDates(showDate));
 
