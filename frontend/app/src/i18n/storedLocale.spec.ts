@@ -31,16 +31,16 @@ async function translationOfClose(code: string): Promise<string> {
     return (await translations[`./${code}.json`]()).close;
 }
 
+beforeEach(() => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+});
+
+afterEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+});
+
 describe("the stored locale", () => {
-    beforeEach(() => {
-        vi.spyOn(console, "warn").mockImplementation(() => {});
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-        localStorage.clear();
-    });
-
     test.each(codes)("%s is still the language after a reload", async (code) => {
         localStorage.setItem(configKeys.locale, code);
         const translation = await translationOfClose(code);
@@ -51,6 +51,7 @@ describe("the stored locale", () => {
 
         expect(page.close()).toBe(translation);
         expect(page.language()).toBe(code);
+        expect(page.canEditTranslations()).toBe(code !== "en");
     });
 
     test("Hebrew chosen in the language selector survives a reload", async () => {
@@ -162,23 +163,6 @@ describe("the stored locale", () => {
 
 // Whether the user's profile offers the toggle for suggesting corrections to the translations
 describe("editing translations", () => {
-    beforeEach(() => {
-        vi.spyOn(console, "warn").mockImplementation(() => {});
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-        localStorage.clear();
-    });
-
-    test.each(codes)("is offered for %s unless it is English", async (code) => {
-        localStorage.setItem(configKeys.locale, code);
-
-        const page = await loadPage();
-
-        expect(page.canEditTranslations()).toBe(code !== "en");
-    });
-
     test.each(["en", "en-GB", "en-US"])("is not offered to a browser set to %s", async (lang) => {
         const page = await loadPage(lang);
 
@@ -240,6 +224,12 @@ describe("editing translations", () => {
         await page.setLocale("en");
 
         expect(page.canEditTranslations()).toBe(false);
+    });
+
+    // svelte-i18n has no locale until it has been initialised
+    test.each([null, undefined])("is not offered when the locale is %s", async (locale) => {
+        const { hasEditableTranslations } = await import("./i18n");
+        expect(hasEditableTranslations(locale)).toBe(false);
     });
 });
 

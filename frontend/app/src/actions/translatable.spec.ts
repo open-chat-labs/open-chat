@@ -115,7 +115,6 @@ describe("translatable action", () => {
     });
 
     test("switching to a locale that lacks the key removes the marker", async () => {
-        addMessages("it", { other: "thing" });
         await locale.set("fr");
         const node = mount("some.thing");
         editmode.set(true);
