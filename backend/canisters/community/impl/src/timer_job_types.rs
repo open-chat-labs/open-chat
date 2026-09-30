@@ -572,10 +572,11 @@ impl JoinMembersToPublicChannelJob {
             }
 
             let mut users_added = Vec::new();
+            let mut processed = 0u32;
             let now = state.env.now();
             while let Some(user_id) = self.members.pop() {
                 if let Some(member) = state.data.members.get_by_user_id(&user_id) {
-                    let result = join_channel_unchecked(
+                    match join_channel_unchecked(
                         user_id,
                         member.user_type,
                         channel,
@@ -584,19 +585,31 @@ impl JoinMembersToPublicChannelJob {
                         false,
                         false,
                         now,
-                    );
-                    if matches!(result, AddResult::Success(_)) {
-                        users_added.push(user_id);
-                        if users_added.len() % 100 == 0 && ic_cdk::api::instruction_counter() > 2_000_000_000 {
+                    ) {
+                        AddResult::Success(_) => users_added.push(user_id),
+                        AddResult::MemberLimitReached(_) => {
+                            // The channel is full, so none of the remaining members can be added
+                            self.members.clear();
                             break;
                         }
+                        AddResult::AlreadyInGroup | AddResult::Blocked => {}
                     }
+                }
+
+                // Every member counts towards the check, whether added or not, since each costs a
+                // read from stable memory
+                processed += 1;
+                if processed.is_multiple_of(100) && ic_cdk::api::instruction_counter() > 2_000_000_000 {
+                    break;
                 }
             }
 
             info!("Joined {} members to channel {channel_id}", users_added.len());
 
-            let bot_notification = channel.chat.events.mark_members_added_to_public_channel(users_added, now);
+            let bot_notification = channel
+                .chat
+                .events
+                .mark_members_added_to_public_channel(users_added.len() as u32, now);
             state.push_bot_notification(bot_notification);
 
             if !self.members.is_empty() {

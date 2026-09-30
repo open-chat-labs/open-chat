@@ -2363,6 +2363,7 @@ export function groupChatSummary(value: TGroupCanisterGroupChatSummary): GroupCh
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
         lastUpdated: value.last_updated,
+        detailsLastUpdated: value.details_last_updated,
         blobReference: mapOptional(value.avatar_id, (blobId) => ({
             blobId,
             canisterId: groupId,
@@ -2426,6 +2427,7 @@ export function communitySummary(value: TCommunityCanisterCommunitySummary): Com
         historyVisible: false,
         latestEventIndex: value.latest_event_index,
         lastUpdated: value.last_updated,
+        detailsLastUpdated: value.details_last_updated,
         metrics: chatMetrics(value.metrics),
         avatar: {
             blobReference: mapOptional(value.avatar_id, (blobId) => ({
@@ -2497,6 +2499,7 @@ export function communityChannelSummary(
         latestEventIndex: value.latest_event_index,
         latestMessageIndex: value.latest_message_index,
         lastUpdated: value.last_updated,
+        detailsLastUpdated: value.details_last_updated,
         blobReference: mapOptional(value.avatar_id, (blobId) => ({
             blobId,
             canisterId: communityId,
@@ -2694,7 +2697,6 @@ export function groupDetailsSuccess(
     canisterId: string,
     channelId?: number,
 ): GroupChatDetailsResponse {
-    console.log("Group details: ", value);
     const members = ("participants" in value ? value.participants : value.members).map(member);
 
     const basicMembers = "basic_members" in value ? value.basic_members : [];

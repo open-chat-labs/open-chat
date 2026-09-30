@@ -97,8 +97,34 @@ export function setNativeTheme() {
     // Keep the v1-derived css variables (still used in places by the v2
     // layout) in step with the selected v2 mode.
     activeThemeV2Id.subscribe((id) => {
-        themeOverride.set(id.endsWith("-light") ? "neon_light" : "neon_dark");
+        const light = id.endsWith("-light");
+        themeOverride.set(light ? "neon_light" : "neon_dark");
+        rememberThemeMode(light ? "light" : "dark");
     });
+}
+
+// The next page load paints a dark background straight from index.html if the theme was a dark
+// one (`generateStartupScript` in rollup.extras.mjs), rather than staying white until the app's
+// styles have arrived.
+const STARTUP_THEME_MODE_KEY = "openchat_startup_theme_mode";
+
+function rememberThemeMode(mode: Theme["mode"]): void {
+    try {
+        localStorage.setItem(STARTUP_THEME_MODE_KEY, mode);
+    } catch {
+        // without storage the next load goes by the OS preference
+    }
+}
+
+// Once the app has drawn its own background the one painted by index.html has done its job.
+// Left in place it would sit behind the body's, and show a stale colour wherever the body
+// doesn't reach after a change of theme.
+export function clearStartupBackground(): void {
+    // the body fades its background in over 300ms, so give that time to finish first
+    window.setTimeout(
+        () => document.documentElement.style.removeProperty("background-color"),
+        1000,
+    );
 }
 
 export const themeOverride = writable<string>(undefined);
@@ -164,5 +190,6 @@ export const currentTheme = derived(currentThemeName, (name) => {
     const theme = themes[name];
     loadFont(theme);
     writeCssVars("--", theme);
+    rememberThemeMode(theme.mode);
     return theme;
 });

@@ -1,5 +1,4 @@
 use crate::env::ENV;
-use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use oc_error_codes::OCErrorCode;
@@ -28,17 +27,7 @@ fn join_public_community_succeeds() {
 
     client::community::happy_path::join_community(env, user2.principal, community_id);
 
-    tick_many(env, 3);
-
-    let initial_state = client::user::happy_path::initial_state(env, &user2);
-
-    assert!(
-        initial_state
-            .communities
-            .summaries
-            .iter()
-            .any(|c| c.community_id == community_id)
-    );
+    wait_for_community_membership(env, &user2, community_id);
 }
 
 #[test]
@@ -102,17 +91,7 @@ fn join_private_community_with_invitation_succeeds() {
 
     client::community::happy_path::join_community(env, user2.principal, community_id);
 
-    tick_many(env, 3);
-
-    let initial_state = client::user::happy_path::initial_state(env, &user2);
-
-    assert!(
-        initial_state
-            .communities
-            .summaries
-            .iter()
-            .any(|c| c.community_id == community_id)
-    );
+    wait_for_community_membership(env, &user2, community_id);
 }
 
 #[test]
@@ -157,17 +136,7 @@ fn join_private_community_using_invite_code_succeeds() {
         local_user_index_canister::join_community::Response::Success(_)
     ));
 
-    tick_many(env, 3);
-
-    let initial_state = client::user::happy_path::initial_state(env, &user2);
-
-    assert!(
-        initial_state
-            .communities
-            .summaries
-            .iter()
-            .any(|c| c.community_id == community_id)
-    );
+    wait_for_community_membership(env, &user2, community_id);
 }
 
 #[test]
@@ -194,17 +163,7 @@ fn invite_to_community_oc_bot_message_received() {
         vec![user2.user_id],
     );
 
-    tick_many(env, 3);
-
-    let initial_state = client::user::happy_path::initial_state(env, &user2);
-
-    assert!(initial_state.direct_chats.summaries.iter().any(|dc| {
-        if let MessageContent::Text(content) = &dc.latest_message.as_ref().unwrap().event.content {
-            content.text.contains("You have been invited to the community") && content.text.contains(&community_id.to_string())
-        } else {
-            false
-        }
-    }));
+    wait_for_invitation(env, &user2, "community", community_id);
 }
 
 #[test]
@@ -243,16 +202,8 @@ fn default_channels_marked_as_read_after_joining() {
 
     client::community::happy_path::join_community(env, user3.principal, community_id);
 
-    tick_many(env, 3);
-
-    let initial_state = client::user::happy_path::initial_state(env, &user3);
-
-    let community = initial_state
-        .communities
-        .summaries
-        .iter()
-        .find(|c| c.community_id == community_id)
-        .unwrap();
+    // The channels are marked as read by the same event which adds the community to the user's canister
+    let community = wait_for_community_membership(env, &user3, community_id);
 
     let channel1 = community.channels.iter().find(|c| c.channel_id == default1).unwrap();
     assert_eq!(channel1.read_by_me_up_to, Some(0.into()));
@@ -319,6 +270,50 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         user2,
         community_id,
     }
+}
+
+// Ticks until the user's canister lists the community, ie. the join event has been delivered, and
+// returns the user's copy of it. This can take many rounds, since a newly created User canister can
+// take around 10 rounds to handle its first message, and the event goes via the UserIndex if the user
+// is on a different subnet from the community.
+pub(super) fn wait_for_community_membership(
+    env: &mut PocketIc,
+    user: &User,
+    community_id: CommunityId,
+) -> user_canister::CommunitySummary {
+    for _ in 0..30 {
+        let initial_state = client::user::happy_path::initial_state(env, user);
+        if let Some(community) = initial_state
+            .communities
+            .summaries
+            .into_iter()
+            .find(|c| c.community_id == community_id)
+        {
+            return community;
+        }
+        env.tick();
+    }
+    panic!("User {} was not notified of joining the community", user.user_id);
+}
+
+// Ticks until the OpenChat bot's message inviting the user to the community or channel with the given
+// id has reached their canister, where `invited_to` is "community" or "channel"
+pub(super) fn wait_for_invitation(env: &mut PocketIc, user: &User, invited_to: &str, id: impl ToString) {
+    let text = format!("You have been invited to the {invited_to}");
+    let id = id.to_string();
+    for _ in 0..30 {
+        let initial_state = client::user::happy_path::initial_state(env, user);
+        if initial_state.direct_chats.summaries.iter().any(|dc| {
+            matches!(
+                dc.latest_message.as_ref().map(|m| &m.event.content),
+                Some(MessageContent::Text(content)) if content.text.contains(&text) && content.text.contains(&id)
+            )
+        }) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("User {} was not told of their invitation to the {invited_to}", user.user_id);
 }
 
 struct TestData {
