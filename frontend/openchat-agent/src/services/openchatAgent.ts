@@ -242,6 +242,7 @@ import {
     buildBlobUrl,
     chatIdentifiersEqual,
     emptyEventsResponse,
+    encodeIcrcAccount,
     isCanisterId,
     isError,
     isMultiUserCanisterUser,
@@ -250,6 +251,7 @@ import {
     messageContextToString,
     messageContextsEqual,
     offline,
+    spenderSubaccount,
     textToCode,
     userCanisterSpenderAccount,
     userWalletAccount,
@@ -523,41 +525,37 @@ export class OpenChatAgent extends EventTarget {
         return userWalletAccount(userId, () => this.principal.toText());
     }
 
-    // Approves the user's canister to pull a payment from the user's wallet, returning the error to
-    // report if it couldn't be, or undefined once it has been, or if it didn't need to be.
-    //
-    // A user in a MultiUser canister holds their own funds, in the account of the principal they
-    // sign in with, which their canister can only pull from once they have approved it as spender.
-    // So it is approved here, as the user, just before each payment it will pull. A user alone in
-    // their canister needs no approval, since the canister holds their funds itself, and neither
-    // does a payment from another account (`fromAccount`), whose owner has approved it already.
+    // Whether the user holds their own funds, in the account of the principal they sign in with,
+    // rather than their canister holding them, as it does for a user alone in it. A canister can
+    // only pull a payment from such a user's wallet once they have approved it as spender.
+    private holdsOwnFunds(): boolean {
+        return isMultiUserCanisterUser(this._userClient.userId);
+    }
+
+    // Approves `spender` to pull a payment from the user's wallet, as the user, returning the error
+    // to report if it couldn't be, or undefined once it has been.
     //
     // `amount` is all that the payment takes from the wallet, so includes the fee of each transfer
-    // the canister makes, and `fee` is what the ledger charges for the approval itself. Without
+    // the spender makes, and `fee` is what the ledger charges for the approval itself. Without
     // knowing that, there is no telling whether the wallet can afford both, so nothing is approved.
     //
-    // The approval is made, and paid for, before the canister has checked anything, so a payment it
+    // The approval is made, and paid for, before the spender has checked anything, so a payment it
     // then refuses, such as one with the wrong PIN, still costs the approval's fee, and leaves the
-    // canister approved for the payment until the approval lapses.
-    private async approveUserCanisterToPull(
+    // spender approved for the payment until the approval lapses.
+    private async approveToPull(
+        spender: IcrcAccount,
         ledger: string,
         amount: bigint,
         fee: bigint | undefined,
-        fromAccount: string | undefined,
     ): Promise<OCError | undefined> {
-        const userId = this._userClient.userId;
-        if (fromAccount !== undefined || !isMultiUserCanisterUser(userId)) {
-            return undefined;
-        }
         if (fee === undefined) {
             return { kind: "error", code: ErrorCode.ApprovalFailed, message: undefined };
         }
 
-        const spender = userCanisterSpenderAccount(userId, () => this.principal.toText());
         const response = await this._ledgerClient
             .approveSpending(ledger, spender, amount, fee)
             .catch((err) => {
-                console.warn("Failed to approve the user's canister to pull a payment", err);
+                console.warn("Failed to approve a payment being pulled from the wallet", err);
                 return "failure" as const;
             });
 
@@ -569,6 +567,63 @@ export class OpenChatAgent extends EventTarget {
             case "failure":
                 return { kind: "error", code: ErrorCode.ApprovalFailed, message: undefined };
         }
+    }
+
+    // Approves the user's canister to pull a payment from the user's wallet, just before each
+    // payment it will pull, if the user holds their own funds. A user alone in their canister needs
+    // no approval, since the canister holds their funds itself, and neither does a payment from
+    // another account (`fromAccount`), whose owner has approved it already.
+    private approveUserCanisterToPull(
+        ledger: string,
+        amount: bigint,
+        fee: bigint | undefined,
+        fromAccount: string | undefined,
+    ): Promise<OCError | undefined> {
+        if (fromAccount !== undefined || !this.holdsOwnFunds()) {
+            return Promise.resolve(undefined);
+        }
+        const userId = this._userClient.userId;
+        const spender = userCanisterSpenderAccount(userId, () => this.principal.toText());
+        return this.approveToPull(spender, ledger, amount, fee);
+    }
+
+    // The account a group or community spends as when it pulls a payment from one of its members:
+    // its own, under the subaccount derived from the member's principal, so that it only ever
+    // spends a member's own approval. Mirrors `ledger_utils::spender_subaccount`.
+    private chatSpenderAccount(chatId: GroupChatIdentifier | ChannelIdentifier): IcrcAccount {
+        return {
+            owner: Principal.fromText(
+                chatId.kind === "channel" ? chatId.communityId : chatId.groupId,
+            ),
+            subaccount: spenderSubaccount(this.principal),
+        };
+    }
+
+    // What a message takes from its sender's wallet: the crypto it sends or the prize it offers,
+    // with the transfer's fee, or the token0 of the swap it offers, which is deposited in the escrow
+    // canister along with the fee for paying it out, so costs two fees.
+    private paymentInMessage(
+        content: MessageContent,
+    ):
+        | { ledger: string; amount: bigint; fee: bigint; fromAccount: string | undefined }
+        | undefined {
+        if (
+            (content.kind === "crypto_content" || content.kind === "prize_content_initial") &&
+            content.transfer.kind === "pending"
+        ) {
+            const { ledger, amountE8s, feeE8s = 0n, fromAccount } = content.transfer;
+            return { ledger, amount: amountE8s + feeE8s, fee: feeE8s, fromAccount };
+        }
+        if (content.kind === "p2p_swap_content_initial") {
+            const { ledger, fee } = content.token0;
+            return {
+                ledger,
+                amount: content.token0Amount + 2n * fee,
+                fee,
+                fromAccount: content.fromAccount,
+            };
+        }
+        return undefined;
     }
 
     // The fee the ledger charges for a transfer or an approval, if the token is a registered one
@@ -694,6 +749,30 @@ export class OpenChatAgent extends EventTarget {
             if (offline()) {
                 this._chatsDb.recordFailedMessage(chatId, event, threadRootMessageIndex);
                 return resolve([CommonResponses.offline(), event.event], true);
+            }
+
+            // A user who holds their own funds can't have their canister make a transfer for them
+            if (
+                chatId.kind !== "direct_chat" &&
+                this.holdsOwnFunds() &&
+                (event.event.content.kind === "crypto_content" ||
+                    event.event.content.kind === "prize_content_initial" ||
+                    event.event.content.kind === "p2p_swap_content_initial")
+            ) {
+                return resolve(
+                    await this.sendMessageWithTransferDirectly(
+                        chatId,
+                        user,
+                        mentioned,
+                        event,
+                        threadRootMessageIndex,
+                        acceptedRules,
+                        messageFilterFailed,
+                        newAchievement,
+                        onRequestAccepted,
+                    ),
+                    true,
+                );
             }
 
             if (chatId.kind === "channel") {
@@ -878,23 +957,80 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // Approves the user's canister to pull whatever a message in a direct chat takes from the
-    // user's wallet: the crypto it sends, or the token0 of the swap it offers, which is deposited in
-    // the escrow canister along with the fee for paying it out, so costs two fees.
+    // user's wallet
     private approveTransferInMessage(content: MessageContent): Promise<OCError | undefined> {
-        if (content.kind === "crypto_content" && content.transfer.kind === "pending") {
-            const { ledger, amountE8s, feeE8s = 0n, fromAccount } = content.transfer;
-            return this.approveUserCanisterToPull(ledger, amountE8s + feeE8s, feeE8s, fromAccount);
-        }
-        if (content.kind === "p2p_swap_content_initial") {
-            const { ledger, fee } = content.token0;
-            return this.approveUserCanisterToPull(
-                ledger,
-                content.token0Amount + 2n * fee,
-                fee,
-                content.fromAccount,
+        const payment = this.paymentInMessage(content);
+        return payment === undefined
+            ? Promise.resolve(undefined)
+            : this.approveUserCanisterToPull(
+                  payment.ledger,
+                  payment.amount,
+                  payment.fee,
+                  payment.fromAccount,
+              );
+    }
+
+    // Sends a message holding a transfer straight to its group or community, which pulls the
+    // transfer from the sender's wallet, once approved to, into the wallet it knows the recipient
+    // by. This is how a user who holds their own funds sends one, since their canister can't make
+    // the transfer for them. A transfer from another account is pulled from that instead, which
+    // its owner has to have approved the group or community to spend from.
+    // TODO: An external wallet is asked to approve the user's canister (see
+    // `approveExternalWalletSpending`), so can't pay this way until it is asked to approve the
+    // group or community instead
+    private async sendMessageWithTransferDirectly(
+        chatId: GroupChatIdentifier | ChannelIdentifier,
+        user: CreatedUser,
+        mentioned: User[],
+        event: EventWrapper<Message>,
+        threadRootMessageIndex: number | undefined,
+        acceptedRules: AcceptedRules | undefined,
+        messageFilterFailed: bigint | undefined,
+        newAchievement: boolean,
+        onRequestAccepted: () => void,
+    ): Promise<[SendMessageResponse, Message]> {
+        const payment = this.paymentInMessage(event.event.content);
+        if (payment !== undefined && payment.fromAccount === undefined) {
+            const error = await this.approveToPull(
+                this.chatSpenderAccount(chatId),
+                payment.ledger,
+                payment.amount,
+                payment.fee,
             );
+            if (error !== undefined) {
+                return [error, event.event];
+            }
         }
-        return Promise.resolve(undefined);
+
+        const wallet = encodeIcrcAccount(this.walletAccount(this._userClient.userId));
+        return chatId.kind === "channel"
+            ? this._communityClient.sendMessage(
+                  chatId,
+                  user.username,
+                  user.displayName,
+                  mentioned,
+                  event,
+                  threadRootMessageIndex,
+                  acceptedRules?.community,
+                  acceptedRules?.chat,
+                  messageFilterFailed,
+                  newAchievement,
+                  onRequestAccepted,
+                  wallet,
+              )
+            : this._groupClient.sendMessage(
+                  chatId.groupId,
+                  user.username,
+                  user.displayName,
+                  mentioned,
+                  event,
+                  threadRootMessageIndex,
+                  acceptedRules?.chat,
+                  messageFilterFailed,
+                  newAchievement,
+                  onRequestAccepted,
+                  wallet,
+              );
     }
 
     private async sendDirectMessage(
@@ -4446,25 +4582,66 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.reportedMessages(userId);
     }
 
+    // `username`, `displayName` and `newAchievement` are only needed by a group or community tipped
+    // in directly
     async tipMessage(
         messageContext: MessageContext,
         messageId: bigint,
         transfer: PendingCryptocurrencyTransfer,
         decimals: number,
         pin: string | undefined,
+        username: string,
+        displayName: string | undefined,
+        newAchievement: boolean,
     ): Promise<TipMessageResponse> {
-        // Only a tip in a direct chat is pulled by the user's canister
-        if (messageContext.chatId.kind === "direct_chat") {
-            const fee = transfer.feeE8s ?? 0n;
+        const { chatId, threadRootMessageIndex } = messageContext;
+        const fee = transfer.feeE8s ?? 0n;
+        const amount = transfer.amountE8s + fee;
+
+        if (chatId.kind === "direct_chat") {
+            // The user's canister pulls a tip in a direct chat
             const error = await this.approveUserCanisterToPull(
                 transfer.ledger,
-                transfer.amountE8s + fee,
+                amount,
                 fee,
                 transfer.fromAccount,
             );
             if (error !== undefined) {
                 return error;
             }
+        } else if (this.holdsOwnFunds()) {
+            // A user who holds their own funds tips in a group or channel by having the group or
+            // community pull the tip from their wallet, since their canister can't make it for them
+            if (transfer.fromAccount === undefined) {
+                const spender = this.chatSpenderAccount(chatId);
+                const error = await this.approveToPull(spender, transfer.ledger, amount, fee);
+                if (error !== undefined) {
+                    return error;
+                }
+            }
+            const wallet = encodeIcrcAccount(this.walletAccount(this._userClient.userId));
+            const paid = { ...transfer, fromAccount: transfer.fromAccount ?? wallet };
+            return chatId.kind === "channel"
+                ? this._communityClient.tipMessage(
+                      chatId,
+                      threadRootMessageIndex,
+                      messageId,
+                      paid,
+                      decimals,
+                      username,
+                      displayName,
+                      newAchievement,
+                  )
+                : this._groupClient.tipMessage(
+                      chatId.groupId,
+                      threadRootMessageIndex,
+                      messageId,
+                      paid,
+                      decimals,
+                      username,
+                      displayName,
+                      newAchievement,
+                  );
         }
 
         return this.userClient.tipMessage(messageContext, messageId, transfer, decimals, pin);
