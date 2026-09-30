@@ -35,7 +35,7 @@
     import Pause from "svelte-material-icons/PauseCircleOutline.svelte";
     import Play from "svelte-material-icons/PlayCircleOutline.svelte";
     import type WaveSurfer from "wavesurfer.js";
-    import { loadWaveSurfer } from "../../utils/wavesurfer";
+    import { loadWaveSurfer, waveSurferFailedToLoad } from "../../utils/wavesurfer";
     import Translatable from "../Translatable.svelte";
     import TextContent from "./TextContent.svelte";
 
@@ -67,6 +67,9 @@
     );
     let hasContent = $derived(!!textContent?.text);
     let textHighlightColour = $derived<ColourVarKeys>(me ? "secondaryAccent" : "primaryAccent");
+
+    // reserved from the start, as the waveform only arrives once wavesurfer has loaded
+    const WAVEFORM_HEIGHT = 42;
 
     let currentTime = $state<string>();
     let waveformDiv: HTMLDivElement | undefined;
@@ -122,13 +125,16 @@
     const chatMetadataSentColor = getColor("--chat-metadata-sent");
 
     onMount(() => {
+        // a reply shows no waveform
+        if (waveformDiv === undefined) return;
+
         let unmounted = false;
 
         loadWaveSurfer().then((WaveSurfer) => {
             if (unmounted || waveformDiv === undefined) return;
 
             wavesurfer = WaveSurfer.create({
-                height: 42,
+                height: WAVEFORM_HEIGHT,
                 barHeight: 0.65,
                 width: "100%",
                 container: waveformDiv,
@@ -167,7 +173,7 @@
             wavesurfer.on("pause", () => (playing = false));
 
             register(wavesurfer);
-        });
+        }, waveSurferFailedToLoad);
 
         return () => {
             unmounted = true;
@@ -237,7 +243,8 @@
                     class="waveform"
                     class:has_content={hasContent}
                     class:me
-                    class:draft>
+                    class:draft
+                    style:min-height="{WAVEFORM_HEIGHT}px">
                 </div>
                 {@render remainingTime()}
             </Column>

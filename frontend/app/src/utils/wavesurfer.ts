@@ -11,3 +11,9 @@ export function loadWaveSurfer(): Promise<typeof WaveSurfer> {
 export function loadRecordPlugin(): Promise<typeof RecordPlugin> {
     return import("wavesurfer.js/dist/plugins/record.esm.js").then((m) => m.default);
 }
+
+// For the components which draw a waveform: without wavesurfer there is no waveform to draw, and
+// nothing the user can do about it.
+export function waveSurferFailedToLoad(err: unknown): void {
+    console.error("Failed to load wavesurfer", err);
+}

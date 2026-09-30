@@ -2,13 +2,20 @@
     import { ChatFootnote, ColourVars, Row } from "component-lib";
     import { onMount } from "svelte";
     import MicrophoneOutline from "svelte-material-icons/MicrophoneOutline.svelte";
-    import { loadRecordPlugin, loadWaveSurfer } from "../../utils/wavesurfer";
+    import {
+        loadRecordPlugin,
+        loadWaveSurfer,
+        waveSurferFailedToLoad,
+    } from "../../utils/wavesurfer";
 
     interface Props {
         stream: MediaStream;
     }
 
     let { stream }: Props = $props();
+
+    // reserved from the start, as the waveform only arrives once wavesurfer has loaded
+    const WAVEFORM_HEIGHT = 42;
 
     let waveformDiv: HTMLDivElement | undefined;
     let elapsed = $state(0);
@@ -32,7 +39,7 @@
 
             const ws = WaveSurfer.create({
                 container: waveformDiv,
-                height: 42,
+                height: WAVEFORM_HEIGHT,
                 barWidth: 3,
                 barRadius: 6,
                 barGap: 4,
@@ -55,7 +62,7 @@
                 micStream.onDestroy();
                 ws.destroy();
             };
-        });
+        }, waveSurferFailedToLoad);
 
         // the recording is under way whether or not its waveform has been drawn yet
         const start = Date.now();
@@ -80,7 +87,11 @@
     crossAxisAlignment="center"
     width="fill">
     <MicrophoneOutline color={ColourVars.secondary} size="1.5rem" />
-    <div bind:this={waveformDiv} class="recording_waveform"></div>
+    <div
+        bind:this={waveformDiv}
+        class="recording_waveform"
+        style:min-height="{WAVEFORM_HEIGHT}px">
+    </div>
     <ChatFootnote colour="secondary" width="hug">{formatTime(elapsed)}</ChatFootnote>
 </Row>
 

@@ -5,24 +5,14 @@ import { selectLayout } from "./layout";
 // rollup.extras.mjs to a polyfill without fileURLToPath.
 vi.mock("url", () => import("node:url"));
 
-// jsdom has no matchMedia, which the themes read as they are imported and the startup script
-// reads as it runs. Hoisted so it is in place before the imports below.
-const osPrefersDark = vi.hoisted(() => {
-    const prefers = { dark: false };
-    window.matchMedia = ((query: string) =>
-        ({
-            matches: query === "(prefers-color-scheme: dark)" && prefers.dark,
-            media: query,
-            addEventListener() {},
-            removeEventListener() {},
-            addListener() {},
-            removeListener() {},
-        }) as unknown as MediaQueryList) as typeof window.matchMedia;
-    return prefers;
-});
+import { generateStartupScript } from "../../rollup.extras.mjs";
 
-import { STARTUP_DARK_BACKGROUND, generateStartupScript } from "../../rollup.extras.mjs";
-import { themes } from "../theme/themes";
+// jsdom has no matchMedia, which the startup script reads as it runs
+const osPrefersDark = { dark: false };
+window.matchMedia = ((query: string) =>
+    ({
+        matches: query === "(prefers-color-scheme: dark)" && osPrefersDark.dark,
+    }) as MediaQueryList) as typeof window.matchMedia;
 
 type Chunk = { fileName: string; moduleIds: string[]; imports: string[]; isEntry: boolean };
 
@@ -114,8 +104,15 @@ describe("the startup script in index.html", () => {
         expect(startupBackground()).not.toBe("");
     });
 
-    test("paints the default dark theme's background", () => {
-        expect(STARTUP_DARK_BACKGROUND).toBe(themes.dark.bg.toLowerCase());
+    test("paints the mobile layout dark on a first visit, as that is its default theme", () => {
+        configure("v2", 400);
+        expect(startupBackground()).not.toBe("");
+    });
+
+    test("goes by the theme last used on the mobile layout too", () => {
+        configure("v2", 400);
+        localStorage.setItem("openchat_startup_theme_mode", "light");
+        expect(startupBackground()).toBe("");
     });
 
     test("preloads the desktop App chunk and everything it statically imports", () => {

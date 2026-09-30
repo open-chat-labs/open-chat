@@ -258,9 +258,10 @@ export const STARTUP_DARK_BACKGROUND = "#1b1c21";
 // entry chunks import the App chunk, which imports its shared chunks, and running that asks for
 // the locale and only then starts the worker.
 //
-// First it paints the page dark if the theme last used was a dark one (themes.ts records it), or
-// on a first visit if the OS prefers dark, which is what the app then defaults to. Otherwise the
-// page stays white until the app's styles have been downloaded and run.
+// First it paints the page dark if the theme last used was a dark one (themes.ts records it).
+// On a first visit it goes by what the app will default to: dark on the mobile layout, and the
+// OS preference otherwise. Without this the page stays white until the app's styles have been
+// downloaded and run.
 //
 // It has to be a script rather than <link> tags because which App tree and which locale get loaded
 // is only known in the browser. Both choices mirror what the app goes on to do (`selectLayout` in
@@ -295,11 +296,12 @@ export function generateStartupScript({ chunks, version, mobileLayout }) {
     }
 
     return `(function () {
+    var mobile = ${mobileLayout} === "v2" && window.innerWidth < 768;
     var mode;
     try {
         mode = localStorage.getItem("openchat_startup_theme_mode");
     } catch (e) {}
-    if (mode ? mode === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    if (mode ? mode === "dark" : mobile || window.matchMedia("(prefers-color-scheme: dark)").matches) {
         document.documentElement.style.backgroundColor = "${STARTUP_DARK_BACKGROUND}";
     }
     function preload(file) {
@@ -308,7 +310,6 @@ export function generateStartupScript({ chunks, version, mobileLayout }) {
         link.href = "/" + file;
         document.head.appendChild(link);
     }
-    var mobile = ${mobileLayout} === "v2" && window.innerWidth < 768;
     (mobile ? ${JSON.stringify(appChunks(MOBILE_APP_ROOT))} : ${JSON.stringify(appChunks(DESKTOP_APP_ROOT))}).forEach(preload);
     var locales = ${JSON.stringify(locales)};
     var locale;

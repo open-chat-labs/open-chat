@@ -5,7 +5,7 @@
     import PlayCircleOutline from "svelte-material-icons/PlayCircleOutline.svelte";
     import { Ringtone, selectedRingtone } from "../../../stores/video";
     import { currentTheme } from "../../../theme/themes";
-    import { loadWaveSurfer } from "../../../utils/wavesurfer";
+    import { loadWaveSurfer, waveSurferFailedToLoad } from "../../../utils/wavesurfer";
 
     interface Props {
         ringtone: Ringtone;
@@ -14,18 +14,23 @@
 
     let { ringtone, onTogglePlay }: Props = $props();
 
+    // reserved from the start, as the waveform only arrives once wavesurfer has loaded
+    const WAVEFORM_HEIGHT = 30;
+
     let waveform: HTMLDivElement | undefined = $state();
 
     let checked = $derived($selectedRingtone === ringtone.key);
 
     onMount(() => {
+        if (!waveform) return;
+
         let unmounted = false;
 
         loadWaveSurfer().then((WaveSurfer) => {
             if (unmounted || !waveform) return;
 
             const wavesurfer = WaveSurfer.create({
-                height: 30,
+                height: WAVEFORM_HEIGHT,
                 cursorWidth: 0,
                 barWidth: 2,
                 barRadius: 4,
@@ -41,7 +46,7 @@
                     togglePlay();
                 }
             });
-        });
+        }, waveSurferFailedToLoad);
 
         return () => {
             unmounted = true;
@@ -78,7 +83,7 @@
             {/snippet}
         </IconButton>
     </Row>
-    <div bind:this={waveform} class="waveform"></div>
+    <div bind:this={waveform} class="waveform" style:min-height="{WAVEFORM_HEIGHT}px"></div>
 </Column>
 
 <style lang="scss">

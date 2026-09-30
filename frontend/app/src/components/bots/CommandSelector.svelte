@@ -28,6 +28,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { toastStore } from "../../stores/toast";
+    import { dateAwareSelection } from "@src/utils/commandSelection";
     import ErrorMessage from "../ErrorMessage.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Logo from "@shared_components/Logo.svelte";
@@ -145,27 +146,13 @@
         }
     }
 
-    // Set while a selection is waiting for the date parser, so that it is not made twice
-    let selecting = false;
+    const selection = dateAwareSelection((command: FlattenedCommand | undefined) => {
+        botState.setSelectedCommand(messageContext, commands, command);
+        sendCommandIfValid();
+    });
 
     function selectCommand(command = commands[botState.focusedCommandIndex]) {
-        if (selecting) return;
-
-        const select = () => {
-            botState.setSelectedCommand(messageContext, commands, command);
-            sendCommandIfValid();
-        };
-        if (command?.params.some((p) => p.kind === "dateTime")) {
-            // a date typed in words can only be read once the date parser has arrived
-            selecting = true;
-            loadDateParser().then(() => {
-                selecting = false;
-                // the selector goes when the command is cancelled
-                if (!destroyed) select();
-            });
-        } else {
-            select();
-        }
+        selection.select(command);
     }
 
     function sendCommandIfValid() {
@@ -191,14 +178,13 @@
         }
     }
 
-    let destroyed = false;
-
     onMount(() => {
+        // on its way by the time a command is selected
         loadDateParser();
         botState.error = undefined;
         document.addEventListener("keydown", onkeydown);
         return () => {
-            destroyed = true;
+            selection.stop();
             document.removeEventListener("keydown", onkeydown);
         };
     });
