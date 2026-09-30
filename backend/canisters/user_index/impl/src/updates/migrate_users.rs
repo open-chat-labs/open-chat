@@ -22,16 +22,9 @@ fn migrate_users_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let retry_failed = matches!(args.users, UsersToMigrate::Specific(_));
     let users: Vec<_> = match args.users {
-        UsersToMigrate::LongestOffline(count) => {
-            if !state.data.users_last_online.is_complete() {
-                return Error(
-                    OCErrorCode::NotReadyForMigration.with_message("Users' last online dates are still being fetched"),
-                );
-            }
-            state.data.users_last_online.longest_offline(count as usize, |user_id| {
-                !state.data.user_migrations.contains(user_id) && can_migrate(user_id, state)
-            })
-        }
+        UsersToMigrate::LongestOffline(count) => state.data.users_last_online.longest_offline(count as usize, |user_id| {
+            !state.data.user_migrations.contains(user_id) && can_migrate(user_id, state)
+        }),
         // Users named explicitly are queued even if they have failed to be migrated before
         UsersToMigrate::Specific(user_ids) => user_ids.into_iter().filter(|user_id| can_migrate(user_id, state)).collect(),
     };

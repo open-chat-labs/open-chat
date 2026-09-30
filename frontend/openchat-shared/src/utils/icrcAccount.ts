@@ -152,6 +152,11 @@ export function userCanisterSpenderAccount(userId: string, principal: () => stri
     return { owner, subaccount: spenderSubaccount(Principal.fromText(principal())) };
 }
 
+// How long an approval made for a single payment stays spendable. The allowance is the whole of the
+// access the spender is granted, so it should outlive the payment it is for and nothing more: an
+// approval left standing is one which could be spent at any point later.
+export const APPROVAL_VALIDITY_MS = 10 * 60 * 1000;
+
 // Mirrors `ledger_utils::convert_to_subaccount`: the principal's length followed by its bytes.
 export function spenderSubaccount(principal: Principal): Uint8Array {
     const bytes = principal.toUint8Array();

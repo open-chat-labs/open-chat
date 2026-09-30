@@ -260,6 +260,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         canister_id,
                         attempt: 0,
                         retry_after: 0,
+                        delete_canister: false,
                     });
                 }
             }

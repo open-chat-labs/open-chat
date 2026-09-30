@@ -530,9 +530,7 @@ struct Data {
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
-    #[serde(default = "notifications_index_event_sync_queue")]
     pub notifications_index_event_sync_queue: BatchedTimerJobQueue<NotificationsIndexEventBatch>,
-    #[serde(default = "online_users_event_sync_queue")]
     pub online_users_event_sync_queue: BatchedTimerJobQueue<OnlineUsersEventBatch>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub platform_moderators: HashSet<UserId>,
@@ -569,11 +567,6 @@ struct Data {
     pub deleted_users: Vec<DeletedUser>,
     #[serde(alias = "identity_canister_user_sync_queue_2")]
     pub identity_canister_user_sync_queue: VecDeque<UserIdentity>,
-    // No longer pushed to, its principals are sent to the OnlineUsers canister as `UserDeleted`
-    // events after the upgrade.
-    // TODO remove after the release containing this has been deployed
-    #[serde(default)]
-    pub remove_from_online_users_queue: VecDeque<Principal>,
     pub survey_messages_sent: usize,
     pub external_achievements: ExternalAchievements,
     pub upload_wasm_chunks_whitelist: Vec<Principal>,
@@ -610,10 +603,6 @@ struct Data {
     // Set by proposal and fanned out to the LocalUserIndexes, including any added later
     #[serde(default)]
     pub daily_puzzle_canister_id: Option<CanisterId>,
-    // Set once the cycles of users deleted before cycles were refunded on deletion have been
-    // queued for refunding, so that the one-off run in `post_upgrade` only happens once
-    #[serde(default)]
-    pub deleted_user_cycles_refund_queued: bool,
     // The old id -> the new id of each user migrated to a MultiUser canister. Fanned out to the
     // LocalUserIndexes, including any added later
     #[serde(default)]
@@ -714,7 +703,6 @@ impl Data {
             chit_leaderboard: ChitLeaderboard::new(now),
             deleted_users: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
-            remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
@@ -732,7 +720,6 @@ impl Data {
             multi_user_canisters_enabled: false,
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
-            deleted_user_cycles_refund_queued: false,
             migrated_user_ids: MigratedUserIds::default(),
             users_last_online: UsersLastOnline::default(),
             user_migrations: UserMigrations::default(),
@@ -777,14 +764,6 @@ impl Data {
 
         bands
     }
-}
-
-fn notifications_index_event_sync_queue() -> BatchedTimerJobQueue<NotificationsIndexEventBatch> {
-    BatchedTimerJobQueue::new(Principal::anonymous(), false)
-}
-
-fn online_users_event_sync_queue() -> BatchedTimerJobQueue<OnlineUsersEventBatch> {
-    BatchedTimerJobQueue::new(Principal::anonymous(), false)
 }
 
 #[cfg(test)]
@@ -841,7 +820,6 @@ impl Default for Data {
             chit_leaderboard: ChitLeaderboard::new(0),
             deleted_users: Vec::new(),
             identity_canister_user_sync_queue: VecDeque::new(),
-            remove_from_online_users_queue: VecDeque::new(),
             survey_messages_sent: 0,
             external_achievements: ExternalAchievements::default(),
             upload_wasm_chunks_whitelist: Vec::new(),
@@ -859,7 +837,6 @@ impl Default for Data {
             multi_user_canisters_enabled: false,
             call_push_enabled: false,
             daily_puzzle_canister_id: None,
-            deleted_user_cycles_refund_queued: false,
             migrated_user_ids: MigratedUserIds::default(),
             users_last_online: UsersLastOnline::default(),
             user_migrations: UserMigrations::default(),

@@ -225,6 +225,18 @@ type EventsStore = IDBPObjectStore<
 //     db.createObjectStore("activityFeed");
 // }
 //
+function noteTimestamp(
+    timestamps: Map<string, bigint>,
+    key: string,
+    timestamp: bigint | undefined,
+) {
+    if (timestamp === undefined) {
+        timestamps.delete(key);
+    } else {
+        timestamps.set(key, timestamp);
+    }
+}
+
 async function clearChatsStore(
     _db: IDBPDatabase<ChatSchema>,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
@@ -346,6 +358,11 @@ export class ChatsDb {
     private readonly connectionManager: IndexedDbConnectionManager<ChatSchema>;
     private readonly principalString: string;
     private expiredEventSweeperJob: NodeJS.Timeout | undefined;
+    // The timestamps of the cached details of each chat and community, as they were when last read
+    // or written here. Reading the details themselves is expensive for a large chat or community,
+    // so these let the updates since they were cached be asked for without doing so.
+    private readonly groupDetailsTimestamps = new Map<string, bigint>();
+    private readonly communityDetailsTimestamps = new Map<string, bigint>();
 
     constructor(principal: Principal) {
         this.principalString = principal.toString();
@@ -1088,11 +1105,15 @@ export class ChatsDb {
     }
 
     async getCachedCommunityDetails(communityId: string): Promise<CommunityDetails | undefined> {
-        return (await this.getDb()).get("community_details", communityId);
+        const details = await (await this.getDb()).get("community_details", communityId);
+        noteTimestamp(this.communityDetailsTimestamps, communityId, details?.lastUpdated);
+        return details;
     }
 
     async getCachedGroupDetails(chatId: string): Promise<GroupChatDetails | undefined> {
-        return (await this.getDb()).get("group_details", chatId);
+        const details = await (await this.getDb()).get("group_details", chatId);
+        noteTimestamp(this.groupDetailsTimestamps, chatId, details?.timestamp);
+        return details;
     }
 
     async setCachedCommunityDetails(
@@ -1100,10 +1121,22 @@ export class ChatsDb {
         communityDetails: CommunityDetails,
     ): Promise<void> {
         await (await this.getDb()).put("community_details", communityDetails, communityId);
+        noteTimestamp(this.communityDetailsTimestamps, communityId, communityDetails.lastUpdated);
     }
 
     async setCachedGroupDetails(chatId: string, groupDetails: GroupChatDetails): Promise<void> {
         await (await this.getDb()).put("group_details", groupDetails, chatId);
+        noteTimestamp(this.groupDetailsTimestamps, chatId, groupDetails.timestamp);
+    }
+
+    // The timestamp of the cached details as they were when last read or written here, if they
+    // have been. Another tab may have written them since.
+    cachedCommunityDetailsTimestamp(communityId: string): bigint | undefined {
+        return this.communityDetailsTimestamps.get(communityId);
+    }
+
+    cachedGroupDetailsTimestamp(chatId: string): bigint | undefined {
+        return this.groupDetailsTimestamps.get(chatId);
     }
 
     async loadMessagesByMessageIndex(

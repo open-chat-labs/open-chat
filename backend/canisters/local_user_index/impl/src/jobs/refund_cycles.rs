@@ -1,6 +1,7 @@
+use crate::updates::c2c_delete_group::spawn_delete_canister;
 use crate::{CanisterToRefund, RuntimeState, call_relay, mutate_state, read_state};
 use constants::{B, CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
-use ic_cdk_management_canister::CanisterInstallMode;
+use ic_cdk_management_canister::{CanisterInstallMode, CanisterStatusType};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -11,8 +12,10 @@ use utils::canister::{
     is_out_of_cycles_error,
 };
 
-// Sends the cycles held by deleted users' uninstalled canisters to the CyclesDispenser, by
-// installing a tiny canister on each which does just that, then uninstalling it again.
+// Sends the cycles held by uninstalled canisters (those of deleted and migrated users) to the
+// CyclesDispenser, by installing a tiny canister on each which does just that, then uninstalling it
+// again. The canisters of deleted groups and communities are uninstalled here first, then deleted
+// once their cycles have been refunded.
 // See backend/canisters/cycles_refunder, which is where this wasm is built from.
 const CYCLES_REFUNDER_WASM: &[u8] = include_bytes!("../../../../cycles_refunder/cycles_refunder.wasm");
 
@@ -106,7 +109,7 @@ fn get_next(state: &mut RuntimeState) -> Result<CanisterToRefund, Option<Millise
 
 async fn process_canister(canister: CanisterToRefund) {
     let canister_id = canister.canister_id;
-    let result = refund_cycles(canister_id).await;
+    let result = refund_cycles(canister_id, canister.delete_canister).await;
 
     mutate_state(|state| {
         IN_PROGRESS.set(false);
@@ -119,10 +122,11 @@ async fn process_canister(canister: CanisterToRefund) {
             state.data.cycles_refund_queue.pop_front();
         }
 
+        let mut retrying = false;
         match result {
             Ok(cycles) => {
                 state.data.cycles_refunded_from_deleted_users += cycles;
-                info!(%canister_id, cycles, "Refunded cycles from deleted user's canister");
+                info!(%canister_id, cycles, "Refunded cycles from uninstalled canister");
             }
             Err(RefundError::NotController) => {
                 error!(%canister_id, "Cycles not refunded, this canister is not a controller");
@@ -145,11 +149,19 @@ async fn process_canister(canister: CanisterToRefund) {
                         canister_id,
                         attempt,
                         retry_after: state.env.now() + delay,
+                        delete_canister: canister.delete_canister,
                     });
+                    retrying = true;
                 } else {
                     error!(%canister_id, ?error, "Cycles not refunded, giving up");
                 }
             }
+        }
+
+        // A deleted group's or community's canister is deleted once nothing more is to be
+        // refunded from it
+        if canister.delete_canister && !retrying {
+            spawn_delete_canister(canister_id);
         }
         start_job_if_required(state, None);
     });
@@ -181,7 +193,7 @@ impl From<C2CError> for RefundError {
     }
 }
 
-async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
+async fn refund_cycles(canister_id: CanisterId, delete_canister: bool) -> Result<Cycles, RefundError> {
     let (cycles_dispenser_canister_id, in_canister_pool) = read_state(|state| {
         (
             state.data.cycles_dispenser_canister_id,
@@ -203,9 +215,15 @@ async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
         return Err(RefundError::NotController);
     }
 
-    // The call relay, left installed by a move of the canister's funds which failed to uninstall it
     let mut module_hash = status.module_hash.clone();
-    if module_hash.as_ref().is_some_and(|hash| *hash == call_relay::wasm().hash()) {
+    if module_hash.as_ref().is_some_and(|hash| {
+        // The call relay, left installed by a move of the canister's funds which failed to
+        // uninstall it
+        *hash == call_relay::wasm().hash()
+            // A deleted group's or community's code, which is uninstalled here rather than when
+            // the group or community is deleted so that a failure to uninstall it is retried
+            || (delete_canister && *hash != wasm.hash())
+    }) {
         utils::canister::uninstall(canister_id).await?;
         module_hash = None;
     }
@@ -235,6 +253,12 @@ async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
         // the balance isn't checked here: `refund` simply replies 0 and the uninstall completes.
         Some(hash) if hash == wasm.hash() => {}
         Some(_) => return Err(RefundError::CanisterHasCode),
+    }
+
+    // The refunder can only be called while the canister is running, and a deleted group's or
+    // community's canister is stopped before it is uninstalled
+    if status.status != CanisterStatusType::Running {
+        utils::canister::start(canister_id).await?;
     }
 
     let cycles: u64 = canister_client::make_c2c_call(

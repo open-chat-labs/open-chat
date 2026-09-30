@@ -227,6 +227,7 @@ export function communitySummaryUpdates(
         name: value.name,
         description: value.description,
         lastUpdated: value.last_updated,
+        detailsLastUpdated: value.details_last_updated,
         channelsRemoved: value.channels_removed?.map((c) => ({
             kind: "channel",
             communityId,
@@ -274,6 +275,7 @@ export function communityChannelUpdates(
         description: value.description,
         externalUrl: optionUpdateV2(value.external_url, identity),
         lastUpdated: value.last_updated,
+        detailsLastUpdated: value.details_last_updated,
         avatarId: optionUpdateV2(value.avatar_id, identity),
         membership: mapOptional(value.membership, groupMembershipUpdates),
         updatedEvents: value.updated_events?.map(updatedEvent) ?? [],
@@ -359,7 +361,6 @@ export function communityDetailsResponse(
     value: CommunitySelectedInitialResponse,
 ): CommunityDetailsResponse {
     if (typeof value === "object" && "Success" in value) {
-        console.log("Community details: ", value.Success);
         return {
             kind: "success",
             members: value.Success.members

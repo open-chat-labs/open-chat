@@ -320,6 +320,7 @@ impl Channel {
         Some(CommunityCanisterChannelSummary {
             channel_id: self.id,
             last_updated: self.last_updated(user_id),
+            details_last_updated: chat.selected_details_last_updated(),
             name: chat.name.value.clone(),
             description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
@@ -413,6 +414,7 @@ impl Channel {
         ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {
             channel_id: self.id,
             last_updated: self.last_updated(user_id),
+            details_last_updated: Some(self.chat.selected_details_last_updated()),
             name: updates.name,
             description: updates.description,
             subtype: updates.subtype,

@@ -1,6 +1,6 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::wait_for_canister_to_be_deleted;
 use crate::{CanisterIds, TestEnv, User, client};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -27,9 +27,7 @@ fn delete_group_succeeds() {
         "{delete_group_response:?}",
     );
 
-    tick_many(env, 5);
-
-    assert!(!env.canister_exists(group_id.into()));
+    wait_for_canister_to_be_deleted(env, group_id.into());
 }
 
 #[test]

@@ -171,6 +171,7 @@ fn summary_updates_impl(
     Success(CommunityCanisterCommunitySummaryUpdates {
         community_id: state.env.canister_id().into(),
         last_updated,
+        details_last_updated: Some(state.data.details_last_updated()),
         name,
         description,
         avatar_id,

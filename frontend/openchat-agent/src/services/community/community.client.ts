@@ -12,7 +12,6 @@ import type {
     ChannelIdentifier,
     ChannelSummaryResponse,
     ChatEvent,
-    CommunityDetails,
     CommunityDetailsResponse,
     CommunityIdentifier,
     CommunityPermissions,
@@ -34,7 +33,6 @@ import type {
     FollowThreadResponse,
     FullWebhookDetails,
     GrantedBotPermissions,
-    GroupChatDetails,
     GroupChatDetailsResponse,
     GroupChatIdentifier,
     ImportGroupResponse,
@@ -43,6 +41,7 @@ import type {
     LeaveGroupResponse,
     MemberRole,
     Message,
+    PendingCryptocurrencyTransfer,
     OCError,
     OptionUpdate,
     OptionalChatPermissions,
@@ -57,6 +56,7 @@ import type {
     SetVideoCallPresenceResponse,
     Tally,
     ThreadPreviewsResponse,
+    TipMessageResponse,
     ToggleMuteNotificationResponse,
     UnblockCommunityUserResponse,
     UndeleteMessageResponse,
@@ -69,14 +69,7 @@ import type {
     VideoCallParticipantsResponse,
     VideoCallPresence,
 } from "@shared";
-import {
-    DestinationInvalidError,
-    MAX_EVENTS,
-    MAX_MESSAGES,
-    offline,
-    random32,
-    toBigInt32,
-} from "@shared";
+import { DestinationInvalidError, MAX_EVENTS, MAX_MESSAGES, random32, toBigInt32 } from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,
@@ -153,6 +146,7 @@ import {
     CommunitySummaryUpdatesArgs,
     CommunityThreadPreviewsArgs,
     CommunityThreadPreviewsResponse,
+    CommunityTipMessageArgs,
     CommunityToggleMuteNotificationsArgs,
     CommunityUnblockUserArgs,
     CommunityUndeleteMessagesArgs,
@@ -173,8 +167,8 @@ import {
     Empty as TEmpty,
     UnitResult,
 } from "../../typebox";
-import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
 import { type ChatsDb } from "../../utils/chatsDb";
+import { loadCommunityDetails, loadGroupDetails } from "../../utils/details";
 import {
     apiOptionUpdateV2,
     identity,
@@ -193,6 +187,7 @@ import {
     apiMaybeAccessGateConfig,
     apiMessageContent,
     apiOgPreview,
+    apiPendingTransaction,
     apiUser as apiUserV2,
     apiVideoCallPresence,
     changeRoleResult,
@@ -211,6 +206,8 @@ import {
     pushEventSuccess,
     searchGroupChatResponse,
     sendMessageSuccess,
+    transferFrom,
+    transferRecipient,
     threadPreviewsSuccess,
     undeleteMessageSuccess,
     unitResult,
@@ -765,170 +762,94 @@ export class CommunityClient
         );
     }
 
-    async getCommunityDetails(
+    // A caller which already holds the details passes the time up to which they are known to be up
+    // to date as `detailsSyncedUpTo`, and is told only that they still are, unless they have changed
+    getCommunityDetails(
         communityId: string,
-        communityLastUpdated: bigint,
+        detailsLastUpdated: bigint,
+        detailsSyncedUpTo?: bigint,
     ): Promise<CommunityDetailsResponse> {
-        const fromCache = await this.chatsDb.getCachedCommunityDetails(communityId);
-        if (fromCache != null) {
-            if (fromCache.lastUpdated >= communityLastUpdated || offline()) {
-                return fromCache;
-            } else {
-                return await this.getCommunityDetailsUpdates(communityId, fromCache);
-            }
-        }
-
-        const response = await this.getCommunityDetailsFromBackend(communityId);
-        if (response.kind === "success") {
-            await this.chatsDb.setCachedCommunityDetails(communityId, response);
-        }
-        return response;
-    }
-
-    private getCommunityDetailsFromBackend(communityId: string): Promise<CommunityDetailsResponse> {
-        return this.query(
+        return loadCommunityDetails(
+            this.chatsDb,
             communityId,
-            "selected_initial",
-            {
-                invite_code: this.inviteCode(communityId),
-            },
-            communityDetailsResponse,
-            CommunitySelectedInitialArgs,
-            CommunitySelectedInitialResponse,
-        );
-    }
-
-    private async getCommunityDetailsUpdates(
-        communityId: string,
-        previous: CommunityDetails,
-    ): Promise<CommunityDetails> {
-        const details = await this.getCommunityDetailsUpdatesFromBackend(communityId, previous);
-        if (details.lastUpdated > previous.lastUpdated) {
-            await this.chatsDb.setCachedCommunityDetails(communityId, details);
-        }
-        return details;
-    }
-
-    private async getCommunityDetailsUpdatesFromBackend(
-        communityId: string,
-        previous: CommunityDetails,
-    ): Promise<CommunityDetails> {
-        const updatesResponse = await this.query(
-            communityId,
-            "selected_updates_v2",
-            {
-                updates_since: previous.lastUpdated,
-                invite_code: this.inviteCode(communityId),
-            },
-            communityDetailsUpdatesResponse,
-            CommunitySelectedUpdatesArgs,
-            CommunitySelectedUpdatesResponse,
-        );
-
-        if (updatesResponse.kind === "failure") {
-            return previous;
-        }
-
-        if (updatesResponse.kind === "success_no_updates") {
-            return {
-                ...previous,
-                lastUpdated: updatesResponse.lastUpdated,
-            };
-        }
-
-        return mergeCommunityDetails(previous, updatesResponse);
-    }
-
-    async getChannelDetails(
-        chatId: ChannelIdentifier,
-        chatLastUpdated: bigint,
-    ): Promise<GroupChatDetailsResponse> {
-        const cacheKey = `${chatId.communityId}_${chatId.channelId}`;
-        const fromCache = await this.chatsDb.getCachedGroupDetails(cacheKey);
-        if (fromCache != null) {
-            if (fromCache.timestamp >= chatLastUpdated || offline()) {
-                return fromCache;
-            } else {
-                return this.getChannelDetailsUpdates(chatId, cacheKey, fromCache);
-            }
-        }
-
-        const response = await this.getChannelDetailsFromBackend(chatId);
-        if (typeof response === "object" && "members" in response) {
-            await this.chatsDb.setCachedGroupDetails(cacheKey, response);
-        }
-        return response;
-    }
-
-    private getChannelDetailsFromBackend(
-        chatId: ChannelIdentifier,
-    ): Promise<GroupChatDetailsResponse> {
-        return this.query(
-            chatId.communityId,
-            "selected_channel_initial",
-            {
-                channel_id: toBigInt32(chatId.channelId),
-            },
-            (resp) =>
-                mapResult(resp, (value) =>
-                    groupDetailsSuccess(
-                        value,
-                        this.config.blobUrlPattern,
-                        chatId.communityId,
-                        chatId.channelId,
-                    ),
+            detailsLastUpdated,
+            detailsSyncedUpTo,
+            () =>
+                this.query(
+                    communityId,
+                    "selected_initial",
+                    {
+                        invite_code: this.inviteCode(communityId),
+                    },
+                    communityDetailsResponse,
+                    CommunitySelectedInitialArgs,
+                    CommunitySelectedInitialResponse,
                 ),
-            CommunitySelectedChannelInitialArgs,
-            CommunitySelectedChannelInitialResponse,
+            (since) =>
+                this.query(
+                    communityId,
+                    "selected_updates_v2",
+                    {
+                        updates_since: since,
+                        invite_code: this.inviteCode(communityId),
+                    },
+                    communityDetailsUpdatesResponse,
+                    CommunitySelectedUpdatesArgs,
+                    CommunitySelectedUpdatesResponse,
+                ),
         );
     }
 
-    private async getChannelDetailsUpdates(
+    // As for `getCommunityDetails`, a caller which already holds the details passes
+    // `detailsSyncedUpTo`
+    getChannelDetails(
         chatId: ChannelIdentifier,
-        cacheKey: string,
-        previous: GroupChatDetails,
-    ): Promise<GroupChatDetails> {
-        const response = await this.getChannelDetailsUpdatesFromBackend(chatId, previous);
-        if (response.timestamp > previous.timestamp) {
-            await this.chatsDb.setCachedGroupDetails(cacheKey, response);
-        }
-        return response;
-    }
-
-    private async getChannelDetailsUpdatesFromBackend(
-        chatId: ChannelIdentifier,
-        previous: GroupChatDetails,
-    ): Promise<GroupChatDetails> {
-        const updatesResponse = await this.query(
-            chatId.communityId,
-            "selected_channel_updates_v2",
-            {
-                channel_id: toBigInt32(chatId.channelId),
-                updates_since: previous.timestamp,
-            },
-            (value) =>
-                groupDetailsUpdatesResponse(
-                    value,
-                    this.config.blobUrlPattern,
+        detailsLastUpdated: bigint,
+        detailsSyncedUpTo?: bigint,
+    ): Promise<GroupChatDetailsResponse> {
+        return loadGroupDetails(
+            this.chatsDb,
+            `${chatId.communityId}_${chatId.channelId}`,
+            detailsLastUpdated,
+            detailsSyncedUpTo,
+            () =>
+                this.query(
                     chatId.communityId,
-                    chatId.channelId,
+                    "selected_channel_initial",
+                    {
+                        channel_id: toBigInt32(chatId.channelId),
+                    },
+                    (resp) =>
+                        mapResult(resp, (value) =>
+                            groupDetailsSuccess(
+                                value,
+                                this.config.blobUrlPattern,
+                                chatId.communityId,
+                                chatId.channelId,
+                            ),
+                        ),
+                    CommunitySelectedChannelInitialArgs,
+                    CommunitySelectedChannelInitialResponse,
                 ),
-            CommunitySelectedChannelUpdatesArgs,
-            CommunitySelectedChannelUpdatesResponse,
+            (since) =>
+                this.query(
+                    chatId.communityId,
+                    "selected_channel_updates_v2",
+                    {
+                        channel_id: toBigInt32(chatId.channelId),
+                        updates_since: since,
+                    },
+                    (value) =>
+                        groupDetailsUpdatesResponse(
+                            value,
+                            this.config.blobUrlPattern,
+                            chatId.communityId,
+                            chatId.channelId,
+                        ),
+                    CommunitySelectedChannelUpdatesArgs,
+                    CommunitySelectedChannelUpdatesResponse,
+                ),
         );
-
-        if (updatesResponse.kind === "failure") {
-            return previous;
-        }
-
-        if (updatesResponse.kind === "success_no_updates") {
-            return {
-                ...previous,
-                timestamp: updatesResponse.timestamp,
-            };
-        }
-
-        return mergeGroupChatDetails(previous, updatesResponse);
     }
 
     sendMessage(
@@ -943,6 +864,8 @@ export class CommunityClient
         messageFilterFailed: bigint | undefined,
         newAchievement: boolean,
         onRequestAccepted: () => void,
+        // The account the community pulls the message's transfer from, if it holds one
+        fromAccount?: string,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         this.chatsDb.removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
@@ -955,9 +878,13 @@ export class CommunityClient
         return uploadContentPromise.then((content) => {
             const newEvent =
                 content !== undefined ? { ...event, event: { ...event.event, content } } : event;
+            const toSend =
+                fromAccount === undefined
+                    ? newEvent.event.content
+                    : transferFrom(newEvent.event.content, fromAccount);
             const args = {
                 channel_id: toBigInt32(chatId.channelId),
-                content: apiMessageContent(newEvent.event.content),
+                content: apiMessageContent(toSend),
                 message_id: newEvent.event.messageId,
                 sender_name: senderName,
                 sender_display_name: senderDisplayName,
@@ -978,20 +905,27 @@ export class CommunityClient
                 chatId.communityId,
                 "send_message",
                 args,
-                (resp) => mapResult(resp, sendMessageSuccess),
+                (resp) =>
+                    mapResult(resp, (value) =>
+                        sendMessageSuccess(
+                            value,
+                            newEvent.event.sender,
+                            transferRecipient(newEvent.event.content),
+                        ),
+                    ),
                 CommunitySendMessageArgs,
                 CommunitySendMessageResponse,
                 onRequestAccepted,
             )
-                .then((resp) => {
-                    const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
+                .then((resp) =>
+                    // Returns the message as it was sent, a prize or swap offer in place of the
+                    // content it was made from
                     this.chatsDb.setCachedMessageFromSendResponse(
                         chatId,
                         newEvent,
                         threadRootMessageIndex,
-                    )(retVal);
-                    return retVal;
-                })
+                    )([resp, newEvent.event]),
+                )
                 .catch((err) => {
                     this.chatsDb.recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
                     throw err;
@@ -1445,6 +1379,37 @@ export class CommunityClient
             },
             (resp) => resp === "Success",
             CommunityReportMessageArgs,
+            UnitResult,
+        );
+    }
+
+    // Tips a message with a transfer the community pulls from the account `transfer` names, which
+    // must have approved the community to, into the wallet of the message's sender
+    tipMessage(
+        chatId: ChannelIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        transfer: PendingCryptocurrencyTransfer,
+        decimals: number,
+        username: string,
+        displayName: string | undefined,
+        newAchievement: boolean,
+    ): Promise<TipMessageResponse> {
+        return this.update(
+            chatId.communityId,
+            "tip_message",
+            {
+                channel_id: toBigInt32(chatId.channelId),
+                thread_root_message_index: threadRootMessageIndex,
+                message_id: messageId,
+                transfer: apiPendingTransaction(transfer),
+                decimals,
+                username,
+                display_name: displayName,
+                new_achievement: newAchievement,
+            },
+            unitResult,
+            CommunityTipMessageArgs,
             UnitResult,
         );
     }
