@@ -82,6 +82,19 @@ describe("the stored locale", () => {
         expect(reloaded.locale()).toBe("he");
     });
 
+    // What the translation corrections review screen does with a correction's locale
+    test("a Hebrew correction's locale can be loaded and read from another language", async () => {
+        await loadPage();
+        const { _, locale } = await import("svelte-i18n");
+        const { i18nLocale } = await import("./i18n");
+
+        await locale.set(i18nLocale("iw"));
+        await locale.set("en-GB");
+
+        expect(get(_)("close", { locale: i18nLocale("iw") })).toBe("סגור");
+        expect(get(_)("close")).toBe("Close");
+    });
+
     // Before the fix a reload left svelte-i18n on "he", and the language selectors then stored
     // that (or the browser's dialect of it) in place of "iw"
     test.each(["he", "he-IL", "iw-IL"])("a stored %s is Hebrew too", async (stored) => {
