@@ -434,7 +434,11 @@ function getAction(
             return agent.markMessagesRead(payload.payload);
 
         case "getGroupDetails":
-            return agent.getGroupDetails(payload.chatId, payload.chatLastUpdated);
+            return agent.getGroupDetails(
+                payload.chatId,
+                payload.chatLastUpdated,
+                payload.detailsSyncedUpTo,
+            );
 
         case "lastOnline":
             return agent.lastOnline(payload.userIds);
@@ -1025,6 +1029,7 @@ function getAction(
             return agent.communityClient.getCommunityDetails(
                 payload.id.communityId,
                 payload.communityLastUpdated,
+                payload.detailsSyncedUpTo,
             );
 
         case "addToFavourites":

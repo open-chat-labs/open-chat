@@ -1729,7 +1729,11 @@ export type Member = {
 
 export type FullMember = Member & UserSummary;
 
-export type GroupChatDetailsResponse = GroupChatDetails | OCError | Failure;
+export type GroupChatDetailsResponse =
+    | GroupChatDetails
+    | { kind: "success_no_updates"; timestamp: bigint }
+    | OCError
+    | Failure;
 
 export type GroupChatDetailsUpdatesResponse =
     | ({ kind: "success" } & GroupChatDetailsUpdates)

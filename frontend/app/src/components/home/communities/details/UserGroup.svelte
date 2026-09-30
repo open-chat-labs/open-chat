@@ -10,6 +10,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import { SvelteSet } from "svelte/reactivity";
     import { i18nKey } from "../../../../i18n/i18n";
     import { toastStore } from "../../../../stores/toast";
     import { trimLeadingAtSymbol } from "../../../../utils/user";
@@ -43,7 +44,7 @@
         onCancel,
     }: Props = $props();
 
-    let userGroup = $state({ ...original });
+    let userGroup = $state(workingCopy());
     let added: Set<string> = new Set();
     let removed: Set<string> = new Set();
     let searchVirtualList = $state<VirtualList<UserSummary> | undefined>();
@@ -103,10 +104,18 @@
         onCancel();
     }
 
+    // the members are edited in a copy of the set, because the original's set belongs to the
+    // store and so must not be changed here. A successful save reaches the list through the
+    // local update which the client records.
+    function workingCopy(): UserGroupDetails {
+        return { ...original, members: new SvelteSet(original.members) };
+    }
+
     function reset() {
-        userGroup = original;
+        userGroup = workingCopy();
         added = new Set();
         removed = new Set();
+        usersDirty = false;
     }
 
     function matchesSearch(searchTerm: string, user: UserSummary): boolean {
@@ -123,19 +132,15 @@
         searchTermEntered = "";
         added.add(userId);
         removed.delete(userId);
-        changeUsers(() => userGroup.members.add(userId));
+        userGroup.members.add(userId);
+        usersDirty = true;
     }
 
     function removeUserFromGroup(userId: string) {
         removed.add(userId);
         added.delete(userId);
-        changeUsers(() => userGroup.members.delete(userId));
-    }
-
-    function changeUsers(fn: () => void) {
-        fn();
+        userGroup.members.delete(userId);
         usersDirty = true;
-        userGroup = userGroup; //:puke: trigger a reaction
     }
     let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered));
     let searchTermLower = $derived(searchTerm.toLowerCase());
