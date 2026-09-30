@@ -27,15 +27,11 @@ fn update_user_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     } else {
         let now = state.env.now();
 
-        if state
+        state
             .data
             .members
-            .update_user_group(args.user_group_id, args.name, args.users_to_add, args.users_to_remove, now)
-        {
-            handle_activity_notification(state);
-            Ok(())
-        } else {
-            Err(OCErrorCode::UserGroupNotFound.into())
-        }
+            .update_user_group(args.user_group_id, args.name, args.users_to_add, args.users_to_remove, now)?;
+        handle_activity_notification(state);
+        Ok(())
     }
 }
