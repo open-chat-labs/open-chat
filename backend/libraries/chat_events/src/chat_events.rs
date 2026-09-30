@@ -18,7 +18,6 @@ use stable_memory_map::{
 };
 use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
-use std::mem;
 use std::ops::DerefMut;
 use tracing::error;
 use types::{
@@ -2412,22 +2411,18 @@ impl ChatEvents {
         )
     }
 
-    pub fn mark_members_added_to_public_channel(
-        &mut self,
-        mut user_ids: Vec<UserId>,
-        now: TimestampMillis,
-    ) -> Option<BotNotification> {
-        if user_ids.is_empty() {
+    pub fn mark_members_added_to_public_channel(&mut self, count: u32, now: TimestampMillis) -> Option<BotNotification> {
+        if count == 0 {
             return None;
         }
 
         if let Some(last_event_index) = self.latest_event_index()
             && self
                 .update_event(None, last_event_index.into(), EventIndex::default(), Some(now), |event| {
-                    // If the last event is of type `MembersAddedToPublicChannel` then add this user_id to that
-                    // event and mark the event as updated, else push a new event
+                    // If the last event is of type `MembersAddedToPublicChannel` then add these members to
+                    // that event's count and mark the event as updated, else push a new event
                     if let ChatEventInternal::MembersAddedToPublicChannel(m) = &mut event.event {
-                        m.user_ids.extend(mem::take(&mut user_ids));
+                        m.add(count);
                         event.timestamp = now;
                         Ok(())
                     } else {
@@ -2440,7 +2435,7 @@ impl ChatEvents {
         };
 
         self.push_main_event(
-            ChatEventInternal::MembersAddedToPublicChannel(Box::new(MembersAddedToPublicChannelInternal { user_ids })),
+            ChatEventInternal::MembersAddedToPublicChannel(Box::new(MembersAddedToPublicChannelInternal::new(count))),
             now,
         )
         .bot_notification
@@ -3859,6 +3854,57 @@ mod tests {
         // The reaction can be removed under the new id
         events.remove_reaction(reaction_args(new_user_id(), 22), &migrated()).unwrap();
         assert!(text_message(&events, text_message_index).reactions.is_empty());
+    }
+
+    #[test]
+    fn members_added_to_public_channel_are_counted_in_the_latest_event() {
+        let (mut events, _, _) = setup_events();
+        let latest_event_index = events.latest_event_index().unwrap();
+
+        events.mark_members_added_to_public_channel(3, 100);
+        events.mark_members_added_to_public_channel(2, 101);
+
+        // The second lot are added to the event pushed for the first
+        assert_eq!(events.latest_event_index().unwrap(), latest_event_index.incr());
+        assert_eq!(members_added_by_latest_event(&events), 5);
+        assert_eq!(events.main.last().unwrap().timestamp, 101);
+    }
+
+    #[test]
+    fn members_added_to_public_channel_after_another_event_are_counted_in_a_new_event() {
+        let (mut events, _, _) = setup_events();
+
+        events.mark_members_added_to_public_channel(3, 100);
+        push_message(
+            &mut events,
+            Principal::from_slice(&[2]).into(),
+            3,
+            MessageContentInternal::Text(TextContentInternal {
+                text: "hello".to_string(),
+            }),
+        );
+        let latest_event_index = events.latest_event_index().unwrap();
+        events.mark_members_added_to_public_channel(2, 102);
+
+        assert_eq!(events.latest_event_index().unwrap(), latest_event_index.incr());
+        assert_eq!(members_added_by_latest_event(&events), 2);
+    }
+
+    #[test]
+    fn no_event_is_pushed_if_no_members_were_added_to_public_channel() {
+        let (mut events, _, _) = setup_events();
+        let latest_event_index = events.latest_event_index().unwrap();
+
+        assert!(events.mark_members_added_to_public_channel(0, 100).is_none());
+
+        assert_eq!(events.latest_event_index().unwrap(), latest_event_index);
+    }
+
+    fn members_added_by_latest_event(events: &ChatEvents) -> u32 {
+        let ChatEventInternal::MembersAddedToPublicChannel(m) = events.main.last().unwrap().event else {
+            panic!("Expected the latest event to be `MembersAddedToPublicChannel`");
+        };
+        m.count()
     }
 
     fn setup_events() -> (ChatEvents, MessageIndex, MessageIndex) {

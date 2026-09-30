@@ -432,8 +432,34 @@ impl From<DeletedBy> for DeletedByInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MembersAddedToPublicChannelInternal {
-    #[serde(rename = "u")]
-    pub user_ids: Vec<UserId>,
+    // The members added used to be listed, but a channel made public in a large community then
+    // held a single event listing every member, which was rewritten each time another joined.
+    // Nothing read the list other than to count it, so now only the count is held. The list is
+    // still read so that the events written before then can be counted.
+    #[serde(rename = "u", default, skip_serializing_if = "Vec::is_empty")]
+    user_ids: Vec<UserId>,
+    #[serde(rename = "c", default, skip_serializing_if = "is_default")]
+    count: u32,
+}
+
+impl MembersAddedToPublicChannelInternal {
+    pub fn new(count: u32) -> Self {
+        MembersAddedToPublicChannelInternal {
+            user_ids: Vec::new(),
+            count,
+        }
+    }
+
+    pub fn count(&self) -> u32 {
+        self.count.saturating_add(self.user_ids.len() as u32)
+    }
+
+    // Any members listed are folded into the count, so an event which listed its members shrinks
+    // the next time members are added to it
+    pub fn add(&mut self, count: u32) {
+        self.count = self.count().saturating_add(count);
+        self.user_ids = Vec::new();
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -453,9 +479,7 @@ impl From<GroupGateUpdatedInternal> for GroupGateUpdated {
 
 impl From<&MembersAddedToPublicChannelInternal> for MembersAddedToDefaultChannel {
     fn from(value: &MembersAddedToPublicChannelInternal) -> MembersAddedToDefaultChannel {
-        MembersAddedToDefaultChannel {
-            count: value.user_ids.len() as u32,
-        }
+        MembersAddedToDefaultChannel { count: value.count() }
     }
 }
 
@@ -586,9 +610,41 @@ impl From<&ReplyContext> for ReplyContextInternal {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ChatEventInternal, MessageContentInternal, MessageInternal, TextContentInternal};
+    use crate::{
+        ChatEventInternal, MembersAddedToPublicChannelInternal, MessageContentInternal, MessageInternal, TextContentInternal,
+    };
     use candid::Principal;
-    use types::{EventWrapperInternal, Tips};
+    use serde::Serialize;
+    use types::{EventWrapperInternal, Tips, UserId};
+
+    // `MembersAddedToPublicChannelInternal` as it was when it listed the members added
+    #[derive(Serialize)]
+    struct PreviousMembersAddedToPublicChannelInternal {
+        #[serde(rename = "u")]
+        user_ids: Vec<UserId>,
+    }
+
+    #[test]
+    fn members_listed_by_an_earlier_event_are_counted_then_dropped_when_more_are_added() {
+        let previous = PreviousMembersAddedToPublicChannelInternal {
+            user_ids: (0..1000u32).map(|i| Principal::from_slice(&i.to_be_bytes()).into()).collect(),
+        };
+        let previous_bytes = msgpack::serialize_then_unwrap(&previous);
+
+        let mut event: MembersAddedToPublicChannelInternal = msgpack::deserialize_then_unwrap(&previous_bytes);
+        assert_eq!(event.count(), 1000);
+
+        event.add(5);
+        assert_eq!(event.count(), 1005);
+
+        // The event no longer grows with the number of members added
+        let bytes = msgpack::serialize_then_unwrap(&event);
+        assert!(bytes.len() < 10, "{}", bytes.len());
+        assert!(previous_bytes.len() > 1000 * 4);
+
+        let deserialized: MembersAddedToPublicChannelInternal = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(deserialized.count(), 1005);
+    }
 
     #[test]
     fn serialize_with_max_defaults() {
