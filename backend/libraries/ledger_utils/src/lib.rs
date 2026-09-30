@@ -7,7 +7,7 @@ use types::{
     UserIdAndPrincipal,
 };
 pub use user_accounts::{Payer, deposit_to_accept_p2p_swap, icrc2_transfer_from, validate_from_account};
-pub use user_transfers::UserTransfer;
+pub use user_transfers::{TransferRecipient, UserTransfer};
 
 pub mod certified;
 pub mod icrc1;
