@@ -10,6 +10,7 @@ import {
     type MessageContent,
     type P2PSwapContentInitial,
     type PendingCryptocurrencyTransfer,
+    type PendingCryptocurrencyWithdrawal,
     type PrizeContentInitial,
     type TokenInfo,
 } from "@shared";
@@ -590,5 +591,66 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             expect(approvals).toEqual([]);
             expect(calls).toEqual(["payForStreakInsurance"]);
         });
+    });
+});
+
+// The wallet's "Send"
+describe("OpenChatAgent withdrawing from the user's wallet", () => {
+    const WITHDRAWAL: PendingCryptocurrencyWithdrawal = {
+        kind: "pending",
+        ledger: ICP_LEDGER,
+        token: "ICP",
+        to: EXTERNAL_ACCOUNT,
+        amountE8s: 100n,
+        feeE8s: FEE,
+        createdAtNanos: 0n,
+    };
+    const PIN = "1234";
+    const LEDGER_RESPONSE = {
+        kind: "error",
+        code: ErrorCode.InsufficientFunds,
+        message: undefined,
+    };
+    const CANISTER_RESPONSE = { kind: "error", code: ErrorCode.PinIncorrect, message: undefined };
+
+    let ledgerWithdrawals: unknown[][];
+    let canisterWithdrawals: unknown[][];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let agent: any;
+
+    function setup(userId: string) {
+        ledgerWithdrawals = [];
+        canisterWithdrawals = [];
+        agent = Object.create(OpenChatAgent.prototype);
+        agent.identity = { getPrincipal: () => ME };
+        agent._ledgerClient = {
+            withdraw: (...args: unknown[]) => {
+                ledgerWithdrawals.push(args);
+                return Promise.resolve(LEDGER_RESPONSE);
+            },
+        };
+        agent._userClient = {
+            userId,
+            withdrawCryptocurrency: (...args: unknown[]) => {
+                canisterWithdrawals.push(args);
+                return Promise.resolve(CANISTER_RESPONSE);
+            },
+        };
+    }
+
+    test("a user in a MultiUser canister sends from their wallet on the ledger, with no PIN", async () => {
+        setup(MULTI_USER_CANISTER_USER);
+
+        expect(await agent.withdrawCryptocurrency(WITHDRAWAL, PIN)).toBe(LEDGER_RESPONSE);
+        expect(ledgerWithdrawals).toEqual([[WITHDRAWAL]]);
+        expect(canisterWithdrawals).toEqual([]);
+    });
+
+    test("a user alone in their canister has it send from its account, with their PIN", async () => {
+        setup(USER_CANISTER_USER);
+
+        expect(await agent.withdrawCryptocurrency(WITHDRAWAL, PIN)).toBe(CANISTER_RESPONSE);
+        expect(canisterWithdrawals).toEqual([[WITHDRAWAL, PIN]]);
+        expect(ledgerWithdrawals).toEqual([]);
     });
 });
