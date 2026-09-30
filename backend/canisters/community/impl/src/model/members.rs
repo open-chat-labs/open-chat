@@ -335,7 +335,7 @@ impl CommunityMembers {
         mut users: Vec<UserId>,
         rng: &mut R,
         now: TimestampMillis,
-    ) -> Option<u32> {
+    ) -> OCResult<u32> {
         users.retain(|u| self.members_and_channels.contains_key(u));
 
         self.user_groups.create(name, users, rng, now)
@@ -348,7 +348,7 @@ impl CommunityMembers {
         mut users_to_add: Vec<UserId>,
         users_to_remove: Vec<UserId>,
         now: TimestampMillis,
-    ) -> bool {
+    ) -> OCResult {
         users_to_add.retain(|u| self.members_and_channels.contains_key(u));
 
         self.user_groups
