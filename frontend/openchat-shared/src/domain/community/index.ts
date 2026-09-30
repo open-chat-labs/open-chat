@@ -247,10 +247,11 @@ export type CommunityDetailsUpdatesResponse =
 
 export type CommunityDetails = {
     kind: "success";
-    // All of the members, unless `moreMembersAfter` is set, in which case those which have been
-    // loaded so far: the first page, any later pages, and any who have been looked up
+    // All of the members, unless `moreMembersAfter` is set, in which case the first page of them
+    // and any who have since been looked up
     members: Member[];
-    // If not all of the members are held, the user id after which the next page of them starts
+    // Set if not all of the members are held, to the user id after which those not in the first
+    // page start
     moreMembersAfter?: string;
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;

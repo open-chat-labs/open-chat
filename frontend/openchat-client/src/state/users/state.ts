@@ -17,11 +17,20 @@ export class UsersState {
     // under each of their earlier ids, since chat events etc. still refer to them by those
     #latestUserIds: Map<string, string> = new Map();
     #previousUserIds: Map<string, Set<string>> = new Map();
+    // Moves on whenever the users change, since the map of them is updated in place
+    #version = 0;
 
     constructor() {
-        allUsersStore.subscribe((val) => (this.#allUsers = val));
+        allUsersStore.subscribe((val) => {
+            this.#allUsers = val;
+            this.#version++;
+        });
         blockedUsersStore.subscribe((val) => (this.#blockedUsers = val));
         suspendedUsersStore.subscribe((val) => (this.#suspendedUsers = val));
+    }
+
+    get version(): number {
+        return this.#version;
     }
 
     setBlockedUsers(userIds: string[]) {

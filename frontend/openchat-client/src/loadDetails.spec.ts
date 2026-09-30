@@ -22,24 +22,30 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
     AuthClient: { create: () => new Promise(() => {}) },
 }));
 
+import { Principal } from "@icp-sdk/core/principal";
 import {
     ChatMap,
     CommunityMap,
     ROLE_MEMBER,
     Stream,
+    anonymousUser,
+    type ChannelIdentifier,
     type ChatEvent,
     type CommunityDetailsResponse,
     type CommunitySummary,
+    type EventWrapper,
     type EventsResponse,
     type GroupChatDetailsResponse,
     type GroupChatSummary,
+    type LookupMembersResponse,
     type Member,
+    type UserSummary,
     type WorkerRequest,
 } from "@shared";
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import {
-    currentUserIdStore,
+    currentUserStore,
     routeStore,
     selectedChatMembersStore,
     selectedChatUserIdsStore,
@@ -50,6 +56,7 @@ import {
     serverEventsStore,
     serverGroupChatsStore,
 } from "./state";
+import { userStore } from "./state/users/state";
 import { WorkerAgent } from "./workerAgent";
 
 // The details of a chat or community can hold tens of thousands of members, and are asked for
@@ -451,10 +458,18 @@ describe("loading the selected chat's details", () => {
 // A chat with more members than are loaded at once has only some of them held, so the users who
 // appear in its events are looked up among its members
 describe("looking up the members who appear in a chat when not all are held", () => {
+    // Only valid user ids are sent
+    const userId = (n: number) =>
+        Principal.fromUint8Array(new Uint8Array([n >> 8, n & 255])).toText();
+    const [me, a, b, x, y, z] = [1, 2, 3, 4, 5, 6].map(userId);
+    const otherChatId = { kind: "group_chat" as const, groupId: "ccccc-cc" };
+
     let client: OpenChat;
     let lookups: Extract<WorkerRequest, { kind: "lookupMembers" }>[];
-    let lookupResponses: Member[][];
+    // Each lookup is answered with the next of these, or else with no members
+    let lookupResponses: (LookupMembersResponse | Promise<LookupMembersResponse>)[];
     let senders: string[];
+    let events: () => EventWrapper<ChatEvent>[];
 
     function messageFrom(sender: string, index: number) {
         return {
@@ -474,28 +489,50 @@ describe("looking up the members who appear in a chat when not all are held", ()
                 deleted: false,
                 blockLevelMarkdown: false,
             },
-        };
+        } as unknown as EventWrapper<ChatEvent>;
     }
 
-    async function load() {
-        await client.setSelectedChat(chatId);
+    function found(...members: Member[]): LookupMembersResponse {
+        return { kind: "success", members };
+    }
+
+    async function load(id: typeof chatId | ChannelIdentifier = chatId) {
+        await client.setSelectedChat(id);
         await new Promise((r) => setTimeout(r, 10));
     }
 
-    function setup(details: GroupChatDetailsResponse) {
-        const chats = new ChatMap<GroupChatSummary>();
-        chats.set(chatId, {
+    function select(id: typeof chatId) {
+        routeStore.set({
+            kind: "global_chat_selected_route",
+            scope: { kind: "chats" },
+            chatId: id,
+            chatType: "group_chat",
+            open: false,
+        });
+    }
+
+    function summary(id: typeof chatId): GroupChatSummary {
+        return {
             ...groupChat(),
+            id,
             latestEventIndex: 3,
             latestMessageIndex: 3,
-            latestMessage: messageFrom("a", 3),
-        } as unknown as GroupChatSummary);
+            latestMessage: messageFrom(a, 3),
+        } as unknown as GroupChatSummary;
+    }
+
+    // `details` are the details of the chat when not already held; those of the other chat never
+    // arrive
+    function setup(details: GroupChatDetailsResponse) {
+        const chats = new ChatMap<GroupChatSummary>();
+        chats.set(chatId, summary(chatId));
+        chats.set(otherChatId, summary(otherChatId));
         serverGroupChatsStore.set(chats);
         client = new OpenChat(config());
 
         vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(() => {
             const resp = {
-                events: senders.map((s, i) => messageFrom(s, i + 1)),
+                events: events(),
                 expiredEventRanges: [],
                 latestEventIndex: 3,
             } as unknown as EventsResponse<ChatEvent>;
@@ -504,6 +541,9 @@ describe("looking up the members who appear in a chat when not all are held", ()
         vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
             switch (req.kind) {
                 case "getGroupDetails":
+                    if (req.chatId.kind === "group_chat" && req.chatId.groupId !== chatId.groupId) {
+                        return new Promise(() => {});
+                    }
                     return Promise.resolve(
                         req.detailsSyncedUpTo === undefined
                             ? details
@@ -511,10 +551,7 @@ describe("looking up the members who appear in a chat when not all are held", ()
                     );
                 case "lookupMembers":
                     lookups.push(req);
-                    return Promise.resolve({
-                        kind: "success",
-                        members: lookupResponses.shift() ?? [],
-                    });
+                    return Promise.resolve(lookupResponses.shift() ?? found());
                 case "getUsers":
                     return Promise.resolve({ users: [], deletedUserIds: new Set() });
                 default:
@@ -523,102 +560,316 @@ describe("looking up the members who appear in a chat when not all are held", ()
         }) as never);
     }
 
+    const someHeld = () => ({
+        ...chatDetails(10n, [member(a), member(b)]),
+        moreMembersAfter: b,
+    });
+
     beforeEach(() => {
         vi.stubGlobal("Worker", FakeWorker);
         vi.spyOn(console, "debug").mockImplementation(() => {});
-        routeStore.set({
-            kind: "global_chat_selected_route",
-            scope: { kind: "chats" },
-            chatId,
-            chatType: "group_chat",
-            open: false,
-        });
+        vi.spyOn(console, "warn").mockImplementation(() => {});
+        select(chatId);
+        currentUserStore.set({ ...anonymousUser(), userId: me });
         selectedChatUserIdsStore.set(new Set());
         lookups = [];
         lookupResponses = [];
-        senders = ["a", "x", "y"];
+        senders = [a, x, y];
+        events = () => senders.map((s, i) => messageFrom(s, i + 1));
     });
 
     afterEach(() => {
         vi.unstubAllGlobals();
         vi.restoreAllMocks();
+        currentUserStore.set(anonymousUser());
         selectedServerChatStore.set(undefined);
         serverGroupChatsStore.set(new ChatMap<GroupChatSummary>());
         serverEventsStore.set([]);
     });
 
     test("those who aren't held are looked up, and added if they are members", async () => {
-        setup({ ...chatDetails(10n, [member("a"), member("b")]), moreMembersAfter: "b" });
-        lookupResponses.push([member("x")]);
+        setup(someHeld());
+        lookupResponses.push(found(member(x)));
 
         await load();
 
         expect(lookups).toHaveLength(1);
         expect(lookups[0].id).toEqual(chatId);
-        // The current user is looked up too, since what is shown of them is just as much in need
-        // of being right
-        expect(new Set(lookups[0].userIds)).toEqual(new Set(["x", "y", currentUserIdStore.value]));
-        expect([...selectedChatMembersStore.value.keys()]).toEqual(["a", "b", "x"]);
+        // The current user comes first, since what is shown of them matters most to them
+        expect(lookups[0].userIds[0]).toBe(me);
+        expect(new Set(lookups[0].userIds)).toEqual(new Set([me, x, y]));
+        // Only a replica which has caught up with the details held is asked
+        expect(lookups[0].latestKnownUpdate).toBe(10n);
+        expect([...selectedChatMembersStore.value.keys()]).toEqual([a, b, x]);
         // There are still more members which aren't held
-        expect(selectedServerChatStore.value?.moreMembersAfter).toBe("b");
+        expect(selectedServerChatStore.value?.moreMembersAfter).toBe(b);
     });
 
-    test("nobody is looked up twice, whether or not they turned out to be a member", async () => {
-        setup({ ...chatDetails(10n, [member("a"), member("b")]), moreMembersAfter: "b" });
-        lookupResponses.push([member("x")]);
+    test("nobody is looked up again once held or known not to be a member", async () => {
+        setup(someHeld());
+        lookupResponses.push(found(member(x)));
         await load();
 
-        senders = ["x", "y", "z"];
+        senders = [x, y, z];
         await load();
 
         expect(lookups).toHaveLength(2);
-        expect(lookups[1].userIds).toEqual(["z"]);
+        expect(lookups[1].userIds).toEqual([z]);
+    });
+
+    test("a member who is already held is left as they are", async () => {
+        setup(someHeld());
+        lookupResponses.push(found({ ...member(x), displayName: "X" }));
+        await load();
+
+        // Held members are kept up to date by the updates to the details, so a lookup answered
+        // before an update which changed them mustn't undo it
+        const before = selectedServerChatStore.value;
+        const added = before?.withLookedUpMembers([{ ...member(x), displayName: "old" }], 10n);
+
+        expect(added).toBeUndefined();
+        expect(selectedChatMembersStore.value.get(x)?.displayName).toBe("X");
     });
 
     test("a lapsed member who is looked up is held as lapsed", async () => {
-        setup({ ...chatDetails(10n, [member("a"), member("b")]), moreMembersAfter: "b" });
-        lookupResponses.push([{ ...member("x"), lapsed: true }]);
+        setup(someHeld());
+        lookupResponses.push(found({ ...member(x), lapsed: true }));
 
         await load();
 
-        expect(selectedChatMembersStore.value.has("x")).toBe(false);
-        expect(selectedServerChatStore.value?.lapsedMembers.has("x")).toBe(true);
+        expect(selectedChatMembersStore.value.has(x)).toBe(false);
+        expect(selectedServerChatStore.value?.lapsedMembers.has(x)).toBe(true);
     });
 
     test("nobody is looked up if every member is held", async () => {
-        setup(chatDetails(10n, [member("a"), member("b")]));
+        setup(chatDetails(10n, [member(a), member(b)]));
 
         await load();
 
         expect(lookups).toHaveLength(0);
     });
+
+    test("those whose lookup fails are looked up again when next seen", async () => {
+        setup(someHeld());
+        lookupResponses.push({ kind: "error", code: 0, message: undefined } as never);
+        await load();
+
+        lookupResponses.push(found(member(x)));
+        await load();
+
+        expect(lookups).toHaveLength(2);
+        expect(new Set(lookups[1].userIds)).toEqual(new Set([me, x, y]));
+        expect(selectedChatMembersStore.value.has(x)).toBe(true);
+    });
+
+    test("members found after the details have been updated are looked up again", async () => {
+        setup(someHeld());
+        let reply: (resp: LookupMembersResponse) => void = () => {};
+        lookupResponses.push(new Promise((resolve) => (reply = resolve)));
+        await load();
+
+        // A member who was looked up may have left in an update which has been applied since
+        selectedServerChatStore.update((state) => {
+            if (state !== undefined) state.timestamp = 20n;
+            return state;
+        });
+        reply(found(member(x)));
+        await new Promise((r) => setTimeout(r, 0));
+        expect(selectedChatMembersStore.value.has(x)).toBe(false);
+
+        senders = [x];
+        await load();
+
+        expect(lookups).toHaveLength(2);
+        expect(lookups[1].userIds).toEqual([x]);
+        expect(lookups[1].latestKnownUpdate).toBe(20n);
+    });
+
+    test("the anonymous user and user ids which aren't valid aren't looked up", async () => {
+        currentUserStore.set(anonymousUser());
+        // as from a mention which someone typed
+        senders = [x, "not_a_principal"];
+        setup(someHeld());
+
+        await load();
+        await load();
+
+        expect(lookups).toHaveLength(1);
+        expect(lookups[0].userIds).toEqual([x]);
+    });
+
+    test("any number of users are looked up, a batch at a time", async () => {
+        const many = Array.from({ length: 1500 }, (_, i) => userId(1000 + i));
+        events = () => [
+            {
+                index: 1,
+                timestamp: 1001n,
+                expiresAt: undefined,
+                event: { kind: "members_added", userIds: many, addedBy: a },
+            } as unknown as EventWrapper<ChatEvent>,
+        ];
+        setup(someHeld());
+
+        await load();
+
+        expect(lookups.map((l) => l.userIds.length)).toEqual([1000, 501]);
+        expect(lookups[0].userIds[0]).toBe(me);
+        expect(new Set(lookups.flatMap((l) => l.userIds))).toEqual(new Set([me, ...many]));
+    });
+
+    test("the users of a newly selected chat aren't looked up in the last one's details", async () => {
+        setup(someHeld());
+        await load();
+        expect(lookups).toHaveLength(1);
+
+        // The store keeps the last chat's details until the next chat's arrive, which here they
+        // never do
+        select(otherChatId);
+        senders = [z];
+        await load(otherChatId);
+
+        expect(lookups).toHaveLength(1);
+        expect(selectedServerChatStore.value?.chatId).toEqual(chatId);
+    });
+});
+
+describe("looking up the members of a community who appear in one of its channels", () => {
+    const userId = (n: number) => Principal.fromUint8Array(new Uint8Array([n])).toText();
+    const [me, a, x] = [1, 2, 3].map(userId);
+    const channelId = { kind: "channel" as const, communityId: id.communityId, channelId: 1 };
+
+    let client: OpenChat;
+    let lookups: Extract<WorkerRequest, { kind: "lookupMembers" }>[];
+
+    beforeEach(() => {
+        vi.stubGlobal("Worker", FakeWorker);
+        vi.spyOn(console, "debug").mockImplementation(() => {});
+        currentUserStore.set({ ...anonymousUser(), userId: me });
+        routeStore.set({
+            kind: "selected_channel_route",
+            scope: { kind: "community", id },
+            communityId: id,
+            chatId: channelId,
+            open: false,
+        });
+        const channel = {
+            ...groupChat(),
+            kind: "channel",
+            id: channelId,
+            latestEventIndex: 1,
+            latestMessageIndex: 1,
+        } as unknown as GroupChatSummary;
+        const communities = new CommunityMap<CommunitySummary>();
+        communities.set(id, { ...community(), channels: [channel] } as unknown as CommunitySummary);
+        serverCommunitiesStore.set(communities);
+        client = new OpenChat(config());
+
+        lookups = [];
+        const message = {
+            index: 1,
+            timestamp: 1001n,
+            expiresAt: undefined,
+            event: {
+                kind: "message",
+                messageIndex: 1,
+                messageId: 101n,
+                sender: x,
+                content: { kind: "text_content", text: "hello" },
+                reactions: [],
+                tips: {},
+                edited: false,
+                forwarded: false,
+                deleted: false,
+                blockLevelMarkdown: false,
+            },
+        };
+        vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(() => {
+            const resp = {
+                events: [message],
+                expiredEventRanges: [],
+                latestEventIndex: 1,
+            } as unknown as EventsResponse<ChatEvent>;
+            return new Stream((resolve) => setTimeout(() => resolve(resp, true), 0)) as never;
+        });
+        vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
+            switch (req.kind) {
+                case "getCommunityDetails":
+                    // The community holds only some of its members
+                    return Promise.resolve({ ...details(10n, [member(a)]), moreMembersAfter: a });
+                case "getGroupDetails":
+                    // The channel holds all of its members
+                    return Promise.resolve(chatDetails(10n, [member(a), member(x)]));
+                case "lookupMembers":
+                    lookups.push(req);
+                    return Promise.resolve({
+                        kind: "success",
+                        members: req.userIds
+                            .filter((u) => u === x)
+                            .map((u) => ({ ...member(u), displayName: "X" })),
+                    });
+                case "getUsers":
+                    return Promise.resolve({ users: [], deletedUserIds: new Set() });
+                default:
+                    return new Promise(() => {});
+            }
+        }) as never);
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+        currentUserStore.set(anonymousUser());
+        selectedServerChatStore.set(undefined);
+        selectedServerCommunityStore.set(undefined);
+        serverCommunitiesStore.set(new CommunityMap<CommunitySummary>());
+        serverEventsStore.set([]);
+    });
+
+    test("the senders in a channel are looked up among the community's members", async () => {
+        await client.setSelectedCommunity(id);
+        await client.setSelectedChat(channelId);
+        await new Promise((r) => setTimeout(r, 10));
+
+        // Each is looked up once, whichever of the community's details and the channel's events
+        // arrive first
+        expect(lookups.every((l) => l.id.kind === "community" && l.latestKnownUpdate === 10n)).toBe(
+            true,
+        );
+        expect(lookups.flatMap((l) => l.userIds).sort()).toEqual([me, x].sort());
+        // So that their display name in the community is known
+        expect(selectedCommunityMembersStore.value.get(x)?.displayName).toBe("X");
+    });
 });
 
 // A chat with more members than are loaded at once has only some of them held, so searching among
 // its members also looks up the users found who aren't held
+function userSummary(userId: string) {
+    return {
+        kind: "user",
+        userId,
+        username: `user_${userId}`,
+        displayName: undefined,
+        updated: 0n,
+        suspended: false,
+        diamondStatus: "inactive",
+        chitBalance: 0,
+        totalChitEarned: 0,
+        streak: 0,
+        maxStreak: 0,
+        isUniquePerson: false,
+        hideOnlineStatus: false,
+    } as UserSummary;
+}
+
 describe("finding members when not all are held", () => {
+    const userId = (n: number) => Principal.fromUint8Array(new Uint8Array([n])).toText();
+    const [a, b, c, x, z] = [2, 3, 4, 5, 6].map(userId);
+
     let client: OpenChat;
     let lookups: Extract<WorkerRequest, { kind: "lookupMembers" }>[];
-    let lookupResponses: Member[][];
+    // Each lookup is answered with the next of these, or else with no members
+    let lookupResponses: (Member[] | Promise<Member[]>)[];
     let found: string[];
-
-    function user(userId: string) {
-        return {
-            kind: "user",
-            userId,
-            username: `user_${userId}`,
-            displayName: undefined,
-            updated: 0n,
-            suspended: false,
-            diamondStatus: "inactive",
-            chitBalance: 0,
-            totalChitEarned: 0,
-            streak: 0,
-            maxStreak: 0,
-            isUniquePerson: false,
-            hideOnlineStatus: false,
-        };
-    }
 
     async function select(details: GroupChatDetailsResponse) {
         vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
@@ -631,12 +882,12 @@ describe("finding members when not all are held", () => {
                     );
                 case "lookupMembers":
                     lookups.push(req);
-                    return Promise.resolve({
+                    return Promise.resolve(lookupResponses.shift() ?? []).then((members) => ({
                         kind: "success",
-                        members: lookupResponses.shift() ?? [],
-                    });
+                        members,
+                    }));
                 case "searchUsers":
-                    return Promise.resolve(found.map(user));
+                    return Promise.resolve(found.map(userSummary));
                 case "getUsers":
                     return Promise.resolve({ users: [], deletedUserIds: new Set() });
                 default:
@@ -648,6 +899,11 @@ describe("finding members when not all are held", () => {
         // Only the lookups made by what is being tested
         lookups = [];
     }
+
+    const someHeld = () => ({
+        ...chatDetails(10n, [member(a), member(b)]),
+        moreMembersAfter: b,
+    });
 
     beforeEach(() => {
         vi.stubGlobal("Worker", FakeWorker);
@@ -674,7 +930,7 @@ describe("finding members when not all are held", () => {
         selectedChatUserIdsStore.set(new Set());
         lookups = [];
         lookupResponses = [];
-        found = ["a", "x", "z"];
+        found = [a, x, z];
     });
 
     afterEach(() => {
@@ -686,42 +942,193 @@ describe("finding members when not all are held", () => {
     });
 
     test("those found are looked up, and those who are members are returned and held", async () => {
-        await select({ ...chatDetails(10n, [member("a"), member("b")]), moreMembersAfter: "b" });
-        lookupResponses.push([member("x")]);
+        await select(someHeld());
+        lookupResponses.push([member(x)]);
 
         const members = await client.findMembers(chatId, "user", 20);
 
-        expect(members.map((u) => u.userId)).toEqual(["a", "x"]);
+        expect(members.map((u) => u.userId)).toEqual([a, x]);
         // Only those who aren't held are looked up
-        expect(lookups.map((l) => l.userIds)).toEqual([["x", "z"]]);
-        expect([...selectedChatMembersStore.value.keys()]).toEqual(["a", "b", "x"]);
+        expect(lookups.map((l) => l.userIds)).toEqual([[x, z]]);
+        expect([...selectedChatMembersStore.value.keys()]).toEqual([a, b, x]);
     });
 
     test("nobody is looked up when every member is held", async () => {
-        await select(chatDetails(10n, [member("a"), member("b")]));
+        await select(chatDetails(10n, [member(a), member(b)]));
 
         const members = await client.findMembers(chatId, "user", 20);
 
-        expect(members.map((u) => u.userId)).toEqual(["a"]);
+        expect(members.map((u) => u.userId)).toEqual([a]);
         expect(lookups).toHaveLength(0);
     });
 
+    test("users already being looked up are found by a search in the meantime", async () => {
+        await select(someHeld());
+        let reply: (members: Member[]) => void = () => {};
+        lookupResponses.push(new Promise((resolve) => (reply = resolve)));
+
+        const first = client.findMembers(chatId, "user", 20);
+        const second = client.findMembers(chatId, "user", 20);
+        await new Promise((r) => setTimeout(r, 0));
+        reply([member(x)]);
+
+        expect((await first).map((u) => u.userId)).toEqual([a, x]);
+        expect((await second).map((u) => u.userId)).toEqual([a, x]);
+        expect(lookups).toHaveLength(1);
+    });
+
     test("members found are offered as mentions", async () => {
-        await select({ ...chatDetails(10n, [member("a"), member("b")]), moreMembersAfter: "b" });
-        expect(client.getUserLookupForMentions()["user_x"]).toBeUndefined();
-        lookupResponses.push([member("x")]);
+        await select(someHeld());
+        expect(client.getUserLookupForMentions()[`user_${x}`]).toBeUndefined();
+        lookupResponses.push([member(x)]);
 
         await client.findMembersToMention("user");
 
-        expect(client.getUserLookupForMentions()["user_x"]).toMatchObject({ userId: "x" });
+        expect(client.getUserLookupForMentions()[`user_${x}`]).toMatchObject({ userId: x });
+    });
+
+    test("members are offered as mentions once their users are known", async () => {
+        await select({ ...chatDetails(10n, [member(a), member(c)]), moreMembersAfter: c });
+        userStore.addMany([userSummary(a)]);
+        expect(Object.keys(client.getUserLookupForMentions())).toEqual([`user_${a}`]);
+
+        userStore.addMany([userSummary(c)]);
+
+        expect(client.getUserLookupForMentions()[`user_${c}`]).toMatchObject({ userId: c });
     });
 
     test("members who aren't held are left out of those to invite", async () => {
-        await select({ ...chatDetails(10n, [member("a"), member("b")]), moreMembersAfter: "b" });
-        lookupResponses.push([member("x")]);
+        await select(someHeld());
+        lookupResponses.push([member(x)]);
 
         const [, toInvite] = await client.searchUsersForInvite("user", 20, "group", false, true);
 
-        expect(toInvite.map((u) => u.userId)).toEqual(["z"]);
+        expect(toInvite.map((u) => u.userId)).toEqual([z]);
+    });
+});
+
+describe("finding users to add to a channel when not all members are held", () => {
+    const userId = (n: number) => Principal.fromUint8Array(new Uint8Array([n])).toText();
+    // `a` is a member of the community and the channel, both of which hold them; `b` is a member of
+    // the community, which holds them, but not the channel; `x` is a member of the community, which
+    // doesn't hold them, but not the channel; `y` is a member of both, of which only the community
+    // holds them (having looked them up, say); `z` isn't a member of either
+    const [me, a, b, x, y, z] = [1, 2, 3, 4, 5, 6].map(userId);
+    const channelId = { kind: "channel" as const, communityId: id.communityId, channelId: 1 };
+
+    let client: OpenChat;
+    let lookups: Extract<WorkerRequest, { kind: "lookupMembers" }>[];
+
+    beforeEach(async () => {
+        vi.stubGlobal("Worker", FakeWorker);
+        vi.spyOn(console, "debug").mockImplementation(() => {});
+        currentUserStore.set({ ...anonymousUser(), userId: me });
+        routeStore.set({
+            kind: "selected_channel_route",
+            scope: { kind: "community", id },
+            communityId: id,
+            chatId: channelId,
+            open: false,
+        });
+        const channel = {
+            ...groupChat(),
+            kind: "channel",
+            id: channelId,
+        } as unknown as GroupChatSummary;
+        const communities = new CommunityMap<CommunitySummary>();
+        communities.set(id, { ...community(), channels: [channel] } as unknown as CommunitySummary);
+        serverCommunitiesStore.set(communities);
+        client = new OpenChat(config());
+
+        lookups = [];
+        vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(() => {
+            const resp = {
+                events: [],
+                expiredEventRanges: [],
+                latestEventIndex: 0,
+            } as unknown as EventsResponse<ChatEvent>;
+            return new Stream((resolve) => setTimeout(() => resolve(resp, true), 0)) as never;
+        });
+        vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
+            switch (req.kind) {
+                case "getCommunityDetails":
+                    return Promise.resolve({
+                        ...details(10n, [member(a), member(b), member(y)]),
+                        moreMembersAfter: b,
+                    });
+                case "getGroupDetails":
+                    return Promise.resolve({
+                        ...chatDetails(10n, [member(a)]),
+                        moreMembersAfter: a,
+                    });
+                case "lookupMembers": {
+                    lookups.push(req);
+                    const members =
+                        req.id.kind === "community"
+                            ? [{ ...member(x), displayName: "X" }]
+                            : [member(y)];
+                    return Promise.resolve({
+                        kind: "success",
+                        members: members.filter((m) => req.userIds.includes(m.userId)),
+                    });
+                }
+                case "searchUsers":
+                    return Promise.resolve([a, b, x, y, z].map(userSummary));
+                case "getUsers":
+                    return Promise.resolve({ users: [], deletedUserIds: new Set() });
+                default:
+                    return new Promise(() => {});
+            }
+        }) as never);
+
+        await client.setSelectedCommunity(id);
+        await client.setSelectedChat(channelId);
+        await new Promise((r) => setTimeout(r, 10));
+        userStore.addMany([a, b, y].map(userSummary));
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+        currentUserStore.set(anonymousUser());
+        selectedServerChatStore.set(undefined);
+        selectedServerCommunityStore.set(undefined);
+        serverCommunitiesStore.set(new CommunityMap<CommunitySummary>());
+        serverEventsStore.set([]);
+    });
+
+    test("members of the channel are left out, whether or not either holds them", async () => {
+        const [communityMembers, others] = await client.searchUsersForInvite(
+            "user",
+            20,
+            "channel",
+            false,
+            true,
+        );
+
+        expect(communityMembers.map((u) => u.userId)).toEqual([b, x]);
+        // with their display names in the community
+        expect(communityMembers[1].displayName).toBe("X");
+        expect(others.map((u) => u.userId)).toEqual([z]);
+    });
+
+    test("only members of the community are offered to add to the channel", async () => {
+        const [communityMembers, others] = await client.searchCommunityMembersToAdd("user", 20);
+
+        expect(communityMembers.map((u) => u.userId)).toEqual([b, x]);
+        expect(others).toEqual([]);
+    });
+
+    test("a user who can't invite users is only offered members of the community", async () => {
+        const [communityMembers, others] = await client.searchUsersForInvite(
+            "user",
+            20,
+            "channel",
+            false,
+            false,
+        );
+
+        expect(communityMembers.map((u) => u.userId)).toEqual([b, x]);
+        expect(others).toEqual([]);
     });
 });

@@ -57,22 +57,38 @@
         onSelectUser?.(user);
         searchTerm = "";
         users = [];
+        latestSearch++;
         inp?.focus();
     }
 
+    // Searches can take a while, so the results of one which has been overtaken by a later one
+    // are ignored
+    let latestSearch = 0;
+
     function searchUsers(value: string) {
+        const search = ++latestSearch;
         if (value === "") {
             users = [];
+            searching = false;
             return;
         }
         searching = true;
         userLookup(value)
             .then((p) => {
+                if (search !== latestSearch) return;
                 communityMembers = p[0];
                 users = p[1];
             })
-            .catch((_err) => toastStore.showFailureToast(i18nKey("userSearchFailed")))
-            .finally(() => (searching = false));
+            .catch((_err) => {
+                if (search === latestSearch) {
+                    toastStore.showFailureToast(i18nKey("userSearchFailed"));
+                }
+            })
+            .finally(() => {
+                if (search === latestSearch) {
+                    searching = false;
+                }
+            });
     }
 
     function onInput() {
@@ -84,6 +100,7 @@
     function clearFilter() {
         users = [];
         searchTerm = "";
+        latestSearch++;
     }
 </script>
 

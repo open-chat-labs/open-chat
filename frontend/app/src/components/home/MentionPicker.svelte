@@ -45,7 +45,9 @@
         onMention,
     }: Props = $props();
 
-    let index = $state(0);
+    // The item highlighted, by its key, since the list changes as more is typed and as members who
+    // weren't held are found
+    let highlighted: string | undefined = $state();
 
     // Rebuilt when the members change, which they do when those which weren't held are found
     let usersAndGroups = $derived.by(() => {
@@ -77,12 +79,12 @@
     function onKeyDown(ev: KeyboardEvent): void {
         switch (ev.key) {
             case "ArrowDown":
-                index = (index + 1) % filtered.length;
+                highlight((index + 1) % filtered.length);
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
             case "ArrowUp":
-                index = index === 0 ? filtered.length - 1 : index - 1;
+                highlight(index === 0 ? filtered.length - 1 : index - 1);
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
@@ -100,6 +102,11 @@
                 ev.stopPropagation();
                 break;
         }
+    }
+
+    function highlight(i: number) {
+        const item = filtered[i];
+        highlighted = item === undefined ? undefined : userOrGroupKey(item);
     }
 
     function compareMatchNames(a: string, b: string): number {
@@ -155,6 +162,12 @@
                 }
                 return a.kind === "user_group" ? -1 : 1;
             }),
+    );
+    let index = $derived(
+        Math.max(
+            0,
+            filtered.findIndex((u) => userOrGroupKey(u) === highlighted),
+        ),
     );
     let style = $derived(
         direction === "up"

@@ -53,7 +53,6 @@ import type {
     LookupMembersResponse,
     Member,
     MemberRole,
-    MembersPageResponse,
     Mention,
     Message,
     // StaleMessage,
@@ -158,7 +157,6 @@ import type {
     WebhookDetails as ApiWebhookDetails,
     BotCommandArg,
     BotDataEncoding,
-    CommunityChannelMembersSuccessResult,
     CommunityCreateChannelSuccessResult,
     CommunityDeletedMessageSuccessResult,
     CommunityEnableInviteCodeSuccessResult,
@@ -175,7 +173,6 @@ import type {
     GroupEnableInviteCodeSuccessResult,
     GroupInviteCodeSuccessResult,
     GroupLookupMembersSuccessResult,
-    GroupMembersSuccessResult,
     GroupSearchMessagesResponse,
     GroupSelectedInitialSuccessResult,
     GroupSelectedUpdatesResponse,
@@ -2708,16 +2705,6 @@ function groupMembers(full: TGroupMember[], basic: ApiPrincipal[] | undefined): 
 
 export function basicMember(userId: string): Member {
     return { role: ROLE_MEMBER, userId, displayName: undefined, lapsed: false };
-}
-
-export function groupMembersPage(
-    value: GroupMembersSuccessResult | CommunityChannelMembersSuccessResult,
-): MembersPageResponse {
-    return {
-        kind: "success",
-        members: groupMembers(value.members, value.basic_members),
-        moreMembersAfter: mapOptional(value.more_members_after, principalBytesToString),
-    };
 }
 
 export function lookupGroupMembersSuccess(

@@ -17,7 +17,6 @@ import type {
     LookupMembersResponse,
     Member,
     MemberRole,
-    MembersPageResponse,
     UpdateCommunityResponse,
     UserFailedError,
     UserGroupDetails,
@@ -41,7 +40,6 @@ import type {
     CommunityExploreChannelsResponse,
     CommunityImportGroupSuccessResult,
     CommunityLookupMembersResponse,
-    CommunityMembersResponse,
     CommunitySelectedInitialResponse,
     CommunitySelectedUpdatesResponse,
     CommunityUpdateCommunitySuccessResult,
@@ -405,14 +403,6 @@ function communityMembers(full: TCommunityMember[], basic: ApiPrincipal[] | unde
     return full
         .map(communityMember)
         .concat(basic?.map((id) => basicMember(principalBytesToString(id))) ?? []);
-}
-
-export function communityMembersPage(value: CommunityMembersResponse): MembersPageResponse {
-    return mapResult(value, (success) => ({
-        kind: "success",
-        members: communityMembers(success.members, success.basic_members),
-        moreMembersAfter: mapOptional(success.more_members_after, principalBytesToString),
-    }));
 }
 
 export function lookupCommunityMembersResponse(

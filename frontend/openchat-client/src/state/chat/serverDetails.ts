@@ -8,7 +8,7 @@ import {
     type VersionedRules,
     type WebhookDetails,
 } from "@shared";
-import { addLoadedMembers, type MembersPagePosition } from "../members";
+import { addLookedUpMembers } from "../members";
 
 export class ChatDetailsState {
     constructor(
@@ -22,26 +22,30 @@ export class ChatDetailsState {
         public bots: ReadonlyMap<string, GrantedBotPermissions>,
         public webhooks: ReadonlyMap<string, WebhookDetails>,
         public rules: VersionedRules = emptyRules(),
-        // If not all of the members are held, the user id after which the next page of them starts
+        // Set if not all of the members are held, to the user id after which those not in the
+        // first page start
         public moreMembersAfter: string | undefined = undefined,
     ) {}
 
-    // These details with members added who have been loaded since: a page of them, or some who
-    // were looked up
-    withMembers(loaded: Member[], page?: MembersPagePosition): ChatDetailsState {
-        const { members, lapsedMembers, moreMembersAfter } = addLoadedMembers(this, loaded, page);
+    // These details with members added who have been looked up, or undefined if there are none to
+    // add (see `addLookedUpMembers`)
+    withLookedUpMembers(found: Member[], asOf: bigint): ChatDetailsState | undefined {
+        const added = addLookedUpMembers(this, found, asOf);
+        if (added === undefined) {
+            return undefined;
+        }
         return new ChatDetailsState(
             this.chatId,
             this.timestamp,
-            members,
-            lapsedMembers,
+            added.members,
+            added.lapsedMembers,
             this.blockedUsers,
             this.invitedUsers,
             this.pinnedMessages,
             this.bots,
             this.webhooks,
             this.rules,
-            moreMembersAfter,
+            this.moreMembersAfter,
         );
     }
 }
