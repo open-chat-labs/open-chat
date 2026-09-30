@@ -15,7 +15,7 @@
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import Translate from "svelte-material-icons/Translate.svelte";
-    import { i18nKey, i18nLocale, reviewingTranslations } from "../../../i18n/i18n";
+    import { i18nKey, reviewingTranslations } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
@@ -54,7 +54,7 @@
             return all;
         }, new Set<string>());
         for (const l of locales) {
-            await locale.set(i18nLocale(l));
+            await locale.set(l);
         }
         await locale.set(currentLocale);
         return corrections;
@@ -181,8 +181,7 @@
                     <td class="locale">{correction.locale}</td>
                     <td class="key">{correction.key}</td>
                     <td class="english">{$_(correction.key, { locale: "en-GB" })}</td>
-                    <td class="current"
-                        >{$_(correction.key, { locale: i18nLocale(correction.locale) })}</td>
+                    <td class="current">{$_(correction.key, { locale: correction.locale })}</td>
                     <td class="proposed">
                         {#if verifying !== undefined && verifying.id === correction.id}
                             {verifying.value}

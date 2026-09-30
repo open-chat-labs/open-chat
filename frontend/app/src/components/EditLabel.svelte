@@ -1,6 +1,6 @@
 <script lang="ts">
     import { locale, _ } from "svelte-i18n";
-    import { editingLabel, i18nKey, languageCode, supportedLanguagesByCode } from "../i18n/i18n";
+    import { editingLabel, i18nKey, supportedLanguages } from "../i18n/i18n";
     import Translate from "svelte-material-icons/Translate.svelte";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
@@ -48,7 +48,7 @@
         if ($locale && $editingLabel) {
             busy = true;
             client
-                .proposeTranslationCorrection(languageCode($locale), $editingLabel.key, suggestion)
+                .proposeTranslationCorrection($locale, $editingLabel.key, suggestion)
                 .then((resp) => {
                     if (resp === "success") {
                         saved = true;
@@ -68,7 +68,7 @@
         }
     }
     let yourLanguage = $derived(
-        supportedLanguagesByCode[languageCode($locale)]?.name ?? "English",
+        supportedLanguages.find((l) => l.code === $locale)?.name ?? "English",
     );
     let englishValue = $derived($editingLabel && $_($editingLabel.key, { locale: "en" }));
     let englishTokens = $derived(extractTokens(englishValue));

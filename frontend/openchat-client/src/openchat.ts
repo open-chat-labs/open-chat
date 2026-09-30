@@ -8491,9 +8491,6 @@ export class OpenChat {
         key: string,
         value: string,
     ): Promise<ProposeResponse> {
-        // The suggestion is for the language in use, whose svelte-i18n locale can differ from
-        // the language code sent to the Translations canister
-        const currentLocale = this.#locale;
         return this.#worker
             .send({
                 kind: "proposeTranslation",
@@ -8503,7 +8500,7 @@ export class OpenChat {
             })
             .then((res) => {
                 if (res === "success") {
-                    applyTranslationCorrection(currentLocale, key, value);
+                    applyTranslationCorrection(locale, key, value);
                 }
                 return res;
             })
