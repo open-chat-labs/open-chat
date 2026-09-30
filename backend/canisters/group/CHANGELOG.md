@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Act on `UserIdMigrated`, moving everything held under the user's old id (their membership, block, invitation, metrics, etc) onto their new id ([#9572](https://github.com/open-chat-labs/open-chat/pull/9572))
 - Export the group's former members and cached migrated user ids along with it when it is imported into a community, after its `GroupChatCore` so that communities on earlier versions ignore them ([#9571](https://github.com/open-chat-labs/open-chat/pull/9571))
 - Tell clients when the details of the group last changed ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
+- Let clients load the members of the group a page at a time ([#9681](https://github.com/open-chat-labs/open-chat/pull/9681))
 
 ### Changed
 
