@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Accept the `previous_user_ids` of a user joining via `c2c_join_community` or `c2c_join_channel`, and if the user was a member of the community under any of them, cache their migrations to the user's current id ([#9565](https://github.com/open-chat-labs/open-chat/pull/9565))
 - Act on `UserIdMigrated`, moving everything held under the user's old id (their membership of the community and its channels, block, invitations, metrics, etc) onto their new id ([#9572](https://github.com/open-chat-labs/open-chat/pull/9572))
 - Carry over an imported group's former members, other than those in the community, and its cached migrated user ids, if the group exported them ([#9571](https://github.com/open-chat-labs/open-chat/pull/9571))
+- Tell clients when the details of the community, and of each channel, last changed ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 
 ### Changed
 
