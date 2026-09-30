@@ -20,6 +20,15 @@ else
     exit 1
 fi
 
+# The x86_64 build runs on Apple Silicon too, but under Rosetta, where the tests take around half
+# as long again
+if [[ $(uname -m) == "arm64" ]] || [[ $(uname -m) == "aarch64" ]]
+then
+    ARCH=arm64
+else
+    ARCH=x86_64
+fi
+
 if [[ $WASM_SRC == "build" ]]
 then
     # Locally this only rebuilds the canisters which have changed since they were last built in
@@ -32,7 +41,7 @@ fi
 
 cd backend/integration_tests
 echo "PocketIC download starting"
-../../scripts/cached-download.sh https://github.com/dfinity/pocketic/releases/download/${POCKET_IC_SERVER_VERSION}/pocket-ic-x86_64-${PLATFORM}.gz pocket-ic.gz || exit 1
+../../scripts/cached-download.sh https://github.com/dfinity/pocketic/releases/download/${POCKET_IC_SERVER_VERSION}/pocket-ic-${ARCH}-${PLATFORM}.gz pocket-ic.gz || exit 1
 gzip -df pocket-ic.gz || exit 1
 chmod +x pocket-ic
 echo "PocketIC download completed"

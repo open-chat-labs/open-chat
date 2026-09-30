@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2079](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2079-notifications_index)] - 2026-09-30
+
 ### Fixed
 
 - Update the cached id of a user migrated to a MultiUser canister, when told by the UserIndex ([#9627](https://github.com/open-chat-labs/open-chat/pull/9627))
