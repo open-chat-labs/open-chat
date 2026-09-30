@@ -1,5 +1,6 @@
 //! End-to-end: daily_puzzle canister -> local user index -> user canister (CHIT) -> back to the
-//! daily_puzzle canister (results). Real generator, real pushes and pulls, no stand-ins.
+//! daily_puzzle canister (results). Real generator, real pushes and pulls, no stand-ins, except for
+//! the one test that pins a board and says so.
 
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
@@ -280,13 +281,14 @@ fn daily_puzzle_end_to_end() {
     wrapper.discard();
 }
 
-// The board `daily_puzzle_end_to_end` failed on while it took the opening hint to be the first
-// step that puts a mark on the board. An 8x8 easy Tents: the first tent, at 41, belongs to the
-// tree at 40, whose other two free neighbours sit in a column that holds no tents, and the step
-// that clears that column looks at the corner cell an earlier step ruled out. So the engine walks
-// back to the corner and opens with grass there (#9588), not with the tent. The real flow meets a
-// board like this only when the day's game and the daily canister's seed produce one, so this one
-// is pushed by a stand-in for the daily canister.
+// `daily_puzzle_end_to_end` used to take the opening hint to be the first step that puts a mark on
+// the board, and failed whenever that step rests on a negatives-only step the engine serves first
+// (#9588). The real flow meets such a board only when the day's game and the daily canister's
+// seed produce one, so this one, an 8x8 easy Tents, is pushed by a stand-in for the daily
+// canister. The first tent is at 53, for the tree at 52, whose only other free neighbour is 44.
+// That is in column 4, which holds no tents, and the step before the tent clears the column. So
+// the engine opens with the column: not with the tent, and not with the corner grass the trace
+// starts with either, which is what serving the trace in order would give.
 #[test]
 fn daily_puzzle_opening_hint_is_a_premise_of_the_first_mark() {
     let mut wrapper = ENV.deref().get();
@@ -312,20 +314,21 @@ fn daily_puzzle_opening_hint_is_a_premise_of_the_first_mark() {
     #[rustfmt::skip]
     let description = vec![
         1, 8, 8,
-        0, 0, 0, 0, 1, 0, 1, 0,
-        0, 0, 0, 0, 1, 1, 0, 0,
-        0, 0, 1, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 1, 1,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        1, 0, 0, 1, 0, 0, 1, 0,
+        0, 0, 0, 1, 0, 1, 0, 0,
+        0, 1, 0, 0, 0, 0, 1, 0,
         0, 0, 0, 0, 1, 0, 0, 0,
-        1, 0, 0, 0, 0, 0, 0, 0,
-        2, 1, 3, 0, 2, 1, 2, 1,
-        0, 3, 0, 3, 0, 2, 2, 2,
+        0, 0, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        1, 0, 0, 1, 1, 0, 0, 1,
+        0, 0, 0, 0, 1, 0, 0, 0,
+        1, 3, 1, 1, 1, 1, 2, 2,
+        1, 2, 1, 3, 0, 2, 1, 2,
     ];
     let (trace, solution) = solve(game_id, &description, 0);
     let first_mark = trace.iter().position(puts_a_mark).unwrap();
-    assert_eq!(trace[first_mark].conclusions, [(41, 1)]);
+    assert_eq!(trace[first_mark].conclusions, [(53, 1)]);
+    assert_eq!(trace[0].conclusions, [(0, 0)]);
 
     let puzzle = DailyPuzzle {
         game_id: game_id.to_string(),
@@ -366,10 +369,9 @@ fn daily_puzzle_opening_hint_is_a_premise_of_the_first_mark() {
         hint_prices[2] - hint_prices[0],
     );
 
-    // What the failing run was served, where it expected the tent at 41
-    assert_eq!(upgraded.hint.hint.conclusions, [(0, 0)]);
     let step = assert_opening_step(&trace, &upgraded.hint.hint);
-    assert!(step < first_mark);
+    assert_eq!(step, first_mark - 1);
+    assert_eq!(upgraded.hint.hint.conclusions, [(4, 0), (12, 0), (28, 0), (36, 0), (44, 0)]);
 
     // The LUI now holds a made up daily canister id and this test's puzzle for today
     wrapper.discard();
