@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::tip_message::*;
 use constants::MEMO_TIP;
-use ledger_utils::UserTransfer;
+use ledger_utils::{TransferRecipient, UserTransfer};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, Caller, CryptoTransaction, OCResult, UserId, icrc2};
 
@@ -85,11 +85,14 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
     };
 
     let this_canister_id = state.env.canister_id();
-    let recipient_wallet = state.member_wallet(recipient)?;
+    let transfer_recipient = TransferRecipient::User {
+        user_id: recipient,
+        wallet: state.member_wallet(recipient)?,
+    };
 
     match UserTransfer::new(
         CryptoTransaction::Pending(args.transfer),
-        recipient_wallet,
+        transfer_recipient,
         &MEMO_TIP,
         this_canister_id,
     )? {

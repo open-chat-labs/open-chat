@@ -1192,12 +1192,15 @@ function getAction(
             );
 
         case "tipMessage":
-            return agent.userClient.tipMessage(
+            return agent.tipMessage(
                 payload.messageContext,
                 payload.messageId,
                 payload.transfer,
                 payload.decimals,
                 payload.pin,
+                payload.username,
+                payload.displayName,
+                payload.newAchievement,
             );
 
         case "loadSavedCryptoAccounts":
@@ -1271,6 +1274,8 @@ function getAction(
                 payload.chatId,
                 payload.threadRootMessageIndex,
                 payload.messageId,
+                payload.token1,
+                payload.token1Amount,
                 payload.pin,
                 payload.newAchievement,
                 payload.fromAccount,

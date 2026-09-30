@@ -2,6 +2,7 @@ use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_
 use group_index_canister::*;
 
 // Queries
+generate_msgpack_query_call!(active_groups);
 generate_msgpack_query_call!(explore_communities);
 generate_msgpack_query_call!(explore_groups);
 generate_msgpack_query_call!(search);
