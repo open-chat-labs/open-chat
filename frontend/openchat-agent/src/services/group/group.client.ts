@@ -19,9 +19,7 @@ import type {
     FollowThreadResponse,
     FullWebhookDetails,
     GrantedBotPermissions,
-    GroupChatDetails,
     GroupChatDetailsResponse,
-    GroupChatDetailsUpdatesResponse,
     GroupChatIdentifier,
     InviteCodeResponse,
     JoinVideoCallResponse,
@@ -52,7 +50,7 @@ import type {
     VideoCallParticipantsResponse,
     VideoCallPresence,
 } from "@shared";
-import { MAX_EVENTS, MAX_MESSAGES, offline, random32 } from "@shared";
+import { MAX_EVENTS, MAX_MESSAGES, random32 } from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,
@@ -125,8 +123,7 @@ import {
     UnitResult,
 } from "../../typebox";
 import { type ChatsDb } from "../../utils/chatsDb";
-import { mergeGroupChatDetails } from "../../utils/chat";
-import { confirmHeldDetails } from "../../utils/heldDetails";
+import { loadGroupDetails } from "../../utils/details";
 import {
     apiOptionUpdateV2,
     identity,
@@ -584,95 +581,41 @@ export class GroupClient
         );
     }
 
-    // If the caller already holds the details it passes the timestamp they were good up to as
+    // A caller which already holds the details passes the timestamp they were good up to as
     // `heldTimestamp`, and is told only that they still are, unless they have changed
-    async getGroupDetails(
+    getGroupDetails(
         groupId: string,
         chatLastUpdated: bigint,
         heldTimestamp?: bigint,
     ): Promise<GroupChatDetailsResponse> {
-        if (heldTimestamp !== undefined) {
-            const timestamp = await confirmHeldDetails(heldTimestamp, chatLastUpdated, (since) =>
-                this.queryGroupDetailsUpdates(groupId, since),
-            );
-            if (timestamp !== undefined) {
-                return { kind: "success_no_updates", timestamp };
-            }
-        }
-
-        const fromCache = await this.chatsDb.getCachedGroupDetails(groupId);
-        if (fromCache !== undefined) {
-            if (fromCache.timestamp >= chatLastUpdated || offline()) {
-                return fromCache;
-            } else {
-                return this.getGroupDetailsUpdates(groupId, fromCache);
-            }
-        }
-
-        const response = await this.getGroupDetailsFromBackend(groupId);
-        if (typeof response === "object" && "members" in response) {
-            await this.chatsDb.setCachedGroupDetails(groupId, response);
-        }
-        return response;
-    }
-
-    private getGroupDetailsFromBackend(groupId: string): Promise<GroupChatDetailsResponse> {
-        return this.query(
+        return loadGroupDetails(
+            this.chatsDb,
             groupId,
-            "selected_initial",
-            {},
-            (resp) =>
-                mapResult(resp, (value) =>
-                    groupDetailsSuccess(value, this.config.blobUrlPattern, groupId),
+            chatLastUpdated,
+            heldTimestamp,
+            () =>
+                this.query(
+                    groupId,
+                    "selected_initial",
+                    {},
+                    (resp) =>
+                        mapResult(resp, (value) =>
+                            groupDetailsSuccess(value, this.config.blobUrlPattern, groupId),
+                        ),
+                    TEmpty,
+                    GroupSelectedInitialResponse,
                 ),
-            TEmpty,
-            GroupSelectedInitialResponse,
+            (since) =>
+                this.query(
+                    groupId,
+                    "selected_updates_v2",
+                    { updates_since: since },
+                    (value) =>
+                        groupDetailsUpdatesResponse(value, this.config.blobUrlPattern, groupId),
+                    GroupSelectedUpdatesArgs,
+                    GroupSelectedUpdatesResponse,
+                ),
         );
-    }
-
-    private async getGroupDetailsUpdates(
-        groupId: string,
-        previous: GroupChatDetails,
-    ): Promise<GroupChatDetails> {
-        const response = await this.getGroupDetailsUpdatesFromBackend(groupId, previous);
-        if (response.timestamp > previous.timestamp) {
-            await this.chatsDb.setCachedGroupDetails(groupId, response);
-        }
-        return response;
-    }
-
-    private queryGroupDetailsUpdates(
-        groupId: string,
-        since: bigint,
-    ): Promise<GroupChatDetailsUpdatesResponse> {
-        return this.query(
-            groupId,
-            "selected_updates_v2",
-            { updates_since: since },
-            (value) => groupDetailsUpdatesResponse(value, this.config.blobUrlPattern, groupId),
-            GroupSelectedUpdatesArgs,
-            GroupSelectedUpdatesResponse,
-        );
-    }
-
-    private async getGroupDetailsUpdatesFromBackend(
-        groupId: string,
-        previous: GroupChatDetails,
-    ): Promise<GroupChatDetails> {
-        const updatesResponse = await this.queryGroupDetailsUpdates(groupId, previous.timestamp);
-
-        if (updatesResponse.kind === "failure") {
-            return previous;
-        }
-
-        if (updatesResponse.kind === "success_no_updates") {
-            return {
-                ...previous,
-                timestamp: updatesResponse.timestamp,
-            };
-        }
-
-        return mergeGroupChatDetails(previous, updatesResponse);
     }
 
     getPublicSummary(groupId: string): Promise<PublicGroupSummaryResponse> {

@@ -343,6 +343,27 @@ describe("loading the selected chat's details", () => {
         expect(selectedServerChatStore.value?.timestamp).toBe(20n);
     });
 
+    test("a late reply that nothing has changed leaves another chat's details alone", async () => {
+        const other = { kind: "group_chat" as const, groupId: "ccccc-cc" };
+        responses.push(chatDetails(10n, [member("a")]));
+        await load();
+
+        // The reply to the next request only arrives once the store holds another chat's
+        // details, as it can if the user switches to that chat and back in the meantime
+        let reply: (resp: GroupChatDetailsResponse) => void = () => {};
+        responses.push(new Promise((resolve) => (reply = resolve)) as never);
+        await load();
+        expect(requests[1].heldTimestamp).toBe(10n);
+        selectedServerChatStore.update((state) => {
+            if (state !== undefined) state.chatId = other;
+            return state;
+        });
+        reply({ kind: "success_no_updates", timestamp: 20n });
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(selectedServerChatStore.value?.timestamp).toBe(10n);
+    });
+
     test("details held for another chat are not taken to be this chat's", async () => {
         const other = { kind: "group_chat" as const, groupId: "ccccc-cc" };
         responses.push(chatDetails(10n, [member("a")]));
