@@ -6,6 +6,7 @@ import {
     type GroupChatDetails,
     type GroupChatDetailsResponse,
     type GroupChatDetailsUpdatesResponse,
+    type Member,
 } from "@shared";
 import { mergeCommunityDetails, mergeGroupChatDetails } from "./chat";
 import type { ChatsDb } from "./chatsDb";
@@ -169,6 +170,60 @@ export async function loadCommunityDetails(
         await cache.setCachedCommunityDetails(communityId, details);
     }
     return details;
+}
+
+/**
+ * Adds members which have been loaded since, a page of them or some who were looked up, to the
+ * cached details of a group or channel, so that they are still held when the details are next
+ * read. `page` is given for a page of members: what was asked for the members after, and where
+ * the members after that page start.
+ */
+export async function addMembersToCachedGroupDetails(
+    cache: GroupDetailsCache,
+    cacheKey: string,
+    members: Member[],
+    page?: { after: string; moreMembersAfter: string | undefined },
+): Promise<void> {
+    const cached = await cache.getCachedGroupDetails(cacheKey);
+    if (cached !== undefined) {
+        await cache.setCachedGroupDetails(cacheKey, withMembers(cached, members, page));
+    }
+}
+
+/**
+ * As for `addMembersToCachedGroupDetails`, but for the details of a community
+ */
+export async function addMembersToCachedCommunityDetails(
+    cache: CommunityDetailsCache,
+    communityId: string,
+    members: Member[],
+    page?: { after: string; moreMembersAfter: string | undefined },
+): Promise<void> {
+    const cached = await cache.getCachedCommunityDetails(communityId);
+    if (cached !== undefined) {
+        await cache.setCachedCommunityDetails(communityId, withMembers(cached, members, page));
+    }
+}
+
+/**
+ * The details with the members added, replacing any already held. A page only moves on where the
+ * members not yet held start if it carries on from where those held stop, since pages can arrive
+ * twice or out of order.
+ */
+export function withMembers<D extends { members: Member[]; moreMembersAfter?: string }>(
+    details: D,
+    members: Member[],
+    page?: { after: string; moreMembersAfter: string | undefined },
+): D {
+    const added = new Set(members.map((m) => m.userId));
+    return {
+        ...details,
+        members: details.members.filter((m) => !added.has(m.userId)).concat(members),
+        moreMembersAfter:
+            page !== undefined && page.after === details.moreMembersAfter
+                ? page.moreMembersAfter
+                : details.moreMembersAfter,
+    };
 }
 
 // The canister's timestamp can be behind the one held if the query hit a lagging replica

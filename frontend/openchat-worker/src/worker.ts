@@ -440,6 +440,12 @@ function getAction(
                 payload.detailsSyncedUpTo,
             );
 
+        case "getMembersPage":
+            return agent.getMembersPage(payload.id, payload.after);
+
+        case "lookupMembers":
+            return agent.lookupMembers(payload.id, payload.userIds);
+
         case "lastOnline":
             return agent.lastOnline(payload.userIds);
 

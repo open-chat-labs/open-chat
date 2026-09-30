@@ -26,6 +26,7 @@ import {
     ICP_SYMBOL,
     IdentityStorage,
     LARGE_GROUP_THRESHOLD,
+    MEMBERS_PAGE_SIZE,
     LEDGER_CANISTER_CHAT,
     LazyFile,
     MessageContextMap,
@@ -473,6 +474,7 @@ import {
 import { botState } from "./state/bots.svelte";
 import { ChatDetailsState } from "./state/chat/serverDetails";
 import { CommunityDetailsState } from "./state/community/server";
+import type { HeldMembers, MembersPagePosition } from "./state/members";
 import type { UndoLocalUpdate } from "./state/undo";
 import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead";
 import { userStore } from "./state/users/state";
@@ -691,6 +693,9 @@ function describeError(err: unknown): string {
     }
 }
 
+// The users who have been looked up among the members of the chat or community with this key
+type MemberLookups = { key: string | undefined; userIds: Set<string> };
+
 export class OpenChat {
     #mobileLayout: "v1" | "v2";
     #worker: WorkerAgent;
@@ -717,6 +722,11 @@ export class OpenChat {
     #currentUserIdChangedPublished = false;
     #referralCode: string | undefined = undefined;
     #userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
+    // The users who have been looked up among the members of the selected community and of the
+    // selected chat, whether or not they turned out to be members, so that they aren't looked up
+    // again
+    #communityMemberLookups: MemberLookups = { key: undefined, userIds: new Set() };
+    #chatMemberLookups: MemberLookups = { key: undefined, userIds: new Set() };
     #chatsPoller: Poller | undefined = undefined;
     #stopWatchingForResume: (() => void) | undefined = undefined;
     readonly #syncPuller: SyncPuller;
@@ -3102,7 +3112,86 @@ export class OpenChat {
         selectedCommunityBlockedUsersStore.value.forEach((u) => allUserIds.add(u));
         selectedCommunityInvitedUsersStore.value.forEach((u) => allUserIds.add(u));
         selectedCommunityReferralsStore.value.forEach((u) => allUserIds.add(u));
+        this.#lookupMembersSeen(selectedChatUserIdsStore.value);
         await this.getMissingUsers(allUserIds);
+    }
+
+    // A chat or community with more members than are loaded at once has only some of them held. So
+    // the users who appear in the selected chat, and the current user, are looked up among the
+    // members of the chat and of its community if they aren't held, so that what is shown of them
+    // (a community display name, say) is right.
+    #lookupMembersSeen(userIds: Iterable<string>): void {
+        const seen = [...userIds];
+        const currentUserId = currentUserIdStore.value;
+        if (currentUserId !== undefined) {
+            seen.push(currentUserId);
+        }
+        const community = selectedServerCommunityStore.value;
+        if (community?.moreMembersAfter !== undefined) {
+            void this.#lookupMembers(
+                community.communityId,
+                community,
+                this.#communityMemberLookups,
+                seen,
+            );
+        }
+        const chat = selectedServerChatStore.value;
+        if (chat?.moreMembersAfter !== undefined && chat.chatId.kind !== "direct_chat") {
+            void this.#lookupMembers(chat.chatId, chat, this.#chatMemberLookups, seen);
+        }
+    }
+
+    async #lookupMembers(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        held: HeldMembers,
+        lookups: MemberLookups,
+        userIds: string[],
+    ): Promise<void> {
+        const key = id.kind === "community" ? id.communityId : chatIdentifierToString(id);
+        if (lookups.key !== key) {
+            lookups.key = key;
+            lookups.userIds = new Set();
+        }
+        const lookedUp = lookups.userIds;
+        const toLookUp = [...new Set(userIds)]
+            .filter((u) => !held.members.has(u) && !held.lapsedMembers.has(u) && !lookedUp.has(u))
+            .slice(0, MEMBERS_PAGE_SIZE);
+        if (toLookUp.length === 0) {
+            return;
+        }
+        toLookUp.forEach((u) => lookedUp.add(u));
+
+        const resp = await this.#worker
+            .send({ kind: "lookupMembers", id, userIds: toLookUp })
+            .catch(CommonResponses.failure);
+        if (resp.kind === "success") {
+            if (resp.members.length > 0) {
+                this.#addLoadedMembers(id, resp.members);
+            }
+        } else {
+            // So that they are looked up again when they are next seen
+            toLookUp.forEach((u) => lookedUp.delete(u));
+        }
+    }
+
+    // Adds members who have been loaded since the details were, a page of them or some who were
+    // looked up, to the details of the selected chat or community, if that is still the one selected
+    #addLoadedMembers(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        members: Member[],
+        page?: MembersPagePosition,
+    ): void {
+        if (id.kind === "community") {
+            const details = selectedServerCommunityStore.value;
+            if (details !== undefined && communityIdentifiersEqual(details.communityId, id)) {
+                selectedServerCommunityStore.set(details.withMembers(members, page));
+            }
+        } else {
+            const details = selectedServerChatStore.value;
+            if (details !== undefined && chatIdentifiersEqual(details.chatId, id)) {
+                selectedServerChatStore.set(details.withMembers(members, page));
+            }
+        }
     }
 
     // We create add a limited subset of the members to the userstore for performance reasons.
@@ -3136,6 +3225,7 @@ export class OpenChat {
                 return set;
             });
         }
+        this.#lookupMembersSeen(selectedChatUserIdsStore.value);
         await this.getMissingUsers(allUserIds);
     }
 
@@ -4073,6 +4163,7 @@ export class OpenChat {
                         resp.referrals,
                         resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
                         resp.rules,
+                        resp.moreMembersAfter,
                     ),
                 );
                 this.#updateUserStoreFromCommunityState();
@@ -4163,6 +4254,7 @@ export class OpenChat {
                             resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
                             new Map(resp.webhooks.map((w) => [w.id, w])),
                             resp.rules,
+                            resp.moreMembersAfter,
                         ),
                     );
                     await this.#updateUserStoreFromEvents([]);

@@ -55,8 +55,10 @@ import type {
     JoinVideoCallResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
+    LookupMembersResponse,
     MarkReadRequest,
     MarkReadResponse,
+    MembersPageResponse,
     Message,
     MessageActivityFeedResponse,
     MessageContext,
@@ -313,6 +315,8 @@ export type WorkerRequest =
     | LastOnline
     | MarkAsOnline
     | GetGroupDetails
+    | GetMembersPage
+    | LookupMembers
     | MarkMessagesRead
     | GetAllCachedUsers
     | GetUsers
@@ -1660,6 +1664,22 @@ type GetGroupDetails = {
     kind: "getGroupDetails";
 };
 
+// The next page of the members of a chat or community, which are also added to its cached details
+type GetMembersPage = {
+    kind: "getMembersPage";
+    id: MultiUserChatIdentifier | CommunityIdentifier;
+    // The `moreMembersAfter` of the members already held
+    after: string;
+};
+
+// Finds which of the users are members of a chat or community. Those who are are also added to its
+// cached details.
+type LookupMembers = {
+    kind: "lookupMembers";
+    id: MultiUserChatIdentifier | CommunityIdentifier;
+    userIds: string[];
+};
+
 type GetAllCachedUsers = {
     kind: "getAllCachedUsers";
 };
@@ -2122,6 +2142,8 @@ export type WorkerResponseInner =
     | Record<string, number>
     | GroupChatDetailsResponse
     | GroupChatDetails
+    | MembersPageResponse
+    | LookupMembersResponse
     | MarkReadResponse
     | UsersResponse
     | CurrentUserResponse
@@ -2549,6 +2571,10 @@ export type WorkerResult<T> = T extends Init
     ? MarkReadResponse
     : T extends GetGroupDetails
     ? GroupChatDetailsResponse
+    : T extends GetMembersPage
+    ? MembersPageResponse
+    : T extends LookupMembers
+    ? LookupMembersResponse
     : T extends CurrentUser
     ? CurrentUserResponse
     : T extends CreateUserClient

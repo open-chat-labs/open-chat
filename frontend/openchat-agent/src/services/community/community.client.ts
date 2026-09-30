@@ -66,8 +66,17 @@ import type {
     User,
     VideoCallParticipantsResponse,
     VideoCallPresence,
+    LookupMembersResponse,
+    MembersPageResponse,
 } from "@shared";
-import { DestinationInvalidError, MAX_EVENTS, MAX_MESSAGES, random32, toBigInt32 } from "@shared";
+import {
+    DestinationInvalidError,
+    MAX_EVENTS,
+    MAX_MESSAGES,
+    MEMBERS_PAGE_SIZE,
+    random32,
+    toBigInt32,
+} from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,
@@ -163,9 +172,22 @@ import {
     CommunitySummaryUpdatesResponse as TCommunitySummaryUpdatesResponse,
     Empty as TEmpty,
     UnitResult,
+    CommunityMembersArgs,
+    CommunityMembersResponse,
+    CommunityLookupMembersArgs,
+    CommunityLookupMembersResponse,
+    CommunityChannelMembersArgs,
+    CommunityChannelMembersResponse,
+    CommunityLookupChannelMembersArgs,
+    CommunityLookupChannelMembersResponse,
 } from "../../typebox";
 import { type ChatsDb } from "../../utils/chatsDb";
-import { loadCommunityDetails, loadGroupDetails } from "../../utils/details";
+import {
+    addMembersToCachedCommunityDetails,
+    addMembersToCachedGroupDetails,
+    loadCommunityDetails,
+    loadGroupDetails,
+} from "../../utils/details";
 import {
     apiOptionUpdateV2,
     identity,
@@ -194,6 +216,8 @@ import {
     getMessagesSuccess,
     groupDetailsSuccess,
     groupDetailsUpdatesResponse,
+    groupMembersPage,
+    lookupGroupMembersSuccess,
     inviteCodeSuccess,
     isSuccess,
     mapResult,
@@ -219,6 +243,8 @@ import {
     communityChannelSummaryResponse,
     communityDetailsResponse,
     communityDetailsUpdatesResponse,
+    communityMembersPage,
+    lookupCommunityMembersResponse,
     createUserGroupSuccess,
     exploreChannelsResponse,
     importGroupSuccess,
@@ -803,7 +829,7 @@ export class CommunityClient
     ): Promise<GroupChatDetailsResponse> {
         return loadGroupDetails(
             this.chatsDb,
-            `${chatId.communityId}_${chatId.channelId}`,
+            channelDetailsCacheKey(chatId),
             detailsLastUpdated,
             detailsSyncedUpTo,
             () =>
@@ -844,6 +870,99 @@ export class CommunityClient
                     CommunitySelectedChannelUpdatesResponse,
                 ),
         );
+    }
+
+    // The next page of members after those already held, which are added to the cached details
+    async getMembersPage(communityId: string, after: string): Promise<MembersPageResponse> {
+        const response = await this.query(
+            communityId,
+            "members",
+            {
+                invite_code: this.inviteCode(communityId),
+                after: principalStringToBytes(after),
+                max_results: MEMBERS_PAGE_SIZE,
+            },
+            communityMembersPage,
+            CommunityMembersArgs,
+            CommunityMembersResponse,
+        );
+        if (response.kind === "success") {
+            await addMembersToCachedCommunityDetails(this.chatsDb, communityId, response.members, {
+                after,
+                moreMembersAfter: response.moreMembersAfter,
+            });
+        }
+        return response;
+    }
+
+    // Those of the users who are members, who are added to the cached details
+    async lookupMembers(communityId: string, userIds: string[]): Promise<LookupMembersResponse> {
+        const response = await this.query(
+            communityId,
+            "lookup_members",
+            { user_ids: userIds.map(principalStringToBytes) },
+            lookupCommunityMembersResponse,
+            CommunityLookupMembersArgs,
+            CommunityLookupMembersResponse,
+        );
+        if (response.kind === "success") {
+            await addMembersToCachedCommunityDetails(this.chatsDb, communityId, response.members);
+        }
+        return response;
+    }
+
+    // As for `getMembersPage`, but of the members of a channel
+    async getChannelMembersPage(
+        chatId: ChannelIdentifier,
+        after: string,
+    ): Promise<MembersPageResponse> {
+        const response = await this.query(
+            chatId.communityId,
+            "channel_members",
+            {
+                channel_id: toBigInt32(chatId.channelId),
+                after: principalStringToBytes(after),
+                max_results: MEMBERS_PAGE_SIZE,
+            },
+            (resp) => mapResult(resp, groupMembersPage),
+            CommunityChannelMembersArgs,
+            CommunityChannelMembersResponse,
+        );
+        if (response.kind === "success") {
+            await addMembersToCachedGroupDetails(
+                this.chatsDb,
+                channelDetailsCacheKey(chatId),
+                response.members,
+                { after, moreMembersAfter: response.moreMembersAfter },
+            );
+        }
+        return response;
+    }
+
+    // As for `lookupMembers`, but of the members of a channel
+    async lookupChannelMembers(
+        chatId: ChannelIdentifier,
+        userIds: string[],
+    ): Promise<LookupMembersResponse> {
+        const response = await this.query(
+            chatId.communityId,
+            "lookup_channel_members",
+            {
+                channel_id: toBigInt32(chatId.channelId),
+                user_ids: userIds.map(principalStringToBytes),
+            },
+            (resp) => mapResult(resp, lookupGroupMembersSuccess),
+            CommunityLookupChannelMembersArgs,
+            CommunityLookupChannelMembersResponse,
+        );
+        if (response.kind === "success") {
+            await addMembersToCachedGroupDetails(
+                this.chatsDb,
+                channelDetailsCacheKey(chatId),
+                response.members,
+            );
+        }
+        return response;
     }
 
     sendMessage(
@@ -1630,4 +1749,9 @@ export class CommunityClient
             ActiveProposalTalliesResponse,
         );
     }
+}
+
+// The key under which the details of a channel are cached
+function channelDetailsCacheKey(chatId: ChannelIdentifier): string {
+    return `${chatId.communityId}_${chatId.channelId}`;
 }

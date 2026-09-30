@@ -7,7 +7,13 @@ import {
     type Member,
 } from "@shared";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { loadCommunityDetails, loadGroupDetails } from "./details";
+import {
+    addMembersToCachedCommunityDetails,
+    addMembersToCachedGroupDetails,
+    loadCommunityDetails,
+    loadGroupDetails,
+    withMembers,
+} from "./details";
 
 function member(userId: string): Member {
     return { userId, role: ROLE_MEMBER, displayName: undefined, lapsed: false };
@@ -129,11 +135,14 @@ describe("loadGroupDetails", () => {
 
     test("cached details are brought up to date with the updates since they were cached", async () => {
         const { load, stored, initial, updatesSince } = setup(
-            details(10n, ["a"]),
+            { ...details(10n, ["a"]), moreMembersAfter: "a" },
             membersAdded(20n, ["b"]),
         );
 
         const resp = await load(20n);
+
+        // Where the members not yet held start is unchanged by the updates
+        expect(stored.get(key)?.moreMembersAfter).toBe("a");
 
         expect(updatesSince).toHaveBeenCalledWith(10n);
         expect(initial).not.toHaveBeenCalled();
@@ -444,5 +453,127 @@ describe("loadCommunityDetails", () => {
         const resp = await load(20n, 5n);
 
         expect(memberIds(resp)).toEqual(["a", "b"]);
+    });
+});
+
+describe("withMembers", () => {
+    const held = (moreMembersAfter?: string) => ({
+        members: [member("a"), member("b")],
+        moreMembersAfter,
+        other: "unchanged",
+    });
+
+    test("members are added to those held, replacing any held already", () => {
+        const b = { ...member("b"), displayName: "B" };
+
+        const result = withMembers(held("b"), [b, member("c")]);
+
+        expect(result.members).toEqual([member("a"), b, member("c")]);
+        expect(result.moreMembersAfter).toBe("b");
+        expect(result.other).toBe("unchanged");
+    });
+
+    test("a page which carries on from the members held moves on where the rest start", () => {
+        const result = withMembers(held("b"), [member("c")], {
+            after: "b",
+            moreMembersAfter: "c",
+        });
+
+        expect(memberIds(result)).toEqual(["a", "b", "c"]);
+        expect(result.moreMembersAfter).toBe("c");
+    });
+
+    test("the last page leaves every member held", () => {
+        const result = withMembers(held("b"), [member("c")], {
+            after: "b",
+            moreMembersAfter: undefined,
+        });
+
+        expect(result.moreMembersAfter).toBeUndefined();
+    });
+
+    test("a page which arrives twice, or out of order, doesn't move where the rest start", () => {
+        const result = withMembers(held("c"), [member("c")], {
+            after: "b",
+            moreMembersAfter: "c",
+        });
+        expect(result.moreMembersAfter).toBe("c");
+
+        const later = withMembers(held("b"), [member("e")], {
+            after: "d",
+            moreMembersAfter: undefined,
+        });
+        expect(later.moreMembersAfter).toBe("b");
+    });
+});
+
+describe("adding members to the cached details", () => {
+    test("members are added to the cached details of a group", async () => {
+        const stored = new Map<string, GroupChatDetails>();
+        stored.set("chat", {
+            members: [member("a")],
+            moreMembersAfter: "a",
+            blockedUsers: new Set(),
+            invitedUsers: new Set(),
+            pinnedMessages: new Set(),
+            rules: { text: "", enabled: false, version: 0 },
+            timestamp: 10n,
+            bots: [],
+            webhooks: [],
+        });
+        const cache = {
+            getCachedGroupDetails: (k: string) => Promise.resolve(stored.get(k)),
+            setCachedGroupDetails: (k: string, d: GroupChatDetails) => {
+                stored.set(k, d);
+                return Promise.resolve();
+            },
+            cachedGroupDetailsTimestamp: () => undefined,
+        };
+
+        await addMembersToCachedGroupDetails(cache, "chat", [member("b")], {
+            after: "a",
+            moreMembersAfter: undefined,
+        });
+
+        expect(memberIds(stored.get("chat"))).toEqual(["a", "b"]);
+        expect(stored.get("chat")?.moreMembersAfter).toBeUndefined();
+        // The details themselves are no more up to date than they were
+        expect(stored.get("chat")?.timestamp).toBe(10n);
+
+        // Nothing is cached for a chat whose details aren't
+        await addMembersToCachedGroupDetails(cache, "other", [member("b")]);
+        expect(stored.has("other")).toBe(false);
+    });
+
+    test("members are added to the cached details of a community", async () => {
+        const stored = new Map<string, CommunityDetails>();
+        stored.set("community", {
+            kind: "success",
+            members: [member("a")],
+            moreMembersAfter: "a",
+            blockedUsers: new Set(),
+            invitedUsers: new Set(),
+            rules: { text: "", enabled: false, version: 0 },
+            lastUpdated: 10n,
+            userGroups: new Map(),
+            referrals: new Set(),
+            bots: [],
+        });
+        const cache = {
+            getCachedCommunityDetails: (k: string) => Promise.resolve(stored.get(k)),
+            setCachedCommunityDetails: (k: string, d: CommunityDetails) => {
+                stored.set(k, d);
+                return Promise.resolve();
+            },
+            cachedCommunityDetailsTimestamp: () => undefined,
+        };
+
+        await addMembersToCachedCommunityDetails(cache, "community", [
+            { ...member("b"), displayName: "B" },
+        ]);
+
+        expect(memberIds(stored.get("community"))).toEqual(["a", "b"]);
+        expect(stored.get("community")?.moreMembersAfter).toBe("a");
+        expect(stored.get("community")?.lastUpdated).toBe(10n);
     });
 });

@@ -1740,8 +1740,25 @@ export type GroupChatDetailsUpdatesResponse =
     | { kind: "success_no_updates"; timestamp: bigint }
     | Failure;
 
-export type GroupChatDetails = {
+// A page of the members of a chat or community. The owners, admins and moderators all come with the
+// first page; the others come in order of user id.
+export type MembersPage = {
     members: Member[];
+    // If there are more members, the user id after which the next page of them starts
+    moreMembersAfter: string | undefined;
+};
+
+export type MembersPageResponse = ({ kind: "success" } & MembersPage) | OCError | Failure;
+
+// Those of the users asked about who are members
+export type LookupMembersResponse = { kind: "success"; members: Member[] } | OCError | Failure;
+
+export type GroupChatDetails = {
+    // All of the members, unless `moreMembersAfter` is set, in which case those which have been
+    // loaded so far: the first page, any later pages, and any who have been looked up
+    members: Member[];
+    // If not all of the members are held, the user id after which the next page of them starts
+    moreMembersAfter?: string;
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;

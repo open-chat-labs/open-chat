@@ -39,8 +39,10 @@ import {
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import {
+    currentUserIdStore,
     routeStore,
     selectedChatMembersStore,
+    selectedChatUserIdsStore,
     selectedCommunityMembersStore,
     selectedServerChatStore,
     selectedServerCommunityStore,
@@ -443,5 +445,151 @@ describe("loading the selected chat's details", () => {
 
         expect(requests[1].detailsSyncedUpTo).toBeUndefined();
         expect([...selectedChatMembersStore.value.keys()]).toEqual(["b"]);
+    });
+});
+
+// A chat with more members than are loaded at once has only some of them held, so the users who
+// appear in its events are looked up among its members
+describe("looking up the members who appear in a chat when not all are held", () => {
+    let client: OpenChat;
+    let lookups: Extract<WorkerRequest, { kind: "lookupMembers" }>[];
+    let lookupResponses: Member[][];
+    let senders: string[];
+
+    function messageFrom(sender: string, index: number) {
+        return {
+            index,
+            timestamp: BigInt(1000 + index),
+            expiresAt: undefined,
+            event: {
+                kind: "message",
+                messageIndex: index,
+                messageId: BigInt(100 + index),
+                sender,
+                content: { kind: "text_content", text: "hello" },
+                reactions: [],
+                tips: {},
+                edited: false,
+                forwarded: false,
+                deleted: false,
+                blockLevelMarkdown: false,
+            },
+        };
+    }
+
+    async function load() {
+        await client.setSelectedChat(chatId);
+        await new Promise((r) => setTimeout(r, 10));
+    }
+
+    function setup(details: GroupChatDetailsResponse) {
+        const chats = new ChatMap<GroupChatSummary>();
+        chats.set(chatId, {
+            ...groupChat(),
+            latestEventIndex: 3,
+            latestMessageIndex: 3,
+            latestMessage: messageFrom("a", 3),
+        } as unknown as GroupChatSummary);
+        serverGroupChatsStore.set(chats);
+        client = new OpenChat(config());
+
+        vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(() => {
+            const resp = {
+                events: senders.map((s, i) => messageFrom(s, i + 1)),
+                expiredEventRanges: [],
+                latestEventIndex: 3,
+            } as unknown as EventsResponse<ChatEvent>;
+            return new Stream((resolve) => setTimeout(() => resolve(resp, true), 0)) as never;
+        });
+        vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
+            switch (req.kind) {
+                case "getGroupDetails":
+                    return Promise.resolve(
+                        req.detailsSyncedUpTo === undefined
+                            ? details
+                            : { kind: "success_no_updates", timestamp: req.detailsSyncedUpTo },
+                    );
+                case "lookupMembers":
+                    lookups.push(req);
+                    return Promise.resolve({
+                        kind: "success",
+                        members: lookupResponses.shift() ?? [],
+                    });
+                case "getUsers":
+                    return Promise.resolve({ users: [], deletedUserIds: new Set() });
+                default:
+                    return new Promise(() => {});
+            }
+        }) as never);
+    }
+
+    beforeEach(() => {
+        vi.stubGlobal("Worker", FakeWorker);
+        vi.spyOn(console, "debug").mockImplementation(() => {});
+        routeStore.set({
+            kind: "global_chat_selected_route",
+            scope: { kind: "chats" },
+            chatId,
+            chatType: "group_chat",
+            open: false,
+        });
+        selectedChatUserIdsStore.set(new Set());
+        lookups = [];
+        lookupResponses = [];
+        senders = ["a", "x", "y"];
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+        selectedServerChatStore.set(undefined);
+        serverGroupChatsStore.set(new ChatMap<GroupChatSummary>());
+        serverEventsStore.set([]);
+    });
+
+    test("those who aren't held are looked up, and added if they are members", async () => {
+        setup({ ...chatDetails(10n, [member("a"), member("b")]), moreMembersAfter: "b" });
+        lookupResponses.push([member("x")]);
+
+        await load();
+
+        expect(lookups).toHaveLength(1);
+        expect(lookups[0].id).toEqual(chatId);
+        // The current user is looked up too, since what is shown of them is just as much in need
+        // of being right
+        expect(new Set(lookups[0].userIds)).toEqual(new Set(["x", "y", currentUserIdStore.value]));
+        expect([...selectedChatMembersStore.value.keys()]).toEqual(["a", "b", "x"]);
+        // There are still more members which aren't held
+        expect(selectedServerChatStore.value?.moreMembersAfter).toBe("b");
+    });
+
+    test("nobody is looked up twice, whether or not they turned out to be a member", async () => {
+        setup({ ...chatDetails(10n, [member("a"), member("b")]), moreMembersAfter: "b" });
+        lookupResponses.push([member("x")]);
+        await load();
+
+        senders = ["x", "y", "z"];
+        await load();
+
+        expect(lookups).toHaveLength(2);
+        expect(lookups[1].userIds).toEqual(["z"]);
+    });
+
+    test("a lapsed member who is looked up is held as lapsed", async () => {
+        setup({ ...chatDetails(10n, [member("a"), member("b")]), moreMembersAfter: "b" });
+        lookupResponses.push([{ ...member("x"), lapsed: true }]);
+
+        await load();
+
+        expect(selectedChatMembersStore.value.has("x")).toBe(false);
+        expect(selectedServerChatStore.value?.lapsedMembers.has("x")).toBe(true);
+    });
+
+    test("nobody is looked up if every member is held", async () => {
+        setup(chatDetails(10n, [member("a"), member("b")]));
+
+        await load();
+
+        expect(lookups).toHaveLength(0);
     });
 });

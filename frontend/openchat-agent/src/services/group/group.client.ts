@@ -49,8 +49,10 @@ import type {
     User,
     VideoCallParticipantsResponse,
     VideoCallPresence,
+    LookupMembersResponse,
+    MembersPageResponse,
 } from "@shared";
-import { MAX_EVENTS, MAX_MESSAGES, random32 } from "@shared";
+import { MAX_EVENTS, MAX_MESSAGES, MEMBERS_PAGE_SIZE, random32 } from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,
@@ -121,9 +123,13 @@ import {
     GroupWebhookResponse,
     Empty as TEmpty,
     UnitResult,
+    GroupMembersArgs,
+    GroupMembersResponse,
+    GroupLookupMembersArgs,
+    GroupLookupMembersResponse,
 } from "../../typebox";
 import { type ChatsDb } from "../../utils/chatsDb";
-import { loadGroupDetails } from "../../utils/details";
+import { addMembersToCachedGroupDetails, loadGroupDetails } from "../../utils/details";
 import {
     apiOptionUpdateV2,
     identity,
@@ -148,6 +154,8 @@ import {
     getMessagesSuccess,
     groupDetailsSuccess,
     groupDetailsUpdatesResponse,
+    groupMembersPage,
+    lookupGroupMembersSuccess,
     inviteCodeSuccess,
     isSuccess,
     mapResult,
@@ -616,6 +624,41 @@ export class GroupClient
                     GroupSelectedUpdatesResponse,
                 ),
         );
+    }
+
+    // The next page of members after those already held, which are added to the cached details
+    async getMembersPage(groupId: string, after: string): Promise<MembersPageResponse> {
+        const response = await this.query(
+            groupId,
+            "members",
+            { after: principalStringToBytes(after), max_results: MEMBERS_PAGE_SIZE },
+            (resp) => mapResult(resp, groupMembersPage),
+            GroupMembersArgs,
+            GroupMembersResponse,
+        );
+        if (response.kind === "success") {
+            await addMembersToCachedGroupDetails(this.chatsDb, groupId, response.members, {
+                after,
+                moreMembersAfter: response.moreMembersAfter,
+            });
+        }
+        return response;
+    }
+
+    // Those of the users who are members, who are added to the cached details
+    async lookupMembers(groupId: string, userIds: string[]): Promise<LookupMembersResponse> {
+        const response = await this.query(
+            groupId,
+            "lookup_members",
+            { user_ids: userIds.map(principalStringToBytes) },
+            (resp) => mapResult(resp, lookupGroupMembersSuccess),
+            GroupLookupMembersArgs,
+            GroupLookupMembersResponse,
+        );
+        if (response.kind === "success") {
+            await addMembersToCachedGroupDetails(this.chatsDb, groupId, response.members);
+        }
+        return response;
     }
 
     getPublicSummary(groupId: string): Promise<PublicGroupSummaryResponse> {
