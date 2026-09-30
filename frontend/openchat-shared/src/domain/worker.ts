@@ -902,6 +902,9 @@ type TipMessage = {
     transfer: PendingCryptocurrencyTransfer;
     decimals: number;
     pin: string | undefined;
+    username: string;
+    displayName: string | undefined;
+    newAchievement: boolean;
 };
 
 type CanSwap = {

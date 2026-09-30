@@ -108,6 +108,7 @@ describe("UserClient sending crypto in a direct chat", () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const client = Object.create(UserClient.prototype) as any;
         client.userId = MULTI_USER_CANISTER_USER;
+        client.identity = { getPrincipal: () => ME };
 
         expect(client.transferFromWallet(content)).toBe(content);
     });

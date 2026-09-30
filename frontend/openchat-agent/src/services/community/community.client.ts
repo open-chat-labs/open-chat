@@ -43,6 +43,7 @@ import type {
     LeaveGroupResponse,
     MemberRole,
     Message,
+    PendingCryptocurrencyTransfer,
     OCError,
     OptionUpdate,
     OptionalChatPermissions,
@@ -57,6 +58,7 @@ import type {
     SetVideoCallPresenceResponse,
     Tally,
     ThreadPreviewsResponse,
+    TipMessageResponse,
     ToggleMuteNotificationResponse,
     UnblockCommunityUserResponse,
     UndeleteMessageResponse,
@@ -153,6 +155,7 @@ import {
     CommunitySummaryUpdatesArgs,
     CommunityThreadPreviewsArgs,
     CommunityThreadPreviewsResponse,
+    CommunityTipMessageArgs,
     CommunityToggleMuteNotificationsArgs,
     CommunityUnblockUserArgs,
     CommunityUndeleteMessagesArgs,
@@ -193,6 +196,7 @@ import {
     apiMaybeAccessGateConfig,
     apiMessageContent,
     apiOgPreview,
+    apiPendingTransaction,
     apiUser as apiUserV2,
     apiVideoCallPresence,
     changeRoleResult,
@@ -211,6 +215,8 @@ import {
     pushEventSuccess,
     searchGroupChatResponse,
     sendMessageSuccess,
+    transferFrom,
+    transferRecipient,
     threadPreviewsSuccess,
     undeleteMessageSuccess,
     unitResult,
@@ -943,6 +949,8 @@ export class CommunityClient
         messageFilterFailed: bigint | undefined,
         newAchievement: boolean,
         onRequestAccepted: () => void,
+        // The account the community pulls the message's transfer from, if it holds one
+        fromAccount?: string,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         this.chatsDb.removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
@@ -955,9 +963,13 @@ export class CommunityClient
         return uploadContentPromise.then((content) => {
             const newEvent =
                 content !== undefined ? { ...event, event: { ...event.event, content } } : event;
+            const toSend =
+                fromAccount === undefined
+                    ? newEvent.event.content
+                    : transferFrom(newEvent.event.content, fromAccount);
             const args = {
                 channel_id: toBigInt32(chatId.channelId),
-                content: apiMessageContent(newEvent.event.content),
+                content: apiMessageContent(toSend),
                 message_id: newEvent.event.messageId,
                 sender_name: senderName,
                 sender_display_name: senderDisplayName,
@@ -978,7 +990,14 @@ export class CommunityClient
                 chatId.communityId,
                 "send_message",
                 args,
-                (resp) => mapResult(resp, sendMessageSuccess),
+                (resp) =>
+                    mapResult(resp, (value) =>
+                        sendMessageSuccess(
+                            value,
+                            newEvent.event.sender,
+                            transferRecipient(newEvent.event.content),
+                        ),
+                    ),
                 CommunitySendMessageArgs,
                 CommunitySendMessageResponse,
                 onRequestAccepted,
@@ -1445,6 +1464,37 @@ export class CommunityClient
             },
             (resp) => resp === "Success",
             CommunityReportMessageArgs,
+            UnitResult,
+        );
+    }
+
+    // Tips a message with a transfer the community pulls from the account `transfer` names, which
+    // must have approved the community to, into the wallet of the message's sender
+    tipMessage(
+        chatId: ChannelIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        transfer: PendingCryptocurrencyTransfer,
+        decimals: number,
+        username: string,
+        displayName: string | undefined,
+        newAchievement: boolean,
+    ): Promise<TipMessageResponse> {
+        return this.update(
+            chatId.communityId,
+            "tip_message",
+            {
+                channel_id: toBigInt32(chatId.channelId),
+                thread_root_message_index: threadRootMessageIndex,
+                message_id: messageId,
+                transfer: apiPendingTransaction(transfer),
+                decimals,
+                username,
+                display_name: displayName,
+                new_achievement: newAchievement,
+            },
+            unitResult,
+            CommunityTipMessageArgs,
             UnitResult,
         );
     }

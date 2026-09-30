@@ -339,16 +339,45 @@ export function eventWrapper(value: TEventWrapperChatEvent): EventWrapper<ChatEv
     };
 }
 
+// A message holding a transfer which the group or community made comes back with that transfer,
+// which is between `sender` and `recipient`
 export function sendMessageSuccess(
     value: CommunitySendMessageSuccessResult | GroupSendMessageSuccessResult,
+    sender: string = "",
+    recipient: string = "",
 ): SendMessageResponse {
-    return {
-        kind: "success",
+    const result = {
         timestamp: value.timestamp,
         messageIndex: value.message_index,
         eventIndex: value.event_index,
         expiresAt: mapOptional(value.expires_at, Number),
     };
+    return value.transfer === undefined
+        ? { kind: "success", ...result }
+        : {
+              kind: "transfer_success",
+              ...result,
+              transfer: completedCryptoTransfer(value.transfer, sender, recipient),
+          };
+}
+
+// The content of a message whose transfer is pulled from `fromAccount` by the canister it is sent
+// to, unless it names an account to be pulled from already. Only a message sending crypto or
+// offering a prize holds such a transfer.
+export function transferFrom(content: MessageContent, fromAccount: string): MessageContent {
+    if (
+        (content.kind !== "crypto_content" && content.kind !== "prize_content_initial") ||
+        content.transfer.kind !== "pending" ||
+        content.transfer.fromAccount !== undefined
+    ) {
+        return content;
+    }
+    return { ...content, transfer: { ...content.transfer, fromAccount } } as MessageContent;
+}
+
+// Who the crypto a message sends is for
+export function transferRecipient(content: MessageContent): string | undefined {
+    return content.kind === "crypto_content" ? content.transfer.recipient : undefined;
 }
 
 export function event(value: TChatEvent): ChatEvent {
@@ -2198,39 +2227,42 @@ export function apiPendingCryptoContent(domain: CryptocurrencyContent): TCryptoC
 
 export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): TCryptoTransaction {
     if (domain.kind === "pending") {
-        // A fromAccount means spending from a wallet OpenChat does not control, which the user's
-        // canister pulls from via ICRC-2, so the wallet must have approved it as spender.
-        if (domain.fromAccount !== undefined) {
-            return {
-                Pending: {
-                    ICRC2: {
-                        ledger: principalStringToBytes(domain.ledger),
-                        token_symbol: domain.token,
-                        from: addressToIcrcAccount(domain.fromAccount),
-                        to: principalToIcrcAccount(domain.recipient),
-                        amount: domain.amountE8s,
-                        fee: domain.feeE8s ?? BigInt(0),
-                        memo: mapOptional(domain.memo, bigintToBytes),
-                        created: domain.createdAtNanos,
-                    },
-                },
-            };
-        }
+        return { Pending: apiPendingTransaction(domain) };
+    }
+    throw new Error("Transaction is not of type 'Pending': " + JSON.stringify(domain));
+}
+
+export function apiPendingTransaction(
+    domain: PendingCryptocurrencyTransfer,
+): TPendingCryptoTransaction {
+    // A fromAccount means the canister the transfer is sent to pulls it from that account via
+    // ICRC-2, so the account must have approved it as spender. Without one, the user's canister
+    // makes the transfer from its own account.
+    if (domain.fromAccount !== undefined) {
         return {
-            Pending: {
-                ICRC1: {
-                    ledger: principalStringToBytes(domain.ledger),
-                    token_symbol: domain.token,
-                    to: principalToIcrcAccount(domain.recipient),
-                    amount: domain.amountE8s,
-                    fee: domain.feeE8s ?? BigInt(0),
-                    memo: mapOptional(domain.memo, bigintToBytes),
-                    created: domain.createdAtNanos,
-                },
+            ICRC2: {
+                ledger: principalStringToBytes(domain.ledger),
+                token_symbol: domain.token,
+                from: addressToIcrcAccount(domain.fromAccount),
+                to: principalToIcrcAccount(domain.recipient),
+                amount: domain.amountE8s,
+                fee: domain.feeE8s ?? BigInt(0),
+                memo: mapOptional(domain.memo, bigintToBytes),
+                created: domain.createdAtNanos,
             },
         };
     }
-    throw new Error("Transaction is not of type 'Pending': " + JSON.stringify(domain));
+    return {
+        ICRC1: {
+            ledger: principalStringToBytes(domain.ledger),
+            token_symbol: domain.token,
+            to: principalToIcrcAccount(domain.recipient),
+            amount: domain.amountE8s,
+            fee: domain.feeE8s ?? BigInt(0),
+            memo: mapOptional(domain.memo, bigintToBytes),
+            created: domain.createdAtNanos,
+        },
+    };
 }
 
 export function apiPendingCryptocurrencyWithdrawal(

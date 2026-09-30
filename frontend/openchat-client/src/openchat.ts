@@ -8156,6 +8156,9 @@ export class OpenChat {
                 transfer,
                 decimals,
                 pin,
+                username: currentUserStore.value.username,
+                displayName: currentUserStore.value.displayName,
+                newAchievement: !achievementsStore.value.has("tipped_message"),
             })
             .then((resp) => {
                 if (resp.kind !== "success") {

@@ -1193,6 +1193,9 @@ function getAction(
                 payload.transfer,
                 payload.decimals,
                 payload.pin,
+                payload.username,
+                payload.displayName,
+                payload.newAchievement,
             );
 
         case "loadSavedCryptoAccounts":
