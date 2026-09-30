@@ -14,6 +14,7 @@ import type {
     ChatEvent,
     CommunityDetails,
     CommunityDetailsResponse,
+    CommunityDetailsUpdatesResponse,
     CommunityIdentifier,
     CommunityPermissions,
     CommunitySummaryResponse,
@@ -36,6 +37,7 @@ import type {
     GrantedBotPermissions,
     GroupChatDetails,
     GroupChatDetailsResponse,
+    GroupChatDetailsUpdatesResponse,
     GroupChatIdentifier,
     ImportGroupResponse,
     InviteCodeResponse,
@@ -175,6 +177,7 @@ import {
 } from "../../typebox";
 import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
 import { type ChatsDb } from "../../utils/chatsDb";
+import { confirmHeldDetails } from "../../utils/heldDetails";
 import {
     apiOptionUpdateV2,
     identity,
@@ -765,10 +768,29 @@ export class CommunityClient
         );
     }
 
+    // If the caller already holds the details it passes the timestamp they were good up to as
+    // `heldTimestamp`, and is told only that they still are, unless they have changed
     async getCommunityDetails(
         communityId: string,
         communityLastUpdated: bigint,
+        heldTimestamp?: bigint,
     ): Promise<CommunityDetailsResponse> {
+        if (heldTimestamp !== undefined) {
+            const lastUpdated = await confirmHeldDetails(
+                heldTimestamp,
+                communityLastUpdated,
+                async (since) => {
+                    const updates = await this.queryCommunityDetailsUpdates(communityId, since);
+                    return updates.kind === "success_no_updates"
+                        ? { kind: "success_no_updates", timestamp: updates.lastUpdated }
+                        : updates;
+                },
+            );
+            if (lastUpdated !== undefined) {
+                return { kind: "success_no_updates", lastUpdated };
+            }
+        }
+
         const fromCache = await this.chatsDb.getCachedCommunityDetails(communityId);
         if (fromCache != null) {
             if (fromCache.lastUpdated >= communityLastUpdated || offline()) {
@@ -809,20 +831,30 @@ export class CommunityClient
         return details;
     }
 
-    private async getCommunityDetailsUpdatesFromBackend(
+    private queryCommunityDetailsUpdates(
         communityId: string,
-        previous: CommunityDetails,
-    ): Promise<CommunityDetails> {
-        const updatesResponse = await this.query(
+        since: bigint,
+    ): Promise<CommunityDetailsUpdatesResponse> {
+        return this.query(
             communityId,
             "selected_updates_v2",
             {
-                updates_since: previous.lastUpdated,
+                updates_since: since,
                 invite_code: this.inviteCode(communityId),
             },
             communityDetailsUpdatesResponse,
             CommunitySelectedUpdatesArgs,
             CommunitySelectedUpdatesResponse,
+        );
+    }
+
+    private async getCommunityDetailsUpdatesFromBackend(
+        communityId: string,
+        previous: CommunityDetails,
+    ): Promise<CommunityDetails> {
+        const updatesResponse = await this.queryCommunityDetailsUpdates(
+            communityId,
+            previous.lastUpdated,
         );
 
         if (updatesResponse.kind === "failure") {
@@ -839,10 +871,21 @@ export class CommunityClient
         return mergeCommunityDetails(previous, updatesResponse);
     }
 
+    // As for `getCommunityDetails`, a caller which already holds the details passes `heldTimestamp`
     async getChannelDetails(
         chatId: ChannelIdentifier,
         chatLastUpdated: bigint,
+        heldTimestamp?: bigint,
     ): Promise<GroupChatDetailsResponse> {
+        if (heldTimestamp !== undefined) {
+            const timestamp = await confirmHeldDetails(heldTimestamp, chatLastUpdated, (since) =>
+                this.queryChannelDetailsUpdates(chatId, since),
+            );
+            if (timestamp !== undefined) {
+                return { kind: "success_no_updates", timestamp };
+            }
+        }
+
         const cacheKey = `${chatId.communityId}_${chatId.channelId}`;
         const fromCache = await this.chatsDb.getCachedGroupDetails(cacheKey);
         if (fromCache != null) {
@@ -895,16 +938,16 @@ export class CommunityClient
         return response;
     }
 
-    private async getChannelDetailsUpdatesFromBackend(
+    private queryChannelDetailsUpdates(
         chatId: ChannelIdentifier,
-        previous: GroupChatDetails,
-    ): Promise<GroupChatDetails> {
-        const updatesResponse = await this.query(
+        since: bigint,
+    ): Promise<GroupChatDetailsUpdatesResponse> {
+        return this.query(
             chatId.communityId,
             "selected_channel_updates_v2",
             {
                 channel_id: toBigInt32(chatId.channelId),
-                updates_since: previous.timestamp,
+                updates_since: since,
             },
             (value) =>
                 groupDetailsUpdatesResponse(
@@ -916,6 +959,13 @@ export class CommunityClient
             CommunitySelectedChannelUpdatesArgs,
             CommunitySelectedChannelUpdatesResponse,
         );
+    }
+
+    private async getChannelDetailsUpdatesFromBackend(
+        chatId: ChannelIdentifier,
+        previous: GroupChatDetails,
+    ): Promise<GroupChatDetails> {
+        const updatesResponse = await this.queryChannelDetailsUpdates(chatId, previous.timestamp);
 
         if (updatesResponse.kind === "failure") {
             return previous;

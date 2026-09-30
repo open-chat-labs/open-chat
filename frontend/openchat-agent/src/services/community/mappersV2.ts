@@ -359,7 +359,6 @@ export function communityDetailsResponse(
     value: CommunitySelectedInitialResponse,
 ): CommunityDetailsResponse {
     if (typeof value === "object" && "Success" in value) {
-        console.log("Community details: ", value.Success);
         return {
             kind: "success",
             members: value.Success.members
