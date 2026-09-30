@@ -31,10 +31,7 @@ fn post_upgrade(args: Args) {
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
 
-    mutate_state(|state| {
-        state.data.drain_legacy_user_event_queue();
-        crate::jobs::refresh_chunk_store::clear_chunk_hashes(state);
-    });
+    mutate_state(crate::jobs::refresh_chunk_store::clear_chunk_hashes);
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");

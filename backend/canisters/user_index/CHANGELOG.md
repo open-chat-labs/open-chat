@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Stop retrying events sent to the NotificationsIndex and OnlineUsers canisters when `c2c_user_index` isn't found, now that both have it ([#XXXX](https://github.com/open-chat-labs/open-chat/pull/XXXX))
+
+### Removed
+
+- Remove the one-off `post_upgrade` jobs now that they have run on prod, along with the state only they used ([#XXXX](https://github.com/open-chat-labs/open-chat/pull/XXXX))
+
+## [[2.0.2080](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2080-user_index)] - 2026-09-30
+
 ### Added
 
 - Pass the Registry's canister id to each LocalUserIndex when installing and upgrading it ([#9623](https://github.com/open-chat-labs/open-chat/pull/9623))
