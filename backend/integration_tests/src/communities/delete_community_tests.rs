@@ -142,6 +142,10 @@ fn uninstalled_community_is_removed(is_public: bool) {
     let local_user_index = canister_ids.local_user_index(env, community_id);
     let group_index = canister_ids.group_index;
 
+    if is_public {
+        assert!(is_listed(env, &owner, group_index, &name, community_id));
+    }
+
     // This is the state the IC leaves a canister in once it has run out of cycles
     env.uninstall_canister(community_id.into(), Some(local_user_index)).unwrap();
 
