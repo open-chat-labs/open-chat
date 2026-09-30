@@ -1729,7 +1729,11 @@ export type Member = {
 
 export type FullMember = Member & UserSummary;
 
-export type GroupChatDetailsResponse = GroupChatDetails | OCError | Failure;
+export type GroupChatDetailsResponse =
+    | GroupChatDetails
+    | { kind: "success_no_updates"; timestamp: bigint }
+    | OCError
+    | Failure;
 
 export type GroupChatDetailsUpdatesResponse =
     | ({ kind: "success" } & GroupChatDetailsUpdates)
@@ -1770,6 +1774,10 @@ export type ChatType = ChatSummary["kind"];
 
 type ChatSummaryCommon = HasMembershipRole & {
     lastUpdated: bigint;
+    // When the details of a group or channel (its members, rules, pinned messages, etc) last
+    // changed. Unlike `lastUpdated` this doesn't move on with each message, so it says whether the
+    // details already held are still up to date. Undefined if the canister predates it.
+    detailsLastUpdated?: bigint;
     latestMessage: EventWrapper<Message> | undefined;
     latestEventIndex: number;
     latestMessageIndex: number | undefined;
@@ -1877,6 +1885,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
     Permissioned<ChatPermissions> & {
         id: GroupChatIdentifier;
         lastUpdated: bigint;
+        detailsLastUpdated?: bigint;
         name: string;
         description: string;
         subtype: GroupSubtype;
@@ -1920,6 +1929,7 @@ export type UpdatedEvent = {
 export type GroupCanisterGroupChatSummaryUpdates = {
     id: GroupChatIdentifier;
     lastUpdated: bigint;
+    detailsLastUpdated?: bigint;
     name: string | undefined;
     description: string | undefined;
     subtype: OptionUpdate<GroupSubtype>;

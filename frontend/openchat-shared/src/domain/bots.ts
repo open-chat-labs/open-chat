@@ -1,5 +1,4 @@
 import { Principal } from "@icp-sdk/core/principal";
-import * as chrono from "chrono-node";
 import { ROLE_MEMBER } from "../constants";
 import { parseBigInt, random64, type InterpolationValues, type ResourceKey } from "../utils";
 import { ValidationErrors } from "../utils/validation";
@@ -499,10 +498,37 @@ export function createArgsFromSchema(params: CommandParam[], maybeArgs: string[]
     });
 }
 
+// chrono-node reads a date typed in words ("tomorrow at 9") as the argument of a bot command.
+// Only bot commands need it, so it is fetched once the user starts typing one rather than with
+// the app. Until it has arrived a date in words is not understood, like any other text which is
+// not a date, so whoever builds a command's arguments from typed text waits for this first.
+let parseDate: typeof import("chrono-node").parseDate | undefined;
+let loadingDateParser: Promise<void> | undefined;
+
+// Never rejects: without the parser a command can still be given its date in the command builder
+export function loadDateParser(): Promise<void> {
+    // naming the one export used lets the bundler leave the rest of chrono-node out
+    loadingDateParser ??= import("chrono-node").then(
+        ({ parseDate: loaded }) => {
+            parseDate = loaded;
+        },
+        (err) => {
+            // allow a later command to retry (e.g. transient network failure)
+            loadingDateParser = undefined;
+            console.error("Failed to load the date parser", err);
+        },
+    );
+    return loadingDateParser;
+}
+
 function parseDateTime(value: string): bigint | null {
+    if (parseDate === undefined) {
+        return null;
+    }
+
     const now = new Date();
 
-    const date = chrono.parseDate(
+    const date = parseDate(
         value,
         { instant: now, timezone: -now.getTimezoneOffset() },
         { forwardDate: true },

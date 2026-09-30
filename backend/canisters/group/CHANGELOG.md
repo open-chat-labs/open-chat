@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Accept the `previous_user_ids` of a user joining via `c2c_join_group`, and if the user was a member under any of them, cache their migrations to the user's current id ([#9565](https://github.com/open-chat-labs/open-chat/pull/9565))
 - Act on `UserIdMigrated`, moving everything held under the user's old id (their membership, block, invitation, metrics, etc) onto their new id ([#9572](https://github.com/open-chat-labs/open-chat/pull/9572))
 - Export the group's former members and cached migrated user ids along with it when it is imported into a community, after its `GroupChatCore` so that communities on earlier versions ignore them ([#9571](https://github.com/open-chat-labs/open-chat/pull/9571))
+- Tell clients when the details of the group last changed ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 
 ### Changed
 
@@ -50,6 +51,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
 - Move anything held under a joining user's `previous_user_ids` onto their current id before checking whether they can join, so that a user blocked under an earlier id stays blocked ([#9567](https://github.com/open-chat-labs/open-chat/pull/9567))
 - Share the former members logic with the Community canister via `group_community_common` ([#9626](https://github.com/open-chat-labs/open-chat/pull/9626))
+- Split a notification with more than 5,000 recipients into several ([#9658](https://github.com/open-chat-labs/open-chat/pull/9658))
 
 ### Removed
 
@@ -63,6 +65,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Don't retry c2c calls to a method the callee doesn't have, which would otherwise be retried forever ([#9521](https://github.com/open-chat-labs/open-chat/pull/9521))
 - Ignore swap status notifications whose swap id doesn't match the swap on the message they name, since anyone can create a swap in the escrow canister naming any message and then cancel it ([#9530](https://github.com/open-chat-labs/open-chat/pull/9530))
 - Stop the `suppressed` and `@everyone` flags being swapped when a bot finalises a message, which made suppressed messages notify everyone and `@everyone` messages notify no one ([#9573](https://github.com/open-chat-labs/open-chat/pull/9573))
+- Stop the job which expires members exceeding the instruction limit in a large group ([#9659](https://github.com/open-chat-labs/open-chat/pull/9659))
+- Tell clients that a pinned message is no longer pinned when it is deleted ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 
 ## [[2.0.2036](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2036-group)] - 2026-08-20
 

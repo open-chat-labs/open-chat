@@ -69,6 +69,7 @@ export function groupChatSummary(
     return {
         id: { kind: "group_chat", groupId: principalBytesToString(value.chat_id) },
         lastUpdated: value.last_updated,
+        detailsLastUpdated: value.details_last_updated,
         name: value.name,
         description: value.description,
         subtype: mapOptional(value.subtype, groupSubtype),
@@ -140,6 +141,7 @@ export function groupChatSummaryUpdates(
     return {
         id: { kind: "group_chat", groupId: principalBytesToString(value.chat_id) },
         lastUpdated: value.last_updated,
+        detailsLastUpdated: value.details_last_updated,
         name: value.name,
         description: value.description,
         subtype: optionUpdateV2(value.subtype, groupSubtype),

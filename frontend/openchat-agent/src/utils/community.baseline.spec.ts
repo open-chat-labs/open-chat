@@ -89,3 +89,43 @@ describe("mergeCommunityUpdates channel membership", () => {
         ).toEqual([4]);
     });
 });
+
+describe("mergeCommunityUpdates details last updated", () => {
+    function withDetailsLastUpdated(): CommunitySummary {
+        const c = community();
+        c.detailsLastUpdated = 10n;
+        c.channels[0].detailsLastUpdated = 11n;
+        return c;
+    }
+
+    test("takes when the details last changed from the updates", () => {
+        const out = mergeCommunityUpdates(
+            [withDetailsLastUpdated()],
+            [],
+            [
+                {
+                    id: communityId,
+                    detailsLastUpdated: 20n,
+                    channelsUpdated: [{ id: channelId, detailsLastUpdated: 21n }],
+                } as unknown as CommunityCanisterCommunitySummaryUpdates,
+            ],
+        );
+        expect(out[0].detailsLastUpdated).toBe(20n);
+        expect(out[0].channels[0].detailsLastUpdated).toBe(21n);
+    });
+
+    test("keeps it if the updates are from a canister which doesn't yet send it", () => {
+        const out = mergeCommunityUpdates(
+            [withDetailsLastUpdated()],
+            [],
+            [
+                {
+                    id: communityId,
+                    channelsUpdated: [{ id: channelId }],
+                } as unknown as CommunityCanisterCommunitySummaryUpdates,
+            ],
+        );
+        expect(out[0].detailsLastUpdated).toBe(10n);
+        expect(out[0].channels[0].detailsLastUpdated).toBe(11n);
+    });
+});
