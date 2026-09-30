@@ -124,6 +124,39 @@ describe("translatable action", () => {
         expect(markerCount()).toBe(0);
     });
 
+    // Translations are registered per language, so a dialect has no dictionary of its own
+    test("a dialect resolves to its language's dictionary", async () => {
+        await locale.set("xx-YY");
+        const node = mount("some.thing");
+        const missing = mount("some.other.thing");
+        editmode.set(true);
+        expect(marker(node)).not.toBeNull();
+        expect(marker(missing)).toBeNull();
+    });
+
+    // A successful suggestion is applied to the current locale, which for a dialect creates a
+    // dictionary holding nothing but the corrected key
+    test("keys stay translatable once a correction has been applied to the dialect", async () => {
+        await locale.set("xx-YY");
+        const corrected = mount("some.thing");
+        const other = mount("top");
+        editmode.set(true);
+
+        addMessages("xx-YY", { some: { thing: "corrected" } });
+
+        expect(marker(corrected)).not.toBeNull();
+        expect(marker(other)).not.toBeNull();
+        expect(marker(mount("top"))).not.toBeNull();
+        expect(markerCount()).toBe(3);
+    });
+
+    test("no marker for a dialect of english", async () => {
+        await locale.set("en-GB");
+        const node = mount("some.thing");
+        editmode.set(true);
+        expect(marker(node)).toBeNull();
+    });
+
     test("an undefined key means the action does nothing at all", async () => {
         await locale.set("xx");
         const node = mount(undefined);

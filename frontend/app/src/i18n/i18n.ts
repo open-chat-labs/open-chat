@@ -98,6 +98,12 @@ export const supportedLanguagesByCode = supportedLanguages.reduce(
     {} as Record<string, { name: string; code: string }>,
 );
 
+// The language of a locale, eg. "fr" for "fr-CA". Translations are registered per language, but
+// the locale is the browser's dialect when that is a dialect of the chosen language.
+export function languageCode(locale: string | null | undefined): string {
+    return (locale || "en").split("-")[0];
+}
+
 // this can't be done in a loop from supportedLanguages because rollup won't understand that
 function registerLocaleLoaders() {
     register("en", () => import("./en.json"));
