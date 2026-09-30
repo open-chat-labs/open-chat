@@ -10,6 +10,7 @@ exports[`mergeGroupChatUpdates > snapshot of a full merge 1`] = `
     "dateLastPinned": 55n,
     "dateReadPinned": 77n,
     "description": "desc",
+    "detailsLastUpdated": 44n,
     "eventsTTL": 1000n,
     "eventsTtlLastUpdated": 20n,
     "frozen": true,

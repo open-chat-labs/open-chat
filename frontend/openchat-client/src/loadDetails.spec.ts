@@ -63,7 +63,9 @@ class FakeWorker {
 
 const id = { kind: "community" as const, communityId: "aaaaa-aa" };
 
-function community(): CommunitySummary {
+// The summary is always newer than the details loaded in these tests, which is what has the
+// details asked for again. `detailsLastUpdated` is only set by canisters which support it.
+function community(detailsLastUpdated?: bigint): CommunitySummary {
     return {
         kind: "community",
         id,
@@ -71,7 +73,8 @@ function community(): CommunitySummary {
         description: "",
         memberCount: 2,
         channels: [],
-        lastUpdated: 0n,
+        lastUpdated: 1000n,
+        detailsLastUpdated,
         membership: { role: ROLE_MEMBER, archived: false, pinned: [], index: 0, lapsed: false },
         gateConfig: { gate: { kind: "no_gate" }, expiry: undefined },
         permissions: {},
@@ -82,7 +85,7 @@ function community(): CommunitySummary {
 
 const chatId = { kind: "group_chat" as const, groupId: "bbbbb-bb" };
 
-function groupChat(): GroupChatSummary {
+function groupChat(detailsLastUpdated?: bigint): GroupChatSummary {
     return {
         kind: "group_chat",
         id: chatId,
@@ -100,7 +103,8 @@ function groupChat(): GroupChatSummary {
         level: "group",
         eventsTTL: undefined,
         eventsTtlLastUpdated: 0n,
-        lastUpdated: 0n,
+        lastUpdated: 1000n,
+        detailsLastUpdated,
         memberCount: 2,
         subtype: undefined,
         frozen: false,
@@ -165,6 +169,12 @@ describe("loading the selected community's details", () => {
         await new Promise((r) => setTimeout(r, 0));
     }
 
+    function setSummary(summary: CommunitySummary) {
+        const communities = new CommunityMap<CommunitySummary>();
+        communities.set(id, summary);
+        serverCommunitiesStore.set(communities);
+    }
+
     beforeEach(() => {
         vi.stubGlobal("Worker", FakeWorker);
         routeStore.set({
@@ -172,9 +182,7 @@ describe("loading the selected community's details", () => {
             scope: { kind: "community", id },
             communityId: id,
         });
-        const communities = new CommunityMap<CommunitySummary>();
-        communities.set(id, community());
-        serverCommunitiesStore.set(communities);
+        setSummary(community());
         client = new OpenChat(config());
 
         requests = [];
@@ -241,6 +249,32 @@ describe("loading the selected community's details", () => {
         expect([...selectedCommunityMembersStore.value.keys()]).toEqual(["a", "b", "c"]);
         expect(selectedServerCommunityStore.value?.timestamp).toBe(20n);
     });
+
+    test("the worker isn't asked if the summary says the details held haven't changed", async () => {
+        setSummary(community(10n));
+        responses.push(details(10n, [member("a"), member("b")]));
+        await load();
+        expect(requests[0].communityLastUpdated).toBe(10n);
+
+        // The community has been updated since, by a message say, but not its details
+        await load();
+
+        expect(requests).toHaveLength(1);
+    });
+
+    test("the worker is asked for details which the summary says have changed", async () => {
+        setSummary(community(10n));
+        responses.push(details(10n, [member("a"), member("b")]));
+        await load();
+
+        setSummary(community(20n));
+        responses.push(details(20n, [member("a"), member("b"), member("c")]));
+        await load();
+
+        expect(requests[1].communityLastUpdated).toBe(20n);
+        expect(requests[1].heldTimestamp).toBe(10n);
+        expect([...selectedCommunityMembersStore.value.keys()]).toEqual(["a", "b", "c"]);
+    });
 });
 
 describe("loading the selected chat's details", () => {
@@ -254,6 +288,12 @@ describe("loading the selected chat's details", () => {
         await new Promise((r) => setTimeout(r, 10));
     }
 
+    function setSummary(summary: GroupChatSummary) {
+        const chats = new ChatMap<GroupChatSummary>();
+        chats.set(chatId, summary);
+        serverGroupChatsStore.set(chats);
+    }
+
     beforeEach(() => {
         vi.stubGlobal("Worker", FakeWorker);
         vi.spyOn(console, "debug").mockImplementation(() => {});
@@ -264,9 +304,7 @@ describe("loading the selected chat's details", () => {
             chatType: "group_chat",
             open: false,
         });
-        const chats = new ChatMap<GroupChatSummary>();
-        chats.set(chatId, groupChat());
-        serverGroupChatsStore.set(chats);
+        setSummary(groupChat());
         client = new OpenChat(config());
 
         requests = [];
@@ -341,6 +379,32 @@ describe("loading the selected chat's details", () => {
         expect(requests[1].heldTimestamp).toBe(10n);
         expect([...selectedChatMembersStore.value.keys()]).toEqual(["a", "b", "c"]);
         expect(selectedServerChatStore.value?.timestamp).toBe(20n);
+    });
+
+    test("the worker isn't asked if the summary says the details held haven't changed", async () => {
+        setSummary(groupChat(10n));
+        responses.push(chatDetails(10n, [member("a"), member("b")]));
+        await load();
+        expect(requests[0].chatLastUpdated).toBe(10n);
+
+        // The chat has been updated since, by a message say, but not its details
+        await load();
+
+        expect(requests).toHaveLength(1);
+    });
+
+    test("the worker is asked for details which the summary says have changed", async () => {
+        setSummary(groupChat(10n));
+        responses.push(chatDetails(10n, [member("a"), member("b")]));
+        await load();
+
+        setSummary(groupChat(20n));
+        responses.push(chatDetails(20n, [member("a"), member("b"), member("c")]));
+        await load();
+
+        expect(requests[1].chatLastUpdated).toBe(20n);
+        expect(requests[1].heldTimestamp).toBe(10n);
+        expect([...selectedChatMembersStore.value.keys()]).toEqual(["a", "b", "c"]);
     });
 
     test("a late reply that nothing has changed leaves another chat's details alone", async () => {

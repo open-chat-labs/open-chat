@@ -2425,6 +2425,35 @@ mod tests {
         assert_eq!(result.users_to_notify, vec![owner]);
     }
 
+    #[test]
+    fn selected_details_last_updated_moves_on_when_the_details_change_but_not_with_each_message() {
+        let (mut chat, owner, _) = setup();
+        let initial = chat.selected_details_last_updated();
+        assert_eq!(initial, 1);
+
+        // A message moves on when the chat was last updated, but its details haven't changed
+        send_bot_message(&mut chat, "hello", false);
+        assert_eq!(chat.details_last_updated(), 20);
+        assert_eq!(chat.selected_details_last_updated(), initial);
+
+        chat.pin_message(owner, MessageIndex::default(), 30).unwrap();
+        assert_eq!(chat.selected_details_last_updated(), 30);
+
+        chat.unpin_message(owner, MessageIndex::default(), 40).unwrap();
+        assert_eq!(chat.selected_details_last_updated(), 40);
+
+        chat.members.add(
+            user_id(4),
+            None,
+            50,
+            EventIndex::default(),
+            MessageIndex::default(),
+            true,
+            UserType::User,
+        );
+        assert_eq!(chat.selected_details_last_updated(), 50);
+    }
+
     // Sends an unfinalised bot message, then finalises it with the given text
     fn send_bot_message(chat: &mut GroupChatCore, text: &str, suppressed: bool) -> SendMessageSuccess {
         let caller = Caller::BotV2(BotCaller {
