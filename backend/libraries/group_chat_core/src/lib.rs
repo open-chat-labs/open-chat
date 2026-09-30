@@ -165,12 +165,27 @@ impl GroupChatCore {
         }
     }
 
+    // The timestamp given to the details returned by `selected_initial` and `selected_updates`. This
+    // is never earlier than `selected_details_last_updated`, so a client which holds the details as
+    // of this can tell from `selected_details_last_updated` whether they have changed since.
     pub fn details_last_updated(&self) -> TimestampMillis {
-        [
+        max(
             self.events.last_updated().unwrap_or_default(),
+            self.selected_details_last_updated(),
+        )
+    }
+
+    // When anything returned by `selected_group_updates` last changed. Unlike `details_last_updated`
+    // this doesn't move on with each event, so a client can tell from the chat's summary whether the
+    // details it holds are still up to date.
+    pub fn selected_details_last_updated(&self) -> TimestampMillis {
+        [
             self.invited_users.last_updated(),
             self.members.last_updated().unwrap_or_default(),
             self.webhooks.last_updated(),
+            self.rules.timestamp,
+            self.pinned_messages.last().map_or(0, |(ts, _)| *ts),
+            self.pinned_messages_removed.last().map_or(0, |(ts, _)| *ts),
         ]
         .into_iter()
         .max()
@@ -1120,9 +1135,7 @@ impl GroupChatCore {
                     .map(|m| m.message_index)
                 {
                     // If the message being deleted is pinned, unpin it
-                    if let Some(entry) = self.pinned_messages.iter().find(|(_, m)| *m == message_index).copied() {
-                        self.pinned_messages.remove(&entry);
-
+                    if self.remove_pinned_message(message_index, now) {
                         self.events.push_main_event(
                             ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                                 message_index,
@@ -2406,6 +2419,62 @@ mod tests {
         let result = send_bot_message(&mut chat, "hello", false);
 
         assert_eq!(result.users_to_notify, vec![owner]);
+    }
+
+    #[test]
+    fn selected_details_last_updated_moves_on_when_the_details_change_but_not_with_each_message() {
+        let (mut chat, owner, _) = setup();
+        let initial = chat.selected_details_last_updated();
+        assert_eq!(initial, 1);
+
+        // A message moves on when the chat was last updated, but its details haven't changed
+        send_bot_message(&mut chat, "hello", false);
+        assert_eq!(chat.details_last_updated(), 20);
+        assert_eq!(chat.selected_details_last_updated(), initial);
+
+        chat.pin_message(owner, MessageIndex::default(), 30).unwrap();
+        assert_eq!(chat.selected_details_last_updated(), 30);
+
+        chat.unpin_message(owner, MessageIndex::default(), 40).unwrap();
+        assert_eq!(chat.selected_details_last_updated(), 40);
+        assert_eq!(chat.details_last_updated(), 40);
+
+        chat.members.add(
+            user_id(4),
+            None,
+            50,
+            EventIndex::default(),
+            MessageIndex::default(),
+            true,
+            UserType::User,
+        );
+        assert_eq!(chat.selected_details_last_updated(), 50);
+    }
+
+    #[test]
+    fn deleting_a_pinned_message_is_reported_as_the_pin_being_removed() {
+        let (mut chat, owner, _) = setup();
+        send_bot_message(&mut chat, "hello", false);
+        chat.pin_message(owner, MessageIndex::default(), 30).unwrap();
+
+        let results = chat
+            .delete_messages(
+                Caller::User(UserIdAndPrincipal::new(owner, Principal::from_slice(&[1]))),
+                None,
+                vec![1u64.into()],
+                false,
+                40,
+                &MigratedUserIds::default(),
+            )
+            .unwrap();
+        assert!(results.iter().all(|(_, result)| result.is_ok()));
+
+        assert!(chat.pinned_messages(MessageIndex::default()).is_empty());
+        assert_eq!(chat.selected_details_last_updated(), 40);
+        let updates = chat
+            .selected_group_updates(30, chat.details_last_updated(), Some(owner))
+            .unwrap();
+        assert_eq!(updates.pinned_messages_removed, vec![MessageIndex::default()]);
     }
 
     // Sends an unfinalised bot message, then finalises it with the given text

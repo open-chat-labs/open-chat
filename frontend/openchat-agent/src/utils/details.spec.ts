@@ -79,8 +79,15 @@ describe("loadGroupDetails", () => {
         const updatesSince = vi.fn((_since: bigint) =>
             Promise.resolve(updates ?? { kind: "failure" as const }),
         );
-        const load = (chatLastUpdated: bigint, detailsSyncedUpTo?: bigint) =>
-            loadGroupDetails(cache, key, chatLastUpdated, detailsSyncedUpTo, initial, updatesSince);
+        const load = (detailsLastUpdated: bigint, detailsSyncedUpTo?: bigint) =>
+            loadGroupDetails(
+                cache,
+                key,
+                detailsLastUpdated,
+                detailsSyncedUpTo,
+                initial,
+                updatesSince,
+            );
         // Loads the details so that the caller holds them, as they were cached
         const loadToHold = async () => {
             await load(stored.get(key)?.timestamp ?? 0n);
@@ -328,11 +335,11 @@ describe("loadCommunityDetails", () => {
         const updatesSince = vi.fn((_since: bigint) =>
             Promise.resolve(updates ?? { kind: "failure" as const }),
         );
-        const load = (communityLastUpdated: bigint, detailsSyncedUpTo?: bigint) =>
+        const load = (detailsLastUpdated: bigint, detailsSyncedUpTo?: bigint) =>
             loadCommunityDetails(
                 cache,
                 id,
-                communityLastUpdated,
+                detailsLastUpdated,
                 detailsSyncedUpTo,
                 initial,
                 updatesSince,
