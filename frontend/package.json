@@ -40,7 +40,6 @@
         "@icp-sdk/canisters": "^3.6.0",
         "@icp-sdk/core": "^5.2.0",
         "@icp-sdk/signer": "^5.6.3",
-        "@memefighter/maker-core": "^0.0.17",
         "@metamask/connect-evm": "^2.1.1",
         "@noble/hashes": "^1.8.0",
         "@panzoom/panzoom": "^4.6.1",
