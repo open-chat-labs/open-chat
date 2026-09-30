@@ -16,6 +16,7 @@
         FIND_MEMBERS_DELAY_MS,
         publish,
         selectedCommunityMembersStore,
+        selectedCommunityUserGroupsStore,
         type CommunitySummary,
         type Member,
         type OpenChat,
@@ -24,7 +25,7 @@
         type UserLookup,
         type UserSummary,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
@@ -52,9 +53,11 @@
     let communityUsers = $derived(createLookup($selectedCommunityMembersStore, $allUsersStore));
     let communityUsersList = $derived(Object.values(communityUsers));
 
-    onMount(() => {
-        // A community which holds only some of its members may not hold those of its user groups
-        client.loadUserGroupMembers(community.id);
+    // A community which holds only some of its members may not hold those of the group, which can
+    // arrive, or change, after it is shown
+    $effect(() => {
+        void $selectedCommunityUserGroupsStore;
+        untrack(() => client.loadUserGroupMembers(community.id, original.id));
     });
 
     function createLookup(

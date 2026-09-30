@@ -2,7 +2,9 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, CommonButton, Container, ListAction } from "component-lib";
     import {
+        allChatsStore,
         allUsersStore,
+        communitiesStore,
         OpenChat,
         type CommunitySummary,
         type FullMember,
@@ -24,6 +26,18 @@
     let { collection }: Props = $props();
 
     let membersState = new MemberManagement(getContext<OpenChat>("client"), collection);
+    // The collection is as it was when the page was opened, so the count is read from its summary
+    // as it is now
+    let memberCount = $derived.by(() => {
+        const summary =
+            collection.kind === "community"
+                ? $communitiesStore.get(collection.id)
+                : $allChatsStore.get(collection.id);
+        return summary !== undefined && summary.kind !== "direct_chat"
+            ? summary.memberCount
+            : collection.memberCount;
+    });
+
     let subset = $derived<FullMember[]>(
         membersState.getKnownUsers(
             $allUsersStore,
@@ -48,7 +62,7 @@
             onClick={() => membersState.showAllMembers()}
             size={"small_text"}
             mode={"active"}>
-            <Translatable resourceKey={i18nKey(`View all (${collection.memberCount})`)}
+            <Translatable resourceKey={i18nKey(`View all (${memberCount})`)}
             ></Translatable>
         </CommonButton>
     </Container>

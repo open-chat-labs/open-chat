@@ -9,7 +9,7 @@
         OpenChat,
         UserSummary,
     } from "@client";
-    import { allUsersStore, FIND_MEMBERS_DELAY_MS } from "@client";
+    import { allChatsStore, allUsersStore, communitiesStore, FIND_MEMBERS_DELAY_MS } from "@client";
     import { getContext } from "svelte";
     import AccountAlert from "svelte-material-icons/AccountAlertOutline.svelte";
     import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
@@ -37,6 +37,17 @@
     const MAX_SEARCH_RESULTS = 255;
     const client = getContext<OpenChat>("client");
     let membersState = new MemberManagement(client, collection);
+    // The collection is as it was when the page was opened, so the count is read from its summary
+    // as it is now
+    let memberCount = $derived.by(() => {
+        const summary =
+            collection.kind === "community"
+                ? $communitiesStore.get(collection.id)
+                : $allChatsStore.get(collection.id);
+        return summary !== undefined && summary.kind !== "direct_chat"
+            ? summary.memberCount
+            : collection.memberCount;
+    });
     let members = $derived<FullMember[]>(
         membersState.getKnownUsers($allUsersStore, [...membersState.members.values()]),
     );
@@ -108,7 +119,7 @@
                     <Body fontWeight={"bold"}>
                         <Translatable
                             resourceKey={i18nKey(
-                                `Current members (${collection.memberCount})`,
+                                `Current members (${memberCount})`,
                             )} />
                     </Body>
                     <MemberList

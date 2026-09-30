@@ -25,7 +25,6 @@ import {
     ErrorCode,
     ICP_SYMBOL,
     IdentityStorage,
-    LARGE_GROUP_THRESHOLD,
     MEMBERS_PAGE_SIZE,
     LEDGER_CANISTER_CHAT,
     LazyFile,
@@ -3384,13 +3383,21 @@ export class OpenChat {
         return found;
     }
 
-    // Makes sure the members of the selected community's user groups are held, and their users are
-    // known, so that the groups can be shown in full. A community which holds only some of its
-    // members may not hold them.
-    async loadUserGroupMembers(communityId: CommunityIdentifier): Promise<void> {
+    // Makes sure the members of the selected community's user groups (or of just the one with this
+    // id) are held, and their users are known, so that the groups can be shown in full. A community
+    // which holds only some of its members may not hold them.
+    async loadUserGroupMembers(
+        communityId: CommunityIdentifier,
+        userGroupId?: number,
+    ): Promise<void> {
+        if (!communityIdentifiersEqual(communityId, selectedCommunityIdStore.value)) {
+            return;
+        }
         const userIds = new Set<string>();
         for (const userGroup of selectedCommunityUserGroupsStore.value.values()) {
-            userGroup.members.forEach((u) => userIds.add(u));
+            if (userGroupId === undefined || userGroup.id === userGroupId) {
+                userGroup.members.forEach((u) => userIds.add(u));
+            }
         }
         if (userIds.size > 0) {
             await Promise.all([
@@ -3402,19 +3409,20 @@ export class OpenChat {
 
     // Looks up the users you have direct chats with among the members of the selected community and
     // channel, where either holds only some of its members, so that the members held say which of
-    // them are members of each. They are offered to add to the channel.
+    // them are members of each. Those who are members of the community, but not the channel, are
+    // offered to add to the channel.
     async lookupDirectChatUsersAmongChannelMembers(): Promise<void> {
-        const userIds = [...serverDirectChatsStore.value.values()].map((c) => c.them.userId);
         const communityId = selectedCommunityIdStore.value;
         const channelId = selectedChatIdStore.value;
-        await Promise.all([
-            communityId !== undefined && this.membersIncomplete(communityId)
-                ? this.#membersAmong(communityId, userIds)
-                : undefined,
-            channelId?.kind === "channel" && this.membersIncomplete(channelId)
-                ? this.#membersAmong(channelId, userIds)
-                : undefined,
-        ]);
+        if (communityId === undefined || channelId?.kind !== "channel") {
+            return;
+        }
+        const userIds = [...serverDirectChatsStore.value.values()]
+            .map((c) => c.them.userId)
+            .filter((u) => userStore.get(u)?.kind !== "bot");
+        // Only members of the community can be members of the channel
+        const inCommunity = await this.#membersAmong(communityId, userIds);
+        await this.#membersAmong(channelId, [...inCommunity]);
     }
 
     // Finds members of the selected chat to offer as mentions for what has been typed, if it holds
@@ -3463,7 +3471,7 @@ export class OpenChat {
         const elevated = members.filter((m) => m.role > ROLE_MEMBER);
         // Then up to as many others as there are in the first page of a chat or community which
         // holds only some of its members
-        const rest = members.filter((m) => m.role <= ROLE_MEMBER).slice(0, LARGE_GROUP_THRESHOLD);
+        const rest = members.filter((m) => m.role <= ROLE_MEMBER).slice(0, MEMBERS_PAGE_SIZE);
         return [...elevated, ...rest];
     }
 

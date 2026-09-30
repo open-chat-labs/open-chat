@@ -9,7 +9,7 @@
         type UserGroupDetails,
         type UserSummary,
     } from "@client";
-    import { getContext, onMount, untrack } from "svelte";
+    import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Edit from "svelte-material-icons/SquareEditOutline.svelte";
     import { i18nKey, interpolate } from "../../../../i18n/i18n";
@@ -38,9 +38,10 @@
     let communityState = new CommunityState(client, community);
     let searchTermEntered = $state("");
 
-    onMount(() => {
-        // So that the users of the group's members are known
-        client.loadUserGroupMembers(community.id);
+    // So that the users of the group's members are known, including when it changes
+    $effect(() => {
+        void $selectedCommunityUserGroupsStore;
+        untrack(() => client.loadUserGroupMembers(community.id, userGroup.id));
     });
 
     function matchesSearch(searchTerm: string, user: UserSummary): boolean {
