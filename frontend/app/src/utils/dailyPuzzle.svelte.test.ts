@@ -296,6 +296,21 @@ describe("DailyPuzzleGame", () => {
         );
     });
 
+    // #9675 invariant 27: a hint with technique 0 (served at level 1 by a LocalUserIndex that
+    // predates one-level hints, or bought at level 1 before them) draws its outline with no
+    // sentence, never the raw key of a technique that doesn't exist
+    test("a hint with no technique draws its outline and no sentence", async () => {
+        const hint: ServedHint = {
+            hint: { technique: 0, focus: [0, 1, 2], target: [], conclusions: [] },
+            level: 1,
+            mistake: false,
+        };
+        const g = build(userState(), hintClient(hint));
+        await g.hint();
+        expect([...g.focus].sort()).toEqual([0, 1, 2]);
+        expect(g.caption).toBeUndefined();
+    });
+
     // #9675 H4: a step is drawn the same however it arrives: bought, re-served free, or re-served
     // after a reload
     test("a hint re-served for free draws exactly as when it was bought", async () => {

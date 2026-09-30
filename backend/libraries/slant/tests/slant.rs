@@ -516,9 +516,7 @@ fn a_paired_clue_step_targets_the_pair_it_ties() {
 /// `slant.spec.ts` reads to check every step gets a sentence naming the right clue, corners or
 /// cell (invariant 24). Run by hand when the solver's steps change:
 /// `cargo test -p slant --test slant write_hint_fixture -- --ignored`
-#[test]
-#[ignore]
-fn write_hint_fixture() {
+fn hint_fixture() -> (std::path::PathBuf, String) {
     let mut entries = Vec::new();
     for (size, tier, seeds) in [(6u8, Tier::Easy, 0..4u64), (6, Tier::Tricky, 0..4), (8, Tier::Tricky, 0..3)] {
         for seed in seeds {
@@ -545,5 +543,28 @@ fn write_hint_fixture() {
     }
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../../frontend/openchat-shared/src/utils/dailyGames/slantHints.json");
-    std::fs::write(path, format!("[{}]\n", entries.join(","))).unwrap();
+    (path, format!("[{}]\n", entries.join(",")))
+}
+
+#[test]
+#[ignore]
+fn write_hint_fixture() {
+    let (path, json) = hint_fixture();
+    std::fs::write(path, json).unwrap();
+}
+
+/// #9675: invariant 24's client test reads a fixture of this solver's steps, so it proves nothing
+/// once the solver moves on. The committed fixture must be exactly what the solver emits now.
+/// Compared without whitespace, because prettier reflows the committed file.
+#[test]
+fn hint_fixture_is_current() {
+    let (path, json) = hint_fixture();
+    let strip = |s: &str| s.chars().filter(|c| !c.is_whitespace()).collect::<String>();
+    let committed = std::fs::read_to_string(&path).unwrap_or_default();
+    assert_eq!(
+        strip(&committed),
+        strip(&json),
+        "{} is stale: run `cargo test -p slant --test slant write_hint_fixture -- --ignored`",
+        path.display()
+    );
 }

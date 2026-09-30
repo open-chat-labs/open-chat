@@ -448,9 +448,7 @@ fn the_solver_never_claims_an_unsound_grid() {
 /// `chatRooms.spec.ts` reads to check every step gets a sentence naming the right row, column or
 /// room (invariant 24). Run by hand when the solver's steps change:
 /// `cargo test -p chat_rooms --test chat_rooms write_hint_fixture -- --ignored`
-#[test]
-#[ignore]
-fn write_hint_fixture() {
+fn hint_fixture() -> (std::path::PathBuf, String) {
     let mut entries = Vec::new();
     for (size, tier, seeds) in [(6u8, Tier::Easy, 0..3u64), (8, Tier::Tricky, 0..3), (9, Tier::Tricky, 0..6)] {
         for seed in seeds {
@@ -477,5 +475,28 @@ fn write_hint_fixture() {
     }
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../../frontend/openchat-shared/src/utils/dailyGames/chatRoomsHints.json");
-    std::fs::write(path, format!("[{}]\n", entries.join(","))).unwrap();
+    (path, format!("[{}]\n", entries.join(",")))
+}
+
+#[test]
+#[ignore]
+fn write_hint_fixture() {
+    let (path, json) = hint_fixture();
+    std::fs::write(path, json).unwrap();
+}
+
+/// #9675: invariant 24's client test reads a fixture of this solver's steps, so it proves nothing
+/// once the solver moves on. The committed fixture must be exactly what the solver emits now.
+/// Compared without whitespace, because prettier reflows the committed file.
+#[test]
+fn hint_fixture_is_current() {
+    let (path, json) = hint_fixture();
+    let strip = |s: &str| s.chars().filter(|c| !c.is_whitespace()).collect::<String>();
+    let committed = std::fs::read_to_string(&path).unwrap_or_default();
+    assert_eq!(
+        strip(&committed),
+        strip(&json),
+        "{} is stale: run `cargo test -p chat_rooms --test chat_rooms write_hint_fixture -- --ignored`",
+        path.display()
+    );
 }
