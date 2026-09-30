@@ -15,7 +15,7 @@ fn members(args: Args) -> Response {
 fn members_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
     state.get_calling_member(None, false)?;
 
-    let max_results = args.max_results.clamp(1, MAX_MEMBERS_PER_QUERY);
+    let max_results = args.max_results.min(MAX_MEMBERS_PER_QUERY);
     let page = state.data.chat.members.page(args.after, Some(max_results));
 
     Ok(SuccessResult {

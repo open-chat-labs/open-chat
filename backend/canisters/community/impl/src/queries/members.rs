@@ -1,3 +1,4 @@
+use crate::queries::verify_community_is_accessible;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use community_canister::members::{Response::*, *};
@@ -13,10 +14,9 @@ fn members(args: Args) -> Response {
 }
 
 fn members_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
-    let caller = state.env.caller();
-    state.data.verify_is_accessible(caller, args.invite_code)?;
+    verify_community_is_accessible(args.invite_code, state)?;
 
-    let max_results = args.max_results.clamp(1, MAX_MEMBERS_PER_QUERY);
+    let max_results = args.max_results.min(MAX_MEMBERS_PER_QUERY);
     let page = state.data.members.page(args.after, Some(max_results));
 
     Ok(SuccessResult {

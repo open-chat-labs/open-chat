@@ -3744,6 +3744,7 @@ export const CommunityLookupMembersResponse = /* @__PURE__ */ Type.Union([
 
 export type CommunityLookupMembersArgs = Static<typeof CommunityLookupMembersArgs>;
 export const CommunityLookupMembersArgs = /* @__PURE__ */ Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
     user_ids: Type.Array(UserId),
 });
 

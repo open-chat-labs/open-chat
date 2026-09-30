@@ -9,8 +9,9 @@ use types::{
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
-    // If set, only the first page of members is returned, holding up to this many of them in
-    // addition to every owner, admin and moderator. The rest can be got from `channel_members`.
+    // If set, only the first page of members is returned, holding up to this many of them (capped
+    // at 1000) in addition to every owner, admin and moderator. The rest can be got from
+    // `channel_members`.
     pub max_members: Option<u32>,
 }
 
@@ -61,5 +62,24 @@ impl SuccessResult {
                 lapsed: false,
             }))
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // `Args` as sent by clients which predate `max_members`
+    #[derive(Serialize)]
+    struct PreviousArgs {
+        channel_id: ChannelId,
+    }
+
+    #[test]
+    fn args_without_max_members_are_read() {
+        let bytes = msgpack::serialize_then_unwrap(PreviousArgs { channel_id: 1u32.into() });
+        let args: Args = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(args.channel_id, 1u32.into());
+        assert!(args.max_members.is_none());
     }
 }

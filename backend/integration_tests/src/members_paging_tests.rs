@@ -1,5 +1,6 @@
 use crate::env::ENV;
 use crate::{TestEnv, client};
+use candid::Principal;
 use oc_error_codes::OCErrorCode;
 use std::collections::BTreeSet;
 use std::ops::Deref;
@@ -88,6 +89,34 @@ fn group_members_are_returned_a_page_at_a_time() {
         vec![others[0].user_id, owner.user_id]
     );
 
+    // A page always holds at least one member
+    let group_canister::members::Response::Success(one) = client::group::members(
+        env,
+        owner.principal,
+        group_id.into(),
+        &group_canister::members::Args {
+            after: None,
+            max_results: 0,
+        },
+    ) else {
+        panic!("'members' failed");
+    };
+    assert_eq!(one.basic_members.len(), 1);
+    assert_eq!(one.more_members_after, one.basic_members.last().copied());
+
+    // No more than 1000 users can be looked up at once
+    assert!(matches!(
+        client::group::lookup_members(
+            env,
+            owner.principal,
+            group_id.into(),
+            &group_canister::lookup_members::Args {
+                user_ids: (0..1001u32).map(|i| Principal::from_slice(&i.to_be_bytes()).into()).collect(),
+            },
+        ),
+        group_canister::lookup_members::Response::Error(e) if e.matches_code(OCErrorCode::TooManyUsers)
+    ));
+
     // Only members can page through or look up the members
     assert!(matches!(
         client::group::members(
@@ -100,6 +129,17 @@ fn group_members_are_returned_a_page_at_a_time() {
             },
         ),
         group_canister::members::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotInChat)
+    ));
+    assert!(matches!(
+        client::group::lookup_members(
+            env,
+            non_member.principal,
+            group_id.into(),
+            &group_canister::lookup_members::Args {
+                user_ids: vec![owner.user_id],
+            },
+        ),
+        group_canister::lookup_members::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotInChat)
     ));
 }
 
@@ -174,7 +214,8 @@ fn community_and_channel_members_are_returned_a_page_at_a_time() {
         owner.principal,
         community_id.into(),
         &community_canister::lookup_members::Args {
-            user_ids: vec![others[0].user_id, non_member.user_id],
+            invite_code: None,
+            user_ids: vec![others[0].user_id, non_member.user_id, others[0].user_id],
         },
     ) else {
         panic!("'lookup_members' failed");
@@ -240,4 +281,100 @@ fn community_and_channel_members_are_returned_a_page_at_a_time() {
         lookup.members.iter().map(|m| m.user_id).collect::<Vec<_>>(),
         vec![others[0].user_id]
     );
+}
+
+#[test]
+fn members_of_a_private_community_can_only_be_got_by_its_members() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let non_member = client::register_user(env, canister_ids);
+    let community_id = client::user::happy_path::create_community(env, &owner, &random_string(), false, vec![random_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, false, random_string());
+
+    // The owner can
+    assert!(matches!(
+        client::community::members(
+            env,
+            owner.principal,
+            community_id.into(),
+            &community_canister::members::Args {
+                invite_code: None,
+                after: None,
+                max_results: 3,
+            },
+        ),
+        community_canister::members::Response::Success(_)
+    ));
+    assert!(matches!(
+        client::community::channel_members(
+            env,
+            owner.principal,
+            community_id.into(),
+            &community_canister::channel_members::Args {
+                channel_id,
+                after: None,
+                max_results: 3,
+            },
+        ),
+        community_canister::channel_members::Response::Success(_)
+    ));
+
+    // A user who isn't a member can't
+    assert!(matches!(
+        client::community::members(
+            env,
+            non_member.principal,
+            community_id.into(),
+            &community_canister::members::Args {
+                invite_code: None,
+                after: None,
+                max_results: 3,
+            },
+        ),
+        community_canister::members::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotInCommunity)
+    ));
+    assert!(matches!(
+        client::community::lookup_members(
+            env,
+            non_member.principal,
+            community_id.into(),
+            &community_canister::lookup_members::Args {
+                invite_code: None,
+                user_ids: vec![owner.user_id],
+            },
+        ),
+        community_canister::lookup_members::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotInCommunity)
+    ));
+    assert!(matches!(
+        client::community::channel_members(
+            env,
+            non_member.principal,
+            community_id.into(),
+            &community_canister::channel_members::Args {
+                channel_id,
+                after: None,
+                max_results: 3,
+            },
+        ),
+        community_canister::channel_members::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotInCommunity)
+    ));
+    assert!(matches!(
+        client::community::lookup_channel_members(
+            env,
+            non_member.principal,
+            community_id.into(),
+            &community_canister::lookup_channel_members::Args {
+                channel_id,
+                user_ids: vec![owner.user_id],
+            },
+        ),
+        community_canister::lookup_channel_members::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotInCommunity)
+    ));
 }

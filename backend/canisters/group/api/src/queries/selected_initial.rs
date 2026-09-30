@@ -8,8 +8,8 @@ use types::{
 #[ts_export(group, selected_initial)]
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Args {
-    // If set, only the first page of members is returned, holding up to this many of them in
-    // addition to every owner, admin and moderator. The rest can be got from `members`.
+    // If set, only the first page of members is returned, holding up to this many of them (capped
+    // at 1000) in addition to every owner, admin and moderator. The rest can be got from `members`.
     pub max_members: Option<u32>,
 }
 
@@ -51,4 +51,17 @@ pub struct SuccessResult {
     #[serde(default, skip_serializing_if = "VersionedRules::is_empty")]
     #[ts(as = "Option<VersionedRules>", optional)]
     pub chat_rules: VersionedRules,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Clients which predate `max_members` send no args at all
+    #[test]
+    fn args_without_max_members_are_read() {
+        let bytes = msgpack::serialize_then_unwrap(types::Empty {});
+        let args: Args = msgpack::deserialize_then_unwrap(&bytes);
+        assert!(args.max_members.is_none());
+    }
 }
