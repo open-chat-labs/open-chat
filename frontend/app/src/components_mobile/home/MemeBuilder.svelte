@@ -1,8 +1,8 @@
 <script lang="ts">
     import { Column, CommonButton, Row, Sheet, Subtitle } from "component-lib";
     import { iconSize, type MemeFighterContent as MemeFighterContentType } from "@client";
-    import { onMount, tick } from "svelte";
-    import { guardMemeFighterMessages } from "@src/utils/memeFighter";
+    import { onDestroy, tick } from "svelte";
+    import { startMemeMaker } from "@src/utils/memeFighter";
     import { i18nKey } from "../../i18n/i18n";
     import { currentTheme } from "../../theme/themes";
     import Translatable from "../Translatable.svelte";
@@ -23,19 +23,21 @@
     let img: HTMLImageElement | undefined = $state();
     let placeholder = "/assets/memefighter.svg";
 
-    // must be registered before maker-core's own listener (added in reset())
-    onMount(guardMemeFighterMessages);
+    let stopListening: (() => void) | undefined;
+
+    function stopMaker() {
+        stopListening?.();
+        stopListening = undefined;
+    }
+
+    onDestroy(stopMaker);
 
     export function reset() {
         memeUrl = undefined;
-        tick().then(async () => {
+        tick().then(() => {
+            stopMaker();
             if (iframe) {
-                const { start } = await import("@memefighter/maker-core");
-                start({
-                    iframe,
-                    styleVariables,
-                    skipInsertButton: true,
-                }).then(onMemeCreated);
+                stopListening = startMemeMaker(iframe, styleVariables, onMemeCreated);
             }
         });
     }
@@ -62,6 +64,7 @@
 
     function close() {
         keyboard.disableViewportResize();
+        stopMaker();
         open = false;
     }
 

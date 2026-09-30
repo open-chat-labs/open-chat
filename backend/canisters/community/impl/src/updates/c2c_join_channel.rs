@@ -374,7 +374,7 @@ pub(crate) fn join_channel_unchecked(
 
         if push_event {
             if channel.chat.is_public.value && !explicit_join {
-                success.bot_notification = channel.chat.events.mark_members_added_to_public_channel(vec![user_id], now);
+                success.bot_notification = channel.chat.events.mark_members_added_to_public_channel(1, now);
             } else {
                 let push_result = channel.chat.events.push_main_event(
                     ChatEventInternal::ParticipantJoined(Box::new(MemberJoinedInternal {

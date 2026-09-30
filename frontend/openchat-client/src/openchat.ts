@@ -541,6 +541,7 @@ import {
     confirmedEventIndexesLoaded,
     containsReaction,
     createMessage,
+    detailsLastUpdated,
     diffGroupPermissions,
     doesMessageFailFilter,
     eventIndexesLoaded,
@@ -868,7 +869,7 @@ export class OpenChat {
         return (
             details === undefined ||
             !chatIdentifiersEqual(details.chatId, serverChat.id) ||
-            details.timestamp < serverChat.lastUpdated
+            details.timestamp < detailsLastUpdated(serverChat)
         );
     }
 
@@ -4010,11 +4011,24 @@ export class OpenChat {
 
     async #loadCommunityDetails(community: CommunitySummary): Promise<void> {
         const id = community.id;
+        const held = selectedServerCommunityStore.value;
+        const detailsSyncedUpTo =
+            held !== undefined && communityIdentifiersEqual(held.communityId, id)
+                ? held.timestamp
+                : undefined;
+        const lastUpdated = detailsLastUpdated(community);
+        if (detailsSyncedUpTo !== undefined && detailsSyncedUpTo >= lastUpdated) {
+            // The details held are already up to date
+            return;
+        }
+        // If the details are already held the worker only says whether they have changed, rather
+        // than sending every member across to be rebuilt into the stores
         const resp: CommunityDetailsResponse = await this.#worker
             .send({
                 kind: "getCommunityDetails",
                 id,
-                communityLastUpdated: community.lastUpdated,
+                detailsLastUpdated: lastUpdated,
+                detailsSyncedUpTo,
             })
             .catch(() => ({ kind: "failure" }));
         if (resp.kind !== "failure") {
@@ -4036,15 +4050,15 @@ export class OpenChat {
                 return;
             }
 
-            // this should not actually happen because we should just get back the previous value
-            // is there were no updates
             if (resp.kind === "success_no_updates") {
-                selectedServerCommunityStore.update((state) => {
-                    if (state) {
-                        state.timestamp = resp.lastUpdated;
-                    }
-                    return state;
-                });
+                // Nothing reads the timestamp reactively, so it is set without the store telling
+                // its subscribers, which would have everything showing a member work out again
+                if (
+                    currentStoreValue !== undefined &&
+                    communityIdentifiersEqual(currentStoreValue.communityId, community.id)
+                ) {
+                    currentStoreValue.timestamp = resp.lastUpdated;
+                }
             } else {
                 const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
 
@@ -4074,14 +4088,27 @@ export class OpenChat {
         switch (serverChat.kind) {
             case "group_chat":
             case "channel":
+                const held = selectedServerChatStore.value;
+                const detailsSyncedUpTo =
+                    held !== undefined && chatIdentifiersEqual(held.chatId, serverChat.id)
+                        ? held.timestamp
+                        : undefined;
+                const lastUpdated = detailsLastUpdated(serverChat);
+                if (detailsSyncedUpTo !== undefined && detailsSyncedUpTo >= lastUpdated) {
+                    // The details held are already up to date
+                    return;
+                }
+                // As for the community's details, if these are already held the worker only says
+                // whether they have changed
                 const resp: GroupChatDetailsResponse = await this.#worker
                     .send({
                         kind: "getGroupDetails",
                         chatId: serverChat.id,
-                        chatLastUpdated: serverChat.lastUpdated,
+                        detailsLastUpdated: lastUpdated,
+                        detailsSyncedUpTo,
                     })
                     .catch(CommonResponses.failure);
-                if ("members" in resp) {
+                if ("members" in resp || resp.kind === "success_no_updates") {
                     if (!chatIdentifiersEqual(serverChat.id, selectedChatIdStore.value)) {
                         console.warn(
                             "Attempting to set chat details on the wrong chat - probably a stale response",
@@ -4097,6 +4124,16 @@ export class OpenChat {
                         resp.timestamp <= currentStoreValue.timestamp
                     ) {
                         // The store already has the latest updates, exiting
+                        return;
+                    }
+                    if (!("members" in resp)) {
+                        // Set without the store telling its subscribers, as for the community
+                        if (
+                            currentStoreValue !== undefined &&
+                            chatIdentifiersEqual(currentStoreValue.chatId, serverChat.id)
+                        ) {
+                            currentStoreValue.timestamp = resp.timestamp;
+                        }
                         return;
                     }
                     const members = resp.members.filter((m) => !m.lapsed);
@@ -8493,20 +8530,25 @@ export class OpenChat {
     }
 
     proposeTranslationCorrection(
-        locale: string,
+        language: string,
         key: string,
         value: string,
     ): Promise<ProposeResponse> {
+        // The correction is filed under the language, but is applied here to the locale in use,
+        // which can be a dialect of it. svelte-i18n caches the messages it has looked up per
+        // locale and adding a message only clears the cache of the locale it is added to, so a
+        // correction applied to the language would not show for a user on one of its dialects.
+        const currentLocale = this.#locale;
         return this.#worker
             .send({
                 kind: "proposeTranslation",
-                locale,
+                locale: language,
                 key,
                 value,
             })
             .then((res) => {
                 if (res === "success") {
-                    applyTranslationCorrection(locale, key, value);
+                    applyTranslationCorrection(currentLocale, key, value);
                 }
                 return res;
             })

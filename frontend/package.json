@@ -40,7 +40,6 @@
         "@icp-sdk/canisters": "^3.6.0",
         "@icp-sdk/core": "^5.2.0",
         "@icp-sdk/signer": "^5.6.3",
-        "@memefighter/maker-core": "^0.0.17",
         "@metamask/connect-evm": "^2.1.1",
         "@noble/hashes": "^1.8.0",
         "@panzoom/panzoom": "^4.6.1",
@@ -88,7 +87,7 @@
         "svelte-confetti": "^2.1.2",
         "svelte-dnd-action": "^0.9.52",
         "svelte-easy-crop": "^5.0.1",
-        "svelte-i18n": "3.7.1",
+        "svelte-i18n": "3.7.4",
         "svelte-material-icons": "^3.0.5",
         "svelte-qrcode-image": "^1.0.0-rc.2",
         "tauri-plugin-oc-api": "file:./tauri-plugin-oc",
@@ -197,6 +196,9 @@
         },
         "svelte-easy-crop": {
             "svelte": "^5.0.0"
+        },
+        "svelte-i18n": {
+            "esbuild": "^0.25.0"
         }
     }
 }
