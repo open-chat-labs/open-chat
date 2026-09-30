@@ -1,4 +1,4 @@
-use crate::queries::verify_community_is_accessible;
+use crate::queries::{check_replica_up_to_date, verify_community_is_accessible};
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use community_canister::lookup_members::{Response::*, *};
@@ -16,6 +16,10 @@ fn lookup_members(args: Args) -> Response {
 }
 
 fn lookup_members_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
+    if let Err(now) = check_replica_up_to_date(args.latest_known_update, state) {
+        return Err(OCErrorCode::ReplicaNotUpToDate.with_message(now));
+    }
+
     verify_community_is_accessible(args.invite_code, state)?;
 
     if args.user_ids.len() > MAX_MEMBERS_PER_QUERY as usize {
