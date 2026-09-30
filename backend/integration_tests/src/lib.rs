@@ -4,10 +4,12 @@ use crate::utils::principal_to_username;
 use candid::Principal;
 use pocket_ic::PocketIc;
 use registry_canister::subnets::Subnet;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Formatter};
 use types::{CanisterId, Cycles, SignedDelegation, UserId};
 
 mod account_linking_tests;
+mod base_state_cache;
 mod batched_summary_and_event_tests;
 mod bot_tests;
 mod call_push_tests;
@@ -128,7 +130,7 @@ impl From<&User> for types::User {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct CanisterIds {
     pub openchat_installer: CanisterId,
     pub user_index: CanisterId,

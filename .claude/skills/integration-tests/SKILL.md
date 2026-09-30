@@ -37,6 +37,12 @@ On CI (`$CI` set) everything is built and downloaded as before.
 
 - Run long suites in the background and check the result when notified.
 - The output is very long (`--nocapture`). Look for `test result:`, `FAILED` and `panicked at`.
+- Every run starts from a base state with every canister installed. Building it takes 30s or
+  more, so it's cached under `~/Library/Caches/openchat/test-base-states`, keyed by a hash of the
+  wasms, the PocketIC binary and the setup code (`setup.rs`, `utils.rs`, `wasms.rs` and `client/`).
+  A run whose inputs match a run in any worktree in the last 4 hours starts from that run's
+  state instead, and prints `Using the base state built ...`. Its clock is then behind the real
+  time by as much as the state's age. Delete the directory to force a fresh base state.
 
 ## Other useful forms
 

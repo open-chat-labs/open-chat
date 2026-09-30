@@ -1,3 +1,4 @@
+use crate::base_state_cache::BaseStateCache;
 use crate::client::{create_canister, create_canister_with_id, install_canister};
 use crate::env::VIDEO_CALL_OPERATOR;
 use crate::utils::tick_many;
@@ -14,7 +15,7 @@ use rand::{RngExt, SeedableRng, rngs::StdRng};
 use sha256::sha256;
 use std::collections::{HashMap, HashSet};
 use std::env;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use std::time::{Instant, SystemTime};
 use storage_index_canister::init::CyclesDispenserConfig;
@@ -29,11 +30,11 @@ pub static POCKET_IC_BIN: &str = "./pocket-ic";
 static BASE_STATE: OnceLock<(PocketIcState, CanisterIds)> = OnceLock::new();
 
 pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
-    verify_pocket_ic_exists();
+    let pocket_ic_bin = verify_pocket_ic_exists();
 
     let controller = Principal::from_text("xuxyr-xopen-chatx-xxxbu-cai").unwrap();
 
-    let (state, canister_ids) = BASE_STATE.get_or_init(|| initialize_base_state(controller, seed));
+    let (state, canister_ids) = BASE_STATE.get_or_init(|| base_state(controller, seed, &pocket_ic_bin));
 
     let env = PocketIcBuilder::new()
         .with_read_only_state(state)
@@ -47,7 +48,32 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
     }
 }
 
-fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIcState, CanisterIds) {
+// Takes the base state from the cache if a run with the same inputs has built it recently, else
+// builds it and adds it to the cache
+fn base_state(controller: Principal, seed: Option<Hash>, pocket_ic_bin: &Path) -> (PocketIcState, CanisterIds) {
+    let initial_time = SystemTime::now();
+
+    // A seed is there to make runs differ, so a seeded run neither uses the cache nor adds to it
+    let cache = if seed.is_none() { BaseStateCache::open(pocket_ic_bin) } else { None };
+    let Some(cache) = cache else {
+        return initialize_base_state(controller, seed, PocketIcState::new(), initial_time);
+    };
+
+    if let Some(cached) = cache.get() {
+        return cached;
+    }
+
+    let (state, canister_ids) = initialize_base_state(controller, seed, cache.new_state(), initial_time);
+
+    (cache.insert(state, &canister_ids, initial_time), canister_ids)
+}
+
+fn initialize_base_state(
+    controller: Principal,
+    seed: Option<Hash>,
+    state: PocketIcState,
+    initial_time: SystemTime,
+) -> (PocketIcState, CanisterIds) {
     let started = Instant::now();
 
     // This thread is first, so it is the only one which will run the full initialization
@@ -62,13 +88,13 @@ fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIc
         .with_sns_subnet()
         .with_application_subnet()
         .with_application_subnet()
-        .with_state(PocketIcState::new())
+        .with_state(state)
         .with_icp_features(icp_features)
         .with_icp_config(icp_config())
         // Start from the current time rather than PocketIC's default of May 2021. Tests which need a
         // recent time would otherwise jump the clock forward by years, which drains canisters of
         // their cycles now that the IC charges every canister a base fee.
-        .with_initial_time(SystemTime::now().into())
+        .with_initial_time(initial_time.into())
         .build();
 
     println!("PocketIC instance ready. Installing canisters...");
@@ -593,7 +619,7 @@ pub fn install_icrc_ledger(
     canister_id
 }
 
-fn verify_pocket_ic_exists() {
+fn verify_pocket_ic_exists() -> PathBuf {
     let path = match env::var_os("POCKET_IC_BIN") {
         None => {
             unsafe {
@@ -615,6 +641,8 @@ I looked for it at {:?}. You can specify another path with the environment varia
 Running the testing script will automatically place the PocketIC binary at the right place to be run without setting the POCKET_IC_BIN environment variable:
     ./scripts/run-integration-tests.sh", &path, &env::current_dir().map(|x| x.display().to_string()).unwrap_or_else(|_| "an unknown directory".to_string()));
     }
+
+    PathBuf::from(path)
 }
 
 #[derive(CandidType)]
