@@ -84,6 +84,7 @@ import type {
     ThreadRead,
     ThreadSyncDetails,
     TipMessageResponse,
+    TokenInfo,
     UnblockUserResponse,
     UndeleteMessageResponse,
     UnfreezeGroupResponse,
@@ -2453,6 +2454,8 @@ type AcceptP2PSwap = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
+    token1: TokenInfo;
+    token1Amount: bigint;
     pin: string | undefined;
     newAchievement: boolean;
     fromAccount: string | undefined;

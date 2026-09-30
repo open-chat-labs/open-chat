@@ -1,6 +1,7 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { Type } from "@sinclair/typebox";
 import {
+    encodeIcrcAccount,
     isMultiUserCanisterUser,
     MAX_EVENTS,
     MAX_MESSAGES,
@@ -50,6 +51,7 @@ import {
     type MarkReadRequest,
     type MarkReadResponse,
     type Message,
+    type MessageContent,
     type MessageActivityFeedResponse,
     type MessageContext,
     type NamedAccount,
@@ -617,7 +619,7 @@ export class UserClient
             const newEvent =
                 content !== undefined ? { ...event, event: { ...event.event, content } } : event;
             const req = {
-                content: apiMessageContent(newEvent.event.content),
+                content: apiMessageContent(this.transferFromWallet(newEvent.event.content)),
                 recipient: principalStringToBytes(chatId.userId),
                 message_id: newEvent.event.messageId,
                 replies_to: mapOptional(newEvent.event.repliesTo, (replyContext) =>
@@ -650,6 +652,23 @@ export class UserClient
                     throw err;
                 });
         });
+    }
+
+    // A MultiUser canister can't make a transfer for its user, who holds their own funds, only pull
+    // it from an account which has approved the canister to. So the crypto its user sends comes
+    // from their wallet, the account of the principal they sign in with, unless they chose another
+    // account to send it from.
+    private transferFromWallet(content: MessageContent): MessageContent {
+        if (
+            content.kind !== "crypto_content" ||
+            content.transfer.kind !== "pending" ||
+            content.transfer.fromAccount !== undefined ||
+            !isMultiUserCanisterUser(this.userId)
+        ) {
+            return content;
+        }
+        const fromAccount = encodeIcrcAccount({ owner: this.principal });
+        return { ...content, transfer: { ...content.transfer, fromAccount } };
     }
 
     sendMessageWithTransferToGroup(

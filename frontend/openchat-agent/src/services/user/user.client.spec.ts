@@ -1,5 +1,10 @@
 import { Principal } from "@icp-sdk/core/principal";
-import { indexedUserId, type DirectChatIdentifier } from "@shared";
+import {
+    indexedUserId,
+    type CryptocurrencyContent,
+    type DirectChatIdentifier,
+    type MessageContent,
+} from "@shared";
 import { describe, expect, test } from "vitest";
 import { UserClient } from "./user.client";
 
@@ -48,5 +53,62 @@ describe("UserClient reading a direct chat's events", () => {
             ["events_by_index", THEM, THEM],
             ["events_window", THEM, THEM],
         ]);
+    });
+});
+
+describe("UserClient sending crypto in a direct chat", () => {
+    const ME = Principal.fromText("2vxsx-fae");
+    const EXTERNAL_ACCOUNT = "rno2w-sqaaa-aaaaa-aaacq-cai";
+
+    function crypto(fromAccount?: string): CryptocurrencyContent {
+        return {
+            kind: "crypto_content",
+            caption: undefined,
+            transfer: {
+                kind: "pending",
+                ledger: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+                token: "ICP",
+                recipient: THEM,
+                amountE8s: 100n,
+                createdAtNanos: 0n,
+                fromAccount,
+            },
+        };
+    }
+
+    // The account the transfer is sent as coming from
+    function fromAccount(userId: string, content: MessageContent): string | undefined {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const client = Object.create(UserClient.prototype) as any;
+        client.userId = userId;
+        client.identity = { getPrincipal: () => ME };
+        const sent = client.transferFromWallet(content);
+        return sent.kind === "crypto_content" && sent.transfer.kind === "pending"
+            ? sent.transfer.fromAccount
+            : undefined;
+    }
+
+    test("a MultiUser canister pulls it from the user's wallet", () => {
+        expect(fromAccount(MULTI_USER_CANISTER_USER, crypto())).toEqual(ME.toText());
+    });
+
+    test("a MultiUser canister pulls it from another account the user chose", () => {
+        expect(fromAccount(MULTI_USER_CANISTER_USER, crypto(EXTERNAL_ACCOUNT))).toEqual(
+            EXTERNAL_ACCOUNT,
+        );
+    });
+
+    test("a User canister sends it from its own account", () => {
+        expect(fromAccount(USER_CANISTER_USER, crypto())).toBeUndefined();
+    });
+
+    test("any other message is left as it is", () => {
+        const content: MessageContent = { kind: "text_content", text: "hello" };
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const client = Object.create(UserClient.prototype) as any;
+        client.userId = MULTI_USER_CANISTER_USER;
+
+        expect(client.transferFromWallet(content)).toBe(content);
     });
 });

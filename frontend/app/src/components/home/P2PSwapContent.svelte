@@ -192,6 +192,8 @@
                     messageContext.chatId,
                     messageContext.threadRootMessageIndex,
                     messageId,
+                    content.token1,
+                    content.token1Amount,
                     fromAccount,
                 )
                 .then((resp) => {
