@@ -3,6 +3,7 @@ use crate::utils::{metrics, tick_many};
 use crate::{TestEnv, client, wasms};
 use constants::ONE_MB;
 use pocket_ic::PocketIc;
+use serde::Deserialize;
 use sha256::sha256;
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -19,6 +20,7 @@ fn chunk_store_holds_only_the_current_wasms_once_upgrades_complete() {
     } = wrapper.env();
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let clears = chunk_store_metrics(env, local_user_index).clears;
 
     // A chunk which isn't part of any current wasm
     let stale_chunk: Hash = env
@@ -37,15 +39,19 @@ fn chunk_store_holds_only_the_current_wasms_once_upgrades_complete() {
             module: wasms::USER.module.clone(),
         },
     );
-    // Wait for the User canisters to be upgraded, after which the chunk store is refreshed
+    // Wait for the User canisters to be upgraded, after which the chunk store is cleared and the
+    // current wasms' chunks are uploaded again. That takes several rounds more, since only a few
+    // chunks are uploaded per round
+    let mut refreshed = false;
     for _ in 0..100 {
         tick_many(env, 5);
-        let metrics = metrics(env, local_user_index);
-        if metrics["user_upgrades_pending"] == 0 && metrics["user_upgrades_in_progress"] == 0 {
+        let chunk_store = chunk_store_metrics(env, local_user_index);
+        if chunk_store.clears > clears && !chunk_store.sync_in_progress {
+            refreshed = true;
             break;
         }
     }
-    tick_many(env, 10);
+    assert!(refreshed, "Chunk store not refreshed");
 
     let stored = stored_chunks(env, local_user_index, canister_ids.user_index);
     assert!(!stored.contains(&stale_chunk));
@@ -122,6 +128,16 @@ fn assert_current_wasms_stored(stored: &HashSet<Hash>) {
             assert!(stored.contains(&chunk), "Chunk missing from the chunk store");
         }
     }
+}
+
+#[derive(Deserialize)]
+struct ChunkStoreMetrics {
+    sync_in_progress: bool,
+    clears: u64,
+}
+
+fn chunk_store_metrics(env: &PocketIc, local_user_index: CanisterId) -> ChunkStoreMetrics {
+    serde_json::from_value(metrics(env, local_user_index)["chunk_store"].clone()).unwrap()
 }
 
 fn chunk_hashes(wasm: &[u8]) -> Vec<Hash> {

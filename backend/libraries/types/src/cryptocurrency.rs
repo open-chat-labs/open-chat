@@ -199,6 +199,22 @@ impl PendingCryptoTransaction {
         true
     }
 
+    // Whether the transfer is to an account of the id of a user in a MultiUser canister (see
+    // `UserId::is_indexed`), under any subaccount, as it is if the user id is given as the recipient.
+    // No one can sign as such an id, so anything sent there can never be spent, the user holding
+    // their funds under the principal they sign in with. An NNS transfer is never flagged: its ICP
+    // account identifier is a hash, from which the owner can't be read, and no one derives one from
+    // a user id.
+    pub fn is_to_indexed_user_id(&self) -> bool {
+        let to = match self {
+            PendingCryptoTransaction::NNS(_) => return false,
+            PendingCryptoTransaction::ICRC1(t) => t.to,
+            PendingCryptoTransaction::ICRC2(t) => t.to,
+            PendingCryptoTransaction::Certified(t) => t.to,
+        };
+        UserId::from(to.owner).is_indexed()
+    }
+
     // Checks the transfer is to exactly `account`. The whole account, not just the owner, since once
     // a canister holds many users the owner alone is satisfied by a transfer destined for any of them.
     pub fn is_to(&self, account: Account) -> bool {
@@ -1131,6 +1147,35 @@ mod tests {
                 assert!(!transfer.send_to_wallet(user_id, recipient.into()));
                 assert!(transfer.is_to(to.into()));
             }
+        }
+    }
+
+    #[test]
+    fn transfer_to_any_account_of_an_indexed_user_id_is_detected() {
+        let user_id = indexed_user();
+        let default_account = icrc1::Account::legacy_for_user(user_id);
+        let subaccount = icrc1::Account {
+            subaccount: Some([1; 32]),
+            ..default_account
+        };
+
+        for to in [default_account, subaccount] {
+            for transfer in [icrc1_transfer_to(to), icrc2_transfer_to(to), certified_transfer_to(to)] {
+                assert!(transfer.is_to_indexed_user_id());
+            }
+        }
+    }
+
+    #[test]
+    fn transfer_to_a_wallet_is_not_to_an_indexed_user_id() {
+        // A user alone in their canister holds their funds in the account of their user id
+        let wallets = [canister_user().as_principal().into(), principal().into()];
+
+        for to in wallets {
+            for transfer in [icrc1_transfer_to(to), icrc2_transfer_to(to), certified_transfer_to(to)] {
+                assert!(!transfer.is_to_indexed_user_id());
+            }
+            assert!(!nns_transfer_to(crate::account_identifier(to.into())).is_to_indexed_user_id());
         }
     }
 
