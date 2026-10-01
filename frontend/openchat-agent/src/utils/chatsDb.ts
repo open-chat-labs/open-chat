@@ -254,8 +254,7 @@ async function clearChatsStore(
 
 // The cached details of chats and communities are cleared, because:
 // - those brought up to date after being left for over 31 days may be missing updates which the
-//   canister had already pruned. Copies written since note when they were last brought up to date,
-//   so that such a copy is reloaded in full rather than updated.
+//   canister had already pruned. Canisters now return the details in full in that case instead.
 // - those of a large chat or community hold every member, but from now on only those of chats and
 //   communities with no more than a page of members do. Clearing them has only the first page
 //   loaded in their place.

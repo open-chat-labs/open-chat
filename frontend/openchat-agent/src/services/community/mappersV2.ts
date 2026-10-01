@@ -4,6 +4,7 @@ import type {
     ChannelSummaryResponse,
     CommunityCanisterChannelSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
+    CommunityDetails,
     CommunityDetailsResponse,
     CommunityDetailsUpdatesResponse,
     CommunityMembershipUpdates,
@@ -42,6 +43,7 @@ import type {
     CommunityLookupMembersResponse,
     CommunitySearchMembersResponse,
     CommunitySelectedInitialResponse,
+    CommunitySelectedInitialSuccessResult,
     CommunitySelectedUpdatesResponse,
     CommunityUpdateCommunitySuccessResult,
     ChannelMatch as TChannelMatch,
@@ -368,25 +370,26 @@ export function communityDetailsResponse(
     value: CommunitySelectedInitialResponse,
 ): CommunityDetailsResponse {
     if (typeof value === "object" && "Success" in value) {
-        return {
-            kind: "success",
-            members: communityMembers(value.Success.members, value.Success.basic_members),
-            moreMembersAfter: mapOptional(
-                value.Success.more_members_after,
-                principalBytesToString,
-            ),
-            blockedUsers: new Set(value.Success.blocked_users?.map(principalBytesToString) ?? []),
-            invitedUsers: new Set(value.Success.invited_users?.map(principalBytesToString) ?? []),
-            rules: value.Success.chat_rules ?? emptyRules(),
-            lastUpdated: value.Success.timestamp,
-            userGroups: new Map(value.Success.user_groups?.map(userGroupDetails) ?? []),
-            referrals: new Set(value.Success.referrals?.map(principalBytesToString) ?? []),
-            bots: value.Success.bots?.map(installedBotDetails) ?? [],
-        };
+        return communityDetailsSuccess(value.Success);
     } else {
         console.warn("CommunityDetails failed with", value);
         return { kind: "failure" };
     }
+}
+
+function communityDetailsSuccess(value: CommunitySelectedInitialSuccessResult): CommunityDetails {
+    return {
+        kind: "success",
+        members: communityMembers(value.members, value.basic_members),
+        moreMembersAfter: mapOptional(value.more_members_after, principalBytesToString),
+        blockedUsers: new Set(value.blocked_users?.map(principalBytesToString) ?? []),
+        invitedUsers: new Set(value.invited_users?.map(principalBytesToString) ?? []),
+        rules: value.chat_rules ?? emptyRules(),
+        lastUpdated: value.timestamp,
+        userGroups: new Map(value.user_groups?.map(userGroupDetails) ?? []),
+        referrals: new Set(value.referrals?.map(principalBytesToString) ?? []),
+        bots: value.bots?.map(installedBotDetails) ?? [],
+    };
 }
 
 function communityMember(value: TCommunityMember): Member {
@@ -463,6 +466,8 @@ export function communityDetailsUpdatesResponse(
                 kind: "success_no_updates",
                 lastUpdated: value.SuccessNoUpdates,
             };
+        } else if ("SuccessSnapshot" in value) {
+            return { kind: "snapshot", details: communityDetailsSuccess(value.SuccessSnapshot) };
         }
     }
     console.warn("Unexpected ApiSelectedUpdatesResponse type received", value);

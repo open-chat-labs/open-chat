@@ -1,6 +1,5 @@
 import {
     offline,
-    ONE_DAY,
     type CommunityDetails,
     type CommunityDetailsResponse,
     type CommunityDetailsUpdatesResponse,
@@ -23,17 +22,12 @@ type CommunityDetailsCache = Pick<
 
 type Updated<T> = Extract<T, { kind: "success" }>;
 
-// Canisters keep the updates to the details of a chat or community for 31 days
-// (DURATION_TO_MAINTAIN_SUMMARY_UPDATES_DATA), so the updates since a copy which was brought up to
-// date longer ago than that may be missing some. Such a copy is reloaded in full instead. The day
-// to spare allows for a lagging replica, and for the canister's clock and the client's differing
-// where a timestamp from the canister is compared with the client's clock.
-const MAX_AGE_TO_UPDATE = BigInt(30 * ONE_DAY);
-
 /**
  * Loads the details of a group or channel: from the cache if that is as new as
  * `detailsLastUpdated`, which is when the chat's summary says they last changed, else from the
- * cache plus whatever the canister says has changed since, else in full from the canister.
+ * cache plus whatever the canister says has changed since, else in full from the canister. The
+ * canister returns them in full instead of the changes since those cached if it no longer has all
+ * of those changes (it keeps them for 31 days), in which case they replace those cached.
  *
  * A caller which already holds the details passes the time up to which they are known to be up to
  * date as `detailsSyncedUpTo`, and is told only that they still are, unless they have changed. The
@@ -56,6 +50,8 @@ export async function loadGroupDetails(
 ): Promise<GroupChatDetailsResponse> {
     // The updates since the cached details were cached, if they have already been fetched
     let fetched: Updated<GroupChatDetailsUpdatesResponse> | undefined;
+    // The details in full, if the canister returned them instead of the updates
+    let snapshot: GroupChatDetails | undefined;
     const cachedTimestamp = cache.cachedGroupDetailsTimestamp(cacheKey);
 
     if (
@@ -66,33 +62,43 @@ export async function loadGroupDetails(
         if (detailsSyncedUpTo >= detailsLastUpdated || offline()) {
             return { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
         }
-        // Otherwise whether the updates are complete depends on when the cached copy was last
-        // brought up to date, which is only known by reading it
-        if (updatesComplete(cachedTimestamp)) {
-            const updates = await updatesSince(cachedTimestamp);
-            if (updates.kind === "failure") {
-                return { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
-            }
-            if (updates.kind === "success_no_updates") {
-                return {
-                    kind: "success_no_updates",
-                    timestamp: later(detailsSyncedUpTo, updates.timestamp),
-                };
-            }
+        const updates = await updatesSince(cachedTimestamp);
+        if (updates.kind === "failure") {
+            return { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
+        }
+        if (updates.kind === "success_no_updates") {
+            return {
+                kind: "success_no_updates",
+                timestamp: later(detailsSyncedUpTo, updates.timestamp),
+            };
+        }
+        if (updates.kind === "snapshot") {
+            snapshot = updates.details;
+        } else {
             fetched = updates;
         }
     }
 
     return withCachedDetailsLock(groupDetailsLockKey(cacheKey), async () => {
         const cached = await cache.getCachedGroupDetails(cacheKey);
+        // The details in full replace those cached, unless another tab has since cached ones as new,
+        // which may also hold members it has looked up since
+        const replace = async (snapshot: GroupChatDetails): Promise<GroupChatDetails> => {
+            if (cached !== undefined && cached.timestamp >= snapshot.timestamp) {
+                return cached;
+            }
+            await cache.setCachedGroupDetails(cacheKey, snapshot);
+            return snapshot;
+        };
+        if (snapshot !== undefined) {
+            return replace(snapshot);
+        }
         if (cached === undefined) {
             const details = await initial();
-            if (!("members" in details)) {
-                return details;
+            if ("members" in details) {
+                await cache.setCachedGroupDetails(cacheKey, details);
             }
-            const loaded = broughtUpToDate(details);
-            await cache.setCachedGroupDetails(cacheKey, loaded);
-            return loaded;
+            return details;
         }
 
         let details: GroupChatDetails;
@@ -104,18 +110,12 @@ export async function loadGroupDetails(
             if (cached.timestamp >= detailsLastUpdated || offline()) {
                 return cached;
             }
-            if (!updatesComplete(cached.syncedAt ?? 0n)) {
-                const reloaded = await initial();
-                if (!("members" in reloaded)) {
-                    return cached;
-                }
-                const loaded = broughtUpToDate(reloaded);
-                await cache.setCachedGroupDetails(cacheKey, loaded);
-                return loaded;
-            }
             const updates = await updatesSince(cached.timestamp);
             if (updates.kind === "failure") {
                 return cached;
+            }
+            if (updates.kind === "snapshot") {
+                return replace(updates.details);
             }
             details =
                 updates.kind === "success"
@@ -124,7 +124,6 @@ export async function loadGroupDetails(
         }
 
         if (details.timestamp > cached.timestamp) {
-            details = broughtUpToDate(details);
             await cache.setCachedGroupDetails(cacheKey, details);
         }
         return details;
@@ -143,6 +142,7 @@ export async function loadCommunityDetails(
     updatesSince: (since: bigint) => Promise<CommunityDetailsUpdatesResponse>,
 ): Promise<CommunityDetailsResponse> {
     let fetched: Updated<CommunityDetailsUpdatesResponse> | undefined;
+    let snapshot: CommunityDetails | undefined;
     const cachedTimestamp = cache.cachedCommunityDetailsTimestamp(communityId);
 
     if (
@@ -153,31 +153,41 @@ export async function loadCommunityDetails(
         if (detailsSyncedUpTo >= detailsLastUpdated || offline()) {
             return { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
         }
-        if (updatesComplete(cachedTimestamp)) {
-            const updates = await updatesSince(cachedTimestamp);
-            if (updates.kind === "failure") {
-                return { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
-            }
-            if (updates.kind === "success_no_updates") {
-                return {
-                    kind: "success_no_updates",
-                    lastUpdated: later(detailsSyncedUpTo, updates.lastUpdated),
-                };
-            }
+        const updates = await updatesSince(cachedTimestamp);
+        if (updates.kind === "failure") {
+            return { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
+        }
+        if (updates.kind === "success_no_updates") {
+            return {
+                kind: "success_no_updates",
+                lastUpdated: later(detailsSyncedUpTo, updates.lastUpdated),
+            };
+        }
+        if (updates.kind === "snapshot") {
+            snapshot = updates.details;
+        } else {
             fetched = updates;
         }
     }
 
     return withCachedDetailsLock(communityDetailsLockKey(communityId), async () => {
         const cached = await cache.getCachedCommunityDetails(communityId);
+        const replace = async (snapshot: CommunityDetails): Promise<CommunityDetails> => {
+            if (cached !== undefined && cached.lastUpdated >= snapshot.lastUpdated) {
+                return cached;
+            }
+            await cache.setCachedCommunityDetails(communityId, snapshot);
+            return snapshot;
+        };
+        if (snapshot !== undefined) {
+            return replace(snapshot);
+        }
         if (cached === undefined) {
             const details = await initial();
-            if (details.kind !== "success") {
-                return details;
+            if (details.kind === "success") {
+                await cache.setCachedCommunityDetails(communityId, details);
             }
-            const loaded = broughtUpToDate(details);
-            await cache.setCachedCommunityDetails(communityId, loaded);
-            return loaded;
+            return details;
         }
 
         let details: CommunityDetails;
@@ -187,18 +197,12 @@ export async function loadCommunityDetails(
             if (cached.lastUpdated >= detailsLastUpdated || offline()) {
                 return cached;
             }
-            if (!updatesComplete(cached.syncedAt ?? 0n)) {
-                const reloaded = await initial();
-                if (reloaded.kind !== "success") {
-                    return cached;
-                }
-                const loaded = broughtUpToDate(reloaded);
-                await cache.setCachedCommunityDetails(communityId, loaded);
-                return loaded;
-            }
             const updates = await updatesSince(cached.lastUpdated);
             if (updates.kind === "failure") {
                 return cached;
+            }
+            if (updates.kind === "snapshot") {
+                return replace(updates.details);
             }
             details =
                 updates.kind === "success"
@@ -207,7 +211,6 @@ export async function loadCommunityDetails(
         }
 
         if (details.lastUpdated > cached.lastUpdated) {
-            details = broughtUpToDate(details);
             await cache.setCachedCommunityDetails(communityId, details);
         }
         return details;
@@ -297,16 +300,6 @@ function groupDetailsLockKey(cacheKey: string): string {
 
 function communityDetailsLockKey(communityId: string): string {
     return `community_${communityId}`;
-}
-
-// Whether the updates since `since` can be relied on to include every change made since then
-function updatesComplete(since: bigint): boolean {
-    return since >= BigInt(Date.now()) - MAX_AGE_TO_UPDATE;
-}
-
-// The details, noting that they have just been loaded or brought up to date
-function broughtUpToDate<D extends { syncedAt?: bigint }>(details: D): D {
-    return { ...details, syncedAt: BigInt(Date.now()) };
 }
 
 // The canister's timestamp can be behind the one held if the query hit a lagging replica
