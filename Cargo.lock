@@ -6258,6 +6258,7 @@ dependencies = [
  "tents",
  "test-case",
  "testing",
+ "tokio",
  "translations_canister",
  "types",
  "unruly",
