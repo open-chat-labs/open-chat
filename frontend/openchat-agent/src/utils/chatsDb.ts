@@ -73,7 +73,7 @@ import {
     type SyncTouched,
 } from "./sync";
 
-const CACHE_VERSION = 152;
+const CACHE_VERSION = 153;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -251,6 +251,19 @@ async function clearChatsStore(
 // ) {
 //     await tx.objectStore("group_details").clear();
 // }
+
+// Cached details which were brought up to date after being left for over 31 days may be missing
+// updates which the canister had already pruned. Copies written since note when they were last
+// brought up to date, so that such a copy is reloaded in full rather than updated. The copies
+// cached before then are cleared, since some of them may be missing updates already.
+async function clearDetailsStores(
+    _db: IDBPDatabase<ChatSchema>,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("group_details").clear();
+    await tx.objectStore("community_details").clear();
+}
+
 async function clearCachePrimerStore(
     _db: IDBPDatabase<ChatSchema>,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
@@ -413,7 +426,8 @@ export class ChatsDb {
             .withMigration(148, clearChatsStore)
             .withMigration(149, clearChatsStore)
             .withMigration(150, createSyncStore)
-            .withMigration(151, createChatRowStores);
+            .withMigration(151, createChatRowStores)
+            .withMigration(152, clearDetailsStores);
     }
 
     getDb(): Database {
