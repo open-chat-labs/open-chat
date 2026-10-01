@@ -8,14 +8,18 @@ use types::{CommunityMember, InstalledBotDetails, TimestampMillis, UserGroupDeta
 pub struct Args {
     pub invite_code: Option<u64>,
     pub updates_since: TimestampMillis,
+    // As for `selected_initial`, used if the details are returned in full (`SuccessSnapshot`)
+    pub max_members: Option<u32>,
 }
 
 #[ts_export(community, selected_updates)]
-#[expect(clippy::large_enum_variant)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
     SuccessNoUpdates(TimestampMillis),
+    // Some of the updates since `updates_since` are too old to have been kept, so the details are
+    // returned in full instead, as `selected_initial` returns them
+    SuccessSnapshot(crate::selected_initial::SuccessResult),
     Error(OCError),
 }
 
@@ -57,4 +61,26 @@ pub struct SuccessResult {
     #[ts(as = "Option<Vec<UserId>>", optional)]
     pub referrals_removed: Vec<UserId>,
     pub public_channel_list_updated: Option<TimestampMillis>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // `Args` as they were before `max_members` was added
+    #[derive(Serialize)]
+    struct PreviousArgs {
+        invite_code: Option<u64>,
+        updates_since: TimestampMillis,
+    }
+
+    #[test]
+    fn args_without_max_members_are_read() {
+        let bytes = msgpack::serialize_then_unwrap(PreviousArgs {
+            invite_code: None,
+            updates_since: 1,
+        });
+        let args: Args = msgpack::deserialize_then_unwrap(&bytes);
+        assert!(args.max_members.is_none());
+    }
 }

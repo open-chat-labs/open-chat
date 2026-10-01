@@ -12,7 +12,7 @@ fn selected_initial(args: Args) -> Response {
     }
 }
 
-fn selected_initial_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
+pub(crate) fn selected_initial_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
     let member = state.get_calling_member(None, false)?;
     let min_visible_message_index = member.min_visible_message_index();
     let last_updated = state.data.details_last_updated();

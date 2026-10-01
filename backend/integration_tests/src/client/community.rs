@@ -523,6 +523,7 @@ pub mod happy_path {
             &community_canister::selected_updates_v2::Args {
                 invite_code: None,
                 updates_since,
+                max_members: None,
             },
         );
 
@@ -591,6 +592,7 @@ pub mod happy_path {
             &community_canister::selected_channel_updates_v2::Args {
                 channel_id,
                 updates_since,
+                max_members: None,
             },
         );
 

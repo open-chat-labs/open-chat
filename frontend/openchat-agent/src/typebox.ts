@@ -243,6 +243,7 @@ export const GroupDeleteHistoryArgs = /* @__PURE__ */ Type.Object({
 export type GroupSelectedUpdatesArgs = Static<typeof GroupSelectedUpdatesArgs>;
 export const GroupSelectedUpdatesArgs = /* @__PURE__ */ Type.Object({
     updates_since: Type.BigInt(),
+    max_members: Type.Optional(Type.Number()),
 });
 
 export type GroupSummaryArgs = Static<typeof GroupSummaryArgs>;
@@ -3168,6 +3169,7 @@ export type CommunitySelectedChannelUpdatesArgs = Static<
 export const CommunitySelectedChannelUpdatesArgs = /* @__PURE__ */ Type.Object({
     channel_id: ChannelId,
     updates_since: Type.BigInt(),
+    max_members: Type.Optional(Type.Number()),
 });
 
 export type CommunityLeaveChannelArgs = Static<typeof CommunityLeaveChannelArgs>;
@@ -3822,6 +3824,7 @@ export type CommunitySelectedUpdatesArgs = Static<typeof CommunitySelectedUpdate
 export const CommunitySelectedUpdatesArgs = /* @__PURE__ */ Type.Object({
     invite_code: Type.Optional(Type.BigInt()),
     updates_since: Type.BigInt(),
+    max_members: Type.Optional(Type.Number()),
 });
 
 export type CommunityImportGroupSuccessResult = Static<typeof CommunityImportGroupSuccessResult>;
@@ -7285,21 +7288,6 @@ export const LocalUserIndexPayForPremiumItemResponse = /* @__PURE__ */ Type.Unio
     }),
 ]);
 
-export type CommunitySelectedChannelUpdatesResponse = Static<
-    typeof CommunitySelectedChannelUpdatesResponse
->;
-export const CommunitySelectedChannelUpdatesResponse = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Success: SelectedGroupUpdates,
-    }),
-    Type.Object({
-        SuccessNoUpdates: Type.BigInt(),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
 export type CommunitySelectedChannelInitialSuccessResult = Static<
     typeof CommunitySelectedChannelInitialSuccessResult
 >;
@@ -7438,6 +7426,9 @@ export const CommunitySelectedUpdatesResponse = /* @__PURE__ */ Type.Union([
     }),
     Type.Object({
         SuccessNoUpdates: Type.BigInt(),
+    }),
+    Type.Object({
+        SuccessSnapshot: CommunitySelectedInitialSuccessResult,
     }),
     Type.Object({
         Error: OCError,
@@ -7636,6 +7627,9 @@ export const GroupSelectedUpdatesResponse = /* @__PURE__ */ Type.Union([
     }),
     Type.Object({
         SuccessNoUpdates: Type.BigInt(),
+    }),
+    Type.Object({
+        SuccessSnapshot: GroupSelectedInitialSuccessResult,
     }),
     Type.Object({
         Error: OCError,
@@ -8678,6 +8672,24 @@ export type LocalUserIndexMoveFundsFromOldCanisterResponse = Static<
 export const LocalUserIndexMoveFundsFromOldCanisterResponse = /* @__PURE__ */ Type.Union([
     Type.Object({
         Success: Type.Array(LocalUserIndexMoveFundsFromOldCanisterLedgerOutcome),
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type CommunitySelectedChannelUpdatesResponse = Static<
+    typeof CommunitySelectedChannelUpdatesResponse
+>;
+export const CommunitySelectedChannelUpdatesResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: SelectedGroupUpdates,
+    }),
+    Type.Object({
+        SuccessNoUpdates: Type.BigInt(),
+    }),
+    Type.Object({
+        SuccessSnapshot: CommunitySelectedChannelInitialSuccessResult,
     }),
     Type.Object({
         Error: OCError,
