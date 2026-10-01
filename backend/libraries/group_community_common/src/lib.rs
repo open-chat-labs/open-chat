@@ -9,6 +9,7 @@ pub mod openai_moderation;
 mod payment_locks;
 mod payment_receipts;
 mod pending_payments_queue;
+mod unlapsing;
 mod user_cache;
 
 pub use achievements::*;
@@ -21,4 +22,5 @@ pub use members_page::*;
 pub use payment_locks::*;
 pub use payment_receipts::*;
 pub use pending_payments_queue::*;
+pub use unlapsing::*;
 pub use user_cache::*;

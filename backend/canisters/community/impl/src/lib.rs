@@ -663,6 +663,29 @@ struct Data {
 }
 
 impl Data {
+    // Records each member who is a bot as one, in the community and in each of its channels they're in.
+    // `CommunityMembers::add` didn't record them, so they were added to channels as users. Also drops
+    // any events queued for them, eg. a mention in such a channel, which a bot's canister doesn't take,
+    // so they would be retried forever. Returns the number of bots, of channel memberships updated
+    // and of events dropped.
+    // TODO: Remove this once every Community canister has been upgraded
+    pub fn populate_bots(&mut self) -> (usize, usize, usize) {
+        let bots = self.members.populate_bots();
+        let mut channel_memberships = 0;
+        for (user_id, user_type) in bots.iter() {
+            for channel_id in self.members.channels_for_member(*user_id) {
+                if let Some(channel) = self.channels.get_mut(channel_id)
+                    && channel.chat.members.set_bot_user_type(*user_id, *user_type)
+                {
+                    channel_memberships += 1;
+                }
+            }
+        }
+        let queued = self.user_events_queue.len();
+        self.user_events_queue.retain(|event| !bots.contains_key(&event.value.0));
+        (bots.len(), channel_memberships, queued - self.user_events_queue.len())
+    }
+
     // Moves the events queued before they were batched per canister into the queue which does so,
     // pairing each with the user it was queued for
     // TODO: Remove this, along with `user_event_sync_queue`, once it has run in every canister
@@ -980,16 +1003,6 @@ impl Data {
         }
     }
 
-    pub fn unlapse_all(&mut self, channel_id: Option<ChannelId>, now: TimestampMillis) {
-        if let Some(channel_id) = channel_id {
-            if let Some(channel) = self.channels.get_mut(&channel_id) {
-                channel.chat.members.unlapse_all(now);
-            }
-        } else {
-            self.members.unlapse_all(now);
-        }
-    }
-
     pub fn update_member_expiry(
         &mut self,
         channel_id: Option<ChannelId>,
@@ -1006,9 +1019,16 @@ impl Data {
                 self.expiring_members
                     .change_gate_expiry(channel_id, new_gate_expiry as i64 - prev_gate_expiry as i64);
             } else {
-                // If the access gate has been removed then clear lapsed status of members
+                // If the access gate has been removed then clear lapsed status of members, a batch at
+                // a time (see the `unlapse_members` job)
                 if new_gate_config.is_none() {
-                    self.unlapse_all(channel_id, now);
+                    if let Some(channel_id) = channel_id {
+                        if let Some(channel) = self.channels.get_mut(&channel_id) {
+                            channel.chat.members.start_unlapsing(now);
+                        }
+                    } else {
+                        self.members.start_unlapsing(now);
+                    }
                 }
 
                 // There is no expiring gate any longer so remove the expiring members

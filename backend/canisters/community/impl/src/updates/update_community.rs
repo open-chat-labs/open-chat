@@ -322,6 +322,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         state.data.gate_config = Timestamped::new(gate_config.clone(), now);
 
         state.data.update_member_expiry(None, &prev_gate_config, now);
+        jobs::unlapse_members::start_job_if_required(state);
 
         state.push_community_event(CommunityEventInternal::GateUpdated(Box::new(GroupGateUpdatedInternal {
             updated_by: my_user_id,
