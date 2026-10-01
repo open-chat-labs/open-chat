@@ -1,7 +1,7 @@
 use crate::model::members::stable_memory::MembersStableStorage;
 use crate::model::user_groups::{UserGroup, UserGroups};
 use constants::calculate_summary_updates_data_removal_cutoff;
-use group_community_common::{FormerMembers, Member, MemberUpdate, Members, MembersPage, members_page};
+use group_community_common::{FormerMembers, Member, MemberUpdate, Members, MembersPage, Unlapsing, members_page};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
@@ -44,6 +44,8 @@ pub struct CommunityMembers {
     // imported channels' events refer to them too
     #[serde(default)]
     former_members: FormerMembers,
+    #[serde(default)]
+    unlapsing: Option<Unlapsing>,
 }
 
 impl CommunityMembers {
@@ -93,6 +95,7 @@ impl CommunityMembers {
             updates: BTreeSet::new(),
             latest_update_removed: 0,
             former_members: FormerMembers::default(),
+            unlapsing: None,
         }
     }
 
@@ -783,11 +786,47 @@ impl CommunityMembers {
         }
     }
 
-    pub fn unlapse_all(&mut self, now: TimestampMillis) {
+    // Starts unlapsing the members who have lapsed up to now, as is done once there is no longer an
+    // access gate (see `unlapse_while`). If unlapsing is already under way it starts again, so that
+    // it covers those who have lapsed since it started too.
+    pub fn start_unlapsing(&mut self, now: TimestampMillis) {
+        self.unlapsing = Some(Unlapsing {
+            before: now,
+            after: None,
+        });
+    }
+
+    pub fn is_unlapsing(&self) -> bool {
+        self.unlapsing.is_some()
+    }
+
+    // Unlapses, in order of user id, the members who lapsed before `start_unlapsing` was called,
+    // until `keep_going` returns false or there are none left. Each is written to stable memory, so
+    // a great many are unlapsed a batch at a time (see the `unlapse_members` job). Members who have
+    // lapsed since, under an access gate set since, are left lapsed. Returns those unlapsed.
+    pub fn unlapse_while(&mut self, now: TimestampMillis, mut keep_going: impl FnMut() -> bool) -> Vec<UserId> {
+        let Some(Unlapsing { before, mut after }) = self.unlapsing else {
+            return Vec::new();
+        };
         self.prune_member_updates(now);
-        for user_id in std::mem::take(&mut self.lapsed) {
-            if matches!(self.update_member(&user_id, |m| m.set_lapsed(false, now)), Some(true)) {
+        let mut unlapsed = Vec::new();
+        loop {
+            if !keep_going() {
+                self.unlapsing = Some(Unlapsing { before, after });
+                return unlapsed;
+            }
+            let start = after.map_or(Bound::Unbounded, Bound::Excluded);
+            let Some(user_id) = self.lapsed.range((start, Bound::Unbounded)).next().copied() else {
+                self.unlapsing = None;
+                return unlapsed;
+            };
+            after = Some(user_id);
+
+            let updated = self.update_member(&user_id, |m| m.lapsed.timestamp <= before && m.set_lapsed(false, now));
+            if matches!(updated, Some(true)) {
+                self.lapsed.remove(&user_id);
                 self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
+                unlapsed.push(user_id);
             }
         }
     }
@@ -1381,6 +1420,66 @@ mod tests {
         });
 
         assert_eq!(member_ids(&found), user_ids([2, 3]));
+    }
+
+    #[test]
+    fn lapsed_members_are_unlapsed_until_told_to_stop() {
+        let mut members = members_for_page_tests(5);
+        for user in 2..=5 {
+            members.update_lapsed(test_user_id(user), true, 3);
+        }
+        members.start_unlapsing(10);
+
+        // Stopped after 2
+        let mut asked = 0;
+        let unlapsed = members.unlapse_while(10, || {
+            asked += 1;
+            asked <= 2
+        });
+        assert_eq!(unlapsed, user_ids([2, 3]));
+        assert!(members.is_unlapsing());
+        assert_eq!(members.lapsed().len(), 2);
+        assert!(!members.get_by_user_id(&test_user_id(2)).unwrap().lapsed().value);
+        assert!(members.get_by_user_id(&test_user_id(5)).unwrap().lapsed().value);
+
+        // Then the rest
+        assert_eq!(members.unlapse_while(11, || true), user_ids([4, 5]));
+        assert!(!members.is_unlapsing());
+        assert!(members.lapsed().is_empty());
+        assert!((2..=5).all(|user| !members.get_by_user_id(&test_user_id(user)).unwrap().lapsed().value));
+        // Each is in the updates, so that clients learn of it
+        let unlapsed: Vec<_> = members
+            .iter_latest_updates(3)
+            .filter(|(_, update)| matches!(update, MemberUpdate::Unlapsed))
+            .map(|(user_id, _)| user_id)
+            .collect();
+        assert_eq!(unlapsed.len(), 4);
+    }
+
+    #[test]
+    fn members_who_lapse_after_unlapsing_starts_are_left_lapsed() {
+        let mut members = members_for_page_tests(4);
+        members.update_lapsed(test_user_id(2), true, 3);
+        members.update_lapsed(test_user_id(4), true, 3);
+        members.start_unlapsing(10);
+
+        let mut asked = 0;
+        let unlapsed = members.unlapse_while(10, || {
+            asked += 1;
+            asked <= 1
+        });
+        assert_eq!(unlapsed, user_ids([2]));
+
+        // User 3 lapses under an access gate set since the last was removed
+        members.update_lapsed(test_user_id(3), true, 20);
+        assert_eq!(members.unlapse_while(21, || true), user_ids([4]));
+        assert!(!members.is_unlapsing());
+        assert!(members.get_by_user_id(&test_user_id(3)).unwrap().lapsed().value);
+
+        // Until that gate is removed too
+        members.start_unlapsing(30);
+        assert_eq!(members.unlapse_while(30, || true), user_ids([3]));
+        assert!(members.lapsed().is_empty());
     }
 
     // Holds users 1 to `count`, of whom user 1 is the owner

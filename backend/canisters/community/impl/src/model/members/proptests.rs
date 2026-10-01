@@ -145,7 +145,8 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
             }
         }
         Operation::UnlapseAll => {
-            members.unlapse_all(timestamp);
+            members.start_unlapsing(timestamp);
+            members.unlapse_while(timestamp, || true);
         }
         Operation::SetSuspended { user_index, suspended } => {
             if suspended {

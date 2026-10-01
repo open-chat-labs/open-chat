@@ -98,6 +98,54 @@ fn import_group_succeeds() {
     wait_for_canister_to_be_deleted(env, group_id.into());
 }
 
+// The group's members who aren't members of the community are added to it a batch at a time (in
+// test mode, 2 at a time)
+#[test]
+fn import_group_adds_its_members_to_the_community_a_batch_at_a_time() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    let members: Vec<_> = (0..5).map(|_| client::register_user(env, canister_ids)).collect();
+    for member in members.iter() {
+        client::group::happy_path::join_group(env, member.principal, group_id);
+    }
+    let default_channels: Vec<_> = (0..2).map(|_| random_string()).collect();
+    let community_id = client::user::happy_path::create_community(env, &owner, &random_string(), true, default_channels);
+    tick_many(env, 3);
+
+    let import_group_response = client::community::happy_path::import_group(env, owner.principal, community_id, group_id);
+    tick_many(env, 30);
+
+    for member in members.iter() {
+        // A member of the community, the imported channel and the community's other public channels
+        let summary = client::community::happy_path::summary(env, member.principal, community_id);
+        assert!(
+            summary.membership.is_some(),
+            "{} isn't a member of the community",
+            member.user_id
+        );
+        assert_eq!(
+            summary.channels.len(),
+            3,
+            "{} isn't a member of every channel",
+            member.user_id
+        );
+        assert!(
+            summary
+                .channels
+                .iter()
+                .any(|c| c.channel_id == import_group_response.channel_id)
+        );
+    }
+}
+
 #[test]
 fn read_up_to_data_maintained_after_import() {
     let mut wrapper = ENV.deref().get();

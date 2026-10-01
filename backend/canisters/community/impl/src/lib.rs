@@ -980,16 +980,6 @@ impl Data {
         }
     }
 
-    pub fn unlapse_all(&mut self, channel_id: Option<ChannelId>, now: TimestampMillis) {
-        if let Some(channel_id) = channel_id {
-            if let Some(channel) = self.channels.get_mut(&channel_id) {
-                channel.chat.members.unlapse_all(now);
-            }
-        } else {
-            self.members.unlapse_all(now);
-        }
-    }
-
     pub fn update_member_expiry(
         &mut self,
         channel_id: Option<ChannelId>,
@@ -1006,9 +996,16 @@ impl Data {
                 self.expiring_members
                     .change_gate_expiry(channel_id, new_gate_expiry as i64 - prev_gate_expiry as i64);
             } else {
-                // If the access gate has been removed then clear lapsed status of members
+                // If the access gate has been removed then clear lapsed status of members, a batch at
+                // a time (see the `unlapse_members` job)
                 if new_gate_config.is_none() {
-                    self.unlapse_all(channel_id, now);
+                    if let Some(channel_id) = channel_id {
+                        if let Some(channel) = self.channels.get_mut(&channel_id) {
+                            channel.chat.members.start_unlapsing(now);
+                        }
+                    } else {
+                        self.members.start_unlapsing(now);
+                    }
                 }
 
                 // There is no expiring gate any longer so remove the expiring members
