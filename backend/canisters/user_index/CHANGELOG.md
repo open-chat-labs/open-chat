@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Accept a `page_index` in `search`, so callers can look beyond the first page of results ([#9710](https://github.com/open-chat-labs/open-chat/pull/9710))
+
 ### Changed
 
 - Stop retrying events sent to the NotificationsIndex and OnlineUsers canisters when `c2c_user_index` isn't found, now that both have it ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))

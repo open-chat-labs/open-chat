@@ -622,6 +622,52 @@ impl CommunityMembers {
         )
     }
 
+    // Up to `max_results` of the members whose display names contain `term` (ignoring case). Those
+    // whose display names start with it come first, then each shortest first, then in order of
+    // display name. `keep_going` is asked before each member with a display name is read, so that
+    // the search can be cut short, in which case the matches found so far are returned.
+    pub fn search_display_names(
+        &self,
+        term: &str,
+        max_results: usize,
+        mut keep_going: impl FnMut() -> bool,
+    ) -> Vec<CommunityMember> {
+        let term = term.trim().to_uppercase();
+        // Display names are at most 25 characters, which in upper case can be up to 3 times as many,
+        // so a longer term can't match any. Comparing one with every display name would be costly.
+        if term.is_empty() || term.chars().count() > 75 {
+            return Vec::new();
+        }
+
+        let mut matches = Vec::new();
+        for user_id in self.members_with_display_names.iter() {
+            if !keep_going() {
+                break;
+            }
+            if let Some(member) = self.members_map.get(user_id)
+                && let Some(display_name) = member.display_name().value.as_deref()
+            {
+                let display_name = display_name.to_uppercase();
+                if let Some(position) = display_name.find(&term) {
+                    matches.push((position > 0, display_name.chars().count(), display_name, member));
+                }
+            }
+        }
+
+        matches.sort_unstable_by(|(c1, l1, n1, m1), (c2, l2, n2, m2)| {
+            c1.cmp(c2)
+                .then(l1.cmp(l2))
+                .then_with(|| n1.cmp(n2))
+                .then(m1.user_id.cmp(&m2.user_id))
+        });
+
+        matches
+            .into_iter()
+            .take(max_results)
+            .map(|(_, _, _, member)| CommunityMember::from(member))
+            .collect()
+    }
+
     pub fn is_former_member(&self, user_id: &UserId) -> bool {
         self.former_members.contains(user_id)
     }
@@ -1289,6 +1335,46 @@ mod tests {
         assert_eq!(member_ids(&all.members), user_ids([1, 8, 3, 5]));
         assert_eq!(all.basic_members, user_ids([2, 4, 6, 7, 9]));
         assert_eq!(all.more_members_after, None);
+    }
+
+    #[test]
+    fn display_names_are_searched_best_matches_first() {
+        let mut members = members_for_page_tests(7);
+        members.set_display_name(test_user_id(2), Some("Bobby".to_string()), 1);
+        members.set_display_name(test_user_id(3), Some("Jimbob".to_string()), 1);
+        members.set_display_name(test_user_id(4), Some("bob".to_string()), 1);
+        members.set_display_name(test_user_id(5), Some("Alice".to_string()), 1);
+        members.set_display_name(test_user_id(6), Some("Bobbi".to_string()), 1);
+        // A display name which has been removed isn't searched
+        members.set_display_name(test_user_id(7), Some("Bob Jr".to_string()), 1);
+        members.set_display_name(test_user_id(7), None, 2);
+
+        // Those starting with the term (ignoring case) come first, shortest first, then those
+        // which only contain it
+        let found = members.search_display_names(" BOB ", 10, || true);
+        assert_eq!(member_ids(&found), user_ids([4, 6, 2, 3]));
+        assert_eq!(found[0].display_name.as_deref(), Some("bob"));
+
+        assert_eq!(member_ids(&members.search_display_names("bob", 2, || true)), user_ids([4, 6]));
+        assert!(members.search_display_names("carol", 10, || true).is_empty());
+        assert!(members.search_display_names("  ", 10, || true).is_empty());
+        assert!(members.search_display_names(&"b".repeat(76), 10, || true).is_empty());
+    }
+
+    #[test]
+    fn a_search_cut_short_returns_what_it_has_found() {
+        let mut members = members_for_page_tests(4);
+        for user in 2..=4 {
+            members.set_display_name(test_user_id(user), Some(format!("name{user}")), 1);
+        }
+
+        let mut asked = 0;
+        let found = members.search_display_names("name", 10, || {
+            asked += 1;
+            asked <= 2
+        });
+
+        assert_eq!(member_ids(&found), user_ids([2, 3]));
     }
 
     // Holds users 1 to `count`, of whom user 1 is the owner

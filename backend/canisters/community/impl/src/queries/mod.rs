@@ -26,6 +26,7 @@ mod lookup_members;
 mod members;
 mod messages_by_message_index;
 mod search_channel;
+mod search_members;
 mod selected_channel_initial;
 mod selected_channel_updates;
 mod selected_initial;
