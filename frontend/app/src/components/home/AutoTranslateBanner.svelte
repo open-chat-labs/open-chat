@@ -54,7 +54,7 @@
             {#if $error !== undefined}
                 <Translatable resourceKey={i18nKey("autoTranslate.failed")} />
             {:else if $needsDownload.size > 0}
-                <Link underline={"always"} onClick={() => onDeviceTranslator.prime()}>
+                <Link underline={"hover"} onClick={() => onDeviceTranslator.prime()}>
                     <Translatable
                         resourceKey={i18nKey("autoTranslate.downloadPacks", {
                             languages: missingLanguages,
@@ -70,7 +70,7 @@
                     resourceKey={i18nKey("autoTranslate.active", { language: targetLanguage })} />
             {/if}
         </span>
-        <Link underline={"always"} onClick={() => setAutoTranslate(chatId, false)}>
+        <Link underline={"hover"} onClick={() => setAutoTranslate(chatId, false)}>
             <Translatable resourceKey={i18nKey("autoTranslate.turnOff")} />
         </Link>
     </div>
@@ -83,7 +83,7 @@
         justify-content: space-between;
         align-items: center;
         gap: $sp3;
-        padding: $sp2 $sp4;
+        padding: $sp3 $sp4;
         background-color: var(--entry-bg);
         border-bottom: var(--bw) solid var(--bd);
         color: var(--txt-light);

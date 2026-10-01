@@ -694,7 +694,7 @@
                             {:else if autoTranslatePending !== undefined && !inert}
                                 <div class="auto-translation">
                                     <Link
-                                        underline={"always"}
+                                        underline={"hover"}
                                         onClick={() => onDeviceTranslator.prime()}>
                                         <Translatable
                                             resourceKey={i18nKey("autoTranslate.translateFrom", {
