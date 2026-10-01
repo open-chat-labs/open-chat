@@ -1523,7 +1523,7 @@ fn updating_autonomous_permissions_should_propogate_to_installations(chat_type: 
     assert!(notifications.notifications.is_empty());
 }
 
-fn register_bot(
+pub(crate) fn register_bot(
     env: &mut PocketIc,
     owner: &User,
     user_index_canister_id: CanisterId,

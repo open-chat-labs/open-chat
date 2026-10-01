@@ -17,11 +17,13 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> OCResult<Response>
         return Ok(SuccessNoUpdates(last_updated));
     }
 
-    if state.data.chat.members.any_updates_removed(args.updates_since)
-        || state.data.bots.any_updates_removed(args.updates_since)
+    // Only callers which pass `max_members` can read `SuccessSnapshot`
+    if let Some(max_members) = args.max_members
+        && (state.data.chat.members.any_updates_removed(args.updates_since)
+            || state.data.bots.any_updates_removed(args.updates_since))
     {
         let args = group_canister::selected_initial::Args {
-            max_members: args.max_members,
+            max_members: Some(max_members),
         };
         return selected_initial_impl(args, state).map(SuccessSnapshot);
     }
