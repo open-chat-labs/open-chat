@@ -1,8 +1,10 @@
+import { AccountIdentifier } from "@icp-sdk/canisters/ledger/icp";
 import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, test } from "vitest";
 import {
     encodeIcrcAccount,
     icrcAccountToUserId,
+    isAccountOfMultiUserCanisterUserId,
     spenderSubaccount,
     userCanisterSpenderAccount,
     userWalletAccount,
@@ -101,6 +103,36 @@ describe("icrcAccountToUserId", () => {
         const owner = Principal.fromText(canisterId);
 
         expect(icrcAccountToUserId({ owner, subaccount: new Uint8Array(31) })).toBeUndefined();
+    });
+});
+
+describe("isAccountOfMultiUserCanisterUserId", () => {
+    test("a MultiUser user's id is refused, under any subaccount", () => {
+        const subaccount = new Uint8Array(32);
+        subaccount[31] = 1;
+        const withSubaccount = encodeIcrcAccount({
+            owner: Principal.fromText(indexedUserId),
+            subaccount,
+        });
+
+        expect(isAccountOfMultiUserCanisterUserId(indexedUserId)).toBe(true);
+        expect(isAccountOfMultiUserCanisterUserId(withSubaccount)).toBe(true);
+    });
+
+    test("a wallet is not refused", () => {
+        expect(isAccountOfMultiUserCanisterUserId(canisterId)).toBe(false);
+        expect(isAccountOfMultiUserCanisterUserId(principal)).toBe(false);
+    });
+
+    test("anything else is not refused", () => {
+        const accountIdentifier = AccountIdentifier.fromPrincipal({
+            principal: Principal.fromText(indexedUserId),
+        }).toHex();
+
+        expect(isAccountOfMultiUserCanisterUserId("")).toBe(false);
+        expect(isAccountOfMultiUserCanisterUserId("not an address")).toBe(false);
+        // A hash, from which the owner can't be read
+        expect(isAccountOfMultiUserCanisterUserId(accountIdentifier)).toBe(false);
     });
 });
 

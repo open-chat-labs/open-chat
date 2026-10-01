@@ -8,6 +8,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Pass on when the details of each group, community and channel last changed in the summaries relayed to clients ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
+- Report a community whose canister has been uninstalled to the GroupIndex, then stop tracking it ([#9672](https://github.com/open-chat-labs/open-chat/pull/9672))
+
+### Changed
+
+- Keep the recorded wasm chunk hashes when upgraded, now that every LocalUserIndex clears them whenever it clears its chunk store ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))
+- Refund a deleted group's or community's cycles before deleting its canister ([#9680](https://github.com/open-chat-labs/open-chat/pull/9680))
+- Name a wrong placement (line, bulb, tent, bridge or CHAT) before a wrong "no" mark in the free mistake check, since the placement is usually the cause ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+- Serve daily puzzle hints at one level for one price: the step's outline and technique, never its conclusions. A step the user already has is re-served free, whatever level an older client asks for ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+
+### Removed
+
+- Remove the legacy user event queue now that every LocalUserIndex has drained it ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))
+
+### Fixed
+
+- Compare a hint step's conclusions with its focus and target as the cells the board draws them on, so Bridges hints, whose conclusions are gaps between islands, no longer skip the steps they rest on or send an outline that names their answer ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+
+## [[2.0.2077](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2077-local_user_index)] - 2026-09-30
+
+### Added
+
 - Add the `use_multi_user_canister` flag to `register_user`, which in test mode registers the user in a MultiUser canister (creating one if there are none) rather than in a canister of their own ([#9524](https://github.com/open-chat-labs/open-chat/pull/9524))
 - Store the map of the old to the new id of each user migrated to a MultiUser canister, synced from the UserIndex ([#9536](https://github.com/open-chat-labs/open-chat/pull/9536))
 - Add the `migrated_user_ids` query, which takes a list of user ids and returns the latest id of each user in it who has been migrated to a MultiUser canister ([#9538](https://github.com/open-chat-labs/open-chat/pull/9538))
@@ -23,7 +45,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Pass the OpenChat bot's welcome messages to the MultiUser canister when registering a user into one ([#9643](https://github.com/open-chat-labs/open-chat/pull/9643))
 - Add `move_funds_from_old_canister`, which moves the funds held by a migrated user's old canister to their wallet, by installing the call relay on the canister ([#9623](https://github.com/open-chat-labs/open-chat/pull/9623))
 - Refresh the tokens known to the Registry daily, which are the only ledgers `move_funds_from_old_canister` moves funds from ([#9623](https://github.com/open-chat-labs/open-chat/pull/9623))
-- Pass on when the details of each group, community and channel last changed in the summaries relayed to clients ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 
 ### Changed
 

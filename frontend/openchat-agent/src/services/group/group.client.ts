@@ -36,10 +36,12 @@ import type {
     ResetInviteCodeResponse,
     Rules,
     SearchGroupChatResponse,
+    PendingCryptocurrencyTransfer,
     SendMessageResponse,
     SetVideoCallPresenceResponse,
     Tally,
     ThreadPreviewsResponse,
+    TipMessageResponse,
     ToggleMuteNotificationResponse,
     UnblockUserResponse,
     UndeleteMessageResponse,
@@ -106,6 +108,7 @@ import {
     GroupSetVideoCallPresenceArgs,
     GroupThreadPreviewsArgs,
     GroupThreadPreviewsResponse,
+    GroupTipMessageArgs,
     GroupToggleMuteNotificationsArgs,
     GroupUnblockUserArgs,
     GroupUndeleteMessagesArgs,
@@ -142,6 +145,7 @@ import {
     apiAccessGateConfig,
     apiExternalBotPermissions,
     apiMessageContent,
+    apiPendingTransaction,
     apiUser as apiUserV2,
     apiVideoCallPresence,
     changeRoleResult,
@@ -160,6 +164,8 @@ import {
     pushEventSuccess,
     searchGroupChatResponse,
     sendMessageSuccess,
+    transferFrom,
+    transferRecipient,
     threadPreviewsSuccess,
     undeleteMessageSuccess,
     unitResult,
@@ -370,6 +376,8 @@ export class GroupClient
         messageFilterFailed: bigint | undefined,
         newAchievement: boolean,
         onRequestAccepted: () => void,
+        // The account the group pulls the message's transfer from, if it holds one
+        fromAccount?: string,
     ): Promise<[SendMessageResponse, Message]> {
         const chatId = this.groupIdToChatId(groupId);
 
@@ -384,8 +392,12 @@ export class GroupClient
         return uploadContentPromise.then((content) => {
             const newEvent =
                 content !== undefined ? { ...event, event: { ...event.event, content } } : event;
+            const toSend =
+                fromAccount === undefined
+                    ? newEvent.event.content
+                    : transferFrom(newEvent.event.content, fromAccount);
             const args = {
-                content: apiMessageContent(newEvent.event.content),
+                content: apiMessageContent(toSend),
                 message_id: newEvent.event.messageId,
                 sender_name: senderName,
                 sender_display_name: senderDisplayName,
@@ -406,20 +418,27 @@ export class GroupClient
                 groupId,
                 "send_message_v2",
                 args,
-                (resp) => mapResult(resp, sendMessageSuccess),
+                (resp) =>
+                    mapResult(resp, (value) =>
+                        sendMessageSuccess(
+                            value,
+                            newEvent.event.sender,
+                            transferRecipient(newEvent.event.content),
+                        ),
+                    ),
                 GroupSendMessageArgs,
                 GroupSendMessageResponse,
                 onRequestAccepted,
             )
-                .then((resp) => {
-                    const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
+                .then((resp) =>
+                    // Returns the message as it was sent, a prize or swap offer in place of the
+                    // content it was made from
                     this.chatsDb.setCachedMessageFromSendResponse(
                         chatId,
                         newEvent,
                         threadRootMessageIndex,
-                    )(retVal);
-                    return retVal;
-                })
+                    )([resp, newEvent.event]),
+                )
                 .catch((err) => {
                     this.chatsDb.recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
                     throw err;
@@ -959,6 +978,36 @@ export class GroupClient
             },
             isSuccess,
             GroupReportMessageArgs,
+            UnitResult,
+        );
+    }
+
+    // Tips a message with a transfer the group pulls from the account `transfer` names, which
+    // must have approved the group to, into the wallet of the message's sender
+    tipMessage(
+        groupId: string,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        transfer: PendingCryptocurrencyTransfer,
+        decimals: number,
+        username: string,
+        displayName: string | undefined,
+        newAchievement: boolean,
+    ): Promise<TipMessageResponse> {
+        return this.update(
+            groupId,
+            "tip_message",
+            {
+                thread_root_message_index: threadRootMessageIndex,
+                message_id: messageId,
+                transfer: apiPendingTransaction(transfer),
+                decimals,
+                username,
+                display_name: displayName,
+                new_achievement: newAchievement,
+            },
+            unitResult,
+            GroupTipMessageArgs,
             UnitResult,
         );
     }

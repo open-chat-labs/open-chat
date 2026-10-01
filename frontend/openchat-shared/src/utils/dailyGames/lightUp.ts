@@ -5,7 +5,14 @@
 // Grid: width*height bytes row-major, 1 = bulb, 0 = no bulb. Cell key = y*width+x.
 
 import { LIGHT_UP_GAME_ID } from "../../domain/dailyPuzzle";
-import type { DailyGame, GameElement, HintKeyStatus, Violation } from "./types";
+import type {
+    DailyGame,
+    GameElement,
+    HintCaption,
+    HintKeyStatus,
+    HintStep,
+    Violation,
+} from "./types";
 
 export type LightUpCell = "empty" | "bulb" | "dot";
 export type LightUpDescCell = { kind: "white" } | { kind: "black"; clue?: number };
@@ -195,6 +202,125 @@ function canStillBeLit(desc: LightUpDescription, grid: LightUpCell[], index: num
     return false;
 }
 
+/** The white cells a bulb at `index` would shine on, up to the nearest black cell or edge. */
+function sight(desc: LightUpDescription, index: number): number[] {
+    const w = desc.width;
+    const h = desc.height;
+    const x = index % w;
+    const y = Math.floor(index / w);
+    const out: number[] = [];
+    for (const [dx, dy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+    ]) {
+        for (
+            let cx = x + dx, cy = y + dy;
+            cx >= 0 && cx < w && cy >= 0 && cy < h;
+            cx += dx, cy += dy
+        ) {
+            const j = cy * w + cx;
+            if (desc.cells[j].kind !== "white") break;
+            out.push(j);
+        }
+    }
+    return out;
+}
+
+/**
+ * The sentence for a served step, naming the number or cell it is about by its row and column.
+ * Every step reasons about one unit, listed whole in its focus (invariant 23): a dark cell with
+ * every cell that could shine on it, or a number with the white cells beside it. Undefined for a
+ * step that cannot be read that way, which then gets the technique's fixed sentence.
+ */
+export function hintCaption(
+    desc: LightUpDescription,
+    grid: LightUpCell[],
+    step: HintStep,
+): HintCaption | undefined {
+    const w = desc.width;
+    const focus = new Set(step.focus);
+    const target = step.target;
+    const at = (k: number) => ({ row: Math.floor(k / w) + 1, column: (k % w) + 1 });
+    const clueAt = (k: number) => {
+        const cell = desc.cells[k];
+        return cell?.kind === "black" ? cell.clue : undefined;
+    };
+    const unit = (k: number) => [k, ...sight(desc, k)];
+    const listed = (cells: number[]) => cells.every((k) => focus.has(k));
+
+    switch (step.technique) {
+        case 1: {
+            // OnlyOneWayToLight: the target is the dark cell, withheld when the bulb goes on it
+            if (target.length === 1) return { key: "hint.onlyWay.cell", params: at(target[0]) };
+            if (target.length > 0) return undefined;
+            // Then the focus is that cell and every cell that could shine on it, and the others
+            // are lit or ruled out, so it is the one cell of them still open
+            const lit = computeLighting(desc, grid);
+            const dark = step.focus.filter(
+                (k) =>
+                    desc.cells[k]?.kind === "white" &&
+                    grid[k] === "empty" &&
+                    !lit[k] &&
+                    unit(k).length === focus.size &&
+                    listed(unit(k)),
+            );
+            return dark.length === 1
+                ? { key: "hint.onlyWay.self", params: at(dark[0]) }
+                : undefined;
+        }
+        case 2:
+        case 3: {
+            // ClueSatisfied and ClueForced: the target is the number
+            if (target.length !== 1) return undefined;
+            const number = clueAt(target[0]);
+            if (number === undefined) return undefined;
+            const params = { number, ...at(target[0]) };
+            if (step.technique === 3) return { key: "hint.clueForced", params };
+            return {
+                key: number === 0 ? "hint.clueSatisfied.zero" : "hint.clueSatisfied.some",
+                params,
+            };
+        }
+        case 4: {
+            // SetExclusion: the target is the unit's open cells, one of which must hold a bulb,
+            // and the ? cell is the one a bulb would rule them all out from
+            if (target.length === 0) return undefined;
+            const clues = step.focus.filter((k) => clueAt(k) !== undefined);
+            if (clues.length === 1) {
+                const c = clues[0];
+                const beside = neighbours(desc, c).filter((j) => desc.cells[j].kind === "white");
+                if (!listed(beside) || !target.every((k) => beside.includes(k))) return undefined;
+                const params = { number: clueAt(c)!, ...at(c) };
+                // The ? cell can itself be one of the number's cells
+                const outside = step.focus.some((k) => k !== c && !beside.includes(k));
+                return {
+                    key: outside ? "hint.setExclusion.clue" : "hint.setExclusion.clueBeside",
+                    params,
+                };
+            }
+            if (clues.length > 0) return undefined;
+            // A dark cell: its unit lies whole in the focus, holds the outlined cells and leaves
+            // out only the ? cell. Two cells of one line can share a unit, and then either names it.
+            const lit = computeLighting(desc, grid);
+            const dark = step.focus.find((k) => {
+                const cells = unit(k);
+                return (
+                    !lit[k] &&
+                    cells.length === focus.size - 1 &&
+                    listed(cells) &&
+                    target.every((t) => cells.includes(t))
+                );
+            });
+            return dark === undefined
+                ? undefined
+                : { key: "hint.setExclusion.dark", params: at(dark) };
+        }
+    }
+    return undefined;
+}
+
 // Violation kinds for the board. "clash" = a bulb that sees another or sits on a black cell.
 // "over" = a clue with too many bulbs. Both are wrong the moment they happen. A clue short of
 // bulbs is "under" while enough of its neighbours are still free to meet it, which the board
@@ -305,4 +431,5 @@ export const lightUp: DailyGame<LightUpDescription, LightUpCell[]> = {
         });
         return out;
     },
+    hintCaption,
 };

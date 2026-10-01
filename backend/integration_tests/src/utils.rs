@@ -5,7 +5,7 @@ use constants::{
 };
 use pocket_ic::PocketIc;
 use rand::{RngExt, SeedableRng, rngs::StdRng};
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 use std::{path::PathBuf, time::UNIX_EPOCH};
 use types::{CanisterId, Hash, HttpRequest, HttpResponse, TimestampMillis, TimestampNanos, TokenInfo};
 
@@ -75,6 +75,26 @@ pub fn try_metrics(env: &PocketIc, canister_id: CanisterId) -> Option<serde_json
         .ok()?;
     let response: HttpResponse = candid::decode_one(&bytes).ok()?;
     serde_json::from_slice(&response.body).ok()
+}
+
+// Waits for the canister of a deleted group or community to be deleted, which its LocalUserIndex
+// does once it has uninstalled the canister and refunded its cycles. The refund can be held up by
+// the IC's install_code rate limit if the canister was installed only moments ago, in which case
+// the LocalUserIndex retries after a delay, so time is advanced if it takes more than a few rounds.
+// A test which gets that far should discard its environment.
+pub fn wait_for_canister_to_be_deleted(env: &mut PocketIc, canister_id: CanisterId) {
+    for i in 0..220 {
+        if !env.canister_exists(canister_id) {
+            return;
+        }
+        if i < 20 {
+            env.tick();
+        } else {
+            env.advance_time(Duration::from_secs(60));
+            tick_many(env, 5);
+        }
+    }
+    panic!("Canister {canister_id} was not deleted");
 }
 
 pub fn metrics(env: &PocketIc, canister_id: CanisterId) -> serde_json::Value {

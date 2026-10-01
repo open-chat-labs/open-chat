@@ -52,3 +52,51 @@ describe("direct message qualification", () => {
         expect(commandSupportsDirectMessages(command)).toEqual(false);
     });
 });
+
+describe("a date argument typed in words", () => {
+    // each test gets the module afresh, so that the date parser starts out not yet loaded
+    async function freshModule() {
+        vi.resetModules();
+        return await import("./bots");
+    }
+
+    function when(bots: Awaited<ReturnType<typeof freshModule>>, typed: string) {
+        const [arg] = bots.createArgsFromSchema([bots.defaultDateTimeParam()], [typed]);
+        return arg.kind === "dateTime" ? arg.value : undefined;
+    }
+
+    test("is not understood until the date parser has loaded", async () => {
+        const bots = await freshModule();
+        expect(when(bots, "tomorrow at 9am")).toBeNull();
+    });
+
+    test("is understood once the date parser has loaded", async () => {
+        const bots = await freshModule();
+        await bots.loadDateParser();
+        const tomorrow = when(bots, "tomorrow at 9am");
+        expect(typeof tomorrow).toBe("bigint");
+        expect(tomorrow! > BigInt(Date.now())).toBe(true);
+    });
+
+    test("a timestamp needs no date parser", async () => {
+        const bots = await freshModule();
+        expect(when(bots, "1790000000000")).toBe(1790000000000n);
+    });
+
+    // Invariant: loading never rejects, as a command can be given its date in the builder instead.
+    test("loading the date parser resolves even if it cannot be fetched, and can be retried", async () => {
+        vi.resetModules();
+        vi.doMock("chrono-node", () => {
+            throw new Error("offline");
+        });
+        vi.spyOn(console, "error").mockImplementation(() => {});
+        const broken = await import("./bots");
+        await expect(broken.loadDateParser()).resolves.toBeUndefined();
+        expect(when(broken, "tomorrow at 9am")).toBeNull();
+
+        vi.doUnmock("chrono-node");
+        await broken.loadDateParser();
+        expect(typeof when(broken, "tomorrow at 9am")).toBe("bigint");
+        vi.restoreAllMocks();
+    });
+});

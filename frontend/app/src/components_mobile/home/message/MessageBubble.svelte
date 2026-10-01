@@ -5,10 +5,13 @@
         currentUserIdStore,
         OpenChat,
         routeForChatIdentifier,
+        selectedChatMembersStore,
         selectedChatWebhooksStore,
         selectedCommunityMembersStore,
+        selectedServerChatStore,
         type ChatIdentifier,
         type ChatType,
+        type Member,
         type Message,
         type RehydratedReplyContext,
         type SenderContext,
@@ -101,6 +104,12 @@
             $selectedCommunityMembersStore,
             $selectedChatWebhooksStore,
         ),
+    );
+    // The details held can be for another chat until the next chat's details load
+    let chatMembers = $derived(
+        chatIdentifiersEqual($selectedServerChatStore?.chatId, chatId)
+            ? $selectedChatMembersStore
+            : new Map<string, Member>(),
     );
     let placeholderContent = $derived(msg.deleted || msg.content.kind === "restricted_content");
     let isProposal = $derived(msg.content.kind === "proposal_content");
@@ -226,7 +235,7 @@
             {#if sender !== undefined && multiUserChat}
                 <WithRole
                     userId={sender.userId}
-                    chatMembers={$selectedCommunityMembersStore}
+                    {chatMembers}
                     communityMembers={$selectedCommunityMembersStore}>
                     {#snippet children(communityRole, chatRole)}
                         <RoleIcon level="community" popup role={communityRole} />
