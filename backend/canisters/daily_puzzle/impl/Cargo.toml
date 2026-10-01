@@ -17,6 +17,7 @@ canister_client = { path = "../../../libraries/canister_client" }
 canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+chat_rooms = { path = "../../../libraries/chat_rooms" }
 constants = { path = "../../../libraries/constants" }
 daily_puzzle_canister = { path = "../api" }
 futures = { workspace = true }

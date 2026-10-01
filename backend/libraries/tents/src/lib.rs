@@ -36,12 +36,22 @@
 //! Solution / grid: width*height bytes row-major, 1 = tent, 0 = no tent.
 //! Tree cells are 0.
 //!
-//! Hint keys are cell indices (y*width+x); values are 1 = tent, 0 = grass.
-//! `focus` is every cell the deduction looked at (for 5-6 the cells of
-//! the row or column that could still take a tent, not the whole line);
-//! `target` is the cell(s) its sentence points at ("this cell", "this
-//! tree"): 1-2 the cell, 3 the tree, 4 the corner cell, 5-8 the concluded
-//! cells.
+//! Hint keys are cell indices (y*width+x), then the row counts
+//! (width*height + y) and the column counts (width*height + height + x);
+//! conclusions are on cells only, values 1 = tent, 0 = grass. `focus` is
+//! every key the deduction rests on, so the LocalUserIndex can serve the
+//! steps it needs first (#9588); `target` is the step's subject, and the
+//! rest of `focus` that takes a mark is what the step asks the player to
+//! mark. Neither a count nor a tree takes a mark.
+//!
+//! | id | focus | target |
+//! |----|-------|--------|
+//! | 1 | the cell and its neighbours | the neighbours |
+//! | 2 | the cell and the tents touching it | the tents |
+//! | 3 | the tree and its neighbours | the tree |
+//! | 4 | the tree, its neighbours and the corner cell | the tree and its two candidate cells |
+//! | 5, 7, 8 | the whole line and its count | the line and its count, less the concluded cells |
+//! | 6 | the whole line, its count and the concluded cells beside it | the line and its count |
 //!
 //! # Tiers
 //!

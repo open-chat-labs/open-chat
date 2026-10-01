@@ -14,6 +14,8 @@ fn main() {
     generate_ts_method!(group, events_window);
     generate_ts_method!(group, invite_code);
     generate_ts_method!(group, local_user_index);
+    generate_ts_method!(group, lookup_members);
+    generate_ts_method!(group, members);
     generate_ts_method!(group, messages_by_message_index);
     generate_ts_method!(group, thread_previews);
     generate_ts_method!(group, public_summary);

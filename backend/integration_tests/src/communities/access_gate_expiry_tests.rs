@@ -3,6 +3,8 @@ use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use constants::CHAT_TRANSFER_FEE;
+use icrc_ledger_types::icrc1::account::Account;
 use pocket_ic::PocketIc;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -11,7 +13,7 @@ use test_case::test_case;
 use testing::rng::random_string;
 use types::{
     AccessGate, AccessGateConfig, AccessGateNonComposite, ChannelId, ChatId, CommunityId, CompositeGate,
-    DiamondMembershipPlanDuration, Milliseconds, OptionUpdate, TimestampMillis, TokenBalanceGate, UserId,
+    DiamondMembershipPlanDuration, Milliseconds, OptionUpdate, PaymentGate, TimestampMillis, TokenBalanceGate, UserId,
 };
 
 const DAY_IN_MS: Milliseconds = 24 * 60 * 60 * 1000;
@@ -79,8 +81,7 @@ fn diamond_members_remain_unlapsed_after_expiry(container_type: ContainerType) {
     tick_many(env, 5);
 
     for user in users.iter() {
-        // Assert that user has lapsed
-        assert!(has_user_lapsed(env, user, &container));
+        wait_for_user_to_lapse(env, user, &container);
     }
 }
 
@@ -112,8 +113,7 @@ fn diamond_member_lapses_and_rejoins_successfully(container_type: ContainerType)
     tick_many(env, 5);
 
     for user in users.iter() {
-        // Assert that user has lapsed
-        assert!(has_user_lapsed(env, user, &container));
+        wait_for_user_to_lapse(env, user, &container);
 
         // Buy Diamond again
         client::upgrade_user(
@@ -162,8 +162,7 @@ fn remove_gate_unlapses_members(container_type: ContainerType) {
     tick_many(env, 5);
 
     for user in users.iter() {
-        // Assert that users have lapsed
-        assert!(has_user_lapsed(env, user, &container));
+        wait_for_user_to_lapse(env, user, &container);
     }
 
     // Assert that users marked as lapsed in updates query
@@ -274,8 +273,7 @@ fn extend_or_reduce_expiry_then_member_lapses_when_expected(container_type: Cont
     tick_many(env, 5);
 
     for user in users.iter() {
-        // Assert that the members have now lapsed
-        assert!(has_user_lapsed(env, user, &container));
+        wait_for_user_to_lapse(env, user, &container);
     }
 }
 
@@ -332,8 +330,7 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(container_type
     tick_many(env, 5);
 
     for user in users.iter() {
-        // Assert that user2 has lapsed
-        assert!(has_user_lapsed(env, user, &container));
+        wait_for_user_to_lapse(env, user, &container);
 
         // Increase token balance
         client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, min_balance);
@@ -344,6 +341,90 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(container_type
         // Assert that user2 is no longer lapsed
         assert!(!has_user_lapsed(env, user, &container));
     }
+}
+
+// A member's gate checked again as it expires is never paid, even where it could be passed by paying
+// and the member has an approval standing under their spender subaccount (such as one made for a tip
+// which wasn't spent). They lapse instead, and pay when they join again.
+#[test_case(ContainerType::Community)]
+#[test_case(ContainerType::Channel)]
+#[test_case(ContainerType::Group)]
+fn member_is_not_charged_for_a_payment_gate_as_it_expires(container_type: ContainerType) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let min_balance = 900_000_000;
+    let amount = 1_0000_0000;
+    let gate_config = AccessGateConfig {
+        gate: AccessGate::Composite(CompositeGate {
+            inner: vec![
+                AccessGateNonComposite::TokenBalance(TokenBalanceGate {
+                    ledger_canister_id: canister_ids.icp_ledger,
+                    min_balance,
+                }),
+                AccessGateNonComposite::Payment(PaymentGate {
+                    ledger_canister_id: canister_ids.chat_ledger,
+                    amount,
+                    fee: CHAT_TRANSFER_FEE,
+                }),
+            ],
+            and: false,
+        }),
+        expiry: Some(DAY_IN_MS),
+    };
+
+    // The user joins with the token balance, so pays nothing
+    let TestData {
+        owner: _,
+        users,
+        container,
+    } = init_test_data(env, canister_ids, *controller, gate_config, 1, container_type, false);
+    let user = &users[0];
+    let wallet = user.canister();
+
+    // The user's wallet then approves the group or community under the user's spender subaccount
+    let spender = match container {
+        Container::Community(community_id) | Container::Channel(community_id, _) => Principal::from(community_id),
+        Container::Group(group_id) => Principal::from(group_id),
+    };
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, wallet, amount);
+    client::ledger::happy_path::approve(
+        env,
+        wallet,
+        canister_ids.chat_ledger,
+        Account {
+            owner: spender,
+            subaccount: Some(ledger_utils::spender_subaccount(user.principal)),
+        },
+        amount - CHAT_TRANSFER_FEE,
+    );
+    let chat_balance = client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, wallet);
+
+    // The user's token balance drops below the gate's
+    user_index::happy_path::pay_for_diamond_membership(
+        env,
+        user.principal,
+        canister_ids.user_index,
+        DiamondMembershipPlanDuration::OneYear,
+        false,
+        false,
+    );
+    tick_many(env, 4);
+
+    // Move the time forward so that the gate expires
+    env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
+    tick_many(env, 5);
+
+    // The user lapsed, without the gate's payment being taken
+    assert!(has_user_lapsed(env, user, &container));
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, wallet),
+        chat_balance
+    );
 }
 
 #[test_case(ContainerType::Community)]
@@ -417,8 +498,8 @@ fn gate_changes_and_members_lapse_as_expected(container_type: ContainerType) {
     tick_many(env, 5);
 
     // Only user2 should be lapsed
+    wait_for_user_to_lapse(env, user2, &container);
     assert!(!has_user_lapsed(env, user1, &container));
-    assert!(has_user_lapsed(env, user2, &container));
     assert!(!has_user_lapsed(env, user3, &container));
 
     // Change to payment gate expires in 4 days
@@ -449,9 +530,9 @@ fn gate_changes_and_members_lapse_as_expected(container_type: ContainerType) {
     tick_many(env, 5);
 
     // User 3 now lapsed
+    wait_for_user_to_lapse(env, user3, &container);
     assert!(!has_user_lapsed(env, user1, &container));
     assert!(has_user_lapsed(env, user2, &container));
-    assert!(has_user_lapsed(env, user3, &container));
 }
 
 #[test_case(ContainerType::Community)]
@@ -500,8 +581,20 @@ fn invited_users_pass_composite_gate_then_expire_later(container_type: Container
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     tick_many(env, 5);
 
+    wait_for_user_to_lapse(env, user2, &container);
     assert!(!has_user_lapsed(env, user1, &container));
-    assert!(has_user_lapsed(env, user2, &container));
+}
+
+// Members lapse in a timer job in the group or community canister, which may first check the gate
+// with another canister, so this can take a few rounds after the clock moves
+fn wait_for_user_to_lapse(env: &mut PocketIc, user: &User, container: &Container) {
+    for _ in 0..30 {
+        if has_user_lapsed(env, user, container) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("User {} did not lapse from {container:?}", user.user_id);
 }
 
 fn has_user_lapsed(env: &mut PocketIc, user: &User, container: &Container) -> bool {

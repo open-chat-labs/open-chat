@@ -277,7 +277,18 @@ impl RuntimeState {
         });
     }
 
+    // Whether this LocalUserIndex holds the user by their latest id, which, if they've been migrated to
+    // a MultiUser canister held by another LocalUserIndex, it doesn't, even while it still holds
+    // their old canister
+    pub fn holds_latest_id_of(&self, user_id: UserId) -> bool {
+        self.data.local_users.contains(&self.data.migrated_user_ids.latest(user_id))
+    }
+
+    // Queues an event for the user, by their latest id if they've been migrated to a MultiUser canister.
+    // Returns false if this LocalUserIndex doesn't hold them by that id. So an event naming a migrated
+    // user by an old id, sent to every LocalUserIndex, is queued only by the one now holding them.
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent, now: TimestampMillis) -> bool {
+        let user_id = self.data.migrated_user_ids.latest(user_id);
         if self.data.local_users.contains(&user_id) {
             self.data.user_events_queue.push(
                 user_id.canister_id(),
@@ -290,6 +301,56 @@ impl RuntimeState {
             true
         } else {
             false
+        }
+    }
+
+    // Moves the events queued for a migrated user's old canister onto their latest id. If a batch of
+    // them is being sent, they are left to be moved after it, once it fails (see `UserEventBatch`), so
+    // that they stay in order.
+    pub fn move_events_queued_for_migrated_user(&mut self, old_user_id: UserId) {
+        let canister_id = old_user_id.canister_id();
+        if old_user_id.index() == 0 && !self.data.user_events_queue.is_in_progress(&canister_id) {
+            let events = self.data.user_events_queue.take(&canister_id);
+            self.push_events_queued_for_migrated_user(old_user_id, events);
+        }
+    }
+
+    // Sends events which were queued for a migrated user's old canister on to their latest id, in
+    // order. If this LocalUserIndex doesn't hold them by that id, the events go via the UserIndex to
+    // the one which does.
+    pub fn push_events_queued_for_migrated_user(
+        &mut self,
+        old_user_id: UserId,
+        events: Vec<IdempotentEnvelope<(UserId, UserEvent)>>,
+    ) {
+        let new_user_id = self.data.migrated_user_ids.latest(old_user_id);
+        if events.is_empty() || new_user_id == old_user_id {
+            return;
+        }
+        let now = self.env.now();
+        if self.data.local_users.contains(&new_user_id) {
+            // Stamped with the current time, since the MultiUser canister ignores any event from here
+            // older than the latest it has had from here, and these may have been created before
+            // events already sent to it
+            let events = events
+                .into_iter()
+                .map(|event| IdempotentEnvelope {
+                    created_at: now,
+                    idempotency_id: event.idempotency_id,
+                    value: (new_user_id, event.value.1),
+                })
+                .collect();
+            self.data.user_events_queue.push_many(new_user_id.canister_id(), events);
+        } else {
+            for event in events {
+                self.push_event_to_user_index(
+                    UserIndexEvent::EventForMigratedUser(Box::new(user_index_canister::EventForMigratedUser {
+                        user_id: new_user_id,
+                        event: ByteBuf::from(msgpack::serialize_then_unwrap(&event.value.1)),
+                    })),
+                    now,
+                );
+            }
         }
     }
 
@@ -316,7 +377,7 @@ impl RuntimeState {
     }
 
     pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, content: MessageContentInitial, now: TimestampMillis) {
-        if self.data.local_users.contains(&user_id) {
+        if self.holds_latest_id_of(user_id) {
             self.push_event_to_user(
                 user_id,
                 UserEvent::OpenChatBotMessageV2(Box::new(user_canister::OpenChatBotMessageV2 {
@@ -385,7 +446,7 @@ impl RuntimeState {
         now: TimestampMillis,
     ) {
         let local_user_index_canister_id = self.env.canister_id();
-        if self.data.local_users.get(&user_id).is_some() {
+        if self.holds_latest_id_of(user_id) {
             self.push_event_to_user(
                 user_id,
                 UserEvent::UserJoinedCommunityOrChannel(Box::new(user_canister::UserJoinedCommunityOrChannel {

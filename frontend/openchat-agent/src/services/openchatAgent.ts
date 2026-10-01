@@ -224,9 +224,11 @@ import type {
     DailyPuzzleSubmitResponse,
     PublicDailyPuzzle,
     SyncSinceResponse,
+    LookupMembersResponse,
 } from "@shared";
 import {
     ANON_USER_ID,
+    APPROVAL_VALIDITY_MS,
     ChatMap,
     CommonResponses,
     DestinationInvalidError,
@@ -538,6 +540,8 @@ export class OpenChatAgent extends EventTarget {
     // `amount` is all that the payment takes from the wallet, so includes the fee of each transfer
     // the spender makes, and `fee` is what the ledger charges for the approval itself. Without
     // knowing that, there is no telling whether the wallet can afford both, so nothing is approved.
+    // `validityMs` is how long the spender has to pull the payment, by default long enough for one
+    // pulled at once.
     //
     // The approval is made, and paid for, before the spender has checked anything, so a payment it
     // then refuses, such as one with the wrong PIN, still costs the approval's fee, and leaves the
@@ -547,13 +551,14 @@ export class OpenChatAgent extends EventTarget {
         ledger: string,
         amount: bigint,
         fee: bigint | undefined,
+        validityMs: number = APPROVAL_VALIDITY_MS,
     ): Promise<OCError | undefined> {
         if (fee === undefined) {
             return { kind: "error", code: ErrorCode.ApprovalFailed, message: undefined };
         }
 
         const response = await this._ledgerClient
-            .approveSpending(ledger, spender, amount, fee)
+            .approveSpending(ledger, spender, amount, fee, validityMs)
             .catch((err) => {
                 console.warn("Failed to approve a payment being pulled from the wallet", err);
                 return "failure" as const;
@@ -591,10 +596,15 @@ export class OpenChatAgent extends EventTarget {
     // its own, under the subaccount derived from the member's principal, so that it only ever
     // spends a member's own approval. Mirrors `ledger_utils::spender_subaccount`.
     private chatSpenderAccount(chatId: GroupChatIdentifier | ChannelIdentifier): IcrcAccount {
+        return this.memberSpenderAccount(
+            chatId.kind === "channel" ? chatId.communityId : chatId.groupId,
+        );
+    }
+
+    // The same, given the group or community's canister id
+    private memberSpenderAccount(canisterId: string): IcrcAccount {
         return {
-            owner: Principal.fromText(
-                chatId.kind === "channel" ? chatId.communityId : chatId.groupId,
-            ),
+            owner: Principal.fromText(canisterId),
             subaccount: spenderSubaccount(this.principal),
         };
     }
@@ -1637,11 +1647,11 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
+    searchUsers(searchTerm: string, maxResults = 20, pageIndex?: number): Promise<UserSummary[]> {
         if (offline()) return Promise.resolve([]);
 
         return this._userIndexClient
-            .searchUsers(searchTerm, maxResults)
+            .searchUsers(searchTerm, maxResults, pageIndex)
             .then((users) => users.map((u) => this.rehydrateUserSummary(u)));
     }
 
@@ -3322,6 +3332,39 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
+    searchCommunityMembers(
+        id: CommunityIdentifier,
+        searchTerm: string,
+        maxResults: number,
+        latestKnownUpdate: bigint,
+    ): Promise<LookupMembersResponse> {
+        return this._communityClient.searchMembers(
+            id.communityId,
+            searchTerm,
+            maxResults,
+            latestKnownUpdate,
+        );
+    }
+
+    lookupMembers(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        userIds: string[],
+        latestKnownUpdate: bigint,
+    ): Promise<LookupMembersResponse> {
+        switch (id.kind) {
+            case "group_chat":
+                return this._groupClient.lookupMembers(id.groupId, userIds, latestKnownUpdate);
+            case "channel":
+                return this._communityClient.lookupChannelMembers(id, userIds, latestKnownUpdate);
+            case "community":
+                return this._communityClient.lookupMembers(
+                    id.communityId,
+                    userIds,
+                    latestKnownUpdate,
+                );
+        }
+    }
+
     getPublicGroupSummary(chatId: GroupChatIdentifier): Promise<PublicGroupSummaryResponse> {
         return this._groupClient
             .getPublicSummary(chatId.groupId)
@@ -3538,12 +3581,18 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
+    // A user who holds their own funds sends them from their wallet on the ledger, as themselves,
+    // since their canister can't send them. Only their canister could check their PIN, so it isn't
+    // checked when they do.
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
         pin: string | undefined,
     ): Promise<WithdrawCryptocurrencyResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
+        if (this.holdsOwnFunds()) {
+            return this._ledgerClient.withdraw(domain);
+        }
         return this.userClient.withdrawCryptocurrency(domain, pin);
     }
 
@@ -4311,10 +4360,11 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<SubmitProposalResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
+        // The ProposalsBot pulls the fee from the user's wallet, which they have approved it to
         return this._proposalsBotClient
             .get()
             .submitProposal(
-                currentUserId,
+                encodeIcrcAccount(this.walletAccount(currentUserId)),
                 governanceCanisterId,
                 proposal,
                 ledger,
@@ -4471,6 +4521,9 @@ export class OpenChatAgent extends EventTarget {
         return this._registryValue?.swapProviders ?? [];
     }
 
+    // Approves `spender`, a canister such as the ProposalsBot which spends as its own default
+    // account, to pull up to `amount` from the user's wallet within `expiresIn` ms (see
+    // `approveSpender`)
     approveTransfer(
         spender: string,
         ledger: string,
@@ -4478,7 +4531,62 @@ export class OpenChatAgent extends EventTarget {
         expiresIn: bigint | undefined,
         pin: string | undefined,
     ): Promise<ApproveTransferResponse> {
-        return this.userClient.approveTransfer(spender, ledger, amount, expiresIn, pin);
+        return this.approveSpender(
+            { owner: Principal.fromText(spender) },
+            ledger,
+            amount,
+            expiresIn,
+            pin,
+        );
+    }
+
+    // Approves a group or community (`canisterId`) to pull an access gate's payment of up to
+    // `amount` from the user's wallet when they join, within `expiresIn` ms. It pulls the payment as
+    // the user's member spender account, as it does any other payment from a member's wallet (see
+    // `approveSpender`).
+    approveAccessGatePayment(
+        canisterId: string,
+        ledger: string,
+        amount: bigint,
+        expiresIn: bigint,
+        pin: string | undefined,
+    ): Promise<ApproveTransferResponse> {
+        return this.approveSpender(
+            this.memberSpenderAccount(canisterId),
+            ledger,
+            amount,
+            expiresIn,
+            pin,
+        );
+    }
+
+    // Approves `spender` to pull up to `amount` from the user's wallet within `expiresIn` ms. A user
+    // alone in their canister has it make the approval, which checks their PIN, and replaces
+    // whatever the spender could pull before.
+    //
+    // A user who holds their own funds can't have their canister approve anything, so approves the
+    // spender on the ledger themselves, adding `amount` to what it may pull already, with the
+    // approval's fee on top. Their PIN isn't checked, since nothing between them and the ledger
+    // holds it. Without `expiresIn` their approval lasts only long enough for a payment pulled at
+    // once, rather than never lapsing.
+    private approveSpender(
+        spender: IcrcAccount,
+        ledger: string,
+        amount: bigint,
+        expiresIn: bigint | undefined,
+        pin: string | undefined,
+    ): Promise<ApproveTransferResponse> {
+        if (!this.holdsOwnFunds()) {
+            return this.userClient.approveTransfer(spender, ledger, amount, expiresIn, pin);
+        }
+
+        return this.approveToPull(
+            spender,
+            ledger,
+            amount,
+            this.ledgerFee(ledger),
+            expiresIn === undefined ? undefined : Number(expiresIn),
+        ).then((error) => error ?? CommonResponses.success());
     }
 
     deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {

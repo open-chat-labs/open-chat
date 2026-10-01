@@ -598,10 +598,12 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         );
     }
 
-    searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
+    // `pageIndex` picks which page of `maxResults` users to return, starting from 0
+    searchUsers(searchTerm: string, maxResults = 20, pageIndex?: number): Promise<UserSummary[]> {
         const args = {
             search_term: searchTerm,
             max_results: maxResults,
+            page_index: pageIndex,
         };
         return this.query(
             "search",

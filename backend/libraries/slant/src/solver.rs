@@ -256,17 +256,24 @@ fn clue_point(
             } else {
                 Technique::ClueForced
             };
-            // All three clue-point techniques say "this number", so the
-            // vertex is the target and the cells around it are context.
+            // All three clue-point techniques are about the number, so the
+            // vertex is the target and the cells around it are context. A
+            // PairedClue's target adds the two tied cells, which it does not
+            // settle, so the sentence can point at them apart from the cells
+            // it does.
             let key = vertex_key(st.w, st.h, vertex);
             let mut focus = vec![key];
             focus.extend(nb.iter().map(|&(j, _)| j as u16));
+            let mut target = vec![key];
+            if meq.is_some() {
+                target.extend([mj1 as u16, mj2 as u16]);
+            }
             push_hint(
                 rec,
                 Hint {
                     technique,
                     focus,
-                    target: vec![key],
+                    target,
                     conclusions,
                 },
             );

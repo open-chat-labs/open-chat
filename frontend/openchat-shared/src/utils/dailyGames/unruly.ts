@@ -13,7 +13,14 @@
 // its value is merged back in by `unrulyGrid` whenever the rules are checked or bytes are made.
 // That keeps givens immutable and keeps `filled` to the player's own marks.
 
-import type { DailyGame, GameElement, Violation } from "./types";
+import type {
+    DailyGame,
+    GameElement,
+    HintCaption,
+    HintCaptionParam,
+    HintStep,
+    Violation,
+} from "./types";
 
 /** 0 empty, 1 the first value, 2 the second. */
 export type UnrulyCell = 0 | 1 | 2;
@@ -181,6 +188,117 @@ function toViolations(violations: UnrulyViolation[]): Violation[] {
     return violations.map((v) => ({ keys: v.cells, kind: v.kind }));
 }
 
+type Line = { kind: "row" | "column"; index: number; cells: number[] };
+
+/** The row or column that holds every one of `keys`, if one does. */
+function lineOf(desc: UnrulyDescription, keys: number[]): Line | undefined {
+    const { width: w, height: h } = desc;
+    if (keys.length === 0) return undefined;
+    const y = Math.floor(keys[0] / w);
+    if (keys.every((k) => Math.floor(k / w) === y)) {
+        return { kind: "row", index: y, cells: Array.from({ length: w }, (_, x) => y * w + x) };
+    }
+    const x = keys[0] % w;
+    if (keys.every((k) => k % w === x)) {
+        return { kind: "column", index: x, cells: Array.from({ length: h }, (_, r) => r * w + x) };
+    }
+    return undefined;
+}
+
+/** The colour's name, for the sentence: "orange". */
+function colourName(value: number): HintCaptionParam {
+    return { key: `colour.${value}` };
+}
+
+const otherValue = (value: number) => (value === UNRULY_VALUE_A ? UNRULY_VALUE_B : UNRULY_VALUE_A);
+
+/**
+ * The sentence for a served step, naming the row or column it is about and the colour it turns
+ * on. PairEnd and PairGap's focus is the three cells of the window and the rest are whole lines
+ * (invariant 23), so the line is the one holding the whole focus; the colour is read from the
+ * board: the outlined cells' colour where the step has a subject, the line's tallies where it
+ * does not. Undefined for a step that cannot be read that way, which then gets the technique's
+ * fixed sentence.
+ */
+export function hintCaption(
+    desc: UnrulyDescription,
+    state: UnrulyCell[],
+    step: HintStep,
+): HintCaption | undefined {
+    const grid = unrulyGrid(desc, state);
+    const line = lineOf(desc, step.focus);
+    if (line === undefined) return undefined;
+    const { kind } = line;
+    const at = line.index + 1;
+    const share = kind === "row" ? unrulyRowTarget(desc) : unrulyColumnTarget(desc);
+    const count = (value: number) => line.cells.filter((k) => grid[k] === value).length;
+    // The outlined cells' one colour, when they are all filled with the same one
+    const subjectColour = (): number | undefined => {
+        const values = new Set(step.target.map((k) => grid[k]));
+        const [v] = values;
+        return values.size === 1 && v !== UNRULY_EMPTY ? v : undefined;
+    };
+    const sentence = (
+        name: string,
+        colour: number,
+        extra: Record<string, HintCaptionParam> = {},
+    ) => ({
+        key: `hint.${name}.${kind}`,
+        params: {
+            line: at,
+            colour: colourName(colour),
+            other: colourName(otherValue(colour)),
+            ...extra,
+        },
+    });
+
+    switch (step.technique) {
+        case 1:
+        case 2: {
+            // PairEnd and PairGap: the subject is the matching pair, the ? cell the third of the window
+            if (step.focus.length !== 3 || step.target.length !== 2) return undefined;
+            const colour = subjectColour();
+            if (colour === undefined) return undefined;
+            return sentence(step.technique === 1 ? "pairEnd" : "pairGap", colour);
+        }
+        case 3: {
+            // LastGap: the subject is the concluded cell, so the server withholds it; the colour
+            // the line has all of is the one at its share, with the other still short
+            if (step.focus.length !== line.cells.length) return undefined;
+            const colour = [UNRULY_VALUE_A, UNRULY_VALUE_B].find(
+                (v) => count(v) === share && count(otherValue(v)) < share,
+            );
+            if (colour === undefined) return undefined;
+            return sentence("lastGap", colour, { count: share });
+        }
+        case 4: {
+            // LineFull: the subject is every cell of the colour the line has all of
+            if (step.focus.length !== line.cells.length) return undefined;
+            const colour = subjectColour();
+            if (colour === undefined) return undefined;
+            return sentence("lineFull", colour, { count: share });
+        }
+        case 5: {
+            // LastInRun: the subject is the window of three the line's last cell of one colour must
+            // go in; the colour is the one the line is a single cell short of
+            if (step.focus.length !== line.cells.length || step.target.length !== 3)
+                return undefined;
+            const colour = [UNRULY_VALUE_A, UNRULY_VALUE_B].find(
+                (v) => count(v) === share - 1 && count(otherValue(v)) < share - 1,
+            );
+            if (colour === undefined) return undefined;
+            const across = step.target.map(
+                (k) => (kind === "row" ? k % desc.width : Math.floor(k / desc.width)) + 1,
+            );
+            return sentence("lastInRun", colour, {
+                from: Math.min(...across),
+                to: Math.max(...across),
+            });
+        }
+    }
+    return undefined;
+}
+
 export const unruly: DailyGame<UnrulyDescription, UnrulyCell[]> = {
     id: "unruly",
     parse: parseDescription,
@@ -241,4 +359,5 @@ export const unruly: DailyGame<UnrulyDescription, UnrulyCell[]> = {
         });
         return out;
     },
+    hintCaption,
 };

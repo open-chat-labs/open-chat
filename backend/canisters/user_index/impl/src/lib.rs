@@ -44,9 +44,9 @@ use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::time::Duration;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{
-    BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId, Cycles, DiamondMembershipFees,
-    IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig, TimestampMillis, Timestamped, UserId,
-    UserType,
+    BotInstallationLocation, BuildVersion, CanisterId, ChannelId, ChatId, ChildCanisterWasms, CommunityId, Cycles,
+    DiamondMembershipFees, IdempotentEnvelope, MediaScanConfig, Milliseconds, ModerationReferralConfig, TimestampMillis,
+    Timestamped, UserId, UserType,
 };
 use user_ids_set::UserIdsSet;
 use user_index_canister::ChildCanisterType;
@@ -165,10 +165,33 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
     }
 
+    // Sends the event to the LocalUserIndex holding the user
     pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
-        if let Some(canister_id) = self.data.local_index_map.get_index_canister(&user_id) {
+        if let Some(canister_id) = self.local_user_index_of_user(user_id) {
             self.data.user_index_event_sync_queue.push(canister_id, event);
             jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
+        }
+    }
+
+    // The LocalUserIndex holding the user. A migrated user may still be named by an old id, which no
+    // LocalUserIndex is mapped to any more, so they are found by their latest id.
+    pub fn local_user_index_of_user(&self, user_id: UserId) -> Option<CanisterId> {
+        self.data
+            .local_index_map
+            .get_index_canister(&self.data.migrated_user_ids.latest(user_id))
+    }
+
+    // The LocalUserIndex to send an event about a bot's installation to. A user who installed the bot
+    // in their direct chats may since have been migrated to a MultiUser canister held by another
+    // LocalUserIndex than the one they installed it through.
+    pub fn local_user_index_of_bot_installation(
+        &self,
+        location: BotInstallationLocation,
+        installed_via: CanisterId,
+    ) -> CanisterId {
+        match location {
+            BotInstallationLocation::User(user_id) => self.local_user_index_of_user(user_id.into()).unwrap_or(installed_via),
+            BotInstallationLocation::Group(_) | BotInstallationLocation::Community(_) => installed_via,
         }
     }
 
