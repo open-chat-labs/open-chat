@@ -47,6 +47,31 @@ describe("withLatestUserIds", () => {
         expect(withLatestUserIds(event, latest)).toBe(event);
     });
 
+    test("holds an id once where it held both the earlier and the current id", () => {
+        const participants = new Set([OLD, NEW, OTHER]);
+
+        expect(withLatestUserIds(participants, latest)).toEqual(new Set([NEW, OTHER]));
+    });
+
+    test("adds together tips keyed by both the earlier and the current id", () => {
+        const tips = { ledger: { [OLD]: 100n, [NEW]: 50n, [OTHER]: 5n } };
+        const tipsMap = new Map([
+            [NEW, 50n],
+            [OLD, 100n],
+        ]);
+
+        expect(withLatestUserIds(tips, latest)).toEqual({ ledger: { [NEW]: 150n, [OTHER]: 5n } });
+        expect(withLatestUserIds(tipsMap, latest)).toEqual(new Map([[NEW, 150n]]));
+    });
+
+    test("leaves text the user wrote as it is", () => {
+        const content = { kind: "text_content", text: OLD };
+        const image = { kind: "image_content", caption: OLD };
+
+        expect(withLatestUserIds(content, latest)).toBe(content);
+        expect(withLatestUserIds(image, latest)).toBe(image);
+    });
+
     test("does nothing when there are no earlier ids", () => {
         const event = { sender: OLD };
 

@@ -1433,8 +1433,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // Rehydrates the event's content and reply context, and refers to the user by their current id
-    // wherever it was from before they were migrated to a MultiUser canister. Every event the agent
-    // returns, whether from the cache or the canister, passes through here.
+    // wherever it was from before they were migrated to a MultiUser canister. Events read from the
+    // cache or a canister pass through here, other than those returned by `updateProposalTallies`,
+    // which maps them itself.
     private rehydrateEvent<T extends ChatEvent>(
         ev: EventWrapper<T>,
         defaultChatId: ChatIdentifier,
@@ -2676,7 +2677,20 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getCurrentUser(): Stream<CurrentUserResponse> {
-        return this._userIndexClient.getCurrentUser();
+        return this._userIndexClient.getCurrentUser().map((user) => {
+            // The user client is created from the first result, which is usually the cached user,
+            // so the user's previous ids are taken again from the live one
+            if (
+                user.kind === "created_user" &&
+                user.userId === this._userClient.userId &&
+                user.previousUserIds !== undefined
+            ) {
+                this._ownLatestUserIds = new Map(
+                    user.previousUserIds.map((id) => [id, user.userId]),
+                );
+            }
+            return user;
+        });
     }
 
     acceptTerms(version: number): Promise<boolean> {
@@ -3358,9 +3372,16 @@ export class OpenChatAgent extends EventTarget {
             .getPublicSummary(chatId.groupId)
             .then((resp) => {
                 if (resp.kind === "success") {
+                    const group = this.rehydrateDataContent(resp.group, "avatar");
                     return {
                         kind: "success",
-                        group: this.rehydrateDataContent(resp.group, "avatar"),
+                        group: {
+                            ...group,
+                            latestMessage: withLatestUserIds(
+                                group.latestMessage,
+                                this._ownLatestUserIds,
+                            ),
+                        },
                     } as PublicGroupSummaryResponse;
                 }
                 return resp;
@@ -5377,7 +5398,8 @@ export class OpenChatAgent extends EventTarget {
         if (version !== undefined) {
             await this.#announceSyncHead(version);
         }
-        return messages;
+        // Returned straight from the cache, so not through `rehydrateEvent`
+        return withLatestUserIds(messages, this._ownLatestUserIds);
     }
 
     async #updateCachedProposalTallies(localUserIndex: string, chatIds: MultiUserChatIdentifier[]) {

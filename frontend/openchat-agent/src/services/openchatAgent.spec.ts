@@ -4,6 +4,7 @@ import {
     indexedUserId,
     LEDGER_CANISTER_CHAT,
     spenderSubaccount,
+    Stream,
     type CryptocurrencyContent,
     type EventWrapper,
     type Message,
@@ -718,6 +719,26 @@ describe("OpenChatAgent referring to the user by their current id", () => {
 
         const fromPrevious = sentBy(PREVIOUS);
         expect(rehydrated([], fromPrevious)).toBe(fromPrevious);
+    });
+
+    test("the previous ids are taken from the live current user", async () => {
+        const user = agent([]);
+        user._userClient = { userId: CURRENT };
+        const live = (userId: string) =>
+            new Stream((resolve) =>
+                queueMicrotask(() =>
+                    resolve({ kind: "created_user", userId, previousUserIds: [PREVIOUS] }, true),
+                ),
+            );
+
+        // Not until the user client has been created for them
+        user._userIndexClient = { getCurrentUser: () => live(THEM) };
+        await user.getCurrentUser().toPromise();
+        expect(user._ownLatestUserIds).toEqual(new Map());
+
+        user._userIndexClient = { getCurrentUser: () => live(CURRENT) };
+        await user.getCurrentUser().toPromise();
+        expect(user._ownLatestUserIds).toEqual(new Map([[PREVIOUS, CURRENT]]));
     });
 
     test("a chat's latest message from before they were migrated is from their current id", () => {
