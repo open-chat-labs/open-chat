@@ -172,6 +172,9 @@ import {
     type CreateCommunityResponse,
     type CreateGroupResponse,
     type CreateMultiUserCanisterResponse,
+    type MigrateUsersResponse,
+    type UserMigrationResponse,
+    type UsersToMigrate,
     type CreateUserGroupResponse,
     type CreatedUser,
     type CryptocurrencyContent,
@@ -7491,6 +7494,33 @@ export class OpenChat {
         return this.#worker
             .send({ kind: "setMultiUserCanistersEnabled", enabled })
             .catch(() => false);
+    }
+
+    // Platform operators only. Queues users in canisters of their own to be migrated to MultiUser
+    // canisters
+    migrateUsers(users: UsersToMigrate): Promise<MigrateUsersResponse> {
+        return this.#worker
+            .send({ kind: "migrateUsers", users })
+            .catch((err) => ({ kind: "error", code: -1, message: String(err) }));
+    }
+
+    // Platform operators only
+    setUserMigrationConcurrency(value: number): Promise<boolean> {
+        return this.#worker.send({ kind: "setUserMigrationConcurrency", value }).catch(() => false);
+    }
+
+    // Platform operators only
+    userMigration(userId: string): Promise<UserMigrationResponse> {
+        return this.#worker
+            .send({ kind: "userMigration", userId })
+            .catch((err) => ({ kind: "error", code: -1, message: String(err) }));
+    }
+
+    // Platform operators only
+    cancelUserMigration(userId: string, multiUserCanisterId: string): Promise<Success | OCError> {
+        return this.#worker
+            .send({ kind: "cancelUserMigration", userId, multiUserCanisterId })
+            .catch((err) => ({ kind: "error", code: -1, message: String(err) }));
     }
 
     markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
