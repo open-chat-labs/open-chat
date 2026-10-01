@@ -54,6 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Share the former members logic with the Community canister via `group_community_common` ([#9626](https://github.com/open-chat-labs/open-chat/pull/9626))
 - Split a notification with more than 5,000 recipients into several ([#9658](https://github.com/open-chat-labs/open-chat/pull/9658))
 - Pull an access gate's payment under the member's spender subaccount, falling back to the default account for now ([#9700](https://github.com/open-chat-labs/open-chat/pull/9700))
+- Additionally tell a removed member's canister via the queue of events for users, so a user being migrated isn't missed ([#9715](https://github.com/open-chat-labs/open-chat/pull/9715))
 
 ### Removed
 

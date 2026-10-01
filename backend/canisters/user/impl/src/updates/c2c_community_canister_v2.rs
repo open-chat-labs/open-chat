@@ -15,7 +15,7 @@ fn c2c_community_canister_v2(args: Args) -> Response {
 fn c2c_community_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
     let my_user_id = state.env.canister_id().into();
     let events = args
-        .events
+        .into_events()
         .into_iter()
         .filter(|event| event.value.0 == my_user_id)
         .map(|event| IdempotentEnvelope {

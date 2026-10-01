@@ -12835,6 +12835,7 @@ dependencies = [
  "ic-ledger-types",
  "ic_principal",
  "icrc-ledger-types",
+ "msgpack",
  "oc_error_codes",
  "serde",
  "serde_bytes",
