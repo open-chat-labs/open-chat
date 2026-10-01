@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Compare a hint step's conclusions with its focus and target as the cells the board draws them on, so Bridges hints, whose conclusions are gaps between islands, no longer skip the steps they rest on or send an outline that names their answer ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+- Send events for a user migrated to a MultiUser canister on to their new id rather than losing them ([#9706](https://github.com/open-chat-labs/open-chat/pull/9706))
 
 ## [[2.0.2077](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2077-local_user_index)] - 2026-09-30
 

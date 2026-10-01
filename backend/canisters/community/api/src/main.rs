@@ -23,6 +23,7 @@ fn main() {
     generate_ts_method!(community, members);
     generate_ts_method!(community, messages_by_message_index);
     generate_ts_method!(community, search_channel);
+    generate_ts_method!(community, search_members);
     generate_ts_method!(community, selected_channel_initial);
     generate_ts_method!(community, selected_channel_updates_v2);
     generate_ts_method!(community, selected_initial);

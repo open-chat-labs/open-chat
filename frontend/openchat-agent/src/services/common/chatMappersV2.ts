@@ -143,6 +143,7 @@ import {
     toBigInt32,
     toBigInt64,
     videoCallTypeFromWire,
+    type IcrcAccount,
 } from "@shared";
 import type {
     AcceptSwapSuccess,
@@ -3141,14 +3142,13 @@ export function principalToIcrcAccount(principal: string): AccountICRC1 {
 }
 
 export function addressToIcrcAccount(address: string): AccountICRC1 {
-    const icrcAccount = decodeIcrcAccount(address);
+    return apiAccount(decodeIcrcAccount(address));
+}
 
+export function apiAccount({ owner, subaccount }: IcrcAccount): AccountICRC1 {
     return {
-        owner: icrcAccount.owner.toUint8Array(),
-        subaccount:
-            icrcAccount?.subaccount !== undefined
-                ? ([...icrcAccount.subaccount] as NumberArray32)
-                : undefined,
+        owner: owner.toUint8Array(),
+        subaccount: subaccount !== undefined ? ([...subaccount] as NumberArray32) : undefined,
     };
 }
 
