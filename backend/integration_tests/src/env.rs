@@ -19,8 +19,12 @@ pub struct TestEnvManager {
 
 impl TestEnvManager {
     pub fn get(&self) -> TestEnvWrapper {
-        let mut lock = self.envs.lock().unwrap();
-        if let Some(env) = lock.pop() { TestEnvWrapper::new(env) } else { self.create_new() }
+        // Release the lock before creating a new env. The base state is still only built once
+        // (see `setup_new_env`), and creating envs from it in parallel is quicker than one at a
+        // time. Holding the lock also meant a panic during creation poisoned it, which then
+        // failed every later test.
+        let env = self.envs.lock().unwrap().pop();
+        if let Some(env) = env { TestEnvWrapper::new(env) } else { self.create_new() }
     }
 
     pub fn create_new(&self) -> TestEnvWrapper {
