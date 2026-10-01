@@ -54,3 +54,9 @@ export {
     type UnrulyDescription,
     type UnrulyViolation,
 } from "./unruly";
+export {
+    chatRooms,
+    type ChatRoomsCell,
+    type ChatRoomsDescription,
+    type ChatRoomsViolation,
+} from "./chatRooms";

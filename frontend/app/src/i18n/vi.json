@@ -686,9 +686,8 @@
         "unavailable": "Hiện chưa có câu đố nào.",
         "startFree": "Bắt đầu (câu đố đầu tiên miễn phí)",
         "startFee": "Bắt đầu với {fee} CHIT",
-        "hintFree": "Gợi ý (cấp {level})",
-        "hintPrice": "Gợi ý (cấp {level}, {price} CHIT)",
         "hintsUsed": "{count} gợi ý",
+        "hintCost": "Gợi ý ({price} CHIT)",
         "hintsLeft": "Còn {count}",
         "noHintsLeft": "Đã hết gợi ý cho câu đố hôm nay",
         "streakDays": "Chuỗi {streak} ngày",
@@ -709,7 +708,6 @@
         "fixMistakeFirst": "Hãy sửa các ô đỏ trước",
         "noFreeChecks": "Đã hết lượt kiểm tra miễn phí cho câu đố hôm nay",
         "checksLeft": "Còn {count} lượt kiểm tra",
-        "revealed": "Đã điền sẵn cho bạn.",
         "reset": "Đặt lại",
         "resetConfirm": "Xóa bảng?",
         "replaced": "Câu đố này đã được thay thế. Đây là câu đố mới.",
@@ -738,6 +736,24 @@
                     "4": "Không đảo nào được vượt quá con số của nó. Đảo này cần ba cầu mà có tới bốn.",
                     "5": "Đổi cạnh này thành một cầu thay vì hai, và nó có đúng ba.",
                     "6": "Mọi con số đều khớp, mọi đảo đều nối với phần còn lại. Thế là xong."
+                },
+                "hint": {
+                    "allSpaces": {
+                        "plain": "Số {n} ở hàng {row}, cột {column} cần mọi cây cầu còn đặt vừa quanh nó mới đạt đủ {n}. Vì vậy mỗi khe ? còn mở nhận nhiều cầu nhất có thể.",
+                        "fresh": "Số {n} ở hàng {row}, cột {column} cần {n} cầu, và các khe của nó cộng lại chỉ chứa được tối đa {n}. Vì vậy mỗi khe ? nhận nhiều cầu nhất có thể.",
+                        "closed": "Quanh số {n} ở hàng {row}, cột {column}, các khe không bị cắt ngang, không bị loại và không dẫn tới đảo đã đủ cầu cộng lại chỉ chứa được tối đa {n} cầu. Vì vậy mỗi khe ? đó nhận nhiều cầu nhất có thể.",
+                        "more": "Số {n} ở hàng {row}, cột {column} còn cần {need} cầu, và các khe quanh nó chưa xác định, không bị cắt ngang và không dẫn tới đảo đã đủ cầu cộng lại chỉ chứa được tối đa {need}. Vì vậy mỗi khe ? đó nhận nhiều cầu nhất có thể."
+                    },
+                    "oneEachWay": {
+                        "plain": "Số {n} ở hàng {row}, cột {column} quá lớn nên không thể bỏ qua đảo lân cận nào nó còn nối tới được: nếu bỏ, các đảo còn lại không bao giờ đạt đủ {n}. Vì vậy mỗi khe ? còn mở cần ít nhất một cầu.",
+                        "count": "Số {n} ở hàng {row}, cột {column} còn nối tới được {count} đảo lân cận. Bỏ bất kỳ đảo nào trong số đó, các đảo còn lại chỉ nhận được tối đa {max} cầu, không đủ {n}. Vì vậy mỗi khe ? còn mở cần ít nhất một cầu."
+                    },
+                    "needsNeighbour": {
+                        "many": "Một số khe quanh số {n} ở hàng {row}, cột {column} không thể để trống: thiếu cầu ở bất kỳ khe nào trong đó, các khe còn lại không thể đạt đủ {n}. Vì vậy mỗi khe ? đó cần ít nhất một cầu.",
+                        "one": "Nếu không có cầu tới số {m} ở hàng {mrow}, cột {mcolumn}, các khe khác quanh số {n} ở hàng {row}, cột {column} chỉ nhận được tối đa {max} cầu, không đủ {n}. Vì vậy khe ? giữa hai đảo đó cần ít nhất một cầu.",
+                        "onePlain": "Các khe khác quanh số {n} ở hàng {row}, cột {column} không thể đạt đủ {n} nếu không có cầu tới số {m} ở hàng {mrow}, cột {mcolumn}. Vì vậy khe ? giữa hai đảo đó cần ít nhất một cầu.",
+                        "two": "Các khe khác quanh số {n} ở hàng {row}, cột {column} không thể đạt đủ {n} nếu không có cầu tới số {a} ở hàng {arow}, cột {acolumn}, và cũng không thể nếu không có cầu tới số {b} ở hàng {brow}, cột {bcolumn}. Vì vậy cả hai khe ? đó đều cần ít nhất một cầu."
+                    }
                 }
             },
             "light_up": {
@@ -756,6 +772,22 @@
                     "4": "Góc này vẫn tối và không bóng nào khác chiếu tới được, nên nó cần một bóng đèn riêng.",
                     "5": "Không bóng nào được chiếu vào bóng khác. Hai bóng này cùng cột và không có gì chắn giữa.",
                     "6": "Mọi ô trắng đều sáng, số 4 có đủ bốn bóng, và không bóng nào chiếu vào bóng khác."
+                },
+                "hint": {
+                    "onlyWay": {
+                        "cell": "Mọi ô có thể chiếu sáng ô có viền ở hàng {row}, cột {column} đều đã được chiếu sáng hoặc bị loại, trừ ô ?. Vì vậy ô ? cần một bóng đèn.",
+                        "self": "Mọi ô có thể chiếu sáng ô có viền ở hàng {row}, cột {column} đều đã được chiếu sáng hoặc bị loại, nên nó cần một bóng đèn riêng."
+                    },
+                    "clueSatisfied": {
+                        "some": "Số {number} ở hàng {row}, cột {column} đã có đủ số bóng đèn nó yêu cầu bên cạnh, nên không ô ? nào cạnh nó có thể có bóng đèn.",
+                        "zero": "Số 0 ở hàng {row}, cột {column} không thể có bóng đèn bên cạnh, nên không ô ? nào cạnh nó có thể có bóng đèn."
+                    },
+                    "clueForced": "Số {number} ở hàng {row}, cột {column} còn lại vừa đủ ô bên cạnh cho số bóng đèn nó còn cần, nên mọi ô ? cạnh nó đều cần một bóng đèn.",
+                    "setExclusion": {
+                        "dark": "Chỉ các ô có viền còn có thể chiếu sáng ô ở hàng {row}, cột {column}, nên một trong số chúng phải có bóng đèn. Một bóng đèn ở ô ? sẽ loại tất cả các ô đó, bằng cách chiếu vào chúng hoặc làm đủ một con số cạnh chúng. Vì vậy ô ? không thể có bóng đèn.",
+                        "clue": "Các ô có viền cạnh số {number} ở hàng {row}, cột {column} là tất cả những chỗ còn lại cho bóng đèn của nó. Một bóng đèn ở ô ? sẽ loại quá nhiều ô trong số đó, bằng cách chiếu vào chúng hoặc làm đủ một con số khác, khiến số {number} bị thiếu. Vì vậy ô ? không thể có bóng đèn.",
+                        "clueBeside": "Ô ? và các ô có viền cạnh số {number} ở hàng {row}, cột {column} là tất cả những chỗ còn lại cho bóng đèn của nó. Một bóng đèn ở ô ? sẽ loại quá nhiều ô có viền, bằng cách chiếu vào chúng hoặc làm đủ một con số khác, khiến số {number} bị thiếu. Vì vậy ô ? không thể có bóng đèn."
+                    }
                 }
             },
             "loopy": {
@@ -800,6 +832,30 @@
                     "4": "Góc này cần bốn, nên cả bốn ô quanh nó phải hướng vào nó. Chỉ có một cách để làm vậy.",
                     "5": "Bốn đường này đã nối thành một vòng khép kín. Vòng không được phép, nên một trong số chúng phải nghiêng theo hướng kia.",
                     "6": "Mọi ô đều được điền, mọi con số đều khớp, và không có vòng nào."
+                },
+                "hint": {
+                    "satisfied": {
+                        "some": "Số {clue} có viền đã có đủ các đường chéo cần thiết, nên mọi ô ? quanh nó phải nghiêng ra xa nó.",
+                        "zero": "Số {clue} có viền không được chạm vào đường chéo nào, nên mọi ô ? quanh nó phải nghiêng ra xa nó."
+                    },
+                    "forced": {
+                        "all": "Số {clue} có viền cần một đường chéo từ mọi ô quanh nó, nên mọi ô ? phải nghiêng về phía nó.",
+                        "one": "Số {clue} có viền còn cần 1 đường chéo, và quanh nó chỉ còn một ô trống, nên ô ? phải nghiêng về phía nó.",
+                        "many": "Số {clue} có viền còn cần {needed} đường chéo, và quanh nó chỉ còn {needed} ô trống, nên mọi ô ? phải nghiêng về phía nó."
+                    },
+                    "paired": {
+                        "away": "Hai ô có viền phải nghiêng cùng hướng, nên cùng nhau chúng cho số {clue} có viền đúng một đường chéo. Đó là tất cả những gì nó còn cần, nên mọi ô ? quanh nó phải nghiêng ra xa nó.",
+                        "towards": "Hai ô có viền phải nghiêng cùng hướng, nên cùng nhau chúng cho số {clue} có viền đúng một đường chéo. Sau đó nó vẫn cần thêm {needed} đường, nên mọi ô ? quanh nó phải nghiêng về phía nó."
+                    },
+                    "loop": {
+                        "backslash": "Góc trên bên trái và góc dưới bên phải của ô có viền đã được nối bằng một chuỗi đường chéo, nên một đường giữa chúng sẽ khép thành vòng. Ô này phải nghiêng từ dưới trái lên trên phải.",
+                        "slash": "Góc dưới bên trái và góc trên bên phải của ô có viền đã được nối bằng một chuỗi đường chéo, nên một đường giữa chúng sẽ khép thành vòng. Ô này phải nghiêng từ trên trái xuống dưới phải."
+                    },
+                    "deadEnd": {
+                        "backslash": "Các góc có viền thuộc về hai nhóm đường chéo, một nhóm ở góc trên bên trái của ô có viền và một nhóm ở góc dưới bên phải. Không nhóm nào chạm tới mép lưới, và mỗi nhóm chỉ có thể dài thêm tối đa một đường nữa. Khi nối lại, chúng sẽ thành một nhóm không bao giờ chạm tới mép, điều chỉ xảy ra bên trong một vòng. Vì vậy ô này phải nghiêng từ dưới trái lên trên phải.",
+                        "slash": "Các góc có viền thuộc về hai nhóm đường chéo, một nhóm ở góc dưới bên trái của ô có viền và một nhóm ở góc trên bên phải. Không nhóm nào chạm tới mép lưới, và mỗi nhóm chỉ có thể dài thêm tối đa một đường nữa. Khi nối lại, chúng sẽ thành một nhóm không bao giờ chạm tới mép, điều chỉ xảy ra bên trong một vòng. Vì vậy ô này phải nghiêng từ trên trái xuống dưới phải."
+                    },
+                    "equivalent": "Các con số nằm giữa ô có viền và ô đã điền ở hàng {row}, cột {column} chỉ thỏa mãn khi cả hai nghiêng cùng hướng, nên ô có viền phải vẽ giống ô đó."
                 }
             },
             "tents": {
@@ -822,6 +878,39 @@
                     "4": "Lều không bao giờ chạm nhau, kể cả ở góc. Hai lều này chạm nhau, nên một trong hai phải dời đi.",
                     "5": "Chỉ còn một ô trống cạnh cây này, nên lều của nó đặt ở đó.",
                     "6": "Mỗi cây đều có lều bên cạnh, không hai lều nào chạm nhau, và các con số đều khớp."
+                },
+                "hint": {
+                    "noFreeTree": {
+                        "none": "Không có cây nào ngay trên, dưới hoặc cạnh ô ?, nên lều ở đó sẽ không có cây nào để thuộc về.",
+                        "one": "Cây duy nhất cạnh ô ? đã có lều riêng, nên lều ở ô ? sẽ không có cây nào để thuộc về.",
+                        "many": "Cả {count} cây cạnh ô ? đều đã có lều riêng, nên lều ở ô ? sẽ không có cây nào để thuộc về."
+                    },
+                    "tentTouches": {
+                        "one": "Ô ? chạm vào lều có viền, mà lều không bao giờ chạm nhau, kể cả ở góc. Vì vậy ô ? không thể có lều.",
+                        "many": "Ô ? chạm vào các lều có viền, mà lều không bao giờ chạm nhau, kể cả ở góc. Vì vậy ô ? không thể có lều."
+                    },
+                    "treeNeedsTent": "Mọi ô khác cạnh cây có viền đều đã bị chiếm hoặc bị loại, nên lều của nó phải đặt ở ô ?.",
+                    "treeCorner": "Lều của cây có viền phải nằm ở một trong hai ô có viền cạnh nó, và cả hai ô đó đều chạm vào ô ?. Dù là ô nào, ô ? cũng không thể có lều.",
+                    "lineCount": {
+                        "row": "Con số của hàng {line} là {count}. Dù bạn đặt số lều còn thiếu vào các ô trống của nó theo cách nào, không để hai lều chạm nhau, mỗi ô ? lần nào cũng ra giống nhau, là lều hoặc không. Vì vậy bạn có thể điền chúng.",
+                        "column": "Con số của cột {line} là {count}. Dù bạn đặt số lều còn thiếu vào các ô trống của nó theo cách nào, không để hai lều chạm nhau, mỗi ô ? lần nào cũng ra giống nhau, là lều hoặc không. Vì vậy bạn có thể điền chúng."
+                    },
+                    "lineNeighbour": {
+                        "row": "Con số của hàng {line} là {count}. Dù bạn đặt số lều còn thiếu vào các ô trống của nó theo cách nào, không để hai lều chạm nhau, luôn có một lều chạm vào mỗi ô ?. Vì vậy các ô ? không thể có lều.",
+                        "column": "Con số của cột {line} là {count}. Dù bạn đặt số lều còn thiếu vào các ô trống của nó theo cách nào, không để hai lều chạm nhau, luôn có một lều chạm vào mỗi ô ?. Vì vậy các ô ? không thể có lều."
+                    },
+                    "lineExact": {
+                        "row": "Mọi ô trong hàng {line}, trừ các ô ?, đều đã có lều hoặc không thể có lều, và hàng này vẫn thiếu {missing} lều. Vì vậy mọi ô ? đều là lều.",
+                        "rowOne": "Mọi ô trong hàng {line}, trừ ô ?, đều đã có lều hoặc không thể có lều, và hàng này vẫn thiếu một lều. Vì vậy ô ? là lều.",
+                        "column": "Mọi ô trong cột {line}, trừ các ô ?, đều đã có lều hoặc không thể có lều, và cột này vẫn thiếu {missing} lều. Vì vậy mọi ô ? đều là lều.",
+                        "columnOne": "Mọi ô trong cột {line}, trừ ô ?, đều đã có lều hoặc không thể có lều, và cột này vẫn thiếu một lều. Vì vậy ô ? là lều."
+                    },
+                    "lineFull": {
+                        "row": "Con số của hàng {line} là {count}, và hàng đã có đủ số lều đó. Vì vậy không ô ? nào có thể có lều.",
+                        "rowZero": "Con số của hàng {line} là 0, nên không ô ? nào có thể có lều.",
+                        "column": "Con số của cột {line} là {count}, và cột đã có đủ số lều đó. Vì vậy không ô ? nào có thể có lều.",
+                        "columnZero": "Con số của cột {line} là 0, nên không ô ? nào có thể có lều."
+                    }
                 }
             },
             "unruly": {
@@ -840,6 +929,87 @@
                     "3": "Mỗi hàng và cột cuối cùng có ba ô mỗi màu. Hàng này có bốn ô tím.",
                     "4": "Hai ô cam cách nhau một ô. Cam ở giữa sẽ thành ba, nên phải là tím.",
                     "5": "Mọi ô đều được tô, không có ba ô liên tiếp cùng màu, và mỗi hàng, mỗi cột có ba ô mỗi màu."
+                },
+                "hint": {
+                    "pairEnd": {
+                        "row": "Các ô có viền ở hàng {line} nằm cạnh nhau và đều màu {colour}. Tô ô ? cũng màu {colour} sẽ tạo ba ô {colour} liên tiếp, nên nó phải là màu {other}.",
+                        "column": "Các ô có viền ở cột {line} nằm trên dưới nhau và đều màu {colour}. Tô ô ? cũng màu {colour} sẽ tạo ba ô {colour} liên tiếp, nên nó phải là màu {other}."
+                    },
+                    "pairGap": {
+                        "row": "Các ô có viền ở hàng {line} đều màu {colour}, với ô ? ở giữa. Tô nó cũng màu {colour} sẽ tạo ba ô {colour} liên tiếp, nên nó phải là màu {other}.",
+                        "column": "Các ô có viền ở cột {line} đều màu {colour}, với ô ? ở giữa. Tô nó cũng màu {colour} sẽ tạo ba ô {colour} liên tiếp, nên nó phải là màu {other}."
+                    },
+                    "lastGap": {
+                        "row": "Hàng {line} đã có đủ cả {count} ô màu {colour} và còn thiếu một ô màu {other}, nên ô trống cuối cùng của nó phải là màu {other}.",
+                        "column": "Cột {line} đã có đủ cả {count} ô màu {colour} và còn thiếu một ô màu {other}, nên ô trống cuối cùng của nó phải là màu {other}."
+                    },
+                    "lineFull": {
+                        "row": "Hàng {line} đã có đủ cả {count} ô màu {colour}, đều có viền, nên mọi ô ? trong đó phải là màu {other}.",
+                        "column": "Cột {line} đã có đủ cả {count} ô màu {colour}, đều có viền, nên mọi ô ? trong đó phải là màu {other}."
+                    },
+                    "lastInRun": {
+                        "row": "Hàng {line} chỉ cần thêm một ô màu {colour}, và nó phải nằm trong các ô có viền từ cột {from} đến cột {to}: đặt ở chỗ khác sẽ khiến cả ba ô đó đều màu {other}. Vì vậy mọi ô ? phải là màu {other}.",
+                        "column": "Cột {line} chỉ cần thêm một ô màu {colour}, và nó phải nằm trong các ô có viền từ hàng {from} đến hàng {to}: đặt ở chỗ khác sẽ khiến cả ba ô đó đều màu {other}. Vì vậy mọi ô ? phải là màu {other}."
+                    }
+                },
+                "colour": {
+                    "1": "cam",
+                    "2": "tím"
+                }
+            },
+            "chat_rooms": {
+                "name": "CHAT Rooms",
+                "rules": "Đặt một CHAT vào mỗi hàng, mỗi cột và mỗi phòng màu. Không được có hai CHAT chạm nhau, kể cả chạm góc.",
+                "technique": {
+                    "1": "Một CHAT loại trừ mọi ô khác trong hàng, cột và phòng của nó, cùng tám ô xung quanh nó.",
+                    "2": "Hàng, cột hoặc phòng này chỉ còn một ô có thể đặt CHAT, nên CHAT phải ở đó.",
+                    "3": "Đây là những ô duy nhất còn lại của một phòng, và tất cả nằm trên cùng một hàng hoặc cột, nên CHAT của hàng hoặc cột đó phải nằm trong số này và phần còn lại của hàng hoặc cột bị loại. Điều ngược lại cũng đúng: một hàng hoặc cột có mọi ô trống nằm trong một phòng sẽ loại phần còn lại của phòng đó.",
+                    "4": "Các phòng này chỉ có thể dùng những hàng hoặc cột này, và số phòng bằng số hàng hoặc cột, nên mọi CHAT của những hàng hoặc cột đó đều thuộc về các phòng này và không ô nào khác trong đó có thể đặt CHAT.",
+                    "5": "Đặt CHAT vào ô này sẽ loại mọi ô còn lại của hàng, cột hoặc phòng này, nên ô này không thể có CHAT."
+                },
+                "demo": {
+                    "1": "Đặt một CHAT vào mỗi hàng, mỗi cột và mỗi phòng màu. Chạm một lần để gạch một ô, hai lần để đặt CHAT.",
+                    "2": "Không được có hai CHAT chạm nhau, kể cả chạm góc.",
+                    "3": "Mỗi phòng có một CHAT. Phòng trên cùng đang có hai.",
+                    "4": "Phòng này chỉ có một ô, nên CHAT của nó ở đó. Mọi ô mà nó loại trừ đều được gạch sẵn cho bạn.",
+                    "5": "Một CHAT trong mỗi hàng, cột và phòng, và không cái nào chạm nhau."
+                },
+                "hint": {
+                    "shadow": "CHAT ở hàng {row}, cột {column} loại mọi ô khác trong hàng, cột của nó và trong {room}, cùng mọi ô chạm vào nó, nên các ô ? không thể có CHAT.",
+                    "lastCell": {
+                        "row": "Mọi ô khác trong hàng {line} đều đã bị loại, nên CHAT của hàng {line} phải ở ô ?.",
+                        "column": "Mọi ô khác trong cột {line} đều đã bị loại, nên CHAT của cột {line} phải ở ô ?.",
+                        "room": "Mọi ô khác trong {room} đều đã bị loại, nên CHAT của phòng đó phải ở ô ?.",
+                        "single": "Ô có viền là toàn bộ {room}, nên CHAT của phòng đó nằm ở đó."
+                    },
+                    "confined": {
+                        "roomInRow": "Những ô duy nhất còn lại của {room} là các ô có viền, và tất cả đều nằm ở hàng {line}. Vì vậy CHAT của hàng {line} phải thuộc phòng đó, và các ô ? không thể có CHAT.",
+                        "roomInColumn": "Những ô duy nhất còn lại của {room} là các ô có viền, và tất cả đều nằm ở cột {line}. Vì vậy CHAT của cột {line} phải thuộc phòng đó, và các ô ? không thể có CHAT.",
+                        "rowInRoom": "Những ô duy nhất còn lại trong hàng {line} là các ô có viền, và tất cả đều nằm trong {room}. Vì vậy CHAT của phòng đó phải ở hàng {line}, và các ô ? không thể có CHAT.",
+                        "columnInRoom": "Những ô duy nhất còn lại trong cột {line} là các ô có viền, và tất cả đều nằm trong {room}. Vì vậy CHAT của phòng đó phải ở cột {line}, và các ô ? không thể có CHAT."
+                    },
+                    "pigeonhole": {
+                        "roomsInRows": "Những ô duy nhất còn lại của {count} phòng này là các ô có viền, và tất cả đều nằm ở hàng {lines}. Vì vậy CHAT của các hàng đó đều phải thuộc các phòng này, và các ô ? không thể có CHAT.",
+                        "roomsInColumns": "Những ô duy nhất còn lại của {count} phòng này là các ô có viền, và tất cả đều nằm ở cột {lines}. Vì vậy CHAT của các cột đó đều phải thuộc các phòng này, và các ô ? không thể có CHAT.",
+                        "rowsInRooms": "Những ô duy nhất còn lại trong hàng {lines} là các ô có viền, và tất cả chỉ nằm trong {count} phòng. Vì vậy CHAT của các phòng đó đều phải ở các hàng này, và các ô ? không thể có CHAT.",
+                        "columnsInRooms": "Những ô duy nhất còn lại trong cột {lines} là các ô có viền, và tất cả chỉ nằm trong {count} phòng. Vì vậy CHAT của các phòng đó đều phải ở các cột này, và các ô ? không thể có CHAT."
+                    },
+                    "blocked": {
+                        "row": "Các ô có viền là tất cả những gì hàng {line} còn lại. Một CHAT ở ô ? sẽ loại tất cả các ô đó, bằng cách chạm vào chúng hoặc chung hàng, cột hay phòng với chúng, khiến hàng {line} không còn chỗ cho CHAT của nó. Vì vậy ô ? không thể có CHAT.",
+                        "column": "Các ô có viền là tất cả những gì cột {line} còn lại. Một CHAT ở ô ? sẽ loại tất cả các ô đó, bằng cách chạm vào chúng hoặc chung hàng, cột hay phòng với chúng, khiến cột {line} không còn chỗ cho CHAT của nó. Vì vậy ô ? không thể có CHAT.",
+                        "room": "Các ô có viền là tất cả những gì {room} còn lại. Một CHAT ở ô ? sẽ loại tất cả các ô đó, bằng cách chạm vào chúng hoặc chung hàng, cột hay phòng với chúng, khiến phòng đó không còn chỗ cho CHAT của nó. Vì vậy ô ? không thể có CHAT."
+                    }
+                },
+                "room": {
+                    "0": "phòng tím",
+                    "1": "phòng cam",
+                    "2": "phòng xanh dương",
+                    "3": "phòng xanh lá",
+                    "4": "phòng xám",
+                    "5": "phòng đỏ",
+                    "6": "phòng vàng",
+                    "7": "phòng nâu",
+                    "8": "phòng hồng"
                 }
             }
         }

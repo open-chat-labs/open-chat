@@ -1,4 +1,11 @@
+import type { HintCaption } from "@client";
 import { describe, expect, test } from "vitest";
+import bridgesHints from "../../../openchat-shared/src/utils/dailyGames/bridgesHints.json";
+import chatRoomsHints from "../../../openchat-shared/src/utils/dailyGames/chatRoomsHints.json";
+import lightUpHints from "../../../openchat-shared/src/utils/dailyGames/lightUpHints.json";
+import slantHints from "../../../openchat-shared/src/utils/dailyGames/slantHints.json";
+import tentsHints from "../../../openchat-shared/src/utils/dailyGames/tentsHints.json";
+import unrulyHints from "../../../openchat-shared/src/utils/dailyGames/unrulyHints.json";
 import en from "../i18n/en.json";
 import { dailyPuzzleGames } from "./dailyPuzzleGames";
 
@@ -70,6 +77,64 @@ describe("daily puzzle demos", () => {
                 for (const [k] of f.marks) expect(keys.has(k)).toBe(true);
                 for (const k of f.target ?? []) expect(k).toBeGreaterThanOrEqual(0);
             }
+        });
+    }
+});
+
+// #9675 invariant 26: a hint sentence is built in code and worded in the strings, and nothing else
+// ties the two. Every caption a game's hintCaption returns for a real solver step names a string
+// the game ships, supplies every placeholder that string has, and names only strings that exist
+// for the values it has translated first (a room's colour). The steps come from the fixtures the
+// per-game "hint sentences" tests read, each kept current by its crate's hint_fixture_is_current.
+describe("daily puzzle hint sentences match their strings", () => {
+    type Step = { technique: number; focus: number[]; target: number[]; conclusions: number[][] };
+    const fixtures: Record<string, { description: string; steps: Step[] }[]> = {
+        chat_rooms: chatRoomsHints,
+        light_up: lightUpHints,
+        tents: tentsHints,
+        slant: slantHints,
+        bridges: bridgesHints,
+        unruly: unrulyHints,
+    };
+    const bytes = (hex: string) => Uint8Array.from(hex.match(/../g)!.map((b) => parseInt(b, 16)));
+    const placeholders = (text: string) =>
+        [...text.matchAll(/\{([a-zA-Z]+)\}/g)].map((m) => m[1]).sort();
+
+    for (const [id, entries] of Object.entries(fixtures)) {
+        test(`${id}: every caption names a string and fills its placeholders`, () => {
+            const def = dailyPuzzleGames[id];
+            expect(def.game.hintCaption, id).toBeDefined();
+            let checked = 0;
+            const check = (caption: HintCaption | undefined, where: string) => {
+                if (caption === undefined) return;
+                checked += 1;
+                const text = def.strings[caption.key];
+                expect(text, `${where}: ${caption.key}`).toBeDefined();
+                const params = caption.params ?? {};
+                // A placeholder with no value renders as raw text; a value the sentence has no
+                // place for is harmless
+                for (const name of placeholders(text)) {
+                    expect(params, `${where}: ${caption.key} needs {${name}}`).toHaveProperty(name);
+                }
+                for (const value of Object.values(params)) {
+                    if (typeof value === "object" && !Array.isArray(value)) {
+                        expect(def.strings[value.key], `${where}: ${value.key}`).toBeDefined();
+                    }
+                }
+            };
+            for (const [p, entry] of entries.entries()) {
+                const model = def.game.parse(bytes(entry.description));
+                let state = def.game.empty(model);
+                for (const [i, step] of entry.steps.entries()) {
+                    const where = `${id} puzzle ${p} step ${i}`;
+                    // As served with its target, and with it withheld
+                    check(def.game.hintCaption!(model, state, step), where);
+                    check(def.game.hintCaption!(model, state, { ...step, target: [] }), where);
+                    for (const [k, v] of step.conclusions)
+                        state = def.game.apply(model, state, k, v);
+                }
+            }
+            expect(checked).toBeGreaterThan(0);
         });
     }
 });
