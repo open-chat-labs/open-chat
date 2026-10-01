@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { DragList } from "@src/components/home/nav/dragList.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import {
         Avatar,
@@ -46,17 +47,17 @@
 
     let props: Props = $props();
 
-    let communityItems = $state<CommunityItem[]>([]);
+    const communityList = new DragList<CommunityItem>();
     $effect(() => {
-        communityItems = $sortedCommunitiesStore.map((c) => ({ ...c, _id: c.id.communityId }));
+        communityList.sync($sortedCommunitiesStore.map((c) => ({ ...c, _id: c.id.communityId })));
     });
 
     function handleDndConsider(e: CustomEvent<DndEvent<CommunityItem>>) {
-        communityItems = e.detail.items;
+        communityList.consider(e.detail.items);
     }
 
     function handleDndFinalize(e: CustomEvent<DndEvent<CommunityItem>>) {
-        client.updateCommunityIndexes(e.detail.items);
+        client.updateCommunityIndexes(communityList.finalize(e.detail.items));
     }
 </script>
 
@@ -138,13 +139,13 @@
         <div
             class={"dropzone"}
             use:dragHandleZone={{
-                items: communityItems,
+                items: communityList.items,
                 flipDurationMs,
                 dropTargetStyle: {},
             }}
             onconsider={handleDndConsider}
             onfinalize={handleDndFinalize}>
-            {#each communityItems as community (community._id)}
+            {#each communityList.items as community (community._id)}
                 <div animate:flip={{ duration: flipDurationMs }}>
                     {@render communityRow(community)}
                 </div>
