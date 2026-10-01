@@ -1513,12 +1513,13 @@ fn notice_of_a_migrated_users_new_id_is_held_until_the_peers_canister_is_upgrade
     );
     let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user1.user_id);
 
-    // user3 is told of user1's new id straight away, but user2 isn't while their canister is on the
-    // older wasm
+    // user3 is told of user1's new id straight away, but user2's notice is held while their canister
+    // is on the older wasm. They may be on different LocalUserIndexes, which hear of the migration at
+    // different times.
     tick_until(env, |env| {
         direct_chat_peer(env, &user3, user1.user_id, new_user_id) == new_user_id
+            && held_user_id_migrations(env, user2.local_user_index) == held_before + 1
     });
-    assert_eq!(held_user_id_migrations(env, user2.local_user_index), held_before + 1);
     assert_eq!(direct_chat_peer(env, &user2, user1.user_id, new_user_id), user1.user_id);
 
     // Once user2's canister has been upgraded, they are. Only theirs is upgraded, so as not to wait
