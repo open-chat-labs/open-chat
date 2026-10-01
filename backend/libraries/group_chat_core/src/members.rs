@@ -4,7 +4,7 @@ use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use candid::Principal;
 use constants::{ONE_MB, calculate_summary_updates_data_removal_cutoff};
-use group_community_common::{Member, MemberUpdate, Members};
+use group_community_common::{Member, MemberUpdate, Members, MembersPage, members_page};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -12,7 +12,7 @@ use stable_memory_map::StableMemoryMap;
 use std::cell::OnceCell;
 use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
-use std::ops::Deref;
+use std::ops::{Bound, Deref};
 use types::{
     BotNotification, EventIndex, GroupMember, GroupRole, MessageIndex, MultiUserChat, OCResult, TimestampMillis, Timestamped,
     UserId, UserIdAndPrincipal, UserType, Version, is_default,
@@ -299,6 +299,22 @@ impl GroupMembers {
 
     pub fn get(&self, user_id: &UserId) -> Option<GroupMemberInternal> {
         self.members_map.get(user_id)
+    }
+
+    // A page of the members in order of user id, starting from the first after `after`, and holding
+    // up to `max_results` of them, or all of them if `max_results` is None. The owners, admins and
+    // moderators are instead all returned with the first page (where `after` is None). See
+    // `members_page`.
+    pub fn page(&self, after: Option<UserId>, max_results: Option<u32>) -> MembersPage<GroupMember> {
+        let start = after.map_or(Bound::Unbounded, Bound::Excluded);
+        members_page(
+            &[&self.owners, &self.admins, &self.moderators],
+            self.member_ids.range((start, Bound::Unbounded)),
+            after.is_none(),
+            max_results,
+            |user_id| !self.lapsed.contains(user_id),
+            |user_id| self.get(user_id).map(|m| GroupMember::from(&m)),
+        )
     }
 
     pub fn get_bot(&self, bot_user_id: &UserId) -> Option<GroupMemberInternal> {
@@ -1215,6 +1231,49 @@ mod tests {
         members.check_invariants();
     }
 
+    #[test]
+    fn pages_hold_each_member_once_with_those_with_roles_in_the_first() {
+        let mut members = members_for_page_tests(9);
+        set_role(&mut members, test_user_id(8), GroupRoleInternal::Admin);
+        set_role(&mut members, test_user_id(9), GroupRoleInternal::Moderator);
+        members.update_lapsed(test_user_id(3), true, 3);
+
+        // The owner, admin and moderator, then the others in order of user id, of whom the lapsed
+        // member is returned in full
+        let page1 = members.page(None, Some(3));
+        assert_eq!(member_ids(&page1.members), user_ids([1, 8, 9, 3]));
+        assert!(page1.members.iter().all(|m| m.lapsed == (m.user_id == test_user_id(3))));
+        assert_eq!(page1.basic_members, user_ids([2, 4]));
+        assert_eq!(page1.more_members_after, Some(test_user_id(4)));
+
+        let page2 = members.page(page1.more_members_after, Some(3));
+        assert!(page2.members.is_empty());
+        assert_eq!(page2.basic_members, user_ids([5, 6, 7]));
+        assert_eq!(page2.more_members_after, None);
+
+        let all = members.page(None, None);
+        assert_eq!(member_ids(&all.members), user_ids([1, 8, 9, 3]));
+        assert_eq!(all.basic_members, user_ids([2, 4, 5, 6, 7]));
+        assert_eq!(all.more_members_after, None);
+    }
+
+    // Holds users 1 to `count`, of whom user 1 is the owner
+    fn members_for_page_tests(count: u8) -> GroupMembers {
+        let mut members = members_for_migration_tests();
+        for i in 2..=count {
+            members.add(test_user_id(i), None, 1, 0.into(), 0.into(), true, UserType::User);
+        }
+        members
+    }
+
+    fn member_ids(members: &[GroupMember]) -> Vec<UserId> {
+        members.iter().map(|m| m.user_id).collect()
+    }
+
+    fn user_ids<const N: usize>(ids: [u8; N]) -> Vec<UserId> {
+        ids.map(test_user_id).to_vec()
+    }
+
     fn members_for_migration_tests() -> GroupMembers {
         use ic_stable_structures::DefaultMemoryImpl;
         use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
@@ -1239,6 +1298,7 @@ mod tests {
         match role {
             GroupRoleInternal::Owner => members.owners.insert(user_id),
             GroupRoleInternal::Admin => members.admins.insert(user_id),
+            GroupRoleInternal::Moderator => members.moderators.insert(user_id),
             _ => unimplemented!(),
         };
     }
