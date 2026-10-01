@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Validate the source account matches the caller when taking the fee to submit a proposal ([#9696](https://github.com/open-chat-labs/open-chat/pull/9696))
+
 ## [[2.0.2070](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2070-proposals_bot)] - 2026-09-29
 
 ### Added
