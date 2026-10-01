@@ -79,7 +79,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Don't take an access gate's payment when a member's gate is checked again as it expires ([#9700](https://github.com/open-chat-labs/open-chat/pull/9700))
 - Don't queue a removal event for a removed bot, whose canister can't take it ([#9717](https://github.com/open-chat-labs/open-chat/pull/9717))
 - Record bots which join a community as bots, and backfill those already in it and its channels ([#9718](https://github.com/open-chat-labs/open-chat/pull/9718))
-- Move a member of an imported group whom the group held by an id they've since been migrated from onto their latest id ([#9722](https://github.com/open-chat-labs/open-chat/pull/9722))
+- After importing a group, fetch latest ids in addition to principals so we can update users who were migrated during the import ([#9722](https://github.com/open-chat-labs/open-chat/pull/9722))
 
 ## [[2.0.2045](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2045-community)] - 2026-08-26
 
