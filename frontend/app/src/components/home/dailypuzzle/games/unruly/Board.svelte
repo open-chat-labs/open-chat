@@ -1,7 +1,8 @@
 <script lang="ts">
     import { unruly, type UnrulyCell, type UnrulyDescription } from "@client";
     import GridSvg from "../GridSvg.svelte";
-    import { CELL, elementCentre, elementRect, highlight, keysOf } from "../gridSvg";
+    import HintOutline from "../HintOutline.svelte";
+    import { CELL, elementCentre, elementRect, keysOf } from "../gridSvg";
     import type { BoardProps } from "../types";
 
     let {
@@ -81,16 +82,12 @@
                 pointer-events="none" />
         {/if}
         {#if focus.has(el.key)}
-            {@const hl = highlight(el.key, focus, target)}
-            <rect
-                x={r.x + 0.5}
-                y={r.y + 0.5}
-                width={CELL - 1}
-                height={CELL - 1}
-                fill={hl.fill}
-                stroke={hl.stroke}
-                stroke-width="0.8"
-                pointer-events="none" />
+            <!-- a given takes no mark, so it is never asked for -->
+            <HintOutline
+                x={r.x}
+                y={r.y}
+                subject={target.has(el.key)}
+                markable={model.givens[el.key] === 0} />
         {/if}
         {#if mistakes.has(el.key)}
             <rect

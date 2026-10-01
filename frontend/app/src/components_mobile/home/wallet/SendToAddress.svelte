@@ -102,8 +102,12 @@
             return [];
         }
     });
+    // Refused whichever way the send is made, since anything sent there would be lost
+    let targetIsUserIdAccount = $derived(client.isAccountOfMultiUserCanisterUserId(targetAccount));
     let targetAccountValid = $derived.by(() => {
         if (targetAccount.length === 0 || targetAccount === account) return false;
+        // Checked before the network, since BTC sent over the ckBTC network goes to an IC account
+        if (targetIsUserIdAccount) return false;
         if (isBtc) return targetAccount.length >= 14;
         if (isOneSecNetwork) return targetAccount.length === 42;
         if (isICRCAddressValid(targetAccount)) return true;
@@ -283,6 +287,11 @@
             )} />
     {/snippet}
 </Input>
+
+{#if targetIsUserIdAccount}
+    <ErrorMessage
+        ><Translatable resourceKey={i18nKey("cryptoAccount.sendToUserId")} /></ErrorMessage>
+{/if}
 
 <TokenInput
     balance={tokenState.cryptoBalance}

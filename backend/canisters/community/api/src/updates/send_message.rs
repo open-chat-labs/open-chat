@@ -15,9 +15,11 @@ use types::{
 // - Certified: made by the caller already, calling `icrc1_transfer` on the ledger with the memo
 //   `ledger_utils::certified::required_memo` builds from the message type's memo (OC_MSG or OC_PRZ)
 //   and the community's canister id.
-// A crypto transfer must be to the recipient's wallet, and a prize to the community's default
-// account. A P2P swap is funded via ICRC2 from its `from_account`, which defaults to the caller's
-// wallet.
+// A crypto transfer must be to the recipient's wallet, or to the account of their user id, as a
+// caller which doesn't know where they hold their funds addresses it, which the community pulls
+// into their wallet instead. A certified one has been made already, so must have been to the
+// wallet. A prize must be to the community's default account. A P2P swap is funded via ICRC2 from
+// its `from_account`, which defaults to the caller's wallet.
 #[ts_export(community, send_message)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {

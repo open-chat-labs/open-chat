@@ -119,6 +119,7 @@ members = [
     "backend/libraries/canister_timer_jobs",
     "backend/libraries/canister_tracing_macros",
     "backend/libraries/chat_events",
+    "backend/libraries/chat_rooms",
     "backend/libraries/constants",
     "backend/libraries/cycles_dispenser_client",
     "backend/libraries/deep_message_links",
@@ -320,6 +321,8 @@ debug = false
 [profile.dev.package.puzzle_core]
 opt-level = 3
 [profile.dev.package.unruly]
+opt-level = 3
+[profile.dev.package.chat_rooms]
 opt-level = 3
 [profile.dev.package.loopy]
 opt-level = 3

@@ -87,6 +87,7 @@ generate_msgpack_update_call!(undelete_messages);
 generate_msgpack_update_call!(unmute_notifications);
 generate_msgpack_update_call!(unpin_chat_v2);
 generate_msgpack_update_call!(update_chat_settings);
+generate_msgpack_update_call!(withdraw_crypto_v2);
 
 pub mod happy_path {
     use crate::User;

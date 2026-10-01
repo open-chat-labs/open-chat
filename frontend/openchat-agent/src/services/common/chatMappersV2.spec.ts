@@ -1,5 +1,5 @@
 import { Principal } from "@icp-sdk/core/principal";
-import type { DailyResultContent, PendingCryptocurrencyTransfer } from "@shared";
+import type { DailyResultContent, MessageContent, PendingCryptocurrencyTransfer } from "@shared";
 import { encodeIcrcAccount } from "@shared";
 import { describe, expect, test } from "vitest";
 import type { MessageContent as TMessageContent } from "../../typebox";
@@ -10,6 +10,8 @@ import {
     formatIcrcAccount,
     messageContent,
     pendingCryptoTransfer,
+    sendMessageSuccess,
+    transferFrom,
 } from "./chatMappersV2";
 
 const ledger = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -109,5 +111,68 @@ describe("daily result custom content mapping", () => {
         );
         expect(json.v).toBe(1);
         expect(json.caption).toBe("hi");
+    });
+});
+
+describe("a transfer pulled by the canister its message is sent to", () => {
+    const crypto: MessageContent = { kind: "crypto_content", caption: undefined, transfer };
+
+    test("is pulled from the account given, as an ICRC2 transfer", () => {
+        const content = transferFrom(crypto, walletOwner);
+
+        expect(content).toEqual({ ...crypto, transfer: { ...transfer, fromAccount: walletOwner } });
+        expect(
+            apiPendingCryptoTransaction({ ...transfer, fromAccount: walletOwner }),
+        ).toHaveProperty("Pending.ICRC2");
+    });
+
+    test("keeps the account it already names", () => {
+        const fromWallet: MessageContent = {
+            ...crypto,
+            transfer: { ...transfer, fromAccount: walletWithSubaccount },
+        };
+
+        expect(transferFrom(fromWallet, walletOwner)).toBe(fromWallet);
+    });
+
+    test("a message holding no such transfer is left as it is", () => {
+        const text: MessageContent = { kind: "text_content", text: "hello" };
+
+        expect(transferFrom(text, walletOwner)).toBe(text);
+    });
+
+    test("comes back from a group or community as the transfer it made", () => {
+        const sent = {
+            event_index: 3,
+            message_index: 2,
+            timestamp: 10n,
+            expires_at: undefined,
+        };
+        const completed = {
+            ICRC2: {
+                ledger: Principal.fromText(ledger).toUint8Array(),
+                token_symbol: "ICP",
+                amount: 100_000_000n,
+                spender: Principal.fromText(recipient).toUint8Array(),
+                from: { Account: addressToIcrcAccount(walletOwner) },
+                to: { Account: addressToIcrcAccount(recipient) },
+                fee: 10_000n,
+                memo: undefined,
+                created: 1n,
+                block_index: 7n,
+            },
+        };
+
+        expect(sendMessageSuccess({ ...sent, transfer: undefined })).toMatchObject({
+            kind: "success",
+            eventIndex: 3,
+        });
+        expect(
+            sendMessageSuccess({ ...sent, transfer: completed }, "sender", recipient),
+        ).toMatchObject({
+            kind: "transfer_success",
+            eventIndex: 3,
+            transfer: { kind: "completed", sender: "sender", recipient, blockIndex: 7n },
+        });
     });
 });

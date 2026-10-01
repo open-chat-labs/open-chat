@@ -70,6 +70,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Stop the `suppressed` and `@everyone` flags being swapped when a bot finalises a message, which made suppressed messages notify everyone and `@everyone` messages notify no one ([#9573](https://github.com/open-chat-labs/open-chat/pull/9573))
 - Process the jobs which expire members or join them to new public channels in batches to avoid exceeding the instruction limit in large communities ([#9659](https://github.com/open-chat-labs/open-chat/pull/9659))
 - Tell clients that a pinned message is no longer pinned when it is deleted ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
+- For users hosted in MultiUser canisters, send crypto and tips to their principal ([#9674](https://github.com/open-chat-labs/open-chat/pull/9674))
 
 ## [[2.0.2045](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2045-community)] - 2026-08-26
 

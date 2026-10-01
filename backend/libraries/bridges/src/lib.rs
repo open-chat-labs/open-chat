@@ -43,8 +43,9 @@
 //! between them, keyed by `from_cell * 2 + dir` where `from_cell` is the
 //! left / top island's cell index and dir 0 = towards the right, 1 =
 //! downwards. Values are bridge counts 0, 1 or 2. Hint `focus` entries are
-//! plain cell indices: the island the deduction was about, the water cells
-//! of the edges it considered and the islands at their far ends. `target`
+//! plain cell indices: the island the deduction was about, and the water
+//! cells and far island of every edge around it, including edges already
+//! closed, since the deduction rests on those too (invariant 23). `target`
 //! is the subset of `focus` the technique's sentence points at, in the
 //! same cell-index space: the island for techniques 1 and 2, and the
 //! island plus every neighbour the step forced a bridge to for technique
