@@ -41,6 +41,7 @@ mod gated_group_tests;
 mod group_and_community_verification_tests;
 mod identity_tests;
 mod join_group_tests;
+mod member_search_tests;
 mod members_paging_tests;
 mod mentions_tests;
 mod message_activity_tests;

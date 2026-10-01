@@ -245,8 +245,11 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         .filter(|c| matches!(c, ReferralCode::BtcMiami(_)))
         .is_some();
 
+    // A referral link may name a user who has since been migrated to a MultiUser canister by their old
+    // id, which they're no longer known by
     let referred_by = referral_code
         .and_then(|c| c.user())
+        .map(|user_id| state.data.migrated_user_ids.latest(user_id))
         .filter(|user_id| state.data.global_users.contains(user_id));
 
     // The OpenChat bot's welcome messages, which the user's canister sends them once created
@@ -365,9 +368,9 @@ fn commit(
         now,
     );
 
-    if let Some(referred_by) = referred_by
-        && state.data.local_users.contains(&referred_by)
-    {
+    // The referrer is told by whichever LocalUserIndex holds them by their latest id, since the
+    // UserIndex tells every other LocalUserIndex of the registration
+    if let Some(referred_by) = referred_by {
         state.push_event_to_user(
             referred_by,
             UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),

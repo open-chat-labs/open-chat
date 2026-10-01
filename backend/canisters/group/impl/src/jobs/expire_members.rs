@@ -87,6 +87,7 @@ fn run() {
                     total_chit_earned: 0,
                     composite_gate_index: None,
                     now: state.env.now(),
+                    take_payment: false,
                 };
 
                 if let Some(cached_details) = state.data.user_cache.get(&member.user_id) {

@@ -229,6 +229,7 @@ fn is_permitted_to_join(
                         total_chit_earned,
                         composite_gate_index,
                         now: state.env.now(),
+                        take_payment: true,
                     },
                 )
             }))

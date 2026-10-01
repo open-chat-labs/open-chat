@@ -57,10 +57,11 @@ fn remove_bot_impl(args: Args, deleted_by: Option<UserId>, state: &mut RuntimeSt
     );
 
     for (location, details) in bot.installations.iter() {
+        let local_user_index = state.local_user_index_of_bot_installation(*location, details.local_user_index);
         state
             .data
             .user_index_event_sync_queue
-            .push(details.local_user_index, UserIndexEvent::BotUninstall(*location, args.bot_id));
+            .push(local_user_index, UserIndexEvent::BotUninstall(*location, args.bot_id));
     }
 
     jobs::sync_events_to_local_user_index_canisters::try_run_now(state);

@@ -1,11 +1,16 @@
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{TestEnv, client};
+use crate::{TestEnv, User, client};
 use candid::Principal;
+use icrc_ledger_types::icrc1::account::Account;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{AccessGate, AccessGateNonComposite, CompositeGate, GateCheckFailedReason, PaymentGate, Rules, TokenBalanceGate};
+use types::{
+    AccessGate, AccessGateNonComposite, CanisterId, ChannelId, CompositeGate, GateCheckFailedReason, PaymentGate, Rules,
+    TokenBalanceGate,
+};
 
 #[test_case(true, false; "diamond_member")]
 #[test_case(false, false; "not_diamond_member")]
@@ -336,14 +341,30 @@ enum Gated {
     Channel,
 }
 
-// A user in a MultiUser canister holds their own funds, in their principal's account, so the
-// website approves the group or community to pull a gate's payment from there, on the ledger
-// itself, as the user's canister does for a user alone in it. The group or community (for a
-// channel too) then pulls it when they join, just as from a User canister.
-#[test_case(Gated::Group; "group")]
-#[test_case(Gated::Community; "community")]
-#[test_case(Gated::Channel; "channel")]
-fn user_in_multi_user_canister_pays_payment_gate_from_their_wallet(gated: Gated) {
+enum Approval {
+    SpenderSubaccount,
+    // TODO: Remove once the website approves the spender subaccount for gate payments, and the
+    // fallback to the default account is removed
+    DefaultAccount,
+}
+
+// A member approves the group or community to pull a gate's payment from their wallet, and it pulls
+// the payment when they join, spending the approval made under the member's own spender
+// subaccount, as for any other payment it pulls from a member's wallet. A user alone in their
+// canister has it make the approval, from its account. A user in a MultiUser canister holds their
+// own funds, in their principal's account, so the website makes the approval on the ledger itself.
+// For now, an approval to the canister's default account, which websites made before the move to
+// the spender subaccount, is spent if there isn't one under the spender subaccount.
+#[test_case(Gated::Group, true, Approval::SpenderSubaccount; "group_multi_user")]
+#[test_case(Gated::Community, true, Approval::SpenderSubaccount; "community_multi_user")]
+#[test_case(Gated::Channel, true, Approval::SpenderSubaccount; "channel_multi_user")]
+#[test_case(Gated::Group, false, Approval::SpenderSubaccount; "group_user_canister")]
+#[test_case(Gated::Community, false, Approval::SpenderSubaccount; "community_user_canister")]
+#[test_case(Gated::Channel, false, Approval::SpenderSubaccount; "channel_user_canister")]
+#[test_case(Gated::Group, true, Approval::DefaultAccount; "group_multi_user_default_account")]
+#[test_case(Gated::Community, false, Approval::DefaultAccount; "community_user_canister_default_account")]
+#[test_case(Gated::Channel, true, Approval::DefaultAccount; "channel_multi_user_default_account")]
+fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canister: bool, approval: Approval) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -353,19 +374,144 @@ fn user_in_multi_user_canister_pays_payment_gate_from_their_wallet(gated: Gated)
     } = wrapper.env();
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let user = client::register_user_in_multi_user_canister(env, canister_ids);
+    let user = if in_multi_user_canister {
+        client::register_user_in_multi_user_canister(env, canister_ids)
+    } else {
+        client::register_user(env, canister_ids)
+    };
+    let wallet = if in_multi_user_canister { user.principal } else { user.canister() };
 
     let amount = 1_0000_0000;
     let fee = 10_000;
+    let (spender, channel_id) = create_gated(env, &owner, &gated, canister_ids.icp_ledger, amount, fee);
+    let spender_account = Account {
+        owner: spender,
+        subaccount: match approval {
+            Approval::SpenderSubaccount => Some(ledger_utils::spender_subaccount(user.principal)),
+            Approval::DefaultAccount => None,
+        },
+    };
+
+    let owner_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id);
+
+    // The wallet holds the gate's amount, and approves the gate's amount less the approval's fee
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, wallet, amount);
+    if in_multi_user_canister {
+        client::ledger::happy_path::approve(env, wallet, canister_ids.icp_ledger, spender_account, amount - fee);
+    } else {
+        client::user::happy_path::approve_transfer(
+            env,
+            &user,
+            &user_canister::approve_transfer::Args {
+                spender: spender_account.into(),
+                ledger_canister_id: canister_ids.icp_ledger,
+                amount: amount - fee,
+                expires_in: None,
+                pin: None,
+            },
+        );
+    }
+
+    match gated {
+        Gated::Group => client::group::happy_path::join_group(env, user.principal, spender.into()),
+        Gated::Community => {
+            client::community::happy_path::join_community(env, user.principal, spender.into());
+        }
+        Gated::Channel => {
+            client::community::happy_path::join_community(env, user.principal, spender.into());
+            client::community::happy_path::join_channel(env, user.principal, spender.into(), channel_id.unwrap());
+        }
+    }
+
+    tick_many(env, 3);
+
+    // The gate took exactly its amount from the wallet, of which the owner was paid their share
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, wallet),
+        0
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id) - owner_balance,
+        (amount * 98) / 100
+    );
+}
+
+// A member can only pay a gate with an approval made under their own spender subaccount, so one
+// made under another member's is never spent
+#[test]
+fn payment_gate_is_not_paid_with_an_approval_under_another_members_spender_subaccount() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let alice = client::register_user_in_multi_user_canister(env, canister_ids);
+    let bob = client::register_user_in_multi_user_canister(env, canister_ids);
+
+    let amount = 1_0000_0000;
+    let fee = 10_000;
+    let (group, _) = create_gated(env, &owner, &Gated::Group, canister_ids.icp_ledger, amount, fee);
+
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, alice.principal, amount);
+    client::ledger::happy_path::approve(
+        env,
+        alice.principal,
+        canister_ids.icp_ledger,
+        Account {
+            owner: group,
+            subaccount: Some(ledger_utils::spender_subaccount(bob.principal)),
+        },
+        amount - fee,
+    );
+
+    let response = client::local_user_index::join_group(
+        env,
+        alice.principal,
+        canister_ids.local_user_index(env, group),
+        &local_user_index_canister::join_group::Args {
+            chat_id: group.into(),
+            invite_code: None,
+            verified_credential_args: None,
+            composite_gate_index: None,
+        },
+    );
+    assert!(
+        matches!(
+            response,
+            local_user_index_canister::join_group::Response::GateCheckFailed(GateCheckFailedReason::PaymentFailed(_))
+        ),
+        "{response:?}"
+    );
+
+    // Alice paid only for her approval
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, alice.principal),
+        amount - fee
+    );
+}
+
+// Creates a group, community or channel with a payment gate, returning the group or community, which
+// pulls the payment, and the channel if it is a channel's gate
+fn create_gated(
+    env: &mut PocketIc,
+    owner: &User,
+    gated: &Gated,
+    ledger_canister_id: CanisterId,
+    amount: u128,
+    fee: u128,
+) -> (Principal, Option<ChannelId>) {
     let gate = AccessGate::Payment(PaymentGate {
-        ledger_canister_id: canister_ids.icp_ledger,
+        ledger_canister_id,
         amount,
         fee,
     });
     let name = random_string();
 
-    // The canister which pulls the payment, and the gated channel if it is a channel's gate
-    let (spender, channel_id) = match gated {
+    match gated {
         Gated::Community => match client::user::create_community(
             env,
             owner.principal,
@@ -389,7 +535,7 @@ fn user_in_multi_user_canister_pays_payment_gate_from_their_wallet(gated: Gated)
             response => panic!("'create_community' error: {response:?}"),
         },
         Gated::Channel => {
-            let community_id = client::user::happy_path::create_community(env, &owner, &name, true, vec![random_string()]);
+            let community_id = client::user::happy_path::create_community(env, owner, &name, true, vec![random_string()]);
             let channel_id =
                 client::community::happy_path::create_gated_channel(env, owner.principal, community_id, true, name, gate);
             (Principal::from(community_id), Some(channel_id))
@@ -414,36 +560,7 @@ fn user_in_multi_user_canister_pays_payment_gate_from_their_wallet(gated: Gated)
             user_canister::create_group::Response::Success(result) => (Principal::from(result.chat_id), None),
             response => panic!("'create_group' error: {response:?}"),
         },
-    };
-
-    let owner_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id);
-
-    // The wallet holds the gate's amount, and approves the gate's amount less the approval's fee
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.principal, amount);
-    client::ledger::happy_path::approve(env, user.principal, canister_ids.icp_ledger, spender, amount - fee);
-
-    match gated {
-        Gated::Group => client::group::happy_path::join_group(env, user.principal, spender.into()),
-        Gated::Community => {
-            client::community::happy_path::join_community(env, user.principal, spender.into());
-        }
-        Gated::Channel => {
-            client::community::happy_path::join_community(env, user.principal, spender.into());
-            client::community::happy_path::join_channel(env, user.principal, spender.into(), channel_id.unwrap());
-        }
     }
-
-    tick_many(env, 3);
-
-    // The gate took exactly its amount from the wallet, of which the owner was paid their share
-    assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.principal),
-        0
-    );
-    assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id) - owner_balance,
-        (amount * 98) / 100
-    );
 }
 
 #[test]
