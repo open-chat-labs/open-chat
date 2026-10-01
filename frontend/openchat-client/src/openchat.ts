@@ -7283,6 +7283,17 @@ export class OpenChat {
                 }
             }
 
+            // Likewise drop any group / channel previews for chats we are now a member of
+            // (e.g. one we were viewing anonymously before logging in), otherwise the preview
+            // takes precedence over the server summary and we keep showing "Join"
+            if (localUpdates.groupChatPreviews.value.size > 0) {
+                for (const chat of chatsAddedUpdated) {
+                    if (chat.kind !== "direct_chat" && !isPreviewing(chat)) {
+                        localUpdates.removeGroupPreview(chat.id);
+                    }
+                }
+            }
+
             if (localUpdates.anyUninitialisedDirectChats()) {
                 for (const chat of chatsAddedUpdated) {
                     localUpdates.removeUninitialisedDirectChat(chat.id);
