@@ -1757,6 +1757,9 @@ export type GroupChatDetails = {
     timestamp: bigint;
     bots: InstalledBotDetails[];
     webhooks: WebhookDetails[];
+    // When the cached copy was last loaded or brought up to date, by the client's clock. Only the
+    // cache sets it.
+    syncedAt?: bigint;
 };
 
 export type GroupChatDetailsUpdates = {
