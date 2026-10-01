@@ -411,7 +411,7 @@ function getAction(
             return agent.getBots(payload.initialLoad);
 
         case "createUserClient":
-            agent.createUserClient(payload.userId, payload.previousUserIds);
+            agent.createUserClient(payload.userId);
             return Promise.resolve();
 
         case "chatEvents":

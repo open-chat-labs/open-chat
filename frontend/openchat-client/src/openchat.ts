@@ -1338,11 +1338,7 @@ export class OpenChat {
         this.#setDiamondStatus(user.diamondStatus);
         initialiseMostRecentSentMessageTimes(isDiamondStore.value);
 
-        this.#worker.send({
-            kind: "createUserClient",
-            userId: user.userId,
-            previousUserIds: user.previousUserIds ?? [],
-        });
+        this.#worker.send({ kind: "createUserClient", userId: user.userId });
         startSwCheckPoller();
 
         this.#startChatsPoller();

@@ -220,9 +220,6 @@ export function currentUserSummary(
         maxStreak: value.max_streak,
         backgroundId: value.profile_background_id,
         hideOnlineStatus: value.hide_online_status ?? false,
-        previousUserIds: mapOptional(value.previous_user_ids, (ids) =>
-            ids.map(principalBytesToString),
-        ),
     };
 }
 

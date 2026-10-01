@@ -117,7 +117,6 @@ export function updateCreatedUser(created: CreatedUser, summary: CurrentUserSumm
     return {
         ...created,
         ...summary,
-        previousUserIds: summary.previousUserIds ?? created.previousUserIds,
         kind: "created_user",
     };
 }

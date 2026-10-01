@@ -734,24 +734,32 @@ describe("OpenChatAgent referring to the user by their current id", () => {
         expect(rehydrated([], fromPrevious)).toBe(fromPrevious);
     });
 
-    test("the previous ids are taken from the live current user", async () => {
+    test("the previous ids are taken from each current user result, the cached one then the live one", async () => {
         const user = agent([]);
-        user._userClient = { userId: CURRENT };
-        const live = (userId: string) =>
-            new Stream((resolve) =>
-                queueMicrotask(() =>
-                    resolve({ kind: "created_user", userId, previousUserIds: [PREVIOUS] }, true),
+        const seen: unknown[] = [];
+        user._userIndexClient = {
+            getCurrentUser: () =>
+                new Stream((resolve) =>
+                    queueMicrotask(() => {
+                        // A user cached before their previous ids were, then the live one
+                        resolve({ kind: "created_user", userId: CURRENT }, false);
+                        resolve(
+                            { kind: "created_user", userId: CURRENT, previousUserIds: [PREVIOUS] },
+                            true,
+                        );
+                    }),
                 ),
-            );
+        };
 
-        // Not until the user client has been created for them
-        user._userIndexClient = { getCurrentUser: () => live(THEM) };
-        await user.getCurrentUser().toPromise();
-        expect(user._ownLatestUserIds).toEqual(new Map());
-
-        user._userIndexClient = { getCurrentUser: () => live(CURRENT) };
-        await user.getCurrentUser().toPromise();
-        expect(user._ownLatestUserIds).toEqual(new Map([[PREVIOUS, CURRENT]]));
+        await new Promise<void>((done) =>
+            user.getCurrentUser().subscribe({
+                onResult: (_: unknown, final: boolean) => {
+                    seen.push(new Map(user._ownLatestUserIds));
+                    if (final) done();
+                },
+            }),
+        );
+        expect(seen).toEqual([new Map(), new Map([[PREVIOUS, CURRENT]])]);
     });
 
     test("a chat's latest message from before they were migrated is from their current id", () => {

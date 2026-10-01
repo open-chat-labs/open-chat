@@ -664,8 +664,7 @@ export class OpenChatAgent extends EventTarget {
         this._communityClient.setInviteCode(value.id.communityId, textToCode(value.code));
     }
 
-    createUserClient(userId: string, previousUserIds: string[] = []): OpenChatAgent {
-        this._ownLatestUserIds = new Map(previousUserIds.map((id) => [id, userId]));
+    createUserClient(userId: string): OpenChatAgent {
         const userClient =
             userId === ANON_USER_ID
                 ? AnonUserClient.create()
@@ -2688,15 +2687,11 @@ export class OpenChatAgent extends EventTarget {
 
     getCurrentUser(): Stream<CurrentUserResponse> {
         return this._userIndexClient.getCurrentUser().map((user) => {
-            // The user client is created from the first result, which is usually the cached user,
-            // so the user's previous ids are taken again from the live one
-            if (
-                user.kind === "created_user" &&
-                user.userId === this._userClient.userId &&
-                user.previousUserIds !== undefined
-            ) {
+            // Taken from each result, the cached user then the live one. The client creates the user
+            // client from the first, and restarts the session if the live one's id differs.
+            if (user.kind === "created_user") {
                 this._ownLatestUserIds = new Map(
-                    user.previousUserIds.map((id) => [id, user.userId]),
+                    (user.previousUserIds ?? []).map((id) => [id, user.userId]),
                 );
             }
             return user;
