@@ -10,6 +10,7 @@ import type {
     ChannelIdentifier,
     ChatEvent,
     ChatIdentifier,
+    IcrcAccount,
     ChitEventsRequest,
     ChitEventsResponse,
     ClaimDailyChitResponse,
@@ -438,7 +439,7 @@ export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {
     }
 
     approveTransfer(
-        _spender: string,
+        _spender: IcrcAccount,
         _ledger: string,
         _amount: bigint,
         _expiresIn: bigint | undefined,

@@ -53,6 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move anything held under a joining user's `previous_user_ids` onto their current id before checking whether they can join, so that a user blocked under an earlier id stays blocked ([#9567](https://github.com/open-chat-labs/open-chat/pull/9567))
 - Share the former members logic with the Community canister via `group_community_common` ([#9626](https://github.com/open-chat-labs/open-chat/pull/9626))
 - Split a notification with more than 5,000 recipients into several ([#9658](https://github.com/open-chat-labs/open-chat/pull/9658))
+- Pull an access gate's payment under the member's spender subaccount, falling back to the default account for now ([#9700](https://github.com/open-chat-labs/open-chat/pull/9700))
 
 ### Removed
 
@@ -69,6 +70,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Stop the job which expires members exceeding the instruction limit in a large group ([#9659](https://github.com/open-chat-labs/open-chat/pull/9659))
 - Tell clients that a pinned message is no longer pinned when it is deleted ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 - For users hosted in MultiUser canisters, send crypto and tips to their principal ([#9674](https://github.com/open-chat-labs/open-chat/pull/9674))
+- Don't take an access gate's payment when a member's gate is checked again as it expires ([#9700](https://github.com/open-chat-labs/open-chat/pull/9700))
 
 ## [[2.0.2036](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2036-group)] - 2026-08-20
 

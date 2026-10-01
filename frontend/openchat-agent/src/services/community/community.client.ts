@@ -75,6 +75,7 @@ import {
     DestinationInvalidError,
     MAX_EVENTS,
     MAX_MESSAGES,
+    MEMBERS_PAGE_SIZE,
     random32,
     toBigInt32,
 } from "@shared";
@@ -801,6 +802,8 @@ export class CommunityClient
                     "selected_initial",
                     {
                         invite_code: this.inviteCode(communityId),
+                        // The rest of the members are only loaded when they are needed
+                        max_members: MEMBERS_PAGE_SIZE,
                     },
                     communityDetailsResponse,
                     CommunitySelectedInitialArgs,
@@ -839,6 +842,8 @@ export class CommunityClient
                     "selected_channel_initial",
                     {
                         channel_id: toBigInt32(chatId.channelId),
+                        // The rest of the members are only loaded when they are needed
+                        max_members: MEMBERS_PAGE_SIZE,
                     },
                     (resp) =>
                         mapResult(resp, (value) =>

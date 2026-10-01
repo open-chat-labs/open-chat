@@ -14,7 +14,6 @@
         OpenChat,
         routeForChatIdentifier,
         routeStore,
-        selectedChatMembersStore,
         selectedChatSummaryStore,
         selectedCommunitySummaryStore,
         subscribe,
@@ -720,7 +719,7 @@
         {:else if page.kind === "direct_chat_details"}
             <DirectChatDetails chat={page.chat} />
         {:else if page.kind === "group_chat_details"}
-            <GroupDetails chat={page.chat} memberCount={$selectedChatMembersStore.size} />
+            <GroupDetails chat={page.chat} memberCount={page.chat.memberCount} />
         {:else if page.kind === "token_page"}
             {#await import("./wallet/TokenPage.svelte") then { default: TokenPage }}
                 <TokenPage tokenState={page.tokenState} />

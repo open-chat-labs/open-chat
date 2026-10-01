@@ -100,6 +100,7 @@ fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState
         total_chit_earned,
         composite_gate_index: None,
         now: state.env.now(),
+        take_payment: false,
     };
 
     Some(PrepareResult {
