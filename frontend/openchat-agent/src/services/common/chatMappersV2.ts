@@ -39,6 +39,7 @@ import type {
     GateCheckFailedReason,
     GiphyContent,
     GiphyImage,
+    GroupChatDetails,
     GroupChatDetailsResponse,
     GroupChatDetailsUpdatesResponse,
     GroupChatIdentifier,
@@ -2785,6 +2786,16 @@ export function groupDetailsUpdatesResponse(
             return {
                 kind: "success_no_updates",
                 timestamp: value.SuccessNoUpdates,
+            };
+        } else if ("SuccessSnapshot" in value) {
+            return {
+                kind: "snapshot",
+                details: groupDetailsSuccess(
+                    value.SuccessSnapshot,
+                    blobUrlPattern,
+                    canisterId,
+                    channelId,
+                ) as GroupChatDetails,
             };
         }
     }

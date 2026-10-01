@@ -463,6 +463,11 @@ export function communityDetailsUpdatesResponse(
                 kind: "success_no_updates",
                 lastUpdated: value.SuccessNoUpdates,
             };
+        } else if ("SuccessSnapshot" in value) {
+            const details = communityDetailsResponse({ Success: value.SuccessSnapshot });
+            if (details.kind === "success") {
+                return { kind: "snapshot", details };
+            }
         }
     }
     console.warn("Unexpected ApiSelectedUpdatesResponse type received", value);
