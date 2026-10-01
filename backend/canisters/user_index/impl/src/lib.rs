@@ -165,7 +165,10 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller) || self.data.upload_wasm_chunks_whitelist.contains(&caller)
     }
 
+    // Sends the event to the LocalUserIndex holding the user. A migrated user may still be named by an
+    // old id, which no LocalUserIndex is mapped to any more, so they are found by their latest id.
     pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
+        let user_id = self.data.migrated_user_ids.latest(user_id);
         if let Some(canister_id) = self.data.local_index_map.get_index_canister(&user_id) {
             self.data.user_index_event_sync_queue.push(canister_id, event);
             jobs::sync_events_to_local_user_index_canisters::try_run_now(self);

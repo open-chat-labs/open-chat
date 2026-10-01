@@ -10,6 +10,7 @@ use pocket_ic::PocketIc;
 use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::time::Duration;
+use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
 use types::{
     BuildVersion, CanisterId, CanisterWasm, Chat, ChatId, DiamondMembershipPlanDuration, Document, Empty, MessageContent,
@@ -1126,6 +1127,150 @@ fn migrated_user_is_not_rewarded_again_to_their_referrer() {
     assert_eq!(referrer_state.referrals.len(), 1);
     assert_eq!(referrer_state.referrals[0].user_id, user.user_id);
     assert!(matches!(referrer_state.referrals[0].status, ReferralStatus::LifetimeDiamond));
+}
+
+#[test_case(true; "held_by_the_same_local_user_index")]
+#[test_case(false; "held_by_another_local_user_index")]
+fn events_for_a_user_being_migrated_reach_them_in_their_new_canister_in_order(same_local_user_index: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    // The user's old canister is held by the same LocalUserIndex as the MultiUser canister, or by another
+    let subnet = canister_ids
+        .subnets
+        .iter()
+        .find(|s| (s.local_user_index == local_user_index) == same_local_user_index)
+        .unwrap()
+        .subnet_id;
+    let user1 = client::register_user_on_subnet(env, canister_ids, subnet);
+    let user2 = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &user2, &random_string(), true, true);
+    tick_many(env, 3);
+
+    // The MultiUser canister is stopped, so it can't import the user, who stays frozen in their old
+    // canister
+    env.stop_canister(multi_user_canister, Some(local_user_index)).unwrap();
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 10);
+    assert!(matches!(
+        user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id),
+        Some(UserMigrationStatus::Started { .. })
+    ));
+
+    // Meanwhile the LocalUserIndex has events for the user, which their frozen canister can't take.
+    // They're invited to and join a group, and change their display name twice.
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        &user2,
+        client::group::happy_path::local_user_index(env, group_id),
+        group_id,
+        vec![(user1.user_id, user1.principal)],
+    );
+    for display_name in ["First name", "Second name"] {
+        client::user_index::happy_path::set_display_name(
+            env,
+            user1.principal,
+            canister_ids.user_index,
+            Some(display_name.to_string()),
+        );
+    }
+    tick_many(env, 5);
+
+    // Once the MultiUser canister is started again, the user is imported and switched over
+    env.start_canister(multi_user_canister, Some(local_user_index)).unwrap();
+    env.advance_time(Duration::from_secs(31));
+    tick_many(env, 30);
+    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id) {
+        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
+        status => panic!("User not imported: {status:?}"),
+    };
+    tick_many(env, 10);
+
+    // And the events reach them there, in order
+    let user_canister::initial_state::Response::Success(state) = client::user::initial_state(
+        env,
+        user1.principal,
+        multi_user_canister,
+        &user_canister::initial_state::Args {},
+    );
+    assert!(state.group_chats.summaries.iter().any(|g| g.chat_id == group_id));
+    let user_canister::public_profile::Response::Success(profile) = client::user::public_profile(
+        env,
+        user1.principal,
+        multi_user_canister,
+        &user_canister::public_profile::Args { user_id: new_user_id },
+    );
+    assert_eq!(profile.display_name.as_deref(), Some("Second name"));
+}
+
+#[test_case(true; "registered_with_the_same_local_user_index")]
+#[test_case(false; "registered_with_another_local_user_index")]
+fn user_referred_by_a_migrated_users_old_id_is_sent_to_their_new_canister(same_local_user_index: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let referrer = client::register_user(env, canister_ids);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![referrer.user_id],
+        Some(multi_user_canister),
+    );
+    tick_many(env, 30);
+    assert!(matches!(
+        user_migration_status(env, operator.principal, canister_ids.user_index, referrer.user_id),
+        Some(UserMigrationStatus::Imported { .. })
+    ));
+
+    // A user registers with a referral link naming the referrer by their old id, with the
+    // LocalUserIndex holding the referrer's new id, or with another
+    let registered_with = canister_ids
+        .subnets
+        .iter()
+        .map(|s| s.local_user_index)
+        .find(|c| (*c == local_user_index) == same_local_user_index)
+        .unwrap();
+    let user = client::register_user_with_referrer_on(env, canister_ids, registered_with, Some(referrer.user_id.to_string()));
+    tick_many(env, 10);
+
+    // The referral reaches the referrer in their MultiUser canister
+    let user_canister::initial_state::Response::Success(state) = client::user::initial_state(
+        env,
+        referrer.principal,
+        multi_user_canister,
+        &user_canister::initial_state::Args {},
+    );
+    assert!(
+        state.referrals.iter().any(|r| r.user_id == user.user_id),
+        "{:?}",
+        state.referrals
+    );
 }
 
 #[test]
