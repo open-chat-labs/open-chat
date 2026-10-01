@@ -42,38 +42,53 @@ const pendingNotificationClicks = new Map<string, string[]>();
 const FILE_ICON =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==";
 
-staticResourceCache({
-    matchCallback: ({ request }) => {
-        // Video is deliberately excluded: media elements fetch it via sequential range requests
-        // (206) which are never cached here anyway, so routing them through the service worker
-        // adds a hop and a body clone per chunk for no benefit.
-        return [
-            "style",
-            "script",
-            "worker",
-            "audio",
-            "font",
-            "frame",
-            "image",
-            "manifest",
-        ].includes(request.destination);
-    },
-    cacheName: "openchat_stale_while_revalidate",
-    plugins: [
-        new CustomCachePlugin(),
-        new ExpirationPlugin({
-            maxAgeSeconds: 30 * 24 * 60 * 60,
-            // This cache also holds user-uploaded chat media, so cap the number of
-            // entries (the app's own hashed js/css take ~125 of these) and let the
-            // cache be purged rather than failing silently when the origin hits quota.
-            maxEntries: 500,
-            purgeOnQuotaError: true,
-        }),
-    ],
-});
+// The dev server builds this worker with NODE_ENV set to "development". There, Workbox caching
+// only gets in the way: every Vite module goes through the static resource cache, and its
+// expiration bookkeeping (an IndexedDB index walked on every cached response) bloats until each
+// walk takes seconds. Chrome serialises IndexedDB per origin, so the app's own cache reads queue
+// behind it and opening a chat stalls. So in dev the service worker only handles notifications.
+const isDevServer = process.env.NODE_ENV === "development";
+const STATIC_CACHE_NAME = "openchat_stale_while_revalidate";
+
+function registerStaticResourceCache() {
+    staticResourceCache({
+        matchCallback: ({ request }) => {
+            // Video is deliberately excluded: media elements fetch it via sequential range requests
+            // (206) which are never cached here anyway, so routing them through the service worker
+            // adds a hop and a body clone per chunk for no benefit.
+            return [
+                "style",
+                "script",
+                "worker",
+                "audio",
+                "font",
+                "frame",
+                "image",
+                "manifest",
+            ].includes(request.destination);
+        },
+        cacheName: STATIC_CACHE_NAME,
+        plugins: [
+            new CustomCachePlugin(),
+            new ExpirationPlugin({
+                maxAgeSeconds: 30 * 24 * 60 * 60,
+                // This cache also holds user-uploaded chat media, so cap the number of
+                // entries (the app's own hashed js/css take ~125 of these) and let the
+                // cache be purged rather than failing silently when the origin hits quota.
+                maxEntries: 500,
+                purgeOnQuotaError: true,
+            }),
+        ],
+    });
+}
 
 const matchCallback = ({ request }: { request: Request }) => request.mode === "navigate";
 const DOCUMENT_CACHE_NAME = "openchat_network_first";
+
+if (!isDevServer) {
+    registerStaticResourceCache();
+    registerRoute(matchCallback, handleNavigation);
+}
 const DOCUMENT_CACHE_KEY = "openchat_document";
 const NETWORK_TIMEOUT_MS = 8000;
 
@@ -188,7 +203,7 @@ function makeReloadFallbackResponse(): Response {
     });
 }
 
-registerRoute(matchCallback, async ({ request }) => {
+async function handleNavigation({ request }: { request: Request }): Promise<Response> {
     const cache = await caches.open(DOCUMENT_CACHE_NAME);
 
     // Returns a valid cached response, or null (and purges any corrupt entry).
@@ -247,7 +262,16 @@ registerRoute(matchCallback, async ({ request }) => {
         "SW: no valid document available from network or cache – serving reload fallback",
     );
     return makeReloadFallbackResponse();
-});
+}
+
+// Drop what earlier dev builds cached, along with Workbox's expiration bookkeeping for it
+async function clearWorkboxCaches(): Promise<void> {
+    await Promise.all([caches.delete(STATIC_CACHE_NAME), caches.delete(DOCUMENT_CACHE_NAME)]);
+    await new Promise<void>((resolve) => {
+        const req = indexedDB.deleteDatabase("workbox-expiration");
+        req.onsuccess = req.onerror = req.onblocked = () => resolve();
+    });
+}
 
 // Always install updated SW immediately
 self.addEventListener("install", (ev) => {
@@ -256,7 +280,9 @@ self.addEventListener("install", (ev) => {
 
 self.addEventListener("activate", (ev) => {
     // upon activation take control of all clients (tabs & windows)
-    ev.waitUntil(self.clients.claim());
+    ev.waitUntil(
+        Promise.all([self.clients.claim(), isDevServer ? clearWorkboxCaches() : undefined]),
+    );
     console.debug("SW: activated");
 });
 
