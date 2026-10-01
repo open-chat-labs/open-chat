@@ -173,7 +173,7 @@
         "showOriginal": "הצג מקור",
         "showTranslation": "הצג תרגום",
         "translateFrom": "תרגם מ{language}",
-        "translatedFrom": "תורגם במכשיר זה מ{language}"
+        "translatedFrom": "תורגם במכשיר מ{language}"
     },
     "nativeUpdate": {
         "downloadingTitle": "רגע אחד! מתעדכן ...",

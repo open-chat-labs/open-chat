@@ -173,7 +173,7 @@
         "showOriginal": "显示原文",
         "showTranslation": "显示译文",
         "translateFrom": "从{language}翻译",
-        "translatedFrom": "已在此设备上从{language}翻译"
+        "translatedFrom": "已在设备上从{language}翻译"
     },
     "nativeUpdate": {
         "downloadingTitle": "稍等！正在更新 ...",

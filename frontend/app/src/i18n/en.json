@@ -178,7 +178,7 @@
         "showOriginal": "Show original",
         "showTranslation": "Show translation",
         "translateFrom": "Translate from {language}",
-        "translatedFrom": "Translated on this device from {language}"
+        "translatedFrom": "Translated on device from {language}"
     },
     "avatarTooBig": "The selected avatar is too big",
     "avatarUpdated": "Avatar successfully updated",

@@ -173,7 +173,7 @@
         "showOriginal": "Показати оригінал",
         "showTranslation": "Показати переклад",
         "translateFrom": "Перекласти з мови: {language}",
-        "translatedFrom": "Перекладено на цьому пристрої з мови: {language}"
+        "translatedFrom": "Перекладено на пристрої з мови: {language}"
     },
     "nativeUpdate": {
         "downloadingTitle": "Секунду! Оновлення ...",

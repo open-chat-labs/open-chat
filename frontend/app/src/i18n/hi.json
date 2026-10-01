@@ -173,7 +173,7 @@
         "showOriginal": "मूल दिखाएँ",
         "showTranslation": "अनुवाद दिखाएँ",
         "translateFrom": "{language} से अनुवाद करें",
-        "translatedFrom": "इस डिवाइस पर {language} से अनुवादित"
+        "translatedFrom": "डिवाइस पर {language} से अनुवादित"
     },
     "nativeUpdate": {
         "downloadingTitle": "एक क्षण! अपडेट हो रहा है ...",

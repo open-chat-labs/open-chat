@@ -676,38 +676,7 @@
                                 ogPreviews={msg.ogPreviews}
                                 messagePreviews={msg.messagePreviews} />
 
-                            {#if autoTranslation !== undefined && !inert}
-                                <div class="auto-translation">
-                                    <Translatable
-                                        resourceKey={i18nKey("autoTranslate.translatedFrom", {
-                                            language: languageName(autoTranslation.from),
-                                        })} />
-                                    ·
-                                    <Link
-                                        underline={"hover"}
-                                        onClick={() => (showOriginal = !showOriginal)}>
-                                        <Translatable
-                                            resourceKey={i18nKey(
-                                                showOriginal
-                                                    ? "autoTranslate.showTranslation"
-                                                    : "autoTranslate.showOriginal",
-                                            )} />
-                                    </Link>
-                                </div>
-                            {:else if autoTranslatePending !== undefined && !inert}
-                                <div class="auto-translation">
-                                    <Link
-                                        underline={"hover"}
-                                        onClick={() => onDeviceTranslator.prime()}>
-                                        <Translatable
-                                            resourceKey={i18nKey("autoTranslate.translateFrom", {
-                                                language: languageName(autoTranslatePending),
-                                            })} />
-                                    </Link>
-                                </div>
-                            {/if}
-
-                            {#if !inert}
+                            {#snippet timeAndTicks()}
                                 <TimeAndTicks
                                     {pinned}
                                     prize={isPrize}
@@ -725,6 +694,45 @@
                                     {crypto}
                                     {chatType}
                                     {dateFormatter} />
+                            {/snippet}
+
+                            {#if autoTranslation !== undefined && !inert}
+                                <div class="auto-translation">
+                                    <div class="note">
+                                        <Translatable
+                                            resourceKey={i18nKey("autoTranslate.translatedFrom", {
+                                                language: languageName(autoTranslation.from),
+                                            })} />
+                                        ·
+                                        <Link
+                                            underline={"hover"}
+                                            onClick={() => (showOriginal = !showOriginal)}>
+                                            <Translatable
+                                                resourceKey={i18nKey(
+                                                    showOriginal
+                                                        ? "autoTranslate.showTranslation"
+                                                        : "autoTranslate.showOriginal",
+                                                )} />
+                                        </Link>
+                                    </div>
+                                    {@render timeAndTicks()}
+                                </div>
+                            {:else if autoTranslatePending !== undefined && !inert}
+                                <div class="auto-translation">
+                                    <div class="note">
+                                        <Link
+                                            underline={"hover"}
+                                            onClick={() => onDeviceTranslator.prime()}>
+                                            <Translatable
+                                                resourceKey={i18nKey("autoTranslate.translateFrom", {
+                                                    language: languageName(autoTranslatePending),
+                                                })} />
+                                        </Link>
+                                    </div>
+                                    {@render timeAndTicks()}
+                                </div>
+                            {:else if !inert}
+                                {@render timeAndTicks()}
                             {/if}
 
                             {#if debug}
@@ -853,10 +861,18 @@
 {/if}
 
 <style lang="scss">
+    // The translation note shares a row with the time and ticks, so the time stays at the bottom
     .auto-translation {
-        @include font(light, normal, fs-60);
-        margin-top: $sp1;
-        opacity: 0.7;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: $sp3;
+
+        .note {
+            @include font(light, normal, fs-60);
+            min-width: 0;
+            opacity: 0.7;
+        }
     }
 
     $size: 10px;

@@ -173,7 +173,7 @@
         "showOriginal": "原文を表示",
         "showTranslation": "翻訳を表示",
         "translateFrom": "{language}から翻訳",
-        "translatedFrom": "この端末で{language}から翻訳"
+        "translatedFrom": "端末で{language}から翻訳"
     },
     "nativeUpdate": {
         "downloadingTitle": "少々お待ちください！更新中 ...",
