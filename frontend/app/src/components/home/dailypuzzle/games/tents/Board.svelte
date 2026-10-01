@@ -7,8 +7,9 @@
         type TentsDescription,
     } from "@client";
     import GridSvg from "../GridSvg.svelte";
+    import HintOutline from "../HintOutline.svelte";
     import NoMark from "../NoMark.svelte";
-    import { CELL, elementCentre, elementRect, highlight, keysOf, outside } from "../gridSvg";
+    import { CELL, elementCentre, elementRect, keysOf, outside } from "../gridSvg";
     import type { BoardProps } from "../types";
 
     let {
@@ -121,16 +122,7 @@
             {/if}
         {/if}
         {#if focus.has(el.key)}
-            {@const hl = highlight(el.key, focus, target)}
-            <rect
-                x={r.x + 0.5}
-                y={r.y + 0.5}
-                width={CELL - 1}
-                height={CELL - 1}
-                fill={tree ? "none" : hl.fill}
-                stroke={hl.stroke}
-                stroke-width="0.8"
-                pointer-events="none" />
+            <HintOutline x={r.x} y={r.y} subject={target.has(el.key)} markable={!tree} />
         {/if}
         {#if mistakes.has(el.key)}
             <rect
@@ -146,6 +138,13 @@
     {/each}
     {#each model.rowCounts as count, y (y)}
         {@const p = outside("right", y, model.width, model.height)}
+        {#if focus.has(tentsRowKey(model, y))}
+            <HintOutline
+                x={p.cx - CELL / 2}
+                y={p.cy - CELL / 2}
+                subject={target.has(tentsRowKey(model, y))}
+                markable={false} />
+        {/if}
         <text
             x={p.cx}
             y={p.cy}
@@ -157,6 +156,13 @@
     {/each}
     {#each model.columnCounts as count, x (x)}
         {@const p = outside("bottom", x, model.width, model.height)}
+        {#if focus.has(tentsColumnKey(model, x))}
+            <HintOutline
+                x={p.cx - CELL / 2}
+                y={p.cy - CELL / 2}
+                subject={target.has(tentsColumnKey(model, x))}
+                markable={false} />
+        {/if}
         <text
             x={p.cx}
             y={p.cy}

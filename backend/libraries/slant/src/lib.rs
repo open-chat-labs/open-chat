@@ -55,7 +55,7 @@
 //! | 3 | LoopAvoidance | the cell being decided | The two corners this slant would join are already connected by a path of diagonals, so joining them would close a loop; the cell must slant the other way. |
 //! | 4 | DeadEndAvoidance | the cell being decided | This slant would join two groups of points that never reach the border and have no other way out, sealing them inside a loop; the cell must slant the other way. Its `focus` is the part of those two groups nearest the cell, not all of them: by the end of a solve they cover most of the board. |
 //! | 5 | Equivalence | the cell being decided | This cell must slant the same way as the highlighted cell it is tied to, which is already filled. |
-//! | 6 | PairedClue | the clue vertex | Two adjacent undecided cells around this clue must slant the same way, so between them they supply exactly one line; that fixes the remaining cells. |
+//! | 6 | PairedClue | the clue vertex and the two tied cells | Two adjacent undecided cells around this clue must slant the same way, so between them they supply exactly one line; that fixes the remaining cells. |
 
 mod generate;
 mod solver;

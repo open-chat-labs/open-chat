@@ -1,6 +1,6 @@
 use light_up::{
-    Cell, LightUp, Params, Symmetry, Tier, Violation, check_rules, count_solutions, generate, is_complete, parse_description,
-    render_ascii, solution_pairs, solve_with_trace,
+    Cell, Description, LightUp, Params, Symmetry, Technique, Tier, Violation, check_rules, count_solutions, generate,
+    is_complete, parse_description, render_ascii, solution_pairs, solve_with_trace,
 };
 use puzzle_core::testing::{
     must_generate, must_only_claim_sound_solutions, must_reject, must_terminate, must_work_through_dyn,
@@ -395,4 +395,247 @@ fn unsatisfiable_descriptions() -> Vec<Vec<u8>> {
 fn the_solver_never_claims_an_unsound_grid() {
     let claimed = must_only_claim_sound_solutions::<LightUp>(unsatisfiable_descriptions());
     assert!(claimed > 1_000, "only {claimed} of the corpus reached the solver");
+}
+
+/// The board as the solver's trace has left it: the bulbs and the ruled-out cells its steps
+/// have concluded so far.
+struct Board<'a> {
+    d: &'a Description,
+    bulb: Vec<bool>,
+    out: Vec<bool>,
+}
+
+impl Board<'_> {
+    fn width(&self) -> usize {
+        self.d.width as usize
+    }
+
+    fn white(&self, i: usize) -> bool {
+        self.d.cells[i] == Cell::White
+    }
+
+    /// The white cells a bulb at `i` would light, up to the nearest black cell or edge, not
+    /// counting `i` itself.
+    fn sight(&self, i: usize) -> Vec<usize> {
+        let (w, h) = (self.width() as isize, self.d.height as isize);
+        let (x, y) = ((i as isize) % w, (i as isize) / w);
+        let mut out = Vec::new();
+        for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+            let (mut cx, mut cy) = (x + dx, y + dy);
+            while cx >= 0 && cy >= 0 && cx < w && cy < h && self.white((cy * w + cx) as usize) {
+                out.push((cy * w + cx) as usize);
+                cx += dx;
+                cy += dy;
+            }
+        }
+        out
+    }
+
+    fn neighbours(&self, i: usize) -> Vec<usize> {
+        puzzle_core::neighbours(self.width(), self.d.height as usize, i).collect()
+    }
+
+    fn lit(&self, i: usize) -> bool {
+        self.bulb[i] || self.sight(i).iter().any(|&j| self.bulb[j])
+    }
+
+    /// A white cell that can still take a bulb.
+    fn free(&self, i: usize) -> bool {
+        self.white(i) && !self.out[i] && !self.lit(i)
+    }
+
+    fn bulbs_beside(&self, clue: usize) -> usize {
+        self.neighbours(clue).into_iter().filter(|&j| self.bulb[j]).count()
+    }
+
+    /// The free cells a bulb at `x` would rule out: those it shines on, and the other free cells
+    /// beside a number it would complete.
+    fn ruled_out_by(&self, x: usize) -> Vec<usize> {
+        let mut out: Vec<usize> = self.sight(x).into_iter().filter(|&j| self.free(j)).collect();
+        for nb in self.neighbours(x) {
+            if let Cell::Black(Some(clue)) = self.d.cells[nb]
+                && self.bulbs_beside(nb) + 1 == clue as usize
+            {
+                out.extend(self.neighbours(nb).into_iter().filter(|&j| j != x && self.free(j)));
+            }
+        }
+        out
+    }
+}
+
+/// What a step can reason about: a dark cell with its line of sight, or a number with the white
+/// cells beside it.
+enum Unit {
+    Dark(usize),
+    Clue(usize),
+}
+
+impl Unit {
+    fn cells(&self, b: &Board) -> Vec<usize> {
+        match *self {
+            Unit::Dark(u) => [vec![u], b.sight(u)].concat(),
+            Unit::Clue(c) => [vec![c], b.neighbours(c).into_iter().filter(|&j| b.white(j)).collect()].concat(),
+        }
+    }
+
+    /// Whether this unit alone, on the board before the step, proves the step's conclusions.
+    fn proves(&self, b: &Board, hint: &light_up::Hint) -> bool {
+        let free: Vec<usize> = self.cells(b).into_iter().filter(|&j| b.free(j)).collect();
+        let concluded = |value: u8| {
+            let mut keys: Vec<usize> = hint
+                .conclusions
+                .iter()
+                .filter(|c| c.1 == value)
+                .map(|c| c.0 as usize)
+                .collect();
+            keys.sort_unstable();
+            keys
+        };
+        let sorted = |mut v: Vec<usize>| {
+            v.sort_unstable();
+            v
+        };
+        match (hint.technique, self) {
+            (Technique::OnlyOneWayToLight, Unit::Dark(u)) => !b.lit(*u) && free.len() == 1 && concluded(1) == free,
+            (Technique::ClueSatisfied, Unit::Clue(c)) => {
+                let Cell::Black(Some(clue)) = b.d.cells[*c] else {
+                    return false;
+                };
+                b.bulbs_beside(*c) == clue as usize && concluded(0) == sorted(free) && concluded(1).is_empty()
+            }
+            (Technique::ClueForced, Unit::Clue(c)) => {
+                let Cell::Black(Some(clue)) = b.d.cells[*c] else {
+                    return false;
+                };
+                b.bulbs_beside(*c) + free.len() == clue as usize && concluded(1) == sorted(free) && concluded(0).is_empty()
+            }
+            (Technique::SetExclusion, unit) => {
+                let [(x, 0)] = hint.conclusions[..] else { return false };
+                let x = x as usize;
+                let ruled = b.ruled_out_by(x);
+                match *unit {
+                    Unit::Dark(u) => !b.lit(u) && !free.is_empty() && free.iter().all(|j| ruled.contains(j)),
+                    Unit::Clue(c) => {
+                        let Cell::Black(Some(clue)) = b.d.cells[c] else { return false };
+                        let beside = b.neighbours(c).contains(&x) as usize;
+                        let left = free.iter().filter(|&&j| j != x && !ruled.contains(&j)).count();
+                        b.bulbs_beside(c) + beside + left < clue as usize
+                    }
+                }
+            }
+            _ => false,
+        }
+    }
+}
+
+/// Invariant 23: a step lists every cell it relies on. Each step reasons about one dark cell
+/// and its line of sight, or one number and the white cells beside it, and that unit lies whole
+/// in the step's focus and, on the board the trace has built so far, proves the step's
+/// conclusions alone. So the cells the step relies on having been ruled out are listed with it.
+/// The LocalUserIndex serves the steps a hint rests on by following its focus (#9588), so a
+/// ruled-out cell left out of the focus is a premise the player can be missing while the hint
+/// reads as proven: a set exclusion "at least one of these must hold a bulb" with another cell
+/// that could light the dark cell still open on the player's board.
+#[test]
+fn every_step_lists_the_cells_it_relies_on() {
+    for (w, h) in [(7u8, 7u8), (10, 10), (7, 10)] {
+        for tier in Tier::ALL {
+            for seed in 0..30 {
+                let g = generate(seed, params(w, h, tier)).unwrap();
+                let d = parse_description(&g.description).unwrap();
+                let n = d.cells.len();
+                let mut b = Board {
+                    d: &d,
+                    bulb: vec![false; n],
+                    out: vec![false; n],
+                };
+                for (s, hint) in g.hints.iter().enumerate() {
+                    let listed = |unit: &Unit| unit.cells(&b).iter().all(|&k| hint.focus.contains(&(k as u16)));
+                    let units = (0..n)
+                        .filter(|&i| b.white(i))
+                        .map(Unit::Dark)
+                        .chain((0..n).filter(|&i| matches!(d.cells[i], Cell::Black(Some(_)))).map(Unit::Clue));
+                    assert!(
+                        units.into_iter().any(|u| listed(&u) && u.proves(&b, hint)),
+                        "{w}x{h} {tier:?} seed {seed} step {s} ({:?}): no unit listed whole in the focus {:?} proves {:?}",
+                        hint.technique,
+                        hint.focus,
+                        hint.conclusions
+                    );
+                    for &(k, v) in &hint.conclusions {
+                        if v == 1 {
+                            b.bulb[k as usize] = true;
+                        } else {
+                            b.out[k as usize] = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Writes the hint steps of a spread of generated puzzles to the client's fixture, which
+/// `lightUp.spec.ts` reads to check every step gets a sentence naming the right number or cell
+/// (invariant 24). Run by hand when the solver's steps change:
+/// `cargo test -p light_up --test light_up write_hint_fixture -- --ignored`
+fn hint_fixture() -> (std::path::PathBuf, String) {
+    let mut entries = Vec::new();
+    for (size, tier, seeds) in [(7u8, Tier::Easy, 0..3u64), (7, Tier::Tricky, 0..3), (10, Tier::Tricky, 0..6)] {
+        for seed in seeds {
+            // The rota's symmetry, not this file's Rot4 for square grids
+            let g = generate(
+                seed,
+                Params {
+                    symmetry: Symmetry::Rot2,
+                    ..params(size, size, tier)
+                },
+            )
+            .unwrap();
+            let steps: Vec<String> = g
+                .hints
+                .iter()
+                .map(|h| {
+                    format!(
+                        "{{\"technique\":{},\"focus\":{:?},\"target\":{:?},\"conclusions\":{:?}}}",
+                        u8::from(h.technique),
+                        h.focus,
+                        h.target,
+                        h.conclusions.iter().map(|&(k, v)| [k as u32, v as u32]).collect::<Vec<_>>()
+                    )
+                })
+                .collect();
+            entries.push(format!(
+                "{{\"description\":\"{}\",\"steps\":[{}]}}",
+                hex(&g.description),
+                steps.join(",")
+            ));
+        }
+    }
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../../frontend/openchat-shared/src/utils/dailyGames/lightUpHints.json");
+    (path, format!("[{}]\n", entries.join(",")))
+}
+
+#[test]
+#[ignore]
+fn write_hint_fixture() {
+    let (path, json) = hint_fixture();
+    std::fs::write(path, json).unwrap();
+}
+
+/// #9675: invariant 24's client test reads a fixture of this solver's steps, so it proves nothing
+/// once the solver moves on. The committed fixture must be exactly what the solver emits now.
+/// Compared without whitespace, because prettier reflows the committed file.
+#[test]
+fn hint_fixture_is_current() {
+    let (path, json) = hint_fixture();
+    let strip = |s: &str| s.chars().filter(|c| !c.is_whitespace()).collect::<String>();
+    let committed = std::fs::read_to_string(&path).unwrap_or_default();
+    assert_eq!(
+        strip(&committed),
+        strip(&json),
+        "{} is stale: run `cargo test -p light_up --test light_up write_hint_fixture -- --ignored`",
+        path.display()
+    );
 }

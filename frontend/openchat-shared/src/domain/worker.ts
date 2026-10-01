@@ -85,6 +85,7 @@ import type {
     ThreadRead,
     ThreadSyncDetails,
     TipMessageResponse,
+    TokenInfo,
     UnblockUserResponse,
     UndeleteMessageResponse,
     UnfreezeGroupResponse,
@@ -903,6 +904,9 @@ type TipMessage = {
     transfer: PendingCryptocurrencyTransfer;
     decimals: number;
     pin: string | undefined;
+    username: string;
+    displayName: string | undefined;
+    newAchievement: boolean;
 };
 
 type CanSwap = {
@@ -2476,6 +2480,8 @@ type AcceptP2PSwap = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
+    token1: TokenInfo;
+    token1Amount: bigint;
     pin: string | undefined;
     newAchievement: boolean;
     fromAccount: string | undefined;

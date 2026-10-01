@@ -180,7 +180,14 @@ fn rule_out_squares(st: &State, i: usize, out: &mut Vec<usize>) {
 /// Port of `discount_set`. `set` is a MAKESLIGHT set: at least one of its
 /// cells must hold a bulb. Any free cell whose bulb would rule out every
 /// member of the set is therefore impossible.
-fn discount_set(st: &mut State, set: &[usize], rec: &mut Option<&mut Vec<Hint>>) -> bool {
+///
+/// `unit` is what makes it one: a dark cell with its line of sight, or a
+/// number with the white cells beside it. A step lists all of it in its
+/// focus, since it rests on the unit's other cells being lit or ruled out
+/// and the LocalUserIndex finds those premises through the focus (#9588),
+/// and points at the unit's free cells, the ones the ruled-out cell would
+/// take away.
+fn discount_set(st: &mut State, set: &[usize], unit: &[usize], rec: &mut Option<&mut Vec<Hint>>) -> bool {
     if set.is_empty() {
         return false;
     }
@@ -207,11 +214,13 @@ fn discount_set(st: &mut State, set: &[usize], rec: &mut Option<&mut Vec<Hint>>)
         }
         st.impossible[d] = true;
         record(rec, || {
-            let mut focus: Vec<u16> = set.iter().map(|&s| s as u16).collect();
-            focus.push(d as u16);
+            let mut focus: Vec<u16> = unit.iter().map(|&c| c as u16).collect();
+            if !unit.contains(&d) {
+                focus.push(d as u16);
+            }
             Hint {
                 technique: Technique::SetExclusion,
-                target: vec![d as u16],
+                target: unit.iter().filter(|&&c| st.could_place(c)).map(|&c| c as u16).collect(),
                 focus,
                 conclusions: vec![(d as u16, 0)],
             }
@@ -224,8 +233,9 @@ fn discount_set(st: &mut State, set: &[usize], rec: &mut Option<&mut Vec<Hint>>)
 /// Port of `discount_unlit`: the cells that could light an unlit cell form
 /// a MAKESLIGHT set.
 fn discount_unlit(st: &mut State, i: usize, rec: &mut Option<&mut Vec<Hint>>) -> bool {
-    let set: Vec<usize> = st.los(i, true).cells().filter(|&c| st.could_place(c)).collect();
-    discount_set(st, &set, rec)
+    let unit: Vec<usize> = st.los(i, true).cells().collect();
+    let set: Vec<usize> = unit.iter().copied().filter(|&c| st.could_place(c)).collect();
+    discount_set(st, &set, &unit, rec)
 }
 
 /// Port of `discount_clue`: for a clue with `n` free neighbours still
@@ -243,10 +253,11 @@ fn discount_clue(st: &mut State, i: usize, rec: &mut Option<&mut Vec<Hint>>) -> 
     if n == 0 || m <= 0 || m > n {
         return false;
     }
+    let unit: Vec<usize> = std::iter::once(i).chain(st.neighbours(i).filter(|&c| !st.black[c])).collect();
     let mut did = false;
     for combo in combinations(free.len(), (n - m + 1) as usize) {
         let set: Vec<usize> = combo.iter().map(|&k| free[k]).collect();
-        if discount_set(st, &set, rec) {
+        if discount_set(st, &set, &unit, rec) {
             did = true;
         }
     }

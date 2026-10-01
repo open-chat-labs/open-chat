@@ -1,5 +1,6 @@
+use crate::delete_user_tests::{MAX_RESIDUAL_CYCLES, cycles_refunded_metric, wait_for_refund_queue_to_empty};
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{tick_many, wait_for_canister_to_be_deleted};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use group_index_canister::freeze_group::SuspensionDetails;
@@ -7,7 +8,7 @@ use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::{random_from_u128, random_string};
-use types::{ChatId, MessageContentInitial, TextContent};
+use types::{CanisterId, ChatId, MessageContentInitial, TextContent};
 
 #[test]
 fn freeze_then_unfreeze() {
@@ -302,6 +303,8 @@ fn delete_frozen_group() {
     } = wrapper.env();
 
     let TestData { user1, group_id, .. } = init_test_data(env, canister_ids, *controller);
+    let canister_id = CanisterId::from(group_id);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
 
     client::group_index::freeze_group(
         env,
@@ -313,6 +316,11 @@ fn delete_frozen_group() {
             suspend_members: None,
         },
     );
+
+    // So that the refunds counted below are only this group's
+    wait_for_refund_queue_to_empty(env, local_user_index);
+    let balance_before = env.cycle_balance(canister_id);
+    let refunded_before = cycles_refunded_metric(env, local_user_index);
 
     let delete_group_response = client::group_index::delete_frozen_group(
         env,
@@ -328,9 +336,15 @@ fn delete_frozen_group() {
         "{delete_group_response:?}"
     );
 
-    tick_many(env, 10);
+    wait_for_canister_to_be_deleted(env, canister_id);
 
-    assert!(!env.canister_exists(Principal::from(group_id).as_slice().try_into().unwrap()));
+    // A frozen group can't refund its own cycles as a group deleting itself does, so they were all
+    // still in its canister, which the LocalUserIndex refunded them from before deleting it
+    let refunded = cycles_refunded_metric(env, local_user_index) - refunded_before;
+    assert!(refunded > balance_before - MAX_RESIDUAL_CYCLES, "{refunded}");
+
+    // Waiting out the IC's install_code rate limit on the group's canister advanced time
+    wrapper.discard();
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

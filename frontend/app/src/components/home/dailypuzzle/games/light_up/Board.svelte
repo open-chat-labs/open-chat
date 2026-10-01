@@ -1,8 +1,9 @@
 <script lang="ts">
     import { lightUp, type LightUpCell, type LightUpDescription } from "@client";
     import GridSvg from "../GridSvg.svelte";
+    import HintOutline from "../HintOutline.svelte";
     import NoMark from "../NoMark.svelte";
-    import { CELL, elementCentre, elementRect, highlight, keysOf } from "../gridSvg";
+    import { CELL, elementCentre, elementRect, keysOf } from "../gridSvg";
     import type { BoardProps } from "../types";
 
     let {
@@ -88,17 +89,7 @@
             {/if}
         {/if}
         {#if focus.has(el.key)}
-            {@const hl = highlight(el.key, focus, target)}
-            <rect
-                x={r.x + 0.5}
-                y={r.y + 0.5}
-                width={CELL - 1}
-                height={CELL - 1}
-                fill={black ? "none" : hl.fill}
-                stroke={hl.stroke}
-                stroke-width="0.8"
-                pointer-events="none"
-            />
+            <HintOutline x={r.x} y={r.y} subject={target.has(el.key)} markable={!black} />
         {/if}
         {#if mistakes.has(el.key)}
             <rect

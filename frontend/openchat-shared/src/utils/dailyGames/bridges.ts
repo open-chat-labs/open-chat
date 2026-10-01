@@ -18,7 +18,14 @@
 // sends those zeros too, so the server skips conclusions the user already ruled out, and an
 // island is only reported short once every one of its edges is committed.
 
-import type { DailyGame, GameElement, HintKeyStatus, Violation } from "./types";
+import type {
+    DailyGame,
+    GameElement,
+    HintCaption,
+    HintKeyStatus,
+    HintStep,
+    Violation,
+} from "./types";
 
 export type BridgesEdge = {
     key: number;
@@ -374,6 +381,126 @@ export function bridgesHitShapes(desc: BridgesDescription): BridgesHitShape[] {
     return out;
 }
 
+/** The island at `cell` for a sentence: its number and where it is, rows and columns from 1. */
+function islandParams(desc: BridgesDescription, cell: number, prefix = "") {
+    return {
+        [prefix === "" ? "n" : prefix]: desc.cells[cell],
+        [`${prefix}row`]: Math.floor(cell / desc.width) + 1,
+        [`${prefix}column`]: (cell % desc.width) + 1,
+    };
+}
+
+/**
+ * The island a step is about. Its focus is that island and every gap around it, water cells and
+ * far island (invariant 23), so it is the one island whose gaps make up the focus exactly. Read
+ * from the focus rather than the target, which the server may withhold.
+ */
+function stepIsland(desc: BridgesDescription, step: HintStep): number | undefined {
+    const focus = new Set(step.focus);
+    return step.focus.find((cell) => {
+        if (desc.cells[cell] === 0) return false;
+        const star = new Set([cell]);
+        for (const e of islandEdges(desc, cell)) {
+            e.cells.forEach((c) => star.add(c));
+            star.add(e.a === cell ? e.b : e.a);
+        }
+        return star.size === focus.size && [...star].every((c) => focus.has(c));
+    });
+}
+
+/**
+ * The most bridges each gap of the island at `cell` can still take, read from the board. A
+ * committed count is final: the server answers a wrong one with a mistake hint rather than a
+ * step. A gap crossed by a bridge, or whose far island already has its number, takes none. Any
+ * other gap takes at most two, the far island's number less what it has elsewhere, and this
+ * island's number less what it has. Each is an upper bound that holds on any board the server
+ * serves a step for, so a sentence built from them is never wrong, only sometimes unsaid.
+ */
+function gapCaps(desc: BridgesDescription, state: BridgesState, cell: number) {
+    const totals = bridgesIslandTotals(desc, state);
+    const have = islandEdges(desc, cell).reduce((sum, e) => sum + count(state, e.key), 0);
+    return islandEdges(desc, cell).map((e) => {
+        const far = e.a === cell ? e.b : e.a;
+        const committed = state.get(e.key);
+        if (committed !== undefined) return { edge: e, far, cap: committed, committed: true };
+        const crossed = e.crossings.some((k) => count(state, k) > 0);
+        const farLeft = desc.cells[far] - (totals.get(far) ?? 0);
+        const cap = crossed ? 0 : Math.min(MAX_BRIDGES, farLeft, desc.cells[cell] - have);
+        return { edge: e, far, cap: Math.max(cap, 0), committed: false };
+    });
+}
+
+/**
+ * The sentence for a served step, naming its island by number and position and, for technique
+ * 3, the neighbours it must bridge to. The numbers in it come from `gapCaps`, and a variant that
+ * states them is used only when they bear the deduction out; otherwise the same sentence without
+ * them. Undefined only when the focus is not one island's gaps.
+ */
+export function hintCaption(
+    desc: BridgesDescription,
+    state: BridgesState,
+    step: HintStep,
+): HintCaption | undefined {
+    const cell = stepIsland(desc, step);
+    if (cell === undefined) return undefined;
+    const n = desc.cells[cell];
+    const island = islandParams(desc, cell);
+    const gaps = gapCaps(desc, state, cell);
+    const have = gaps.reduce((sum, g) => sum + (g.committed ? g.cap : 0), 0);
+    const open = gaps.filter((g) => g.cap > 0);
+    const total = open.reduce((sum, g) => sum + g.cap, 0);
+
+    switch (step.technique) {
+        case 1: {
+            // AllSpacesNeeded: the open gaps not yet decided hold exactly what the island lacks
+            const need = n - have;
+            const room = open.reduce((sum, g) => sum + (g.committed ? 0 : g.cap), 0);
+            if (room !== need) return { key: "hint.allSpaces.plain", params: island };
+            if (have > 0) return { key: "hint.allSpaces.more", params: { ...island, need } };
+            return open.length === gaps.length
+                ? { key: "hint.allSpaces.fresh", params: island }
+                : { key: "hint.allSpaces.closed", params: island };
+        }
+        case 2: {
+            // OneEachWay: leave any open gap out and the rest fall short
+            const max = total - Math.min(...open.map((g) => g.cap));
+            if (open.length < 2 || max >= n) return { key: "hint.oneEachWay.plain", params: island };
+            return {
+                key: "hint.oneEachWay.count",
+                params: { ...island, count: open.length, max },
+            };
+        }
+        case 3: {
+            // NeedsNeighbour: the target names the neighbours the step bridges to; if the server
+            // withheld it, they are the open gaps the rest cannot do without
+            const named = step.target.filter((c) => c !== cell);
+            const forced =
+                named.length > 0
+                    ? gaps.filter((g) => named.includes(g.far))
+                    : open.filter((g) => !g.committed && total - g.cap < n);
+            if (forced.length === 1) {
+                const max = total - forced[0].cap;
+                const neighbour = islandParams(desc, forced[0].far, "m");
+                return max < n
+                    ? { key: "hint.needsNeighbour.one", params: { ...island, ...neighbour, max } }
+                    : { key: "hint.needsNeighbour.onePlain", params: { ...island, ...neighbour } };
+            }
+            if (forced.length === 2) {
+                return {
+                    key: "hint.needsNeighbour.two",
+                    params: {
+                        ...island,
+                        ...islandParams(desc, forced[0].far, "a"),
+                        ...islandParams(desc, forced[1].far, "b"),
+                    },
+                };
+            }
+            return { key: "hint.needsNeighbour.many", params: island };
+        }
+    }
+    return undefined;
+}
+
 export const bridges: DailyGame<BridgesDescription, BridgesState> = {
     id: "bridges",
     parse: parseDescription,
@@ -452,6 +579,7 @@ export const bridges: DailyGame<BridgesDescription, BridgesState> = {
         }
         return out;
     },
+    hintCaption,
 };
 
 /**

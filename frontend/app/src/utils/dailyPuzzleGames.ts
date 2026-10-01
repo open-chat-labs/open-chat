@@ -1,9 +1,13 @@
-import { bridges, lightUp, loopy, slant, tents, unruly, type DailyGame } from "@client";
+import { bridges, chatRooms, lightUp, loopy, slant, tents, unruly, type DailyGame } from "@client";
 import type { Component } from "svelte";
 import BridgesBoard from "../components/home/dailypuzzle/games/bridges/Board.svelte";
 import bridgesDemo from "../components/home/dailypuzzle/games/bridges/demo";
 import bridgesStrings from "../components/home/dailypuzzle/games/bridges/i18n.en.json";
 import BridgesPictogram from "../components/home/dailypuzzle/games/bridges/Pictogram.svelte";
+import ChatRoomsBoard from "../components/home/dailypuzzle/games/chat_rooms/Board.svelte";
+import chatRoomsDemo from "../components/home/dailypuzzle/games/chat_rooms/demo";
+import chatRoomsStrings from "../components/home/dailypuzzle/games/chat_rooms/i18n.en.json";
+import ChatRoomsPictogram from "../components/home/dailypuzzle/games/chat_rooms/Pictogram.svelte";
 import LightUpBoard from "../components/home/dailypuzzle/games/light_up/Board.svelte";
 import lightUpDemo from "../components/home/dailypuzzle/games/light_up/demo";
 import lightUpStrings from "../components/home/dailypuzzle/games/light_up/i18n.en.json";
@@ -110,6 +114,13 @@ export const dailyPuzzleGames: Record<string, DailyPuzzleGameDef> = {
         Pictogram: UnrulyPictogram,
         strings: unrulyStrings,
         demo: unrulyDemo,
+    }),
+    [chatRooms.id]: defineGame({
+        game: chatRooms,
+        Board: ChatRoomsBoard,
+        Pictogram: ChatRoomsPictogram,
+        strings: chatRoomsStrings,
+        demo: chatRoomsDemo,
     }),
 };
 

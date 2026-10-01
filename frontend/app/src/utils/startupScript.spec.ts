@@ -7,6 +7,13 @@ vi.mock("url", () => import("node:url"));
 
 import { generateStartupScript } from "../../rollup.extras.mjs";
 
+// jsdom has no matchMedia, which the startup script reads as it runs
+const osPrefersDark = { dark: false };
+window.matchMedia = ((query: string) =>
+    ({
+        matches: query === "(prefers-color-scheme: dark)" && osPrefersDark.dark,
+    }) as MediaQueryList) as typeof window.matchMedia;
+
 type Chunk = { fileName: string; moduleIds: string[]; imports: string[]; isEntry: boolean };
 
 function chunk(fileName: string, moduleIds: string[], imports: string[] = []): Chunk {
@@ -61,8 +68,51 @@ describe("the startup script in index.html", () => {
         vi.unstubAllGlobals();
         vi.restoreAllMocks();
         document.head.innerHTML = "";
+        document.documentElement.style.removeProperty("background-color");
+        osPrefersDark.dark = false;
         localStorage.clear();
         window.OC_PRESTARTED_WORKER = undefined;
+    });
+
+    function startupBackground(): string {
+        run();
+        return document.documentElement.style.backgroundColor;
+    }
+
+    test("paints the page dark when the theme last used was a dark one", () => {
+        localStorage.setItem("openchat_startup_theme_mode", "dark");
+        expect(startupBackground()).not.toBe("");
+    });
+
+    test("leaves the page alone when the theme last used was a light one, whatever the OS prefers", () => {
+        localStorage.setItem("openchat_startup_theme_mode", "light");
+        osPrefersDark.dark = true;
+        expect(startupBackground()).toBe("");
+    });
+
+    test("goes by the OS preference on a first visit", () => {
+        expect(startupBackground()).toBe("");
+        osPrefersDark.dark = true;
+        expect(startupBackground()).not.toBe("");
+    });
+
+    test("goes by the OS preference when localStorage is unavailable", () => {
+        vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+            throw new Error("denied");
+        });
+        osPrefersDark.dark = true;
+        expect(startupBackground()).not.toBe("");
+    });
+
+    test("paints the mobile layout dark on a first visit, as that is its default theme", () => {
+        configure("v2", 400);
+        expect(startupBackground()).not.toBe("");
+    });
+
+    test("goes by the theme last used on the mobile layout too", () => {
+        configure("v2", 400);
+        localStorage.setItem("openchat_startup_theme_mode", "light");
+        expect(startupBackground()).toBe("");
     });
 
     test("preloads the desktop App chunk and everything it statically imports", () => {

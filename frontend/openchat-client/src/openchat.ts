@@ -66,6 +66,7 @@ import {
     getEmailSignInSession,
     i18nKey,
     indexRangeForChat,
+    isAccountOfMultiUserCanisterUserId,
     isBalanceGate,
     isCaptionedContent,
     isChitEarnedGate,
@@ -314,6 +315,7 @@ import {
     type ThreadSummary,
     type ThreadSyncDetails,
     type TipMessageResponse,
+    type TokenInfo,
     type TokenSwapStatusResponse,
     type TransferSuccess,
     type UpdateGroupResponse,
@@ -2379,6 +2381,7 @@ export class OpenChat {
     userAvatarUrl = userAvatarUrl;
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
+    isAccountOfMultiUserCanisterUserId = isAccountOfMultiUserCanisterUserId;
     parseBigInt = parseBigInt;
     userIdsFromEvents = userIdsFromEvents;
     userOrUserGroupName = userOrUserGroupName;
@@ -7593,6 +7596,17 @@ export class OpenChat {
                 }
             }
 
+            // Likewise drop any group / channel previews for chats we are now a member of
+            // (e.g. one we were viewing anonymously before logging in), otherwise the preview
+            // takes precedence over the server summary and we keep showing "Join"
+            if (localUpdates.groupChatPreviews.value.size > 0) {
+                for (const chat of chatsAddedUpdated) {
+                    if (chat.kind !== "direct_chat" && !isPreviewing(chat)) {
+                        localUpdates.removeGroupPreview(chat.id);
+                    }
+                }
+            }
+
             if (localUpdates.anyUninitialisedDirectChats()) {
                 for (const chat of chatsAddedUpdated) {
                     localUpdates.removeUninitialisedDirectChat(chat.id);
@@ -8038,10 +8052,13 @@ export class OpenChat {
             .catch(() => false);
     }
 
+    // `token1` and `token1Amount` are what accepting the swap costs, as the swap's message has them
     async acceptP2PSwap(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
+        token1: TokenInfo,
+        token1Amount: bigint,
         fromAccount?: string,
     ): Promise<AcceptP2PSwapResponse> {
         let pin: string | undefined = undefined;
@@ -8063,6 +8080,8 @@ export class OpenChat {
                 chatId,
                 threadRootMessageIndex,
                 messageId,
+                token1,
+                token1Amount,
                 pin,
                 newAchievement,
                 fromAccount,
@@ -8657,6 +8676,9 @@ export class OpenChat {
                 transfer,
                 decimals,
                 pin,
+                username: currentUserStore.value.username,
+                displayName: currentUserStore.value.displayName,
+                newAchievement: !achievementsStore.value.has("tipped_message"),
             })
             .then((resp) => {
                 if (resp.kind !== "success") {

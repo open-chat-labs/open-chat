@@ -274,14 +274,9 @@
                                 <Translatable resourceKey={i18nKey("dailyPuzzle.noHintsLeft")} />
                             {:else}
                                 <Translatable
-                                    resourceKey={hintButton.price === 0
-                                        ? i18nKey("dailyPuzzle.hintFree", {
-                                              level: hintButton.level,
-                                          })
-                                        : i18nKey("dailyPuzzle.hintPrice", {
-                                              level: hintButton.level,
-                                              price: hintButton.price,
-                                          })}
+                                    resourceKey={i18nKey("dailyPuzzle.hintCost", {
+                                        price: hintButton.price,
+                                    })}
                                 />
                                 {#if hintButton.hintsLeft > 0}
                                     · <Translatable
