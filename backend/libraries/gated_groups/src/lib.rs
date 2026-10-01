@@ -45,6 +45,11 @@ pub struct CheckGateArgs {
     pub total_chit_earned: i32,
     pub composite_gate_index: Option<u8>,
     pub now: TimestampMillis,
+    // Whether a payment gate may be passed by pulling its payment from the user's wallet. Only
+    // when the user is joining, which is when they approve it, and when the payment is passed on
+    // to the owners. A member's gate checked again as it expires is never paid, else any approval
+    // they had left standing under their spender subaccount, such as one for a tip, could be spent.
+    pub take_payment: bool,
 }
 
 #[derive(Clone)]
@@ -81,7 +86,15 @@ async fn check_non_composite_gate(gate: AccessGateNonComposite, args: CheckGateA
             check_verified_credential_gate(&g, args.verified_credential_args, args.now)
         }
         AccessGateNonComposite::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user.user_id).await,
-        AccessGateNonComposite::Payment(g) => try_transfer_from(&g, args.user, args.this_canister, args.now).await,
+        AccessGateNonComposite::Payment(g) => {
+            if args.take_payment {
+                try_transfer_from(&g, args.user, args.this_canister, args.now).await
+            } else {
+                CheckIfPassesGateResult::Failed(GateCheckFailedReason::PaymentFailed(
+                    TransferFromError::InsufficientAllowance { allowance: 0 },
+                ))
+            }
+        }
         AccessGateNonComposite::TokenBalance(g) => check_token_balance_gate(&g, args.user).await,
         AccessGateNonComposite::Locked => CheckIfPassesGateResult::Failed(GateCheckFailedReason::Locked),
         AccessGateNonComposite::ReferredByMember => check_referred_by_member_gate(args.referred_by_member),
@@ -346,9 +359,10 @@ async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIf
     }
 }
 
-// Pulls the gate's payment from the user's wallet, spending only the approval they made under their
-// own spender subaccount (see `ledger_utils::spender_subaccount`), as for any other payment this
-// canister pulls from a member's wallet
+// Pulls the gate's payment from the user's wallet, spending the approval they made under their own
+// spender subaccount (see `ledger_utils::spender_subaccount`), as for any other payment this
+// canister pulls from a member's wallet, or until the TODO below is done, an approval to this
+// canister's default account
 async fn try_transfer_from(
     gate: &PaymentGate,
     user: UserIdAndPrincipal,
