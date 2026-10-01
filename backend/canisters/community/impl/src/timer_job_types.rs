@@ -582,6 +582,8 @@ impl JoinMembersToPublicChannelJob {
             let mut processed = 0u32;
             let now = state.env.now();
             while let Some(user_id) = self.members.pop() {
+                // A member queued under an id the community has since been told they've been migrated from
+                let user_id = state.data.migrated_user_ids.latest(user_id);
                 if let Some(member) = state.data.members.get_by_user_id(&user_id) {
                     match join_channel_unchecked(
                         user_id,

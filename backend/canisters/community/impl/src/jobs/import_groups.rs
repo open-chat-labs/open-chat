@@ -283,9 +283,11 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
 
 // The channel's members are processed a batch at a time, in order of user id:
 // 1. For channel members already in the community, add the new channel to their set of channels.
-// 2. For channel members who are not yet community members, lookup their principals, then join them
-// to the community, add the new channel to their set of channels, and add them to the community's
-// other public channels (via `JoinMembersToPublicChannelJob`).
+// 2. For channel members who are not yet community members, lookup their latest ids and principals,
+// then join them to the community, add the new channel to their set of channels, and add them to the
+// community's other public channels (via `JoinMembersToPublicChannelJob`). A member the group held by
+// an id they've since been migrated from is moved onto their latest id, as when the community is told
+// of a migration, which the group, being deleted once imported, won't be.
 // Once every batch has been processed, if the channel is public, the community members not in it
 // are added to it.
 pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMembersJob) {
@@ -300,15 +302,15 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
         return;
     }
 
-    let c2c_args = local_user_index_canister::c2c_user_principals::Args {
+    let c2c_args = local_user_index_canister::c2c_user_principals_v2::Args {
         user_ids: batch.keys().copied().collect(),
     };
-    let response = local_user_index_canister_c2c_client::c2c_user_principals(local_user_index_canister_id, &c2c_args).await;
+    let response = local_user_index_canister_c2c_client::c2c_user_principals_v2(local_user_index_canister_id, &c2c_args).await;
 
     mutate_state(|state| {
         let now = state.env.now();
 
-        if let Ok(local_user_index_canister::c2c_user_principals::Response::Success(users)) = response {
+        if let Ok(local_user_index_canister::c2c_user_principals_v2::Response::Success(users)) = response {
             // In order of user id, so that the next batch can start after the last processed
             let users: BTreeMap<_, _> = users.into_iter().collect();
 
@@ -317,7 +319,8 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
             // stops before it has processed them all
             let mut processed_to = scanned_to;
             let mut last_processed = job.after;
-            for (index, (user_id, principal)) in users.into_iter().enumerate() {
+            let mut migrated = Vec::new();
+            for (index, (user_id, latest)) in users.into_iter().enumerate() {
                 // Each is written to stable memory, so if the instructions for this run are used up,
                 // the rest are left for the next run
                 if index > 0
@@ -328,6 +331,25 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
                     break;
                 }
                 last_processed = Some(user_id);
+
+                let principal = latest.principal;
+                if latest.user_id != user_id {
+                    // The group held the member by an id they've since been migrated from. They're added
+                    // under it, as the channel holds them, then moved onto their latest id below. If
+                    // they're already a member under it, only the channel is moved. If they've been
+                    // blocked under it, they're removed from the channel as when blocked under the old.
+                    migrated.push((user_id, latest));
+                    if state.data.members.is_blocked(&latest.user_id) {
+                        let channel = state.data.channels.get_mut(&channel_id).unwrap();
+                        let _ = channel
+                            .chat
+                            .remove_member(Caller::OCBot(OPENCHAT_BOT_USER_ID), user_id, false, now);
+                        continue;
+                    }
+                    if state.data.members.contains(&latest.user_id) {
+                        continue;
+                    }
+                }
 
                 match state.data.members.add(
                     user_id,
@@ -350,6 +372,26 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
                             .chat
                             .remove_member(Caller::OCBot(OPENCHAT_BOT_USER_ID), user_id, false, now);
                     }
+                }
+            }
+
+            for (old_user_id, latest) in migrated {
+                state
+                    .data
+                    .migrate_user_ids(&[old_user_id], latest.user_id, Some(latest.principal), now);
+                if state.data.members.contains(&latest.user_id) {
+                    state.data.invited_users.remove(&latest.user_id, now);
+                    if state
+                        .data
+                        .channels
+                        .get(&channel_id)
+                        .is_some_and(|c| c.chat.members.contains(&latest.user_id))
+                    {
+                        state.data.members.mark_member_joined_channel(latest.user_id, channel_id);
+                    }
+                }
+                if let Some(added) = added.iter_mut().find(|u| **u == old_user_id) {
+                    *added = latest.user_id;
                 }
             }
 
@@ -433,6 +475,12 @@ fn complete_processing_channel_members(group_id: ChatId, channel_id: ChannelId, 
         // Add community members to the channel if it is public
         add_community_members_to_channel_if_public(channel_id, state);
 
+        // By their latest ids, in case the community has been told of any of their migrations since
+        // they were added
+        let members_added = members_added
+            .into_iter()
+            .map(|user_id| state.data.migrated_user_ids.latest(user_id))
+            .collect();
         state.push_community_event(CommunityEventInternal::GroupImported(Box::new(GroupImportedInternal {
             group_id,
             channel_id,
