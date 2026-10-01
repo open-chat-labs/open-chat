@@ -26,9 +26,10 @@ use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
 // The PocketIC server stops once it has been idle for a minute, but a call which never completes
-// (eg. an `await_call` on a stuck update) keeps it busy, so if the test run is killed at that point
-// the server would otherwise run forever. A full run takes around 13 minutes on CI.
-const POCKET_IC_SERVER_HARD_TTL: Duration = Duration::from_secs(2 * 60 * 60);
+// (eg. an `await_call` on a stuck update) keeps it busy even after the test has given up on the
+// call and the run has ended, so the server would otherwise run forever. A full run takes around
+// 25 minutes on CI.
+const POCKET_IC_SERVER_HARD_TTL: Duration = Duration::from_secs(6 * 60 * 60);
 
 static POCKET_IC_SERVER_URL: OnceLock<Url> = OnceLock::new();
 
@@ -623,13 +624,15 @@ pub fn install_icrc_ledger(
 }
 
 // The instances in a test run all share this server. It is started here rather than by
-// `PocketIcBuilder`, which has no way to set its hard TTL.
+// `PocketIcBuilder`, which has no way to set its hard TTL. It isn't reused, as reusing keys the
+// server on the test process id, so a run whose id had been recycled could attach to a server left
+// over from an earlier run.
 fn pocket_ic_server_url() -> Url {
     POCKET_IC_SERVER_URL
         .get_or_init(|| {
             let runtime = tokio::runtime::Builder::new_current_thread().build().unwrap();
             let (_, url) = runtime.block_on(start_server(StartServerParams {
-                reuse: true,
+                reuse: false,
                 hard_ttl: Some(POCKET_IC_SERVER_HARD_TTL),
                 ..Default::default()
             }));
