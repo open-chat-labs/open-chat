@@ -510,6 +510,9 @@ impl CommunityMembers {
                 set.insert(new_user_id);
             }
         }
+        if self.lapsed.contains(&new_user_id) {
+            self.restart_unlapsing_cursor();
+        }
         if let Some(user_type) = self.bots.remove(&old_user_id) {
             self.bots.insert(new_user_id, user_type);
         }
@@ -822,12 +825,35 @@ impl CommunityMembers {
             };
             after = Some(user_id);
 
-            let updated = self.update_member(&user_id, |m| m.lapsed.timestamp <= before && m.set_lapsed(false, now));
-            if matches!(updated, Some(true)) {
-                self.lapsed.remove(&user_id);
-                self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
-                unlapsed.push(user_id);
+            let mut not_lapsed = false;
+            let updated = self.update_member(&user_id, |m| {
+                not_lapsed = !m.lapsed.value;
+                m.lapsed.timestamp <= before && m.set_lapsed(false, now)
+            });
+            match updated {
+                Some(true) => {
+                    self.lapsed.remove(&user_id);
+                    self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
+                    unlapsed.push(user_id);
+                }
+                // A member whose record says they aren't lapsed, or who isn't a member, shouldn't be
+                // in the set (eg. if the members were imported from a group which was unlapsing them)
+                Some(false) if not_lapsed => {
+                    self.lapsed.remove(&user_id);
+                }
+                None => {
+                    self.lapsed.remove(&user_id);
+                }
+                Some(false) => {}
             }
+        }
+    }
+
+    // A member who has been migrated to a new user id may now come before the cursor, so the lapsed
+    // members are looked at again from the start. Those already unlapsed are no longer among them.
+    fn restart_unlapsing_cursor(&mut self) {
+        if let Some(unlapsing) = self.unlapsing.as_mut() {
+            unlapsing.after = None;
         }
     }
 
@@ -1454,6 +1480,39 @@ mod tests {
             .map(|(user_id, _)| user_id)
             .collect();
         assert_eq!(unlapsed.len(), 4);
+    }
+
+    #[test]
+    fn a_lapsed_member_migrated_to_an_earlier_user_id_is_still_unlapsed() {
+        let mut members = members_for_page_tests(5);
+        members.update_lapsed(test_user_id(3), true, 3);
+        members.update_lapsed(test_user_id(5), true, 3);
+        members.start_unlapsing(10);
+
+        let mut asked = 0;
+        let unlapsed = members.unlapse_while(10, || {
+            asked += 1;
+            asked <= 1
+        });
+        assert_eq!(unlapsed, user_ids([3]));
+
+        // User 5 is migrated to an id before where unlapsing has got to
+        members.migrate_user_id(test_user_id(5), test_user_id(0), None, 11);
+        assert_eq!(members.unlapse_while(12, || true), user_ids([0]));
+        assert!(members.lapsed().is_empty());
+        assert!(!members.get_by_user_id(&test_user_id(0)).unwrap().lapsed().value);
+    }
+
+    #[test]
+    fn a_member_in_the_lapsed_set_whose_record_isnt_lapsed_is_dropped_from_it() {
+        let mut members = members_for_page_tests(3);
+        // As can happen if the members were imported from a group which was unlapsing them
+        members.lapsed.insert(test_user_id(2));
+        members.start_unlapsing(10);
+
+        assert!(members.unlapse_while(10, || true).is_empty());
+        assert!(members.lapsed().is_empty());
+        assert!(!members.is_unlapsing());
     }
 
     #[test]

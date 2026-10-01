@@ -14,6 +14,8 @@ thread_local! {
 }
 
 const MAX_INSTRUCTIONS_PER_RUN: u64 = 2_000_000_000;
+// In test mode only one member is unlapsed per run, so that tests cover the job running again
+const MAX_MEMBERS_PER_RUN_TEST_MODE: u32 = 1;
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && state.data.chat.members.is_unlapsing() {
@@ -31,10 +33,12 @@ fn run() {
 
     mutate_state(|state| {
         let now = state.env.now();
+        let max_members = if state.data.test_mode { MAX_MEMBERS_PER_RUN_TEST_MODE } else { u32::MAX };
         let mut processed = 0u32;
         let unlapsed = state.data.chat.members.unlapse_while(now, || {
             processed += 1;
-            !processed.is_multiple_of(100) || ic_cdk::api::instruction_counter() < MAX_INSTRUCTIONS_PER_RUN
+            processed <= max_members
+                && (!processed.is_multiple_of(100) || ic_cdk::api::instruction_counter() < MAX_INSTRUCTIONS_PER_RUN)
         });
 
         // If an expiring gate has been set since the gate was removed, then had these members been

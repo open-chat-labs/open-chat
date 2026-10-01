@@ -121,7 +121,24 @@ fn import_group_adds_its_members_to_the_community_a_batch_at_a_time() {
     tick_many(env, 3);
 
     let import_group_response = client::community::happy_path::import_group(env, owner.principal, community_id, group_id);
-    tick_many(env, 30);
+
+    // The batches are processed by timer jobs, so wait until every member has joined every channel
+    let in_every_channel = |env: &PocketIc, user: &User| {
+        let args = community_canister::summary::Args {
+            on_behalf_of: None,
+            invite_code: None,
+        };
+        matches!(
+            client::community::summary(env, user.principal, community_id.into(), &args),
+            community_canister::summary::Response::Success(s) if s.channels.len() == 3
+        )
+    };
+    for _ in 0..60 {
+        if members.iter().all(|m| in_every_channel(env, m)) {
+            break;
+        }
+        env.tick();
+    }
 
     for member in members.iter() {
         // A member of the community, the imported channel and the community's other public channels

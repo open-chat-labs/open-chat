@@ -1,5 +1,5 @@
 use crate::activity_notifications::extract_activity;
-use crate::jobs::migrate_chat_events_to_stable_memory;
+use crate::jobs::{migrate_chat_events_to_stable_memory, unlapse_members};
 use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
@@ -9,7 +9,7 @@ use crate::timer_job_types::{
 };
 use crate::{RuntimeState, mutate_state, read_state};
 use chat_events::ChatEvents;
-use constants::OPENCHAT_BOT_USER_ID;
+use constants::{OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use group_canister::c2c_export_group::{Args, ExportExtras, Response};
 use group_chat_core::{GroupChatCore, GroupMembers};
 use ic_cdk::call::RejectCode;
@@ -21,7 +21,7 @@ use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{
     C2CError, Caller, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty,
-    MultiUserChat, UserId, UserType,
+    Milliseconds, MultiUserChat, UserId, UserType,
 };
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
@@ -30,6 +30,8 @@ const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
 const IMPORT_MEMBERS_BATCH_SIZE: usize = 1000;
 const IMPORT_MEMBERS_BATCH_SIZE_TEST_MODE: usize = 2;
 const MAX_INSTRUCTIONS_PER_MEMBERS_BATCH: u64 = 2_000_000_000;
+// Each retry of a batch whose members' principals couldn't be got waits this much longer than the last
+const IMPORT_MEMBERS_RETRY_INTERVAL: Milliseconds = 10 * SECOND_IN_MS;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -258,6 +260,8 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             // Moves the imported group's data which is still on the heap (eg. its users' metrics)
             // into stable memory under the channel's prefixes
             migrate_chat_events_to_stable_memory::start_job_if_required(state);
+            // The group may have been unlapsing its members when it was exported
+            unlapse_members::start_job_if_required(state);
 
             state.data.timer_jobs.enqueue_job(
                 TimerJob::ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob {
@@ -370,6 +374,14 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
             job.attempt = 0;
         } else if job.attempt < 30 {
             job.attempt += 1;
+            // Retried after a delay, so that a LocalUserIndex which is briefly unavailable (eg. while
+            // it is upgraded) doesn't use up the attempts
+            let retry_at = now + IMPORT_MEMBERS_RETRY_INTERVAL * job.attempt as u64;
+            state
+                .data
+                .timer_jobs
+                .enqueue_job(TimerJob::ProcessGroupImportChannelMembers(job), retry_at, now);
+            return;
         } else {
             // The batch is given up on, and the rest processed
             error!(%group_id, after = ?job.after, "Failed to get the principals of a batch of the group's members");
@@ -434,11 +446,17 @@ fn complete_processing_channel_members(group_id: ChatId, channel_id: ChannelId, 
 
 fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut RuntimeState) {
     if let Some(channel) = state.data.channels.get_mut(&channel_id) {
-        // If this is a public channel, add all community members to it
+        // If this is a public channel, add all community members to it, other than those who have
+        // left it (which, with the import done in batches, they can have done in the meantime)
         if channel.chat.is_public.value && channel.chat.gate_config.value.is_none() {
             JoinMembersToPublicChannelJob {
                 channel_id,
-                members: state.data.members.iter_member_ids().collect(),
+                members: state
+                    .data
+                    .members
+                    .iter_member_ids()
+                    .filter(|user_id| !state.data.members.member_channel_links_removed_contains(*user_id, channel_id))
+                    .collect(),
             }
             .execute_with_state(state);
         }
