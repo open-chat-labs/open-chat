@@ -5875,6 +5875,94 @@ fn crypto_addressed_to_a_users_id_is_sent_to_their_wallet(in_channel: bool) {
     assert_bob_paid(env, 4);
 }
 
+// No one can spend from an account of a MultiUser user's id, so a User canister refuses to withdraw
+// to one rather than lose the funds. Withdrawals to the user's wallet are unaffected.
+#[test]
+fn withdrawals_to_an_account_of_a_multi_user_users_id_are_refused() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let bob = client::register_user_in_multi_user_canister(env, canister_ids);
+    let carol = client::register_user(env, canister_ids);
+
+    let ledger = canister_ids.icp_ledger;
+    let amount = 1_000_000;
+    client::ledger::happy_path::transfer(env, *controller, ledger, carol.user_id, 1_000_000_000);
+
+    let icrc1_withdrawal = |env: &PocketIc, to: icrc1::Account| {
+        PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+            ledger,
+            token_symbol: ICP_SYMBOL.to_string(),
+            amount,
+            to,
+            fee: ICP_TRANSFER_FEE,
+            memo: None,
+            created: now_millis(env) * 1_000_000,
+        })
+    };
+    let nns_withdrawal = |env: &PocketIc, to: icrc1::Account| {
+        PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
+            ledger,
+            token_symbol: ICP_SYMBOL.to_string(),
+            amount: types::nns::Tokens::from_e8s(amount as u64),
+            to: types::nns::UserOrAccount::Account(types::account_identifier(to.into())),
+            fee: None,
+            memo: None,
+            created: now_millis(env) * 1_000_000,
+        })
+    };
+    let withdraw = |env: &mut PocketIc, withdrawal: PendingCryptoTransaction| {
+        client::user::withdraw_crypto_v2(
+            env,
+            carol.principal,
+            carol.canister(),
+            &user_canister::withdraw_crypto_v2::Args { withdrawal, pin: None },
+        )
+    };
+
+    let bobs_user_id = icrc1::Account::legacy_for_user(bob.user_id);
+    let subaccount_of_bobs_user_id = icrc1::Account {
+        subaccount: Some([1; 32]),
+        ..bobs_user_id
+    };
+    let carols_balance = client::ledger::happy_path::balance_of(env, ledger, carol.user_id);
+
+    // Bob's user id, given as the recipient, under any subaccount
+    for to in [bobs_user_id, subaccount_of_bobs_user_id] {
+        let response = withdraw(env, icrc1_withdrawal(env, to));
+        assert!(
+            matches!(&response, user_canister::withdraw_crypto_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+            "{response:?}"
+        );
+    }
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, ledger, carol.user_id),
+        carols_balance
+    );
+    for account in [bobs_user_id, subaccount_of_bobs_user_id] {
+        assert_eq!(client::ledger::happy_path::balance_of(env, ledger, account), 0);
+    }
+
+    // Bob's wallet is the account of his principal, which Carol can withdraw to however she
+    // addresses it. Each is made later than the last, which the ledger could otherwise take for a
+    // duplicate of it.
+    let bobs_wallet = icrc1::Account::from(bob.principal);
+    for as_nns in [false, true] {
+        env.advance_time(Duration::from_secs(1));
+        let withdrawal = if as_nns { nns_withdrawal(env, bobs_wallet) } else { icrc1_withdrawal(env, bobs_wallet) };
+        let response = withdraw(env, withdrawal);
+        assert!(
+            matches!(response, user_canister::withdraw_crypto_v2::Response::Success(_)),
+            "{response:?}"
+        );
+    }
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.principal), 2 * amount);
+}
+
 #[test]
 fn tips_are_paid_from_the_tippers_own_wallet() {
     let mut wrapper = ENV.deref().get();

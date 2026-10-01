@@ -627,6 +627,7 @@
         "sendSucceeded": "Your {symbol} was successfully sent!",
         "sendTarget": "Enter an address to send to",
         "sendToken": "Send {symbol}",
+        "sendToUserId": "This address is an OpenChat user's ID rather than their wallet, so anything sent to it would be lost. To send them tokens, do so in a chat with them, or ask them for their wallet address.",
         "shortBalanceLabel": "Balance",
         "shortRemainingBalanceLabel": "remaining balance",
         "showZeroBalance": "show more",
