@@ -3363,7 +3363,7 @@ export class OpenChat {
         searchTerm: string,
         maxResults: number,
     ): Promise<UserSummary[]> {
-        const { members: found } = await this.#searchForMembers(id, searchTerm, maxResults);
+        const { members } = await this.#searchForMembers(id, searchTerm, maxResults);
         if (id.kind === "channel") {
             // So that their display names in the community are known
             const communityId: CommunityIdentifier = {
@@ -3376,22 +3376,37 @@ export class OpenChat {
                     communityId,
                     community.held,
                     community.lookups,
-                    found.map((u) => u.userId),
+                    members.map((u) => u.userId),
                 );
             }
         }
-        return found;
+        return members.slice(0, maxResults);
     }
 
-    // Searches for users by name who are members of the selected chat or community with this id,
-    // until `maxResults` of them are found. The users found are those who best match out of every
-    // user, so if it holds only some of its members, further pages of users are searched. The
-    // members' display names in a community (for a channel, its community) are searched too, since
-    // the user search doesn't know them. Returns the members found, and the other users found.
+    // Whether searching for members of the selected chat or community with this id should look for
+    // more than it holds: because it holds only some of its members, or because it is a channel
+    // whose community does, in which case its members' display names in the community aren't all
+    // held
+    shouldSearchForMembers(id: MultiUserChatIdentifier | CommunityIdentifier): boolean {
+        return (
+            this.membersIncomplete(id) ||
+            (id.kind === "channel" &&
+                this.membersIncomplete({ kind: "community", communityId: id.communityId }))
+        );
+    }
+
+    // Searches for users by name who are members of the selected chat or community with this id.
+    // The users found are those who best match out of every user, so if it holds only some of its
+    // members, further pages of users are searched until `maxResults` usable members are found
+    // (all of them unless the caller says otherwise). The members' display names in a community
+    // (for a channel, its community) are searched too, since the user search doesn't know them.
+    // Returns every usable member found, and the other users found who aren't members.
     async #searchForMembers(
         id: MultiUserChatIdentifier | CommunityIdentifier,
         searchTerm: string,
         maxResults: number,
+        usable: (members: UserSummary[]) => Promise<UserSummary[]> = (members) =>
+            Promise.resolve(members),
     ): Promise<{ members: UserSummary[]; others: UserSummary[] }> {
         const byDisplayName = this.#searchCommunityDisplayNames(id, searchTerm);
         const members: UserSummary[] = [];
@@ -3399,6 +3414,10 @@ export class OpenChat {
         const seen = new Set<string>();
         const pages = this.membersIncomplete(id) ? MAX_PAGES_SEARCHED_FOR_MEMBERS : 1;
         for (let pageIndex = 0; pageIndex < pages && members.length < maxResults; pageIndex++) {
+            if (pageIndex > 0 && this.#selectedMembers(id) === undefined) {
+                // Another chat or community has been selected since
+                break;
+            }
             const page = await this.searchUsers(
                 searchTerm,
                 USERS_SEARCHED_TO_FIND_MEMBERS,
@@ -3414,25 +3433,24 @@ export class OpenChat {
                 id,
                 users.map((u) => u.userId),
             );
-            for (const user of users) {
-                (found.has(user.userId) ? members : others).push(user);
-            }
+            others.push(...users.filter((u) => !found.has(u.userId)));
+            members.push(...(await usable(users.filter((u) => found.has(u.userId)))));
             if (page.length < USERS_SEARCHED_TO_FIND_MEMBERS) {
                 break;
             }
         }
 
-        const named = await byDisplayName;
         const memberIds = new Set(members.map((u) => u.userId));
-        for (const user of named) {
-            if (!memberIds.has(user.userId)) {
-                memberIds.add(user.userId);
-                members.push(user);
-            }
+        const named = (await byDisplayName).filter((u) => !memberIds.has(u.userId));
+        for (const user of await usable(named)) {
+            memberIds.add(user.userId);
+            members.push(user);
         }
+        // Those found by their display names aren't others, whether or not the caller can use them
+        const namedIds = new Set(named.map((u) => u.userId));
         return {
-            members: members.slice(0, maxResults),
-            others: others.filter((u) => !memberIds.has(u.userId)),
+            members,
+            others: others.filter((u) => !memberIds.has(u.userId) && !namedIds.has(u.userId)),
         };
     }
 
@@ -3487,14 +3505,14 @@ export class OpenChat {
         return users;
     }
 
-    // Finds members of the selected chat to offer as mentions for what has been typed, if it holds
-    // only some of its members. Those found are then held, so are offered too.
+    // Finds members of the selected chat to offer as mentions for what has been typed, if it may not
+    // hold them all (see `shouldSearchForMembers`). Those found are then held, so are offered too.
     async findMembersToMention(prefix: string): Promise<void> {
         const chatId = selectedChatIdStore.value;
         if (
             chatId !== undefined &&
             chatId.kind !== "direct_chat" &&
-            this.membersIncomplete(chatId)
+            this.shouldSearchForMembers(chatId)
         ) {
             await this.findMembers(chatId, prefix, MEMBERS_FOUND_TO_MENTION);
         }
@@ -6132,31 +6150,49 @@ export class OpenChat {
         let foundInCommunity: UserSummary[] = [];
         let others: UserSummary[] = [];
         if (communityId !== undefined && (canInviteUsers || this.membersIncomplete(communityId))) {
-            const found = await this.#searchForMembers(communityId, searchTerm, maxResults);
-            foundInCommunity = found.members
-                .filter((u) => !heldIds.has(u.userId))
-                .map((u) => this.#withCommunityDisplayName(u));
+            // Of the community members found, only those not already found above, and not members
+            // of the channel, are of use, so they are the ones counted towards `maxResults`
+            const found = await this.#searchForMembers(
+                communityId,
+                searchTerm,
+                maxResults,
+                async (members) => {
+                    const notHeld = members.filter((u) => !heldIds.has(u.userId));
+                    if (channelId === undefined) {
+                        return notHeld;
+                    }
+                    const inChannel = await this.#membersAmong(
+                        channelId,
+                        notHeld.map((u) => u.userId),
+                    );
+                    return notHeld.filter((u) => !inChannel.has(u.userId));
+                },
+            );
+            foundInCommunity = found.members.map((u) => this.#withCommunityDisplayName(u));
             others = found.others;
         }
 
-        // Only members of the community can be members of the channel
-        const candidates = [...held, ...foundInCommunity];
+        // Those found who aren't members of the community are checked too, since someone whose
+        // membership of the community has lapsed can still be a member of the channel
         const inChannel =
             channelId === undefined
                 ? new Set<string>()
                 : await this.#membersAmong(
                       channelId,
-                      candidates.map((u) => u.userId),
+                      [...held, ...others].map((u) => u.userId),
                   );
 
-        const communityMatches = candidates
-            .filter((u) => !inChannel.has(u.userId))
-            .slice(0, maxResults);
+        const communityMatches = [
+            ...held.filter((u) => !inChannel.has(u.userId)),
+            ...foundInCommunity,
+        ].slice(0, maxResults);
         if (!canInviteUsers) {
             return [communityMatches, []];
         }
         const shown = new Set(communityMatches.map((u) => u.userId));
-        const matches = others.filter((u) => !shown.has(u.userId)).slice(0, maxResults);
+        const matches = others
+            .filter((u) => !shown.has(u.userId) && !inChannel.has(u.userId))
+            .slice(0, maxResults);
         return [communityMatches, matches];
     }
 

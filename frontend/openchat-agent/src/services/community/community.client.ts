@@ -70,7 +70,14 @@ import type {
     VideoCallPresence,
     LookupMembersResponse,
 } from "@shared";
-import { DestinationInvalidError, MAX_EVENTS, MAX_MESSAGES, random32, toBigInt32 } from "@shared";
+import {
+    CanisterMethodNotFoundError,
+    DestinationInvalidError,
+    MAX_EVENTS,
+    MAX_MESSAGES,
+    random32,
+    toBigInt32,
+} from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,
@@ -916,8 +923,15 @@ export class CommunityClient
             lookupCommunityMembersResponse,
             CommunitySearchMembersArgs,
             CommunitySearchMembersResponse,
-        );
-        if (response.kind === "success") {
+        ).catch((err) => {
+            // A Community canister which hasn't yet been upgraded to have `search_members` finds
+            // nobody, rather than failing every search
+            if (err instanceof CanisterMethodNotFoundError) {
+                return { kind: "success" as const, members: [] };
+            }
+            throw err;
+        });
+        if (response.kind === "success" && response.members.length > 0) {
             await addMembersToCachedCommunityDetails(
                 this.chatsDb,
                 communityId,

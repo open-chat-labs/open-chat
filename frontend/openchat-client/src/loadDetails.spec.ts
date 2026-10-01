@@ -1085,11 +1085,17 @@ describe("finding users to add to a channel when not all members are held", () =
     // holds them (having looked them up, say); `z` isn't a member of either. `d` and `e` are members
     // of the community, which doesn't hold them, found only by their display names in it, of whom
     // `e` is a member of the channel too, which doesn't hold them.
-    const [me, a, b, x, y, z, d, e] = [1, 2, 3, 4, 5, 6, 7, 8].map(userId);
+    const [me, a, b, x, y, z, d, e, f] = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(userId);
     const channelId = { kind: "channel" as const, communityId: id.communityId, channelId: 1 };
 
     let client: OpenChat;
     let lookups: Extract<WorkerRequest, { kind: "lookupMembers" }>[];
+    // The members of the channel which it doesn't hold
+    let channelMembersNotHeld: string[];
+    // The members of the community which it doesn't hold, and whose membership has lapsed
+    let lapsedInCommunity: string[];
+    // What searching the community's display names returns
+    let displayNameResponse: LookupMembersResponse;
 
     beforeEach(async () => {
         vi.stubGlobal("Worker", FakeWorker);
@@ -1113,6 +1119,15 @@ describe("finding users to add to a channel when not all members are held", () =
         client = new OpenChat(config());
 
         lookups = [];
+        channelMembersNotHeld = [y, e];
+        lapsedInCommunity = [];
+        displayNameResponse = {
+            kind: "success",
+            members: [
+                { ...member(d), displayName: "Userina" },
+                { ...member(e), displayName: "Usher" },
+            ],
+        };
         vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(() => {
             const resp = {
                 events: [],
@@ -1137,8 +1152,11 @@ describe("finding users to add to a channel when not all members are held", () =
                     lookups.push(req);
                     const members =
                         req.id.kind === "community"
-                            ? [{ ...member(x), displayName: "X" }]
-                            : [member(y), member(e)];
+                            ? [
+                                  { ...member(x), displayName: "X" },
+                                  ...lapsedInCommunity.map((u) => ({ ...member(u), lapsed: true })),
+                              ]
+                            : channelMembersNotHeld.map(member);
                     return Promise.resolve({
                         kind: "success",
                         members: members.filter((m) => req.userIds.includes(m.userId)),
@@ -1147,13 +1165,7 @@ describe("finding users to add to a channel when not all members are held", () =
                 case "searchUsers":
                     return Promise.resolve([a, b, x, y, z].map(userSummary));
                 case "searchCommunityMembers":
-                    return Promise.resolve({
-                        kind: "success",
-                        members: [
-                            { ...member(d), displayName: "Userina" },
-                            { ...member(e), displayName: "Usher" },
-                        ],
-                    });
+                    return Promise.resolve(displayNameResponse);
                 case "getUsers":
                     return Promise.resolve({ users: [], deletedUserIds: new Set() });
                 default:
@@ -1164,7 +1176,7 @@ describe("finding users to add to a channel when not all members are held", () =
         await client.setSelectedCommunity(id);
         await client.setSelectedChat(channelId);
         await new Promise((r) => setTimeout(r, 10));
-        userStore.addMany([a, b, y, d, e].map(userSummary));
+        userStore.addMany([a, b, y, d, e, f].map(userSummary));
     });
 
     afterEach(() => {
@@ -1223,5 +1235,63 @@ describe("finding users to add to a channel when not all members are held", () =
         expect(found[2].displayName).toBe("Usher");
         // and is held from now on, as a member of the community
         expect(selectedCommunityMembersStore.value.get(d)?.displayName).toBe("Userina");
+    });
+
+    test("only those which can be offered count towards how many are wanted", async () => {
+        // `x` is found by the user search and `d` by display name, after members of the channel
+        // have been left out
+        const [two] = await client.searchCommunityMembersToAdd("user", 2);
+        expect(two.map((u) => u.userId)).toEqual([b, x]);
+
+        // which the first search has since added to those held, so the order differs
+        const [three] = await client.searchCommunityMembersToAdd("user", 3);
+        expect(new Set(three.map((u) => u.userId))).toEqual(new Set([b, x, d]));
+    });
+
+    test("someone whose community membership has lapsed isn't invited to a channel they're in", async () => {
+        lapsedInCommunity = [z];
+        channelMembersNotHeld = [y, e, z];
+
+        const [, others] = await client.searchUsersForInvite("user", 20, "channel", false, true);
+
+        expect(others).toEqual([]);
+    });
+
+    test("those found by the user search are offered if display names can't be searched", async () => {
+        displayNameResponse = { kind: "failure" } as never;
+
+        const [communityMembers] = await client.searchCommunityMembersToAdd("user", 20);
+
+        expect(communityMembers.map((u) => u.userId)).toEqual([b, x]);
+    });
+
+    test("a lapsed member found by their display name isn't offered, but is held as lapsed", async () => {
+        displayNameResponse = {
+            kind: "success",
+            members: [{ ...member(f), displayName: "Userf", lapsed: true }],
+        };
+
+        const found = await client.findMembers(id, "user", 20);
+
+        expect(found.map((u) => u.userId)).not.toContain(f);
+        expect(selectedServerCommunityStore.value?.lapsedMembers.has(f)).toBe(true);
+    });
+
+    test("a channel which holds every member is searched by display name if its community isn't", async () => {
+        selectedServerChatStore.update((state) => {
+            if (state !== undefined) {
+                state.moreMembersAfter = undefined;
+                state.members = new Map([a, y, e].map((u) => [u, member(u)]));
+            }
+            return state;
+        });
+        expect(client.membersIncomplete(channelId)).toBe(false);
+        expect(client.shouldSearchForMembers(channelId)).toBe(true);
+
+        const found = await client.findMembers(channelId, "user", 20);
+
+        // `e` is only found by their display name in the community
+        expect(found.map((u) => u.userId)).toContain(e);
+        expect(found.map((u) => u.userId)).not.toContain(d);
     });
 });

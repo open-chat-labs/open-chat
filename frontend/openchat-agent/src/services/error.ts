@@ -13,6 +13,7 @@ import {
     ICErrorCode,
     SessionExpiryError,
     AuthError,
+    CanisterMethodNotFoundError,
     CanisterUnavailableError,
     DestinationInvalidError,
     InvalidDelegationError,
@@ -128,6 +129,10 @@ function classifyError(
 
     if (canisterUnavailable(error)) {
         return new CanisterUnavailableError(error);
+    }
+
+    if (rejectErrorCode(error) === ICErrorCode.CanisterMethodNotFound) {
+        return new CanisterMethodNotFoundError(error);
     }
 
     const tooLarge = responseTooLarge(error);
