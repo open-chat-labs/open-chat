@@ -5,6 +5,9 @@ use core::cmp::Ordering;
 use user_index_canister::search::{Response::*, *};
 
 const MAX_SEARCH_TERM_LENGTH: usize = 25;
+// Callers can page through at most this many pages of results for a search term, so that the
+// whole of the user directory can't be listed by paging through the users who match "", say
+const MAX_PAGES: u32 = 8;
 
 #[query(candid = true, msgpack = true)]
 fn search(args: Args) -> Response {
@@ -16,8 +19,15 @@ fn search_impl(args: Args, state: &RuntimeState) -> Response {
     let now = state.env.now();
     let users = &state.data.users;
 
-    let mut search_term = args.search_term.trim().to_string();
-    search_term.truncate(MAX_SEARCH_TERM_LENGTH);
+    let page_index = args.page_index.unwrap_or_default();
+    if page_index >= MAX_PAGES {
+        return Success(Result {
+            users: Vec::new(),
+            timestamp: now,
+        });
+    }
+
+    let search_term: String = args.search_term.trim().chars().take(MAX_SEARCH_TERM_LENGTH).collect();
 
     // Filter
     let mut matches: Vec<(&User, bool)> = users.search(&search_term).filter(|(u, _)| u.principal != caller).collect();
@@ -31,7 +41,7 @@ fn search_impl(args: Args, state: &RuntimeState) -> Response {
     let page_size = args.max_results as usize;
     let results = matches
         .iter()
-        .skip(args.page_index.unwrap_or_default() as usize * page_size)
+        .skip(page_index as usize * page_size)
         .take(page_size)
         .map(|(u, _)| u.to_summary(now))
         .collect();
@@ -187,6 +197,49 @@ mod tests {
         assert_eq!(page(1), ["amar", "muhamMad", "amabcdef"]);
         assert_eq!(page(2), ["mohammad"]);
         assert!(page(3).is_empty());
+    }
+
+    #[test]
+    fn pages_beyond_the_last_allowed_are_empty() {
+        let state = setup_runtime_state();
+
+        let Response::Success(results) = search_impl(
+            Args {
+                max_results: 1,
+                search_term: "".to_string(),
+                page_index: Some(MAX_PAGES - 1),
+            },
+            &state,
+        );
+        assert_eq!(results.users.len(), 1);
+
+        let Response::Success(results) = search_impl(
+            Args {
+                max_results: 1,
+                search_term: "".to_string(),
+                page_index: Some(MAX_PAGES),
+            },
+            &state,
+        );
+        assert!(results.users.is_empty());
+    }
+
+    #[test]
+    fn a_long_term_is_cut_short_between_characters() {
+        let state = setup_runtime_state();
+
+        // The 25th character, at which the term is cut short, takes two bytes
+        let term = format!("{}é", "a".repeat(24));
+        let Response::Success(results) = search_impl(
+            Args {
+                max_results: 10,
+                search_term: term,
+                page_index: None,
+            },
+            &state,
+        );
+
+        assert!(results.users.is_empty());
     }
 
     #[test]

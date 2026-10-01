@@ -633,7 +633,9 @@ impl CommunityMembers {
         mut keep_going: impl FnMut() -> bool,
     ) -> Vec<CommunityMember> {
         let term = term.trim().to_uppercase();
-        if term.is_empty() {
+        // Display names are at most 25 characters, which in upper case can be up to 3 times as many,
+        // so a longer term can't match any. Comparing one with every display name would be costly.
+        if term.is_empty() || term.chars().count() > 75 {
             return Vec::new();
         }
 
@@ -1356,6 +1358,7 @@ mod tests {
         assert_eq!(member_ids(&members.search_display_names("bob", 2, || true)), user_ids([4, 6]));
         assert!(members.search_display_names("carol", 10, || true).is_empty());
         assert!(members.search_display_names("  ", 10, || true).is_empty());
+        assert!(members.search_display_names(&"b".repeat(76), 10, || true).is_empty());
     }
 
     #[test]
