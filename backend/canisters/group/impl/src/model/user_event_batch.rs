@@ -30,18 +30,15 @@ impl TimerJobItem for UserEventBatch {
         let response = if self.items.first().is_some_and(|event| event.value.0.index() != 0) {
             user_canister_c2c_client::c2c_group_canister_v2(
                 canister_id,
-                &user_canister::c2c_group_canister_v2::Args {
-                    events: self.items.clone(),
-                },
+                &user_canister::c2c_group_canister_v2::Args::new(self.items.clone()),
             )
             .await
         } else {
             user_canister_c2c_client::c2c_group_canister(
                 canister_id,
-                &user_canister::c2c_group_canister::Args {
-                    user_id: canister_id.into(),
-                    events: self
-                        .items
+                &user_canister::c2c_group_canister::Args::new(
+                    canister_id.into(),
+                    self.items
                         .iter()
                         .map(|event| IdempotentEnvelope {
                             created_at: event.created_at,
@@ -49,7 +46,7 @@ impl TimerJobItem for UserEventBatch {
                             value: event.value.1.clone(),
                         })
                         .collect(),
-                },
+                ),
             )
             .await
         };

@@ -15,7 +15,7 @@ use types::{
     BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, CommunityMembersRemoved, CommunityPermission, CommunityRole,
     CommunityUsersBlocked, OCResult, UnitResult, UserId,
 };
-use user_canister::c2c_remove_from_community;
+use user_canister::{CommunityCanisterEvent, RemovedFromCommunity, c2c_remove_from_community};
 
 #[update(msgpack = true)]
 #[trace]
@@ -176,7 +176,9 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
     handle_activity_notification(state);
 
     if removed {
-        // Fire-and-forget call to notify the user canister
+        // Fire-and-forget call to notify the user canister, kept for User canisters which don't yet know
+        // of the event below
+        // TODO: Remove this once every User canister has been upgraded
         remove_membership_from_user_canister(
             user_id,
             removed_by,
@@ -184,6 +186,22 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
             state.data.name.value.clone(),
             state.data.is_public.value,
             &mut state.data.fire_and_forget_handler,
+        );
+
+        // The user's canister is also told via the queue of events for users, which keeps them in order
+        // and sends them on to the user's new id if they've been migrated to a MultiUser canister, so
+        // the removal isn't lost if their canister is frozen for the migration. Whichever of the two
+        // arrives second does nothing.
+        let now = state.env.now();
+        state.push_event_to_user(
+            user_id,
+            CommunityCanisterEvent::RemovedFromCommunity(Box::new(RemovedFromCommunity {
+                removed_by,
+                blocked: block,
+                community_name: state.data.name.value.clone(),
+                public: state.data.is_public.value,
+            })),
+            now,
         );
     }
 }

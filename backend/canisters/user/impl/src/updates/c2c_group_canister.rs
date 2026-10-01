@@ -9,7 +9,7 @@ use user_canister::c2c_group_canister::*;
 #[update(guard = "caller_is_known_group_canister", msgpack = true)]
 #[trace]
 fn c2c_group_canister(args: Args) -> Response {
-    execute_update(|state| handle_events(args.events, state))
+    execute_update(|state| handle_events(args.into_events(), state))
 }
 
 pub(crate) fn handle_events(events: Vec<IdempotentEnvelope<GroupCanisterEvent>>, state: &mut RuntimeState) -> Response {
@@ -31,6 +31,9 @@ pub(crate) fn handle_events(events: Vec<IdempotentEnvelope<GroupCanisterEvent>>,
                 GroupCanisterEvent::P2PSwapCreated(swap) => {
                     let my_user_id = state.env.canister_id().into();
                     state.data.user.p2p_swaps.add_created_in_chat(*swap, my_user_id);
+                }
+                GroupCanisterEvent::RemovedFromGroup(ev) => {
+                    super::c2c_remove_from_group::remove_from_group(ev.removed_by, ev.blocked, ev.group_name, ev.public, state);
                 }
             }
         }

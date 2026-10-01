@@ -107,6 +107,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
 - Receive direct messages via `user_core`'s `receive_message`, shared with the MultiUser canister ([#9631](https://github.com/open-chat-labs/open-chat/pull/9631))
 - Refuse crypto and P2P swaps sent to bots ([#9648](https://github.com/open-chat-labs/open-chat/pull/9648))
+- Handle removal from a group or community sent via its queue of events for users ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
 
 ### Removed
 
