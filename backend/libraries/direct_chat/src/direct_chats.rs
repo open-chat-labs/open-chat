@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::RemovedChatKeyPrefix;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use types::{Chat, ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct DirectChats {
@@ -216,6 +217,41 @@ impl DirectChats {
         }
     }
 
+    // Moves the chat with another user onto their new id, once they are migrated to a MultiUser
+    // canister, along with its pin, so that events from them under their new id are added to it. The
+    // chat under their old id is recorded as removed, so that clients drop it and pick it up under
+    // the new id. If there is already a chat under the new id, eg. because a message from them under
+    // it arrived first, both are left as they are. Returns whether the chat was moved.
+    pub fn migrate_their_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) -> bool {
+        if self.direct_chats.contains_key(&new_user_id.into()) {
+            return false;
+        }
+        let Some(mut chat) = self.direct_chats.remove(&old_user_id.into()) else {
+            return false;
+        };
+        chat.migrate_their_user_id(new_user_id, now);
+        self.direct_chats.insert(new_user_id.into(), chat);
+        if let Some(pinned_at) = self.pinned.value.remove(&old_user_id.into()) {
+            self.pinned.value.insert(new_user_id.into(), pinned_at);
+            self.pinned.timestamp = now;
+        }
+        let old_chat_id: ChatId = old_user_id.into();
+        removed_chats::add(&RemovedChatKeyPrefix::new_for_direct_chats(), old_chat_id.into(), now);
+        true
+    }
+
+    // The id of the other user in the chat recorded as being with `user_id`: `user_id` itself, or, if
+    // the chat has since been moved onto their new id after they were migrated to a MultiUser
+    // canister, that id. For what was recorded against the chat before it moved, such as timer jobs
+    // and the locations of P2P swaps.
+    pub fn latest_user_id(&self, user_id: UserId, migrated_user_ids: &MigratedUserIds) -> UserId {
+        if self.direct_chats.contains_key(&user_id.into()) {
+            user_id
+        } else {
+            migrated_user_ids.latest(user_id)
+        }
+    }
+
     pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<DirectChat> {
         if let Some(chat) = self.direct_chats.remove(&chat_id) {
             removed_chats::add(&RemovedChatKeyPrefix::new_for_direct_chats(), chat_id.into(), now);
@@ -264,6 +300,49 @@ mod tests {
             (1..=3u8).map(|i| (user(i), (i as u32).into())).collect::<Vec<_>>()
         );
         assert_eq!(private_replies::take(chat(2)), vec![(user(1), 1.into())]);
+    }
+
+    #[test]
+    fn chat_with_a_migrated_user_is_moved_onto_their_new_id() {
+        init_stable_memory_map();
+        let (me, old, new) = (user(1), user(2), user(3));
+        let mut direct_chats = DirectChats::default();
+        direct_chats.get_or_create(me, old, UserType::User, || 1, 10);
+        direct_chats.pin(old.into(), 20);
+
+        assert!(direct_chats.migrate_their_user_id(old, new, 100));
+
+        let chat = direct_chats.get(&new.into()).unwrap();
+        assert_eq!(chat.them, new);
+        assert!(direct_chats.get(&old.into()).is_none());
+        assert_eq!(
+            direct_chats.pinned_chats(),
+            HashMap::from([(types::Chat::Direct(new.into()), 20)])
+        );
+        // Clients which last synced before the move are sent the chat as a new one, and told the chat
+        // under the old id was removed, while later ones hear of neither
+        assert!(chat.added_since(99) && chat.has_updates_since(99));
+        assert!(!chat.added_since(100) && !chat.has_updates_since(100));
+        assert_eq!(direct_chats.removed_since(99), vec![ChatId::from(old)]);
+        assert!(direct_chats.removed_since(100).is_empty());
+        assert!(direct_chats.pinned_chats_if_updated(99).is_some());
+    }
+
+    #[test]
+    fn chat_already_under_a_migrated_users_new_id_is_left_as_it_is() {
+        init_stable_memory_map();
+        let (me, old, new) = (user(1), user(2), user(3));
+        let mut direct_chats = DirectChats::default();
+        direct_chats.get_or_create(me, old, UserType::User, || 1, 10);
+        direct_chats.get_or_create(me, new, UserType::User, || 2, 20);
+
+        assert!(!direct_chats.migrate_their_user_id(old, new, 100));
+
+        assert_eq!(direct_chats.get(&old.into()).unwrap().them, old);
+        assert_eq!(direct_chats.get(&new.into()).unwrap().them, new);
+        assert!(direct_chats.removed_since(0).is_empty());
+        // Nor is anything done for a user there is no chat with
+        assert!(!direct_chats.migrate_their_user_id(user(4), user(5), 100));
     }
 
     // The format `DirectChats` was serialized in before the removed chats and the private replies

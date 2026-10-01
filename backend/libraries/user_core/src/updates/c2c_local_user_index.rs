@@ -162,6 +162,9 @@ pub fn apply(user: &mut User, event: LocalUserIndexEvent, now: TimestampMillis) 
         LocalUserIndexEvent::BotUpdated(ev) => {
             user.handle_bot_definition_updated(*ev, now);
         }
+        LocalUserIndexEvent::UserIdMigrated(ev) => {
+            user.migrate_their_user_id(ev.old_user_id, ev.new_user_id, now);
+        }
     }
 
     effects
