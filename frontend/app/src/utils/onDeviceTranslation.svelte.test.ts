@@ -171,6 +171,8 @@ describe("protect and restore", () => {
 });
 
 describe("OnDeviceChatTranslator", () => {
+    // Invariant: every queued foreign message gets translated, including messages released by a
+    // language pack that became ready just as the queue finished draining
     test("translates a foreign message into the target language", async () => {
         translator.enqueue(1n, 1, FRENCH);
         await settle();
