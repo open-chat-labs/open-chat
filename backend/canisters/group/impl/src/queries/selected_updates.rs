@@ -1,3 +1,4 @@
+use crate::queries::selected_initial::selected_initial_impl;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use group_canister::selected_updates_v2::{Response::*, *};
@@ -14,6 +15,17 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> OCResult<Response>
     let last_updated = state.data.details_last_updated();
     if last_updated <= args.updates_since {
         return Ok(SuccessNoUpdates(last_updated));
+    }
+
+    // Only callers which pass `max_members` can read `SuccessSnapshot`
+    if let Some(max_members) = args.max_members
+        && (state.data.chat.members.any_updates_removed(args.updates_since)
+            || state.data.bots.any_updates_removed(args.updates_since))
+    {
+        let args = group_canister::selected_initial::Args {
+            max_members: Some(max_members),
+        };
+        return selected_initial_impl(args, state).map(SuccessSnapshot);
     }
 
     let user_id = state.get_caller_user_id()?;

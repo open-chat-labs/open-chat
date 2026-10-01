@@ -1,3 +1,4 @@
+use crate::queries::selected_channel_initial::selected_channel_initial_impl;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use community_canister::selected_channel_updates_v2::{Response::*, *};
@@ -14,6 +15,17 @@ fn selected_channel_updates_impl(args: Args, state: &RuntimeState) -> OCResult<R
 
     if last_updated <= args.updates_since {
         return Ok(SuccessNoUpdates(last_updated));
+    }
+
+    // Only callers which pass `max_members` can read `SuccessSnapshot`
+    if let Some(max_members) = args.max_members
+        && channel.chat.members.any_updates_removed(args.updates_since)
+    {
+        let args = community_canister::selected_channel_initial::Args {
+            channel_id: args.channel_id,
+            max_members: Some(max_members),
+        };
+        return selected_channel_initial_impl(args, state).map(SuccessSnapshot);
     }
 
     let caller = state.env.caller();

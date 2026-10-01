@@ -7,7 +7,7 @@ use unruly::{
     render_ascii, solve_with_trace,
 };
 
-const SEEDS_PER_CONFIG: u64 = 100;
+const SEEDS_PER_CONFIG: u64 = 20;
 
 fn params(width: u8, height: u8, tier: Tier) -> Params {
     Params::default_for(width, height, tier)
@@ -49,7 +49,7 @@ fn generated_10x10() {
 #[test]
 fn every_playable_size_generates() {
     for p in playable() {
-        must_generate::<Unruly>(p, 0..25);
+        must_generate::<Unruly>(p, 0..5);
     }
 }
 

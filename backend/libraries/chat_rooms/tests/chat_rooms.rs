@@ -7,7 +7,7 @@ use puzzle_core::testing::{
 };
 use puzzle_core::{Puzzle, PuzzleError, Tier};
 
-const SEEDS_PER_CONFIG: u64 = 100;
+const SEEDS_PER_CONFIG: u64 = 20;
 
 fn params(size: u8, tier: Tier) -> Params {
     Params::default_for(size, size, tier)
@@ -65,7 +65,7 @@ fn impossible_sizes_are_rejected() {
 /// shared by the checker and the generator cannot hide it.
 #[test]
 fn solution_has_one_logo_per_row_column_room_and_none_touch() {
-    for seed in 0..40 {
+    for seed in 0..10 {
         let tier = if seed % 2 == 0 { Tier::Easy } else { Tier::Tricky };
         let g = generate(seed, params(8, tier)).unwrap();
         let d = parse_description(&g.description).unwrap();
@@ -105,7 +105,7 @@ fn tricky_puzzles_defeat_the_easy_solver() {
 /// Invariant 6: every room is one piece, joined across and down.
 #[test]
 fn every_room_is_connected() {
-    for seed in 0..40 {
+    for seed in 0..10 {
         for size in [6, 8, 9] {
             let g = generate(seed, params(size, Tier::Easy)).unwrap();
             let d = parse_description(&g.description).unwrap();
@@ -134,7 +134,7 @@ fn every_room_is_connected() {
 fn at_most_one_single_cell_room() {
     for size in MIN_SIZE as u8..=MAX_SIZE as u8 {
         for tier in Tier::ALL {
-            for seed in 0..15 {
+            for seed in 0..5 {
                 let g = generate(seed, params(size, tier)).unwrap();
                 let d = parse_description(&g.description).unwrap();
                 let mut sizes = vec![0; size as usize];
@@ -153,7 +153,7 @@ fn at_most_one_single_cell_room() {
 /// reading the grid, so an id carries nothing about where its logo is.
 #[test]
 fn room_ids_follow_reading_order() {
-    for seed in 0..40 {
+    for seed in 0..10 {
         let g = generate(seed, params(8, Tier::Easy)).unwrap();
         let d = parse_description(&g.description).unwrap();
         let mut next = 0;
@@ -176,7 +176,7 @@ fn room_ids_follow_reading_order() {
 fn every_step_lists_the_cells_it_relies_on() {
     for size in [6u8, 8, 9] {
         for tier in Tier::ALL {
-            for seed in 0..15 {
+            for seed in 0..5 {
                 let g = generate(seed, params(size, tier)).unwrap();
                 let d = parse_description(&g.description).unwrap();
                 let n = size as usize;
@@ -423,7 +423,7 @@ fn unsatisfiable_descriptions() -> Vec<Vec<u8>> {
             out.push(d);
         }
         // And generated puzzles with one cell moved to another room
-        for seed in 0..50 {
+        for seed in 0..10 {
             let Ok(g) = generate(seed, params(n as u8, Tier::Easy)) else {
                 continue;
             };

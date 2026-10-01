@@ -12,7 +12,7 @@ fn selected_initial(args: Args) -> Response {
     }
 }
 
-fn selected_initial_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
+pub(crate) fn selected_initial_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
     let caller = state.env.caller();
     let data = &state.data;
     data.verify_is_accessible(caller, args.invite_code)?;
