@@ -25,7 +25,7 @@
         autoTranslateEnabled,
         languageName as cachedLanguageName,
         onDeviceTranslator,
-    } from "../../utils/onDeviceTranslation";
+    } from "../../utils/onDeviceTranslation.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import Avatar from "../Avatar.svelte";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
@@ -198,19 +198,15 @@
         }
     });
 
-    const autoTranslations = onDeviceTranslator.translations;
-    const autoTranslateTarget = onDeviceTranslator.targetLanguage;
-    const autoTranslateWaiting = onDeviceTranslator.waiting;
-    const autoTranslateNeedsDownload = onDeviceTranslator.needsDownload;
     // Set when this message's language pack needs a click to download
     let autoTranslatePending = $derived.by(() => {
-        if (!$autoTranslateOn || me) return undefined;
-        const from = $autoTranslateWaiting.get(msg.messageId);
-        return from !== undefined && $autoTranslateNeedsDownload.has(from) ? from : undefined;
+        if (!autoTranslateOn || me) return undefined;
+        const from = onDeviceTranslator.waiting.get(msg.messageId);
+        return from !== undefined && onDeviceTranslator.needsDownload.has(from) ? from : undefined;
     });
     let autoTranslateOn = $derived(autoTranslateEnabled(chatId));
     let autoTranslation = $derived(
-        $autoTranslateOn && !me ? $autoTranslations.get(msg.messageId) : undefined,
+        autoTranslateOn && !me ? onDeviceTranslator.translations.get(msg.messageId) : undefined,
     );
     let showOriginal = $state(false);
     let displayContent = $derived(
@@ -226,9 +222,9 @@
     // This component is only mounted while the message is inside the virtual list's rendered
     // window, so registering here (and cancelling on teardown) limits translation to that window.
     $effect(() => {
-        if (!$autoTranslateOn || me || inert || failed) return;
+        if (!autoTranslateOn || me || inert || failed) return;
         // re-register for a new target language
-        void $autoTranslateTarget;
+        void onDeviceTranslator.target;
         const text = client.getMessageText(msg.content);
         if (!text) return;
         const messageId = msg.messageId;

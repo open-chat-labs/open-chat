@@ -22,7 +22,6 @@
         type VideoCallType,
     } from "@client";
     import { getContext } from "svelte";
-    import { get } from "svelte/store";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -52,7 +51,7 @@
         autoTranslateEnabled,
         onDeviceTranslationSupported,
         setAutoTranslate,
-    } from "../../utils/onDeviceTranslation";
+    } from "../../utils/onDeviceTranslation.svelte";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall } from "../../stores/video";
     import HoverIcon from "../HoverIcon.svelte";
@@ -154,7 +153,7 @@
             publish("upgrade");
         } else {
             // read once on click rather than subscribing: the menu doesn't need to track events
-            const loadedTexts = get(eventsStore)
+            const loadedTexts = eventsStore.value
                 .flatMap((e) =>
                     e.event.kind === "message" && e.event.sender !== $currentUserIdStore
                         ? [client.getMessageText(e.event.content)]
@@ -162,7 +161,7 @@
                 )
                 .filter((t): t is string => !!t)
                 .reverse();
-            setAutoTranslate(selectedChatSummary.id, !$autoTranslating, loadedTexts);
+            setAutoTranslate(selectedChatSummary.id, !autoTranslating, loadedTexts);
         }
     }
 
@@ -466,7 +465,7 @@
                 {#if onDeviceTranslation}
                     <MenuItem onclick={toggleAutoTranslate}>
                         {#snippet icon()}
-                            {#if $autoTranslating}
+                            {#if autoTranslating}
                                 <TranslateOff size={$iconSize} color={"var(--icon-txt)"} />
                             {:else}
                                 <TranslateIcon size={$iconSize} color={"var(--icon-txt)"} />
@@ -475,7 +474,7 @@
                         {#snippet text()}
                             <Translatable
                                 resourceKey={i18nKey(
-                                    $autoTranslating ? "autoTranslate.turnOff" : "autoTranslate.turnOn",
+                                    autoTranslating ? "autoTranslate.turnOff" : "autoTranslate.turnOn",
                                 )} />
                         {/snippet}
                     </MenuItem>

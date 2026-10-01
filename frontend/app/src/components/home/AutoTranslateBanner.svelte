@@ -7,7 +7,7 @@
         languageName as cachedLanguageName,
         onDeviceTranslator,
         setAutoTranslate,
-    } from "../../utils/onDeviceTranslation";
+    } from "../../utils/onDeviceTranslation.svelte";
     import Link from "../Link.svelte";
     import Translatable from "../Translatable.svelte";
 
@@ -16,10 +16,6 @@
     }
 
     let { chatId }: Props = $props();
-
-    const downloads = onDeviceTranslator.downloads;
-    const needsDownload = onDeviceTranslator.needsDownload;
-    const error = onDeviceTranslator.error;
 
     let enabled = $derived(autoTranslateEnabled(chatId));
 
@@ -31,24 +27,29 @@
         return cachedLanguageName(code, $locale);
     }
 
-    const target = onDeviceTranslator.targetLanguage;
-    let targetLanguage = $derived(languageName($target));
+    let targetLanguage = $derived(languageName(onDeviceTranslator.target));
 
     // Report the slowest pack in flight
     let progress = $derived(
-        $downloads.size > 0 ? Math.round(Math.min(...$downloads.values()) * 100) : undefined,
+        onDeviceTranslator.downloads.size > 0
+            ? Math.round(Math.min(...onDeviceTranslator.downloads.values()) * 100)
+            : undefined,
     );
 
-    let missingLanguages = $derived([...$needsDownload].map(languageName).join(", "));
-    let downloadingLanguages = $derived([...$downloads.keys()].map(languageName).join(", "));
+    let missingLanguages = $derived(
+        [...onDeviceTranslator.needsDownload].map(languageName).join(", "),
+    );
+    let downloadingLanguages = $derived(
+        [...onDeviceTranslator.downloads.keys()].map(languageName).join(", "),
+    );
 </script>
 
-{#if $enabled}
-    <div class="auto-translate-banner" class:error={$error !== undefined}>
+{#if enabled}
+    <div class="auto-translate-banner" class:error={onDeviceTranslator.error !== undefined}>
         <span class="status">
-            {#if $error !== undefined}
+            {#if onDeviceTranslator.error !== undefined}
                 <Translatable resourceKey={i18nKey("autoTranslate.failed")} />
-            {:else if $needsDownload.size > 0}
+            {:else if onDeviceTranslator.needsDownload.size > 0}
                 <Link underline={"hover"} onClick={() => onDeviceTranslator.prime()}>
                     <Translatable
                         resourceKey={i18nKey("autoTranslate.downloadPacks", {

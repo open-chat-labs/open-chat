@@ -1,5 +1,6 @@
-import { describe, expect, test } from "vitest";
-import { protect, restore, toBcp47 } from "./onDeviceTranslation";
+import { flushSync } from "svelte";
+import { describe, expect, test, vi } from "vitest";
+import { onDeviceTranslator, protect, restore, toBcp47 } from "./onDeviceTranslation.svelte";
 
 describe("onDeviceTranslation", () => {
     test("maps our locale codes to BCP 47", () => {
@@ -36,5 +37,31 @@ describe("onDeviceTranslation", () => {
         const p = protect("[1] Salut @UserId(a) voir https://oc.app")!;
         expect(p.text).toEqual("[1] Salut {0} voir {1}");
         expect(restore("[1] Hi {0} see {1}", p)).toEqual("[1] Hi @UserId(a) see https://oc.app");
+    });
+
+    // Invariant: a message's enqueue effect doesn't depend on translator state, so translating
+    // one message doesn't re-run (cancel and re-enqueue) the effect of every other rendered message
+    test("translating one message does not re-run another message's enqueue effect", () => {
+        vi.useFakeTimers();
+        let runs = 0;
+        const cleanup = $effect.root(() => {
+            $effect(() => {
+                runs++;
+                onDeviceTranslator.enqueue(1n, 1, "bonjour tout le monde");
+                return () => onDeviceTranslator.cancel(1n);
+            });
+        });
+        try {
+            flushSync();
+            onDeviceTranslator.translations.set(2n, { source: "hola", text: "hello", from: "es" });
+            onDeviceTranslator.waiting.set(3n, "de");
+            flushSync();
+            expect(runs).toEqual(1);
+        } finally {
+            cleanup();
+            onDeviceTranslator.translations.clear();
+            onDeviceTranslator.waiting.clear();
+            vi.useRealTimers();
+        }
     });
 });

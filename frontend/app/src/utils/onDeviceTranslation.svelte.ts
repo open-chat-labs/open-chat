@@ -1,5 +1,6 @@
 import { type ChatIdentifier, chatIdentifierToString } from "@client";
-import { derived, get, writable, type Readable } from "svelte/store";
+import { untrack } from "svelte";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 // Whole-chat translation using the browser's built-in Translator and LanguageDetector APIs
 // (desktop Chrome / Edge). Everything runs on the device: no message text leaves the browser.
@@ -128,8 +129,11 @@ function isNotAllowed(err: unknown): boolean {
     return err instanceof DOMException && err.name === "NotAllowedError";
 }
 
+// enqueue, cancel and setTarget are called from component effects, so they read reactive state
+// untracked: otherwise every message's effect would re-run whenever another message is translated.
 class OnDeviceChatTranslator {
-    #target = "en";
+    #target = $state("en");
+    #error = $state<string | undefined>(undefined);
     #detector: Promise<BrowserLanguageDetector> | undefined;
     #translators = new Map<string, BrowserTranslator>();
     #creating = new Map<string, Promise<void>>();
@@ -145,32 +149,33 @@ class OnDeviceChatTranslator {
 
     // messageId -> translation. Separate from translationsStore so that writes don't
     // re-run the whole event merge, and so the original stays visible above the translation.
-    readonly translations = writable(new Map<bigint, AutoTranslation>());
+    readonly translations = new SvelteMap<bigint, AutoTranslation>();
     // Language packs being downloaded, source language -> progress (0..1)
-    readonly downloads = writable(new Map<string, number>());
+    readonly downloads = new SvelteMap<string, number>();
     // Source languages whose packs need downloading but we had no user gesture to start them
-    readonly needsDownload = writable(new Set<string>());
+    readonly needsDownload = new SvelteSet<string>();
     // messageId -> detected source language, for messages waiting on a language pack
-    readonly waiting = writable(new Map<bigint, string>());
-    readonly error = writable<string | undefined>(undefined);
-    readonly targetLanguage = writable("en");
+    readonly waiting = new SvelteMap<bigint, string>();
 
     setTarget(locale: string | null | undefined) {
         const target = toBcp47(locale);
-        if (target === this.#target) return;
+        if (target === untrack(() => this.#target)) return;
+        // Rendered messages depend on this, so they re-register for the new language
         this.#target = target;
         this.#queue.clear();
         this.#clearResults();
-        // Rendered messages depend on this, so they re-register for the new language
-        this.targetLanguage.set(target);
     }
 
     get target() {
         return this.#target;
     }
 
+    get error() {
+        return this.#error;
+    }
+
     enqueue(messageId: bigint, messageIndex: number, text: string) {
-        const existing = get(this.translations).get(messageId);
+        const existing = untrack(() => this.translations.get(messageId));
         if (existing?.source === text) return;
         if (this.#skipped.get(messageId) === text) return;
         this.#queue.set(messageId, { messageId, messageIndex, text });
@@ -182,35 +187,7 @@ class OnDeviceChatTranslator {
         for (const jobs of this.#parked.values()) {
             jobs.delete(messageId);
         }
-        // Leaving a chat unmounts every message at once, so batch these rather than copying
-        // the map and notifying every subscriber once per message
-        if (get(this.waiting).has(messageId)) {
-            this.#cancelled.push(messageId);
-            if (this.#cancelled.length === 1) {
-                queueMicrotask(() => {
-                    const ids = this.#cancelled;
-                    this.#cancelled = [];
-                    this.#setWaiting(ids, undefined);
-                });
-            }
-        }
-    }
-
-    #cancelled: bigint[] = [];
-
-    #setWaiting(messageIds: bigint[], source: string | undefined) {
-        if (messageIds.length === 0) return;
-        this.waiting.update((map) => {
-            const next = new Map(map);
-            for (const id of messageIds) {
-                if (source === undefined) {
-                    next.delete(id);
-                } else {
-                    next.set(id, source);
-                }
-            }
-            return next;
-        });
+        this.waiting.delete(messageId);
     }
 
     #clearResults() {
@@ -218,23 +195,23 @@ class OnDeviceChatTranslator {
         this.#pendingResults.clear();
         this.#unsupportedSources.clear();
         this.#parked.clear();
-        this.waiting.set(new Map());
+        this.waiting.clear();
         this.#creating.clear();
         for (const t of this.#translators.values()) {
             t.destroy();
         }
         this.#translators.clear();
-        this.translations.set(new Map());
-        this.downloads.set(new Map());
-        this.needsDownload.set(new Set());
-        this.error.set(undefined);
+        this.translations.clear();
+        this.downloads.clear();
+        this.needsDownload.clear();
+        this.#error = undefined;
         this.#failed = false;
     }
 
     // Call from a click handler: creating a detector or translator whose model still has to
     // download requires transient user activation. Starts every language pack we know we need.
     prime() {
-        for (const source of get(this.needsDownload)) {
+        for (const source of [...this.needsDownload]) {
             this.#startTranslator(source);
         }
         this.#kick();
@@ -278,7 +255,7 @@ class OnDeviceChatTranslator {
             if (!isNotAllowed(err)) {
                 console.warn("On-device language detection failed: ", err);
                 this.#failed = true;
-                this.error.set(String(err));
+                this.#error = String(err);
             }
         });
         this.#detector = p;
@@ -286,28 +263,19 @@ class OnDeviceChatTranslator {
     }
 
     #setProgress(source: string, progress: number | undefined) {
-        this.downloads.update((map) => {
-            const next = new Map(map);
-            if (progress === undefined || progress >= 1) {
-                next.delete(source);
-            } else {
-                next.set(source, progress);
-            }
-            return next;
-        });
+        if (progress === undefined || progress >= 1) {
+            this.downloads.delete(source);
+        } else {
+            this.downloads.set(source, progress);
+        }
     }
 
     #setNeedsDownload(source: string, needed: boolean) {
-        this.needsDownload.update((set) => {
-            if (set.has(source) === needed) return set;
-            const next = new Set(set);
-            if (needed) {
-                next.add(source);
-            } else {
-                next.delete(source);
-            }
-            return next;
-        });
+        if (needed) {
+            this.needsDownload.add(source);
+        } else {
+            this.needsDownload.delete(source);
+        }
     }
 
     // Starts creating (and, if necessary, downloading) the translator for a source language
@@ -360,8 +328,8 @@ class OnDeviceChatTranslator {
         const jobs = this.#parked.get(source);
         this.#parked.delete(source);
         if (jobs === undefined) return;
-        this.#setWaiting([...jobs.keys()], undefined);
         for (const job of jobs.values()) {
+            this.waiting.delete(job.messageId);
             this.#queue.set(job.messageId, job);
         }
         this.#kick();
@@ -370,7 +338,9 @@ class OnDeviceChatTranslator {
     #dropParked(source: string) {
         const jobs = this.#parked.get(source);
         this.#parked.delete(source);
-        if (jobs !== undefined) this.#setWaiting([...jobs.keys()], undefined);
+        for (const id of jobs?.keys() ?? []) {
+            this.waiting.delete(id);
+        }
     }
 
     #park(job: DetectedJob) {
@@ -380,7 +350,7 @@ class OnDeviceChatTranslator {
             this.#parked.set(job.from, jobs);
         }
         jobs.set(job.messageId, job);
-        this.#setWaiting([job.messageId], job.from);
+        this.waiting.set(job.messageId, job.from);
     }
 
     #kickScheduled = false;
@@ -494,7 +464,7 @@ class OnDeviceChatTranslator {
 
     async #ensureTranslator(source: string) {
         if (this.#translators.has(source) || this.#creating.has(source)) return;
-        if (get(this.needsDownload).has(source)) return;
+        if (this.needsDownload.has(source)) return;
         const a = apis();
         if (a === undefined) return;
         let availability: Availability;
@@ -518,7 +488,7 @@ class OnDeviceChatTranslator {
         }
     }
 
-    // Batch store writes so a screenful of results re-renders once, not once per message
+    // Batch writes so a screenful of results re-renders once, not once per message
     #scheduleFlush() {
         if (this.#flushScheduled) return;
         this.#flushScheduled = true;
@@ -526,11 +496,7 @@ class OnDeviceChatTranslator {
             this.#flushScheduled = false;
             const pending = this.#pendingResults;
             this.#pendingResults = new Map();
-            this.translations.update((map) => {
-                const next = new Map(map);
-                pending.forEach((v, k) => next.set(k, v));
-                return next;
-            });
+            pending.forEach((v, k) => this.translations.set(k, v));
         }, 100);
     }
 }
@@ -570,19 +536,10 @@ function loadChats(): Set<string> {
     }
 }
 
-const autoTranslateChats = writable<Set<string>>(loadChats());
+const autoTranslateChats = new SvelteSet<string>(loadChats());
 
-autoTranslateChats.subscribe((chats) => {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify([...chats]));
-    } catch {
-        // storage unavailable; the toggle just won't be remembered
-    }
-});
-
-export function autoTranslateEnabled(chatId: ChatIdentifier): Readable<boolean> {
-    const key = chatIdentifierToString(chatId);
-    return derived(autoTranslateChats, (chats) => chats.has(key));
+export function autoTranslateEnabled(chatId: ChatIdentifier): boolean {
+    return autoTranslateChats.has(chatIdentifierToString(chatId));
 }
 
 // Call from a click handler. `loadedTexts` are the chat's already loaded messages, newest first.
@@ -592,15 +549,16 @@ export function setAutoTranslate(
     loadedTexts: string[] = [],
 ) {
     const key = chatIdentifierToString(chatId);
-    autoTranslateChats.update((chats) => {
-        const next = new Set(chats);
-        if (enabled) {
-            next.add(key);
-        } else {
-            next.delete(key);
-        }
-        return next;
-    });
+    if (enabled) {
+        autoTranslateChats.add(key);
+    } else {
+        autoTranslateChats.delete(key);
+    }
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([...autoTranslateChats]));
+    } catch {
+        // storage unavailable; the toggle just won't be remembered
+    }
     if (enabled) {
         onDeviceTranslator.prime();
         void onDeviceTranslator.preload(loadedTexts);
