@@ -21,7 +21,11 @@
     import { isTouchOnlyDevice } from "../../utils/devices";
     import { reservedMediaWidth } from "../../utils/media";
     import { canShareMessage } from "../../utils/share";
-    import { autoTranslateEnabled, onDeviceTranslator } from "../../utils/onDeviceTranslation";
+    import {
+        autoTranslateEnabled,
+        languageName as cachedLanguageName,
+        onDeviceTranslator,
+    } from "../../utils/onDeviceTranslation";
     import { removeQueryStringParam } from "../../utils/urls";
     import Avatar from "../Avatar.svelte";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
@@ -216,13 +220,7 @@
     );
 
     function languageName(code: string): string {
-        try {
-            return (
-                new Intl.DisplayNames([$locale ?? "en"], { type: "language" }).of(code) ?? code
-            );
-        } catch {
-            return code;
-        }
+        return cachedLanguageName(code, $locale);
     }
 
     // This component is only mounted while the message is inside the virtual list's rendered

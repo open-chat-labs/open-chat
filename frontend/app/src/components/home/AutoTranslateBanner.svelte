@@ -4,6 +4,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import {
         autoTranslateEnabled,
+        languageName as cachedLanguageName,
         onDeviceTranslator,
         setAutoTranslate,
     } from "../../utils/onDeviceTranslation";
@@ -27,13 +28,7 @@
     });
 
     function languageName(code: string): string {
-        try {
-            return (
-                new Intl.DisplayNames([$locale ?? "en"], { type: "language" }).of(code) ?? code
-            );
-        } catch {
-            return code;
-        }
+        return cachedLanguageName(code, $locale);
     }
 
     const target = onDeviceTranslator.targetLanguage;

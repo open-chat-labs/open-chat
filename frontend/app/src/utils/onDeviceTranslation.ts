@@ -182,10 +182,24 @@ class OnDeviceChatTranslator {
         for (const jobs of this.#parked.values()) {
             jobs.delete(messageId);
         }
-        this.#setWaiting([messageId], undefined);
+        // Leaving a chat unmounts every message at once, so batch these rather than copying
+        // the map and notifying every subscriber once per message
+        if (get(this.waiting).has(messageId)) {
+            this.#cancelled.push(messageId);
+            if (this.#cancelled.length === 1) {
+                queueMicrotask(() => {
+                    const ids = this.#cancelled;
+                    this.#cancelled = [];
+                    this.#setWaiting(ids, undefined);
+                });
+            }
+        }
     }
 
+    #cancelled: bigint[] = [];
+
     #setWaiting(messageIds: bigint[], source: string | undefined) {
+        if (messageIds.length === 0) return;
         this.waiting.update((map) => {
             const next = new Map(map);
             for (const id of messageIds) {
@@ -590,5 +604,24 @@ export function setAutoTranslate(
     if (enabled) {
         onDeviceTranslator.prime();
         void onDeviceTranslator.preload(loadedTexts);
+    }
+}
+
+// Intl.DisplayNames is expensive to construct, so keep one per UI locale
+const displayNames = new Map<string, Intl.DisplayNames | undefined>();
+
+export function languageName(code: string, uiLocale: string | null | undefined): string {
+    const key = uiLocale ?? "en";
+    if (!displayNames.has(key)) {
+        try {
+            displayNames.set(key, new Intl.DisplayNames([key], { type: "language" }));
+        } catch {
+            displayNames.set(key, undefined);
+        }
+    }
+    try {
+        return displayNames.get(key)?.of(code) ?? code;
+    } catch {
+        return code;
     }
 }
