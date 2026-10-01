@@ -22,6 +22,7 @@
         type VideoCallType,
     } from "@client";
     import { getContext } from "svelte";
+    import { get } from "svelte/store";
     import { _ } from "svelte-i18n";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -152,7 +153,8 @@
         if (!$isDiamondStore) {
             publish("upgrade");
         } else {
-            const loadedTexts = $eventsStore
+            // read once on click rather than subscribing: the menu doesn't need to track events
+            const loadedTexts = get(eventsStore)
                 .flatMap((e) =>
                     e.event.kind === "message" && e.event.sender !== $currentUserIdStore
                         ? [client.getMessageText(e.event.content)]

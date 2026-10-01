@@ -228,8 +228,9 @@
     // This component is only mounted while the message is inside the virtual list's rendered
     // window, so registering here (and cancelling on teardown) limits translation to that window.
     $effect(() => {
-        void $autoTranslateTarget;
         if (!$autoTranslateOn || me || inert || failed) return;
+        // re-register for a new target language
+        void $autoTranslateTarget;
         const text = client.getMessageText(msg.content);
         if (!text) return;
         const messageId = msg.messageId;
