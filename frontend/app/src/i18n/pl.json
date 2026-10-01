@@ -164,11 +164,15 @@
         "notAvailableTitle": "Treść niedostępna"
     },
     "autoTranslate": {
+        "downloadPacks": "Pobierz pakiety językowe: {languages}",
         "turnOn": "Tłumacz ten czat",
         "turnOff": "Przestań tłumaczyć ten czat",
         "active": "Tłumaczenie na {language} na tym urządzeniu",
-        "downloading": "Pobieranie pakietu językowego ({progress}%)",
+        "downloading": "Pobieranie pakietów językowych: {languages} ({progress}%)",
         "failed": "Tłumaczenie na urządzeniu jest teraz niedostępne",
+        "showOriginal": "Pokaż oryginał",
+        "showTranslation": "Pokaż tłumaczenie",
+        "translateFrom": "Przetłumacz z języka: {language}",
         "translatedFrom": "Przetłumaczono na tym urządzeniu z języka: {language}"
     },
     "nativeUpdate": {

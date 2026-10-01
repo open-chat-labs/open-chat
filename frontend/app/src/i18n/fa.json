@@ -164,11 +164,15 @@
         "notAvailableTitle": "محتوا در دسترس نیست"
     },
     "autoTranslate": {
+        "downloadPacks": "دانلود بسته‌های زبان: {languages}",
         "turnOn": "ترجمه این گفتگو",
         "turnOff": "توقف ترجمه این گفتگو",
         "active": "در حال ترجمه به {language} روی این دستگاه",
-        "downloading": "در حال دانلود بسته زبان ({progress}٪)",
+        "downloading": "در حال دانلود بسته‌های زبان: {languages} ({progress}٪)",
         "failed": "ترجمه روی دستگاه در حال حاضر در دسترس نیست",
+        "showOriginal": "نمایش متن اصلی",
+        "showTranslation": "نمایش ترجمه",
+        "translateFrom": "ترجمه از {language}",
         "translatedFrom": "ترجمه‌شده روی این دستگاه از {language}"
     },
     "nativeUpdate": {

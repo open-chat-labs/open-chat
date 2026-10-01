@@ -164,11 +164,15 @@
         "notAvailableTitle": "Nội dung không khả dụng"
     },
     "autoTranslate": {
+        "downloadPacks": "Tải gói ngôn ngữ: {languages}",
         "turnOn": "Dịch cuộc trò chuyện này",
         "turnOff": "Dừng dịch cuộc trò chuyện này",
         "active": "Đang dịch sang {language} trên thiết bị này",
-        "downloading": "Đang tải gói ngôn ngữ ({progress}%)",
+        "downloading": "Đang tải gói ngôn ngữ: {languages} ({progress}%)",
         "failed": "Hiện không thể dịch trên thiết bị",
+        "showOriginal": "Xem bản gốc",
+        "showTranslation": "Xem bản dịch",
+        "translateFrom": "Dịch từ {language}",
         "translatedFrom": "Đã dịch trên thiết bị này từ {language}"
     },
     "nativeUpdate": {

@@ -164,11 +164,15 @@
         "notAvailableTitle": "内容不可用"
     },
     "autoTranslate": {
+        "downloadPacks": "下载语言包：{languages}",
         "turnOn": "翻译此聊天",
         "turnOff": "停止翻译此聊天",
         "active": "正在此设备上翻译为{language}",
-        "downloading": "正在下载语言包（{progress}%）",
+        "downloading": "正在下载语言包：{languages}（{progress}%）",
         "failed": "设备端翻译当前不可用",
+        "showOriginal": "显示原文",
+        "showTranslation": "显示译文",
+        "translateFrom": "从{language}翻译",
         "translatedFrom": "已在此设备上从{language}翻译"
     },
     "nativeUpdate": {

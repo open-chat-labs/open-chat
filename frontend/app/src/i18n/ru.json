@@ -164,11 +164,15 @@
         "notAvailableTitle": "Контент недоступен"
     },
     "autoTranslate": {
+        "downloadPacks": "Загрузить языковые пакеты: {languages}",
         "turnOn": "Перевести этот чат",
         "turnOff": "Остановить перевод этого чата",
         "active": "Перевод на {language} на этом устройстве",
-        "downloading": "Загрузка языкового пакета ({progress}%)",
+        "downloading": "Загрузка языковых пакетов: {languages} ({progress}%)",
         "failed": "Перевод на устройстве сейчас недоступен",
+        "showOriginal": "Показать оригинал",
+        "showTranslation": "Показать перевод",
+        "translateFrom": "Перевести с языка: {language}",
         "translatedFrom": "Переведено на этом устройстве с языка: {language}"
     },
     "nativeUpdate": {

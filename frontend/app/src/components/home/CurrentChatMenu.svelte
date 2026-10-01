@@ -5,6 +5,7 @@
         type ChatSummary,
         currentUserIdStore,
         directChatBotsStore,
+        eventsStore,
         favouritesStore,
         type GroupChatSummary,
         iconSize,
@@ -151,7 +152,15 @@
         if (!$isDiamondStore) {
             publish("upgrade");
         } else {
-            setAutoTranslate(selectedChatSummary.id, !$autoTranslating);
+            const loadedTexts = $eventsStore
+                .flatMap((e) =>
+                    e.event.kind === "message" && e.event.sender !== $currentUserIdStore
+                        ? [client.getMessageText(e.event.content)]
+                        : [],
+                )
+                .filter((t): t is string => !!t)
+                .reverse();
+            setAutoTranslate(selectedChatSummary.id, !$autoTranslating, loadedTexts);
         }
     }
 

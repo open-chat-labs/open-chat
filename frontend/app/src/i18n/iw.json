@@ -164,11 +164,15 @@
         "notAvailableTitle": "התוכן אינו זמין"
     },
     "autoTranslate": {
+        "downloadPacks": "הורד חבילות שפה: {languages}",
         "turnOn": "תרגם את הצ'אט הזה",
         "turnOff": "הפסק לתרגם את הצ'אט הזה",
         "active": "מתרגם ל{language} במכשיר זה",
-        "downloading": "מוריד חבילת שפה ({progress}%)",
+        "downloading": "מוריד חבילות שפה: {languages} ({progress}%)",
         "failed": "תרגום במכשיר אינו זמין כרגע",
+        "showOriginal": "הצג מקור",
+        "showTranslation": "הצג תרגום",
+        "translateFrom": "תרגם מ{language}",
         "translatedFrom": "תורגם במכשיר זה מ{language}"
     },
     "nativeUpdate": {

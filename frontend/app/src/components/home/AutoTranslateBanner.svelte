@@ -16,7 +16,8 @@
 
     let { chatId }: Props = $props();
 
-    const download = onDeviceTranslator.download;
+    const downloads = onDeviceTranslator.downloads;
+    const needsDownload = onDeviceTranslator.needsDownload;
     const error = onDeviceTranslator.error;
 
     let enabled = $derived(autoTranslateEnabled(chatId));
@@ -25,21 +26,26 @@
         onDeviceTranslator.setTarget($locale);
     });
 
-    let targetLanguage = $derived.by(() => {
+    function languageName(code: string): string {
         try {
             return (
-                new Intl.DisplayNames([$locale ?? "en"], { type: "language" }).of(
-                    onDeviceTranslator.target,
-                ) ?? onDeviceTranslator.target
+                new Intl.DisplayNames([$locale ?? "en"], { type: "language" }).of(code) ?? code
             );
         } catch {
-            return onDeviceTranslator.target;
+            return code;
         }
-    });
+    }
 
+    const target = onDeviceTranslator.targetLanguage;
+    let targetLanguage = $derived(languageName($target));
+
+    // Report the slowest pack in flight
     let progress = $derived(
-        $download !== undefined ? Math.round($download.progress * 100) : undefined,
+        $downloads.size > 0 ? Math.round(Math.min(...$downloads.values()) * 100) : undefined,
     );
+
+    let missingLanguages = $derived([...$needsDownload].map(languageName).join(", "));
+    let downloadingLanguages = $derived([...$downloads.keys()].map(languageName).join(", "));
 </script>
 
 {#if $enabled}
@@ -47,8 +53,18 @@
         <span class="status">
             {#if $error !== undefined}
                 <Translatable resourceKey={i18nKey("autoTranslate.failed")} />
+            {:else if $needsDownload.size > 0}
+                <Link underline={"always"} onClick={() => onDeviceTranslator.prime()}>
+                    <Translatable
+                        resourceKey={i18nKey("autoTranslate.downloadPacks", {
+                            languages: missingLanguages,
+                        })} />
+                </Link>
             {:else if progress !== undefined}
-                <Translatable resourceKey={i18nKey("autoTranslate.downloading", { progress })} />
+                <Translatable resourceKey={i18nKey("autoTranslate.downloading", {
+                        languages: downloadingLanguages,
+                        progress,
+                    })} />
             {:else}
                 <Translatable
                     resourceKey={i18nKey("autoTranslate.active", { language: targetLanguage })} />

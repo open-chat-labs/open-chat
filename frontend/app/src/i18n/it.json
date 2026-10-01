@@ -164,11 +164,15 @@
         "notAvailableTitle": "Contenuto non disponibile"
     },
     "autoTranslate": {
+        "downloadPacks": "Scarica i pacchetti lingua: {languages}",
         "turnOn": "Traduci questa chat",
         "turnOff": "Interrompi la traduzione di questa chat",
         "active": "Traduzione in {language} su questo dispositivo",
-        "downloading": "Download del pacchetto lingua ({progress}%)",
+        "downloading": "Download dei pacchetti lingua: {languages} ({progress}%)",
         "failed": "La traduzione sul dispositivo non è disponibile al momento",
+        "showOriginal": "Mostra originale",
+        "showTranslation": "Mostra traduzione",
+        "translateFrom": "Traduci da: {language}",
         "translatedFrom": "Tradotto su questo dispositivo da: {language}"
     },
     "nativeUpdate": {

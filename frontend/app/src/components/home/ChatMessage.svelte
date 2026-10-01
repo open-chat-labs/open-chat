@@ -7,7 +7,6 @@
     import { AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { _, locale } from "svelte-i18n";
-    import Markdown from "@shared_components/Markdown.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import EmoticonOutline from "svelte-material-icons/EmoticonOutline.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
@@ -197,22 +196,34 @@
 
     const autoTranslations = onDeviceTranslator.translations;
     const autoTranslateTarget = onDeviceTranslator.targetLanguage;
+    const autoTranslateWaiting = onDeviceTranslator.waiting;
+    const autoTranslateNeedsDownload = onDeviceTranslator.needsDownload;
+    // Set when this message's language pack needs a click to download
+    let autoTranslatePending = $derived.by(() => {
+        if (!$autoTranslateOn || me) return undefined;
+        const from = $autoTranslateWaiting.get(msg.messageId);
+        return from !== undefined && $autoTranslateNeedsDownload.has(from) ? from : undefined;
+    });
     let autoTranslateOn = $derived(autoTranslateEnabled(chatId));
     let autoTranslation = $derived(
         $autoTranslateOn && !me ? $autoTranslations.get(msg.messageId) : undefined,
     );
-    let autoTranslatedFrom = $derived.by(() => {
-        if (autoTranslation === undefined) return "";
+    let showOriginal = $state(false);
+    let displayContent = $derived(
+        autoTranslation !== undefined && !showOriginal
+            ? client.applyTranslation(msg.content, autoTranslation.text)
+            : msg.content,
+    );
+
+    function languageName(code: string): string {
         try {
             return (
-                new Intl.DisplayNames([$locale ?? "en"], { type: "language" }).of(
-                    autoTranslation.from,
-                ) ?? autoTranslation.from
+                new Intl.DisplayNames([$locale ?? "en"], { type: "language" }).of(code) ?? code
             );
         } catch {
-            return autoTranslation.from;
+            return code;
         }
-    });
+    }
 
     // This component is only mounted while the message is inside the virtual list's rendered
     // window, so registering here (and cancelling on teardown) limits translation to that window.
@@ -653,7 +664,7 @@
                                 {timestamp}
                                 messageIndex={msg.messageIndex}
                                 messageId={msg.messageId}
-                                content={msg.content}
+                                content={displayContent}
                                 {edited}
                                 blockLevelMarkdown={msg.blockLevelMarkdown}
                                 {onRemovePreview}
@@ -664,15 +675,32 @@
 
                             {#if autoTranslation !== undefined && !inert}
                                 <div class="auto-translation">
-                                    <Markdown
-                                        inline={!msg.blockLevelMarkdown}
-                                        text={autoTranslation.text} />
-                                    <div class="auto-translation-label">
+                                    <Translatable
+                                        resourceKey={i18nKey("autoTranslate.translatedFrom", {
+                                            language: languageName(autoTranslation.from),
+                                        })} />
+                                    ·
+                                    <Link
+                                        underline={"hover"}
+                                        onClick={() => (showOriginal = !showOriginal)}>
                                         <Translatable
-                                            resourceKey={i18nKey("autoTranslate.translatedFrom", {
-                                                language: autoTranslatedFrom,
+                                            resourceKey={i18nKey(
+                                                showOriginal
+                                                    ? "autoTranslate.showTranslation"
+                                                    : "autoTranslate.showOriginal",
+                                            )} />
+                                    </Link>
+                                </div>
+                            {:else if autoTranslatePending !== undefined && !inert}
+                                <div class="auto-translation">
+                                    <Link
+                                        underline={"always"}
+                                        onClick={() => onDeviceTranslator.prime()}>
+                                        <Translatable
+                                            resourceKey={i18nKey("autoTranslate.translateFrom", {
+                                                language: languageName(autoTranslatePending),
                                             })} />
-                                    </div>
+                                    </Link>
                                 </div>
                             {/if}
 
@@ -823,16 +851,9 @@
 
 <style lang="scss">
     .auto-translation {
-        margin-top: $sp2;
-        padding-top: $sp2;
-        border-top: 1px solid var(--bd);
-        word-wrap: break-word;
-
-        .auto-translation-label {
-            @include font(light, normal, fs-60);
-            margin-top: $sp1;
-            opacity: 0.7;
-        }
+        @include font(light, normal, fs-60);
+        margin-top: $sp1;
+        opacity: 0.7;
     }
 
     $size: 10px;

@@ -112,20 +112,32 @@ function letterCount(text: string): number {
     return (text.match(/\p{L}/gu) ?? []).length;
 }
 
-export type DownloadState = { language: string; progress: number } | undefined;
-
 type Job = { messageId: bigint; messageIndex: number; text: string };
 
 export type AutoTranslation = { source: string; text: string; from: string };
 
+type DetectedJob = Job & { from: string; prot: Protected };
+
+function hasUserActivation(): boolean {
+    return (
+        (navigator as { userActivation?: { isActive: boolean } }).userActivation?.isActive ?? false
+    );
+}
+
+function isNotAllowed(err: unknown): boolean {
+    return err instanceof DOMException && err.name === "NotAllowedError";
+}
+
 class OnDeviceChatTranslator {
     #target = "en";
     #detector: Promise<BrowserLanguageDetector> | undefined;
-    #translators = new Map<string, Promise<BrowserTranslator | undefined>>();
+    #translators = new Map<string, BrowserTranslator>();
+    #creating = new Map<string, Promise<void>>();
     #unsupportedSources = new Set<string>();
     #queue = new Map<bigint, Job>();
+    // Detected jobs waiting on a language pack, keyed by source language
+    #parked = new Map<string, Map<bigint, DetectedJob>>();
     #running = false;
-    #awaitingActivation = false;
     #pendingResults = new Map<bigint, AutoTranslation>();
     #flushScheduled = false;
     #skipped = new Map<bigint, string>();
@@ -134,7 +146,12 @@ class OnDeviceChatTranslator {
     // messageId -> translation. Separate from translationsStore so that writes don't
     // re-run the whole event merge, and so the original stays visible above the translation.
     readonly translations = writable(new Map<bigint, AutoTranslation>());
-    readonly download = writable<DownloadState>(undefined);
+    // Language packs being downloaded, source language -> progress (0..1)
+    readonly downloads = writable(new Map<string, number>());
+    // Source languages whose packs need downloading but we had no user gesture to start them
+    readonly needsDownload = writable(new Set<string>());
+    // messageId -> detected source language, for messages waiting on a language pack
+    readonly waiting = writable(new Map<bigint, string>());
     readonly error = writable<string | undefined>(undefined);
     readonly targetLanguage = writable("en");
 
@@ -162,108 +179,216 @@ class OnDeviceChatTranslator {
 
     cancel(messageId: bigint) {
         this.#queue.delete(messageId);
+        for (const jobs of this.#parked.values()) {
+            jobs.delete(messageId);
+        }
+        this.#setWaiting([messageId], undefined);
+    }
+
+    #setWaiting(messageIds: bigint[], source: string | undefined) {
+        this.waiting.update((map) => {
+            const next = new Map(map);
+            for (const id of messageIds) {
+                if (source === undefined) {
+                    next.delete(id);
+                } else {
+                    next.set(id, source);
+                }
+            }
+            return next;
+        });
     }
 
     #clearResults() {
         this.#skipped.clear();
         this.#pendingResults.clear();
         this.#unsupportedSources.clear();
+        this.#parked.clear();
+        this.waiting.set(new Map());
+        this.#creating.clear();
         for (const t of this.#translators.values()) {
-            t.then((tr) => tr?.destroy()).catch(() => undefined);
+            t.destroy();
         }
         this.#translators.clear();
         this.translations.set(new Map());
-        this.download.set(undefined);
+        this.downloads.set(new Map());
+        this.needsDownload.set(new Set());
         this.error.set(undefined);
         this.#failed = false;
     }
 
-    // Call from a click handler where possible: creating a detector or translator whose model
-    // still has to download requires transient user activation.
+    // Call from a click handler: creating a detector or translator whose model still has to
+    // download requires transient user activation. Starts every language pack we know we need.
     prime() {
+        for (const source of get(this.needsDownload)) {
+            this.#startTranslator(source);
+        }
         this.#kick();
+    }
+
+    // Detects the language of every message already loaded (not just the rendered ones) and starts
+    // downloading any missing language packs while the user's click still counts as activation,
+    // so languages further up the chat are usually ready by the time they scroll into view.
+    async preload(texts: string[]) {
+        if (this.#detector === undefined) this.#createDetector();
+        let detector: BrowserLanguageDetector;
+        try {
+            detector = await this.#detector!;
+        } catch {
+            return;
+        }
+        const seen = new Set<string>();
+        for (const text of texts) {
+            if (!hasUserActivation()) return;
+            const prot = protect(text);
+            if (prot === undefined || letterCount(prot.text) < MIN_LETTERS) continue;
+            try {
+                const [top] = await detector.detect(prot.text);
+                if (top === undefined || top.confidence < MIN_CONFIDENCE) continue;
+                const from = top.detectedLanguage;
+                if (from === "und" || toBcp47(from) === this.#target || seen.has(from)) continue;
+                seen.add(from);
+                await this.#ensureTranslator(from);
+            } catch {
+                // best effort
+            }
+        }
     }
 
     #createDetector(): Promise<BrowserLanguageDetector> {
         const a = apis();
         if (a === undefined) return Promise.reject(new Error("LanguageDetector not supported"));
-        const p = a.LanguageDetector.create({
-            monitor: (m) =>
-                m.addEventListener("downloadprogress", (e) =>
-                    this.download.set(
-                        e.loaded < 1 ? { language: "*", progress: e.loaded } : undefined,
-                    ),
-                ),
-        });
+        const p = a.LanguageDetector.create();
         p.catch((err) => {
             this.#detector = undefined;
-            this.#handleCreateError(err);
+            if (!isNotAllowed(err)) {
+                console.warn("On-device language detection failed: ", err);
+                this.#failed = true;
+                this.error.set(String(err));
+            }
         });
         this.#detector = p;
         return p;
     }
 
-    #translator(source: string): Promise<BrowserTranslator | undefined> {
-        let p = this.#translators.get(source);
-        if (p !== undefined) return p;
-        const a = apis();
-        if (a === undefined) return Promise.resolve(undefined);
-        const target = this.#target;
-        p = a.Translator.availability({ sourceLanguage: source, targetLanguage: target })
-            .then((availability) => {
-                if (availability === "unavailable") {
-                    this.#unsupportedSources.add(source);
-                    return undefined;
-                }
-                return a.Translator.create({
-                    sourceLanguage: source,
-                    targetLanguage: target,
-                    monitor: (m) =>
-                        m.addEventListener("downloadprogress", (e) =>
-                            this.download.set(
-                                e.loaded < 1 ? { language: source, progress: e.loaded } : undefined,
-                            ),
-                        ),
-                });
-            })
-            .catch((err) => {
-                this.#translators.delete(source);
-                if (err instanceof DOMException && err.name === "NotAllowedError") throw err;
-                console.warn(`On-device translation from ${source} failed: `, err);
-                this.#unsupportedSources.add(source);
-                return undefined;
-            });
-        this.#translators.set(source, p);
-        return p;
+    #setProgress(source: string, progress: number | undefined) {
+        this.downloads.update((map) => {
+            const next = new Map(map);
+            if (progress === undefined || progress >= 1) {
+                next.delete(source);
+            } else {
+                next.set(source, progress);
+            }
+            return next;
+        });
     }
 
-    #handleCreateError(err: unknown) {
-        if (err instanceof DOMException && err.name === "NotAllowedError") {
-            // A model needs downloading and we no longer have user activation. Wait for the
-            // next interaction rather than failing.
-            this.#awaitActivation();
+    #setNeedsDownload(source: string, needed: boolean) {
+        this.needsDownload.update((set) => {
+            if (set.has(source) === needed) return set;
+            const next = new Set(set);
+            if (needed) {
+                next.add(source);
+            } else {
+                next.delete(source);
+            }
+            return next;
+        });
+    }
+
+    // Starts creating (and, if necessary, downloading) the translator for a source language
+    // without blocking the queue. Parked jobs for that language are released when it's ready.
+    #startTranslator(source: string, downloading = true) {
+        if (this.#translators.has(source) || this.#creating.has(source)) return;
+        const a = apis();
+        if (a === undefined) return;
+        const target = this.#target;
+        this.#setNeedsDownload(source, false);
+        const p = a.Translator.create({
+            sourceLanguage: source,
+            targetLanguage: target,
+            // Chrome fires progress events even for packs already on disk, so only report
+            // progress when we know a download is actually happening
+            monitor: downloading
+                ? (m) =>
+                      m.addEventListener("downloadprogress", (e) =>
+                          this.#setProgress(source, e.loaded),
+                      )
+                : undefined,
+        })
+            .then((translator) => {
+                if (target !== this.#target) {
+                    translator.destroy();
+                    return;
+                }
+                this.#translators.set(source, translator);
+                this.#release(source);
+            })
+            .catch((err) => {
+                if (target !== this.#target) return;
+                if (isNotAllowed(err)) {
+                    // The gesture expired before we got here; offer a button instead
+                    this.#setNeedsDownload(source, true);
+                } else {
+                    console.warn(`On-device translation from ${source} failed: `, err);
+                    this.#unsupportedSources.add(source);
+                    this.#dropParked(source);
+                }
+            })
+            .finally(() => {
+                this.#creating.delete(source);
+                this.#setProgress(source, undefined);
+            });
+        this.#creating.set(source, p);
+    }
+
+    #release(source: string) {
+        const jobs = this.#parked.get(source);
+        this.#parked.delete(source);
+        if (jobs === undefined) return;
+        this.#setWaiting([...jobs.keys()], undefined);
+        for (const job of jobs.values()) {
+            this.#queue.set(job.messageId, job);
+        }
+        this.#kick();
+    }
+
+    #dropParked(source: string) {
+        const jobs = this.#parked.get(source);
+        this.#parked.delete(source);
+        if (jobs !== undefined) this.#setWaiting([...jobs.keys()], undefined);
+    }
+
+    #park(job: DetectedJob) {
+        let jobs = this.#parked.get(job.from);
+        if (jobs === undefined) {
+            jobs = new Map();
+            this.#parked.set(job.from, jobs);
+        }
+        jobs.set(job.messageId, job);
+        this.#setWaiting([job.messageId], job.from);
+    }
+
+    #kickScheduled = false;
+
+    // Never do translation work in the same task as rendering the chat: wait until the browser
+    // is idle so loading messages always comes first
+    #kick() {
+        if (this.#kickScheduled || this.#running || this.#failed) return;
+        this.#kickScheduled = true;
+        const run = () => {
+            this.#kickScheduled = false;
+            this.#run();
+        };
+        if ("requestIdleCallback" in window) {
+            requestIdleCallback(run, { timeout: 500 });
         } else {
-            console.warn("On-device translation failed: ", err);
-            this.#failed = true;
-            this.error.set(String(err));
+            setTimeout(run, 50);
         }
     }
 
-    #awaitActivation() {
-        if (this.#awaitingActivation) return;
-        this.#awaitingActivation = true;
-        const resume = () => {
-            window.removeEventListener("pointerdown", resume, true);
-            window.removeEventListener("keydown", resume, true);
-            this.#awaitingActivation = false;
-            this.prime();
-        };
-        window.addEventListener("pointerdown", resume, true);
-        window.addEventListener("keydown", resume, true);
-    }
-
-    #kick() {
-        if (this.#running || this.#awaitingActivation || this.#failed) return;
+    #run() {
+        if (this.#running || this.#failed) return;
         if (this.#detector === undefined) this.#createDetector();
         this.#running = true;
         this.#drain().finally(() => {
@@ -271,7 +396,7 @@ class OnDeviceChatTranslator {
         });
     }
 
-    #next(): Job | undefined {
+    #next(): Job | DetectedJob | undefined {
         // Newest first: the user is most likely looking at the bottom of the chat
         let best: Job | undefined;
         for (const job of this.#queue.values()) {
@@ -288,54 +413,95 @@ class OnDeviceChatTranslator {
         } catch {
             return;
         }
-        let job: Job | undefined;
-        while ((job = this.#next()) !== undefined && !this.#awaitingActivation) {
+        // Pass 1: detect every queued message and start any missing language packs straight
+        // away, in parallel, while the user's click still counts as activation.
+        const ready: DetectedJob[] = [];
+        let job: Job | DetectedJob | undefined;
+        while ((job = this.#next()) !== undefined) {
+            const detected = "from" in job ? job : await this.#detect(detector, job);
+            if (detected === undefined) continue;
+            if (this.#translators.has(detected.from)) {
+                ready.push(detected);
+            } else if (!this.#unsupportedSources.has(detected.from)) {
+                this.#park(detected);
+                await this.#ensureTranslator(detected.from);
+            }
+        }
+
+        // Pass 2: translate what we can, newest first
+        ready.sort((a, b) => b.messageIndex - a.messageIndex);
+        for (const d of ready) {
             const target = this.#target;
+            const translator = this.#translators.get(d.from);
+            if (translator === undefined) continue;
             try {
-                const result = await this.#translate(detector, job.text);
-                if (target !== this.#target) {
-                    this.#queue.set(job.messageId, job);
-                    continue;
-                }
-                if (result === undefined) {
-                    this.#skipped.set(job.messageId, job.text);
+                const translated = restore(await translator.translate(d.prot.text), d.prot);
+                if (target !== this.#target) continue;
+                if (translated === undefined) {
+                    this.#skipped.set(d.messageId, d.text);
                 } else {
-                    this.#pendingResults.set(job.messageId, { source: job.text, ...result });
+                    this.#pendingResults.set(d.messageId, {
+                        source: d.text,
+                        text: translated,
+                        from: d.from,
+                    });
                     this.#scheduleFlush();
                 }
             } catch (err) {
-                if (err instanceof DOMException && err.name === "NotAllowedError") {
-                    // Put it back and wait for the user to interact with the page
-                    this.#queue.set(job.messageId, job);
-                    this.#awaitActivation();
-                } else {
-                    console.warn("On-device translation of a message failed: ", err);
-                    this.#skipped.set(job.messageId, job.text);
-                }
+                console.warn("On-device translation of a message failed: ", err);
+                this.#skipped.set(d.messageId, d.text);
             }
+        }
+
+        // Anything that arrived while we were translating
+        if (this.#queue.size > 0) await this.#drain();
+    }
+
+    async #detect(detector: BrowserLanguageDetector, job: Job): Promise<DetectedJob | undefined> {
+        const skip = () => {
+            this.#skipped.set(job.messageId, job.text);
+            return undefined;
+        };
+        if (job.text.length > MAX_LENGTH) return skip();
+        const prot = protect(job.text);
+        if (prot === undefined || letterCount(prot.text) < MIN_LETTERS) return skip();
+        try {
+            const [top] = await detector.detect(prot.text);
+            if (top === undefined || top.confidence < MIN_CONFIDENCE) return skip();
+            const from = top.detectedLanguage;
+            if (from === "und" || toBcp47(from) === this.#target) return skip();
+            if (this.#unsupportedSources.has(from)) return skip();
+            return { ...job, from, prot };
+        } catch (err) {
+            console.warn("On-device language detection of a message failed: ", err);
+            return skip();
         }
     }
 
-    async #translate(
-        detector: BrowserLanguageDetector,
-        original: string,
-    ): Promise<{ text: string; from: string } | undefined> {
-        if (original.length > MAX_LENGTH) return undefined;
-        const prot = protect(original);
-        if (prot === undefined || letterCount(prot.text) < MIN_LETTERS) return undefined;
-        const text = prot.text;
-
-        const [top] = await detector.detect(text);
-        if (top === undefined || top.confidence < MIN_CONFIDENCE) return undefined;
-        const from = top.detectedLanguage;
-        if (from === "und" || toBcp47(from) === this.#target) return undefined;
-        if (this.#unsupportedSources.has(from)) return undefined;
-
-        const translator = await this.#translator(from);
-        if (translator === undefined) return undefined;
-
-        const translated = restore(await translator.translate(text), prot);
-        return translated === undefined ? undefined : { text: translated, from };
+    async #ensureTranslator(source: string) {
+        if (this.#translators.has(source) || this.#creating.has(source)) return;
+        if (get(this.needsDownload).has(source)) return;
+        const a = apis();
+        if (a === undefined) return;
+        let availability: Availability;
+        try {
+            availability = await a.Translator.availability({
+                sourceLanguage: source,
+                targetLanguage: this.#target,
+            });
+        } catch {
+            availability = "unavailable";
+        }
+        if (availability === "unavailable") {
+            this.#unsupportedSources.add(source);
+            this.#dropParked(source);
+        } else if (availability === "available") {
+            this.#startTranslator(source, false);
+        } else if (hasUserActivation()) {
+            this.#startTranslator(source);
+        } else {
+            this.#setNeedsDownload(source, true);
+        }
     }
 
     // Batch store writes so a screenful of results re-renders once, not once per message
@@ -405,7 +571,12 @@ export function autoTranslateEnabled(chatId: ChatIdentifier): Readable<boolean> 
     return derived(autoTranslateChats, (chats) => chats.has(key));
 }
 
-export function setAutoTranslate(chatId: ChatIdentifier, enabled: boolean) {
+// Call from a click handler. `loadedTexts` are the chat's already loaded messages, newest first.
+export function setAutoTranslate(
+    chatId: ChatIdentifier,
+    enabled: boolean,
+    loadedTexts: string[] = [],
+) {
     const key = chatIdentifierToString(chatId);
     autoTranslateChats.update((chats) => {
         const next = new Set(chats);
@@ -418,5 +589,6 @@ export function setAutoTranslate(chatId: ChatIdentifier, enabled: boolean) {
     });
     if (enabled) {
         onDeviceTranslator.prime();
+        void onDeviceTranslator.preload(loadedTexts);
     }
 }
