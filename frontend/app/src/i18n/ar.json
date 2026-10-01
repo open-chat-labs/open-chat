@@ -164,11 +164,11 @@
         "notAvailableTitle": "المحتوى غير متاح"
     },
     "autoTranslate": {
-        "downloadPacks": "تنزيل حزم اللغة: {languages}",
+        "downloadPacks": "تنزيل حزم اللغة ({count})",
         "turnOn": "ترجمة هذه الدردشة",
         "turnOff": "إيقاف ترجمة هذه الدردشة",
         "active": "جارٍ الترجمة إلى {language} على هذا الجهاز",
-        "downloading": "جارٍ تنزيل حزم اللغة: {languages} ({progress}%)",
+        "downloading": "جارٍ تنزيل {language} ({index} من {total})…",
         "failed": "الترجمة على الجهاز غير متاحة حاليًا",
         "showOriginal": "عرض الأصل",
         "showTranslation": "عرض الترجمة",

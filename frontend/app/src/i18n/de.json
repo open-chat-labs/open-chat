@@ -164,11 +164,11 @@
         "notAvailableTitle": "Inhalt nicht verfügbar"
     },
     "autoTranslate": {
-        "downloadPacks": "Sprachpakete herunterladen: {languages}",
+        "downloadPacks": "Sprachpakete herunterladen ({count})",
         "turnOn": "Diesen Chat übersetzen",
         "turnOff": "Übersetzung dieses Chats beenden",
         "active": "Übersetzung auf diesem Gerät ({language})",
-        "downloading": "Sprachpakete werden heruntergeladen: {languages} ({progress} %)",
+        "downloading": "{language} wird heruntergeladen ({index} von {total})…",
         "failed": "Übersetzung auf dem Gerät ist gerade nicht verfügbar",
         "showOriginal": "Original anzeigen",
         "showTranslation": "Übersetzung anzeigen",

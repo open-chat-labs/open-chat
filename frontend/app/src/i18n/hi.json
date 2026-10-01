@@ -164,11 +164,11 @@
         "notAvailableTitle": "सामग्री उपलब्ध नहीं"
     },
     "autoTranslate": {
-        "downloadPacks": "भाषा पैक डाउनलोड करें: {languages}",
+        "downloadPacks": "भाषा पैक डाउनलोड करें ({count})",
         "turnOn": "इस चैट का अनुवाद करें",
         "turnOff": "इस चैट का अनुवाद बंद करें",
         "active": "इस डिवाइस पर {language} में अनुवाद हो रहा है",
-        "downloading": "भाषा पैक डाउनलोड हो रहे हैं: {languages} ({progress}%)",
+        "downloading": "{language} डाउनलोड हो रहा है ({index}/{total})…",
         "failed": "डिवाइस पर अनुवाद अभी उपलब्ध नहीं है",
         "showOriginal": "मूल दिखाएँ",
         "showTranslation": "अनुवाद दिखाएँ",

@@ -25,6 +25,10 @@ class FakeBrowser {
     translateGate: Promise<void> | undefined;
     translated: { source: string; target: string; text: string }[] = [];
     created: string[] = [];
+    // Texts whose translation always fails
+    failing = new Set<string>();
+    attempts: string[] = [];
+    #live = new Set<{ dead: boolean }>();
     destroyed: string[] = [];
 
     install() {
@@ -59,9 +63,18 @@ class FakeBrowser {
                     throw new DOMException("needs a user gesture", "NotAllowedError");
                 }
                 this.availability.delete(sourceLanguage);
+                const instance = { dead: false };
+                this.#live.add(instance);
                 return {
                     translate: async (text: string) => {
                         await this.translateGate;
+                        this.attempts.push(text);
+                        if (instance.dead || this.failing.has(text)) {
+                            throw new DOMException(
+                                "Other generic failures occurred.",
+                                "UnknownError",
+                            );
+                        }
                         this.translated.push({
                             source: sourceLanguage,
                             target: targetLanguage,
@@ -77,6 +90,12 @@ class FakeBrowser {
             value: this.activation,
             configurable: true,
         });
+    }
+
+    // What installing another language pack does to translators Chrome has already handed out
+    killTranslators() {
+        for (const instance of this.#live) instance.dead = true;
+        this.#live.clear();
     }
 
     uninstall() {
@@ -97,6 +116,16 @@ async function settle() {
     for (let i = 0; i < 5; i++) {
         await vi.runAllTimersAsync();
     }
+}
+
+// Three messages, in French, German and Spanish, whose language packs all need downloading
+function enqueueThreeLanguages() {
+    ["fr", "de", "es"].forEach((lang, i) => {
+        browser.availability.set(lang, "downloadable");
+        const text = lang === "fr" ? FRENCH : `${lang} message text`;
+        browser.languages.set(text, { lang });
+        translator.enqueue(BigInt(i), i, text);
+    });
 }
 
 const chatId: ChatIdentifier = { kind: "group_chat", groupId: "abcde" };
@@ -325,12 +354,125 @@ describe("OnDeviceChatTranslator", () => {
     // Invariant: if the gesture expires before the download starts, the language is offered again
     test("offers the download again when the gesture expired", async () => {
         browser.availability.set("fr", "downloadable");
+        translator.enqueue(1n, 1, FRENCH);
+        await settle();
         browser.activation.isActive = true;
         browser.rejectCreate = "NotAllowedError";
-        translator.enqueue(1n, 1, FRENCH);
+        translator.prime();
         await settle();
         expect(translator.needsDownload.has("fr")).toBe(true);
         expect(translator.waiting.get(1n)).toEqual("fr");
+    });
+
+    // Invariant: one click starts at most one language pack download, because Chrome lets a user
+    // gesture start only one; the others stay offered rather than failing
+    test("one click downloads one language pack", async () => {
+        enqueueThreeLanguages();
+        await settle();
+        expect(translator.needsDownload.size).toEqual(3);
+
+        browser.activation.isActive = true;
+        translator.prime();
+        await settle();
+        expect(browser.created).toHaveLength(1);
+        expect(translator.needsDownload.size).toEqual(2);
+    });
+
+    // Invariant: a message's own "Translate from X" link downloads X, not some other language
+    test("priming a language downloads that language", async () => {
+        enqueueThreeLanguages();
+        await settle();
+        browser.activation.isActive = true;
+        translator.prime("de");
+        await settle();
+        expect(browser.created).toEqual(["de"]);
+    });
+
+    // Invariant: turning a chat on uses that click to start the first missing pack and offers the
+    // rest, instead of trying them all and having all but one fail
+    test("turning a chat on downloads one pack and offers the rest", async () => {
+        for (const lang of ["de", "es"]) {
+            browser.availability.set(lang, "downloadable");
+            browser.languages.set(`${lang} message text`, { lang });
+        }
+        browser.availability.set("fr", "downloadable");
+        browser.activation.isActive = true;
+        await translator.preload([FRENCH, "de message text", "es message text"]);
+        await settle();
+        expect(browser.created).toEqual(["fr"]);
+        expect([...translator.needsDownload].sort()).toEqual(["de", "es"]);
+    });
+
+    // Invariant: while a pack downloads, the banner can say which one and how far through the
+    // packs this chat needs it is
+    test("reports the pack being downloaded as n of total", async () => {
+        enqueueThreeLanguages();
+        await settle();
+        browser.activation.isActive = true;
+        const first = deferred();
+        browser.createGate = first.promise;
+        translator.prime();
+        await settle();
+        expect(translator.currentDownload).toMatchObject({ index: 1, total: 3 });
+
+        first.resolve();
+        await settle();
+        expect(translator.currentDownload).toBeUndefined();
+
+        const second = deferred();
+        browser.createGate = second.promise;
+        translator.prime();
+        await settle();
+        expect(translator.currentDownload).toMatchObject({ index: 2, total: 3 });
+        second.resolve();
+        await settle();
+    });
+
+    // Invariant: the total counts only packs for the current target language
+    test("a locale change resets the pack count", async () => {
+        enqueueThreeLanguages();
+        await settle();
+        translator.setTarget("de");
+        browser.availability.set("fr", "downloadable");
+        translator.enqueue(0n, 0, FRENCH);
+        await settle();
+        browser.activation.isActive = true;
+        const gate = deferred();
+        browser.createGate = gate.promise;
+        translator.prime();
+        await settle();
+        expect(translator.currentDownload).toMatchObject({ source: "fr", index: 1, total: 1 });
+        gate.resolve();
+        await settle();
+    });
+
+    // Invariant: a translator that stops working is replaced, so its language keeps translating
+    // without a reload, and no message waiting on it is dropped
+    test("replaces a translator that stops working", async () => {
+        translator.enqueue(1n, 1, FRENCH);
+        await settle();
+        expect(translator.translationFor(1n, FRENCH)).toBeDefined();
+
+        browser.killTranslators();
+        translator.enqueue(2n, 2, "salut les amis");
+        translator.enqueue(3n, 3, "merci beaucoup mes amis");
+        await settle();
+        expect(translator.translationFor(2n, "salut les amis")).toBeDefined();
+        expect(translator.translationFor(3n, "merci beaucoup mes amis")).toBeDefined();
+        expect(browser.created).toEqual(["fr", "fr"]);
+    });
+
+    // Invariant: a message whose translation keeps failing is retried once, then left alone
+    test("gives up on a message that keeps failing", async () => {
+        browser.failing.add(FRENCH);
+        translator.enqueue(1n, 1, FRENCH);
+        await settle();
+        expect(translator.translations.size).toEqual(0);
+        expect(browser.attempts).toEqual([FRENCH, FRENCH]);
+
+        translator.enqueue(1n, 1, FRENCH);
+        await settle();
+        expect(browser.attempts).toHaveLength(2);
     });
 
     // Invariant: a cancelled message is forgotten, so it's never translated after it unmounts

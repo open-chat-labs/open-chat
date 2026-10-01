@@ -164,11 +164,11 @@
         "notAvailableTitle": "Вміст недоступний"
     },
     "autoTranslate": {
-        "downloadPacks": "Завантажити мовні пакети: {languages}",
+        "downloadPacks": "Завантажити мовні пакети ({count})",
         "turnOn": "Перекласти цей чат",
         "turnOff": "Зупинити переклад цього чату",
         "active": "Переклад мовою {language} на цьому пристрої",
-        "downloading": "Завантаження мовних пакетів: {languages} ({progress}%)",
+        "downloading": "Завантаження: {language} ({index} з {total})…",
         "failed": "Переклад на пристрої зараз недоступний",
         "showOriginal": "Показати оригінал",
         "showTranslation": "Показати переклад",

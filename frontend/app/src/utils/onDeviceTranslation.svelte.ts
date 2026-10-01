@@ -15,15 +15,7 @@ import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
 type Availability = "unavailable" | "downloadable" | "downloading" | "available";
 
-interface DownloadMonitor {
-    addEventListener(
-        type: "downloadprogress",
-        listener: (e: Event & { loaded: number }) => void,
-    ): void;
-}
-
 interface CreateOptions {
-    monitor?: (m: DownloadMonitor) => void;
     signal?: AbortSignal;
 }
 
@@ -125,13 +117,7 @@ type Job = { messageId: bigint; messageIndex: number; text: string };
 
 export type AutoTranslation = { source: string; text: string; from: string };
 
-type DetectedJob = Job & { from: string; prot: Protected };
-
-function hasUserActivation(): boolean {
-    return (
-        (navigator as { userActivation?: { isActive: boolean } }).userActivation?.isActive ?? false
-    );
-}
+type DetectedJob = Job & { from: string; prot: Protected; retried?: boolean };
 
 function isNotAllowed(err: unknown): boolean {
     return err instanceof DOMException && err.name === "NotAllowedError";
@@ -146,7 +132,7 @@ export class OnDeviceChatTranslator {
     #translators = new Map<string, BrowserTranslator>();
     #creating = new Map<string, Promise<void>>();
     #unsupportedSources = new Set<string>();
-    #queue = new Map<bigint, Job>();
+    #queue = new Map<bigint, Job | DetectedJob>();
     // Detected jobs waiting on a language pack, keyed by source language
     #parked = new Map<string, Map<bigint, DetectedJob>>();
     #running = false;
@@ -158,12 +144,15 @@ export class OnDeviceChatTranslator {
     // messageId -> translation. Separate from translationsStore so that writes don't
     // re-run the whole event merge. Read it through translationFor.
     readonly translations = new SvelteMap<bigint, AutoTranslation>();
-    // Language packs being downloaded, source language -> progress (0..1)
-    readonly downloads = new SvelteMap<string, number>();
+    // Source languages whose packs are downloading. Chrome reports a pack's progress only at 0 and
+    // 1, so there's no percentage to show.
+    readonly downloads = new SvelteSet<string>();
     // Source languages whose packs need downloading but we had no user gesture to start them
     readonly needsDownload = new SvelteSet<string>();
     // messageId -> detected source language, for messages waiting on a language pack
     readonly waiting = new SvelteMap<bigint, string>();
+    // Every pack this target language has needed downloading, done or not, for "n of total"
+    readonly #packs = new SvelteSet<string>();
 
     setTarget(locale: string | null | undefined) {
         const target = toBcp47(locale);
@@ -180,6 +169,15 @@ export class OnDeviceChatTranslator {
 
     get error() {
         return this.#error;
+    }
+
+    // The pack being downloaded, and where it falls among the packs this chat has needed
+    get currentDownload(): { source: string; index: number; total: number } | undefined {
+        for (const source of this.downloads) {
+            const total = this.#packs.size;
+            return { source, index: total - this.needsDownload.size, total };
+        }
+        return undefined;
     }
 
     // The translation of a message's current text. After an edit the old translation may still be
@@ -220,22 +218,23 @@ export class OnDeviceChatTranslator {
         this.translations.clear();
         this.downloads.clear();
         this.needsDownload.clear();
+        this.#packs.clear();
         this.#error = undefined;
         this.#failed = false;
     }
 
-    // Call from a click handler: creating a detector or translator whose model still has to
-    // download requires transient user activation. Starts every language pack we know we need.
-    prime() {
-        for (const source of [...this.needsDownload]) {
-            this.#startTranslator(source);
-        }
+    // Call from a click handler: creating a translator whose language pack still has to download
+    // needs a user gesture, and Chrome lets one gesture start only one download. So this starts
+    // one pack: `source` if given, otherwise the next one needed.
+    prime(source?: string) {
+        const next = source ?? this.needsDownload.values().next().value;
+        if (next !== undefined) this.#startTranslator(next);
         this.#kick();
     }
 
-    // Detects the language of every message already loaded (not just the rendered ones) and starts
-    // downloading any missing language packs while the user's click still counts as activation,
-    // so languages further up the chat are usually ready by the time they scroll into view.
+    // Detects the language of every message already loaded (not just the rendered ones) so the
+    // banner can offer every pack the chat needs. The first missing pack uses the click that
+    // turned translation on.
     async preload(texts: string[]) {
         const a = apis();
         if (a === undefined) return;
@@ -247,8 +246,8 @@ export class OnDeviceChatTranslator {
             return;
         }
         const seen = new Set<string>();
+        let started = false;
         for (const text of texts) {
-            if (!hasUserActivation()) return;
             const prot = protect(text);
             if (prot === undefined || letterCount(prot.text) < MIN_LETTERS) continue;
             try {
@@ -258,6 +257,10 @@ export class OnDeviceChatTranslator {
                 if (from === "und" || toBcp47(from) === this.#target || seen.has(from)) continue;
                 seen.add(from);
                 await this.#ensureTranslator(from);
+                if (!started && this.needsDownload.has(from)) {
+                    started = true;
+                    this.#startTranslator(from);
+                }
             } catch {
                 // best effort
             }
@@ -277,16 +280,9 @@ export class OnDeviceChatTranslator {
         this.#detector = p;
     }
 
-    #setProgress(source: string, progress: number | undefined) {
-        if (progress === undefined || progress >= 1) {
-            this.downloads.delete(source);
-        } else {
-            this.downloads.set(source, progress);
-        }
-    }
-
     #setNeedsDownload(source: string, needed: boolean) {
         if (needed) {
+            this.#packs.add(source);
             this.needsDownload.add(source);
         } else {
             this.needsDownload.delete(source);
@@ -301,17 +297,13 @@ export class OnDeviceChatTranslator {
         if (a === undefined) return;
         const target = this.#target;
         this.#setNeedsDownload(source, false);
+        if (downloading) {
+            this.#packs.add(source);
+            this.downloads.add(source);
+        }
         const p = a.Translator.create({
             sourceLanguage: source,
             targetLanguage: target,
-            // Chrome fires progress events even for packs already on disk, so only report
-            // progress when we know a download is actually happening
-            monitor: downloading
-                ? (m) =>
-                      m.addEventListener("downloadprogress", (e) =>
-                          this.#setProgress(source, e.loaded),
-                      )
-                : undefined,
         })
             .then((translator) => {
                 if (target !== this.#target) {
@@ -328,13 +320,14 @@ export class OnDeviceChatTranslator {
                     this.#setNeedsDownload(source, true);
                 } else {
                     console.warn(`On-device translation from ${source} failed: `, err);
+                    this.#packs.delete(source);
                     this.#unsupportedSources.add(source);
                     this.#dropParked(source);
                 }
             })
             .finally(() => {
                 this.#creating.delete(source);
-                this.#setProgress(source, undefined);
+                this.downloads.delete(source);
             });
         this.#creating.set(source, p);
     }
@@ -436,7 +429,11 @@ export class OnDeviceChatTranslator {
         for (const d of ready) {
             const target = this.#target;
             const translator = this.#translators.get(d.from);
-            if (translator === undefined) continue;
+            if (translator === undefined) {
+                // Its translator was replaced while this message waited, so it goes round again
+                this.#queue.set(d.messageId, d);
+                continue;
+            }
             try {
                 const translated = restore(await translator.translate(d.prot.text), d.prot);
                 if (target !== this.#target) continue;
@@ -451,8 +448,22 @@ export class OnDeviceChatTranslator {
                     this.#scheduleFlush();
                 }
             } catch (err) {
-                console.warn("On-device translation of a message failed: ", err);
-                this.#skipped.set(d.messageId, d.text);
+                if (!d.retried) {
+                    // Chrome's translators can stop working under us (installing another language
+                    // pack does it) while a fresh one works, so replace it and try once more
+                    if (this.#translators.get(d.from) === translator) {
+                        this.#translators.delete(d.from);
+                        try {
+                            translator.destroy();
+                        } catch {
+                            // already broken
+                        }
+                    }
+                    this.#queue.set(d.messageId, { ...d, retried: true });
+                } else {
+                    console.warn("On-device translation of a message failed: ", err);
+                    this.#skipped.set(d.messageId, d.text);
+                }
             }
         }
 
@@ -500,9 +511,8 @@ export class OnDeviceChatTranslator {
             this.#dropParked(source);
         } else if (availability === "available") {
             this.#startTranslator(source, false);
-        } else if (hasUserActivation()) {
-            this.#startTranslator(source);
         } else {
+            // Downloads only start from prime, one per click
             this.#setNeedsDownload(source, true);
         }
     }

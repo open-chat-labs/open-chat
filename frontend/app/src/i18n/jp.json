@@ -164,11 +164,11 @@
         "notAvailableTitle": "コンテンツを利用できません"
     },
     "autoTranslate": {
-        "downloadPacks": "言語パックをダウンロード：{languages}",
+        "downloadPacks": "言語パックをダウンロード（{count}）",
         "turnOn": "このチャットを翻訳",
         "turnOff": "このチャットの翻訳を停止",
         "active": "この端末で{language}に翻訳中",
-        "downloading": "言語パックをダウンロード中：{languages}（{progress}%）",
+        "downloading": "{language}をダウンロード中（{index}/{total}）…",
         "failed": "端末上の翻訳は現在利用できません",
         "showOriginal": "原文を表示",
         "showTranslation": "翻訳を表示",

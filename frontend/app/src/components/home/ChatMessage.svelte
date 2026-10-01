@@ -722,7 +722,8 @@
                                     <div class="note">
                                         <Link
                                             underline={"hover"}
-                                            onClick={() => onDeviceTranslator.prime()}>
+                                            onClick={() =>
+                                                onDeviceTranslator.prime(autoTranslatePending)}>
                                             <Translatable
                                                 resourceKey={i18nKey("autoTranslate.translateFrom", {
                                                     language: languageName(autoTranslatePending),

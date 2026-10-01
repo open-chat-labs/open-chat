@@ -33,19 +33,7 @@
 
     let targetLanguage = $derived(languageName(onDeviceTranslator.target));
 
-    // Report the slowest pack in flight
-    let progress = $derived(
-        onDeviceTranslator.downloads.size > 0
-            ? Math.round(Math.min(...onDeviceTranslator.downloads.values()) * 100)
-            : undefined,
-    );
-
-    let missingLanguages = $derived(
-        [...onDeviceTranslator.needsDownload].map(languageName).join(", "),
-    );
-    let downloadingLanguages = $derived(
-        [...onDeviceTranslator.downloads.keys()].map(languageName).join(", "),
-    );
+    let download = $derived(onDeviceTranslator.currentDownload);
 </script>
 
 {#if enabled}
@@ -53,18 +41,20 @@
         <span class="status">
             {#if onDeviceTranslator.error !== undefined}
                 <Translatable resourceKey={i18nKey("autoTranslate.failed")} />
+            {:else if download !== undefined}
+                <Translatable
+                    resourceKey={i18nKey("autoTranslate.downloading", {
+                        language: languageName(download.source),
+                        index: download.index,
+                        total: download.total,
+                    })} />
             {:else if onDeviceTranslator.needsDownload.size > 0}
                 <Link underline={"hover"} onClick={() => onDeviceTranslator.prime()}>
                     <Translatable
                         resourceKey={i18nKey("autoTranslate.downloadPacks", {
-                            languages: missingLanguages,
+                            count: onDeviceTranslator.needsDownload.size,
                         })} />
                 </Link>
-            {:else if progress !== undefined}
-                <Translatable resourceKey={i18nKey("autoTranslate.downloading", {
-                        languages: downloadingLanguages,
-                        progress,
-                    })} />
             {:else}
                 <Translatable
                     resourceKey={i18nKey("autoTranslate.active", { language: targetLanguage })} />

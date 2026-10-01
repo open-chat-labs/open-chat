@@ -164,11 +164,11 @@
         "notAvailableTitle": "התוכן אינו זמין"
     },
     "autoTranslate": {
-        "downloadPacks": "הורד חבילות שפה: {languages}",
+        "downloadPacks": "הורד חבילות שפה ({count})",
         "turnOn": "תרגם את הצ'אט הזה",
         "turnOff": "הפסק לתרגם את הצ'אט הזה",
         "active": "מתרגם ל{language} במכשיר זה",
-        "downloading": "מוריד חבילות שפה: {languages} ({progress}%)",
+        "downloading": "מוריד {language} ({index} מתוך {total})…",
         "failed": "תרגום במכשיר אינו זמין כרגע",
         "showOriginal": "הצג מקור",
         "showTranslation": "הצג תרגום",

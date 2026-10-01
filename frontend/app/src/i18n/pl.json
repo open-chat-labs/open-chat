@@ -164,11 +164,11 @@
         "notAvailableTitle": "Treść niedostępna"
     },
     "autoTranslate": {
-        "downloadPacks": "Pobierz pakiety językowe: {languages}",
+        "downloadPacks": "Pobierz pakiety językowe ({count})",
         "turnOn": "Tłumacz ten czat",
         "turnOff": "Przestań tłumaczyć ten czat",
         "active": "Tłumaczenie na {language} na tym urządzeniu",
-        "downloading": "Pobieranie pakietów językowych: {languages} ({progress}%)",
+        "downloading": "Pobieranie: {language} ({index} z {total})…",
         "failed": "Tłumaczenie na urządzeniu jest teraz niedostępne",
         "showOriginal": "Pokaż oryginał",
         "showTranslation": "Pokaż tłumaczenie",
