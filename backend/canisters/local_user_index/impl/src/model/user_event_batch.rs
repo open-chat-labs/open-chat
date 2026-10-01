@@ -1,12 +1,8 @@
 use crate::updates::c2c_notify_low_balance::top_up_child_canister;
-use crate::{UserEvent, mutate_state, read_state};
-use constants::MINUTE_IN_MS;
+use crate::{UserEvent, mutate_state};
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{CanisterId, IdempotentEnvelope, Milliseconds, UserId};
-use utils::canister::{
-    delay_if_should_retry_failed_c2c_call, delay_if_should_retry_failed_c2c_call_to_new_method, is_out_of_cycles_error,
-    is_user_canister_possibly_migrated,
-};
+use utils::canister::{delay_if_should_retry_failed_c2c_call, is_out_of_cycles_error};
 
 // Batched per canister, so that the events for every user a MultiUser canister holds are sent to it
 // together
@@ -53,13 +49,15 @@ impl TimerJobItem for UserEventBatch {
                     top_up_child_canister(Some(canister_id)).await;
                 }
                 // If the user has been migrated to a MultiUser canister, their events are sent on to
-                // them there instead. Only a canister which holds a user alone is ever migrated.
-                if self.items.iter().all(|event| event.value.0.index() == 0) {
-                    let user_id: UserId = canister_id.into();
-                    if mutate_state(|state| {
-                        // Whatever the failure, since the user's old canister no longer serves them,
-                        // eg. a batch sent while they were being switched over fails because their
-                        // old canister is frozen
+                // them there instead, whatever the failure, since their old canister no longer serves
+                // them. Eg. a batch sent while they were being switched over fails because their old
+                // canister is frozen. Until then the frozen canister traps, which is retried, and it
+                // is only closed out once this LocalUserIndex has recorded the migration, so the
+                // migration is always known here by the time the old canister is gone. Only a
+                // canister which holds a user alone is ever migrated.
+                if self.items.iter().all(|event| event.value.0.index() == 0)
+                    && mutate_state(|state| {
+                        let user_id: UserId = canister_id.into();
                         if state.data.migrated_user_ids.get(&user_id).is_none() {
                             return false;
                         }
@@ -73,18 +71,9 @@ impl TimerJobItem for UserEventBatch {
                             .collect();
                         state.push_events_queued_for_migrated_user(user_id, events);
                         true
-                    }) {
-                        return Ok(());
-                    }
-                    // This LocalUserIndex is told of each of its users' migrations before closing out
-                    // their old canisters, so if their canister looks to have been closed out, the
-                    // events are retried until it has been told, as long as the user is still held
-                    // here, rather than having been deleted
-                    if is_user_canister_possibly_migrated(&error)
-                        && read_state(|state| state.data.local_users.contains(&user_id))
-                    {
-                        return Err(delay_if_should_retry_failed_c2c_call_to_new_method(&error).or(Some(5 * MINUTE_IN_MS)));
-                    }
+                    })
+                {
+                    return Ok(());
                 }
                 let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
                 Err(delay_if_should_retry)
