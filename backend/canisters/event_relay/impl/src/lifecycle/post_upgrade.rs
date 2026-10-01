@@ -19,7 +19,8 @@ fn post_upgrade(args: Args) {
         msgpack::deserialize(reader).unwrap();
 
     // One-off: stop the test EventRelay pushing events to its EventStore, and drop the events it has
-    // pending. Fresh installs (the integration tests and local dev) keep pushing them.
+    // pending. Fresh installs (the integration tests and local dev) keep pushing them, but a local or
+    // testnet relay upgraded to this version is switched off too, until it's reinstalled.
     // TODO remove after the release containing this has been deployed, along with the serde default
     // of `push_to_event_store`
     if data.test_mode {
