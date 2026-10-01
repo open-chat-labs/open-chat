@@ -51,6 +51,7 @@
         autoTranslateEnabled,
         onDeviceTranslationSupported,
         setAutoTranslate,
+        textsToPreload,
     } from "../../utils/onDeviceTranslation.svelte";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall } from "../../stores/video";
@@ -149,20 +150,11 @@
     let autoTranslating = $derived(autoTranslateEnabled(selectedChatSummary.id));
 
     function toggleAutoTranslate() {
-        if (!$isDiamondStore) {
-            publish("upgrade");
-        } else {
-            // read once on click rather than subscribing: the menu doesn't need to track events
-            const loadedTexts = eventsStore.value
-                .flatMap((e) =>
-                    e.event.kind === "message" && e.event.sender !== $currentUserIdStore
-                        ? [client.getMessageText(e.event.content)]
-                        : [],
-                )
-                .filter((t): t is string => !!t)
-                .reverse();
-            setAutoTranslate(selectedChatSummary.id, !autoTranslating, loadedTexts);
-        }
+        // read once on click rather than subscribing: the menu doesn't need to track events
+        const loadedTexts = textsToPreload(eventsStore.value, $currentUserIdStore, (c) =>
+            client.getMessageText(c),
+        );
+        setAutoTranslate(selectedChatSummary.id, !autoTranslating, loadedTexts);
     }
 
     let canStartOrJoinVideoCall = $derived(!inCall && (videoCallInProgress || canStartVideoCalls));

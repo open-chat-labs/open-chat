@@ -1,4 +1,10 @@
-import { type ChatIdentifier, chatIdentifierToString } from "@client";
+import {
+    type ChatEvent,
+    type ChatIdentifier,
+    chatIdentifierToString,
+    type EventWrapper,
+    type MessageContent,
+} from "@client";
 import { untrack } from "svelte";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
 
@@ -43,9 +49,9 @@ interface LanguageDetectorStatic {
     create(opts?: CreateOptions): Promise<BrowserLanguageDetector>;
 }
 
-function apis():
-    | { Translator: TranslatorStatic; LanguageDetector: LanguageDetectorStatic }
-    | undefined {
+type Apis = { Translator: TranslatorStatic; LanguageDetector: LanguageDetectorStatic };
+
+function apis(): Apis | undefined {
     const g = globalThis as unknown as {
         Translator?: TranslatorStatic;
         LanguageDetector?: LanguageDetectorStatic;
@@ -70,8 +76,10 @@ const MIN_CONFIDENCE = 0.6;
 const MIN_LETTERS = 4;
 const MAX_LENGTH = 2000;
 
-// Tokens the translator must not touch: mentions, URLs, code spans and fenced code.
-const PROTECTED = /```[\s\S]*?```|`[^`\n]+`|@UserId\([^)]*\)|@UserGroup\([^)]*\)|https?:\/\/\S+/g;
+// Tokens the translator must not touch: everything the renderer reads out of message text
+// (mentions, @everyone, dates), URLs, code spans and fenced code.
+const PROTECTED =
+    /```[\s\S]*?```|`[^`\n]+`|@UserId\([^)]*\)|@UserGroup\([^)]*\)|@everyone(?!\w)|@DateTime\(\d+\)|https?:\/\/\S+/g;
 
 // Placeholder styles, tried in order; we use the first one that doesn't already appear in the
 // message so a literal "[1]" can't be mistaken for a placeholder.
@@ -131,7 +139,7 @@ function isNotAllowed(err: unknown): boolean {
 
 // enqueue, cancel and setTarget are called from component effects, so they read reactive state
 // untracked: otherwise every message's effect would re-run whenever another message is translated.
-class OnDeviceChatTranslator {
+export class OnDeviceChatTranslator {
     #target = $state("en");
     #error = $state<string | undefined>(undefined);
     #detector: Promise<BrowserLanguageDetector> | undefined;
@@ -148,7 +156,7 @@ class OnDeviceChatTranslator {
     #failed = false;
 
     // messageId -> translation. Separate from translationsStore so that writes don't
-    // re-run the whole event merge, and so the original stays visible above the translation.
+    // re-run the whole event merge. Read it through translationFor.
     readonly translations = new SvelteMap<bigint, AutoTranslation>();
     // Language packs being downloaded, source language -> progress (0..1)
     readonly downloads = new SvelteMap<string, number>();
@@ -174,7 +182,15 @@ class OnDeviceChatTranslator {
         return this.#error;
     }
 
+    // The translation of a message's current text. After an edit the old translation may still be
+    // stored, and must not be shown against the new text.
+    translationFor(messageId: bigint, text: string): AutoTranslation | undefined {
+        const translation = this.translations.get(messageId);
+        return translation?.source === text ? translation : undefined;
+    }
+
     enqueue(messageId: bigint, messageIndex: number, text: string) {
+        if (apis() === undefined) return;
         const existing = untrack(() => this.translations.get(messageId));
         if (existing?.source === text) return;
         if (this.#skipped.get(messageId) === text) return;
@@ -221,7 +237,9 @@ class OnDeviceChatTranslator {
     // downloading any missing language packs while the user's click still counts as activation,
     // so languages further up the chat are usually ready by the time they scroll into view.
     async preload(texts: string[]) {
-        if (this.#detector === undefined) this.#createDetector();
+        const a = apis();
+        if (a === undefined) return;
+        if (this.#detector === undefined) this.#createDetector(a);
         let detector: BrowserLanguageDetector;
         try {
             detector = await this.#detector!;
@@ -246,9 +264,7 @@ class OnDeviceChatTranslator {
         }
     }
 
-    #createDetector(): Promise<BrowserLanguageDetector> {
-        const a = apis();
-        if (a === undefined) return Promise.reject(new Error("LanguageDetector not supported"));
+    #createDetector(a: Apis) {
         const p = a.LanguageDetector.create();
         p.catch((err) => {
             this.#detector = undefined;
@@ -259,7 +275,6 @@ class OnDeviceChatTranslator {
             }
         });
         this.#detector = p;
-        return p;
     }
 
     #setProgress(source: string, progress: number | undefined) {
@@ -372,11 +387,15 @@ class OnDeviceChatTranslator {
     }
 
     #run() {
-        if (this.#running || this.#failed) return;
-        if (this.#detector === undefined) this.#createDetector();
+        const a = apis();
+        if (this.#running || this.#failed || a === undefined) return;
+        if (this.#detector === undefined) this.#createDetector(a);
         this.#running = true;
         this.#drain().finally(() => {
             this.#running = false;
+            // A language pack that became ready as the drain finished kicked while we were still
+            // running, so that kick was dropped
+            if (this.#queue.size > 0) this.#kick();
         });
     }
 
@@ -540,6 +559,32 @@ const autoTranslateChats = new SvelteSet<string>(loadChats());
 
 export function autoTranslateEnabled(chatId: ChatIdentifier): boolean {
     return autoTranslateChats.has(chatIdentifierToString(chatId));
+}
+
+// The text of a rendered message to translate, or undefined if it isn't to be translated: the
+// user's own messages and inert or failed ones never are. `text` is only read when it's needed.
+export function autoTranslatableText(
+    chatId: ChatIdentifier,
+    msg: { mine: boolean; inert: boolean; failed: boolean; text: () => string | undefined },
+): string | undefined {
+    if (msg.mine || msg.inert || msg.failed || !autoTranslateEnabled(chatId)) {
+        return undefined;
+    }
+    return msg.text() || undefined;
+}
+
+// Other people's loaded message texts, newest first, for preload
+export function textsToPreload(
+    events: EventWrapper<ChatEvent>[],
+    me: string,
+    getText: (content: MessageContent) => string | undefined,
+): string[] {
+    return events
+        .flatMap((e) =>
+            e.event.kind === "message" && e.event.sender !== me ? [getText(e.event.content)] : [],
+        )
+        .filter((t): t is string => !!t)
+        .reverse();
 }
 
 // Call from a click handler. `loadedTexts` are the chat's already loaded messages, newest first.

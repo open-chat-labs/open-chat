@@ -22,7 +22,7 @@
     import { reservedMediaWidth } from "../../utils/media";
     import { canShareMessage } from "../../utils/share";
     import {
-        autoTranslateEnabled,
+        autoTranslatableText,
         languageName as cachedLanguageName,
         onDeviceTranslator,
     } from "../../utils/onDeviceTranslation.svelte";
@@ -198,15 +198,30 @@
         }
     });
 
+    let inert = $derived(
+        msg.content.kind === "deleted_content" ||
+            msg.content.kind === "blocked_content" ||
+            msg.content.kind === "restricted_content" ||
+            collapsed,
+    );
+    let autoTranslateText = $derived(
+        autoTranslatableText(chatId, {
+            mine: me,
+            inert,
+            failed,
+            text: () => client.getMessageText(msg.content),
+        }),
+    );
     // Set when this message's language pack needs a click to download
     let autoTranslatePending = $derived.by(() => {
-        if (!autoTranslateOn || me) return undefined;
+        if (autoTranslateText === undefined) return undefined;
         const from = onDeviceTranslator.waiting.get(msg.messageId);
         return from !== undefined && onDeviceTranslator.needsDownload.has(from) ? from : undefined;
     });
-    let autoTranslateOn = $derived(autoTranslateEnabled(chatId));
     let autoTranslation = $derived(
-        autoTranslateOn && !me ? onDeviceTranslator.translations.get(msg.messageId) : undefined,
+        autoTranslateText === undefined
+            ? undefined
+            : onDeviceTranslator.translationFor(msg.messageId, autoTranslateText),
     );
     let showOriginal = $state(false);
     let displayContent = $derived(
@@ -222,11 +237,10 @@
     // This component is only mounted while the message is inside the virtual list's rendered
     // window, so registering here (and cancelling on teardown) limits translation to that window.
     $effect(() => {
-        if (!autoTranslateOn || me || inert || failed) return;
+        const text = autoTranslateText;
+        if (text === undefined) return;
         // re-register for a new target language
         void onDeviceTranslator.target;
-        const text = client.getMessageText(msg.content);
-        if (!text) return;
         const messageId = msg.messageId;
         onDeviceTranslator.enqueue(messageId, msg.messageIndex, text);
         return () => onDeviceTranslator.cancel(messageId);
@@ -395,12 +409,6 @@
         mediaDimensions !== undefined
             ? reservedMediaWidth(mediaDimensions.width, mediaDimensions.height)
             : undefined,
-    );
-    let inert = $derived(
-        msg.content.kind === "deleted_content" ||
-            msg.content.kind === "blocked_content" ||
-            msg.content.kind === "restricted_content" ||
-            collapsed,
     );
     let canTip = $derived(!me && confirmed && !inert && !failed);
     let inThread = $derived(threadRootMessage !== undefined);

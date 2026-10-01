@@ -5,6 +5,7 @@
     import {
         autoTranslateEnabled,
         languageName as cachedLanguageName,
+        onDeviceTranslationSupported,
         onDeviceTranslator,
         setAutoTranslate,
     } from "../../utils/onDeviceTranslation.svelte";
@@ -17,7 +18,10 @@
 
     let { chatId }: Props = $props();
 
-    let enabled = $derived(autoTranslateEnabled(chatId));
+    // A chat can stay switched on in localStorage after the browser loses the APIs
+    let supported = $state(false);
+    onDeviceTranslationSupported().then((s) => (supported = s));
+    let enabled = $derived(supported && autoTranslateEnabled(chatId));
 
     $effect(() => {
         onDeviceTranslator.setTarget($locale);
