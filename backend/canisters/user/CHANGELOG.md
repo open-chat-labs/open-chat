@@ -132,6 +132,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix bug where a referrer could be rewarded again for a user migrated to a MultiUser canister ([#9628](https://github.com/open-chat-labs/open-chat/pull/9628))
 - Send crypto addressed to the recipient's user id to their wallet, so that it reaches a user in a MultiUser canister ([#9674](https://github.com/open-chat-labs/open-chat/pull/9674))
 - Refuse to send crypto in a group or channel which is addressed to anyone but its recipient ([#9674](https://github.com/open-chat-labs/open-chat/pull/9674))
+- Refuse withdrawals to an account of a MultiUser user's id, which no one can spend from ([#9693](https://github.com/open-chat-labs/open-chat/pull/9693))
 
 ## [[2.0.2015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2015-user)] - 2026-08-12
 
