@@ -9,6 +9,7 @@ use types::{C2CError, CanisterId, UserId};
 generate_c2c_call!(c2c_lookup_user);
 generate_c2c_call!(c2c_lookup_users);
 generate_c2c_call!(c2c_user_principals);
+generate_c2c_call!(c2c_user_principals_v2);
 generate_c2c_call!(chat_events);
 generate_c2c_call!(is_user_or_multi_user_canister);
 generate_c2c_call!(migrated_user_ids);

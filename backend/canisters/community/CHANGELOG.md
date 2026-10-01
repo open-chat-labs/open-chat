@@ -77,6 +77,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - For users hosted in MultiUser canisters, send crypto and tips to their principal ([#9674](https://github.com/open-chat-labs/open-chat/pull/9674))
 - Don't take an access gate's payment when a member's gate is checked again as it expires ([#9700](https://github.com/open-chat-labs/open-chat/pull/9700))
 - Don't queue a removal event for a removed bot, whose canister can't take it ([#9717](https://github.com/open-chat-labs/open-chat/pull/9717))
+- Move a member of an imported group whom the group held by an id they've since been migrated from onto their latest id ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
 
 ## [[2.0.2045](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2045-community)] - 2026-08-26
 

@@ -1236,6 +1236,70 @@ fn user_who_joins_while_being_migrated_is_held_under_their_new_id(community: boo
     assert!(listed(env));
 }
 
+// A member of a group imported into a community while they're being migrated is added to the community
+// under the id the group held them by. The group is deleted once imported, so the migration's notice
+// to it is dropped, and the community's LocalUserIndex, which the import gets the members' principals
+// from, tells the community their new id instead.
+#[test]
+fn member_of_a_group_imported_while_being_migrated_is_held_under_their_new_id() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    client::group::happy_path::join_group(env, user.principal, group_id);
+    let community_id = client::user::happy_path::create_community(env, &owner, &random_string(), false, vec![random_string()]);
+    tick_many(env, 5);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_until(env, |env| {
+        matches!(
+            user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+            Some(UserMigrationStatus::Started { .. })
+        )
+    });
+
+    // The group is imported while the user's old canister is frozen
+    client::community::happy_path::import_group(env, owner.principal, community_id, group_id);
+    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user.user_id);
+
+    let members = |env: &PocketIc| -> Vec<UserId> {
+        let response = client::community::happy_path::selected_initial(env, owner.principal, community_id);
+        response
+            .members
+            .iter()
+            .map(|m| m.user_id)
+            .chain(response.basic_members)
+            .collect()
+    };
+    for _ in 0..20 {
+        if members(env).contains(&new_user_id) {
+            break;
+        }
+        env.advance_time(Duration::from_secs(60));
+        tick_many(env, 5);
+    }
+    let members = members(env);
+    assert!(members.contains(&new_user_id), "{members:?}");
+    assert!(!members.contains(&user.user_id), "{members:?}");
+}
+
 #[test]
 fn users_with_a_direct_chat_with_or_a_block_of_a_migrated_user_hold_it_under_their_new_id() {
     let mut wrapper = ENV.deref().get();

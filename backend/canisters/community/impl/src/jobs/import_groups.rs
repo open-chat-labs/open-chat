@@ -298,11 +298,11 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
     let mut members_added = Vec::new();
 
     if !members_to_add_to_community.is_empty() {
-        let c2c_args = local_user_index_canister::c2c_user_principals::Args {
+        let c2c_args = local_user_index_canister::c2c_user_principals_v2::Args {
             user_ids: members_to_add_to_community.keys().copied().collect(),
         };
-        if let Ok(local_user_index_canister::c2c_user_principals::Response::Success(users)) =
-            local_user_index_canister_c2c_client::c2c_user_principals(local_user_index_canister_id, &c2c_args).await
+        if let Ok(local_user_index_canister::c2c_user_principals_v2::Response::Success(users)) =
+            local_user_index_canister_c2c_client::c2c_user_principals_v2(local_user_index_canister_id, &c2c_args).await
         {
             mutate_state(|state| {
                 let now = state.env.now();
@@ -311,7 +311,18 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                 add_community_members_to_channel_if_public(channel_id, state);
 
                 let public_channel_ids = state.data.channels.public_channel_ids();
-                for (user_id, principal) in users {
+                let mut migrated = Vec::new();
+                for (user_id, latest) in users {
+                    let principal = latest.principal;
+                    if latest.user_id != user_id {
+                        // The group held the member by an id they've since been migrated from. They're
+                        // added under it, as the channel holds them, then moved onto their latest id
+                        // below. If they're already a member under it, only the channel is moved.
+                        migrated.push((user_id, latest));
+                        if state.data.members.contains(&latest.user_id) {
+                            continue;
+                        }
+                    }
                     match state.data.members.add(
                         user_id,
                         principal,
@@ -351,6 +362,25 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
                                 .chat
                                 .remove_member(Caller::OCBot(OPENCHAT_BOT_USER_ID), user_id, false, now);
                         }
+                    }
+                }
+
+                // As when the community is told of a migration, which the group, being deleted once
+                // imported, won't be
+                for (old_user_id, latest) in migrated {
+                    state
+                        .data
+                        .migrate_user_ids(&[old_user_id], latest.user_id, Some(latest.principal), now);
+                    if state
+                        .data
+                        .channels
+                        .get(&channel_id)
+                        .is_some_and(|c| c.chat.members.contains(&latest.user_id))
+                    {
+                        state.data.members.mark_member_joined_channel(latest.user_id, channel_id);
+                    }
+                    if let Some(added) = members_added.iter_mut().find(|u| **u == old_user_id) {
+                        *added = latest.user_id;
                     }
                 }
             });
