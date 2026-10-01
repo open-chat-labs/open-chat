@@ -379,7 +379,6 @@ impl CommunityMembers {
         self.user_groups.last_updated()
     }
 
-    // Returns the number of members whose principal was set
     // Records each member who is a bot in `bots`, which `add` didn't use to. Returns them.
     // TODO: Remove this once every Community canister has been upgraded
     pub fn populate_bots(&mut self) -> BTreeMap<UserId, UserType> {
@@ -387,6 +386,7 @@ impl CommunityMembers {
         self.bots.clone()
     }
 
+    // Returns the number of members whose principal was set
     pub fn populate_member_principals(&mut self) -> u32 {
         let principals: HashMap<_, _> = self
             .principal_to_user_id_map
