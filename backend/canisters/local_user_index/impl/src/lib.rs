@@ -819,8 +819,8 @@ impl RuntimeState {
             users_to_import_pending: self.data.users_to_import.pending(),
             users_to_import_in_progress: self.data.users_to_import.in_progress(),
             users_to_close_out_pending: self.data.users_to_close_out.pending(),
-            recent_joins: self.data.recent_joins.len(),
             users_to_close_out_in_progress: self.data.users_to_close_out.in_progress(),
+            recent_joins: self.data.recent_joins.len(),
             chunk_store: crate::jobs::refresh_chunk_store::metrics(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
@@ -976,8 +976,6 @@ struct Data {
     // Users the UserIndex has asked this LocalUserIndex to start migrating to MultiUser canisters
     #[serde(default)]
     pub users_to_migrate: UsersToMigrate,
-    #[serde(default)]
-    pub recent_joins: RecentJoins,
     // Users the UserIndex has asked this LocalUserIndex to have one of its MultiUser canisters import
     #[serde(default)]
     pub users_to_import: UsersToMigrate<UserToImport>,
@@ -985,6 +983,10 @@ struct Data {
     // this LocalUserIndex controls, are to be uninstalled
     #[serde(default)]
     pub users_to_close_out: UsersToMigrate<UserToCloseOut>,
+    // The groups and communities users have recently joined via this LocalUserIndex, which are told
+    // of a user's new id if they turn out to have been being migrated
+    #[serde(default)]
+    pub recent_joins: RecentJoins,
     // Passed in the init and upgrade args, so is set once this LocalUserIndex has been upgraded by a
     // UserIndex which passes it
     #[serde(default)]
@@ -1121,9 +1123,9 @@ impl Data {
             game_chit_credit_retry_queue: new_retry_queue(),
             migrated_user_ids: MigratedUserIds::default(),
             users_to_migrate: UsersToMigrate::default(),
-            recent_joins: RecentJoins::default(),
             users_to_import: UsersToMigrate::default(),
             users_to_close_out: UsersToMigrate::default(),
+            recent_joins: RecentJoins::default(),
             registry_canister_id: Some(registry_canister_id),
             registry_tokens: RegistryTokens::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
