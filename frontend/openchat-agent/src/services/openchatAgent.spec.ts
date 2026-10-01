@@ -789,9 +789,9 @@ describe("OpenChatAgent referring to the user by their current id", () => {
         ]);
         expect(stayed.seen).toEqual([new Map(), new Map([[CURRENT, PREVIOUS]])]);
 
-        // And once the session is under the latest id, the other way round
-        stayed.user._userClient = { userId: CURRENT };
-        stayed.user.updateOwnLatestUserIds();
+        // And once the session's user client is created under the latest id, the other way round
+        stayed.user._chatEventsReader = { setUserClient: () => {} };
+        stayed.user.createUserClient(CURRENT);
         expect(stayed.user._ownLatestUserIds).toEqual(new Map([[PREVIOUS, CURRENT]]));
     });
 
@@ -841,6 +841,33 @@ describe("OpenChatAgent referring to the user by their current id", () => {
         const loaded = await user.loadFailedMessages();
 
         expect(loaded.get("chat")[2].event.sender).toEqual(CURRENT);
+    });
+
+    test("a message deleted or undeleted from before they were migrated refers to their current id", async () => {
+        const user = agent([PREVIOUS]);
+        const content = crypto(undefined, PREVIOUS);
+        user._userClient = {
+            getDeletedMessage: () => Promise.resolve({ kind: "success", content }),
+            undeleteMessage: () =>
+                Promise.resolve({
+                    kind: "success",
+                    message: { ...sentBy(PREVIOUS).event, content },
+                }),
+        };
+        user._groupClient = {
+            getDeletedMessage: () => Promise.resolve({ kind: "success", content }),
+        };
+
+        const direct = await user.getDeletedDirectMessage(THEM, 1n);
+        const group = await user.getDeletedGroupMessage(GROUP_ID, 1n);
+        const undeleted = await user.undeleteMessage({ kind: "direct_chat", userId: THEM }, 1n);
+
+        expect(direct.content.transfer.recipient).toEqual(CURRENT);
+        expect(group.content.transfer.recipient).toEqual(CURRENT);
+        expect(undeleted.message).toMatchObject({
+            sender: CURRENT,
+            content: { transfer: { recipient: CURRENT } },
+        });
     });
 
     test("a chat's latest message from before they were migrated is from their current id", () => {
