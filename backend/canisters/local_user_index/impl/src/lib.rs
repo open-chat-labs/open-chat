@@ -3,6 +3,7 @@ use crate::model::daily_puzzle_engine::{DailyPuzzleEngine, DailyPuzzleEngineMetr
 use crate::model::daily_puzzle_result_batch::DailyPuzzleResultBatch;
 use crate::model::game_chit_credit::{GameChitCreditRetryQueue, new_retry_queue};
 use crate::model::group_event_batch::GroupEventBatch;
+use crate::model::held_user_id_migrations::HeldUserIdMigrations;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
 use crate::model::local_multi_user_canister_map::LocalMultiUserCanisterMap;
@@ -302,6 +303,41 @@ impl RuntimeState {
             true
         } else {
             false
+        }
+    }
+
+    // Tells the user of another user's new id. A canister on a wasm older than the current User wasm
+    // may not know `UserIdMigrated` (User 2.0.2015 doesn't), and an event a canister can't decode fails
+    // the whole batch it's in, holding up every later event to that canister until it's upgraded. So
+    // for such a canister the notice is held, and sent once the canister has been upgraded.
+    // TODO remove the hold once no User canister is on 2.0.2015
+    pub fn notify_user_of_migrated_user_id(
+        &mut self,
+        user_id: UserId,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        now: TimestampMillis,
+    ) {
+        let user_id = self.data.migrated_user_ids.latest(user_id);
+        let current_wasm_version = self.data.child_canister_wasms.get(ChildCanisterType::User).wasm.version;
+        let canister_is_behind = self
+            .data
+            .local_users
+            .get(&user_id)
+            .and_then(|user| user.wasm_version)
+            .is_some_and(|wasm_version| wasm_version < current_wasm_version);
+
+        if canister_is_behind {
+            self.data.held_user_id_migrations.hold(user_id, old_user_id, new_user_id);
+        } else {
+            self.push_event_to_user(
+                user_id,
+                UserEvent::UserIdMigrated(Box::new(user_canister::UserIdMigrated {
+                    old_user_id,
+                    new_user_id,
+                })),
+                now,
+            );
         }
     }
 
@@ -821,6 +857,7 @@ impl RuntimeState {
             users_to_close_out_pending: self.data.users_to_close_out.pending(),
             users_to_close_out_in_progress: self.data.users_to_close_out.in_progress(),
             recent_joins: self.data.recent_joins.len(),
+            held_user_id_migrations: self.data.held_user_id_migrations.len(),
             chunk_store: crate::jobs::refresh_chunk_store::metrics(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
@@ -987,6 +1024,10 @@ struct Data {
     // of a user's new id if they turn out to have been being migrated
     #[serde(default)]
     pub recent_joins: RecentJoins,
+    // Notices of migrated users' new ids for users whose canisters are yet to be upgraded to the
+    // current User wasm (see `notify_user_of_migrated_user_id`)
+    #[serde(default)]
+    pub held_user_id_migrations: HeldUserIdMigrations,
     // Passed in the init and upgrade args, so is set once this LocalUserIndex has been upgraded by a
     // UserIndex which passes it
     #[serde(default)]
@@ -1126,6 +1167,7 @@ impl Data {
             users_to_import: UsersToMigrate::default(),
             users_to_close_out: UsersToMigrate::default(),
             recent_joins: RecentJoins::default(),
+            held_user_id_migrations: HeldUserIdMigrations::default(),
             registry_canister_id: Some(registry_canister_id),
             registry_tokens: RegistryTokens::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
@@ -1191,6 +1233,7 @@ pub struct Metrics {
     pub users_to_close_out_pending: usize,
     pub users_to_close_out_in_progress: usize,
     pub recent_joins: usize,
+    pub held_user_id_migrations: usize,
     pub chunk_store: crate::jobs::refresh_chunk_store::ChunkStoreMetrics,
     pub cycles_refund_queue_length: usize,
     pub cycles_refunded_from_deleted_users: Cycles,
