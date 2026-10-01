@@ -17,10 +17,7 @@ impl TimerJobItem for LegacyUserEventBatch {
 
         let response = user_canister_c2c_client::c2c_community_canister(
             self.key.canister_id(),
-            &user_canister::c2c_community_canister::Args {
-                user_id: self.key,
-                events: self.items.clone(),
-            },
+            &user_canister::c2c_community_canister::Args::new(self.key, self.items.clone()),
         )
         .await;
 

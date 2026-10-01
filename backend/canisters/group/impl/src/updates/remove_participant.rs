@@ -10,7 +10,7 @@ use local_user_index_canister_c2c_client::lookup_user;
 use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
 use types::{BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, OCResult, UnitResult, UserId};
-use user_canister::c2c_remove_from_group;
+use user_canister::{GroupCanisterEvent, RemovedFromGroup, c2c_remove_from_group};
 
 #[update(msgpack = true)]
 #[trace]
@@ -145,7 +145,9 @@ fn commit(user_to_remove: UserId, block: bool, remove: bool, caller: Caller, sta
     handle_activity_notification(state);
 
     if remove {
-        // Fire-and-forget call to notify the user canister
+        // Fire-and-forget call to notify the user canister, kept for User canisters which don't yet know
+        // of the event below
+        // TODO: Remove this once every User canister has been upgraded
         remove_membership_from_user_canister(
             user_to_remove,
             agent,
@@ -153,6 +155,22 @@ fn commit(user_to_remove: UserId, block: bool, remove: bool, caller: Caller, sta
             state.data.chat.name.value.clone(),
             state.data.chat.is_public.value,
             &mut state.data.fire_and_forget_handler,
+        );
+
+        // The user's canister is also told via the queue of events for users, which keeps them in order
+        // and sends them on to the user's new id if they've been migrated to a MultiUser canister, so
+        // the removal isn't lost if their canister is frozen for the migration. Whichever of the two
+        // arrives second does nothing.
+        let now = state.env.now();
+        state.push_event_to_user(
+            user_to_remove,
+            GroupCanisterEvent::RemovedFromGroup(Box::new(RemovedFromGroup {
+                removed_by: agent,
+                blocked: block,
+                group_name: state.data.chat.name.value.clone(),
+                public: state.data.chat.is_public.value,
+            })),
+            now,
         );
     }
 

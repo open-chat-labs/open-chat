@@ -3308,12 +3308,12 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
 
     // Only a group Bob is in can send him events. Those from any other caller are dropped.
     let now = now_millis(env);
-    let achievement_event = |id, achievement| user_canister::c2c_group_canister_v2::Args {
-        events: vec![IdempotentEnvelope {
+    let achievement_event = |id, achievement| {
+        user_canister::c2c_group_canister_v2::Args::new(vec![IdempotentEnvelope {
             created_at: now,
             idempotency_id: id,
             value: (bob_id, user_canister::GroupCanisterEvent::Achievement(achievement)),
-        }],
+        }])
     };
     client::user::c2c_group_canister_v2(
         env,
@@ -4635,9 +4635,10 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         env,
         group2.into(),
         canister_id,
-        &user_canister::c2c_group_canister_v2::Args {
-            events: vec![paired(alice_id, achievement(1)), paired(bob_id, achievement(2))],
-        },
+        &user_canister::c2c_group_canister_v2::Args::new(vec![
+            paired(alice_id, achievement(1)),
+            paired(bob_id, achievement(2)),
+        ]),
     );
     assert!(!has_achievement(
         &initial_state(env, alice, canister_id),
@@ -4658,12 +4659,10 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         env,
         community.into(),
         canister_id,
-        &user_canister::c2c_community_canister_v2::Args {
-            events: vec![
-                paired(alice_id, community_achievement(1)),
-                paired(bob_id, community_achievement(2)),
-            ],
-        },
+        &user_canister::c2c_community_canister_v2::Args::new(vec![
+            paired(alice_id, community_achievement(1)),
+            paired(bob_id, community_achievement(2)),
+        ]),
     );
     assert!(!has_achievement(
         &initial_state(env, alice, canister_id),
