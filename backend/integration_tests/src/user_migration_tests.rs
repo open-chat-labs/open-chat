@@ -1029,6 +1029,111 @@ fn blocked_user_pairs_are_moved_onto_a_migrated_users_new_id() {
     assert_eq!(recipients, vec![user2.user_id]);
 }
 
+// A removal is sent to the user's canister via the group's or community's queue of events for users,
+// so one made while they're being migrated, while their old canister is frozen, reaches them in their
+// new one rather than being dropped
+#[test_case(false; "group")]
+#[test_case(true; "community")]
+fn user_removed_while_being_migrated_is_removed_in_their_new_canister(community: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+    let chat: CanisterId = if community {
+        let community_id =
+            client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
+        client::community::happy_path::join_community(env, user.principal, community_id);
+        community_id.into()
+    } else {
+        let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+        client::group::happy_path::join_group(env, user.principal, group_id);
+        group_id.into()
+    };
+    tick_many(env, 5);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_until(env, |env| {
+        matches!(
+            user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+            Some(UserMigrationStatus::Started { .. })
+        )
+    });
+
+    // The user is removed while their old canister is frozen
+    if community {
+        let response = client::community::remove_member(
+            env,
+            owner.principal,
+            chat,
+            &community_canister::remove_member::Args { user_id: user.user_id },
+        );
+        assert!(
+            matches!(response, community_canister::remove_member::Response::Success),
+            "{response:?}"
+        );
+    } else {
+        let response = client::group::remove_participant(
+            env,
+            owner.principal,
+            chat,
+            &group_canister::remove_participant::Args { user_id: user.user_id },
+        );
+        assert!(
+            matches!(response, group_canister::remove_participant::Response::Success),
+            "{response:?}"
+        );
+    }
+    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user.user_id);
+
+    // The group or community retries the removal until the old canister is gone, then sends it on
+    let user = User {
+        user_id: new_user_id,
+        local_user_index,
+        ..user
+    };
+    let still_member = |env: &PocketIc| {
+        let state = client::user::happy_path::initial_state(env, &user);
+        state
+            .group_chats
+            .summaries
+            .iter()
+            .any(|g| CanisterId::from(g.chat_id) == chat)
+            || state
+                .communities
+                .summaries
+                .iter()
+                .any(|c| CanisterId::from(c.community_id) == chat)
+    };
+    for _ in 0..20 {
+        if !still_member(env) {
+            break;
+        }
+        env.advance_time(Duration::from_secs(60));
+        tick_many(env, 5);
+    }
+    assert!(
+        !still_member(env),
+        "The user is still in the {}",
+        if community { "community" } else { "group" }
+    );
+}
+
 #[test]
 fn migrated_user_is_not_rewarded_again_to_their_referrer() {
     let mut wrapper = ENV.deref().get();
