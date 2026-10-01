@@ -180,9 +180,9 @@ fn remove_gate_unlapses_members(container_type: ContainerType) {
     // Remove the gate
     update_container_gate(env, owner.principal, &container, None);
 
+    // Members are unlapsed a batch at a time by a timer job
     for user in users.iter() {
-        // Assert that users are no longer lapsed
-        assert!(!has_user_lapsed(env, user, &container));
+        wait_for_user_to_unlapse(env, user, &container);
     }
 
     // Assert that users marked as unlapsed in updates query
@@ -595,6 +595,16 @@ fn wait_for_user_to_lapse(env: &mut PocketIc, user: &User, container: &Container
         env.tick();
     }
     panic!("User {} did not lapse from {container:?}", user.user_id);
+}
+
+fn wait_for_user_to_unlapse(env: &mut PocketIc, user: &User, container: &Container) {
+    for _ in 0..30 {
+        if !has_user_lapsed(env, user, container) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("User {} did not unlapse from {container:?}", user.user_id);
 }
 
 fn has_user_lapsed(env: &mut PocketIc, user: &User, container: &Container) -> bool {
