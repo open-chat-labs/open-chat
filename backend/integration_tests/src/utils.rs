@@ -1,4 +1,4 @@
-use crate::client;
+use crate::{User, client};
 use candid::Principal;
 use constants::{
     CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE,
@@ -7,7 +7,7 @@ use pocket_ic::PocketIc;
 use rand::{RngExt, SeedableRng, rngs::StdRng};
 use std::time::{Duration, SystemTime};
 use std::{path::PathBuf, time::UNIX_EPOCH};
-use types::{CanisterId, Hash, HttpRequest, HttpResponse, TimestampMillis, TimestampNanos, TokenInfo};
+use types::{CanisterId, Hash, HttpRequest, HttpResponse, TimestampMillis, TimestampNanos, TokenInfo, UserId};
 
 pub fn principal_to_username(principal: Principal) -> String {
     principal.to_string()[0..5].to_string()
@@ -95,6 +95,21 @@ pub fn wait_for_canister_to_be_deleted(env: &mut PocketIc, canister_id: Canister
         }
     }
     panic!("Canister {canister_id} was not deleted");
+}
+
+// Ticks until the user's canister lists their direct chat with `them`, ie. the first message sent in
+// it has been delivered. This can take many rounds, since a newly created User canister periodically
+// takes around 10 rounds to handle its first message (seemingly while the wasm is compiled on its
+// subnet), a number which grows with the size of the wasm.
+pub fn wait_for_direct_chat(env: &mut PocketIc, user: &User, them: UserId) {
+    for _ in 0..30 {
+        let initial_state = client::user::happy_path::initial_state(env, user);
+        if initial_state.direct_chats.summaries.iter().any(|c| c.them == them) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("User {} did not receive the message from user {them}", user.user_id);
 }
 
 pub fn metrics(env: &PocketIc, canister_id: CanisterId) -> serde_json::Value {
