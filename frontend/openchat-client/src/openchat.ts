@@ -2017,11 +2017,11 @@ export class OpenChat {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
-        const spender = entity.kind === "group_chat" ? entity.id.groupId : entity.id.communityId;
+        const canisterId = entity.kind === "group_chat" ? entity.id.groupId : entity.id.communityId;
 
         const results = await Promise.all(
             [...approvals.entries()].map(([ledger, approval]) =>
-                this.approveAccessGatePayment(spender, ledger, approval, pin),
+                this.approveAccessGatePayment(canisterId, ledger, approval, pin),
             ),
         );
 
@@ -2103,16 +2103,17 @@ export class OpenChat {
             });
     }
 
+    // Approves the group or community (`canisterId`) to pull the gate's payment when the user joins
     async approveAccessGatePayment(
-        spender: string,
+        canisterId: string,
         ledger: string,
         { amount, approvalFee }: PaymentGateApproval,
         pin: string | undefined,
     ): Promise<ApproveAccessGatePaymentResponse> {
         return this.#worker
             .send({
-                kind: "approveTransfer",
-                spender,
+                kind: "approveAccessGatePayment",
+                canisterId,
                 ledger,
                 amount: amount - approvalFee, // The user should pay only the amount not amount+fee so it is a round number
                 expiresIn: BigInt(5 * ONE_MINUTE_MILLIS), // Allow 5 mins for the join_group call before the approval expires

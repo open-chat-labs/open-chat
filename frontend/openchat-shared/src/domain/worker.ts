@@ -452,6 +452,7 @@ export type WorkerRequest =
     | SwapTokens
     | TokenSwapStatus
     | ApproveTransfer
+    | ApproveAccessGatePayment
     | DeleteDirectChat
     | GetDiamondMembershipFees
     | GetReportedMessages
@@ -2355,6 +2356,15 @@ type ApproveTransfer = {
     kind: "approveTransfer";
 };
 
+type ApproveAccessGatePayment = {
+    canisterId: string;
+    ledger: string;
+    amount: bigint;
+    expiresIn: bigint;
+    pin: string | undefined;
+    kind: "approveAccessGatePayment";
+};
+
 type DeclineInvitation = {
     chatId: MultiUserChatIdentifier;
     kind: "declineInvitation";
@@ -2784,6 +2794,8 @@ export type WorkerResult<T> = T extends Init
     : T extends ReportMessage
     ? boolean
     : T extends ApproveTransfer
+    ? ApproveTransferResponse
+    : T extends ApproveAccessGatePayment
     ? ApproveTransferResponse
     : T extends DeclineInvitation
     ? DeclineInvitationResponse
