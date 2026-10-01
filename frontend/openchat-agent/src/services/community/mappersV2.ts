@@ -14,6 +14,8 @@ import type {
     ExploreChannelsResponse,
     GroupMembershipUpdates,
     ImportGroupResponse,
+    LookupMembersResponse,
+    Member,
     MemberRole,
     UpdateCommunityResponse,
     UserFailedError,
@@ -23,7 +25,6 @@ import {
     CommonResponses,
     emptyRules,
     ROLE_ADMIN,
-    ROLE_MEMBER,
     ROLE_MODERATOR,
     ROLE_OWNER,
     toBigInt32,
@@ -38,12 +39,14 @@ import type {
     CommunityCreateUserGroupSuccessResult,
     CommunityExploreChannelsResponse,
     CommunityImportGroupSuccessResult,
+    CommunityLookupMembersResponse,
     CommunitySelectedInitialResponse,
     CommunitySelectedUpdatesResponse,
     CommunityUpdateCommunitySuccessResult,
     ChannelMatch as TChannelMatch,
     CommunityCanisterChannelSummaryUpdates as TCommunityCanisterChannelSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates as TCommunityCanisterCommunitySummaryUpdates,
+    CommunityMember as TCommunityMember,
     CommunityMembershipUpdates as TCommunityMembershipUpdates,
     CommunityRole as TCommunityRole,
     CommunitySummaryResponse as TCommunitySummaryResponse,
@@ -54,9 +57,11 @@ import type {
     UserGroupDetails as TUserGroupDetails,
 } from "../../typebox";
 import { identity, mapOptional, optionUpdateV2, principalBytesToString } from "../../utils/mapping";
+import type { ApiPrincipal } from "../index";
 import {
     accessGateConfig,
     apiCommunityPermissionRole,
+    basicMember,
     chatMetrics,
     communityChannelSummary,
     communityPermissions,
@@ -64,6 +69,7 @@ import {
     groupPermissions,
     groupSubtype,
     installedBotDetails,
+    mapResult,
     memberRole,
     mentions,
     messageEvent,
@@ -363,21 +369,11 @@ export function communityDetailsResponse(
     if (typeof value === "object" && "Success" in value) {
         return {
             kind: "success",
-            members: value.Success.members
-                .map((m) => ({
-                    role: memberRole(m.role),
-                    userId: principalBytesToString(m.user_id),
-                    displayName: m.display_name,
-                    lapsed: m.lapsed ?? false,
-                }))
-                .concat(
-                    value.Success.basic_members?.map((id) => ({
-                        role: ROLE_MEMBER,
-                        userId: principalBytesToString(id),
-                        displayName: undefined,
-                        lapsed: false,
-                    })) ?? [],
-                ),
+            members: communityMembers(value.Success.members, value.Success.basic_members),
+            moreMembersAfter: mapOptional(
+                value.Success.more_members_after,
+                principalBytesToString,
+            ),
             blockedUsers: new Set(value.Success.blocked_users?.map(principalBytesToString) ?? []),
             invitedUsers: new Set(value.Success.invited_users?.map(principalBytesToString) ?? []),
             rules: value.Success.chat_rules ?? emptyRules(),
@@ -390,6 +386,32 @@ export function communityDetailsResponse(
         console.warn("CommunityDetails failed with", value);
         return { kind: "failure" };
     }
+}
+
+function communityMember(value: TCommunityMember): Member {
+    return {
+        role: memberRole(value.role),
+        userId: principalBytesToString(value.user_id),
+        displayName: value.display_name,
+        lapsed: value.lapsed ?? false,
+    };
+}
+
+// The members of a community, of whom those whose details are all the defaults are returned as
+// just their ids
+function communityMembers(full: TCommunityMember[], basic: ApiPrincipal[] | undefined): Member[] {
+    return full
+        .map(communityMember)
+        .concat(basic?.map((id) => basicMember(principalBytesToString(id))) ?? []);
+}
+
+export function lookupCommunityMembersResponse(
+    value: CommunityLookupMembersResponse,
+): LookupMembersResponse {
+    return mapResult(value, (success) => ({
+        kind: "success",
+        members: success.members.map(communityMember),
+    }));
 }
 
 export function userGroupDetails(value: TUserGroupDetails): [number, UserGroupDetails] {
@@ -411,12 +433,8 @@ export function communityDetailsUpdatesResponse(
         if ("Success" in value) {
             return {
                 kind: "success",
-                membersAddedOrUpdated: value.Success.members_added_or_updated?.map((m) => ({
-                    role: memberRole(m.role),
-                    userId: principalBytesToString(m.user_id),
-                    displayName: m.display_name,
-                    lapsed: m.lapsed ?? false,
-                })) ?? [],
+                membersAddedOrUpdated:
+                    value.Success.members_added_or_updated?.map(communityMember) ?? [],
                 membersRemoved: new Set(value.Success.members_removed?.map(principalBytesToString) ?? []),
                 blockedUsersAdded: new Set(
                     value.Success.blocked_users_added?.map(principalBytesToString) ?? [],

@@ -26,6 +26,7 @@ import {
     ICP_SYMBOL,
     IdentityStorage,
     LARGE_GROUP_THRESHOLD,
+    MEMBERS_PAGE_SIZE,
     LEDGER_CANISTER_CHAT,
     LazyFile,
     MessageContextMap,
@@ -475,6 +476,7 @@ import {
 import { botState } from "./state/bots.svelte";
 import { ChatDetailsState } from "./state/chat/serverDetails";
 import { CommunityDetailsState } from "./state/community/server";
+import type { HeldMembers } from "./state/members";
 import type { UndoLocalUpdate } from "./state/undo";
 import { messagesRead, startMessagesReadTracker } from "./state/unread/markRead";
 import { userStore } from "./state/users/state";
@@ -606,7 +608,7 @@ import { getErc20TokenBalances, type Erc20TokenBalance } from "./utils/evm";
 import formatFileSize from "./utils/fileSize";
 import { gaTrack } from "./utils/ga";
 import { calculateMediaDimensions } from "./utils/layout";
-import { groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
+import { chunk, groupBy, groupWhile, keepMax, partition, toRecord, toRecord2 } from "./utils/list";
 import { getUserCountryCode } from "./utils/location";
 import {
     DIAMOND_MAX_SIZES,
@@ -693,6 +695,10 @@ function describeError(err: unknown): string {
     }
 }
 
+// The users who are known not to be members of the chat or community with this key, or who are
+// being looked up among its members, so that they aren't looked up again
+type MemberLookups = { key: string | undefined; userIds: Set<string> };
+
 export class OpenChat {
     #mobileLayout: "v1" | "v2";
     #worker: WorkerAgent;
@@ -719,6 +725,13 @@ export class OpenChat {
     #currentUserIdChangedPublished = false;
     #referralCode: string | undefined = undefined;
     #userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
+    #communityMemberLookups: MemberLookups = { key: undefined, userIds: new Set() };
+    #chatMemberLookups: MemberLookups = { key: undefined, userIds: new Set() };
+    // The users who have appeared in the events loaded of the chat with this key
+    #usersSeenInChat: { key: string | undefined; userIds: Set<string> } = {
+        key: undefined,
+        userIds: new Set(),
+    };
     #chatsPoller: Poller | undefined = undefined;
     #stopWatchingForResume: (() => void) | undefined = undefined;
     readonly #syncPuller: SyncPuller;
@@ -3081,7 +3094,7 @@ export class OpenChat {
             resp.expiredEventRanges,
         );
 
-        await this.#updateUserStoreFromEvents(resp.events);
+        await this.#updateUserStoreFromEvents(chat.id, resp.events);
 
         if (!get(offlineStore)) {
             makeRtcConnections(
@@ -3105,7 +3118,144 @@ export class OpenChat {
         selectedCommunityBlockedUsersStore.value.forEach((u) => allUserIds.add(u));
         selectedCommunityInvitedUsersStore.value.forEach((u) => allUserIds.add(u));
         selectedCommunityReferralsStore.value.forEach((u) => allUserIds.add(u));
+        this.#lookupMembersSeen();
         await this.getMissingUsers(allUserIds);
+    }
+
+    // A chat or community with more members than are loaded at once has only some of them held. So
+    // the current user, and the users who have appeared in the events loaded of the selected chat,
+    // are looked up among the members of the chat and of its community if they aren't held, so that
+    // what is shown of them (a community display name, say) is right.
+    #lookupMembersSeen(): void {
+        const chatId = selectedChatIdStore.value;
+        const seen =
+            chatId !== undefined && this.#usersSeenInChat.key === chatIdentifierToString(chatId)
+                ? this.#usersSeenInChat.userIds
+                : new Set<string>();
+        const community = selectedServerCommunityStore.value;
+        if (
+            community?.moreMembersAfter !== undefined &&
+            communityIdentifiersEqual(community.communityId, selectedCommunityIdStore.value)
+        ) {
+            const inCommunity =
+                chatId?.kind === "channel" &&
+                chatId.communityId === community.communityId.communityId;
+            void this.#lookupMembers(
+                community.communityId,
+                community,
+                this.#communityMemberLookups,
+                inCommunity ? seen : [],
+            );
+        }
+        const chat = selectedServerChatStore.value;
+        if (
+            chat?.moreMembersAfter !== undefined &&
+            chat.chatId.kind !== "direct_chat" &&
+            chatIdentifiersEqual(chat.chatId, chatId)
+        ) {
+            void this.#lookupMembers(chat.chatId, chat, this.#chatMemberLookups, seen);
+        }
+    }
+
+    #noteUsersSeenInChat(chatId: ChatIdentifier, userIds: Iterable<string>): void {
+        // Events which arrive once another chat has been selected are left out
+        if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
+            return;
+        }
+        const key = chatIdentifierToString(chatId);
+        if (this.#usersSeenInChat.key !== key) {
+            this.#usersSeenInChat = { key, userIds: new Set() };
+        }
+        for (const userId of userIds) {
+            this.#usersSeenInChat.userIds.add(userId);
+        }
+    }
+
+    // Looks up the current user and those seen among the members, other than those who are held or
+    // are known not to be members
+    async #lookupMembers(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        held: HeldMembers,
+        lookups: MemberLookups,
+        seen: Iterable<string>,
+    ): Promise<void> {
+        const key = id.kind === "community" ? id.communityId : chatIdentifierToString(id);
+        if (lookups.key !== key) {
+            lookups.key = key;
+            lookups.userIds = new Set();
+        }
+        const noted = lookups.userIds;
+        const candidates = new Set<string>();
+        // The current user comes first, since what is shown of them matters most to them
+        if (!anonUserStore.value) {
+            candidates.add(currentUserIdStore.value);
+        }
+        for (const userId of seen) {
+            candidates.add(userId);
+        }
+        const toLookUp: string[] = [];
+        for (const userId of candidates) {
+            if (held.members.has(userId) || held.lapsedMembers.has(userId) || noted.has(userId)) {
+                continue;
+            }
+            // Each is noted before it is sent, so that another call in the meantime doesn't send it
+            // too. A user id which isn't valid (from a mention which someone typed, say) would fail
+            // the whole lookup, so it is noted as not a member without being sent.
+            noted.add(userId);
+            if (isPrincipalValid(userId)) {
+                toLookUp.push(userId);
+            }
+        }
+
+        // The lookups only go to a replica which has reached the details held
+        const asOf = held.timestamp;
+        for (const batch of chunk(toLookUp, MEMBERS_PAGE_SIZE)) {
+            if (lookups.userIds !== noted) {
+                // Another chat or community has been selected since
+                return;
+            }
+            const resp = await this.#worker
+                .send({ kind: "lookupMembers", id, userIds: batch, latestKnownUpdate: asOf })
+                .catch(CommonResponses.failure);
+            if (resp.kind === "success") {
+                // Those who are members are held from now on, so only those who aren't are kept
+                // here. Then a member is looked up again if the details are replaced by some which
+                // don't hold them, as they are if the details have been updated since the lookup.
+                for (const member of resp.members) {
+                    noted.delete(member.userId);
+                }
+                this.#addLookedUpMembers(id, resp.members, asOf);
+            } else {
+                // So that they are looked up again when they are next seen
+                batch.forEach((u) => noted.delete(u));
+            }
+        }
+    }
+
+    // Adds members who have been looked up to the details of the selected chat or community, if that
+    // is still the one selected
+    #addLookedUpMembers(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        members: Member[],
+        asOf: bigint,
+    ): void {
+        if (id.kind === "community") {
+            const details = selectedServerCommunityStore.value;
+            if (details !== undefined && communityIdentifiersEqual(details.communityId, id)) {
+                const updated = details.withLookedUpMembers(members, asOf);
+                if (updated !== undefined) {
+                    selectedServerCommunityStore.set(updated);
+                }
+            }
+        } else {
+            const details = selectedServerChatStore.value;
+            if (details !== undefined && chatIdentifiersEqual(details.chatId, id)) {
+                const updated = details.withLookedUpMembers(members, asOf);
+                if (updated !== undefined) {
+                    selectedServerChatStore.set(updated);
+                }
+            }
+        }
     }
 
     // We create add a limited subset of the members to the userstore for performance reasons.
@@ -3117,7 +3267,10 @@ export class OpenChat {
         return [...elevated, ...rest];
     }
 
-    async #updateUserStoreFromEvents(events: EventWrapper<ChatEvent>[]): Promise<void> {
+    async #updateUserStoreFromEvents(
+        chatId: ChatIdentifier,
+        events: EventWrapper<ChatEvent>[],
+    ): Promise<void> {
         const userId = currentUserIdStore.value;
         const allUserIds = new Set<string>();
         this.#getTruncatedUserIdsFromMembers([...selectedChatMembersStore.value.values()]).forEach(
@@ -3129,6 +3282,7 @@ export class OpenChat {
         for (const u of userIds) {
             allUserIds.add(u);
         }
+        this.#noteUsersSeenInChat(chatId, userIds);
         userStore.addWebhookIds([...webhooks]);
         const newChatUserIds = [...allUserIds].filter(
             (u) => u !== userId && !selectedChatUserIdsStore.value.has(u),
@@ -3139,6 +3293,7 @@ export class OpenChat {
                 return set;
             });
         }
+        this.#lookupMembersSeen();
         await this.getMissingUsers(allUserIds);
     }
 
@@ -4076,6 +4231,7 @@ export class OpenChat {
                         resp.referrals,
                         resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
                         resp.rules,
+                        resp.moreMembersAfter,
                     ),
                 );
                 this.#updateUserStoreFromCommunityState();
@@ -4166,9 +4322,10 @@ export class OpenChat {
                             resp.bots.reduce((all, b) => all.set(b.id, b.permissions), new Map()),
                             new Map(resp.webhooks.map((w) => [w.id, w])),
                             resp.rules,
+                            resp.moreMembersAfter,
                         ),
                     );
-                    await this.#updateUserStoreFromEvents([]);
+                    await this.#updateUserStoreFromEvents(serverChat.id, []);
                 }
                 break;
             case "direct_chat":
@@ -6597,7 +6754,7 @@ export class OpenChat {
                 .catch(CommonResponses.failure);
 
             if (isSuccessfulEventsResponse(resp)) {
-                await this.#updateUserStoreFromEvents(resp.events);
+                await this.#updateUserStoreFromEvents(chatId, resp.events);
             }
             return resp;
         } catch {
@@ -7122,6 +7279,17 @@ export class OpenChat {
                         localUpdates.isPreviewingCommunity(community.id)
                     ) {
                         localUpdates.removeCommunityPreview(community.id);
+                    }
+                }
+            }
+
+            // Likewise drop any group / channel previews for chats we are now a member of
+            // (e.g. one we were viewing anonymously before logging in), otherwise the preview
+            // takes precedence over the server summary and we keep showing "Join"
+            if (localUpdates.groupChatPreviews.value.size > 0) {
+                for (const chat of chatsAddedUpdated) {
+                    if (chat.kind !== "direct_chat" && !isPreviewing(chat)) {
+                        localUpdates.removeGroupPreview(chat.id);
                     }
                 }
             }

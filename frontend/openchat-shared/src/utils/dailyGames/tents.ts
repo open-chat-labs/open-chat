@@ -5,7 +5,7 @@
 // Grid: width*height bytes row-major, 1 = tent, 0 = no tent (trees are 0). Cell key = y*width+x.
 // Conclusion values: 1 = tent, 0 = grass.
 
-import type { DailyGame, GameElement, Violation } from "./types";
+import type { DailyGame, GameElement, HintCaption, HintStep, Violation } from "./types";
 
 export const TENTS_GAME_ID = "tents";
 
@@ -278,6 +278,76 @@ function toViolations(
     return out;
 }
 
+/**
+ * The sentence for a served step, naming the row or column it is about, or the trees and tents
+ * it rests on. The step's target is its subject (the solid outline) and the rest of its focus
+ * that takes a mark is what it asks for (the ? cells). A row or column step carries that line's
+ * count key in its target, which says which line it is. Undefined for a step with no target,
+ * which then gets the technique's fixed sentence: the server withholds a target that names a
+ * concluded key, which only a puzzle generated before these sentences has.
+ */
+export function hintCaption(
+    desc: TentsDescription,
+    grid: TentsCell[],
+    step: HintStep,
+): HintCaption | undefined {
+    const n = desc.width * desc.height;
+    const target = new Set(step.target);
+    if (target.size === 0) return undefined;
+    const asked = step.focus.filter(
+        (k) => !target.has(k) && k < n && !desc.trees[k] && grid[k] === "",
+    );
+    switch (step.technique) {
+        case 1: {
+            // NoFreeTree: the target is the ? cell's neighbours, whose trees all have their tents
+            const count = step.target.filter((k) => k < n && desc.trees[k]).length;
+            if (count === 0) return { key: "hint.noFreeTree.none" };
+            if (count === 1) return { key: "hint.noFreeTree.one" };
+            return { key: "hint.noFreeTree.many", params: { count } };
+        }
+        case 2:
+            // TentTouches: the target is the tents the ? cell touches
+            return {
+                key: step.target.length === 1 ? "hint.tentTouches.one" : "hint.tentTouches.many",
+            };
+        case 3:
+            return { key: "hint.treeNeedsTent" };
+        case 4:
+            return { key: "hint.treeCorner" };
+        case 5:
+        case 6:
+        case 7:
+        case 8: {
+            const countKey = step.target.find((k) => k >= n);
+            if (countKey === undefined) return undefined;
+            const row = countKey < n + desc.height;
+            const kind = row ? "row" : "column";
+            const index = row ? countKey - n : countKey - n - desc.height;
+            const line = index + 1;
+            const count = row ? desc.rowCounts[index] : desc.columnCounts[index];
+            switch (step.technique) {
+                case 5:
+                    return { key: `hint.lineCount.${kind}`, params: { line, count } };
+                case 6:
+                    return { key: `hint.lineNeighbour.${kind}`, params: { line, count } };
+                case 7:
+                    if (asked.length === 0) return undefined;
+                    return asked.length === 1
+                        ? { key: `hint.lineExact.${kind}One`, params: { line } }
+                        : {
+                              key: `hint.lineExact.${kind}`,
+                              params: { line, missing: asked.length },
+                          };
+                default:
+                    return count === 0
+                        ? { key: `hint.lineFull.${kind}Zero`, params: { line } }
+                        : { key: `hint.lineFull.${kind}`, params: { line, count } };
+            }
+        }
+    }
+    return undefined;
+}
+
 export const tents: DailyGame<TentsDescription, TentsCell[]> = {
     id: TENTS_GAME_ID,
     parse: parseDescription,
@@ -329,4 +399,5 @@ export const tents: DailyGame<TentsDescription, TentsCell[]> = {
         });
         return out;
     },
+    hintCaption,
 };

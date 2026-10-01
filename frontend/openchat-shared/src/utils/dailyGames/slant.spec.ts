@@ -4,6 +4,7 @@ import {
     cycleCell,
     emptyGrid,
     fromGridBytes,
+    hintCaption,
     isSolved,
     parseDescription,
     slant,
@@ -13,6 +14,7 @@ import {
     type SlantCell,
     type SlantDescription,
 } from "./slant";
+import fixture from "./slantHints.json";
 
 // Vertex rows of (w+1) characters, (h+1) rows: '.' no clue, '0'-'4' a clue.
 function descBytes(rows: string[]): number[] {
@@ -273,4 +275,161 @@ describe("slant DailyGame", () => {
     test("has no derived highlight", () => {
         expect(slant.lit).toBeUndefined();
     });
+});
+
+// Invariant 24: every step of a generated trace, as the server serves it, gets a sentence, and
+// what it names is so on the board before the step: the clue's number, the lines it has and
+// needs, the corners a line in the outlined cell would join, the filled cell it copies. The
+// fixture is written by the Rust test `write_hint_fixture` from real generated puzzles.
+describe("hint sentences", () => {
+    const bytes = (hex: string) => Uint8Array.from(hex.match(/../g)!.map((b) => parseInt(b, 16)));
+
+    for (const [p, entry] of fixture.entries()) {
+        test(`puzzle ${p}: every step says what it is about`, () => {
+            const d = parseDescription(bytes(entry.description));
+            const w = d.width;
+            const n = w * d.height;
+            const vw = w + 1;
+            const corners = (i: number, v: number) => {
+                const x = i % w;
+                const y = Math.floor(i / w);
+                return v === 1
+                    ? [y * vw + x, (y + 1) * vw + x + 1]
+                    : [y * vw + x + 1, (y + 1) * vw + x];
+            };
+            const round = (vk: number) =>
+                vertexNeighbours(d, (vk - n) % vw, Math.floor((vk - n) / vw));
+            // Corners joined by lines on the board, walked out from `a`
+            const joined = (grid: SlantCell[], a: number, b: number) => {
+                const reached = new Set([a]);
+                let grew = true;
+                while (grew) {
+                    grew = false;
+                    grid.forEach((v, i) => {
+                        if (v === 0) return;
+                        const [x, y] = corners(i, v);
+                        if (reached.has(x) !== reached.has(y)) {
+                            reached.add(x).add(y);
+                            grew = true;
+                        }
+                    });
+                }
+                return reached.has(b);
+            };
+
+            let grid = emptyGrid(d);
+            for (const [i, step] of entry.steps.entries()) {
+                const concluded = step.conclusions.map(([k]) => k);
+                // hint_at_level in the LocalUserIndex: the target is sent only when it names no
+                // concluded key, and the conclusions are never sent
+                const target = step.target.some((k) => concluded.includes(k)) ? [] : step.target;
+                const caption = hintCaption(d, grid, {
+                    technique: step.technique,
+                    focus: step.focus,
+                    target,
+                });
+                const where = `step ${i} (technique ${step.technique})`;
+                expect(caption, where).toBeDefined();
+                const { key, params = {} } = caption!;
+
+                if (
+                    key.startsWith("hint.satisfied") ||
+                    key.startsWith("hint.forced") ||
+                    key.startsWith("hint.paired")
+                ) {
+                    const vk = target.find((k) => k >= n)!;
+                    expect(params.clue, where).toBe(d.clues[vk - n]);
+                    const pair = target.filter((k) => k < n);
+                    const cells = round(vk).filter(([j]) => !pair.includes(j));
+                    const towards = (k: number, v: number) =>
+                        cells.some(([j, s]) => j === k && s === v);
+                    const away = (k: number, v: number) =>
+                        cells.some(([j, s]) => j === k && s !== v);
+                    const lines = cells.filter(([j, s]) => grid[j] === s).length;
+                    const open = cells.filter(([j]) => grid[j] === 0).length;
+                    expect(concluded.length, where).toBe(open);
+                    if (key.startsWith("hint.satisfied")) {
+                        expect(lines, where).toBe(params.clue);
+                        expect(key === "hint.satisfied.zero", where).toBe(params.clue === 0);
+                        expect(
+                            step.conclusions.every(([k, v]) => away(k, v)),
+                            where,
+                        ).toBe(true);
+                    } else if (key.startsWith("hint.forced")) {
+                        expect(
+                            step.conclusions.every(([k, v]) => towards(k, v)),
+                            where,
+                        ).toBe(true);
+                        if (key === "hint.forced.all")
+                            expect(cells.length, where).toBe(params.clue);
+                        if (key === "hint.forced.one") expect(open, where).toBe(1);
+                        if (key === "hint.forced.many") expect(params.needed, where).toBe(open);
+                    } else {
+                        expect(pair.length, where).toBe(2);
+                        expect(
+                            pair.every((k) => round(vk).some(([j]) => j === k)),
+                            where,
+                        ).toBe(true);
+                        expect(
+                            pair.every((k) => grid[k] === 0 && !concluded.includes(k)),
+                            where,
+                        ).toBe(true);
+                        const [a, b] = pair;
+                        const apart =
+                            Math.abs((a % w) - (b % w)) +
+                            Math.abs(Math.floor(a / w) - Math.floor(b / w));
+                        expect(apart, where).toBe(1);
+                        if (key === "hint.paired.away") {
+                            expect(lines + 1, where).toBe(params.clue);
+                            expect(
+                                step.conclusions.every(([k, v]) => away(k, v)),
+                                where,
+                            ).toBe(true);
+                        } else {
+                            expect(key, where).toBe("hint.paired.towards");
+                            expect(params.needed, where).toBe(open);
+                            expect(lines + 1 + open, where).toBe(params.clue);
+                            expect(
+                                step.conclusions.every(([k, v]) => towards(k, v)),
+                                where,
+                            ).toBe(true);
+                        }
+                    }
+                } else if (key.startsWith("hint.loop.") || key.startsWith("hint.deadEnd.")) {
+                    expect(step.conclusions.length, where).toBe(1);
+                    const [cell, value] = step.conclusions[0];
+                    // The outlined cell is the one still open in the focus
+                    expect(
+                        step.focus.filter((k) => k < n && grid[k] === 0),
+                        where,
+                    ).toEqual([cell]);
+                    const named = key.endsWith(".backslash") ? 1 : 2;
+                    expect(named, where).not.toBe(value);
+                    const [a, b] = corners(cell, named);
+                    if (key.startsWith("hint.loop.")) {
+                        expect(joined(grid, a, b), where).toBe(true);
+                    } else {
+                        expect(joined(grid, a, b), where).toBe(false);
+                        expect(
+                            step.focus.includes(n + a) && step.focus.includes(n + b),
+                            where,
+                        ).toBe(true);
+                    }
+                } else if (key === "hint.equivalent") {
+                    const [cell, value] = step.conclusions[0];
+                    expect(
+                        step.focus.filter((k) => k < n && grid[k] === 0),
+                        where,
+                    ).toEqual([cell]);
+                    const tied = ((params.row as number) - 1) * w + (params.column as number) - 1;
+                    expect(step.focus.includes(tied), where).toBe(true);
+                    expect(grid[tied], where).toBe(value);
+                } else {
+                    throw new Error(`${where}: unexpected sentence ${key}`);
+                }
+
+                for (const [k, v] of step.conclusions) grid = slant.apply(d, grid, k, v);
+            }
+        });
+    }
 });

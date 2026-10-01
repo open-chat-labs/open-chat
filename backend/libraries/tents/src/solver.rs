@@ -78,12 +78,13 @@ pub(crate) fn solve(st: &mut State, tier: Tier, mut rec: Option<&mut Vec<Hint>>)
             }
             st.grid[i] = Square::NonTent;
             record(&mut rec, || {
-                let mut focus = vec![i as u16];
-                focus.extend(st.neighbours(i).map(|(_, j)| j as u16));
+                // The subject is the cell's neighbours, whose trees (if any) are all claimed; the
+                // cell itself is what the step asks for
+                let target: Vec<u16> = st.neighbours(i).map(|(_, j)| j as u16).collect();
                 Hint {
                     technique: Technique::NoFreeTree,
-                    target: vec![i as u16],
-                    focus,
+                    focus: [vec![i as u16], target.clone()].concat(),
+                    target,
                     conclusions: vec![(i as u16, 0)],
                 }
             });
@@ -108,15 +109,12 @@ pub(crate) fn solve(st: &mut State, tier: Tier, mut rec: Option<&mut Vec<Hint>>)
                 continue;
             }
             st.grid[i] = Square::NonTent;
-            record(&mut rec, || {
-                let mut focus = vec![i as u16];
-                focus.extend(tents);
-                Hint {
-                    technique: Technique::TentTouches,
-                    target: vec![i as u16],
-                    focus,
-                    conclusions: vec![(i as u16, 0)],
-                }
+            record(&mut rec, || Hint {
+                technique: Technique::TentTouches,
+                focus: [vec![i as u16], tents.clone()].concat(),
+                // The subject is the tents it touches; the cell is what the step asks for
+                target: tents,
+                conclusions: vec![(i as u16, 0)],
             });
             did = true;
         }
@@ -160,11 +158,19 @@ pub(crate) fn solve(st: &mut State, tier: Tier, mut rec: Option<&mut Vec<Hint>>)
                         .expect("corner of two on-grid neighbours is on the grid");
                     if st.grid[corner] == Square::Blank {
                         st.grid[corner] = Square::NonTent;
-                        record(&mut rec, || Hint {
-                            technique: Technique::TreeCorner,
-                            target: vec![corner as u16],
-                            focus: vec![i as u16, j1 as u16, j2 as u16, corner as u16],
-                            conclusions: vec![(corner as u16, 0)],
+                        record(&mut rec, || {
+                            // Every neighbour of the tree, not only its two candidates: the step
+                            // rests on the others being ruled out, and the LocalUserIndex finds
+                            // those premises through the focus (#9588)
+                            let mut focus = vec![i as u16];
+                            focus.extend(st.neighbours(i).map(|(_, k)| k as u16));
+                            focus.push(corner as u16);
+                            Hint {
+                                technique: Technique::TreeCorner,
+                                target: vec![i as u16, j1 as u16, j2 as u16],
+                                focus,
+                                conclusions: vec![(corner as u16, 0)],
+                            }
                         });
                         did = true;
                     }
@@ -335,22 +341,13 @@ fn line_count_exact(st: &mut State, line: usize, rec: &mut Option<&mut Vec<Hint>
         st.grid[pos] = sq;
     }
     record(rec, || {
-        let target: Vec<u16> = blanks.iter().map(|&pos| pos as u16).collect();
-        // A full line is about the tents already in it, so the whole line
-        // is the handle. An exact line is about the cells left, and some
-        // of those were ruled out by steps the player is never shown (the
-        // server skips steps that only cross cells off), so the whole line
-        // would show them as open and make the count look wrong (#9517
-        // invariant 3).
-        let focus = match technique {
-            Technique::LineExact => target.clone(),
-            _ => (0..len).map(|j| (start + j * step) as u16).collect(),
-        };
+        let conclusions: Vec<(u16, u8)> = blanks.iter().map(|&pos| (pos as u16, (sq == Square::Tent) as u8)).collect();
+        let (focus, target) = line_focus(st, line, &conclusions);
         Hint {
             technique,
             target,
             focus,
-            conclusions: blanks.iter().map(|&pos| (pos as u16, (sq == Square::Tent) as u8)).collect(),
+            conclusions,
         }
     });
     true
@@ -456,33 +453,49 @@ fn line_deduce(st: &mut State, tier: Tier, line: usize, rec: &mut Option<&mut Ve
 
     let did = !in_line.is_empty() || !beside.is_empty();
     if did && rec.is_some() {
-        // What the enumeration actually worked from: the squares of the
-        // line that could still take a tent. Highlighting the whole line
-        // buries them, and they are the handle the argument needs.
-        let viable: Vec<u16> = locs.iter().map(|&j| (start + j * step) as u16).collect();
         if !in_line.is_empty() {
+            let (focus, target) = line_focus(st, line, &in_line);
             record(rec, || Hint {
                 technique: Technique::LineCount,
-                target: in_line.iter().map(|&(c, _)| c).collect(),
-                focus: viable.clone(),
+                target,
+                focus,
                 conclusions: in_line,
             });
         }
         if !beside.is_empty() {
-            record(rec, || {
-                let target: Vec<u16> = beside.iter().map(|&(c, _)| c).collect();
-                let mut focus = viable;
-                focus.extend(target.iter().copied());
-                Hint {
-                    technique: Technique::LineNeighbour,
-                    target,
-                    focus,
-                    conclusions: beside,
-                }
+            let (focus, target) = line_focus(st, line, &beside);
+            record(rec, || Hint {
+                technique: Technique::LineNeighbour,
+                target,
+                focus,
+                conclusions: beside,
             });
         }
     }
     Some(did)
+}
+
+/// The hint key of a row or column's count, indexed as `numbers` is (columns first, then
+/// rows). The counts sit after the cells, rows first, as the client's `tentsRowKey` and
+/// `tentsColumnKey` number them.
+fn count_key(st: &State, line: usize) -> u16 {
+    let n = st.size();
+    (if line < st.w { n + st.h + line } else { n + line - st.w }) as u16
+}
+
+/// Focus and target for a step about a row or column's count. The focus is every cell of the
+/// line and its count, plus the concluded cells (beside the line for `LineNeighbour`): the
+/// step rests on the line's other cells already holding a tent or being ruled out, and the
+/// LocalUserIndex finds those premises through the focus (#9588). The target, the step's
+/// subject, is all of that but the concluded cells, which are what the step asks for.
+fn line_focus(st: &State, line: usize, conclusions: &[(u16, u8)]) -> (Vec<u16>, Vec<u16>) {
+    let (start, step, len) = line_span(st, line);
+    let mut target: Vec<u16> = (0..len).map(|j| (start + j * step) as u16).collect();
+    target.retain(|k| !conclusions.iter().any(|&(c, _)| c == *k));
+    target.push(count_key(st, line));
+    let mut focus = target.clone();
+    focus.extend(conclusions.iter().map(|&(c, _)| c));
+    (focus, target)
 }
 
 /// Exhaustive, independent solution count, capped. Assigns each tree a

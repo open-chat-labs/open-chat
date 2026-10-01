@@ -82,6 +82,7 @@ export function mergeCommunityDetails(
     return {
         kind: "success",
         lastUpdated: updates.lastUpdated,
+        moreMembersAfter: previous.moreMembersAfter,
         members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
             added: [],
             updated: updates.membersAddedOrUpdated,
@@ -137,6 +138,7 @@ export function mergeGroupChatDetails(
 ): GroupChatDetails {
     return {
         timestamp: updates.timestamp,
+        moreMembersAfter: previous.moreMembersAfter,
         members: mergeThings((p) => p.userId, mergeParticipants, previous.members, {
             added: [],
             updated: updates.membersAddedOrUpdated,

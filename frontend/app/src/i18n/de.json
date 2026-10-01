@@ -686,9 +686,8 @@
         "unavailable": "Zurzeit ist kein Rätsel verfügbar.",
         "startFree": "Starten (erstes Rätsel gratis)",
         "startFee": "Für {fee} CHIT starten",
-        "hintFree": "Tipp (Stufe {level})",
-        "hintPrice": "Tipp (Stufe {level}, {price} CHIT)",
         "hintsUsed": "{count} Tipps",
+        "hintCost": "Tipp ({price} CHIT)",
         "hintsLeft": "{count} übrig",
         "noHintsLeft": "Keine Tipps mehr für das heutige Rätsel",
         "streakDays": "{streak} Tage in Folge",
@@ -709,7 +708,6 @@
         "fixMistakeFirst": "Korrigieren Sie zuerst die roten Zellen",
         "noFreeChecks": "Keine kostenlosen Prüfungen mehr für das heutige Rätsel",
         "checksLeft": "{count} Prüfungen übrig",
-        "revealed": "Für Sie ausgefüllt.",
         "reset": "Zurücksetzen",
         "resetConfirm": "Das Brett leeren?",
         "replaced": "Dieses Rätsel wurde ersetzt. Hier ist das neue.",
@@ -738,6 +736,24 @@
                     "4": "Keine Insel darf ihre Zahl überschreiten. Diese braucht drei Brücken und hat vier.",
                     "5": "Eine Brücke an der Seite statt zwei, und sie hat ihre drei.",
                     "6": "Jede Zahl stimmt, und jede Insel ist mit den übrigen verbunden. Damit ist es gelöst."
+                },
+                "hint": {
+                    "allSpaces": {
+                        "plain": "Die {n} in Zeile {row}, Spalte {column} braucht jede Brücke, die um sie herum noch passt, um {n} zu erreichen. Jede noch offene ?-Lücke bekommt also so viele Brücken, wie hineinpassen.",
+                        "fresh": "Die {n} in Zeile {row}, Spalte {column} braucht {n} Brücken, und ihre Lücken fassen zusammen nicht mehr als {n}. Jede ?-Lücke bekommt also so viele Brücken, wie hineinpassen.",
+                        "closed": "Um die {n} in Zeile {row}, Spalte {column} fassen die Lücken, die weder gekreuzt noch ausgeschlossen sind und nicht an einer vollen Insel enden, zusammen nicht mehr als {n} Brücken. Jede dieser ?-Lücken bekommt also so viele Brücken, wie hineinpassen.",
+                        "more": "Die {n} in Zeile {row}, Spalte {column} braucht noch {need} Brücken, und die Lücken um sie herum, die weder entschieden noch gekreuzt sind und nicht an einer vollen Insel enden, fassen zusammen nicht mehr als {need}. Jede dieser ?-Lücken bekommt also so viele Brücken, wie hineinpassen."
+                    },
+                    "oneEachWay": {
+                        "plain": "Die {n} in Zeile {row}, Spalte {column} ist zu groß, um einen Nachbarn auszulassen, den sie noch erreichen kann: Die anderen kämen nie auf {n}. Jede noch offene ?-Lücke braucht also mindestens eine Brücke.",
+                        "count": "Die {n} in Zeile {row}, Spalte {column} kann noch {count} Nachbarn erreichen. Lassen Sie einen davon aus, fassen die anderen höchstens {max} Brücken, weniger als {n}. Jede noch offene ?-Lücke braucht also mindestens eine Brücke."
+                    },
+                    "needsNeighbour": {
+                        "many": "Einige Lücken um die {n} in Zeile {row}, Spalte {column} dürfen nicht leer bleiben: Fehlt in einer davon eine Brücke, kommen die übrigen nicht auf {n}. Jede dieser ?-Lücken braucht also mindestens eine Brücke.",
+                        "one": "Ohne eine Brücke zur {m} in Zeile {mrow}, Spalte {mcolumn} fassen die anderen Lücken um die {n} in Zeile {row}, Spalte {column} höchstens {max} Brücken, weniger als {n}. Die ?-Lücke zwischen den beiden braucht also mindestens eine Brücke.",
+                        "onePlain": "Die anderen Lücken um die {n} in Zeile {row}, Spalte {column} kommen ohne eine Brücke zur {m} in Zeile {mrow}, Spalte {mcolumn} nicht auf {n}. Die ?-Lücke zwischen den beiden braucht also mindestens eine Brücke.",
+                        "two": "Die anderen Lücken um die {n} in Zeile {row}, Spalte {column} kommen weder ohne eine Brücke zur {a} in Zeile {arow}, Spalte {acolumn} noch ohne eine zur {b} in Zeile {brow}, Spalte {bcolumn} auf {n}. Beide ?-Lücken brauchen also mindestens eine Brücke."
+                    }
                 }
             },
             "light_up": {
@@ -756,6 +772,22 @@
                     "4": "Diese Ecke ist noch dunkel, und nichts anderes erreicht sie, also bekommt sie eine eigene Lampe.",
                     "5": "Keine Lampe darf eine andere anstrahlen. Diese beiden stehen in derselben Spalte, ohne etwas dazwischen.",
                     "6": "Jede weiße Zelle ist beleuchtet, die 4 hat ihre vier Lampen, und keine Lampe strahlt eine andere an."
+                },
+                "hint": {
+                    "onlyWay": {
+                        "cell": "Jede Zelle, die die umrandete Zelle in Zeile {row}, Spalte {column} beleuchten könnte, ist schon beleuchtet oder ausgeschlossen, bis auf die ?-Zelle. Die ?-Zelle braucht also eine Lampe.",
+                        "self": "Jede Zelle, die die umrandete Zelle in Zeile {row}, Spalte {column} beleuchten könnte, ist schon beleuchtet oder ausgeschlossen, also braucht sie selbst eine Lampe."
+                    },
+                    "clueSatisfied": {
+                        "some": "Die {number} in Zeile {row}, Spalte {column} hat schon alle Lampen neben sich, die sie verlangt, also kann keine ?-Zelle daneben eine Lampe aufnehmen.",
+                        "zero": "Die 0 in Zeile {row}, Spalte {column} darf keine Lampe neben sich haben, also kann keine ?-Zelle daneben eine aufnehmen."
+                    },
+                    "clueForced": "Die {number} in Zeile {row}, Spalte {column} hat gerade noch genug Zellen neben sich für die Lampen, die ihr fehlen, also braucht jede ?-Zelle daneben eine Lampe.",
+                    "setExclusion": {
+                        "dark": "Nur die umrandeten Zellen können die Zelle in Zeile {row}, Spalte {column} noch beleuchten, also muss eine davon eine Lampe enthalten. Eine Lampe in der ?-Zelle würde sie alle ausschließen, indem sie sie anstrahlt oder eine Zahl daneben vervollständigt. Die ?-Zelle kann also keine Lampe enthalten.",
+                        "clue": "Die umrandeten Zellen neben der {number} in Zeile {row}, Spalte {column} sind alles, was ihr für ihre Lampen bleibt. Eine Lampe in der ?-Zelle würde zu viele davon ausschließen, indem sie sie anstrahlt oder eine andere Zahl vervollständigt, und der {number} würden Lampen fehlen. Die ?-Zelle kann also keine Lampe enthalten.",
+                        "clueBeside": "Die ?-Zelle und die umrandeten Zellen neben der {number} in Zeile {row}, Spalte {column} sind alles, was ihr für ihre Lampen bleibt. Eine Lampe in der ?-Zelle würde zu viele der umrandeten ausschließen, indem sie sie anstrahlt oder eine andere Zahl vervollständigt, und der {number} würden Lampen fehlen. Die ?-Zelle kann also keine Lampe enthalten."
+                    }
                 }
             },
             "loopy": {
@@ -800,6 +832,30 @@
                     "4": "Diese Ecke braucht vier, also müssen alle vier Zellen um sie herum auf sie zeigen. Dafür gibt es nur eine Möglichkeit.",
                     "5": "Diese vier haben sich zu einem geschlossenen Ring verbunden. Ringe sind nicht erlaubt, also muss eine davon in die andere Richtung geneigt sein.",
                     "6": "Jede Zelle ausgefüllt, jede Zahl erfüllt, und nirgends ein Ring."
+                },
+                "hint": {
+                    "satisfied": {
+                        "some": "Die umrandete {clue} hat schon alle Linien, die sie braucht, also muss jede ?-Zelle um sie herum von ihr weg geneigt sein.",
+                        "zero": "Die umrandete {clue} darf keine Linie berühren, also muss jede ?-Zelle um sie herum von ihr weg geneigt sein."
+                    },
+                    "forced": {
+                        "all": "Die umrandete {clue} braucht eine Linie aus jeder Zelle um sie herum, also muss jede ?-Zelle zu ihr hin geneigt sein.",
+                        "one": "Die umrandete {clue} braucht noch 1 Linie, und nur eine Zelle um sie herum ist leer, also muss die ?-Zelle zu ihr hin geneigt sein.",
+                        "many": "Die umrandete {clue} braucht noch {needed} Linien, und nur {needed} Zellen um sie herum sind leer, also muss jede ?-Zelle zu ihr hin geneigt sein."
+                    },
+                    "paired": {
+                        "away": "Die beiden umrandeten Zellen müssen in dieselbe Richtung geneigt sein, also geben sie der umrandeten {clue} zusammen genau eine Linie. Mehr braucht sie nicht, also muss jede ?-Zelle um sie herum von ihr weg geneigt sein.",
+                        "towards": "Die beiden umrandeten Zellen müssen in dieselbe Richtung geneigt sein, also geben sie der umrandeten {clue} zusammen genau eine Linie. Danach braucht sie noch {needed} weitere, also muss jede ?-Zelle um sie herum zu ihr hin geneigt sein."
+                    },
+                    "loop": {
+                        "backslash": "Die obere linke und die untere rechte Ecke der umrandeten Zelle sind schon durch eine Kette von Linien verbunden, also würde eine Linie zwischen ihnen eine Schleife schließen. Die Zelle muss von links unten nach rechts oben geneigt sein.",
+                        "slash": "Die untere linke und die obere rechte Ecke der umrandeten Zelle sind schon durch eine Kette von Linien verbunden, also würde eine Linie zwischen ihnen eine Schleife schließen. Die Zelle muss von links oben nach rechts unten geneigt sein."
+                    },
+                    "deadEnd": {
+                        "backslash": "Die umrandeten Ecken gehören zu zwei Gruppen von Linien, eine an der oberen linken Ecke der umrandeten Zelle und eine an ihrer unteren rechten. Keine erreicht den Rand, und jede kann um höchstens eine weitere Linie wachsen. Verbunden ergäben sie eine Gruppe, die den Rand nie erreichen kann, und das gibt es nur innerhalb einer Schleife. Die Zelle muss also von links unten nach rechts oben geneigt sein.",
+                        "slash": "Die umrandeten Ecken gehören zu zwei Gruppen von Linien, eine an der unteren linken Ecke der umrandeten Zelle und eine an ihrer oberen rechten. Keine erreicht den Rand, und jede kann um höchstens eine weitere Linie wachsen. Verbunden ergäben sie eine Gruppe, die den Rand nie erreichen kann, und das gibt es nur innerhalb einer Schleife. Die Zelle muss also von links oben nach rechts unten geneigt sein."
+                    },
+                    "equivalent": "Die Zahlen zwischen der umrandeten Zelle und der ausgefüllten Zelle in Zeile {row}, Spalte {column} lassen sich nur erfüllen, wenn beide in dieselbe Richtung geneigt sind, also muss die umrandete Zelle sie übernehmen."
                 }
             },
             "tents": {
@@ -822,6 +878,39 @@
                     "4": "Zelte berühren sich nie, auch nicht an einer Ecke. Diese beiden tun es, also muss eins davon umziehen.",
                     "5": "Neben diesem Baum ist nur noch eine Zelle frei, also kommt sein Zelt dorthin.",
                     "6": "Jeder Baum hat ein Zelt neben sich, keine zwei Zelte berühren sich, und alle Zahlen stimmen."
+                },
+                "hint": {
+                    "noFreeTree": {
+                        "none": "Direkt über, unter oder neben der ?-Zelle steht kein Baum, also hätte ein Zelt dort keinen Baum, zu dem es gehört.",
+                        "one": "Der einzige Baum neben der ?-Zelle hat schon sein eigenes Zelt, also hätte ein Zelt in der ?-Zelle keinen Baum, zu dem es gehört.",
+                        "many": "Die {count} Bäume neben der ?-Zelle haben alle schon ihr eigenes Zelt, also hätte ein Zelt in der ?-Zelle keinen Baum, zu dem es gehört."
+                    },
+                    "tentTouches": {
+                        "one": "Die ?-Zelle berührt das umrandete Zelt, und Zelte berühren sich nie, auch nicht an einer Ecke. Die ?-Zelle kann also kein Zelt enthalten.",
+                        "many": "Die ?-Zelle berührt die umrandeten Zelte, und Zelte berühren sich nie, auch nicht an einer Ecke. Die ?-Zelle kann also kein Zelt enthalten."
+                    },
+                    "treeNeedsTent": "Jede andere Zelle neben dem umrandeten Baum ist belegt oder ausgeschlossen, also muss sein Zelt in die ?-Zelle.",
+                    "treeCorner": "Das Zelt des umrandeten Baums muss in eine der beiden umrandeten Zellen neben ihm, und beide berühren die ?-Zelle. Egal welche es ist, die ?-Zelle kann kein Zelt enthalten.",
+                    "lineCount": {
+                        "row": "Die Zahl von Zeile {line} ist {count}. Wie auch immer Sie die fehlenden Zelte in ihre leeren Zellen setzen, ohne dass sich zwei berühren, jede ?-Zelle fällt jedes Mal gleich aus, Zelt oder kein Zelt. Sie können sie also ausfüllen.",
+                        "column": "Die Zahl von Spalte {line} ist {count}. Wie auch immer Sie die fehlenden Zelte in ihre leeren Zellen setzen, ohne dass sich zwei berühren, jede ?-Zelle fällt jedes Mal gleich aus, Zelt oder kein Zelt. Sie können sie also ausfüllen."
+                    },
+                    "lineNeighbour": {
+                        "row": "Die Zahl von Zeile {line} ist {count}. Wie auch immer Sie die fehlenden Zelte in ihre leeren Zellen setzen, ohne dass sich zwei berühren, eines davon berührt immer jede ?-Zelle. Die ?-Zellen können also kein Zelt enthalten.",
+                        "column": "Die Zahl von Spalte {line} ist {count}. Wie auch immer Sie die fehlenden Zelte in ihre leeren Zellen setzen, ohne dass sich zwei berühren, eines davon berührt immer jede ?-Zelle. Die ?-Zellen können also kein Zelt enthalten."
+                    },
+                    "lineExact": {
+                        "row": "Jede Zelle in Zeile {line} außer den ?-Zellen hat schon ein Zelt oder kann keins enthalten, und der Zeile fehlen noch {missing} Zelte. Jede ?-Zelle ist also ein Zelt.",
+                        "rowOne": "Jede Zelle in Zeile {line} außer der ?-Zelle hat schon ein Zelt oder kann keins enthalten, und der Zeile fehlt noch ein Zelt. Die ?-Zelle ist also ein Zelt.",
+                        "column": "Jede Zelle in Spalte {line} außer den ?-Zellen hat schon ein Zelt oder kann keins enthalten, und der Spalte fehlen noch {missing} Zelte. Jede ?-Zelle ist also ein Zelt.",
+                        "columnOne": "Jede Zelle in Spalte {line} außer der ?-Zelle hat schon ein Zelt oder kann keins enthalten, und der Spalte fehlt noch ein Zelt. Die ?-Zelle ist also ein Zelt."
+                    },
+                    "lineFull": {
+                        "row": "Die Zahl von Zeile {line} ist {count}, und sie hat schon so viele Zelte. Keine der ?-Zellen kann also eins enthalten.",
+                        "rowZero": "Die Zahl von Zeile {line} ist 0, also kann keine der ?-Zellen ein Zelt enthalten.",
+                        "column": "Die Zahl von Spalte {line} ist {count}, und sie hat schon so viele Zelte. Keine der ?-Zellen kann also eins enthalten.",
+                        "columnZero": "Die Zahl von Spalte {line} ist 0, also kann keine der ?-Zellen ein Zelt enthalten."
+                    }
                 }
             },
             "unruly": {
@@ -840,6 +929,87 @@
                     "3": "Jede Zeile und Spalte enthält am Ende drei von jeder Farbe. Diese Zeile hat vier violette.",
                     "4": "Zwei Orange mit einer Lücke. Orange dazwischen ergäbe drei, also muss es Violett sein.",
                     "5": "Jede Zelle ausgefüllt, keine Dreierreihe, und drei von jeder Farbe in jeder Zeile und Spalte."
+                },
+                "hint": {
+                    "pairEnd": {
+                        "row": "Die umrandeten Zellen in Zeile {line} liegen nebeneinander und sind beide {colour}. Wäre die ?-Zelle auch {colour}, wären drei Zellen hintereinander {colour}, also muss sie {other} sein.",
+                        "column": "Die umrandeten Zellen in Spalte {line} liegen übereinander und sind beide {colour}. Wäre die ?-Zelle auch {colour}, wären drei Zellen hintereinander {colour}, also muss sie {other} sein."
+                    },
+                    "pairGap": {
+                        "row": "Die umrandeten Zellen in Zeile {line} sind beide {colour}, mit der ?-Zelle dazwischen. Wäre sie auch {colour}, wären drei Zellen hintereinander {colour}, also muss sie {other} sein.",
+                        "column": "Die umrandeten Zellen in Spalte {line} sind beide {colour}, mit der ?-Zelle dazwischen. Wäre sie auch {colour}, wären drei Zellen hintereinander {colour}, also muss sie {other} sein."
+                    },
+                    "lastGap": {
+                        "row": "Zeile {line} hat schon alle {count} Zellen, die {colour} sein sollen, und es fehlt ihr noch eine, die {other} ist, also muss ihre letzte leere Zelle {other} sein.",
+                        "column": "Spalte {line} hat schon alle {count} Zellen, die {colour} sein sollen, und es fehlt ihr noch eine, die {other} ist, also muss ihre letzte leere Zelle {other} sein."
+                    },
+                    "lineFull": {
+                        "row": "Zeile {line} hat schon alle {count} Zellen, die {colour} sein sollen, umrandet, also muss jede ?-Zelle darin {other} sein.",
+                        "column": "Spalte {line} hat schon alle {count} Zellen, die {colour} sein sollen, umrandet, also muss jede ?-Zelle darin {other} sein."
+                    },
+                    "lastInRun": {
+                        "row": "Zeile {line} braucht nur noch eine Zelle, die {colour} ist, und die muss in eine der umrandeten Zellen in den Spalten {from} bis {to}: Überall sonst wären diese drei alle {other}. Jede ?-Zelle muss also {other} sein.",
+                        "column": "Spalte {line} braucht nur noch eine Zelle, die {colour} ist, und die muss in eine der umrandeten Zellen in den Zeilen {from} bis {to}: Überall sonst wären diese drei alle {other}. Jede ?-Zelle muss also {other} sein."
+                    }
+                },
+                "colour": {
+                    "1": "orange",
+                    "2": "violett"
+                }
+            },
+            "chat_rooms": {
+                "name": "CHAT Rooms",
+                "rules": "Setzen Sie in jede Zeile, jede Spalte und jeden farbigen Raum genau ein CHAT. Zwei CHATs dürfen sich nie berühren, auch nicht über Eck.",
+                "technique": {
+                    "1": "Ein CHAT schließt jede andere Zelle in seiner Zeile, seiner Spalte und seinem Raum aus, dazu die acht Zellen rundherum.",
+                    "2": "In dieser Zeile, Spalte oder diesem Raum ist nur noch eine Zelle für das CHAT frei, also kommt es dorthin.",
+                    "3": "Das sind die einzigen Zellen, die für einen Raum übrig sind, und sie liegen alle in einer Zeile oder Spalte. Das CHAT dieser Linie muss also darunter sein, und der Rest der Linie ist ausgeschlossen. Es geht auch umgekehrt: Liegen alle freien Zellen einer Zeile oder Spalte in einem Raum, ist der Rest dieses Raums ausgeschlossen.",
+                    "4": "Diese Räume können nur diese Zeilen oder Spalten nutzen, und es gibt genauso viele Räume wie Linien. Die CHATs dieser Linien gehören also alle zu diesen Räumen, und sonst kann nichts in diesen Linien ein CHAT aufnehmen.",
+                    "5": "Ein CHAT in dieser Zelle würde jede Zelle ausschließen, die dieser Zeile, Spalte oder diesem Raum noch bleibt. Diese Zelle kann also kein CHAT aufnehmen."
+                },
+                "demo": {
+                    "1": "Setzen Sie in jede Zeile, jede Spalte und jeden farbigen Raum ein CHAT. Einmal tippen streicht eine Zelle, zweimal setzt ein CHAT.",
+                    "2": "Zwei CHATs dürfen sich nie berühren, auch nicht über Eck.",
+                    "3": "Jeder Raum enthält ein CHAT. Der obere Raum hat zwei.",
+                    "4": "Dieser Raum ist eine einzelne Zelle, also kommt sein CHAT dorthin. Jede Zelle, die es ausschließt, wird für Sie gestrichen.",
+                    "5": "Ein CHAT in jeder Zeile, Spalte und jedem Raum, und keine berühren sich."
+                },
+                "hint": {
+                    "shadow": "Das CHAT in Zeile {row}, Spalte {column} schließt jede andere Zelle in seiner Zeile und Spalte aus, dazu jede Zelle, die es berührt, und jede andere Zelle in seinem Raum, denn {room} hat damit sein CHAT. Die ?-Zellen können also kein CHAT aufnehmen.",
+                    "lastCell": {
+                        "row": "Jede andere Zelle in Zeile {line} ist ausgeschlossen, also muss das CHAT von Zeile {line} in die ?-Zelle.",
+                        "column": "Jede andere Zelle in Spalte {line} ist ausgeschlossen, also muss das CHAT von Spalte {line} in die ?-Zelle.",
+                        "room": "Außer der ?-Zelle hat {room} keine freie Zelle mehr, also muss das CHAT dieses Raums dorthin.",
+                        "single": "Die umrandete Zelle ist alles, was {room} umfasst, also kommt das CHAT dieses Raums dorthin."
+                    },
+                    "confined": {
+                        "roomInRow": "Die einzigen Zellen, die {room} noch frei hat, sind die umrandeten, und sie liegen alle in Zeile {line}. Das CHAT von Zeile {line} muss also aus diesem Raum kommen, und die ?-Zellen können keins aufnehmen.",
+                        "roomInColumn": "Die einzigen Zellen, die {room} noch frei hat, sind die umrandeten, und sie liegen alle in Spalte {line}. Das CHAT von Spalte {line} muss also aus diesem Raum kommen, und die ?-Zellen können keins aufnehmen.",
+                        "rowInRoom": "Die einzigen Zellen, die in Zeile {line} noch frei sind, sind die umrandeten, und {room} enthält sie alle. Das CHAT dieses Raums muss also in Zeile {line} liegen, und die ?-Zellen können keins aufnehmen.",
+                        "columnInRoom": "Die einzigen Zellen, die in Spalte {line} noch frei sind, sind die umrandeten, und {room} enthält sie alle. Das CHAT dieses Raums muss also in Spalte {line} liegen, und die ?-Zellen können keins aufnehmen."
+                    },
+                    "pigeonhole": {
+                        "roomsInRows": "Die einzigen Zellen, die diese {count} Räume noch frei haben, sind die umrandeten, und sie liegen alle in den Zeilen {lines}. Die CHATs dieser Zeilen müssen also alle aus diesen Räumen kommen, und die ?-Zellen können keins aufnehmen.",
+                        "roomsInColumns": "Die einzigen Zellen, die diese {count} Räume noch frei haben, sind die umrandeten, und sie liegen alle in den Spalten {lines}. Die CHATs dieser Spalten müssen also alle aus diesen Räumen kommen, und die ?-Zellen können keins aufnehmen.",
+                        "rowsInRooms": "Die einzigen Zellen, die in den Zeilen {lines} noch frei sind, sind die umrandeten, und sie liegen alle in nur {count} Räumen. Die CHATs dieser Räume müssen also alle in diesen Zeilen liegen, und die ?-Zellen können keins aufnehmen.",
+                        "columnsInRooms": "Die einzigen Zellen, die in den Spalten {lines} noch frei sind, sind die umrandeten, und sie liegen alle in nur {count} Räumen. Die CHATs dieser Räume müssen also alle in diesen Spalten liegen, und die ?-Zellen können keins aufnehmen."
+                    },
+                    "blocked": {
+                        "row": "Die umrandeten Zellen sind alles, was Zeile {line} noch bleibt. Ein CHAT in der ?-Zelle würde sie alle ausschließen, weil es sie berührt oder Zeile, Spalte oder Raum mit ihnen teilt, und Zeile {line} hätte keinen Platz mehr für ihr CHAT. Die ?-Zelle kann also kein CHAT aufnehmen.",
+                        "column": "Die umrandeten Zellen sind alles, was Spalte {line} noch bleibt. Ein CHAT in der ?-Zelle würde sie alle ausschließen, weil es sie berührt oder Zeile, Spalte oder Raum mit ihnen teilt, und Spalte {line} hätte keinen Platz mehr für ihr CHAT. Die ?-Zelle kann also kein CHAT aufnehmen.",
+                        "room": "Die umrandeten Zellen sind alles, was {room} noch hat. Ein CHAT in der ?-Zelle würde sie alle ausschließen, weil es sie berührt oder Zeile, Spalte oder Raum mit ihnen teilt, und dieser Raum hätte keinen Platz mehr für sein CHAT. Die ?-Zelle kann also kein CHAT aufnehmen."
+                    }
+                },
+                "room": {
+                    "0": "der violette Raum",
+                    "1": "der orangefarbene Raum",
+                    "2": "der blaue Raum",
+                    "3": "der grüne Raum",
+                    "4": "der graue Raum",
+                    "5": "der rote Raum",
+                    "6": "der gelbe Raum",
+                    "7": "der braune Raum",
+                    "8": "der rosa Raum"
                 }
             }
         }
