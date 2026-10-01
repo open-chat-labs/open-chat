@@ -283,9 +283,11 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
 
 // The channel's members are processed a batch at a time, in order of user id:
 // 1. For channel members already in the community, add the new channel to their set of channels.
-// 2. For channel members who are not yet community members, lookup their principals, then join them
-// to the community, add the new channel to their set of channels, and add them to the community's
-// other public channels (via `JoinMembersToPublicChannelJob`).
+// 2. For channel members who are not yet community members, lookup their latest ids and principals,
+// then join them to the community, add the new channel to their set of channels, and add them to the
+// community's other public channels (via `JoinMembersToPublicChannelJob`). A member the group held by
+// an id they've since been migrated from is moved onto their latest id, as when the community is told
+// of a migration, which the group, being deleted once imported, won't be.
 // Once every batch has been processed, if the channel is public, the community members not in it
 // are added to it.
 pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMembersJob) {
@@ -334,8 +336,16 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
                 if latest.user_id != user_id {
                     // The group held the member by an id they've since been migrated from. They're added
                     // under it, as the channel holds them, then moved onto their latest id below. If
-                    // they're already a member under it, only the channel is moved.
+                    // they're already a member under it, only the channel is moved. If they've been
+                    // blocked under it, they're removed from the channel as when blocked under the old.
                     migrated.push((user_id, latest));
+                    if state.data.members.is_blocked(&latest.user_id) {
+                        let channel = state.data.channels.get_mut(&channel_id).unwrap();
+                        let _ = channel
+                            .chat
+                            .remove_member(Caller::OCBot(OPENCHAT_BOT_USER_ID), user_id, false, now);
+                        continue;
+                    }
                     if state.data.members.contains(&latest.user_id) {
                         continue;
                     }
@@ -365,19 +375,20 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
                 }
             }
 
-            // As when the community is told of a migration, which the group, being deleted once
-            // imported, won't be
             for (old_user_id, latest) in migrated {
                 state
                     .data
                     .migrate_user_ids(&[old_user_id], latest.user_id, Some(latest.principal), now);
-                if state
-                    .data
-                    .channels
-                    .get(&channel_id)
-                    .is_some_and(|c| c.chat.members.contains(&latest.user_id))
-                {
-                    state.data.members.mark_member_joined_channel(latest.user_id, channel_id);
+                if state.data.members.contains(&latest.user_id) {
+                    state.data.invited_users.remove(&latest.user_id, now);
+                    if state
+                        .data
+                        .channels
+                        .get(&channel_id)
+                        .is_some_and(|c| c.chat.members.contains(&latest.user_id))
+                    {
+                        state.data.members.mark_member_joined_channel(latest.user_id, channel_id);
+                    }
                 }
                 if let Some(added) = added.iter_mut().find(|u| **u == old_user_id) {
                     *added = latest.user_id;
@@ -464,6 +475,12 @@ fn complete_processing_channel_members(group_id: ChatId, channel_id: ChannelId, 
         // Add community members to the channel if it is public
         add_community_members_to_channel_if_public(channel_id, state);
 
+        // By their latest ids, in case the community has been told of any of their migrations since
+        // they were added
+        let members_added = members_added
+            .into_iter()
+            .map(|user_id| state.data.migrated_user_ids.latest(user_id))
+            .collect();
         state.push_community_event(CommunityEventInternal::GroupImported(Box::new(GroupImportedInternal {
             group_id,
             channel_id,
