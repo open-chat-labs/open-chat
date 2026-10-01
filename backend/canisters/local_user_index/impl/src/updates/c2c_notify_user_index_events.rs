@@ -418,24 +418,10 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     .blocked_users
                     .migrate_user_id(ev.old_user_id, ev.new_user_id, &ev.blocked_users);
                 for user_id in ev.users_to_notify {
-                    state.push_event_to_user(
-                        user_id,
-                        UserEvent::UserIdMigrated(Box::new(user_canister::UserIdMigrated {
-                            old_user_id: ev.old_user_id,
-                            new_user_id: ev.new_user_id,
-                        })),
-                        **now,
-                    );
+                    state.notify_user_of_migrated_user_id(user_id, ev.old_user_id, ev.new_user_id, **now);
                 }
                 for (old_user_id, new_user_id) in ev.migrated_earlier {
-                    state.push_event_to_user(
-                        ev.new_user_id,
-                        UserEvent::UserIdMigrated(Box::new(user_canister::UserIdMigrated {
-                            old_user_id,
-                            new_user_id,
-                        })),
-                        **now,
-                    );
+                    state.notify_user_of_migrated_user_id(ev.new_user_id, old_user_id, new_user_id, **now);
                 }
                 // Also any group or community the user joined via this LocalUserIndex recently, which
                 // may have been after their old canister was exported, so isn't among `canisters_to_notify`

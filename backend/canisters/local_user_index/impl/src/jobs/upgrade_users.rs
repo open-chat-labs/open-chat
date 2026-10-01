@@ -134,6 +134,12 @@ fn on_success(canister_id: CanisterId, to_version: BuildVersion, top_up: Option<
 pub(crate) fn on_upgraded(user_id: UserId, to_version: BuildVersion, top_up: Option<Cycles>, state: &mut RuntimeState) {
     mark_upgrade_complete(user_id, Some(to_version), state);
 
+    // Send the notices held until the canister was upgraded (see `notify_user_of_migrated_user_id`)
+    let now = state.env.now();
+    for (old_user_id, new_user_id) in state.data.held_user_id_migrations.take(&user_id) {
+        state.notify_user_of_migrated_user_id(user_id, old_user_id, new_user_id, now);
+    }
+
     if let Some(top_up) = top_up {
         state.data.local_users.mark_cycles_top_up(
             &user_id,
