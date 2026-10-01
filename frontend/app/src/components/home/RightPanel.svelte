@@ -371,14 +371,14 @@
         {#if $selectedChatSummaryStore.kind === "channel" && $selectedCommunitySummaryStore !== undefined}
             <ChannelOrCommunitySummary
                 channel={$selectedChatSummaryStore}
-                memberCount={$selectedChatMembersStore.size}
+                memberCount={$selectedChatSummaryStore.memberCount}
                 community={$selectedCommunitySummaryStore}
                 selectedTab="channel"
                 onClose={client.popRightPanelHistory} />
         {:else if $selectedChatSummaryStore.kind === "group_chat"}
             <GroupDetails
                 chat={$selectedChatSummaryStore}
-                memberCount={$selectedChatMembersStore.size}
+                memberCount={$selectedChatSummaryStore.memberCount}
                 onClose={client.popRightPanelHistory} />
         {:else if $selectedChatSummaryStore.kind === "direct_chat"}
             <DirectChatDetails
@@ -536,7 +536,7 @@
             <ChannelOrCommunitySummary
                 channel={multiUserChat}
                 community={$selectedCommunitySummaryStore}
-                memberCount={$selectedChatMembersStore.size}
+                memberCount={multiUserChat.memberCount}
                 selectedTab="community"
                 onClose={client.popRightPanelHistory} />
         {:else}

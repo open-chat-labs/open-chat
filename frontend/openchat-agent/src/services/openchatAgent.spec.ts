@@ -1,5 +1,6 @@
 import { Principal } from "@icp-sdk/core/principal";
 import {
+    APPROVAL_VALIDITY_MS,
     ErrorCode,
     indexedUserId,
     LEDGER_CANISTER_CHAT,
@@ -246,14 +247,16 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         test.each(payments)("%s is approved first", async (_, pay, ledger, amount) => {
             await pay();
 
-            expect(approvals).toEqual([[ledger, spender, amount, FEE]]);
+            expect(approvals).toEqual([[ledger, spender, amount, FEE, APPROVAL_VALIDITY_MS]]);
             expect(calls.length).toEqual(1);
         });
 
         test("streak insurance is approved first, with no fee since it is burned", async () => {
             await agent.payForStreakInsurance(1, 5_000n, undefined);
 
-            expect(approvals).toEqual([[LEDGER_CANISTER_CHAT, spender, 5_000n, CHAT_FEE]]);
+            expect(approvals).toEqual([
+                [LEDGER_CANISTER_CHAT, spender, 5_000n, CHAT_FEE, APPROVAL_VALIDITY_MS],
+            ]);
             expect(calls).toEqual(["payForStreakInsurance"]);
         });
 
@@ -325,7 +328,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         test("crypto for another user in a MultiUser canister is approved and sent like any other", async () => {
             await sendDirectMessage(crypto(undefined, OTHER_MULTI_USER_CANISTER_USER));
 
-            expect(approvals).toEqual([[ICP_LEDGER, spender, 110n, FEE]]);
+            expect(approvals).toEqual([[ICP_LEDGER, spender, 110n, FEE, APPROVAL_VALIDITY_MS]]);
             expect(calls).toEqual(["sendMessage"]);
         });
 
@@ -352,7 +355,9 @@ describe("OpenChatAgent paying from the user's wallet", () => {
                 async (_, content, amount) => {
                     await send(GROUP, content());
 
-                    expect(approvals).toEqual([[ICP_LEDGER, spender(GROUP.groupId), amount, FEE]]);
+                    expect(approvals).toEqual([
+                        [ICP_LEDGER, spender(GROUP.groupId), amount, FEE, APPROVAL_VALIDITY_MS],
+                    ]);
                     expect(calls).toEqual(["groupSendMessage"]);
                     expect(callArgs[0].at(-1)).toEqual(ME.toText());
                 },
@@ -364,7 +369,13 @@ describe("OpenChatAgent paying from the user's wallet", () => {
                     await send(CHANNEL, content());
 
                     expect(approvals).toEqual([
-                        [ICP_LEDGER, spender(CHANNEL.communityId), amount, FEE],
+                        [
+                            ICP_LEDGER,
+                            spender(CHANNEL.communityId),
+                            amount,
+                            FEE,
+                            APPROVAL_VALIDITY_MS,
+                        ],
                     ]);
                     expect(calls).toEqual(["communitySendMessage"]);
                     expect(callArgs[0].at(-1)).toEqual(ME.toText());
@@ -454,7 +465,9 @@ describe("OpenChatAgent paying from the user's wallet", () => {
                         true,
                     );
 
-                    expect(approvals).toEqual([[ICP_LEDGER, spender(canisterId), 110n, FEE]]);
+                    expect(approvals).toEqual([
+                        [ICP_LEDGER, spender(canisterId), 110n, FEE, APPROVAL_VALIDITY_MS],
+                    ]);
                     expect(calls).toEqual([call]);
                     expect(callArgs[0][3]).toEqual({ ...transfer(), fromAccount: ME.toText() });
                 },
@@ -749,5 +762,189 @@ describe("OpenChatAgent referring to the user by their current id", () => {
         );
         // The other user in the chat is left as they are
         expect(agent([THEM]).hydrateChatSummary(chat).them).toEqual(THEM);
+    });
+});
+
+// Approvals the website asks for directly, for a group or community to pull an access gate's
+// payment when the user joins, and for the ProposalsBot, Registry or UserIndex to pull what a
+// proposal costs
+describe("OpenChatAgent approving a spender", () => {
+    const PROPOSALS_BOT = "rno2w-sqaaa-aaaaa-aaacq-cai";
+    const FIVE_MINUTES = 5n * 60n * 1000n;
+    // What the website approves for a gate of 1,000: the gate's amount less the approval's fee, so
+    // that the user pays exactly the gate's amount. The group pulls it less another fee, plus the
+    // fee for pulling it.
+    const GATE_APPROVAL = 1_000n - FEE;
+
+    let approvals: unknown[][];
+    let approveResponse: "success" | "insufficient_funds" | "failure";
+    let userCanisterApprovals: unknown[][];
+    let submitted: unknown[][];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let agent: any;
+
+    function setup(userId: string) {
+        agent = Object.create(OpenChatAgent.prototype);
+        agent.identity = { getPrincipal: () => ME };
+        agent._registryValue = { tokenDetails: [{ ledger: ICP_LEDGER, transferFee: FEE }] };
+        agent._ledgerClient = {
+            approveSpending: (...args: unknown[]) => {
+                approvals.push(args);
+                return Promise.resolve(approveResponse);
+            },
+        };
+        agent._userClient = {
+            userId,
+            approveTransfer: (...args: unknown[]) => {
+                userCanisterApprovals.push(args);
+                return Promise.resolve({ kind: "success" });
+            },
+        };
+        agent._proposalsBotClient = {
+            get: () => ({
+                submitProposal: (...args: unknown[]) => {
+                    submitted.push(args);
+                    return Promise.resolve({ kind: "success" });
+                },
+            }),
+        };
+    }
+
+    // A group or community pulls a gate's payment as the member's spender account, while the
+    // ProposalsBot pulls a proposal's fee as its own default account
+    const memberSpender = (canisterId: string) => ({
+        owner: Principal.fromText(canisterId),
+        subaccount: spenderSubaccount(ME),
+    });
+    const proposalsBotSpender = { owner: Principal.fromText(PROPOSALS_BOT) };
+
+    const approveGatePayment = (canisterId: string = GROUP.groupId) =>
+        agent.approveAccessGatePayment(canisterId, ICP_LEDGER, GATE_APPROVAL, FIVE_MINUTES, "1234");
+
+    const approveProposalFee = () =>
+        agent.approveTransfer(PROPOSALS_BOT, ICP_LEDGER, 100n, FIVE_MINUTES, "1234");
+
+    const submitProposal = (userId: string) =>
+        agent.submitProposal(
+            userId,
+            "rrkah-fqaaa-aaaaa-aaaaq-cai",
+            { title: "title", url: undefined, summary: "summary", action: { kind: "motion" } },
+            ICP_LEDGER,
+            "ICP",
+            1_000n,
+            FEE,
+        );
+
+    beforeEach(() => {
+        approvals = [];
+        approveResponse = "success";
+        userCanisterApprovals = [];
+        submitted = [];
+    });
+
+    describe("by a user in a MultiUser canister", () => {
+        beforeEach(() => setup(MULTI_USER_CANISTER_USER));
+
+        test.each([
+            ["group", GROUP.groupId],
+            ["community", CHANNEL.communityId],
+        ])(
+            "a %s is approved on the ledger to pull a gate's payment from their wallet as their member spender, for as long as asked",
+            async (_, canisterId) => {
+                expect(await approveGatePayment(canisterId)).toEqual({ kind: "success" });
+
+                // The wallet pays the approval's fee on top
+                expect(approvals).toEqual([
+                    [
+                        ICP_LEDGER,
+                        memberSpender(canisterId),
+                        GATE_APPROVAL,
+                        FEE,
+                        Number(FIVE_MINUTES),
+                    ],
+                ]);
+                expect(userCanisterApprovals).toEqual([]);
+            },
+        );
+
+        test("the ProposalsBot is approved on the ledger to pull a proposal's fee as its own account", async () => {
+            expect(await approveProposalFee()).toEqual({ kind: "success" });
+
+            expect(approvals).toEqual([
+                [ICP_LEDGER, proposalsBotSpender, 100n, FEE, Number(FIVE_MINUTES)],
+            ]);
+            expect(userCanisterApprovals).toEqual([]);
+        });
+
+        test("with no expiry, the approval lasts only as long as a payment pulled at once needs", async () => {
+            await agent.approveTransfer(PROPOSALS_BOT, ICP_LEDGER, 100n, undefined, undefined);
+
+            expect(approvals).toEqual([
+                [ICP_LEDGER, proposalsBotSpender, 100n, FEE, APPROVAL_VALIDITY_MS],
+            ]);
+        });
+
+        test.each([
+            ["insufficient_funds", ErrorCode.InsufficientFunds],
+            ["failure", ErrorCode.ApprovalFailed],
+        ] as const)("an approval which fails with %s is reported", async (response, code) => {
+            approveResponse = response;
+
+            expect(await approveGatePayment()).toEqual({ kind: "error", code, message: undefined });
+        });
+
+        test("nothing is approved while the ledger's fee isn't known", async () => {
+            agent._registryValue = undefined;
+
+            expect(await approveGatePayment()).toEqual({
+                kind: "error",
+                code: ErrorCode.ApprovalFailed,
+                message: undefined,
+            });
+            expect(approvals).toEqual([]);
+            expect(userCanisterApprovals).toEqual([]);
+        });
+
+        test("a proposal's fee is pulled from their wallet", async () => {
+            await submitProposal(MULTI_USER_CANISTER_USER);
+
+            expect(submitted.length).toEqual(1);
+            expect(submitted[0][0]).toEqual(ME.toText());
+        });
+    });
+
+    describe("by a user alone in their canister", () => {
+        beforeEach(() => setup(USER_CANISTER_USER));
+
+        test.each([
+            ["group", GROUP.groupId],
+            ["community", CHANNEL.communityId],
+        ])(
+            "their canister approves a %s to pull a gate's payment as their member spender, checking their PIN",
+            async (_, canisterId) => {
+                expect(await approveGatePayment(canisterId)).toEqual({ kind: "success" });
+
+                expect(userCanisterApprovals).toEqual([
+                    [memberSpender(canisterId), ICP_LEDGER, GATE_APPROVAL, FIVE_MINUTES, "1234"],
+                ]);
+                expect(approvals).toEqual([]);
+            },
+        );
+
+        test("their canister approves the ProposalsBot to pull a proposal's fee as its own account, checking their PIN", async () => {
+            expect(await approveProposalFee()).toEqual({ kind: "success" });
+
+            expect(userCanisterApprovals).toEqual([
+                [proposalsBotSpender, ICP_LEDGER, 100n, FIVE_MINUTES, "1234"],
+            ]);
+            expect(approvals).toEqual([]);
+        });
+
+        test("a proposal's fee is pulled from their canister's account", async () => {
+            await submitProposal(USER_CANISTER_USER);
+
+            expect(submitted.length).toEqual(1);
+            expect(submitted[0][0]).toEqual(USER_CANISTER_USER);
+        });
     });
 });

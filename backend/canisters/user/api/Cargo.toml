@@ -19,3 +19,6 @@ sha256 = { path = "../../../libraries/sha256" }
 ts_export = { path = "../../../libraries/ts_export" }
 ts-rs = { workspace = true }
 types = { path = "../../../libraries/types" }
+
+[dev-dependencies]
+msgpack = { path = "../../../libraries/msgpack" }

@@ -60,12 +60,14 @@ export class LedgerClient extends CandidCanisterAgent<LedgerService> {
     // principal they sign in with, on top of whatever it may pull already (see `approvalToAdd`).
     // `amount` must include the fee the ledger charges for each transfer the spender makes. `fee`
     // is what the ledger charges for the approval itself, which isn't made, so isn't charged for,
-    // unless the account can then afford the payment.
+    // unless the account can then afford the payment. `validityMs` is how long the spender has to
+    // pull the payment.
     async approveSpending(
         ledger: string,
         spender: IcrcAccount,
         amount: bigint,
         fee: bigint,
+        validityMs: number,
     ): Promise<ApproveSpendingResponse> {
         const account = { owner: this.principal };
         let now = BigInt(Date.now()) * 1_000_000n;
@@ -83,7 +85,7 @@ export class LedgerClient extends CandidCanisterAgent<LedgerService> {
                 return "insufficient_funds";
             }
 
-            const approval = approvalToAdd(current, amount, now);
+            const approval = approvalToAdd(current, amount, now, validityMs);
             const response = await this.handleResponse(
                 this.service.icrc2_approve.withOptions({ canisterId: ledger })({
                     spender: apiIcrcAccount(spender),

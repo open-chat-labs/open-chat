@@ -13,7 +13,7 @@ use types::{
 /// The rota, Mon..Sun: (game_id, grid size). Mirrors `daily_puzzle_canister_impl::model::schedule`,
 /// which is the one definition (#9357); test mode runs the same rota as production.
 const SCHEDULE: [(&str, u8); 7] = [
-    ("light_up", 7),
+    ("chat_rooms", 9),
     ("tents", 8),
     ("slant", 6),
     ("bridges", 7),
@@ -247,7 +247,7 @@ fn daily_puzzle_rotates_through_the_week() {
         assert_eq!(puzzle.description[2], size, "day {day} {game_id}");
         seen.push(game_id);
     }
-    for game_id in ["light_up", "tents", "slant", "bridges", "unruly"] {
+    for game_id in ["chat_rooms", "light_up", "tents", "slant", "bridges", "unruly"] {
         assert!(seen.contains(&game_id), "{game_id} never shipped: {seen:?}");
     }
 

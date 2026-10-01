@@ -148,6 +148,7 @@ type BotMatch = record {
 type SearchArgs = record {
     search_term : text;
     max_results : nat8;
+    page_index : opt nat32;
 };
 
 type SearchResponse = variant {

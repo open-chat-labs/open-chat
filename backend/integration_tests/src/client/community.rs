@@ -5,12 +5,17 @@ use ic_stable_structures::memory_manager::MemoryId;
 pub const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 // Queries
+generate_msgpack_query_call!(channel_members);
 generate_msgpack_query_call!(channel_summary);
 generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
 generate_msgpack_query_call!(local_user_index);
+generate_msgpack_query_call!(lookup_channel_members);
+generate_msgpack_query_call!(lookup_members);
+generate_msgpack_query_call!(members);
 generate_msgpack_query_call!(messages_by_message_index);
 generate_msgpack_query_call!(search_channel);
+generate_msgpack_query_call!(search_members);
 generate_msgpack_query_call!(selected_channel_initial);
 generate_msgpack_query_call!(selected_channel_updates_v2);
 generate_msgpack_query_call!(selected_initial);
@@ -45,6 +50,7 @@ generate_msgpack_update_call!(remove_member);
 generate_msgpack_update_call!(remove_member_from_channel);
 generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(send_message);
+generate_msgpack_update_call!(set_member_display_name);
 generate_msgpack_update_call!(start_video_call_v2);
 generate_msgpack_update_call!(tip_message);
 generate_msgpack_update_call!(toggle_mute_notifications);
@@ -492,7 +498,10 @@ pub mod happy_path {
             env,
             sender,
             community_id.into(),
-            &community_canister::selected_initial::Args { invite_code: None },
+            &community_canister::selected_initial::Args {
+                invite_code: None,
+                max_members: None,
+            },
         );
 
         match response {
@@ -556,7 +565,10 @@ pub mod happy_path {
             env,
             sender.principal,
             community_id.into(),
-            &community_canister::selected_channel_initial::Args { channel_id },
+            &community_canister::selected_channel_initial::Args {
+                channel_id,
+                max_members: None,
+            },
         );
 
         match response {

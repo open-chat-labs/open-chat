@@ -13,7 +13,13 @@
         type OpenChat,
         type ResourceKey,
     } from "@client";
-    import { isPrincipalValid, isUrl, random32, type ExternalBot } from "@shared";
+    import {
+        APPROVAL_VALIDITY_MS,
+        isPrincipalValid,
+        isUrl,
+        random32,
+        type ExternalBot,
+    } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import EyeIcon from "svelte-material-icons/EyeOutline.svelte";
@@ -55,6 +61,11 @@
     const CHAT_FEE_PER_CHIT_AWARD: bigint = 20_000n; // 1/5000th of a CHAT
     const ONE_MONTH = 1000 * 60 * 60 * 24 * 7 * 4;
     const TOKEN_LISTING_FEE: bigint = 50_000_100_000n; // 500 CHAT + transfer fee
+    // The ProposalsBot pulls the proposal's fee as soon as it is submitted (within
+    // `APPROVAL_VALIDITY_MS`), but a token's listing fee or an achievement's CHAT is only pulled
+    // once the proposal is executed, after a vote of up to 6 days (4, extended by up to 2 if the
+    // result changes near the end)
+    const PROPOSAL_EXECUTION_WINDOW: bigint = BigInt(1000 * 60 * 60 * 24 * 7);
 
     const PROPOSALS_BOT_CANISTER = import.meta.env.OC_PROPOSALS_BOT_CANISTER!;
     const REGISTRY_CANISTER = import.meta.env.OC_REGISTRY_CANISTER!;
@@ -157,6 +168,7 @@
             !(await approvePayment(
                 PROPOSALS_BOT_CANISTER,
                 proposalCost + BigInt(2) * transferFee,
+                BigInt(APPROVAL_VALIDITY_MS),
                 pin,
             ))
         ) {
@@ -172,7 +184,7 @@
             let spender = addToken ? REGISTRY_CANISTER : USER_INDEX_CANISTER;
             let amount = addToken ? TOKEN_LISTING_FEE : achievementChatCost;
 
-            if (!(await approvePayment(spender, amount, pin))) {
+            if (!(await approvePayment(spender, amount, PROPOSAL_EXECUTION_WINDOW, pin))) {
                 busy = false;
                 return;
             }
@@ -276,19 +288,15 @@
         }
     }
 
+    // Approves the spender to pull `amount` within `expiresIn` ms
     async function approvePayment(
         spender_canister_id: string,
         amount: bigint,
+        expiresIn: bigint,
         pin: string | undefined,
     ): Promise<boolean> {
         return client
-            .approveTransfer(
-                spender_canister_id,
-                tokenDetails.ledger,
-                amount,
-                BigInt(Date.now() + 1000 * 60 * 60 * 24 * 5), // allow 5 days for proposal
-                pin,
-            )
+            .approveTransfer(spender_canister_id, tokenDetails.ledger, amount, expiresIn, pin)
             .then((resp) => {
                 if (resp.kind === "success") {
                     return true;

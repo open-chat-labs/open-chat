@@ -1816,6 +1816,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "chat_rooms"
+version = "0.1.0"
+dependencies = [
+ "puzzle_core",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2714,6 +2721,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "chat_rooms",
  "constants",
  "daily_puzzle_canister",
  "futures",
@@ -4104,6 +4112,7 @@ dependencies = [
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
+ "ledger_utils",
  "oc_error_codes",
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
@@ -6203,6 +6212,7 @@ dependencies = [
  "bridges",
  "candid",
  "chat_events",
+ "chat_rooms",
  "community_canister",
  "constants",
  "cycles_dispenser_canister",
@@ -12825,6 +12835,7 @@ dependencies = [
  "ic-ledger-types",
  "ic_principal",
  "icrc-ledger-types",
+ "msgpack",
  "oc_error_codes",
  "serde",
  "serde_bytes",

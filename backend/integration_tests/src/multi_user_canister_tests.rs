@@ -2992,7 +2992,16 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
     // Missing a day uses up each user's day of insurance, keeping their streaks, B setting up their
     // job having left A's in place. The OpenChat bot tells each of them.
     env.advance_time(Duration::from_millis(2 * constants::DAY_IN_MS));
-    env.tick();
+    // Each claim is made by a timer job, which can take a few rounds to run
+    for _ in 0..30 {
+        if [a_principal, b_principal]
+            .iter()
+            .all(|principal| initial_state(env, *principal, canister_id).streak == 2)
+        {
+            break;
+        }
+        env.tick();
+    }
     for (principal, user_id) in [(a_principal, a), (b_principal, b)] {
         let state = initial_state(env, principal, canister_id);
         assert_eq!(state.streak, 2);
@@ -3299,12 +3308,12 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
 
     // Only a group Bob is in can send him events. Those from any other caller are dropped.
     let now = now_millis(env);
-    let achievement_event = |id, achievement| user_canister::c2c_group_canister_v2::Args {
-        events: vec![IdempotentEnvelope {
+    let achievement_event = |id, achievement| {
+        user_canister::c2c_group_canister_v2::Args::new(vec![IdempotentEnvelope {
             created_at: now,
             idempotency_id: id,
             value: (bob_id, user_canister::GroupCanisterEvent::Achievement(achievement)),
-        }],
+        }])
     };
     client::user::c2c_group_canister_v2(
         env,
@@ -3730,6 +3739,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
                 created_at: now_millis(env),
                 idempotency_id: 1,
                 value: user_canister::c2c_user_canister_v2::Event {
+                    sender_previous_user_ids: Vec::new(),
                     sender: carol.user_id,
                     recipient: alice_id,
                     event: UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::Diamond)),
@@ -3769,6 +3779,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
                 created_at: now_millis(env),
                 idempotency_id: 1,
                 value: user_canister::c2c_user_canister_v2::Event {
+                    sender_previous_user_ids: Vec::new(),
                     sender: migrated_user_id,
                     recipient: alice_id,
                     event: UserCanisterEvent::SetReferralStatusV2(Box::new(user_canister::SetReferralStatusV2 {
@@ -4626,9 +4637,10 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         env,
         group2.into(),
         canister_id,
-        &user_canister::c2c_group_canister_v2::Args {
-            events: vec![paired(alice_id, achievement(1)), paired(bob_id, achievement(2))],
-        },
+        &user_canister::c2c_group_canister_v2::Args::new(vec![
+            paired(alice_id, achievement(1)),
+            paired(bob_id, achievement(2)),
+        ]),
     );
     assert!(!has_achievement(
         &initial_state(env, alice, canister_id),
@@ -4649,12 +4661,10 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         env,
         community.into(),
         canister_id,
-        &user_canister::c2c_community_canister_v2::Args {
-            events: vec![
-                paired(alice_id, community_achievement(1)),
-                paired(bob_id, community_achievement(2)),
-            ],
-        },
+        &user_canister::c2c_community_canister_v2::Args::new(vec![
+            paired(alice_id, community_achievement(1)),
+            paired(bob_id, community_achievement(2)),
+        ]),
     );
     assert!(!has_achievement(
         &initial_state(env, alice, canister_id),
@@ -4732,6 +4742,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
                     created_at: now_millis(env),
                     idempotency_id: next_id,
                     value: user_canister::c2c_user_canister_v2::Event {
+                        sender_previous_user_ids: Vec::new(),
                         sender,
                         recipient: bob_id,
                         event,
@@ -4873,6 +4884,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         created_at: now_millis(env),
         idempotency_id: 1_000,
         value: user_canister::c2c_user_canister_v2::Event {
+            sender_previous_user_ids: Vec::new(),
             sender: alice.user_id,
             recipient: bob_id,
             event: send_text(random_from_u128(), 1, "once"),
@@ -4903,6 +4915,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
                 created_at: now_millis(env),
                 idempotency_id: 1_001,
                 value: user_canister::c2c_user_canister_v2::Event {
+                    sender_previous_user_ids: Vec::new(),
                     sender: alice.user_id,
                     recipient: UserId::new_indexed(canister_id, 99),
                     event: send_text(random_from_u128(), 2, "nobody"),
@@ -5095,6 +5108,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
                 created_at: now_millis(env),
                 idempotency_id: 1,
                 value: user_canister::c2c_user_canister_v2::Event {
+                    sender_previous_user_ids: Vec::new(),
                     sender: UserId::new_indexed(impostor, 1),
                     recipient: bob_id,
                     event: UserCanisterEvent::SetEventsTtl(Box::new(user_canister::SetEventsTtl {
@@ -5124,6 +5138,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
                 created_at: now_millis(env),
                 idempotency_id: 1,
                 value: user_canister::c2c_user_canister_v2::Event {
+                    sender_previous_user_ids: Vec::new(),
                     sender: canister_ids.proposals_bot.into(),
                     recipient: bob_id,
                     event: UserCanisterEvent::SetEventsTtl(Box::new(user_canister::SetEventsTtl {
@@ -5169,6 +5184,7 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
         created_at: now_millis(env),
         idempotency_id: id,
         value: user_canister::c2c_user_canister_v2::Event {
+            sender_previous_user_ids: Vec::new(),
             sender,
             recipient: carol_id,
             event: UserCanisterEvent::SendMessages(Box::new(user_canister::SendMessagesArgs {
@@ -5873,6 +5889,94 @@ fn crypto_addressed_to_a_users_id_is_sent_to_their_wallet(in_channel: bool) {
     };
     assert!(matches!(response, UnitResult::Success), "{response:?}");
     assert_bob_paid(env, 4);
+}
+
+// No one can spend from an account of a MultiUser user's id, so a User canister refuses to withdraw
+// to one rather than lose the funds. Withdrawals to the user's wallet are unaffected.
+#[test]
+fn withdrawals_to_an_account_of_a_multi_user_users_id_are_refused() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let bob = client::register_user_in_multi_user_canister(env, canister_ids);
+    let carol = client::register_user(env, canister_ids);
+
+    let ledger = canister_ids.icp_ledger;
+    let amount = 1_000_000;
+    client::ledger::happy_path::transfer(env, *controller, ledger, carol.user_id, 1_000_000_000);
+
+    let icrc1_withdrawal = |env: &PocketIc, to: icrc1::Account| {
+        PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+            ledger,
+            token_symbol: ICP_SYMBOL.to_string(),
+            amount,
+            to,
+            fee: ICP_TRANSFER_FEE,
+            memo: None,
+            created: now_millis(env) * 1_000_000,
+        })
+    };
+    let nns_withdrawal = |env: &PocketIc, to: icrc1::Account| {
+        PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
+            ledger,
+            token_symbol: ICP_SYMBOL.to_string(),
+            amount: types::nns::Tokens::from_e8s(amount as u64),
+            to: types::nns::UserOrAccount::Account(types::account_identifier(to.into())),
+            fee: None,
+            memo: None,
+            created: now_millis(env) * 1_000_000,
+        })
+    };
+    let withdraw = |env: &mut PocketIc, withdrawal: PendingCryptoTransaction| {
+        client::user::withdraw_crypto_v2(
+            env,
+            carol.principal,
+            carol.canister(),
+            &user_canister::withdraw_crypto_v2::Args { withdrawal, pin: None },
+        )
+    };
+
+    let bobs_user_id = icrc1::Account::legacy_for_user(bob.user_id);
+    let subaccount_of_bobs_user_id = icrc1::Account {
+        subaccount: Some([1; 32]),
+        ..bobs_user_id
+    };
+    let carols_balance = client::ledger::happy_path::balance_of(env, ledger, carol.user_id);
+
+    // Bob's user id, given as the recipient, under any subaccount
+    for to in [bobs_user_id, subaccount_of_bobs_user_id] {
+        let response = withdraw(env, icrc1_withdrawal(env, to));
+        assert!(
+            matches!(&response, user_canister::withdraw_crypto_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+            "{response:?}"
+        );
+    }
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, ledger, carol.user_id),
+        carols_balance
+    );
+    for account in [bobs_user_id, subaccount_of_bobs_user_id] {
+        assert_eq!(client::ledger::happy_path::balance_of(env, ledger, account), 0);
+    }
+
+    // Bob's wallet is the account of his principal, which Carol can withdraw to however she
+    // addresses it. Each is made later than the last, which the ledger could otherwise take for a
+    // duplicate of it.
+    let bobs_wallet = icrc1::Account::from(bob.principal);
+    for as_nns in [false, true] {
+        env.advance_time(Duration::from_secs(1));
+        let withdrawal = if as_nns { nns_withdrawal(env, bobs_wallet) } else { icrc1_withdrawal(env, bobs_wallet) };
+        let response = withdraw(env, withdrawal);
+        assert!(
+            matches!(response, user_canister::withdraw_crypto_v2::Response::Success(_)),
+            "{response:?}"
+        );
+    }
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.principal), 2 * amount);
 }
 
 #[test]

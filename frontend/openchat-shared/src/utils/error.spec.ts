@@ -274,6 +274,78 @@ describe("shouldReportError", () => {
         ).toBe(true);
     });
 
+    // Invariant: the network, clock, canister-upgrade and CDN failures seen on 2.0.2054 are not
+    // reported, and a nearby failure of ours still is. Each message was a live Rollbar item.
+    test("silences the 2026-10-01 environment noise", () => {
+        // #31999: the agent's catch-all wrapping a fetch that threw
+        expect(
+            shouldReportError(new HttpError(500, new Error("Unexpected error: Load failed"))),
+        ).toBe(false);
+        expect(
+            shouldReportError(
+                new HttpError(500, new Error("Unexpected error: Cannot read properties of null")),
+            ),
+        ).toBe(true);
+        expect(shouldReportError(new Error("Unexpected error: Load failed"))).toBe(true);
+
+        // #31681, and the same text as a bare uncaught rejection under #2195
+        const clock =
+            '"System time has been synced with the IC network, but certificate is still too ' +
+            'far in the future."';
+        expect(shouldReportError(new HttpError(500, new Error(`Unexpected error: ${clock}`)))).toBe(
+            false,
+        );
+        expect(shouldReportMessage("", clock)).toBe(false);
+        expect(
+            shouldReportError(
+                new HttpError(500, new Error('Unexpected error: "Invalid certificate signature"')),
+            ),
+        ).toBe(true);
+
+        // #31692 and #31764: a stopped canister, but not the other rejections from the same items
+        const rejected = (text: string, code: string) =>
+            new HttpError(
+                500,
+                new Error(
+                    "The replica returned a rejection error:\n  Reject code: 5\n  Reject text: " +
+                        `${text}\n  Error code: ${code}\n\nCall context:\n  Canister ID: <id>`,
+                ),
+            );
+        expect(
+            shouldReportError(
+                rejected(
+                    "Canister <id> is stopped and therefore does not have a CallContextManager",
+                    "IC0508",
+                ),
+            ),
+        ).toBe(false);
+        expect(shouldReportError(rejected("Canister <id> is stopped", "IC0508"))).toBe(false);
+        expect(
+            shouldReportError(
+                rejected("Error from Canister <id>: Canister rejected the message", "IC0406"),
+            ),
+        ).toBe(true);
+        // a canister trap stays a signal, even when its text has a network phrase in it
+        expect(
+            shouldReportError(
+                rejected("Canister <id> trapped: failed to fetch the exchange rate", "IC0503"),
+            ),
+        ).toBe(true);
+
+        // #31998: the emoji data CDN failing, as reported and as Rollbar strips it on the
+        // uncaught path; our own "Failed to fetch: ..." errors still report
+        const emojiData =
+            "https://cdn.jsdelivr.net/npm/emoji-picker-element-data@^1/en/emojibase/data.json:  500";
+        expect(shouldReportError(new Error(`Failed to fetch: ${emojiData}`))).toBe(false);
+        expect(shouldReportMessage("Error", emojiData)).toBe(false);
+        expect(
+            shouldReportError(new Error(`Failed to fetch: ${emojiData.replace("500", "404")}`)),
+        ).toBe(true);
+        expect(shouldReportError(new Error("Failed to fetch: https://oc.app/version: 500"))).toBe(
+            true,
+        );
+    });
+
     test("silences Safari storage and in-app browser bridge failures", () => {
         for (const message of [
             "Database deleted by request of the user",

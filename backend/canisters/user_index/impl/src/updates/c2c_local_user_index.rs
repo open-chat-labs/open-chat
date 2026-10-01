@@ -265,7 +265,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 .user_migrations
                 .mark_imported(ev.old_user_id, ev.new_user_id, **now)
             {
-                if state.switch_over_migrated_user(ev.old_user_id, ev.new_user_id, ev.canisters_to_notify) {
+                if state.switch_over_migrated_user(ev.old_user_id, ev.new_user_id, ev.canisters_to_notify, ev.users_to_notify) {
                     info!(old_user_id = %ev.old_user_id, new_user_id = %ev.new_user_id, "User imported and switched over");
                 } else {
                     error!(old_user_id = %ev.old_user_id, new_user_id = %ev.new_user_id, "User imported but not switched over");
@@ -351,6 +351,16 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.push_event_to_all_local_user_indexes(UserIndexEvent::UserUnblocked(user_id, unblocked), Some(caller));
         }
         LocalUserIndexEvent::SetMaxStreak(user_id, max_streak) => state.data.users.set_max_streak(&user_id, max_streak),
+        LocalUserIndexEvent::EventForMigratedUser(ev) => {
+            let user_id = state.data.migrated_user_ids.latest(ev.user_id);
+            state.push_event_to_local_user_index(
+                user_id,
+                UserIndexEvent::EventForMigratedUser(Box::new(local_user_index_canister::EventForMigratedUser {
+                    user_id,
+                    event: ev.event,
+                })),
+            );
+        }
     }
 }
 

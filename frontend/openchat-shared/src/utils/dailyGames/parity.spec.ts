@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { descriptionFromHex } from "../../domain/dailyPuzzle";
-import { bridges, lightUp, loopy, slant, tents, unruly } from "./index";
+import { bridges, chatRooms, lightUp, loopy, slant, tents, unruly } from "./index";
 import fixture from "./parity.json";
 import type { DailyGame } from "./types";
 
@@ -9,11 +9,15 @@ import type { DailyGame } from "./types";
 // fixture drifts from them. Every entry is a puzzle the Rust `check_rules` accepted as solved,
 // so the TypeScript checker must accept it too, and must refuse every single-cell change to it.
 const games = Object.fromEntries(
-    [lightUp, tents, slant, bridges, loopy, unruly].map((g) => [
+    [lightUp, tents, slant, bridges, loopy, unruly, chatRooms].map((g) => [
         g.id,
         g as DailyGame<unknown, unknown>,
     ]),
 );
+
+function sameBytes(a: Uint8Array, b: Uint8Array): boolean {
+    return a.length === b.length && a.every((v, i) => v === b[i]);
+}
 
 describe("client checkers agree with the Rust check_rules", () => {
     test("the fixture covers every game", () => {
@@ -32,8 +36,13 @@ describe("client checkers agree with the Rust check_rules", () => {
             let changes = 0;
             for (const el of game.elements(model)) {
                 if (el.kind === "vertex") continue;
-                const changed = game.tap(model, solved, el.key);
+                let changed = game.tap(model, solved, el.key);
                 if (changed === solved) continue;
+                // A "no" mark on an empty cell is a note, not a change to the answer. CHAT Rooms
+                // crosses a cell out on the first tap, so tap again to reach the logo.
+                if (sameBytes(game.toBytes(model, changed), game.toBytes(model, solved))) {
+                    changed = game.tap(model, changed, el.key);
+                }
                 changes += 1;
                 expect(game.solved(model, changed), `key ${el.key} changed`).toBe(false);
             }
