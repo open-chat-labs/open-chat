@@ -14,6 +14,7 @@ use rand::{RngExt, SeedableRng, rngs::StdRng};
 use sha256::sha256;
 use std::collections::{HashMap, HashSet};
 use std::env;
+use std::io::Write;
 use std::path::Path;
 use std::sync::OnceLock;
 use std::time::{Instant, SystemTime};
@@ -25,28 +26,15 @@ pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
 // This base state is set at the end of the initialization process, so each thread (other than
 // the one doing the initialization) waits until the state is available at which point they
-// create their own PocketIC instance which is initialized with this state. If initialization
-// panics, `None` is stored so that later tests fail straight away rather than each retrying it.
-static BASE_STATE: OnceLock<Option<(PocketIcState, CanisterIds)>> = OnceLock::new();
+// create their own PocketIC instance which is initialized with this state.
+static BASE_STATE: OnceLock<(PocketIcState, CanisterIds)> = OnceLock::new();
 
 pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
     verify_pocket_ic_exists();
 
     let controller = Principal::from_text("xuxyr-xopen-chatx-xxxbu-cai").unwrap();
 
-    let mut init_panic = None;
-    let base_state = BASE_STATE.get_or_init(|| {
-        std::panic::catch_unwind(|| initialize_base_state(controller, seed))
-            .map_err(|payload| init_panic = Some(payload))
-            .ok()
-    });
-    // The test which ran the initialization fails with its panic, the rest with a pointer to it
-    if let Some(payload) = init_panic {
-        std::panic::resume_unwind(payload);
-    }
-    let Some((state, canister_ids)) = base_state else {
-        panic!("Initializing the base state failed in an earlier test");
-    };
+    let (state, canister_ids) = BASE_STATE.get_or_init(|| initialize_base_state_or_exit(controller, seed));
 
     let env = PocketIcBuilder::new()
         .with_read_only_state(state)
@@ -58,6 +46,24 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
         canister_ids: canister_ids.clone(),
         controller,
     }
+}
+
+// If initializing the base state fails, every other test would fail the same way trying it again,
+// so end the test run
+fn initialize_base_state_or_exit(controller: Principal, seed: Option<Hash>) -> (PocketIcState, CanisterIds) {
+    std::panic::catch_unwind(|| initialize_base_state(controller, seed)).unwrap_or_else(|payload| {
+        let message = payload
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| payload.downcast_ref::<&str>().copied())
+            .unwrap_or("unknown panic");
+        // Written to stderr directly, since the test's captured output is lost on exit
+        let _ = writeln!(
+            std::io::stderr(),
+            "Initializing the base state failed, ending the test run: {message}"
+        );
+        std::process::exit(1);
+    })
 }
 
 fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIcState, CanisterIds) {
