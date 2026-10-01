@@ -4,6 +4,7 @@ import {
     cycleCell,
     emptyGrid,
     fromGridBytes,
+    hintCaption,
     isGiven,
     isSolved,
     parseDescription,
@@ -15,6 +16,7 @@ import {
     type UnrulyCell,
     type UnrulyDescription,
 } from "./unruly";
+import fixture from "./unrulyHints.json";
 
 // Rows of width characters: '.' blank, '1' the first value, '2' the second.
 function cells(rows: string[]): UnrulyCell[] {
@@ -281,4 +283,102 @@ describe("unruly DailyGame", () => {
     test("has no derived highlight", () => {
         expect(unruly.lit).toBeUndefined();
     });
+});
+
+// Invariant 24: every step of a generated trace, as the server serves it at level 2, gets a
+// sentence that names the row or column the step lies in and the colour it turns on, and the
+// cells it fills lie in that line and take the other colour. The fixture is written by the Rust
+// test `write_hint_fixture` from real generated puzzles.
+describe("hint sentences", () => {
+    const bytes = (hex: string) => Uint8Array.from(hex.match(/../g)!.map((b) => parseInt(b, 16)));
+
+    for (const [p, entry] of fixture.entries()) {
+        test(`puzzle ${p}: every step names its line and colour`, () => {
+            const desc = parseDescription(bytes(entry.description));
+            const w = desc.width;
+            const inLine = (kind: string, line: number, k: number) =>
+                (kind === "row" ? Math.floor(k / w) : k % w) === line - 1;
+            const along = (kind: string, k: number) =>
+                (kind === "row" ? k % w : Math.floor(k / w)) + 1;
+
+            // The board as the solver left it before each step: the server serves a step only
+            // once what it rests on is on the board
+            let state = emptyGrid(desc);
+            for (const [i, step] of entry.steps.entries()) {
+                const concluded = step.conclusions.map(([k]) => k);
+                // hint_at_level in the LocalUserIndex: below level 3 the target is sent only when
+                // it names no concluded key, and the focus is sorted
+                const target = step.target.some((k) => concluded.includes(k)) ? [] : step.target;
+                const focus = [...step.focus].sort((a, b) => a - b);
+                const grid = unrulyGrid(desc, state);
+                const caption = hintCaption(desc, state, {
+                    technique: step.technique,
+                    focus,
+                    target,
+                });
+                for (const [k, v] of step.conclusions) state = unruly.apply(desc, state, k, v);
+                const where = `step ${i} (technique ${step.technique})`;
+                expect(caption, where).toBeDefined();
+                const { key, params = {} } = caption!;
+                const [, name, kind] = key.split(".");
+                const line = params.line as number;
+                const colour = Number((params.colour as { key: string }).key.split(".")[1]);
+                const other = Number((params.other as { key: string }).key.split(".")[1]);
+                const count = (v: number) =>
+                    grid.filter((c, k) => c === v && inLine(kind, line, k)).length;
+                const share = kind === "row" ? unrulyRowTarget(desc) : unrulyColumnTarget(desc);
+
+                expect(["row", "column"], where).toContain(kind);
+                expect(new Set([colour, other]), where).toEqual(new Set([1, 2]));
+                expect(
+                    step.focus.every((k) => inLine(kind, line, k)),
+                    where,
+                ).toBe(true);
+                expect(
+                    step.conclusions.every(([k, v]) => inLine(kind, line, k) && v === other),
+                    where,
+                ).toBe(true);
+
+                if (name === "pairEnd" || name === "pairGap") {
+                    expect(step.technique, where).toBe(name === "pairEnd" ? 1 : 2);
+                    expect(target.length, where).toBe(2);
+                    expect(
+                        target.every((k) => grid[k] === colour),
+                        where,
+                    ).toBe(true);
+                    const [a, b] = target.map((k) => along(kind, k));
+                    expect(Math.abs(a - b), where).toBe(name === "pairEnd" ? 1 : 2);
+                } else if (name === "lastGap") {
+                    expect(step.technique, where).toBe(3);
+                    expect(params.count, where).toBe(share);
+                    expect([count(colour), count(other)], where).toEqual([share, share - 1]);
+                } else if (name === "lineFull") {
+                    expect(step.technique, where).toBe(4);
+                    expect(params.count, where).toBe(share);
+                    expect(count(colour), where).toBe(share);
+                    expect(
+                        target.every((k) => grid[k] === colour),
+                        where,
+                    ).toBe(true);
+                } else if (name === "lastInRun") {
+                    expect(step.technique, where).toBe(5);
+                    expect(count(colour), where).toBe(share - 1);
+                    const across = target.map((k) => along(kind, k)).sort((a, b) => a - b);
+                    expect(across, where).toEqual([
+                        params.from,
+                        (params.from as number) + 1,
+                        params.to,
+                    ]);
+                    expect(params.to, where).toBe((params.from as number) + 2);
+                    // the window takes no conclusion: the colour's last cell goes there
+                    expect(
+                        concluded.every((k) => !target.includes(k)),
+                        where,
+                    ).toBe(true);
+                } else {
+                    throw new Error(`${where}: unexpected sentence ${key}`);
+                }
+            }
+        });
+    }
 });

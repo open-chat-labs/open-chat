@@ -5,6 +5,7 @@ import {
     cycleCell,
     emptyGrid,
     fromGridBytes,
+    hintCaption,
     isSolved,
     lightUp,
     neighbours,
@@ -13,6 +14,7 @@ import {
     type LightUpCell,
     type LightUpDescription,
 } from "./lightUp";
+import fixture from "./lightUpHints.json";
 
 // '.' white, '#' black unnumbered, '0'-'4' black with clue.
 function descBytes(rows: string[]): number[] {
@@ -344,4 +346,107 @@ describe("hintKeyStatus", () => {
         expect(lightUp.hintKeyStatus!(d, g, 4)).toBe("todo");
         expect(lightUp.hintKeyStatus!(d, g, 1)).toBe("context");
     });
+});
+
+// Invariant 24: every step of a generated trace, as the server serves it, gets a sentence that
+// names the number or cell it is about by its row and column, and the cells it outlines and
+// concludes lie where the sentence says. The fixture is written by the Rust test
+// `write_hint_fixture` from real generated puzzles.
+describe("hint sentences", () => {
+    const bytes = (hex: string) => Uint8Array.from(hex.match(/../g)!.map((b) => parseInt(b, 16)));
+
+    for (const [p, entry] of fixture.entries()) {
+        test(`puzzle ${p}: every step names what it is about`, () => {
+            const d = parseDescription(bytes(entry.description));
+            const w = d.width;
+            const white = (k: number) => d.cells[k].kind === "white";
+            // The white cells a bulb at k would shine on, up to a black cell or the edge
+            const sight = (k: number) => {
+                const out: number[] = [];
+                for (const [dx, dy] of [
+                    [1, 0],
+                    [-1, 0],
+                    [0, 1],
+                    [0, -1],
+                ]) {
+                    let x = (k % w) + dx;
+                    let y = Math.floor(k / w) + dy;
+                    while (x >= 0 && x < w && y >= 0 && y < d.height && white(y * w + x)) {
+                        out.push(y * w + x);
+                        x += dx;
+                        y += dy;
+                    }
+                }
+                return out;
+            };
+
+            // The board as the solver left it before each step: the server serves a step only
+            // once what it rests on is on the board
+            let grid = emptyGrid(d);
+            for (const [i, step] of entry.steps.entries()) {
+                const concluded = step.conclusions.map(([k]) => k);
+                // hint_at_level in the LocalUserIndex: the target is sent only when it names no
+                // concluded key
+                const target = step.target.some((k) => concluded.includes(k)) ? [] : step.target;
+                const caption = hintCaption(d, grid, { ...step, target });
+                for (const [k, v] of step.conclusions) grid = lightUp.apply(d, grid, k, v);
+                const where = `step ${i} (technique ${step.technique})`;
+                expect(caption, where).toBeDefined();
+                const { key, params = {} } = caption!;
+                const named = ((params.row as number) - 1) * w + (params.column as number) - 1;
+                const cell = d.cells[named];
+                const clue = cell.kind === "black" ? cell.clue : undefined;
+                const beside = neighbours(d, named);
+
+                if (key === "hint.onlyWay.cell") {
+                    expect(named, where).toBe(target[0]);
+                    expect(
+                        concluded.every((k) => sight(named).includes(k)),
+                        where,
+                    ).toBe(true);
+                } else if (key === "hint.onlyWay.self") {
+                    expect(concluded, where).toEqual([named]);
+                } else if (
+                    key === "hint.clueSatisfied.some" ||
+                    key === "hint.clueSatisfied.zero" ||
+                    key === "hint.clueForced"
+                ) {
+                    expect(clue, where).toBe(params.number);
+                    expect(key === "hint.clueSatisfied.zero", where).toBe(
+                        key !== "hint.clueForced" && clue === 0,
+                    );
+                    expect(
+                        concluded.every((k) => beside.includes(k)),
+                        where,
+                    ).toBe(true);
+                } else if (key === "hint.setExclusion.dark") {
+                    expect(cell.kind, where).toBe("white");
+                    const unit = [named, ...sight(named)];
+                    expect(
+                        target.every((k) => unit.includes(k)),
+                        where,
+                    ).toBe(true);
+                    expect(
+                        concluded.some((k) => unit.includes(k)),
+                        where,
+                    ).toBe(false);
+                } else if (
+                    key === "hint.setExclusion.clue" ||
+                    key === "hint.setExclusion.clueBeside"
+                ) {
+                    expect(clue, where).toBe(params.number);
+                    expect(
+                        target.every((k) => beside.includes(k)),
+                        where,
+                    ).toBe(true);
+                    expect(
+                        concluded.every((k) => beside.includes(k)),
+                        where,
+                    ).toBe(key === "hint.setExclusion.clueBeside");
+                } else {
+                    throw new Error(`${where}: unexpected sentence ${key}`);
+                }
+            }
+        });
+    }
 });

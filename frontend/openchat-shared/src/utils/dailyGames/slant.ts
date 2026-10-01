@@ -6,7 +6,7 @@
 // Cell key = y*width+x. Vertex key = width*height + vertex index, so hint focus can name the
 // clue it used; vertices are never conclusions.
 
-import type { DailyGame, GameElement, Violation } from "./types";
+import type { DailyGame, GameElement, HintCaption, HintStep, Violation } from "./types";
 
 /** 0 undecided, 1 backslash, 2 slash. */
 export type SlantCell = 0 | 1 | 2;
@@ -231,6 +231,127 @@ export function checkRules(desc: SlantDescription, grid: SlantCell[]): SlantViol
     return out;
 }
 
+/** Which way round a line runs, named for the sentence: the slant a step rules out. */
+const slantName = (s: SlantCell) => (s === SLANT_BACKSLASH ? "backslash" : "slash");
+
+/**
+ * The sentence for a served step, naming the clue by its number, or the corners a line in the
+ * outlined cell would join. Worked out from the step and the board, which holds every earlier
+ * step when the step is served (Slant concludes only lines, so a step waits for them all).
+ * Undefined for a step that can't be read that way, which then gets the technique's fixed
+ * sentence.
+ */
+export function hintCaption(
+    desc: SlantDescription,
+    grid: SlantCell[],
+    step: HintStep,
+): HintCaption | undefined {
+    const { width: w, height: h } = desc;
+    const n = w * h;
+    const vw = w + 1;
+    const round = (v: number) => vertexNeighbours(desc, v % vw, Math.floor(v / vw));
+
+    switch (step.technique) {
+        case 1:
+        case 2:
+        case 6: {
+            // The clue is the target; a PairedClue's target adds the two tied cells
+            const vk = step.target.find((k) => k >= n);
+            const clue = vk === undefined ? undefined : desc.clues[vk - n];
+            if (vk === undefined || clue === undefined) return undefined;
+            const pair = step.target.filter((k) => k < n);
+            const cells = round(vk - n).filter(([j]) => !pair.includes(j));
+            const lines = cells.filter(([j, s]) => grid[j] === s).length;
+            const open = cells.filter(([j]) => grid[j] === 0).length;
+            if (step.technique === 1) {
+                if (lines !== clue) return undefined;
+                return {
+                    key: clue === 0 ? "hint.satisfied.zero" : "hint.satisfied.some",
+                    params: { clue },
+                };
+            }
+            if (step.technique === 2) {
+                const needed = clue - lines;
+                if (needed !== open) return undefined;
+                if (cells.length === clue) return { key: "hint.forced.all", params: { clue } };
+                return needed === 1
+                    ? { key: "hint.forced.one", params: { clue } }
+                    : { key: "hint.forced.many", params: { clue, needed } };
+            }
+            // Old puzzles name only the clue, and without the pair the sentence can't be told
+            if (pair.length !== 2) return undefined;
+            const needed = clue - lines - 1;
+            if (needed === 0) return { key: "hint.paired.away", params: { clue } };
+            if (needed === open) return { key: "hint.paired.towards", params: { clue, needed } };
+            return undefined;
+        }
+        case 3:
+        case 4:
+        case 5: {
+            // The target is the concluded cell, so it is withheld: the step is about the one
+            // cell in its focus still open
+            const open = step.focus.filter((k) => k < n && grid[k] === 0);
+            if (open.length !== 1) return undefined;
+            const cell = open[0];
+            if (step.technique === 5) {
+                // The filled cell it is tied to: the nearest, if the focus holds several
+                const x = cell % w;
+                const y = Math.floor(cell / w);
+                const dist = (k: number) => Math.abs((k % w) - x) + Math.abs(Math.floor(k / w) - y);
+                const tied = step.focus
+                    .filter((k) => k < n && grid[k] !== 0)
+                    .sort((a, b) => dist(a) - dist(b))[0];
+                if (tied === undefined) return undefined;
+                return {
+                    key: "hint.equivalent",
+                    params: { row: Math.floor(tied / w) + 1, column: (tied % w) + 1 },
+                };
+            }
+            const dsf = new Dsf(vw * (h + 1));
+            grid.forEach((v, i) => {
+                if (v !== 0) dsf.merge(...endpoints(desc, i, v));
+            });
+            let ruledOut: SlantCell[];
+            if (step.technique === 3) {
+                ruledOut = ([SLANT_BACKSLASH, SLANT_SLASH] as SlantCell[]).filter((s) =>
+                    dsf.equivalent(...endpoints(desc, cell, s)),
+                );
+            } else {
+                // Tatham's dead-end count: a group of corners joined by lines, off the edge, that
+                // can take at most one more line. A numbered corner can take its number less the
+                // lines on it; any other corner, one line per open cell round it.
+                const edge = new Set<number>();
+                const exits = new Map<number, number>();
+                for (let v = 0; v < vw * (h + 1); v++) {
+                    const r = dsf.canonify(v);
+                    const vx = v % vw;
+                    const vy = Math.floor(v / vw);
+                    if (vx === 0 || vy === 0 || vx === w || vy === h) edge.add(r);
+                    const nb = round(v);
+                    const clue = desc.clues[v];
+                    const e =
+                        clue === undefined
+                            ? nb.filter(([j]) => grid[j] === 0).length
+                            : clue - nb.filter(([j, s]) => grid[j] === s).length;
+                    exits.set(r, (exits.get(r) ?? 0) + e);
+                }
+                const sealed = (v: number) => {
+                    const r = dsf.canonify(v);
+                    return !edge.has(r) && (exits.get(r) ?? 0) <= 1;
+                };
+                ruledOut = ([SLANT_BACKSLASH, SLANT_SLASH] as SlantCell[]).filter((s) => {
+                    const [a, b] = endpoints(desc, cell, s);
+                    return !dsf.equivalent(a, b) && sealed(a) && sealed(b);
+                });
+            }
+            if (ruledOut.length !== 1) return undefined;
+            const name = step.technique === 3 ? "loop" : "deadEnd";
+            return { key: `hint.${name}.${slantName(ruledOut[0])}` };
+        }
+    }
+    return undefined;
+}
+
 export function isSolved(desc: SlantDescription, grid: SlantCell[]): boolean {
     return (
         grid.length === desc.width * desc.height &&
@@ -330,4 +451,5 @@ export const slant: DailyGame<SlantDescription, SlantCell[]> = {
         });
         return out;
     },
+    hintCaption,
 };
