@@ -155,7 +155,7 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     let insured = days_insured >= 4;
 
-    expected_streak = if insured { 6 } else { 0 };
+    expected_streak = if insured { 8 } else { 0 };
     expected_max_streak = max(expected_streak, expected_max_streak);
     wait_for_streak_lengths(env, &user, expected_streak, expected_max_streak);
 

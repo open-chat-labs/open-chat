@@ -2992,7 +2992,16 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
     // Missing a day uses up each user's day of insurance, keeping their streaks, B setting up their
     // job having left A's in place. The OpenChat bot tells each of them.
     env.advance_time(Duration::from_millis(2 * constants::DAY_IN_MS));
-    env.tick();
+    // Each claim is made by a timer job, which can take a few rounds to run
+    for _ in 0..30 {
+        if [a_principal, b_principal]
+            .iter()
+            .all(|principal| initial_state(env, *principal, canister_id).streak == 2)
+        {
+            break;
+        }
+        env.tick();
+    }
     for (principal, user_id) in [(a_principal, a), (b_principal, b)] {
         let state = initial_state(env, principal, canister_id);
         assert_eq!(state.streak, 2);

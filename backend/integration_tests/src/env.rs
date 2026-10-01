@@ -15,9 +15,9 @@ lazy_static! {
 pub const VIDEO_CALL_OPERATOR: Principal = Principal::from_slice(&[1, 2, 3, 4, 5]);
 
 // An env whose clock has moved on further than this since it was created isn't returned to the
-// pool (see `Drop`). Steps of seconds or minutes past rate limits and timeouts are harmless, but
-// longer ones leave the canisters' interval timers behind schedule, and they then catch up during
-// whichever test draws the env next.
+// pool (see `Drop`). This catches tests which jump hours or days, leaving the canisters' interval
+// jobs (which run hourly or less often) to catch up during whichever test draws the env next. A
+// test whose shorter steps would still affect the next test should call `discard`.
 const MAX_CLOCK_ADVANCE: Duration = Duration::from_secs(60 * 60);
 
 #[derive(Default)]
@@ -68,9 +68,9 @@ impl TestEnvWrapper {
 
     // Drops the env instead of returning it to the pool. Tests which change env-wide state (e.g.
     // release a new wasm) MUST call this: a pooled env left changed poisons whichever test draws
-    // it next, which surfaces as unrelated flakes. An env whose clock has been pushed well forward,
-    // or whose test panics, is never returned to the pool (see `Drop`), so this is only needed for
-    // other changes, on the path where the test passes.
+    // it next, which surfaces as unrelated flakes. An env whose clock has moved on more than
+    // `MAX_CLOCK_ADVANCE`, or whose test panics, is never returned to the pool (see `Drop`), so
+    // this is only needed for other changes, on the path where the test passes.
     pub fn discard(mut self) {
         self.env = None;
         std::mem::forget(self);
