@@ -267,7 +267,9 @@ fn removing_a_bot_queues_no_event_for_it() {
         community_canister::remove_member::Response::Success
     ));
 
-    tick_many(env, 5);
+    // A wrongly queued event is only counted again once its call to the bot, which may be on another
+    // subnet, has failed
+    tick_many(env, 15);
     assert_eq!(queued_user_events(env, community_id), 0);
 }
 

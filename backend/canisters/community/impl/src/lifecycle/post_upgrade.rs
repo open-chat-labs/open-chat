@@ -38,6 +38,11 @@ fn post_upgrade(args: Args) {
         info!(populated, members, "Populated member principals");
     });
 
+    mutate_state(|state| {
+        let bots = state.data.members.populate_bots();
+        info!(bots, "Populated bot members");
+    });
+
     let completed_imports = read_state(|state| state.data.groups_being_imported.completed_imports());
 
     for group_id in completed_imports {
