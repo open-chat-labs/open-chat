@@ -139,6 +139,21 @@ export function userWalletAccount(userId: string, principal: () => string): Icrc
     };
 }
 
+// Whether `address` is an account of the id of a user in a MultiUser canister, under any subaccount,
+// as it is if the user id is entered as the address, rather than their wallet (see
+// `userWalletAccount`). No one can sign as such an id, so anything sent there is lost. Mirrors
+// `PendingCryptoTransaction::is_to_indexed_user_id` in backend/libraries/types/src/cryptocurrency.rs.
+// An ICP account identifier is a hash, from which the owner can't be read, so it is never refused.
+export function isAccountOfMultiUserCanisterUserId(address: string): boolean {
+    let owner: Principal;
+    try {
+        owner = decodeIcrcAccount(address).owner;
+    } catch {
+        return false;
+    }
+    return isMultiUserCanisterUser(owner.toText());
+}
+
 // The account a user's canister spends as when it pulls funds the user has approved via ICRC-2, so
 // the spender the user has to approve. A User canister spends as itself. A canister holding many
 // users spends each user's approval under a subaccount derived from their principal, mirroring
@@ -151,6 +166,11 @@ export function userCanisterSpenderAccount(userId: string, principal: () => stri
     }
     return { owner, subaccount: spenderSubaccount(Principal.fromText(principal())) };
 }
+
+// How long an approval made for a single payment stays spendable. The allowance is the whole of the
+// access the spender is granted, so it should outlive the payment it is for and nothing more: an
+// approval left standing is one which could be spent at any point later.
+export const APPROVAL_VALIDITY_MS = 10 * 60 * 1000;
 
 // Mirrors `ledger_utils::convert_to_subaccount`: the principal's length followed by its bytes.
 export function spenderSubaccount(principal: Principal): Uint8Array {

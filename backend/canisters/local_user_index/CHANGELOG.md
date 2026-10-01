@@ -8,6 +8,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Pass on when the details of each group, community and channel last changed in the summaries relayed to clients ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
+- Report a community whose canister has been uninstalled to the GroupIndex, then stop tracking it ([#9672](https://github.com/open-chat-labs/open-chat/pull/9672))
+
+### Changed
+
+- Keep the recorded wasm chunk hashes when upgraded, now that every LocalUserIndex clears them whenever it clears its chunk store ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))
+- Refund a deleted group's or community's cycles before deleting its canister ([#9680](https://github.com/open-chat-labs/open-chat/pull/9680))
+- Name a wrong placement (line, bulb, tent, bridge or CHAT) before a wrong "no" mark in the free mistake check, since the placement is usually the cause ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+- Serve daily puzzle hints at one level for one price: the step's outline and technique, never its conclusions. A step the user already has is re-served free, whatever level an older client asks for ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+
+### Removed
+
+- Remove the legacy user event queue now that every LocalUserIndex has drained it ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))
+
+### Fixed
+
+- Compare a hint step's conclusions with its focus and target as the cells the board draws them on, so Bridges hints, whose conclusions are gaps between islands, no longer skip the steps they rest on or send an outline that names their answer ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+
+## [[2.0.2077](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2077-local_user_index)] - 2026-09-30
+
+### Added
+
 - Add the `use_multi_user_canister` flag to `register_user`, which in test mode registers the user in a MultiUser canister (creating one if there are none) rather than in a canister of their own ([#9524](https://github.com/open-chat-labs/open-chat/pull/9524))
 - Store the map of the old to the new id of each user migrated to a MultiUser canister, synced from the UserIndex ([#9536](https://github.com/open-chat-labs/open-chat/pull/9536))
 - Add the `migrated_user_ids` query, which takes a list of user ids and returns the latest id of each user in it who has been migrated to a MultiUser canister ([#9538](https://github.com/open-chat-labs/open-chat/pull/9538))
@@ -31,8 +53,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Once the last upgrade in a series completes, and on start up, clear the chunk store then upload the chunks of the current User, Group, Community and MultiUser wasms again, rather than leaving the store empty, and install new canisters from those chunks ([#9583](https://github.com/open-chat-labs/open-chat/pull/9583))
 - Hold the weekly cycles balance checks, as a one-off, until 09:00 UTC on 5 October 2026, rather than running them as soon as the LocalUserIndex is upgraded ([#9598](https://github.com/open-chat-labs/open-chat/pull/9598))
 - Set a canister's freezing threshold to 0 before refunding its cycles, so that those it held back are refunded too ([#9629](https://github.com/open-chat-labs/open-chat/pull/9629))
-- Name a wrong placement (line, bulb, tent, bridge or CHAT) before a wrong "no" mark in the free mistake check, since the placement is usually the cause ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
-- Serve daily puzzle hints at one level for one price: the step's outline and technique, never its conclusions. A step the user already has is re-served free, whatever level an older client asks for ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 
 ### Fixed
 
@@ -44,7 +64,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move the blocked-user pairs naming a migrated user onto their new id, including those blocked or unblocked by their old id afterwards ([#9630](https://github.com/open-chat-labs/open-chat/pull/9630))
 - Fix reading direct chat events via `chat_events` and `bot_chat_events` for users in MultiUser canisters ([#9652](https://github.com/open-chat-labs/open-chat/pull/9652))
 - Fix issuing access tokens for direct chats with users in MultiUser canisters ([#9654](https://github.com/open-chat-labs/open-chat/pull/9654))
-- Compare a hint step's conclusions with its focus and target as the cells the board draws them on, so Bridges hints, whose conclusions are gaps between islands, no longer skip the steps they rest on or send an outline that names their answer ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 
 ## [[2.0.2063](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2063-local_user_index)] - 2026-09-23
 

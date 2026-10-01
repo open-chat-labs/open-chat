@@ -40,6 +40,10 @@ impl CanistersRequiringUpgrade {
         self.failed.retain(|f| f.to_version >= older_than);
     }
 
+    pub fn remove_failed(&mut self, canister_id: &CanisterId) {
+        self.failed.retain(|f| f.canister_id != *canister_id);
+    }
+
     pub fn mark_success(&mut self, canister_id: &CanisterId) {
         self.mark_upgrade_no_longer_in_progress(canister_id);
         while self.recently_competed.len() > 10 {
@@ -114,4 +118,29 @@ pub struct FailedUpgradeCount {
     pub from_version: BuildVersion,
     pub to_version: BuildVersion,
     pub count: usize,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn remove_failed_removes_only_that_canisters_failures() {
+        let canister1 = CanisterId::from_slice(&[1]);
+        let canister2 = CanisterId::from_slice(&[2]);
+
+        let mut canisters = CanistersRequiringUpgrade::default();
+        for (canister_id, patch) in [(canister1, 1), (canister2, 1), (canister1, 2)] {
+            canisters.mark_failure(FailedUpgrade {
+                canister_id,
+                from_version: BuildVersion::default(),
+                to_version: BuildVersion::new(2, 0, patch),
+            });
+        }
+
+        canisters.remove_failed(&canister1);
+
+        assert_eq!(canisters.failed.len(), 1);
+        assert_eq!(canisters.failed[0].canister_id, canister2);
+    }
 }

@@ -217,13 +217,8 @@ impl RuntimeState {
         recipients: Vec<UserId>,
         notification: GroupChatUserNotificationPayload,
     ) {
-        if !recipients.is_empty() {
-            let notification = Notification::User(UserNotification {
-                sender,
-                recipients,
-                notification,
-            });
-            self.push_notification_inner(notification);
+        for notification in UserNotification::split_by_recipients(sender, recipients, notification) {
+            self.push_notification_inner(Notification::User(notification));
         }
     }
 
@@ -335,6 +330,7 @@ impl RuntimeState {
             chat_id: self.env.canister_id().into(),
             local_user_index_canister_id: self.data.local_user_index_canister_id,
             last_updated: chat.last_updated(Some(member.user_id())),
+            details_last_updated: self.data.selected_details_last_updated(),
             name: chat.name.value.clone(),
             description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
@@ -1186,6 +1182,11 @@ impl Data {
         let timestamps = vec![self.chat.details_last_updated(), self.bots.last_updated()];
 
         timestamps.into_iter().max().unwrap_or_default()
+    }
+
+    // When anything returned by `selected_updates` last changed
+    pub fn selected_details_last_updated(&self) -> TimestampMillis {
+        self.chat.selected_details_last_updated().max(self.bots.last_updated())
     }
 
     pub fn flush_pending_events(&mut self) {

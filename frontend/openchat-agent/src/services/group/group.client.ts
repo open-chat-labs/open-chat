@@ -19,7 +19,6 @@ import type {
     FollowThreadResponse,
     FullWebhookDetails,
     GrantedBotPermissions,
-    GroupChatDetails,
     GroupChatDetailsResponse,
     GroupChatIdentifier,
     InviteCodeResponse,
@@ -37,10 +36,12 @@ import type {
     ResetInviteCodeResponse,
     Rules,
     SearchGroupChatResponse,
+    PendingCryptocurrencyTransfer,
     SendMessageResponse,
     SetVideoCallPresenceResponse,
     Tally,
     ThreadPreviewsResponse,
+    TipMessageResponse,
     ToggleMuteNotificationResponse,
     UnblockUserResponse,
     UndeleteMessageResponse,
@@ -51,7 +52,7 @@ import type {
     VideoCallParticipantsResponse,
     VideoCallPresence,
 } from "@shared";
-import { MAX_EVENTS, MAX_MESSAGES, offline, random32 } from "@shared";
+import { MAX_EVENTS, MAX_MESSAGES, random32 } from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,
@@ -106,6 +107,7 @@ import {
     GroupSetVideoCallPresenceArgs,
     GroupThreadPreviewsArgs,
     GroupThreadPreviewsResponse,
+    GroupTipMessageArgs,
     GroupToggleMuteNotificationsArgs,
     GroupUnblockUserArgs,
     GroupUndeleteMessagesArgs,
@@ -124,7 +126,7 @@ import {
     UnitResult,
 } from "../../typebox";
 import { type ChatsDb } from "../../utils/chatsDb";
-import { mergeGroupChatDetails } from "../../utils/chat";
+import { loadGroupDetails } from "../../utils/details";
 import {
     apiOptionUpdateV2,
     identity,
@@ -140,6 +142,7 @@ import {
     apiAccessGateConfig,
     apiExternalBotPermissions,
     apiMessageContent,
+    apiPendingTransaction,
     apiUser as apiUserV2,
     apiVideoCallPresence,
     changeRoleResult,
@@ -157,6 +160,8 @@ import {
     pushEventSuccess,
     searchGroupChatResponse,
     sendMessageSuccess,
+    transferFrom,
+    transferRecipient,
     threadPreviewsSuccess,
     undeleteMessageSuccess,
     unitResult,
@@ -367,6 +372,8 @@ export class GroupClient
         messageFilterFailed: bigint | undefined,
         newAchievement: boolean,
         onRequestAccepted: () => void,
+        // The account the group pulls the message's transfer from, if it holds one
+        fromAccount?: string,
     ): Promise<[SendMessageResponse, Message]> {
         const chatId = this.groupIdToChatId(groupId);
 
@@ -381,8 +388,12 @@ export class GroupClient
         return uploadContentPromise.then((content) => {
             const newEvent =
                 content !== undefined ? { ...event, event: { ...event.event, content } } : event;
+            const toSend =
+                fromAccount === undefined
+                    ? newEvent.event.content
+                    : transferFrom(newEvent.event.content, fromAccount);
             const args = {
-                content: apiMessageContent(newEvent.event.content),
+                content: apiMessageContent(toSend),
                 message_id: newEvent.event.messageId,
                 sender_name: senderName,
                 sender_display_name: senderDisplayName,
@@ -403,20 +414,27 @@ export class GroupClient
                 groupId,
                 "send_message_v2",
                 args,
-                (resp) => mapResult(resp, sendMessageSuccess),
+                (resp) =>
+                    mapResult(resp, (value) =>
+                        sendMessageSuccess(
+                            value,
+                            newEvent.event.sender,
+                            transferRecipient(newEvent.event.content),
+                        ),
+                    ),
                 GroupSendMessageArgs,
                 GroupSendMessageResponse,
                 onRequestAccepted,
             )
-                .then((resp) => {
-                    const retVal: [SendMessageResponse, Message] = [resp, newEvent.event];
+                .then((resp) =>
+                    // Returns the message as it was sent, a prize or swap offer in place of the
+                    // content it was made from
                     this.chatsDb.setCachedMessageFromSendResponse(
                         chatId,
                         newEvent,
                         threadRootMessageIndex,
-                    )(retVal);
-                    return retVal;
-                })
+                    )([resp, newEvent.event]),
+                )
                 .catch((err) => {
                     this.chatsDb.recordFailedMessage(chatId, newEvent, threadRootMessageIndex);
                     throw err;
@@ -582,79 +600,41 @@ export class GroupClient
         );
     }
 
-    async getGroupDetails(
+    // A caller which already holds the details passes the time up to which they are known to be up
+    // to date as `detailsSyncedUpTo`, and is told only that they still are, unless they have changed
+    getGroupDetails(
         groupId: string,
-        chatLastUpdated: bigint,
+        detailsLastUpdated: bigint,
+        detailsSyncedUpTo?: bigint,
     ): Promise<GroupChatDetailsResponse> {
-        const fromCache = await this.chatsDb.getCachedGroupDetails(groupId);
-        if (fromCache !== undefined) {
-            if (fromCache.timestamp >= chatLastUpdated || offline()) {
-                return fromCache;
-            } else {
-                return this.getGroupDetailsUpdates(groupId, fromCache);
-            }
-        }
-
-        const response = await this.getGroupDetailsFromBackend(groupId);
-        if (typeof response === "object" && "members" in response) {
-            await this.chatsDb.setCachedGroupDetails(groupId, response);
-        }
-        return response;
-    }
-
-    private getGroupDetailsFromBackend(groupId: string): Promise<GroupChatDetailsResponse> {
-        return this.query(
+        return loadGroupDetails(
+            this.chatsDb,
             groupId,
-            "selected_initial",
-            {},
-            (resp) =>
-                mapResult(resp, (value) =>
-                    groupDetailsSuccess(value, this.config.blobUrlPattern, groupId),
+            detailsLastUpdated,
+            detailsSyncedUpTo,
+            () =>
+                this.query(
+                    groupId,
+                    "selected_initial",
+                    {},
+                    (resp) =>
+                        mapResult(resp, (value) =>
+                            groupDetailsSuccess(value, this.config.blobUrlPattern, groupId),
+                        ),
+                    TEmpty,
+                    GroupSelectedInitialResponse,
                 ),
-            TEmpty,
-            GroupSelectedInitialResponse,
+            (since) =>
+                this.query(
+                    groupId,
+                    "selected_updates_v2",
+                    { updates_since: since },
+                    (value) =>
+                        groupDetailsUpdatesResponse(value, this.config.blobUrlPattern, groupId),
+                    GroupSelectedUpdatesArgs,
+                    GroupSelectedUpdatesResponse,
+                ),
         );
-    }
-
-    private async getGroupDetailsUpdates(
-        groupId: string,
-        previous: GroupChatDetails,
-    ): Promise<GroupChatDetails> {
-        const response = await this.getGroupDetailsUpdatesFromBackend(groupId, previous);
-        if (response.timestamp > previous.timestamp) {
-            await this.chatsDb.setCachedGroupDetails(groupId, response);
-        }
-        return response;
-    }
-
-    private async getGroupDetailsUpdatesFromBackend(
-        groupId: string,
-        previous: GroupChatDetails,
-    ): Promise<GroupChatDetails> {
-        const args = {
-            updates_since: previous.timestamp,
-        };
-        const updatesResponse = await this.query(
-            groupId,
-            "selected_updates_v2",
-            args,
-            (value) => groupDetailsUpdatesResponse(value, this.config.blobUrlPattern, groupId),
-            GroupSelectedUpdatesArgs,
-            GroupSelectedUpdatesResponse,
-        );
-
-        if (updatesResponse.kind === "failure") {
-            return previous;
-        }
-
-        if (updatesResponse.kind === "success_no_updates") {
-            return {
-                ...previous,
-                timestamp: updatesResponse.timestamp,
-            };
-        }
-
-        return mergeGroupChatDetails(previous, updatesResponse);
     }
 
     getPublicSummary(groupId: string): Promise<PublicGroupSummaryResponse> {
@@ -965,6 +945,36 @@ export class GroupClient
             },
             isSuccess,
             GroupReportMessageArgs,
+            UnitResult,
+        );
+    }
+
+    // Tips a message with a transfer the group pulls from the account `transfer` names, which
+    // must have approved the group to, into the wallet of the message's sender
+    tipMessage(
+        groupId: string,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        transfer: PendingCryptocurrencyTransfer,
+        decimals: number,
+        username: string,
+        displayName: string | undefined,
+        newAchievement: boolean,
+    ): Promise<TipMessageResponse> {
+        return this.update(
+            groupId,
+            "tip_message",
+            {
+                thread_root_message_index: threadRootMessageIndex,
+                message_id: messageId,
+                transfer: apiPendingTransaction(transfer),
+                decimals,
+                username,
+                display_name: displayName,
+                new_achievement: newAchievement,
+            },
+            unitResult,
+            GroupTipMessageArgs,
             UnitResult,
         );
     }

@@ -204,6 +204,8 @@
                     messageContext.chatId,
                     messageContext.threadRootMessageIndex,
                     messageId,
+                    content.token1,
+                    content.token1Amount,
                     fromAccount,
                 )
                 .then((resp) => {
@@ -241,6 +243,7 @@
             case "chat_frozen":
             case "insufficient_funds":
             case "internal_error":
+            case "error":
                 key = accepting ? "unknown_accept_error" : "unknown_cancel_error";
                 break;
         }

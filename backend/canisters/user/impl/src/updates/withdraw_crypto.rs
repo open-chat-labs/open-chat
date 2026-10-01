@@ -14,6 +14,14 @@ async fn withdraw_crypto_v2(args: Args) -> Response {
 }
 
 async fn withdraw_crypto_impl(mut args: Args) -> Response {
+    // A user in a MultiUser canister holds their funds under their principal, and no one can spend
+    // from an account of their user id, so a withdrawal to one would be lost
+    if args.withdrawal.is_to_indexed_user_id() {
+        return Error(OCErrorCode::InvalidRequest.with_message(
+            "The recipient is the id of a user in a MultiUser canister, which no one can spend from, rather than their wallet",
+        ));
+    }
+
     if let Err(error) = mutate_state(|state| state.data.user.pin_number.verify(args.pin.as_mut(), state.env.now())) {
         return Error(error.into());
     }

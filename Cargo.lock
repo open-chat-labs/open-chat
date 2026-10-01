@@ -6867,6 +6867,8 @@ dependencies = [
  "group_canister",
  "group_canister_c2c_client",
  "group_community_common",
+ "group_index_canister",
+ "group_index_canister_c2c_client",
  "http_request",
  "ic-cdk 0.20.3",
  "ic-cdk-management-canister",

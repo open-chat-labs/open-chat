@@ -14,7 +14,7 @@ use chat_events::{
     ValidateNewMessageContentResult,
 };
 use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, NANOS_PER_MILLISECOND, OPENCHAT_BOT_USER_ID};
-use ledger_utils::UserTransfer;
+use ledger_utils::{TransferRecipient, UserTransfer};
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
@@ -210,9 +210,10 @@ enum CryptoTransfer {
     Certified(certified::PendingCryptoTransaction),
 }
 
-// Checks a crypto transfer is to the recipient's wallet, and is one this canister can submit for the
-// user. Users hold their own funds in their own wallets, so this canister can't make an NNS or ICRC1
-// transfer for them, only pull their funds via ICRC2, or accept a transfer they have already made.
+// Checks a crypto transfer is for the recipient, sending it to their wallet if it is addressed to
+// their user id, and is one this canister can submit for the user. Users hold their own funds in
+// their own wallets, so this canister can't make an NNS or ICRC1 transfer for them, only pull their
+// funds via ICRC2, or accept a transfer they have already made.
 async fn prepare_crypto_transfer(
     content: &CryptoContent,
     my_index: u16,
@@ -253,7 +254,10 @@ async fn prepare_crypto_transfer(
 
         let transfer = UserTransfer::new(
             content.transfer.clone(),
-            recipient_wallet,
+            TransferRecipient::User {
+                user_id: content.recipient,
+                wallet: recipient_wallet,
+            },
             &MEMO_MESSAGE,
             state.env.canister_id(),
         )?;

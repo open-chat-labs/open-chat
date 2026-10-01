@@ -434,7 +434,11 @@ function getAction(
             return agent.markMessagesRead(payload.payload);
 
         case "getGroupDetails":
-            return agent.getGroupDetails(payload.chatId, payload.chatLastUpdated);
+            return agent.getGroupDetails(
+                payload.chatId,
+                payload.detailsLastUpdated,
+                payload.detailsSyncedUpTo,
+            );
 
         case "lastOnline":
             return agent.lastOnline(payload.userIds);
@@ -1024,7 +1028,8 @@ function getAction(
         case "getCommunityDetails":
             return agent.communityClient.getCommunityDetails(
                 payload.id.communityId,
-                payload.communityLastUpdated,
+                payload.detailsLastUpdated,
+                payload.detailsSyncedUpTo,
             );
 
         case "addToFavourites":
@@ -1187,12 +1192,15 @@ function getAction(
             );
 
         case "tipMessage":
-            return agent.userClient.tipMessage(
+            return agent.tipMessage(
                 payload.messageContext,
                 payload.messageId,
                 payload.transfer,
                 payload.decimals,
                 payload.pin,
+                payload.username,
+                payload.displayName,
+                payload.newAchievement,
             );
 
         case "loadSavedCryptoAccounts":
@@ -1266,6 +1274,8 @@ function getAction(
                 payload.chatId,
                 payload.threadRootMessageIndex,
                 payload.messageId,
+                payload.token1,
+                payload.token1Amount,
                 payload.pin,
                 payload.newAchievement,
                 payload.fromAccount,

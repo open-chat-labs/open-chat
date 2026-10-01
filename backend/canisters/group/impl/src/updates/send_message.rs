@@ -16,14 +16,13 @@ use group_canister::c2c_send_message::{Args as C2CArgs, Response as C2CResponse}
 use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageSuccess;
 use group_community_common::{NewP2PSwap, prize_refund, validate_prize};
-use ledger_utils::UserTransfer;
+use ledger_utils::{TransferRecipient, UserTransfer};
 use oc_error_codes::OCErrorCode;
 use tracing::error;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, CanisterId, Chat, ChatId, CompletedCryptoTransaction, EventIndex,
     EventWrapper, GroupChatUserNotificationPayload, GroupMessageNotification, Message, MessageContent, MessageContentInitial,
-    MessageContentType, MessageIndex, OCResult, P2PSwapLocation, TimestampMillis, User, UserIdAndPrincipal, UserType, icrc1,
-    icrc2,
+    MessageContentType, MessageIndex, OCResult, P2PSwapLocation, TimestampMillis, User, UserIdAndPrincipal, UserType, icrc2,
 };
 use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
@@ -524,13 +523,16 @@ fn prepare_transfer(args: &Args, state: &mut RuntimeState) -> OCResult<(UserIdAn
                 if c.recipient == user_id {
                     return Err(OCErrorCode::TransferCannotBeToSelf.into());
                 }
-                let recipient = state.member_wallet(c.recipient)?;
+                let recipient = TransferRecipient::User {
+                    user_id: c.recipient,
+                    wallet: state.member_wallet(c.recipient)?,
+                };
                 (MessageContentType::Crypto, MEMO_MESSAGE.as_slice(), c.transfer, recipient)
             }
             ValidateNewMessageContentResult::SuccessPrize(p) => {
                 validate_prize(&p, args.thread_root_message_index)?;
                 // The group holds the prize, paying out each winner's share from its own account
-                let recipient = icrc1::Account::from(this_canister_id);
+                let recipient = TransferRecipient::Account(this_canister_id.into());
                 (MessageContentType::Prize, MEMO_PRIZE.as_slice(), p.transfer, recipient)
             }
             ValidateNewMessageContentResult::SuccessP2PSwap(p) => {
