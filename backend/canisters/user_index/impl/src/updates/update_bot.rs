@@ -92,8 +92,9 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
             let bot = state.data.users.get_bot(&args.bot_id).unwrap();
 
             for (location, details) in bot.installations.iter() {
+                let local_user_index = state.local_user_index_of_bot_installation(*location, details.local_user_index);
                 state.data.user_index_event_sync_queue.push(
-                    details.local_user_index,
+                    local_user_index,
                     UserIndexEvent::BotUpdateInstallation(*location, installation_update.clone()),
                 );
             }

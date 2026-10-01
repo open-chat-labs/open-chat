@@ -61,7 +61,7 @@ fn commit(
     let local_user_index_canister_id = state.env.canister_id();
     let now = state.env.now();
 
-    if state.data.local_users.get(&user_id).is_some() {
+    if state.holds_latest_id_of(user_id) {
         state.push_event_to_user(
             user_id,
             UserEvent::UserJoinedGroup(Box::new(user_canister::UserJoinedGroup {

@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove the one-off `post_upgrade` jobs now that they have run on prod, along with the state only they used ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))
 - Remove the one-off job which fetched each user's last online date, now that it has finished on prod ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))
 
+### Fixed
+
+- Send events naming a migrated user by an old id on to the LocalUserIndex holding their new id ([#9706](https://github.com/open-chat-labs/open-chat/pull/9706))
+
 ## [[2.0.2080](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2080-user_index)] - 2026-09-30
 
 ### Added
