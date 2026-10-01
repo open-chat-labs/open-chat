@@ -33,6 +33,7 @@ import {
     type ChatEvent,
     type CommunityDetailsResponse,
     type CommunitySummary,
+    type DirectChatSummary,
     type EventWrapper,
     type EventsResponse,
     type GroupChatDetailsResponse,
@@ -53,6 +54,7 @@ import {
     selectedServerChatStore,
     selectedServerCommunityStore,
     serverCommunitiesStore,
+    serverDirectChatsStore,
     serverEventsStore,
     serverGroupChatsStore,
 } from "./state";
@@ -1012,12 +1014,14 @@ describe("finding users to add to a channel when not all members are held", () =
     // `a` is a member of the community and the channel, both of which hold them; `b` is a member of
     // the community, which holds them, but not the channel; `x` is a member of the community, which
     // doesn't hold them, but not the channel; `y` is a member of both, of which only the community
-    // holds them (having looked them up, say); `z` isn't a member of either
-    const [me, a, b, x, y, z] = [1, 2, 3, 4, 5, 6].map(userId);
+    // holds them (having looked them up, say); `z` isn't a member of either; `w` is a member of
+    // the community, which doesn't hold them, and of one of its user groups
+    const [me, a, b, x, y, z, w] = [1, 2, 3, 4, 5, 6, 7].map(userId);
     const channelId = { kind: "channel" as const, communityId: id.communityId, channelId: 1 };
 
     let client: OpenChat;
     let lookups: Extract<WorkerRequest, { kind: "lookupMembers" }>[];
+    let usersAskedFor: string[];
 
     beforeEach(async () => {
         vi.stubGlobal("Worker", FakeWorker);
@@ -1041,6 +1045,7 @@ describe("finding users to add to a channel when not all members are held", () =
         client = new OpenChat(config());
 
         lookups = [];
+        usersAskedFor = [];
         vi.spyOn(WorkerAgent.prototype, "stream").mockImplementation(() => {
             const resp = {
                 events: [],
@@ -1055,6 +1060,9 @@ describe("finding users to add to a channel when not all members are held", () =
                     return Promise.resolve({
                         ...details(10n, [member(a), member(b), member(y)]),
                         moreMembersAfter: b,
+                        userGroups: new Map([
+                            [1, { kind: "user_group", id: 1, name: "g", members: new Set([w]) }],
+                        ]),
                     });
                 case "getGroupDetails":
                     return Promise.resolve({
@@ -1065,7 +1073,10 @@ describe("finding users to add to a channel when not all members are held", () =
                     lookups.push(req);
                     const members =
                         req.id.kind === "community"
-                            ? [{ ...member(x), displayName: "X" }]
+                            ? [
+                                  { ...member(x), displayName: "X" },
+                                  { ...member(w), displayName: "W" },
+                              ]
                             : [member(y)];
                     return Promise.resolve({
                         kind: "success",
@@ -1075,6 +1086,7 @@ describe("finding users to add to a channel when not all members are held", () =
                 case "searchUsers":
                     return Promise.resolve([a, b, x, y, z].map(userSummary));
                 case "getUsers":
+                    usersAskedFor.push(...req.users.userGroups.flatMap((g) => g.users));
                     return Promise.resolve({ users: [], deletedUserIds: new Set() });
                 default:
                     return new Promise(() => {});
@@ -1094,6 +1106,7 @@ describe("finding users to add to a channel when not all members are held", () =
         selectedServerChatStore.set(undefined);
         selectedServerCommunityStore.set(undefined);
         serverCommunitiesStore.set(new CommunityMap<CommunitySummary>());
+        serverDirectChatsStore.set(new ChatMap<DirectChatSummary>());
         serverEventsStore.set([]);
     });
 
@@ -1130,5 +1143,32 @@ describe("finding users to add to a channel when not all members are held", () =
 
         expect(communityMembers.map((u) => u.userId)).toEqual([b, x]);
         expect(others).toEqual([]);
+    });
+
+    test("the members of the community's user groups are looked up, and their users loaded", async () => {
+        await client.loadUserGroupMembers(id);
+
+        expect(lookups.some((l) => l.id.kind === "community" && l.userIds.includes(w))).toBe(true);
+        expect(selectedCommunityMembersStore.value.get(w)?.displayName).toBe("W");
+        expect(usersAskedFor).toContain(w);
+    });
+
+    test("those you have direct chats with are looked up before being offered to add", async () => {
+        const chats = new ChatMap<DirectChatSummary>();
+        for (const userId of [x, y, z]) {
+            chats.set({ kind: "direct_chat", userId }, {
+                kind: "direct_chat",
+                id: { kind: "direct_chat", userId },
+                them: { userId },
+            } as unknown as DirectChatSummary);
+        }
+        serverDirectChatsStore.set(chats);
+
+        await client.lookupDirectChatUsersAmongChannelMembers();
+
+        // So that `x` is offered, being a member of the community, and `y` isn't, being a member
+        // of the channel already
+        expect(selectedCommunityMembersStore.value.has(x)).toBe(true);
+        expect(selectedChatMembersStore.value.has(y)).toBe(true);
     });
 });

@@ -91,12 +91,16 @@ function fakeClient(updateResponse: UpdateUserGroupResponse = { kind: "success" 
         localUpdates.addOrUpdateUserGroup(id, { ...userGroup, id: NEW_GROUP_ID });
         return { kind: "success", userGroupId: NEW_GROUP_ID };
     });
+    const loadUserGroupMembers = vi.fn<OpenChat["loadUserGroupMembers"]>(async () => {});
     const known: Record<string, unknown> = {
         canManageUserGroups: () => true,
         getDisplayName: (userId: string) => userId,
         userAvatarUrl: () => "",
+        // The community holds every member
+        membersIncomplete: () => false,
         updateUserGroup,
         createUserGroup,
+        loadUserGroupMembers,
     };
     const client = new Proxy(known, {
         get: (target, prop) =>
@@ -106,7 +110,7 @@ function fakeClient(updateResponse: UpdateUserGroupResponse = { kind: "success" 
                   ? target[prop]
                   : () => Promise.resolve(undefined),
     }) as unknown as OpenChat;
-    return { client, updateUserGroup, createUserGroup };
+    return { client, updateUserGroup, createUserGroup, loadUserGroupMembers };
 }
 
 describe("desktop user groups", () => {
@@ -148,12 +152,12 @@ describe("desktop user groups", () => {
         selectedServerCommunityStore.set(undefined);
     });
 
-    function render(client: OpenChat) {
+    function render(client: OpenChat, openedGroupId?: number) {
         target = document.createElement("div");
         document.body.appendChild(target);
         app = mount(UserGroups, {
             target,
-            props: { community },
+            props: { community, openedGroupId },
             context: new Map<string, unknown>([["client", client]]),
         });
         flushSync();
@@ -338,5 +342,63 @@ describe("desktop user groups", () => {
 
         expect(editing()).toBe(false);
         expect(listed()).toEqual({ devs: "2", ops: "1" });
+    });
+
+    // The usernames listed under the opened group
+    function shownMembers(): string[] {
+        return [...target.querySelectorAll(".user-group-card .user")].map(username).sort();
+    }
+
+    test("members of a group who are found after it is shown are listed", async () => {
+        // erin is in the group, but not among the members the community holds, as a community
+        // which holds only some of its members may not
+        allUsersStore.set(new Map([...USER_IDS, "erin"].map((u) => [u, user(u)])));
+        const details = selectedServerCommunityStore.value!;
+        const erinsGroup = {
+            ...details.userGroups.get(GROUP_ID)!,
+            members: new Set(["alice", "erin"]),
+        };
+        selectedServerCommunityStore.set(
+            new CommunityDetailsState(
+                details.communityId,
+                details.timestamp,
+                new Map([[GROUP_ID, erinsGroup]]),
+                details.members,
+                details.blockedUsers,
+                details.lapsedMembers,
+                details.invitedUsers,
+                details.referrals,
+                details.bots,
+            ),
+        );
+        render(fakeClient().client, GROUP_ID);
+        await settle();
+        expect(shownMembers()).toEqual(["@alice"]);
+
+        // erin is looked up
+        selectedServerCommunityStore.set(
+            selectedServerCommunityStore.value!.withLookedUpMembers([member("erin")], 0n),
+        );
+        await settle();
+
+        expect(shownMembers()).toEqual(["@alice", "@erin"]);
+    });
+
+    test("the groups' members are loaded again when the groups change", async () => {
+        const { client, loadUserGroupMembers } = fakeClient();
+        render(client);
+        expect(loadUserGroupMembers).toHaveBeenCalledTimes(1);
+        expect(loadUserGroupMembers).toHaveBeenLastCalledWith(communityId);
+
+        // as when the community's details arrive after the groups are shown
+        localUpdates.addOrUpdateUserGroup(communityId, {
+            kind: "user_group",
+            id: NEW_GROUP_ID,
+            name: "ops",
+            members: new Set(["carol"]),
+        });
+        flushSync();
+
+        expect(loadUserGroupMembers).toHaveBeenCalledTimes(2);
     });
 });
