@@ -167,4 +167,45 @@ describe("user migrations", () => {
         cancel!.click();
         expect(cancelUserMigration).toHaveBeenCalledWith(userId, multiUserCanisterId);
     });
+
+    test.each([
+        { kind: "queued" },
+        { kind: "not_found" },
+        {
+            kind: "imported",
+            multiUserCanisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+            timestamp: 0n,
+            newUserId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+        },
+        {
+            kind: "failed",
+            multiUserCanisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+            timestamp: 0n,
+            error: { kind: "error", code: 100, message: undefined },
+        },
+    ])("doesn't offer to cancel a migration which is $kind", async (migration) => {
+        const target = render({ userMigration: vi.fn(async () => migration) });
+        const status = section(target, "User migration status");
+
+        type(status.querySelector("input")!, "dfdal-2uaaa-aaaaa-qaama-cai");
+        status.querySelector("button")!.click();
+        await new Promise((r) => setTimeout(r, 0));
+        flushSync();
+
+        expect(status.querySelector(".hint")).not.toBeNull();
+        const buttons = [...status.querySelectorAll("button")].map((b) => b.textContent?.trim());
+        expect(buttons).not.toContain("Cancel migration");
+    });
+
+    test("rejects counts which don't fit in a u32", () => {
+        const target = render({});
+        const concurrency = section(target, "Set user migration concurrency");
+        const input = concurrency.querySelector("input")!;
+        const apply = concurrency.querySelector("button")!;
+
+        type(input, "4294967295");
+        expect(apply.disabled).toBe(false);
+        type(input, "4294967296");
+        expect(apply.disabled).toBe(true);
+    });
 });

@@ -99,13 +99,13 @@
             !isValidPrincipal(multiUserCanisterLocalUserIndex.trim()),
     );
     let migrateLongestOfflineCountInvalid = $derived(
-        !/^[1-9]\d*$/.test(migrateLongestOfflineCount.trim()),
+        !isU32(migrateLongestOfflineCount) || parseInt(migrateLongestOfflineCount.trim(), 10) === 0,
     );
     let migrateUserIdsInvalid = $derived(
         parseUserIds(migrateUserIds).length === 0 ||
             parseUserIds(migrateUserIds).some((id) => !isValidPrincipal(id)),
     );
-    let userMigrationConcurrencyInvalid = $derived(!/^\d+$/.test(userMigrationConcurrency.trim()));
+    let userMigrationConcurrencyInvalid = $derived(!isU32(userMigrationConcurrency));
     let userMigrationUserIdInvalid = $derived(!isValidPrincipal(userMigrationUserId.trim()));
     let exchangeIdInvalid = $derived(isNaN(parseInt(exchangeId, 0)));
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
@@ -385,6 +385,12 @@
             });
     }
 
+    // The canister rejects anything which doesn't fit its u32 arguments
+    function isU32(value: string): boolean {
+        const trimmed = value.trim();
+        return /^\d+$/.test(trimmed) && Number(trimmed) <= 4_294_967_295;
+    }
+
     function parseUserIds(value: string): string[] {
         return value
             .split(",")
@@ -440,9 +446,8 @@
             });
     }
 
-    function checkUserMigration(): Promise<void> {
-        error = undefined;
-        const userId = userMigrationUserId.trim();
+    // Doesn't clear `error`, so that a failed cancel stays on screen after the re-check which follows it
+    function checkUserMigration(userId: string): Promise<void> {
         addBusy(19);
         return client
             .userMigration(userId)
@@ -472,8 +477,9 @@
             })
             .finally(() => {
                 removeBusy(21);
-                if (userMigrationUserId.trim() === userId) {
-                    checkUserMigration();
+                // Refresh the status on screen, if it is still this user's
+                if (userMigration?.userId === userId) {
+                    checkUserMigration(userId);
                 }
             });
     }
@@ -1042,7 +1048,10 @@
                 tiny
                 disabled={busy.has(19) || userMigrationUserIdInvalid}
                 loading={busy.has(19)}
-                onClick={checkUserMigration}>Check</Button>
+                onClick={() => {
+                    error = undefined;
+                    checkUserMigration(userMigrationUserId.trim());
+                }}>Check</Button>
         </ButtonGroup>
         {#if userMigration !== undefined}
             {@const { userId, status } = userMigration}
