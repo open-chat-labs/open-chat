@@ -2415,6 +2415,7 @@ export type UserIndexSearchArgs = Static<typeof UserIndexSearchArgs>;
 export const UserIndexSearchArgs = /* @__PURE__ */ Type.Object({
     search_term: Type.String(),
     max_results: Type.Number(),
+    page_index: Type.Optional(Type.Number()),
 });
 
 export type UserIndexDestroyVaultEvidenceArgs = Static<typeof UserIndexDestroyVaultEvidenceArgs>;
@@ -3465,6 +3466,31 @@ export type CommunityEnableInviteCodeResponse = Static<typeof CommunityEnableInv
 export const CommunityEnableInviteCodeResponse = /* @__PURE__ */ Type.Union([
     Type.Object({
         Success: CommunityEnableInviteCodeSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type CommunitySearchMembersArgs = Static<typeof CommunitySearchMembersArgs>;
+export const CommunitySearchMembersArgs = /* @__PURE__ */ Type.Object({
+    invite_code: Type.Optional(Type.BigInt()),
+    search_term: Type.String(),
+    max_results: Type.Number(),
+    latest_known_update: Type.Optional(Type.BigInt()),
+});
+
+export type CommunitySearchMembersSuccessResult = Static<
+    typeof CommunitySearchMembersSuccessResult
+>;
+export const CommunitySearchMembersSuccessResult = /* @__PURE__ */ Type.Object({
+    members: Type.Array(CommunityMember),
+});
+
+export type CommunitySearchMembersResponse = Static<typeof CommunitySearchMembersResponse>;
+export const CommunitySearchMembersResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: CommunitySearchMembersSuccessResult,
     }),
     Type.Object({
         Error: OCError,

@@ -28,9 +28,11 @@ fn search_impl(args: Args, state: &RuntimeState) -> Response {
     });
 
     // Page
+    let page_size = args.max_results as usize;
     let results = matches
         .iter()
-        .take(args.max_results as usize)
+        .skip(args.page_index.unwrap_or_default() as usize * page_size)
+        .take(page_size)
         .map(|(u, _)| u.to_summary(now))
         .collect();
 
@@ -100,6 +102,7 @@ mod tests {
             Args {
                 max_results: 2,
                 search_term: "ma".to_string(),
+                page_index: None,
             },
             &state,
         );
@@ -116,6 +119,7 @@ mod tests {
             Args {
                 max_results: 10,
                 search_term: "MA".to_string(),
+                page_index: None,
             },
             &state,
         );
@@ -132,6 +136,7 @@ mod tests {
             Args {
                 max_results: 10,
                 search_term: "Ma".to_string(),
+                page_index: None,
             },
             &state,
         );
@@ -154,12 +159,34 @@ mod tests {
             Args {
                 max_results: 10,
                 search_term: "".to_string(),
+                page_index: None,
             },
             &state,
         );
 
         let Response::Success(results) = response;
         assert_eq!(9, results.users.len());
+    }
+
+    #[test]
+    fn later_pages_follow_on_from_earlier_ones() {
+        let state = setup_runtime_state();
+        let page = |page_index| {
+            let Response::Success(results) = search_impl(
+                Args {
+                    max_results: 3,
+                    search_term: "Ma".to_string(),
+                    page_index: Some(page_index),
+                },
+                &state,
+            );
+            results.users.into_iter().map(|u| u.username).collect::<Vec<_>>()
+        };
+
+        assert_eq!(page(0), ["matty", "Martin", "marcus"]);
+        assert_eq!(page(1), ["amar", "muhamMad", "amabcdef"]);
+        assert_eq!(page(2), ["mohammad"]);
+        assert!(page(3).is_empty());
     }
 
     #[test]
@@ -170,6 +197,7 @@ mod tests {
             Args {
                 max_results: 10,
                 search_term: "hamish".to_string(),
+                page_index: None,
             },
             &state,
         );
