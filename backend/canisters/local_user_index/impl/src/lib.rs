@@ -310,7 +310,7 @@ impl RuntimeState {
     // may not know `UserIdMigrated` (User 2.0.2015 doesn't), and an event a canister can't decode fails
     // the whole batch it's in, holding up every later event to that canister until it's upgraded. So
     // for such a canister the notice is held, and sent once the canister has been upgraded.
-    // TODO remove the hold once no User canister is on 2.0.2015
+    // TODO remove the hold once no User canister is on 2.0.2015, sending on any notices still held
     pub fn notify_user_of_migrated_user_id(
         &mut self,
         user_id: UserId,
@@ -318,26 +318,35 @@ impl RuntimeState {
         new_user_id: UserId,
         now: TimestampMillis,
     ) {
-        let user_id = self.data.migrated_user_ids.latest(user_id);
+        let latest_user_id = self.data.migrated_user_ids.latest(user_id);
         let current_wasm_version = self.data.child_canister_wasms.get(ChildCanisterType::User).wasm.version;
-        let canister_is_behind = self
-            .data
-            .local_users
-            .get(&user_id)
-            .and_then(|user| user.wasm_version)
-            .is_some_and(|wasm_version| wasm_version < current_wasm_version);
+        let canister_is_behind = self.data.local_users.get(&latest_user_id).map(|user| {
+            user.wasm_version
+                .is_some_and(|wasm_version| wasm_version < current_wasm_version)
+        });
+        let event = UserEvent::UserIdMigrated(Box::new(user_canister::UserIdMigrated {
+            old_user_id,
+            new_user_id,
+        }));
 
-        if canister_is_behind {
-            self.data.held_user_id_migrations.hold(user_id, old_user_id, new_user_id);
-        } else {
-            self.push_event_to_user(
-                user_id,
-                UserEvent::UserIdMigrated(Box::new(user_canister::UserIdMigrated {
-                    old_user_id,
-                    new_user_id,
-                })),
-                now,
-            );
+        match canister_is_behind {
+            Some(true) => self
+                .data
+                .held_user_id_migrations
+                .hold(latest_user_id, old_user_id, new_user_id),
+            Some(false) => {
+                self.push_event_to_user(latest_user_id, event, now);
+            }
+            // The user isn't held here. If they've been migrated to a canister on another
+            // LocalUserIndex, the notice is sent on to them there
+            None => {
+                let envelope = IdempotentEnvelope {
+                    created_at: now,
+                    idempotency_id: self.env.rng().next_u64(),
+                    value: (latest_user_id, event),
+                };
+                self.push_events_queued_for_migrated_user(user_id, vec![envelope]);
+            }
         }
     }
 

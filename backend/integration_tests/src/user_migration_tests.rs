@@ -1389,6 +1389,13 @@ fn notice_of_a_migrated_users_new_id_is_held_until_the_peers_canister_is_upgrade
     tick_many(env, 10);
     assert_ne!(wasm_version(env, user2.canister()), version);
 
+    // user3 registers now, so their canister is on the current wasm
+    let user3 = client::register_user(env, canister_ids);
+    assert_eq!(wasm_version(env, user3.canister()), version);
+    client::user::happy_path::send_text_message(env, &user3, user1.user_id, random_string(), None);
+    tick_many(env, 10);
+
+    let held_before = held_user_id_migrations(env, user2.local_user_index);
     migrate_users(
         env,
         operator.principal,
@@ -1397,10 +1404,13 @@ fn notice_of_a_migrated_users_new_id_is_held_until_the_peers_canister_is_upgrade
         Some(multi_user_canister),
     );
     let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user1.user_id);
-    tick_many(env, 10);
 
-    // user2 isn't told of user1's new id while their canister is on the older wasm
-    assert_eq!(held_user_id_migrations(env, user2.local_user_index), 1);
+    // user3 is told of user1's new id straight away, but user2 isn't while their canister is on the
+    // older wasm
+    tick_until(env, |env| {
+        direct_chat_peer(env, &user3, user1.user_id, new_user_id) == new_user_id
+    });
+    assert_eq!(held_user_id_migrations(env, user2.local_user_index), held_before + 1);
     assert_eq!(direct_chat_peer(env, &user2, user1.user_id, new_user_id), user1.user_id);
 
     // Once user2's canister has been upgraded, they are. Only theirs is upgraded, so as not to wait
@@ -1424,10 +1434,10 @@ fn notice_of_a_migrated_users_new_id_is_held_until_the_peers_canister_is_upgrade
     tick_until(env, |env| {
         try_metrics(env, user2.canister()).and_then(|m| serde_json::from_value(m["wasm_version"].clone()).ok()) == Some(version)
     });
-    tick_many(env, 10);
-
-    assert_eq!(held_user_id_migrations(env, user2.local_user_index), 0);
-    assert_eq!(direct_chat_peer(env, &user2, user1.user_id, new_user_id), new_user_id);
+    tick_until(env, |env| {
+        direct_chat_peer(env, &user2, user1.user_id, new_user_id) == new_user_id
+    });
+    assert_eq!(held_user_id_migrations(env, user2.local_user_index), held_before);
 
     // Releasing a new User wasm would break later tests which draw this env
     wrapper.discard();
