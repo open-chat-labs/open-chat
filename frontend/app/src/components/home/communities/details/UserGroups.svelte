@@ -14,7 +14,7 @@
         selectedCommunityMembersStore,
         selectedCommunityUserGroupsStore,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, untrack } from "svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
@@ -42,12 +42,15 @@
     let selectedGroup: UserGroupDetails | undefined = $state(undefined);
     let confirmingDelete = $state(false);
     let groupToDelete: UserGroupDetails | undefined = undefined;
-    let communityUsers: Record<string, UserSummary> = $state({});
-    let communityUsersList: UserSummary[] = $state([]);
+    // Rebuilt as members who weren't held are found, and as their users become known
+    let communityUsers = $derived(createLookup($selectedCommunityMembersStore, $allUsersStore));
+    let communityUsersList = $derived(Object.values(communityUsers));
 
-    onMount(() => {
-        communityUsers = createLookup($selectedCommunityMembersStore, $allUsersStore);
-        communityUsersList = Object.values(communityUsers);
+    // A community which holds only some of its members may not hold those of its user groups, which
+    // can arrive, or change, after these are shown
+    $effect(() => {
+        void $selectedCommunityUserGroupsStore;
+        untrack(() => client.loadUserGroupMembers(community.id));
     });
 
     function createLookup(

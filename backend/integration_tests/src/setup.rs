@@ -14,6 +14,7 @@ use rand::{RngExt, SeedableRng, rngs::StdRng};
 use sha256::sha256;
 use std::collections::{HashMap, HashSet};
 use std::env;
+use std::io::Write;
 use std::path::Path;
 use std::sync::OnceLock;
 use std::time::{Instant, SystemTime};
@@ -33,7 +34,7 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
 
     let controller = Principal::from_text("xuxyr-xopen-chatx-xxxbu-cai").unwrap();
 
-    let (state, canister_ids) = BASE_STATE.get_or_init(|| initialize_base_state(controller, seed));
+    let (state, canister_ids) = BASE_STATE.get_or_init(|| initialize_base_state_or_exit(controller, seed));
 
     let env = PocketIcBuilder::new()
         .with_read_only_state(state)
@@ -45,6 +46,24 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
         canister_ids: canister_ids.clone(),
         controller,
     }
+}
+
+// If initializing the base state fails, every other test would fail the same way trying it again,
+// so end the test run
+fn initialize_base_state_or_exit(controller: Principal, seed: Option<Hash>) -> (PocketIcState, CanisterIds) {
+    std::panic::catch_unwind(|| initialize_base_state(controller, seed)).unwrap_or_else(|payload| {
+        let message = payload
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| payload.downcast_ref::<&str>().copied())
+            .unwrap_or("unknown panic");
+        // Written to stderr directly, since the test's captured output is lost on exit
+        let _ = writeln!(
+            std::io::stderr(),
+            "Initializing the base state failed, ending the test run: {message}"
+        );
+        std::process::exit(1);
+    })
 }
 
 fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIcState, CanisterIds) {

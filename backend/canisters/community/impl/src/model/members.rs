@@ -1,7 +1,7 @@
 use crate::model::members::stable_memory::MembersStableStorage;
 use crate::model::user_groups::{UserGroup, UserGroups};
 use constants::calculate_summary_updates_data_removal_cutoff;
-use group_community_common::{FormerMembers, Member, MemberUpdate, Members};
+use group_community_common::{FormerMembers, Member, MemberUpdate, Members, MembersPage, members_page};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::ops::Bound;
 use types::{
     ChannelId, CommunityMember, CommunityPermissions, CommunityRole, OCResult, PushIfNotContains, TimestampMillis, Timestamped,
     UserId, UserIdAndPrincipal, UserType, Version, is_default,
@@ -599,6 +600,28 @@ impl CommunityMembers {
         self.members_and_channels.contains_key(user_id)
     }
 
+    // A page of the members in order of user id, starting from the first after `after`, and holding
+    // up to `max_results` of them, or all of them if `max_results` is None. The owners and admins
+    // are instead all returned with the first page (where `after` is None). See `members_page`.
+    pub fn page(&self, after: Option<UserId>, max_results: Option<u32>) -> MembersPage<CommunityMember> {
+        let start = after.map_or(Bound::Unbounded, Bound::Excluded);
+        members_page(
+            &[&self.owners, &self.admins],
+            self.members_and_channels
+                .range((start, Bound::Unbounded))
+                .map(|(user_id, _)| user_id),
+            after.is_none(),
+            max_results,
+            |user_id| {
+                !self.lapsed.contains(user_id)
+                    && !self.suspended.contains(user_id)
+                    && !self.members_with_display_names.contains(user_id)
+                    && !self.members_with_referrals.contains(user_id)
+            },
+            |user_id| self.members_map.get(user_id).map(CommunityMember::from),
+        )
+    }
+
     pub fn is_former_member(&self, user_id: &UserId) -> bool {
         self.former_members.contains(user_id)
     }
@@ -654,10 +677,6 @@ impl CommunityMembers {
         &self.lapsed
     }
 
-    pub fn suspended(&self) -> &BTreeSet<UserId> {
-        &self.suspended
-    }
-
     pub fn member_ids(&self) -> impl Iterator<Item = &UserId> {
         self.members_and_channels.keys()
     }
@@ -672,14 +691,6 @@ impl CommunityMembers {
         } else {
             None
         }
-    }
-
-    pub fn members_with_display_names(&self) -> &BTreeSet<UserId> {
-        &self.members_with_display_names
-    }
-
-    pub fn members_with_referrals(&self) -> &BTreeSet<UserId> {
-        &self.members_with_referrals
     }
 
     pub fn set_display_name(&mut self, user_id: UserId, display_name: Option<String>, now: TimestampMillis) {
@@ -1156,9 +1167,9 @@ mod tests {
         // So that the referrer's client is told the referral under the old id has gone
         assert!(referrer_member.referrals_removed().contains(&old));
         assert_eq!(members.get_by_user_id(&referred).unwrap().referred_by, Some(new));
-        assert!(members.suspended().contains(&new));
-        assert!(members.members_with_display_names().contains(&new));
-        assert!(members.members_with_referrals().contains(&new));
+        assert!(members.suspended.contains(&new));
+        assert!(members.members_with_display_names.contains(&new));
+        assert!(members.members_with_referrals.contains(&new));
 
         assert!(members.migrate_user_id(blocked_old, blocked_new, None, 10));
         assert!(!members.is_blocked(&blocked_old));
@@ -1252,6 +1263,65 @@ mod tests {
 
         assert!(members.migrate_user_id(old, new, Some(principal), 10));
         assert_eq!(members.lookup_user_id(principal), Some(new));
+    }
+
+    #[test]
+    fn pages_hold_each_member_once_with_those_with_roles_in_the_first() {
+        let mut members = members_for_page_tests(9);
+        make_admin(&mut members, 8);
+        members.update_lapsed(test_user_id(3), true, 3);
+        members.set_display_name(test_user_id(5), Some("five".to_string()), 3);
+
+        // The owner and admin, then the others in order of user id, of whom the lapsed member and
+        // the member with a display name are returned in full
+        let page1 = members.page(None, Some(4));
+        assert_eq!(member_ids(&page1.members), user_ids([1, 8, 3, 5]));
+        assert_eq!(page1.members[3].display_name.as_deref(), Some("five"));
+        assert_eq!(page1.basic_members, user_ids([2, 4]));
+        assert_eq!(page1.more_members_after, Some(test_user_id(5)));
+
+        let page2 = members.page(page1.more_members_after, Some(4));
+        assert!(page2.members.is_empty());
+        assert_eq!(page2.basic_members, user_ids([6, 7, 9]));
+        assert_eq!(page2.more_members_after, None);
+
+        let all = members.page(None, None);
+        assert_eq!(member_ids(&all.members), user_ids([1, 8, 3, 5]));
+        assert_eq!(all.basic_members, user_ids([2, 4, 6, 7, 9]));
+        assert_eq!(all.more_members_after, None);
+    }
+
+    // Holds users 1 to `count`, of whom user 1 is the owner
+    fn members_for_page_tests(count: u8) -> CommunityMembers {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let owner = test_user_id(1);
+        let mut members = CommunityMembers::new(test_principal(owner), owner, UserType::User, Vec::new(), 0);
+        for user_id in (2..=count).map(test_user_id) {
+            members.add(user_id, test_principal(user_id), UserType::User, None, 1);
+        }
+        members
+    }
+
+    fn make_admin(members: &mut CommunityMembers, user: u8) {
+        members
+            .change_role(
+                test_user_id(1),
+                test_user_id(user),
+                CommunityRole::Admin,
+                &CommunityPermissions::default(),
+                2,
+            )
+            .unwrap();
+    }
+
+    fn member_ids(members: &[CommunityMember]) -> Vec<UserId> {
+        members.iter().map(|m| m.user_id).collect()
+    }
+
+    fn user_ids<const N: usize>(ids: [u8; N]) -> Vec<UserId> {
+        ids.map(test_user_id).to_vec()
     }
 
     fn test_user_id(i: u8) -> UserId {

@@ -1,5 +1,6 @@
 <script lang="ts">
     import {
+        FIND_MEMBERS_DELAY_MS,
         iconSize,
         type CommunitySummary,
         type OpenChat,
@@ -54,6 +55,7 @@
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
+    const MAX_SEARCH_RESULTS = 255;
 
     // we are going to just wait for the save to succeed here rather than mess about with
     // local updates since this is probably not a very common operation and it's much simpler this way
@@ -144,6 +146,17 @@
     }
     let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered));
     let searchTermLower = $derived(searchTerm.toLowerCase());
+    // If the community holds only some of its members, those who match what has been typed are
+    // searched for. Those found are then held, so are among the matches.
+    $effect(() => {
+        const searchFor = searchTerm;
+        if (searchFor.length < 2 || !client.membersIncomplete(community.id)) return;
+        const timer = setTimeout(
+            () => client.findMembers(community.id, searchFor, MAX_SEARCH_RESULTS),
+            FIND_MEMBERS_DELAY_MS,
+        );
+        return () => clearTimeout(timer);
+    });
     let groupUsers = $derived(
         [...userGroup.members].map((m) => communityUsers[m]).filter((u) => u !== undefined),
     );

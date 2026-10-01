@@ -8,6 +8,7 @@ fn main() {
     }
 
     generate_ts_method!(community, active_proposal_tallies);
+    generate_ts_method!(community, channel_members);
     generate_ts_method!(community, channel_summary_updates);
     generate_ts_method!(community, channel_summary);
     generate_ts_method!(community, deleted_message);
@@ -17,7 +18,9 @@ fn main() {
     generate_ts_method!(community, explore_channels);
     generate_ts_method!(community, invite_code);
     generate_ts_method!(community, local_user_index);
+    generate_ts_method!(community, lookup_channel_members);
     generate_ts_method!(community, lookup_members);
+    generate_ts_method!(community, members);
     generate_ts_method!(community, messages_by_message_index);
     generate_ts_method!(community, search_channel);
     generate_ts_method!(community, selected_channel_initial);

@@ -1,7 +1,7 @@
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
 use community_canister::selected_initial::{Response::*, *};
-use std::collections::HashSet;
+use constants::MAX_MEMBERS_PER_QUERY;
 use types::{InstalledBotDetails, OCResult};
 
 #[query(msgpack = true)]
@@ -23,25 +23,9 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessRe
         .get(caller)
         .map_or(Vec::new(), |m| m.referrals().iter().copied().collect());
 
-    let mut non_basic_members = HashSet::new();
-    non_basic_members.extend(data.members.owners().iter().copied());
-    non_basic_members.extend(data.members.admins().iter().copied());
-    non_basic_members.extend(data.members.lapsed().iter().copied());
-    non_basic_members.extend(data.members.suspended().iter().copied());
-    non_basic_members.extend(data.members.members_with_display_names().iter().copied());
-    non_basic_members.extend(data.members.members_with_referrals().iter().copied());
-
-    let mut members = Vec::new();
-    let mut basic_members = Vec::new();
-    for user_id in data.members.iter_member_ids() {
-        if non_basic_members.contains(&user_id) {
-            if let Some(member) = data.members.get_by_user_id(&user_id) {
-                members.push(member.into());
-            }
-        } else {
-            basic_members.push(user_id);
-        }
-    }
+    let members = data
+        .members
+        .page(None, args.max_members.map(|max| max.min(MAX_MEMBERS_PER_QUERY)));
 
     let bots = data
         .bots
@@ -58,9 +42,10 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessRe
         timestamp: last_updated,
         last_updated,
         latest_event_index: data.events.latest_event_index(),
-        members,
+        members: members.members,
         bots,
-        basic_members,
+        basic_members: members.basic_members,
+        more_members_after: members.more_members_after,
         blocked_users: data.members.blocked(),
         invited_users: data.invited_users.users(),
         chat_rules: data.rules.value.clone().into(),

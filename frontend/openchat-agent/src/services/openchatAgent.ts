@@ -224,6 +224,7 @@ import type {
     DailyPuzzleSubmitResponse,
     PublicDailyPuzzle,
     SyncSinceResponse,
+    LookupMembersResponse,
 } from "@shared";
 import {
     ANON_USER_ID,
@@ -3327,6 +3328,25 @@ export class OpenChatAgent extends EventTarget {
                     chatId,
                     detailsLastUpdated,
                     detailsSyncedUpTo,
+                );
+        }
+    }
+
+    lookupMembers(
+        id: MultiUserChatIdentifier | CommunityIdentifier,
+        userIds: string[],
+        latestKnownUpdate: bigint,
+    ): Promise<LookupMembersResponse> {
+        switch (id.kind) {
+            case "group_chat":
+                return this._groupClient.lookupMembers(id.groupId, userIds, latestKnownUpdate);
+            case "channel":
+                return this._communityClient.lookupChannelMembers(id, userIds, latestKnownUpdate);
+            case "community":
+                return this._communityClient.lookupMembers(
+                    id.communityId,
+                    userIds,
+                    latestKnownUpdate,
                 );
         }
     }

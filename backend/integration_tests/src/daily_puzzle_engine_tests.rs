@@ -283,6 +283,7 @@ fn build_puzzle(game_id: &str, number: PuzzleNumber, enabled: bool) -> DailyPuzz
         description: vec![1, 3, 3, 0, 0, 0, 0, 0x10, 0, 0, 0, 0],
         solution: vec![1, 0, 0, 0, 0, 0, 1, 0, 1],
         solution_pairs: vec![(0, 1), (1, 0), (2, 0), (3, 0), (5, 0), (6, 1), (7, 0), (8, 1)],
+        hint_settles: Vec::new(),
         hints: vec![PuzzleHint {
             technique: 1,
             focus: vec![4],

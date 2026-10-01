@@ -3,8 +3,8 @@ use puzzle_core::testing::{
 };
 use puzzle_core::{Puzzle, PuzzleError, Tier};
 use slant::{
-    BACKSLASH, Params, SLASH, Slant, Violation, check_rules, count_solutions, generate, is_complete, parse_description,
-    render_ascii, solution_pairs, solve_with_trace,
+    BACKSLASH, Params, SLASH, Slant, Technique, Violation, check_rules, count_solutions, generate, is_complete,
+    parse_description, render_ascii, solution_pairs, solve_with_trace,
 };
 
 const SEEDS_PER_CONFIG: u64 = 200;
@@ -351,4 +351,220 @@ fn unsatisfiable_descriptions() -> Vec<Vec<u8>> {
 fn the_solver_never_claims_an_unsound_grid() {
     let claimed = must_only_claim_sound_solutions::<Slant>(unsatisfiable_descriptions());
     assert!(claimed > 1_000, "only {claimed} of the corpus reached the solver");
+}
+
+/// Cells around vertex `v` of a `w`x`h` grid, each with the value (1 = backslash, 2 = slash)
+/// that would put a line on the vertex.
+fn cells_round(w: usize, h: usize, v: usize) -> Vec<(usize, u8)> {
+    let (vx, vy) = (v % (w + 1), v / (w + 1));
+    let mut out = Vec::new();
+    if vx > 0 && vy > 0 {
+        out.push(((vy - 1) * w + vx - 1, BACKSLASH));
+    }
+    if vx > 0 && vy < h {
+        out.push((vy * w + vx - 1, SLASH));
+    }
+    if vx < w && vy < h {
+        out.push((vy * w + vx, BACKSLASH));
+    }
+    if vx < w && vy > 0 {
+        out.push(((vy - 1) * w + vx, SLASH));
+    }
+    out
+}
+
+/// The two vertices a line of `value` in cell `i` joins.
+fn corners(w: usize, i: usize, value: u8) -> (usize, usize) {
+    let (x, y, vw) = (i % w, i / w, w + 1);
+    if value == BACKSLASH {
+        (y * vw + x, (y + 1) * vw + x + 1)
+    } else {
+        (y * vw + x + 1, (y + 1) * vw + x)
+    }
+}
+
+fn other(value: u8) -> u8 {
+    if value == BACKSLASH { SLASH } else { BACKSLASH }
+}
+
+/// Invariant 23: a step lists in its focus what it relies on. Every Slant conclusion is a line,
+/// never a "no line", so the LocalUserIndex's premise walk (#9588), which follows negatives-only
+/// steps, never applies: a step is served only once every earlier step is on the board. What is
+/// left is that the focus shows the premises the step reads off that board:
+/// - a clue step lists its clue and every cell round it
+/// - LoopAvoidance lists a chain of cells, all decided before it, joining the two corners the
+///   other slant would join
+/// - Equivalence lists a cell decided before it with the slant it concludes
+/// - DeadEndAvoidance lists the two corners the other slant would join (the two groups
+///   themselves are cut to their members nearest the cell, `MAX_DEAD_END_FOCUS`)
+///
+/// Equivalence and PairedClue also rest on ties between cells that the solver works out in its
+/// v-shape pass, which records no step and so leaves no cells to list.
+#[test]
+fn every_step_lists_what_it_relies_on() {
+    for p in playable() {
+        for seed in 0..10 {
+            let g = generate(seed, p).unwrap();
+            let d = parse_description(&g.description).unwrap();
+            let (w, h) = (d.width as usize, d.height as usize);
+            let n = w * h;
+            let mut board = vec![0u8; n];
+            for (s, hint) in g.hints.iter().enumerate() {
+                let ctx = format!("{w}x{h} {:?} seed {seed} step {s} ({:?})", p.tier, hint.technique);
+                assert!(
+                    hint.conclusions.iter().all(|&(_, v)| v == BACKSLASH || v == SLASH),
+                    "{ctx}: concludes something other than a line"
+                );
+                let listed = |k: usize| hint.focus.contains(&(k as u16));
+                let premises: Vec<usize> = hint
+                    .focus
+                    .iter()
+                    .map(|&k| k as usize)
+                    .filter(|&k| k < n && !hint.conclusions.iter().any(|&(c, _)| c as usize == k))
+                    .collect();
+                match hint.technique {
+                    Technique::ClueSatisfied | Technique::ClueForced | Technique::PairedClue => {
+                        let v = hint.target[0] as usize - n;
+                        assert!(d.clues[v].is_some(), "{ctx}: the target is not a clue");
+                        for (c, _) in cells_round(w, h, v) {
+                            assert!(listed(c), "{ctx}: cell {c} round the clue is not in the focus");
+                        }
+                    }
+                    Technique::LoopAvoidance | Technique::Equivalence | Technique::DeadEndAvoidance => {
+                        let (cell, value) = (hint.conclusions[0].0 as usize, hint.conclusions[0].1);
+                        let (a, b) = corners(w, cell, other(value));
+                        for &c in &premises {
+                            assert!(board[c] != 0, "{ctx}: focus cell {c} is not decided yet");
+                        }
+                        match hint.technique {
+                            Technique::LoopAvoidance => {
+                                // Walk the listed lines out from one corner: they must reach the other
+                                let mut reached = vec![a];
+                                let mut i = 0;
+                                while i < reached.len() {
+                                    let v = reached[i];
+                                    for &c in &premises {
+                                        let (x, y) = corners(w, c, board[c]);
+                                        for (from, to) in [(x, y), (y, x)] {
+                                            if from == v && !reached.contains(&to) {
+                                                reached.push(to);
+                                            }
+                                        }
+                                    }
+                                    i += 1;
+                                }
+                                assert!(reached.contains(&b), "{ctx}: the listed cells do not join the corners");
+                            }
+                            Technique::Equivalence => {
+                                assert!(
+                                    premises.iter().any(|&c| board[c] == value),
+                                    "{ctx}: no listed cell holds the slant it copies"
+                                );
+                            }
+                            _ => {
+                                for corner in [a, b] {
+                                    assert!(listed(n + corner), "{ctx}: corner {corner} is not in the focus");
+                                }
+                            }
+                        }
+                    }
+                }
+                for &(k, v) in &hint.conclusions {
+                    board[k as usize] = v;
+                }
+            }
+        }
+    }
+}
+
+/// Invariant 24: a PairedClue step's target is its clue and the two neighbouring cells it ties,
+/// none of them concluded, so that at level 2 the sentence can point at the pair by its solid
+/// outline and at the cells it settles by their ?.
+#[test]
+fn a_paired_clue_step_targets_the_pair_it_ties() {
+    let mut seen = 0;
+    for p in playable().into_iter().filter(|p| p.tier == Tier::Tricky) {
+        for seed in 0..10 {
+            let g = generate(seed, p).unwrap();
+            let d = parse_description(&g.description).unwrap();
+            let (w, h) = (d.width as usize, d.height as usize);
+            for hint in g.hints.iter().filter(|h| h.technique == Technique::PairedClue) {
+                seen += 1;
+                let ctx = format!("{w}x{h} seed {seed}: {hint:?}");
+                let v = hint.target[0] as usize - w * h;
+                let round: Vec<u16> = cells_round(w, h, v).iter().map(|&(c, _)| c as u16).collect();
+                let pair = &hint.target[1..];
+                assert_eq!(pair.len(), 2, "{ctx}: the target does not name a pair");
+                assert!(
+                    pair.iter().all(|c| round.contains(c)),
+                    "{ctx}: the pair is not round the clue"
+                );
+                let (x0, y0) = (pair[0] as usize % w, pair[0] as usize / w);
+                let (x1, y1) = (pair[1] as usize % w, pair[1] as usize / w);
+                assert_eq!(x0.abs_diff(x1) + y0.abs_diff(y1), 1, "{ctx}: the pair are not neighbours");
+                assert!(
+                    !hint.conclusions.iter().any(|(k, _)| pair.contains(k)),
+                    "{ctx}: the step concludes a cell of the pair"
+                );
+            }
+        }
+    }
+    assert!(seen > 0, "no PairedClue step in the corpus");
+}
+
+/// Writes the hint steps of a spread of generated puzzles to the client's fixture, which
+/// `slant.spec.ts` reads to check every step gets a sentence naming the right clue, corners or
+/// cell (invariant 24). Run by hand when the solver's steps change:
+/// `cargo test -p slant --test slant write_hint_fixture -- --ignored`
+fn hint_fixture() -> (std::path::PathBuf, String) {
+    let mut entries = Vec::new();
+    for (size, tier, seeds) in [(6u8, Tier::Easy, 0..4u64), (6, Tier::Tricky, 0..4), (8, Tier::Tricky, 0..3)] {
+        for seed in seeds {
+            let g = generate(seed, params(size, size, tier)).unwrap();
+            let steps: Vec<String> = g
+                .hints
+                .iter()
+                .map(|h| {
+                    format!(
+                        "{{\"technique\":{},\"focus\":{:?},\"target\":{:?},\"conclusions\":{:?}}}",
+                        u8::from(h.technique),
+                        h.focus,
+                        h.target,
+                        h.conclusions.iter().map(|&(k, v)| [k as u32, v as u32]).collect::<Vec<_>>()
+                    )
+                })
+                .collect();
+            entries.push(format!(
+                "{{\"description\":\"{}\",\"steps\":[{}]}}",
+                hex(&g.description),
+                steps.join(",")
+            ));
+        }
+    }
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../../frontend/openchat-shared/src/utils/dailyGames/slantHints.json");
+    (path, format!("[{}]\n", entries.join(",")))
+}
+
+#[test]
+#[ignore]
+fn write_hint_fixture() {
+    let (path, json) = hint_fixture();
+    std::fs::write(path, json).unwrap();
+}
+
+/// #9675: invariant 24's client test reads a fixture of this solver's steps, so it proves nothing
+/// once the solver moves on. The committed fixture must be exactly what the solver emits now.
+/// Compared without whitespace, because prettier reflows the committed file.
+#[test]
+fn hint_fixture_is_current() {
+    let (path, json) = hint_fixture();
+    let strip = |s: &str| s.chars().filter(|c| !c.is_whitespace()).collect::<String>();
+    let committed = std::fs::read_to_string(&path).unwrap_or_default();
+    assert_eq!(
+        strip(&committed),
+        strip(&json),
+        "{} is stale: run `cargo test -p slant --test slant write_hint_fixture -- --ignored`",
+        path.display()
+    );
 }
