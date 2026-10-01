@@ -15,6 +15,7 @@ import {
     type TokenInfo,
 } from "@shared";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { AsyncMessageContextMap } from "../utils/messageContext";
 import { OpenChatAgent } from "./openchatAgent";
 
 const ICP_LEDGER = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -652,5 +653,80 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         expect(await agent.withdrawCryptocurrency(WITHDRAWAL, PIN)).toBe(CANISTER_RESPONSE);
         expect(canisterWithdrawals).toEqual([[WITHDRAWAL, PIN]]);
         expect(ledgerWithdrawals).toEqual([]);
+    });
+});
+
+// A user migrated to a MultiUser canister is referred to by their earlier id in the events from
+// before then, which the agent replaces with their current id
+describe("OpenChatAgent referring to the user by their current id", () => {
+    const PREVIOUS = USER_CANISTER_USER;
+    const CURRENT = MULTI_USER_CANISTER_USER;
+    const GROUP_ID = { kind: "group_chat", groupId: "rdmx6-jaaaa-aaaaa-aaadq-cai" } as const;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function agent(previousUserIds: string[]): any {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const agent = Object.create(OpenChatAgent.prototype) as any;
+        agent._ownLatestUserIds = new Map(previousUserIds.map((id) => [id, CURRENT]));
+        return agent;
+    }
+
+    function sentBy(sender: string): EventWrapper<Message> {
+        return {
+            index: 3,
+            timestamp: 10n,
+            event: {
+                kind: "message",
+                messageId: 1n,
+                messageIndex: 2,
+                sender,
+                content: { kind: "text_content", text: "hello" },
+                reactions: [{ reaction: "👍", userIds: new Set([sender, THEM]) }],
+                tips: { [ICP_LEDGER]: { [sender]: 100n } },
+                edited: false,
+                forwarded: false,
+                deleted: false,
+                blockLevelMarkdown: false,
+                senderContext: undefined,
+                ogPreviews: [],
+                messagePreviews: [],
+            },
+        } as EventWrapper<Message>;
+    }
+
+    function rehydrated(previousUserIds: string[], event: EventWrapper<Message>) {
+        return agent(previousUserIds).rehydrateEvent(
+            event,
+            GROUP_ID,
+            new AsyncMessageContextMap(),
+            { messages: new AsyncMessageContextMap(), previews: new Map() },
+            undefined,
+        );
+    }
+
+    test("an event from before they were migrated is from their current id", () => {
+        expect(rehydrated([PREVIOUS], sentBy(PREVIOUS)).event).toMatchObject({
+            sender: CURRENT,
+            reactions: [{ reaction: "👍", userIds: new Set([CURRENT, THEM]) }],
+            tips: { [ICP_LEDGER]: { [CURRENT]: 100n } },
+        });
+    });
+
+    test("an event from anyone else, or for a user who wasn't migrated, is left as it is", () => {
+        const fromThem = sentBy(THEM);
+        expect(rehydrated([PREVIOUS], fromThem)).toBe(fromThem);
+
+        const fromPrevious = sentBy(PREVIOUS);
+        expect(rehydrated([], fromPrevious)).toBe(fromPrevious);
+    });
+
+    test("a chat's latest message from before they were migrated is from their current id", () => {
+        const chat = { kind: "direct_chat", them: THEM, latestMessage: sentBy(PREVIOUS) };
+
+        expect(agent([PREVIOUS]).hydrateChatSummary(chat).latestMessage.event.sender).toEqual(
+            CURRENT,
+        );
+        // The other user in the chat is left as they are
+        expect(agent([THEM]).hydrateChatSummary(chat).them).toEqual(THEM);
     });
 });

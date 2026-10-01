@@ -1833,6 +1833,8 @@ type ChatEvents = {
 
 type CreateUserClient = {
     userId: string;
+    // The ids the user had before being migrated to a MultiUser canister
+    previousUserIds: string[];
     kind: "createUserClient";
 };
 

@@ -330,6 +330,9 @@ export function currentUserResponse(value: UserIndexCurrentUserResponse): Curren
             hideOnlineStatus: r.hide_online_status ?? false,
             acceptedTermsVersion: r.accepted_terms_version ?? 0,
             currentTermsVersion: r.current_terms_version,
+            previousUserIds: mapOptional(r.previous_user_ids, (ids) =>
+                ids.map(principalBytesToString),
+            ),
         };
     }
 

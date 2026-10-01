@@ -286,6 +286,7 @@ import {
 import { createHttpAgentSync } from "../utils/httpAgent";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
+import { withLatestUserIds } from "../utils/latestUserIds";
 import { mean } from "../utils/maths";
 import { extractMessagePreviews } from "@shared";
 import { AsyncMessageContextMap } from "../utils/messageContext";
@@ -355,6 +356,8 @@ export class OpenChatAgent extends EventTarget {
     private _dailyPuzzleClient: Lazy<DailyPuzzleClient>;
     private _groupIndexClient: GroupIndexClient;
     private _userClient: UserClient | AnonUserClient;
+    // Each id the user had before being migrated to a MultiUser canister, mapped to their current id
+    private _ownLatestUserIds: ReadonlyMap<string, string> = new Map();
     private _notificationClient: NotificationsClient;
     private _registryClient: RegistryClient;
     private _identityClient: IdentityClient;
@@ -651,7 +654,8 @@ export class OpenChatAgent extends EventTarget {
         this._communityClient.setInviteCode(value.id.communityId, textToCode(value.code));
     }
 
-    createUserClient(userId: string): OpenChatAgent {
+    createUserClient(userId: string, previousUserIds: string[] = []): OpenChatAgent {
+        this._ownLatestUserIds = new Map(previousUserIds.map((id) => [id, userId]));
         const userClient =
             userId === ANON_USER_ID
                 ? AnonUserClient.create()
@@ -1428,7 +1432,29 @@ export class OpenChatAgent extends EventTarget {
         return { messages, previews };
     }
 
+    // Rehydrates the event's content and reply context, and refers to the user by their current id
+    // wherever it was from before they were migrated to a MultiUser canister. Every event the agent
+    // returns, whether from the cache or the canister, passes through here.
     private rehydrateEvent<T extends ChatEvent>(
+        ev: EventWrapper<T>,
+        defaultChatId: ChatIdentifier,
+        missingReplies: AsyncMessageContextMap<EventWrapper<Message>>,
+        missingMessagePreviews: ResolvedMessagePreviews,
+        threadRootMessageIndex: number | undefined,
+    ): EventWrapper<T> {
+        return withLatestUserIds(
+            this.rehydrateEventContent(
+                ev,
+                defaultChatId,
+                missingReplies,
+                missingMessagePreviews,
+                threadRootMessageIndex,
+            ),
+            this._ownLatestUserIds,
+        );
+    }
+
+    private rehydrateEventContent<T extends ChatEvent>(
         ev: EventWrapper<T>,
         defaultChatId: ChatIdentifier,
         missingReplies: AsyncMessageContextMap<EventWrapper<Message>>,
@@ -2634,6 +2660,11 @@ export class OpenChatAgent extends EventTarget {
     }
 
     hydrateChatSummary<T extends ChatSummary>(chat: T): T {
+        // The latest message may be from before the user was migrated to a MultiUser canister
+        const latestMessage = withLatestUserIds(chat.latestMessage, this._ownLatestUserIds);
+        if (latestMessage !== chat.latestMessage) {
+            chat = { ...chat, latestMessage };
+        }
         switch (chat.kind) {
             case "direct_chat":
                 return chat;

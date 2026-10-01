@@ -312,6 +312,9 @@ export type CreatedUser = CurrentUserCommon & {
     kind: "created_user";
     dateCreated: bigint;
     cryptoAccount: string;
+    // The ids the user had before being migrated to a MultiUser canister, which events from before
+    // then still refer to them by
+    previousUserIds?: string[];
 };
 
 export function anonymousUser(): CreatedUser {
