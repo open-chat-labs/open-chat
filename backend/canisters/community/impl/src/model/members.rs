@@ -1,7 +1,7 @@
 use crate::model::members::stable_memory::MembersStableStorage;
 use crate::model::user_groups::{UserGroup, UserGroups};
 use constants::calculate_summary_updates_data_removal_cutoff;
-use group_community_common::{FormerMembers, Member, MemberUpdate, Members, MembersPage, members_page};
+use group_community_common::{FormerMembers, Member, MemberUpdate, Members, MembersPage, Unlapsing, members_page};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
@@ -44,6 +44,8 @@ pub struct CommunityMembers {
     // imported channels' events refer to them too
     #[serde(default)]
     former_members: FormerMembers,
+    #[serde(default)]
+    unlapsing: Option<Unlapsing>,
 }
 
 impl CommunityMembers {
@@ -93,6 +95,7 @@ impl CommunityMembers {
             updates: BTreeSet::new(),
             latest_update_removed: 0,
             former_members: FormerMembers::default(),
+            unlapsing: None,
         }
     }
 
@@ -129,6 +132,9 @@ impl CommunityMembers {
             };
             self.add_user_id(principal, user_id);
             self.members_map.insert(member.user_id, member.clone());
+            if user_type.is_bot() {
+                self.bots.insert(user_id, user_type);
+            }
             self.former_members.on_member_added(user_id);
             self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
 
@@ -376,6 +382,13 @@ impl CommunityMembers {
         self.user_groups.last_updated()
     }
 
+    // Records each member who is a bot in `bots`, which `add` didn't use to. Returns them.
+    // TODO: Remove this once every Community canister has been upgraded
+    pub fn populate_bots(&mut self) -> BTreeMap<UserId, UserType> {
+        self.bots = self.members_map.bots();
+        self.bots.clone()
+    }
+
     // Returns the number of members whose principal was set
     pub fn populate_member_principals(&mut self) -> u32 {
         let principals: HashMap<_, _> = self
@@ -506,6 +519,9 @@ impl CommunityMembers {
             if set.remove(&old_user_id) {
                 set.insert(new_user_id);
             }
+        }
+        if self.lapsed.contains(&new_user_id) {
+            self.restart_unlapsing_cursor();
         }
         if let Some(user_type) = self.bots.remove(&old_user_id) {
             self.bots.insert(new_user_id, user_type);
@@ -783,12 +799,71 @@ impl CommunityMembers {
         }
     }
 
-    pub fn unlapse_all(&mut self, now: TimestampMillis) {
+    // Starts unlapsing the members who have lapsed up to now, as is done once there is no longer an
+    // access gate (see `unlapse_while`). If unlapsing is already under way it starts again, so that
+    // it covers those who have lapsed since it started too.
+    pub fn start_unlapsing(&mut self, now: TimestampMillis) {
+        self.unlapsing = Some(Unlapsing {
+            before: now,
+            after: None,
+        });
+    }
+
+    pub fn is_unlapsing(&self) -> bool {
+        self.unlapsing.is_some()
+    }
+
+    // Unlapses, in order of user id, the members who lapsed before `start_unlapsing` was called,
+    // until `keep_going` returns false or there are none left. Each is written to stable memory, so
+    // a great many are unlapsed a batch at a time (see the `unlapse_members` job). Members who have
+    // lapsed since, under an access gate set since, are left lapsed. Returns those unlapsed.
+    pub fn unlapse_while(&mut self, now: TimestampMillis, mut keep_going: impl FnMut() -> bool) -> Vec<UserId> {
+        let Some(Unlapsing { before, mut after }) = self.unlapsing else {
+            return Vec::new();
+        };
         self.prune_member_updates(now);
-        for user_id in std::mem::take(&mut self.lapsed) {
-            if matches!(self.update_member(&user_id, |m| m.set_lapsed(false, now)), Some(true)) {
-                self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
+        let mut unlapsed = Vec::new();
+        loop {
+            if !keep_going() {
+                self.unlapsing = Some(Unlapsing { before, after });
+                return unlapsed;
             }
+            let start = after.map_or(Bound::Unbounded, Bound::Excluded);
+            let Some(user_id) = self.lapsed.range((start, Bound::Unbounded)).next().copied() else {
+                self.unlapsing = None;
+                return unlapsed;
+            };
+            after = Some(user_id);
+
+            let mut not_lapsed = false;
+            let updated = self.update_member(&user_id, |m| {
+                not_lapsed = !m.lapsed.value;
+                m.lapsed.timestamp <= before && m.set_lapsed(false, now)
+            });
+            match updated {
+                Some(true) => {
+                    self.lapsed.remove(&user_id);
+                    self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
+                    unlapsed.push(user_id);
+                }
+                // A member whose record says they aren't lapsed, or who isn't a member, shouldn't be
+                // in the set (eg. if the members were imported from a group which was unlapsing them)
+                Some(false) if not_lapsed => {
+                    self.lapsed.remove(&user_id);
+                }
+                None => {
+                    self.lapsed.remove(&user_id);
+                }
+                Some(false) => {}
+            }
+        }
+    }
+
+    // A member who has been migrated to a new user id may now come before the cursor, so the lapsed
+    // members are looked at again from the start. Those already unlapsed are no longer among them.
+    fn restart_unlapsing_cursor(&mut self) {
+        if let Some(unlapsing) = self.unlapsing.as_mut() {
+            unlapsing.after = None;
         }
     }
 
@@ -862,6 +937,7 @@ impl CommunityMembers {
         let mut suspended = BTreeSet::new();
         let mut members_with_display_names = BTreeSet::new();
         let mut members_with_referrals = BTreeSet::new();
+        let mut bots = BTreeMap::new();
 
         for member in self.members_map.all_members() {
             member_ids.insert(member.user_id);
@@ -887,6 +963,10 @@ impl CommunityMembers {
             if !member.referrals.is_empty() {
                 members_with_referrals.insert(member.user_id);
             }
+
+            if member.user_type.is_bot() {
+                bots.insert(member.user_id, member.user_type);
+            }
         }
 
         assert_eq!(member_ids, self.members_and_channels.keys().copied().collect::<BTreeSet<_>>());
@@ -896,6 +976,7 @@ impl CommunityMembers {
         assert_eq!(suspended, self.suspended);
         assert_eq!(members_with_display_names, self.members_with_display_names);
         assert_eq!(members_with_referrals, self.members_with_referrals);
+        assert_eq!(bots, self.bots);
         assert!(self.former_members.iter().all(|u| !member_ids.contains(&u)));
     }
 }
@@ -1126,6 +1207,32 @@ mod tests {
         members.remove(user_id2, Some(principal2), false, 0);
         assert!(members.channels_for_member(user_id2).is_empty());
         assert!(members.channels_removed_for_member(user_id2).next().is_none());
+    }
+
+    #[test]
+    fn bots_recorded_when_added_and_when_populated() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let user_id = test_user_id;
+        let principal = |i: u8| test_principal(test_user_id(i));
+        let expected = BTreeMap::from([(user_id(2), UserType::OcControlledBot)]);
+
+        let mut members = CommunityMembers::new(principal(1), user_id(1), UserType::User, Vec::new(), 0);
+        members.add(user_id(2), principal(2), UserType::OcControlledBot, None, 0);
+        members.add(user_id(3), principal(3), UserType::User, None, 0);
+        assert_eq!(members.bots(), &expected);
+        members.check_invariants();
+
+        // As held before `add` recorded bots
+        members.bots.clear();
+        assert_eq!(members.populate_bots(), expected);
+        assert_eq!(members.bots(), &expected);
+        members.check_invariants();
+
+        members.remove(user_id(2), None, false, 0);
+        assert!(members.bots().is_empty());
+        members.check_invariants();
     }
 
     #[test]
@@ -1381,6 +1488,99 @@ mod tests {
         });
 
         assert_eq!(member_ids(&found), user_ids([2, 3]));
+    }
+
+    #[test]
+    fn lapsed_members_are_unlapsed_until_told_to_stop() {
+        let mut members = members_for_page_tests(5);
+        for user in 2..=5 {
+            members.update_lapsed(test_user_id(user), true, 3);
+        }
+        members.start_unlapsing(10);
+
+        // Stopped after 2
+        let mut asked = 0;
+        let unlapsed = members.unlapse_while(10, || {
+            asked += 1;
+            asked <= 2
+        });
+        assert_eq!(unlapsed, user_ids([2, 3]));
+        assert!(members.is_unlapsing());
+        assert_eq!(members.lapsed().len(), 2);
+        assert!(!members.get_by_user_id(&test_user_id(2)).unwrap().lapsed().value);
+        assert!(members.get_by_user_id(&test_user_id(5)).unwrap().lapsed().value);
+
+        // Then the rest
+        assert_eq!(members.unlapse_while(11, || true), user_ids([4, 5]));
+        assert!(!members.is_unlapsing());
+        assert!(members.lapsed().is_empty());
+        assert!((2..=5).all(|user| !members.get_by_user_id(&test_user_id(user)).unwrap().lapsed().value));
+        // Each is in the updates, so that clients learn of it
+        let unlapsed: Vec<_> = members
+            .iter_latest_updates(3)
+            .filter(|(_, update)| matches!(update, MemberUpdate::Unlapsed))
+            .map(|(user_id, _)| user_id)
+            .collect();
+        assert_eq!(unlapsed.len(), 4);
+    }
+
+    #[test]
+    fn a_lapsed_member_migrated_to_an_earlier_user_id_is_still_unlapsed() {
+        let mut members = members_for_page_tests(5);
+        members.update_lapsed(test_user_id(3), true, 3);
+        members.update_lapsed(test_user_id(5), true, 3);
+        members.start_unlapsing(10);
+
+        let mut asked = 0;
+        let unlapsed = members.unlapse_while(10, || {
+            asked += 1;
+            asked <= 1
+        });
+        assert_eq!(unlapsed, user_ids([3]));
+
+        // User 5 is migrated to an id before where unlapsing has got to
+        members.migrate_user_id(test_user_id(5), test_user_id(0), None, 11);
+        assert_eq!(members.unlapse_while(12, || true), user_ids([0]));
+        assert!(members.lapsed().is_empty());
+        assert!(!members.get_by_user_id(&test_user_id(0)).unwrap().lapsed().value);
+    }
+
+    #[test]
+    fn a_member_in_the_lapsed_set_whose_record_isnt_lapsed_is_dropped_from_it() {
+        let mut members = members_for_page_tests(3);
+        // As can happen if the members were imported from a group which was unlapsing them
+        members.lapsed.insert(test_user_id(2));
+        members.start_unlapsing(10);
+
+        assert!(members.unlapse_while(10, || true).is_empty());
+        assert!(members.lapsed().is_empty());
+        assert!(!members.is_unlapsing());
+    }
+
+    #[test]
+    fn members_who_lapse_after_unlapsing_starts_are_left_lapsed() {
+        let mut members = members_for_page_tests(4);
+        members.update_lapsed(test_user_id(2), true, 3);
+        members.update_lapsed(test_user_id(4), true, 3);
+        members.start_unlapsing(10);
+
+        let mut asked = 0;
+        let unlapsed = members.unlapse_while(10, || {
+            asked += 1;
+            asked <= 1
+        });
+        assert_eq!(unlapsed, user_ids([2]));
+
+        // User 3 lapses under an access gate set since the last was removed
+        members.update_lapsed(test_user_id(3), true, 20);
+        assert_eq!(members.unlapse_while(21, || true), user_ids([4]));
+        assert!(!members.is_unlapsing());
+        assert!(members.get_by_user_id(&test_user_id(3)).unwrap().lapsed().value);
+
+        // Until that gate is removed too
+        members.start_unlapsing(30);
+        assert_eq!(members.unlapse_while(30, || true), user_ids([3]));
+        assert!(members.lapsed().is_empty());
     }
 
     // Holds users 1 to `count`, of whom user 1 is the owner
