@@ -29,7 +29,7 @@ pub static POCKET_IC_BIN: &str = "./pocket-ic";
 // (eg. an `await_call` on a stuck update) keeps it busy even after the test has given up on the
 // call and the run has ended, so the server would otherwise run forever. A full run takes around
 // 25 minutes on CI.
-const POCKET_IC_SERVER_HARD_TTL: Duration = Duration::from_secs(6 * 60 * 60);
+const POCKET_IC_SERVER_HARD_TTL: Duration = Duration::from_secs(2 * 60 * 60);
 
 static POCKET_IC_SERVER_URL: OnceLock<Url> = OnceLock::new();
 
