@@ -176,7 +176,11 @@
     }
 
     function onSearchEntered() {
-        if (largeGroup && knownUsers.length < members.length && searchTerm.length > 0) {
+        if (client.membersIncomplete(collection.id) && searchTerm.length > 0) {
+            // Not every member is held, so search for those who match. Those found are then held,
+            // so will be in the search results.
+            client.findMembers(collection.id, searchTerm, MAX_SEARCH_RESULTS);
+        } else if (largeGroup && knownUsers.length < members.length && searchTerm.length > 0) {
             // let's kick off the universal usersearch to try to fill in any missing users
             // no need to process the results, they will automatically get added to the userstore and that
             // will cause the search results to be reactively recalculated

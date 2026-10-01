@@ -5,11 +5,13 @@
         allUsersStore,
         AvatarSize,
         currentUserIdStore,
+        FIND_MEMBERS_DELAY_MS,
         iconSize,
         mobileWidth,
+        selectedChatMembersStore,
         selectedCommunityMembersStore,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import Avatar from "../Avatar.svelte";
     import Menu from "../Menu.svelte";
@@ -43,16 +45,31 @@
         onMention,
     }: Props = $props();
 
-    let index = $state(0);
-    let usersAndGroups: UserOrUserGroup[] = $state([]);
+    // The item highlighted, by its key, since the list changes as more is typed and as members who
+    // weren't held are found
+    let highlighted: string | undefined = $state();
 
-    onMount(() => {
-        usersAndGroups = Object.values(client.getUserLookupForMentions()).sort(
+    // Rebuilt when the members change, which they do when those which weren't held are found
+    let usersAndGroups = $derived.by(() => {
+        void [$selectedChatMembersStore, $selectedCommunityMembersStore, $allUsersStore];
+        return Object.values(client.getUserLookupForMentions()).sort(
             (a: UserOrUserGroup, b: UserOrUserGroup) => {
                 const order = { everyone: 1, user_group: 2, user: 3, bot: 4 };
                 return order[a.kind] - order[b.kind];
             },
         );
+    });
+
+    // A chat which holds only some of its members is searched for those matching what has been
+    // typed
+    $effect(() => {
+        const searchFor = prefix;
+        if (searchFor === undefined || searchFor.length < 2) return;
+        const timer = setTimeout(
+            () => client.findMembersToMention(searchFor),
+            FIND_MEMBERS_DELAY_MS,
+        );
+        return () => clearTimeout(timer);
     });
 
     function mention(userOrGroup: UserOrUserGroup) {
@@ -62,12 +79,12 @@
     function onKeyDown(ev: KeyboardEvent): void {
         switch (ev.key) {
             case "ArrowDown":
-                index = (index + 1) % filtered.length;
+                highlight((index + 1) % filtered.length);
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
             case "ArrowUp":
-                index = index === 0 ? filtered.length - 1 : index - 1;
+                highlight(index === 0 ? filtered.length - 1 : index - 1);
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
@@ -85,6 +102,11 @@
                 ev.stopPropagation();
                 break;
         }
+    }
+
+    function highlight(i: number) {
+        const item = filtered[i];
+        highlighted = item === undefined ? undefined : userOrGroupKey(item);
     }
 
     function compareMatchNames(a: string, b: string): number {
@@ -140,6 +162,12 @@
                 }
                 return a.kind === "user_group" ? -1 : 1;
             }),
+    );
+    let index = $derived(
+        Math.max(
+            0,
+            filtered.findIndex((u) => userOrGroupKey(u) === highlighted),
+        ),
     );
     let style = $derived(
         direction === "up"

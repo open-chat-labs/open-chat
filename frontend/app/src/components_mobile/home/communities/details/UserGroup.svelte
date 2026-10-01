@@ -38,6 +38,12 @@
     let communityState = new CommunityState(client, community);
     let searchTermEntered = $state("");
 
+    // So that the users of the group's members are known, including when it changes
+    $effect(() => {
+        void $selectedCommunityUserGroupsStore;
+        untrack(() => client.loadUserGroupMembers(community.id, userGroup.id));
+    });
+
     function matchesSearch(searchTerm: string, user: UserSummary): boolean {
         if (searchTerm === "") return true;
         return (

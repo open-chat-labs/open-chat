@@ -53,7 +53,7 @@ import type {
     VideoCallPresence,
     LookupMembersResponse,
 } from "@shared";
-import { MAX_EVENTS, MAX_MESSAGES, random32 } from "@shared";
+import { MAX_EVENTS, MAX_MESSAGES, MEMBERS_PAGE_SIZE, random32 } from "@shared";
 import type { AgentConfig } from "../../config";
 import {
     ActiveProposalTalliesResponse,
@@ -100,6 +100,7 @@ import {
     GroupReportMessageArgs,
     GroupSearchMessagesArgs,
     GroupSearchMessagesResponse,
+    GroupSelectedInitialArgs,
     GroupSelectedInitialResponse,
     GroupSelectedUpdatesArgs,
     GroupSelectedUpdatesResponse,
@@ -620,12 +621,13 @@ export class GroupClient
                 this.query(
                     groupId,
                     "selected_initial",
-                    {},
+                    // The rest of the members are only loaded when they are needed
+                    { max_members: MEMBERS_PAGE_SIZE },
                     (resp) =>
                         mapResult(resp, (value) =>
                             groupDetailsSuccess(value, this.config.blobUrlPattern, groupId),
                         ),
-                    TEmpty,
+                    GroupSelectedInitialArgs,
                     GroupSelectedInitialResponse,
                 ),
             (since) =>

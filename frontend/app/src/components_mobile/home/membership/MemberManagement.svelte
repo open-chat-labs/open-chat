@@ -9,7 +9,7 @@
         OpenChat,
         UserSummary,
     } from "@client";
-    import { allUsersStore } from "@client";
+    import { allChatsStore, allUsersStore, communitiesStore, FIND_MEMBERS_DELAY_MS } from "@client";
     import { getContext } from "svelte";
     import AccountAlert from "svelte-material-icons/AccountAlertOutline.svelte";
     import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
@@ -34,7 +34,20 @@
     let searchTermEntered = $state<string>();
     let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered ?? ""));
     let searchTermLower = $derived(searchTerm.toLowerCase());
-    let membersState = new MemberManagement(getContext<OpenChat>("client"), collection);
+    const MAX_SEARCH_RESULTS = 255;
+    const client = getContext<OpenChat>("client");
+    let membersState = new MemberManagement(client, collection);
+    // The collection is as it was when the page was opened, so the count is read from its summary
+    // as it is now
+    let memberCount = $derived.by(() => {
+        const summary =
+            collection.kind === "community"
+                ? $communitiesStore.get(collection.id)
+                : $allChatsStore.get(collection.id);
+        return summary !== undefined && summary.kind !== "direct_chat"
+            ? summary.memberCount
+            : collection.memberCount;
+    });
     let members = $derived<FullMember[]>(
         membersState.getKnownUsers($allUsersStore, [...membersState.members.values()]),
     );
@@ -56,6 +69,18 @@
     let filteredBlocked = $derived<UserSummary[]>(
         blocked.filter((u) => membersState.matchesSearch(searchTermLower, u)),
     );
+    // If not every member is held, those who match what has been typed are searched for. Those
+    // found are then held, so will be in the search results.
+    $effect(() => {
+        const searchFor = searchTerm;
+        if (searchFor.length < 2 || !client.membersIncomplete(collection.id)) return;
+        const timer = setTimeout(
+            () => client.findMembers(collection.id, searchFor, MAX_SEARCH_RESULTS),
+            FIND_MEMBERS_DELAY_MS,
+        );
+        return () => clearTimeout(timer);
+    });
+
     function setView(v: View) {
         transition(["fade"], () => {
             view = v;
@@ -93,7 +118,9 @@
                     direction={"vertical"}>
                     <Body fontWeight={"bold"}>
                         <Translatable
-                            resourceKey={i18nKey(`Current members (${members.length})`)} />
+                            resourceKey={i18nKey(
+                                `Current members (${memberCount})`,
+                            )} />
                     </Body>
                     <MemberList
                         searchTerm={searchTermEntered}

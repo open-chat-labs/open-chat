@@ -55,6 +55,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Within the chat event, store the count of members added to a public channel rather than listing each of them ([#9661](https://github.com/open-chat-labs/open-chat/pull/9661))
 - Limit user groups to 1,000 members ([#9662](https://github.com/open-chat-labs/open-chat/pull/9662))
 - Split a notification with more than 5,000 recipients into several ([#9658](https://github.com/open-chat-labs/open-chat/pull/9658))
+- Pull an access gate's payment under the member's spender subaccount, falling back to the default account for now ([#9700](https://github.com/open-chat-labs/open-chat/pull/9700))
 
 ### Removed
 
@@ -71,6 +72,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Process the jobs which expire members or join them to new public channels in batches to avoid exceeding the instruction limit in large communities ([#9659](https://github.com/open-chat-labs/open-chat/pull/9659))
 - Tell clients that a pinned message is no longer pinned when it is deleted ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 - For users hosted in MultiUser canisters, send crypto and tips to their principal ([#9674](https://github.com/open-chat-labs/open-chat/pull/9674))
+- Don't take an access gate's payment when a member's gate is checked again as it expires ([#9700](https://github.com/open-chat-labs/open-chat/pull/9700))
 
 ## [[2.0.2045](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2045-community)] - 2026-08-26
 
