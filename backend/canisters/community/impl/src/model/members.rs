@@ -380,11 +380,11 @@ impl CommunityMembers {
     }
 
     // Returns the number of members whose principal was set
-    // Records each member who is a bot in `bots`, which `add` didn't use to. Returns how many there are.
+    // Records each member who is a bot in `bots`, which `add` didn't use to. Returns them.
     // TODO: Remove this once every Community canister has been upgraded
-    pub fn populate_bots(&mut self) -> usize {
+    pub fn populate_bots(&mut self) -> BTreeMap<UserId, UserType> {
         self.bots = self.members_map.bots();
-        self.bots.len()
+        self.bots.clone()
     }
 
     pub fn populate_member_principals(&mut self) -> u32 {
@@ -1161,7 +1161,7 @@ mod tests {
 
         // As held before `add` recorded bots
         members.bots.clear();
-        assert_eq!(members.populate_bots(), 1);
+        assert_eq!(members.populate_bots(), expected);
         assert_eq!(members.bots(), &expected);
         members.check_invariants();
 

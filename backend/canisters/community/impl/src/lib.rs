@@ -664,6 +664,25 @@ struct Data {
 
 impl Data {
     // Moves the events queued before they were batched per canister into the queue which does so,
+    // Records each member who is a bot as one, in the community and in each of its channels they're in.
+    // `CommunityMembers::add` didn't record them, so they were added to channels as users. Returns the
+    // number of bots and of channel memberships updated.
+    // TODO: Remove this once every Community canister has been upgraded
+    pub fn populate_bots(&mut self) -> (usize, usize) {
+        let bots = self.members.populate_bots();
+        let mut channel_memberships = 0;
+        for (user_id, user_type) in bots.iter() {
+            for channel_id in self.members.channels_for_member(*user_id) {
+                if let Some(channel) = self.channels.get_mut(channel_id)
+                    && channel.chat.members.set_bot_user_type(*user_id, *user_type)
+                {
+                    channel_memberships += 1;
+                }
+            }
+        }
+        (bots.len(), channel_memberships)
+    }
+
     // pairing each with the user it was queued for
     // TODO: Remove this, along with `user_event_sync_queue`, once it has run in every canister
     pub fn drain_legacy_user_event_queue(&mut self) {

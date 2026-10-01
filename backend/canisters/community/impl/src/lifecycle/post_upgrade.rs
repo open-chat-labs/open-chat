@@ -39,8 +39,8 @@ fn post_upgrade(args: Args) {
     });
 
     mutate_state(|state| {
-        let bots = state.data.members.populate_bots();
-        info!(bots, "Populated bot members");
+        let (bots, channel_memberships) = state.data.populate_bots();
+        info!(bots, channel_memberships, "Populated bot members");
     });
 
     let completed_imports = read_state(|state| state.data.groups_being_imported.completed_imports());
