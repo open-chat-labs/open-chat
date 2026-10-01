@@ -97,6 +97,7 @@ pub(crate) fn handle_event<F: FnOnce() -> TimestampMillis>(
                     old_user_id: ev.old_user_id,
                     new_user_id: user_id,
                     canisters_to_notify: ev.canisters_to_notify,
+                    users_to_notify: ev.users_to_notify,
                 })),
                 **now,
             );

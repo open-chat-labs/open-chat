@@ -27,6 +27,7 @@ pub mod multi_user;
 pub mod notifications_index;
 pub mod online_users;
 pub mod openchat_installer;
+pub mod proposals_bot;
 pub mod registry;
 pub mod sign_in_with_email;
 pub mod storage_bucket;

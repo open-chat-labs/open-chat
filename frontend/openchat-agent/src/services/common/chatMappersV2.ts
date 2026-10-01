@@ -39,7 +39,7 @@ import type {
     GateCheckFailedReason,
     GiphyContent,
     GiphyImage,
-    GroupChatDetailsResponse,
+    GroupChatDetails,
     GroupChatDetailsUpdatesResponse,
     GroupChatIdentifier,
     GroupChatSummary,
@@ -2700,7 +2700,7 @@ export function groupDetailsSuccess(
     blobUrlPattern: string,
     canisterId: string,
     channelId?: number,
-): GroupChatDetailsResponse {
+): GroupChatDetails {
     const members = groupMembers(
         "participants" in value ? value.participants : value.members,
         value.basic_members,
@@ -2785,6 +2785,16 @@ export function groupDetailsUpdatesResponse(
             return {
                 kind: "success_no_updates",
                 timestamp: value.SuccessNoUpdates,
+            };
+        } else if ("SuccessSnapshot" in value) {
+            return {
+                kind: "snapshot",
+                details: groupDetailsSuccess(
+                    value.SuccessSnapshot,
+                    blobUrlPattern,
+                    canisterId,
+                    channelId,
+                ),
             };
         }
     }

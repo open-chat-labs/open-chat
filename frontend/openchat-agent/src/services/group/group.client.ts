@@ -634,7 +634,9 @@ export class GroupClient
                 this.query(
                     groupId,
                     "selected_updates_v2",
-                    { updates_since: since },
+                    // The details are returned in full if some of the updates are too old to have
+                    // been kept, in which case only the first page of members is wanted
+                    { updates_since: since, max_members: MEMBERS_PAGE_SIZE },
                     (value) =>
                         groupDetailsUpdatesResponse(value, this.config.blobUrlPattern, groupId),
                     GroupSelectedUpdatesArgs,

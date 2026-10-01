@@ -4,7 +4,7 @@ use crate::mentions::Mentions;
 use crate::roles::GroupRoleInternal;
 use candid::Principal;
 use constants::{ONE_MB, calculate_summary_updates_data_removal_cutoff};
-use group_community_common::{Member, MemberUpdate, Members, MembersPage, members_page};
+use group_community_common::{Member, MemberUpdate, Members, MembersPage, Unlapsing, members_page};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
@@ -41,6 +41,8 @@ pub struct GroupMembers {
     suspended: BTreeSet<UserId>,
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
     latest_update_removed: TimestampMillis,
+    #[serde(default)]
+    unlapsing: Option<Unlapsing>,
 }
 
 impl GroupMembers {
@@ -89,6 +91,7 @@ impl GroupMembers {
             suspended: BTreeSet::new(),
             updates: BTreeSet::new(),
             latest_update_removed: 0,
+            unlapsing: None,
         }
     }
 
@@ -248,6 +251,7 @@ impl GroupMembers {
         }
         if member.lapsed.value {
             self.lapsed.insert(user_id);
+            self.restart_unlapsing_cursor();
         }
         if member.suspended.value {
             self.suspended.insert(user_id);
@@ -323,6 +327,24 @@ impl GroupMembers {
 
     pub fn contains(&self, user_id: &UserId) -> bool {
         self.member_ids.contains(user_id)
+    }
+
+    // Records a member who was added as a user as the bot they are. Returns whether anything changed.
+    // TODO: Remove this once every Community canister has been upgraded, since only a community's
+    // channels had bots added as users (see `CommunityMembers::populate_bots`)
+    pub fn set_bot_user_type(&mut self, user_id: UserId, user_type: UserType) -> bool {
+        if !user_type.is_bot() || !self.member_ids.contains(&user_id) {
+            return false;
+        }
+        let bot_added = self.bots.insert(user_id, user_type) != Some(user_type);
+        let member_updated = self
+            .update_member(&user_id, |m| {
+                let updated = m.user_type != user_type;
+                m.user_type = user_type;
+                updated
+            })
+            .unwrap_or_default();
+        bot_added || member_updated
     }
 
     pub fn update_member<F: FnOnce(&mut GroupMemberInternal) -> bool>(
@@ -514,12 +536,71 @@ impl GroupMembers {
         }
     }
 
-    pub fn unlapse_all(&mut self, now: TimestampMillis) {
+    // Starts unlapsing the members who have lapsed up to now, as is done once there is no longer an
+    // access gate (see `unlapse_while`). If unlapsing is already under way it starts again, so that
+    // it covers those who have lapsed since it started too.
+    pub fn start_unlapsing(&mut self, now: TimestampMillis) {
+        self.unlapsing = Some(Unlapsing {
+            before: now,
+            after: None,
+        });
+    }
+
+    pub fn is_unlapsing(&self) -> bool {
+        self.unlapsing.is_some()
+    }
+
+    // Unlapses, in order of user id, the members who lapsed before `start_unlapsing` was called,
+    // until `keep_going` returns false or there are none left. Each is written to stable memory, so
+    // a great many are unlapsed a batch at a time (see the `unlapse_members` job). Members who have
+    // lapsed since, under an access gate set since, are left lapsed. Returns those unlapsed.
+    pub fn unlapse_while(&mut self, now: TimestampMillis, mut keep_going: impl FnMut() -> bool) -> Vec<UserId> {
+        let Some(Unlapsing { before, mut after }) = self.unlapsing else {
+            return Vec::new();
+        };
         self.prune_member_updates(now);
-        for user_id in std::mem::take(&mut self.lapsed) {
-            if matches!(self.update_member(&user_id, |m| m.set_lapsed(false, now)), Some(true)) {
-                self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
+        let mut unlapsed = Vec::new();
+        loop {
+            if !keep_going() {
+                self.unlapsing = Some(Unlapsing { before, after });
+                return unlapsed;
             }
+            let start = after.map_or(Bound::Unbounded, Bound::Excluded);
+            let Some(user_id) = self.lapsed.range((start, Bound::Unbounded)).next().copied() else {
+                self.unlapsing = None;
+                return unlapsed;
+            };
+            after = Some(user_id);
+
+            let mut not_lapsed = false;
+            let updated = self.update_member(&user_id, |m| {
+                not_lapsed = !m.lapsed.value;
+                m.lapsed.timestamp <= before && m.set_lapsed(false, now)
+            });
+            match updated {
+                Some(true) => {
+                    self.lapsed.remove(&user_id);
+                    self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
+                    unlapsed.push(user_id);
+                }
+                // A member whose record says they aren't lapsed, or who isn't a member, shouldn't be
+                // in the set (eg. if the members were imported from a group which was unlapsing them)
+                Some(false) if not_lapsed => {
+                    self.lapsed.remove(&user_id);
+                }
+                None => {
+                    self.lapsed.remove(&user_id);
+                }
+                Some(false) => {}
+            }
+        }
+    }
+
+    // A member who has been migrated to a new user id may now come before the cursor, so the lapsed
+    // members are looked at again from the start. Those already unlapsed are no longer among them.
+    fn restart_unlapsing_cursor(&mut self) {
+        if let Some(unlapsing) = self.unlapsing.as_mut() {
+            unlapsing.after = None;
         }
     }
 
@@ -642,6 +723,7 @@ impl GroupMembers {
         let mut at_everyone_muted = BTreeSet::new();
         let mut lapsed = BTreeSet::new();
         let mut suspended = BTreeSet::new();
+        let mut bots = BTreeMap::new();
 
         let all_members = self.members_map.all_members();
 
@@ -670,6 +752,10 @@ impl GroupMembers {
             if member.suspended.value {
                 suspended.insert(member.user_id);
             }
+
+            if member.user_type.is_bot() {
+                bots.insert(member.user_id, member.user_type);
+            }
         }
 
         assert_eq!(member_ids, self.member_ids);
@@ -680,6 +766,7 @@ impl GroupMembers {
         assert_eq!(at_everyone_muted, self.at_everyone_muted);
         assert_eq!(lapsed, self.lapsed);
         assert_eq!(suspended, self.suspended);
+        assert_eq!(bots, self.bots);
     }
 }
 
@@ -1146,6 +1233,27 @@ mod tests {
     }
 
     #[test]
+    fn set_bot_user_type_records_a_bot_added_as_a_user() {
+        let mut members = members_for_migration_tests();
+        let [bot, user, non_member]: [UserId; 3] = [2, 3, 4].map(test_user_id);
+        members.add(bot, None, 1, 0.into(), 0.into(), false, UserType::User);
+        members.add(user, None, 1, 0.into(), 0.into(), false, UserType::User);
+
+        assert!(members.set_bot_user_type(bot, UserType::OcControlledBot));
+        assert_eq!(members.get(&bot).unwrap().user_type(), UserType::OcControlledBot);
+        assert_eq!(members.bots().get(&bot), Some(&UserType::OcControlledBot));
+        members.check_invariants();
+
+        // Nothing changes once it's recorded, nor for a user or someone who isn't a member
+        assert!(!members.set_bot_user_type(bot, UserType::OcControlledBot));
+        assert!(!members.set_bot_user_type(user, UserType::User));
+        assert!(!members.set_bot_user_type(non_member, UserType::OcControlledBot));
+        assert_eq!(members.get(&user).unwrap().user_type(), UserType::User);
+        assert!(!members.bots().contains_key(&non_member));
+        members.check_invariants();
+    }
+
+    #[test]
     fn migrate_user_id_moves_membership_and_block() {
         let mut members = members_for_migration_tests();
         let [old, new, blocked_old, blocked_new]: [UserId; 4] = [2, 3, 4, 5].map(test_user_id);
@@ -1255,6 +1363,99 @@ mod tests {
         assert_eq!(member_ids(&all.members), user_ids([1, 8, 9, 3]));
         assert_eq!(all.basic_members, user_ids([2, 4, 5, 6, 7]));
         assert_eq!(all.more_members_after, None);
+    }
+
+    #[test]
+    fn lapsed_members_are_unlapsed_until_told_to_stop() {
+        let mut members = members_for_page_tests(5);
+        for user in 2..=5 {
+            members.update_lapsed(test_user_id(user), true, 3);
+        }
+        members.start_unlapsing(10);
+
+        // Stopped after 2
+        let mut asked = 0;
+        let unlapsed = members.unlapse_while(10, || {
+            asked += 1;
+            asked <= 2
+        });
+        assert_eq!(unlapsed, user_ids([2, 3]));
+        assert!(members.is_unlapsing());
+        assert_eq!(members.lapsed().len(), 2);
+        assert!(!members.get(&test_user_id(2)).unwrap().lapsed().value);
+        assert!(members.get(&test_user_id(5)).unwrap().lapsed().value);
+
+        // Then the rest
+        assert_eq!(members.unlapse_while(11, || true), user_ids([4, 5]));
+        assert!(!members.is_unlapsing());
+        assert!(members.lapsed().is_empty());
+        assert!((2..=5).all(|user| !members.get(&test_user_id(user)).unwrap().lapsed().value));
+        // Each is in the updates, so that clients learn of it
+        let unlapsed: Vec<_> = members
+            .iter_latest_updates(3)
+            .filter(|(_, update)| matches!(update, MemberUpdate::Unlapsed))
+            .map(|(user_id, _)| user_id)
+            .collect();
+        assert_eq!(unlapsed.len(), 4);
+    }
+
+    #[test]
+    fn a_lapsed_member_migrated_to_an_earlier_user_id_is_still_unlapsed() {
+        let mut members = members_for_page_tests(5);
+        members.update_lapsed(test_user_id(3), true, 3);
+        members.update_lapsed(test_user_id(5), true, 3);
+        members.start_unlapsing(10);
+
+        let mut asked = 0;
+        let unlapsed = members.unlapse_while(10, || {
+            asked += 1;
+            asked <= 1
+        });
+        assert_eq!(unlapsed, user_ids([3]));
+
+        // User 5 is migrated to an id before where unlapsing has got to
+        members.migrate_user_id(test_user_id(5), test_user_id(0), 11);
+        assert_eq!(members.unlapse_while(12, || true), user_ids([0]));
+        assert!(members.lapsed().is_empty());
+        assert!(!members.get(&test_user_id(0)).unwrap().lapsed().value);
+    }
+
+    #[test]
+    fn a_member_in_the_lapsed_set_whose_record_isnt_lapsed_is_dropped_from_it() {
+        let mut members = members_for_page_tests(3);
+        // As can happen if the members were imported from a group which was unlapsing them
+        members.lapsed.insert(test_user_id(2));
+        members.start_unlapsing(10);
+
+        assert!(members.unlapse_while(10, || true).is_empty());
+        assert!(members.lapsed().is_empty());
+        assert!(!members.is_unlapsing());
+    }
+
+    #[test]
+    fn members_who_lapse_after_unlapsing_starts_are_left_lapsed() {
+        let mut members = members_for_page_tests(4);
+        members.update_lapsed(test_user_id(2), true, 3);
+        members.update_lapsed(test_user_id(4), true, 3);
+        members.start_unlapsing(10);
+
+        let mut asked = 0;
+        let unlapsed = members.unlapse_while(10, || {
+            asked += 1;
+            asked <= 1
+        });
+        assert_eq!(unlapsed, user_ids([2]));
+
+        // User 3 lapses under an access gate set since the last was removed
+        members.update_lapsed(test_user_id(3), true, 20);
+        assert_eq!(members.unlapse_while(21, || true), user_ids([4]));
+        assert!(!members.is_unlapsing());
+        assert!(members.get(&test_user_id(3)).unwrap().lapsed().value);
+
+        // Until that gate is removed too
+        members.start_unlapsing(30);
+        assert_eq!(members.unlapse_while(30, || true), user_ids([3]));
+        assert!(members.lapsed().is_empty());
     }
 
     // Holds users 1 to `count`, of whom user 1 is the owner

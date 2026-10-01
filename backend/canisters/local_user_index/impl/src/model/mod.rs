@@ -12,6 +12,7 @@ pub mod local_user_map;
 pub mod media_scan_job_log;
 pub mod moderation_queue;
 pub mod premium_items;
+pub mod recent_joins;
 pub mod referral_codes;
 pub mod registry_tokens;
 pub mod top_up_leaderboards;

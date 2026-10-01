@@ -176,9 +176,9 @@
     }
 
     function onSearchEntered() {
-        if (client.membersIncomplete(collection.id) && searchTerm.length > 0) {
-            // Not every member is held, so search for those who match. Those found are then held,
-            // so will be in the search results.
+        if (client.shouldSearchForMembers(collection.id) && searchTerm.length > 0) {
+            // Not every member, or not every member's display name in the community, is held, so
+            // search for those who match. Those found are then held, so will be in the results.
             client.findMembers(collection.id, searchTerm, MAX_SEARCH_RESULTS);
         } else if (largeGroup && knownUsers.length < members.length && searchTerm.length > 0) {
             // let's kick off the universal usersearch to try to fill in any missing users

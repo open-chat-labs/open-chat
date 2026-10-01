@@ -1,6 +1,6 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::utils::{now_nanos, tick_many};
+use crate::utils::{now_nanos, tick_many, wait_for_direct_chat};
 use crate::{TestEnv, client};
 use constants::{ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE};
 use std::ops::Deref;
@@ -92,18 +92,21 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, icrc2: bool)
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
-    tick_many(env, 3);
-
     let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance, amount);
 
     if with_c2c_error {
+        // Long enough for the message to reach the stopped canister and the failure to come back, even
+        // if the canisters are on different subnets
+        tick_many(env, 25);
+
         // Start the canister before advancing the time, else the retry falls due while it is still
         // stopped and is spent on another failure
         start_canister(env, user2.local_user_index, user2.canister());
         env.advance_time(Duration::from_secs(10));
-        tick_many(env, 3);
     }
+
+    wait_for_direct_chat(env, &user2, user1.user_id);
 
     let event = client::user::happy_path::events(env, &user2, user1.user_id, 0.into(), true, 10, 10)
         .events

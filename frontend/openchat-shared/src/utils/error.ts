@@ -69,6 +69,7 @@ const HTTP_ERROR_NAMES = new Set<string>([
     "AuthError",
     "DestinationInvalidError",
     "CanisterUnavailableError",
+    "CanisterMethodNotFoundError",
     "ResponseTooLargeError",
 ]);
 

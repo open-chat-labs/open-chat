@@ -71,6 +71,7 @@ import type {
     LookupMembersResponse,
 } from "@shared";
 import {
+    CanisterMethodNotFoundError,
     DestinationInvalidError,
     MAX_EVENTS,
     MAX_MESSAGES,
@@ -176,6 +177,8 @@ import {
     UnitResult,
     CommunityLookupMembersArgs,
     CommunityLookupMembersResponse,
+    CommunitySearchMembersArgs,
+    CommunitySearchMembersResponse,
     CommunityLookupChannelMembersArgs,
     CommunityLookupChannelMembersResponse,
 } from "../../typebox";
@@ -813,6 +816,8 @@ export class CommunityClient
                     {
                         updates_since: since,
                         invite_code: this.inviteCode(communityId),
+                        // As for `selected_initial`, if the details are returned in full
+                        max_members: MEMBERS_PAGE_SIZE,
                     },
                     communityDetailsUpdatesResponse,
                     CommunitySelectedUpdatesArgs,
@@ -861,6 +866,8 @@ export class CommunityClient
                     {
                         channel_id: toBigInt32(chatId.channelId),
                         updates_since: since,
+                        // As for `selected_channel_initial`, if the details are returned in full
+                        max_members: MEMBERS_PAGE_SIZE,
                     },
                     (value) =>
                         groupDetailsUpdatesResponse(
@@ -895,6 +902,45 @@ export class CommunityClient
             CommunityLookupMembersResponse,
         );
         if (response.kind === "success") {
+            await addMembersToCachedCommunityDetails(
+                this.chatsDb,
+                communityId,
+                response.members,
+                latestKnownUpdate,
+            );
+        }
+        return response;
+    }
+
+    // The members whose display names in the community match the search term, who are added to the
+    // cached details. `latestKnownUpdate` is as for `lookupMembers`.
+    async searchMembers(
+        communityId: string,
+        searchTerm: string,
+        maxResults: number,
+        latestKnownUpdate: bigint,
+    ): Promise<LookupMembersResponse> {
+        const response = await this.query(
+            communityId,
+            "search_members",
+            {
+                invite_code: this.inviteCode(communityId),
+                search_term: searchTerm,
+                max_results: maxResults,
+                latest_known_update: latestKnownUpdate,
+            },
+            lookupCommunityMembersResponse,
+            CommunitySearchMembersArgs,
+            CommunitySearchMembersResponse,
+        ).catch((err) => {
+            // A Community canister which hasn't yet been upgraded to have `search_members` finds
+            // nobody, rather than failing every search
+            if (err instanceof CanisterMethodNotFoundError) {
+                return { kind: "success" as const, members: [] };
+            }
+            throw err;
+        });
+        if (response.kind === "success" && response.members.length > 0) {
             await addMembersToCachedCommunityDetails(
                 this.chatsDb,
                 communityId,

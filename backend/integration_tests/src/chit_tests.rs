@@ -120,48 +120,44 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
     );
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
-    env.tick();
     let insured = days_insured >= 1;
 
     let mut expected_streak = if insured { 2 } else { 0 };
     let mut expected_max_streak = max(expected_streak, 1);
-    assert_streak_lengths(env, &user, expected_streak, expected_max_streak);
+    wait_for_streak_lengths(env, &user, expected_streak, expected_max_streak);
 
     expected_streak += 1;
     expected_max_streak = max(expected_streak, expected_max_streak);
     claim_then_check_result(env, &user, expected_streak, expected_max_streak);
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
-    env.tick();
     let insured = days_insured >= 2;
 
     expected_streak = if insured { 4 } else { 0 };
     expected_max_streak = max(expected_streak, expected_max_streak);
-    assert_streak_lengths(env, &user, expected_streak, expected_max_streak);
+    wait_for_streak_lengths(env, &user, expected_streak, expected_max_streak);
 
     expected_streak += 1;
     expected_max_streak = max(expected_streak, expected_max_streak);
     claim_then_check_result(env, &user, expected_streak, expected_max_streak);
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
-    env.tick();
     let insured = days_insured >= 3;
 
     expected_streak = if insured { 6 } else { 0 };
     expected_max_streak = max(expected_streak, expected_max_streak);
-    assert_streak_lengths(env, &user, expected_streak, expected_max_streak);
+    wait_for_streak_lengths(env, &user, expected_streak, expected_max_streak);
 
     expected_streak += 1;
     expected_max_streak = max(expected_streak, expected_max_streak);
     claim_then_check_result(env, &user, expected_streak, expected_max_streak);
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
-    env.tick();
     let insured = days_insured >= 4;
 
-    expected_streak = if insured { 6 } else { 0 };
+    expected_streak = if insured { 8 } else { 0 };
     expected_max_streak = max(expected_streak, expected_max_streak);
-    assert_streak_lengths(env, &user, expected_streak, expected_max_streak);
+    wait_for_streak_lengths(env, &user, expected_streak, expected_max_streak);
 
     expected_streak += 1;
     expected_max_streak = max(expected_streak, expected_max_streak);
@@ -215,9 +211,9 @@ fn streak_insurance_can_cover_multiple_days_missed_in_a_row(days_insured: u8) {
     env.advance_time(Duration::from_millis(DAY_IN_MS));
     env.tick();
 
-    for _ in 0..days_insured {
+    for day in 0..days_insured as u16 {
         env.advance_time(Duration::from_millis(DAY_IN_MS));
-        env.tick();
+        wait_for_streak_lengths(env, &user, day + 2, day + 2);
     }
 
     let summary = client::user::happy_path::initial_state(env, &user);
@@ -252,7 +248,7 @@ fn streak_insurance_updates_returned_in_summary_updates(final_day_manually_claim
     client::user::happy_path::pay_for_streak_insurance(env, &user, 1, ONE_CHAT);
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
-    env.tick();
+    wait_for_streak_lengths(env, &user, 2, 2);
 
     if final_day_manually_claimed {
         client::user::happy_path::claim_daily_chit(env, &user, None);
@@ -449,8 +445,18 @@ pub(crate) fn ensure_time_at_least_day0(env: &mut PocketIc) {
     }
 }
 
-fn assert_streak_lengths(env: &PocketIc, user: &User, streak: u16, max_streak: u16) {
-    let initial_state = client::user::happy_path::initial_state(env, user);
+// Streak insurance is claimed by a timer job in the User canister, which can take a few rounds to
+// run after the clock moves. A claim only counts on the day it falls due, so a test must wait for
+// it before moving the clock on again.
+fn wait_for_streak_lengths(env: &mut PocketIc, user: &User, streak: u16, max_streak: u16) {
+    let mut initial_state = client::user::happy_path::initial_state(env, user);
+    for _ in 0..30 {
+        if initial_state.streak == streak {
+            break;
+        }
+        env.tick();
+        initial_state = client::user::happy_path::initial_state(env, user);
+    }
     assert_eq!(initial_state.streak, streak);
     assert_eq!(initial_state.max_streak, max_streak);
 }

@@ -1,12 +1,15 @@
 //! Generates one candidate per timer callback so no single message runs the whole pool, and
-//! re-arms itself while anything is still needed.
+//! re-arms itself while anything is still needed. Each candidate takes two callbacks: `run` marks
+//! the generation as started and `generate` does it, so a generation that traps leaves the mark
+//! behind and the next `run` salts a different seed instead of trapping on the same one.
 
 use crate::jobs::push_puzzle;
-use crate::{GenerationFailure, MAX_GENERATION_FAILURES, RuntimeState, mutate_state};
+use crate::{GENERATION_STALE_AFTER, GenerationFailure, MAX_GENERATION_FAILURES, NextGeneration, RuntimeState, mutate_state};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, info};
+use types::PuzzleNumber;
 
 /// Long enough that a run of failing attempts does not hold the canister's message queue, short
 /// enough that the day still ships within minutes of the rollover.
@@ -31,11 +34,15 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 fn schedule(delay: Duration) {
+    cancel();
+    let timer_id = ic_cdk_timers::set_timer(delay, async { run() });
+    TIMER_ID.set(Some(timer_id));
+}
+
+fn cancel() {
     if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
     }
-    let timer_id = ic_cdk_timers::set_timer(delay, async { run() });
-    TIMER_ID.set(Some(timer_id));
 }
 
 fn run() {
@@ -49,9 +56,24 @@ fn run() {
             ic_cdk_timers::set_timer(Duration::ZERO, async { crate::lifecycle::reseed_rng() });
             return;
         }
-        let Some(number) = state.data.generation_needed(now) else {
+        match state.data.begin_generation(now) {
+            NextGeneration::Generate(number) => {
+                ic_cdk_timers::set_timer(Duration::ZERO, async move { generate(number) });
+                // Fires only if `generate` traps, since every way out of it re-arms or cancels
+                schedule(Duration::from_millis(GENERATION_STALE_AFTER));
+            }
+            NextGeneration::InProgress(remaining) => schedule(Duration::from_millis(remaining)),
+            NextGeneration::Idle => {}
+        }
+    });
+}
+
+fn generate(number: PuzzleNumber) {
+    mutate_state(|state| {
+        if !state.data.finish_generation(number) {
             return;
-        };
+        }
+        let now = state.env.now();
         let params = state.data.params_for(number);
         let start = ic_cdk::api::performance_counter(0);
         let index = match state.data.generate_candidate(number) {
@@ -73,6 +95,7 @@ fn run() {
                         failures = MAX_GENERATION_FAILURES,
                         "Generation exhausted, giving up for this number"
                     );
+                    cancel();
                 }
                 return;
             }
@@ -80,6 +103,7 @@ fn run() {
             // out of the schedule, and no retry fixes either. Don't re-arm, or the job would spin.
             Err(GenerationFailure::Permanent) => {
                 error!(number, game_id = params.game_id, "No candidate generated for scheduled game");
+                cancel();
                 return;
             }
         };
@@ -102,6 +126,8 @@ fn run() {
         if state.data.ensure_puzzles(now) {
             push_puzzle::schedule(true, Duration::ZERO);
         }
-        start_job_if_required(state);
+        if !start_job_if_required(state) {
+            cancel();
+        }
     });
 }

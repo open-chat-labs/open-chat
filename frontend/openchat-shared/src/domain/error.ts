@@ -17,6 +17,7 @@ export class UnsupportedValueError extends Error {
 export const ICErrorCode = {
     CanisterOutOfCycles: "IC0207", // the canister is frozen
     CanisterNotFound: "IC0301", // the canister has been deleted
+    CanisterMethodNotFound: "IC0536", // the canister has no such method, eg. it hasn't been upgraded
     CanisterWasmModuleNotFound: "IC0537", // the canister has been uninstalled
 } as const;
 
@@ -78,6 +79,15 @@ export class CanisterUnavailableError extends HttpError {
     constructor(error: Error) {
         super(503, error);
         this.name = "CanisterUnavailableError";
+    }
+}
+
+// The canister has no such method, eg. because it hasn't yet been upgraded to a version which has
+// it. Retrying won't change that within the lifetime of a request.
+export class CanisterMethodNotFoundError extends HttpError {
+    constructor(error: Error) {
+        super(501, error);
+        this.name = "CanisterMethodNotFoundError";
     }
 }
 

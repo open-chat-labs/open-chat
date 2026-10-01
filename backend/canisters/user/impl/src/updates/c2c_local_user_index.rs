@@ -27,6 +27,10 @@ pub(crate) fn handle_events(events: Vec<IdempotentEnvelope<LocalUserIndexEvent>>
 
 fn process_event(event: LocalUserIndexEvent, state: &mut RuntimeState) {
     let now = state.env.now();
+    // Events for the user's old id are then sent straight to their new one
+    if let LocalUserIndexEvent::UserIdMigrated(ev) = &event {
+        state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id);
+    }
     let effects = user_core::updates::c2c_local_user_index::apply(&mut state.data.user, event, now);
 
     if effects.chit_changed {

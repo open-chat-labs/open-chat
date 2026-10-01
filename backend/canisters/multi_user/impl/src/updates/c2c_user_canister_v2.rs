@@ -47,12 +47,16 @@ async fn c2c_user_canister_v2_impl(args: Args) -> Response {
                 sender,
                 recipient,
                 event,
+                sender_previous_user_ids,
             } = event.value;
             if !can_act_for(caller_kind, sender, caller) {
                 continue;
             }
             // Events for a user who isn't in this canister can never be applied, so are dropped
             if let Some(recipient_index) = state.index_of_local_user(recipient) {
+                if caller_kind == CanisterKind::MultiUserCanister {
+                    migrate_sender_user_id(recipient_index, sender, &sender_previous_user_ids, state);
+                }
                 apply_event(event, sender, recipient_index, state);
             }
         }
@@ -110,6 +114,30 @@ fn known_caller_kind(caller: CanisterId, args: &Args, state: &RuntimeState) -> O
             .unwrap_or_default()
     });
     has_chat_with_caller.then_some(CanisterKind::UserCanister)
+}
+
+// Moves what the user at `recipient_index` holds under the sender's previous ids, such as their chat
+// with the sender and any block of them, onto the sender's id. A sender migrated to a MultiUser
+// canister may get here before the notice of their new id, which would otherwise leave their events
+// to start a second chat, or get past a block held under their previous id.
+pub(crate) fn migrate_sender_user_id(
+    recipient_index: u16,
+    sender: UserId,
+    sender_previous_user_ids: &[UserId],
+    state: &mut RuntimeState,
+) {
+    if sender_previous_user_ids.is_empty() {
+        return;
+    }
+    let now = state.env.now();
+    state
+        .data
+        .migrated_user_ids
+        .insert_previous_ids(sender_previous_user_ids, sender);
+    let migrated_user_ids = &state.data.migrated_user_ids;
+    state.data.users.with_user_mut(recipient_index, |user| {
+        user.migrate_sender_user_id(sender, sender_previous_user_ids, migrated_user_ids, now)
+    });
 }
 
 // Applies an event from `sender` to the user at `recipient_index`, as the User canister's

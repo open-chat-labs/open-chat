@@ -8,6 +8,7 @@ import {
     type Identity,
 } from "@icp-sdk/core/agent";
 import {
+    CanisterMethodNotFoundError,
     CanisterUnavailableError,
     DestinationInvalidError,
     HttpError,
@@ -85,6 +86,22 @@ describe("toCanisterResponseError", () => {
 
         expect(toCanisterResponseError(frozen, identity)).toBeInstanceOf(CanisterUnavailableError);
         expect(toCanisterResponseError(noWasm, identity)).toBeInstanceOf(CanisterUnavailableError);
+    });
+
+    // A canister which hasn't yet been upgraded to a version with a new method rejects calls to it,
+    // and will go on doing so for the rest of the request
+    test("a canister without the method is not retryable", () => {
+        const error = toCanisterResponseError(
+            reject(
+                ReplicaRejectCode.CanisterError,
+                "Canister x has no query method 'search_members'",
+                "IC0536",
+            ),
+            identity,
+        );
+
+        expect(error).toBeInstanceOf(CanisterMethodNotFoundError);
+        expect(error).not.toBeInstanceOf(DestinationInvalidError);
     });
 
     // It may come back once topped up or reinstalled, so it must not be reported as a canister

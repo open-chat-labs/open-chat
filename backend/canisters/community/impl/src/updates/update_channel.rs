@@ -105,6 +105,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> OCResult<Suc
     if has_gate_config_updates {
         state.data.update_member_expiry(Some(args.channel_id), &prev_gate_config, now);
         jobs::expire_members::restart_job(state);
+        jobs::unlapse_members::start_job_if_required(state);
     }
 
     state.push_bot_notifications(result.bot_notifications);

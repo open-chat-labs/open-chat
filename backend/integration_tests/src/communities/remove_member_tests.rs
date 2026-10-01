@@ -1,14 +1,16 @@
+use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{metrics, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{CommunityId, MessageContent};
+use types::{ChatEvent, CommunityId, EventIndex, MessageContent};
 
 #[test_case(true)]
 #[test_case(false)]
@@ -158,13 +160,133 @@ fn remove_user_succeeds() {
 
     // Check bot message received
     let user1_id = user1.user_id;
+    let removed_text = format!("You were removed from the private community \"{community_name}\" by @UserId({user1_id})");
     assert!(initial_state.direct_chats.summaries.iter().any(|dc| {
         if let MessageContent::Text(content) = &dc.latest_message.as_ref().unwrap().event.content {
-            content.text == format!("You were removed from the private community \"{community_name}\" by @UserId({user1_id})")
+            content.text == removed_text
         } else {
             false
         }
     }));
+
+    // The user's canister is told of the removal both directly and via the community's queue of
+    // events for users, but only the first does anything, so the bot's message is sent once
+    tick_many(env, 3);
+    assert_eq!(bot_messages(env, &user2, &removed_text), 1);
+}
+
+// The direct call to the user's canister is retried for about 21 minutes. A canister unreachable for
+// longer is still told, via the community's queue of events for users.
+#[test]
+fn removal_reaches_a_user_canister_unreachable_for_longer_than_the_direct_call_is_retried() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        community_id,
+        community_name,
+    } = init_test_data(env, canister_ids, *controller, false, true);
+
+    stop_canister(env, user2.local_user_index, user2.canister());
+
+    let remove_member_response = client::community::remove_member(
+        env,
+        user1.principal,
+        community_id.into(),
+        &community_canister::remove_member::Args { user_id: user2.user_id },
+    );
+    assert!(matches!(
+        remove_member_response,
+        community_canister::remove_member::Response::Success
+    ));
+
+    // The direct call makes 50 retries, each a second further apart than the last, so one per minute
+    // here, with enough rounds each minute for a call to another subnet to complete
+    for _ in 0..60 {
+        env.advance_time(Duration::from_secs(60));
+        tick_many(env, 10);
+    }
+
+    start_canister(env, user2.local_user_index, user2.canister());
+
+    let mut removed = false;
+    for _ in 0..10 {
+        env.advance_time(Duration::from_secs(60));
+        tick_many(env, 3);
+        let initial_state = client::user::happy_path::initial_state(env, &user2);
+        if !initial_state
+            .communities
+            .summaries
+            .iter()
+            .any(|c| c.community_id == community_id)
+        {
+            removed = true;
+            break;
+        }
+    }
+    assert!(removed);
+
+    let user1_id = user1.user_id;
+    let removed_text = format!("You were removed from the private community \"{community_name}\" by @UserId({user1_id})");
+    assert_eq!(bot_messages(env, &user2, &removed_text), 1);
+}
+
+// A bot's canister takes no events from the community, so none is queued for it when it's removed
+#[test]
+fn removing_a_bot_queues_no_event_for_it() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user1, community_id, .. } = init_test_data(env, canister_ids, *controller, true, false);
+
+    let bot = canister_ids.proposals_bot;
+    client::community::happy_path::join_community(env, bot, community_id);
+    tick_many(env, 3);
+    assert_eq!(queued_user_events(env, community_id), 0);
+
+    let remove_member_response = client::community::remove_member(
+        env,
+        user1.principal,
+        community_id.into(),
+        &community_canister::remove_member::Args { user_id: bot.into() },
+    );
+    assert!(matches!(
+        remove_member_response,
+        community_canister::remove_member::Response::Success
+    ));
+
+    // A wrongly queued event is only counted again once its call to the bot, which may be on another
+    // subnet, has failed
+    tick_many(env, 15);
+    assert_eq!(queued_user_events(env, community_id), 0);
+}
+
+// The number of messages from the OpenChat bot to the user with the given text
+fn bot_messages(env: &PocketIc, user: &User, text: &str) -> usize {
+    client::user::happy_path::events(env, user, OPENCHAT_BOT_USER_ID, EventIndex::default(), true, 1000, 1000)
+        .events
+        .iter()
+        .filter(|event| {
+            matches!(&event.event, ChatEvent::Message(m)
+                if matches!(&m.content, MessageContent::Text(content) if content.text == text))
+        })
+        .count()
+}
+
+fn queued_user_events(env: &PocketIc, community_id: CommunityId) -> u64 {
+    metrics(env, community_id.into())["queued_user_events"].as_u64().unwrap()
 }
 
 #[test]

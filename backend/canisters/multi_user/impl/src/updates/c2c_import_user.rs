@@ -32,16 +32,22 @@ fn c2c_import_user_impl(args: Args, state: &mut RuntimeState) -> OCResult<UserId
     if latest_user_id != old_user_id
         && let Some(index) = state.index_of_local_user(latest_user_id)
     {
-        let canisters_to_notify = state
+        let (canisters_to_notify, users_to_notify) = state
             .data
             .users
-            .with_user(index, |user| user.group_and_community_canisters())
+            .with_user(index, |user| {
+                (
+                    user.group_and_community_canisters(),
+                    user.direct_chat_user_ids(latest_user_id),
+                )
+            })
             .unwrap_or_default();
         state.push_local_user_index_canister_event(
             index,
             LocalUserIndexEvent::UserImported(UserImported {
                 old_user_id,
                 canisters_to_notify,
+                users_to_notify,
             }),
             now,
         );

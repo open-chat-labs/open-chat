@@ -54,6 +54,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Share the former members logic with the Community canister via `group_community_common` ([#9626](https://github.com/open-chat-labs/open-chat/pull/9626))
 - Split a notification with more than 5,000 recipients into several ([#9658](https://github.com/open-chat-labs/open-chat/pull/9658))
 - Pull an access gate's payment under the member's spender subaccount, falling back to the default account for now ([#9700](https://github.com/open-chat-labs/open-chat/pull/9700))
+- Additionally tell a removed member's canister via the queue of events for users, so a user being migrated isn't missed ([#9715](https://github.com/open-chat-labs/open-chat/pull/9715))
+- Return the details in full from `selected_updates_v2` if any of the updates have been pruned ([#9713](https://github.com/open-chat-labs/open-chat/pull/9713))
+- Unlapse members a batch at a time once an access gate is removed ([#9719](https://github.com/open-chat-labs/open-chat/pull/9719))
 
 ### Removed
 
@@ -71,6 +74,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Tell clients that a pinned message is no longer pinned when it is deleted ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 - For users hosted in MultiUser canisters, send crypto and tips to their principal ([#9674](https://github.com/open-chat-labs/open-chat/pull/9674))
 - Don't take an access gate's payment when a member's gate is checked again as it expires ([#9700](https://github.com/open-chat-labs/open-chat/pull/9700))
+- Don't queue a removal event for a removed bot, whose canister can't take it ([#9717](https://github.com/open-chat-labs/open-chat/pull/9717))
 
 ## [[2.0.2036](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2036-group)] - 2026-08-20
 

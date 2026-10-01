@@ -2992,7 +2992,16 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
     // Missing a day uses up each user's day of insurance, keeping their streaks, B setting up their
     // job having left A's in place. The OpenChat bot tells each of them.
     env.advance_time(Duration::from_millis(2 * constants::DAY_IN_MS));
-    env.tick();
+    // Each claim is made by a timer job, which can take a few rounds to run
+    for _ in 0..30 {
+        if [a_principal, b_principal]
+            .iter()
+            .all(|principal| initial_state(env, *principal, canister_id).streak == 2)
+        {
+            break;
+        }
+        env.tick();
+    }
     for (principal, user_id) in [(a_principal, a), (b_principal, b)] {
         let state = initial_state(env, principal, canister_id);
         assert_eq!(state.streak, 2);
@@ -3299,12 +3308,12 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
 
     // Only a group Bob is in can send him events. Those from any other caller are dropped.
     let now = now_millis(env);
-    let achievement_event = |id, achievement| user_canister::c2c_group_canister_v2::Args {
-        events: vec![IdempotentEnvelope {
+    let achievement_event = |id, achievement| {
+        user_canister::c2c_group_canister_v2::Args::new(vec![IdempotentEnvelope {
             created_at: now,
             idempotency_id: id,
             value: (bob_id, user_canister::GroupCanisterEvent::Achievement(achievement)),
-        }],
+        }])
     };
     client::user::c2c_group_canister_v2(
         env,
@@ -3730,6 +3739,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
                 created_at: now_millis(env),
                 idempotency_id: 1,
                 value: user_canister::c2c_user_canister_v2::Event {
+                    sender_previous_user_ids: Vec::new(),
                     sender: carol.user_id,
                     recipient: alice_id,
                     event: UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::Diamond)),
@@ -3769,6 +3779,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
                 created_at: now_millis(env),
                 idempotency_id: 1,
                 value: user_canister::c2c_user_canister_v2::Event {
+                    sender_previous_user_ids: Vec::new(),
                     sender: migrated_user_id,
                     recipient: alice_id,
                     event: UserCanisterEvent::SetReferralStatusV2(Box::new(user_canister::SetReferralStatusV2 {
@@ -4626,9 +4637,10 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         env,
         group2.into(),
         canister_id,
-        &user_canister::c2c_group_canister_v2::Args {
-            events: vec![paired(alice_id, achievement(1)), paired(bob_id, achievement(2))],
-        },
+        &user_canister::c2c_group_canister_v2::Args::new(vec![
+            paired(alice_id, achievement(1)),
+            paired(bob_id, achievement(2)),
+        ]),
     );
     assert!(!has_achievement(
         &initial_state(env, alice, canister_id),
@@ -4649,12 +4661,10 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         env,
         community.into(),
         canister_id,
-        &user_canister::c2c_community_canister_v2::Args {
-            events: vec![
-                paired(alice_id, community_achievement(1)),
-                paired(bob_id, community_achievement(2)),
-            ],
-        },
+        &user_canister::c2c_community_canister_v2::Args::new(vec![
+            paired(alice_id, community_achievement(1)),
+            paired(bob_id, community_achievement(2)),
+        ]),
     );
     assert!(!has_achievement(
         &initial_state(env, alice, canister_id),
@@ -4732,6 +4742,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
                     created_at: now_millis(env),
                     idempotency_id: next_id,
                     value: user_canister::c2c_user_canister_v2::Event {
+                        sender_previous_user_ids: Vec::new(),
                         sender,
                         recipient: bob_id,
                         event,
@@ -4873,6 +4884,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         created_at: now_millis(env),
         idempotency_id: 1_000,
         value: user_canister::c2c_user_canister_v2::Event {
+            sender_previous_user_ids: Vec::new(),
             sender: alice.user_id,
             recipient: bob_id,
             event: send_text(random_from_u128(), 1, "once"),
@@ -4903,6 +4915,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
                 created_at: now_millis(env),
                 idempotency_id: 1_001,
                 value: user_canister::c2c_user_canister_v2::Event {
+                    sender_previous_user_ids: Vec::new(),
                     sender: alice.user_id,
                     recipient: UserId::new_indexed(canister_id, 99),
                     event: send_text(random_from_u128(), 2, "nobody"),
@@ -5095,6 +5108,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
                 created_at: now_millis(env),
                 idempotency_id: 1,
                 value: user_canister::c2c_user_canister_v2::Event {
+                    sender_previous_user_ids: Vec::new(),
                     sender: UserId::new_indexed(impostor, 1),
                     recipient: bob_id,
                     event: UserCanisterEvent::SetEventsTtl(Box::new(user_canister::SetEventsTtl {
@@ -5124,6 +5138,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
                 created_at: now_millis(env),
                 idempotency_id: 1,
                 value: user_canister::c2c_user_canister_v2::Event {
+                    sender_previous_user_ids: Vec::new(),
                     sender: canister_ids.proposals_bot.into(),
                     recipient: bob_id,
                     event: UserCanisterEvent::SetEventsTtl(Box::new(user_canister::SetEventsTtl {
@@ -5169,6 +5184,7 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
         created_at: now_millis(env),
         idempotency_id: id,
         value: user_canister::c2c_user_canister_v2::Event {
+            sender_previous_user_ids: Vec::new(),
             sender,
             recipient: carol_id,
             event: UserCanisterEvent::SendMessages(Box::new(user_canister::SendMessagesArgs {

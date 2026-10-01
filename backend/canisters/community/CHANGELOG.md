@@ -57,6 +57,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Limit user groups to 1,000 members ([#9662](https://github.com/open-chat-labs/open-chat/pull/9662))
 - Split a notification with more than 5,000 recipients into several ([#9658](https://github.com/open-chat-labs/open-chat/pull/9658))
 - Pull an access gate's payment under the member's spender subaccount, falling back to the default account for now ([#9700](https://github.com/open-chat-labs/open-chat/pull/9700))
+- Additionally tell a removed member's canister via the queue of events for users, so a user being migrated isn't missed ([#9715](https://github.com/open-chat-labs/open-chat/pull/9715))
+- Return the details in full from `selected_updates_v2` and `selected_channel_updates_v2` if any updates have been pruned ([#9713](https://github.com/open-chat-labs/open-chat/pull/9713))
+- Unlapse members a batch at a time once an access gate is removed, and add an imported group's members a batch at a time ([#9719](https://github.com/open-chat-labs/open-chat/pull/9719))
 
 ### Removed
 
@@ -74,6 +77,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Tell clients that a pinned message is no longer pinned when it is deleted ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 - For users hosted in MultiUser canisters, send crypto and tips to their principal ([#9674](https://github.com/open-chat-labs/open-chat/pull/9674))
 - Don't take an access gate's payment when a member's gate is checked again as it expires ([#9700](https://github.com/open-chat-labs/open-chat/pull/9700))
+- Don't queue a removal event for a removed bot, whose canister can't take it ([#9717](https://github.com/open-chat-labs/open-chat/pull/9717))
+- Record bots which join a community as bots, and backfill those already in it and its channels ([#9718](https://github.com/open-chat-labs/open-chat/pull/9718))
+- After importing a group, fetch latest ids in addition to principals so we can update users who were migrated during the import ([#9722](https://github.com/open-chat-labs/open-chat/pull/9722))
 
 ## [[2.0.2045](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2045-community)] - 2026-08-26
 

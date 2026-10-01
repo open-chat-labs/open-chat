@@ -81,8 +81,7 @@ fn diamond_members_remain_unlapsed_after_expiry(container_type: ContainerType) {
     tick_many(env, 5);
 
     for user in users.iter() {
-        // Assert that user has lapsed
-        assert!(has_user_lapsed(env, user, &container));
+        wait_for_user_to_lapse(env, user, &container);
     }
 }
 
@@ -114,8 +113,7 @@ fn diamond_member_lapses_and_rejoins_successfully(container_type: ContainerType)
     tick_many(env, 5);
 
     for user in users.iter() {
-        // Assert that user has lapsed
-        assert!(has_user_lapsed(env, user, &container));
+        wait_for_user_to_lapse(env, user, &container);
 
         // Buy Diamond again
         client::upgrade_user(
@@ -164,8 +162,7 @@ fn remove_gate_unlapses_members(container_type: ContainerType) {
     tick_many(env, 5);
 
     for user in users.iter() {
-        // Assert that users have lapsed
-        assert!(has_user_lapsed(env, user, &container));
+        wait_for_user_to_lapse(env, user, &container);
     }
 
     // Assert that users marked as lapsed in updates query
@@ -183,9 +180,9 @@ fn remove_gate_unlapses_members(container_type: ContainerType) {
     // Remove the gate
     update_container_gate(env, owner.principal, &container, None);
 
+    // Members are unlapsed a batch at a time by a timer job
     for user in users.iter() {
-        // Assert that users are no longer lapsed
-        assert!(!has_user_lapsed(env, user, &container));
+        wait_for_user_to_unlapse(env, user, &container);
     }
 
     // Assert that users marked as unlapsed in updates query
@@ -276,8 +273,7 @@ fn extend_or_reduce_expiry_then_member_lapses_when_expected(container_type: Cont
     tick_many(env, 5);
 
     for user in users.iter() {
-        // Assert that the members have now lapsed
-        assert!(has_user_lapsed(env, user, &container));
+        wait_for_user_to_lapse(env, user, &container);
     }
 }
 
@@ -334,8 +330,7 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(container_type
     tick_many(env, 5);
 
     for user in users.iter() {
-        // Assert that user2 has lapsed
-        assert!(has_user_lapsed(env, user, &container));
+        wait_for_user_to_lapse(env, user, &container);
 
         // Increase token balance
         client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, min_balance);
@@ -503,8 +498,8 @@ fn gate_changes_and_members_lapse_as_expected(container_type: ContainerType) {
     tick_many(env, 5);
 
     // Only user2 should be lapsed
+    wait_for_user_to_lapse(env, user2, &container);
     assert!(!has_user_lapsed(env, user1, &container));
-    assert!(has_user_lapsed(env, user2, &container));
     assert!(!has_user_lapsed(env, user3, &container));
 
     // Change to payment gate expires in 4 days
@@ -535,9 +530,9 @@ fn gate_changes_and_members_lapse_as_expected(container_type: ContainerType) {
     tick_many(env, 5);
 
     // User 3 now lapsed
+    wait_for_user_to_lapse(env, user3, &container);
     assert!(!has_user_lapsed(env, user1, &container));
     assert!(has_user_lapsed(env, user2, &container));
-    assert!(has_user_lapsed(env, user3, &container));
 }
 
 #[test_case(ContainerType::Community)]
@@ -586,8 +581,30 @@ fn invited_users_pass_composite_gate_then_expire_later(container_type: Container
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
     tick_many(env, 5);
 
+    wait_for_user_to_lapse(env, user2, &container);
     assert!(!has_user_lapsed(env, user1, &container));
-    assert!(has_user_lapsed(env, user2, &container));
+}
+
+// Members lapse in a timer job in the group or community canister, which may first check the gate
+// with another canister, so this can take a few rounds after the clock moves
+fn wait_for_user_to_lapse(env: &mut PocketIc, user: &User, container: &Container) {
+    for _ in 0..30 {
+        if has_user_lapsed(env, user, container) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("User {} did not lapse from {container:?}", user.user_id);
+}
+
+fn wait_for_user_to_unlapse(env: &mut PocketIc, user: &User, container: &Container) {
+    for _ in 0..30 {
+        if !has_user_lapsed(env, user, container) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("User {} did not unlapse from {container:?}", user.user_id);
 }
 
 fn has_user_lapsed(env: &mut PocketIc, user: &User, container: &Container) -> bool {

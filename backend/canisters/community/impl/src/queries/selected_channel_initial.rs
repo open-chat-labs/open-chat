@@ -12,7 +12,7 @@ fn selected_channel_initial(args: Args) -> Response {
     }
 }
 
-fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
+pub(crate) fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> OCResult<SuccessResult> {
     let caller = state.env.caller();
     state.data.verify_is_accessible(caller, None)?;
 

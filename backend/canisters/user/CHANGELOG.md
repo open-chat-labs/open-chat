@@ -107,6 +107,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Also retry sending events for migrated users to their new canister while the cycles refunder is installed in their old one ([#9558](https://github.com/open-chat-labs/open-chat/pull/9558))
 - Receive direct messages via `user_core`'s `receive_message`, shared with the MultiUser canister ([#9631](https://github.com/open-chat-labs/open-chat/pull/9631))
 - Refuse crypto and P2P swaps sent to bots ([#9648](https://github.com/open-chat-labs/open-chat/pull/9648))
+- Handle removal from a group or community sent via its queue of events for users ([#9715](https://github.com/open-chat-labs/open-chat/pull/9715))
 
 ### Removed
 
@@ -115,6 +116,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Move a direct chat, block and contact onto another user's new id once they are migrated to a MultiUser canister ([#9697](https://github.com/open-chat-labs/open-chat/pull/9697))
 - Validate the whole recipient account rather than only its owner when sending crypto ([#9259](https://github.com/open-chat-labs/open-chat/pull/9259))
 - Clamp events queries to the caller's min visible event index instead of trapping when the start index is below it ([#9291](https://github.com/open-chat-labs/open-chat/pull/9291))
 - Restrict `update_bot` to the canister owner ([#9401](https://github.com/open-chat-labs/open-chat/pull/9401))

@@ -243,6 +243,8 @@ export type CommunityDetailsUpdatesResponse =
           kind: "success_no_updates";
           lastUpdated: bigint;
       }
+    // The details in full, because the canister no longer has all of the updates asked for
+    | { kind: "snapshot"; details: CommunityDetails }
     | Failure;
 
 export type CommunityDetails = {
@@ -260,9 +262,6 @@ export type CommunityDetails = {
     userGroups: Map<number, UserGroupDetails>;
     referrals: Set<string>;
     bots: InstalledBotDetails[];
-    // When the cached copy was last loaded or brought up to date, by the client's clock. Only the
-    // cache sets it.
-    syncedAt?: bigint;
 };
 
 export type CommunityDetailsUpdates = {

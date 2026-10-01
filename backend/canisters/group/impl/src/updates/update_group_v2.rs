@@ -178,6 +178,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
 
     if result.gate_config_update.has_update() {
         update_member_expiry(&mut state.data, &prev_gate_config, now);
+        jobs::unlapse_members::start_job_if_required(state);
     }
 
     jobs::expire_members::restart_job(state);
@@ -204,9 +205,10 @@ pub fn update_member_expiry(data: &mut Data, prev_gate_config: &Option<AccessGat
             data.expiring_members.remove_gate(None);
             data.expiring_member_actions.remove_gate(None);
 
-            // If the access gate has been removed then clear lapsed status of members
+            // If the access gate has been removed then clear lapsed status of members, a batch at a
+            // time (see the `unlapse_members` job)
             if new_gate_config.is_none() {
-                data.chat.members.unlapse_all(now);
+                data.chat.members.start_unlapsing(now);
             }
         }
     } else if let Some(new_gate_expiry) = new_gate_expiry {
