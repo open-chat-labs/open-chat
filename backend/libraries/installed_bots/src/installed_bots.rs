@@ -128,6 +128,12 @@ impl InstalledBots {
         self.updates.iter().next_back().map_or(0, |(ts, _, _)| *ts)
     }
 
+    // Whether any update made after `since` has been pruned, so that `iter_latest_updates(since)`
+    // doesn't return them all
+    pub fn any_updates_removed(&self, since: TimestampMillis) -> bool {
+        self.latest_update_removed > since
+    }
+
     fn prune_then_insert_member_update(&mut self, bot_id: UserId, update: BotUpdate, now: TimestampMillis) {
         self.prune_member_updates(now);
         self.updates.insert((now, bot_id, update));

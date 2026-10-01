@@ -1,3 +1,4 @@
+use crate::queries::selected_initial::selected_initial_impl;
 use crate::{RuntimeState, model::members::CommunityMembers, read_state};
 use canister_api_macros::query;
 use community_canister::selected_updates_v2::{Response::*, *};
@@ -30,6 +31,20 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
     if last_updated <= args.updates_since {
         return SuccessNoUpdates(now);
+    }
+
+    // Only callers which pass `max_members` can read `SuccessSnapshot`
+    if let Some(max_members) = args.max_members
+        && (data.members.any_updates_removed(args.updates_since) || data.bots.any_updates_removed(args.updates_since))
+    {
+        let args = community_canister::selected_initial::Args {
+            invite_code: args.invite_code,
+            max_members: Some(max_members),
+        };
+        return match selected_initial_impl(args, state) {
+            Ok(result) => SuccessSnapshot(result),
+            Err(error) => Error(error),
+        };
     }
 
     let invited_users = if data.invited_users.last_updated() > args.updates_since {

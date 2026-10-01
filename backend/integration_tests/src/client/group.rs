@@ -364,7 +364,10 @@ pub mod happy_path {
             env,
             sender,
             group_chat_id.into(),
-            &group_canister::selected_updates_v2::Args { updates_since },
+            &group_canister::selected_updates_v2::Args {
+                updates_since,
+                max_members: None,
+            },
         );
 
         match response {
