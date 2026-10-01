@@ -8,6 +8,9 @@ import type {
     CheckUsernameResponse,
     CreateMultiUserCanisterResponse,
     ChitLeaderboardResponse,
+    MigrateUsersResponse,
+    UserMigrationResponse,
+    UsersToMigrate,
     CurrentUserResponse,
     DiamondMembershipDuration,
     DiamondMembershipFees,
@@ -83,6 +86,13 @@ import {
     UserIndexCreateMultiUserCanisterArgs,
     UserIndexCreateMultiUserCanisterResponse,
     UserIndexSetMultiUserCanistersEnabledArgs,
+    UserIndexMigrateUsersArgs,
+    UserIndexMigrateUsersResponse,
+    UserIndexSetUserMigrationConcurrencyArgs,
+    UserIndexUserMigrationArgs,
+    UserIndexUserMigrationResponse,
+    UserIndexCancelUserMigrationArgs,
+    UserIndexCancelUserMigrationResponse,
     UserIndexModerationConfigResponse,
     UserIndexCallPushEnabledResponse,
     UserIndexSetCallPushEnabledArgs,
@@ -112,7 +122,7 @@ import {
     UserIndexUsersResponse,
 } from "../../typebox";
 import type { UserIndexProposeProtectedActionProtectedAction } from "../../typebox";
-import { addressToIcrcAccount, unitResult } from "../common/chatMappersV2";
+import { addressToIcrcAccount, mapResult, unitResult } from "../common/chatMappersV2";
 import type { ChatsDb } from "../../utils/chatsDb";
 import { groupBy } from "../../utils/list";
 import {
@@ -142,6 +152,7 @@ import {
     submitProofOfUniquePersonhoodResponse,
     suspendUserResponse,
     unsuspendUserResponse,
+    userMigrationResponse,
     userRegistrationCanisterResponse,
     usersApiResponse,
     userSearchResponse,
@@ -1108,6 +1119,58 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             () => true,
             UserIndexSetMultiUserCanistersEnabledArgs,
             SuccessOnly,
+        );
+    }
+
+    migrateUsers(users: UsersToMigrate): Promise<MigrateUsersResponse> {
+        return this.update(
+            "migrate_users",
+            {
+                users:
+                    users.kind === "longest_offline"
+                        ? { LongestOffline: users.count }
+                        : { Specific: users.userIds.map(principalStringToBytes) },
+            },
+            (resp): MigrateUsersResponse =>
+                mapResult(resp, (result) => ({
+                    kind: "success",
+                    queued: result.queued.map(principalBytesToString),
+                })),
+            UserIndexMigrateUsersArgs,
+            UserIndexMigrateUsersResponse,
+        );
+    }
+
+    setUserMigrationConcurrency(value: number): Promise<boolean> {
+        return this.update(
+            "set_user_migration_concurrency",
+            { value },
+            () => true,
+            UserIndexSetUserMigrationConcurrencyArgs,
+            SuccessOnly,
+        );
+    }
+
+    userMigration(userId: string): Promise<UserMigrationResponse> {
+        return this.query(
+            "user_migration",
+            { user_id: principalStringToBytes(userId) },
+            userMigrationResponse,
+            UserIndexUserMigrationArgs,
+            UserIndexUserMigrationResponse,
+        );
+    }
+
+    cancelUserMigration(userId: string, multiUserCanisterId: string): Promise<Success | OCError> {
+        return this.update(
+            "cancel_user_migration",
+            {
+                user_id: principalStringToBytes(userId),
+                multi_user_canister_id: principalStringToBytes(multiUserCanisterId),
+            },
+            unitResult,
+            UserIndexCancelUserMigrationArgs,
+            UserIndexCancelUserMigrationResponse,
         );
     }
 

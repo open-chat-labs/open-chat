@@ -6,7 +6,7 @@
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import { AvatarSize, type ChatIdentifier, chatIdentifiersEqual, chatListScopeStore, type ChatType, currentUserIdStore, currentUserStore, type EnhancedReplyContext, iconSize, localUpdates, type Member, type Message, type MessageReminderCreatedContent, mobileWidth, OpenChat, publish, routeForMessage, routeStore, screenWidth, ScreenWidth, selectedChatBlockedUsersStore, selectedChatMembersStore, selectedChatWebhooksStore, selectedCommunityMembersStore, type SelectedEmoji, selectedServerChatStore, type SenderContext, translationsStore, unconfirmedReadByThem, undeletingMessagesStore, type UserSummary } from "@client";
     import { getContext, onDestroy, onMount, tick } from "svelte";
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
     import EmoticonOutline from "svelte-material-icons/EmoticonOutline.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
@@ -21,6 +21,11 @@
     import { isTouchOnlyDevice } from "../../utils/devices";
     import { reservedMediaWidth } from "../../utils/media";
     import { canShareMessage } from "../../utils/share";
+    import {
+        autoTranslatableText,
+        languageName as cachedLanguageName,
+        onDeviceTranslator,
+    } from "../../utils/onDeviceTranslation.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import Avatar from "../Avatar.svelte";
     import BotMessageContext from "../bots/BotMessageContext.svelte";
@@ -193,6 +198,54 @@
         }
     });
 
+    let inert = $derived(
+        msg.content.kind === "deleted_content" ||
+            msg.content.kind === "blocked_content" ||
+            msg.content.kind === "restricted_content" ||
+            collapsed,
+    );
+    let autoTranslateText = $derived(
+        autoTranslatableText(chatId, {
+            mine: me,
+            inert,
+            failed,
+            text: () => client.getMessageText(msg.content),
+        }),
+    );
+    // Set when this message's language pack needs a click to download
+    let autoTranslatePending = $derived.by(() => {
+        if (autoTranslateText === undefined) return undefined;
+        const from = onDeviceTranslator.waiting.get(msg.messageId);
+        return from !== undefined && onDeviceTranslator.needsDownload.has(from) ? from : undefined;
+    });
+    let autoTranslation = $derived(
+        autoTranslateText === undefined
+            ? undefined
+            : onDeviceTranslator.translationFor(msg.messageId, autoTranslateText),
+    );
+    let showOriginal = $state(false);
+    let displayContent = $derived(
+        autoTranslation !== undefined && !showOriginal
+            ? client.applyTranslation(msg.content, autoTranslation.text)
+            : msg.content,
+    );
+
+    function languageName(code: string): string {
+        return cachedLanguageName(code, $locale);
+    }
+
+    // This component is only mounted while the message is inside the virtual list's rendered
+    // window, so registering here (and cancelling on teardown) limits translation to that window.
+    $effect(() => {
+        const text = autoTranslateText;
+        if (text === undefined) return;
+        // re-register for a new target language
+        void onDeviceTranslator.target;
+        const messageId = msg.messageId;
+        onDeviceTranslator.enqueue(messageId, msg.messageIndex, text);
+        return () => onDeviceTranslator.cancel(messageId);
+    });
+
     onDestroy(() => {
         if (msgElement) {
             observer?.unobserve(msgElement);
@@ -356,12 +409,6 @@
         mediaDimensions !== undefined
             ? reservedMediaWidth(mediaDimensions.width, mediaDimensions.height)
             : undefined,
-    );
-    let inert = $derived(
-        msg.content.kind === "deleted_content" ||
-            msg.content.kind === "blocked_content" ||
-            msg.content.kind === "restricted_content" ||
-            collapsed,
     );
     let canTip = $derived(!me && confirmed && !inert && !failed);
     let inThread = $derived(threadRootMessage !== undefined);
@@ -620,7 +667,7 @@
                                 {timestamp}
                                 messageIndex={msg.messageIndex}
                                 messageId={msg.messageId}
-                                content={msg.content}
+                                content={displayContent}
                                 {edited}
                                 blockLevelMarkdown={msg.blockLevelMarkdown}
                                 {onRemovePreview}
@@ -629,7 +676,7 @@
                                 ogPreviews={msg.ogPreviews}
                                 messagePreviews={msg.messagePreviews} />
 
-                            {#if !inert}
+                            {#snippet timeAndTicks()}
                                 <TimeAndTicks
                                     {pinned}
                                     prize={isPrize}
@@ -647,6 +694,46 @@
                                     {crypto}
                                     {chatType}
                                     {dateFormatter} />
+                            {/snippet}
+
+                            {#if autoTranslation !== undefined && !inert}
+                                <div class="auto-translation">
+                                    <div class="note">
+                                        <Translatable
+                                            resourceKey={i18nKey("autoTranslate.translatedFrom", {
+                                                language: languageName(autoTranslation.from),
+                                            })} />
+                                        ·
+                                        <Link
+                                            underline={"hover"}
+                                            onClick={() => (showOriginal = !showOriginal)}>
+                                            <Translatable
+                                                resourceKey={i18nKey(
+                                                    showOriginal
+                                                        ? "autoTranslate.showTranslation"
+                                                        : "autoTranslate.showOriginal",
+                                                )} />
+                                        </Link>
+                                    </div>
+                                    {@render timeAndTicks()}
+                                </div>
+                            {:else if autoTranslatePending !== undefined && !inert}
+                                <div class="auto-translation">
+                                    <div class="note">
+                                        <Link
+                                            underline={"hover"}
+                                            onClick={() =>
+                                                onDeviceTranslator.prime(autoTranslatePending)}>
+                                            <Translatable
+                                                resourceKey={i18nKey("autoTranslate.translateFrom", {
+                                                    language: languageName(autoTranslatePending),
+                                                })} />
+                                        </Link>
+                                    </div>
+                                    {@render timeAndTicks()}
+                                </div>
+                            {:else if !inert}
+                                {@render timeAndTicks()}
                             {/if}
 
                             {#if debug}
@@ -775,6 +862,20 @@
 {/if}
 
 <style lang="scss">
+    // The translation note shares a row with the time and ticks, so the time stays at the bottom
+    .auto-translation {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: $sp3;
+
+        .note {
+            @include font(light, normal, fs-60);
+            min-width: 0;
+            opacity: 0.7;
+        }
+    }
+
     $size: 10px;
 
     $avatar-width: toRem(56);

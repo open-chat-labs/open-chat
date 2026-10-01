@@ -163,6 +163,18 @@
         "notAvailable": "Этот контент недоступен в этой версии приложения. Вы по-прежнему можете открыть его в веб-приложении на [oc.app](https://oc.app).",
         "notAvailableTitle": "Контент недоступен"
     },
+    "autoTranslate": {
+        "downloadPacks": "Загрузить языковые пакеты ({count})",
+        "turnOn": "Перевести этот чат",
+        "turnOff": "Остановить перевод этого чата",
+        "active": "Перевод на {language} на этом устройстве",
+        "downloading": "Загрузка: {language} ({index} из {total})…",
+        "failed": "Перевод на устройстве сейчас недоступен",
+        "showOriginal": "Показать оригинал",
+        "showTranslation": "Показать перевод",
+        "translateFrom": "Перевести с языка: {language}",
+        "translatedFrom": "Переведено на устройстве с языка: {language}"
+    },
     "nativeUpdate": {
         "downloadingTitle": "Секунду! Обновление ...",
         "downloadingMessage": "Мы загружаем небольшое обновление, и вы сможете продолжить ...",

@@ -163,6 +163,18 @@
         "notAvailable": "此内容在此版本的应用中不可用。您仍可通过网页应用 [oc.app](https://oc.app) 访问。",
         "notAvailableTitle": "内容不可用"
     },
+    "autoTranslate": {
+        "downloadPacks": "下载语言包（{count}）",
+        "turnOn": "翻译此聊天",
+        "turnOff": "停止翻译此聊天",
+        "active": "正在此设备上翻译为{language}",
+        "downloading": "正在下载{language}（第 {index}/{total} 个）…",
+        "failed": "设备端翻译当前不可用",
+        "showOriginal": "显示原文",
+        "showTranslation": "显示译文",
+        "translateFrom": "从{language}翻译",
+        "translatedFrom": "已在设备上从{language}翻译"
+    },
     "nativeUpdate": {
         "downloadingTitle": "稍等！正在更新 ...",
         "downloadingMessage": "我们正在下载一个快速更新，稍后即可继续 ...",

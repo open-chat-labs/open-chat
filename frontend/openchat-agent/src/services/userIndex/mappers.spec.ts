@@ -9,6 +9,7 @@ import {
     currentUserResponse,
     currentUserSummary,
     dropInvalidUserIds,
+    userMigrationResponse,
     userSummaryUpdate,
 } from "./mappers";
 
@@ -90,5 +91,62 @@ test("a current user summary comes with the previous ids, which replace the cach
     expect(updateCreatedUser(cached, summary)).toMatchObject({
         userId: latest,
         previousUserIds: [previous],
+    });
+});
+
+describe("userMigrationResponse", () => {
+    const userId = "dfdal-2uaaa-aaaaa-qaama-cai";
+    const multiUserCanisterId = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+    const multi_user_canister_id = principalStringToBytes(multiUserCanisterId);
+
+    test("maps each stage of a migration", () => {
+        expect(userMigrationResponse("NotFound")).toEqual({ kind: "not_found" });
+        expect(userMigrationResponse({ Success: "Queued" })).toEqual({ kind: "queued" });
+        expect(
+            userMigrationResponse({
+                Success: { Requested: { multi_user_canister_id, timestamp: 1n } },
+            }),
+        ).toEqual({ kind: "requested", multiUserCanisterId, timestamp: 1n });
+        expect(
+            userMigrationResponse({
+                Success: {
+                    Started: {
+                        multi_user_canister_id,
+                        timestamp: 2n,
+                        user_bytes: 1000n,
+                        wasm_version: { major: 2, minor: 0, patch: 2077 },
+                    },
+                },
+            }),
+        ).toEqual({
+            kind: "started",
+            multiUserCanisterId,
+            timestamp: 2n,
+            userBytes: 1000n,
+            wasmVersion: "2.0.2077",
+        });
+        expect(
+            userMigrationResponse({
+                Success: {
+                    Imported: {
+                        multi_user_canister_id,
+                        timestamp: 3n,
+                        new_user_id: principalStringToBytes(userId),
+                    },
+                },
+            }),
+        ).toEqual({ kind: "imported", multiUserCanisterId, timestamp: 3n, newUserId: userId });
+        expect(
+            userMigrationResponse({
+                Success: {
+                    Failed: { multi_user_canister_id, timestamp: 4n, error: [100, "Frozen"] },
+                },
+            }),
+        ).toEqual({
+            kind: "failed",
+            multiUserCanisterId,
+            timestamp: 4n,
+            error: { kind: "error", code: 100, message: "Frozen" },
+        });
     });
 });
