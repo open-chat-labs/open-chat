@@ -38,11 +38,21 @@ async fn c2c_user_canister_v2_impl(args: Args) -> Response {
                 sender,
                 recipient,
                 event,
+                sender_previous_user_ids,
             } = event.value;
-            if recipient == my_user_id
-                && can_act_for(caller_kind, sender, caller)
-                && !state.data.user.blocked_users.contains(&sender)
-            {
+            if recipient != my_user_id || !can_act_for(caller_kind, sender, caller) {
+                continue;
+            }
+            // A sender migrated to a MultiUser canister may get here before the notice of their new
+            // id, so what is held under their previous ids, including a block, is moved first
+            if caller_kind == CanisterKind::MultiUserCanister {
+                let now = state.env.now();
+                for previous_user_id in sender_previous_user_ids {
+                    state.data.migrated_user_ids.insert(previous_user_id, sender);
+                    state.data.user.migrate_their_user_id(previous_user_id, sender, now);
+                }
+            }
+            if !state.data.user.blocked_users.contains(&sender) {
                 process_event(event, sender, state);
             }
         }

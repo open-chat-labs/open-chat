@@ -1,4 +1,5 @@
 use crate::{can_borrow_state, mutate_state, read_state};
+use std::collections::HashSet;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
 use user_canister::c2c_user_canister_v2::Event;
@@ -39,6 +40,18 @@ impl TimerJobItem for UserCanisterEventBatch {
                         Ok(Some(new_user_id)) => {
                             mutate_state(|state| {
                                 state.data.migrated_user_ids.insert(self.key.into(), new_user_id);
+                                // The senders may not have been told of the migration, eg. if their
+                                // first message to the user was sent while the user was being
+                                // migrated, so their chats are moved onto the new id now
+                                let now = state.env.now();
+                                let senders: HashSet<UserId> = self.items.iter().map(|event| event.value.sender).collect();
+                                for sender in senders {
+                                    if let Some(sender_index) = state.index_of_local_user(sender) {
+                                        state.data.users.with_user_mut(sender_index, |user| {
+                                            user.migrate_their_user_id(self.key.into(), new_user_id, now)
+                                        });
+                                    }
+                                }
 
                                 // Any events queued for the old id since this batch was taken are moved
                                 // too, after it, so that they stay in order. All are stamped with the

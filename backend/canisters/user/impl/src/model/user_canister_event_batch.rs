@@ -43,6 +43,7 @@ impl TimerJobItem for UserCanisterEventBatch {
                                 sender: my_user_id,
                                 recipient: event.value.0,
                                 event: event.value.1.clone(),
+                                sender_previous_user_ids: Vec::new(),
                             },
                         })
                         .collect(),
@@ -80,6 +81,11 @@ impl TimerJobItem for UserCanisterEventBatch {
                         Ok(Some(new_user_id)) => {
                             mutate_state(|state| {
                                 state.data.migrated_user_ids.insert(canister_id.into(), new_user_id);
+                                // The user may not have been told of the migration, eg. if this
+                                // user's first message to them was sent while they were being
+                                // migrated, so their chat is moved onto the new id now
+                                let now = state.env.now();
+                                state.data.user.migrate_their_user_id(canister_id.into(), new_user_id, now);
 
                                 // Any events queued for the old id since this batch was taken are moved
                                 // too, after it, so that they stay in order. All are stamped with the
