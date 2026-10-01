@@ -11,7 +11,7 @@ use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use std::cmp::min;
 use std::collections::HashSet;
-use tracing::info;
+use tracing::{error, info};
 use types::{
     BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotRegisteredEvent, CanisterId, MAX_USER_INDEX,
     PushIfNotContains, TimestampMillis,
@@ -183,24 +183,22 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 .global_users
                 .set_diamond_membership_expiry_date(ev.user_id, ev.expires_at);
 
-            if state.data.local_users.contains(&ev.user_id) {
-                state.push_event_to_user(
-                    ev.user_id,
-                    UserEvent::DiamondMembershipPaymentReceived(Box::new(DiamondMembershipPaymentReceived {
-                        timestamp: ev.timestamp,
-                        expires_at: ev.expires_at,
-                        ledger: ev.ledger,
-                        token: Some(ev.token_symbol.clone().into()),
-                        token_symbol: ev.token_symbol,
-                        amount_e8s: ev.amount_e8s,
-                        block_index: ev.block_index,
-                        duration: ev.duration,
-                        recurring: ev.recurring,
-                        send_bot_message: ev.send_bot_message,
-                    })),
-                    **now,
-                );
-            }
+            state.push_event_to_user(
+                ev.user_id,
+                UserEvent::DiamondMembershipPaymentReceived(Box::new(DiamondMembershipPaymentReceived {
+                    timestamp: ev.timestamp,
+                    expires_at: ev.expires_at,
+                    ledger: ev.ledger,
+                    token: Some(ev.token_symbol.clone().into()),
+                    token_symbol: ev.token_symbol,
+                    amount_e8s: ev.amount_e8s,
+                    block_index: ev.block_index,
+                    duration: ev.duration,
+                    recurring: ev.recurring,
+                    send_bot_message: ev.send_bot_message,
+                })),
+                **now,
+            );
         }
         UserIndexEvent::OpenChatBotMessageV2(ev) => {
             state.push_event_to_user(
@@ -238,9 +236,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             }
         }
         UserIndexEvent::NotifyUniquePersonProof(user_id, proof) => {
-            if state.data.local_users.contains(&user_id) {
-                state.push_event_to_user(user_id, UserEvent::NotifyUniquePersonProof(Box::new(proof.clone())), **now);
-            }
+            state.push_event_to_user(user_id, UserEvent::NotifyUniquePersonProof(Box::new(proof.clone())), **now);
             state.data.global_users.insert_unique_person_proof(user_id, proof);
         }
         UserIndexEvent::UpdateChitBalance(user_id, chit_record) => {
@@ -414,6 +410,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         }
                     }
                 }
+                // Any events still queued for the user's old canister, eg. those which failed while it
+                // was frozen, are sent on to their new id
+                state.move_events_queued_for_migrated_user(ev.old_user_id);
                 state
                     .data
                     .blocked_users
@@ -461,15 +460,22 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 }
             }
         }
+        UserIndexEvent::EventForMigratedUser(ev) => match msgpack::deserialize::<UserEvent, _>(ev.event.as_slice()) {
+            Ok(event) => {
+                if !state.push_event_to_user(ev.user_id, event, **now) {
+                    info!(user_id = %ev.user_id, "Event for migrated user dropped, user not found");
+                }
+            }
+            // Only if the LocalUserIndex which queued it is on a later version, with a new type of event
+            Err(error) => error!(user_id = %ev.user_id, ?error, "Failed to deserialize event for migrated user"),
+        },
     }
 }
 
 fn handle_user_registered(user: UserRegistered, now: TimestampMillis, state: &mut RuntimeState) {
     state.data.global_users.add(user.user_principal, user.user_id, user.user_type);
 
-    if let Some(referred_by) = user.referred_by
-        && state.data.local_users.get(&referred_by).is_some()
-    {
+    if let Some(referred_by) = user.referred_by {
         state.push_event_to_user(
             referred_by,
             UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered {

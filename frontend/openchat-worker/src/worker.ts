@@ -440,6 +440,9 @@ function getAction(
                 payload.detailsSyncedUpTo,
             );
 
+        case "lookupMembers":
+            return agent.lookupMembers(payload.id, payload.userIds, payload.latestKnownUpdate);
+
         case "lastOnline":
             return agent.lastOnline(payload.userIds);
 
@@ -945,6 +948,15 @@ function getAction(
         case "approveTransfer":
             return agent.approveTransfer(
                 payload.spender,
+                payload.ledger,
+                payload.amount,
+                payload.expiresIn,
+                payload.pin,
+            );
+
+        case "approveAccessGatePayment":
+            return agent.approveAccessGatePayment(
+                payload.canisterId,
                 payload.ledger,
                 payload.amount,
                 payload.expiresIn,

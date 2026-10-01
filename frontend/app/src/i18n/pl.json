@@ -686,9 +686,8 @@
         "unavailable": "W tej chwili nie ma dostępnej łamigłówki.",
         "startFree": "Zacznij (pierwsza łamigłówka za darmo)",
         "startFee": "Zacznij za {fee} CHIT",
-        "hintFree": "Podpowiedź (poziom {level})",
-        "hintPrice": "Podpowiedź (poziom {level}, {price} CHIT)",
         "hintsUsed": "Podpowiedzi: {count}",
+        "hintCost": "Podpowiedź ({price} CHIT)",
         "hintsLeft": "Pozostało: {count}",
         "noHintsLeft": "Brak podpowiedzi do dzisiejszej łamigłówki",
         "streakDays": "Seria: {streak} dni",
@@ -709,7 +708,6 @@
         "fixMistakeFirst": "Najpierw popraw czerwone pola",
         "noFreeChecks": "Brak darmowych sprawdzeń do dzisiejszej łamigłówki",
         "checksLeft": "Pozostałe sprawdzenia: {count}",
-        "revealed": "Wypełnione za Ciebie.",
         "reset": "Resetuj",
         "resetConfirm": "Wyczyścić planszę?",
         "replaced": "Ta łamigłówka została zastąpiona. Oto nowa.",
@@ -738,6 +736,24 @@
                     "4": "Żadna wyspa nie może przekroczyć swojej liczby. Ta potrzebuje trzech mostów, a ma cztery.",
                     "5": "Jeden most w dół wzdłuż boku zamiast dwóch i ma swoje trzy.",
                     "6": "Każda liczba się zgadza i każda wyspa jest połączona z resztą. To kończy sprawę."
+                },
+                "hint": {
+                    "allSpaces": {
+                        "plain": "Wyspa {n} w wierszu {row}, kolumnie {column} potrzebuje każdego mostu, który jeszcze się wokół niej mieści, aby osiągnąć {n}. Każda wciąż otwarta luka ? dostaje więc tyle mostów, ile się w niej zmieści.",
+                        "fresh": "Liczba mostów wyspy {n} w wierszu {row}, kolumnie {column} ma wynosić {n}, a jej luki pomieszczą łącznie nie więcej mostów niż {n}. Każda luka ? dostaje więc tyle mostów, ile się w niej zmieści.",
+                        "closed": "Wokół wyspy {n} w wierszu {row}, kolumnie {column} luki, które nie są przecięte ani wykluczone i nie kończą się na pełnej wyspie, pomieszczą łącznie nie więcej mostów niż {n}. Każda z tych luk ? dostaje więc tyle mostów, ile się w niej zmieści.",
+                        "more": "Wyspie {n} w wierszu {row}, kolumnie {column} wciąż brakuje mostów: {need}, a luki wokół niej, które nie są jeszcze rozstrzygnięte ani przecięte i nie kończą się na pełnej wyspie, pomieszczą łącznie nie więcej mostów niż {need}. Każda z tych luk ? dostaje więc tyle mostów, ile się w niej zmieści."
+                    },
+                    "oneEachWay": {
+                        "plain": "Wyspa {n} w wierszu {row}, kolumnie {column} ma za dużą liczbę, by pominąć któregokolwiek sąsiada, do którego jeszcze sięga: bez niego pozostali nigdy nie dadzą jej {n}. Każda wciąż otwarta luka ? potrzebuje więc co najmniej jednego mostu.",
+                        "count": "Wyspa {n} w wierszu {row}, kolumnie {column} może jeszcze sięgnąć do {count} sąsiadów. Jeśli pominiesz któregokolwiek z nich, pozostałe luki pomieszczą nie więcej mostów niż {max}, czyli mniej niż {n}. Każda wciąż otwarta luka ? potrzebuje więc co najmniej jednego mostu."
+                    },
+                    "needsNeighbour": {
+                        "many": "Niektóre luki wokół wyspy {n} w wierszu {row}, kolumnie {column} nie mogą zostać puste: bez mostu w którejkolwiek z nich pozostałe nie dadzą {n}. Każda z tych luk ? potrzebuje więc co najmniej jednego mostu.",
+                        "one": "Bez mostu do wyspy {m} w wierszu {mrow}, kolumnie {mcolumn} pozostałe luki wokół wyspy {n} w wierszu {row}, kolumnie {column} pomieszczą nie więcej mostów niż {max}, czyli mniej niż {n}. Luka ? między nimi potrzebuje więc co najmniej jednego mostu.",
+                        "onePlain": "Pozostałe luki wokół wyspy {n} w wierszu {row}, kolumnie {column} nie dadzą {n} bez mostu do wyspy {m} w wierszu {mrow}, kolumnie {mcolumn}. Luka ? między nimi potrzebuje więc co najmniej jednego mostu.",
+                        "two": "Pozostałe luki wokół wyspy {n} w wierszu {row}, kolumnie {column} nie dadzą {n} ani bez mostu do wyspy {a} w wierszu {arow}, kolumnie {acolumn}, ani bez mostu do wyspy {b} w wierszu {brow}, kolumnie {bcolumn}. Obie te luki ? potrzebują więc co najmniej jednego mostu."
+                    }
                 }
             },
             "light_up": {
@@ -756,6 +772,22 @@
                     "4": "Ten róg wciąż jest ciemny i nic innego do niego nie sięga, więc potrzebuje własnej żarówki.",
                     "5": "Żadna żarówka nie może świecić na inną. Te dwie stoją w tej samej kolumnie i nic ich nie rozdziela.",
                     "6": "Każde białe pole jest oświetlone, 4 ma swoje cztery żarówki i żadna żarówka nie świeci na inną."
+                },
+                "hint": {
+                    "onlyWay": {
+                        "cell": "Każde pole, które mogłoby oświetlić pole w obwódce w wierszu {row}, kolumnie {column}, jest już oświetlone albo wykluczone, poza polem ?. Pole ? potrzebuje więc żarówki.",
+                        "self": "Każde pole, które mogłoby oświetlić pole w obwódce w wierszu {row}, kolumnie {column}, jest już oświetlone albo wykluczone, więc potrzebuje ono własnej żarówki."
+                    },
+                    "clueSatisfied": {
+                        "some": "Liczba {number} w wierszu {row}, kolumnie {column} ma już obok siebie wszystkie żarówki, których wymaga, więc w żadnym polu ? obok niej nie może stać żarówka.",
+                        "zero": "Liczba 0 w wierszu {row}, kolumnie {column} nie może mieć obok siebie żarówki, więc w żadnym polu ? obok niej nie może jej być."
+                    },
+                    "clueForced": "Liczbie {number} w wierszu {row}, kolumnie {column} zostało obok siebie dokładnie tyle pól, ile żarówek jeszcze potrzebuje, więc w każdym polu ? obok niej musi stać żarówka.",
+                    "setExclusion": {
+                        "dark": "Tylko pola w obwódce mogą jeszcze oświetlić pole w wierszu {row}, kolumnie {column}, więc w jednym z nich musi stać żarówka. Żarówka w polu ? wykluczyłaby je wszystkie, świecąc na nie albo dopełniając liczbę obok. W polu ? nie może więc stać żarówka.",
+                        "clue": "Pola w obwódce obok liczby {number} w wierszu {row}, kolumnie {column} to wszystko, co jej zostało na żarówki. Żarówka w polu ? wykluczyłaby zbyt wiele z nich, świecąc na nie albo dopełniając inną liczbę, i liczbie {number} zabrakłoby żarówek. W polu ? nie może więc stać żarówka.",
+                        "clueBeside": "Pole ? i pola w obwódce obok liczby {number} w wierszu {row}, kolumnie {column} to wszystko, co jej zostało na żarówki. Żarówka w polu ? wykluczyłaby zbyt wiele pól w obwódce, świecąc na nie albo dopełniając inną liczbę, i liczbie {number} zabrakłoby żarówek. W polu ? nie może więc stać żarówka."
+                    }
                 }
             },
             "loopy": {
@@ -800,6 +832,30 @@
                     "4": "Ten róg potrzebuje czterech, więc wszystkie cztery pola wokół niego muszą wskazywać na niego. Da się to zrobić tylko w jeden sposób.",
                     "5": "Te cztery połączyły się w zamknięty pierścień. Pierścienie są niedozwolone, więc jedno z nich musi być nachylone w drugą stronę.",
                     "6": "Każde pole wypełnione, każda liczba się zgadza i nigdzie nie ma pierścienia."
+                },
+                "hint": {
+                    "satisfied": {
+                        "some": "Liczba {clue} w obwódce ma już wszystkie linie, których potrzebuje, więc każde pole ? wokół niej musi być nachylone od niej.",
+                        "zero": "Liczba {clue} w obwódce nie może dotykać żadnej linii, więc każde pole ? wokół niej musi być nachylone od niej."
+                    },
+                    "forced": {
+                        "all": "Liczba {clue} w obwódce potrzebuje linii z każdego pola wokół siebie, więc każde pole ? musi być nachylone ku niej.",
+                        "one": "Liczba {clue} w obwódce potrzebuje jeszcze 1 linii, a wokół niej jest tylko jedno puste pole, więc pole ? musi być nachylone ku niej.",
+                        "many": "Liczba {clue} w obwódce potrzebuje jeszcze {needed} linii, a pustych pól wokół niej jest tylko {needed}, więc każde pole ? musi być nachylone ku niej."
+                    },
+                    "paired": {
+                        "away": "Oba pola w obwódce muszą być nachylone tak samo, więc razem dają liczbie {clue} w obwódce dokładnie jedną linię. To wszystko, czego jeszcze potrzebuje, więc każde pole ? wokół niej musi być nachylone od niej.",
+                        "towards": "Oba pola w obwódce muszą być nachylone tak samo, więc razem dają liczbie {clue} w obwódce dokładnie jedną linię. Potem wciąż brakuje jej linii: {needed}, więc każde pole ? wokół niej musi być nachylone ku niej."
+                    },
+                    "loop": {
+                        "backslash": "Lewy górny i prawy dolny róg pola w obwódce są już połączone łańcuchem linii, więc linia między nimi zamknęłaby pętlę. Pole musi być nachylone od lewego dolnego do prawego górnego rogu.",
+                        "slash": "Lewy dolny i prawy górny róg pola w obwódce są już połączone łańcuchem linii, więc linia między nimi zamknęłaby pętlę. Pole musi być nachylone od lewego górnego do prawego dolnego rogu."
+                    },
+                    "deadEnd": {
+                        "backslash": "Rogi w obwódce należą do dwóch grup linii: jednej przy lewym górnym rogu pola w obwódce i drugiej przy jego prawym dolnym rogu. Żadna nie sięga krawędzi i każda może urosnąć najwyżej o jedną linię. Połączone utworzyłyby grupę, która nigdy nie sięgnie krawędzi, a to zdarza się tylko wewnątrz pętli. Pole musi więc być nachylone od lewego dolnego do prawego górnego rogu.",
+                        "slash": "Rogi w obwódce należą do dwóch grup linii: jednej przy lewym dolnym rogu pola w obwódce i drugiej przy jego prawym górnym rogu. Żadna nie sięga krawędzi i każda może urosnąć najwyżej o jedną linię. Połączone utworzyłyby grupę, która nigdy nie sięgnie krawędzi, a to zdarza się tylko wewnątrz pętli. Pole musi więc być nachylone od lewego górnego do prawego dolnego rogu."
+                    },
+                    "equivalent": "Liczby między polem w obwódce a wypełnionym polem w wierszu {row}, kolumnie {column} da się spełnić tylko wtedy, gdy oba są nachylone tak samo, więc pole w obwódce musi je skopiować."
                 }
             },
             "tents": {
@@ -822,6 +878,39 @@
                     "4": "Namioty nigdy się nie stykają, nawet rogiem. Te dwa się stykają, więc jeden z nich musi się przesunąć.",
                     "5": "Obok tego drzewa wolne jest tylko jedno pole, więc jego namiot staje tam.",
                     "6": "Każde drzewo ma namiot obok siebie, żadne dwa namioty się nie stykają i wszystkie liczby się zgadzają."
+                },
+                "hint": {
+                    "noFreeTree": {
+                        "none": "Bezpośrednio nad polem ?, pod nim ani obok niego nie ma drzewa, więc namiot w tym miejscu nie miałby drzewa, do którego mógłby należeć.",
+                        "one": "Jedyne drzewo obok pola ? ma już własny namiot, więc namiot w polu ? nie miałby drzewa, do którego mógłby należeć.",
+                        "many": "Wszystkie {count} drzewa obok pola ? mają już własne namioty, więc namiot w polu ? nie miałby drzewa, do którego mógłby należeć."
+                    },
+                    "tentTouches": {
+                        "one": "Pole ? styka się z namiotem w obwódce, a namioty nigdy się nie stykają, nawet rogiem. W polu ? nie może więc być namiotu.",
+                        "many": "Pole ? styka się z namiotami w obwódce, a namioty nigdy się nie stykają, nawet rogiem. W polu ? nie może więc być namiotu."
+                    },
+                    "treeNeedsTent": "Każde inne pole obok drzewa w obwódce jest zajęte albo wykluczone, więc jego namiot musi stanąć w polu ?.",
+                    "treeCorner": "Namiot drzewa w obwódce musi stanąć w jednym z dwóch pól w obwódce obok niego, a oba stykają się z polem ?. Niezależnie od tego, które to będzie, w polu ? nie może być namiotu.",
+                    "lineCount": {
+                        "row": "Liczba wiersza {line} to {count}. Jakkolwiek rozmieścisz jego brakujące namioty w jego pustych polach, tak by żadne dwa się nie stykały, każde pole ? za każdym razem wychodzi tak samo, namiot albo brak namiotu. Możesz je więc wypełnić.",
+                        "column": "Liczba kolumny {line} to {count}. Jakkolwiek rozmieścisz jej brakujące namioty w jej pustych polach, tak by żadne dwa się nie stykały, każde pole ? za każdym razem wychodzi tak samo, namiot albo brak namiotu. Możesz je więc wypełnić."
+                    },
+                    "lineNeighbour": {
+                        "row": "Liczba wiersza {line} to {count}. Jakkolwiek rozmieścisz jego brakujące namioty w jego pustych polach, tak by żadne dwa się nie stykały, jeden z nich zawsze styka się z każdym polem ?. W polach ? nie może więc być namiotu.",
+                        "column": "Liczba kolumny {line} to {count}. Jakkolwiek rozmieścisz jej brakujące namioty w jej pustych polach, tak by żadne dwa się nie stykały, jeden z nich zawsze styka się z każdym polem ?. W polach ? nie może więc być namiotu."
+                    },
+                    "lineExact": {
+                        "row": "Każde pole w wierszu {line} poza polami ? ma już namiot albo nie może go mieć, a wierszowi wciąż brakuje {missing} namiotów. W każdym polu ? stoi więc namiot.",
+                        "rowOne": "Każde pole w wierszu {line} poza polem ? ma już namiot albo nie może go mieć, a wierszowi wciąż brakuje jednego namiotu. W polu ? stoi więc namiot.",
+                        "column": "Każde pole w kolumnie {line} poza polami ? ma już namiot albo nie może go mieć, a kolumnie wciąż brakuje {missing} namiotów. W każdym polu ? stoi więc namiot.",
+                        "columnOne": "Każde pole w kolumnie {line} poza polem ? ma już namiot albo nie może go mieć, a kolumnie wciąż brakuje jednego namiotu. W polu ? stoi więc namiot."
+                    },
+                    "lineFull": {
+                        "row": "Liczba wiersza {line} to {count} i ma on już tyle namiotów. W żadnym z pól ? nie może więc być namiotu.",
+                        "rowZero": "Liczba wiersza {line} to 0, więc w żadnym z pól ? nie może być namiotu.",
+                        "column": "Liczba kolumny {line} to {count} i ma ona już tyle namiotów. W żadnym z pól ? nie może więc być namiotu.",
+                        "columnZero": "Liczba kolumny {line} to 0, więc w żadnym z pól ? nie może być namiotu."
+                    }
                 }
             },
             "unruly": {
@@ -840,6 +929,87 @@
                     "3": "W każdym wierszu i kolumnie ma być po trzy każdego koloru. Ten wiersz ma cztery fioletowe.",
                     "4": "Dwa pomarańczowe z przerwą. Pomarańczowe pomiędzy dałoby trzy, więc musi być fioletowe.",
                     "5": "Każde pole wypełnione, żadnej trójki pod rząd i po trzy każdego koloru w każdym wierszu i kolumnie."
+                },
+                "hint": {
+                    "pairEnd": {
+                        "row": "Pola w obwódce w wierszu {line} leżą obok siebie i oba są {colour}. Gdyby pole ? też było {colour}, trzy pola pod rząd byłyby {colour}, więc musi być {other}.",
+                        "column": "Pola w obwódce w kolumnie {line} leżą jedno nad drugim i oba są {colour}. Gdyby pole ? też było {colour}, trzy pola pod rząd byłyby {colour}, więc musi być {other}."
+                    },
+                    "pairGap": {
+                        "row": "Pola w obwódce w wierszu {line} są oba {colour}, a pole ? leży między nimi. Gdyby ono też było {colour}, trzy pola pod rząd byłyby {colour}, więc musi być {other}.",
+                        "column": "Pola w obwódce w kolumnie {line} są oba {colour}, a pole ? leży między nimi. Gdyby ono też było {colour}, trzy pola pod rząd byłyby {colour}, więc musi być {other}."
+                    },
+                    "lastGap": {
+                        "row": "W wierszu {line} są już wszystkie pola {colour}, których ma być {count}, i brakuje jeszcze jednego pola, które ma być {other}, więc jego ostatnie puste pole musi być {other}.",
+                        "column": "W kolumnie {line} są już wszystkie pola {colour}, których ma być {count}, i brakuje jeszcze jednego pola, które ma być {other}, więc jej ostatnie puste pole musi być {other}."
+                    },
+                    "lineFull": {
+                        "row": "W wierszu {line} są już wszystkie pola {colour}, których ma być {count}, i są w obwódce, więc każde pole ? w tym wierszu musi być {other}.",
+                        "column": "W kolumnie {line} są już wszystkie pola {colour}, których ma być {count}, i są w obwódce, więc każde pole ? w tej kolumnie musi być {other}."
+                    },
+                    "lastInRun": {
+                        "row": "W wierszu {line} brakuje jeszcze tylko jednego pola, które ma być {colour}, i musi ono trafić do któregoś z pól w obwódce w kolumnach od {from} do {to}: gdziekolwiek indziej te trzy pola byłyby wszystkie {other}. Każde pole ? musi więc być {other}.",
+                        "column": "W kolumnie {line} brakuje jeszcze tylko jednego pola, które ma być {colour}, i musi ono trafić do któregoś z pól w obwódce w wierszach od {from} do {to}: gdziekolwiek indziej te trzy pola byłyby wszystkie {other}. Każde pole ? musi więc być {other}."
+                    }
+                },
+                "colour": {
+                    "1": "pomarańczowe",
+                    "2": "fioletowe"
+                }
+            },
+            "chat_rooms": {
+                "name": "CHAT Rooms",
+                "rules": "Umieść jeden CHAT w każdym wierszu, każdej kolumnie i każdym kolorowym pokoju. Dwa CHAT-y nie mogą się stykać, nawet rogami.",
+                "technique": {
+                    "1": "CHAT wyklucza wszystkie inne pola w swoim wierszu, swojej kolumnie i swoim pokoju oraz osiem pól wokół siebie.",
+                    "2": "W tym wierszu, kolumnie lub pokoju zostało tylko jedno pole na CHAT, więc CHAT trafia tam.",
+                    "3": "To jedyne pola, jakie zostały dla jednego pokoju, i wszystkie leżą w jednym wierszu lub kolumnie, więc CHAT tej linii musi być wśród nich, a reszta linii jest wykluczona. Działa to też w drugą stronę: wiersz lub kolumna, której wolne pola leżą w jednym pokoju, wyklucza resztę tego pokoju.",
+                    "4": "Te pokoje mogą korzystać tylko z tych wierszy lub kolumn, a pokoi jest tyle samo co linii, więc CHAT-y tych linii należą do tych pokoi i nic innego w tych liniach nie może dostać CHAT-a.",
+                    "5": "CHAT w tym polu wykluczyłby każde pole, jakie zostało temu wierszowi, kolumnie lub pokojowi, więc to pole nie może dostać CHAT-a."
+                },
+                "demo": {
+                    "1": "Umieść jeden CHAT w każdym wierszu, każdej kolumnie i każdym kolorowym pokoju. Stuknij raz, aby skreślić pole, dwa razy, aby postawić CHAT.",
+                    "2": "Dwa CHAT-y nie mogą się stykać, nawet rogami.",
+                    "3": "Każdy pokój ma jeden CHAT. Górny pokój ma dwa.",
+                    "4": "Ten pokój to jedno pole, więc jego CHAT trafia tam. Każde pole, które wyklucza, zostaje skreślone za ciebie.",
+                    "5": "Jeden CHAT w każdym wierszu, kolumnie i pokoju, i żadne się nie stykają."
+                },
+                "hint": {
+                    "shadow": "CHAT w wierszu {row}, kolumnie {column} wyklucza każde inne pole w swoim wierszu, w swojej kolumnie i w swoim pokoju, którym jest {room}, a także każde pole, które go dotyka, więc w polach ? nie może być CHAT-a.",
+                    "lastCell": {
+                        "row": "Każde inne pole w wierszu {line} jest wykluczone, więc CHAT wiersza {line} musi trafić do pola ?.",
+                        "column": "Każde inne pole w kolumnie {line} jest wykluczone, więc CHAT kolumny {line} musi trafić do pola ?.",
+                        "room": "Poza polem ? każde pole, które obejmuje {room}, jest wykluczone, więc CHAT tego pokoju musi trafić do pola ?.",
+                        "single": "Pole w obwódce to cały {room}, więc CHAT tego pokoju trafia tam."
+                    },
+                    "confined": {
+                        "roomInRow": "Jedyne wolne pola, jakie ma jeszcze {room}, to pola w obwódce, i wszystkie leżą w wierszu {line}. CHAT wiersza {line} musi więc pochodzić z tego pokoju, a w polach ? nie może go być.",
+                        "roomInColumn": "Jedyne wolne pola, jakie ma jeszcze {room}, to pola w obwódce, i wszystkie leżą w kolumnie {line}. CHAT kolumny {line} musi więc pochodzić z tego pokoju, a w polach ? nie może go być.",
+                        "rowInRoom": "Jedyne wolne pola w wierszu {line} to pola w obwódce, i wszystkie należą do jednego pokoju, którym jest {room}. CHAT tego pokoju musi więc być w wierszu {line}, a w polach ? nie może go być.",
+                        "columnInRoom": "Jedyne wolne pola w kolumnie {line} to pola w obwódce, i wszystkie należą do jednego pokoju, którym jest {room}. CHAT tego pokoju musi więc być w kolumnie {line}, a w polach ? nie może go być."
+                    },
+                    "pigeonhole": {
+                        "roomsInRows": "Jedyne pola, jakie zostały tym {count} pokojom, to pola w obwódce, i wszystkie leżą w wierszach {lines}. CHAT-y tych wierszy muszą więc pochodzić z tych pokoi, a w polach ? nie może być CHAT-a.",
+                        "roomsInColumns": "Jedyne pola, jakie zostały tym {count} pokojom, to pola w obwódce, i wszystkie leżą w kolumnach {lines}. CHAT-y tych kolumn muszą więc pochodzić z tych pokoi, a w polach ? nie może być CHAT-a.",
+                        "rowsInRooms": "Jedyne wolne pola w wierszach {lines} to pola w obwódce, i wszystkie leżą w zaledwie {count} pokojach. CHAT-y tych pokoi muszą więc być w tych wierszach, a w polach ? nie może być CHAT-a.",
+                        "columnsInRooms": "Jedyne wolne pola w kolumnach {lines} to pola w obwódce, i wszystkie leżą w zaledwie {count} pokojach. CHAT-y tych pokoi muszą więc być w tych kolumnach, a w polach ? nie może być CHAT-a."
+                    },
+                    "blocked": {
+                        "row": "Pola w obwódce to wszystko, co zostało wierszowi {line}. CHAT w polu ? wykluczyłby je wszystkie, dotykając ich albo dzieląc z nimi wiersz, kolumnę lub pokój, i nie zostałoby miejsca na CHAT wiersza {line}. W polu ? nie może więc być CHAT-a.",
+                        "column": "Pola w obwódce to wszystko, co zostało kolumnie {line}. CHAT w polu ? wykluczyłby je wszystkie, dotykając ich albo dzieląc z nimi wiersz, kolumnę lub pokój, i nie zostałoby miejsca na CHAT kolumny {line}. W polu ? nie może więc być CHAT-a.",
+                        "room": "Pola w obwódce to wszystko, co ma jeszcze {room}. CHAT w polu ? wykluczyłby je wszystkie, dotykając ich albo dzieląc z nimi wiersz, kolumnę lub pokój, i nie zostałoby miejsca na CHAT tego pokoju. W polu ? nie może więc być CHAT-a."
+                    }
+                },
+                "room": {
+                    "0": "fioletowy pokój",
+                    "1": "pomarańczowy pokój",
+                    "2": "niebieski pokój",
+                    "3": "zielony pokój",
+                    "4": "szary pokój",
+                    "5": "czerwony pokój",
+                    "6": "żółty pokój",
+                    "7": "brązowy pokój",
+                    "8": "różowy pokój"
                 }
             }
         }

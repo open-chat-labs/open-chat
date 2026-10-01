@@ -177,6 +177,27 @@ pub fn register_user_on_subnet(env: &mut PocketIc, canister_ids: &CanisterIds, s
     .0
 }
 
+// Registers the user in a canister of their own on the given LocalUserIndex
+pub fn register_user_with_referrer_on(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    local_user_index: CanisterId,
+    referral_code: Option<String>,
+) -> User {
+    let (auth_principal, public_key) = random_internet_identity_principal();
+    register_user_internal(
+        env,
+        canister_ids,
+        referral_code,
+        auth_principal,
+        public_key,
+        Some(local_user_index),
+        false,
+        None,
+    )
+    .0
+}
+
 pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterIds, referral_code: Option<String>) -> User {
     register_user_with_options(env, canister_ids, referral_code, false)
 }

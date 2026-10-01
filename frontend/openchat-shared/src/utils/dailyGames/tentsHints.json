@@ -1,0 +1,2684 @@
+[
+    {
+        "description": "010606000000010000010001000000000001000001000000000000000001000000000000010000020002010200010101020101",
+        "steps": [
+            { "technique": 1, "focus": [1, 0, 2, 7], "target": [0, 2, 7], "conclusions": [[1, 0]] },
+            { "technique": 1, "focus": [5, 4, 11], "target": [4, 11], "conclusions": [[5, 0]] },
+            {
+                "technique": 1,
+                "focus": [10, 4, 9, 11, 16],
+                "target": [4, 9, 11, 16],
+                "conclusions": [[10, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [18, 12, 19, 24],
+                "target": [12, 19, 24],
+                "conclusions": [[18, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [19, 13, 18, 20, 25],
+                "target": [13, 18, 20, 25],
+                "conclusions": [[19, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [21, 15, 20, 22, 27],
+                "target": [15, 20, 22, 27],
+                "conclusions": [[21, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [22, 16, 21, 23, 28],
+                "target": [16, 21, 23, 28],
+                "conclusions": [[22, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [24, 18, 25, 30],
+                "target": [18, 25, 30],
+                "conclusions": [[24, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [28, 22, 27, 29, 34],
+                "target": [22, 27, 29, 34],
+                "conclusions": [[28, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [29, 23, 28, 35],
+                "target": [23, 28, 35],
+                "conclusions": [[29, 0]]
+            },
+            { "technique": 1, "focus": [30, 24, 31], "target": [24, 31], "conclusions": [[30, 0]] },
+            {
+                "technique": 1,
+                "focus": [31, 25, 30, 32],
+                "target": [25, 30, 32],
+                "conclusions": [[31, 0]]
+            },
+            { "technique": 1, "focus": [35, 29, 34], "target": [29, 34], "conclusions": [[35, 0]] },
+            {
+                "technique": 8,
+                "focus": [6, 8, 10, 37, 7, 9, 11],
+                "target": [6, 8, 10, 37],
+                "conclusions": [
+                    [7, 0],
+                    [9, 0],
+                    [11, 0]
+                ]
+            },
+            { "technique": 3, "focus": [8, 2, 7, 9, 14], "target": [8], "conclusions": [[2, 1]] },
+            { "technique": 3, "focus": [3, 2, 4, 9], "target": [3], "conclusions": [[4, 1]] },
+            {
+                "technique": 8,
+                "focus": [2, 8, 14, 26, 44, 20, 32],
+                "target": [2, 8, 14, 26, 44],
+                "conclusions": [
+                    [20, 0],
+                    [32, 0]
+                ]
+            },
+            {
+                "technique": 7,
+                "focus": [3, 9, 21, 33, 45, 15, 27],
+                "target": [3, 9, 21, 33, 45],
+                "conclusions": [
+                    [15, 1],
+                    [27, 1]
+                ]
+            },
+            {
+                "technique": 1,
+                "focus": [13, 7, 12, 14, 19],
+                "target": [7, 12, 14, 19],
+                "conclusions": [[13, 0]]
+            },
+            { "technique": 2, "focus": [16, 15], "target": [15], "conclusions": [[16, 0]] },
+            { "technique": 2, "focus": [34, 27], "target": [27], "conclusions": [[34, 0]] },
+            { "technique": 3, "focus": [17, 11, 16, 23], "target": [17], "conclusions": [[23, 1]] },
+            {
+                "technique": 3,
+                "focus": [26, 20, 25, 27, 32],
+                "target": [26],
+                "conclusions": [[25, 1]]
+            },
+            {
+                "technique": 8,
+                "focus": [1, 2, 3, 4, 5, 36, 0],
+                "target": [1, 2, 3, 4, 5, 36],
+                "conclusions": [[0, 0]]
+            },
+            { "technique": 3, "focus": [6, 0, 7, 12], "target": [6], "conclusions": [[12, 1]] }
+        ]
+    },
+    {
+        "description": "010606000000000100000001000001010000000000000000010000000000000000000100000001020102000101010002010003",
+        "steps": [
+            { "technique": 1, "focus": [0, 1, 6], "target": [1, 6], "conclusions": [[0, 0]] },
+            { "technique": 1, "focus": [1, 0, 2, 7], "target": [0, 2, 7], "conclusions": [[1, 0]] },
+            {
+                "technique": 1,
+                "focus": [16, 10, 15, 17, 22],
+                "target": [10, 15, 17, 22],
+                "conclusions": [[16, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [19, 13, 18, 20, 25],
+                "target": [13, 18, 20, 25],
+                "conclusions": [[19, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [23, 17, 22, 29],
+                "target": [17, 22, 29],
+                "conclusions": [[23, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [24, 18, 25, 30],
+                "target": [18, 25, 30],
+                "conclusions": [[24, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [26, 20, 25, 27, 32],
+                "target": [20, 25, 27, 32],
+                "conclusions": [[26, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [28, 22, 27, 29, 34],
+                "target": [22, 27, 29, 34],
+                "conclusions": [[28, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [33, 27, 32, 34],
+                "target": [27, 32, 34],
+                "conclusions": [[33, 0]]
+            },
+            {
+                "technique": 8,
+                "focus": [1, 19, 31, 43, 7, 13, 25],
+                "target": [1, 19, 31, 43],
+                "conclusions": [
+                    [7, 0],
+                    [13, 0],
+                    [25, 0]
+                ]
+            },
+            {
+                "technique": 8,
+                "focus": [4, 16, 28, 46, 10, 22, 34],
+                "target": [4, 16, 28, 46],
+                "conclusions": [
+                    [10, 0],
+                    [22, 0],
+                    [34, 0]
+                ]
+            },
+            { "technique": 3, "focus": [35, 29, 34], "target": [35], "conclusions": [[29, 1]] },
+            {
+                "technique": 7,
+                "focus": [11, 23, 29, 35, 47, 5, 17],
+                "target": [11, 23, 29, 35, 47],
+                "conclusions": [
+                    [5, 1],
+                    [17, 1]
+                ]
+            },
+            { "technique": 1, "focus": [3, 2, 4, 9], "target": [2, 4, 9], "conclusions": [[3, 0]] },
+            {
+                "technique": 7,
+                "focus": [0, 1, 3, 4, 5, 36, 2],
+                "target": [0, 1, 3, 4, 5, 36],
+                "conclusions": [[2, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [9, 3, 8, 10, 15],
+                "target": [3, 8, 10, 15],
+                "conclusions": [[9, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [14, 8, 13, 15, 20],
+                "target": [8, 13, 15, 20],
+                "conclusions": [[14, 0]]
+            },
+            {
+                "technique": 7,
+                "focus": [7, 8, 9, 10, 11, 37, 6],
+                "target": [7, 8, 9, 10, 11, 37],
+                "conclusions": [[6, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [18, 12, 19, 24],
+                "target": [12, 19, 24],
+                "conclusions": [[18, 0]]
+            },
+            {
+                "technique": 8,
+                "focus": [0, 6, 12, 18, 24, 42, 30],
+                "target": [0, 6, 12, 18, 24, 42],
+                "conclusions": [[30, 0]]
+            },
+            { "technique": 3, "focus": [31, 25, 30, 32], "target": [31], "conclusions": [[32, 1]] },
+            { "technique": 2, "focus": [27, 32], "target": [32], "conclusions": [[27, 0]] },
+            {
+                "technique": 8,
+                "focus": [2, 8, 14, 26, 32, 44, 20],
+                "target": [2, 8, 14, 26, 32, 44],
+                "conclusions": [[20, 0]]
+            },
+            {
+                "technique": 3,
+                "focus": [21, 15, 20, 22, 27],
+                "target": [21],
+                "conclusions": [[15, 1]]
+            }
+        ]
+    },
+    {
+        "description": "0108080000000000010000000000000100000001000000000000000100000000010000000000000000000100000001000001000000010001000000000100000000010001020002020103010102000300020103",
+        "steps": [
+            { "technique": 1, "focus": [0, 1, 8], "target": [1, 8], "conclusions": [[0, 0]] },
+            { "technique": 1, "focus": [1, 0, 2, 9], "target": [0, 2, 9], "conclusions": [[1, 0]] },
+            {
+                "technique": 1,
+                "focus": [2, 1, 3, 10],
+                "target": [1, 3, 10],
+                "conclusions": [[2, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [3, 2, 4, 11],
+                "target": [2, 4, 11],
+                "conclusions": [[3, 0]]
+            },
+            { "technique": 1, "focus": [7, 6, 15], "target": [6, 15], "conclusions": [[7, 0]] },
+            {
+                "technique": 1,
+                "focus": [9, 1, 8, 10, 17],
+                "target": [1, 8, 10, 17],
+                "conclusions": [[9, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [10, 2, 9, 11, 18],
+                "target": [2, 9, 11, 18],
+                "conclusions": [[10, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [14, 6, 13, 15, 22],
+                "target": [6, 13, 15, 22],
+                "conclusions": [[14, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [15, 7, 14, 23],
+                "target": [7, 14, 23],
+                "conclusions": [[15, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [18, 10, 17, 19, 26],
+                "target": [10, 17, 19, 26],
+                "conclusions": [[18, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [19, 11, 18, 20, 27],
+                "target": [11, 18, 20, 27],
+                "conclusions": [[19, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [22, 14, 21, 23, 30],
+                "target": [14, 21, 23, 30],
+                "conclusions": [[22, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [23, 15, 22, 31],
+                "target": [15, 22, 31],
+                "conclusions": [[23, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [26, 18, 25, 27, 34],
+                "target": [18, 25, 27, 34],
+                "conclusions": [[26, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [27, 19, 26, 28, 35],
+                "target": [19, 26, 28, 35],
+                "conclusions": [[27, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [33, 25, 32, 34, 41],
+                "target": [25, 32, 34, 41],
+                "conclusions": [[33, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [34, 26, 33, 35, 42],
+                "target": [26, 33, 35, 42],
+                "conclusions": [[34, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [36, 28, 35, 37, 44],
+                "target": [28, 35, 37, 44],
+                "conclusions": [[36, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [40, 32, 41, 48],
+                "target": [32, 41, 48],
+                "conclusions": [[40, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [41, 33, 40, 42, 49],
+                "target": [33, 40, 42, 49],
+                "conclusions": [[41, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [48, 40, 49, 56],
+                "target": [40, 49, 56],
+                "conclusions": [[48, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [55, 47, 54, 63],
+                "target": [47, 54, 63],
+                "conclusions": [[55, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [59, 51, 58, 60],
+                "target": [51, 58, 60],
+                "conclusions": [[59, 0]]
+            },
+            {
+                "technique": 8,
+                "focus": [2, 10, 18, 26, 34, 50, 74, 42, 58],
+                "target": [2, 10, 18, 26, 34, 50, 74],
+                "conclusions": [
+                    [42, 0],
+                    [58, 0]
+                ]
+            },
+            {
+                "technique": 7,
+                "focus": [3, 19, 27, 43, 59, 75, 11, 35, 51],
+                "target": [3, 19, 27, 43, 59, 75],
+                "conclusions": [
+                    [11, 1],
+                    [35, 1],
+                    [51, 1]
+                ]
+            },
+            {
+                "technique": 1,
+                "focus": [20, 12, 19, 21, 28],
+                "target": [12, 19, 21, 28],
+                "conclusions": [[20, 0]]
+            },
+            { "technique": 2, "focus": [4, 11], "target": [11], "conclusions": [[4, 0]] },
+            { "technique": 2, "focus": [28, 35], "target": [35], "conclusions": [[28, 0]] },
+            { "technique": 2, "focus": [44, 35, 51], "target": [35, 51], "conclusions": [[44, 0]] },
+            { "technique": 2, "focus": [60, 51], "target": [51], "conclusions": [[60, 0]] },
+            {
+                "technique": 7,
+                "focus": [7, 15, 23, 39, 55, 79, 31, 47, 63],
+                "target": [7, 15, 23, 39, 55, 79],
+                "conclusions": [
+                    [31, 1],
+                    [47, 1],
+                    [63, 1]
+                ]
+            },
+            {
+                "technique": 1,
+                "focus": [38, 30, 37, 39, 46],
+                "target": [30, 37, 39, 46],
+                "conclusions": [[38, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [45, 37, 44, 46, 53],
+                "target": [37, 44, 46, 53],
+                "conclusions": [[45, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [54, 46, 53, 55, 62],
+                "target": [46, 53, 55, 62],
+                "conclusions": [[54, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [61, 53, 60, 62],
+                "target": [53, 60, 62],
+                "conclusions": [[61, 0]]
+            },
+            { "technique": 2, "focus": [30, 31], "target": [31], "conclusions": [[30, 0]] },
+            {
+                "technique": 7,
+                "focus": [14, 22, 30, 38, 46, 54, 62, 78, 6],
+                "target": [14, 22, 30, 38, 46, 54, 62, 78],
+                "conclusions": [[6, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [13, 5, 12, 14, 21],
+                "target": [5, 12, 14, 21],
+                "conclusions": [[13, 0]]
+            },
+            {
+                "technique": 7,
+                "focus": [9, 10, 11, 12, 13, 14, 15, 65, 8],
+                "target": [9, 10, 11, 12, 13, 14, 15, 65],
+                "conclusions": [[8, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [17, 9, 16, 18, 25],
+                "target": [9, 16, 18, 25],
+                "conclusions": [[17, 0]]
+            },
+            {
+                "technique": 8,
+                "focus": [0, 8, 16, 24, 40, 48, 72, 32, 56],
+                "target": [0, 8, 16, 24, 40, 48, 72],
+                "conclusions": [
+                    [32, 0],
+                    [56, 0]
+                ]
+            },
+            { "technique": 3, "focus": [24, 16, 25, 32], "target": [24], "conclusions": [[25, 1]] },
+            { "technique": 3, "focus": [57, 49, 56, 58], "target": [57], "conclusions": [[49, 1]] },
+            {
+                "technique": 3,
+                "focus": [52, 44, 51, 53, 60],
+                "target": [52],
+                "conclusions": [[53, 1]]
+            },
+            {
+                "technique": 8,
+                "focus": [16, 17, 18, 19, 20, 22, 23, 66, 21],
+                "target": [16, 17, 18, 19, 20, 22, 23, 66],
+                "conclusions": [[21, 0]]
+            },
+            {
+                "technique": 3,
+                "focus": [29, 21, 28, 30, 37],
+                "target": [29],
+                "conclusions": [[37, 1]]
+            }
+        ]
+    },
+    {
+        "description": "0108080000000000000000010100000000000100000000000100000000000100000001000001000001000000000000000001000000000000000100010000010000000001020201020101020102010101030003",
+        "steps": [
+            {
+                "technique": 1,
+                "focus": [2, 1, 3, 10],
+                "target": [1, 3, 10],
+                "conclusions": [[2, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [3, 2, 4, 11],
+                "target": [2, 4, 11],
+                "conclusions": [[3, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [4, 3, 5, 12],
+                "target": [3, 5, 12],
+                "conclusions": [[4, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [5, 4, 6, 13],
+                "target": [4, 6, 13],
+                "conclusions": [[5, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [6, 5, 7, 14],
+                "target": [5, 7, 14],
+                "conclusions": [[6, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [11, 3, 10, 12, 19],
+                "target": [3, 10, 12, 19],
+                "conclusions": [[11, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [12, 4, 11, 13, 20],
+                "target": [4, 11, 13, 20],
+                "conclusions": [[12, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [18, 10, 17, 19, 26],
+                "target": [10, 17, 19, 26],
+                "conclusions": [[18, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [24, 16, 25, 32],
+                "target": [16, 25, 32],
+                "conclusions": [[24, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [25, 17, 24, 26, 33],
+                "target": [17, 24, 26, 33],
+                "conclusions": [[25, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [32, 24, 33, 40],
+                "target": [24, 33, 40],
+                "conclusions": [[32, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [40, 32, 41, 48],
+                "target": [32, 41, 48],
+                "conclusions": [[40, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [41, 33, 40, 42, 49],
+                "target": [33, 40, 42, 49],
+                "conclusions": [[41, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [43, 35, 42, 44, 51],
+                "target": [35, 42, 44, 51],
+                "conclusions": [[43, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [44, 36, 43, 45, 52],
+                "target": [36, 43, 45, 52],
+                "conclusions": [[44, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [49, 41, 48, 50, 57],
+                "target": [41, 48, 50, 57],
+                "conclusions": [[49, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [50, 42, 49, 51, 58],
+                "target": [42, 49, 51, 58],
+                "conclusions": [[50, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [52, 44, 51, 53, 60],
+                "target": [44, 51, 53, 60],
+                "conclusions": [[52, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [61, 53, 60, 62],
+                "target": [53, 60, 62],
+                "conclusions": [[61, 0]]
+            },
+            { "technique": 1, "focus": [63, 55, 62], "target": [55, 62], "conclusions": [[63, 0]] },
+            {
+                "technique": 8,
+                "focus": [6, 46, 54, 78, 14, 22, 30, 38, 62],
+                "target": [6, 46, 54, 78],
+                "conclusions": [
+                    [14, 0],
+                    [22, 0],
+                    [30, 0],
+                    [38, 0],
+                    [62, 0]
+                ]
+            },
+            {
+                "technique": 7,
+                "focus": [8, 9, 11, 12, 14, 15, 65, 10, 13],
+                "target": [8, 9, 11, 12, 14, 15, 65],
+                "conclusions": [
+                    [10, 1],
+                    [13, 1]
+                ]
+            },
+            { "technique": 1, "focus": [1, 0, 2, 9], "target": [0, 2, 9], "conclusions": [[1, 0]] },
+            {
+                "technique": 1,
+                "focus": [17, 9, 16, 18, 25],
+                "target": [9, 16, 18, 25],
+                "conclusions": [[17, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [20, 12, 19, 21, 28],
+                "target": [12, 19, 21, 28],
+                "conclusions": [[20, 0]]
+            },
+            { "technique": 2, "focus": [19, 10], "target": [10], "conclusions": [[19, 0]] },
+            {
+                "technique": 7,
+                "focus": [1, 9, 17, 25, 41, 49, 73, 33, 57],
+                "target": [1, 9, 17, 25, 41, 49, 73],
+                "conclusions": [
+                    [33, 1],
+                    [57, 1]
+                ]
+            },
+            {
+                "technique": 1,
+                "focus": [42, 34, 41, 43, 50],
+                "target": [34, 41, 43, 50],
+                "conclusions": [[42, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [48, 40, 49, 56],
+                "target": [40, 49, 56],
+                "conclusions": [[48, 0]]
+            },
+            { "technique": 2, "focus": [26, 33], "target": [33], "conclusions": [[26, 0]] },
+            { "technique": 2, "focus": [58, 57], "target": [57], "conclusions": [[58, 0]] },
+            {
+                "technique": 7,
+                "focus": [17, 18, 19, 20, 21, 22, 66, 16, 23],
+                "target": [17, 18, 19, 20, 21, 22, 66],
+                "conclusions": [
+                    [16, 1],
+                    [23, 1]
+                ]
+            },
+            { "technique": 1, "focus": [0, 1, 8], "target": [1, 8], "conclusions": [[0, 0]] },
+            {
+                "technique": 7,
+                "focus": [0, 1, 2, 3, 4, 5, 6, 64, 7],
+                "target": [0, 1, 2, 3, 4, 5, 6, 64],
+                "conclusions": [[7, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [39, 31, 38, 47],
+                "target": [31, 38, 47],
+                "conclusions": [[39, 0]]
+            },
+            {
+                "technique": 7,
+                "focus": [56, 57, 58, 59, 61, 62, 63, 71, 60],
+                "target": [56, 57, 58, 59, 61, 62, 63, 71],
+                "conclusions": [[60, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [51, 43, 50, 52, 59],
+                "target": [43, 50, 52, 59],
+                "conclusions": [[51, 0]]
+            },
+            { "technique": 2, "focus": [53, 60], "target": [60], "conclusions": [[53, 0]] },
+            {
+                "technique": 3,
+                "focus": [54, 46, 53, 55, 62],
+                "target": [54],
+                "conclusions": [[55, 1]]
+            },
+            { "technique": 2, "focus": [47, 55], "target": [55], "conclusions": [[47, 0]] },
+            {
+                "technique": 3,
+                "focus": [46, 38, 45, 47, 54],
+                "target": [46],
+                "conclusions": [[45, 1]]
+            },
+            { "technique": 2, "focus": [36, 45], "target": [45], "conclusions": [[36, 0]] },
+            {
+                "technique": 3,
+                "focus": [37, 29, 36, 38, 45],
+                "target": [37],
+                "conclusions": [[29, 1]]
+            },
+            { "technique": 2, "focus": [28, 29], "target": [29], "conclusions": [[28, 0]] },
+            {
+                "technique": 3,
+                "focus": [27, 19, 26, 28, 35],
+                "target": [27],
+                "conclusions": [[35, 1]]
+            }
+        ]
+    },
+    {
+        "description": "0108080100000000000000000000000001000000000001000000000000000001000000000100000000000100000001000001000000000000000001000101000000010000030003000300030201010200030102",
+        "steps": [
+            {
+                "technique": 1,
+                "focus": [2, 1, 3, 10],
+                "target": [1, 3, 10],
+                "conclusions": [[2, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [3, 2, 4, 11],
+                "target": [2, 4, 11],
+                "conclusions": [[3, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [4, 3, 5, 12],
+                "target": [3, 5, 12],
+                "conclusions": [[4, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [6, 5, 7, 14],
+                "target": [5, 7, 14],
+                "conclusions": [[6, 0]]
+            },
+            { "technique": 1, "focus": [7, 6, 15], "target": [6, 15], "conclusions": [[7, 0]] },
+            {
+                "technique": 1,
+                "focus": [9, 1, 8, 10, 17],
+                "target": [1, 8, 10, 17],
+                "conclusions": [[9, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [10, 2, 9, 11, 18],
+                "target": [2, 9, 11, 18],
+                "conclusions": [[10, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [15, 7, 14, 23],
+                "target": [7, 14, 23],
+                "conclusions": [[15, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [16, 8, 17, 24],
+                "target": [8, 17, 24],
+                "conclusions": [[16, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [17, 9, 16, 18, 25],
+                "target": [9, 16, 18, 25],
+                "conclusions": [[17, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [22, 14, 21, 23, 30],
+                "target": [14, 21, 23, 30],
+                "conclusions": [[22, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [23, 15, 22, 31],
+                "target": [15, 22, 31],
+                "conclusions": [[23, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [24, 16, 25, 32],
+                "target": [16, 25, 32],
+                "conclusions": [[24, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [26, 18, 25, 27, 34],
+                "target": [18, 25, 27, 34],
+                "conclusions": [[26, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [30, 22, 29, 31, 38],
+                "target": [22, 29, 31, 38],
+                "conclusions": [[30, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [37, 29, 36, 38, 45],
+                "target": [29, 36, 38, 45],
+                "conclusions": [[37, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [40, 32, 41, 48],
+                "target": [32, 41, 48],
+                "conclusions": [[40, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [48, 40, 49, 56],
+                "target": [40, 49, 56],
+                "conclusions": [[48, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [52, 44, 51, 53, 60],
+                "target": [44, 51, 53, 60],
+                "conclusions": [[52, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [53, 45, 52, 54, 61],
+                "target": [45, 52, 54, 61],
+                "conclusions": [[53, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [60, 52, 59, 61],
+                "target": [52, 59, 61],
+                "conclusions": [[60, 0]]
+            },
+            {
+                "technique": 8,
+                "focus": [4, 28, 52, 60, 76, 12, 20, 36, 44],
+                "target": [4, 28, 52, 60, 76],
+                "conclusions": [
+                    [12, 0],
+                    [20, 0],
+                    [36, 0],
+                    [44, 0]
+                ]
+            },
+            {
+                "technique": 8,
+                "focus": [0, 2, 3, 4, 6, 7, 64, 1, 5],
+                "target": [0, 2, 3, 4, 6, 7, 64],
+                "conclusions": [
+                    [1, 0],
+                    [5, 0]
+                ]
+            },
+            { "technique": 3, "focus": [0, 1, 8], "target": [0], "conclusions": [[8, 1]] },
+            {
+                "technique": 7,
+                "focus": [8, 9, 10, 12, 13, 15, 65, 11, 14],
+                "target": [8, 9, 10, 12, 13, 15, 65],
+                "conclusions": [
+                    [11, 1],
+                    [14, 1]
+                ]
+            },
+            {
+                "technique": 1,
+                "focus": [18, 10, 17, 19, 26],
+                "target": [10, 17, 19, 26],
+                "conclusions": [[18, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [21, 13, 20, 22, 29],
+                "target": [13, 20, 22, 29],
+                "conclusions": [[21, 0]]
+            },
+            {
+                "technique": 7,
+                "focus": [5, 13, 21, 37, 53, 77, 29, 45, 61],
+                "target": [5, 13, 21, 37, 53, 77],
+                "conclusions": [
+                    [29, 1],
+                    [45, 1],
+                    [61, 1]
+                ]
+            },
+            {
+                "technique": 1,
+                "focus": [27, 19, 26, 28, 35],
+                "target": [19, 26, 28, 35],
+                "conclusions": [[27, 0]]
+            },
+            { "technique": 2, "focus": [38, 29, 45], "target": [29, 45], "conclusions": [[38, 0]] },
+            { "technique": 2, "focus": [54, 45, 61], "target": [45, 61], "conclusions": [[54, 0]] },
+            {
+                "technique": 7,
+                "focus": [24, 26, 27, 28, 29, 30, 67, 25, 31],
+                "target": [24, 26, 27, 28, 29, 30, 67],
+                "conclusions": [
+                    [25, 1],
+                    [31, 1]
+                ]
+            },
+            {
+                "technique": 1,
+                "focus": [32, 24, 33, 40],
+                "target": [24, 33, 40],
+                "conclusions": [[32, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [34, 26, 33, 35, 42],
+                "target": [26, 33, 35, 42],
+                "conclusions": [[34, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [41, 33, 40, 42, 49],
+                "target": [33, 40, 42, 49],
+                "conclusions": [[41, 0]]
+            },
+            {
+                "technique": 7,
+                "focus": [0, 8, 16, 24, 32, 40, 48, 72, 56],
+                "target": [0, 8, 16, 24, 32, 40, 48, 72],
+                "conclusions": [[56, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [49, 41, 48, 50, 57],
+                "target": [41, 48, 50, 57],
+                "conclusions": [[49, 0]]
+            },
+            {
+                "technique": 8,
+                "focus": [32, 33, 34, 36, 37, 38, 39, 68, 35],
+                "target": [32, 33, 34, 36, 37, 38, 39, 68],
+                "conclusions": [[35, 0]]
+            },
+            {
+                "technique": 7,
+                "focus": [40, 41, 43, 44, 45, 46, 69, 42, 47],
+                "target": [40, 41, 43, 44, 45, 46, 69],
+                "conclusions": [
+                    [42, 1],
+                    [47, 1]
+                ]
+            },
+            {
+                "technique": 1,
+                "focus": [51, 43, 50, 52, 59],
+                "target": [43, 50, 52, 59],
+                "conclusions": [[51, 0]]
+            },
+            { "technique": 1, "focus": [63, 55, 62], "target": [55, 62], "conclusions": [[63, 0]] },
+            { "technique": 2, "focus": [50, 42], "target": [42], "conclusions": [[50, 0]] },
+            { "technique": 3, "focus": [58, 50, 57, 59], "target": [58], "conclusions": [[59, 1]] }
+        ]
+    },
+    {
+        "description": "0108080000000000000000000000010100000000000000000001000000000001000001000001000000000000000000000001000101000000000000000000010100010001020101010200040101030002020102",
+        "steps": [
+            { "technique": 1, "focus": [0, 1, 8], "target": [1, 8], "conclusions": [[0, 0]] },
+            { "technique": 1, "focus": [1, 0, 2, 9], "target": [0, 2, 9], "conclusions": [[1, 0]] },
+            {
+                "technique": 1,
+                "focus": [2, 1, 3, 10],
+                "target": [1, 3, 10],
+                "conclusions": [[2, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [5, 4, 6, 13],
+                "target": [4, 6, 13],
+                "conclusions": [[5, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [6, 5, 7, 14],
+                "target": [5, 7, 14],
+                "conclusions": [[6, 0]]
+            },
+            { "technique": 1, "focus": [7, 6, 15], "target": [6, 15], "conclusions": [[7, 0]] },
+            {
+                "technique": 1,
+                "focus": [8, 0, 9, 16],
+                "target": [0, 9, 16],
+                "conclusions": [[8, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [9, 1, 8, 10, 17],
+                "target": [1, 8, 10, 17],
+                "conclusions": [[9, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [15, 7, 14, 23],
+                "target": [7, 14, 23],
+                "conclusions": [[15, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [16, 8, 17, 24],
+                "target": [8, 17, 24],
+                "conclusions": [[16, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [17, 9, 16, 18, 25],
+                "target": [9, 16, 18, 25],
+                "conclusions": [[17, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [18, 10, 17, 19, 26],
+                "target": [10, 17, 19, 26],
+                "conclusions": [[18, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [24, 16, 25, 32],
+                "target": [16, 25, 32],
+                "conclusions": [[24, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [25, 17, 24, 26, 33],
+                "target": [17, 24, 26, 33],
+                "conclusions": [[25, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [32, 24, 33, 40],
+                "target": [24, 33, 40],
+                "conclusions": [[32, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [37, 29, 36, 38, 45],
+                "target": [29, 36, 38, 45],
+                "conclusions": [[37, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [43, 35, 42, 44, 51],
+                "target": [35, 42, 44, 51],
+                "conclusions": [[43, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [44, 36, 43, 45, 52],
+                "target": [36, 43, 45, 52],
+                "conclusions": [[44, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [53, 45, 52, 54, 61],
+                "target": [45, 52, 54, 61],
+                "conclusions": [[53, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [55, 47, 54, 63],
+                "target": [47, 54, 63],
+                "conclusions": [[55, 0]]
+            },
+            {
+                "technique": 8,
+                "focus": [11, 43, 59, 75, 3, 19, 27, 35, 51],
+                "target": [11, 43, 59, 75],
+                "conclusions": [
+                    [3, 0],
+                    [19, 0],
+                    [27, 0],
+                    [35, 0],
+                    [51, 0]
+                ]
+            },
+            {
+                "technique": 3,
+                "focus": [11, 3, 10, 12, 19],
+                "target": [11],
+                "conclusions": [[10, 1]]
+            },
+            { "technique": 3, "focus": [59, 51, 58, 60], "target": [59], "conclusions": [[58, 1]] },
+            { "technique": 2, "focus": [50, 58], "target": [58], "conclusions": [[50, 0]] },
+            { "technique": 2, "focus": [57, 58], "target": [58], "conclusions": [[57, 0]] },
+            {
+                "technique": 3,
+                "focus": [49, 41, 48, 50, 57],
+                "target": [49],
+                "conclusions": [[41, 1]]
+            },
+            { "technique": 2, "focus": [33, 41], "target": [41], "conclusions": [[33, 0]] },
+            { "technique": 2, "focus": [40, 41], "target": [41], "conclusions": [[40, 0]] },
+            { "technique": 2, "focus": [42, 41], "target": [41], "conclusions": [[42, 0]] },
+            {
+                "technique": 3,
+                "focus": [34, 26, 33, 35, 42],
+                "target": [34],
+                "conclusions": [[26, 1]]
+            },
+            { "technique": 3, "focus": [48, 40, 49, 56], "target": [48], "conclusions": [[56, 1]] },
+            {
+                "technique": 7,
+                "focus": [0, 1, 2, 3, 5, 6, 7, 64, 4],
+                "target": [0, 1, 2, 3, 5, 6, 7, 64],
+                "conclusions": [[4, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [13, 5, 12, 14, 21],
+                "target": [5, 12, 14, 21],
+                "conclusions": [[13, 0]]
+            },
+            {
+                "technique": 7,
+                "focus": [8, 9, 10, 11, 12, 13, 15, 65, 14],
+                "target": [8, 9, 10, 11, 12, 13, 15, 65],
+                "conclusions": [[14, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [21, 13, 20, 22, 29],
+                "target": [13, 20, 22, 29],
+                "conclusions": [[21, 0]]
+            },
+            { "technique": 2, "focus": [23, 14], "target": [14], "conclusions": [[23, 0]] },
+            {
+                "technique": 8,
+                "focus": [6, 14, 22, 46, 62, 78, 30, 38, 54],
+                "target": [6, 14, 22, 46, 62, 78],
+                "conclusions": [
+                    [30, 0],
+                    [38, 0],
+                    [54, 0]
+                ]
+            },
+            { "technique": 3, "focus": [31, 23, 30, 39], "target": [31], "conclusions": [[39, 1]] },
+            { "technique": 2, "focus": [47, 39], "target": [39], "conclusions": [[47, 0]] },
+            {
+                "technique": 3,
+                "focus": [46, 38, 45, 47, 54],
+                "target": [46],
+                "conclusions": [[45, 1]]
+            },
+            { "technique": 2, "focus": [36, 45], "target": [45], "conclusions": [[36, 0]] },
+            { "technique": 2, "focus": [52, 45], "target": [45], "conclusions": [[52, 0]] },
+            { "technique": 3, "focus": [60, 52, 59, 61], "target": [60], "conclusions": [[61, 1]] },
+            { "technique": 3, "focus": [62, 54, 61, 63], "target": [62], "conclusions": [[63, 1]] },
+            {
+                "technique": 7,
+                "focus": [4, 12, 28, 36, 44, 52, 60, 76, 20],
+                "target": [4, 12, 28, 36, 44, 52, 60, 76],
+                "conclusions": [[20, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [29, 21, 28, 30, 37],
+                "target": [21, 28, 30, 37],
+                "conclusions": [[29, 0]]
+            }
+        ]
+    },
+    {
+        "description": "010a0a000000000001010000000001000100000000000000010000000000000100010000010100000000000000000000000001000000000000010000000001000100000000000001000100000000010000000000010000000000000001000000000100010000000301020103010401020202020203010301020202",
+        "steps": [
+            { "technique": 1, "focus": [0, 1, 10], "target": [1, 10], "conclusions": [[0, 0]] },
+            {
+                "technique": 1,
+                "focus": [2, 1, 3, 12],
+                "target": [1, 3, 12],
+                "conclusions": [[2, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [8, 7, 9, 18],
+                "target": [7, 9, 18],
+                "conclusions": [[8, 0]]
+            },
+            { "technique": 1, "focus": [9, 8, 19], "target": [8, 19], "conclusions": [[9, 0]] },
+            {
+                "technique": 1,
+                "focus": [17, 7, 16, 18, 27],
+                "target": [7, 16, 18, 27],
+                "conclusions": [[17, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [19, 9, 18, 29],
+                "target": [9, 18, 29],
+                "conclusions": [[19, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [25, 15, 24, 26, 35],
+                "target": [15, 24, 26, 35],
+                "conclusions": [[25, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [26, 16, 25, 27, 36],
+                "target": [16, 25, 27, 36],
+                "conclusions": [[26, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [36, 26, 35, 37, 46],
+                "target": [26, 35, 37, 46],
+                "conclusions": [[36, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [39, 29, 38, 49],
+                "target": [29, 38, 49],
+                "conclusions": [[39, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [41, 31, 40, 42, 51],
+                "target": [31, 40, 42, 51],
+                "conclusions": [[41, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [42, 32, 41, 43, 52],
+                "target": [32, 41, 43, 52],
+                "conclusions": [[42, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [45, 35, 44, 46, 55],
+                "target": [35, 44, 46, 55],
+                "conclusions": [[45, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [50, 40, 51, 60],
+                "target": [40, 51, 60],
+                "conclusions": [[50, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [52, 42, 51, 53, 62],
+                "target": [42, 51, 53, 62],
+                "conclusions": [[52, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [56, 46, 55, 57, 66],
+                "target": [46, 55, 57, 66],
+                "conclusions": [[56, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [63, 53, 62, 64, 73],
+                "target": [53, 62, 64, 73],
+                "conclusions": [[63, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [66, 56, 65, 67, 76],
+                "target": [56, 65, 67, 76],
+                "conclusions": [[66, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [72, 62, 71, 73, 82],
+                "target": [62, 71, 73, 82],
+                "conclusions": [[72, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [73, 63, 72, 74, 83],
+                "target": [63, 72, 74, 83],
+                "conclusions": [[73, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [77, 67, 76, 78, 87],
+                "target": [67, 76, 78, 87],
+                "conclusions": [[77, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [83, 73, 82, 84, 93],
+                "target": [73, 82, 84, 93],
+                "conclusions": [[83, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [87, 77, 86, 88, 97],
+                "target": [77, 86, 88, 97],
+                "conclusions": [[87, 0]]
+            },
+            { "technique": 1, "focus": [90, 80, 91], "target": [80, 91], "conclusions": [[90, 0]] },
+            {
+                "technique": 1,
+                "focus": [92, 82, 91, 93],
+                "target": [82, 91, 93],
+                "conclusions": [[92, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [98, 88, 97, 99],
+                "target": [88, 97, 99],
+                "conclusions": [[98, 0]]
+            },
+            {
+                "technique": 4,
+                "focus": [5, 4, 6, 15, 14],
+                "target": [5, 4, 15],
+                "conclusions": [[14, 0]]
+            },
+            {
+                "technique": 6,
+                "focus": [3, 13, 23, 33, 43, 53, 63, 73, 83, 93, 113, 12],
+                "target": [3, 13, 23, 33, 43, 53, 63, 73, 83, 93, 113],
+                "conclusions": [[12, 0]]
+            },
+            {
+                "technique": 6,
+                "focus": [5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 115, 24],
+                "target": [5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 115],
+                "conclusions": [[24, 0]]
+            },
+            {
+                "technique": 5,
+                "focus": [0, 2, 3, 4, 5, 6, 8, 9, 100, 1, 7],
+                "target": [0, 2, 3, 4, 5, 6, 8, 9, 100],
+                "conclusions": [
+                    [1, 1],
+                    [7, 1]
+                ]
+            },
+            {
+                "technique": 6,
+                "focus": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100, 10, 16, 18],
+                "target": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100],
+                "conclusions": [
+                    [10, 0],
+                    [16, 0],
+                    [18, 0]
+                ]
+            },
+            {
+                "technique": 5,
+                "focus": [10, 11, 12, 13, 14, 16, 17, 18, 19, 101, 15],
+                "target": [10, 11, 12, 13, 14, 16, 17, 18, 19, 101],
+                "conclusions": [[15, 1]]
+            },
+            {
+                "technique": 6,
+                "focus": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 101, 4],
+                "target": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 101],
+                "conclusions": [[4, 0]]
+            },
+            {
+                "technique": 6,
+                "focus": [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 106, 51, 71, 58, 78],
+                "target": [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 106],
+                "conclusions": [
+                    [51, 0],
+                    [71, 0],
+                    [58, 0],
+                    [78, 0]
+                ]
+            },
+            {
+                "technique": 7,
+                "focus": [0, 1, 2, 4, 5, 6, 7, 8, 9, 100, 3],
+                "target": [0, 1, 2, 4, 5, 6, 7, 8, 9, 100],
+                "conclusions": [[3, 1]]
+            },
+            {
+                "technique": 5,
+                "focus": [8, 18, 28, 38, 48, 58, 68, 78, 98, 118, 88],
+                "target": [8, 18, 28, 38, 48, 58, 68, 78, 98, 118],
+                "conclusions": [[88, 1]]
+            },
+            {
+                "technique": 6,
+                "focus": [8, 18, 28, 38, 48, 58, 68, 78, 88, 98, 118, 37, 49, 79, 97, 99],
+                "target": [8, 18, 28, 38, 48, 58, 68, 78, 88, 98, 118],
+                "conclusions": [
+                    [37, 0],
+                    [49, 0],
+                    [79, 0],
+                    [97, 0],
+                    [99, 0]
+                ]
+            },
+            {
+                "technique": 5,
+                "focus": [9, 19, 39, 49, 59, 79, 89, 99, 119, 29, 69],
+                "target": [9, 19, 39, 49, 59, 79, 89, 99, 119],
+                "conclusions": [
+                    [29, 1],
+                    [69, 1]
+                ]
+            },
+            {
+                "technique": 6,
+                "focus": [9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 119, 38],
+                "target": [9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 119],
+                "conclusions": [[38, 0]]
+            },
+            {
+                "technique": 6,
+                "focus": [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 104, 57],
+                "target": [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 104],
+                "conclusions": [[57, 0]]
+            },
+            {
+                "technique": 6,
+                "focus": [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 105, 44, 64],
+                "target": [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 105],
+                "conclusions": [
+                    [44, 0],
+                    [64, 0]
+                ]
+            },
+            {
+                "technique": 6,
+                "focus": [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 106, 76],
+                "target": [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 106],
+                "conclusions": [[76, 0]]
+            },
+            {
+                "technique": 5,
+                "focus": [70, 71, 72, 73, 75, 76, 77, 78, 79, 107, 74],
+                "target": [70, 71, 72, 73, 75, 76, 77, 78, 79, 107],
+                "conclusions": [[74, 1]]
+            },
+            {
+                "technique": 6,
+                "focus": [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 107, 84, 65, 85],
+                "target": [70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 107],
+                "conclusions": [
+                    [84, 0],
+                    [65, 0],
+                    [85, 0]
+                ]
+            },
+            {
+                "technique": 6,
+                "focus": [90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 109, 82],
+                "target": [90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 109],
+                "conclusions": [[82, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [27, 17, 26, 28, 37],
+                "target": [17, 26, 28, 37],
+                "conclusions": [[27, 0]]
+            },
+            {
+                "technique": 3,
+                "focus": [34, 24, 33, 35, 44],
+                "target": [34],
+                "conclusions": [[35, 1]]
+            },
+            {
+                "technique": 3,
+                "focus": [68, 58, 67, 69, 78],
+                "target": [68],
+                "conclusions": [[67, 1]]
+            },
+            { "technique": 2, "focus": [46, 35], "target": [35], "conclusions": [[46, 0]] },
+            {
+                "technique": 3,
+                "focus": [47, 37, 46, 48, 57],
+                "target": [47],
+                "conclusions": [[48, 1]]
+            },
+            {
+                "technique": 7,
+                "focus": [6, 16, 26, 36, 46, 56, 66, 76, 96, 116, 86],
+                "target": [6, 16, 26, 36, 46, 56, 66, 76, 96, 116],
+                "conclusions": [[86, 1]]
+            },
+            { "technique": 2, "focus": [95, 86], "target": [86], "conclusions": [[95, 0]] },
+            { "technique": 3, "focus": [94, 84, 93, 95], "target": [94], "conclusions": [[93, 1]] },
+            {
+                "technique": 7,
+                "focus": [5, 15, 25, 35, 45, 65, 75, 85, 95, 115, 55],
+                "target": [5, 15, 25, 35, 45, 65, 75, 85, 95, 115],
+                "conclusions": [[55, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [53, 43, 52, 54, 63],
+                "target": [43, 52, 54, 63],
+                "conclusions": [[53, 0]]
+            },
+            {
+                "technique": 8,
+                "focus": [30, 33, 34, 35, 36, 37, 38, 39, 103, 31, 32],
+                "target": [30, 33, 34, 35, 36, 37, 38, 39, 103],
+                "conclusions": [
+                    [31, 0],
+                    [32, 0]
+                ]
+            },
+            {
+                "technique": 7,
+                "focus": [1, 11, 21, 31, 41, 51, 61, 71, 81, 111, 91],
+                "target": [1, 11, 21, 31, 41, 51, 61, 71, 81, 111],
+                "conclusions": [[91, 1]]
+            },
+            { "technique": 2, "focus": [80, 91], "target": [91], "conclusions": [[80, 0]] },
+            { "technique": 3, "focus": [70, 60, 71, 80], "target": [70], "conclusions": [[60, 1]] },
+            {
+                "technique": 3,
+                "focus": [61, 51, 60, 62, 71],
+                "target": [61],
+                "conclusions": [[62, 1]]
+            },
+            {
+                "technique": 7,
+                "focus": [2, 12, 32, 42, 52, 62, 72, 82, 92, 112, 22],
+                "target": [2, 12, 32, 42, 52, 62, 72, 82, 92, 112],
+                "conclusions": [[22, 1]]
+            },
+            { "technique": 2, "focus": [23, 22], "target": [22], "conclusions": [[23, 0]] },
+            {
+                "technique": 3,
+                "focus": [33, 23, 32, 34, 43],
+                "target": [33],
+                "conclusions": [[43, 1]]
+            },
+            {
+                "technique": 8,
+                "focus": [21, 22, 23, 24, 25, 26, 27, 28, 29, 102, 20],
+                "target": [21, 22, 23, 24, 25, 26, 27, 28, 29, 102],
+                "conclusions": [[20, 0]]
+            },
+            { "technique": 3, "focus": [30, 20, 31, 40], "target": [30], "conclusions": [[40, 1]] }
+        ]
+    },
+    {
+        "description": "010a0a000000010000000000000000000000010000000101000000000001010000000000010000000001000000000000000000000001000001000001000001000000000000000000000001000001000001000000000000010001000100000001000100000000000202020102020202030202020004010202020203",
+        "steps": [
+            { "technique": 1, "focus": [0, 1, 10], "target": [1, 10], "conclusions": [[0, 0]] },
+            {
+                "technique": 1,
+                "focus": [1, 0, 2, 11],
+                "target": [0, 2, 11],
+                "conclusions": [[1, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [6, 5, 7, 16],
+                "target": [5, 7, 16],
+                "conclusions": [[6, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [7, 6, 8, 17],
+                "target": [6, 8, 17],
+                "conclusions": [[7, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [8, 7, 9, 18],
+                "target": [7, 9, 18],
+                "conclusions": [[8, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [11, 1, 10, 12, 21],
+                "target": [1, 10, 12, 21],
+                "conclusions": [[11, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [12, 2, 11, 13, 22],
+                "target": [2, 11, 13, 22],
+                "conclusions": [[12, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [22, 12, 21, 23, 32],
+                "target": [12, 21, 23, 32],
+                "conclusions": [[22, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [24, 14, 23, 25, 34],
+                "target": [14, 23, 25, 34],
+                "conclusions": [[24, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [31, 21, 30, 32, 41],
+                "target": [21, 30, 32, 41],
+                "conclusions": [[31, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [35, 25, 34, 36, 45],
+                "target": [25, 34, 36, 45],
+                "conclusions": [[35, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [41, 31, 40, 42, 51],
+                "target": [31, 40, 42, 51],
+                "conclusions": [[41, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [42, 32, 41, 43, 52],
+                "target": [32, 41, 43, 52],
+                "conclusions": [[42, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [44, 34, 43, 45, 54],
+                "target": [34, 43, 45, 54],
+                "conclusions": [[44, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [45, 35, 44, 46, 55],
+                "target": [35, 44, 46, 55],
+                "conclusions": [[45, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [47, 37, 46, 48, 57],
+                "target": [37, 46, 48, 57],
+                "conclusions": [[47, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [62, 52, 61, 63, 72],
+                "target": [52, 61, 63, 72],
+                "conclusions": [[62, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [65, 55, 64, 66, 75],
+                "target": [55, 64, 66, 75],
+                "conclusions": [[65, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [68, 58, 67, 69, 78],
+                "target": [58, 67, 69, 78],
+                "conclusions": [[68, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [79, 69, 78, 89],
+                "target": [69, 78, 89],
+                "conclusions": [[79, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [80, 70, 81, 90],
+                "target": [70, 81, 90],
+                "conclusions": [[80, 0]]
+            },
+            { "technique": 1, "focus": [90, 80, 91], "target": [80, 91], "conclusions": [[90, 0]] },
+            {
+                "technique": 1,
+                "focus": [97, 87, 96, 98],
+                "target": [87, 96, 98],
+                "conclusions": [[97, 0]]
+            },
+            { "technique": 1, "focus": [99, 89, 98], "target": [89, 98], "conclusions": [[99, 0]] },
+            {
+                "technique": 8,
+                "focus": [12, 22, 42, 62, 92, 112, 2, 32, 52, 72, 82],
+                "target": [12, 22, 42, 62, 92, 112],
+                "conclusions": [
+                    [2, 0],
+                    [32, 0],
+                    [52, 0],
+                    [72, 0],
+                    [82, 0]
+                ]
+            },
+            {
+                "technique": 4,
+                "focus": [3, 2, 4, 13, 14],
+                "target": [3, 4, 13],
+                "conclusions": [[14, 0]]
+            },
+            {
+                "technique": 5,
+                "focus": [3, 13, 23, 33, 53, 63, 73, 83, 93, 113, 43],
+                "target": [3, 13, 23, 33, 53, 63, 73, 83, 93, 113],
+                "conclusions": [[43, 1]]
+            },
+            {
+                "technique": 6,
+                "focus": [3, 13, 23, 33, 43, 53, 63, 73, 83, 93, 113, 34, 54, 64],
+                "target": [3, 13, 23, 33, 43, 53, 63, 73, 83, 93, 113],
+                "conclusions": [
+                    [34, 0],
+                    [54, 0],
+                    [64, 0]
+                ]
+            },
+            {
+                "technique": 5,
+                "focus": [14, 24, 34, 44, 54, 64, 74, 84, 94, 114, 4],
+                "target": [14, 24, 34, 44, 54, 64, 74, 84, 94, 114],
+                "conclusions": [[4, 1]]
+            },
+            {
+                "technique": 6,
+                "focus": [4, 14, 24, 34, 44, 54, 64, 74, 84, 94, 114, 5, 13],
+                "target": [4, 14, 24, 34, 44, 54, 64, 74, 84, 94, 114],
+                "conclusions": [
+                    [5, 0],
+                    [13, 0]
+                ]
+            },
+            {
+                "technique": 5,
+                "focus": [0, 1, 2, 3, 4, 5, 6, 7, 8, 100, 9],
+                "target": [0, 1, 2, 3, 4, 5, 6, 7, 8, 100],
+                "conclusions": [[9, 1]]
+            },
+            {
+                "technique": 6,
+                "focus": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100, 18],
+                "target": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100],
+                "conclusions": [[18, 0]]
+            },
+            {
+                "technique": 5,
+                "focus": [11, 12, 13, 14, 15, 16, 17, 18, 19, 101, 10],
+                "target": [11, 12, 13, 14, 15, 16, 17, 18, 19, 101],
+                "conclusions": [[10, 1]]
+            },
+            {
+                "technique": 6,
+                "focus": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 101, 21],
+                "target": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 101],
+                "conclusions": [[21, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [29, 19, 28, 39],
+                "target": [19, 28, 39],
+                "conclusions": [[29, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [30, 20, 31, 40],
+                "target": [20, 31, 40],
+                "conclusions": [[30, 0]]
+            },
+            {
+                "technique": 6,
+                "focus": [1, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111, 60],
+                "target": [1, 11, 21, 31, 41, 51, 61, 71, 81, 91, 111],
+                "conclusions": [[60, 0]]
+            },
+            {
+                "technique": 5,
+                "focus": [3, 13, 33, 43, 53, 63, 73, 83, 93, 113, 23],
+                "target": [3, 13, 33, 43, 53, 63, 73, 83, 93, 113],
+                "conclusions": [[23, 1]]
+            },
+            {
+                "technique": 6,
+                "focus": [9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 119, 78],
+                "target": [9, 19, 29, 39, 49, 59, 69, 79, 89, 99, 119],
+                "conclusions": [[78, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [63, 53, 62, 64, 73],
+                "target": [53, 62, 64, 73],
+                "conclusions": [[63, 0]]
+            },
+            {
+                "technique": 5,
+                "focus": [3, 13, 23, 33, 43, 53, 63, 113, 73, 83, 93],
+                "target": [3, 13, 23, 33, 43, 53, 63, 113],
+                "conclusions": [
+                    [73, 1],
+                    [83, 0],
+                    [93, 1]
+                ]
+            },
+            {
+                "technique": 6,
+                "focus": [80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 108, 76, 96, 98],
+                "target": [80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 108],
+                "conclusions": [
+                    [76, 0],
+                    [96, 0],
+                    [98, 0]
+                ]
+            },
+            {
+                "technique": 1,
+                "focus": [75, 65, 74, 76, 85],
+                "target": [65, 74, 76, 85],
+                "conclusions": [[75, 0]]
+            },
+            {
+                "technique": 3,
+                "focus": [84, 74, 83, 85, 94],
+                "target": [84],
+                "conclusions": [[85, 1]]
+            },
+            {
+                "technique": 3,
+                "focus": [86, 76, 85, 87, 96],
+                "target": [86],
+                "conclusions": [[87, 1]]
+            },
+            {
+                "technique": 3,
+                "focus": [88, 78, 87, 89, 98],
+                "target": [88],
+                "conclusions": [[89, 1]]
+            },
+            { "technique": 2, "focus": [95, 85], "target": [85], "conclusions": [[95, 0]] },
+            {
+                "technique": 3,
+                "focus": [77, 67, 76, 78, 87],
+                "target": [77],
+                "conclusions": [[67, 1]]
+            },
+            { "technique": 2, "focus": [57, 67], "target": [67], "conclusions": [[57, 0]] },
+            { "technique": 2, "focus": [58, 67], "target": [67], "conclusions": [[58, 0]] },
+            { "technique": 2, "focus": [66, 67], "target": [67], "conclusions": [[66, 0]] },
+            { "technique": 3, "focus": [92, 82, 91, 93], "target": [92], "conclusions": [[91, 1]] },
+            { "technique": 2, "focus": [81, 91], "target": [91], "conclusions": [[81, 0]] },
+            {
+                "technique": 8,
+                "focus": [7, 27, 47, 57, 67, 77, 87, 97, 117, 17, 37],
+                "target": [7, 27, 47, 57, 67, 77, 87, 97, 117],
+                "conclusions": [
+                    [17, 0],
+                    [37, 0]
+                ]
+            },
+            {
+                "technique": 3,
+                "focus": [27, 17, 26, 28, 37],
+                "target": [27],
+                "conclusions": [[28, 1]]
+            },
+            {
+                "technique": 4,
+                "focus": [38, 28, 37, 39, 48, 49],
+                "target": [38, 39, 48],
+                "conclusions": [[49, 0]]
+            },
+            { "technique": 3, "focus": [59, 49, 58, 69], "target": [59], "conclusions": [[69, 1]] },
+            { "technique": 2, "focus": [39, 28], "target": [28], "conclusions": [[39, 0]] },
+            {
+                "technique": 3,
+                "focus": [38, 28, 37, 39, 48],
+                "target": [38],
+                "conclusions": [[48, 1]]
+            },
+            {
+                "technique": 7,
+                "focus": [10, 11, 12, 13, 14, 15, 17, 18, 19, 101, 16],
+                "target": [10, 11, 12, 13, 14, 15, 17, 18, 19, 101],
+                "conclusions": [[16, 1]]
+            },
+            { "technique": 2, "focus": [25, 16], "target": [16], "conclusions": [[25, 0]] },
+            {
+                "technique": 3,
+                "focus": [26, 16, 25, 27, 36],
+                "target": [26],
+                "conclusions": [[36, 1]]
+            },
+            { "technique": 2, "focus": [46, 36], "target": [36], "conclusions": [[46, 0]] },
+            {
+                "technique": 3,
+                "focus": [56, 46, 55, 57, 66],
+                "target": [56],
+                "conclusions": [[55, 1]]
+            },
+            {
+                "technique": 8,
+                "focus": [41, 42, 43, 44, 45, 46, 47, 48, 49, 104, 40],
+                "target": [41, 42, 43, 44, 45, 46, 47, 48, 49, 104],
+                "conclusions": [[40, 0]]
+            },
+            { "technique": 3, "focus": [50, 40, 51, 60], "target": [50], "conclusions": [[51, 1]] },
+            { "technique": 2, "focus": [61, 51], "target": [51], "conclusions": [[61, 0]] },
+            {
+                "technique": 3,
+                "focus": [71, 61, 70, 72, 81],
+                "target": [71],
+                "conclusions": [[70, 1]]
+            }
+        ]
+    },
+    {
+        "description": "010a0a010000000000000001000000010000010000000101000000010000000100000000000000000000000000000000010000000000000100000000000101010000000100000000000000000000010000000101000000010000000001000000000100000000000201040102020202010304010102010301030004",
+        "steps": [
+            {
+                "technique": 1,
+                "focus": [3, 2, 4, 13],
+                "target": [2, 4, 13],
+                "conclusions": [[3, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [4, 3, 5, 14],
+                "target": [3, 5, 14],
+                "conclusions": [[4, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [6, 5, 7, 16],
+                "target": [5, 7, 16],
+                "conclusions": [[6, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [17, 7, 16, 18, 27],
+                "target": [7, 16, 18, 27],
+                "conclusions": [[17, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [26, 16, 25, 27, 36],
+                "target": [16, 25, 27, 36],
+                "conclusions": [[26, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [31, 21, 30, 32, 41],
+                "target": [21, 30, 32, 41],
+                "conclusions": [[31, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [32, 22, 31, 33, 42],
+                "target": [22, 31, 33, 42],
+                "conclusions": [[32, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [33, 23, 32, 34, 43],
+                "target": [23, 32, 34, 43],
+                "conclusions": [[33, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [36, 26, 35, 37, 46],
+                "target": [26, 35, 37, 46],
+                "conclusions": [[36, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [37, 27, 36, 38, 47],
+                "target": [27, 36, 38, 47],
+                "conclusions": [[37, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [39, 29, 38, 49],
+                "target": [29, 38, 49],
+                "conclusions": [[39, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [40, 30, 41, 50],
+                "target": [30, 41, 50],
+                "conclusions": [[40, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [41, 31, 40, 42, 51],
+                "target": [31, 40, 42, 51],
+                "conclusions": [[41, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [43, 33, 42, 44, 53],
+                "target": [33, 42, 44, 53],
+                "conclusions": [[43, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [47, 37, 46, 48, 57],
+                "target": [37, 46, 48, 57],
+                "conclusions": [[47, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [56, 46, 55, 57, 66],
+                "target": [46, 55, 57, 66],
+                "conclusions": [[56, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [66, 56, 65, 67, 76],
+                "target": [56, 65, 67, 76],
+                "conclusions": [[66, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [67, 57, 66, 68, 77],
+                "target": [57, 66, 68, 77],
+                "conclusions": [[67, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [71, 61, 70, 72, 81],
+                "target": [61, 70, 72, 81],
+                "conclusions": [[71, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [72, 62, 71, 73, 82],
+                "target": [62, 71, 73, 82],
+                "conclusions": [[72, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [73, 63, 72, 74, 83],
+                "target": [63, 72, 74, 83],
+                "conclusions": [[73, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [77, 67, 76, 78, 87],
+                "target": [67, 76, 78, 87],
+                "conclusions": [[77, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [82, 72, 81, 83, 92],
+                "target": [72, 81, 83, 92],
+                "conclusions": [[82, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [86, 76, 85, 87, 96],
+                "target": [76, 85, 87, 96],
+                "conclusions": [[86, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [87, 77, 86, 88, 97],
+                "target": [77, 86, 88, 97],
+                "conclusions": [[87, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [91, 81, 90, 92],
+                "target": [81, 90, 92],
+                "conclusions": [[91, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [92, 82, 91, 93],
+                "target": [82, 91, 93],
+                "conclusions": [[92, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [96, 86, 95, 97],
+                "target": [86, 95, 97],
+                "conclusions": [[96, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [97, 87, 96, 98],
+                "target": [87, 96, 98],
+                "conclusions": [[97, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [98, 88, 97, 99],
+                "target": [88, 97, 99],
+                "conclusions": [[98, 0]]
+            },
+            {
+                "technique": 4,
+                "focus": [0, 1, 10, 11],
+                "target": [0, 1, 10],
+                "conclusions": [[11, 0]]
+            },
+            {
+                "technique": 4,
+                "focus": [79, 69, 78, 89, 68],
+                "target": [79, 69, 78],
+                "conclusions": [[68, 0]]
+            },
+            {
+                "technique": 7,
+                "focus": [17, 37, 47, 67, 77, 87, 97, 117, 7, 27, 57],
+                "target": [17, 37, 47, 67, 77, 87, 97, 117],
+                "conclusions": [
+                    [7, 1],
+                    [27, 1],
+                    [57, 1]
+                ]
+            },
+            {
+                "technique": 1,
+                "focus": [38, 28, 37, 39, 48],
+                "target": [28, 37, 39, 48],
+                "conclusions": [[38, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [48, 38, 47, 49, 58],
+                "target": [38, 47, 49, 58],
+                "conclusions": [[48, 0]]
+            },
+            { "technique": 2, "focus": [16, 7, 27], "target": [7, 27], "conclusions": [[16, 0]] },
+            { "technique": 2, "focus": [18, 7, 27], "target": [7, 27], "conclusions": [[18, 0]] },
+            { "technique": 2, "focus": [46, 57], "target": [57], "conclusions": [[46, 0]] },
+            {
+                "technique": 7,
+                "focus": [6, 16, 26, 36, 46, 56, 66, 86, 96, 116, 76],
+                "target": [6, 16, 26, 36, 46, 56, 66, 86, 96, 116],
+                "conclusions": [[76, 1]]
+            },
+            { "technique": 2, "focus": [65, 76], "target": [76], "conclusions": [[65, 0]] },
+            { "technique": 2, "focus": [85, 76], "target": [76], "conclusions": [[85, 0]] },
+            {
+                "technique": 8,
+                "focus": [8, 18, 28, 38, 48, 58, 68, 98, 118, 78, 88],
+                "target": [8, 18, 28, 38, 48, 58, 68, 98, 118],
+                "conclusions": [
+                    [78, 0],
+                    [88, 0]
+                ]
+            },
+            { "technique": 3, "focus": [79, 69, 78, 89], "target": [79], "conclusions": [[69, 1]] },
+            { "technique": 3, "focus": [89, 79, 88, 99], "target": [89], "conclusions": [[99, 1]] },
+            { "technique": 3, "focus": [59, 49, 58, 69], "target": [59], "conclusions": [[49, 1]] },
+            {
+                "technique": 6,
+                "focus": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 110, 21, 61, 81],
+                "target": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 110],
+                "conclusions": [
+                    [21, 0],
+                    [61, 0],
+                    [81, 0]
+                ]
+            },
+            {
+                "technique": 5,
+                "focus": [20, 21, 22, 23, 24, 26, 27, 28, 102, 25, 29],
+                "target": [20, 21, 22, 23, 24, 26, 27, 28, 102],
+                "conclusions": [
+                    [25, 1],
+                    [29, 1]
+                ]
+            },
+            {
+                "technique": 6,
+                "focus": [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 102, 13, 14, 34, 35],
+                "target": [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 102],
+                "conclusions": [
+                    [13, 0],
+                    [14, 0],
+                    [34, 0],
+                    [35, 0]
+                ]
+            },
+            {
+                "technique": 5,
+                "focus": [31, 32, 33, 34, 35, 36, 37, 38, 39, 103, 30],
+                "target": [31, 32, 33, 34, 35, 36, 37, 38, 39, 103],
+                "conclusions": [[30, 1]]
+            },
+            {
+                "technique": 6,
+                "focus": [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 104, 53],
+                "target": [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 104],
+                "conclusions": [[53, 0]]
+            },
+            {
+                "technique": 5,
+                "focus": [80, 81, 82, 84, 85, 86, 87, 88, 89, 108, 83],
+                "target": [80, 81, 82, 84, 85, 86, 87, 88, 89, 108],
+                "conclusions": [[83, 1]]
+            },
+            {
+                "technique": 6,
+                "focus": [80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 108, 93, 74],
+                "target": [80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 108],
+                "conclusions": [
+                    [93, 0],
+                    [74, 0]
+                ]
+            },
+            {
+                "technique": 5,
+                "focus": [91, 92, 93, 94, 96, 97, 98, 99, 109, 90, 95],
+                "target": [91, 92, 93, 94, 96, 97, 98, 99, 109],
+                "conclusions": [
+                    [90, 1],
+                    [95, 1]
+                ]
+            },
+            { "technique": 1, "focus": [9, 8, 19], "target": [8, 19], "conclusions": [[9, 0]] },
+            {
+                "technique": 4,
+                "focus": [45, 35, 44, 46, 55, 54],
+                "target": [45, 44, 55],
+                "conclusions": [[54, 0]]
+            },
+            {
+                "technique": 3,
+                "focus": [64, 54, 63, 65, 74],
+                "target": [64],
+                "conclusions": [[63, 1]]
+            },
+            { "technique": 2, "focus": [62, 63], "target": [63], "conclusions": [[62, 0]] },
+            {
+                "technique": 8,
+                "focus": [3, 13, 33, 43, 53, 63, 73, 83, 93, 113, 23],
+                "target": [3, 13, 33, 43, 53, 63, 73, 83, 93, 113],
+                "conclusions": [[23, 0]]
+            },
+            {
+                "technique": 3,
+                "focus": [15, 5, 14, 16, 25],
+                "target": [15],
+                "conclusions": [[5, 1]]
+            },
+            {
+                "technique": 7,
+                "focus": [4, 14, 24, 34, 54, 64, 74, 84, 94, 114, 44],
+                "target": [4, 14, 24, 34, 54, 64, 74, 84, 94, 114],
+                "conclusions": [[44, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [55, 45, 54, 56, 65],
+                "target": [45, 54, 56, 65],
+                "conclusions": [[55, 0]]
+            },
+            {
+                "technique": 8,
+                "focus": [0, 3, 4, 5, 6, 7, 8, 9, 100, 1, 2],
+                "target": [0, 3, 4, 5, 6, 7, 8, 9, 100],
+                "conclusions": [
+                    [1, 0],
+                    [2, 0]
+                ]
+            },
+            { "technique": 3, "focus": [0, 1, 10], "target": [0], "conclusions": [[10, 1]] },
+            {
+                "technique": 3,
+                "focus": [12, 2, 11, 13, 22],
+                "target": [12],
+                "conclusions": [[22, 1]]
+            },
+            {
+                "technique": 7,
+                "focus": [1, 11, 21, 31, 41, 61, 71, 81, 91, 111, 51],
+                "target": [1, 11, 21, 31, 41, 61, 71, 81, 91, 111],
+                "conclusions": [[51, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [42, 32, 41, 43, 52],
+                "target": [32, 41, 43, 52],
+                "conclusions": [[42, 0]]
+            },
+            { "technique": 2, "focus": [50, 51], "target": [51], "conclusions": [[50, 0]] },
+            { "technique": 3, "focus": [60, 50, 61, 70], "target": [60], "conclusions": [[70, 1]] }
+        ]
+    },
+    {
+        "description": "010a0a000000000000000001000000000100000000010101000100000000000000000000000001000000000001000000000100000000000000000001000000000000010000000000010001000001000001010001000001000000000000000000000000000100010203010300030103000402020103020103010203",
+        "steps": [
+            { "technique": 1, "focus": [0, 1, 10], "target": [1, 10], "conclusions": [[0, 0]] },
+            {
+                "technique": 1,
+                "focus": [1, 0, 2, 11],
+                "target": [0, 2, 11],
+                "conclusions": [[1, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [2, 1, 3, 12],
+                "target": [1, 3, 12],
+                "conclusions": [[2, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [4, 3, 5, 14],
+                "target": [3, 5, 14],
+                "conclusions": [[4, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [5, 4, 6, 15],
+                "target": [4, 6, 15],
+                "conclusions": [[5, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [6, 5, 7, 16],
+                "target": [5, 7, 16],
+                "conclusions": [[6, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [11, 1, 10, 12, 21],
+                "target": [1, 10, 12, 21],
+                "conclusions": [[11, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [15, 5, 14, 16, 25],
+                "target": [5, 14, 16, 25],
+                "conclusions": [[15, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [16, 6, 15, 17, 26],
+                "target": [6, 15, 17, 26],
+                "conclusions": [[16, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [24, 14, 23, 25, 34],
+                "target": [14, 23, 25, 34],
+                "conclusions": [[24, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [26, 16, 25, 27, 36],
+                "target": [16, 25, 27, 36],
+                "conclusions": [[26, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [27, 17, 26, 28, 37],
+                "target": [17, 26, 28, 37],
+                "conclusions": [[27, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [33, 23, 32, 34, 43],
+                "target": [23, 32, 34, 43],
+                "conclusions": [[33, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [37, 27, 36, 38, 47],
+                "target": [27, 36, 38, 47],
+                "conclusions": [[37, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [38, 28, 37, 39, 48],
+                "target": [28, 37, 39, 48],
+                "conclusions": [[38, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [39, 29, 38, 49],
+                "target": [29, 38, 49],
+                "conclusions": [[39, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [43, 33, 42, 44, 53],
+                "target": [33, 42, 44, 53],
+                "conclusions": [[43, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [44, 34, 43, 45, 54],
+                "target": [34, 43, 45, 54],
+                "conclusions": [[44, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [48, 38, 47, 49, 58],
+                "target": [38, 47, 49, 58],
+                "conclusions": [[48, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [49, 39, 48, 59],
+                "target": [39, 48, 59],
+                "conclusions": [[49, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [50, 40, 51, 60],
+                "target": [40, 51, 60],
+                "conclusions": [[50, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [52, 42, 51, 53, 62],
+                "target": [42, 51, 53, 62],
+                "conclusions": [[52, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [54, 44, 53, 55, 64],
+                "target": [44, 53, 55, 64],
+                "conclusions": [[54, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [58, 48, 57, 59, 68],
+                "target": [48, 57, 59, 68],
+                "conclusions": [[58, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [60, 50, 61, 70],
+                "target": [50, 61, 70],
+                "conclusions": [[60, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [65, 55, 64, 66, 75],
+                "target": [55, 64, 66, 75],
+                "conclusions": [[65, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [85, 75, 84, 86, 95],
+                "target": [75, 84, 86, 95],
+                "conclusions": [[85, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [86, 76, 85, 87, 96],
+                "target": [76, 85, 87, 96],
+                "conclusions": [[86, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [91, 81, 90, 92],
+                "target": [81, 90, 92],
+                "conclusions": [[91, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [92, 82, 91, 93],
+                "target": [82, 91, 93],
+                "conclusions": [[92, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [94, 84, 93, 95],
+                "target": [84, 93, 95],
+                "conclusions": [[94, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [95, 85, 94, 96],
+                "target": [85, 94, 96],
+                "conclusions": [[95, 0]]
+            },
+            {
+                "technique": 4,
+                "focus": [99, 89, 98, 88],
+                "target": [99, 89, 98],
+                "conclusions": [[88, 0]]
+            },
+            {
+                "technique": 8,
+                "focus": [41, 43, 44, 46, 48, 49, 104, 40, 42, 45, 47],
+                "target": [41, 43, 44, 46, 48, 49, 104],
+                "conclusions": [
+                    [40, 0],
+                    [42, 0],
+                    [45, 0],
+                    [47, 0]
+                ]
+            },
+            {
+                "technique": 3,
+                "focus": [46, 36, 45, 47, 56],
+                "target": [46],
+                "conclusions": [[36, 1]]
+            },
+            { "technique": 2, "focus": [25, 36], "target": [36], "conclusions": [[25, 0]] },
+            {
+                "technique": 3,
+                "focus": [35, 25, 34, 36, 45],
+                "target": [35],
+                "conclusions": [[34, 1]]
+            },
+            { "technique": 2, "focus": [23, 34], "target": [34], "conclusions": [[23, 0]] },
+            {
+                "technique": 8,
+                "focus": [80, 83, 85, 86, 88, 108, 81, 82, 84, 87, 89],
+                "target": [80, 83, 85, 86, 88, 108],
+                "conclusions": [
+                    [81, 0],
+                    [82, 0],
+                    [84, 0],
+                    [87, 0],
+                    [89, 0]
+                ]
+            },
+            {
+                "technique": 4,
+                "focus": [77, 67, 76, 78, 87, 66],
+                "target": [77, 67, 76],
+                "conclusions": [[66, 0]]
+            },
+            { "technique": 3, "focus": [99, 89, 98], "target": [99], "conclusions": [[98, 1]] },
+            { "technique": 3, "focus": [97, 87, 96, 98], "target": [97], "conclusions": [[96, 1]] },
+            {
+                "technique": 7,
+                "focus": [6, 16, 26, 36, 46, 56, 66, 86, 96, 116, 76],
+                "target": [6, 16, 26, 36, 46, 56, 66, 86, 96, 116],
+                "conclusions": [[76, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [67, 57, 66, 68, 77],
+                "target": [57, 66, 68, 77],
+                "conclusions": [[67, 0]]
+            },
+            { "technique": 2, "focus": [75, 76], "target": [76], "conclusions": [[75, 0]] },
+            {
+                "technique": 7,
+                "focus": [5, 15, 25, 35, 45, 65, 75, 85, 95, 115, 55],
+                "target": [5, 15, 25, 35, 45, 65, 75, 85, 95, 115],
+                "conclusions": [[55, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [57, 47, 56, 58, 67],
+                "target": [47, 56, 58, 67],
+                "conclusions": [[57, 0]]
+            },
+            { "technique": 2, "focus": [64, 55], "target": [55], "conclusions": [[64, 0]] },
+            {
+                "technique": 3,
+                "focus": [74, 64, 73, 75, 84],
+                "target": [74],
+                "conclusions": [[73, 1]]
+            },
+            {
+                "technique": 3,
+                "focus": [83, 73, 82, 84, 93],
+                "target": [83],
+                "conclusions": [[93, 1]]
+            },
+            { "technique": 2, "focus": [62, 73], "target": [73], "conclusions": [[62, 0]] },
+            { "technique": 2, "focus": [72, 73], "target": [73], "conclusions": [[72, 0]] },
+            {
+                "technique": 3,
+                "focus": [63, 53, 62, 64, 73],
+                "target": [63],
+                "conclusions": [[53, 1]]
+            },
+            {
+                "technique": 8,
+                "focus": [13, 23, 33, 43, 53, 63, 73, 83, 93, 113, 3],
+                "target": [13, 23, 33, 43, 53, 63, 73, 83, 93, 113],
+                "conclusions": [[3, 0]]
+            },
+            {
+                "technique": 7,
+                "focus": [4, 24, 34, 44, 54, 64, 74, 84, 94, 114, 14],
+                "target": [4, 24, 34, 44, 54, 64, 74, 84, 94, 114],
+                "conclusions": [[14, 1]]
+            },
+            {
+                "technique": 7,
+                "focus": [0, 1, 2, 3, 4, 5, 6, 8, 100, 7, 9],
+                "target": [0, 1, 2, 3, 4, 5, 6, 8, 100],
+                "conclusions": [
+                    [7, 1],
+                    [9, 1]
+                ]
+            },
+            {
+                "technique": 1,
+                "focus": [29, 19, 28, 39],
+                "target": [19, 28, 39],
+                "conclusions": [[29, 0]]
+            },
+            { "technique": 2, "focus": [17, 7], "target": [7], "conclusions": [[17, 0]] },
+            {
+                "technique": 3,
+                "focus": [18, 8, 17, 19, 28],
+                "target": [18],
+                "conclusions": [[28, 1]]
+            },
+            {
+                "technique": 8,
+                "focus": [8, 18, 28, 38, 48, 58, 78, 88, 98, 118, 68],
+                "target": [8, 18, 28, 38, 48, 58, 78, 88, 98, 118],
+                "conclusions": [[68, 0]]
+            },
+            {
+                "technique": 3,
+                "focus": [78, 68, 77, 79, 88],
+                "target": [78],
+                "conclusions": [[79, 1]]
+            },
+            { "technique": 3, "focus": [69, 59, 68, 79], "target": [69], "conclusions": [[59, 1]] },
+            {
+                "technique": 7,
+                "focus": [11, 13, 14, 15, 16, 17, 18, 19, 101, 10, 12],
+                "target": [11, 13, 14, 15, 16, 17, 18, 19, 101],
+                "conclusions": [
+                    [10, 1],
+                    [12, 1]
+                ]
+            },
+            {
+                "technique": 1,
+                "focus": [21, 11, 20, 22, 31],
+                "target": [11, 20, 22, 31],
+                "conclusions": [[21, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [30, 20, 31, 40],
+                "target": [20, 31, 40],
+                "conclusions": [[30, 0]]
+            },
+            {
+                "technique": 1,
+                "focus": [32, 22, 31, 33, 42],
+                "target": [22, 31, 33, 42],
+                "conclusions": [[32, 0]]
+            },
+            {
+                "technique": 7,
+                "focus": [30, 32, 33, 34, 35, 36, 37, 38, 39, 103, 31],
+                "target": [30, 32, 33, 34, 35, 36, 37, 38, 39, 103],
+                "conclusions": [[31, 1]]
+            },
+            {
+                "technique": 1,
+                "focus": [51, 41, 50, 52, 61],
+                "target": [41, 50, 52, 61],
+                "conclusions": [[51, 0]]
+            },
+            {
+                "technique": 7,
+                "focus": [1, 11, 21, 31, 41, 51, 71, 81, 91, 111, 61],
+                "target": [1, 11, 21, 31, 41, 51, 71, 81, 91, 111],
+                "conclusions": [[61, 1]]
+            },
+            { "technique": 2, "focus": [70, 61], "target": [61], "conclusions": [[70, 0]] },
+            { "technique": 3, "focus": [80, 70, 81, 90], "target": [80], "conclusions": [[90, 1]] }
+        ]
+    }
+]

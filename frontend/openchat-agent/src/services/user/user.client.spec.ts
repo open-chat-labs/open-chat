@@ -113,3 +113,36 @@ describe("UserClient sending crypto in a direct chat", () => {
         expect(client.transferFromWallet(content)).toBe(content);
     });
 });
+
+describe("UserClient approving a spender", () => {
+    const LEDGER = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+    const SPENDER = Principal.fromText("rno2w-sqaaa-aaaaa-aaacq-cai");
+
+    // The spender the User canister is asked to approve
+    async function approved(subaccount?: Uint8Array): Promise<unknown> {
+        let sent: { spender: unknown } | undefined;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const client = Object.create(UserClient.prototype) as any;
+        client.update = (method: string, args: { spender: unknown }) => {
+            expect(method).toEqual("approve_transfer");
+            sent = args;
+            return Promise.resolve({ kind: "success" });
+        };
+
+        await client.approveTransfer({ owner: SPENDER, subaccount }, LEDGER, 100n, 1_000n, "1234");
+        return sent?.spender;
+    }
+
+    test("a spender's subaccount is approved, as a group or community pulls a gate's payment", async () => {
+        const subaccount = new Uint8Array(32).fill(7);
+
+        expect(await approved(subaccount)).toEqual({
+            owner: SPENDER.toUint8Array(),
+            subaccount: [...subaccount],
+        });
+    });
+
+    test("a spender's default account is approved, as the ProposalsBot pulls a proposal's fee", async () => {
+        expect(await approved()).toEqual({ owner: SPENDER.toUint8Array(), subaccount: undefined });
+    });
+});

@@ -52,8 +52,7 @@ pub struct DailyPuzzleConfig {
     /// CHIT credited on solve, indexed by the number of consecutive days solved BEFORE this one,
     /// clamped to the last entry. So [250, 300, 350, 400, 450, 500, 500] pays 250 on a fresh streak.
     pub reward_by_streak: Vec<u32>,
-    /// CHIT deducted from the reward per hint step served, floored at zero. Every step counts:
-    /// a hint is a hint, whichever level it was bought at.
+    /// CHIT deducted from the reward per hint step served, floored at zero.
     pub hint_penalty: u32,
     /// A solve faster than this is still recorded, paid and counted for the streak, but the local
     /// user index does not push it to the results index, so it can back no card and move no
@@ -98,13 +97,9 @@ impl Default for DailyPuzzleConfig {
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct GameConfig {
-    /// CHIT per hint level, index 0 = level 1 (highlight), 1 = level 2 (explain), 2 = level 3 (fill).
-    /// Every level costs something: a free tier makes the whole ladder skippable and leaves the
-    /// paid tiers unreachable, because a free level 1 on each of `max_hints` steps exhausts the
-    /// same budget the paid ones draw on. Upgrading a step already served costs the difference
-    /// between the two levels, so working up the ladder is never dearer than jumping to the top,
-    /// which is also why the prices must strictly increase: a flat or descending entry prices an
-    /// upgrade to the answer at nothing.
+    /// CHIT for one hint: the next step's outline and its sentence, never its answer. One
+    /// entry. A list because it once priced a three-level ladder, and the field travels with every
+    /// pushed puzzle and every public one.
     pub hint_prices: Vec<u32>,
     /// Maximum hint steps per user per puzzle.
     pub max_hints: u8,
@@ -113,7 +108,7 @@ pub struct GameConfig {
 impl Default for GameConfig {
     fn default() -> Self {
         GameConfig {
-            hint_prices: vec![25, 75, 200],
+            hint_prices: vec![100],
             max_hints: 3,
         }
     }
@@ -137,6 +132,13 @@ pub struct DailyPuzzle {
     #[serde(default)]
     pub solution_pairs: Vec<(u16, u8)>,
     pub hints: Vec<PuzzleHint>,
+    /// Per hint, in the order of `hints`: (conclusion key, key the board draws it on) for each of
+    /// its conclusions (`Puzzle::display_keys`). The two are the same in every game but Bridges,
+    /// whose conclusions are gaps between islands while its hints highlight cells. Comparing a
+    /// hint's focus or target with its conclusions has to go through this. Empty for puzzles
+    /// pushed before it existed, which fall back to the conclusion keys.
+    #[serde(default)]
+    pub hint_settles: Vec<Vec<(u16, u16)>>,
     pub starts_at: TimestampMillis,
     pub expires_at: TimestampMillis,
     /// Series config, identical on every puzzle of the same day.
@@ -202,14 +204,15 @@ pub struct DailyPuzzleResult {
     pub solved_at: TimestampMillis,
 }
 
-/// A hint as served to one user: the generator's step plus the level it was revealed to.
+/// A hint as served to one user: the generator's step without its conclusions.
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ServedHint {
     pub hint: PuzzleHint,
-    /// 1 = focus only, `technique` withheld as 0; 2 = focus + technique + target; 3 = all of it
-    /// plus the conclusions, which are the answer. A `target` naming a key the step concludes is
-    /// withheld below level 3, so an empty `target` at level 2 means "paint the whole of `focus`".
+    /// 2 for every hint served now: focus, technique and target, never the conclusions. A `target`
+    /// naming a key the step concludes is withheld, so an empty `target` means "paint the whole
+    /// of `focus`". 1 and 3 are records from the three-level ladder hints once were, sold before
+    /// it went: 1 without the technique, 3 with the conclusions.
     pub level: u8,
     /// True when this is a "you have a mistake" hint: `focus` is the single lowest key whose value
     /// disagrees with the solution, and there are no conclusions. One key, never the set: `filled`

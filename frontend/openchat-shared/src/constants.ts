@@ -30,6 +30,10 @@ export const ONE_WEEK = ONE_DAY * 7;
 export const ONE_MONTH = ONE_WEEK * 4;
 export const ONE_YEAR = 365 * ONE_DAY;
 export const LARGE_GROUP_THRESHOLD = 1000;
+// The most members of a chat or community which are loaded at a time
+export const MEMBERS_PAGE_SIZE = 1000;
+// How long to wait after the last keystroke before searching for members which aren't held
+export const FIND_MEMBERS_DELAY_MS = 300;
 // Bump this when the platform terms change: users whose recorded acceptance is below this
 // version are shown a blocking terms-updated notice and must affirmatively accept.
 export const CURRENT_TERMS_VERSION = 2;

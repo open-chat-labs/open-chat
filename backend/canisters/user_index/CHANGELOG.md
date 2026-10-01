@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Tell each LocalUserIndex which of its users have a direct chat with, or have blocked, a migrated user ([#9697](https://github.com/open-chat-labs/open-chat/pull/9697))
+- Send events naming a migrated user by an old id on to the LocalUserIndex holding their new id ([#9706](https://github.com/open-chat-labs/open-chat/pull/9706))
 
 ## [[2.0.2080](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2080-user_index)] - 2026-09-30
 

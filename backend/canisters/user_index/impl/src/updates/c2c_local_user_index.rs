@@ -351,6 +351,16 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.push_event_to_all_local_user_indexes(UserIndexEvent::UserUnblocked(user_id, unblocked), Some(caller));
         }
         LocalUserIndexEvent::SetMaxStreak(user_id, max_streak) => state.data.users.set_max_streak(&user_id, max_streak),
+        LocalUserIndexEvent::EventForMigratedUser(ev) => {
+            let user_id = state.data.migrated_user_ids.latest(ev.user_id);
+            state.push_event_to_local_user_index(
+                user_id,
+                UserIndexEvent::EventForMigratedUser(Box::new(local_user_index_canister::EventForMigratedUser {
+                    user_id,
+                    event: ev.event,
+                })),
+            );
+        }
     }
 }
 

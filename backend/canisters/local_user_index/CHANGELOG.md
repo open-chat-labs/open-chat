@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Keep the recorded wasm chunk hashes when upgraded, now that every LocalUserIndex clears them whenever it clears its chunk store ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))
 - Refund a deleted group's or community's cycles before deleting its canister ([#9680](https://github.com/open-chat-labs/open-chat/pull/9680))
+- Name a wrong placement (line, bulb, tent, bridge or CHAT) before a wrong "no" mark in the free mistake check, since the placement is usually the cause ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+- Serve daily puzzle hints at one level for one price: the step's outline and technique, never its conclusions. A step the user already has is re-served free, whatever level an older client asks for ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 
 ### Removed
 
@@ -23,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Tell a migrated user's direct chat peers and those who have blocked them of the user's new id ([#9697](https://github.com/open-chat-labs/open-chat/pull/9697))
+- Compare a hint step's conclusions with its focus and target as the cells the board draws them on, so Bridges hints, whose conclusions are gaps between islands, no longer skip the steps they rest on or send an outline that names their answer ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+- Send events for a user migrated to a MultiUser canister on to their new id rather than losing them ([#9706](https://github.com/open-chat-labs/open-chat/pull/9706))
 
 ## [[2.0.2077](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2077-local_user_index)] - 2026-09-30
 

@@ -55,6 +55,7 @@ import type {
     JoinVideoCallResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
+    LookupMembersResponse,
     MarkReadRequest,
     MarkReadResponse,
     Message,
@@ -314,6 +315,7 @@ export type WorkerRequest =
     | LastOnline
     | MarkAsOnline
     | GetGroupDetails
+    | LookupMembers
     | MarkMessagesRead
     | GetAllCachedUsers
     | GetUsers
@@ -450,6 +452,7 @@ export type WorkerRequest =
     | SwapTokens
     | TokenSwapStatus
     | ApproveTransfer
+    | ApproveAccessGatePayment
     | DeleteDirectChat
     | GetDiamondMembershipFees
     | GetReportedMessages
@@ -1664,6 +1667,17 @@ type GetGroupDetails = {
     kind: "getGroupDetails";
 };
 
+// Finds which of the users are members of a chat or community. Those who are are also added to its
+// cached details.
+type LookupMembers = {
+    kind: "lookupMembers";
+    id: MultiUserChatIdentifier | CommunityIdentifier;
+    userIds: string[];
+    // The time up to which the details held are known to be up to date. A replica which is behind
+    // it isn't asked.
+    latestKnownUpdate: bigint;
+};
+
 type GetAllCachedUsers = {
     kind: "getAllCachedUsers";
 };
@@ -2126,6 +2140,7 @@ export type WorkerResponseInner =
     | Record<string, number>
     | GroupChatDetailsResponse
     | GroupChatDetails
+    | LookupMembersResponse
     | MarkReadResponse
     | UsersResponse
     | CurrentUserResponse
@@ -2339,6 +2354,15 @@ type ApproveTransfer = {
     expiresIn: bigint | undefined;
     pin: string | undefined;
     kind: "approveTransfer";
+};
+
+type ApproveAccessGatePayment = {
+    canisterId: string;
+    ledger: string;
+    amount: bigint;
+    expiresIn: bigint;
+    pin: string | undefined;
+    kind: "approveAccessGatePayment";
 };
 
 type DeclineInvitation = {
@@ -2555,6 +2579,8 @@ export type WorkerResult<T> = T extends Init
     ? MarkReadResponse
     : T extends GetGroupDetails
     ? GroupChatDetailsResponse
+    : T extends LookupMembers
+    ? LookupMembersResponse
     : T extends CurrentUser
     ? CurrentUserResponse
     : T extends CreateUserClient
@@ -2768,6 +2794,8 @@ export type WorkerResult<T> = T extends Init
     : T extends ReportMessage
     ? boolean
     : T extends ApproveTransfer
+    ? ApproveTransferResponse
+    : T extends ApproveAccessGatePayment
     ? ApproveTransferResponse
     : T extends DeclineInvitation
     ? DeclineInvitationResponse

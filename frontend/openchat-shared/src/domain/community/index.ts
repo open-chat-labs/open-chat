@@ -247,7 +247,12 @@ export type CommunityDetailsUpdatesResponse =
 
 export type CommunityDetails = {
     kind: "success";
+    // All of the members, unless `moreMembersAfter` is set, in which case the first page of them
+    // and any who have since been looked up
     members: Member[];
+    // Set if not all of the members are held, to the user id after which those not in the first
+    // page start
+    moreMembersAfter?: string;
     blockedUsers: Set<string>;
     invitedUsers: Set<string>;
     rules: VersionedRules;
@@ -255,6 +260,9 @@ export type CommunityDetails = {
     userGroups: Map<number, UserGroupDetails>;
     referrals: Set<string>;
     bots: InstalledBotDetails[];
+    // When the cached copy was last loaded or brought up to date, by the client's clock. Only the
+    // cache sets it.
+    syncedAt?: bigint;
 };
 
 export type CommunityDetailsUpdates = {

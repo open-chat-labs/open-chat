@@ -5,10 +5,14 @@ use ic_stable_structures::memory_manager::MemoryId;
 pub const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 // Queries
+generate_msgpack_query_call!(channel_members);
 generate_msgpack_query_call!(channel_summary);
 generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
 generate_msgpack_query_call!(local_user_index);
+generate_msgpack_query_call!(lookup_channel_members);
+generate_msgpack_query_call!(lookup_members);
+generate_msgpack_query_call!(members);
 generate_msgpack_query_call!(messages_by_message_index);
 generate_msgpack_query_call!(search_channel);
 generate_msgpack_query_call!(selected_channel_initial);
@@ -492,7 +496,10 @@ pub mod happy_path {
             env,
             sender,
             community_id.into(),
-            &community_canister::selected_initial::Args { invite_code: None },
+            &community_canister::selected_initial::Args {
+                invite_code: None,
+                max_members: None,
+            },
         );
 
         match response {
@@ -556,7 +563,10 @@ pub mod happy_path {
             env,
             sender.principal,
             community_id.into(),
-            &community_canister::selected_channel_initial::Args { channel_id },
+            &community_canister::selected_channel_initial::Args {
+                channel_id,
+                max_members: None,
+            },
         );
 
         match response {
