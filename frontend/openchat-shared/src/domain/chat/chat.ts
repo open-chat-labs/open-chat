@@ -1738,6 +1738,8 @@ export type GroupChatDetailsResponse =
 export type GroupChatDetailsUpdatesResponse =
     | ({ kind: "success" } & GroupChatDetailsUpdates)
     | { kind: "success_no_updates"; timestamp: bigint }
+    // The details in full, because the canister no longer has all of the updates asked for
+    | { kind: "snapshot"; details: GroupChatDetails }
     | Failure;
 
 // Those of the users asked about who are members
@@ -1757,9 +1759,6 @@ export type GroupChatDetails = {
     timestamp: bigint;
     bots: InstalledBotDetails[];
     webhooks: WebhookDetails[];
-    // When the cached copy was last loaded or brought up to date, by the client's clock. Only the
-    // cache sets it.
-    syncedAt?: bigint;
 };
 
 export type GroupChatDetailsUpdates = {

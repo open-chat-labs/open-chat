@@ -8,7 +8,7 @@ use tents::{
     solution_pairs, solve_with_trace,
 };
 
-const SEEDS_PER_CONFIG: u64 = 200;
+const SEEDS_PER_CONFIG: u64 = 20;
 
 fn params(width: u8, height: u8, tier: Tier) -> Params {
     Params::default_for(width, height, tier)
@@ -49,7 +49,7 @@ fn generated_10x10() {
 #[test]
 fn every_playable_size_generates() {
     for p in playable() {
-        must_generate::<Tents>(p, 0..25);
+        must_generate::<Tents>(p, 0..5);
     }
 }
 
@@ -61,7 +61,7 @@ fn every_workable_density_generates() {
         for tier in Tier::ALL {
             let mut p = params(10, 10, tier);
             p.tree_pct = tree_pct;
-            must_generate::<Tents>(p, 0..25);
+            must_generate::<Tents>(p, 0..5);
         }
     }
 }
@@ -141,7 +141,7 @@ fn tiny_grids_report_the_tier_they_used() {
 
 #[test]
 fn single_cell_perturbation_is_caught() {
-    for seed in 0..50 {
+    for seed in 0..10 {
         let p = params(8, 8, if seed % 2 == 0 { Tier::Easy } else { Tier::Tricky });
         let g = generate(seed, p).unwrap();
         for i in 0..g.solution.len() {

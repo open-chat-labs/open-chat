@@ -1,4 +1,5 @@
 use crate::model::members::CommunityMembers;
+use group_community_common::Unlapsing;
 use ic_principal::Principal;
 use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
@@ -14,6 +15,7 @@ enum Operation {
     Add {
         user_id: UserId,
         referred_by_index: Option<usize>,
+        bot: bool,
     },
     ChangeRole {
         owner_index: usize,
@@ -40,6 +42,14 @@ enum Operation {
         user_index: usize,
     },
     UnlapseAll,
+    StartUnlapsing,
+    UnlapseSome {
+        count: u8,
+    },
+    Migrate {
+        user_index: usize,
+        new_user_index: usize,
+    },
     SetSuspended {
         user_index: usize,
         suspended: bool,
@@ -52,8 +62,8 @@ enum Operation {
 
 fn operation_strategy() -> impl Strategy<Value = Operation> {
     prop_oneof![
-        50 => (any::<usize>(), any::<bool>(), any::<usize>())
-            .prop_map(|(user_index, set_referrer, referrer_index)| Operation::Add { user_id: user_id(user_index), referred_by_index: set_referrer.then_some(referrer_index) }),
+        50 => (any::<usize>(), any::<bool>(), any::<usize>(), 0..10u8)
+            .prop_map(|(user_index, set_referrer, referrer_index, n)| Operation::Add { user_id: user_id(user_index), referred_by_index: set_referrer.then_some(referrer_index), bot: n == 0 }),
         20 => (any::<usize>(), any::<usize>(), any::<usize>())
             .prop_map(|(owner_index, user_index, role_index)| Operation::ChangeRole { owner_index, user_index, role: role(role_index) }),
         10 => (any::<usize>(), any::<usize>()).prop_map(|(user_index, value)| Operation::SetDisplayName { user_index, value: Some(value.to_string()) } ),
@@ -66,6 +76,10 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
             .prop_map(|(user_indexes, member_index)| Operation::AddFormerMembers { user_ids: user_indexes.into_iter().map(user_id).collect(), member_index }),
         3 => any::<usize>().prop_map(|user_index| Operation::Unlapse { user_index}),
         1 => Just(Operation::UnlapseAll),
+        1 => Just(Operation::StartUnlapsing),
+        3 => any::<u8>().prop_map(|count| Operation::UnlapseSome { count }),
+        2 => (any::<usize>(), any::<usize>())
+            .prop_map(|(user_index, new_user_index)| Operation::Migrate { user_index, new_user_index }),
         2 => any::<usize>().prop_map(|user_index| Operation::SetSuspended { user_index, suspended: true }),
         1 => any::<usize>().prop_map(|user_index| Operation::SetSuspended { user_index, suspended: false }),
     ]
@@ -84,6 +98,15 @@ fn comprehensive(#[strategy(pvec(operation_strategy(), 1_000..5_000))] ops: Vec<
         timestamp += 1000;
     }
 
+    // Once unlapsing has finished, nobody who lapsed before it started is still lapsed
+    if let Some(Unlapsing { before, .. }) = members.unlapsing {
+        members.unlapse_while(timestamp, || true);
+        for user_id in members.lapsed.clone() {
+            let member = members.get_by_user_id(&user_id).unwrap();
+            assert!(member.lapsed.timestamp > before, "{user_id} is still lapsed");
+        }
+    }
+
     members.check_invariants();
 }
 
@@ -92,6 +115,7 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
         Operation::Add {
             user_id,
             referred_by_index,
+            bot,
         } => {
             let referred_by = referred_by_index.and_then(|i| {
                 if members.members_and_channels.is_empty() {
@@ -100,7 +124,8 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
                     Some(get_from_map(&members.members_and_channels, i))
                 }
             });
-            members.add(user_id, user_id.as_principal(), UserType::User, referred_by, timestamp);
+            let user_type = if bot { UserType::OcControlledBot } else { UserType::User };
+            members.add(user_id, user_id.as_principal(), user_type, referred_by, timestamp);
         }
         Operation::ChangeRole {
             owner_index,
@@ -145,7 +170,24 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
             }
         }
         Operation::UnlapseAll => {
-            members.unlapse_all(timestamp);
+            members.start_unlapsing(timestamp);
+            members.unlapse_while(timestamp, || true);
+        }
+        Operation::StartUnlapsing => members.start_unlapsing(timestamp),
+        Operation::UnlapseSome { count } => {
+            let mut unlapsed = 0;
+            members.unlapse_while(timestamp, || {
+                unlapsed += 1;
+                unlapsed <= count
+            });
+        }
+        Operation::Migrate {
+            user_index,
+            new_user_index,
+        } => {
+            let old_user_id = get_from_map(&members.members_and_channels, user_index);
+            let new_user_id = user_id(new_user_index);
+            members.migrate_user_id(old_user_id, new_user_id, None, timestamp);
         }
         Operation::SetSuspended { user_index, suspended } => {
             if suspended {

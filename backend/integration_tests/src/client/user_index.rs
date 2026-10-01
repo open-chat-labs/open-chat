@@ -255,6 +255,16 @@ pub mod happy_path {
         user_index_canister_id: CanisterId,
         wasm: CanisterWasm,
     ) {
+        upgrade_user_canister_wasm_with_filter(env, sender, user_index_canister_id, wasm, None);
+    }
+
+    pub fn upgrade_user_canister_wasm_with_filter(
+        env: &mut PocketIc,
+        sender: Principal,
+        user_index_canister_id: CanisterId,
+        wasm: CanisterWasm,
+        filter: Option<UpgradesFilter>,
+    ) {
         upload_wasm_in_chunks(env, sender, user_index_canister_id, &wasm.module, ChildCanisterType::User);
 
         let response = super::upgrade_user_canister_wasm(
@@ -264,7 +274,7 @@ pub mod happy_path {
             &user_index_canister::upgrade_user_canister_wasm::Args {
                 version: wasm.version,
                 wasm_hash: sha256(&wasm.module),
-                filter: None,
+                filter,
             },
         );
 

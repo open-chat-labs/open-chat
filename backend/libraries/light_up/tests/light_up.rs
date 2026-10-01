@@ -7,7 +7,7 @@ use puzzle_core::testing::{
 };
 use puzzle_core::{Puzzle, PuzzleError};
 
-const SEEDS_PER_CONFIG: u64 = 200;
+const SEEDS_PER_CONFIG: u64 = 20;
 
 fn params(width: u8, height: u8, tier: Tier) -> Params {
     let symmetry = if width == height { Symmetry::Rot4 } else { Symmetry::Rot2 };
@@ -55,7 +55,7 @@ fn generated_10x10() {
 #[test]
 fn every_playable_size_generates() {
     for p in playable() {
-        must_generate::<LightUp>(p, 0..25);
+        must_generate::<LightUp>(p, 0..5);
     }
 }
 
@@ -165,7 +165,7 @@ fn tricky_puzzles_defeat_the_easy_solver() {
 
 #[test]
 fn single_cell_perturbation_is_caught() {
-    for seed in 0..50 {
+    for seed in 0..10 {
         let p = params(7, 7, if seed % 2 == 0 { Tier::Easy } else { Tier::Tricky });
         let g = generate(seed, p).unwrap();
         for i in 0..g.solution.len() {

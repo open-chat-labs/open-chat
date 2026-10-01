@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Pass on when the details of each group, community and channel last changed in the summaries relayed to clients ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 - Report a community whose canister has been uninstalled to the GroupIndex, then stop tracking it ([#9672](https://github.com/open-chat-labs/open-chat/pull/9672))
+- Add `c2c_user_principals_v2`, for a community importing a group, which returns each member's latest id and records those not yet migrated as having joined the community ([#9722](https://github.com/open-chat-labs/open-chat/pull/9722))
 
 ### Changed
 
@@ -25,8 +26,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Tell a migrated user's direct chat peers and those who have blocked them of the user's new id ([#9697](https://github.com/open-chat-labs/open-chat/pull/9697))
+- Hold a migrated user's new id from User canisters behind the current wasm until they're upgraded ([#9723](https://github.com/open-chat-labs/open-chat/pull/9723))
 - Compare a hint step's conclusions with its focus and target as the cells the board draws them on, so Bridges hints, whose conclusions are gaps between islands, no longer skip the steps they rest on or send an outline that names their answer ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 - Send events for a user migrated to a MultiUser canister on to their new id rather than losing them ([#9706](https://github.com/open-chat-labs/open-chat/pull/9706))
+- Tell the groups and communities a migrated user recently joined of their new id, covering joins made mid-migration ([#9721](https://github.com/open-chat-labs/open-chat/pull/9721))
 
 ## [[2.0.2077](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2077-local_user_index)] - 2026-09-30
 

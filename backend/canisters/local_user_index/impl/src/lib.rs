@@ -3,12 +3,14 @@ use crate::model::daily_puzzle_engine::{DailyPuzzleEngine, DailyPuzzleEngineMetr
 use crate::model::daily_puzzle_result_batch::DailyPuzzleResultBatch;
 use crate::model::game_chit_credit::{GameChitCreditRetryQueue, new_retry_queue};
 use crate::model::group_event_batch::GroupEventBatch;
+use crate::model::held_user_id_migrations::HeldUserIdMigrations;
 use crate::model::local_community_map::LocalCommunityMap;
 use crate::model::local_group_map::LocalGroupMap;
 use crate::model::local_multi_user_canister_map::LocalMultiUserCanisterMap;
 use crate::model::media_scan_job_log::MediaScanJobLog;
 use crate::model::moderation_queue::ModerationQueue;
 use crate::model::premium_items::PremiumItems;
+use crate::model::recent_joins::RecentJoins;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::registry_tokens::RegistryTokens;
 use crate::model::top_up_leaderboards::TopUpLeaderboards;
@@ -304,6 +306,50 @@ impl RuntimeState {
         }
     }
 
+    // Tells the user of another user's new id. A canister on a wasm older than the current User wasm
+    // may not know `UserIdMigrated` (User 2.0.2015 doesn't), and an event a canister can't decode fails
+    // the whole batch it's in, holding up every later event to that canister until it's upgraded. So
+    // for such a canister the notice is held, and sent once the canister has been upgraded.
+    // TODO remove the hold once no User canister is on 2.0.2015, sending on any notices still held
+    pub fn notify_user_of_migrated_user_id(
+        &mut self,
+        user_id: UserId,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        now: TimestampMillis,
+    ) {
+        let latest_user_id = self.data.migrated_user_ids.latest(user_id);
+        let current_wasm_version = self.data.child_canister_wasms.get(ChildCanisterType::User).wasm.version;
+        let canister_is_behind = self.data.local_users.get(&latest_user_id).map(|user| {
+            user.wasm_version
+                .is_some_and(|wasm_version| wasm_version < current_wasm_version)
+        });
+        let event = UserEvent::UserIdMigrated(Box::new(user_canister::UserIdMigrated {
+            old_user_id,
+            new_user_id,
+        }));
+
+        match canister_is_behind {
+            Some(true) => self
+                .data
+                .held_user_id_migrations
+                .hold(latest_user_id, old_user_id, new_user_id),
+            Some(false) => {
+                self.push_event_to_user(latest_user_id, event, now);
+            }
+            // The user isn't held here. If they've been migrated to a canister on another
+            // LocalUserIndex, the notice is sent on to them there
+            None => {
+                let envelope = IdempotentEnvelope {
+                    created_at: now,
+                    idempotency_id: self.env.rng().next_u64(),
+                    value: (latest_user_id, event),
+                };
+                self.push_events_queued_for_migrated_user(user_id, vec![envelope]);
+            }
+        }
+    }
+
     // Moves the events queued for a migrated user's old canister onto their latest id. If a batch of
     // them is being sent, they are left to be moved after it, once it fails (see `UserEventBatch`), so
     // that they stay in order.
@@ -445,6 +491,8 @@ impl RuntimeState {
         community_canister_timestamp: TimestampMillis,
         now: TimestampMillis,
     ) {
+        self.record_join(user_id, community_id.into(), now);
+
         let local_user_index_canister_id = self.env.canister_id();
         if self.holds_latest_id_of(user_id) {
             self.push_event_to_user(
@@ -466,6 +514,47 @@ impl RuntimeState {
                     channels,
                     community_canister_timestamp,
                 })),
+                now,
+            );
+        }
+    }
+
+    // Records that the user has joined the group or community, so that it can be told of their new id if
+    // they turn out to be being migrated (see `RecentJoins`). If their migration has been heard of
+    // already, while the join was in flight, it's told now.
+    pub fn record_join(&mut self, user_id: UserId, canister_id: CanisterId, now: TimestampMillis) {
+        let latest_user_id = self.data.migrated_user_ids.latest(user_id);
+        if latest_user_id != user_id {
+            self.notify_group_or_community_of_migrated_user_id(canister_id, user_id, latest_user_id, now);
+        } else {
+            self.data.recent_joins.push(user_id, canister_id, now);
+        }
+    }
+
+    // Tells the group or community, if this LocalUserIndex holds it, that the user has been migrated
+    pub fn notify_group_or_community_of_migrated_user_id(
+        &mut self,
+        canister_id: CanisterId,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        now: TimestampMillis,
+    ) {
+        if self.data.local_groups.get(&canister_id.into()).is_some() {
+            self.push_event_to_group(
+                canister_id,
+                GroupEvent::UserIdMigrated(group_canister::UserIdMigrated {
+                    old_user_id,
+                    new_user_id,
+                }),
+                now,
+            );
+        } else if self.data.local_communities.get(&canister_id.into()).is_some() {
+            self.push_event_to_community(
+                canister_id,
+                CommunityEvent::UserIdMigrated(community_canister::UserIdMigrated {
+                    old_user_id,
+                    new_user_id,
+                }),
                 now,
             );
         }
@@ -776,6 +865,8 @@ impl RuntimeState {
             users_to_import_in_progress: self.data.users_to_import.in_progress(),
             users_to_close_out_pending: self.data.users_to_close_out.pending(),
             users_to_close_out_in_progress: self.data.users_to_close_out.in_progress(),
+            recent_joins: self.data.recent_joins.len(),
+            held_user_id_migrations: self.data.held_user_id_migrations.len(),
             chunk_store: crate::jobs::refresh_chunk_store::metrics(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
@@ -938,6 +1029,14 @@ struct Data {
     // this LocalUserIndex controls, are to be uninstalled
     #[serde(default)]
     pub users_to_close_out: UsersToMigrate<UserToCloseOut>,
+    // The groups and communities users have recently joined via this LocalUserIndex, which are told
+    // of a user's new id if they turn out to have been being migrated
+    #[serde(default)]
+    pub recent_joins: RecentJoins,
+    // Notices of migrated users' new ids for users whose canisters are yet to be upgraded to the
+    // current User wasm (see `notify_user_of_migrated_user_id`)
+    #[serde(default)]
+    pub held_user_id_migrations: HeldUserIdMigrations,
     // Passed in the init and upgrade args, so is set once this LocalUserIndex has been upgraded by a
     // UserIndex which passes it
     #[serde(default)]
@@ -1076,6 +1175,8 @@ impl Data {
             users_to_migrate: UsersToMigrate::default(),
             users_to_import: UsersToMigrate::default(),
             users_to_close_out: UsersToMigrate::default(),
+            recent_joins: RecentJoins::default(),
+            held_user_id_migrations: HeldUserIdMigrations::default(),
             registry_canister_id: Some(registry_canister_id),
             registry_tokens: RegistryTokens::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
@@ -1140,6 +1241,8 @@ pub struct Metrics {
     pub users_to_import_in_progress: usize,
     pub users_to_close_out_pending: usize,
     pub users_to_close_out_in_progress: usize,
+    pub recent_joins: usize,
+    pub held_user_id_migrations: usize,
     pub chunk_store: crate::jobs::refresh_chunk_store::ChunkStoreMetrics,
     pub cycles_refund_queue_length: usize,
     pub cycles_refunded_from_deleted_users: Cycles,

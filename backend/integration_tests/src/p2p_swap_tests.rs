@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::utils::{chat_token_info, icp_token_info, now_millis, tick_many};
+use crate::utils::{chat_token_info, icp_token_info, now_millis, tick_many, wait_for_direct_chat};
 use crate::{TestEnv, User, client};
 use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, MINUTE_IN_MS};
 use oc_error_codes::OCErrorCode;
@@ -9,8 +9,7 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    Chat, ChatEvent, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapLocation, P2PSwapStatus, UserId,
-    icrc1,
+    Chat, ChatEvent, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapLocation, P2PSwapStatus, icrc1,
 };
 
 #[test]
@@ -1378,21 +1377,6 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
             |status| matches!(status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id),
         );
     }
-}
-
-// Ticks until the user's canister lists their direct chat with `them`, ie. the first message sent in
-// it has been delivered. This can take many rounds, since the first User canister to run on a subnet
-// takes around 10 rounds to handle its first message (seemingly while the wasm is compiled there),
-// a number which grows with the size of the wasm.
-fn wait_for_direct_chat(env: &mut PocketIc, user: &User, them: UserId) {
-    for _ in 0..30 {
-        let initial_state = client::user::happy_path::initial_state(env, user);
-        if initial_state.direct_chats.summaries.iter().any(|c| c.them == them) {
-            return;
-        }
-        env.tick();
-    }
-    panic!("User {} did not receive the message from user {them}", user.user_id);
 }
 
 pub(crate) fn verify_swap_status<F: FnOnce(&P2PSwapStatus) -> bool>(event: ChatEvent, predicate: F) {

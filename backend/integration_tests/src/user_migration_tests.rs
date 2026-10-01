@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::setup::install_icrc_ledger;
-use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many};
+use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many, try_metrics};
 use crate::{CanisterIds, TestEnv, User, client, wasms};
 use candid::{CandidType, Nat, Principal};
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
@@ -14,8 +14,8 @@ use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     BotDefinition, BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, CanisterWasm, Chat, ChatId,
-    DiamondMembershipPlanDuration, Document, Empty, IdempotentEnvelope, MessageContent, MessageContentInitial, OptionUpdate,
-    P2PSwapContentInitial, ReferralStatus, UserId,
+    CommunityRole, DiamondMembershipPlanDuration, Document, Empty, IdempotentEnvelope, MessageContent, MessageContentInitial,
+    OptionUpdate, P2PSwapContentInitial, ReferralStatus, UpgradesFilter, UserId,
 };
 use user_canister::UserCanisterEvent;
 use user_index_canister::user_migration::UserMigrationStatus;
@@ -1135,6 +1135,215 @@ fn user_removed_while_being_migrated_is_removed_in_their_new_canister(community:
     );
 }
 
+// A user who joins a group or community while being migrated is added to it under their old id, after
+// their old canister was exported, so it isn't among those the migration tells of their new id. The
+// LocalUserIndex the join went via tells it instead, once it hears of the migration.
+#[test_case(false; "group")]
+#[test_case(true; "community")]
+fn user_who_joins_while_being_migrated_is_held_under_their_new_id(community: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+    let chat: CanisterId = if community {
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]).into()
+    } else {
+        client::user::happy_path::create_group(env, &owner, &random_string(), true, true).into()
+    };
+    tick_many(env, 5);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_until(env, |env| {
+        matches!(
+            user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+            Some(UserMigrationStatus::Started { .. })
+        )
+    });
+
+    // The user joins while their old canister is frozen
+    if community {
+        client::community::happy_path::join_community(env, user.principal, chat.into());
+    } else {
+        client::group::happy_path::join_group(env, user.principal, chat.into());
+    }
+    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user.user_id);
+
+    let members = |env: &PocketIc| -> Vec<UserId> {
+        if community {
+            let response = client::community::happy_path::selected_initial(env, owner.principal, chat.into());
+            response
+                .members
+                .iter()
+                .map(|m| m.user_id)
+                .chain(response.basic_members)
+                .collect()
+        } else {
+            let response = client::group::happy_path::selected_initial(env, owner.principal, chat.into());
+            response
+                .participants
+                .iter()
+                .map(|m| m.user_id)
+                .chain(response.basic_members)
+                .collect()
+        }
+    };
+    // The user's new canister lists it too, the join having been sent on to it
+    let old_user_id = user.user_id;
+    let new_user = User {
+        user_id: new_user_id,
+        local_user_index,
+        ..user
+    };
+    let listed = |env: &PocketIc| {
+        let state = client::user::happy_path::initial_state(env, &new_user);
+        state
+            .group_chats
+            .summaries
+            .iter()
+            .any(|g| CanisterId::from(g.chat_id) == chat)
+            || state
+                .communities
+                .summaries
+                .iter()
+                .any(|c| CanisterId::from(c.community_id) == chat)
+    };
+    for _ in 0..20 {
+        if members(env).contains(&new_user_id) && listed(env) {
+            break;
+        }
+        env.advance_time(Duration::from_secs(60));
+        tick_many(env, 5);
+    }
+    let members = members(env);
+    assert!(members.contains(&new_user_id), "{members:?}");
+    assert!(!members.contains(&old_user_id), "{members:?}");
+    assert!(listed(env));
+}
+
+// A member of a group imported into a community while they're being migrated is copied into it under
+// the id the group held them by. The group is deleted once imported, so the migration's notice to it is
+// dropped. Instead the import gets each member's latest id from the community's LocalUserIndex and
+// moves them onto it, or the LocalUserIndex tells the community once the migration completes. A user
+// who's already an admin of the community, which is told of the migration, keeps their membership and
+// role, and only the channel is moved.
+#[test_case(false; "not_in_the_community")]
+#[test_case(true; "already_an_admin_of_the_community")]
+fn member_of_a_group_imported_while_being_migrated_is_held_under_their_new_id(in_community: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    client::group::happy_path::join_group(env, user.principal, group_id);
+    let community_id = client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
+    if in_community {
+        client::community::happy_path::join_community(env, user.principal, community_id);
+        client::community::happy_path::change_role(env, owner.principal, community_id, user.user_id, CommunityRole::Admin);
+    }
+    tick_many(env, 5);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_until(env, |env| {
+        matches!(
+            user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+            Some(UserMigrationStatus::Started { .. })
+        )
+    });
+
+    // The group is imported while the user's old canister is frozen
+    let channel_id = client::community::happy_path::import_group(env, owner.principal, community_id, group_id).channel_id;
+    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user.user_id);
+
+    let community_members = |env: &PocketIc| {
+        let response = client::community::happy_path::selected_initial(env, owner.principal, community_id);
+        let roles: Vec<(UserId, CommunityRole)> = response.members.iter().map(|m| (m.user_id, m.role)).collect();
+        (roles, response.basic_members)
+    };
+    // Empty until the import has completed, before which the channel isn't found
+    let channel_members = |env: &PocketIc| -> Vec<UserId> {
+        match client::community::selected_channel_initial(
+            env,
+            owner.principal,
+            community_id.into(),
+            &community_canister::selected_channel_initial::Args {
+                channel_id,
+                max_members: None,
+            },
+        ) {
+            community_canister::selected_channel_initial::Response::Success(response) => response
+                .members
+                .iter()
+                .map(|m| m.user_id)
+                .chain(response.basic_members)
+                .collect(),
+            _ => Vec::new(),
+        }
+    };
+    let old_user_id = user.user_id;
+    let new_user = User {
+        user_id: new_user_id,
+        local_user_index,
+        ..user
+    };
+    let held_under_new_id = |env: &PocketIc| {
+        let (roles, basic_members) = community_members(env);
+        let in_community = roles.iter().any(|(u, _)| *u == new_user_id) || basic_members.contains(&new_user_id);
+        let listed = client::user::happy_path::initial_state(env, &new_user)
+            .communities
+            .summaries
+            .iter()
+            .any(|c| c.community_id == community_id);
+        in_community && channel_members(env).contains(&new_user_id) && listed
+    };
+    for _ in 0..20 {
+        if held_under_new_id(env) {
+            break;
+        }
+        env.advance_time(Duration::from_secs(60));
+        tick_many(env, 5);
+    }
+    assert!(held_under_new_id(env));
+
+    let (roles, basic_members) = community_members(env);
+    assert!(!roles.iter().any(|(u, _)| *u == old_user_id) && !basic_members.contains(&old_user_id));
+    assert!(!channel_members(env).contains(&old_user_id));
+    if in_community {
+        assert!(roles.contains(&(new_user_id, CommunityRole::Admin)), "{roles:?}");
+    }
+}
+
 #[test]
 fn users_with_a_direct_chat_with_or_a_block_of_a_migrated_user_hold_it_under_their_new_id() {
     let mut wrapper = ENV.deref().get();
@@ -1249,6 +1458,126 @@ fn users_with_a_direct_chat_with_or_a_block_of_a_migrated_user_hold_it_under_the
     }
     let state = client::user::happy_path::initial_state(env, &user4);
     assert!(state.direct_chats.summaries.iter().all(|c| c.them != new_user_id));
+}
+
+// A canister on a wasm older than the current User wasm may not know `UserIdMigrated`, and an event
+// it can't decode would fail the whole batch it's in, so the notice is held until it's upgraded
+#[test]
+fn notice_of_a_migrated_users_new_id_is_held_until_the_peers_canister_is_upgraded() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    client::user::happy_path::send_text_message(env, &user2, user1.user_id, random_string(), None);
+    tick_many(env, 10);
+
+    // Stop User canisters being upgraded as usual, then release a new User wasm, leaving user2's
+    // canister on an older one
+    set_user_upgrade_concurrency(env, operator.principal, canister_ids.user_index, 0);
+    let version = BuildVersion::new(0, 0, 1);
+    client::user_index::happy_path::upgrade_user_canister_wasm(
+        env,
+        *controller,
+        canister_ids.user_index,
+        CanisterWasm {
+            version,
+            module: wasms::USER.module.clone(),
+        },
+    );
+    tick_many(env, 10);
+    assert_ne!(wasm_version(env, user2.canister()), version);
+
+    // user3 registers now, so their canister is on the current wasm
+    let user3 = client::register_user(env, canister_ids);
+    assert_eq!(wasm_version(env, user3.canister()), version);
+    client::user::happy_path::send_text_message(env, &user3, user1.user_id, random_string(), None);
+    tick_many(env, 10);
+
+    let held_before = held_user_id_migrations(env, user2.local_user_index);
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id],
+        Some(multi_user_canister),
+    );
+    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user1.user_id);
+
+    // user3 is told of user1's new id straight away, but user2's notice is held while their canister
+    // is on the older wasm. They may be on different LocalUserIndexes, which hear of the migration at
+    // different times.
+    tick_until(env, |env| {
+        direct_chat_peer(env, &user3, user1.user_id, new_user_id) == new_user_id
+            && held_user_id_migrations(env, user2.local_user_index) == held_before + 1
+    });
+    assert_eq!(direct_chat_peer(env, &user2, user1.user_id, new_user_id), user1.user_id);
+
+    // Once user2's canister has been upgraded, they are. Only theirs is upgraded, so as not to wait
+    // for every User canister in this env.
+    let version = BuildVersion::new(0, 0, 2);
+    client::user_index::happy_path::upgrade_user_canister_wasm_with_filter(
+        env,
+        *controller,
+        canister_ids.user_index,
+        CanisterWasm {
+            version,
+            module: wasms::USER.module.clone(),
+        },
+        Some(UpgradesFilter {
+            include: [user2.canister()].into_iter().collect(),
+            ..Default::default()
+        }),
+    );
+    set_user_upgrade_concurrency(env, operator.principal, canister_ids.user_index, 10);
+    // The canister can't be queried while it's stopped for the upgrade
+    tick_until(env, |env| {
+        try_metrics(env, user2.canister()).and_then(|m| serde_json::from_value(m["wasm_version"].clone()).ok()) == Some(version)
+    });
+    tick_until(env, |env| {
+        direct_chat_peer(env, &user2, user1.user_id, new_user_id) == new_user_id
+    });
+    assert_eq!(held_user_id_migrations(env, user2.local_user_index), held_before);
+
+    // Releasing a new User wasm would break later tests which draw this env
+    wrapper.discard();
+}
+
+fn set_user_upgrade_concurrency(env: &mut PocketIc, sender: Principal, user_index: CanisterId, value: u32) {
+    let response = client::user_index::set_user_upgrade_concurrency(
+        env,
+        sender,
+        user_index,
+        &user_index_canister::set_user_upgrade_concurrency::Args { value },
+    );
+    assert!(matches!(response, types::SuccessOnly::Success), "{response:?}");
+    tick_many(env, 5);
+}
+
+fn held_user_id_migrations(env: &PocketIc, local_user_index: CanisterId) -> u64 {
+    metrics(env, local_user_index)["held_user_id_migrations"].as_u64().unwrap()
+}
+
+// The id the user holds their one direct chat with the migrated user under
+fn direct_chat_peer(env: &PocketIc, user: &User, old_user_id: UserId, new_user_id: UserId) -> UserId {
+    let state = client::user::happy_path::initial_state(env, user);
+    let chats: Vec<_> = state
+        .direct_chats
+        .summaries
+        .iter()
+        .filter(|c| c.them == old_user_id || c.them == new_user_id)
+        .collect();
+    assert_eq!(chats.len(), 1, "{chats:?}");
+    chats[0].them
 }
 
 // Each user's canister is frozen while they are being migrated, so neither hears of the other's new

@@ -72,6 +72,13 @@ pub struct ProcessGroupImportChannelMembersJob {
     pub group_id: ChatId,
     pub channel_id: ChannelId,
     pub attempt: u32,
+    // The channel's members are processed a batch at a time, in order of user id. Those up to and
+    // including this one have been processed.
+    #[serde(default)]
+    pub after: Option<UserId>,
+    // Those of the channel's members who have been added to the community so far
+    #[serde(default)]
+    pub members_added: Vec<UserId>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -339,7 +346,7 @@ impl Job for FinalizeGroupImportJob {
 
 impl Job for ProcessGroupImportChannelMembersJob {
     fn execute(self) {
-        utils::async_work::spawn_tracked(process_channel_members(self.group_id, self.channel_id, self.attempt));
+        utils::async_work::spawn_tracked(process_channel_members(self));
     }
 }
 
@@ -575,6 +582,8 @@ impl JoinMembersToPublicChannelJob {
             let mut processed = 0u32;
             let now = state.env.now();
             while let Some(user_id) = self.members.pop() {
+                // A member queued under an id the community has since been told they've been migrated from
+                let user_id = state.data.migrated_user_ids.latest(user_id);
                 if let Some(member) = state.data.members.get_by_user_id(&user_id) {
                     match join_channel_unchecked(
                         user_id,

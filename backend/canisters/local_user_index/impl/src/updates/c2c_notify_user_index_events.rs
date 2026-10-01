@@ -10,7 +10,7 @@ use p256_key_pair::P256KeyPair;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use std::cmp::min;
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use tracing::{error, info};
 use types::{
     BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotRegisteredEvent, CanisterId, MAX_USER_INDEX,
@@ -418,45 +418,17 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     .blocked_users
                     .migrate_user_id(ev.old_user_id, ev.new_user_id, &ev.blocked_users);
                 for user_id in ev.users_to_notify {
-                    state.push_event_to_user(
-                        user_id,
-                        UserEvent::UserIdMigrated(Box::new(user_canister::UserIdMigrated {
-                            old_user_id: ev.old_user_id,
-                            new_user_id: ev.new_user_id,
-                        })),
-                        **now,
-                    );
+                    state.notify_user_of_migrated_user_id(user_id, ev.old_user_id, ev.new_user_id, **now);
                 }
                 for (old_user_id, new_user_id) in ev.migrated_earlier {
-                    state.push_event_to_user(
-                        ev.new_user_id,
-                        UserEvent::UserIdMigrated(Box::new(user_canister::UserIdMigrated {
-                            old_user_id,
-                            new_user_id,
-                        })),
-                        **now,
-                    );
+                    state.notify_user_of_migrated_user_id(ev.new_user_id, old_user_id, new_user_id, **now);
                 }
-                for canister_id in ev.canisters_to_notify {
-                    if state.data.local_groups.get(&canister_id.into()).is_some() {
-                        state.push_event_to_group(
-                            canister_id,
-                            GroupEvent::UserIdMigrated(group_canister::UserIdMigrated {
-                                old_user_id: ev.old_user_id,
-                                new_user_id: ev.new_user_id,
-                            }),
-                            **now,
-                        );
-                    } else if state.data.local_communities.get(&canister_id.into()).is_some() {
-                        state.push_event_to_community(
-                            canister_id,
-                            CommunityEvent::UserIdMigrated(community_canister::UserIdMigrated {
-                                old_user_id: ev.old_user_id,
-                                new_user_id: ev.new_user_id,
-                            }),
-                            **now,
-                        );
-                    }
+                // Also any group or community the user joined via this LocalUserIndex recently, which
+                // may have been after their old canister was exported, so isn't among `canisters_to_notify`
+                let mut canisters_to_notify: BTreeSet<CanisterId> = ev.canisters_to_notify.into_iter().collect();
+                canisters_to_notify.extend(state.data.recent_joins.joined_by(ev.old_user_id, **now));
+                for canister_id in canisters_to_notify {
+                    state.notify_group_or_community_of_migrated_user_id(canister_id, ev.old_user_id, ev.new_user_id, **now);
                 }
             }
         }
