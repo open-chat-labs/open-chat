@@ -40,6 +40,7 @@ import type {
     CommunityExploreChannelsResponse,
     CommunityImportGroupSuccessResult,
     CommunityLookupMembersResponse,
+    CommunitySearchMembersResponse,
     CommunitySelectedInitialResponse,
     CommunitySelectedUpdatesResponse,
     CommunityUpdateCommunitySuccessResult,
@@ -406,7 +407,7 @@ function communityMembers(full: TCommunityMember[], basic: ApiPrincipal[] | unde
 }
 
 export function lookupCommunityMembersResponse(
-    value: CommunityLookupMembersResponse,
+    value: CommunityLookupMembersResponse | CommunitySearchMembersResponse,
 ): LookupMembersResponse {
     return mapResult(value, (success) => ({
         kind: "success",
