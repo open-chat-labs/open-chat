@@ -45,6 +45,7 @@
     import DirectChatHeader from "../bots/DirectChatHeader.svelte";
     import ImportToCommunity from "./communities/Import.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
+    import AutoTranslateBanner from "./AutoTranslateBanner.svelte";
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import CurrentChatSearchHeader from "./CurrentChatSearchHeader.svelte";
@@ -451,6 +452,7 @@
                 selectedChatSummary={chat}
                 hasPinned={$selectedChatPinnedMessagesStore.size > 0} />
         {/if}
+        <AutoTranslateBanner chatId={chat.id} />
         {#if externalUrl !== undefined}
             <ExternalContent {privateChatPreview} {frozen} {externalUrl} />
         {:else}
