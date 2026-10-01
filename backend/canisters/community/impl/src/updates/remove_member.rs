@@ -135,11 +135,12 @@ fn prepare(user_id: UserId, block: bool, ext_caller: Option<Caller>, state: &Run
 
 fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) {
     let now = state.env.now();
-    let is_bot = state.data.members.bots().contains_key(&user_id);
 
     // Remove the user from the community
     let removed_member = state.data.remove_user_from_community(user_id, None, now);
     let removed = removed_member.is_some();
+    // Taken from the member rather than `members.bots()`, which doesn't hold bots which joined
+    let is_bot = removed_member.as_ref().is_some_and(|m| m.user_type.is_bot());
 
     let blocked = block && state.data.members.block(user_id, now);
 
