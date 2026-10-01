@@ -46,9 +46,11 @@ impl TestEnvWrapper {
     }
 
     // Drops the env instead of returning it to the pool. Tests which advance time
-    // significantly MUST call this: a pooled env with its clock pushed forward poisons
-    // whichever test draws it next (pending timers fire, time-based state reconciles), which
-    // surfaces as unrelated flakes.
+    // significantly or change env-wide state (e.g. release a new wasm) MUST call this: a pooled
+    // env with its clock pushed forward poisons whichever test draws it next (pending timers
+    // fire, time-based state reconciles), which surfaces as unrelated flakes. A test which
+    // panics never returns its env to the pool (see `Drop`), so this is only needed on the path
+    // where the test passes.
     pub fn discard(mut self) {
         self.env = None;
         std::mem::forget(self);
@@ -58,6 +60,10 @@ impl TestEnvWrapper {
 impl Drop for TestEnvWrapper {
     fn drop(&mut self) {
         let env = std::mem::take(&mut self.env).unwrap();
-        ENV.deref().envs.lock().unwrap().push(env);
+        // A failing test may have left the env half-changed (e.g. before reaching its
+        // `discard`), so drop it rather than hand it to whichever test draws it next
+        if !std::thread::panicking() {
+            ENV.deref().envs.lock().unwrap().push(env);
+        }
     }
 }
