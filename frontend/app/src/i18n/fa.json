@@ -163,6 +163,18 @@
         "notAvailable": "این محتوا در این نسخه از برنامه در دسترس نیست. همچنان می‌توانید از طریق برنامه وب در [oc.app](https://oc.app) به آن دسترسی داشته باشید.",
         "notAvailableTitle": "محتوا در دسترس نیست"
     },
+    "autoTranslate": {
+        "downloadPacks": "دانلود بسته‌های زبان ({count})",
+        "turnOn": "ترجمه این گفتگو",
+        "turnOff": "توقف ترجمه این گفتگو",
+        "active": "در حال ترجمه به {language} روی این دستگاه",
+        "downloading": "در حال دانلود {language} ({index} از {total})…",
+        "failed": "ترجمه روی دستگاه در حال حاضر در دسترس نیست",
+        "showOriginal": "نمایش متن اصلی",
+        "showTranslation": "نمایش ترجمه",
+        "translateFrom": "ترجمه از {language}",
+        "translatedFrom": "ترجمه‌شده روی دستگاه از {language}"
+    },
     "nativeUpdate": {
         "downloadingTitle": "یک لحظه! در حال به‌روزرسانی ...",
         "downloadingMessage": "در حال دانلود یک به‌روزرسانی کوچک هستیم و به‌زودی می‌توانید ادامه دهید ...",
