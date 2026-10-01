@@ -46,6 +46,10 @@ pub struct DirectChat {
     // The latest change to the events' TTL, by either user, which a change from the other user must
     // supersede to be applied
     events_ttl_latest_change: EventsTtlLatestChange,
+    // When the chat was moved onto the other user's new id, after they were migrated to a MultiUser
+    // canister. Clients first hear of the chat under that id then, so are sent it as a new chat.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    them_migrated_at: Option<TimestampMillis>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -95,6 +99,7 @@ impl DirectChat {
             read_by_them_up_to: Timestamped::new(None, now),
             self_chat: my_user_id == them,
             events_ttl_latest_change: EventsTtlLatestChange::NeverChanged,
+            them_migrated_at: None,
         }
     }
 
@@ -106,6 +111,14 @@ impl DirectChat {
             self.them = new_user_id;
             self.events.set_direct_chat_user(new_user_id);
         }
+    }
+
+    // Moves the chat onto the other user's new id, once they are migrated to a MultiUser canister.
+    // Their messages keep the id they were sent under.
+    pub(crate) fn migrate_their_user_id(&mut self, new_user_id: UserId, now: TimestampMillis) {
+        self.them = new_user_id;
+        self.events.set_direct_chat_user(new_user_id);
+        self.them_migrated_at = Some(now);
     }
 
     // TODO: Remove this after next release
@@ -169,6 +182,11 @@ impl DirectChat {
         self.date_created
     }
 
+    // Whether clients which last synced at `since` haven't heard of the chat under its current id
+    pub fn added_since(&self, since: TimestampMillis) -> bool {
+        self.date_created > since || self.them_migrated_at.is_some_and(|t| t > since)
+    }
+
     pub fn has_updates_since(&self, since: TimestampMillis) -> bool {
         self.last_updated() > since
     }
@@ -180,6 +198,7 @@ impl DirectChat {
             self.read_by_them_up_to.timestamp,
             self.notifications_muted.timestamp,
             self.archived.timestamp,
+            self.them_migrated_at.unwrap_or_default(),
         ]
         .into_iter()
         .max()
@@ -686,6 +705,8 @@ struct DirectChatSerde {
     core: Option<LegacyDirectChatCore>,
     #[serde(default)]
     events_ttl_latest_change: EventsTtlLatestChange,
+    #[serde(default)]
+    them_migrated_at: Option<TimestampMillis>,
 }
 
 #[derive(Deserialize)]
@@ -729,6 +750,7 @@ impl From<DirectChatSerde> for DirectChat {
             read_by_them_up_to,
             self_chat: value.self_chat,
             events_ttl_latest_change: value.events_ttl_latest_change,
+            them_migrated_at: value.them_migrated_at,
         };
         if chat.self_chat {
             chat.align_self_chat_read_positions();
