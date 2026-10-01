@@ -1135,6 +1135,107 @@ fn user_removed_while_being_migrated_is_removed_in_their_new_canister(community:
     );
 }
 
+// A user who joins a group or community while being migrated is added to it under their old id, after
+// their old canister was exported, so it isn't among those the migration tells of their new id. The
+// LocalUserIndex the join went via tells it instead, once it hears of the migration.
+#[test_case(false; "group")]
+#[test_case(true; "community")]
+fn user_who_joins_while_being_migrated_is_held_under_their_new_id(community: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+    let chat: CanisterId = if community {
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]).into()
+    } else {
+        client::user::happy_path::create_group(env, &owner, &random_string(), true, true).into()
+    };
+    tick_many(env, 5);
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(multi_user_canister),
+    );
+    tick_until(env, |env| {
+        matches!(
+            user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+            Some(UserMigrationStatus::Started { .. })
+        )
+    });
+
+    // The user joins while their old canister is frozen
+    if community {
+        client::community::happy_path::join_community(env, user.principal, chat.into());
+    } else {
+        client::group::happy_path::join_group(env, user.principal, chat.into());
+    }
+    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user.user_id);
+
+    let members = |env: &PocketIc| -> Vec<UserId> {
+        if community {
+            let response = client::community::happy_path::selected_initial(env, owner.principal, chat.into());
+            response
+                .members
+                .iter()
+                .map(|m| m.user_id)
+                .chain(response.basic_members)
+                .collect()
+        } else {
+            let response = client::group::happy_path::selected_initial(env, owner.principal, chat.into());
+            response
+                .participants
+                .iter()
+                .map(|m| m.user_id)
+                .chain(response.basic_members)
+                .collect()
+        }
+    };
+    // The user's new canister lists it too, the join having been sent on to it
+    let old_user_id = user.user_id;
+    let new_user = User {
+        user_id: new_user_id,
+        local_user_index,
+        ..user
+    };
+    let listed = |env: &PocketIc| {
+        let state = client::user::happy_path::initial_state(env, &new_user);
+        state
+            .group_chats
+            .summaries
+            .iter()
+            .any(|g| CanisterId::from(g.chat_id) == chat)
+            || state
+                .communities
+                .summaries
+                .iter()
+                .any(|c| CanisterId::from(c.community_id) == chat)
+    };
+    for _ in 0..20 {
+        if members(env).contains(&new_user_id) && listed(env) {
+            break;
+        }
+        env.advance_time(Duration::from_secs(60));
+        tick_many(env, 5);
+    }
+    let members = members(env);
+    assert!(members.contains(&new_user_id), "{members:?}");
+    assert!(!members.contains(&old_user_id), "{members:?}");
+    assert!(listed(env));
+}
+
 #[test]
 fn users_with_a_direct_chat_with_or_a_block_of_a_migrated_user_hold_it_under_their_new_id() {
     let mut wrapper = ENV.deref().get();
