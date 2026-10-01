@@ -4,7 +4,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use constants::DAY_IN_MS;
 use daily_puzzle_canister::{CandidateView, PuzzleParams};
-use puzzle_core::GenerateError;
+use puzzle_core::{GenerateError, Puzzle};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
@@ -330,6 +330,11 @@ impl Data {
             // The schedule entry is wrong, or names a game with no generator: no seed fixes either
             Some(Err(GenerateError::InvalidParams(_))) | None => return Err(GenerationFailure::Permanent),
         };
+        let hint_settles = generated
+            .hints
+            .iter()
+            .map(|h| hint_settles(&params.game_id, &generated.description, h))
+            .collect();
         let puzzle = DailyPuzzle {
             game_id: params.game_id.clone(),
             number,
@@ -337,6 +342,7 @@ impl Data {
             description: generated.description,
             solution: generated.solution,
             solution_pairs: generated.pairs,
+            hint_settles,
             hints: generated.hints,
             starts_at: number as u64 * DAY_IN_MS,
             expires_at: (number as u64 + 1) * DAY_IN_MS,
@@ -572,6 +578,26 @@ macro_rules! into_generated {
     }};
 }
 
+/// (conclusion key, key the board draws it on) for each of the hint's conclusions, through the
+/// game's own `Puzzle::display_keys`: see `DailyPuzzle::hint_settles`. Every game is listed, not
+/// only the one that differs today, so a game that starts drawing conclusions elsewhere is covered.
+fn hint_settles(game_id: &str, description: &[u8], hint: &PuzzleHint) -> Vec<(u16, u16)> {
+    let display: fn(&[u8], u16) -> Vec<u16> = match game_id {
+        light_up::GAME_ID => <light_up::LightUp as Puzzle>::display_keys,
+        tents::GAME_ID => <tents::Tents as Puzzle>::display_keys,
+        slant::GAME_ID => <slant::Slant as Puzzle>::display_keys,
+        bridges::GAME_ID => <bridges::Bridges as Puzzle>::display_keys,
+        loopy::GAME_ID => <loopy::Loopy as Puzzle>::display_keys,
+        unruly::GAME_ID => <unruly::Unruly as Puzzle>::display_keys,
+        chat_rooms::GAME_ID => <chat_rooms::ChatRooms as Puzzle>::display_keys,
+        _ => |_, key| vec![key],
+    };
+    hint.conclusions
+        .iter()
+        .flat_map(|&(key, _)| display(description, key).into_iter().map(move |drawn| (key, drawn)))
+        .collect()
+}
+
 /// Runs the generator registered for `params.game_id`; None when there isn't one. `black_pct`
 /// only applies to light_up; the other games use their crate's default density knobs.
 fn generate(params: &PuzzleParams, seed: u64) -> Option<Result<Generated, GenerateError>> {
@@ -624,6 +650,13 @@ fn generate(params: &PuzzleParams, seed: u64) -> Option<Result<Generated, Genera
             unruly::generate(
                 seed,
                 unruly::Params::default_for(w, h, if easy { unruly::Tier::Easy } else { unruly::Tier::Tricky }),
+            )
+        ),
+        chat_rooms::GAME_ID => into_generated!(
+            chat_rooms::GAME_ID,
+            chat_rooms::generate(
+                seed,
+                chat_rooms::Params::default_for(w, h, if easy { chat_rooms::Tier::Easy } else { chat_rooms::Tier::Tricky }),
             )
         ),
         _ => return None,
@@ -696,8 +729,8 @@ mod tests {
     use crate::model::seed::puzzle_seed;
 
     const LU: &str = light_up::GAME_ID;
-    /// Numbers on the rota's Monday (light_up 7x7) and Tuesday (tents 8x8), so tests generate
-    /// small easy boards
+    const CR: &str = chat_rooms::GAME_ID;
+    /// Numbers on the rota's Monday (chat_rooms 9x9 tricky) and Tuesday (tents 8x8 easy)
     const MONDAY: PuzzleNumber = 102;
     const TUESDAY: PuzzleNumber = 103;
 
@@ -710,12 +743,36 @@ mod tests {
     /// Expected byte lengths of (description, solution) for a game's wire format
     fn wire_lengths(game_id: &str, w: usize, h: usize) -> (usize, usize) {
         match game_id {
-            light_up::GAME_ID | bridges::GAME_ID | unruly::GAME_ID => (3 + w * h, w * h),
+            light_up::GAME_ID | bridges::GAME_ID | unruly::GAME_ID | chat_rooms::GAME_ID => (3 + w * h, w * h),
             tents::GAME_ID => (3 + w * h + h + w, w * h),
             slant::GAME_ID => (3 + (w + 1) * (h + 1), w * h),
             loopy::GAME_ID => (3 + w * h, (h + 1) * w + h * (w + 1)),
             other => panic!("unknown game {other}"),
         }
+    }
+
+    /// #9675 H5: each hint carries, for each conclusion, the keys its game draws it on, so the
+    /// LocalUserIndex can compare conclusions with focus and target cell for cell. Only Bridges
+    /// draws a conclusion (a gap) anywhere but its own key.
+    #[test]
+    fn puzzles_carry_where_each_conclusion_is_drawn() {
+        for game_id in generators() {
+            let params = forced_params(game_id).unwrap();
+            let g = generate(&params, 7).unwrap().unwrap();
+            let mut moved = false;
+            for h in &g.hints {
+                let settles = hint_settles(game_id, &g.description, h);
+                let keys: std::collections::BTreeSet<u16> = settles.iter().map(|(k, _)| *k).collect();
+                assert_eq!(keys, h.conclusions.iter().map(|(k, _)| *k).collect(), "{game_id}");
+                moved |= settles.iter().any(|(k, drawn)| k != drawn);
+            }
+            assert_eq!(moved, *game_id == bridges::GAME_ID, "{game_id}");
+        }
+
+        let mut d = data();
+        d.generate_candidate(MONDAY).unwrap();
+        let candidate = &pool(&d, MONDAY)[0].puzzle;
+        assert_eq!(candidate.hint_settles.len(), candidate.hints.len());
     }
 
     #[test]
@@ -820,8 +877,9 @@ mod tests {
         assert_eq!(weekday(11), 0);
 
         let d = data();
-        assert_eq!(d.params_for(4).game_id, LU); // Monday
-        assert_eq!(d.params_for(4).width, 7);
+        assert_eq!(d.params_for(4).game_id, CR); // Monday tricky
+        assert_eq!(d.params_for(4).width, 9);
+        assert_eq!(d.params_for(4).tier, 1);
         assert_eq!(d.params_for(7).game_id, bridges::GAME_ID); // Thursday
         assert_eq!(d.params_for(9).game_id, tents::GAME_ID); // Saturday tricky
         assert_eq!(d.params_for(9).tier, 1);
@@ -839,7 +897,7 @@ mod tests {
         d.generate_candidate(MONDAY).unwrap();
         d.generate_candidate(MONDAY).unwrap();
         d.generate_candidate(MONDAY).unwrap();
-        assert!(d.veto_candidate(MONDAY, LU, 0));
+        assert!(d.veto_candidate(MONDAY, CR, 0));
         let expected = pool(&d, MONDAY)[1].puzzle.description.clone();
 
         assert!(d.ensure_puzzles(now));
@@ -855,7 +913,7 @@ mod tests {
         let mut d = data();
         let now = MONDAY as u64 * DAY_IN_MS + 1;
         d.generate_candidate(MONDAY).unwrap();
-        assert!(d.veto_candidate(MONDAY, LU, 0));
+        assert!(d.veto_candidate(MONDAY, CR, 0));
         assert!(!d.ensure_puzzles(now));
         assert!(!d.puzzles.contains_key(&MONDAY));
         assert!(d.current_puzzles(now).is_empty());
@@ -898,7 +956,7 @@ mod tests {
         for i in 0..MAX_CANDIDATE_POOL {
             assert_eq!(d.generation_needed(now), Some(MONDAY));
             assert_eq!(d.generate_candidate(MONDAY).unwrap(), i as u8);
-            assert!(d.veto_candidate(MONDAY, LU, i as u8));
+            assert!(d.veto_candidate(MONDAY, CR, i as u8));
         }
         // Today is given up on rather than generated forever; tomorrow still gets its pool
         assert_eq!(d.generation_needed(now), Some(TUESDAY));
@@ -916,23 +974,23 @@ mod tests {
     #[test]
     fn rota_generates_per_weekday() {
         let mut d = data();
-        // Monday and Sunday are both light_up, at different sizes and tiers
+        // Monday is chat_rooms and Sunday light_up, both tricky, at different sizes
         let sunday = MONDAY + 6;
         assert_eq!(weekday(sunday), 6);
         d.generate_candidate(MONDAY).unwrap();
         d.generate_candidate(sunday).unwrap();
         let mon = &pool(&d, MONDAY)[0].puzzle;
         let sun = &pool(&d, sunday)[0].puzzle;
-        assert_eq!(mon.game_id, LU);
+        assert_eq!(mon.game_id, CR);
         assert_eq!(sun.game_id, LU);
-        assert_eq!(mon.description[1], 7);
+        assert_eq!(mon.description[1], 9);
         assert_eq!(sun.description[1], 10);
-        assert_eq!(mon.tier, 0);
+        assert_eq!(mon.tier, 1);
         assert_eq!(sun.tier, 1);
 
         let now = MONDAY as u64 * DAY_IN_MS + 1;
         assert!(d.ensure_puzzles(now));
-        assert_eq!(d.current_puzzles(now)[0].description[1], 7);
+        assert_eq!(d.current_puzzles(now)[0].description[1], 9);
         let now = sunday as u64 * DAY_IN_MS + 1;
         assert!(d.ensure_puzzles(now));
         assert_eq!(d.current_puzzles(now)[0].description[1], 10);
@@ -954,7 +1012,7 @@ mod tests {
         let now = MONDAY as u64 * DAY_IN_MS + 1;
 
         run_generation(&mut d, now);
-        assert_eq!(d.current_puzzles(now)[0].game_id, LU);
+        assert_eq!(d.current_puzzles(now)[0].game_id, CR);
 
         d.regenerate_today(Some(tents::GAME_ID.to_string()), now).unwrap();
         assert!(!d.puzzles.contains_key(&MONDAY));
@@ -973,7 +1031,7 @@ mod tests {
         assert_eq!(d.generation_needed(now), Some(TUESDAY));
         d.generate_candidate(TUESDAY).unwrap();
         assert_eq!(d.candidates[&TUESDAY].keys().next().unwrap(), tents::GAME_ID);
-        assert_eq!(d.params_for(MONDAY + 7).game_id, LU);
+        assert_eq!(d.params_for(MONDAY + 7).game_id, CR);
 
         // The override goes with the day
         d.prune(now + DAY_IN_MS);
@@ -1074,14 +1132,14 @@ mod tests {
             reward_by_streak: vec![1],
             ..enabled.clone()
         };
-        d.puzzles.get_mut(&MONDAY).unwrap().get_mut(LU).unwrap().config = stale.clone();
+        d.puzzles.get_mut(&MONDAY).unwrap().get_mut(CR).unwrap().config = stale.clone();
         d.candidates.get_mut(&TUESDAY).unwrap().get_mut(tents::GAME_ID).unwrap()[0]
             .puzzle
             .config = stale;
         d.puzzles
             .get_mut(&MONDAY)
             .unwrap()
-            .get_mut(LU)
+            .get_mut(CR)
             .unwrap()
             .game_config
             .hint_prices = vec![1];
@@ -1135,8 +1193,10 @@ mod tests {
     // #9357 acceptance: the launch numbers are constants, and the checks that used to guard the
     // setters hold over them. Solve rewards stay below the daily claim, so the puzzle is a
     // supplement to that habit and not a replacement; the entry fee stays below the streak-zero
-    // reward, so a first solve is never a net loss; and the entry fee plus three full hints
-    // costs more than the top reward, so hinting all the way through never pays.
+    // reward, so a first solve is never a net loss; and a solve with every hint used earns less
+    // than the entry fee and those hints cost, so hinting all the way through never pays. The
+    // reward counts its penalty per hint: with one hint level at 100 (#9675) the hints alone no
+    // longer outweigh the top reward, but net of the penalty the sum still never comes out ahead.
     #[test]
     fn launch_numbers_are_constants_that_pass_the_config_checks() {
         let config = DailyPuzzleConfig::default();
@@ -1148,8 +1208,9 @@ mod tests {
         let max_reward = *config.reward_by_streak.iter().max().unwrap();
         assert!(max_reward < MAX_DAILY_CLAIM, "{max_reward} vs {MAX_DAILY_CLAIM}");
         assert!(config.entry_fee < config.reward_by_streak[0]);
-        let full_hint = *game_config.hint_prices.last().unwrap();
-        assert!(config.entry_fee + 3 * full_hint > max_reward);
+        let hints = game_config.max_hints as u32;
+        let hinted_reward = max_reward.saturating_sub(hints * config.hint_penalty);
+        assert!(config.entry_fee + hints * game_config.hint_prices[0] > hinted_reward);
         assert_eq!(game_config.max_hints, 3);
 
         // What the canister serves is exactly these, plus the flag
@@ -1184,15 +1245,8 @@ mod tests {
         };
         assert!(validate_config(&config).is_err());
 
-        // Upgrades are priced at the difference, so a flat or descending table hands over the
-        // conclusions for nothing; a free level 1 is unmetered in CHIT and in free checks
-        for prices in [
-            vec![],
-            vec![0, 1, 2, 3],
-            vec![200, 75, 25],
-            vec![100, 100, 100],
-            vec![0, 1, 2],
-        ] {
+        // One hint level, one price (#9675 H3), and a free hint is unmetered in CHIT and free checks
+        for prices in [vec![], vec![0], vec![25, 75, 200], vec![100, 100], vec![100_001]] {
             let game_config = GameConfig {
                 hint_prices: prices,
                 ..Default::default()
@@ -1215,9 +1269,34 @@ mod tests {
             ),
             (0, Box::new(|p: &mut PuzzleParams| p.height = 15)),
             (0, Box::new(|p: &mut PuzzleParams| p.tier = 2)),
-            (0, Box::new(|p: &mut PuzzleParams| p.black_pct = 61)),
+            (6, Box::new(|p: &mut PuzzleParams| p.black_pct = 61)),
             (3, Box::new(|p: &mut PuzzleParams| p.game_id = "sudoku".to_string())),
             (4, Box::new(|p: &mut PuzzleParams| p.width = 7)),
+            (
+                5,
+                Box::new(|p: &mut PuzzleParams| {
+                    p.game_id = chat_rooms::GAME_ID.to_string();
+                    p.width = 9;
+                    p.height = 8;
+                }),
+            ),
+            (
+                6,
+                Box::new(|p: &mut PuzzleParams| {
+                    p.game_id = chat_rooms::GAME_ID.to_string();
+                    p.width = 12;
+                    p.height = 12;
+                }),
+            ),
+            (
+                2,
+                Box::new(|p: &mut PuzzleParams| {
+                    p.game_id = chat_rooms::GAME_ID.to_string();
+                    p.width = 9;
+                    p.height = 9;
+                    p.tier = 0;
+                }),
+            ),
         ] {
             let mut schedule = schedule();
             mutate(&mut schedule[i]);
@@ -1229,6 +1308,17 @@ mod tests {
         schedule[1].black_pct = 0;
         schedule[2].black_pct = 255;
         assert!(validate_schedule(&schedule).is_ok());
+    }
+
+    /// Invariant 20 of the CHAT Rooms branch: CHAT Rooms is only ever served Tricky. Forcing it
+    /// takes its default params, and a rota entry that names it at Easy fails the launch checks
+    /// (see `config_checks_reject_bad_numbers`).
+    #[test]
+    fn chat_rooms_is_always_tricky() {
+        let forced = forced_params(chat_rooms::GAME_ID).unwrap();
+        assert_eq!(forced.tier, 1);
+        let generated = generate(&forced, 7).unwrap().unwrap();
+        assert_eq!(generated.tier, 1);
     }
 
     #[test]
@@ -1302,7 +1392,7 @@ mod tests {
             },
             game_configs: BTreeMap::new(),
             schedule: vec![scheduled(MONDAY); 7],
-            puzzles: BTreeMap::from([(MONDAY, BTreeMap::from([(LU.to_string(), stale.clone())]))]),
+            puzzles: BTreeMap::from([(MONDAY, BTreeMap::from([(CR.to_string(), stale.clone())]))]),
             candidates: BTreeMap::new(),
             results: BTreeMap::new(),
             local_user_indexes: HashSet::new(),

@@ -7,26 +7,25 @@ use local_user_index_canister::daily_puzzle_hint::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, UserId};
 
-// No `#[trace]`: it records args and result, and the result of a level 3 hint is the answer.
+// No `#[trace]`: it records args and result, and a hint's result names cells of the answer.
 // `canister_logger::init` enables the trace buffer wherever `test_mode` is on and `http_request`
 // serves it to anyone.
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 async fn daily_puzzle_hint(args: Args) -> Response {
     // The step is reserved here, before the debit, so calls that overlap on the await cannot get
     // more steps than `max_hints` between them. The hint itself only reaches state once paid for.
-    let (user_id, step, level, mut result, price, key, metered) = match mutate_state(|state| prepare(&args, state)) {
+    let (user_id, step, mut result, price, key, metered) = match mutate_state(|state| prepare(&args, state)) {
         Ok((_, HintPrepared::Mistake(result))) | Ok((_, HintPrepared::AlreadyServed(result))) => return Success(result),
         Ok((
             user_id,
             HintPrepared::Serve {
                 step,
-                level,
                 result,
                 price,
                 key,
                 metered,
             },
-        )) => (user_id, step, level, result, price, key, metered),
+        )) => (user_id, step, result, price, key, metered),
         Err(error) => return Error(error),
     };
 
@@ -35,7 +34,7 @@ async fn daily_puzzle_hint(args: Args) -> Response {
             state
                 .data
                 .daily_puzzle_engine
-                .release_hint(user_id, &args.game_id, args.number, step, level);
+                .release_hint(user_id, &args.game_id, args.number, step);
             Error(error)
         })
     };
@@ -73,7 +72,7 @@ async fn daily_puzzle_hint(args: Args) -> Response {
         state
             .data
             .daily_puzzle_engine
-            .confirm_hint(user_id, &args.game_id, args.number, step, level, metered)
+            .confirm_hint(user_id, &args.game_id, args.number, step, metered)
     });
 
     Success(result)

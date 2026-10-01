@@ -10,6 +10,8 @@ generate_msgpack_query_call!(events);
 generate_msgpack_query_call!(events_by_index);
 generate_msgpack_query_call!(events_window);
 generate_msgpack_query_call!(local_user_index);
+generate_msgpack_query_call!(lookup_members);
+generate_msgpack_query_call!(members);
 generate_msgpack_query_call!(public_summary);
 generate_msgpack_query_call!(selected_initial);
 generate_msgpack_query_call!(selected_updates_v2);
@@ -339,7 +341,12 @@ pub mod happy_path {
         sender: Principal,
         group_chat_id: ChatId,
     ) -> group_canister::selected_initial::SuccessResult {
-        let response = super::selected_initial(env, sender, group_chat_id.into(), &group_canister::selected_initial::Args {});
+        let response = super::selected_initial(
+            env,
+            sender,
+            group_chat_id.into(),
+            &group_canister::selected_initial::Args::default(),
+        );
 
         match response {
             group_canister::selected_initial::Response::Success(result) => result,

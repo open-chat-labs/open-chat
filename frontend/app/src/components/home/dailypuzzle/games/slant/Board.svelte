@@ -1,7 +1,8 @@
 <script lang="ts">
     import { slant, slantVertexLines, type SlantCell, type SlantDescription } from "@client";
     import GridSvg from "../GridSvg.svelte";
-    import { CELL, elementRect, highlight, keysOf, vertex } from "../gridSvg";
+    import HintOutline from "../HintOutline.svelte";
+    import { CELL, elementRect, keysOf, vertex } from "../gridSvg";
     import type { BoardProps } from "../types";
 
     let {
@@ -18,7 +19,7 @@
 
     // Clue circles sit on the grid corners, so the outer ones need a little room past the frame.
     const CLUE_R = 2.4;
-    // border clues and their focus ring (CLUE_R + 1, stroke 0.8) spill past the grid; keep the
+    // border clues and their focus ring (CLUE_R + 1, stroke 0.9) spill past the grid; keep the
     // margin clear of both
     const MARGIN = 0.5;
 
@@ -77,16 +78,7 @@
                 pointer-events="none" />
         {/if}
         {#if focus.has(el.key)}
-            {@const hl = highlight(el.key, focus, target)}
-            <rect
-                x={r.x + 0.5}
-                y={r.y + 0.5}
-                width={CELL - 1}
-                height={CELL - 1}
-                fill={hl.fill}
-                stroke={hl.stroke}
-                stroke-width="0.8"
-                pointer-events="none" />
+            <HintOutline x={r.x} y={r.y} subject={target.has(el.key)} />
         {/if}
         {#if mistakes.has(el.key)}
             <rect
@@ -122,14 +114,15 @@
                 pointer-events="none">{el.label}</text>
         {/if}
         {#if focus.has(el.key)}
-            {@const hl = highlight(el.key, focus, target)}
+            <!-- A corner takes no mark, so it is never asked for: always HintOutline's solid
+                 look, a ring round the clue circle (or the bare corner) -->
             <circle
                 cx={c.cx}
                 cy={c.cy}
                 r={CLUE_R + 1}
-                fill={hl.fill}
-                stroke={hl.stroke}
-                stroke-width="0.8"
+                fill="none"
+                stroke="#1d4ed8"
+                stroke-width="0.9"
                 pointer-events="none" />
         {/if}
     {/each}

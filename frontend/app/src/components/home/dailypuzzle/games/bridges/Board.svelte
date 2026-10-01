@@ -9,8 +9,9 @@
         type BridgesHitShape,
     } from "@client";
     import GridSvg from "../GridSvg.svelte";
+    import HintOutline from "../HintOutline.svelte";
     import NoMark from "../NoMark.svelte";
-    import { CELL, elementCentre, highlight, hitQuarter, keysOf } from "../gridSvg";
+    import { CELL, elementCentre, hitQuarter, keysOf } from "../gridSvg";
     import type { BoardProps } from "../types";
 
     let {
@@ -40,6 +41,15 @@
     let disconnected = $derived(keysOf(violations, "disconnected"));
     // cell indices the server flagged
     let mistakes = $derived(keysOf(violations, "mistake"));
+    // A hint's focus is cells: an island and every gap around it. Each gap is outlined whole,
+    // while any of its water cells is still in focus; both its islands are in focus, since the
+    // shell keeps keys that take no mark. Solid when every such cell is in the target, dashed
+    // with a ? when the player is asked to act on it.
+    let hintGaps = $derived(
+        model.edges.filter(
+            (e) => focus.has(e.a) && focus.has(e.b) && e.cells.some((c) => focus.has(c)),
+        ),
+    );
 
     // Tap targets, one per water cell per edge. A cell two edges share is split along its
     // diagonals so each edge keeps a target of its own (#9372); the polygon is in SVG units.
@@ -127,31 +137,28 @@
             pointer-events="none">{el.label}</text
         >
     {/each}
-    {#each [...focus] as index (index)}
+    {#each hintGaps as e (e.key)}
+        {@const o = cellOrigin(e.cells[0])}
+        <HintOutline
+            x={o.x}
+            y={o.y}
+            width={(e.horizontal ? e.cells.length : 1) * CELL}
+            height={(e.horizontal ? 1 : e.cells.length) * CELL}
+            subject={e.cells.every((c) => !focus.has(c) || target.has(c))}
+        />
+    {/each}
+    {#each [...focus].filter((index) => model.cells[index] !== 0) as index (index)}
         {@const o = cellOrigin(index)}
-        {@const hl = highlight(index, focus, target)}
-        {#if model.cells[index] !== 0}
-            <circle
-                cx={o.x + CELL / 2}
-                cy={o.y + CELL / 2}
-                r={ISLAND_R + 0.9}
-                fill="none"
-                stroke={hl.stroke}
-                stroke-width="0.8"
-                pointer-events="none"
-            />
-        {:else}
-            <rect
-                x={o.x + 0.5}
-                y={o.y + 0.5}
-                width={CELL - 1}
-                height={CELL - 1}
-                fill={hl.fill}
-                stroke={hl.stroke}
-                stroke-width="0.8"
-                pointer-events="none"
-            />
-        {/if}
+        <!-- an island takes no mark, so it is never asked for: always the solid look -->
+        <circle
+            cx={o.x + CELL / 2}
+            cy={o.y + CELL / 2}
+            r={ISLAND_R + 0.9}
+            fill="none"
+            stroke="#1d4ed8"
+            stroke-width="0.9"
+            pointer-events="none"
+        />
     {/each}
     {#each bridgesMistakeElements(elements, mistakes) as el (el.key)}
         <rect

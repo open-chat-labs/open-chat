@@ -686,9 +686,8 @@
         "unavailable": "Aucun puzzle disponible pour le moment.",
         "startFree": "Commencer (premier puzzle gratuit)",
         "startFee": "Commencer pour {fee} CHIT",
-        "hintFree": "Indice (niveau {level})",
-        "hintPrice": "Indice (niveau {level}, {price} CHIT)",
         "hintsUsed": "{count} indices",
+        "hintCost": "Indice ({price} CHIT)",
         "hintsLeft": "{count} restants",
         "noHintsLeft": "Plus d'indices pour le puzzle du jour",
         "streakDays": "Série de {streak} jours",
@@ -709,7 +708,6 @@
         "fixMistakeFirst": "Corrigez d'abord les cases rouges",
         "noFreeChecks": "Plus de vérifications gratuites pour le puzzle du jour",
         "checksLeft": "{count} vérifications restantes",
-        "revealed": "Rempli pour vous.",
         "reset": "Réinitialiser",
         "resetConfirm": "Effacer la grille ?",
         "replaced": "Ce puzzle a été remplacé. Voici le nouveau.",
@@ -738,6 +736,24 @@
                     "4": "Aucune île ne peut dépasser son nombre. Celle-ci a besoin de trois ponts et en a quatre.",
                     "5": "Un pont sur le côté au lieu de deux, et elle a ses trois.",
                     "6": "Chaque nombre est respecté, et chaque île est reliée aux autres. C'est terminé."
+                },
+                "hint": {
+                    "allSpaces": {
+                        "plain": "Le {n} en ligne {row}, colonne {column} a besoin de chaque pont qui tient encore autour de lui pour atteindre {n}. Chaque espace ? encore ouvert reçoit donc autant de ponts qu'il peut en contenir.",
+                        "fresh": "Le {n} en ligne {row}, colonne {column} a besoin de {n} ponts, et ses espaces ne peuvent pas en contenir plus de {n} à eux tous. Chaque espace ? reçoit donc autant de ponts qu'il peut en contenir.",
+                        "closed": "Autour du {n} en ligne {row}, colonne {column}, les espaces qui ne sont ni croisés ni exclus et qui ne mènent pas à une île complète ne peuvent pas contenir plus de {n} ponts à eux tous. Chacun de ces espaces ? reçoit donc autant de ponts qu'il peut en contenir.",
+                        "more": "Le {n} en ligne {row}, colonne {column} a encore besoin de {need} ponts, et les espaces autour de lui qui ne sont ni décidés ni croisés et qui ne mènent pas à une île complète ne peuvent pas en contenir plus de {need} à eux tous. Chacun de ces espaces ? reçoit donc autant de ponts qu'il peut en contenir."
+                    },
+                    "oneEachWay": {
+                        "plain": "Le {n} en ligne {row}, colonne {column} est trop grand pour laisser de côté un voisin qu'il peut encore atteindre : les autres ne pourraient jamais atteindre {n}. Chaque espace ? encore ouvert a donc besoin d'au moins un pont.",
+                        "count": "Le {n} en ligne {row}, colonne {column} peut encore atteindre {count} voisins. Si vous en laissez un de côté, les autres peuvent contenir au plus {max} ponts, moins que {n}. Chaque espace ? encore ouvert a donc besoin d'au moins un pont."
+                    },
+                    "needsNeighbour": {
+                        "many": "Certains espaces autour du {n} en ligne {row}, colonne {column} ne peuvent pas rester vides : sans pont dans l'un d'eux, les autres ne pourraient pas atteindre {n}. Chacun de ces espaces ? a donc besoin d'au moins un pont.",
+                        "one": "Sans pont vers le {m} en ligne {mrow}, colonne {mcolumn}, les autres espaces autour du {n} en ligne {row}, colonne {column} peuvent contenir au plus {max} ponts, moins que {n}. L'espace ? entre les deux a donc besoin d'au moins un pont.",
+                        "onePlain": "Les autres espaces autour du {n} en ligne {row}, colonne {column} ne peuvent pas atteindre {n} sans pont vers le {m} en ligne {mrow}, colonne {mcolumn}. L'espace ? entre les deux a donc besoin d'au moins un pont.",
+                        "two": "Les autres espaces autour du {n} en ligne {row}, colonne {column} ne peuvent atteindre {n} ni sans pont vers le {a} en ligne {arow}, colonne {acolumn}, ni sans pont vers le {b} en ligne {brow}, colonne {bcolumn}. Ces deux espaces ? ont donc besoin d'au moins un pont chacun."
+                    }
                 }
             },
             "light_up": {
@@ -756,6 +772,22 @@
                     "4": "Ce coin est encore sombre, et rien d'autre ne peut l'atteindre, donc il lui faut sa propre ampoule.",
                     "5": "Aucune ampoule ne doit en éclairer une autre. Ces deux-là sont dans la même colonne sans rien entre elles.",
                     "6": "Chaque case blanche est éclairée, le 4 a ses quatre ampoules, et aucune ampoule n'en éclaire une autre."
+                },
+                "hint": {
+                    "onlyWay": {
+                        "cell": "Toutes les cases qui pourraient éclairer la case encadrée en ligne {row}, colonne {column} sont déjà éclairées ou exclues, sauf la case ?. La case ? a donc besoin d'une ampoule.",
+                        "self": "Toutes les cases qui pourraient éclairer la case encadrée en ligne {row}, colonne {column} sont déjà éclairées ou exclues, donc il lui faut sa propre ampoule."
+                    },
+                    "clueSatisfied": {
+                        "some": "Le {number} en ligne {row}, colonne {column} a déjà à côté de lui toutes les ampoules qu'il demande, donc aucune case ? à côté de lui ne peut recevoir d'ampoule.",
+                        "zero": "Le 0 en ligne {row}, colonne {column} ne peut avoir aucune ampoule à côté de lui, donc aucune case ? à côté de lui ne peut en recevoir."
+                    },
+                    "clueForced": "Il reste au {number} en ligne {row}, colonne {column} juste assez de cases à côté de lui pour les ampoules qui lui manquent, donc chaque case ? à côté de lui a besoin d'une ampoule.",
+                    "setExclusion": {
+                        "dark": "Seules les cases encadrées peuvent encore éclairer la case en ligne {row}, colonne {column}, donc l'une d'elles doit contenir une ampoule. Une ampoule dans la case ? les exclurait toutes, en les éclairant ou en complétant un nombre adjacent. La case ? ne peut donc pas contenir d'ampoule.",
+                        "clue": "Les cases encadrées à côté du {number} en ligne {row}, colonne {column} sont tout ce qui lui reste pour ses ampoules. Une ampoule dans la case ? en exclurait trop, en les éclairant ou en complétant un autre nombre, et il manquerait des ampoules au {number}. La case ? ne peut donc pas contenir d'ampoule.",
+                        "clueBeside": "La case ? et les cases encadrées à côté du {number} en ligne {row}, colonne {column} sont tout ce qui lui reste pour ses ampoules. Une ampoule dans la case ? exclurait trop de cases encadrées, en les éclairant ou en complétant un autre nombre, et il manquerait des ampoules au {number}. La case ? ne peut donc pas contenir d'ampoule."
+                    }
                 }
             },
             "loopy": {
@@ -800,6 +832,30 @@
                     "4": "Ce coin en a besoin de quatre, donc les quatre cases autour doivent pointer vers lui. Il n'y a qu'une façon de le faire.",
                     "5": "Ces quatre-là se sont rejointes en anneau fermé. Les anneaux sont interdits, donc l'une d'elles doit pencher dans l'autre sens.",
                     "6": "Chaque case remplie, chaque nombre respecté, et aucun anneau nulle part."
+                },
+                "hint": {
+                    "satisfied": {
+                        "some": "Le {clue} encadré a déjà tous les traits qu'il lui faut, donc chaque case ? autour de lui doit pencher à l'opposé.",
+                        "zero": "Le {clue} encadré ne peut toucher aucun trait, donc chaque case ? autour de lui doit pencher à l'opposé."
+                    },
+                    "forced": {
+                        "all": "Le {clue} encadré a besoin d'un trait venant de chaque case autour de lui, donc chaque case ? doit pencher vers lui.",
+                        "one": "Le {clue} encadré a encore besoin d'1 trait, et une seule case autour de lui est vide, donc la case ? doit pencher vers lui.",
+                        "many": "Le {clue} encadré a encore besoin de {needed} traits, et seules {needed} cases autour de lui sont vides, donc chaque case ? doit pencher vers lui."
+                    },
+                    "paired": {
+                        "away": "Les deux cases encadrées doivent pencher dans le même sens, donc à elles deux elles donnent exactement un trait au {clue} encadré. C'est tout ce qu'il lui faut encore, donc chaque case ? autour de lui doit pencher à l'opposé.",
+                        "towards": "Les deux cases encadrées doivent pencher dans le même sens, donc à elles deux elles donnent exactement un trait au {clue} encadré. Ensuite, il lui en faut encore {needed}, donc chaque case ? autour de lui doit pencher vers lui."
+                    },
+                    "loop": {
+                        "backslash": "Les coins supérieur gauche et inférieur droit de la case encadrée sont déjà reliés par une chaîne de traits, donc un trait entre eux fermerait une boucle. La case doit pencher du coin inférieur gauche au coin supérieur droit.",
+                        "slash": "Les coins inférieur gauche et supérieur droit de la case encadrée sont déjà reliés par une chaîne de traits, donc un trait entre eux fermerait une boucle. La case doit pencher du coin supérieur gauche au coin inférieur droit."
+                    },
+                    "deadEnd": {
+                        "backslash": "Les coins encadrés appartiennent à deux groupes de traits, l'un au coin supérieur gauche de la case encadrée et l'autre à son coin inférieur droit. Aucun n'atteint le bord, et chacun peut grandir d'au plus un trait. Réunis, ils formeraient un groupe qui ne pourrait jamais atteindre le bord, ce qui n'arrive qu'à l'intérieur d'une boucle. La case doit donc pencher du coin inférieur gauche au coin supérieur droit.",
+                        "slash": "Les coins encadrés appartiennent à deux groupes de traits, l'un au coin inférieur gauche de la case encadrée et l'autre à son coin supérieur droit. Aucun n'atteint le bord, et chacun peut grandir d'au plus un trait. Réunis, ils formeraient un groupe qui ne pourrait jamais atteindre le bord, ce qui n'arrive qu'à l'intérieur d'une boucle. La case doit donc pencher du coin supérieur gauche au coin inférieur droit."
+                    },
+                    "equivalent": "Les nombres entre la case encadrée et la case remplie en ligne {row}, colonne {column} ne peuvent être respectés que si les deux penchent dans le même sens, donc la case encadrée doit la copier."
                 }
             },
             "tents": {
@@ -822,6 +878,39 @@
                     "4": "Les tentes ne se touchent jamais, pas même par un coin. Ces deux-là se touchent, donc l'une doit bouger.",
                     "5": "Une seule case à côté de cet arbre est encore libre, donc sa tente va là.",
                     "6": "Chaque arbre a une tente à côté de lui, aucune tente n'en touche une autre, et tous les comptes sont bons."
+                },
+                "hint": {
+                    "noFreeTree": {
+                        "none": "Aucun arbre ne se trouve juste au-dessus, en dessous ou à côté de la case ?, donc une tente à cet endroit n'aurait aucun arbre auquel appartenir.",
+                        "one": "Le seul arbre à côté de la case ? a déjà sa propre tente, donc une tente dans la case ? n'aurait aucun arbre auquel appartenir.",
+                        "many": "Les {count} arbres à côté de la case ? ont tous déjà leur propre tente, donc une tente dans la case ? n'aurait aucun arbre auquel appartenir."
+                    },
+                    "tentTouches": {
+                        "one": "La case ? touche la tente encadrée, et les tentes ne se touchent jamais, pas même par un coin. La case ? ne peut donc pas contenir de tente.",
+                        "many": "La case ? touche les tentes encadrées, et les tentes ne se touchent jamais, pas même par un coin. La case ? ne peut donc pas contenir de tente."
+                    },
+                    "treeNeedsTent": "Toutes les autres cases à côté de l'arbre encadré sont prises ou exclues, donc sa tente doit aller dans la case ?.",
+                    "treeCorner": "La tente de l'arbre encadré doit aller dans l'une des deux cases encadrées à côté de lui, et toutes deux touchent la case ?. Quelle que soit la bonne, la case ? ne peut pas contenir de tente.",
+                    "lineCount": {
+                        "row": "Le nombre de la ligne {line} est {count}. De quelque façon que vous placiez ses tentes manquantes dans ses cases vides, sans que deux se touchent, chaque case ? donne le même résultat à chaque fois, tente ou pas. Vous pouvez donc les remplir.",
+                        "column": "Le nombre de la colonne {line} est {count}. De quelque façon que vous placiez ses tentes manquantes dans ses cases vides, sans que deux se touchent, chaque case ? donne le même résultat à chaque fois, tente ou pas. Vous pouvez donc les remplir."
+                    },
+                    "lineNeighbour": {
+                        "row": "Le nombre de la ligne {line} est {count}. De quelque façon que vous placiez ses tentes manquantes dans ses cases vides, sans que deux se touchent, l'une d'elles touche toujours chaque case ?. Les cases ? ne peuvent donc pas contenir de tente.",
+                        "column": "Le nombre de la colonne {line} est {count}. De quelque façon que vous placiez ses tentes manquantes dans ses cases vides, sans que deux se touchent, l'une d'elles touche toujours chaque case ?. Les cases ? ne peuvent donc pas contenir de tente."
+                    },
+                    "lineExact": {
+                        "row": "Toutes les cases de la ligne {line}, sauf les cases ?, ont déjà une tente ou ne peuvent pas en contenir, et il manque encore {missing} tentes à la ligne. Chaque case ? est donc une tente.",
+                        "rowOne": "Toutes les cases de la ligne {line}, sauf la case ?, ont déjà une tente ou ne peuvent pas en contenir, et il manque encore une tente à la ligne. La case ? est donc une tente.",
+                        "column": "Toutes les cases de la colonne {line}, sauf les cases ?, ont déjà une tente ou ne peuvent pas en contenir, et il manque encore {missing} tentes à la colonne. Chaque case ? est donc une tente.",
+                        "columnOne": "Toutes les cases de la colonne {line}, sauf la case ?, ont déjà une tente ou ne peuvent pas en contenir, et il manque encore une tente à la colonne. La case ? est donc une tente."
+                    },
+                    "lineFull": {
+                        "row": "Le nombre de la ligne {line} est {count}, et elle a déjà autant de tentes. Aucune des cases ? ne peut donc en contenir.",
+                        "rowZero": "Le nombre de la ligne {line} est 0, donc aucune des cases ? ne peut contenir de tente.",
+                        "column": "Le nombre de la colonne {line} est {count}, et elle a déjà autant de tentes. Aucune des cases ? ne peut donc en contenir.",
+                        "columnZero": "Le nombre de la colonne {line} est 0, donc aucune des cases ? ne peut contenir de tente."
+                    }
                 }
             },
             "unruly": {
@@ -840,6 +929,87 @@
                     "3": "Chaque ligne et colonne finit avec trois de chaque couleur. Cette ligne a quatre violets.",
                     "4": "Deux oranges avec un trou. Orange au milieu en ferait trois, donc ce doit être violet.",
                     "5": "Chaque case remplie, aucune série de trois, et trois de chaque couleur dans chaque ligne et colonne."
+                },
+                "hint": {
+                    "pairEnd": {
+                        "row": "Les cases encadrées de la ligne {line} sont côte à côte et toutes deux en {colour}. Mettre aussi la case ? en {colour} ferait trois cases en {colour} à la suite, donc il faut la mettre en {other}.",
+                        "column": "Les cases encadrées de la colonne {line} sont l'une au-dessus de l'autre et toutes deux en {colour}. Mettre aussi la case ? en {colour} ferait trois cases en {colour} à la suite, donc il faut la mettre en {other}."
+                    },
+                    "pairGap": {
+                        "row": "Les cases encadrées de la ligne {line} sont toutes deux en {colour}, avec la case ? entre elles. La mettre aussi en {colour} ferait trois cases en {colour} à la suite, donc il faut la mettre en {other}.",
+                        "column": "Les cases encadrées de la colonne {line} sont toutes deux en {colour}, avec la case ? entre elles. La mettre aussi en {colour} ferait trois cases en {colour} à la suite, donc il faut la mettre en {other}."
+                    },
+                    "lastGap": {
+                        "row": "La ligne {line} a déjà toutes ses {count} cases en {colour} et il lui manque une case en {other}, donc sa dernière case vide doit être mise en {other}.",
+                        "column": "La colonne {line} a déjà toutes ses {count} cases en {colour} et il lui manque une case en {other}, donc sa dernière case vide doit être mise en {other}."
+                    },
+                    "lineFull": {
+                        "row": "La ligne {line} a déjà toutes ses {count} cases en {colour}, encadrées, donc chaque case ? qu'elle contient doit être mise en {other}.",
+                        "column": "La colonne {line} a déjà toutes ses {count} cases en {colour}, encadrées, donc chaque case ? qu'elle contient doit être mise en {other}."
+                    },
+                    "lastInRun": {
+                        "row": "Il ne manque plus qu'une case en {colour} à la ligne {line}, et elle doit aller dans les cases encadrées des colonnes {from} à {to} : ailleurs, ces trois-là seraient toutes en {other}. Chaque case ? doit donc être mise en {other}.",
+                        "column": "Il ne manque plus qu'une case en {colour} à la colonne {line}, et elle doit aller dans les cases encadrées des lignes {from} à {to} : ailleurs, ces trois-là seraient toutes en {other}. Chaque case ? doit donc être mise en {other}."
+                    }
+                },
+                "colour": {
+                    "1": "orange",
+                    "2": "violet"
+                }
+            },
+            "chat_rooms": {
+                "name": "CHAT Rooms",
+                "rules": "Placez un CHAT dans chaque ligne, chaque colonne et chaque pièce colorée. Deux CHAT ne doivent jamais se toucher, même par un coin.",
+                "technique": {
+                    "1": "Un CHAT exclut toutes les autres cases de sa ligne, de sa colonne et de sa pièce, ainsi que les huit cases qui l'entourent.",
+                    "2": "Cette ligne, cette colonne ou cette pièce n'a plus qu'une case libre pour son CHAT, donc le CHAT va là.",
+                    "3": "Ce sont les seules cases qui restent pour une pièce, et elles sont toutes dans une même ligne ou colonne. Le CHAT de cette ligne doit donc être parmi elles, et le reste de la ligne est exclu. Cela marche aussi dans l'autre sens : une ligne ou une colonne dont toutes les cases libres sont dans une seule pièce exclut le reste de cette pièce.",
+                    "4": "Ces pièces ne peuvent utiliser que ces lignes ou colonnes, et il y a autant de pièces que de lignes. Les CHAT de ces lignes appartiennent donc tous à ces pièces, et rien d'autre dans ces lignes ne peut en recevoir un.",
+                    "5": "Un CHAT dans cette case exclurait toutes les cases qui restent à cette ligne, cette colonne ou cette pièce, donc cette case ne peut pas en recevoir."
+                },
+                "demo": {
+                    "1": "Placez un CHAT dans chaque ligne, chaque colonne et chaque pièce colorée. Touchez une fois pour barrer une case, deux fois pour un CHAT.",
+                    "2": "Deux CHAT ne doivent jamais se toucher, même par un coin.",
+                    "3": "Chaque pièce contient un CHAT. La pièce du haut en a deux.",
+                    "4": "Cette pièce ne fait qu'une case, donc son CHAT va là. Toutes les cases qu'il exclut sont barrées pour vous.",
+                    "5": "Un CHAT dans chaque ligne, colonne et pièce, et aucun ne se touche."
+                },
+                "hint": {
+                    "shadow": "Le CHAT en ligne {row}, colonne {column} exclut toutes les autres cases de sa ligne, de sa colonne et de {room}, ainsi que toutes les cases qui le touchent, donc les cases ? ne peuvent pas recevoir de CHAT.",
+                    "lastCell": {
+                        "row": "Toutes les autres cases de la ligne {line} sont exclues, donc le CHAT de la ligne {line} doit aller dans la case ?.",
+                        "column": "Toutes les autres cases de la colonne {line} sont exclues, donc le CHAT de la colonne {line} doit aller dans la case ?.",
+                        "room": "Toutes les autres cases de {room} sont exclues, donc le CHAT de cette pièce doit aller dans la case ?.",
+                        "single": "La case encadrée constitue à elle seule {room}, donc le CHAT de cette pièce va là."
+                    },
+                    "confined": {
+                        "roomInRow": "Les seules cases qui restent à {room} sont les cases encadrées, et elles sont toutes dans la ligne {line}. Le CHAT de la ligne {line} doit donc venir de cette pièce, et les cases ? ne peuvent pas en recevoir.",
+                        "roomInColumn": "Les seules cases qui restent à {room} sont les cases encadrées, et elles sont toutes dans la colonne {line}. Le CHAT de la colonne {line} doit donc venir de cette pièce, et les cases ? ne peuvent pas en recevoir.",
+                        "rowInRoom": "Les seules cases qui restent dans la ligne {line} sont les cases encadrées, et elles sont toutes dans {room}. Le CHAT de cette pièce doit donc être dans la ligne {line}, et les cases ? ne peuvent pas en recevoir.",
+                        "columnInRoom": "Les seules cases qui restent dans la colonne {line} sont les cases encadrées, et elles sont toutes dans {room}. Le CHAT de cette pièce doit donc être dans la colonne {line}, et les cases ? ne peuvent pas en recevoir."
+                    },
+                    "pigeonhole": {
+                        "roomsInRows": "Les seules cases qui restent à ces {count} pièces sont les cases encadrées, et elles sont toutes dans les lignes {lines}. Les CHAT de ces lignes doivent donc tous venir de ces pièces, et les cases ? ne peuvent pas en recevoir.",
+                        "roomsInColumns": "Les seules cases qui restent à ces {count} pièces sont les cases encadrées, et elles sont toutes dans les colonnes {lines}. Les CHAT de ces colonnes doivent donc tous venir de ces pièces, et les cases ? ne peuvent pas en recevoir.",
+                        "rowsInRooms": "Les seules cases qui restent dans les lignes {lines} sont les cases encadrées, et elles sont toutes dans seulement {count} pièces. Les CHAT de ces pièces doivent donc tous être dans ces lignes, et les cases ? ne peuvent pas en recevoir.",
+                        "columnsInRooms": "Les seules cases qui restent dans les colonnes {lines} sont les cases encadrées, et elles sont toutes dans seulement {count} pièces. Les CHAT de ces pièces doivent donc tous être dans ces colonnes, et les cases ? ne peuvent pas en recevoir."
+                    },
+                    "blocked": {
+                        "row": "Les cases encadrées sont tout ce qui reste à la ligne {line}. Un CHAT dans la case ? les exclurait toutes, en les touchant ou en partageant leur ligne, leur colonne ou leur pièce, et la ligne {line} n'aurait plus de place pour son CHAT. La case ? ne peut donc pas recevoir de CHAT.",
+                        "column": "Les cases encadrées sont tout ce qui reste à la colonne {line}. Un CHAT dans la case ? les exclurait toutes, en les touchant ou en partageant leur ligne, leur colonne ou leur pièce, et la colonne {line} n'aurait plus de place pour son CHAT. La case ? ne peut donc pas recevoir de CHAT.",
+                        "room": "Les cases encadrées sont tout ce qui reste à {room}. Un CHAT dans la case ? les exclurait toutes, en les touchant ou en partageant leur ligne, leur colonne ou leur pièce, et cette pièce n'aurait plus de place pour son CHAT. La case ? ne peut donc pas recevoir de CHAT."
+                    }
+                },
+                "room": {
+                    "0": "la pièce violette",
+                    "1": "la pièce orange",
+                    "2": "la pièce bleue",
+                    "3": "la pièce verte",
+                    "4": "la pièce grise",
+                    "5": "la pièce rouge",
+                    "6": "la pièce jaune",
+                    "7": "la pièce marron",
+                    "8": "la pièce rose"
                 }
             }
         }

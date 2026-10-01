@@ -3,6 +3,7 @@ import {
     type DailyGame,
     type DailyPuzzleUserState,
     type DailyResultContent,
+    type HintCaption,
     type HintKeyStatus,
     type OpenChat,
     type PublicDailyPuzzle,
@@ -16,9 +17,32 @@ import {
     puzzleFingerprint,
     stateFor,
 } from "@client";
+import { _, locale } from "svelte-i18n";
+import { get } from "svelte/store";
 import { i18nKey } from "../i18n/i18n";
 import { toastStore } from "../stores/toast";
 import { gameI18nPrefix } from "./dailyPuzzleGames";
+
+// A game's own sentence for a step, with its values made readable: a string of the game's
+// translated first (a room's colour, "the orange room"), a list joined as the player's language
+// joins one ("3 and 5")
+function captionKey(prefix: string, caption: HintCaption): ResourceKey {
+    const params: Record<string, string | number> = {};
+    for (const [name, value] of Object.entries(caption.params ?? {})) {
+        if (typeof value === "number") params[name] = value;
+        else if (Array.isArray(value)) params[name] = joinList(value.map(String));
+        else params[name] = get(_)(`${prefix}.${value.key}`);
+    }
+    return i18nKey(`${prefix}.${caption.key}`, params);
+}
+
+function joinList(items: string[]): string {
+    try {
+        return new Intl.ListFormat(get(locale) ?? "en", { type: "conjunction" }).format(items);
+    } catch {
+        return items.join(", ");
+    }
+}
 
 const SERVER_SAVE_INTERVAL = 5000;
 
@@ -89,12 +113,12 @@ export const SHOW_CHECKS_LEFT_BELOW = 5;
 /**
  * What the hint button offers. Decided here rather than in the two pages so both agree and the
  * decision is testable: while a mistake hint stands on an unchanged board the server would only
- * repeat it, so no level or price is quoted (#9360 invariant 2).
+ * repeat it, so no price is quoted (#9360 invariant 2).
  */
 export type HintButton =
     | { kind: "mistake" }
     | { kind: "noneLeft" }
-    | { kind: "hint"; level: number; price: number; hintsLeft: number; checksLeft?: number };
+    | { kind: "hint"; price: number; hintsLeft: number; checksLeft?: number };
 
 export function tierKey(tier: number): string {
     return `dailyPuzzle.tier.${tier}`;
@@ -137,6 +161,9 @@ export class DailyPuzzleGame {
     resetArmed = $state(false);
     // the most recent hint step served for this puzzle (a mistake hint is not a step)
     lastHint = $state<ServedHint | undefined>(undefined);
+    // The server refused a hint for `max_hints`: it has the last word on which step is next, so
+    // once it says none are left, none are offered
+    #outOfHints = $state(false);
 
     marks = $derived.by(() => this.game.marks(this.model, this.state));
     lit = $derived.by(() => this.game.lit?.(this.model, this.state) ?? new Set<number>());
@@ -149,6 +176,10 @@ export class DailyPuzzleGame {
     });
     solvedLocally = $derived.by(() => this.game.solved(this.model, this.state));
 
+    // The store's `.value` is not tracked by Svelte, so a $derived reading it straight would keep
+    // a stale hint count after a hint is bought (#9675 invariant 28): mirror it into state
+    #store = $state.raw(dailyPuzzleStore.value);
+    #unsubscribe: () => void;
     #dirty = false;
     #saveTimer: number | undefined;
     #disposed = false;
@@ -169,16 +200,18 @@ export class DailyPuzzleGame {
         this.state = this.#resume(userState);
         this.lastHint = [...(userState?.hints ?? [])].reverse().find((h) => !h.mistake);
         document.addEventListener("visibilitychange", this.#onVisibility);
+        this.#unsubscribe = dailyPuzzleStore.subscribe((v) => (this.#store = v));
     }
 
     dispose(): void {
         this.#disposed = true;
         document.removeEventListener("visibilitychange", this.#onVisibility);
+        this.#unsubscribe();
         this.flushSave();
     }
 
     get userState(): DailyPuzzleUserState | undefined {
-        return stateFor(dailyPuzzleStore.value, this.puzzle.gameId);
+        return stateFor(this.#store, this.puzzle.gameId);
     }
 
     get started(): boolean {
@@ -267,14 +300,12 @@ export class DailyPuzzleGame {
 
     get hintButton(): HintButton {
         if (this.mistakeStands) return { kind: "mistake" };
-        const level = this.nextHintLevel;
         const hintsLeft = this.hintsLeft;
-        if (level === 1 && hintsLeft === 0) return { kind: "noneLeft" };
+        if (this.#outOfHints || hintsLeft === 0) return { kind: "noneLeft" };
         const checksLeft = this.freeChecksLeft;
         return {
             kind: "hint",
-            level,
-            price: this.nextHintPrice,
+            price: this.hintPrice,
             hintsLeft,
             ...(checksLeft < SHOW_CHECKS_LEFT_BELOW ? { checksLeft } : {}),
         };
@@ -338,10 +369,9 @@ export class DailyPuzzleGame {
     // moves it asked for they describe the past: left up, they read as the game telling you to
     // do something you have already done. So the highlight only ever shows what is still to
     // do, cells drop out of it as they are marked, and once nothing markable is left the whole
-    // hint goes on the player's next edit. Below level 3 the server withholds the conclusions,
-    // so "done" cannot be read from the values; it is read from the keys the highlight named
-    // (#9334 invariant 61). Only a player edit trims, never the level 3 reveal applying its own
-    // conclusions, or the highlight would vanish the instant it appeared.
+    // hint goes on the player's next edit. The server never sends the conclusions, so "done"
+    // cannot be read from the values; it is read from the keys the highlight named (#9334
+    // invariant 61). Only a player edit trims.
     #trimHint(): void {
         if (this.focus.size === 0) return;
         const filled = new Set(this.#filled().map(([k]) => k));
@@ -352,10 +382,7 @@ export class DailyPuzzleGame {
         const subject = new Set(last?.hint.target ?? []);
         const asked = [...this.focus].filter((k) => !subject.has(k) && status(k) !== "context");
         const remaining = asked.filter((k) => status(k) === "todo");
-        // A reveal has nothing left to ask for, so any edit after it, including undoing a cell it
-        // filled, retires it: kept, its caption would describe a fill no longer on the board
-        const revealed = last !== undefined && last.level >= 3;
-        if (revealed || (last !== undefined && this.#concluded(last)) || remaining.length === 0) {
+        if (remaining.length === 0) {
             this.focus = new Set();
             this.target = new Set();
             this.#caption = undefined;
@@ -430,45 +457,21 @@ export class DailyPuzzleGame {
             });
     }
 
-    // Level to ask for on the next hint tap: the current step's next level while its
-    // conclusions are still open, otherwise level 1 of a new step.
-    get nextHintLevel(): number {
-        const last = this.lastHint;
-        if (last !== undefined && !this.#concluded(last) && last.level < 3) {
-            return last.level + 1;
-        }
-        return 1;
-    }
-
-    // What the server will charge for the next tap: a new step at level 1 costs level 1; upgrading
-    // the served step to the next level costs the difference between the two levels, as the
-    // engine prices it, so climbing the ladder is never dearer than jumping to the top.
-    get nextHintPrice(): number {
-        const level = this.nextHintLevel;
-        const price = (l: number) => this.puzzle.hintPrices[l - 1] ?? 0;
-        return level > 1 ? price(level) - price(level - 1) : price(level);
+    /** What a hint costs: one level, one price (#9675). */
+    get hintPrice(): number {
+        return this.puzzle.hintPrices[0] ?? 0;
     }
 
     #filled(): [number, number][] {
         return this.game.filled(this.model, this.state);
     }
 
-    #filledKey(): string {
-        return JSON.stringify(this.#filled());
+    #hintFilled(): [number, number][] {
+        return this.game.hintFilled?.(this.model, this.state) ?? this.#filled();
     }
 
-    // Same test the server applies when it picks the next step: a step is done once its
-    // positive conclusions are on the board. Negative ones ("no line", "grass") are optional
-    // notes the player may never mark, so requiring them would strand us on a finished step.
-    #concluded(hint: ServedHint): boolean {
-        // Below level 3 the server withholds the conclusions, so an empty list means "not
-        // revealed", not "all satisfied". Reading it as satisfied would pin the next tap at
-        // level 1 forever and the hint button would look dead.
-        if (hint.hint.conclusions.length === 0) return false;
-        const filled = this.#filled();
-        return hint.hint.conclusions
-            .filter(([, v]) => v !== 0)
-            .every(([k, v]) => filled.some(([fk, fv]) => fk === k && fv === v));
+    #filledKey(): string {
+        return JSON.stringify(this.#filled());
     }
 
     hint(): Promise<void> {
@@ -476,14 +479,8 @@ export class DailyPuzzleGame {
         // The answer to these marks is already on screen, and asking again would spend a free
         // check on it (#9360 invariant 1)
         if (this.mistakeStands) return Promise.resolve();
-        const last = this.lastHint;
-        // A fully revealed step whose conclusions were undone: re-apply it, no charge
-        if (last !== undefined && last.level === 3 && !this.#concluded(last)) {
-            this.#applyHint(last);
-            return Promise.resolve();
-        }
         this.busy = true;
-        return this.#requestHint(this.nextHintLevel, this.nextHintPrice, false).finally(() => {
+        return this.#requestHint(this.hintPrice, false).finally(() => {
             this.busy = false;
         });
     }
@@ -493,9 +490,10 @@ export class DailyPuzzleGame {
     // move; a second mismatch is an error. A quote above the price on the button is never paid:
     // the player agreed to what the button said, not to whatever the server asks (#9517
     // invariant 2).
-    #requestHint(level: number, price: number, retried: boolean): Promise<void> {
+    #requestHint(price: number, retried: boolean): Promise<void> {
+        // The level argument is what the server once sold hints in; it now ignores it (#9675)
         return this.client
-            .dailyPuzzleHint(this.puzzle.gameId, level, this.#filled(), price)
+            .dailyPuzzleHint(this.puzzle.gameId, 1, this.#hintFilled(), price)
             .then((resp) => {
                 if (resp.kind === "error") {
                     const quoted = Number(resp.message);
@@ -505,13 +503,18 @@ export class DailyPuzzleGame {
                         Number.isFinite(quoted) &&
                         quoted <= price
                     ) {
-                        return this.#requestHint(level, quoted, true);
+                        return this.#requestHint(quoted, true);
                     }
+                    const outOfHints =
+                        resp.code === ErrorCode.Throttled && resp.message === "max_hints";
+                    if (outOfHints) this.#outOfHints = true;
                     toastStore.showFailureToast(
                         i18nKey(
-                            resp.code === ErrorCode.Throttled
-                                ? "dailyPuzzle.noFreeChecks"
-                                : "dailyPuzzle.failedHint",
+                            outOfHints
+                                ? "dailyPuzzle.noHintsLeft"
+                                : resp.code === ErrorCode.Throttled
+                                  ? "dailyPuzzle.noFreeChecks"
+                                  : "dailyPuzzle.failedHint",
                         ),
                         resp,
                     );
@@ -543,26 +546,15 @@ export class DailyPuzzleGame {
             });
     }
 
+    // One level (#9675): every hint is the step's outline and its sentence, and never its answer.
+    // A hint kept from the three-level ladder is drawn the same way: one bought at level 1 has no
+    // technique, so no sentence, and one bought at level 3 has its conclusions ignored.
     #applyHint(hint: ServedHint): void {
-        if (hint.level >= 3) {
-            // The reveal fills the cells itself, so afterwards there is nothing to ask the player
-            // for: the caption says what was done and the filled cells sit in the faint context
-            // highlight, never the "mark this" one (#9360 invariant 6). Cleared on the next edit.
-            this.state = hint.hint.conclusions.reduce(
-                (s, [k, v]) => this.game.apply(this.model, s, k, v),
-                this.state,
-            );
-            this.focus = new Set([...hint.hint.focus, ...hint.hint.conclusions.map(([k]) => k)]);
-            this.target = new Set();
-            this.#caption = i18nKey("dailyPuzzle.revealed");
-            this.#afterChange();
-            return;
-        }
         // Cells the player has already marked are not shown: the hint is about what is left.
-        // The target is the sentence's subject ("this cell can only be lit from one place"),
-        // and below level 3 the server sends it only when it names no concluded key, so it is
-        // never the move asked for: it stays in the highlight whether marked or not, or the
-        // sentence would sit on the answer cell instead of the cell it describes.
+        // The target is the sentence's subject ("the outlined cells"), and the server sends it
+        // only when it names no concluded key, so it is never the move asked for: it stays in the
+        // highlight whether marked or not, or the sentence would sit on the answer cell instead of
+        // the cell it describes.
         const filled = new Set(this.#filled().map(([k]) => k));
         const subject = new Set(hint.hint.target);
         const show = (keys: number[]) =>
@@ -570,10 +562,16 @@ export class DailyPuzzleGame {
         this.focus = new Set([...show(hint.hint.focus), ...subject]);
         // no target: point at everything in focus
         this.target = subject.size > 0 ? subject : new Set(this.focus);
+        const prefix = gameI18nPrefix(this.puzzle.gameId);
+        const technique = hint.hint.technique;
+        const own =
+            technique === 0 ? undefined : this.game.hintCaption?.(this.model, this.state, hint.hint);
         this.#caption =
-            hint.level >= 2
-                ? i18nKey(`${gameI18nPrefix(this.puzzle.gameId)}.technique.${hint.hint.technique}`)
-                : undefined;
+            own !== undefined
+                ? captionKey(prefix, own)
+                : technique === 0
+                  ? undefined
+                  : i18nKey(`${prefix}.technique.${technique}`);
     }
 
     resultCard(): DailyResultContent | undefined {

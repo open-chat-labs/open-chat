@@ -31,6 +31,7 @@ ledger_utils = { path = "../libraries/ledger_utils" }
 light_up = { path = "../libraries/light_up" }
 loopy = { path = "../libraries/loopy" }
 unruly = { path = "../libraries/unruly" }
+chat_rooms = { path = "../libraries/chat_rooms" }
 local_user_index_canister = { path = "../canisters/local_user_index/api" }
 msgpack = { path = "../libraries/msgpack" }
 multi_user_canister = { path = "../canisters/multi_user/api" }

@@ -2,6 +2,7 @@ use puzzle_core::testing::{
     must_generate, must_only_claim_sound_solutions, must_reject, must_terminate, must_work_through_dyn,
 };
 use puzzle_core::{Puzzle, PuzzleError, Tier};
+use std::collections::BTreeSet;
 use tents::{
     Cell, Params, Tents, Violation, check_rules, count_solutions, generate, is_complete, parse_description, render_ascii,
     solution_pairs, solve_with_trace,
@@ -453,25 +454,167 @@ fn the_solver_never_claims_an_unsound_grid() {
     assert!(claimed > 1_000, "only {claimed} of the corpus reached the solver");
 }
 
-/// #9517 invariant 3: a line-exact hint's focus is exactly the cells it
-/// fills. The whole line would include cells an unserved step ruled out,
-/// and the count would look wrong on the player's board.
+/// The keys of a step's focus it asks the player to mark: not its subject (the target), not a
+/// tree or a count (neither takes a mark), and not a cell an earlier step already decided.
+fn asked(d: &tents::Description, hint: &tents::Hint, decided: &BTreeSet<u16>) -> BTreeSet<u16> {
+    let n = d.cells.len();
+    hint.focus
+        .iter()
+        .copied()
+        .filter(|k| {
+            !hint.target.contains(k) && (*k as usize) < n && d.cells[*k as usize] == Cell::Empty && !decided.contains(k)
+        })
+        .collect()
+}
+
+/// #9517 invariant 3, for every technique: on a board holding every earlier step's conclusions,
+/// the cells a step asks for (the ? cells) are exactly the cells it decides. Its sentence says
+/// "the ? cells" meaning those, so a ? on a cell it does not decide, or a decided cell drawn as
+/// its subject, would make the sentence read wrong.
 #[test]
-fn a_line_exact_hint_focuses_only_the_cells_it_fills() {
+fn a_step_asks_for_exactly_the_cells_it_decides() {
     let mut seen = 0;
-    for seed in 0..SEEDS_PER_CONFIG {
-        let g = generate(seed, params(8, 8, Tier::Easy)).unwrap();
-        let (hints, _) = solve_with_trace(&g.description, Tier::Easy).unwrap();
-        for h in hints.iter().filter(|h| h.technique == tents::Technique::LineExact) {
-            let filled: Vec<u16> = h.conclusions.iter().map(|&(k, _)| k).collect();
-            let mut focus = h.focus.clone();
-            focus.sort_unstable();
-            let mut filled_sorted = filled.clone();
-            filled_sorted.sort_unstable();
-            assert_eq!(focus, filled_sorted, "seed {seed}");
-            assert!(h.conclusions.iter().all(|&(_, v)| v == 1), "seed {seed}");
-            seen += 1;
+    for p in playable() {
+        for seed in 0..10 {
+            let g = generate(seed, p).unwrap();
+            let d = parse_description(&g.description).unwrap();
+            let mut decided = BTreeSet::new();
+            for (s, h) in g.hints.iter().enumerate() {
+                let concluded: BTreeSet<u16> = h.conclusions.iter().map(|&(k, _)| k).collect();
+                assert_eq!(
+                    asked(&d, h, &decided),
+                    concluded,
+                    "{p:?} seed {seed} step {s} ({:?})",
+                    h.technique
+                );
+                assert!(
+                    !h.target.iter().any(|k| concluded.contains(k)),
+                    "{p:?} seed {seed} step {s} ({:?}): the target names a concluded cell, so the server withholds it",
+                    h.technique
+                );
+                decided.extend(concluded);
+                seen += 1;
+            }
         }
     }
-    assert!(seen > 0, "no line-exact step in {SEEDS_PER_CONFIG} seeds");
+    assert!(seen > 1_000, "only {seen} steps checked");
+}
+
+/// Invariant 23: a step lists every key it relies on. A tree step lists the tree and every cell
+/// beside it, since it rests on the others being taken or ruled out; a line step lists every
+/// cell of its row or column and the count; a cell ruled out for lack of a free tree lists its
+/// neighbours, and one touching a tent lists that tent. The LocalUserIndex serves the steps a
+/// hint rests on by following its focus (#9588), so a ruled-out cell left out of the focus is a
+/// premise the player can be missing while the hint reads as proven: "row 3 has only these
+/// cells left" with another of its cells still open on the player's board.
+#[test]
+fn every_step_lists_the_keys_it_relies_on() {
+    use tents::Technique::*;
+    for p in playable() {
+        for seed in 0..10 {
+            let g = generate(seed, p).unwrap();
+            let d = parse_description(&g.description).unwrap();
+            let (w, h) = (d.width as usize, d.height as usize);
+            let n = w * h;
+            let beside = |i: usize| puzzle_core::neighbours(w, h, i).map(|j| j as u16).collect::<Vec<_>>();
+            let touching = |a: usize, b: usize| a != b && (a % w).abs_diff(b % w) <= 1 && (a / w).abs_diff(b / w) <= 1;
+            // Every row, then every column: its cells and its count key
+            let lines: Vec<(Vec<u16>, u16)> = (0..h)
+                .map(|y| ((0..w).map(|x| (y * w + x) as u16).collect(), (n + y) as u16))
+                .chain((0..w).map(|x| ((0..h).map(|y| (y * w + x) as u16).collect(), (n + h + x) as u16)))
+                .collect();
+            let mut tents_placed = BTreeSet::new();
+            for (s, hint) in g.hints.iter().enumerate() {
+                let focus: BTreeSet<u16> = hint.focus.iter().copied().collect();
+                let cells: Vec<usize> = hint.conclusions.iter().map(|&(k, _)| k as usize).collect();
+                let whole = |keys: &[u16]| keys.iter().all(|k| focus.contains(k));
+                let ok = match hint.technique {
+                    NoFreeTree => whole(&beside(cells[0])),
+                    TentTouches => tents_placed
+                        .iter()
+                        .any(|&t| focus.contains(&t) && touching(t as usize, cells[0])),
+                    TreeNeedsTent | TreeCorner => focus
+                        .iter()
+                        .any(|&t| (t as usize) < n && d.cells[t as usize] == Cell::Tree && whole(&beside(t as usize))),
+                    LineCount | LineExact | LineFull | LineNeighbour => lines.iter().any(|(line, count)| {
+                        let at = |c: usize| {
+                            if hint.technique == LineNeighbour {
+                                beside(c).iter().any(|k| line.contains(k))
+                            } else {
+                                line.contains(&(c as u16))
+                            }
+                        };
+                        whole(line) && focus.contains(count) && cells.iter().all(|&c| at(c))
+                    }),
+                };
+                assert!(
+                    ok,
+                    "{p:?} seed {seed} step {s} ({:?}): the focus {:?} leaves out a key the step rests on",
+                    hint.technique, hint.focus
+                );
+                tents_placed.extend(hint.conclusions.iter().filter(|&&(_, v)| v == 1).map(|&(k, _)| k));
+            }
+        }
+    }
+}
+
+/// Writes the hint steps of a spread of generated puzzles to the client's fixture, which
+/// `tents.spec.ts` reads to check every step gets a sentence naming the right row, column, tree
+/// or tent (invariant 24). Run by hand when the solver's steps change:
+/// `cargo test -p tents --test tents write_hint_fixture -- --ignored`
+fn hint_fixture() -> (std::path::PathBuf, String) {
+    let mut entries = Vec::new();
+    for (w, h, tier, seeds) in [
+        (6u8, 6u8, Tier::Easy, 0..2u64),
+        (8, 8, Tier::Easy, 0..4),
+        (10, 10, Tier::Tricky, 0..4),
+    ] {
+        for seed in seeds {
+            let g = generate(seed, params(w, h, tier)).unwrap();
+            let steps: Vec<String> = g
+                .hints
+                .iter()
+                .map(|h| {
+                    format!(
+                        "{{\"technique\":{},\"focus\":{:?},\"target\":{:?},\"conclusions\":{:?}}}",
+                        u8::from(h.technique),
+                        h.focus,
+                        h.target,
+                        h.conclusions.iter().map(|&(k, v)| [k as u32, v as u32]).collect::<Vec<_>>()
+                    )
+                })
+                .collect();
+            entries.push(format!(
+                "{{\"description\":\"{}\",\"steps\":[{}]}}",
+                hex(&g.description),
+                steps.join(",")
+            ));
+        }
+    }
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../../frontend/openchat-shared/src/utils/dailyGames/tentsHints.json");
+    (path, format!("[{}]\n", entries.join(",")))
+}
+
+#[test]
+#[ignore]
+fn write_hint_fixture() {
+    let (path, json) = hint_fixture();
+    std::fs::write(path, json).unwrap();
+}
+
+/// #9675: invariant 24's client test reads a fixture of this solver's steps, so it proves nothing
+/// once the solver moves on. The committed fixture must be exactly what the solver emits now.
+/// Compared without whitespace, because prettier reflows the committed file.
+#[test]
+fn hint_fixture_is_current() {
+    let (path, json) = hint_fixture();
+    let strip = |s: &str| s.chars().filter(|c| !c.is_whitespace()).collect::<String>();
+    let committed = std::fs::read_to_string(&path).unwrap_or_default();
+    assert_eq!(
+        strip(&committed),
+        strip(&json),
+        "{} is stale: run `cargo test -p tents --test tents write_hint_fixture -- --ignored`",
+        path.display()
+    );
 }

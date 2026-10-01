@@ -686,9 +686,8 @@
         "unavailable": "Al momento non c'è nessun puzzle disponibile.",
         "startFree": "Inizia (il primo puzzle è gratis)",
         "startFee": "Inizia per {fee} CHIT",
-        "hintFree": "Suggerimento (livello {level})",
-        "hintPrice": "Suggerimento (livello {level}, {price} CHIT)",
         "hintsUsed": "{count} suggerimenti",
+        "hintCost": "Suggerimento ({price} CHIT)",
         "hintsLeft": "{count} rimasti",
         "noHintsLeft": "Nessun suggerimento rimasto per il puzzle di oggi",
         "streakDays": "Serie di {streak} giorni",
@@ -709,7 +708,6 @@
         "fixMistakeFirst": "Prima correggi le celle rosse",
         "noFreeChecks": "Nessun controllo gratuito rimasto per il puzzle di oggi",
         "checksLeft": "{count} controlli rimasti",
-        "revealed": "Compilato per te.",
         "reset": "Azzera",
         "resetConfirm": "Svuotare la griglia?",
         "replaced": "Questo puzzle è stato sostituito. Ecco quello nuovo.",
@@ -738,6 +736,24 @@
                     "4": "Nessuna isola può superare il suo numero. Questa ha bisogno di tre ponti e ne ha quattro.",
                     "5": "Un ponte sul lato invece di due, e ha i suoi tre.",
                     "6": "Ogni numero rispettato e ogni isola collegata alle altre. Così è finito."
+                },
+                "hint": {
+                    "allSpaces": {
+                        "plain": "L'isola {n} in riga {row}, colonna {column} ha bisogno di ogni ponte che ci sta ancora intorno a lei per arrivare a {n}. Quindi ogni spazio ? ancora aperto riceve tutti i ponti che può contenere.",
+                        "fresh": "L'isola {n} in riga {row}, colonna {column} ha bisogno di {n} ponti, e i suoi spazi non possono contenerne più di {n} in tutto. Quindi ogni spazio ? riceve tutti i ponti che può contenere.",
+                        "closed": "Intorno all'isola {n} in riga {row}, colonna {column}, gli spazi non attraversati, non esclusi e che non finiscono su un'isola completa non possono contenere più di {n} ponti in tutto. Quindi ognuno di quegli spazi ? riceve tutti i ponti che può contenere.",
+                        "more": "All'isola {n} in riga {row}, colonna {column} servono ancora {need} ponti, e gli spazi intorno a lei non ancora decisi, non attraversati e che non finiscono su un'isola completa non possono contenerne più di {need} in tutto. Quindi ognuno di quegli spazi ? riceve tutti i ponti che può contenere."
+                    },
+                    "oneEachWay": {
+                        "plain": "L'isola {n} in riga {row}, colonna {column} è troppo grande per lasciare fuori un vicino che può ancora raggiungere: gli altri non arriverebbero mai a {n}. Quindi ogni spazio ? ancora aperto ha bisogno di almeno un ponte.",
+                        "count": "L'isola {n} in riga {row}, colonna {column} può ancora raggiungere {count} vicini. Lasciane fuori uno qualsiasi e gli altri possono contenere al massimo {max} ponti, meno di {n}. Quindi ogni spazio ? ancora aperto ha bisogno di almeno un ponte."
+                    },
+                    "needsNeighbour": {
+                        "many": "Alcuni spazi intorno all'isola {n} in riga {row}, colonna {column} non possono restare vuoti: senza un ponte in uno qualsiasi di loro, gli altri non potrebbero arrivare a {n}. Quindi ognuno di quegli spazi ? ha bisogno di almeno un ponte.",
+                        "one": "Senza un ponte verso l'isola {m} in riga {mrow}, colonna {mcolumn}, gli altri spazi intorno all'isola {n} in riga {row}, colonna {column} possono contenere al massimo {max} ponti, meno di {n}. Quindi lo spazio ? tra le due ha bisogno di almeno un ponte.",
+                        "onePlain": "Gli altri spazi intorno all'isola {n} in riga {row}, colonna {column} non possono arrivare a {n} senza un ponte verso l'isola {m} in riga {mrow}, colonna {mcolumn}. Quindi lo spazio ? tra le due ha bisogno di almeno un ponte.",
+                        "two": "Gli altri spazi intorno all'isola {n} in riga {row}, colonna {column} non possono arrivare a {n} senza un ponte verso l'isola {a} in riga {arow}, colonna {acolumn}, né senza uno verso l'isola {b} in riga {brow}, colonna {bcolumn}. Quindi entrambi quegli spazi ? hanno bisogno di almeno un ponte."
+                    }
                 }
             },
             "light_up": {
@@ -756,6 +772,22 @@
                     "4": "Questo angolo è ancora buio e nient'altro può raggiungerlo, quindi gli serve una lampadina tutta sua.",
                     "5": "Nessuna lampadina può illuminarne un'altra. Queste due sono nella stessa colonna senza niente in mezzo.",
                     "6": "Ogni cella bianca è illuminata, il 4 ha le sue quattro lampadine e nessuna lampadina ne illumina un'altra."
+                },
+                "hint": {
+                    "onlyWay": {
+                        "cell": "Ogni cella che potrebbe illuminare la cella contornata in riga {row}, colonna {column} è già illuminata o esclusa, tranne la cella ?. Quindi la cella ? ha bisogno di una lampadina.",
+                        "self": "Ogni cella che potrebbe illuminare la cella contornata in riga {row}, colonna {column} è già illuminata o esclusa, quindi le serve una lampadina tutta sua."
+                    },
+                    "clueSatisfied": {
+                        "some": "Il numero {number} in riga {row}, colonna {column} ha già accanto tutte le lampadine che richiede, quindi nessuna cella ? accanto a lui può avere una lampadina.",
+                        "zero": "Lo 0 in riga {row}, colonna {column} non può avere lampadine accanto, quindi nessuna cella ? accanto a lui può averne una."
+                    },
+                    "clueForced": "Al numero {number} in riga {row}, colonna {column} restano accanto giusto le celle che bastano per le lampadine che gli mancano, quindi ogni cella ? accanto a lui ha bisogno di una lampadina.",
+                    "setExclusion": {
+                        "dark": "Solo le celle contornate possono ancora illuminare la cella in riga {row}, colonna {column}, quindi una di loro deve contenere una lampadina. Una lampadina nella cella ? le escluderebbe tutte, illuminandole o completando un numero accanto. Quindi la cella ? non può contenere una lampadina.",
+                        "clue": "Le celle contornate accanto al numero {number} in riga {row}, colonna {column} sono tutto ciò che gli resta per le sue lampadine. Una lampadina nella cella ? ne escluderebbe troppe, illuminandole o completando un altro numero, e al numero {number} mancherebbero lampadine. Quindi la cella ? non può contenere una lampadina.",
+                        "clueBeside": "La cella ? e le celle contornate accanto al numero {number} in riga {row}, colonna {column} sono tutto ciò che gli resta per le sue lampadine. Una lampadina nella cella ? escluderebbe troppe celle contornate, illuminandole o completando un altro numero, e al numero {number} mancherebbero lampadine. Quindi la cella ? non può contenere una lampadina."
+                    }
                 }
             },
             "loopy": {
@@ -800,6 +832,30 @@
                     "4": "Questo angolo ne vuole quattro, quindi tutte e quattro le celle intorno devono puntare verso di lui. C'è un solo modo per farlo.",
                     "5": "Queste quattro si sono unite in un anello chiuso. Gli anelli non sono ammessi, quindi una di loro deve inclinarsi dall'altra parte.",
                     "6": "Ogni cella piena, ogni numero rispettato e nessun anello da nessuna parte."
+                },
+                "hint": {
+                    "satisfied": {
+                        "some": "Il numero {clue} contornato ha già tutte le linee di cui ha bisogno, quindi ogni cella ? intorno a lui deve inclinarsi dalla parte opposta.",
+                        "zero": "Il numero {clue} contornato non può toccare nessuna linea, quindi ogni cella ? intorno a lui deve inclinarsi dalla parte opposta."
+                    },
+                    "forced": {
+                        "all": "Il numero {clue} contornato ha bisogno di una linea da ogni cella intorno a lui, quindi ogni cella ? deve inclinarsi verso di lui.",
+                        "one": "Il numero {clue} contornato ha ancora bisogno di 1 linea, e solo una cella intorno a lui è vuota, quindi la cella ? deve inclinarsi verso di lui.",
+                        "many": "Il numero {clue} contornato ha ancora bisogno di {needed} linee, e solo {needed} celle intorno a lui sono vuote, quindi ogni cella ? deve inclinarsi verso di lui."
+                    },
+                    "paired": {
+                        "away": "Le due celle contornate devono inclinarsi nello stesso modo, quindi insieme danno esattamente una linea al numero {clue} contornato. È tutto ciò che gli serve ancora, quindi ogni cella ? intorno a lui deve inclinarsi dalla parte opposta.",
+                        "towards": "Le due celle contornate devono inclinarsi nello stesso modo, quindi insieme danno esattamente una linea al numero {clue} contornato. Dopo questa gliene servono ancora {needed}, quindi ogni cella ? intorno a lui deve inclinarsi verso di lui."
+                    },
+                    "loop": {
+                        "backslash": "Gli angoli in alto a sinistra e in basso a destra della cella contornata sono già uniti da una catena di linee, quindi una linea tra loro chiuderebbe un anello. La cella deve andare dall'angolo in basso a sinistra a quello in alto a destra.",
+                        "slash": "Gli angoli in basso a sinistra e in alto a destra della cella contornata sono già uniti da una catena di linee, quindi una linea tra loro chiuderebbe un anello. La cella deve andare dall'angolo in alto a sinistra a quello in basso a destra."
+                    },
+                    "deadEnd": {
+                        "backslash": "Gli angoli contornati appartengono a due gruppi di linee, uno nell'angolo in alto a sinistra della cella contornata e uno nel suo angolo in basso a destra. Nessuno dei due raggiunge il bordo, e ciascuno può crescere al massimo di un'altra linea. Uniti, formerebbero un gruppo che non potrebbe mai raggiungere il bordo, e questo succede solo dentro un anello. Quindi la cella deve andare dall'angolo in basso a sinistra a quello in alto a destra.",
+                        "slash": "Gli angoli contornati appartengono a due gruppi di linee, uno nell'angolo in basso a sinistra della cella contornata e uno nel suo angolo in alto a destra. Nessuno dei due raggiunge il bordo, e ciascuno può crescere al massimo di un'altra linea. Uniti, formerebbero un gruppo che non potrebbe mai raggiungere il bordo, e questo succede solo dentro un anello. Quindi la cella deve andare dall'angolo in alto a sinistra a quello in basso a destra."
+                    },
+                    "equivalent": "I numeri tra la cella contornata e la cella piena in riga {row}, colonna {column} si possono rispettare solo se le due si inclinano nello stesso modo, quindi la cella contornata deve copiarla."
                 }
             },
             "tents": {
@@ -822,6 +878,39 @@
                     "4": "Le tende non si toccano mai, nemmeno a un angolo. Queste due si toccano, quindi una deve spostarsi.",
                     "5": "Accanto a questo albero è rimasta libera una sola cella, quindi la sua tenda va lì.",
                     "6": "Ogni albero ha una tenda accanto, nessuna tenda ne tocca un'altra e tutti i conti tornano."
+                },
+                "hint": {
+                    "noFreeTree": {
+                        "none": "Nessun albero sta subito sopra, sotto o accanto alla cella ?, quindi una tenda lì non avrebbe nessun albero a cui appartenere.",
+                        "one": "L'unico albero accanto alla cella ? ha già la sua tenda, quindi una tenda nella cella ? non avrebbe nessun albero a cui appartenere.",
+                        "many": "I {count} alberi accanto alla cella ? hanno già tutti la loro tenda, quindi una tenda nella cella ? non avrebbe nessun albero a cui appartenere."
+                    },
+                    "tentTouches": {
+                        "one": "La cella ? tocca la tenda contornata, e le tende non si toccano mai, nemmeno a un angolo. Quindi la cella ? non può contenere una tenda.",
+                        "many": "La cella ? tocca le tende contornate, e le tende non si toccano mai, nemmeno a un angolo. Quindi la cella ? non può contenere una tenda."
+                    },
+                    "treeNeedsTent": "Ogni altra cella accanto all'albero contornato è occupata o esclusa, quindi la sua tenda deve andare nella cella ?.",
+                    "treeCorner": "La tenda dell'albero contornato deve andare in una delle due celle contornate accanto a lui, ed entrambe toccano la cella ?. Qualunque sia, la cella ? non può contenere una tenda.",
+                    "lineCount": {
+                        "row": "Il numero della riga {line} è {count}. Comunque sistemi le tende che le mancano nelle sue celle vuote, senza che due si tocchino, ogni cella ? risulta uguale ogni volta, tenda o niente. Quindi puoi riempirle.",
+                        "column": "Il numero della colonna {line} è {count}. Comunque sistemi le tende che le mancano nelle sue celle vuote, senza che due si tocchino, ogni cella ? risulta uguale ogni volta, tenda o niente. Quindi puoi riempirle."
+                    },
+                    "lineNeighbour": {
+                        "row": "Il numero della riga {line} è {count}. Comunque sistemi le tende che le mancano nelle sue celle vuote, senza che due si tocchino, una di loro tocca sempre ogni cella ?. Quindi le celle ? non possono contenere una tenda.",
+                        "column": "Il numero della colonna {line} è {count}. Comunque sistemi le tende che le mancano nelle sue celle vuote, senza che due si tocchino, una di loro tocca sempre ogni cella ?. Quindi le celle ? non possono contenere una tenda."
+                    },
+                    "lineExact": {
+                        "row": "Ogni cella della riga {line} tranne le celle ? ha già una tenda o non può contenerne una, e alla riga mancano ancora {missing} tende. Quindi ogni cella ? è una tenda.",
+                        "rowOne": "Ogni cella della riga {line} tranne la cella ? ha già una tenda o non può contenerne una, e alla riga manca ancora una tenda. Quindi la cella ? è una tenda.",
+                        "column": "Ogni cella della colonna {line} tranne le celle ? ha già una tenda o non può contenerne una, e alla colonna mancano ancora {missing} tende. Quindi ogni cella ? è una tenda.",
+                        "columnOne": "Ogni cella della colonna {line} tranne la cella ? ha già una tenda o non può contenerne una, e alla colonna manca ancora una tenda. Quindi la cella ? è una tenda."
+                    },
+                    "lineFull": {
+                        "row": "Il numero della riga {line} è {count}, e ha già altrettante tende. Quindi nessuna delle celle ? può contenerne una.",
+                        "rowZero": "Il numero della riga {line} è 0, quindi nessuna delle celle ? può contenere una tenda.",
+                        "column": "Il numero della colonna {line} è {count}, e ha già altrettante tende. Quindi nessuna delle celle ? può contenerne una.",
+                        "columnZero": "Il numero della colonna {line} è 0, quindi nessuna delle celle ? può contenere una tenda."
+                    }
                 }
             },
             "unruly": {
@@ -840,6 +929,87 @@
                     "3": "Ogni riga e colonna finisce con tre di ogni colore. Questa riga ha quattro viola.",
                     "4": "Due arancioni con uno spazio. Arancione in mezzo ne farebbe tre, quindi deve essere viola.",
                     "5": "Ogni cella piena, nessuna serie di tre e tre di ogni colore in ogni riga e colonna."
+                },
+                "hint": {
+                    "pairEnd": {
+                        "row": "Le celle contornate nella riga {line} sono una accanto all'altra ed entrambe di colore {colour}. Rendere anche la cella ? di colore {colour} metterebbe tre celle di colore {colour} di fila, quindi deve essere di colore {other}.",
+                        "column": "Le celle contornate nella colonna {line} sono una sopra l'altra ed entrambe di colore {colour}. Rendere anche la cella ? di colore {colour} metterebbe tre celle di colore {colour} di fila, quindi deve essere di colore {other}."
+                    },
+                    "pairGap": {
+                        "row": "Le celle contornate nella riga {line} sono entrambe di colore {colour}, con la cella ? in mezzo. Renderla anche lei di colore {colour} metterebbe tre celle di colore {colour} di fila, quindi deve essere di colore {other}.",
+                        "column": "Le celle contornate nella colonna {line} sono entrambe di colore {colour}, con la cella ? in mezzo. Renderla anche lei di colore {colour} metterebbe tre celle di colore {colour} di fila, quindi deve essere di colore {other}."
+                    },
+                    "lastGap": {
+                        "row": "La riga {line} ha già tutte le sue {count} celle di colore {colour} e le manca una cella di colore {other}, quindi la sua ultima cella vuota deve essere di colore {other}.",
+                        "column": "La colonna {line} ha già tutte le sue {count} celle di colore {colour} e le manca una cella di colore {other}, quindi la sua ultima cella vuota deve essere di colore {other}."
+                    },
+                    "lineFull": {
+                        "row": "La riga {line} ha già tutte le sue {count} celle di colore {colour}, contornate, quindi ogni cella ? al suo interno deve essere di colore {other}.",
+                        "column": "La colonna {line} ha già tutte le sue {count} celle di colore {colour}, contornate, quindi ogni cella ? al suo interno deve essere di colore {other}."
+                    },
+                    "lastInRun": {
+                        "row": "Alla riga {line} manca solo un'altra cella di colore {colour}, e deve andare nelle celle contornate delle colonne da {from} a {to}: altrove lascerebbe quelle tre tutte di colore {other}. Quindi ogni cella ? deve essere di colore {other}.",
+                        "column": "Alla colonna {line} manca solo un'altra cella di colore {colour}, e deve andare nelle celle contornate delle righe da {from} a {to}: altrove lascerebbe quelle tre tutte di colore {other}. Quindi ogni cella ? deve essere di colore {other}."
+                    }
+                },
+                "colour": {
+                    "1": "arancione",
+                    "2": "viola"
+                }
+            },
+            "chat_rooms": {
+                "name": "CHAT Rooms",
+                "rules": "Metti un CHAT in ogni riga, ogni colonna e ogni stanza colorata. Due CHAT non possono mai toccarsi, nemmeno in diagonale.",
+                "technique": {
+                    "1": "Un CHAT esclude tutte le altre celle della sua riga, della sua colonna e della sua stanza, più le otto celle intorno.",
+                    "2": "A questa riga, colonna o stanza resta una sola cella per il suo CHAT, quindi il CHAT va lì.",
+                    "3": "Queste sono le uniche celle rimaste a una stanza, e stanno tutte in una stessa riga o colonna, quindi il CHAT di quella linea deve essere tra queste e il resto della linea è escluso. Funziona anche al contrario: una riga o colonna le cui celle libere stanno tutte in una stanza esclude il resto di quella stanza.",
+                    "4": "Queste stanze possono usare solo queste righe o colonne, e le stanze sono tante quante le linee, quindi i CHAT di quelle linee appartengono tutti a queste stanze e nient'altro in quelle linee può averne uno.",
+                    "5": "Un CHAT in questa cella escluderebbe tutte le celle rimaste a questa riga, colonna o stanza, quindi questa cella non può averne uno."
+                },
+                "demo": {
+                    "1": "Metti un CHAT in ogni riga, ogni colonna e ogni stanza colorata. Tocca una volta per barrare una cella, due volte per un CHAT.",
+                    "2": "Due CHAT non possono mai toccarsi, nemmeno in diagonale.",
+                    "3": "Ogni stanza contiene un CHAT. La stanza in alto ne ha due.",
+                    "4": "Questa stanza è una sola cella, quindi il suo CHAT va lì. Ogni cella che esclude viene barrata per te.",
+                    "5": "Un CHAT in ogni riga, colonna e stanza, e nessuno si tocca."
+                },
+                "hint": {
+                    "shadow": "Il CHAT in riga {row}, colonna {column} esclude ogni altra cella della sua riga e della sua colonna, ogni cella che lo tocca e ogni altra cella della sua stanza, cioè {room}, quindi le celle ? non possono averne uno.",
+                    "lastCell": {
+                        "row": "Ogni altra cella della riga {line} è esclusa, quindi il CHAT della riga {line} deve andare nella cella ?.",
+                        "column": "Ogni altra cella della colonna {line} è esclusa, quindi il CHAT della colonna {line} deve andare nella cella ?.",
+                        "room": "Per {room} ogni altra cella è esclusa, quindi il CHAT di quella stanza deve andare nella cella ?.",
+                        "single": "La cella contornata forma da sola {room}, quindi il CHAT di quella stanza va lì."
+                    },
+                    "confined": {
+                        "roomInRow": "Le uniche celle rimaste per {room} sono quelle contornate, e stanno tutte nella riga {line}. Quindi il CHAT della riga {line} deve venire da quella stanza, e le celle ? non possono averne uno.",
+                        "roomInColumn": "Le uniche celle rimaste per {room} sono quelle contornate, e stanno tutte nella colonna {line}. Quindi il CHAT della colonna {line} deve venire da quella stanza, e le celle ? non possono averne uno.",
+                        "rowInRoom": "Le uniche celle rimaste nella riga {line} sono quelle contornate, e {room} le contiene tutte. Quindi il CHAT di quella stanza deve essere nella riga {line}, e le celle ? non possono averne uno.",
+                        "columnInRoom": "Le uniche celle rimaste nella colonna {line} sono quelle contornate, e {room} le contiene tutte. Quindi il CHAT di quella stanza deve essere nella colonna {line}, e le celle ? non possono averne uno."
+                    },
+                    "pigeonhole": {
+                        "roomsInRows": "Le uniche celle rimaste per queste {count} stanze sono quelle contornate, e stanno tutte nelle righe {lines}. Quindi i CHAT di quelle righe devono venire tutti da queste stanze, e le celle ? non possono averne uno.",
+                        "roomsInColumns": "Le uniche celle rimaste per queste {count} stanze sono quelle contornate, e stanno tutte nelle colonne {lines}. Quindi i CHAT di quelle colonne devono venire tutti da queste stanze, e le celle ? non possono averne uno.",
+                        "rowsInRooms": "Le uniche celle rimaste nelle righe {lines} sono quelle contornate, e stanno tutte in sole {count} stanze. Quindi i CHAT di quelle stanze devono essere tutti in queste righe, e le celle ? non possono averne uno.",
+                        "columnsInRooms": "Le uniche celle rimaste nelle colonne {lines} sono quelle contornate, e stanno tutte in sole {count} stanze. Quindi i CHAT di quelle stanze devono essere tutti in queste colonne, e le celle ? non possono averne uno."
+                    },
+                    "blocked": {
+                        "row": "Le celle contornate sono tutto ciò che resta alla riga {line}. Un CHAT nella cella ? le escluderebbe tutte, toccandole o condividendo con loro riga, colonna o stanza, e la riga {line} non avrebbe più posto per il suo CHAT. Quindi la cella ? non può avere un CHAT.",
+                        "column": "Le celle contornate sono tutto ciò che resta alla colonna {line}. Un CHAT nella cella ? le escluderebbe tutte, toccandole o condividendo con loro riga, colonna o stanza, e la colonna {line} non avrebbe più posto per il suo CHAT. Quindi la cella ? non può avere un CHAT.",
+                        "room": "Le celle contornate sono tutto ciò che resta per {room}. Un CHAT nella cella ? le escluderebbe tutte, toccandole o condividendo con loro riga, colonna o stanza, e quella stanza non avrebbe più posto per il suo CHAT. Quindi la cella ? non può avere un CHAT."
+                    }
+                },
+                "room": {
+                    "0": "la stanza viola",
+                    "1": "la stanza arancione",
+                    "2": "la stanza blu",
+                    "3": "la stanza verde",
+                    "4": "la stanza grigia",
+                    "5": "la stanza rossa",
+                    "6": "la stanza gialla",
+                    "7": "la stanza marrone",
+                    "8": "la stanza rosa"
                 }
             }
         }

@@ -15,6 +15,8 @@ pub mod events_by_index;
 pub mod events_window;
 pub mod invite_code;
 pub mod local_user_index;
+pub mod lookup_members;
+pub mod members;
 pub mod messages_by_message_index;
 pub mod public_summary;
 pub mod rules;

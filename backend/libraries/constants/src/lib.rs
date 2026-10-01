@@ -70,6 +70,9 @@ pub const LIFETIME_DIAMOND_TIMESTAMP: TimestampMillis = 30000000000000; // This 
 
 pub const PRIZE_FEE_PERCENT: u8 = 5;
 
+// The most members of a chat or community returned by, or looked up in, a single query
+pub const MAX_MEMBERS_PER_QUERY: u32 = 1000;
+
 // The length of time to hold on to data required to compile chat summary updates, eg. event last
 // updated timestamps
 pub const DURATION_TO_MAINTAIN_SUMMARY_UPDATES_DATA: Milliseconds = 31 * DAY_IN_MS;

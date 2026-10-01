@@ -1816,6 +1816,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "chat_rooms"
+version = "0.1.0"
+dependencies = [
+ "puzzle_core",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2714,6 +2721,7 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "chat_rooms",
  "constants",
  "daily_puzzle_canister",
  "futures",
@@ -6203,6 +6211,7 @@ dependencies = [
  "bridges",
  "candid",
  "chat_events",
+ "chat_rooms",
  "community_canister",
  "constants",
  "cycles_dispenser_canister",
