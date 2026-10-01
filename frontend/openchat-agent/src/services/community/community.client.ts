@@ -169,6 +169,8 @@ import {
     UnitResult,
     CommunityLookupMembersArgs,
     CommunityLookupMembersResponse,
+    CommunitySearchMembersArgs,
+    CommunitySearchMembersResponse,
     CommunityLookupChannelMembersArgs,
     CommunityLookupChannelMembersResponse,
 } from "../../typebox";
@@ -882,6 +884,38 @@ export class CommunityClient
             lookupCommunityMembersResponse,
             CommunityLookupMembersArgs,
             CommunityLookupMembersResponse,
+        );
+        if (response.kind === "success") {
+            await addMembersToCachedCommunityDetails(
+                this.chatsDb,
+                communityId,
+                response.members,
+                latestKnownUpdate,
+            );
+        }
+        return response;
+    }
+
+    // The members whose display names in the community match the search term, who are added to the
+    // cached details. `latestKnownUpdate` is as for `lookupMembers`.
+    async searchMembers(
+        communityId: string,
+        searchTerm: string,
+        maxResults: number,
+        latestKnownUpdate: bigint,
+    ): Promise<LookupMembersResponse> {
+        const response = await this.query(
+            communityId,
+            "search_members",
+            {
+                invite_code: this.inviteCode(communityId),
+                search_term: searchTerm,
+                max_results: maxResults,
+                latest_known_update: latestKnownUpdate,
+            },
+            lookupCommunityMembersResponse,
+            CommunitySearchMembersArgs,
+            CommunitySearchMembersResponse,
         );
         if (response.kind === "success") {
             await addMembersToCachedCommunityDetails(

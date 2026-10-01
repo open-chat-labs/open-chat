@@ -1642,11 +1642,11 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
+    searchUsers(searchTerm: string, maxResults = 20, pageIndex?: number): Promise<UserSummary[]> {
         if (offline()) return Promise.resolve([]);
 
         return this._userIndexClient
-            .searchUsers(searchTerm, maxResults)
+            .searchUsers(searchTerm, maxResults, pageIndex)
             .then((users) => users.map((u) => this.rehydrateUserSummary(u)));
     }
 
@@ -3325,6 +3325,20 @@ export class OpenChatAgent extends EventTarget {
                     detailsSyncedUpTo,
                 );
         }
+    }
+
+    searchCommunityMembers(
+        id: CommunityIdentifier,
+        searchTerm: string,
+        maxResults: number,
+        latestKnownUpdate: bigint,
+    ): Promise<LookupMembersResponse> {
+        return this._communityClient.searchMembers(
+            id.communityId,
+            searchTerm,
+            maxResults,
+            latestKnownUpdate,
+        );
     }
 
     lookupMembers(

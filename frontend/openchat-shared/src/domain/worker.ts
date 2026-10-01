@@ -316,6 +316,7 @@ export type WorkerRequest =
     | MarkAsOnline
     | GetGroupDetails
     | LookupMembers
+    | SearchCommunityMembers
     | MarkMessagesRead
     | GetAllCachedUsers
     | GetUsers
@@ -1612,6 +1613,8 @@ type CheckUsername = {
 type SearchUsers = {
     searchTerm: string;
     maxResults: number;
+    // Which page of `maxResults` users to return, starting from 0
+    pageIndex?: number;
     kind: "searchUsers";
 };
 
@@ -1674,6 +1677,17 @@ type LookupMembers = {
     userIds: string[];
     // The time up to which the details held are known to be up to date. A replica which is behind
     // it isn't asked.
+    latestKnownUpdate: bigint;
+};
+
+// Finds the members of a community whose display names in it match the search term. Those found
+// are also added to its cached details.
+type SearchCommunityMembers = {
+    kind: "searchCommunityMembers";
+    id: CommunityIdentifier;
+    searchTerm: string;
+    maxResults: number;
+    // As for `LookupMembers`
     latestKnownUpdate: bigint;
 };
 
@@ -2570,6 +2584,8 @@ export type WorkerResult<T> = T extends Init
     : T extends GetGroupDetails
     ? GroupChatDetailsResponse
     : T extends LookupMembers
+    ? LookupMembersResponse
+    : T extends SearchCommunityMembers
     ? LookupMembersResponse
     : T extends CurrentUser
     ? CurrentUserResponse
