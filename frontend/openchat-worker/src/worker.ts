@@ -951,6 +951,15 @@ function getAction(
                 payload.pin,
             );
 
+        case "approveAccessGatePayment":
+            return agent.approveAccessGatePayment(
+                payload.canisterId,
+                payload.ledger,
+                payload.amount,
+                payload.expiresIn,
+                payload.pin,
+            );
+
         case "declineInvitation":
             return agent.declineInvitation(payload.chatId);
 

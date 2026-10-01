@@ -4104,6 +4104,7 @@ dependencies = [
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
+ "ledger_utils",
  "oc_error_codes",
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",

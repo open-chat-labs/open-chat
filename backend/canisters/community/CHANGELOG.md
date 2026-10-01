@@ -54,6 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Within the chat event, store the count of members added to a public channel rather than listing each of them ([#9661](https://github.com/open-chat-labs/open-chat/pull/9661))
 - Limit user groups to 1,000 members ([#9662](https://github.com/open-chat-labs/open-chat/pull/9662))
 - Split a notification with more than 5,000 recipients into several ([#9658](https://github.com/open-chat-labs/open-chat/pull/9658))
+- Pull an access gate's payment under the member's spender subaccount, falling back to the default account for now ([#GATE_PR](https://github.com/open-chat-labs/open-chat/pull/GATE_PR))
 
 ### Removed
 
