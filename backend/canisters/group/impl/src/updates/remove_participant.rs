@@ -131,6 +131,7 @@ fn prepare(
 
 fn commit(user_to_remove: UserId, block: bool, remove: bool, caller: Caller, state: &mut RuntimeState) -> OCResult {
     let agent = caller.agent();
+    let is_bot = state.data.chat.members.bots().contains_key(&user_to_remove);
 
     let bot_notification = state
         .data
@@ -159,19 +160,23 @@ fn commit(user_to_remove: UserId, block: bool, remove: bool, caller: Caller, sta
 
         // The user's canister is also told via the queue of events for users, which keeps them in order
         // and sends them on to the user's new id if they've been migrated to a MultiUser canister, so
-        // the removal isn't lost if their canister is frozen for the migration. Whichever of the two
-        // arrives second does nothing.
-        let now = state.env.now();
-        state.push_event_to_user(
-            user_to_remove,
-            GroupCanisterEvent::RemovedFromGroup(Box::new(RemovedFromGroup {
-                removed_by: agent,
-                blocked: block,
-                group_name: state.data.chat.name.value.clone(),
-                public: state.data.chat.is_public.value,
-            })),
-            now,
-        );
+        // the removal isn't lost if their canister is frozen for the migration, or unreachable for
+        // longer than the direct call is retried. Whichever of the two arrives second finds the group
+        // already gone, so does nothing, unless the user has rejoined in between. A bot's canister
+        // takes no such events.
+        if !is_bot {
+            let now = state.env.now();
+            state.push_event_to_user(
+                user_to_remove,
+                GroupCanisterEvent::RemovedFromGroup(Box::new(RemovedFromGroup {
+                    removed_by: agent,
+                    blocked: block,
+                    group_name: state.data.chat.name.value.clone(),
+                    public: state.data.chat.is_public.value,
+                })),
+                now,
+            );
+        }
     }
 
     Ok(())

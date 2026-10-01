@@ -135,6 +135,7 @@ fn prepare(user_id: UserId, block: bool, ext_caller: Option<Caller>, state: &Run
 
 fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) {
     let now = state.env.now();
+    let is_bot = state.data.members.bots().contains_key(&user_id);
 
     // Remove the user from the community
     let removed_member = state.data.remove_user_from_community(user_id, None, now);
@@ -190,19 +191,22 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
 
         // The user's canister is also told via the queue of events for users, which keeps them in order
         // and sends them on to the user's new id if they've been migrated to a MultiUser canister, so
-        // the removal isn't lost if their canister is frozen for the migration. Whichever of the two
-        // arrives second does nothing.
-        let now = state.env.now();
-        state.push_event_to_user(
-            user_id,
-            CommunityCanisterEvent::RemovedFromCommunity(Box::new(RemovedFromCommunity {
-                removed_by,
-                blocked: block,
-                community_name: state.data.name.value.clone(),
-                public: state.data.is_public.value,
-            })),
-            now,
-        );
+        // the removal isn't lost if their canister is frozen for the migration, or unreachable for
+        // longer than the direct call is retried. Whichever of the two arrives second finds the
+        // community already gone, so does nothing, unless the user has rejoined in between. A bot's
+        // canister takes no such events.
+        if !is_bot {
+            state.push_event_to_user(
+                user_id,
+                CommunityCanisterEvent::RemovedFromCommunity(Box::new(RemovedFromCommunity {
+                    removed_by,
+                    blocked: block,
+                    community_name: state.data.name.value.clone(),
+                    public: state.data.is_public.value,
+                })),
+                now,
+            );
+        }
     }
 }
 
