@@ -9,20 +9,29 @@ use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
 use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
 use pocket_ic::common::rest::{IcpConfig, IcpConfigFlag, IcpFeatures, IcpFeaturesConfig};
-use pocket_ic::{PocketIc, PocketIcBuilder, PocketIcState};
+use pocket_ic::{PocketIc, PocketIcBuilder, PocketIcState, StartServerParams, start_server};
 use rand::{RngExt, SeedableRng, rngs::StdRng};
+use reqwest::Url;
 use sha256::sha256;
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::io::Write;
 use std::path::Path;
 use std::sync::OnceLock;
-use std::time::{Instant, SystemTime};
+use std::time::{Duration, Instant, SystemTime};
 use storage_index_canister::init::CyclesDispenserConfig;
 use testing::NNS_INTERNET_IDENTITY_CANISTER_ID;
 use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
 
 pub static POCKET_IC_BIN: &str = "./pocket-ic";
+
+// The PocketIC server stops once it has been idle for a minute, but a call which never completes
+// (eg. an `await_call` on a stuck update) keeps it busy even after the test has given up on the
+// call and the run has ended, so the server would otherwise run forever. A full run takes around
+// 25 minutes on CI.
+const POCKET_IC_SERVER_HARD_TTL: Duration = Duration::from_secs(2 * 60 * 60);
+
+static POCKET_IC_SERVER_URL: OnceLock<Url> = OnceLock::new();
 
 // This base state is set at the end of the initialization process, so each thread (other than
 // the one doing the initialization) waits until the state is available at which point they
@@ -37,6 +46,7 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
     let (state, canister_ids) = BASE_STATE.get_or_init(|| initialize_base_state_or_exit(controller, seed));
 
     let env = PocketIcBuilder::new()
+        .with_server_url(pocket_ic_server_url())
         .with_read_only_state(state)
         .with_icp_config(icp_config())
         .build();
@@ -77,6 +87,7 @@ fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIc
         ..Default::default()
     };
     let mut env = PocketIcBuilder::new()
+        .with_server_url(pocket_ic_server_url())
         .with_nns_subnet()
         .with_sns_subnet()
         .with_application_subnet()
@@ -610,6 +621,24 @@ pub fn install_icrc_ledger(
     install_canister(env, controller, canister_id, wasms::ICRC_LEDGER.clone(), args);
 
     canister_id
+}
+
+// The instances in a test run all share this server. It is started here rather than by
+// `PocketIcBuilder`, which has no way to set its hard TTL. It isn't reused, as reusing keys the
+// server on the test process id, so a run whose id had been recycled could attach to a server left
+// over from an earlier run.
+fn pocket_ic_server_url() -> Url {
+    POCKET_IC_SERVER_URL
+        .get_or_init(|| {
+            let runtime = tokio::runtime::Builder::new_current_thread().build().unwrap();
+            let (_, url) = runtime.block_on(start_server(StartServerParams {
+                reuse: false,
+                hard_ttl: Some(POCKET_IC_SERVER_HARD_TTL),
+                ..Default::default()
+            }));
+            url
+        })
+        .clone()
 }
 
 fn verify_pocket_ic_exists() {

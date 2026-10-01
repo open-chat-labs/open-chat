@@ -56,6 +56,7 @@ storage_index_canister = { path = "../canisters/storage_index/api" }
 tents = { path = "../libraries/tents" }
 testing = { path = "../libraries/testing" }
 test-case = { workspace = true }
+tokio = { workspace = true, features = ["rt"] }
 translations_canister = { path = "../canisters/translations/api" }
 types = { path = "../libraries/types" }
 user_canister = { path = "../canisters/user/api" }
