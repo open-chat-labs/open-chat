@@ -325,6 +325,12 @@ describe("shouldReportError", () => {
                 rejected("Error from Canister <id>: Canister rejected the message", "IC0406"),
             ),
         ).toBe(true);
+        // a canister trap stays a signal, even when its text has a network phrase in it
+        expect(
+            shouldReportError(
+                rejected("Canister <id> trapped: failed to fetch the exchange rate", "IC0503"),
+            ),
+        ).toBe(true);
 
         // #31998: the emoji data CDN failing, as reported and as Rollbar strips it on the
         // uncaught path; our own "Failed to fetch: ..." errors still report
@@ -332,6 +338,9 @@ describe("shouldReportError", () => {
             "https://cdn.jsdelivr.net/npm/emoji-picker-element-data@^1/en/emojibase/data.json:  500";
         expect(shouldReportError(new Error(`Failed to fetch: ${emojiData}`))).toBe(false);
         expect(shouldReportMessage("Error", emojiData)).toBe(false);
+        expect(
+            shouldReportError(new Error(`Failed to fetch: ${emojiData.replace("500", "404")}`)),
+        ).toBe(true);
         expect(shouldReportError(new Error("Failed to fetch: https://oc.app/version: 500"))).toBe(
             true,
         );

@@ -163,11 +163,11 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     // incident that every background BTC balance refresh hits until it is switched back on (#31771)
     /bitcoin api is disabled/i,
     // A canister stopped for an upgrade rejects every call until it restarts (#31692, #31764).
-    // One left stopped by a failed upgrade is caught by the release's own checks.
+    // The upgrader restarts it whether or not the install succeeded, and logs a failed start.
     /error code: IC0508\b/i,
-    // emoji-picker-element getting an error back from the jsDelivr CDN for its emoji data
-    // (#31998): the CDN's outage, not our code
-    /emoji-picker-element-data/i,
+    // emoji-picker-element getting a 5xx back from the jsDelivr CDN for its emoji data (#31998):
+    // the CDN's outage, not our code. A 4xx would mean the data URL itself broke, so it reports.
+    /emoji-picker-element-data\S*:\s+5\d\d\b/i,
 ];
 
 function errorName(error: unknown): string {
