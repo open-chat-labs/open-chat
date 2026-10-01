@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Tell a migrated user's direct chat peers and those who have blocked them of the user's new id ([#9697](https://github.com/open-chat-labs/open-chat/pull/9697))
 - Compare a hint step's conclusions with its focus and target as the cells the board draws them on, so Bridges hints, whose conclusions are gaps between islands, no longer skip the steps they rest on or send an outline that names their answer ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 - Send events for a user migrated to a MultiUser canister on to their new id rather than losing them ([#9706](https://github.com/open-chat-labs/open-chat/pull/9706))
 

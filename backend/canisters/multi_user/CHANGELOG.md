@@ -97,9 +97,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Apply direct chat events between users in the same canister as those from other canisters, so their recipients get the same achievements and notifications ([#9594](https://github.com/open-chat-labs/open-chat/pull/9594))
 - Receive direct messages via `user_core`'s `receive_message`, shared with the User canister ([#9631](https://github.com/open-chat-labs/open-chat/pull/9631))
 - Run every update through `execute_update` or `execute_update_async`, which flush the queued events once the update is done ([#9642](https://github.com/open-chat-labs/open-chat/pull/9642))
+- Handle removal from a group or community sent via its queue of events for users ([#9715](https://github.com/open-chat-labs/open-chat/pull/9715))
 
 ### Fixed
 
+- Tell an imported user's direct chat peers their new id, and move a chat, block and contact onto a peer's new id once they migrate ([#9697](https://github.com/open-chat-labs/open-chat/pull/9697))
 - Fix bug where disappearing message TTL could skip being set in new direct chats ([#9584](https://github.com/open-chat-labs/open-chat/pull/9584))
 - Fix bug where a disappearing message TTL changed twice before the other user received the changes could leave their copy of the direct chat with the earlier TTL ([#9585](https://github.com/open-chat-labs/open-chat/pull/9585))
 - Fix bug where a referrer could be rewarded again for a user migrated to a MultiUser canister ([#9628](https://github.com/open-chat-labs/open-chat/pull/9628))

@@ -32,7 +32,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Price a daily puzzle hint at 100 CHIT, with one hint level instead of three ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 - Store with each hint the cells each of its conclusions is drawn on, so the LocalUserIndex can compare them with the hint's cells ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 - Make every hint step in Light Up, Tents, Slant and Bridges list the cells it relies on, and outline what the step is about rather than the cell it decides ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
+- Generate CHAT Rooms candidates several times faster by holding each cell's shadow as a bit mask, so a 9x9 Tricky candidate stays far inside the 40B instruction limit ([#9716](https://github.com/open-chat-labs/open-chat/pull/9716))
 
 ### Fixed
 
 - Point a Tents "line exact" hint at only the cells it fills, not the whole line, since the line includes cells ruled out by steps the player is never shown ([#9535](https://github.com/open-chat-labs/open-chat/pull/9535))
+- Retry a candidate generation that traps with a different seed. The trap rolled back its own failure count, so every retry used the seed that trapped, and a trap on the first candidate meant the day never shipped ([#9716](https://github.com/open-chat-labs/open-chat/pull/9716))

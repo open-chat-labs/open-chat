@@ -2,13 +2,14 @@ use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
+use constants::OPENCHAT_BOT_USER_ID;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_string;
-use types::{CommunityId, MessageContent};
+use types::{ChatEvent, CommunityId, EventIndex, MessageContent};
 
 #[test_case(true)]
 #[test_case(false)]
@@ -158,13 +159,29 @@ fn remove_user_succeeds() {
 
     // Check bot message received
     let user1_id = user1.user_id;
+    let removed_text = format!("You were removed from the private community \"{community_name}\" by @UserId({user1_id})");
     assert!(initial_state.direct_chats.summaries.iter().any(|dc| {
         if let MessageContent::Text(content) = &dc.latest_message.as_ref().unwrap().event.content {
-            content.text == format!("You were removed from the private community \"{community_name}\" by @UserId({user1_id})")
+            content.text == removed_text
         } else {
             false
         }
     }));
+
+    // The user's canister is told of the removal both directly and via the community's queue of
+    // events for users, but only the first does anything, so the bot's message is sent once
+    tick_many(env, 3);
+    let bot_events =
+        client::user::happy_path::events(env, &user2, OPENCHAT_BOT_USER_ID, EventIndex::default(), true, 1000, 1000);
+    let removed_messages = bot_events
+        .events
+        .iter()
+        .filter(|event| {
+            matches!(&event.event, ChatEvent::Message(m)
+                if matches!(&m.content, MessageContent::Text(content) if content.text == removed_text))
+        })
+        .count();
+    assert_eq!(removed_messages, 1);
 }
 
 #[test]

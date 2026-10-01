@@ -417,6 +417,26 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     .data
                     .blocked_users
                     .migrate_user_id(ev.old_user_id, ev.new_user_id, &ev.blocked_users);
+                for user_id in ev.users_to_notify {
+                    state.push_event_to_user(
+                        user_id,
+                        UserEvent::UserIdMigrated(Box::new(user_canister::UserIdMigrated {
+                            old_user_id: ev.old_user_id,
+                            new_user_id: ev.new_user_id,
+                        })),
+                        **now,
+                    );
+                }
+                for (old_user_id, new_user_id) in ev.migrated_earlier {
+                    state.push_event_to_user(
+                        ev.new_user_id,
+                        UserEvent::UserIdMigrated(Box::new(user_canister::UserIdMigrated {
+                            old_user_id,
+                            new_user_id,
+                        })),
+                        **now,
+                    );
+                }
                 for canister_id in ev.canisters_to_notify {
                     if state.data.local_groups.get(&canister_id.into()).is_some() {
                         state.push_event_to_group(

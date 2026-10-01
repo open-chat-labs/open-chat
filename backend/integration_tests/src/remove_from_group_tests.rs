@@ -37,6 +37,13 @@ fn remove_group_member_succeeds(user_joins_group: bool) {
     let response = client::group::happy_path::selected_initial(env, user1.principal, group_id);
     assert!(!response.invited_users.contains(&user2.user_id));
     assert!(!response.participants.iter().any(|m| m.user_id == user2.user_id));
+
+    if user_joins_group {
+        // The user's canister is told, so no longer lists the group
+        tick_many(env, 3);
+        let initial_state = client::user::happy_path::initial_state(env, &user2);
+        assert!(!initial_state.group_chats.summaries.iter().any(|g| g.chat_id == group_id));
+    }
 }
 
 #[test]

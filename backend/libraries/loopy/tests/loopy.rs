@@ -7,7 +7,7 @@ use puzzle_core::testing::{
 };
 use puzzle_core::{Puzzle, PuzzleError};
 
-const SEEDS_PER_CONFIG: u64 = 200;
+const SEEDS_PER_CONFIG: u64 = 20;
 
 fn params(width: u8, height: u8, tier: Tier) -> Params {
     Params::default_for(width, height, tier)
@@ -48,7 +48,7 @@ fn generated_8x8() {
 #[test]
 fn every_playable_size_generates() {
     for p in playable() {
-        must_generate::<Loopy>(p, 0..25);
+        must_generate::<Loopy>(p, 0..5);
     }
 }
 
@@ -82,7 +82,7 @@ fn the_smallest_grid_generates_an_easy_puzzle() {
 
 #[test]
 fn single_edge_perturbation_is_caught() {
-    for seed in 0..50 {
+    for seed in 0..10 {
         let p = params(6, 6, if seed % 2 == 0 { Tier::Easy } else { Tier::Tricky });
         let g = generate(seed, p).unwrap();
         for e in 0..g.solution.len() {

@@ -61,6 +61,9 @@ pub struct UserImported {
     pub new_user_id: UserId,
     // The groups and communities the user is in, each of which is told of the user's new id
     pub canisters_to_notify: Vec<CanisterId>,
+    // The users the user has, or had, a direct chat with, each of whom is told of the user's new id
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub users_to_notify: Vec<UserId>,
 }
 
 // The MultiUser canister the user is being migrated to couldn't import them

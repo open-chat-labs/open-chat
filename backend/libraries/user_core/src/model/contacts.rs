@@ -80,6 +80,20 @@ impl Contacts {
         }
     }
 
+    // Moves the contact for another user onto their new id once they are migrated to a MultiUser
+    // canister, unless there is already one for their new id
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        let prefix = ContactKeyPrefix::new();
+        with_map_mut(|m| {
+            if m.contains_key(prefix.create_key(&new_user_id)) {
+                return;
+            }
+            if let Some(bytes) = m.remove(prefix.create_key(&old_user_id)) {
+                m.insert(prefix.create_key(&new_user_id), bytes);
+            }
+        });
+    }
+
     // Returns every contact, ordered by user id
     pub fn all(&self) -> Vec<(UserId, Contact)> {
         with_map(|m| {
@@ -173,6 +187,22 @@ mod tests {
             SetContactResponse::NoChange
         ));
         assert_eq!(nicknames(&contacts), owned(&[(2, "updated"), (3, "nickname3")]));
+    }
+
+    #[test]
+    fn contact_for_a_migrated_user_is_moved_onto_their_new_id() {
+        init_stable_memory_map();
+        let mut contacts = Contacts::default();
+        contacts.set_contact(set_nickname(1, "one"));
+        contacts.set_contact(set_nickname(2, "two"));
+        contacts.set_contact(set_nickname(3, "three"));
+
+        contacts.migrate_user_id(user_id(1), user_id(4));
+        assert_eq!(nicknames(&contacts), owned(&[(2, "two"), (3, "three"), (4, "one")]));
+
+        // A contact already held for the new id is kept
+        contacts.migrate_user_id(user_id(2), user_id(3));
+        assert_eq!(nicknames(&contacts), owned(&[(2, "two"), (3, "three"), (4, "one")]));
     }
 
     #[test]

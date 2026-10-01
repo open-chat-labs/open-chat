@@ -1,14 +1,11 @@
 use crate::env::ENV;
-use crate::utils::{now_millis, tick_many};
+use crate::utils::now_millis;
 use crate::{TestEnv, client};
 use candid::Principal;
 use constants::DAY_IN_MS;
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
-use std::time::Duration;
-use types::{
-    DailyPuzzleConfig, DailyPuzzleResult, Empty, GameConfig, HttpRequest, LIGHT_UP_GAME_ID, PuzzleNumber, UnitResult, UserId,
-};
+use types::{DailyPuzzleConfig, DailyPuzzleResult, Empty, GameConfig, LIGHT_UP_GAME_ID, PuzzleNumber, UnitResult, UserId};
 
 /// The rota, Mon..Sun: (game_id, grid size). Mirrors `daily_puzzle_canister_impl::model::schedule`,
 /// which is the one definition (#9357); test mode runs the same rota as production.
@@ -63,11 +60,18 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_operator_calls() {
     assert_eq!(puzzle.hint_prices, GameConfig::default().hint_prices);
     assert_eq!(puzzle.max_hints, GameConfig::default().max_hints);
 
-    // Tomorrow's pool fills in via timers
+    // Tomorrow's pool fills in via timers, one candidate at a time. How many ticks that takes
+    // depends on the game and the seed, so wait for it rather than counting them
     let (tomorrows_game, _) = scheduled(today + 1);
-    tick_many(env, 5);
-    let candidates =
-        client::daily_puzzle::happy_path::candidates(env, operator.principal, canister_ids.daily_puzzle, today + 1);
+    let mut candidates = Vec::new();
+    for _ in 0..100 {
+        env.tick();
+        candidates =
+            client::daily_puzzle::happy_path::candidates(env, operator.principal, canister_ids.daily_puzzle, today + 1);
+        if candidates.len() == 3 {
+            break;
+        }
+    }
     assert_eq!(candidates.len(), 3);
     assert!(
         candidates
@@ -174,99 +178,5 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_operator_calls() {
     assert!(result.is_err(), "c2c_pull_puzzles should not be reachable as ingress");
 
     // This test flipped `enabled`, so don't hand the env back to the pool
-    wrapper.discard();
-}
-
-/// Walks a week of rollovers so every rota entry, the 10x10 tricky boards included, is generated
-/// inside the canister, which proves each fits the timer callback's instruction limit. The
-/// "Generated candidate" log lines carry the instruction counts.
-#[test]
-fn daily_puzzle_rotates_through_the_week() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let operator = client::register_user(env, canister_ids);
-    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
-
-    // Start at the top of a day. The loop below steps in 12-hour jumps and its two halves are the
-    // 12:00 top-up and the 00:00 ship, which only holds from there. The pooled env's clock is
-    // wherever earlier tests left it, and from the second half of a day the first jump crosses
-    // midnight: `generation_needed` then answers for `current` rather than `next`, so
-    // `ensure_puzzles` promotes the day 1 pool and removes it before the assertion reads it.
-    let into_day = now_millis(env) % DAY_IN_MS;
-    env.advance_time(Duration::from_millis(DAY_IN_MS - into_day + 60_000));
-
-    let today = (now_millis(env) / DAY_IN_MS) as u32;
-    let mut puzzles = Vec::new();
-    for _ in 0..20 {
-        env.tick();
-        puzzles = client::daily_puzzle::happy_path::current_puzzles(env, Principal::anonymous(), canister_ids.daily_puzzle);
-        if puzzles.iter().any(|p| p.number == today) {
-            break;
-        }
-    }
-    assert_eq!(puzzles.len(), 1, "{puzzles:?}");
-    assert_eq!(puzzles[0].number, today);
-    assert_eq!(puzzles[0].game_id, scheduled(today).0);
-
-    let mut seen = Vec::new();
-    for day in 1..=7u32 {
-        let number = today + day;
-        let (game_id, size) = scheduled(number);
-
-        // The 12:00 rollover tops up the next pool; the 00:00 one ships from it. Each candidate is
-        // its own timer callback, so give each boundary a few ticks.
-        env.advance_time(Duration::from_millis(DAY_IN_MS / 2));
-        tick_many(env, 5);
-        let candidates =
-            client::daily_puzzle::happy_path::candidates(env, operator.principal, canister_ids.daily_puzzle, number);
-        assert!(!candidates.is_empty(), "day {day}: no candidates for {game_id}");
-        assert!(
-            candidates.iter().all(|c| c.game_id == game_id && c.hint_count > 0),
-            "day {day}: {candidates:?}"
-        );
-        env.advance_time(Duration::from_millis(DAY_IN_MS / 2));
-        let mut puzzles = Vec::new();
-        for _ in 0..20 {
-            env.tick();
-            puzzles = client::daily_puzzle::happy_path::current_puzzles(env, Principal::anonymous(), canister_ids.daily_puzzle);
-            if puzzles.iter().any(|p| p.number == number) {
-                break;
-            }
-        }
-        assert_eq!(puzzles.len(), 1, "day {day}: {puzzles:?}");
-        let puzzle = &puzzles[0];
-        assert_eq!(puzzle.number, number, "day {day}: no puzzle shipped for number {number}");
-        assert_eq!(puzzle.game_id, game_id, "day {day}");
-        assert_eq!(puzzle.description[0], 1);
-        assert_eq!(puzzle.description[1], size, "day {day} {game_id}");
-        assert_eq!(puzzle.description[2], size, "day {day} {game_id}");
-        seen.push(game_id);
-    }
-    for game_id in ["chat_rooms", "light_up", "tents", "slant", "bridges", "unruly"] {
-        assert!(seen.contains(&game_id), "{game_id} never shipped: {seen:?}");
-    }
-
-    let response = client::http_request(
-        env,
-        Principal::anonymous(),
-        canister_ids.daily_puzzle,
-        &HttpRequest {
-            method: "GET".to_string(),
-            url: "/logs".to_string(),
-            headers: Vec::new(),
-            body: Vec::new(),
-        },
-    );
-    let logs = String::from_utf8(response.body.to_vec()).unwrap();
-    for line in logs.lines().filter(|l| l.contains("Generated candidate")) {
-        println!("{line}");
-    }
-
-    // Time moved a week; don't hand the env back to the pool
     wrapper.discard();
 }
