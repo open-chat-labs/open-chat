@@ -72,24 +72,37 @@ const MAX_LENGTH = 2000;
 // Tokens the translator must not touch: mentions, URLs, code spans and fenced code.
 const PROTECTED = /```[\s\S]*?```|`[^`\n]+`|@UserId\([^)]*\)|@UserGroup\([^)]*\)|https?:\/\/\S+/g;
 
-export function protect(text: string): { text: string; tokens: string[] } {
+// Placeholder styles, tried in order; we use the first one that doesn't already appear in the
+// message so a literal "[1]" can't be mistaken for a placeholder.
+const MARKERS: [RegExp, (i: number) => string][] = [
+    [/\[\d+\]/, (i) => `[${i}]`],
+    [/\{\d+\}/, (i) => `{${i}}`],
+    [/<\d+>/, (i) => `<${i}>`],
+];
+
+export type Protected = { text: string; tokens: string[]; marker: (i: number) => string };
+
+export function protect(text: string): Protected | undefined {
+    const style = MARKERS.find(([pattern]) => !pattern.test(text));
+    if (style === undefined) return undefined;
+    const marker = style[1];
     const tokens: string[] = [];
     const replaced = text.replace(PROTECTED, (m) => {
         tokens.push(m);
-        return `[${tokens.length - 1}]`;
+        return marker(tokens.length - 1);
     });
-    return { text: replaced, tokens };
+    return { text: replaced, tokens, marker };
 }
 
-export function restore(text: string, tokens: string[]): string | undefined {
+export function restore(text: string, { tokens, marker }: Protected): string | undefined {
     let missing = false;
     const restored = tokens.reduce((acc, token, i) => {
-        const marker = `[${i}]`;
-        if (!acc.includes(marker)) {
+        const m = marker(i);
+        if (!acc.includes(m)) {
             missing = true;
             return acc;
         }
-        return acc.replace(marker, () => token);
+        return acc.replace(m, () => token);
     }, text);
     // If the translator mangled a placeholder we'd rather show nothing than a broken mention
     return missing ? undefined : restored;
@@ -308,8 +321,9 @@ class OnDeviceChatTranslator {
         original: string,
     ): Promise<{ text: string; from: string } | undefined> {
         if (original.length > MAX_LENGTH) return undefined;
-        const { text, tokens } = protect(original);
-        if (letterCount(text) < MIN_LETTERS) return undefined;
+        const prot = protect(original);
+        if (prot === undefined || letterCount(prot.text) < MIN_LETTERS) return undefined;
+        const text = prot.text;
 
         const [top] = await detector.detect(text);
         if (top === undefined || top.confidence < MIN_CONFIDENCE) return undefined;
@@ -320,7 +334,7 @@ class OnDeviceChatTranslator {
         const translator = await this.#translator(from);
         if (translator === undefined) return undefined;
 
-        const translated = restore(await translator.translate(text), tokens);
+        const translated = restore(await translator.translate(text), prot);
         return translated === undefined ? undefined : { text: translated, from };
     }
 
