@@ -25,15 +25,28 @@ pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
 // This base state is set at the end of the initialization process, so each thread (other than
 // the one doing the initialization) waits until the state is available at which point they
-// create their own PocketIC instance which is initialized with this state.
-static BASE_STATE: OnceLock<(PocketIcState, CanisterIds)> = OnceLock::new();
+// create their own PocketIC instance which is initialized with this state. If initialization
+// panics, `None` is stored so that later tests fail straight away rather than each retrying it.
+static BASE_STATE: OnceLock<Option<(PocketIcState, CanisterIds)>> = OnceLock::new();
 
 pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
     verify_pocket_ic_exists();
 
     let controller = Principal::from_text("xuxyr-xopen-chatx-xxxbu-cai").unwrap();
 
-    let (state, canister_ids) = BASE_STATE.get_or_init(|| initialize_base_state(controller, seed));
+    let mut init_panic = None;
+    let base_state = BASE_STATE.get_or_init(|| {
+        std::panic::catch_unwind(|| initialize_base_state(controller, seed))
+            .map_err(|payload| init_panic = Some(payload))
+            .ok()
+    });
+    // The test which ran the initialization fails with its panic, the rest with a pointer to it
+    if let Some(payload) = init_panic {
+        std::panic::resume_unwind(payload);
+    }
+    let Some((state, canister_ids)) = base_state else {
+        panic!("Initializing the base state failed in an earlier test");
+    };
 
     let env = PocketIcBuilder::new()
         .with_read_only_state(state)
