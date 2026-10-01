@@ -1236,10 +1236,10 @@ fn user_who_joins_while_being_migrated_is_held_under_their_new_id(community: boo
     assert!(listed(env));
 }
 
-// A member of a group imported into a community while they're being migrated is added to the community
-// under the id the group held them by. The group is deleted once imported, so the migration's notice
-// to it is dropped, and the community's LocalUserIndex, which the import gets the members' principals
-// from, tells the community their new id instead.
+// A member of a group imported into a community while they're being migrated is copied into it under
+// the id the group held them by. The group is deleted once imported, so the migration's notice to it is
+// dropped. Instead the import gets each member's latest id from the community's LocalUserIndex and
+// moves them onto it, or the LocalUserIndex tells the community once the migration completes.
 #[test]
 fn member_of_a_group_imported_while_being_migrated_is_held_under_their_new_id() {
     let mut wrapper = ENV.deref().get();

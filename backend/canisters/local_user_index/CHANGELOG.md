@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Pass on when the details of each group, community and channel last changed in the summaries relayed to clients ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 - Report a community whose canister has been uninstalled to the GroupIndex, then stop tracking it ([#9672](https://github.com/open-chat-labs/open-chat/pull/9672))
-- Add `c2c_user_principals_v2`, for a community importing a group, which returns each member's latest id and records those not yet migrated as having joined the community ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Add `c2c_user_principals_v2`, for a community importing a group, which returns each member's latest id and records those not yet migrated as having joined the community ([#9722](https://github.com/open-chat-labs/open-chat/pull/9722))
 
 ### Changed
 

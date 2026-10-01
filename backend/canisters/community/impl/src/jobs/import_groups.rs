@@ -1,5 +1,5 @@
 use crate::activity_notifications::extract_activity;
-use crate::jobs::migrate_chat_events_to_stable_memory;
+use crate::jobs::{migrate_chat_events_to_stable_memory, unlapse_members};
 use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
@@ -7,24 +7,31 @@ use crate::model::members::AddResult;
 use crate::timer_job_types::{
     FinalizeGroupImportJob, JoinMembersToPublicChannelJob, ProcessGroupImportChannelMembersJob, TimerJob,
 };
-use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{RuntimeState, mutate_state, read_state};
 use chat_events::ChatEvents;
-use constants::OPENCHAT_BOT_USER_ID;
+use constants::{OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use group_canister::c2c_export_group::{Args, ExportExtras, Response};
 use group_chat_core::{GroupChatCore, GroupMembers};
 use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
+use std::ops::Bound;
 use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{
-    C2CError, Caller, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty, MultiUserChat, UserId,
-    UserType,
+    C2CError, Caller, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityUsersBlocked, Empty,
+    Milliseconds, MultiUserChat, UserId, UserType,
 };
 
 const PAGE_SIZE: u32 = 19 * 102 * 1024; // Roughly 1.9MB (1.9 * 1024 * 1024)
+// The most of an imported group's members who aren't yet members of the community to add at a time
+// (in test mode, few enough that a test's group needs several batches)
+const IMPORT_MEMBERS_BATCH_SIZE: usize = 1000;
+const IMPORT_MEMBERS_BATCH_SIZE_TEST_MODE: usize = 2;
+const MAX_INSTRUCTIONS_PER_MEMBERS_BATCH: u64 = 2_000_000_000;
+// Each retry of a batch whose members' principals couldn't be got waits this much longer than the last
+const IMPORT_MEMBERS_RETRY_INTERVAL: Milliseconds = 10 * SECOND_IN_MS;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -253,12 +260,16 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             // Moves the imported group's data which is still on the heap (eg. its users' metrics)
             // into stable memory under the channel's prefixes
             migrate_chat_events_to_stable_memory::start_job_if_required(state);
+            // The group may have been unlapsing its members when it was exported
+            unlapse_members::start_job_if_required(state);
 
             state.data.timer_jobs.enqueue_job(
                 TimerJob::ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob {
                     group_id,
                     channel_id,
                     attempt: 0,
+                    after: None,
+                    members_added: Vec::new(),
                 }),
                 now,
                 now,
@@ -270,141 +281,189 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
     info!(%group_id, instruction_count, "'finalize_group_import' completed");
 }
 
+// The channel's members are processed a batch at a time, in order of user id:
 // 1. For channel members already in the community, add the new channel to their set of channels.
-// 2. If the channel is public, for community members not in the channel, add them to the channel.
-// 3. For channel members who are not yet community members, lookup their principals, then join them
-// to the community, then add them to the public channels, then add the new channel to their set of
-// channels.
-pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: ChannelId, attempt: u32) {
-    info!(%group_id, attempt, "'process_channel_members' starting");
+// 2. For channel members who are not yet community members, lookup their principals, then join them
+// to the community, add the new channel to their set of channels, and add them to the community's
+// other public channels (via `JoinMembersToPublicChannelJob`).
+// Once every batch has been processed, if the channel is public, the community members not in it
+// are added to it.
+pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMembersJob) {
+    let group_id = job.group_id;
+    let channel_id = job.channel_id;
+    info!(%group_id, attempt = job.attempt, after = ?job.after, "'process_channel_members' starting");
 
-    let (members_to_add_to_community, local_user_index_canister_id) = mutate_state(|state| {
-        let channel = state.data.channels.get(&channel_id).unwrap();
-        let bots = channel.chat.members.bots();
-        let mut to_add: HashMap<UserId, UserType> = HashMap::new();
+    let (batch, scanned_to, local_user_index_canister_id) = mutate_state(|state| next_batch_of_channel_members(&job, state));
 
-        for user_id in channel.chat.members.member_ids().iter() {
-            if state.data.members.contains(user_id) {
-                state.data.members.mark_member_joined_channel(*user_id, channel_id);
-            } else {
-                let user_type = bots.get(user_id).copied().unwrap_or_default();
-                to_add.insert(*user_id, user_type);
-            }
-        }
-
-        (to_add, state.data.local_user_index_canister_id)
-    });
-
-    let mut members_added = Vec::new();
-
-    if !members_to_add_to_community.is_empty() {
-        let c2c_args = local_user_index_canister::c2c_user_principals_v2::Args {
-            user_ids: members_to_add_to_community.keys().copied().collect(),
-        };
-        if let Ok(local_user_index_canister::c2c_user_principals_v2::Response::Success(users)) =
-            local_user_index_canister_c2c_client::c2c_user_principals_v2(local_user_index_canister_id, &c2c_args).await
-        {
-            mutate_state(|state| {
-                let now = state.env.now();
-
-                // Add existing community members to the channel if it is public
-                add_community_members_to_channel_if_public(channel_id, state);
-
-                let public_channel_ids = state.data.channels.public_channel_ids();
-                let mut migrated = Vec::new();
-                for (user_id, latest) in users {
-                    let principal = latest.principal;
-                    if latest.user_id != user_id {
-                        // The group held the member by an id they've since been migrated from. They're
-                        // added under it, as the channel holds them, then moved onto their latest id
-                        // below. If they're already a member under it, only the channel is moved.
-                        migrated.push((user_id, latest));
-                        if state.data.members.contains(&latest.user_id) {
-                            continue;
-                        }
-                    }
-                    match state.data.members.add(
-                        user_id,
-                        principal,
-                        members_to_add_to_community.get(&user_id).copied().unwrap_or_default(),
-                        None,
-                        now,
-                    ) {
-                        AddResult::Success(_) => {
-                            state.data.invited_users.remove(&user_id, now);
-
-                            let user_type = state.data.members.bots().get(&user_id).copied().unwrap_or_default();
-
-                            for channel_id in public_channel_ids.iter().filter(|&c| *c != channel_id) {
-                                if let Some(channel) = state.data.channels.get_mut(channel_id)
-                                    && channel.chat.gate_config.is_none()
-                                {
-                                    join_channel_unchecked(
-                                        user_id,
-                                        user_type,
-                                        channel,
-                                        &mut state.data.members,
-                                        state.data.is_public.value,
-                                        true,
-                                        false,
-                                        now,
-                                    );
-                                }
-                            }
-
-                            state.data.members.mark_member_joined_channel(user_id, channel_id);
-                            members_added.push(user_id);
-                        }
-                        AddResult::AlreadyInCommunity => {}
-                        AddResult::Blocked => {
-                            let channel = state.data.channels.get_mut(&channel_id).unwrap();
-                            let _ = channel
-                                .chat
-                                .remove_member(Caller::OCBot(OPENCHAT_BOT_USER_ID), user_id, false, now);
-                        }
-                    }
-                }
-
-                // As when the community is told of a migration, which the group, being deleted once
-                // imported, won't be
-                for (old_user_id, latest) in migrated {
-                    state
-                        .data
-                        .migrate_user_ids(&[old_user_id], latest.user_id, Some(latest.principal), now);
-                    if state
-                        .data
-                        .channels
-                        .get(&channel_id)
-                        .is_some_and(|c| c.chat.members.contains(&latest.user_id))
-                    {
-                        state.data.members.mark_member_joined_channel(latest.user_id, channel_id);
-                    }
-                    if let Some(added) = members_added.iter_mut().find(|u| **u == old_user_id) {
-                        *added = latest.user_id;
-                    }
-                }
-            });
-        } else if attempt < 30 {
-            mutate_state(|state| {
-                let now = state.env.now();
-                state.data.timer_jobs.enqueue_job(
-                    TimerJob::ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob {
-                        group_id,
-                        channel_id,
-                        attempt: attempt + 1,
-                    }),
-                    now,
-                    now,
-                );
-            });
-            return;
-        }
-    } else {
-        // Add community members to the channel if it is public
-        mutate_state(|state| add_community_members_to_channel_if_public(channel_id, state));
+    if batch.is_empty() {
+        complete_processing_channel_members(group_id, channel_id, job.members_added);
+        return;
     }
 
+    let c2c_args = local_user_index_canister::c2c_user_principals_v2::Args {
+        user_ids: batch.keys().copied().collect(),
+    };
+    let response = local_user_index_canister_c2c_client::c2c_user_principals_v2(local_user_index_canister_id, &c2c_args).await;
+
     mutate_state(|state| {
+        let now = state.env.now();
+
+        if let Ok(local_user_index_canister::c2c_user_principals_v2::Response::Success(users)) = response {
+            // In order of user id, so that the next batch can start after the last processed
+            let users: BTreeMap<_, _> = users.into_iter().collect();
+
+            let mut added = Vec::new();
+            // Where the next run carries on from: after the last member looked at, unless this run
+            // stops before it has processed them all
+            let mut processed_to = scanned_to;
+            let mut last_processed = job.after;
+            let mut migrated = Vec::new();
+            for (index, (user_id, latest)) in users.into_iter().enumerate() {
+                // Each is written to stable memory, so if the instructions for this run are used up,
+                // the rest are left for the next run
+                if index > 0
+                    && index.is_multiple_of(100)
+                    && ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_PER_MEMBERS_BATCH
+                {
+                    processed_to = last_processed;
+                    break;
+                }
+                last_processed = Some(user_id);
+
+                let principal = latest.principal;
+                if latest.user_id != user_id {
+                    // The group held the member by an id they've since been migrated from. They're added
+                    // under it, as the channel holds them, then moved onto their latest id below. If
+                    // they're already a member under it, only the channel is moved.
+                    migrated.push((user_id, latest));
+                    if state.data.members.contains(&latest.user_id) {
+                        continue;
+                    }
+                }
+
+                match state.data.members.add(
+                    user_id,
+                    principal,
+                    batch.get(&user_id).copied().unwrap_or_default(),
+                    None,
+                    now,
+                ) {
+                    AddResult::Success(_) => {
+                        state.data.invited_users.remove(&user_id, now);
+                        state.data.members.mark_member_joined_channel(user_id, channel_id);
+                        added.push(user_id);
+                    }
+                    AddResult::AlreadyInCommunity => {
+                        state.data.members.mark_member_joined_channel(user_id, channel_id);
+                    }
+                    AddResult::Blocked => {
+                        let channel = state.data.channels.get_mut(&channel_id).unwrap();
+                        let _ = channel
+                            .chat
+                            .remove_member(Caller::OCBot(OPENCHAT_BOT_USER_ID), user_id, false, now);
+                    }
+                }
+            }
+
+            // As when the community is told of a migration, which the group, being deleted once
+            // imported, won't be
+            for (old_user_id, latest) in migrated {
+                state
+                    .data
+                    .migrate_user_ids(&[old_user_id], latest.user_id, Some(latest.principal), now);
+                if state
+                    .data
+                    .channels
+                    .get(&channel_id)
+                    .is_some_and(|c| c.chat.members.contains(&latest.user_id))
+                {
+                    state.data.members.mark_member_joined_channel(latest.user_id, channel_id);
+                }
+                if let Some(added) = added.iter_mut().find(|u| **u == old_user_id) {
+                    *added = latest.user_id;
+                }
+            }
+
+            if !added.is_empty() {
+                // Those added to the community join its other public channels a batch at a time
+                for other_channel_id in state.data.channels.public_channel_ids() {
+                    if other_channel_id != channel_id {
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::JoinMembersToPublicChannel(JoinMembersToPublicChannelJob {
+                                channel_id: other_channel_id,
+                                members: added.clone(),
+                            }),
+                            now,
+                            now,
+                        );
+                    }
+                }
+                job.members_added.extend(added);
+            }
+
+            job.after = processed_to;
+            job.attempt = 0;
+        } else if job.attempt < 30 {
+            job.attempt += 1;
+            // Retried after a delay, so that a LocalUserIndex which is briefly unavailable (eg. while
+            // it is upgraded) doesn't use up the attempts
+            let retry_at = now + IMPORT_MEMBERS_RETRY_INTERVAL * job.attempt as u64;
+            state
+                .data
+                .timer_jobs
+                .enqueue_job(TimerJob::ProcessGroupImportChannelMembers(job), retry_at, now);
+            return;
+        } else {
+            // The batch is given up on, and the rest processed
+            error!(%group_id, after = ?job.after, "Failed to get the principals of a batch of the group's members");
+            job.after = scanned_to;
+            job.attempt = 0;
+        }
+
+        state
+            .data
+            .timer_jobs
+            .enqueue_job(TimerJob::ProcessGroupImportChannelMembers(job), now, now);
+    });
+}
+
+// The next batch of the channel's members who aren't members of the community, with their user
+// types, and the last of the channel's members looked at. The channel's members looked at who are
+// members of the community are marked as members of the channel along the way.
+fn next_batch_of_channel_members(
+    job: &ProcessGroupImportChannelMembersJob,
+    state: &mut RuntimeState,
+) -> (BTreeMap<UserId, UserType>, Option<UserId>, CanisterId) {
+    let data = &mut state.data;
+    let batch_size = if data.test_mode { IMPORT_MEMBERS_BATCH_SIZE_TEST_MODE } else { IMPORT_MEMBERS_BATCH_SIZE };
+    let mut batch = BTreeMap::new();
+    let mut scanned_to = job.after;
+
+    if let Some(channel) = data.channels.get(&job.channel_id) {
+        let bots = channel.chat.members.bots();
+        let start = job.after.map_or(Bound::Unbounded, Bound::Excluded);
+
+        for user_id in channel.chat.members.member_ids().range((start, Bound::Unbounded)) {
+            scanned_to = Some(*user_id);
+            if data.members.contains(user_id) {
+                data.members.mark_member_joined_channel(*user_id, job.channel_id);
+            } else {
+                batch.insert(*user_id, bots.get(user_id).copied().unwrap_or_default());
+                if batch.len() >= batch_size {
+                    break;
+                }
+            }
+        }
+    }
+
+    (batch, scanned_to, data.local_user_index_canister_id)
+}
+
+fn complete_processing_channel_members(group_id: ChatId, channel_id: ChannelId, members_added: Vec<UserId>) {
+    mutate_state(|state| {
+        // Add community members to the channel if it is public
+        add_community_members_to_channel_if_public(channel_id, state);
+
         state.push_community_event(CommunityEventInternal::GroupImported(Box::new(GroupImportedInternal {
             group_id,
             channel_id,
@@ -413,16 +472,22 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
     });
 
     ic_cdk_timers::set_timer(Duration::ZERO, async move { mark_import_complete(group_id, channel_id) });
-    info!(%group_id, attempt, "'process_channel_members' completed");
+    info!(%group_id, "'process_channel_members' completed");
 }
 
 fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut RuntimeState) {
     if let Some(channel) = state.data.channels.get_mut(&channel_id) {
-        // If this is a public channel, add all community members to it
+        // If this is a public channel, add all community members to it, other than those who have
+        // left it (which, with the import done in batches, they can have done in the meantime)
         if channel.chat.is_public.value && channel.chat.gate_config.value.is_none() {
             JoinMembersToPublicChannelJob {
                 channel_id,
-                members: state.data.members.iter_member_ids().collect(),
+                members: state
+                    .data
+                    .members
+                    .iter_member_ids()
+                    .filter(|user_id| !state.data.members.member_channel_links_removed_contains(*user_id, channel_id))
+                    .collect(),
             }
             .execute_with_state(state);
         }

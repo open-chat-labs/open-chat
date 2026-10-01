@@ -1,5 +1,6 @@
 use crate::{GroupMembers, GroupRoleInternal};
 use candid::Principal;
+use group_community_common::Unlapsing;
 use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use proptest::collection::vec as pvec;
@@ -13,6 +14,7 @@ use types::{EventIndex, MessageIndex, MultiUserChat, TimestampMillis, UserId, Us
 enum Operation {
     Add {
         user_id: UserId,
+        bot: bool,
     },
     ChangeRole {
         user_index: usize,
@@ -39,6 +41,14 @@ enum Operation {
         user_index: usize,
     },
     UnlapseAll,
+    StartUnlapsing,
+    UnlapseSome {
+        count: u8,
+    },
+    Migrate {
+        user_index: usize,
+        new_user_index: usize,
+    },
     SetSuspended {
         user_index: usize,
         suspended: bool,
@@ -47,7 +57,7 @@ enum Operation {
 
 fn operation_strategy() -> impl Strategy<Value = Operation> {
     prop_oneof![
-        50 => any::<usize>().prop_map(|user_index| Operation::Add { user_id: user_id(user_index) }),
+        50 => (any::<usize>(), 0..10u8).prop_map(|(user_index, n)| Operation::Add { user_id: user_id(user_index), bot: n == 0 }),
         20 => (any::<usize>(), any::<usize>())
             .prop_map(|(user_index, role_index)| Operation::ChangeRole { user_index, role: role(role_index) }),
         10 => (any::<usize>(), any::<Option<bool>>(), any::<Option<bool>>())
@@ -58,6 +68,10 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
         5 => any::<usize>().prop_map(|user_index| Operation::Lapse { user_index}),
         3 => any::<usize>().prop_map(|user_index| Operation::Unlapse { user_index}),
         1 => Just(Operation::UnlapseAll),
+        1 => Just(Operation::StartUnlapsing),
+        3 => any::<u8>().prop_map(|count| Operation::UnlapseSome { count }),
+        2 => (any::<usize>(), any::<usize>())
+            .prop_map(|(user_index, new_user_index)| Operation::Migrate { user_index, new_user_index }),
         2 => any::<usize>().prop_map(|user_index| Operation::SetSuspended { user_index, suspended: true }),
         1 => any::<usize>().prop_map(|user_index| Operation::SetSuspended { user_index, suspended: false }),
     ]
@@ -82,12 +96,21 @@ fn comprehensive(#[strategy(pvec(operation_strategy(), 100..5_000))] ops: Vec<Op
         timestamp += 1000;
     }
 
+    // Once unlapsing has finished, nobody who lapsed before it started is still lapsed
+    if let Some(Unlapsing { before, .. }) = members.unlapsing {
+        members.unlapse_while(timestamp, || true);
+        for user_id in members.lapsed.clone() {
+            let member = members.get(&user_id).unwrap();
+            assert!(member.lapsed.timestamp > before, "{user_id} is still lapsed");
+        }
+    }
+
     members.check_invariants();
 }
 
 fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: TimestampMillis) {
     match op {
-        Operation::Add { user_id } => {
+        Operation::Add { user_id, bot } => {
             members.add(
                 user_id,
                 None,
@@ -95,7 +118,7 @@ fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: Times
                 EventIndex::default(),
                 MessageIndex::default(),
                 false,
-                UserType::User,
+                if bot { UserType::OcControlledBot } else { UserType::User },
             );
         }
         Operation::ChangeRole { user_index, role } => {
@@ -140,7 +163,24 @@ fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: Times
             }
         }
         Operation::UnlapseAll => {
-            members.unlapse_all(timestamp);
+            members.start_unlapsing(timestamp);
+            members.unlapse_while(timestamp, || true);
+        }
+        Operation::StartUnlapsing => members.start_unlapsing(timestamp),
+        Operation::UnlapseSome { count } => {
+            let mut unlapsed = 0;
+            members.unlapse_while(timestamp, || {
+                unlapsed += 1;
+                unlapsed <= count
+            });
+        }
+        Operation::Migrate {
+            user_index,
+            new_user_index,
+        } => {
+            let old_user_id = get(&members.member_ids, user_index);
+            let new_user_id = user_id(new_user_index);
+            members.migrate_user_id(old_user_id, new_user_id, timestamp);
         }
         Operation::SetSuspended { user_index, suspended } => {
             if suspended {

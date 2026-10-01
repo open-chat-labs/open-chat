@@ -2,7 +2,7 @@ use crate::CommunityMemberInternal;
 use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{Key, KeyPrefix, StableMemoryMap, UserIdKeyPrefix, with_map, with_map_mut};
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::Bound;
 use types::{CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version, is_default};
 
@@ -70,6 +70,19 @@ impl MembersStableStorage {
             }
         }
         updated
+    }
+
+    // Each member who is a bot, with their type
+    pub fn bots(&self) -> BTreeMap<UserId, UserType> {
+        with_map(|m| {
+            m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)
+                .take_while(|(k, _)| k.matches_prefix(&self.prefix))
+                .filter_map(|(k, v)| {
+                    let member = bytes_to_member(&v);
+                    member.user_type.is_bot().then(|| (k.user_id(), member.user_type))
+                })
+                .collect()
+        })
     }
 
     #[cfg(test)]
