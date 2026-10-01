@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::setup::install_icrc_ledger;
-use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many};
+use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many, try_metrics};
 use crate::{CanisterIds, TestEnv, User, client, wasms};
 use candid::{CandidType, Nat, Principal};
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
@@ -1420,7 +1420,10 @@ fn notice_of_a_migrated_users_new_id_is_held_until_the_peers_canister_is_upgrade
         }),
     );
     set_user_upgrade_concurrency(env, operator.principal, canister_ids.user_index, 10);
-    tick_until(env, |env| wasm_version(env, user2.canister()) == version);
+    // The canister can't be queried while it's stopped for the upgrade
+    tick_until(env, |env| {
+        try_metrics(env, user2.canister()).and_then(|m| serde_json::from_value(m["wasm_version"].clone()).ok()) == Some(version)
+    });
     tick_many(env, 10);
 
     assert_eq!(held_user_id_migrations(env, user2.local_user_index), 0);
