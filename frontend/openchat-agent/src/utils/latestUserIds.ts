@@ -100,6 +100,8 @@ function first<T>(items: Iterable<T>, count: number): T[] {
     return taken;
 }
 
+// The only values keyed by user id which are bigints are tip amounts, keyed by tipper, so adding them
+// together is right. Anything else keyed by user id would need its own rule here.
 function merge(existing: unknown, value: unknown): unknown {
     return typeof existing === "bigint" && typeof value === "bigint" ? existing + value : value;
 }

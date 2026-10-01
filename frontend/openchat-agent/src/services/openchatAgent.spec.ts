@@ -734,23 +734,25 @@ describe("OpenChatAgent referring to the user by their current id", () => {
         expect(rehydrated([], fromPrevious)).toBe(fromPrevious);
     });
 
-    test("the previous ids are taken from each current user result, the cached one then the live one", async () => {
+    // Runs `getCurrentUser` with the given results, the last being the live one, as the session
+    // `sessionUserId`, returning the mapping after each
+    async function mappingsAfter(
+        sessionUserId: string,
+        results: { userId: string; previousUserIds?: string[] }[],
+    ) {
         const user = agent([]);
-        const seen: unknown[] = [];
+        user._userClient = { userId: sessionUserId };
         user._userIndexClient = {
             getCurrentUser: () =>
                 new Stream((resolve) =>
-                    queueMicrotask(() => {
-                        // A user cached before their previous ids were, then the live one
-                        resolve({ kind: "created_user", userId: CURRENT }, false);
-                        resolve(
-                            { kind: "created_user", userId: CURRENT, previousUserIds: [PREVIOUS] },
-                            true,
-                        );
-                    }),
+                    queueMicrotask(() =>
+                        results.forEach((r, i) =>
+                            resolve({ kind: "created_user", ...r }, i === results.length - 1),
+                        ),
+                    ),
                 ),
         };
-
+        const seen: Map<string, string>[] = [];
         await new Promise<void>((done) =>
             user.getCurrentUser().subscribe({
                 onResult: (_: unknown, final: boolean) => {
@@ -759,7 +761,86 @@ describe("OpenChatAgent referring to the user by their current id", () => {
                 },
             }),
         );
+        return { user, seen };
+    }
+
+    test("the previous ids are taken from each current user result, the cached one then the live one", async () => {
+        // A user cached before their previous ids were, then the live one
+        const { seen } = await mappingsAfter(CURRENT, [
+            { userId: CURRENT },
+            { userId: CURRENT, previousUserIds: [PREVIOUS] },
+        ]);
+
         expect(seen).toEqual([new Map(), new Map([[PREVIOUS, CURRENT]])]);
+    });
+
+    test("the user's ids are mapped to the one the session is under", async () => {
+        // Before the user client is created, the result's own id
+        const before = await mappingsAfter("anon", [
+            { userId: CURRENT, previousUserIds: [PREVIOUS] },
+        ]);
+        expect(before.seen).toEqual([new Map([[PREVIOUS, CURRENT]])]);
+
+        // A session carrying on under the earlier id, which the client does if it can't restart
+        // under the latest, has what they did under the latest mapped back to it
+        const stayed = await mappingsAfter(PREVIOUS, [
+            { userId: PREVIOUS },
+            { userId: CURRENT, previousUserIds: [PREVIOUS] },
+        ]);
+        expect(stayed.seen).toEqual([new Map(), new Map([[CURRENT, PREVIOUS]])]);
+
+        // And once the session is under the latest id, the other way round
+        stayed.user._userClient = { userId: CURRENT };
+        stayed.user.updateOwnLatestUserIds();
+        expect(stayed.user._ownLatestUserIds).toEqual(new Map([[PREVIOUS, CURRENT]]));
+    });
+
+    test("an id which isn't one of the user's maps nothing onto the session's", async () => {
+        // eg. a new account on the same principal as a deleted one
+        const { seen } = await mappingsAfter(THEM, [{ userId: THEM }, { userId: CURRENT }]);
+
+        expect(seen).toEqual([new Map(), new Map()]);
+    });
+
+    test("a reply to a message from before they were migrated is from their current id", () => {
+        const missingReplies = new AsyncMessageContextMap<EventWrapper<Message>>();
+        missingReplies.insert(
+            { chatId: GROUP_ID, threadRootMessageIndex: undefined },
+            {
+                ...sentBy(PREVIOUS),
+                index: 7,
+            },
+        );
+        const reply = sentBy(THEM);
+        reply.event.repliesTo = {
+            kind: "raw_reply_context",
+            eventIndex: 7,
+        } as unknown as Message["repliesTo"];
+
+        const replied = agent([PREVIOUS]).rehydrateEvent(
+            reply,
+            GROUP_ID,
+            missingReplies,
+            { messages: new AsyncMessageContextMap(), previews: new Map() },
+            undefined,
+        );
+
+        expect(replied.event.repliesTo).toMatchObject({
+            kind: "rehydrated_reply_context",
+            senderId: CURRENT,
+        });
+    });
+
+    test("a message which failed before they were migrated is from their current id", async () => {
+        const user = agent([PREVIOUS]);
+        const failed = { 2: sentBy(PREVIOUS) };
+        user._chatsDb = {
+            loadFailedMessages: () => Promise.resolve({ toMap: () => new Map([["chat", failed]]) }),
+        };
+
+        const loaded = await user.loadFailedMessages();
+
+        expect(loaded.get("chat")[2].event.sender).toEqual(CURRENT);
     });
 
     test("a chat's latest message from before they were migrated is from their current id", () => {
