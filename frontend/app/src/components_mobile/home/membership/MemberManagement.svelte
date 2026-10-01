@@ -69,11 +69,12 @@
     let filteredBlocked = $derived<UserSummary[]>(
         blocked.filter((u) => membersState.matchesSearch(searchTermLower, u)),
     );
-    // If not every member is held, those who match what has been typed are searched for. Those
-    // found are then held, so will be in the search results.
+    // If not every member, or not every member's display name in the community, is held, those who
+    // match what has been typed are searched for. Those found are then held, so will be in the
+    // search results.
     $effect(() => {
         const searchFor = searchTerm;
-        if (searchFor.length < 2 || !client.membersIncomplete(collection.id)) return;
+        if (searchFor.length < 2 || !client.shouldSearchForMembers(collection.id)) return;
         const timer = setTimeout(
             () => client.findMembers(collection.id, searchFor, MAX_SEARCH_RESULTS),
             FIND_MEMBERS_DELAY_MS,

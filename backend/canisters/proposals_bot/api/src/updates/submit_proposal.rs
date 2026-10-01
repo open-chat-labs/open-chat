@@ -9,6 +9,9 @@ use types::{CanisterId, icrc2};
 pub struct Args {
     pub governance_canister_id: CanisterId,
     pub proposal: ProposalToSubmit,
+    // The fee, which the ProposalsBot pulls via ICRC2. It must be from the caller's wallet (their
+    // User canister's account, or their principal's for a user in a MultiUser canister), which must
+    // have approved the ProposalsBot, and to the ProposalsBot's own account.
     pub transaction: icrc2::PendingCryptoTransaction,
 }
 
