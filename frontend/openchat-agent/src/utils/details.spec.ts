@@ -333,6 +333,21 @@ describe("loadGroupDetails", () => {
             expect(memberIds(resp)).toEqual(["a", "c", "d"]);
             expect(stored.get(key)?.timestamp).toBe(40n);
         });
+
+        test("details as new which another tab has cached in the meantime are kept", async () => {
+            const { load, loadToHold, stored, cache } = setup(
+                details(10n, ["a"]),
+                snapshot(30n, ["a", "c"]),
+            );
+            await loadToHold();
+            // The same details in full, to which that tab has since added a member it looked up
+            stored.set(key, details(30n, ["a", "c", "x"]));
+
+            const resp = await load(30n, 20n);
+
+            expect(memberIds(resp)).toEqual(["a", "c", "x"]);
+            expect(cache.setCachedGroupDetails).not.toHaveBeenCalled();
+        });
     });
 });
 
@@ -537,6 +552,20 @@ describe("loadCommunityDetails", () => {
 
             expect(memberIds(resp)).toEqual(["a", "c"]);
             expect(memberIds(stored.get(id))).toEqual(["a", "c"]);
+        });
+
+        test("later details which another tab has cached in the meantime are kept", async () => {
+            const { load, loadToHold, stored } = setup(
+                details(10n, ["a"]),
+                snapshot(30n, ["a", "c"]),
+            );
+            await loadToHold();
+            stored.set(id, details(40n, ["a", "c", "d"]));
+
+            const resp = await load(40n, 20n);
+
+            expect(memberIds(resp)).toEqual(["a", "c", "d"]);
+            expect(stored.get(id)?.lastUpdated).toBe(40n);
         });
     });
 });

@@ -40,7 +40,6 @@ import type {
     GiphyContent,
     GiphyImage,
     GroupChatDetails,
-    GroupChatDetailsResponse,
     GroupChatDetailsUpdatesResponse,
     GroupChatIdentifier,
     GroupChatSummary,
@@ -2701,7 +2700,7 @@ export function groupDetailsSuccess(
     blobUrlPattern: string,
     canisterId: string,
     channelId?: number,
-): GroupChatDetailsResponse {
+): GroupChatDetails {
     const members = groupMembers(
         "participants" in value ? value.participants : value.members,
         value.basic_members,
@@ -2795,7 +2794,7 @@ export function groupDetailsUpdatesResponse(
                     blobUrlPattern,
                     canisterId,
                     channelId,
-                ) as GroupChatDetails,
+                ),
             };
         }
     }

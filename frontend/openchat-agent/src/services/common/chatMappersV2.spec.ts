@@ -6,6 +6,7 @@ import type { MessageContent as TMessageContent } from "../../typebox";
 import {
     addressToIcrcAccount,
     apiMessageContent,
+    groupDetailsUpdatesResponse,
     apiPendingCryptoTransaction,
     formatIcrcAccount,
     messageContent,
@@ -174,5 +175,35 @@ describe("a transfer pulled by the canister its message is sent to", () => {
             eventIndex: 3,
             transfer: { kind: "completed", sender: "sender", recipient, blockIndex: 7n },
         });
+    });
+});
+
+describe("the details of a group or channel returned in full instead of updates", () => {
+    test("are mapped as the details of a group are", () => {
+        const member = Principal.fromText(walletOwner).toUint8Array();
+        const other = Principal.fromText(recipient).toUint8Array();
+        const resp = groupDetailsUpdatesResponse(
+            {
+                SuccessSnapshot: {
+                    timestamp: 30n,
+                    last_updated: 30n,
+                    latest_event_index: 5,
+                    participants: [{ user_id: member, date_added: 1n, role: "Owner" }],
+                    basic_members: [other],
+                    more_members_after: other,
+                    bots: [],
+                    webhooks: [],
+                    chat_rules: { text: "", enabled: false, version: 0 },
+                },
+            } as never,
+            "",
+            "aaaaa-aa",
+        );
+
+        expect(resp.kind).toBe("snapshot");
+        if (resp.kind !== "snapshot") return;
+        expect(resp.details.timestamp).toBe(30n);
+        expect(resp.details.members.map((m) => m.userId)).toEqual([walletOwner, recipient]);
+        expect(resp.details.moreMembersAfter).toBe(recipient);
     });
 });

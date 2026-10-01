@@ -81,9 +81,10 @@ export async function loadGroupDetails(
 
     return withCachedDetailsLock(groupDetailsLockKey(cacheKey), async () => {
         const cached = await cache.getCachedGroupDetails(cacheKey);
-        // The details in full replace those cached, unless another tab has since cached later ones
+        // The details in full replace those cached, unless another tab has since cached ones as new,
+        // which may also hold members it has looked up since
         const replace = async (snapshot: GroupChatDetails): Promise<GroupChatDetails> => {
-            if (cached !== undefined && cached.timestamp > snapshot.timestamp) {
+            if (cached !== undefined && cached.timestamp >= snapshot.timestamp) {
                 return cached;
             }
             await cache.setCachedGroupDetails(cacheKey, snapshot);
@@ -172,7 +173,7 @@ export async function loadCommunityDetails(
     return withCachedDetailsLock(communityDetailsLockKey(communityId), async () => {
         const cached = await cache.getCachedCommunityDetails(communityId);
         const replace = async (snapshot: CommunityDetails): Promise<CommunityDetails> => {
-            if (cached !== undefined && cached.lastUpdated > snapshot.lastUpdated) {
+            if (cached !== undefined && cached.lastUpdated >= snapshot.lastUpdated) {
                 return cached;
             }
             await cache.setCachedCommunityDetails(communityId, snapshot);
