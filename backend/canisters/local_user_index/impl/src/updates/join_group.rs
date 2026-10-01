@@ -61,6 +61,8 @@ fn commit(
     let local_user_index_canister_id = state.env.canister_id();
     let now = state.env.now();
 
+    state.record_join(user_id, chat_id.into(), now);
+
     if state.holds_latest_id_of(user_id) {
         state.push_event_to_user(
             user_id,

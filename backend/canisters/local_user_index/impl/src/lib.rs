@@ -9,6 +9,7 @@ use crate::model::local_multi_user_canister_map::LocalMultiUserCanisterMap;
 use crate::model::media_scan_job_log::MediaScanJobLog;
 use crate::model::moderation_queue::ModerationQueue;
 use crate::model::premium_items::PremiumItems;
+use crate::model::recent_joins::RecentJoins;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::model::registry_tokens::RegistryTokens;
 use crate::model::top_up_leaderboards::TopUpLeaderboards;
@@ -445,6 +446,8 @@ impl RuntimeState {
         community_canister_timestamp: TimestampMillis,
         now: TimestampMillis,
     ) {
+        self.record_join(user_id, community_id.into(), now);
+
         let local_user_index_canister_id = self.env.canister_id();
         if self.holds_latest_id_of(user_id) {
             self.push_event_to_user(
@@ -466,6 +469,47 @@ impl RuntimeState {
                     channels,
                     community_canister_timestamp,
                 })),
+                now,
+            );
+        }
+    }
+
+    // Records that the user has joined the group or community, so that it can be told of their new id if
+    // they turn out to be being migrated (see `RecentJoins`). If their migration has been heard of
+    // already, while the join was in flight, it's told now.
+    pub fn record_join(&mut self, user_id: UserId, canister_id: CanisterId, now: TimestampMillis) {
+        let latest_user_id = self.data.migrated_user_ids.latest(user_id);
+        if latest_user_id != user_id {
+            self.notify_group_or_community_of_migrated_user_id(canister_id, user_id, latest_user_id, now);
+        } else {
+            self.data.recent_joins.push(user_id, canister_id, now);
+        }
+    }
+
+    // Tells the group or community, if this LocalUserIndex holds it, that the user has been migrated
+    pub fn notify_group_or_community_of_migrated_user_id(
+        &mut self,
+        canister_id: CanisterId,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        now: TimestampMillis,
+    ) {
+        if self.data.local_groups.get(&canister_id.into()).is_some() {
+            self.push_event_to_group(
+                canister_id,
+                GroupEvent::UserIdMigrated(group_canister::UserIdMigrated {
+                    old_user_id,
+                    new_user_id,
+                }),
+                now,
+            );
+        } else if self.data.local_communities.get(&canister_id.into()).is_some() {
+            self.push_event_to_community(
+                canister_id,
+                CommunityEvent::UserIdMigrated(community_canister::UserIdMigrated {
+                    old_user_id,
+                    new_user_id,
+                }),
                 now,
             );
         }
@@ -775,6 +819,7 @@ impl RuntimeState {
             users_to_import_pending: self.data.users_to_import.pending(),
             users_to_import_in_progress: self.data.users_to_import.in_progress(),
             users_to_close_out_pending: self.data.users_to_close_out.pending(),
+            recent_joins: self.data.recent_joins.len(),
             users_to_close_out_in_progress: self.data.users_to_close_out.in_progress(),
             chunk_store: crate::jobs::refresh_chunk_store::metrics(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
@@ -931,6 +976,8 @@ struct Data {
     // Users the UserIndex has asked this LocalUserIndex to start migrating to MultiUser canisters
     #[serde(default)]
     pub users_to_migrate: UsersToMigrate,
+    #[serde(default)]
+    pub recent_joins: RecentJoins,
     // Users the UserIndex has asked this LocalUserIndex to have one of its MultiUser canisters import
     #[serde(default)]
     pub users_to_import: UsersToMigrate<UserToImport>,
@@ -1074,6 +1121,7 @@ impl Data {
             game_chit_credit_retry_queue: new_retry_queue(),
             migrated_user_ids: MigratedUserIds::default(),
             users_to_migrate: UsersToMigrate::default(),
+            recent_joins: RecentJoins::default(),
             users_to_import: UsersToMigrate::default(),
             users_to_close_out: UsersToMigrate::default(),
             registry_canister_id: Some(registry_canister_id),
@@ -1140,6 +1188,7 @@ pub struct Metrics {
     pub users_to_import_in_progress: usize,
     pub users_to_close_out_pending: usize,
     pub users_to_close_out_in_progress: usize,
+    pub recent_joins: usize,
     pub chunk_store: crate::jobs::refresh_chunk_store::ChunkStoreMetrics,
     pub cycles_refund_queue_length: usize,
     pub cycles_refunded_from_deleted_users: Cycles,
