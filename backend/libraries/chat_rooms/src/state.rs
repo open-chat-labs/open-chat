@@ -1,4 +1,7 @@
-use crate::Description;
+use crate::{Description, MAX_SIZE};
+
+// Every cell of the largest board has a bit in a `u128`
+const _: () = assert!(MAX_SIZE * MAX_SIZE <= u128::BITS as usize);
 
 /// The fixed shape of a puzzle: its rooms and the groups every rule talks
 /// about. Group `g` is row `g` for `g < n`, column `g - n` for `g < 2n`,
@@ -8,8 +11,8 @@ pub(crate) struct Board {
     pub rooms: Vec<u8>,
     pub groups: Vec<Vec<usize>>,
     /// Per cell, every other cell a logo there rules out: its row, column
-    /// and room, and the eight cells around it. Sorted.
-    pub shadows: Vec<Vec<usize>>,
+    /// and room, and the eight cells around it. Cell `j` is bit `j`.
+    pub shadows: Vec<u128>,
 }
 
 impl Board {
@@ -24,13 +27,20 @@ impl Board {
             groups[n + i % n].push(i);
             groups[2 * n + room as usize].push(i);
         }
+        let masks: Vec<u128> = groups.iter().map(|g| g.iter().fold(0, |m, &i| m | 1 << i)).collect();
         let mut board = Board {
             n,
             rooms,
             groups,
             shadows: Vec::new(),
         };
-        board.shadows = (0..n * n).map(|i| board.shadow_of(i)).collect();
+        board.shadows = (0..n * n)
+            .map(|i| {
+                let around = board.around(i).fold(0, |m, j| m | 1 << j);
+                let [row, column, room] = board.groups_of(i);
+                (masks[row] | masks[column] | masks[room] | around) & !(1 << i)
+            })
+            .collect();
         board
     }
 
@@ -38,19 +48,6 @@ impl Board {
     pub fn groups_of(&self, i: usize) -> [usize; 3] {
         let n = self.n;
         [i / n, n + i % n, 2 * n + self.rooms[i] as usize]
-    }
-
-    fn shadow_of(&self, i: usize) -> Vec<usize> {
-        let mut out: Vec<usize> = self
-            .groups_of(i)
-            .iter()
-            .flat_map(|&g| self.groups[g].iter().copied())
-            .collect();
-        out.extend(self.around(i));
-        out.sort_unstable();
-        out.dedup();
-        out.retain(|&j| j != i);
-        out
     }
 
     /// The up to eight cells touching `i`, diagonals included.
@@ -68,4 +65,15 @@ impl Board {
     pub fn touching_after(&self, i: usize) -> impl Iterator<Item = usize> + '_ {
         self.around(i).filter(move |&j| j > i)
     }
+}
+
+/// The cells of `mask`, lowest first.
+pub(crate) fn cells(mut mask: u128) -> impl Iterator<Item = usize> {
+    std::iter::from_fn(move || {
+        (mask != 0).then(|| {
+            let i = mask.trailing_zeros() as usize;
+            mask &= mask - 1;
+            i
+        })
+    })
 }

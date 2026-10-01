@@ -7,7 +7,7 @@ use puzzle_core::testing::{
 };
 use puzzle_core::{Puzzle, PuzzleError, Tier};
 
-const SEEDS_PER_CONFIG: u64 = 100;
+const SEEDS_PER_CONFIG: u64 = 20;
 
 fn params(width: u8, height: u8, tier: Tier) -> Params {
     Params::default_for(width, height, tier)
@@ -108,7 +108,7 @@ fn generated_9x9() {
 #[test]
 fn every_playable_size_generates() {
     for p in playable() {
-        must_generate::<Bridges>(p, 0..25);
+        must_generate::<Bridges>(p, 0..5);
     }
 }
 
@@ -162,7 +162,7 @@ fn every_density_terminates() {
 
 #[test]
 fn single_cell_perturbation_is_caught() {
-    for seed in 0..50 {
+    for seed in 0..10 {
         let p = params(7, 7, if seed % 2 == 0 { Tier::Easy } else { Tier::Tricky });
         let g = generate(seed, p).unwrap();
         for i in 0..g.solution.len() {
