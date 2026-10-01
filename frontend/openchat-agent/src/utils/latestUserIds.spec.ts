@@ -39,6 +39,35 @@ describe("withLatestUserIds", () => {
         expect(withLatestUserIds(content, latest)).toBe(content);
     });
 
+    test("copies from the first change, keeping what comes before and after it in order", () => {
+        const before = { kind: "text_content", text: "before" };
+        const after = { kind: "text_content", text: "after" };
+        const list = [before, OLD, after];
+        const set = new Set([OTHER, OLD, "x"]);
+        const map = new Map<string, unknown>([
+            ["a", before],
+            [OLD, 1n],
+            ["b", after],
+        ]);
+        const record = { a: before, sender: OLD, b: after };
+
+        const replacedList = withLatestUserIds(list, latest);
+        expect(replacedList).toEqual([before, NEW, after]);
+        expect(replacedList[0]).toBe(before);
+        expect(replacedList[2]).toBe(after);
+        expect([...withLatestUserIds(set, latest)]).toEqual([OTHER, NEW, "x"]);
+        expect([...withLatestUserIds(map, latest)]).toEqual([
+            ["a", before],
+            [NEW, 1n],
+            ["b", after],
+        ]);
+        const replacedRecord = withLatestUserIds(record, latest);
+        expect(Object.keys(replacedRecord)).toEqual(["a", "sender", "b"]);
+        expect(replacedRecord).toEqual({ a: before, sender: NEW, b: after });
+        expect(replacedRecord.a).toBe(before);
+        expect(list).toEqual([before, OLD, after]);
+    });
+
     test("leaves anything other than plain data as it is", () => {
         const bytes = new Uint8Array([1, 2, 3]);
         const date = new Date(0);
@@ -60,8 +89,12 @@ describe("withLatestUserIds", () => {
             [OLD, 100n],
         ]);
 
+        // The current id first, so the copy only starts at the earlier one
+        const currentFirst = { [OTHER]: 5n, [NEW]: 50n, [OLD]: 100n };
+
         expect(withLatestUserIds(tips, latest)).toEqual({ ledger: { [NEW]: 150n, [OTHER]: 5n } });
         expect(withLatestUserIds(tipsMap, latest)).toEqual(new Map([[NEW, 150n]]));
+        expect(withLatestUserIds(currentFirst, latest)).toEqual({ [OTHER]: 5n, [NEW]: 150n });
     });
 
     test("leaves text the user wrote as it is", () => {

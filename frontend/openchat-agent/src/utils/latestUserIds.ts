@@ -7,7 +7,9 @@ const USER_TEXT_KEYS = new Set(["text", "caption"]);
 // Returns `value` with each user id which is a key of `latestUserIds` replaced by its value. Walks
 // strings, arrays, Sets, Maps and plain objects, whose keys (eg. those of tips, keyed by tipper)
 // are replaced too, leaving anything else, such as a Uint8Array or a class instance, as it is.
-// Whatever holds no such id is returned as it was, rather than copied.
+// Whatever holds no such id is returned as it was. Anything else is copied only once its first
+// change is found, from the entries before it, so that walking data which holds no such id, which
+// is most of it, allocates nothing.
 //
 // Where an earlier id and the id replacing it are both keys, eg. of the tips of a user who tipped a
 // message before and after being migrated, their values are added together if they are bigints,
@@ -24,39 +26,78 @@ function replace(value: unknown, latestUserIds: ReadonlyMap<string, string>): un
         return value;
     }
     if (Array.isArray(value)) {
-        const replaced = value.map((v) => replace(v, latestUserIds));
-        return replaced.some((v, i) => v !== value[i]) ? replaced : value;
+        let replaced: unknown[] | undefined;
+        for (let i = 0; i < value.length; i++) {
+            const v = replace(value[i], latestUserIds);
+            if (replaced === undefined && v !== value[i]) {
+                replaced = value.slice(0, i);
+            }
+            replaced?.push(v);
+        }
+        return replaced ?? value;
     }
     if (value instanceof Set) {
-        const original = [...value];
-        const replaced = original.map((v) => replace(v, latestUserIds));
-        return replaced.some((v, i) => v !== original[i]) ? new Set(replaced) : value;
+        let replaced: Set<unknown> | undefined;
+        let i = 0;
+        for (const v of value) {
+            const replacedValue = replace(v, latestUserIds);
+            if (replaced === undefined && replacedValue !== v) {
+                replaced = new Set(first(value, i));
+            }
+            replaced?.add(replacedValue);
+            i++;
+        }
+        return replaced ?? value;
     }
     if (value instanceof Map) {
-        const original = [...value];
-        let changed = false;
-        const replaced = new Map<unknown, unknown>();
-        for (const [k, v] of original) {
+        let replaced: Map<unknown, unknown> | undefined;
+        let i = 0;
+        for (const [k, v] of value) {
             const key = replace(k, latestUserIds);
             const replacedValue = replace(v, latestUserIds);
-            changed ||= key !== k || replacedValue !== v;
-            replaced.set(key, merge(replaced.get(key), replacedValue));
+            if (replaced === undefined && (key !== k || replacedValue !== v)) {
+                replaced = new Map(first(value, i));
+            }
+            if (replaced !== undefined) {
+                replaced.set(key, merge(replaced.get(key), replacedValue));
+            }
+            i++;
         }
-        return changed ? replaced : value;
+        return replaced ?? value;
     }
     const prototype = Object.getPrototypeOf(value);
     if (prototype !== Object.prototype && prototype !== null) {
         return value;
     }
-    let changed = false;
-    const replaced: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value)) {
+    const record = value as Record<string, unknown>;
+    const keys = Object.keys(record);
+    let replaced: Record<string, unknown> | undefined;
+    for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        const v = record[k];
         const key = latestUserIds.get(k) ?? k;
         const replacedValue = USER_TEXT_KEYS.has(k) ? v : replace(v, latestUserIds);
-        changed ||= key !== k || replacedValue !== v;
-        replaced[key] = merge(replaced[key], replacedValue);
+        if (replaced === undefined && (key !== k || replacedValue !== v)) {
+            replaced = {};
+            for (let j = 0; j < i; j++) {
+                replaced[keys[j]] = record[keys[j]];
+            }
+        }
+        if (replaced !== undefined) {
+            replaced[key] = merge(replaced[key], replacedValue);
+        }
     }
-    return changed ? replaced : value;
+    return replaced ?? value;
+}
+
+// The first `count` items of `items`
+function first<T>(items: Iterable<T>, count: number): T[] {
+    const taken: T[] = [];
+    for (const item of items) {
+        if (taken.length === count) break;
+        taken.push(item);
+    }
+    return taken;
 }
 
 function merge(existing: unknown, value: unknown): unknown {
