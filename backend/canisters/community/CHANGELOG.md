@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Carry over an imported group's former members, other than those in the community, and its cached migrated user ids, if the group exported them ([#9571](https://github.com/open-chat-labs/open-chat/pull/9571))
 - Tell clients when the details of the community, and of each channel, last changed ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
 - Let clients load the members of the community, and of each channel, a page at a time ([#9681](https://github.com/open-chat-labs/open-chat/pull/9681))
+- Add `search_members`, which finds members by their display names in the community ([#9710](https://github.com/open-chat-labs/open-chat/pull/9710))
 
 ### Changed
 
