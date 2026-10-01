@@ -67,6 +67,16 @@ pub enum UserIndexEvent {
     UserIdMigrated(UserIdMigrated),
     StartUserMigration(StartUserMigration),
     ImportUser(ImportUser),
+    EventForMigratedUser(Box<EventForMigratedUser>),
+}
+
+// An event which another LocalUserIndex had queued for a user's old canister, for a user who has since
+// been migrated to a MultiUser canister held by this one, passed on by the UserIndex
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct EventForMigratedUser {
+    pub user_id: UserId,
+    // A msgpack serialized `user_canister::LocalUserIndexEvent`
+    pub event: serde_bytes::ByteBuf,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

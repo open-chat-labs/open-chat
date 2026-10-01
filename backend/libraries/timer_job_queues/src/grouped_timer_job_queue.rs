@@ -116,6 +116,11 @@ impl<T: TimerJobItemGroup> GroupedTimerJobQueue<T> {
         self.within_lock(|i| i.in_progress.len())
     }
 
+    // Whether a batch for `grouping_key` is being processed
+    pub fn is_in_progress(&self, grouping_key: &T::Key) -> bool {
+        self.within_lock(|i| i.in_progress.contains(grouping_key))
+    }
+
     // Whether no items are queued or being processed. Unlike `is_empty`, this includes items queued
     // for a key whose batch is already being processed.
     pub fn is_idle(&self) -> bool {

@@ -13,8 +13,10 @@
     import {
         allUsersStore,
         ErrorCode,
+        FIND_MEMBERS_DELAY_MS,
         publish,
         selectedCommunityMembersStore,
+        selectedCommunityUserGroupsStore,
         type CommunitySummary,
         type Member,
         type OpenChat,
@@ -23,7 +25,7 @@
         type UserLookup,
         type UserSummary,
     } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
@@ -37,6 +39,7 @@
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
+    const MAX_SEARCH_RESULTS = 255;
     const client = getContext<OpenChat>("client");
 
     interface Props {
@@ -46,12 +49,15 @@
 
     let { community, original }: Props = $props();
 
-    let communityUsers: Record<string, UserSummary> = $state({});
-    let communityUsersList: UserSummary[] = $state([]);
+    // Rebuilt as members who weren't held are found, and as their users become known
+    let communityUsers = $derived(createLookup($selectedCommunityMembersStore, $allUsersStore));
+    let communityUsersList = $derived(Object.values(communityUsers));
 
-    onMount(() => {
-        communityUsers = createLookup($selectedCommunityMembersStore, $allUsersStore);
-        communityUsersList = Object.values(communityUsers);
+    // A community which holds only some of its members may not hold those of the group, which can
+    // arrive, or change, after it is shown
+    $effect(() => {
+        void $selectedCommunityUserGroupsStore;
+        untrack(() => client.loadUserGroupMembers(community.id, original.id));
     });
 
     function createLookup(
@@ -109,6 +115,17 @@
 
     let searchTerm = $derived(trimLeadingAtSymbol(searchTermEntered));
     let searchTermLower = $derived(searchTerm.toLowerCase());
+    // If the community holds only some of its members, those who match what has been typed are
+    // searched for. Those found are then held, so are among the matches.
+    $effect(() => {
+        const searchFor = searchTerm;
+        if (searchFor.length < 2 || !client.membersIncomplete(community.id)) return;
+        const timer = setTimeout(
+            () => client.findMembers(community.id, searchFor, MAX_SEARCH_RESULTS),
+            FIND_MEMBERS_DELAY_MS,
+        );
+        return () => clearTimeout(timer);
+    });
     let groupUsers = $derived(
         [...userGroup.members]
             .map((m) => $allUsersStore.get(m))
