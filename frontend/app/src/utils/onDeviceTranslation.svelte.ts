@@ -297,10 +297,7 @@ export class OnDeviceChatTranslator {
         if (a === undefined) return;
         const target = this.#target;
         this.#setNeedsDownload(source, false);
-        if (downloading) {
-            this.#packs.add(source);
-            this.downloads.add(source);
-        }
+        if (downloading) this.downloads.add(source);
         const p = a.Translator.create({
             sourceLanguage: source,
             targetLanguage: target,
@@ -320,7 +317,6 @@ export class OnDeviceChatTranslator {
                     this.#setNeedsDownload(source, true);
                 } else {
                     console.warn(`On-device translation from ${source} failed: `, err);
-                    this.#packs.delete(source);
                     this.#unsupportedSources.add(source);
                     this.#dropParked(source);
                 }
@@ -403,14 +399,16 @@ export class OnDeviceChatTranslator {
     }
 
     async #drain() {
+        // A locale change clears everything and the rendered messages queue again for the new
+        // target, so anything this drain still holds after one is dropped, never sent round again
+        const target = this.#target;
         let detector: BrowserLanguageDetector;
         try {
             detector = await this.#detector!;
         } catch {
             return;
         }
-        // Pass 1: detect every queued message and start any missing language packs straight
-        // away, in parallel, while the user's click still counts as activation.
+        // Pass 1: detect every queued message. Those whose translator isn't ready wait for it.
         const ready: DetectedJob[] = [];
         let job: Job | DetectedJob | undefined;
         while ((job = this.#next()) !== undefined) {
@@ -427,7 +425,6 @@ export class OnDeviceChatTranslator {
         // Pass 2: translate what we can, newest first
         ready.sort((a, b) => b.messageIndex - a.messageIndex);
         for (const d of ready) {
-            const target = this.#target;
             const translator = this.#translators.get(d.from);
             if (translator === undefined) {
                 // Its translator was replaced while this message waited, so it goes round again
@@ -436,7 +433,7 @@ export class OnDeviceChatTranslator {
             }
             try {
                 const translated = restore(await translator.translate(d.prot.text), d.prot);
-                if (target !== this.#target) continue;
+                if (target !== this.#target) return;
                 if (translated === undefined) {
                     this.#skipped.set(d.messageId, d.text);
                 } else {
@@ -448,6 +445,7 @@ export class OnDeviceChatTranslator {
                     this.#scheduleFlush();
                 }
             } catch (err) {
+                if (target !== this.#target) return;
                 if (!d.retried) {
                     // Chrome's translators can stop working under us (installing another language
                     // pack does it) while a fresh one works, so replace it and try once more

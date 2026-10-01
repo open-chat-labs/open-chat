@@ -462,6 +462,51 @@ describe("OnDeviceChatTranslator", () => {
         expect(browser.created).toEqual(["fr", "fr"]);
     });
 
+    // Invariant: a message held over by a translate, a failure or a replaced translator is dropped
+    // when the target changes meanwhile, so it's never "translated" into the language it's in
+    test("drops held-over messages when the locale changes", async () => {
+        for (const text of ["guten morgen zusammen", "wie geht es euch allen"]) {
+            browser.languages.set(text, { lang: "de" });
+        }
+        const gate = deferred();
+        browser.translateGate = gate.promise;
+        translator.enqueue(1n, 1, "guten morgen zusammen");
+        translator.enqueue(2n, 2, "wie geht es euch allen");
+        await settle();
+        translator.setTarget("de");
+        gate.resolve();
+        await settle();
+        expect(translator.translations.size).toEqual(0);
+        expect(browser.created).toEqual(["de"]);
+    });
+
+    test("drops a message whose translate failed after the locale changed", async () => {
+        browser.languages.set("guten morgen zusammen", { lang: "de" });
+        const gate = deferred();
+        browser.translateGate = gate.promise;
+        translator.enqueue(1n, 1, "guten morgen zusammen");
+        await settle();
+        browser.killTranslators();
+        translator.setTarget("de");
+        gate.resolve();
+        await settle();
+        expect(translator.translations.size).toEqual(0);
+        expect(browser.created).toEqual(["de"]);
+    });
+
+    // Invariant: creating a translator for a pack already on disk is never reported as a download
+    test("doesn't report a pack already on disk as downloading", async () => {
+        const gate = deferred();
+        browser.createGate = gate.promise;
+        translator.enqueue(1n, 1, FRENCH);
+        await settle();
+        expect(browser.created).toEqual(["fr"]);
+        expect(translator.downloads.size).toEqual(0);
+        expect(translator.currentDownload).toBeUndefined();
+        gate.resolve();
+        await settle();
+    });
+
     // Invariant: a message whose translation keeps failing is retried once, then left alone
     test("gives up on a message that keeps failing", async () => {
         browser.failing.add(FRENCH);
