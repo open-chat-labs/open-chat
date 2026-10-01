@@ -35,6 +35,19 @@ export type Violation = { keys: number[]; kind: string };
  */
 export type HintKeyStatus = "todo" | "done" | "context";
 
+/**
+ * A value in a hint sentence: a number as is, a list of numbers joined as the player's language
+ * joins a list ("3 and 5"), or `{ key }`, a string under the game's i18n prefix translated first
+ * (the name of a room's colour).
+ */
+export type HintCaptionParam = number | number[] | { key: string };
+
+/** A hint's sentence: an i18n key under the game's prefix, with the values it names. */
+export type HintCaption = { key: string; params?: Record<string, HintCaptionParam> };
+
+/** What a served hint step tells the client below the reveal: no conclusions. */
+export type HintStep = { technique: number; focus: number[]; target: number[] };
+
 export interface DailyGame<M, S> {
     /** GameId as the backend names it, e.g. "light_up". */
     id: string;
@@ -54,6 +67,13 @@ export interface DailyGame<M, S> {
      * skipped, and used by the shell to save and restore marks locally.
      */
     filled(model: M, state: S): Array<[number, number]>;
+    /**
+     * Optional. The pairs sent with a hint request, when the board shows the player more than
+     * their own marks: CHAT Rooms crosses out for them every cell a placed CHAT rules out, and a
+     * hint must not sell them a step that is already drawn. Absent, `filled`. Never saved: a
+     * resume replays `filled` only.
+     */
+    hintFilled?(model: M, state: S): Array<[number, number]>;
     /** Broken rules, for painting. */
     check(model: M, state: S): Violation[];
     /** No violations and complete. */
@@ -72,4 +92,10 @@ export interface DailyGame<M, S> {
      * reads a key as done once it takes a mark and has one (#9370).
      */
     hintKeyStatus?(model: M, state: S, key: number): HintKeyStatus;
+    /**
+     * Optional. The sentence for a served step, worked out from the step and the board: which
+     * row, column or room it is about. Absent, or undefined for a step, the technique's fixed
+     * sentence (`technique.<id>`) is shown.
+     */
+    hintCaption?(model: M, state: S, step: HintStep): HintCaption | undefined;
 }

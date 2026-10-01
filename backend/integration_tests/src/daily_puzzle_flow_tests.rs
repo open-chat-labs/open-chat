@@ -81,45 +81,31 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(started.chit_balance, None);
     assert_eq!(started.total_chit_earned, None);
 
-    // Level 1 hint: highlights the step, and carries neither the technique nor the conclusions,
-    // which are what levels 2 and 3 are sold for. Every level costs, so this one is debited like
-    // any other.
-    let level_1_price = puzzle.hint_prices[0];
-    assert!(level_1_price > 0, "no hint level is free");
-    let first = hint(env, &user, local_user_index, game_id, number, 1, Vec::new(), level_1_price);
+    // One hint level (#9675): the step's outline and technique, never its conclusions. It costs
+    // the one price, and the step it serves is one the engine may open with (see
+    // `assert_opening_step`).
+    let price = puzzle.hint_prices[0];
+    assert!(price > 0, "a hint is never free");
+    let first = hint(env, &user, local_user_index, game_id, number, 1, Vec::new(), price);
     assert!(!first.hint.mistake);
-    assert_eq!(first.hint.level, 1);
-    assert_eq!(first.hint.hint.technique, 0);
-    assert!(first.hint.hint.target.is_empty());
+    assert_eq!(first.hint.level, 2);
+    assert_ne!(first.hint.hint.technique, 0);
     assert!(first.hint.hint.conclusions.is_empty());
     assert!(!first.hint.hint.focus.is_empty());
+    assert_opening_step(&trace, &first.hint.hint);
     assert_eq!(first.hints_used, 1);
-    let balance_after_first = DAILY_CHIT - level_1_price as i32;
-    assert_eq!(chit_balance(env, &user), balance_after_first);
-    assert_eq!(first.chit_balance, Some(balance_after_first));
-
-    // Upgrading the same step to level 3: the only tier that hands over the conclusions, and the
-    // step is still the one step used. The upgrade is priced at the difference, so climbing costs
-    // the same as jumping straight here. Level 2's payload is covered by the engine's own tests.
-    let upgrade_price = puzzle.hint_prices[2] - level_1_price;
-    let upgraded = hint(env, &user, local_user_index, game_id, number, 3, Vec::new(), upgrade_price);
-    assert!(!upgraded.hint.mistake);
-    assert_eq!(upgraded.hint.level, 3);
-    assert_ne!(upgraded.hint.hint.technique, 0);
-    // Level 3 carries the generator's focus in deduction order; the lower levels sort it, so the
-    // position of the concluded key does not name it below the level that sells it
-    let mut focus_at_3 = upgraded.hint.hint.focus.clone();
-    focus_at_3.sort_unstable();
-    assert_eq!(focus_at_3, first.hint.hint.focus);
-    assert_opening_step(&trace, &upgraded.hint.hint);
-    assert_eq!(upgraded.hints_used, 1);
-    assert_eq!(upgraded.state.hints.len(), 1);
-    let balance_after_hint = balance_after_first - upgrade_price as i32;
-    assert_eq!(balance_after_hint, DAILY_CHIT - puzzle.hint_prices[2] as i32);
+    let balance_after_hint = DAILY_CHIT - price as i32;
     assert_eq!(chit_balance(env, &user), balance_after_hint);
     // The debit landed in this call, so the response reports the user canister's balances
-    assert_eq!(upgraded.chit_balance, Some(balance_after_hint));
-    assert_eq!(upgraded.total_chit_earned, Some(total_chit_earned(env, &user)));
+    assert_eq!(first.chit_balance, Some(balance_after_hint));
+    assert_eq!(first.total_chit_earned, Some(total_chit_earned(env, &user)));
+
+    // An old client asking for "level 3" of the same step gets the same hint back, free
+    let again = hint(env, &user, local_user_index, game_id, number, 3, Vec::new(), price);
+    assert_eq!(again.hint, first.hint);
+    assert_eq!(again.hints_used, 1);
+    assert_eq!(again.state.hints.len(), 1);
+    assert_eq!(chit_balance(env, &user), balance_after_hint);
 
     // A wrong entry: free mistake hint focused on that key, nothing counted. The key is a real
     // hint key for this game (an edge for bridges and loopy, a cell otherwise) with a value that
@@ -182,8 +168,8 @@ fn daily_puzzle_end_to_end() {
         events.iter().any(|e| matches!(
             &e.reason,
             ChitEventType::Game { game_id: g, key }
-                if g == game_id && key.starts_with(&hint_prefix) && key.ends_with(":3")
-        ) && e.amount == -(upgrade_price as i32)),
+                if g == game_id && key.starts_with(&hint_prefix) && key.ends_with(":2")
+        ) && e.amount == -(price as i32)),
         "no hint debit event: {events:?}"
     );
     assert!(
@@ -338,6 +324,8 @@ fn daily_puzzle_opening_hint_is_a_premise_of_the_first_mark() {
         description,
         solution,
         hints: trace.clone(),
+        // Empty: Tents draws every conclusion on its own key, which is what the LUI assumes then
+        hint_settles: Vec::new(),
         starts_at: number as u64 * DAY_IN_MS,
         expires_at: (number as u64 + 1) * DAY_IN_MS,
         config: DailyPuzzleConfig {
@@ -357,21 +345,11 @@ fn daily_puzzle_opening_hint_is_a_premise_of_the_first_mark() {
 
     client::user::happy_path::claim_daily_chit(env, &user, None);
     start(env, &user, local_user_index, game_id, number, 0);
-    hint(env, &user, local_user_index, game_id, number, 1, Vec::new(), hint_prices[0]);
-    let upgraded = hint(
-        env,
-        &user,
-        local_user_index,
-        game_id,
-        number,
-        3,
-        Vec::new(),
-        hint_prices[2] - hint_prices[0],
-    );
+    let first = hint(env, &user, local_user_index, game_id, number, 1, Vec::new(), hint_prices[0]);
 
-    let step = assert_opening_step(&trace, &upgraded.hint.hint);
+    let step = assert_opening_step(&trace, &first.hint.hint);
     assert_eq!(step, first_mark - 1);
-    assert_eq!(upgraded.hint.hint.conclusions, [(4, 0), (12, 0), (28, 0), (36, 0), (44, 0)]);
+    assert_eq!(trace[step].conclusions, [(4, 0), (12, 0), (28, 0), (36, 0), (44, 0)]);
 
     // The LUI now holds a made up daily canister id and this test's puzzle for today
     wrapper.discard();
@@ -752,6 +730,7 @@ fn solution_value(game_id: &str, description: &[u8], solution: &[u8], key: u16) 
         tents::GAME_ID => tents::solution_pairs(description, solution),
         loopy::GAME_ID => loopy::solution_pairs(description, solution),
         unruly::GAME_ID => unruly::solution_pairs(description, solution),
+        chat_rooms::GAME_ID => chat_rooms::solution_pairs(description, solution),
         slant::GAME_ID => slant::solution_pairs(description, solution),
         bridges::GAME_ID => bridges::solution_pairs(description, solution),
         other => panic!("no solution pairs for game {other}"),
@@ -837,7 +816,7 @@ fn puts_a_mark(step: &PuzzleHint) -> bool {
     step.conclusions.iter().any(|(_, value)| *value != 0)
 }
 
-// Checks that a level 3 hint bought against an untouched board is a step the engine may open
+// Checks that a hint bought against an untouched board is a step the engine may open
 // with, and returns its index in the trace. The engine starts from the first step that puts a
 // mark on the board, because the cheap rules run to a standstill first and their negatives-only
 // conclusions cost a hint and teach nothing. It then walks back through the negatives-only steps
@@ -849,13 +828,23 @@ fn puts_a_mark(step: &PuzzleHint) -> bool {
 // edges), so the comparison is against the solver's trace rather than the solution bytes.
 fn assert_opening_step(trace: &[PuzzleHint], served: &PuzzleHint) -> usize {
     let first_mark = trace.iter().position(puts_a_mark).unwrap_or(0);
-    // A key is concluded once, so its conclusions identify the step
+    // One level (#9675) serves the step's technique and sorted focus, never its conclusions, so
+    // those identify the step
+    assert!(
+        served.conclusions.is_empty(),
+        "a hint never carries its conclusions: {served:?}"
+    );
+    let sorted = |keys: &[u16]| {
+        let mut keys = keys.to_vec();
+        keys.sort_unstable();
+        keys
+    };
     let step = trace
         .iter()
-        .position(|h| h.conclusions == served.conclusions)
+        .position(|h| h.technique == served.technique && sorted(&h.focus) == served.focus)
         .unwrap_or_else(|| panic!("not a step of the solver's trace: {served:?}"));
-    // Level 3 hands the step over whole
-    assert_eq!(*served, trace[step]);
+    // The target is the step's own, or withheld
+    assert!(served.target.is_empty() || sorted(&served.target) == sorted(&trace[step].target));
     assert!(
         step <= first_mark,
         "step {step} was served with step {first_mark}, the first to put a mark on the board, still to take"
@@ -899,6 +888,7 @@ fn solve(game_id: &str, description: &[u8], tier: u8) -> (Vec<PuzzleHint>, Vec<u
         bridges::GAME_ID => solve_with!(bridges),
         loopy::GAME_ID => solve_with!(loopy),
         unruly::GAME_ID => solve_with!(unruly),
+        chat_rooms::GAME_ID => solve_with!(chat_rooms),
         other => panic!("no solver for game {other}"),
     }
 }
@@ -931,6 +921,10 @@ fn wrong_pair(game_id: &str, description: &[u8], solution: &[u8]) -> (u16, u8) {
         bridges::GAME_ID => (
             bridges::solution_pairs(description, solution).expect("valid description"),
             |v| (v + 1) % 3,
+        ),
+        chat_rooms::GAME_ID => (
+            chat_rooms::solution_pairs(description, solution).expect("valid description"),
+            |v| v ^ 1,
         ),
         other => panic!("no solution pairs for game {other}"),
     };
