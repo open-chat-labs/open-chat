@@ -536,6 +536,15 @@ fn send_message_impl(
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
+    // The chat may have been moved onto the recipient's new id while awaiting, if they have been
+    // migrated to a MultiUser canister
+    let recipient = state
+        .data
+        .users
+        .with_user(my_index, |user| {
+            user.direct_chats.latest_user_id(recipient, &state.data.migrated_user_ids)
+        })
+        .unwrap_or(recipient);
 
     let reply_context = replies_to.as_ref().map(ReplyContextInternal::from);
     // A reply to a message in a group is recorded against the group, as in the User canister

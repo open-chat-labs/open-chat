@@ -326,6 +326,13 @@ fn send_message_impl(
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
+    // The chat may have been moved onto the recipient's new id while awaiting, if they have been
+    // migrated to a MultiUser canister
+    let recipient = state
+        .data
+        .user
+        .direct_chats
+        .latest_user_id(recipient, &state.data.migrated_user_ids);
     let reply_context = replies_to.as_ref().map(ReplyContextInternal::from);
 
     let chat_private_replying_to = if let Some((chat, None)) = reply_context.as_ref().and_then(|r| r.chat_if_other) {

@@ -36,7 +36,7 @@ impl BlockedUsers {
 
     // Returns true if the user was blocked
     pub fn unblock(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
-        if with_map_mut(|m| m.remove(key(user_id))).is_some() {
+        if self.count > 0 && with_map_mut(|m| m.remove(key(user_id))).is_some() {
             self.count = self.count.saturating_sub(1);
             self.last_updated = now;
             true

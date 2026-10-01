@@ -16,6 +16,7 @@ use types::{
     ChitEventType, CommunityId, MultiUserChat, ReferralStatus, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
 use user_canister::{MessageActivityEvent, WalletConfig};
+use utils::migrated_user_ids::MigratedUserIds;
 
 // The state of a single user, shared by the User canister, which holds one, and the MultiUser
 // canister, which holds many, so that the logic of each endpoint can be shared and a user could
@@ -116,6 +117,27 @@ impl User {
             self.favourite_chats.migrate_their_user_id(old_user_id, new_user_id, now);
         }
         self.contacts.migrate_user_id(old_user_id, new_user_id);
+    }
+
+    // Moves what the user holds under the previous ids a sender's MultiUser canister sent with their
+    // event onto the sender's id, before the event is applied, in case the notice of the sender's
+    // migration hasn't arrived yet. The ids, oldest first, are recorded in `migrated_user_ids`
+    // first, and an id is only moved if it now leads to the sender. Only what this is needed for, the
+    // chat and a block, is checked for, since this runs for every such event.
+    pub fn migrate_sender_user_id(
+        &mut self,
+        sender: UserId,
+        sender_previous_user_ids: &[UserId],
+        migrated_user_ids: &MigratedUserIds,
+        now: TimestampMillis,
+    ) {
+        for &previous_user_id in sender_previous_user_ids {
+            if migrated_user_ids.latest(previous_user_id) == sender
+                && (self.direct_chats.exists(&previous_user_id.into()) || self.blocked_users.contains(&previous_user_id))
+            {
+                self.migrate_their_user_id(previous_user_id, sender, now);
+            }
+        }
     }
 
     // The users the user has, or had, a direct chat with, other than themselves and bots, who are

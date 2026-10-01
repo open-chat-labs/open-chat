@@ -92,7 +92,6 @@ impl TimerJobItem for UserCanisterEventBatch {
                                 // current time, since the MultiUser canister ignores any event from this
                                 // canister older than the latest it has had from it, and these may have
                                 // been created before events already sent to it.
-                                let now = state.env.now();
                                 let queue = &mut state.data.user_canister_events_by_canister;
                                 let events = self
                                     .items

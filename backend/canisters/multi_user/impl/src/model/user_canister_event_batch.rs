@@ -40,11 +40,24 @@ impl TimerJobItem for UserCanisterEventBatch {
                         Ok(Some(new_user_id)) => {
                             mutate_state(|state| {
                                 state.data.migrated_user_ids.insert(self.key.into(), new_user_id);
+
+                                // Any events queued for the old id since this batch was taken are moved
+                                // too, after it, so that they stay in order. All are stamped with the
+                                // current time, since the MultiUser canister ignores any event from this
+                                // canister older than the latest it has had from it, and these may have
+                                // been created before events already sent to it.
+                                let now = state.env.now();
+                                let pending: Vec<_> = self
+                                    .items
+                                    .iter()
+                                    .cloned()
+                                    .chain(state.data.user_canister_events_queue.take(&self.key))
+                                    .collect();
+
                                 // The senders may not have been told of the migration, eg. if their
                                 // first message to the user was sent while the user was being
                                 // migrated, so their chats are moved onto the new id now
-                                let now = state.env.now();
-                                let senders: HashSet<UserId> = self.items.iter().map(|event| event.value.sender).collect();
+                                let senders: HashSet<UserId> = pending.iter().map(|event| event.value.sender).collect();
                                 for sender in senders {
                                     if let Some(sender_index) = state.index_of_local_user(sender) {
                                         state.data.users.with_user_mut(sender_index, |user| {
@@ -53,18 +66,8 @@ impl TimerJobItem for UserCanisterEventBatch {
                                     }
                                 }
 
-                                // Any events queued for the old id since this batch was taken are moved
-                                // too, after it, so that they stay in order. All are stamped with the
-                                // current time, since the MultiUser canister ignores any event from this
-                                // canister older than the latest it has had from it, and these may have
-                                // been created before events already sent to it.
-                                let now = state.env.now();
-                                let queue = &mut state.data.user_canister_events_queue;
-                                let events = self
-                                    .items
-                                    .iter()
-                                    .cloned()
-                                    .chain(queue.take(&self.key))
+                                let events = pending
+                                    .into_iter()
                                     .map(|event| IdempotentEnvelope {
                                         created_at: now,
                                         idempotency_id: event.idempotency_id,
@@ -74,7 +77,10 @@ impl TimerJobItem for UserCanisterEventBatch {
                                         },
                                     })
                                     .collect();
-                                queue.push_many(new_user_id.canister_id(), events);
+                                state
+                                    .data
+                                    .user_canister_events_queue
+                                    .push_many(new_user_id.canister_id(), events);
                             });
                             return Ok(());
                         }

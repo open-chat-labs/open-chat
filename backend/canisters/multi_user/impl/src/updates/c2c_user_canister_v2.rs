@@ -130,13 +130,13 @@ pub(crate) fn migrate_sender_user_id(
         return;
     }
     let now = state.env.now();
-    for &previous_user_id in sender_previous_user_ids {
-        state.data.migrated_user_ids.insert(previous_user_id, sender);
-    }
+    state
+        .data
+        .migrated_user_ids
+        .insert_previous_ids(sender_previous_user_ids, sender);
+    let migrated_user_ids = &state.data.migrated_user_ids;
     state.data.users.with_user_mut(recipient_index, |user| {
-        for &previous_user_id in sender_previous_user_ids {
-            user.migrate_their_user_id(previous_user_id, sender, now);
-        }
+        user.migrate_sender_user_id(sender, sender_previous_user_ids, migrated_user_ids, now)
     });
 }
 
