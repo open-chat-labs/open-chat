@@ -816,6 +816,8 @@ export class CommunityClient
                     {
                         updates_since: since,
                         invite_code: this.inviteCode(communityId),
+                        // As for `selected_initial`, if the details are returned in full
+                        max_members: MEMBERS_PAGE_SIZE,
                     },
                     communityDetailsUpdatesResponse,
                     CommunitySelectedUpdatesArgs,
@@ -864,6 +866,8 @@ export class CommunityClient
                     {
                         channel_id: toBigInt32(chatId.channelId),
                         updates_since: since,
+                        // As for `selected_channel_initial`, if the details are returned in full
+                        max_members: MEMBERS_PAGE_SIZE,
                     },
                     (value) =>
                         groupDetailsUpdatesResponse(
