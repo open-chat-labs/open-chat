@@ -1,4 +1,5 @@
 use crate::{can_borrow_state, mutate_state, read_state};
+use std::collections::HashSet;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
 use user_canister::c2c_user_canister_v2::Event;
@@ -46,12 +47,27 @@ impl TimerJobItem for UserCanisterEventBatch {
                                 // canister older than the latest it has had from it, and these may have
                                 // been created before events already sent to it.
                                 let now = state.env.now();
-                                let queue = &mut state.data.user_canister_events_queue;
-                                let events = self
+                                let pending: Vec<_> = self
                                     .items
                                     .iter()
                                     .cloned()
-                                    .chain(queue.take(&self.key))
+                                    .chain(state.data.user_canister_events_queue.take(&self.key))
+                                    .collect();
+
+                                // The senders may not have been told of the migration, eg. if their
+                                // first message to the user was sent while the user was being
+                                // migrated, so their chats are moved onto the new id now
+                                let senders: HashSet<UserId> = pending.iter().map(|event| event.value.sender).collect();
+                                for sender in senders {
+                                    if let Some(sender_index) = state.index_of_local_user(sender) {
+                                        state.data.users.with_user_mut(sender_index, |user| {
+                                            user.migrate_their_user_id(self.key.into(), new_user_id, now)
+                                        });
+                                    }
+                                }
+
+                                let events = pending
+                                    .into_iter()
                                     .map(|event| IdempotentEnvelope {
                                         created_at: now,
                                         idempotency_id: event.idempotency_id,
@@ -61,7 +77,10 @@ impl TimerJobItem for UserCanisterEventBatch {
                                         },
                                     })
                                     .collect();
-                                queue.push_many(new_user_id.canister_id(), events);
+                                state
+                                    .data
+                                    .user_canister_events_queue
+                                    .push_many(new_user_id.canister_id(), events);
                             });
                             return Ok(());
                         }

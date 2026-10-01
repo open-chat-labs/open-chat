@@ -40,6 +40,16 @@ async fn send_message_v2(args: Args) -> Response {
 }
 
 async fn send_message_v2_impl(mut args: Args) -> Response {
+    // A message for a user who has since been migrated to a MultiUser canister, eg. from a client
+    // which hasn't yet heard, goes to their new id, once the chat with them has been moved onto it
+    args.recipient = read_state(|state| {
+        if state.with_caller_user(|_, user| user.direct_chats.exists(&args.recipient.into())) {
+            args.recipient
+        } else {
+            state.data.migrated_user_ids.latest(args.recipient)
+        }
+    });
+
     let PrepareOk {
         my_index,
         my_user_id,
@@ -526,6 +536,15 @@ fn send_message_impl(
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
+    // The chat may have been moved onto the recipient's new id while awaiting, if they have been
+    // migrated to a MultiUser canister
+    let recipient = state
+        .data
+        .users
+        .with_user(my_index, |user| {
+            user.direct_chats.latest_user_id(recipient, &state.data.migrated_user_ids)
+        })
+        .unwrap_or(recipient);
 
     let reply_context = replies_to.as_ref().map(ReplyContextInternal::from);
     // A reply to a message in a group is recorded against the group, as in the User canister

@@ -1,4 +1,4 @@
-use crate::state::Board;
+use crate::state::{Board, cells};
 use crate::{Hint, LOGO, NO_LOGO, Technique, Tier};
 use puzzle_core::{MAX_SEARCH_DEPTH, SearchBudget};
 
@@ -114,7 +114,7 @@ fn broken(board: &Board, marks: &[Mark]) -> bool {
 /// A logo rules out every cell in its shadow.
 fn shadow(board: &Board, marks: &[Mark]) -> Option<Step> {
     (0..marks.len()).filter(|&i| marks[i] == Mark::Logo).find_map(|i| {
-        let ruled_out: Vec<usize> = board.shadows[i].iter().copied().filter(|&j| marks[j] == Mark::Open).collect();
+        let ruled_out: Vec<usize> = cells(board.shadows[i]).filter(|&j| marks[j] == Mark::Open).collect();
         (!ruled_out.is_empty()).then(|| Step {
             technique: Technique::Shadow,
             focus: [vec![i], ruled_out.clone()].concat(),
@@ -227,20 +227,24 @@ fn subsets(
 /// A logo here would leave some other row, column or room with nowhere
 /// to put its own.
 fn blocked(board: &Board, marks: &[Mark]) -> Option<Step> {
+    // Per group, its open cells, or none when it already has its logo
+    let open: Vec<u128> = (0..board.groups.len())
+        .map(
+            |g| {
+                if has_logo(board, marks, g) { 0 } else { open_cells(board, marks, g).fold(0, |m, i| m | 1 << i) }
+            },
+        )
+        .collect();
     (0..marks.len()).filter(|&c| marks[c] == Mark::Open).find_map(|c| {
         let own = board.groups_of(c);
         (0..board.groups.len())
-            .filter(|g| !own.contains(g) && !has_logo(board, marks, *g))
-            .find_map(|g| {
-                let open: Vec<usize> = open_cells(board, marks, g).collect();
-                let emptied = !open.is_empty() && open.iter().all(|o| board.shadows[c].binary_search(o).is_ok());
-                // The whole group, as for Confined: the step rests on its other cells being out
-                emptied.then(|| Step {
-                    technique: Technique::Blocked,
-                    focus: [board.groups[g].clone(), vec![c]].concat(),
-                    target: open,
-                    conclusions: vec![(c, Mark::No)],
-                })
+            .find(|g| !own.contains(g) && open[*g] != 0 && open[*g] & !board.shadows[c] == 0)
+            // The whole group, as for Confined: the step rests on its other cells being out
+            .map(|g| Step {
+                technique: Technique::Blocked,
+                focus: [board.groups[g].clone(), vec![c]].concat(),
+                target: cells(open[g]).collect(),
+                conclusions: vec![(c, Mark::No)],
             })
     })
 }
@@ -285,7 +289,7 @@ fn count_rec(board: &Board, marks: &mut [Mark], placed: usize, cap: u32, depth: 
     for c in branch {
         let mut next = marks.to_vec();
         next[c] = Mark::Logo;
-        for &j in &board.shadows[c] {
+        for j in cells(board.shadows[c]) {
             next[j] = Mark::No;
         }
         total += count_rec(board, &mut next, placed + 1, cap - total, depth + 1, budget);

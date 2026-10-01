@@ -21,7 +21,7 @@ fn c2c_community_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Respo
     let now = state.env.now();
     let mut awarded_achievement = BTreeSet::new();
 
-    for event in args.events {
+    for event in args.into_events() {
         if !state
             .data
             .idempotency_checker
@@ -32,6 +32,22 @@ fn c2c_community_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Respo
         let (user_id, event) = event.value;
         let Some(user_index) = state.index_of_local_user(user_id) else {
             continue;
+        };
+        // Removing the community needs the whole canister's state rather than just the user's. It does
+        // nothing if the user isn't in the community.
+        let event = match event {
+            CommunityCanisterEvent::RemovedFromCommunity(ev) => {
+                super::c2c_remove_from_community::remove_from_community(
+                    user_index,
+                    ev.removed_by,
+                    ev.blocked,
+                    ev.community_name,
+                    ev.public,
+                    state,
+                );
+                continue;
+            }
+            event => event,
         };
 
         state.data.users.with_user_mut(user_index, |user| {
@@ -46,6 +62,7 @@ fn c2c_community_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Respo
                     }
                 }
                 CommunityCanisterEvent::P2PSwapCreated(swap) => user.p2p_swaps.add_created_in_chat(*swap, user_id),
+                CommunityCanisterEvent::RemovedFromCommunity(_) => {}
             }
         });
     }

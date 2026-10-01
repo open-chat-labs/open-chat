@@ -2,7 +2,7 @@ use crate::model::schedule::{PUZZLES_TO_KEEP, RESULTS_RETENTION_DAYS, forced_par
 use crate::model::seed::candidate_seed;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use constants::DAY_IN_MS;
+use constants::{DAY_IN_MS, MINUTE_IN_MS};
 use daily_puzzle_canister::{CandidateView, PuzzleParams};
 use puzzle_core::{GenerateError, Puzzle};
 use serde::{Deserialize, Deserializer, Serialize};
@@ -39,6 +39,11 @@ pub const MAX_CANDIDATE_POOL: usize = 32;
 /// failure salts the next seed, so the day only stops once this many distinct seeds have all found
 /// nothing, which means the parameters are at a limit rather than the seed being unlucky.
 pub const MAX_GENERATION_FAILURES: u32 = 20;
+
+/// How long a generation may be in progress before the job takes it to have trapped. Queued at
+/// zero delay and capped at 40B instructions, a generation finishes within a minute; one still
+/// marked in progress long after that trapped, rolling back the clear of its own marker.
+pub const GENERATION_STALE_AFTER: TimestampMillis = 10 * MINUTE_IN_MS;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -143,6 +148,17 @@ pub enum GenerationFailure {
     Permanent,
 }
 
+/// What the generation job should do next, from `begin_generation`.
+#[derive(Debug, PartialEq, Eq)]
+pub enum NextGeneration {
+    /// Generate a candidate for this number now.
+    Generate(PuzzleNumber),
+    /// A generation is already in progress. Check again after this long.
+    InProgress(TimestampMillis),
+    /// Nothing needs generating.
+    Idle,
+}
+
 /// A pin on a number's parameters: `params` replace the rota entry for `number`, and `attempt`
 /// salts its seeds so each regeneration produces a different puzzle. Set by `regenerate_today`.
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -173,6 +189,10 @@ struct Data {
     /// attempt rather than the one that just failed, and caps how many are tried.
     #[serde(default)]
     pub generation_failures: BTreeMap<PuzzleNumber, u32>,
+    /// The number being generated for and when that started. Set in one message and cleared in
+    /// the next, so a generation that traps leaves it behind.
+    #[serde(default)]
+    pub generation_started: Option<(PuzzleNumber, TimestampMillis)>,
     pub results: BTreeMap<(PuzzleNumber, GameId, UserId), DailyPuzzleResult>,
     pub local_user_indexes: HashSet<CanisterId>,
     pub pending_pushes: HashSet<CanisterId>,
@@ -198,6 +218,7 @@ impl Data {
             candidates: BTreeMap::new(),
             regeneration: None,
             generation_failures: BTreeMap::new(),
+            generation_started: None,
             results: BTreeMap::new(),
             local_user_indexes: HashSet::new(),
             pending_pushes: HashSet::new(),
@@ -250,6 +271,40 @@ impl Data {
         let failures = self.generation_failures.entry(number).or_default();
         *failures = failures.saturating_add(1);
         *failures < MAX_GENERATION_FAILURES
+    }
+
+    /// Marks the next generation as started. A generation that traps rolls back everything it
+    /// did, failure count included, so retrying would use the seed that trapped. It can't roll
+    /// back this mark, made in an earlier message, so once the mark is stale the trap counts as a
+    /// failure and the next seed is salted differently.
+    pub fn begin_generation(&mut self, now: TimestampMillis) -> NextGeneration {
+        if let Some((number, started)) = self.generation_started {
+            let stale_at = started + GENERATION_STALE_AFTER;
+            if now < stale_at {
+                return NextGeneration::InProgress(stale_at - now);
+            }
+            self.generation_started = None;
+            self.record_generation_failure(number);
+            error!(number, failures = self.failures_for(number), "Generation trapped");
+        }
+        match self.generation_needed(now) {
+            Some(number) => {
+                self.generation_started = Some((number, now));
+                NextGeneration::Generate(number)
+            }
+            None => NextGeneration::Idle,
+        }
+    }
+
+    /// Clears the mark `begin_generation` made. False if `number` is not the generation in
+    /// progress, which is then not run.
+    pub fn finish_generation(&mut self, number: PuzzleNumber) -> bool {
+        if self.generation_started.is_some_and(|(n, _)| n == number) {
+            self.generation_started = None;
+            true
+        } else {
+            false
+        }
     }
 
     /// Every puzzle for the current day, one per game.
@@ -953,10 +1008,18 @@ mod tests {
     fn candidate_pool_has_a_ceiling() {
         let mut d = data();
         let now = MONDAY as u64 * DAY_IN_MS + 1;
-        for i in 0..MAX_CANDIDATE_POOL {
+        assert_eq!(d.generate_candidate(MONDAY).unwrap(), 0);
+        assert!(d.veto_candidate(MONDAY, CR, 0));
+        // Copies of the first candidate, since generating 32 CHAT Rooms puzzles is slow
+        let vetoed = pool(&d, MONDAY)[0].clone();
+        for _ in 1..MAX_CANDIDATE_POOL {
             assert_eq!(d.generation_needed(now), Some(MONDAY));
-            assert_eq!(d.generate_candidate(MONDAY).unwrap(), i as u8);
-            assert!(d.veto_candidate(MONDAY, CR, i as u8));
+            d.candidates
+                .get_mut(&MONDAY)
+                .unwrap()
+                .get_mut(CR)
+                .unwrap()
+                .push(vetoed.clone());
         }
         // Today is given up on rather than generated forever; tomorrow still gets its pool
         assert_eq!(d.generation_needed(now), Some(TUESDAY));
@@ -1036,6 +1099,37 @@ mod tests {
         // The override goes with the day
         d.prune(now + DAY_IN_MS);
         assert!(d.regeneration.is_none());
+    }
+
+    // A generation that traps rolls back its own failure count, so the retry would use the seed that
+    // trapped and trap again, every rollover, for good. The mark made before it survives the trap.
+    #[test]
+    fn a_trapped_generation_salts_the_next_seed() {
+        let mut d = data();
+        let now = MONDAY as u64 * DAY_IN_MS + 1;
+        assert_eq!(d.begin_generation(now), NextGeneration::Generate(MONDAY));
+        let salt = d.attempt_for(MONDAY);
+
+        // The generation traps, so nothing it would have done happens
+        assert_eq!(
+            d.begin_generation(now + 1),
+            NextGeneration::InProgress(GENERATION_STALE_AFTER - 1)
+        );
+        assert_eq!(
+            d.begin_generation(now + GENERATION_STALE_AFTER),
+            NextGeneration::Generate(MONDAY)
+        );
+        assert_eq!(d.failures_for(MONDAY), 1);
+        assert_ne!(d.attempt_for(MONDAY), salt);
+
+        // One that finishes counts as nothing
+        assert!(d.finish_generation(MONDAY));
+        d.generate_candidate(MONDAY).unwrap();
+        assert_eq!(
+            d.begin_generation(now + GENERATION_STALE_AFTER),
+            NextGeneration::Generate(TUESDAY)
+        );
+        assert_eq!(d.failures_for(MONDAY), 1);
     }
 
     // Nothing else moves the seed, so a number whose generation failed would otherwise regenerate

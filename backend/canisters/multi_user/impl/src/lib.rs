@@ -259,9 +259,11 @@ impl RuntimeState {
         if recipient == sender || recipient_is_bot {
             return;
         }
+        let sender_previous_user_ids = self.data.migrated_user_ids.previous_ids(sender);
         if self.user_index(recipient).is_some() {
             // An index in this canister which holds no user has nobody to apply the event to
             if let Some(recipient_index) = self.index_of_local_user(recipient) {
+                updates::c2c_user_canister_v2::migrate_sender_user_id(recipient_index, sender, &sender_previous_user_ids, self);
                 updates::c2c_user_canister_v2::apply_event(event, sender, recipient_index, self);
             }
             return;
@@ -278,6 +280,7 @@ impl RuntimeState {
                     sender,
                     recipient,
                     event,
+                    sender_previous_user_ids,
                 },
             },
         );

@@ -21,7 +21,7 @@ fn c2c_group_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Response 
     let now = state.env.now();
     let mut awarded_achievement = BTreeSet::new();
 
-    for event in args.events {
+    for event in args.into_events() {
         if !state
             .data
             .idempotency_checker
@@ -32,6 +32,22 @@ fn c2c_group_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Response 
         let (user_id, event) = event.value;
         let Some(user_index) = state.index_of_local_user(user_id) else {
             continue;
+        };
+        // Removing the group needs the whole canister's state rather than just the user's. It does
+        // nothing if the user isn't in the group.
+        let event = match event {
+            GroupCanisterEvent::RemovedFromGroup(ev) => {
+                super::c2c_remove_from_group::remove_from_group(
+                    user_index,
+                    ev.removed_by,
+                    ev.blocked,
+                    ev.group_name,
+                    ev.public,
+                    state,
+                );
+                continue;
+            }
+            event => event,
         };
 
         state.data.users.with_user_mut(user_index, |user| {
@@ -46,6 +62,7 @@ fn c2c_group_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Response 
                     }
                 }
                 GroupCanisterEvent::P2PSwapCreated(swap) => user.p2p_swaps.add_created_in_chat(*swap, user_id),
+                GroupCanisterEvent::RemovedFromGroup(_) => {}
             }
         });
     }

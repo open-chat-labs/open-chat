@@ -13,14 +13,37 @@ impl FavouriteChats {
     // Moves the user's chat with themselves, which is identified by their id, onto their new id once
     // they are migrated to a MultiUser canister
     pub fn migrate_own_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        self.move_direct_chat(old_user_id, new_user_id);
+    }
+
+    // Moves the user's chat with another user onto that user's new id once they are migrated to a
+    // MultiUser canister
+    pub fn migrate_their_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) {
+        let (chats_changed, pinned_changed) = self.move_direct_chat(old_user_id, new_user_id);
+        if chats_changed {
+            self.chats.timestamp = now;
+        }
+        if pinned_changed {
+            self.pinned.timestamp = now;
+        }
+    }
+
+    // Returns whether the favourites, then the pinned favourites, changed
+    fn move_direct_chat(&mut self, old_user_id: UserId, new_user_id: UserId) -> (bool, bool) {
         let old_chat = Chat::Direct(old_user_id.into());
         let new_chat = Chat::Direct(new_user_id.into());
+        let mut chats_changed = false;
         for chat in self.chats.value.iter_mut().filter(|c| **c == old_chat) {
             *chat = new_chat;
+            chats_changed = true;
         }
-        if let Some(pinned_at) = self.pinned.value.remove(&old_chat) {
+        let pinned_changed = if let Some(pinned_at) = self.pinned.value.remove(&old_chat) {
             self.pinned.value.insert(new_chat, pinned_at);
-        }
+            true
+        } else {
+            false
+        };
+        (chats_changed, pinned_changed)
     }
 
     pub fn add(&mut self, chat: Chat, now: TimestampMillis) -> bool {
@@ -110,5 +133,27 @@ mod tests {
         let new_self_chat = Chat::Direct(user_id(3).into());
         assert_eq!(favourites.chats.value, vec![other_chat, new_self_chat]);
         assert_eq!(favourites.pinned.value, HashMap::from([(new_self_chat, 3)]));
+    }
+
+    #[test]
+    fn chat_with_a_migrated_user_is_moved_onto_their_new_id() {
+        let mut favourites = FavouriteChats::default();
+        let chat = Chat::Direct(user_id(2).into());
+        let other_chat = Chat::Direct(user_id(4).into());
+        favourites.add(chat, 1);
+        favourites.add(other_chat, 2);
+        favourites.pin(chat, 3);
+
+        favourites.migrate_their_user_id(user_id(2), user_id(5), 10);
+
+        let new_chat = Chat::Direct(user_id(5).into());
+        assert_eq!(favourites.chats.value, vec![other_chat, new_chat]);
+        assert_eq!(favourites.pinned.value, HashMap::from([(new_chat, 3)]));
+        // Clients are sent the favourites again
+        assert!(favourites.any_updated(9));
+
+        // Nothing changes for a user who isn't a favourite
+        favourites.migrate_their_user_id(user_id(6), user_id(7), 20);
+        assert!(!favourites.any_updated(10));
     }
 }
