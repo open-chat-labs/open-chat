@@ -5,6 +5,7 @@ use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
+use types::CanisterId;
 
 // `details_last_updated` tells a client whether the details it holds for a chat or community (its
 // members etc) are still up to date, so unlike `last_updated` it must not move on with each message
@@ -52,6 +53,7 @@ fn group_details_last_updated_only_moves_on_when_the_details_change() {
         env,
         canister_ids,
         &user1,
+        group_id.into(),
         vec![
             SummaryUpdatesArgs {
                 canister_id: group_id.into(),
@@ -127,6 +129,7 @@ fn community_and_channel_details_last_updated_only_move_on_when_their_details_ch
         env,
         canister_ids,
         &user1,
+        community_id.into(),
         vec![SummaryUpdatesArgs {
             canister_id: community_id.into(),
             is_community: true,
@@ -143,17 +146,19 @@ fn community_and_channel_details_last_updated_only_move_on_when_their_details_ch
     )));
 }
 
+// Like the website, calls the LocalUserIndex on the chat's subnet, which may not be the user's
 fn summaries_via_local_user_index(
     env: &PocketIc,
     canister_ids: &CanisterIds,
     user: &User,
+    chat_canister_id: CanisterId,
     requests: Vec<SummaryUpdatesArgs>,
 ) -> Vec<SummaryUpdatesResponse> {
     let local_user_index_canister::group_and_community_summary_updates_v2::Response::Success(response) =
         client::local_user_index::group_and_community_summary_updates_v2(
             env,
             user.principal,
-            canister_ids.local_user_index(env, user.canister()),
+            canister_ids.local_user_index(env, chat_canister_id),
             &local_user_index_canister::group_and_community_summary_updates_v2::Args {
                 requests,
                 max_c2c_calls: 10,

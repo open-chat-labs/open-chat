@@ -66,6 +66,7 @@ import {
     getEmailSignInSession,
     i18nKey,
     indexRangeForChat,
+    isAccountOfMultiUserCanisterUserId,
     isBalanceGate,
     isCaptionedContent,
     isChitEarnedGate,
@@ -2343,6 +2344,7 @@ export class OpenChat {
     userAvatarUrl = userAvatarUrl;
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
+    isAccountOfMultiUserCanisterUserId = isAccountOfMultiUserCanisterUserId;
     parseBigInt = parseBigInt;
     userIdsFromEvents = userIdsFromEvents;
     userOrUserGroupName = userOrUserGroupName;
