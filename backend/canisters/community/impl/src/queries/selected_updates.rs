@@ -33,10 +33,13 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         return SuccessNoUpdates(now);
     }
 
-    if data.members.any_updates_removed(args.updates_since) || data.bots.any_updates_removed(args.updates_since) {
+    // Only callers which pass `max_members` can read `SuccessSnapshot`
+    if let Some(max_members) = args.max_members
+        && (data.members.any_updates_removed(args.updates_since) || data.bots.any_updates_removed(args.updates_since))
+    {
         let args = community_canister::selected_initial::Args {
             invite_code: args.invite_code,
-            max_members: args.max_members,
+            max_members: Some(max_members),
         };
         return match selected_initial_impl(args, state) {
             Ok(result) => SuccessSnapshot(result),

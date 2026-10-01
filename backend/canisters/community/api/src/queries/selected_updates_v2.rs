@@ -8,7 +8,10 @@ use types::{CommunityMember, InstalledBotDetails, TimestampMillis, UserGroupDeta
 pub struct Args {
     pub invite_code: Option<u64>,
     pub updates_since: TimestampMillis,
-    // As for `selected_initial`, used if the details are returned in full (`SuccessSnapshot`)
+    // If set, the details are returned in full (`SuccessSnapshot`, holding the first page of
+    // members as `selected_initial` does) when some of the updates since `updates_since` have been
+    // pruned. If not, the updates which haven't been are returned, as they were before clients
+    // could read `SuccessSnapshot`.
     pub max_members: Option<u32>,
 }
 

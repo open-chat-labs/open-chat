@@ -1,15 +1,19 @@
+use crate::bot_tests::register_bot;
 use crate::env::ENV;
-use crate::utils::now_millis;
+use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, client};
 use constants::DAY_IN_MS;
 use std::collections::BTreeSet;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
-use types::UserId;
+use types::{BotInstallationLocation, BotPermissions, UserId};
 
 // Canisters keep the updates to a chat's or community's details for 31 days. A client asking for
-// the updates since a time from which some have been pruned is given the details in full instead.
+// the updates since a time from which some have been pruned is given the details in full instead,
+// if it passes `max_members`, which only clients which can read them do.
+
+const PAGE_SIZE: Option<u32> = Some(1000);
 
 #[test]
 fn group_details_are_returned_in_full_once_updates_since_have_been_pruned() {
@@ -47,7 +51,7 @@ fn group_details_are_returned_in_full_once_updates_since_have_been_pruned() {
         )
     };
 
-    let group_canister::selected_updates_v2::Response::SuccessSnapshot(snapshot) = updates_since(env, before, None) else {
+    let group_canister::selected_updates_v2::Response::SuccessSnapshot(snapshot) = updates_since(env, before, PAGE_SIZE) else {
         panic!("Expected the details in full");
     };
     let members: BTreeSet<UserId> = snapshot
@@ -59,7 +63,7 @@ fn group_details_are_returned_in_full_once_updates_since_have_been_pruned() {
     assert_eq!(members, BTreeSet::from([owner.user_id, user1.user_id, user2.user_id]));
     assert!(snapshot.more_members_after.is_none());
 
-    // The details in full are a first page if a page size is given, as for `selected_initial`
+    // The details in full are a first page of the size given, as for `selected_initial`
     let group_canister::selected_updates_v2::Response::SuccessSnapshot(page) = updates_since(env, before, Some(1)) else {
         panic!("Expected the details in full");
     };
@@ -67,11 +71,73 @@ fn group_details_are_returned_in_full_once_updates_since_have_been_pruned() {
     assert!(page.more_members_after.is_some());
 
     // The updates since a time from which none have been pruned are returned as usual
-    let group_canister::selected_updates_v2::Response::Success(updates) = updates_since(env, after_user1_joined, None) else {
+    let group_canister::selected_updates_v2::Response::Success(updates) = updates_since(env, after_user1_joined, PAGE_SIZE)
+    else {
         panic!("Expected the updates");
     };
     let added: Vec<UserId> = updates.members_added_or_updated.iter().map(|m| m.user_id).collect();
     assert_eq!(added, vec![user2.user_id]);
+
+    // A client which doesn't pass `max_members` is given the updates which haven't been pruned, as
+    // before, since it can't read the details in full
+    let group_canister::selected_updates_v2::Response::Success(updates) = updates_since(env, before, None) else {
+        panic!("Expected the updates");
+    };
+    let added: Vec<UserId> = updates.members_added_or_updated.iter().map(|m| m.user_id).collect();
+    assert_eq!(added, vec![user2.user_id]);
+}
+
+#[test]
+fn group_details_are_returned_in_full_once_bot_updates_since_have_been_pruned() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    let (bot_id, _) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
+    tick_many(env, 3);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+
+    let before = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+    client::local_user_index::happy_path::install_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+        BotPermissions::default(),
+        None,
+    );
+
+    // The update of the bot being installed is pruned when it is uninstalled
+    env.advance_time(Duration::from_millis(32 * DAY_IN_MS));
+    client::local_user_index::happy_path::uninstall_bot(
+        env,
+        owner.principal,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+    );
+
+    let response = client::group::selected_updates_v2(
+        env,
+        owner.principal,
+        group_id.into(),
+        &group_canister::selected_updates_v2::Args {
+            updates_since: before,
+            max_members: PAGE_SIZE,
+        },
+    );
+    let group_canister::selected_updates_v2::Response::SuccessSnapshot(snapshot) = response else {
+        panic!("Expected the details in full, got {response:?}");
+    };
+    assert!(snapshot.bots.is_empty());
 }
 
 #[test]
@@ -87,6 +153,7 @@ fn community_and_channel_details_are_returned_in_full_once_updates_since_have_be
     let owner = client::register_diamond_user(env, canister_ids, *controller);
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
+    let non_member = client::register_user(env, canister_ids);
     let community_id = client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
     let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
 
@@ -99,19 +166,21 @@ fn community_and_channel_details_are_returned_in_full_once_updates_since_have_be
     env.advance_time(Duration::from_millis(32 * DAY_IN_MS));
     client::community::happy_path::join_community(env, user2.principal, community_id);
 
-    let community_updates = |env: &mut _, updates_since| {
+    let community_updates = |env: &mut _, sender, updates_since, max_members| {
         client::community::selected_updates_v2(
             env,
-            owner.principal,
+            sender,
             community_id.into(),
             &community_canister::selected_updates_v2::Args {
                 invite_code: None,
                 updates_since,
-                max_members: None,
+                max_members,
             },
         )
     };
-    let community_canister::selected_updates_v2::Response::SuccessSnapshot(snapshot) = community_updates(env, before) else {
+    let community_canister::selected_updates_v2::Response::SuccessSnapshot(snapshot) =
+        community_updates(env, owner.principal, before, PAGE_SIZE)
+    else {
         panic!("Expected the community's details in full");
     };
     let members: BTreeSet<UserId> = snapshot
@@ -121,12 +190,36 @@ fn community_and_channel_details_are_returned_in_full_once_updates_since_have_be
         .chain(snapshot.basic_members.iter().copied())
         .collect();
     assert_eq!(members, BTreeSet::from([owner.user_id, user1.user_id, user2.user_id]));
+
+    let community_canister::selected_updates_v2::Response::Success(updates) =
+        community_updates(env, owner.principal, after_user1_joined, PAGE_SIZE)
+    else {
+        panic!("Expected the community's updates");
+    };
+    let added: Vec<UserId> = updates.members_added_or_updated.iter().map(|m| m.user_id).collect();
+    assert_eq!(added, vec![user2.user_id]);
+
+    // As a first page if asked for one
+    let community_canister::selected_updates_v2::Response::SuccessSnapshot(page) =
+        community_updates(env, owner.principal, before, Some(1))
+    else {
+        panic!("Expected the community's details in full");
+    };
+    assert!(page.more_members_after.is_some());
+
+    // To someone previewing the public community too
     assert!(matches!(
-        community_updates(env, after_user1_joined),
+        community_updates(env, non_member.principal, before, PAGE_SIZE),
+        community_canister::selected_updates_v2::Response::SuccessSnapshot(_)
+    ));
+
+    // But not to a client which doesn't pass `max_members`
+    assert!(matches!(
+        community_updates(env, owner.principal, before, None),
         community_canister::selected_updates_v2::Response::Success(_)
     ));
 
-    let channel_updates = |env: &mut _, updates_since| {
+    let channel_updates = |env: &mut _, updates_since, max_members| {
         client::community::selected_channel_updates_v2(
             env,
             owner.principal,
@@ -134,11 +227,12 @@ fn community_and_channel_details_are_returned_in_full_once_updates_since_have_be
             &community_canister::selected_channel_updates_v2::Args {
                 channel_id,
                 updates_since,
-                max_members: None,
+                max_members,
             },
         )
     };
-    let community_canister::selected_channel_updates_v2::Response::SuccessSnapshot(snapshot) = channel_updates(env, before)
+    let community_canister::selected_channel_updates_v2::Response::SuccessSnapshot(snapshot) =
+        channel_updates(env, before, PAGE_SIZE)
     else {
         panic!("Expected the channel's details in full");
     };
@@ -149,8 +243,24 @@ fn community_and_channel_details_are_returned_in_full_once_updates_since_have_be
         .chain(snapshot.basic_members.iter().copied())
         .collect();
     assert_eq!(members, BTreeSet::from([owner.user_id, user1.user_id, user2.user_id]));
+
+    let community_canister::selected_channel_updates_v2::Response::Success(updates) =
+        channel_updates(env, after_user1_joined, PAGE_SIZE)
+    else {
+        panic!("Expected the channel's updates");
+    };
+    let added: Vec<UserId> = updates.members_added_or_updated.iter().map(|m| m.user_id).collect();
+    assert_eq!(added, vec![user2.user_id]);
+
+    let community_canister::selected_channel_updates_v2::Response::SuccessSnapshot(page) =
+        channel_updates(env, before, Some(1))
+    else {
+        panic!("Expected the channel's details in full");
+    };
+    assert!(page.more_members_after.is_some());
+
     assert!(matches!(
-        channel_updates(env, after_user1_joined),
+        channel_updates(env, before, None),
         community_canister::selected_channel_updates_v2::Response::Success(_)
     ));
 }
