@@ -478,6 +478,28 @@ export type CreateMultiUserCanisterResponse =
     | { kind: "local_user_index_not_found" }
     | InternalError;
 
+export type UsersToMigrate =
+    | { kind: "longest_offline"; count: number }
+    | { kind: "specific"; userIds: string[] };
+
+// Users who can't be migrated, or who are already queued or being migrated, are left out of `queued`
+export type MigrateUsersResponse = { kind: "success"; queued: string[] } | OCError;
+
+export type UserMigrationStatus =
+    | { kind: "queued" }
+    | { kind: "requested"; multiUserCanisterId: string; timestamp: bigint }
+    | {
+          kind: "started";
+          multiUserCanisterId: string;
+          timestamp: bigint;
+          userBytes: bigint;
+          wasmVersion: string;
+      }
+    | { kind: "imported"; multiUserCanisterId: string; timestamp: bigint; newUserId: string }
+    | { kind: "failed"; multiUserCanisterId: string; timestamp: bigint; error: OCError };
+
+export type UserMigrationResponse = UserMigrationStatus | { kind: "not_found" } | OCError;
+
 export type SetMessageReminderResponse = Success | OCError | Offline;
 
 export type ModerationFlag = 1 | 2 | 4;
