@@ -393,9 +393,7 @@ fn cancelled_migration_is_never_imported() {
         vec![user.user_id],
         Some(multi_user_canister),
     );
-    tick_many(env, 30);
-    let status = user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id);
-    assert!(matches!(status, Some(UserMigrationStatus::Imported { .. })), "{status:?}");
+    wait_for_import(env, operator.principal, canister_ids.user_index, user.user_id);
 }
 
 #[test]
@@ -579,12 +577,7 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
         vec![user1.user_id],
         Some(multi_user_canister),
     );
-    tick_many(env, 30);
-
-    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id) {
-        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
-        status => panic!("User not imported: {status:?}"),
-    };
+    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user1.user_id);
     assert_eq!(new_user_id.canister_id(), multi_user_canister);
     assert_eq!(metrics(env, multi_user_canister)["user_imports_in_progress"], 0);
 
@@ -715,11 +708,7 @@ fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
         vec![user.user_id],
         Some(multi_user_canister),
     );
-    tick_many(env, 30);
-    assert!(matches!(
-        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
-        Some(UserMigrationStatus::Imported { .. })
-    ));
+    wait_for_import(env, operator.principal, canister_ids.user_index, user.user_id);
 
     // Once the old canister is uninstalled its cycles are refunded, so it has to be topped up for
     // the relay to be installed on it
@@ -948,12 +937,7 @@ fn notifications_index_knows_migrated_user_by_their_new_id() {
         vec![user1.user_id],
         Some(multi_user_canister),
     );
-    tick_many(env, 30);
-
-    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id) {
-        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
-        status => panic!("User not imported: {status:?}"),
-    };
+    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user1.user_id);
 
     // The NotificationsIndex now knows the user by their new id, so the subscription held under their
     // old id is no longer theirs
@@ -1025,11 +1009,7 @@ fn blocked_user_pairs_are_moved_onto_a_migrated_users_new_id() {
         vec![user1.user_id],
         Some(multi_user_canister),
     );
-    tick_many(env, 30);
-    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user1.user_id) {
-        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
-        status => panic!("User not imported: {status:?}"),
-    };
+    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user1.user_id);
     // Having not subscribed until now, the user's subscription is held under their new id
     subscribe_to_notifications(env, canister_ids, &user1);
     tick_many(env, 10);
@@ -1083,11 +1063,7 @@ fn migrated_user_is_not_rewarded_again_to_their_referrer() {
         vec![user.user_id],
         Some(multi_user_canister),
     );
-    tick_many(env, 30);
-    assert!(matches!(
-        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
-        Some(UserMigrationStatus::Imported { .. })
-    ));
+    wait_for_import(env, operator.principal, canister_ids.user_index, user.user_id);
 
     // The user now pays from their own wallet, having approved their MultiUser canister to charge it
     let icp = canister_ids.icp_ledger;
@@ -1578,12 +1554,7 @@ fn online_users_knows_migrated_user_by_their_new_id() {
         vec![user.user_id],
         Some(multi_user_canister),
     );
-    tick_many(env, 30);
-
-    let new_user_id = match user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id) {
-        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
-        status => panic!("User not imported: {status:?}"),
-    };
+    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user.user_id);
 
     // The user's last online date has moved from their old id to their new one
     let last_online = |env: &PocketIc, user_id: UserId| {
