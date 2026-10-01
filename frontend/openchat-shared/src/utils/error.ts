@@ -60,6 +60,8 @@ const RETRY_EXHAUSTED_PATTERN = /retry strategy exhausted after \d+ attempts/i;
 
 const AGENT_FETCH_FAILED_PATTERN = /^failed to fetch http request/i;
 
+const AGENT_UNEXPECTED_ERROR_PATTERN = /^unexpected error: /i;
+
 // Every HttpError subclass overwrites `name` with its own, so a bare `name === "HttpError"` test
 // misses them. `code` only means an HTTP status on one of these.
 const HTTP_ERROR_NAMES = new Set<string>([
@@ -90,6 +92,13 @@ function isTransientNetworkError(error: unknown): boolean {
     // The agent wraps a fetch that threw (no response at all) as an HttpError with this prefix
     // and the browser's own text after it. Same network weather, different envelope.
     if (HTTP_ERROR_NAMES.has(name) && AGENT_FETCH_FAILED_PATTERN.test(message)) return true;
+    // The agent's catch-all for anything it doesn't recognise, here a fetch that threw (#31999)
+    if (
+        HTTP_ERROR_NAMES.has(name) &&
+        AGENT_UNEXPECTED_ERROR_PATTERN.test(message) &&
+        NETWORK_NOISE_PATTERN.test(message)
+    )
+        return true;
     // Only for the browser's own TypeError: our code also throws Errors whose text happens to
     // start "Failed to fetch ...", and those must stay reportable. A bare string carries no
     // name, so it can never satisfy this and is reported like any other unrecognised failure.
@@ -133,6 +142,8 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     // The client's clock is wrong, so the replica certificate looks like it is from the future;
     // or the device slept mid-request and the certificate is stale by the time it is checked
     /certificate is signed more than 5 minutes in the (future|past)/i,
+    // The agent re-synced its clock with the IC and the certificate still doesn't fit (#31681)
+    /certificate is still too far in the future/i,
     // The agent gave up polling for an update's result: the network, not our code
     /request timed out after \d+ msec/i,
     /backoff strategy exhausted/i,
@@ -151,6 +162,12 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     // The IC's Bitcoin canister trapping while the Bitcoin API is switched off: an IC-side
     // incident that every background BTC balance refresh hits until it is switched back on (#31771)
     /bitcoin api is disabled/i,
+    // A canister stopped for an upgrade rejects every call until it restarts (#31692, #31764).
+    // One left stopped by a failed upgrade is caught by the release's own checks.
+    /error code: IC0508\b/i,
+    // emoji-picker-element getting an error back from the jsDelivr CDN for its emoji data
+    // (#31998): the CDN's outage, not our code
+    /emoji-picker-element-data/i,
 ];
 
 function errorName(error: unknown): string {
