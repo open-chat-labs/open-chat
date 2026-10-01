@@ -1690,27 +1690,29 @@ fn started_migration(env: &PocketIc, sender: Principal, user_index: CanisterId, 
 }
 
 // A canister which isn't ready is retried by the LocalUserIndex until its attempts run out
-// Ticks, moving time on a second at a time so that jobs retrying after a delay run, until the user
-// has been imported into the MultiUser canister they're being migrated to. Returns their new id.
+// Waits until the user has been imported into the MultiUser canister they're being migrated to.
+// Returns their new id.
 fn wait_for_import(env: &mut PocketIc, sender: Principal, user_index: CanisterId, user_id: UserId) -> UserId {
-    for _ in 0..100 {
-        if let Some(UserMigrationStatus::Imported { new_user_id, .. }) = user_migration_status(env, sender, user_index, user_id)
-        {
-            return new_user_id;
-        }
-        env.advance_time(Duration::from_secs(1));
-        env.tick();
+    tick_until(env, |env| {
+        matches!(
+            user_migration_status(env, sender, user_index, user_id),
+            Some(UserMigrationStatus::Imported { .. })
+        )
+    });
+    match user_migration_status(env, sender, user_index, user_id) {
+        Some(UserMigrationStatus::Imported { new_user_id, .. }) => new_user_id,
+        status => panic!("User not imported: {status:?}"),
     }
-    let status = user_migration_status(env, sender, user_index, user_id);
-    panic!("User not imported: {status:?}");
 }
 
-// Ticks until `condition` holds, failing if it doesn't within a generous number of rounds
+// Ticks, moving time on a second at a time so that jobs retrying after a delay run, until
+// `condition` holds. Fails if it doesn't within a generous number of rounds.
 fn tick_until(env: &mut PocketIc, condition: impl Fn(&PocketIc) -> bool) {
-    for _ in 0..50 {
+    for _ in 0..100 {
         if condition(env) {
             return;
         }
+        env.advance_time(Duration::from_secs(1));
         env.tick();
     }
     assert!(condition(env), "Condition not met");
