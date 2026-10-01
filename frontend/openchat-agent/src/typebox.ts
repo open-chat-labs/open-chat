@@ -2142,6 +2142,30 @@ export const UserIndexAcceptTermsArgs = /* @__PURE__ */ Type.Object({
     version: Type.Number(),
 });
 
+export type UserIndexMigrateUsersUsersToMigrate = Static<
+    typeof UserIndexMigrateUsersUsersToMigrate
+>;
+export const UserIndexMigrateUsersUsersToMigrate = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        LongestOffline: Type.Number(),
+    }),
+    Type.Object({
+        Specific: Type.Array(UserId),
+    }),
+]);
+
+export type UserIndexMigrateUsersSuccessResult = Static<typeof UserIndexMigrateUsersSuccessResult>;
+export const UserIndexMigrateUsersSuccessResult = /* @__PURE__ */ Type.Object({
+    queued: Type.Array(UserId),
+});
+
+export type UserIndexSetUserMigrationConcurrencyArgs = Static<
+    typeof UserIndexSetUserMigrationConcurrencyArgs
+>;
+export const UserIndexSetUserMigrationConcurrencyArgs = /* @__PURE__ */ Type.Object({
+    value: Type.Number(),
+});
+
 export type UserIndexUpdateDiamondMembershipSubscriptionArgs = Static<
     typeof UserIndexUpdateDiamondMembershipSubscriptionArgs
 >;
@@ -2161,6 +2185,46 @@ export const UserIndexUpdateDiamondMembershipSubscriptionResponse = /* @__PURE__
         Error: OCError,
     }),
 ]);
+
+export type UserIndexUserMigrationUserMigrationStatus = Static<
+    typeof UserIndexUserMigrationUserMigrationStatus
+>;
+export const UserIndexUserMigrationUserMigrationStatus = /* @__PURE__ */ Type.Union([
+    Type.Literal("Queued"),
+    Type.Object({
+        Requested: Type.Object({
+            multi_user_canister_id: TSPrincipal,
+            timestamp: Type.BigInt(),
+        }),
+    }),
+    Type.Object({
+        Started: Type.Object({
+            multi_user_canister_id: TSPrincipal,
+            timestamp: Type.BigInt(),
+            user_bytes: Type.BigInt(),
+            wasm_version: BuildVersion,
+        }),
+    }),
+    Type.Object({
+        Imported: Type.Object({
+            multi_user_canister_id: TSPrincipal,
+            timestamp: Type.BigInt(),
+            new_user_id: UserId,
+        }),
+    }),
+    Type.Object({
+        Failed: Type.Object({
+            multi_user_canister_id: TSPrincipal,
+            timestamp: Type.BigInt(),
+            error: OCError,
+        }),
+    }),
+]);
+
+export type UserIndexUserMigrationArgs = Static<typeof UserIndexUserMigrationArgs>;
+export const UserIndexUserMigrationArgs = /* @__PURE__ */ Type.Object({
+    user_id: UserId,
+});
 
 export type UserIndexCreateMultiUserCanisterArgs = Static<
     typeof UserIndexCreateMultiUserCanisterArgs
@@ -2702,6 +2766,22 @@ export const UserIndexSetDisplayNameResponse = /* @__PURE__ */ Type.Union([
 export type UserIndexSetDisplayNameArgs = Static<typeof UserIndexSetDisplayNameArgs>;
 export const UserIndexSetDisplayNameArgs = /* @__PURE__ */ Type.Object({
     display_name: Type.Optional(Type.String()),
+});
+
+export type UserIndexCancelUserMigrationResponse = Static<
+    typeof UserIndexCancelUserMigrationResponse
+>;
+export const UserIndexCancelUserMigrationResponse = /* @__PURE__ */ Type.Union([
+    Type.Literal("Success"),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type UserIndexCancelUserMigrationArgs = Static<typeof UserIndexCancelUserMigrationArgs>;
+export const UserIndexCancelUserMigrationArgs = /* @__PURE__ */ Type.Object({
+    user_id: UserId,
+    multi_user_canister_id: TSPrincipal,
 });
 
 export type UserIndexSetDiamondMembershipFeesResponse = Static<
@@ -6835,6 +6915,30 @@ export type UserIndexUsersChitResponse = Static<typeof UserIndexUsersChitRespons
 export const UserIndexUsersChitResponse = /* @__PURE__ */ Type.Object({
     Success: UserIndexUsersChitSuccessResult,
 });
+
+export type UserIndexMigrateUsersArgs = Static<typeof UserIndexMigrateUsersArgs>;
+export const UserIndexMigrateUsersArgs = /* @__PURE__ */ Type.Object({
+    users: UserIndexMigrateUsersUsersToMigrate,
+    multi_user_canister_id: Type.Optional(TSPrincipal),
+});
+
+export type UserIndexMigrateUsersResponse = Static<typeof UserIndexMigrateUsersResponse>;
+export const UserIndexMigrateUsersResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: UserIndexMigrateUsersSuccessResult,
+    }),
+    Type.Object({
+        Error: OCError,
+    }),
+]);
+
+export type UserIndexUserMigrationResponse = Static<typeof UserIndexUserMigrationResponse>;
+export const UserIndexUserMigrationResponse = /* @__PURE__ */ Type.Union([
+    Type.Object({
+        Success: UserIndexUserMigrationUserMigrationStatus,
+    }),
+    Type.Literal("NotFound"),
+]);
 
 export type UserIndexPlatformModeratorsResponse = Static<
     typeof UserIndexPlatformModeratorsResponse

@@ -163,6 +163,18 @@
         "notAvailable": "Nội dung này không khả dụng trong phiên bản ứng dụng này. Bạn vẫn có thể truy cập nó từ ứng dụng web tại [oc.app](https://oc.app).",
         "notAvailableTitle": "Nội dung không khả dụng"
     },
+    "autoTranslate": {
+        "downloadPacks": "Tải gói ngôn ngữ ({count})",
+        "turnOn": "Dịch cuộc trò chuyện này",
+        "turnOff": "Dừng dịch cuộc trò chuyện này",
+        "active": "Đang dịch sang {language} trên thiết bị này",
+        "downloading": "Đang tải {language} ({index}/{total})…",
+        "failed": "Hiện không thể dịch trên thiết bị",
+        "showOriginal": "Xem bản gốc",
+        "showTranslation": "Xem bản dịch",
+        "translateFrom": "Dịch từ {language}",
+        "translatedFrom": "Đã dịch trên thiết bị từ {language}"
+    },
     "nativeUpdate": {
         "downloadingTitle": "Chờ một chút! Đang cập nhật ...",
         "downloadingMessage": "Chúng tôi đang tải một bản cập nhật nhanh và bạn sẽ có thể tiếp tục ngay ...",

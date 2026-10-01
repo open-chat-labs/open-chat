@@ -240,6 +240,9 @@ import type {
     SetUsernameResponse,
     SetUserUpgradeConcurrencyResponse,
     CreateMultiUserCanisterResponse,
+    MigrateUsersResponse,
+    UserMigrationResponse,
+    UsersToMigrate,
     SubmitProofOfUniquePersonhoodResponse,
     SubmitProposalResponse,
     SuspendUserResponse,
@@ -378,6 +381,10 @@ export type WorkerRequest =
     | SetUserUpgradeConcurrency
     | CreateMultiUserCanister
     | SetMultiUserCanistersEnabled
+    | MigrateUsers
+    | SetUserMigrationConcurrency
+    | GetUserMigration
+    | CancelUserMigration
     | MarkLocalGroupIndexFull
     | SetDiamondMembershipFees
     | StakeNeuronForSubmittingProposals
@@ -1820,6 +1827,27 @@ type SetMultiUserCanistersEnabled = {
     kind: "setMultiUserCanistersEnabled";
 };
 
+type MigrateUsers = {
+    users: UsersToMigrate;
+    kind: "migrateUsers";
+};
+
+type SetUserMigrationConcurrency = {
+    value: number;
+    kind: "setUserMigrationConcurrency";
+};
+
+type GetUserMigration = {
+    userId: string;
+    kind: "userMigration";
+};
+
+type CancelUserMigration = {
+    userId: string;
+    multiUserCanisterId: string;
+    kind: "cancelUserMigration";
+};
+
 type MarkLocalGroupIndexFull = {
     canisterId: string;
     full: boolean;
@@ -2785,6 +2813,14 @@ export type WorkerResult<T> = T extends Init
     ? CreateMultiUserCanisterResponse
     : T extends SetMultiUserCanistersEnabled
     ? boolean
+    : T extends MigrateUsers
+    ? MigrateUsersResponse
+    : T extends SetUserMigrationConcurrency
+    ? boolean
+    : T extends GetUserMigration
+    ? UserMigrationResponse
+    : T extends CancelUserMigration
+    ? Success | OCError
     : T extends MarkLocalGroupIndexFull
     ? boolean
     : T extends SetDiamondMembershipFees

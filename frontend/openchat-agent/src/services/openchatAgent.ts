@@ -160,6 +160,9 @@ import type {
     SetPinNumberResponse,
     SetUserUpgradeConcurrencyResponse,
     CreateMultiUserCanisterResponse,
+    MigrateUsersResponse,
+    UserMigrationResponse,
+    UsersToMigrate,
     SetUsernameResponse,
     SetVideoCallPresenceResponse,
     SiwePrepareLoginResponse,
@@ -4226,6 +4229,22 @@ export class OpenChatAgent extends EventTarget {
 
     setMultiUserCanistersEnabled(enabled: boolean): Promise<boolean> {
         return this._userIndexClient.setMultiUserCanistersEnabled(enabled);
+    }
+
+    migrateUsers(users: UsersToMigrate): Promise<MigrateUsersResponse> {
+        return this._userIndexClient.migrateUsers(users);
+    }
+
+    setUserMigrationConcurrency(value: number): Promise<boolean> {
+        return this._userIndexClient.setUserMigrationConcurrency(value);
+    }
+
+    userMigration(userId: string): Promise<UserMigrationResponse> {
+        return this._userIndexClient.userMigration(userId);
+    }
+
+    cancelUserMigration(userId: string, multiUserCanisterId: string): Promise<Success | OCError> {
+        return this._userIndexClient.cancelUserMigration(userId, multiUserCanisterId);
     }
 
     markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {

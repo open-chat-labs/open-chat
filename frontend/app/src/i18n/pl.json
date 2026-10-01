@@ -163,6 +163,18 @@
         "notAvailable": "Ta treść jest niedostępna w tej wersji aplikacji. Nadal możesz uzyskać do niej dostęp w aplikacji internetowej pod adresem [oc.app](https://oc.app).",
         "notAvailableTitle": "Treść niedostępna"
     },
+    "autoTranslate": {
+        "downloadPacks": "Pobierz pakiety językowe ({count})",
+        "turnOn": "Tłumacz ten czat",
+        "turnOff": "Przestań tłumaczyć ten czat",
+        "active": "Tłumaczenie na {language} na tym urządzeniu",
+        "downloading": "Pobieranie: {language} ({index} z {total})…",
+        "failed": "Tłumaczenie na urządzeniu jest teraz niedostępne",
+        "showOriginal": "Pokaż oryginał",
+        "showTranslation": "Pokaż tłumaczenie",
+        "translateFrom": "Przetłumacz z języka: {language}",
+        "translatedFrom": "Przetłumaczono na urządzeniu z języka: {language}"
+    },
     "nativeUpdate": {
         "downloadingTitle": "Chwileczkę! Aktualizowanie ...",
         "downloadingMessage": "Pobieramy szybką aktualizację i za chwilę będzie można kontynuować ...",
