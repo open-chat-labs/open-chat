@@ -279,6 +279,9 @@ export const ANON_DISPLAY_NAME = "Guest user";
 export const ANON_AVATAR_URL = "/assets/anon.svg";
 
 type CurrentUserCommon = DataContent & {
+    // The ids the user had before being migrated to a MultiUser canister, which events from before
+    // then still refer to them by
+    previousUserIds?: string[];
     username: string;
     isPlatformOperator: boolean;
     diamondStatus: DiamondMembershipStatus;

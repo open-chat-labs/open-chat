@@ -642,10 +642,10 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         const newMigrations = migrationsFromResponse(apiResponse);
         let currentUserMigratedFrom: string | undefined = undefined;
         if (apiResponse.currentUser !== undefined) {
-            // The current user comes back under their latest id without their earlier ones, but
-            // the one we've got cached is the id they had when the session started. The server
-            // only returns them under a different id when we asked for that one, and if it's been
-            // deleted, this is a new account on the same principal rather than a migration.
+            // The current user comes back under their latest id, but the one we've got cached is
+            // the id they had when the session started. The server only returns them under a
+            // different id when we asked for that one, and if it's been deleted, this is a new
+            // account on the same principal rather than a migration.
             const cachedCurrentUserId = (await this.chatsDb.getCachedCurrentUser())?.userId;
             if (
                 cachedCurrentUserId !== undefined &&

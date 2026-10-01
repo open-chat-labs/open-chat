@@ -220,6 +220,11 @@ export function currentUserSummary(
         maxStreak: value.max_streak,
         backgroundId: value.profile_background_id,
         hideOnlineStatus: value.hide_online_status ?? false,
+        // Also kept on the cached current user, which a summary under a new id (the user having been
+        // migrated during the session) replaces, so that the next session maps them from the start
+        previousUserIds: mapOptional(value.previous_user_ids, (ids) =>
+            ids.map(principalBytesToString),
+        ),
     };
 }
 
@@ -330,6 +335,9 @@ export function currentUserResponse(value: UserIndexCurrentUserResponse): Curren
             hideOnlineStatus: r.hide_online_status ?? false,
             acceptedTermsVersion: r.accepted_terms_version ?? 0,
             currentTermsVersion: r.current_terms_version,
+            previousUserIds: mapOptional(r.previous_user_ids, (ids) =>
+                ids.map(principalBytesToString),
+            ),
         };
     }
 
