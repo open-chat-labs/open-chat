@@ -39,11 +39,18 @@
     import Magnify from "svelte-material-icons/Magnify.svelte";
     import Phone from "svelte-material-icons/Phone.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
+    import TranslateIcon from "svelte-material-icons/Translate.svelte";
+    import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
     import Tune from "svelte-material-icons/Tune.svelte";
     import Webhook from "svelte-material-icons/Webhook.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { canDeleteDirectChat, publishDeleteDirectChat } from "../../utils/directChat";
     import { rtlStore } from "../../stores/rtl";
+    import {
+        autoTranslateEnabled,
+        onDeviceTranslationSupported,
+        setAutoTranslate,
+    } from "../../utils/onDeviceTranslation";
     import { toastStore } from "../../stores/toast";
     import { activeVideoCall } from "../../stores/video";
     import HoverIcon from "../HoverIcon.svelte";
@@ -135,6 +142,18 @@
     let canChooseCallType = $derived(!videoCallInProgress && !isPublic);
 
     let canRegisterWebhook = $derived(client.canRegisterWebhook(selectedChatSummary.id));
+
+    let onDeviceTranslation = $state(false);
+    onDeviceTranslationSupported().then((supported) => (onDeviceTranslation = supported));
+    let autoTranslating = $derived(autoTranslateEnabled(selectedChatSummary.id));
+
+    function toggleAutoTranslate() {
+        if (!$isDiamondStore) {
+            publish("upgrade");
+        } else {
+            setAutoTranslate(selectedChatSummary.id, !$autoTranslating);
+        }
+    }
 
     let canStartOrJoinVideoCall = $derived(!inCall && (videoCallInProgress || canStartVideoCalls));
 
@@ -433,6 +452,23 @@
                         <Translatable resourceKey={i18nKey("copyUrl")} />
                     {/snippet}
                 </MenuItem>
+                {#if onDeviceTranslation}
+                    <MenuItem onclick={toggleAutoTranslate}>
+                        {#snippet icon()}
+                            {#if $autoTranslating}
+                                <TranslateOff size={$iconSize} color={"var(--icon-txt)"} />
+                            {:else}
+                                <TranslateIcon size={$iconSize} color={"var(--icon-txt)"} />
+                            {/if}
+                        {/snippet}
+                        {#snippet text()}
+                            <Translatable
+                                resourceKey={i18nKey(
+                                    $autoTranslating ? "autoTranslate.turnOff" : "autoTranslate.turnOn",
+                                )} />
+                        {/snippet}
+                    </MenuItem>
+                {/if}
                 {#if $mobileWidth}
                     {#if selectedChatSummary.kind === "direct_chat"}
                         <MenuItem onclick={showGroupDetails}>

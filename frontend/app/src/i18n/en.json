@@ -168,6 +168,14 @@
     "archiveChatFailed": "Failed to archive chat",
     "areYouSure": "Are you sure?",
     "attachFile": "Attach image/video/file",
+    "autoTranslate": {
+        "turnOn": "Translate this chat",
+        "turnOff": "Stop translating this chat",
+        "active": "Translating into {language} on this device",
+        "downloading": "Downloading language pack ({progress}%)",
+        "failed": "On-device translation isn't available right now",
+        "translatedFrom": "Translated on this device from {language}"
+    },
     "avatarTooBig": "The selected avatar is too big",
     "avatarUpdated": "Avatar successfully updated",
     "avatarUpdateFailed": "Avatar update failed",

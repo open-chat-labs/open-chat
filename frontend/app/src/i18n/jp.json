@@ -163,6 +163,14 @@
         "notAvailable": "このコンテンツは、このバージョンのアプリでは利用できません。ウェブアプリ [oc.app](https://oc.app) からは引き続きアクセスできます。",
         "notAvailableTitle": "コンテンツを利用できません"
     },
+    "autoTranslate": {
+        "turnOn": "このチャットを翻訳",
+        "turnOff": "このチャットの翻訳を停止",
+        "active": "この端末で{language}に翻訳中",
+        "downloading": "言語パックをダウンロード中（{progress}%）",
+        "failed": "端末上の翻訳は現在利用できません",
+        "translatedFrom": "この端末で{language}から翻訳"
+    },
     "nativeUpdate": {
         "downloadingTitle": "少々お待ちください！更新中 ...",
         "downloadingMessage": "簡単な更新をダウンロードしています。まもなく続行できます ...",
