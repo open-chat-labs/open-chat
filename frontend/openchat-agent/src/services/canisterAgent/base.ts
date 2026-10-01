@@ -2,6 +2,7 @@ import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import {
     AuthError,
+    CanisterMethodNotFoundError,
     CanisterUnavailableError,
     DestinationInvalidError,
     ResponseTooLargeError,
@@ -51,6 +52,7 @@ export abstract class CanisterAgent {
                     !(responseErr instanceof SessionExpiryError) &&
                     !(responseErr instanceof DestinationInvalidError) &&
                     !(responseErr instanceof CanisterUnavailableError) &&
+                    !(responseErr instanceof CanisterMethodNotFoundError) &&
                     !(responseErr instanceof AuthError) &&
                     !(responseErr instanceof TypeboxValidationError) &&
                     retries < MAX_RETRIES
