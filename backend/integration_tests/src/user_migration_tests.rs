@@ -509,7 +509,10 @@ fn migrate_users_starts_migrating_each_user_to_a_multi_user_canister() {
 
     let queued = migrate_users(env, operator.principal, canister_ids.user_index, vec![user.user_id], None);
     assert_eq!(queued, vec![user.user_id]);
-    tick_many(env, 10);
+    // The user's canister was only just created, so may take a dozen rounds to handle its first message
+    tick_until(env, |env| {
+        user_migration_metrics(env, canister_ids.user_index).started_or_imported() > before.started_or_imported()
+    });
 
     let after = user_migration_metrics(env, canister_ids.user_index);
     assert_eq!(after.started_or_imported(), before.started_or_imported() + 1);
