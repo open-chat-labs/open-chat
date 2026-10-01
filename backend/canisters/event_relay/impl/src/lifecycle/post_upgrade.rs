@@ -18,7 +18,12 @@ fn post_upgrade(args: Args) {
     let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
+    // One-off: stop the test EventRelay pushing events to its EventStore, and drop the events it has
+    // pending. Fresh installs (the integration tests and local dev) keep pushing them.
+    // TODO remove after the release containing this has been deployed, along with the serde default
+    // of `push_to_event_store`
     if data.test_mode {
+        data.push_to_event_store = false;
         data.event_store_client.take_events();
     }
 

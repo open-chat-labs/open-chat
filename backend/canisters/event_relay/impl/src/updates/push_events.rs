@@ -11,7 +11,7 @@ fn push_events(args: Args) {
 }
 
 fn push_events_impl(args: Args, state: &mut RuntimeState) {
-    if state.data.test_mode {
+    if !state.data.push_to_event_store {
         return;
     }
 

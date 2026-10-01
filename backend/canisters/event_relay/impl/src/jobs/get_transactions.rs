@@ -16,7 +16,7 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if !state.data.test_mode && !STARTED.get() {
+    if state.data.push_to_event_store && !STARTED.get() {
         ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         STARTED.set(true);
         true
