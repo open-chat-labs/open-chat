@@ -129,6 +129,9 @@ impl CommunityMembers {
             };
             self.add_user_id(principal, user_id);
             self.members_map.insert(member.user_id, member.clone());
+            if user_type.is_bot() {
+                self.bots.insert(user_id, user_type);
+            }
             self.former_members.on_member_added(user_id);
             self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
 
@@ -374,6 +377,13 @@ impl CommunityMembers {
 
     pub fn user_groups_last_updated(&self) -> TimestampMillis {
         self.user_groups.last_updated()
+    }
+
+    // Records each member who is a bot in `bots`, which `add` didn't use to. Returns them.
+    // TODO: Remove this once every Community canister has been upgraded
+    pub fn populate_bots(&mut self) -> BTreeMap<UserId, UserType> {
+        self.bots = self.members_map.bots();
+        self.bots.clone()
     }
 
     // Returns the number of members whose principal was set
@@ -862,6 +872,7 @@ impl CommunityMembers {
         let mut suspended = BTreeSet::new();
         let mut members_with_display_names = BTreeSet::new();
         let mut members_with_referrals = BTreeSet::new();
+        let mut bots = BTreeMap::new();
 
         for member in self.members_map.all_members() {
             member_ids.insert(member.user_id);
@@ -887,6 +898,10 @@ impl CommunityMembers {
             if !member.referrals.is_empty() {
                 members_with_referrals.insert(member.user_id);
             }
+
+            if member.user_type.is_bot() {
+                bots.insert(member.user_id, member.user_type);
+            }
         }
 
         assert_eq!(member_ids, self.members_and_channels.keys().copied().collect::<BTreeSet<_>>());
@@ -896,6 +911,7 @@ impl CommunityMembers {
         assert_eq!(suspended, self.suspended);
         assert_eq!(members_with_display_names, self.members_with_display_names);
         assert_eq!(members_with_referrals, self.members_with_referrals);
+        assert_eq!(bots, self.bots);
         assert!(self.former_members.iter().all(|u| !member_ids.contains(&u)));
     }
 }
@@ -1126,6 +1142,32 @@ mod tests {
         members.remove(user_id2, Some(principal2), false, 0);
         assert!(members.channels_for_member(user_id2).is_empty());
         assert!(members.channels_removed_for_member(user_id2).next().is_none());
+    }
+
+    #[test]
+    fn bots_recorded_when_added_and_when_populated() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let user_id = test_user_id;
+        let principal = |i: u8| test_principal(test_user_id(i));
+        let expected = BTreeMap::from([(user_id(2), UserType::OcControlledBot)]);
+
+        let mut members = CommunityMembers::new(principal(1), user_id(1), UserType::User, Vec::new(), 0);
+        members.add(user_id(2), principal(2), UserType::OcControlledBot, None, 0);
+        members.add(user_id(3), principal(3), UserType::User, None, 0);
+        assert_eq!(members.bots(), &expected);
+        members.check_invariants();
+
+        // As held before `add` recorded bots
+        members.bots.clear();
+        assert_eq!(members.populate_bots(), expected);
+        assert_eq!(members.bots(), &expected);
+        members.check_invariants();
+
+        members.remove(user_id(2), None, false, 0);
+        assert!(members.bots().is_empty());
+        members.check_invariants();
     }
 
     #[test]

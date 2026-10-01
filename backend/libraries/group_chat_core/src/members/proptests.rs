@@ -13,6 +13,7 @@ use types::{EventIndex, MessageIndex, MultiUserChat, TimestampMillis, UserId, Us
 enum Operation {
     Add {
         user_id: UserId,
+        bot: bool,
     },
     ChangeRole {
         user_index: usize,
@@ -47,7 +48,7 @@ enum Operation {
 
 fn operation_strategy() -> impl Strategy<Value = Operation> {
     prop_oneof![
-        50 => any::<usize>().prop_map(|user_index| Operation::Add { user_id: user_id(user_index) }),
+        50 => (any::<usize>(), 0..10u8).prop_map(|(user_index, n)| Operation::Add { user_id: user_id(user_index), bot: n == 0 }),
         20 => (any::<usize>(), any::<usize>())
             .prop_map(|(user_index, role_index)| Operation::ChangeRole { user_index, role: role(role_index) }),
         10 => (any::<usize>(), any::<Option<bool>>(), any::<Option<bool>>())
@@ -87,7 +88,7 @@ fn comprehensive(#[strategy(pvec(operation_strategy(), 100..5_000))] ops: Vec<Op
 
 fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: TimestampMillis) {
     match op {
-        Operation::Add { user_id } => {
+        Operation::Add { user_id, bot } => {
             members.add(
                 user_id,
                 None,
@@ -95,7 +96,7 @@ fn execute_operation(members: &mut GroupMembers, op: Operation, timestamp: Times
                 EventIndex::default(),
                 MessageIndex::default(),
                 false,
-                UserType::User,
+                if bot { UserType::OcControlledBot } else { UserType::User },
             );
         }
         Operation::ChangeRole { user_index, role } => {

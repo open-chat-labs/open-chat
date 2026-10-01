@@ -14,6 +14,7 @@ enum Operation {
     Add {
         user_id: UserId,
         referred_by_index: Option<usize>,
+        bot: bool,
     },
     ChangeRole {
         owner_index: usize,
@@ -52,8 +53,8 @@ enum Operation {
 
 fn operation_strategy() -> impl Strategy<Value = Operation> {
     prop_oneof![
-        50 => (any::<usize>(), any::<bool>(), any::<usize>())
-            .prop_map(|(user_index, set_referrer, referrer_index)| Operation::Add { user_id: user_id(user_index), referred_by_index: set_referrer.then_some(referrer_index) }),
+        50 => (any::<usize>(), any::<bool>(), any::<usize>(), 0..10u8)
+            .prop_map(|(user_index, set_referrer, referrer_index, n)| Operation::Add { user_id: user_id(user_index), referred_by_index: set_referrer.then_some(referrer_index), bot: n == 0 }),
         20 => (any::<usize>(), any::<usize>(), any::<usize>())
             .prop_map(|(owner_index, user_index, role_index)| Operation::ChangeRole { owner_index, user_index, role: role(role_index) }),
         10 => (any::<usize>(), any::<usize>()).prop_map(|(user_index, value)| Operation::SetDisplayName { user_index, value: Some(value.to_string()) } ),
@@ -92,6 +93,7 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
         Operation::Add {
             user_id,
             referred_by_index,
+            bot,
         } => {
             let referred_by = referred_by_index.and_then(|i| {
                 if members.members_and_channels.is_empty() {
@@ -100,7 +102,8 @@ fn execute_operation(members: &mut CommunityMembers, op: Operation, timestamp: T
                     Some(get_from_map(&members.members_and_channels, i))
                 }
             });
-            members.add(user_id, user_id.as_principal(), UserType::User, referred_by, timestamp);
+            let user_type = if bot { UserType::OcControlledBot } else { UserType::User };
+            members.add(user_id, user_id.as_principal(), user_type, referred_by, timestamp);
         }
         Operation::ChangeRole {
             owner_index,
