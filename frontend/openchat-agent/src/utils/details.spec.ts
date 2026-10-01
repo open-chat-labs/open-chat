@@ -1,4 +1,5 @@
 import {
+    ONE_DAY,
     ROLE_MEMBER,
     type CommunityDetails,
     type CommunityDetailsUpdatesResponse,
@@ -6,7 +7,7 @@ import {
     type GroupChatDetailsUpdatesResponse,
     type Member,
 } from "@shared";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
     addMembersToCachedCommunityDetails,
     addMembersToCachedGroupDetails,
@@ -22,6 +23,14 @@ function member(userId: string): Member {
 function memberIds(details: unknown): string[] {
     return (details as { members: Member[] }).members.map((m) => m.userId);
 }
+
+const DAY = BigInt(ONE_DAY);
+
+// The details in these tests mostly date from the first moments of 1970, which are taken to be
+// recent, so that the updates since them are complete. The clock is set later where that matters.
+beforeEach(() => {
+    vi.spyOn(Date, "now").mockReturnValue(1_000);
+});
 
 afterEach(() => {
     vi.restoreAllMocks();
@@ -112,6 +121,8 @@ describe("loadGroupDetails", () => {
 
         expect(memberIds(resp)).toEqual(["a", "b"]);
         expect(stored.get(key)?.timestamp).toBe(10n);
+        // When they were loaded is noted, so that it is known whether updates since are complete
+        expect(stored.get(key)?.syncedAt).toBe(1_000n);
         expect(updatesSince).not.toHaveBeenCalled();
     });
 
@@ -283,6 +294,80 @@ describe("loadGroupDetails", () => {
 
         expect(memberIds(resp)).toEqual(["a", "b"]);
     });
+
+    // The canister keeps the updates to the details for 31 days, so the updates since details which
+    // were brought up to date longer ago than that may be missing some
+    describe("when the cached details were brought up to date over 30 days ago", () => {
+        beforeEach(() => {
+            vi.spyOn(Date, "now").mockReturnValue(Number(100n * DAY));
+        });
+
+        test("those which have changed are reloaded in full", async () => {
+            const { load, stored, initial, updatesSince } = setup(
+                details(50n * DAY, ["a", "b"]),
+                membersAdded(90n * DAY, ["c"]),
+            );
+            // `b` left 60 days ago, an update which the canister no longer has
+            initial.mockResolvedValue(details(90n * DAY, ["a", "c"]));
+
+            const resp = await load(90n * DAY);
+
+            expect(updatesSince).not.toHaveBeenCalled();
+            expect(memberIds(resp)).toEqual(["a", "c"]);
+            expect(memberIds(stored.get(key))).toEqual(["a", "c"]);
+            expect(stored.get(key)?.syncedAt).toBe(100n * DAY);
+        });
+
+        test("those which haven't changed are returned as they are", async () => {
+            const { load, initial, updatesSince } = setup(details(50n * DAY, ["a"]));
+
+            const resp = await load(50n * DAY);
+
+            expect(memberIds(resp)).toEqual(["a"]);
+            expect(initial).not.toHaveBeenCalled();
+            expect(updatesSince).not.toHaveBeenCalled();
+        });
+
+        test("they are kept as they are if they can't be reloaded", async () => {
+            const { load, stored, initial, cache } = setup(details(50n * DAY, ["a"]));
+            initial.mockResolvedValue({ kind: "failure" } as never);
+
+            const resp = await load(90n * DAY);
+
+            expect(memberIds(resp)).toEqual(["a"]);
+            expect(stored.get(key)?.timestamp).toBe(50n * DAY);
+            expect(cache.setCachedGroupDetails).not.toHaveBeenCalled();
+        });
+
+        test("those held by the caller are reloaded in full rather than updated", async () => {
+            const { load, loadToHold, initial, updatesSince } = setup(
+                details(50n * DAY, ["a", "b"]),
+                membersAdded(90n * DAY, ["c"]),
+            );
+            await loadToHold();
+            initial.mockResolvedValue(details(90n * DAY, ["a", "c"]));
+
+            const resp = await load(90n * DAY, 50n * DAY);
+
+            expect(updatesSince).not.toHaveBeenCalled();
+            expect(memberIds(resp)).toEqual(["a", "c"]);
+        });
+
+        test("those brought up to date within 30 days are updated, however long ago they last changed", async () => {
+            // Nothing changed between 50 days ago and when they were last brought up to date
+            const { load, stored, initial, updatesSince } = setup(
+                { ...details(50n * DAY, ["a"]), syncedAt: 80n * DAY },
+                membersAdded(90n * DAY, ["b"]),
+            );
+
+            const resp = await load(90n * DAY);
+
+            expect(updatesSince).toHaveBeenCalledWith(50n * DAY);
+            expect(initial).not.toHaveBeenCalled();
+            expect(memberIds(resp)).toEqual(["a", "b"]);
+            expect(stored.get(key)?.syncedAt).toBe(100n * DAY);
+        });
+    });
 });
 
 describe("loadCommunityDetails", () => {
@@ -453,6 +538,53 @@ describe("loadCommunityDetails", () => {
         const resp = await load(20n, 5n);
 
         expect(memberIds(resp)).toEqual(["a", "b"]);
+    });
+
+    describe("when the cached details were brought up to date over 30 days ago", () => {
+        beforeEach(() => {
+            vi.spyOn(Date, "now").mockReturnValue(Number(100n * DAY));
+        });
+
+        test("those which have changed are reloaded in full", async () => {
+            const { load, stored, initial, updatesSince } = setup(
+                details(50n * DAY, ["a", "b"]),
+                membersAdded(90n * DAY, ["c"]),
+            );
+            initial.mockResolvedValue(details(90n * DAY, ["a", "c"]));
+
+            const resp = await load(90n * DAY);
+
+            expect(updatesSince).not.toHaveBeenCalled();
+            expect(memberIds(resp)).toEqual(["a", "c"]);
+            expect(stored.get(id)?.syncedAt).toBe(100n * DAY);
+        });
+
+        test("those held by the caller are reloaded in full rather than updated", async () => {
+            const { load, loadToHold, initial, updatesSince } = setup(
+                details(50n * DAY, ["a", "b"]),
+                membersAdded(90n * DAY, ["c"]),
+            );
+            await loadToHold();
+            initial.mockResolvedValue(details(90n * DAY, ["a", "c"]));
+
+            const resp = await load(90n * DAY, 50n * DAY);
+
+            expect(updatesSince).not.toHaveBeenCalled();
+            expect(memberIds(resp)).toEqual(["a", "c"]);
+        });
+
+        test("those brought up to date within 30 days are updated, however long ago they last changed", async () => {
+            const { load, initial, updatesSince } = setup(
+                { ...details(50n * DAY, ["a"]), syncedAt: 80n * DAY },
+                membersAdded(90n * DAY, ["b"]),
+            );
+
+            const resp = await load(90n * DAY);
+
+            expect(updatesSince).toHaveBeenCalledWith(50n * DAY);
+            expect(initial).not.toHaveBeenCalled();
+            expect(memberIds(resp)).toEqual(["a", "b"]);
+        });
     });
 });
 

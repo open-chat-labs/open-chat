@@ -260,6 +260,9 @@ export type CommunityDetails = {
     userGroups: Map<number, UserGroupDetails>;
     referrals: Set<string>;
     bots: InstalledBotDetails[];
+    // When the cached copy was last loaded or brought up to date, by the client's clock. Only the
+    // cache sets it.
+    syncedAt?: bigint;
 };
 
 export type CommunityDetailsUpdates = {

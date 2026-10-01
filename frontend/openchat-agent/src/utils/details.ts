@@ -1,5 +1,6 @@
 import {
     offline,
+    ONE_DAY,
     type CommunityDetails,
     type CommunityDetailsResponse,
     type CommunityDetailsUpdatesResponse,
@@ -21,6 +22,12 @@ type CommunityDetailsCache = Pick<
 >;
 
 type Updated<T> = Extract<T, { kind: "success" }>;
+
+// Canisters keep the updates to the details of a chat or community for 31 days
+// (DURATION_TO_MAINTAIN_SUMMARY_UPDATES_DATA), so the updates since a copy which was brought up to
+// date longer ago than that may be missing some. Such a copy is reloaded in full instead. This
+// allows a day for the client's clock being out.
+const MAX_AGE_TO_UPDATE = BigInt(30 * ONE_DAY);
 
 /**
  * Loads the details of a group or channel: from the cache if that is as new as
@@ -58,27 +65,33 @@ export async function loadGroupDetails(
         if (detailsSyncedUpTo >= detailsLastUpdated || offline()) {
             return { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
         }
-        const updates = await updatesSince(cachedTimestamp);
-        if (updates.kind === "failure") {
-            return { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
+        // Otherwise whether the updates are complete depends on when the cached copy was last
+        // brought up to date, which is only known by reading it
+        if (updatesComplete(cachedTimestamp)) {
+            const updates = await updatesSince(cachedTimestamp);
+            if (updates.kind === "failure") {
+                return { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
+            }
+            if (updates.kind === "success_no_updates") {
+                return {
+                    kind: "success_no_updates",
+                    timestamp: later(detailsSyncedUpTo, updates.timestamp),
+                };
+            }
+            fetched = updates;
         }
-        if (updates.kind === "success_no_updates") {
-            return {
-                kind: "success_no_updates",
-                timestamp: later(detailsSyncedUpTo, updates.timestamp),
-            };
-        }
-        fetched = updates;
     }
 
     return withCachedDetailsLock(groupDetailsLockKey(cacheKey), async () => {
         const cached = await cache.getCachedGroupDetails(cacheKey);
         if (cached === undefined) {
             const details = await initial();
-            if ("members" in details) {
-                await cache.setCachedGroupDetails(cacheKey, details);
+            if (!("members" in details)) {
+                return details;
             }
-            return details;
+            const loaded = broughtUpToDate(details);
+            await cache.setCachedGroupDetails(cacheKey, loaded);
+            return loaded;
         }
 
         let details: GroupChatDetails;
@@ -89,6 +102,15 @@ export async function loadGroupDetails(
             // since they were last read here, so that those fetched aren't the updates since these
             if (cached.timestamp >= detailsLastUpdated || offline()) {
                 return cached;
+            }
+            if (!updatesComplete(cached.syncedAt ?? cached.timestamp)) {
+                const reloaded = await initial();
+                if (!("members" in reloaded)) {
+                    return cached;
+                }
+                const loaded = broughtUpToDate(reloaded);
+                await cache.setCachedGroupDetails(cacheKey, loaded);
+                return loaded;
             }
             const updates = await updatesSince(cached.timestamp);
             if (updates.kind === "failure") {
@@ -101,6 +123,7 @@ export async function loadGroupDetails(
         }
 
         if (details.timestamp > cached.timestamp) {
+            details = broughtUpToDate(details);
             await cache.setCachedGroupDetails(cacheKey, details);
         }
         return details;
@@ -129,27 +152,31 @@ export async function loadCommunityDetails(
         if (detailsSyncedUpTo >= detailsLastUpdated || offline()) {
             return { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
         }
-        const updates = await updatesSince(cachedTimestamp);
-        if (updates.kind === "failure") {
-            return { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
+        if (updatesComplete(cachedTimestamp)) {
+            const updates = await updatesSince(cachedTimestamp);
+            if (updates.kind === "failure") {
+                return { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
+            }
+            if (updates.kind === "success_no_updates") {
+                return {
+                    kind: "success_no_updates",
+                    lastUpdated: later(detailsSyncedUpTo, updates.lastUpdated),
+                };
+            }
+            fetched = updates;
         }
-        if (updates.kind === "success_no_updates") {
-            return {
-                kind: "success_no_updates",
-                lastUpdated: later(detailsSyncedUpTo, updates.lastUpdated),
-            };
-        }
-        fetched = updates;
     }
 
     return withCachedDetailsLock(communityDetailsLockKey(communityId), async () => {
         const cached = await cache.getCachedCommunityDetails(communityId);
         if (cached === undefined) {
             const details = await initial();
-            if (details.kind === "success") {
-                await cache.setCachedCommunityDetails(communityId, details);
+            if (details.kind !== "success") {
+                return details;
             }
-            return details;
+            const loaded = broughtUpToDate(details);
+            await cache.setCachedCommunityDetails(communityId, loaded);
+            return loaded;
         }
 
         let details: CommunityDetails;
@@ -158,6 +185,15 @@ export async function loadCommunityDetails(
         } else {
             if (cached.lastUpdated >= detailsLastUpdated || offline()) {
                 return cached;
+            }
+            if (!updatesComplete(cached.syncedAt ?? cached.lastUpdated)) {
+                const reloaded = await initial();
+                if (reloaded.kind !== "success") {
+                    return cached;
+                }
+                const loaded = broughtUpToDate(reloaded);
+                await cache.setCachedCommunityDetails(communityId, loaded);
+                return loaded;
             }
             const updates = await updatesSince(cached.lastUpdated);
             if (updates.kind === "failure") {
@@ -170,6 +206,7 @@ export async function loadCommunityDetails(
         }
 
         if (details.lastUpdated > cached.lastUpdated) {
+            details = broughtUpToDate(details);
             await cache.setCachedCommunityDetails(communityId, details);
         }
         return details;
@@ -259,6 +296,16 @@ function groupDetailsLockKey(cacheKey: string): string {
 
 function communityDetailsLockKey(communityId: string): string {
     return `community_${communityId}`;
+}
+
+// Whether the updates since `since` can be relied on to include every change made since then
+function updatesComplete(since: bigint): boolean {
+    return since >= BigInt(Date.now()) - MAX_AGE_TO_UPDATE;
+}
+
+// The details, noting that they have just been loaded or brought up to date
+function broughtUpToDate<D extends { syncedAt?: bigint }>(details: D): D {
+    return { ...details, syncedAt: BigInt(Date.now()) };
 }
 
 // The canister's timestamp can be behind the one held if the query hit a lagging replica
