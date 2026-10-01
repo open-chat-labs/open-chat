@@ -25,8 +25,9 @@ type Updated<T> = Extract<T, { kind: "success" }>;
 
 // Canisters keep the updates to the details of a chat or community for 31 days
 // (DURATION_TO_MAINTAIN_SUMMARY_UPDATES_DATA), so the updates since a copy which was brought up to
-// date longer ago than that may be missing some. Such a copy is reloaded in full instead. This
-// allows a day for the client's clock being out.
+// date longer ago than that may be missing some. Such a copy is reloaded in full instead. The day
+// to spare allows for a lagging replica, and for the canister's clock and the client's differing
+// where a timestamp from the canister is compared with the client's clock.
 const MAX_AGE_TO_UPDATE = BigInt(30 * ONE_DAY);
 
 /**
@@ -103,7 +104,7 @@ export async function loadGroupDetails(
             if (cached.timestamp >= detailsLastUpdated || offline()) {
                 return cached;
             }
-            if (!updatesComplete(cached.syncedAt ?? cached.timestamp)) {
+            if (!updatesComplete(cached.syncedAt ?? 0n)) {
                 const reloaded = await initial();
                 if (!("members" in reloaded)) {
                     return cached;
@@ -186,7 +187,7 @@ export async function loadCommunityDetails(
             if (cached.lastUpdated >= detailsLastUpdated || offline()) {
                 return cached;
             }
-            if (!updatesComplete(cached.syncedAt ?? cached.lastUpdated)) {
+            if (!updatesComplete(cached.syncedAt ?? 0n)) {
                 const reloaded = await initial();
                 if (reloaded.kind !== "success") {
                     return cached;
