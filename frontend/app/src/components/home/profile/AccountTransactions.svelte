@@ -1,7 +1,6 @@
 <script lang="ts">
     import {
         type AccountTransaction,
-        type AccountTransactions,
         type NamedAccount,
         type OpenChat,
         type ResourceKey,
@@ -14,6 +13,11 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import type { RemoteData as RD } from "../../../utils/remoteData";
+    import {
+        type TransactionHistory,
+        addTransactionsPage,
+        nextPageStart,
+    } from "../../../utils/transactionHistory";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
@@ -33,16 +37,13 @@
     let { ledger = $bindable(), urlFormat = $bindable(), onClose }: Props = $props();
 
     type LoadingMore<T> = { kind: "loading_more"; data: T };
-    type RemoteData = RD<AccountTransactions, string> | LoadingMore<AccountTransactions>;
+    type RemoteData = RD<TransactionHistory, string> | LoadingMore<TransactionHistory>;
 
     let transactionData = $state<RemoteData>({ kind: "loading" });
     let accounts: NamedAccount[] = $state([]);
 
     function moreTransactionsAvailable(trans: RemoteData): boolean {
-        if (trans.kind !== "success") return false;
-        if (trans.data.oldestTransactionId === undefined) return false;
-        const lastLoaded = trans.data.transactions[trans.data.transactions.length - 1];
-        return lastLoaded.id > trans.data.oldestTransactionId;
+        return trans.kind === "success" && nextPageStart(trans.data) !== undefined;
     }
 
     onMount(async () => {
@@ -95,9 +96,8 @@
         if (ledgerIndex !== undefined) {
             let start = undefined;
             if (transactionData.kind === "success") {
-                start =
-                    transactionData.data.transactions[transactionData.data.transactions.length - 1]
-                        .id - 1n;
+                start = nextPageStart(transactionData.data);
+                if (start === undefined) return;
                 transactionData = { kind: "loading_more", data: transactionData.data };
             } else {
                 transactionData = { kind: "loading" };
@@ -109,25 +109,15 @@
                         transactionData = { kind: "idle" };
                         toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
                     } else {
-                        // Filter out approvals
-                        const transactions = result.transactions.filter(
-                            (t) => t.kind !== "approve",
-                        );
                         if (transactionData.kind === "loading") {
                             transactionData = {
                                 kind: "success",
-                                data: { ...result, transactions },
+                                data: addTransactionsPage(undefined, result),
                             };
                         } else if (transactionData.kind === "loading_more") {
                             transactionData = {
                                 kind: "success",
-                                data: {
-                                    oldestTransactionId: result.oldestTransactionId,
-                                    transactions: [
-                                        ...transactionData.data.transactions,
-                                        ...transactions,
-                                    ],
-                                },
+                                data: addTransactionsPage(transactionData.data, result),
                             };
                         }
                     }
