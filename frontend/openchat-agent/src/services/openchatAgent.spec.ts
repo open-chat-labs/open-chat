@@ -817,20 +817,66 @@ describe("OpenChatAgent moving funds from the user's previous wallets", () => {
     });
 
     test("each ledger in a call which fails fails with its error", async () => {
-        const inProgress = {
+        const notAuthorized = {
             kind: "error",
-            code: ErrorCode.AlreadyInProgress,
-            message: "Old canister not yet uninstalled",
+            code: ErrorCode.InitiatorNotAuthorized,
+            message: "Caller wasn't migrated from the old user id",
         };
-        moveResponse = () => inProgress;
+        moveResponse = (localUserIndex) =>
+            localUserIndex === LOCAL_USER_INDEX ? notAuthorized : CANISTER_NOT_FOUND;
 
         expect(await agent.moveFundsFromPreviousWallets(funds(PREVIOUS, [ICP_LEDGER]))).toEqual([
             {
                 previousUserId: PREVIOUS,
                 ledger: ICP_LEDGER,
-                result: { kind: "failed", error: inProgress },
+                result: { kind: "failed", error: notAuthorized },
             },
         ]);
+        expect(moves).toHaveLength(2);
+    });
+
+    // As it is while the LocalUserIndex refunds its cycles, which it does after each batch
+    test("a move turned away while the canister is busy is retried, up to 3 times", async () => {
+        const inProgress = {
+            kind: "error",
+            code: ErrorCode.AlreadyInProgress,
+            message: "Old canister's cycles being refunded",
+        };
+        let busyFor = 0;
+        moveResponse = (localUserIndex, ledgers) => {
+            if (localUserIndex !== LOCAL_USER_INDEX) return CANISTER_NOT_FOUND;
+            if (busyFor-- > 0) return inProgress;
+            return { kind: "success", outcomes: ledgers.map((ledger) => moved(ledger)) };
+        };
+        const move = async () => {
+            moves = [];
+            const outcomes = agent.moveFundsFromPreviousWallets(
+                funds(OTHER_PREVIOUS, [ICP_LEDGER]),
+            );
+            await vi.runAllTimersAsync();
+            return outcomes;
+        };
+
+        vi.useFakeTimers();
+        try {
+            busyFor = 3;
+            expect(await move()).toEqual([
+                { previousUserId: OTHER_PREVIOUS, ...moved(ICP_LEDGER) },
+            ]);
+            expect(moves).toHaveLength(4);
+
+            busyFor = 4;
+            expect(await move()).toEqual([
+                {
+                    previousUserId: OTHER_PREVIOUS,
+                    ledger: ICP_LEDGER,
+                    result: { kind: "failed", error: inProgress },
+                },
+            ]);
+            expect(moves).toHaveLength(4);
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     test("each ledger fails if no LocalUserIndex controls the previous canister", async () => {
@@ -845,7 +891,55 @@ describe("OpenChatAgent moving funds from the user's previous wallets", () => {
         ]);
     });
 
+    test("a controller which rejects the call is passed over", async () => {
+        moveResponse = (localUserIndex, ledgers) => {
+            if (localUserIndex !== LOCAL_USER_INDEX) {
+                throw new Error("Canister has no update method 'move_funds_from_old_canister'");
+            }
+            return { kind: "success", outcomes: ledgers.map((ledger) => moved(ledger)) };
+        };
+
+        expect(await agent.moveFundsFromPreviousWallets(funds(PREVIOUS, [ICP_LEDGER]))).toEqual([
+            { previousUserId: PREVIOUS, ...moved(ICP_LEDGER) },
+        ]);
+        expect(moves.map(([localUserIndex]) => localUserIndex)).toEqual([
+            OTHER_LOCAL_USER_INDEX,
+            LOCAL_USER_INDEX,
+        ]);
+    });
+
+    // `CanisterStatus` gives null, rather than throwing, for controllers it couldn't read
     test("each ledger fails if the previous canister's controllers can't be read", async () => {
+        delete agent.canisterControllers;
+        const fetchRootKey = vi.fn(() => {
+            agent._agent.rootKey = new Uint8Array();
+            return Promise.resolve(agent._agent.rootKey);
+        });
+        agent._agent = {
+            rootKey: null,
+            fetchRootKey,
+            readState: () => Promise.reject(new Error("Failed to fetch")),
+        };
+
+        expect(await agent.moveFundsFromPreviousWallets(funds(PREVIOUS, [ICP_LEDGER]))).toEqual([
+            {
+                previousUserId: PREVIOUS,
+                ledger: ICP_LEDGER,
+                result: {
+                    kind: "failed",
+                    error: {
+                        kind: "error",
+                        code: ErrorCode.Unknown,
+                        message: `Error: Unable to read the controllers of ${PREVIOUS}`,
+                    },
+                },
+            },
+        ]);
+        expect(fetchRootKey).toHaveBeenCalledOnce();
+        expect(moves).toEqual([]);
+    });
+
+    test("one previous canister failing doesn't stop the others being moved from", async () => {
         controllers.set(PREVIOUS, new Error("read_state failed"));
 
         const outcomes = await agent.moveFundsFromPreviousWallets([

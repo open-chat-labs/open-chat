@@ -359,6 +359,8 @@ const NNS_ERROR_TYPE_NEURON_ALREADY_VOTED = 19;
 const MAX_CONCURRENT_PREVIOUS_WALLET_BALANCE_CHECKS = 10;
 // The most ledgers the LocalUserIndex moves funds from in one call
 const MAX_LEDGERS_PER_FUNDS_MOVE = 20;
+const MAX_FUNDS_MOVE_RETRIES = 3;
+const FUNDS_MOVE_RETRY_INTERVAL_MS = 10_000;
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -3616,8 +3618,7 @@ export class OpenChatAgent extends EventTarget {
 
     // Moves the given balances, left behind in the wallets of the canisters the user had before
     // being migrated to a MultiUser canister, to the user's wallet, returning the outcome on each
-    // ledger. One canister is moved from at a time, since the LocalUserIndex turns away a move from
-    // a canister it's already moving from.
+    // ledger. The canisters are moved from one after another.
     async moveFundsFromPreviousWallets(
         funds: FundsInPreviousWallet[],
     ): Promise<MoveFundsOutcome[]> {
@@ -3643,26 +3644,17 @@ export class OpenChatAgent extends EventTarget {
         const outcomes: { ledger: string; result: MoveFundsResult }[] = [];
         let localUserIndexes: string[] | undefined = undefined;
         for (const batch of chunk(ledgers, MAX_LEDGERS_PER_FUNDS_MOVE)) {
-            let response: MoveFundsFromOldCanisterResponse = {
-                kind: "error",
-                code: ErrorCode.CanisterNotFound,
-                message: "No LocalUserIndex controls the previous canister",
-            };
+            let response: MoveFundsFromOldCanisterResponse;
             try {
-                const candidates = (localUserIndexes ??=
-                    await this.canisterControllers(previousUserId));
-                // A LocalUserIndex which doesn't control the canister returns `CanisterNotFound`,
-                // so is passed over
-                for (const localUserIndex of candidates) {
-                    response = await this._localUserIndexClient.moveFundsFromOldCanister(
-                        localUserIndex,
-                        previousUserId,
-                        batch,
-                    );
-                    if (!isError(response) || response.code !== ErrorCode.CanisterNotFound) {
-                        localUserIndexes = [localUserIndex];
-                        break;
-                    }
+                localUserIndexes ??= await this.canisterControllers(previousUserId);
+                const moved = await this.moveFundsThroughController(
+                    localUserIndexes,
+                    previousUserId,
+                    batch,
+                );
+                response = moved.response;
+                if (moved.localUserIndex !== undefined) {
+                    localUserIndexes = [moved.localUserIndex];
                 }
             } catch (err) {
                 response = { kind: "error", code: ErrorCode.Unknown, message: String(err) };
@@ -3678,20 +3670,80 @@ export class OpenChatAgent extends EventTarget {
         return outcomes;
     }
 
+    // Moves the funds on `ledgers` from the canister of `previousUserId` through whichever of its
+    // controllers is the LocalUserIndex which controls it, giving that LocalUserIndex if found. The
+    // others are passed over, since a LocalUserIndex which doesn't control the canister returns
+    // `CanisterNotFound`, and a canister which isn't a LocalUserIndex rejects the call.
+    private async moveFundsThroughController(
+        controllers: string[],
+        previousUserId: string,
+        ledgers: string[],
+    ): Promise<{ localUserIndex?: string; response: MoveFundsFromOldCanisterResponse }> {
+        let response: MoveFundsFromOldCanisterResponse = {
+            kind: "error",
+            code: ErrorCode.CanisterNotFound,
+            message: "No LocalUserIndex controls the previous canister",
+        };
+        for (const controller of controllers) {
+            try {
+                response = await this.moveFundsFromOldCanister(controller, previousUserId, ledgers);
+            } catch (err) {
+                response = { kind: "error", code: ErrorCode.Unknown, message: String(err) };
+                continue;
+            }
+            if (!isError(response) || response.code !== ErrorCode.CanisterNotFound) {
+                return { localUserIndex: controller, response };
+            }
+        }
+        return { response };
+    }
+
+    // The LocalUserIndex turns a move away with `AlreadyInProgress` while the canister is busy,
+    // which it is for a few seconds while its cycles are refunded. That happens once the canister
+    // is uninstalled, and again straight after each move which makes a transfer from it, so is to
+    // be expected before each batch of ledgers after the first.
+    private async moveFundsFromOldCanister(
+        localUserIndex: string,
+        previousUserId: string,
+        ledgers: string[],
+    ): Promise<MoveFundsFromOldCanisterResponse> {
+        for (let attempt = 0; ; attempt++) {
+            const response = await this._localUserIndexClient.moveFundsFromOldCanister(
+                localUserIndex,
+                previousUserId,
+                ledgers,
+            );
+            if (
+                !isError(response) ||
+                response.code !== ErrorCode.AlreadyInProgress ||
+                attempt >= MAX_FUNDS_MOVE_RETRIES
+            ) {
+                return response;
+            }
+            await new Promise((resolve) => setTimeout(resolve, FUNDS_MOVE_RETRY_INTERVAL_MS));
+        }
+    }
+
     // The canisters which control `canisterId`. The IC certifies these for any canister, so unlike
     // a canister's own `local_user_index` query, they can be had for a User canister which has been
     // uninstalled, as one is once its user has been migrated to a MultiUser canister. A User
     // canister is controlled by the LocalUserIndex which created it.
     private async canisterControllers(canisterId: string): Promise<string[]> {
+        // `CanisterStatus` doesn't fetch the root key itself, as calls do, when the agent has to
+        if (this._agent.rootKey === null) {
+            await this._agent.fetchRootKey();
+        }
         const status = await CanisterStatus.request({
             canisterId: Principal.fromText(canisterId),
             agent: this._agent,
             paths: ["controllers"],
         });
+        // Rather than throwing, `CanisterStatus` gives null for a path it couldn't read
         const controllers = status.get("controllers");
-        return Array.isArray(controllers)
-            ? (controllers as Principal[]).filter(isCanisterId).map((c) => c.toText())
-            : [];
+        if (!Array.isArray(controllers)) {
+            throw new Error(`Unable to read the controllers of ${canisterId}`);
+        }
+        return (controllers as Principal[]).filter(isCanisterId).map((c) => c.toText());
     }
 
     getAccountTransactions(
