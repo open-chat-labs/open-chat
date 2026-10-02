@@ -18,7 +18,8 @@ fn change_casing_of_community_name_succeeds() {
         ..
     } = wrapper.env();
 
-    let community_name = "community_change_casing".to_string();
+    // At most 20 characters, the longest search term the GroupIndex accepts
+    let community_name = "community_casing".to_string();
     let TestData {
         user1,
         user2,
@@ -51,7 +52,12 @@ fn change_casing_of_community_name_succeeds() {
     tick_many(env, 3);
 
     // Find the community in the group_index and check that the name has changed
-    let communities = client::group_index::happy_path::explore_communities(env, user2.principal, canister_ids.group_index);
+    let communities = client::group_index::happy_path::explore_communities(
+        env,
+        user2.principal,
+        canister_ids.group_index,
+        &new_community_name,
+    );
     assert!(
         communities
             .iter()
@@ -178,7 +184,8 @@ fn make_private_community_public_succeeds() {
 
     let user = client::register_diamond_user(env, canister_ids, *controller);
 
-    let community_id = client::user::happy_path::create_community(env, &user, &random_string(), false, vec!["abc".to_string()]);
+    let community_name = random_string();
+    let community_id = client::user::happy_path::create_community(env, &user, &community_name, false, vec!["abc".to_string()]);
 
     let args = community_canister::update_community::Args {
         name: None,
@@ -199,7 +206,7 @@ fn make_private_community_public_succeeds() {
     assert!(result.is_public);
 
     assert!(
-        client::group_index::happy_path::explore_communities(env, user.principal, canister_ids.group_index)
+        client::group_index::happy_path::explore_communities(env, user.principal, canister_ids.group_index, &community_name)
             .into_iter()
             .any(|c| c.id == community_id)
     );

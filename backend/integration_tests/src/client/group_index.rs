@@ -28,13 +28,20 @@ pub mod happy_path {
     use sha256::sha256;
     use types::{CanisterId, CanisterWasm, ChatId, CommunityId, CommunityMatch, GroupMatch};
 
-    pub fn explore_communities(env: &PocketIc, sender: Principal, group_index_canister_id: CanisterId) -> Vec<CommunityMatch> {
+    // Searches by name rather than taking the first page of all communities, since a test's
+    // community may not be ranked on that page in an env which other tests have filled
+    pub fn explore_communities(
+        env: &PocketIc,
+        sender: Principal,
+        group_index_canister_id: CanisterId,
+        search_term: &str,
+    ) -> Vec<CommunityMatch> {
         let response = super::explore_communities(
             env,
             sender,
             group_index_canister_id,
             &group_index_canister::explore_communities::Args {
-                search_term: None,
+                search_term: Some(search_term.to_string()),
                 languages: Vec::new(),
                 page_index: 0,
                 page_size: 50,
@@ -49,13 +56,19 @@ pub mod happy_path {
         }
     }
 
-    pub fn explore_groups(env: &PocketIc, sender: Principal, group_index_canister_id: CanisterId) -> Vec<GroupMatch> {
+    // Searches by name, for the same reason as `explore_communities`
+    pub fn explore_groups(
+        env: &PocketIc,
+        sender: Principal,
+        group_index_canister_id: CanisterId,
+        search_term: &str,
+    ) -> Vec<GroupMatch> {
         let response = super::explore_groups(
             env,
             sender,
             group_index_canister_id,
             &group_index_canister::explore_groups::Args {
-                search_term: None,
+                search_term: Some(search_term.to_string()),
                 page_index: 0,
                 page_size: 50,
                 include_moderation_flags: None,
