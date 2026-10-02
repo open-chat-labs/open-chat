@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2090](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2090-user)] - 2026-10-02
+
 ### Added
 
 - Support leaving tips from external wallets using ICRC2 ([#9263](https://github.com/open-chat-labs/open-chat/pull/9263))

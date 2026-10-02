@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Top up MultiUser canisters by 5T cycles at a time, and when below 10T ([#9735](https://github.com/open-chat-labs/open-chat/pull/9735))
+
+## [[2.0.2086](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2086-local_user_index)] - 2026-10-02
+
 ### Added
 
 - Pass on when the details of each group, community and channel last changed in the summaries relayed to clients ([#9670](https://github.com/open-chat-labs/open-chat/pull/9670))
@@ -18,7 +24,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Refund a deleted group's or community's cycles before deleting its canister ([#9680](https://github.com/open-chat-labs/open-chat/pull/9680))
 - Name a wrong placement (line, bulb, tent, bridge or CHAT) before a wrong "no" mark in the free mistake check, since the placement is usually the cause ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 - Serve daily puzzle hints at one level for one price: the step's outline and technique, never its conclusions. A step the user already has is re-served free, whatever level an older client asks for ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
-- Top up MultiUser canisters by 5T cycles at a time, and when below 10T ([#9735](https://github.com/open-chat-labs/open-chat/pull/9735))
 
 ### Removed
 

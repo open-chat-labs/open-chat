@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2085](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2085-user_index)] - 2026-10-02
+
 ### Added
 
 - Accept a `page_index` in `search`, so callers can look beyond the first page of results ([#9710](https://github.com/open-chat-labs/open-chat/pull/9710))
