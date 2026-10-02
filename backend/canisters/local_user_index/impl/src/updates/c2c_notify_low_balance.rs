@@ -142,7 +142,7 @@ fn prepare(
     }
 }
 
-fn top_up_amount(canister_id: CanisterId, state: &RuntimeState) -> Cycles {
+pub(crate) fn top_up_amount(canister_id: CanisterId, state: &RuntimeState) -> Cycles {
     if state.data.local_multi_user_canisters.contains(&canister_id) {
         multi_user_canister_top_up_amount(state.data.test_mode)
     } else {

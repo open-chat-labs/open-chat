@@ -1,13 +1,14 @@
-use crate::updates::c2c_notify_low_balance::top_up_child_canister;
+use crate::updates::c2c_notify_low_balance::{top_up_amount, top_up_child_canister};
 use crate::{CanisterToRefund, RuntimeState, jobs, mutate_state, read_state};
-use constants::{DAY_IN_MS, multi_user_canister_min_cycles_balance};
+use constants::{DAY_IN_MS, min_cycles_balance, multi_user_canister_min_cycles_balance};
 use oc_error_codes::OCErrorCode;
 use per_round_timer::PerRoundTimer;
 use std::cell::RefCell;
 use std::time::Duration;
 use tracing::{error, info};
-use types::{CanisterId, CommunityId, Cycles, Milliseconds, UnitResult};
+use types::{CanisterId, CommunityId, Cycles, Milliseconds, NotifyLowBalanceResponse, UnitResult};
 use utils::canister_timers::run_now_then_interval;
+use utils::cycles::can_spend_cycles;
 
 thread_local! {
     static TIMER: RefCell<Option<PerRoundTimer>> = RefCell::default();
@@ -108,7 +109,17 @@ async fn run_async(canister_id: CanisterId) {
                 // time between these checks, and isn't asking to be topped up itself (eg. a large
                 // canister which has gone quiet), would keep falling further behind.
                 if shortfall > 0 {
-                    top_up_child_canister(Some(canister_id), shortfall).await;
+                    // The shortfall is only added while this canister would keep twice its own
+                    // minimum. A pass which finds many canisters low would otherwise hold it at
+                    // its minimum, blocking every other top up, eg. those its children ask for.
+                    let additional = read_state(|state| {
+                        let amount = top_up_amount(canister_id, state) + shortfall;
+                        if can_spend_cycles(amount, 2 * min_cycles_balance(state.data.test_mode)) { shortfall } else { 0 }
+                    });
+                    let response = top_up_child_canister(Some(canister_id), additional).await;
+                    if !matches!(response, NotifyLowBalanceResponse::Success(_)) {
+                        info!(%canister_id, ?response, "Canister found low by the weekly check not topped up");
+                    }
                 }
             }
         }

@@ -45,10 +45,10 @@ pub fn is_cycles_balance_low(cycles_balance: Cycles, freeze_threshold: Cycles, m
     cycles_balance_shortfall(cycles_balance, freeze_threshold, min_cycles_balance) > 0
 }
 
-// How many more cycles the canister needs for its balance no longer to be low
+// How many more cycles the canister needs for its balance no longer to be low. This counts the
+// whole freezing threshold, so for a frozen canister it includes however far it is below it.
 pub fn cycles_balance_shortfall(cycles_balance: Cycles, freeze_threshold: Cycles, min_cycles_balance: Cycles) -> Cycles {
-    let liquid_cycles = cycles_balance.saturating_sub(freeze_threshold);
-    max(2 * freeze_threshold, min_cycles_balance).saturating_sub(liquid_cycles)
+    (max(2 * freeze_threshold, min_cycles_balance) + freeze_threshold).saturating_sub(cycles_balance)
 }
 
 // The cycles a canister must keep to not be frozen, worked out as the IC does: the cycles it burns
@@ -136,11 +136,35 @@ mod tests {
     }
 
     #[test]
-    fn the_shortfall_of_a_frozen_canister_counts_none_of_its_cycles() {
+    fn the_shortfall_of_a_frozen_canister_includes_how_far_it_is_below_its_freezing_threshold() {
         assert_eq!(
             cycles_balance_shortfall(10 * B, 20 * B, MIN_CYCLES_BALANCE),
-            MIN_CYCLES_BALANCE
+            MIN_CYCLES_BALANCE + 10 * B
         );
+    }
+
+    #[test]
+    fn topping_up_by_the_shortfall_means_the_balance_is_no_longer_low() {
+        for freeze_threshold in [0, 40 * B, MIN_CYCLES_BALANCE / 2, MIN_CYCLES_BALANCE, 3 * MIN_CYCLES_BALANCE] {
+            for cycles_balance in [
+                0,
+                10 * B,
+                freeze_threshold,
+                freeze_threshold + 300 * B,
+                2 * MIN_CYCLES_BALANCE,
+            ] {
+                let shortfall = cycles_balance_shortfall(cycles_balance, freeze_threshold, MIN_CYCLES_BALANCE);
+                assert_eq!(
+                    shortfall > 0,
+                    is_cycles_balance_low(cycles_balance, freeze_threshold, MIN_CYCLES_BALANCE)
+                );
+                assert!(!is_cycles_balance_low(
+                    cycles_balance + shortfall,
+                    freeze_threshold,
+                    MIN_CYCLES_BALANCE
+                ));
+            }
+        }
     }
 
     #[test]
