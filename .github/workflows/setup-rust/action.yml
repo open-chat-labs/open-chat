@@ -7,6 +7,10 @@ inputs:
     description: 'Which cache to use (jobs sharing a key share a cache)'
     type: string
     default: 'build-debug'
+  cache-on-failure:
+    description: 'Set to "true" to save the cache even if the job fails (only for jobs whose failures come after the build, eg. failing tests)'
+    type: string
+    default: 'false'
   install-tauri-libs:
     description: 'Set to "true" to install the native libs the Tauri crates need (only jobs which build them should set this)'
     type: string
@@ -27,12 +31,13 @@ runs:
       if: ${{ inputs.cache == 'read' || inputs.cache == 'write' }}
       uses: Swatinem/rust-cache@v2
       with:
-        # Bump this when the cache-warming workflow starts producing new artifacts: the action only
-        # saves when the key changed, and the key covers the manifests, lockfile and toolchain but
-        # not what the workflow builds
+        # Bump this when a workflow which writes a cache starts producing new artifacts: the action
+        # only saves when the key changed, and the key covers the manifests, lockfile and toolchain
+        # but not what the workflow builds
         prefix-key: v1-rust
         shared-key: ${{ inputs.shared-key }}
         save-if: ${{ inputs.cache == 'write' }}
+        cache-on-failure: ${{ inputs.cache-on-failure }}
 
     # Only the Tauri crates need these, and the Ubuntu mirror serving them is intermittently very slow
     # (25+ minutes seen), so jobs which don't build those crates must not pay for them
