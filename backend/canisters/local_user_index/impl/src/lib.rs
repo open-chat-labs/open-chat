@@ -20,7 +20,7 @@ use crate::model::web_push_subscriptions::WebPushSubscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use community_canister::LocalIndexEvent as CommunityEvent;
-use constants::{MINUTE_IN_MS, multi_user_canister_min_cycles_balance};
+use constants::{MINUTE_IN_MS, MULTI_USER_CANISTER_MIN_CYCLES_BALANCE};
 use ct_codecs::{Base64UrlSafeNoPadding, Encoder};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -83,20 +83,20 @@ const MULTI_USER_UPGRADE_CONCURRENCY: usize = 1;
 
 // The cycles above its freezing threshold each type of child canister keeps. A child is created with
 // this plus one top up, and is topped up by half this at a time.
-fn child_min_cycles_balance(canister_type: ChildCanisterType, test_mode: bool) -> Cycles {
+fn child_min_cycles_balance(canister_type: ChildCanisterType) -> Cycles {
     match canister_type {
         ChildCanisterType::User => utils::cycles::USER_CANISTER_MIN_CYCLES_BALANCE, // 0.3T
         ChildCanisterType::Group | ChildCanisterType::Community => utils::cycles::MIN_CYCLES_BALANCE, // 1T
-        ChildCanisterType::MultiUser => multi_user_canister_min_cycles_balance(test_mode), // 10T
+        ChildCanisterType::MultiUser => MULTI_USER_CANISTER_MIN_CYCLES_BALANCE,     // 10T
     }
 }
 
-fn child_top_up_amount(canister_type: ChildCanisterType, test_mode: bool) -> Cycles {
-    child_min_cycles_balance(canister_type, test_mode) / 2
+fn child_top_up_amount(canister_type: ChildCanisterType) -> Cycles {
+    child_min_cycles_balance(canister_type) / 2
 }
 
-fn child_initial_cycles_balance(canister_type: ChildCanisterType, test_mode: bool) -> Cycles {
-    child_min_cycles_balance(canister_type, test_mode) + child_top_up_amount(canister_type, test_mode)
+fn child_initial_cycles_balance(canister_type: ChildCanisterType) -> Cycles {
+    child_min_cycles_balance(canister_type) + child_top_up_amount(canister_type)
 }
 
 thread_local! {

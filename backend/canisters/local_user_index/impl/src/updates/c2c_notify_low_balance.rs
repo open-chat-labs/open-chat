@@ -146,7 +146,7 @@ fn prepare(
 pub(crate) fn top_up_amount(canister_id: CanisterId, state: &RuntimeState) -> Cycles {
     // Only this canister's children are topped up, so the fallback should never be needed
     let canister_type = state.child_canister_type(canister_id).unwrap_or(ChildCanisterType::Group);
-    child_top_up_amount(canister_type, state.data.test_mode)
+    child_top_up_amount(canister_type)
 }
 
 fn commit(canister_id: CanisterId, top_up: CyclesTopUp, state: &mut RuntimeState) {

@@ -79,7 +79,7 @@ struct PrepareOk {
 
 fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     // A canister taken from the pool is given its cycles now
-    let initial_cycles_balance = child_initial_cycles_balance(ChildCanisterType::Group, state.data.test_mode);
+    let initial_cycles_balance = child_initial_cycles_balance(ChildCanisterType::Group);
     let cycles_to_use = if state.data.canister_pool.is_empty() {
         initial_cycles_balance + CREATE_CANISTER_CYCLES_FEE
     } else {

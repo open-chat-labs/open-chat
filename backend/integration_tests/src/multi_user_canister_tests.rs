@@ -6,8 +6,8 @@ use crate::utils::{
 use crate::{CanisterIds, TestEnv, client, wasms};
 use candid::Principal;
 use constants::{
-    HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID,
-    multi_user_canister_min_cycles_balance,
+    HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, MULTI_USER_CANISTER_MIN_CYCLES_BALANCE,
+    OPENCHAT_BOT_USER_ID,
 };
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
@@ -7156,7 +7156,7 @@ fn private_replies_to_a_group_follow_it_into_a_community() {
 // balance than a User canister, and is topped up by more each time.
 #[test]
 fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
-    let min_balance = multi_user_canister_min_cycles_balance(true);
+    let min_balance = MULTI_USER_CANISTER_MIN_CYCLES_BALANCE;
     let top_up_amount = min_balance / 2;
     // Less a margin for the cycles the update and the check themselves use
     let topped_up_from = |balance: u128| balance + top_up_amount - 10_000_000_000;

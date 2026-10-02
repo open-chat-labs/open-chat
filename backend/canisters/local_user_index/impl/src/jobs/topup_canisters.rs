@@ -133,7 +133,7 @@ async fn run_async(canister_id: CanisterId) {
 fn child_canister_min_cycles_balance(canister_id: CanisterId, state: &RuntimeState) -> Cycles {
     // Only this canister's children are checked, so the fallback should never be needed
     let canister_type = state.child_canister_type(canister_id).unwrap_or(ChildCanisterType::Group);
-    child_min_cycles_balance(canister_type, state.data.test_mode)
+    child_min_cycles_balance(canister_type)
 }
 
 // Tells the GroupIndex, which stops listing the community, then stops tracking it here. The

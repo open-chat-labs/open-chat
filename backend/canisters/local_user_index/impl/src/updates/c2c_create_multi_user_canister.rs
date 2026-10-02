@@ -69,7 +69,7 @@ fn prepare(state: &mut RuntimeState) -> OCResult<PrepareOk> {
     let canister_wasm = state.child_canister_wasm_to_install(ChildCanisterType::MultiUser);
 
     // A canister taken from the pool is given its cycles now
-    let initial_cycles_balance = child_initial_cycles_balance(ChildCanisterType::MultiUser, state.data.test_mode);
+    let initial_cycles_balance = child_initial_cycles_balance(ChildCanisterType::MultiUser);
     let cycles_to_use = if state.data.canister_pool.is_empty() {
         initial_cycles_balance + CREATE_CANISTER_CYCLES_FEE
     } else {
