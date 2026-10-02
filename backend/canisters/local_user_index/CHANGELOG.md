@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Top up MultiUser canisters by 5T cycles at a time, and when below 10T ([#9735](https://github.com/open-chat-labs/open-chat/pull/9735))
 
+### Removed
+
+- Remove `c2c_user_principals`, replaced by `c2c_user_principals_v2` ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))
+- Remove the Registry id from the upgrade args now that every LocalUserIndex has it ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))
+
 ## [[2.0.2086](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2086-local_user_index)] - 2026-10-02
 
 ### Added
