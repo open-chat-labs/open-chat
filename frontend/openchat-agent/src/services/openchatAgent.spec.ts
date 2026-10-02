@@ -670,6 +670,208 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
     });
 });
 
+// A user migrated to a MultiUser canister may have left funds in the wallet of their previous
+// canister, which only the LocalUserIndex controlling that canister can move to their wallet
+describe("OpenChatAgent moving funds from the user's previous wallets", () => {
+    const canisterId = (n: number) =>
+        Principal.fromUint8Array(new Uint8Array([0, 0, 0, 0, 0, 0, 0x10, n, 1, 1])).toText();
+    const PREVIOUS = canisterId(1);
+    const OTHER_PREVIOUS = canisterId(2);
+    const LOCAL_USER_INDEX = canisterId(3);
+    const OTHER_LOCAL_USER_INDEX = canisterId(4);
+    const DEAD_LEDGER = canisterId(5);
+    const CANISTER_NOT_FOUND = {
+        kind: "error",
+        code: ErrorCode.CanisterNotFound,
+        message: undefined,
+    };
+
+    let balances: Map<string, bigint>;
+    let balanceOwners: Set<string>;
+    let controllers: Map<string, string[] | Error>;
+    let controllerLookups: string[];
+    let moves: [string, string, string[]][];
+    let moveResponse: (localUserIndex: string, ledgers: string[]) => unknown;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let agent: any;
+
+    beforeEach(() => {
+        balances = new Map();
+        balanceOwners = new Set();
+        controllers = new Map([
+            [PREVIOUS, [OTHER_LOCAL_USER_INDEX, LOCAL_USER_INDEX]],
+            [OTHER_PREVIOUS, [LOCAL_USER_INDEX]],
+        ]);
+        controllerLookups = [];
+        moves = [];
+        moveResponse = (localUserIndex, ledgers) =>
+            localUserIndex === LOCAL_USER_INDEX
+                ? { kind: "success", outcomes: ledgers.map((ledger) => moved(ledger)) }
+                : CANISTER_NOT_FOUND;
+
+        agent = Object.create(OpenChatAgent.prototype);
+        agent.identity = { getPrincipal: () => ME };
+        agent._userClient = { userId: MULTI_USER_CANISTER_USER };
+        agent._registryValue = {
+            tokenDetails: [
+                { ledger: ICP_LEDGER, transferFee: FEE },
+                { ledger: LEDGER_CANISTER_CHAT, transferFee: CHAT_FEE },
+                { ledger: DEAD_LEDGER, transferFee: FEE },
+            ],
+        };
+        agent._ledgerClient = {
+            accountBalance: (ledger: string, account: { owner: Principal }) => {
+                const owner = account.owner.toText();
+                balanceOwners.add(owner);
+                return ledger === DEAD_LEDGER
+                    ? Promise.reject(new Error("The ledger has no wasm module"))
+                    : Promise.resolve(balances.get(`${owner}:${ledger}`) ?? 0n);
+            },
+        };
+        agent.canisterControllers = (canisterId: string) => {
+            controllerLookups.push(canisterId);
+            const result = controllers.get(canisterId) ?? [];
+            return result instanceof Error ? Promise.reject(result) : Promise.resolve(result);
+        };
+        agent._localUserIndexClient = {
+            moveFundsFromOldCanister: async (
+                localUserIndex: string,
+                oldUserId: string,
+                ledgers: string[],
+            ) => {
+                moves.push([localUserIndex, oldUserId, ledgers]);
+                return moveResponse(localUserIndex, ledgers);
+            },
+        };
+    });
+
+    function moved(ledger: string) {
+        return { ledger, result: { kind: "moved", amount: 100n, fee: FEE, blockIndex: 1n } };
+    }
+
+    function funds(previousUserId: string, ledgers: string[]) {
+        return ledgers.map((ledger) => ({ previousUserId, ledger, balance: 1_000_000n }));
+    }
+
+    test("finds the balances above the fee on each token in the wallets of previous canisters", async () => {
+        balances.set(`${PREVIOUS}:${ICP_LEDGER}`, FEE + 1n);
+        balances.set(`${PREVIOUS}:${LEDGER_CANISTER_CHAT}`, CHAT_FEE);
+        balances.set(`${OTHER_PREVIOUS}:${LEDGER_CANISTER_CHAT}`, 5_000n);
+
+        // A previous id in a MultiUser canister had no wallet of its own, and the dead ledger's
+        // balances can't be read
+        const found = await agent.fundsInPreviousWallets([
+            PREVIOUS,
+            OTHER_MULTI_USER_CANISTER_USER,
+            OTHER_PREVIOUS,
+        ]);
+
+        expect(found).toEqual([
+            { previousUserId: PREVIOUS, ledger: ICP_LEDGER, balance: FEE + 1n },
+            { previousUserId: OTHER_PREVIOUS, ledger: LEDGER_CANISTER_CHAT, balance: 5_000n },
+        ]);
+        expect(balanceOwners).toEqual(new Set([PREVIOUS, OTHER_PREVIOUS]));
+    });
+
+    test("moves through the LocalUserIndex controlling each previous canister, one canister at a time", async () => {
+        const events: string[] = [];
+        moveResponse = async (localUserIndex, ledgers) => {
+            events.push(`start ${ledgers.join(",")}`);
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            events.push(`end ${ledgers.join(",")}`);
+            return localUserIndex === LOCAL_USER_INDEX
+                ? { kind: "success", outcomes: ledgers.map((ledger) => moved(ledger)) }
+                : CANISTER_NOT_FOUND;
+        };
+
+        const outcomes = await agent.moveFundsFromPreviousWallets([
+            ...funds(PREVIOUS, [ICP_LEDGER, LEDGER_CANISTER_CHAT]),
+            ...funds(OTHER_PREVIOUS, [ICP_LEDGER]),
+        ]);
+
+        expect(moves).toEqual([
+            [OTHER_LOCAL_USER_INDEX, PREVIOUS, [ICP_LEDGER, LEDGER_CANISTER_CHAT]],
+            [LOCAL_USER_INDEX, PREVIOUS, [ICP_LEDGER, LEDGER_CANISTER_CHAT]],
+            [LOCAL_USER_INDEX, OTHER_PREVIOUS, [ICP_LEDGER]],
+        ]);
+        expect(events.every((e, i) => e.startsWith(i % 2 === 0 ? "start" : "end"))).toBe(true);
+        expect(outcomes).toEqual([
+            { previousUserId: PREVIOUS, ...moved(ICP_LEDGER) },
+            { previousUserId: PREVIOUS, ...moved(LEDGER_CANISTER_CHAT) },
+            { previousUserId: OTHER_PREVIOUS, ...moved(ICP_LEDGER) },
+        ]);
+    });
+
+    test("moves at most 20 ledgers a call, from the LocalUserIndex found for the first", async () => {
+        const ledgers = Array.from({ length: 25 }, (_, i) => canisterId(100 + i));
+
+        const outcomes = await agent.moveFundsFromPreviousWallets(funds(PREVIOUS, ledgers));
+
+        expect(moves).toEqual([
+            [OTHER_LOCAL_USER_INDEX, PREVIOUS, ledgers.slice(0, 20)],
+            [LOCAL_USER_INDEX, PREVIOUS, ledgers.slice(0, 20)],
+            [LOCAL_USER_INDEX, PREVIOUS, ledgers.slice(20)],
+        ]);
+        expect(controllerLookups).toEqual([PREVIOUS]);
+        expect(outcomes.map((o: { ledger: string }) => o.ledger)).toEqual(ledgers);
+    });
+
+    test("each ledger in a call which fails fails with its error", async () => {
+        const inProgress = {
+            kind: "error",
+            code: ErrorCode.AlreadyInProgress,
+            message: "Old canister not yet uninstalled",
+        };
+        moveResponse = () => inProgress;
+
+        expect(await agent.moveFundsFromPreviousWallets(funds(PREVIOUS, [ICP_LEDGER]))).toEqual([
+            {
+                previousUserId: PREVIOUS,
+                ledger: ICP_LEDGER,
+                result: { kind: "failed", error: inProgress },
+            },
+        ]);
+    });
+
+    test("each ledger fails if no LocalUserIndex controls the previous canister", async () => {
+        controllers.set(PREVIOUS, [OTHER_LOCAL_USER_INDEX]);
+
+        expect(await agent.moveFundsFromPreviousWallets(funds(PREVIOUS, [ICP_LEDGER]))).toEqual([
+            {
+                previousUserId: PREVIOUS,
+                ledger: ICP_LEDGER,
+                result: { kind: "failed", error: CANISTER_NOT_FOUND },
+            },
+        ]);
+    });
+
+    test("each ledger fails if the previous canister's controllers can't be read", async () => {
+        controllers.set(PREVIOUS, new Error("read_state failed"));
+
+        const outcomes = await agent.moveFundsFromPreviousWallets([
+            ...funds(PREVIOUS, [ICP_LEDGER]),
+            ...funds(OTHER_PREVIOUS, [ICP_LEDGER]),
+        ]);
+
+        expect(outcomes).toEqual([
+            {
+                previousUserId: PREVIOUS,
+                ledger: ICP_LEDGER,
+                result: {
+                    kind: "failed",
+                    error: {
+                        kind: "error",
+                        code: ErrorCode.Unknown,
+                        message: "Error: read_state failed",
+                    },
+                },
+            },
+            { previousUserId: OTHER_PREVIOUS, ...moved(ICP_LEDGER) },
+        ]);
+        expect(moves).toEqual([[LOCAL_USER_INDEX, OTHER_PREVIOUS, [ICP_LEDGER]]]);
+    });
+});
+
 // A user migrated to a MultiUser canister is referred to by their earlier id in the events from
 // before then, which the agent replaces with their current id
 describe("OpenChatAgent referring to the user by their current id", () => {

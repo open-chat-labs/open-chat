@@ -500,6 +500,34 @@ export type UserMigrationStatus =
 
 export type UserMigrationResponse = UserMigrationStatus | { kind: "not_found" } | OCError;
 
+// A balance left behind in the wallet of a canister the user had before being migrated to a
+// MultiUser canister. Only that canister can move it, so it isn't in the user's wallet until the
+// LocalUserIndex which controls the canister moves it there.
+export type FundsInPreviousWallet = {
+    previousUserId: string;
+    ledger: string;
+    balance: bigint;
+};
+
+export type MoveFundsResult =
+    // `amount` arrived in the user's wallet, the ledger having charged `fee` on top
+    | { kind: "moved"; amount: bigint; fee: bigint; blockIndex: bigint }
+    // The balance didn't exceed the fee, so there was nothing to move
+    | { kind: "nothing_to_move" }
+    // A transfer which timed out may still have been made, in which case the balance is gone from
+    // the previous wallet
+    | { kind: "failed"; error: OCError };
+
+export type MoveFundsFromOldCanisterResponse =
+    | { kind: "success"; outcomes: { ledger: string; result: MoveFundsResult }[] }
+    | OCError;
+
+export type MoveFundsOutcome = {
+    previousUserId: string;
+    ledger: string;
+    result: MoveFundsResult;
+};
+
 export type SetMessageReminderResponse = Success | OCError | Offline;
 
 export type ModerationFlag = 1 | 2 | 4;

@@ -10,6 +10,8 @@ import type {
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
+    MoveFundsFromOldCanisterResponse,
+    MoveFundsResult,
     MultiUserChatIdentifier,
     PayForPremiumItemResponse,
     PayForPremiumItemSuccess,
@@ -44,6 +46,8 @@ import type {
     LocalUserIndexInviteUsersToGroupResponse,
     LocalUserIndexJoinChannelResponse,
     LocalUserIndexJoinCommunityResponse,
+    LocalUserIndexMoveFundsFromOldCanisterMoveFundsResult,
+    LocalUserIndexMoveFundsFromOldCanisterResponse,
     LocalUserIndexPayForPremiumItemResponse,
     LocalUserIndexPayForPremiumItemSuccessResult,
     LocalUserIndexRegisterUserResponse,
@@ -85,6 +89,35 @@ export function payForPremiumItemSuccess(
         totalChitEarned: value.total_chit_earned,
         chitBalance: value.chit_balance,
     };
+}
+
+export function moveFundsFromOldCanisterResponse(
+    value: LocalUserIndexMoveFundsFromOldCanisterResponse,
+): MoveFundsFromOldCanisterResponse {
+    return mapResult(value, (outcomes) => ({
+        kind: "success",
+        outcomes: outcomes.map((o) => ({
+            ledger: principalBytesToString(o.ledger),
+            result: moveFundsResult(o.result),
+        })),
+    }));
+}
+
+function moveFundsResult(
+    value: LocalUserIndexMoveFundsFromOldCanisterMoveFundsResult,
+): MoveFundsResult {
+    if (value === "NothingToMove") {
+        return { kind: "nothing_to_move" };
+    }
+    if ("Moved" in value) {
+        return {
+            kind: "moved",
+            amount: value.Moved.amount,
+            fee: value.Moved.fee,
+            blockIndex: value.Moved.block_index,
+        };
+    }
+    return { kind: "failed", error: ocError(value.Failed) };
 }
 
 export function apiAccessTokenType(domain: AccessTokenType): LocalUserIndexAccessTokenV2Args {
