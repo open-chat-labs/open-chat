@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Top up MultiUser canisters by 5T cycles at a time, and when below 10T ([#9735](https://github.com/open-chat-labs/open-chat/pull/9735))
 - Top up a child canister which is out of cycles, then retry the call to it ([#9736](https://github.com/open-chat-labs/open-chat/pull/9736))
 - Never let topping up a canister take this canister's own balance below its minimum ([#9736](https://github.com/open-chat-labs/open-chat/pull/9736))
+- Stop refilling the canister pool, and refund the cycles of the canisters in it, which are given cycles as they're used ([#9749](https://github.com/open-chat-labs/open-chat/pull/9749))
 
 ### Removed
 
