@@ -45,12 +45,16 @@ jobs:
         run: |
           curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --default-toolchain none -y
       - uses: actions/checkout@v4
-      # The master runs write the cache which every run restores. The cache is only saved when its
-      # key (the manifests, lockfile and toolchain) has changed, and only by a run which succeeds,
-      # so after a key change the first passing run on master saves it
+      # The master runs write the cache which every run restores. It's only saved when its key (the
+      # manifests, lockfile and toolchain) has changed, so after a key change the first master run
+      # to finish saves it (runs which started before then try too, and fail harmlessly). Runs whose
+      # tests fail save it as well: they nearly always fail after the build has finished, and
+      # saving only on success would leave runs building from an older cache (or from nothing,
+      # after a toolchain change) until one passed
       - uses: ./.github/workflows/setup-rust
         with:
           cache: ${{ github.event_name == 'push' && 'write' || 'read' }}
+          cache-on-failure: 'true'
           shared-key: build-wasm
       - uses: arduino/setup-protoc@v1
         with:
