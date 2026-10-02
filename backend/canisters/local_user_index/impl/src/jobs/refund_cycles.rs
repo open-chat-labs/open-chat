@@ -1,6 +1,6 @@
 use crate::updates::c2c_delete_group::spawn_delete_canister;
 use crate::{CanisterToRefund, RuntimeState, call_relay, mutate_state, read_state};
-use constants::{B, CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
+use constants::{B, CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS, min_cycles_balance};
 use ic_cdk_management_canister::{CanisterInstallMode, CanisterStatusType};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -11,6 +11,7 @@ use utils::canister::{
     CanisterToInstall, WasmToInstall, delay_if_should_retry_failed_c2c_call, is_invalid_controller_error,
     is_out_of_cycles_error,
 };
+use utils::cycles::can_spend_cycles;
 
 // Sends the cycles held by uninstalled canisters (those of deleted and migrated users) to the
 // CyclesDispenser, by installing a tiny canister on each which does just that, then uninstalling it
@@ -31,6 +32,10 @@ const MIN_CYCLES_TO_REFUND: Cycles = 100 * B;
 // threshold having been set to 0), else it is topped up first. The top-up comes back along with
 // the rest, so erring on the generous side costs nothing.
 pub(crate) const CYCLES_REQUIRED_FOR_INSTALL: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + 100 * B;
+
+// How long a refund waits for this canister's own balance to recover, if topping up the canister
+// to refund would take it below its minimum
+const CYCLES_BALANCE_TOO_LOW_RETRY_DELAY: Milliseconds = 10 * MINUTE_IN_MS;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -140,6 +145,17 @@ async fn process_canister(canister: CanisterToRefund) {
             Err(RefundError::TooFewCycles(cycles)) => {
                 info!(%canister_id, cycles, "Cycles not refunded, too few to be worth it");
             }
+            // Not counted as an attempt, since it clears once this canister is topped up
+            Err(RefundError::CyclesBalanceTooLow) => {
+                state.data.cycles_refund_queue.push_back(CanisterToRefund {
+                    canister_id,
+                    attempt: canister.attempt,
+                    retry_after: state.env.now() + CYCLES_BALANCE_TOO_LOW_RETRY_DELAY,
+                    delete_canister: canister.delete_canister,
+                });
+                retrying = true;
+                info!(%canister_id, "Cycles refund deferred, this canister's cycles balance is too low");
+            }
             Err(RefundError::C2C(error)) => {
                 let attempt = canister.attempt + 1;
                 if let Some(delay) = retry_delay(&error)
@@ -184,6 +200,9 @@ enum RefundError {
     CanisterHasCode,
     InCanisterPool,
     TooFewCycles(Cycles),
+    // Topping the canister up to install the refunder would take this canister's own balance below
+    // its minimum
+    CyclesBalanceTooLow,
     C2C(C2CError),
 }
 
@@ -243,6 +262,9 @@ async fn refund_cycles(canister_id: CanisterId, delete_canister: bool) -> Result
 
             if balance < CYCLES_REQUIRED_FOR_INSTALL {
                 let top_up = CYCLES_REQUIRED_FOR_INSTALL - balance;
+                if !read_state(|state| can_spend_cycles(top_up, min_cycles_balance(state.data.test_mode))) {
+                    return Err(RefundError::CyclesBalanceTooLow);
+                }
                 utils::canister::deposit_cycles(canister_id, top_up).await?;
                 mutate_state(|state| state.data.cycles_topped_up_for_refunds += top_up);
             }
@@ -289,7 +311,7 @@ async fn install_refunder(
         new_wasm_version: BuildVersion::default(),
         args: candid::encode_one(Some(cycles_dispenser_canister_id)).unwrap(),
         new_wasm: WasmToInstall::Default(wasm),
-        deposit_cycles_if_needed: false,
+        top_up_keeping_balance_above: None,
         mode: CanisterInstallMode::Install,
         stop_start_canister: false,
     })

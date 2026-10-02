@@ -1,3 +1,4 @@
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{
     RuntimeState,
     bots::{BotAccessContext, extract_access_context_from_chat_context},
@@ -8,8 +9,8 @@ use local_user_index_canister::bot_send_message::*;
 use oc_error_codes::{OCError, OCErrorCode};
 use rand::RngExt;
 use types::{
-    BotActionScope, BotInitiator, BotMessageContent, ChannelId, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex,
-    OgPreview, UserId,
+    BotActionScope, BotInitiator, BotMessageContent, CanisterId, ChannelId, Chat, ChatId, CommunityId, EventIndex, MessageId,
+    MessageIndex, OgPreview, UserId,
 };
 
 #[update(candid = true, json = true, msgpack = true)]
@@ -172,24 +173,26 @@ async fn send_message_to_channel(
 ) -> Response {
     use Response::*;
 
-    match community_canister_c2c_client::c2c_bot_send_message(
-        community_id.into(),
-        &community_canister::c2c_bot_send_message::Args {
-            bot_id,
-            initiator,
-            channel_id,
-            thread_root_message_index,
-            message_id,
-            replies_to,
-            content,
-            bot_name,
-            block_level_markdown,
-            finalised,
-            og_previews,
-        },
-    )
-    .await
-    {
+    let canister_id = CanisterId::from(community_id);
+    let c2c_args = community_canister::c2c_bot_send_message::Args {
+        bot_id,
+        initiator,
+        channel_id,
+        thread_root_message_index,
+        message_id,
+        replies_to,
+        content,
+        bot_name,
+        block_level_markdown,
+        finalised,
+        og_previews,
+    };
+    let response = top_up_and_retry_if_out_of_cycles(canister_id, || {
+        community_canister_c2c_client::c2c_bot_send_message(canister_id, &c2c_args)
+    })
+    .await;
+
+    match response {
         Ok(response) => match response {
             community_canister::c2c_bot_send_message::Response::Success(result) => Success(SuccessResult {
                 message_id,
@@ -220,23 +223,25 @@ async fn send_message_to_group(
 ) -> Response {
     use Response::*;
 
-    match group_canister_c2c_client::c2c_bot_send_message(
-        chat_id.into(),
-        &group_canister::c2c_bot_send_message::Args {
-            bot_id,
-            initiator,
-            thread_root_message_index,
-            message_id,
-            replies_to,
-            content,
-            bot_name,
-            block_level_markdown,
-            finalised,
-            og_previews,
-        },
-    )
-    .await
-    {
+    let canister_id = CanisterId::from(chat_id);
+    let c2c_args = group_canister::c2c_bot_send_message::Args {
+        bot_id,
+        initiator,
+        thread_root_message_index,
+        message_id,
+        replies_to,
+        content,
+        bot_name,
+        block_level_markdown,
+        finalised,
+        og_previews,
+    };
+    let response = top_up_and_retry_if_out_of_cycles(canister_id, || {
+        group_canister_c2c_client::c2c_bot_send_message(canister_id, &c2c_args)
+    })
+    .await;
+
+    match response {
         Ok(response) => match response {
             group_canister::c2c_bot_send_message::Response::Success(result) => Success(SuccessResult {
                 message_id,
@@ -269,25 +274,27 @@ async fn send_message_to_user(
     use Response::*;
 
     // A user in a MultiUser canister is one of many there, so their id is not their canister's id
-    match user_canister_c2c_client::c2c_bot_send_message(
-        UserId::from(chat_id).canister_id(),
-        &user_canister::c2c_bot_send_message::Args {
-            user_id: chat_id.into(),
-            bot_id,
-            initiator,
-            thread_root_message_index,
-            message_id,
-            replies_to,
-            user_message_id,
-            content,
-            bot_name,
-            block_level_markdown,
-            finalised,
-            og_previews,
-        },
-    )
-    .await
-    {
+    let canister_id = UserId::from(chat_id).canister_id();
+    let c2c_args = user_canister::c2c_bot_send_message::Args {
+        user_id: chat_id.into(),
+        bot_id,
+        initiator,
+        thread_root_message_index,
+        message_id,
+        replies_to,
+        user_message_id,
+        content,
+        bot_name,
+        block_level_markdown,
+        finalised,
+        og_previews,
+    };
+    let response = top_up_and_retry_if_out_of_cycles(canister_id, || {
+        user_canister_c2c_client::c2c_bot_send_message(canister_id, &c2c_args)
+    })
+    .await;
+
+    match response {
         Ok(response) => match response {
             user_canister::c2c_bot_send_message::Response::Success(result) => Success(SuccessResult {
                 message_id,

@@ -84,28 +84,7 @@ fn next(state: &mut RuntimeState) -> GetNextResult {
     let mut count = 0;
     let now = state.env.now();
     while let Some(canister_id) = state.data.cycles_balance_check_queue.pop_front() {
-        let cycle_top_ups = state
-            .data
-            .local_users
-            .get(&canister_id.into())
-            .map(|u| &u.cycle_top_ups)
-            .or_else(|| state.data.local_groups.get(&canister_id.into()).map(|g| &g.cycle_top_ups))
-            .or_else(|| {
-                state
-                    .data
-                    .local_communities
-                    .get(&canister_id.into())
-                    .map(|c| &c.cycle_top_ups)
-            })
-            .or_else(|| {
-                state
-                    .data
-                    .local_multi_user_canisters
-                    .get(&canister_id)
-                    .map(|c| &c.cycle_top_ups)
-            });
-
-        if let Some(cycle_top_ups) = cycle_top_ups {
+        if let Some(cycle_top_ups) = state.child_canister_cycle_top_ups(canister_id) {
             let most_recent_top_up = cycle_top_ups.last().map(|c| c.date).unwrap_or_default();
 
             // Only check the balance if the most recent top up was more than 10 days ago

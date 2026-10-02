@@ -98,7 +98,7 @@ async fn perform_upgrade(canister_to_upgrade: NextCanisterToUpgrade) {
                 wasm_hash: canister_to_upgrade.new_wasm.module.hash(),
                 store_canister_id: canister_id,
             }),
-            deposit_cycles_if_needed: false,
+            top_up_keeping_balance_above: None,
             args: candid::encode_one(&local_user_index_canister::post_upgrade::Args {
                 wasm_version: to_version,
             })

@@ -9,18 +9,13 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-# Create and install the NNS canisters
-if ! dfx extension install nns --version 0.8.0 >& /dev/null
+# Port of this checkout's replica, so several checkouts can each run one
+REPLICA_PORT=${OC_REPLICA_PORT:-8080}
+if ! curl -sf -o /dev/null http://127.0.0.1:$REPLICA_PORT/api/v2/status
 then
-  echo "Updating the DFX NNS extension to version 0.8.0"
-  dfx extension uninstall nns
-  dfx extension install nns --version 0.8.0 >& /dev/null
+  echo "No replica on port $REPLICA_PORT"
+  exit 1
 fi
-
-TEST_ICP_ACCOUNT=$(dfx --identity $IDENTITY ledger account-id)
-dfx --identity $IDENTITY nns install --ledger-accounts $TEST_ICP_ACCOUNT
-# Stop the SNS aggregator so that it doesn't spam the logs
-dfx --identity anonymous canister stop sgymv-uiaaa-aaaaa-aaaia-cai &
 
 NNS_ROOT_CANISTER_ID=r7inp-6aaaa-aaaaa-aaabq-cai
 NNS_GOVERNANCE_CANISTER_ID=rrkah-fqaaa-aaaaa-aaaaq-cai
@@ -30,13 +25,29 @@ NNS_CMC_CANISTER_ID=rkp4c-7iaaa-aaaaa-aaaca-cai
 NNS_SNS_WASM_CANISTER_ID=qaa6y-5yaaa-aaaaa-aaafa-cai
 NNS_INDEX_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
 
+# Create and install the NNS canisters, unless the replica already has them (eg. restored from a saved state)
+if ! dfx canister info $NNS_LEDGER_CANISTER_ID >& /dev/null
+then
+  if ! dfx extension install nns --version 0.8.0 >& /dev/null
+  then
+    echo "Updating the DFX NNS extension to version 0.8.0"
+    dfx extension uninstall nns
+    dfx extension install nns --version 0.8.0 >& /dev/null
+  fi
+
+  TEST_ICP_ACCOUNT=$(dfx --identity $IDENTITY ledger account-id)
+  dfx --identity $IDENTITY nns install --ledger-accounts $TEST_ICP_ACCOUNT
+  # Stop the SNS aggregator so that it doesn't spam the logs
+  dfx --identity anonymous canister stop sgymv-uiaaa-aaaaa-aaaia-cai &
+fi
+
 echo "Building local_canister_creator"
 cargo build --package local_canister_creator
 echo "Building completed"
 
 echo "Creating canisters"
 cargo run --package local_canister_creator -- \
-  --ic-url http://127.0.0.1:8080/ \
+  --ic-url http://127.0.0.1:$REPLICA_PORT/ \
   --pocket-ic-url http://127.0.0.1:$(dfx info pocketic-config-port) \
   --controller $IDENTITY \
   --cycles 1000000000000000 \
@@ -68,7 +79,7 @@ echo "Canisters created"
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh local \
-    http://127.0.0.1:8080/ \
+    http://127.0.0.1:$REPLICA_PORT/ \
     $IDENTITY \
     $WASM_SRC \
     $NNS_ROOT_CANISTER_ID \

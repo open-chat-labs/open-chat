@@ -1,3 +1,4 @@
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{CanisterToRefund, RuntimeState, UserIndexEvent, UserToDelete, jobs, mutate_state};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
@@ -86,10 +87,10 @@ async fn process_user_inner(user: &UserToDelete) -> Result<DeleteUserSuccess, C2
     let user_id = user.user_id;
     let canister_id = user_id.canister_id();
 
-    let (groups, communities) = user_canister_c2c_client::c2c_groups_and_communities(
-        canister_id,
-        &user_canister::c2c_groups_and_communities::Args { user_id },
-    )
+    let args = user_canister::c2c_groups_and_communities::Args { user_id };
+    let (groups, communities) = top_up_and_retry_if_out_of_cycles(canister_id, || {
+        user_canister_c2c_client::c2c_groups_and_communities(canister_id, &args)
+    })
     .await
     .map(|r| (r.groups, r.communities))?;
 
@@ -97,8 +98,11 @@ async fn process_user_inner(user: &UserToDelete) -> Result<DeleteUserSuccess, C2
         utils::canister::uninstall(canister_id).await?;
     } else {
         // A user held in a MultiUser canister shares it with other users, so only they are removed
-        multi_user_canister_c2c_client::c2c_delete_user(canister_id, &multi_user_canister::c2c_delete_user::Args { user_id })
-            .await?;
+        let args = multi_user_canister::c2c_delete_user::Args { user_id };
+        top_up_and_retry_if_out_of_cycles(canister_id, || {
+            multi_user_canister_c2c_client::c2c_delete_user(canister_id, &args)
+        })
+        .await?;
     }
 
     Ok(DeleteUserSuccess::Deleted(

@@ -13,6 +13,9 @@ pub async fn create_and_install(
     wasm: VersionedWasmToInstall,
     init_args: Vec<u8>,
     cycles_to_use: Cycles,
+    // The canister is topped up if it doesn't have the cycles to install the code, so long as that
+    // leaves this canister's own balance above this
+    min_cycles_balance: Cycles,
     on_canister_created: fn(Cycles) -> (),
 ) -> Result<CanisterId, (Option<CanisterId>, C2CError)> {
     // Counted from before the canister is created, since the chunks to install were chosen already
@@ -36,7 +39,7 @@ pub async fn create_and_install(
         current_wasm_version: BuildVersion::default(),
         new_wasm_version: wasm.version,
         new_wasm: wasm.wasm,
-        deposit_cycles_if_needed: true,
+        top_up_keeping_balance_above: Some(min_cycles_balance),
         args: init_args,
         mode: CanisterInstallMode::Reinstall,
         stop_start_canister: false,

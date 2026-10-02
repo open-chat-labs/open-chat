@@ -180,7 +180,7 @@ async fn install_canister<A: CandidType>(args: InstallCanisterArgs<A>, wasm_vers
             wasm_hash: args.wasm_hash,
             store_canister_id: args.canister_id,
         }),
-        deposit_cycles_if_needed: false,
+        top_up_keeping_balance_above: None,
         args: candid::encode_one(&args.init_args).unwrap(),
         mode: CanisterInstallMode::Install,
         stop_start_canister: false,

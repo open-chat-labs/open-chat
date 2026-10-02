@@ -1,5 +1,6 @@
 use crate::guards::caller_is_platform_operator;
 use crate::read_state;
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::withdraw_from_icpswap::*;
@@ -12,16 +13,17 @@ async fn withdraw_from_icpswap(args: Args) -> Response {
         return Response::Error(OCErrorCode::TargetUserNotFound.into());
     }
 
-    user_canister_c2c_client::c2c_withdraw_from_icpswap(
-        args.user_id.canister_id(),
-        &user_canister::c2c_withdraw_from_icpswap::Args {
-            user_id: args.user_id,
-            swap_id: args.swap_id,
-            input_token: args.input_token,
-            amount: args.amount,
-            fee: args.fee,
-        },
-    )
+    let canister_id = args.user_id.canister_id();
+    let c2c_args = user_canister::c2c_withdraw_from_icpswap::Args {
+        user_id: args.user_id,
+        swap_id: args.swap_id,
+        input_token: args.input_token,
+        amount: args.amount,
+        fee: args.fee,
+    };
+    top_up_and_retry_if_out_of_cycles(canister_id, || {
+        user_canister_c2c_client::c2c_withdraw_from_icpswap(canister_id, &c2c_args)
+    })
     .await
     .unwrap_or_else(|e| Response::Error(e.into()))
 }
