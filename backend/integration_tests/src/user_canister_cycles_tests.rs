@@ -1,15 +1,16 @@
 use crate::env::ENV;
-use crate::utils::{metrics, set_freezing_threshold};
+use crate::utils::{liquid_cycle_balance, metrics, set_freezing_threshold, tick_many};
 use crate::{TestEnv, client};
 use candid::Nat;
 use constants::B;
 use std::ops::Deref;
 use std::time::Duration;
 use types::CanisterId;
+use utils::cycles::{MIN_CYCLES_BALANCE, USER_CANISTER_MIN_CYCLES_BALANCE};
 
 // User canisters are being migrated into MultiUser canisters, so the LocalUserIndex's weekly check
-// holds them to their old minimum of 0.35T rather than topping each up towards the 1T other
-// canisters keep. A frozen User canister on the same LocalUserIndex shows when a check has run.
+// holds them to about their old minimum rather than topping each up towards the 1T other canisters
+// keep. A frozen User canister on the same LocalUserIndex shows when a check has run.
 #[test]
 fn weekly_check_holds_user_canisters_to_their_old_minimum() {
     let mut wrapper = ENV.deref().get();
@@ -19,10 +20,12 @@ fn weekly_check_holds_user_canisters_to_their_old_minimum() {
     let local_user_index = user.local_user_index;
     let frozen_user = client::register_user_with_referrer_on(env, canister_ids, local_user_index, None);
 
-    // Below 1T, but above 0.35T, once the cycles its freezing threshold reserves are set aside
+    // Once the cycles its freezing threshold reserves are set aside, it holds less than the 1T other
+    // canisters keep, but more than the User canister minimum
     let balance = env.cycle_balance(user.canister());
-    assert!(balance < 1_000 * B);
-    assert!(balance > 400 * B);
+    let liquid = liquid_cycle_balance(env, user.canister(), local_user_index);
+    assert!(liquid < MIN_CYCLES_BALANCE);
+    assert!(liquid > USER_CANISTER_MIN_CYCLES_BALANCE + 100 * B);
 
     // Raise the frozen user's freezing threshold until the cycles it reserves are just above its
     // balance, so it can't ask to be topped up itself
@@ -42,7 +45,9 @@ fn weekly_check_holds_user_canisters_to_their_old_minimum() {
         env.advance_time(Duration::from_secs(8 * 24 * 60 * 60));
         for _ in 0..3000 {
             env.tick();
-            if env.cycle_balance(frozen_user.canister()) > frozen_balance && check_queue_length(env, local_user_index) == 0 {
+            if env.cycle_balance(frozen_user.canister()) > frozen_balance + 150 * B
+                && check_queue_length(env, local_user_index) == 0
+            {
                 checked = true;
                 break 'outer;
             }
@@ -50,13 +55,16 @@ fn weekly_check_holds_user_canisters_to_their_old_minimum() {
     }
     assert!(checked, "The frozen user's canister was not topped up");
 
+    // The queue empties as the last canister in it is taken, before that canister's top up (if any)
+    // has landed
+    tick_many(env, 10);
+
     // The other user's canister, above its old minimum, was left alone
     assert!(env.cycle_balance(user.canister()) <= balance);
 
+    // Put the freezing threshold back, since the environment, and so this canister, is shared with
+    // later tests
     set_freezing_threshold(env, frozen_user.canister(), local_user_index, original_freezing_threshold);
-
-    // The clock has jumped by weeks
-    wrapper.discard();
 }
 
 fn check_queue_length(env: &pocket_ic::PocketIc, local_user_index: CanisterId) -> u64 {
