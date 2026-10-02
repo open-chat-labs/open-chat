@@ -4,8 +4,9 @@ use crate::model::users::Users;
 use crate::model::vault::Vault;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
+use constants::MINUTE_IN_MS;
 use serde::{Deserialize, Serialize};
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::collections::BTreeMap;
 use timer_job_queues::BatchedTimerJobQueue;
 use types::{BuildVersion, CanisterId, Cycles, FileId, TimestampMillis, Timestamped};
@@ -24,6 +25,7 @@ const MAX_EVENTS_TO_SYNC_PER_BATCH: usize = 1000;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
+    static LAST_CYCLES_BALANCE_CHECK: Cell<TimestampMillis> = Cell::default();
 }
 
 canister_state!(RuntimeState);
@@ -173,7 +175,13 @@ pub fn chunk_bounds(chunk_size: u32, total_size: u64, chunk_index: u32) -> Optio
     Some((start..end, chunk_count))
 }
 
+// Checks at most once every 5 minutes, as the other canisters do. Otherwise each of a burst of calls,
+// such as the chunks of an upload, would ask for a top up before the first one landed.
 fn check_cycles_balance() {
-    let storage_index_canister_id = read_state(|state| state.data.storage_index_canister_id);
+    let (storage_index_canister_id, now) = read_state(|state| (state.data.storage_index_canister_id, state.env.now()));
+    if now.saturating_sub(LAST_CYCLES_BALANCE_CHECK.get()) < 5 * MINUTE_IN_MS {
+        return;
+    }
+    LAST_CYCLES_BALANCE_CHECK.set(now);
     utils::cycles::check_cycles_balance(storage_index_canister_id);
 }
