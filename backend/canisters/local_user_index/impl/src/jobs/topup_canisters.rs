@@ -142,6 +142,7 @@ async fn notify_community_uninstalled(community_id: CommunityId) {
                 retry_after: 0,
                 // Kept, since it may hold tokens (see above)
                 delete_canister: false,
+                return_to_pool: false,
             });
             jobs::refund_cycles::start_job_if_required(state, None);
             info!(%community_id, "Uninstalled community removed");

@@ -32,7 +32,7 @@ pub(crate) async fn create_multi_user_canister() -> Result<(CanisterId, BuildVer
         candid::encode_one(&prepare_ok.init_canister_args).unwrap(),
         prepare_ok.cycles_to_use,
         read_state(|state| min_cycles_balance(state.data.test_mode)),
-        on_canister_created,
+        on_cycles_spent,
     )
     .await
     {
@@ -68,15 +68,15 @@ fn prepare(state: &mut RuntimeState) -> OCResult<PrepareOk> {
     }
     let canister_wasm = state.child_canister_wasm_to_install(ChildCanisterType::MultiUser);
 
+    // A canister taken from the pool is given its cycles now
     let cycles_to_use = if state.data.canister_pool.is_empty() {
-        let cycles_required = CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-        if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
-            return Err(OCErrorCode::CyclesBalanceTooLow.into());
-        }
-        cycles_required
+        CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE
     } else {
-        0
+        CHILD_CANISTER_INITIAL_CYCLES_BALANCE
     };
+    if !utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(state.data.test_mode)) {
+        return Err(OCErrorCode::CyclesBalanceTooLow.into());
+    }
 
     let canister_id = state.data.canister_pool.pop();
     let init_canister_args = multi_user_canister::init::Args {
@@ -127,6 +127,6 @@ fn rollback(canister_id: Option<CanisterId>, error: &C2CError, state: &mut Runti
     }
 }
 
-fn on_canister_created(cycles: Cycles) {
+fn on_cycles_spent(cycles: Cycles) {
     mutate_state(|state| state.data.total_cycles_spent_on_canisters += cycles);
 }

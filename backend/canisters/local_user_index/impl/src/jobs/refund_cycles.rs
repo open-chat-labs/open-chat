@@ -115,6 +115,8 @@ fn get_next(state: &mut RuntimeState) -> Result<CanisterToRefund, Option<Millise
 async fn process_canister(canister: CanisterToRefund) {
     let canister_id = canister.canister_id;
     let result = refund_cycles(canister_id, canister.delete_canister).await;
+    // Unless something unexpected is installed on it, or this canister doesn't control it
+    let can_return_to_pool = !matches!(result, Err(RefundError::NotController | RefundError::CanisterHasCode));
 
     mutate_state(|state| {
         IN_PROGRESS.set(false);
@@ -152,6 +154,7 @@ async fn process_canister(canister: CanisterToRefund) {
                     attempt: canister.attempt,
                     retry_after: state.env.now() + CYCLES_BALANCE_TOO_LOW_RETRY_DELAY,
                     delete_canister: canister.delete_canister,
+                    return_to_pool: canister.return_to_pool,
                 });
                 retrying = true;
                 info!(%canister_id, "Cycles refund deferred, this canister's cycles balance is too low");
@@ -166,6 +169,7 @@ async fn process_canister(canister: CanisterToRefund) {
                         attempt,
                         retry_after: state.env.now() + delay,
                         delete_canister: canister.delete_canister,
+                        return_to_pool: canister.return_to_pool,
                     });
                     retrying = true;
                 } else {
@@ -178,6 +182,11 @@ async fn process_canister(canister: CanisterToRefund) {
         // refunded from it
         if canister.delete_canister && !retrying {
             spawn_delete_canister(canister_id);
+        }
+
+        // A pool canister goes back into the pool, to be given cycles again when it is used
+        if canister.return_to_pool && !retrying && can_return_to_pool && !state.data.canister_pool.contains(&canister_id) {
+            state.data.canister_pool.push(canister_id);
         }
         start_job_if_required(state, None);
     });
