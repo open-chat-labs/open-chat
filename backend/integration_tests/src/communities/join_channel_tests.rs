@@ -1,7 +1,8 @@
 use crate::communities::join_community_tests::wait_for_invitation;
 use crate::env::ENV;
+use crate::utils::set_freezing_threshold;
 use crate::{CanisterIds, TestEnv, User, client};
-use candid::{Nat, Principal};
+use candid::Principal;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -88,18 +89,6 @@ fn join_channel_tops_up_community_which_is_out_of_cycles() {
     // Put the freezing threshold back, since the environment, and so this canister, is shared with
     // later tests
     set_freezing_threshold(env, canister_id, local_user_index, original_freezing_threshold);
-}
-
-fn set_freezing_threshold(env: &PocketIc, canister_id: CanisterId, controller: CanisterId, freezing_threshold: Nat) {
-    env.update_canister_settings(
-        canister_id,
-        Some(controller),
-        pocket_ic::CanisterSettings {
-            freezing_threshold: Some(freezing_threshold),
-            ..Default::default()
-        },
-    )
-    .unwrap();
 }
 
 #[test]

@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::process_expire_member_actions;
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use gated_groups::{CheckGateArgs, check_if_passes_gate_synchronously};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
@@ -45,6 +45,7 @@ pub(crate) fn restart_job(state: &RuntimeState) {
 fn run() {
     trace!("'expire_members' job running");
     TIMER_ID.set(None);
+    run_regular_jobs();
     mutate_state(|state| {
         let now = state.env.now();
         let mut users_to_lookup = Vec::new();

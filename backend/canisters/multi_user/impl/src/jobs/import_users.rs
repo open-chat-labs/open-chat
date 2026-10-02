@@ -47,6 +47,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 fn run() {
     trace!("'import_users' job running");
     TIMER_ID.set(None);
+    mutate_state(|state| state.run_regular_jobs());
 
     let user_ids = read_state(|state| {
         let now = state.env.now();

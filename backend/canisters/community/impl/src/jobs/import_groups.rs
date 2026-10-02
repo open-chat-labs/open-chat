@@ -7,7 +7,7 @@ use crate::model::members::AddResult;
 use crate::timer_job_types::{
     FinalizeGroupImportJob, JoinMembersToPublicChannelJob, ProcessGroupImportChannelMembersJob, TimerJob,
 };
-use crate::{RuntimeState, mutate_state, read_state};
+use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
 use chat_events::ChatEvents;
 use constants::{OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use group_canister::c2c_export_group::{Args, ExportExtras, Response};
@@ -50,6 +50,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 fn run() {
     trace!("'import_groups' job running");
     TIMER_ID.set(None);
+    run_regular_jobs();
 
     let batch = mutate_state(next_batch);
     if !batch.is_empty() {

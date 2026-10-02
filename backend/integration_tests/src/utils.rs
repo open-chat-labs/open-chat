@@ -1,5 +1,5 @@
 use crate::{User, client};
-use candid::Principal;
+use candid::{Nat, Principal};
 use constants::{
     CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE,
 };
@@ -95,6 +95,31 @@ pub fn wait_for_canister_to_be_deleted(env: &mut PocketIc, canister_id: Canister
         }
     }
     panic!("Canister {canister_id} was not deleted");
+}
+
+pub fn set_freezing_threshold(env: &PocketIc, canister_id: CanisterId, controller: CanisterId, freezing_threshold: Nat) {
+    env.update_canister_settings(
+        canister_id,
+        Some(controller),
+        pocket_ic::CanisterSettings {
+            freezing_threshold: Some(freezing_threshold),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+}
+
+pub fn wait_for_cycle_balance_above(env: &mut PocketIc, canister_id: CanisterId, balance: u128) {
+    for _ in 0..50 {
+        if env.cycle_balance(canister_id) > balance {
+            return;
+        }
+        env.tick();
+    }
+    panic!(
+        "Cycles balance of {canister_id} didn't rise above {balance}. Balance: {}",
+        env.cycle_balance(canister_id)
+    );
 }
 
 // Ticks until the user's canister lists their direct chat with `them`, ie. the first message sent in

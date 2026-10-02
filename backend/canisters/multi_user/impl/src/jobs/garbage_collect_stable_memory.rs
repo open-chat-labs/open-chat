@@ -27,6 +27,7 @@ pub(crate) fn start_job_if_required(data: &Data) -> bool {
 fn run() {
     trace!("'garbage_collect_stable_memory' job running");
     TIMER_ID.set(None);
+    mutate_state(|state| state.run_regular_jobs());
     mutate_state(|state| {
         let mut complete = true;
         while let Some((user_index, prefix)) = state.data.stable_memory_keys_to_garbage_collect.pop() {
