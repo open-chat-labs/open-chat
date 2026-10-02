@@ -163,6 +163,18 @@
         "notAvailable": "यह सामग्री ऐप के इस संस्करण में उपलब्ध नहीं है। आप इसे [oc.app](https://oc.app) पर वेब ऐप से अब भी देख सकते हैं।",
         "notAvailableTitle": "सामग्री उपलब्ध नहीं"
     },
+    "autoTranslate": {
+        "downloadPacks": "भाषा पैक डाउनलोड करें ({count})",
+        "turnOn": "इस चैट का अनुवाद करें",
+        "turnOff": "इस चैट का अनुवाद बंद करें",
+        "active": "इस डिवाइस पर {language} में अनुवाद हो रहा है",
+        "downloading": "{language} डाउनलोड हो रहा है ({index}/{total})…",
+        "failed": "डिवाइस पर अनुवाद अभी उपलब्ध नहीं है",
+        "showOriginal": "मूल दिखाएँ",
+        "showTranslation": "अनुवाद दिखाएँ",
+        "translateFrom": "{language} से अनुवाद करें",
+        "translatedFrom": "डिवाइस पर {language} से अनुवादित"
+    },
     "nativeUpdate": {
         "downloadingTitle": "एक क्षण! अपडेट हो रहा है ...",
         "downloadingMessage": "हम एक छोटा अपडेट डाउनलोड कर रहे हैं और फिर आप आगे बढ़ सकेंगे ...",

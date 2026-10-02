@@ -59,6 +59,7 @@ impl RuntimeState {
             push_events_whitelist: self.data.push_events_whitelist.iter().copied().collect(),
             event_store_client_info,
             ledger_transaction_processed_up_to: self.data.ledger_transaction_processed_up_to,
+            push_to_event_store: self.data.push_to_event_store,
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
                 event_sink: event_store_canister_id,
@@ -82,8 +83,14 @@ struct Data {
     pub chat_governance_canister_id: CanisterId,
     pub chat_treasury_subaccount: [u8; 32],
     pub ledger_transaction_processed_up_to: Option<u64>,
+    #[serde(default = "default_push_to_event_store")]
+    pub push_to_event_store: bool,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn default_push_to_event_store() -> bool {
+    true
 }
 
 impl Data {
@@ -108,6 +115,7 @@ impl Data {
             chat_governance_canister_id,
             chat_treasury_subaccount: compute_distribution_subaccount_bytes(chat_governance_canister_id, 0),
             ledger_transaction_processed_up_to: None,
+            push_to_event_store: true,
             rng_seed: [0; 32],
             test_mode,
         }
@@ -133,6 +141,7 @@ pub struct Metrics {
     pub push_events_whitelist: Vec<Principal>,
     pub event_store_client_info: EventStoreClientInfo,
     pub ledger_transaction_processed_up_to: Option<u64>,
+    pub push_to_event_store: bool,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,
 }

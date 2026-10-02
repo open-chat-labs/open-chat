@@ -1,18 +1,22 @@
 use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
+use ts_export::ts_export;
 use types::{BuildVersion, CanisterId, TimestampMillis, UserId};
 
+#[ts_export(user_index, user_migration)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
 }
 
+#[ts_export(user_index, user_migration)]
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(UserMigrationStatus),
     NotFound,
 }
 
+#[ts_export(user_index, user_migration)]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum UserMigrationStatus {
     Queued,

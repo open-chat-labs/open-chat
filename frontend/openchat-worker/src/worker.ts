@@ -886,6 +886,18 @@ function getAction(
         case "setMultiUserCanistersEnabled":
             return agent.setMultiUserCanistersEnabled(payload.enabled);
 
+        case "migrateUsers":
+            return agent.migrateUsers(payload.users);
+
+        case "setUserMigrationConcurrency":
+            return agent.setUserMigrationConcurrency(payload.value);
+
+        case "userMigration":
+            return agent.userMigration(payload.userId);
+
+        case "cancelUserMigration":
+            return agent.cancelUserMigration(payload.userId, payload.multiUserCanisterId);
+
         case "markLocalGroupIndexFull":
             return agent.markLocalGroupIndexFull(payload.canisterId, payload.full);
 

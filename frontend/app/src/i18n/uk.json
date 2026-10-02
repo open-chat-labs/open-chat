@@ -163,6 +163,18 @@
         "notAvailable": "Цей вміст недоступний у цій версії програми. Ви все одно можете отримати до нього доступ у веб-програмі за адресою [oc.app](https://oc.app).",
         "notAvailableTitle": "Вміст недоступний"
     },
+    "autoTranslate": {
+        "downloadPacks": "Завантажити мовні пакети ({count})",
+        "turnOn": "Перекласти цей чат",
+        "turnOff": "Зупинити переклад цього чату",
+        "active": "Переклад мовою {language} на цьому пристрої",
+        "downloading": "Завантаження: {language} ({index} з {total})…",
+        "failed": "Переклад на пристрої зараз недоступний",
+        "showOriginal": "Показати оригінал",
+        "showTranslation": "Показати переклад",
+        "translateFrom": "Перекласти з мови: {language}",
+        "translatedFrom": "Перекладено на пристрої з мови: {language}"
+    },
     "nativeUpdate": {
         "downloadingTitle": "Секунду! Оновлення ...",
         "downloadingMessage": "Ми завантажуємо невелике оновлення, і ви зможете продовжити ...",

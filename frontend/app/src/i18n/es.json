@@ -163,6 +163,18 @@
         "notAvailable": "Este contenido no está disponible en esta versión de la aplicación. Todavía puede acceder a él desde la aplicación web en [oc.app](https://oc.app).",
         "notAvailableTitle": "Contenido no disponible"
     },
+    "autoTranslate": {
+        "downloadPacks": "Descargar paquetes de idioma ({count})",
+        "turnOn": "Traducir este chat",
+        "turnOff": "Dejar de traducir este chat",
+        "active": "Traduciendo al {language} en este dispositivo",
+        "downloading": "Descargando {language} ({index} de {total})…",
+        "failed": "La traducción en el dispositivo no está disponible ahora",
+        "showOriginal": "Ver original",
+        "showTranslation": "Ver traducción",
+        "translateFrom": "Traducir desde: {language}",
+        "translatedFrom": "Traducido en el dispositivo desde: {language}"
+    },
     "nativeUpdate": {
         "downloadingTitle": "¡Un momento! Actualizando ...",
         "downloadingMessage": "Estamos descargando una actualización rápida y enseguida podrá continuar ...",

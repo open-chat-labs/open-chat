@@ -163,6 +163,18 @@
         "notAvailable": "هذا المحتوى غير متاح في هذا الإصدار من التطبيق. لا يزال بإمكانك الوصول إليه من تطبيق الويب على [oc.app](https://oc.app).",
         "notAvailableTitle": "المحتوى غير متاح"
     },
+    "autoTranslate": {
+        "downloadPacks": "تنزيل حزم اللغة ({count})",
+        "turnOn": "ترجمة هذه الدردشة",
+        "turnOff": "إيقاف ترجمة هذه الدردشة",
+        "active": "جارٍ الترجمة إلى {language} على هذا الجهاز",
+        "downloading": "جارٍ تنزيل {language} ({index} من {total})…",
+        "failed": "الترجمة على الجهاز غير متاحة حاليًا",
+        "showOriginal": "عرض الأصل",
+        "showTranslation": "عرض الترجمة",
+        "translateFrom": "ترجمة من {language}",
+        "translatedFrom": "تُرجمت على الجهاز من {language}"
+    },
     "nativeUpdate": {
         "downloadingTitle": "لحظة واحدة! جارٍ التحديث ...",
         "downloadingMessage": "نقوم بتنزيل تحديث سريع وستتمكن من المتابعة بعد قليل ...",
