@@ -3607,10 +3607,12 @@ export class OpenChatAgent extends EventTarget {
         return mergeAccountTransactions(results);
     }
 
-    // The wallet of `userId`, along with, for the current user, the wallet of each id they had before
-    // being migrated to a MultiUser canister, since until then their funds were held in their User
-    // canister's account rather than in their principal's. Each id of the user's maps to the same
-    // principal, so ids which were each in a MultiUser canister share a wallet, which is listed once.
+    // The wallet of `userId`, along with, for the current user, the wallet of each of their other ids,
+    // since the funds of a user migrated to a MultiUser canister were held in their User canister's
+    // account until then, and in their principal's since. That's whichever of those the session isn't
+    // under, which is usually their earlier one (see `updateOwnLatestUserIds`). Each of the user's ids
+    // maps to the same principal, so ids which were each in a MultiUser canister share a wallet,
+    // which is listed once.
     private walletsOf(userId: string): Wallets {
         const accounts = new Map<string, IcrcAccount>();
         const add = (account: IcrcAccount) => accounts.set(encodeIcrcAccount(account), account);
