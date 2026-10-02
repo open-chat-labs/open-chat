@@ -1,4 +1,5 @@
 use crate::bots::validate_installation_location;
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{UserIndexEvent, guards::caller_is_openchat_user, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_client::generate_c2c_call;
@@ -18,15 +19,12 @@ async fn uninstall_bot(args: Args) -> Response {
         Err(error) => return Response::Error(error),
     };
 
-    match c2c_uninstall_bot(
-        args.location.canister_id(),
-        &c2c_uninstall_bot::Args {
-            bot_id: args.bot_id,
-            caller: user_id,
-        },
-    )
-    .await
-    {
+    let canister_id = args.location.canister_id();
+    let c2c_args = c2c_uninstall_bot::Args {
+        bot_id: args.bot_id,
+        caller: user_id,
+    };
+    match top_up_and_retry_if_out_of_cycles(canister_id, || c2c_uninstall_bot(canister_id, &c2c_args)).await {
         Ok(Response::Success) => (),
         Ok(error) => return error,
         Err(error) => return Response::Error(error.into()),
