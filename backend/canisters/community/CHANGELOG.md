@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Tell a removed user's canister only via the queue of events for users, among the other events ([#9743](https://github.com/open-chat-labs/open-chat/pull/9743))
+
 ### Removed
 
 - Remove the one-off `post_upgrade` jobs and the legacy user event queue now that they have run on prod ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))
