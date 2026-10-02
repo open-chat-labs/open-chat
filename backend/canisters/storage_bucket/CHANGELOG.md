@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Ask for a top up once the liquid cycles balance falls below 250B ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
+
 ## [[2.0.2066](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2066-storage_bucket)] - 2026-09-29
 
 ### Changed

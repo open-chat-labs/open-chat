@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Check the cycles balance as background jobs run, not only as updates are handled ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
+- Ask for a top up once the liquid cycles balance falls below 250B ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
+
 ### Removed
 
 - Remove the one-off `post_upgrade` jobs and the legacy user event queue now that they have run on prod ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))

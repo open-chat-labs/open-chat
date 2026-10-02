@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Keep a minimum balance of 10T cycles, rather than the User canister's 0.35T ([#9735](https://github.com/open-chat-labs/open-chat/pull/9735))
+- Check the cycles balance as background jobs run, not only as updates are handled ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
+- Ask for a top up once the liquid cycles balance falls below 250B ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
 
 ## [[2.0.2091](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2091-multi_user)] - 2026-10-02
 
