@@ -98,6 +98,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Receive direct messages via `user_core`'s `receive_message`, shared with the User canister ([#9631](https://github.com/open-chat-labs/open-chat/pull/9631))
 - Run every update through `execute_update` or `execute_update_async`, which flush the queued events once the update is done ([#9642](https://github.com/open-chat-labs/open-chat/pull/9642))
 - Handle removal from a group or community sent via its queue of events for users ([#9715](https://github.com/open-chat-labs/open-chat/pull/9715))
+- Keep a minimum balance of 10T cycles, rather than the User canister's 0.35T ([#PR](https://github.com/open-chat-labs/open-chat/pull/PR))
 
 ### Fixed
 
