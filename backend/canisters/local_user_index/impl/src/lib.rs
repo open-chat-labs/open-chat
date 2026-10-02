@@ -48,7 +48,7 @@ use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
     CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_DIAMOND_MEMBERSHIP, CallDismissalKind, CanisterId, ChannelLatestMessageIndex,
     Chat, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles,
-    DailyPuzzleResult, DeclineVideoCallClaims, DiamondMembershipDetails, DirectCallDismissedNotification, FcmData,
+    CyclesTopUp, DailyPuzzleResult, DeclineVideoCallClaims, DiamondMembershipDetails, DirectCallDismissedNotification, FcmData,
     GroupCallDismissedNotification, IdempotentEnvelope, MediaScanConfig, MessageContentInitial, MessageId, Milliseconds,
     ModerationReferralConfig, Notification, NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId,
     UserNotificationEnvelope, UserNotificationPayload, VerifiedCredentialGateArgs,
@@ -200,6 +200,23 @@ impl RuntimeState {
             || self.data.local_groups.contains(&caller.into())
             || self.data.local_communities.contains(&caller.into())
             || self.data.local_multi_user_canisters.contains(&caller)
+    }
+
+    // The cycles top ups of one of this canister's children, or None if it isn't one
+    pub fn child_canister_cycle_top_ups(&self, canister_id: CanisterId) -> Option<&[CyclesTopUp]> {
+        self.data
+            .local_users
+            .get(&canister_id.into())
+            .map(|u| &u.cycle_top_ups)
+            .or_else(|| self.data.local_groups.get(&canister_id.into()).map(|g| &g.cycle_top_ups))
+            .or_else(|| self.data.local_communities.get(&canister_id.into()).map(|c| &c.cycle_top_ups))
+            .or_else(|| {
+                self.data
+                    .local_multi_user_canisters
+                    .get(&canister_id)
+                    .map(|c| &c.cycle_top_ups)
+            })
+            .map(|t| t.as_slice())
     }
 
     pub fn is_caller_notification_pusher(&self) -> bool {

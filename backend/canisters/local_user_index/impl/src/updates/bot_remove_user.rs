@@ -1,3 +1,4 @@
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{
     bots::{BotAccessContext, extract_access_context_from_community_or_group_context},
     mutate_state,
@@ -5,7 +6,7 @@ use crate::{
 use canister_api_macros::update;
 use local_user_index_canister::bot_remove_user::*;
 use oc_error_codes::OCErrorCode;
-use types::{BotActionScope, ChannelId, Chat, UserId};
+use types::{BotActionScope, CanisterId, ChannelId, Chat, UserId};
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_remove_user(args: Args) -> Response {
@@ -27,44 +28,53 @@ async fn call_chat_canister(
 ) -> Response {
     match context.scope {
         BotActionScope::Chat(details) => match details.chat {
-            Chat::Channel(community_id, _) => community_canister_c2c_client::c2c_bot_remove_user(
-                community_id.into(),
-                &community_canister::c2c_bot_remove_user::Args {
+            Chat::Channel(community_id, _) => {
+                let canister_id = CanisterId::from(community_id);
+                let c2c_args = community_canister::c2c_bot_remove_user::Args {
                     bot_id: context.bot_id,
                     initiator: context.initiator,
                     channel_id,
                     user_id,
                     block,
-                },
-            )
-            .await
-            .into(),
-            Chat::Group(chat_id) => group_canister_c2c_client::c2c_bot_remove_user(
-                chat_id.into(),
-                &group_canister::c2c_bot_remove_user::Args {
+                };
+                top_up_and_retry_if_out_of_cycles(canister_id, || {
+                    community_canister_c2c_client::c2c_bot_remove_user(canister_id, &c2c_args)
+                })
+                .await
+                .into()
+            }
+            Chat::Group(chat_id) => {
+                let canister_id = CanisterId::from(chat_id);
+                let c2c_args = group_canister::c2c_bot_remove_user::Args {
                     bot_id: context.bot_id,
                     initiator: context.initiator,
                     user_id,
                     block,
-                },
-            )
-            .await
-            .into(),
+                };
+                top_up_and_retry_if_out_of_cycles(canister_id, || {
+                    group_canister_c2c_client::c2c_bot_remove_user(canister_id, &c2c_args)
+                })
+                .await
+                .into()
+            }
             Chat::Direct(_) => OCErrorCode::InvalidBotActionScope
                 .with_message("Direct chats not supported")
                 .into(),
         },
-        BotActionScope::Community(details) => community_canister_c2c_client::c2c_bot_remove_user(
-            details.community_id.into(),
-            &community_canister::c2c_bot_remove_user::Args {
+        BotActionScope::Community(details) => {
+            let canister_id = CanisterId::from(details.community_id);
+            let c2c_args = community_canister::c2c_bot_remove_user::Args {
                 bot_id: context.bot_id,
                 initiator: context.initiator,
                 channel_id,
                 user_id,
                 block,
-            },
-        )
-        .await
-        .into(),
+            };
+            top_up_and_retry_if_out_of_cycles(canister_id, || {
+                community_canister_c2c_client::c2c_bot_remove_user(canister_id, &c2c_args)
+            })
+            .await
+            .into()
+        }
     }
 }

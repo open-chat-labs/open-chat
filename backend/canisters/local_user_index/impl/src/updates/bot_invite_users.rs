@@ -1,3 +1,4 @@
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{
     bots::{BotAccessContext, extract_access_context_from_chat_context},
     mutate_state, read_state,
@@ -6,7 +7,7 @@ use crate::{
 use canister_api_macros::update;
 use local_user_index_canister::bot_invite_users::*;
 use oc_error_codes::OCErrorCode;
-use types::{ChannelId, Chat, UserId};
+use types::{CanisterId, ChannelId, Chat, UserId};
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_invite_users(args: Args) -> Response {
@@ -38,29 +39,29 @@ async fn call_chat_canister(context: BotAccessContext, channel_id: Option<Channe
             .with_message("Direct chats not supported")
             .into(),
         Chat::Channel(community_id, channel_id) => {
-            if let Some((invited_users, community_name, channel_name)) =
-                match community_canister_c2c_client::c2c_bot_invite_users(
-                    community_id.into(),
-                    &community_canister::c2c_bot_invite_users::Args {
-                        bot_id: context.bot_id,
-                        initiator: context.initiator,
-                        channel_id,
-                        users,
-                    },
-                )
-                .await
-                {
-                    Ok(community_canister::c2c_bot_invite_users::Response::Failed(_)) => None,
-                    Ok(community_canister::c2c_bot_invite_users::Response::Success(result)) => {
-                        Some((result.invited_users, result.community_name, result.channel_name))
-                    }
-                    Ok(community_canister::c2c_bot_invite_users::Response::PartialSuccess(result)) => {
-                        Some((result.invited_users, result.community_name, result.channel_name))
-                    }
-                    Ok(community_canister::c2c_bot_invite_users::Response::Error(error)) => return Response::Error(error),
-                    Err(error) => return Err(error).into(),
+            let canister_id = CanisterId::from(community_id);
+            let c2c_args = community_canister::c2c_bot_invite_users::Args {
+                bot_id: context.bot_id,
+                initiator: context.initiator,
+                channel_id,
+                users,
+            };
+            let response = top_up_and_retry_if_out_of_cycles(canister_id, || {
+                community_canister_c2c_client::c2c_bot_invite_users(canister_id, &c2c_args)
+            })
+            .await;
+
+            if let Some((invited_users, community_name, channel_name)) = match response {
+                Ok(community_canister::c2c_bot_invite_users::Response::Failed(_)) => None,
+                Ok(community_canister::c2c_bot_invite_users::Response::Success(result)) => {
+                    Some((result.invited_users, result.community_name, result.channel_name))
                 }
-            {
+                Ok(community_canister::c2c_bot_invite_users::Response::PartialSuccess(result)) => {
+                    Some((result.invited_users, result.community_name, result.channel_name))
+                }
+                Ok(community_canister::c2c_bot_invite_users::Response::Error(error)) => return Response::Error(error),
+                Err(error) => return Err(error).into(),
+            } {
                 mutate_state(|state| {
                     send_channel_invitation(
                         context.bot_id,
@@ -77,16 +78,18 @@ async fn call_chat_canister(context: BotAccessContext, channel_id: Option<Channe
             Response::Success
         }
         Chat::Group(chat_id) => {
-            match group_canister_c2c_client::c2c_bot_invite_users(
-                chat_id.into(),
-                &group_canister::c2c_bot_invite_users::Args {
-                    bot_id: context.bot_id,
-                    initiator: context.initiator,
-                    users,
-                },
-            )
-            .await
-            {
+            let canister_id = CanisterId::from(chat_id);
+            let c2c_args = group_canister::c2c_bot_invite_users::Args {
+                bot_id: context.bot_id,
+                initiator: context.initiator,
+                users,
+            };
+            let response = top_up_and_retry_if_out_of_cycles(canister_id, || {
+                group_canister_c2c_client::c2c_bot_invite_users(canister_id, &c2c_args)
+            })
+            .await;
+
+            match response {
                 Ok(response) => match response {
                     group_canister::c2c_bot_invite_users::Response::Success(result) => mutate_state(|state| {
                         send_group_invitation(context.bot_id, chat_id, result.group_name, result.invited_users, state);

@@ -1,10 +1,11 @@
 use crate::guards::caller_is_openchat_user;
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{RuntimeState, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::invite_users_to_group::{Response::*, *};
-use types::{ChatId, MessageContentInitial, TextContent, UserId};
+use types::{CanisterId, ChatId, MessageContentInitial, TextContent, UserId};
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -16,7 +17,12 @@ async fn invite_users_to_group(args: Args) -> Response {
         users,
     };
 
-    match group_canister_c2c_client::c2c_invite_users(args.group_id.into(), &c2c_args).await {
+    let canister_id = CanisterId::from(args.group_id);
+    match top_up_and_retry_if_out_of_cycles(canister_id, || {
+        group_canister_c2c_client::c2c_invite_users(canister_id, &c2c_args)
+    })
+    .await
+    {
         Ok(response) => match response {
             group_canister::c2c_invite_users::Response::Success(s) => {
                 mutate_state(|state| {
