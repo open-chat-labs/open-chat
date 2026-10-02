@@ -1,6 +1,6 @@
 use crate::RuntimeState;
 
-// Each job (other than the one-off migrations) runs the regular jobs before doing its work, since
+// Each job (other than the one-off migration) runs the regular jobs before doing its work, since
 // they include checking the cycles balance, which would otherwise only happen as updates are handled.
 // So a canister which is busy with background work but receiving few updates still asks to be topped
 // up before it runs out of cycles.
