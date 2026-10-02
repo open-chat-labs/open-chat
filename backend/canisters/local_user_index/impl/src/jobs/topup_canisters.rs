@@ -114,6 +114,8 @@ async fn run_async(canister_id: CanisterId) {
 fn child_canister_min_cycles_balance(canister_id: CanisterId, state: &RuntimeState) -> Cycles {
     if state.data.local_multi_user_canisters.contains(&canister_id) {
         multi_user_canister_min_cycles_balance(state.data.test_mode)
+    } else if state.data.local_users.contains(&canister_id.into()) {
+        utils::cycles::USER_CANISTER_MIN_CYCLES_BALANCE
     } else {
         utils::cycles::MIN_CYCLES_BALANCE
     }

@@ -79,6 +79,8 @@ mod queries;
 mod updates;
 
 const CHILD_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = utils::cycles::MIN_CYCLES_BALANCE + CHILD_CANISTER_TOP_UP_AMOUNT; // 1.2T cycles
+const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles =
+    utils::cycles::USER_CANISTER_MIN_CYCLES_BALANCE + CHILD_CANISTER_TOP_UP_AMOUNT; // 0.55T cycles
 const CHILD_CANISTER_TOP_UP_AMOUNT: Cycles = 200_000_000_000; // 0.2T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const MULTI_USER_UPGRADE_CONCURRENCY: usize = 1;

@@ -1,5 +1,5 @@
 use canister_client::generate_c2c_call;
-use constants::T;
+use constants::{B, CYCLES_REQUIRED_FOR_UPGRADE, T};
 use std::cmp::max;
 use tracing::error;
 use types::{CanisterId, Cycles};
@@ -8,6 +8,10 @@ use types::{CanisterId, Cycles};
 // an upgrade needs, so that a canister which goes quiet, and so stops checking its balance, has
 // months of cycles before it freezes.
 pub const MIN_CYCLES_BALANCE: Cycles = T; // 1T
+
+// User canisters are being migrated into MultiUser canisters, so rather than each being topped up
+// towards `MIN_CYCLES_BALANCE`, they keep the minimum they had before it was raised
+pub const USER_CANISTER_MIN_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + 50 * B; // 0.35T
 
 pub fn check_cycles_balance(top_up_canister_id: CanisterId) {
     check_cycles_balance_with_min(top_up_canister_id, MIN_CYCLES_BALANCE);
@@ -71,7 +75,6 @@ generate_c2c_call!(c2c_notify_low_balance);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use constants::B;
 
     #[test]
     fn a_small_canister_keeps_the_minimum_above_its_freezing_threshold() {
