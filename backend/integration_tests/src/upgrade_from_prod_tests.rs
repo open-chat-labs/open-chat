@@ -238,9 +238,15 @@ fn user_canisters_survive_upgrade_from_prod() {
     assert_eq!(count_keys(env, user1.canister(), KeyType::GroupChatRemoved), 2);
     assert_eq!(count_keys(env, user1.canister(), KeyType::CommunityRemoved), 1);
 
-    // A group which is rejoined is no longer returned as removed, until it is left again
+    // A group which is rejoined is no longer returned as removed, until it is left again. The User
+    // canister hears of the join via the LocalUserIndex's queue of events for users, so wait for it.
     client::group::happy_path::join_group(env, user1.principal, removed_group_ids[0]);
-    tick_many(env, 3);
+    for _ in 0..20 {
+        if removed_chats(env, &user1, removed_since).1 == vec![removed_group_ids[1]] {
+            break;
+        }
+        env.tick();
+    }
     assert_eq!(removed_chats(env, &user1, removed_since).1, vec![removed_group_ids[1]]);
     env.advance_time(Duration::from_secs(1));
     client::user::happy_path::leave_group(env, &user1, removed_group_ids[0]);
