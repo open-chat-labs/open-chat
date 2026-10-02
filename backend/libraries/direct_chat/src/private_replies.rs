@@ -1,6 +1,5 @@
 use ic_principal::Principal;
 use stable_memory_map::{KeyPrefix, PrivateReplyKey, PrivateReplyKeyPrefix, with_map, with_map_mut};
-use std::collections::BTreeMap;
 use std::ops::RangeInclusive;
 use types::{ChatId, MessageIndex, UserId};
 
@@ -45,28 +44,6 @@ fn range(group_chat_id: ChatId) -> RangeInclusive<PrivateReplyKey> {
     prefix.create_key(&(min_user_id, MessageIndex::from(0)))..=prefix.create_key(&(max_user_id, MessageIndex::from(u32::MAX)))
 }
 
-// Moves the private replies which were held on the heap into stable memory, returning how many were
-// moved
-// TODO: Remove this after next release
-pub fn migrate_to_stable_memory(entries: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>) -> usize {
-    let mut entries: Vec<_> = entries
-        .into_iter()
-        .flat_map(|(group_chat_id, replies)| {
-            let prefix = PrivateReplyKeyPrefix::new(group_chat_id);
-            replies.into_iter().map(move |reply| (prefix.create_key(&reply), Vec::new()))
-        })
-        .collect();
-    if entries.is_empty() {
-        return 0;
-    }
-    // Insert the entries in key order
-    entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-
-    let count = entries.len();
-    with_map_mut(|m| m.insert_many(entries));
-    count
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -96,26 +73,6 @@ mod tests {
         add(chat(1), user(1), 10.into());
 
         assert_eq!(take(chat(1)), vec![(user(1), 10.into())]);
-    }
-
-    #[test]
-    fn entries_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-
-        assert_eq!(migrate_to_stable_memory(BTreeMap::new()), 0);
-        assert_eq!(
-            migrate_to_stable_memory(BTreeMap::from([
-                (chat(1), (1..=10u8).rev().map(|i| (user(i), (i as u32).into())).collect()),
-                (chat(2), vec![(user(1), 1.into())]),
-            ])),
-            11
-        );
-
-        assert_eq!(
-            take(chat(1)),
-            (1..=10u8).map(|i| (user(i), (i as u32).into())).collect::<Vec<_>>()
-        );
-        assert_eq!(take(chat(2)), vec![(user(1), 1.into())]);
     }
 
     fn chat(i: u8) -> ChatId {

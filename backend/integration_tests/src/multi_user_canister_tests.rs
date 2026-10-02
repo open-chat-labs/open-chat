@@ -1,6 +1,6 @@
 use crate::chit_tests::DAY_ZERO;
 use crate::env::{ENV, VIDEO_CALL_OPERATOR};
-use crate::utils::{metrics, now_millis, tick_many, try_metrics};
+use crate::utils::{metrics, now_millis, tick_many, try_metrics, wait_for_cycle_balance_above};
 use crate::{CanisterIds, TestEnv, client, wasms};
 use candid::Principal;
 use constants::{
@@ -7240,19 +7240,6 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
         },
     )
     .unwrap();
-}
-
-fn wait_for_cycle_balance_above(env: &mut PocketIc, canister_id: CanisterId, balance: u128) {
-    for _ in 0..50 {
-        if env.cycle_balance(canister_id) > balance {
-            return;
-        }
-        env.tick();
-    }
-    panic!(
-        "Cycles balance of {canister_id} didn't rise above {balance}. Balance: {}",
-        env.cycle_balance(canister_id)
-    );
 }
 
 // A user in a MultiUser canister can read their direct chats via their LocalUserIndex's

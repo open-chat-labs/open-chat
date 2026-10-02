@@ -31,7 +31,7 @@ pub(crate) fn start(state: &RuntimeState) {
     refund_cycles::start_job_if_required(state, None);
     start_user_migrations::start_job_if_required(state);
     topup_canister_pool::start_job_if_required(state, None);
-    topup_canisters::start_job(state.env.now());
+    topup_canisters::start_job();
     upgrade_communities::start_job_if_required(state);
     upgrade_groups::start_job_if_required(state);
     upgrade_multi_users::start_job_if_required(state);

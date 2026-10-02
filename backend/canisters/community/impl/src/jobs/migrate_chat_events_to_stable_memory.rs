@@ -1,4 +1,4 @@
-use crate::{RuntimeState, mutate_state};
+use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -35,6 +35,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 fn run() {
     trace!("'migrate_chat_events_to_stable_memory' job running");
     TIMER_ID.set(None);
+    run_regular_jobs();
     mutate_state(|state| {
         let mut count = 0;
         'outer: for events in state.data.channels.iter_mut().map(|c| &mut c.chat.events) {

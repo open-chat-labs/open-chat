@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2092](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2092-notification_pusher)] - 2026-10-02
+
 ### Changed
 
 - Skip the web push arm for call dismissal notifications, which only an FCM device can act on ([#9509](https://github.com/open-chat-labs/open-chat/pull/9509))

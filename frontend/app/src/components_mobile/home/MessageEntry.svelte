@@ -814,7 +814,8 @@
                                 wallet={externalWalletDraft.wallet}
                                 ledger={externalWalletDraft.ledger}
                                 amount={externalWalletDraft.amount}
-                                fees={externalWalletDraft.fees} />
+                                fees={externalWalletDraft.fees}
+                                chatId={messageContext.chatId} />
                         </div>
                     {/if}
                     {#if $videoProcessingProgress !== undefined && messageContextsEqual($videoProcessingProgress.context, messageContext)}

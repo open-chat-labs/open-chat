@@ -1,9 +1,12 @@
-use crate::{can_borrow_state, mutate_state, read_state};
+use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
 use std::collections::HashSet;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
 use user_canister::c2c_user_canister_v2::Event;
-use utils::canister::{delay_if_should_retry_failed_c2c_call_to_new_method, is_target_canister_uninstalled_or_deleted};
+use utils::canister::{
+    delay_if_should_retry_failed_c2c_call, delay_if_should_retry_failed_c2c_call_to_new_method,
+    is_user_canister_possibly_migrated,
+};
 
 // The direct chat events from this canister's users for users in other canisters, batched per
 // canister, so that those for every user a canister holds are sent to it together. They are always
@@ -13,7 +16,7 @@ grouped_timer_job_batch!(UserCanisterEventBatch, CanisterId, IdempotentEnvelope<
 impl TimerJobItem for UserCanisterEventBatch {
     async fn process(&self) -> Result<(), Option<Milliseconds>> {
         if can_borrow_state() {
-            mutate_state(|state| state.run_regular_jobs());
+            run_regular_jobs();
         }
 
         let response = user_canister_c2c_client::c2c_user_canister_v2(
@@ -29,11 +32,7 @@ impl TimerJobItem for UserCanisterEventBatch {
             Err(error) => {
                 // If the user has been migrated to a MultiUser canister, their events are sent on
                 // to them there instead. Only a canister which holds a user alone is ever migrated.
-                // A missing method isn't taken as a sign of a migration here, since every User
-                // canister is missing `c2c_user_canister_v2` until upgraded, and it is retried
-                // anyway, so the migration is found once the cycles refunder is uninstalled again.
-                // TODO use `is_user_canister_possibly_migrated` once every User canister has it
-                if is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message())
+                if is_user_canister_possibly_migrated(&error)
                     && self.items.iter().all(|event| event.value.recipient.index() == 0)
                 {
                     match latest_id_if_migrated(self.key.into()).await {
@@ -84,19 +83,19 @@ impl TimerJobItem for UserCanisterEventBatch {
                             });
                             return Ok(());
                         }
-                        Ok(None) => {}
+                        // The LocalUserIndex may not have heard of the migration yet, so the events are
+                        // retried, including while the cycles refunder is installed, which is only
+                        // briefly, and is otherwise the only time a User canister is missing the method
+                        Ok(None) => return Err(delay_if_should_retry_failed_c2c_call_to_new_method(&error)),
                         // They may have been migrated, so the events are retried as the lookup would
                         // be, falling back to retrying them as the call to the old canister would be
                         Err(lookup_error) => {
                             return Err(delay_if_should_retry_failed_c2c_call_to_new_method(&lookup_error)
-                                .or_else(|| delay_if_should_retry_failed_c2c_call_to_new_method(&error)));
+                                .or_else(|| delay_if_should_retry_failed_c2c_call(&error)));
                         }
                     }
                 }
-                // Keep retrying if the recipient's User canister hasn't yet been upgraded to a version
-                // with `c2c_user_canister_v2`
-                // TODO revert to `delay_if_should_retry_failed_c2c_call` once every User canister has it
-                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call_to_new_method(&error);
+                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
                 Err(delay_if_should_retry)
             }
         }

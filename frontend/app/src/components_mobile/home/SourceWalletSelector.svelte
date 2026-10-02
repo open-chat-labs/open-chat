@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { EXTERNAL_WALLETS_ENABLED, SIGNER_WALLETS, type SignerWallet } from "@client";
+    import { cryptoLookup, EXTERNAL_WALLETS_ENABLED, SIGNER_WALLETS, type SignerWallet } from "@client";
     import { Body, ColourVars, Column, Row, Sheet, Subtitle } from "component-lib";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../i18n/i18n";
@@ -11,9 +11,25 @@
         // The external wallet the payment will come from, or undefined for the user's own OpenChat
         // account, which is where payments have always come from
         wallet?: SignerWallet;
+        // The ledger of the token being paid
+        ledger: string;
     }
 
-    let { wallet = $bindable() }: Props = $props();
+    let { wallet = $bindable(), ledger }: Props = $props();
+
+    // A payment is only pulled from an external wallet once it has approved the spender, which
+    // needs the token's ledger to support ICRC-2
+    let available = $derived(
+        EXTERNAL_WALLETS_ENABLED &&
+            ($cryptoLookup.get(ledger)?.supportedStandards.includes("ICRC-2") ?? false),
+    );
+
+    // Switching to a token which can't be paid from an external wallet goes back to OpenChat's own
+    $effect(() => {
+        if (!available && wallet !== undefined) {
+            wallet = undefined;
+        }
+    });
 
     let choosing = $state(false);
 
@@ -23,7 +39,7 @@
     }
 </script>
 
-{#if EXTERNAL_WALLETS_ENABLED}
+{#if available}
     <Row onClick={() => (choosing = true)} width={"hug"} crossAxisAlignment={"center"} gap={"sm"}>
         <!-- The same size as the balance text alongside, but in the label colour -->
         <Body colour={"textSecondary"} width={"hug"}>

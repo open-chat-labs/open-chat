@@ -11,17 +11,6 @@ pub struct GroupChats {
     groups_created: u32,
     group_chats: HashMap<ChatId, GroupChat>,
     pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
-    // The groups removed which were held on the heap, which are all moved into stable memory in
-    // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
-    // TODO: Remove this after next release
-    #[serde(rename = "removed", default, skip_serializing)]
-    removed_on_heap: Vec<RemovedGroup>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct RemovedGroup {
-    chat_id: ChatId,
-    timestamp: TimestampMillis,
 }
 
 impl GroupChats {
@@ -86,16 +75,6 @@ impl GroupChats {
         self.group_chats.remove(&chat_id)
     }
 
-    // TODO: Remove this after next release
-    pub fn migrate_removed_to_stable_memory(&mut self) -> usize {
-        removed_chats::migrate_to_stable_memory(
-            &RemovedChatKeyPrefix::new_for_group_chats(),
-            std::mem::take(&mut self.removed_on_heap)
-                .into_iter()
-                .map(|g| (g.timestamp, g.chat_id.into())),
-        )
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = &GroupChat> {
         self.group_chats.values()
     }
@@ -157,39 +136,6 @@ mod tests {
         assert_eq!(group_chats.removed_since(30), vec![chat(1)]);
         assert!(group_chats.removed_since(50).is_empty());
         assert!(group_chats.any_updated(49));
-    }
-
-    #[test]
-    fn removed_groups_serialized_before_the_migration_are_migrated_to_stable_memory() {
-        // The format `GroupChats` was serialized in before the removed groups were moved into
-        // stable memory
-        #[derive(Serialize)]
-        struct LegacyGroupChats {
-            groups_created: u32,
-            group_chats: HashMap<ChatId, GroupChat>,
-            pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
-            removed: Vec<RemovedGroup>,
-        }
-
-        init_stable_memory_map();
-        let legacy = LegacyGroupChats {
-            groups_created: 2,
-            group_chats: HashMap::new(),
-            pinned: Timestamped::default(),
-            removed: (1..=5)
-                .map(|i| RemovedGroup {
-                    chat_id: chat(i),
-                    timestamp: i as u64 * 10,
-                })
-                .collect(),
-        };
-
-        let mut group_chats: GroupChats = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&legacy));
-
-        assert_eq!(group_chats.groups_created(), 2);
-        assert_eq!(group_chats.migrate_removed_to_stable_memory(), 5);
-        assert_eq!(group_chats.migrate_removed_to_stable_memory(), 0);
-        assert_eq!(group_chats.removed_since(20), vec![chat(5), chat(4), chat(3)]);
     }
 
     fn chat(i: u8) -> ChatId {

@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{KeyPrefix, TokenSwapKey, TokenSwapKeyPrefix, with_map, with_map_mut};
-use std::collections::HashMap;
 use std::ops::RangeInclusive;
 use types::icrc1::Account;
 use types::{TimestampMillis, Timestamped};
@@ -16,11 +15,6 @@ pub struct SwapSuccess {
 // The user's token swaps, stored in the main stable memory map keyed by swap id
 #[derive(Serialize, Deserialize, Default)]
 pub struct TokenSwaps {
-    // The swaps which were held on the heap, which are all moved into stable memory in
-    // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
-    // TODO: Remove this after next release
-    #[serde(rename = "swaps", default, skip_serializing)]
-    on_heap: HashMap<u128, TokenSwap>,
     #[serde(default)]
     count: u32,
 }
@@ -70,27 +64,6 @@ impl TokenSwaps {
 
     pub fn len(&self) -> usize {
         self.count as usize
-    }
-
-    // Moves the swaps which were held on the heap into stable memory, returning how many were moved
-    // TODO: Remove this after next release
-    pub fn migrate_to_stable_memory(&mut self) -> usize {
-        if self.on_heap.is_empty() {
-            return 0;
-        }
-
-        let prefix = TokenSwapKeyPrefix::new();
-        let mut entries: Vec<_> = std::mem::take(&mut self.on_heap)
-            .into_iter()
-            .map(|(swap_id, swap)| (prefix.create_key(&swap_id), swap_to_bytes(&swap)))
-            .collect();
-        // Insert the entries in key order
-        entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-
-        let count = entries.len();
-        with_map_mut(|m| m.insert_many(entries));
-        self.count += count as u32;
-        count
     }
 }
 
@@ -200,39 +173,6 @@ mod tests {
             vec![2, 3]
         );
         assert_eq!(swaps.page(0, 1).iter().map(|s| s.args.swap_id).collect::<Vec<_>>(), vec![1]);
-    }
-
-    #[test]
-    fn swaps_on_heap_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-        let mut swaps = TokenSwaps {
-            on_heap: (1..=50u128)
-                .map(|swap_id| (swap_id, TokenSwap::new(args(swap_id), false, true, swap_id as u64)))
-                .collect(),
-            count: 0,
-        };
-
-        assert_eq!(swaps.migrate_to_stable_memory(), 50);
-        assert!(swaps.on_heap.is_empty());
-        assert_eq!(swaps.migrate_to_stable_memory(), 0);
-
-        assert_eq!(swaps.len(), 50);
-        let all = swaps.all();
-        assert_eq!(all.len(), 50);
-        assert!(
-            all.iter()
-                .enumerate()
-                .all(|(i, s)| s.args.swap_id == i as u128 + 1 && s.started == i as u64 + 1)
-        );
-        assert!(swaps.get(20).unwrap().auto_withdrawals);
-
-        // Updating a migrated swap doesn't change the count
-        swaps.upsert(swaps.get(20).unwrap());
-        assert_eq!(swaps.len(), 50);
-
-        // The heap isn't serialized
-        let deserialized: TokenSwaps = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&swaps));
-        assert_eq!(deserialized.len(), 50);
     }
 
     fn args(swap_id: u128) -> user_canister::swap_tokens::Args {

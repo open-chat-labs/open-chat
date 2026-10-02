@@ -1,4 +1,4 @@
-use crate::{Data, mutate_state};
+use crate::{Data, mutate_state, run_regular_jobs};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -21,6 +21,7 @@ pub(crate) fn start_job_if_required(data: &Data) -> bool {
 fn run() {
     trace!("'garbage_collect_stable_memory' job running");
     TIMER_ID.set(None);
+    run_regular_jobs();
     mutate_state(|state| {
         while let Some(prefix) = state.data.stable_memory_keys_to_garbage_collect.pop() {
             let result = stable_memory_map::garbage_collect(prefix.clone());
