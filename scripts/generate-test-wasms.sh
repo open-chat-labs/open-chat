@@ -10,7 +10,7 @@
 #
 # The wasms are built with TEST_BUILD=1 (see generate-all-canister-wasms.sh), so they aren't the
 # wasms which would be released. On CI, where there is no cache to share and the build is warmed by
-# the `build_caches` workflow, this builds everything the release way instead.
+# the cache the integration tests write on master, this builds everything the release way instead.
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
