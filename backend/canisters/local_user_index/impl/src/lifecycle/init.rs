@@ -1,13 +1,11 @@
 use crate::Data;
-use crate::lifecycle::{init_env, init_state};
+use crate::lifecycle::{CANISTER_POOL_TARGET_SIZE, init_env, init_state};
 use crate::memory::get_stable_memory_map_memory;
 use canister_tracing_macros::trace;
 use ic_cdk::init;
 use local_user_index_canister::init::Args;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
-
-const CANISTER_POOL_TARGET_SIZE: u16 = 20;
 
 #[init]
 #[trace]
@@ -17,8 +15,6 @@ fn init(args: Args) {
     init_cycles_dispenser_client(args.cycles_dispenser_canister_id, args.test_mode);
 
     let env = init_env(args.rng_seed);
-    let canister_pool_target_size = if args.test_mode { 3_u16 } else { CANISTER_POOL_TARGET_SIZE };
-
     let data = Data::new(
         args.user_index_canister_id,
         args.group_index_canister_id,
@@ -32,7 +28,7 @@ fn init(args: Args) {
         args.registry_canister_id,
         args.internet_identity_canister_id,
         args.website_canister_id,
-        canister_pool_target_size,
+        CANISTER_POOL_TARGET_SIZE,
         args.video_call_operators,
         args.oc_secret_key_der,
         args.openai_api_key,

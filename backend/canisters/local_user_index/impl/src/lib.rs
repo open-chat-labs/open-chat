@@ -869,6 +869,7 @@ impl RuntimeState {
             chunk_store: crate::jobs::refresh_chunk_store::metrics(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
+            cycles_refunded_from_pool_canisters: self.data.cycles_refunded_from_pool_canisters,
             cycles_topped_up_for_refunds: self.data.cycles_topped_up_for_refunds,
             registry_tokens: self.data.registry_tokens.len(),
             referral_codes: self.data.referral_codes.metrics(now),
@@ -977,6 +978,8 @@ struct Data {
     #[serde(default)]
     pub cycles_refunded_from_deleted_users: Cycles,
     #[serde(default)]
+    pub cycles_refunded_from_pool_canisters: Cycles,
+    #[serde(default)]
     pub cycles_topped_up_for_refunds: Cycles,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
@@ -1066,6 +1069,10 @@ pub struct CanisterToRefund {
     // been refunded
     #[serde(default)]
     pub delete_canister: bool,
+    // Set for a canister from the canister pool, which goes back into the pool once its cycles have
+    // been refunded
+    #[serde(default)]
+    pub return_to_pool: bool,
 }
 
 impl Data {
@@ -1141,6 +1148,7 @@ impl Data {
             users_to_delete_queue: VecDeque::new(),
             cycles_refund_queue: VecDeque::new(),
             cycles_refunded_from_deleted_users: 0,
+            cycles_refunded_from_pool_canisters: 0,
             cycles_topped_up_for_refunds: 0,
             events_for_remote_users: Vec::new(),
             cycles_balance_check_queue: VecDeque::new(),
@@ -1172,6 +1180,33 @@ impl Data {
             registry_tokens: RegistryTokens::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
+    }
+
+    // Queues every canister in the pool to have its cycles refunded, after which it goes back into
+    // the pool. A pool canister is given its cycles when it is used, so until then it needn't hold
+    // any, and an empty canister still pays the IC's base fee. Returns how many were queued.
+    pub fn refund_pool_canisters(&mut self) -> usize {
+        let mut queued: HashSet<CanisterId> = self.cycles_refund_queue.iter().map(|c| c.canister_id).collect();
+        let mut count = 0;
+        for canister_id in self.canister_pool.take_all() {
+            // Belt and braces, a live canister should never be in the pool
+            let is_live = self.local_users.contains(&canister_id.into())
+                || self.local_groups.contains(&canister_id.into())
+                || self.local_communities.contains(&canister_id.into())
+                || self.local_multi_user_canisters.contains(&canister_id);
+
+            if !is_live && queued.insert(canister_id) {
+                self.cycles_refund_queue.push_back(CanisterToRefund {
+                    canister_id,
+                    attempt: 0,
+                    retry_after: 0,
+                    delete_canister: false,
+                    return_to_pool: true,
+                });
+                count += 1;
+            }
+        }
+        count
     }
 }
 
@@ -1236,6 +1271,7 @@ pub struct Metrics {
     pub chunk_store: crate::jobs::refresh_chunk_store::ChunkStoreMetrics,
     pub cycles_refund_queue_length: usize,
     pub cycles_refunded_from_deleted_users: Cycles,
+    pub cycles_refunded_from_pool_canisters: Cycles,
     pub cycles_topped_up_for_refunds: Cycles,
     pub registry_tokens: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,

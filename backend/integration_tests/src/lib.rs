@@ -12,6 +12,7 @@ mod batched_summary_and_event_tests;
 mod bot_tests;
 mod call_push_tests;
 mod call_relay_tests;
+mod canister_pool_tests;
 mod change_group_role_tests;
 mod chit_tests;
 mod chunk_store_tests;

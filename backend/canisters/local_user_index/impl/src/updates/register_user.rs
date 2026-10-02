@@ -100,7 +100,7 @@ async fn create_user_canister(
         candid::encode_one(&init_canister_args).unwrap(),
         cycles_to_use,
         read_state(|state| min_cycles_balance(state.data.test_mode)),
-        on_canister_created,
+        on_cycles_spent,
     )
     .await
     {
@@ -109,9 +109,8 @@ async fn create_user_canister(
             if let Some(id) = canister_id {
                 mutate_state(|state| {
                     // If this canister is not controlled by the LocalUserIndex then installs into
-                    // it can never succeed, so drop it from the pool and let the topup job replace
-                    // it, else registrations would keep pulling the same unusable canisters out of
-                    // the pool
+                    // it can never succeed, so drop it from the pool, else registrations would keep
+                    // pulling the same unusable canisters out of the pool
                     if canister::is_invalid_controller_error(error.reject_code(), error.message()) {
                         error!(canister_id = %id, "Dropping canister from pool - LocalUserIndex is not a controller");
                         crate::jobs::topup_canister_pool::start_job_if_required(state, None);
@@ -289,15 +288,15 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         });
     }
 
+    // A canister taken from the pool is given its cycles now
     let cycles_to_use = if state.data.canister_pool.is_empty() {
-        let cycles_required = CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-        if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
-            return Err(CyclesBalanceTooLow);
-        }
-        cycles_required
+        CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE
     } else {
-        0
+        CHILD_CANISTER_INITIAL_CYCLES_BALANCE
     };
+    if !utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(state.data.test_mode)) {
+        return Err(CyclesBalanceTooLow);
+    }
 
     let canister_id = state.data.canister_pool.pop();
     let canister_wasm = state.child_canister_wasm_to_install(ChildCanisterType::User);
@@ -416,6 +415,6 @@ fn validate_public_key(caller: Principal, public_key: &[u8], identity_canister_i
     }
 }
 
-fn on_canister_created(cycles: Cycles) {
+fn on_cycles_spent(cycles: Cycles) {
     mutate_state(|state| state.data.total_cycles_spent_on_canisters += cycles);
 }

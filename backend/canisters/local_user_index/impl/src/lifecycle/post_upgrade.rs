@@ -1,5 +1,5 @@
 use crate::Data;
-use crate::lifecycle::{init_env, init_state};
+use crate::lifecycle::{CANISTER_POOL_TARGET_SIZE, init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -17,10 +17,20 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
+
+    // One-off: stop refilling the pool, and refund the cycles held by the canisters already in it,
+    // since a canister taken from the pool is now given its cycles when it is used.
+    // TODO remove in the release after this one
+    data.canister_pool.set_target_size(CANISTER_POOL_TARGET_SIZE);
+    let pool_canisters_queued = data.refund_pool_canisters();
+    info!(
+        pool_canisters_queued,
+        "Queued the pool canisters to have their cycles refunded"
+    );
 
     let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
