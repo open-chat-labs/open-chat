@@ -33,13 +33,13 @@ impl CanisterStatusMinimal {
         nat_to_u128(&self.cycles)
     }
 
-    // The cycles the canister must keep to not be frozen, worked out as the IC does: the cycles it
-    // burns while idle over the freezing threshold, less those it holds in reserve
+    // The cycles the canister must keep to not be frozen
     pub fn freeze_threshold_cycles(&self) -> u128 {
-        let idle_cycles_burned_per_day = nat_to_u128(&self.idle_cycles_burned_per_day);
-        let freezing_threshold_secs = nat_to_u128(&self.settings.freezing_threshold);
-        let threshold = idle_cycles_burned_per_day.saturating_mul(freezing_threshold_secs) / (24 * 60 * 60);
-        threshold.saturating_sub(nat_to_u128(&self.reserved_cycles))
+        crate::cycles::freeze_threshold_cycles(
+            nat_to_u128(&self.idle_cycles_burned_per_day),
+            u64::try_from(self.settings.freezing_threshold.0.clone()).unwrap_or(u64::MAX),
+            nat_to_u128(&self.reserved_cycles),
+        )
     }
 }
 

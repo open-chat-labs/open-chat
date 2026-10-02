@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Top up a child canister which is out of cycles, then retry the call to it ([#9736](https://github.com/open-chat-labs/open-chat/pull/9736))
 - Never let topping up a canister take this canister's own balance below its minimum ([#9736](https://github.com/open-chat-labs/open-chat/pull/9736))
 - Top up a child canister by the measure it uses to ask for a top up, the cycles above its freezing threshold ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748))
+- Don't top up a child canister which has no code ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748))
 
 ### Removed
 

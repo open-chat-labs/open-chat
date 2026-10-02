@@ -7242,13 +7242,15 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
     .unwrap();
 }
 
-// The cycles above the canister's freezing threshold, worked out as the IC does
+// The cycles above the canister's freezing threshold
 fn liquid_cycle_balance(env: &PocketIc, canister_id: CanisterId, controller: Principal) -> u128 {
     let status = env.canister_status(canister_id, Some(controller)).unwrap();
     let to_u128 = |nat: &candid::Nat| -> u128 { nat.0.clone().try_into().unwrap() };
-    let freeze_threshold = (to_u128(&status.idle_cycles_burned_per_day) * to_u128(&status.settings.freezing_threshold)
-        / (24 * 60 * 60))
-        .saturating_sub(to_u128(&status.reserved_cycles));
+    let freeze_threshold = utils::cycles::freeze_threshold_cycles(
+        to_u128(&status.idle_cycles_burned_per_day),
+        status.settings.freezing_threshold.0.clone().try_into().unwrap(),
+        to_u128(&status.reserved_cycles),
+    );
     to_u128(&status.cycles).saturating_sub(freeze_threshold)
 }
 

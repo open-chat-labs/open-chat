@@ -107,8 +107,13 @@ async fn run_async(canister_id: CanisterId) {
             // A community's canister only loses its code by being uninstalled, which the IC does
             // once a canister runs out of cycles. Topping it up can't bring its state back, so
             // the community is removed instead.
-            if status.module_hash.is_none() && read_state(|state| state.data.local_communities.contains(&canister_id.into())) {
-                notify_community_uninstalled(canister_id.into()).await;
+            if status.module_hash.is_none() {
+                if read_state(|state| state.data.local_communities.contains(&canister_id.into())) {
+                    notify_community_uninstalled(canister_id.into()).await;
+                } else {
+                    // Topping up a canister with no code would only strand the cycles in it
+                    info!(%canister_id, "Not topping up a canister which has no code");
+                }
             } else if utils::cycles::is_cycles_balance_low(
                 status.cycles(),
                 status.freeze_threshold_cycles(),

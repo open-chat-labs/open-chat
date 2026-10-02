@@ -46,6 +46,17 @@ pub fn is_cycles_balance_low(cycles_balance: Cycles, freeze_threshold: Cycles, m
     liquid_cycles < max(2 * freeze_threshold, min_cycles_balance)
 }
 
+// The cycles a canister must keep to not be frozen, worked out as the IC does: the cycles it burns
+// while idle over the freezing threshold, less those it holds in reserve
+pub fn freeze_threshold_cycles(
+    idle_cycles_burned_per_day: Cycles,
+    freezing_threshold_secs: u64,
+    reserved_cycles: Cycles,
+) -> Cycles {
+    let threshold = idle_cycles_burned_per_day.saturating_mul(freezing_threshold_secs as Cycles) / (24 * 60 * 60);
+    threshold.saturating_sub(reserved_cycles)
+}
+
 // This is needed because the 'generate_update_call' macro looks for 'c2c_notify_low_balance::Args'
 // and 'c2c_notify_low_balance::Response'
 mod c2c_notify_low_balance {
@@ -95,5 +106,19 @@ mod tests {
     #[test]
     fn a_canister_below_its_freezing_threshold_is_low() {
         assert!(is_cycles_balance_low(10 * B, 20 * B, MIN_CYCLES_BALANCE));
+    }
+
+    #[test]
+    fn the_freeze_threshold_is_the_idle_burn_over_the_freezing_threshold() {
+        let thirty_days_secs = 30 * 24 * 60 * 60;
+        assert_eq!(freeze_threshold_cycles(2 * B, thirty_days_secs, 0), 60 * B);
+        assert_eq!(freeze_threshold_cycles(2 * B, 12 * 60 * 60, 0), B);
+    }
+
+    #[test]
+    fn reserved_cycles_count_towards_the_freeze_threshold() {
+        let thirty_days_secs = 30 * 24 * 60 * 60;
+        assert_eq!(freeze_threshold_cycles(2 * B, thirty_days_secs, 10 * B), 50 * B);
+        assert_eq!(freeze_threshold_cycles(2 * B, thirty_days_secs, 100 * B), 0);
     }
 }
