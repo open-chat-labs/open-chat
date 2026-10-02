@@ -419,9 +419,11 @@ fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canist
 }
 
 // A member can only pay a gate with an approval made under their own spender subaccount, so one
-// made under another member's is never spent
-#[test]
-fn payment_gate_is_not_paid_with_an_approval_under_another_members_spender_subaccount() {
+// made under another member's is never spent. Nor is one made to the group's default account, since
+// whoever called the group could spend it.
+#[test_case(true; "approved for another member")]
+#[test_case(false; "approved without a spender subaccount")]
+fn payment_gate_is_only_paid_with_an_approval_under_the_members_spender_subaccount(approved_for_another_member: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -443,7 +445,14 @@ fn payment_gate_is_not_paid_with_an_approval_under_another_members_spender_subac
         env,
         alice.principal,
         canister_ids.icp_ledger,
-        member_spender_account(group, &bob),
+        if approved_for_another_member {
+            member_spender_account(group, &bob)
+        } else {
+            Account {
+                owner: group,
+                subaccount: None,
+            }
+        },
         amount - fee,
     );
 

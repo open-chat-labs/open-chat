@@ -54,7 +54,8 @@ impl Default for MembersStableStorage {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CommunityMemberStableStorage {
-    // TODO: Remove the default once every member's principal has been populated
+    // Members stored before principals were added had theirs set by a one-off backfill, but only
+    // where it found the principal, so the default stays until no member is known to lack one
     #[serde(rename = "p", default = "Principal::anonymous")]
     principal: Principal,
     #[serde(rename = "d", alias = "date_added")]

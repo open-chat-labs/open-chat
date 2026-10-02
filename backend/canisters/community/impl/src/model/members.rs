@@ -1147,9 +1147,9 @@ impl From<&CommunityMemberInternal> for CommunityMember {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use std::collections::HashMap;
     use test_case::test_case;
     use types::CanisterId;
 
