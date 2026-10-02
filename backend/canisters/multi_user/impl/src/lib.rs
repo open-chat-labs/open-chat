@@ -91,10 +91,14 @@ fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
 
 async fn execute_update_async<F: FnOnce() -> Fut, Fut: Future<Output = R>, R>(f: F) -> R {
     let _guard = AsyncWorkGuard::new();
-    mutate_state(|state| state.run_regular_jobs());
+    run_regular_jobs();
     let result = f().await;
     mutate_state(|state| state.data.flush_pending_events());
     result
+}
+
+fn run_regular_jobs() {
+    mutate_state(|state| state.run_regular_jobs());
 }
 
 struct RuntimeState {

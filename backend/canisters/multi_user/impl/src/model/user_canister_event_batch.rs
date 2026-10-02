@@ -1,4 +1,4 @@
-use crate::{can_borrow_state, mutate_state, read_state};
+use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
 use std::collections::HashSet;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
@@ -16,7 +16,7 @@ grouped_timer_job_batch!(UserCanisterEventBatch, CanisterId, IdempotentEnvelope<
 impl TimerJobItem for UserCanisterEventBatch {
     async fn process(&self) -> Result<(), Option<Milliseconds>> {
         if can_borrow_state() {
-            mutate_state(|state| state.run_regular_jobs());
+            run_regular_jobs();
         }
 
         let response = user_canister_c2c_client::c2c_user_canister_v2(
