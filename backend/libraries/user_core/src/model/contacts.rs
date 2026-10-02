@@ -1,7 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{ContactKey, ContactKeyPrefix, EntryExt, KeyPrefix, with_map, with_map_mut};
-use std::collections::HashMap;
 use std::ops::RangeInclusive;
 use types::{FieldTooLongResult, FieldTooShortResult, OptionUpdate, UserId};
 use user_canister::set_contact::OptionalContact;
@@ -9,22 +8,15 @@ use user_canister::set_contact::OptionalContact;
 const MAX_NICKNAME_LEN: u32 = 32;
 const MIN_NICKNAME_LEN: u32 = 2;
 
-// The user's contacts, stored in the main stable memory map keyed by user id
+// The user's contacts, stored in the main stable memory map keyed by user id. It has braces, rather
+// than being a unit struct, since it is serialized as an empty map.
 #[derive(Serialize, Deserialize, Default)]
-pub struct Contacts {
-    // The contacts which were held on the heap, which are all moved into stable memory in
-    // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
-    // TODO: Remove this after next release
-    #[serde(rename = "map", default, skip_serializing)]
-    on_heap: HashMap<UserId, Contact>,
-}
+pub struct Contacts {}
 
 // Each contact is serialized into stable memory, so its field names are kept short
 #[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 pub struct Contact {
-    // The alias is the field's name when the contacts were held on the heap
-    // TODO: Remove the alias after next release
-    #[serde(rename = "n", alias = "nickname", default, skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "n", default, skip_serializing_if = "Option::is_none")]
     pub nickname: Option<String>,
 }
 
@@ -101,27 +93,6 @@ impl Contacts {
                 .map(|(key, bytes)| (key.user_id(), contact_from_bytes(&bytes)))
                 .collect()
         })
-    }
-
-    // Moves the contacts which were held on the heap into stable memory, returning how many were
-    // moved
-    // TODO: Remove this after next release
-    pub fn migrate_to_stable_memory(&mut self) -> usize {
-        if self.on_heap.is_empty() {
-            return 0;
-        }
-
-        let prefix = ContactKeyPrefix::new();
-        let mut entries: Vec<_> = std::mem::take(&mut self.on_heap)
-            .into_iter()
-            .map(|(user_id, contact)| (prefix.create_key(&user_id), contact_to_bytes(&contact)))
-            .collect();
-        // Insert the entries in key order
-        entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-
-        let count = entries.len();
-        with_map_mut(|m| m.insert_many(entries));
-        count
     }
 }
 
@@ -222,6 +193,13 @@ mod tests {
     }
 
     #[test]
+    fn contacts_are_serialized_as_an_empty_map() {
+        let bytes = msgpack::serialize_then_unwrap(Contacts::default());
+        assert_eq!(bytes, [0x80]);
+        let _: Contacts = msgpack::deserialize_then_unwrap(&bytes);
+    }
+
+    #[test]
     fn contacts_use_short_field_names() {
         let contact = Contact {
             nickname: Some("abc".to_string()),
@@ -233,62 +211,6 @@ mod tests {
 
         // An empty contact deserializes, so fields can be made optional in future
         assert_eq!(contact_from_bytes(&contact_to_bytes(&Contact::default())), Contact::default());
-    }
-
-    #[test]
-    fn contacts_on_heap_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-
-        // Contacts serialized by the previous version, whose field names were in full
-        #[derive(Serialize)]
-        struct PreviousContacts {
-            map: HashMap<UserId, PreviousContact>,
-        }
-        #[derive(Serialize)]
-        struct PreviousContact {
-            nickname: Option<String>,
-        }
-        let previous = PreviousContacts {
-            map: (1..=50)
-                .map(|i| {
-                    (
-                        user_id(i),
-                        PreviousContact {
-                            nickname: Some(format!("nickname{i}")),
-                        },
-                    )
-                })
-                .collect(),
-        };
-        let mut contacts: Contacts = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&previous));
-
-        assert_eq!(contacts.migrate_to_stable_memory(), 50);
-        assert!(contacts.on_heap.is_empty());
-        assert_eq!(contacts.migrate_to_stable_memory(), 0);
-
-        let all = contacts.all();
-        assert_eq!(all.len(), 50);
-        for (user_id, contact) in all {
-            let i = user_id.as_slice()[0];
-            assert_eq!(contact.nickname, Some(format!("nickname{i}")));
-        }
-
-        // Migrated contacts can be updated
-        assert!(matches!(
-            contacts.set_contact(set_nickname(20, "updated")),
-            SetContactResponse::Success
-        ));
-        assert!(contacts.all().contains(&(
-            user_id(20),
-            Contact {
-                nickname: Some("updated".to_string())
-            }
-        )));
-
-        // The heap isn't serialized
-        let deserialized: Contacts = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&contacts));
-        assert!(deserialized.on_heap.is_empty());
-        assert_eq!(deserialized.all().len(), 50);
     }
 
     fn nicknames(contacts: &Contacts) -> Vec<(u8, String)> {

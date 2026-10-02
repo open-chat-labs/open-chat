@@ -252,11 +252,11 @@ import {
     isError,
     isMultiUserCanisterUser,
     isSuccessfulEventsResponse,
+    memberSpenderAccount,
     mergeEventStreamResponses,
     messageContextToString,
     messageContextsEqual,
     offline,
-    spenderSubaccount,
     textToCode,
     userCanisterSpenderAccount,
     userWalletAccount,
@@ -603,21 +603,16 @@ export class OpenChatAgent extends EventTarget {
         return this.approveToPull(spender, ledger, amount, fee);
     }
 
-    // The account a group or community spends as when it pulls a payment from one of its members:
-    // its own, under the subaccount derived from the member's principal, so that it only ever
-    // spends a member's own approval. Mirrors `ledger_utils::spender_subaccount`.
+    // The account a group or community spends as when it pulls a payment from one of its members
+    // (see `memberSpenderAccount`)
     private chatSpenderAccount(chatId: GroupChatIdentifier | ChannelIdentifier): IcrcAccount {
         return this.memberSpenderAccount(
             chatId.kind === "channel" ? chatId.communityId : chatId.groupId,
         );
     }
 
-    // The same, given the group or community's canister id
     private memberSpenderAccount(canisterId: string): IcrcAccount {
-        return {
-            owner: Principal.fromText(canisterId),
-            subaccount: spenderSubaccount(this.principal),
-        };
+        return memberSpenderAccount(canisterId, () => this.principal.toText());
     }
 
     // What a message takes from its sender's wallet: the crypto it sends or the prize it offers,
@@ -1015,10 +1010,8 @@ export class OpenChatAgent extends EventTarget {
     // transfer from the sender's wallet, once approved to, into the wallet it knows the recipient
     // by. This is how a user who holds their own funds sends one, since their canister can't make
     // the transfer for them. A transfer from another account is pulled from that instead, which
-    // its owner has to have approved the group or community to spend from.
-    // TODO: An external wallet is asked to approve the user's canister (see
-    // `approveExternalWalletSpending`), so can't pay this way until it is asked to approve the
-    // group or community instead
+    // its owner has to have approved the group or community to spend from (see
+    // `paymentSpenderAccount`).
     private async sendMessageWithTransferDirectly(
         chatId: GroupChatIdentifier | ChannelIdentifier,
         user: CreatedUser,
@@ -2080,9 +2073,7 @@ export class OpenChatAgent extends EventTarget {
                         // A debit (daily puzzle entry or hint) moves the balance without
                         // touching the total earned, so the balance must be compared too
                         userResponse.chitBalance !== chitState.value.chitBalance ||
-                        userResponse.streakEnds !== chitState.value.streakEnds ||
-                        // TODO remove this once User canisters have been upgraded
-                        userResponse.nextDailyClaim !== chitState.value.nextDailyChitClaim
+                        userResponse.streakEnds !== chitState.value.streakEnds
                     ) {
                         chitState.value = {
                             streakEnds: userResponse.streakEnds,

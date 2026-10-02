@@ -481,39 +481,6 @@ pub struct RemovedFromCommunity {
     pub public: bool,
 }
 
-// A group or community sends removals to the user's canister apart from the other events, so that a
-// canister on a version which doesn't know of them ignores them, rather than failing to read the whole
-// batch, which would then be retried until the canister was upgraded. Such a canister is also told
-// directly, by `c2c_remove_from_group` / `c2c_remove_from_community`.
-// TODO: Send removals among the other events once every User canister knows of them
-fn split_out_removals<T, R>(
-    events: Vec<IdempotentEnvelope<T>>,
-    classify: impl Fn(T) -> EventOrRemoval<T, R>,
-) -> (Vec<IdempotentEnvelope<T>>, Vec<IdempotentEnvelope<R>>) {
-    let mut others = Vec::new();
-    let mut removals = Vec::new();
-    for event in events {
-        match classify(event.value) {
-            EventOrRemoval::Removal(value) => removals.push(IdempotentEnvelope {
-                created_at: event.created_at,
-                idempotency_id: event.idempotency_id,
-                value,
-            }),
-            EventOrRemoval::Event(value) => others.push(IdempotentEnvelope {
-                created_at: event.created_at,
-                idempotency_id: event.idempotency_id,
-                value,
-            }),
-        }
-    }
-    (others, removals)
-}
-
-enum EventOrRemoval<T, R> {
-    Event(T),
-    Removal(R),
-}
-
 // Puts the removals back among the other events, in the order they were created, since the
 // idempotency checker drops any event older than the latest it has had from the same canister
 fn merge_in_removals<T, R>(

@@ -47,11 +47,11 @@ describe("UserClient reading a direct chat's events", () => {
         ]);
     });
 
-    test("a User canister is sent the peer in `user_id`, where the previous wasm reads it", async () => {
+    test("a User canister is told whose copy of the chat to read too", async () => {
         expect(await sent(USER_CANISTER_USER)).toEqual([
-            ["events", THEM, THEM],
-            ["events_by_index", THEM, THEM],
-            ["events_window", THEM, THEM],
+            ["events", USER_CANISTER_USER, THEM],
+            ["events_by_index", USER_CANISTER_USER, THEM],
+            ["events_window", USER_CANISTER_USER, THEM],
         ]);
     });
 });

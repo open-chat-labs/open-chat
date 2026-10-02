@@ -6,16 +6,14 @@ use crate::{
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::remove_member::*;
-use fire_and_forget_handler::FireAndForgetHandler;
 use local_user_index_canister_c2c_client::lookup_user;
-use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
 use std::collections::HashMap;
 use types::{
     BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, CommunityMembersRemoved, CommunityPermission, CommunityRole,
     CommunityUsersBlocked, OCResult, UnitResult, UserId,
 };
-use user_canister::{CommunityCanisterEvent, RemovedFromCommunity, c2c_remove_from_community};
+use user_canister::{CommunityCanisterEvent, RemovedFromCommunity};
 
 #[update(msgpack = true)]
 #[trace]
@@ -177,23 +175,8 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
     handle_activity_notification(state);
 
     if removed {
-        // Fire-and-forget call to notify the user canister, kept for User canisters which don't yet know
-        // of the event below
-        // TODO: Remove this once every User canister has been upgraded
-        remove_membership_from_user_canister(
-            user_id,
-            removed_by,
-            block,
-            state.data.name.value.clone(),
-            state.data.is_public.value,
-            &mut state.data.fire_and_forget_handler,
-        );
-
-        // The user's canister is also told via the queue of events for users, which keeps them in order
-        // and sends them on to the user's new id if they've been migrated to a MultiUser canister, so
-        // the removal isn't lost if their canister is frozen for the migration, or unreachable for
-        // longer than the direct call is retried. Whichever of the two arrives second finds the
-        // community already gone, so does nothing, unless the user has rejoined in between. A bot's
+        // The user's canister is told via the queue of events for users, which keeps them in order and
+        // sends them on to the user's new id if they've been migrated to a MultiUser canister. A bot's
         // canister takes no such events.
         if !is_bot {
             state.push_event_to_user(
@@ -208,26 +191,4 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
             );
         }
     }
-}
-
-fn remove_membership_from_user_canister(
-    user_id: UserId,
-    removed_by: UserId,
-    blocked: bool,
-    community_name: String,
-    public: bool,
-    fire_and_forget_handler: &mut FireAndForgetHandler,
-) {
-    let args = c2c_remove_from_community::Args {
-        user_id,
-        removed_by,
-        blocked,
-        community_name,
-        public,
-    };
-    fire_and_forget_handler.send(
-        user_id.canister_id(),
-        "c2c_remove_from_community_msgpack".to_string(),
-        serialize_then_unwrap(args),
-    );
 }

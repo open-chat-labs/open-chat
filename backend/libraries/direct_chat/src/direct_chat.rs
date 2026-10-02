@@ -23,7 +23,6 @@ use utils::migrated_user_ids::MigratedUserIds;
 /// (so its own event and message indexes) and its own record of how far each of them has read,
 /// whether they are in different canisters or the same one.
 #[derive(Serialize, Deserialize)]
-#[serde(from = "DirectChatSerde")]
 pub struct DirectChat {
     pub them: UserId,
     pub user_type: UserType,
@@ -119,32 +118,6 @@ impl DirectChat {
         self.them = new_user_id;
         self.events.set_direct_chat_user(new_user_id);
         self.them_migrated_at = Some(now);
-    }
-
-    // TODO: Remove this after next release
-    pub(crate) fn mark_as_self_chat(&mut self) -> bool {
-        if std::mem::replace(&mut self.self_chat, true) {
-            false
-        } else {
-            self.align_self_chat_read_positions();
-            true
-        }
-    }
-
-    // In a chat with yourself every message is read on both sides as it is sent, but a chat
-    // serialized before it was marked as a self chat only advanced one of the two read positions
-    // per message, and the split shape kept both of a self chat's positions in its first slot
-    // leaving the second unused. So on either being read, whichever position is further along
-    // is taken for both.
-    // TODO: Remove this after next release
-    fn align_self_chat_read_positions(&mut self) {
-        let furthest = if self.read_by_them_up_to.value > self.read_by_me_up_to.value {
-            self.read_by_them_up_to.clone()
-        } else {
-            self.read_by_me_up_to.clone()
-        };
-        self.read_by_me_up_to = furthest.clone();
-        self.read_by_them_up_to = furthest;
     }
 
     pub fn events(&self) -> &ChatEvents {
@@ -399,12 +372,6 @@ impl DirectChat {
             .remove_up_to(self.events.stable_memory_prefix(), their_read_up_to);
     }
 
-    // TODO: Remove this after next release
-    pub fn migrate_unread_message_indexes_to_stable_memory(&mut self) -> usize {
-        self.unread_message_index_map
-            .migrate_to_stable_memory(self.events.stable_memory_prefix())
-    }
-
     pub fn push_bot_updated_event(&mut self, event: BotUpdated, now: TimestampMillis) -> PushEventResultInternal {
         self.events
             .push_main_event(ChatEventInternal::BotUpdated(Box::new(event)), now)
@@ -649,23 +616,6 @@ impl DirectChat {
         self.events.subscribe_bot_to_events(bot_id, event_types, permitted_categories)
     }
 
-    pub fn skip_their_metrics(&mut self, my_user_id: UserId) {
-        self.events.skip_their_metrics(my_user_id)
-    }
-
-    pub fn migrate_events_to_stable_memory(&mut self, max_count: usize) -> usize {
-        self.events.migrate_to_stable_memory(max_count)
-    }
-
-    pub fn migrate_legacy_events_batch(&mut self) -> bool {
-        self.events.migrate_legacy_events_batch()
-    }
-
-    // TODO: Remove this once every user canister has been migrated
-    pub(crate) fn assign_key_id(&mut self, key_id: u32) -> bool {
-        self.events.assign_direct_chat_key_id(key_id)
-    }
-
     pub(crate) fn migrate_reply(
         &mut self,
         message_index: MessageIndex,
@@ -674,88 +624,6 @@ impl DirectChat {
         now: TimestampMillis,
     ) {
         self.events.migrate_reply(message_index, old, new, now)
-    }
-}
-
-// Reads a `DirectChat` in its current shape or in the one it was briefly serialized in between
-// times, with the events and both read positions split out into a `core` (which may also have
-// held `date_created`) and a `min_visible_event_index`, which is ignored. The current shape is
-// also the one from before the split, plus `self_chat`, so User canisters running either of the
-// versions deployed before this one can be upgraded from.
-// TODO: Remove the legacy fields after next release
-#[derive(Deserialize)]
-struct DirectChatSerde {
-    them: UserId,
-    user_type: UserType,
-    notifications_muted: Timestamped<bool>,
-    archived: Timestamped<bool>,
-    // Absent only for chats serialized with `date_created` on the core
-    #[serde(default)]
-    date_created: Option<TimestampMillis>,
-    unread_message_index_map: UnreadMessageIndexMap,
-    #[serde(default)]
-    self_chat: bool,
-    #[serde(default)]
-    events: Option<ChatEvents>,
-    #[serde(default)]
-    read_by_me_up_to: Option<Timestamped<Option<MessageIndex>>>,
-    #[serde(default)]
-    read_by_them_up_to: Option<Timestamped<Option<MessageIndex>>>,
-    #[serde(default)]
-    core: Option<LegacyDirectChatCore>,
-    #[serde(default)]
-    events_ttl_latest_change: EventsTtlLatestChange,
-    #[serde(default)]
-    them_migrated_at: Option<TimestampMillis>,
-}
-
-#[derive(Deserialize)]
-struct LegacyDirectChatCore {
-    #[serde(default)]
-    date_created: TimestampMillis,
-    events: ChatEvents,
-    // Read up to by me, then by them
-    read_up_to: [Timestamped<Option<MessageIndex>>; 2],
-}
-
-impl From<DirectChatSerde> for DirectChat {
-    fn from(value: DirectChatSerde) -> Self {
-        let (events, read_by_me_up_to, read_by_them_up_to, date_created) = match value.core {
-            Some(core) => {
-                let [read_by_me_up_to, read_by_them_up_to] = core.read_up_to;
-                (
-                    core.events,
-                    read_by_me_up_to,
-                    read_by_them_up_to,
-                    value.date_created.unwrap_or(core.date_created),
-                )
-            }
-            None => (
-                value.events.expect("events"),
-                value.read_by_me_up_to.expect("read_by_me_up_to"),
-                value.read_by_them_up_to.expect("read_by_them_up_to"),
-                value.date_created.expect("date_created"),
-            ),
-        };
-
-        let mut chat = DirectChat {
-            them: value.them,
-            user_type: value.user_type,
-            notifications_muted: value.notifications_muted,
-            archived: value.archived,
-            date_created,
-            events,
-            unread_message_index_map: value.unread_message_index_map,
-            read_by_me_up_to,
-            read_by_them_up_to,
-            self_chat: value.self_chat,
-            events_ttl_latest_change: value.events_ttl_latest_change,
-            them_migrated_at: value.them_migrated_at,
-        };
-        if chat.self_chat {
-            chat.align_self_chat_read_positions();
-        }
-        chat
     }
 }
 
@@ -837,72 +705,6 @@ mod tests {
         chat.push_message::<NullEventPusher>(message(me, 2, 200), None, None);
         assert!(!chat.mark_read_by_me_up_to(1.into(), 300), "already read on sending");
         assert!(!chat.mark_read_by_them_up_to(1.into(), 300));
-    }
-
-    #[test]
-    fn a_self_chat_serialized_in_earlier_shapes_has_both_read_positions_aligned() {
-        init_stable_memory_map();
-        let me = user(1);
-        let mut chat = DirectChat::new(me, me, UserType::User, 1, None, 123, 1);
-        chat.push_message::<NullEventPusher>(message(me, 1, 100), None, None);
-        chat.push_message::<NullEventPusher>(message(me, 2, 200), None, None);
-        chat.push_message::<NullEventPusher>(message(me, 3, 300), None, None);
-
-        // The split shape kept a self chat's live read position in the first slot, with the second
-        // holding whatever it had before the chat was marked as a self chat, or nothing
-        #[derive(Serialize)]
-        struct SplitSelfChat<'a> {
-            them: UserId,
-            user_type: UserType,
-            notifications_muted: &'a Timestamped<bool>,
-            archived: &'a Timestamped<bool>,
-            date_created: TimestampMillis,
-            unread_message_index_map: &'a UnreadMessageIndexMap,
-            min_visible_event_index: EventIndex,
-            self_chat: bool,
-            core: SplitSelfChatCore<'a>,
-        }
-
-        #[derive(Serialize)]
-        struct SplitSelfChatCore<'a> {
-            events: &'a ChatEvents,
-            read_up_to: [Timestamped<Option<MessageIndex>>; 2],
-        }
-
-        let split = |second_slot: Timestamped<Option<MessageIndex>>| SplitSelfChat {
-            them: me,
-            user_type: UserType::User,
-            notifications_muted: &chat.notifications_muted,
-            archived: &chat.archived,
-            date_created: 1,
-            unread_message_index_map: &chat.unread_message_index_map,
-            min_visible_event_index: EventIndex::default(),
-            self_chat: true,
-            core: SplitSelfChatCore {
-                events: &chat.events,
-                read_up_to: [Timestamped::new(Some(2.into()), 300), second_slot],
-            },
-        };
-        for second_slot in [Timestamped::new(None, 1), Timestamped::new(Some(0.into()), 100)] {
-            let deserialized: DirectChat =
-                msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(split(second_slot)));
-            assert!(deserialized.self_chat);
-            assert_eq!(deserialized.read_by_me_up_to().value, Some(2.into()));
-            assert_eq!(deserialized.read_by_them_up_to().value, Some(2.into()));
-        }
-
-        // Before a chat with yourself was marked as such, only the "them" position moved as each
-        // message was sent, and the "me" position when the user marked the chat as read
-        let mut unmarked = DirectChat {
-            self_chat: false,
-            read_by_me_up_to: Timestamped::new(Some(0.into()), 150),
-            read_by_them_up_to: Timestamped::new(Some(2.into()), 300),
-            ..msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&chat))
-        };
-        assert!(unmarked.mark_as_self_chat());
-        assert_eq!(unmarked.read_by_me_up_to(), &Timestamped::new(Some(2.into()), 300));
-        assert_eq!(unmarked.read_by_them_up_to(), &Timestamped::new(Some(2.into()), 300));
-        assert!(!unmarked.mark_as_self_chat(), "already marked");
     }
 
     #[test]
@@ -998,7 +800,7 @@ mod tests {
     }
 
     #[test]
-    fn chats_serialized_in_earlier_shapes_are_deserialized() {
+    fn chats_round_trip_through_msgpack() {
         init_stable_memory_map();
         let me = user(1);
         let them = user(2);
@@ -1007,96 +809,19 @@ mod tests {
         chat.mark_read_by_me_up_to(0.into(), 150);
         chat.notifications_muted = Timestamped::new(true, 200);
 
-        // The shape from before the events and read positions were split out into a core, which
-        // is the current shape without `self_chat`
-        #[derive(Serialize)]
-        struct FlatDirectChat<'a> {
-            them: UserId,
-            date_created: TimestampMillis,
-            events: &'a ChatEvents,
-            unread_message_index_map: &'a UnreadMessageIndexMap,
-            read_by_me_up_to: &'a Timestamped<Option<MessageIndex>>,
-            read_by_them_up_to: &'a Timestamped<Option<MessageIndex>>,
-            notifications_muted: &'a Timestamped<bool>,
-            archived: &'a Timestamped<bool>,
-            user_type: UserType,
-        }
+        let deserialized: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&chat));
 
-        let flat = FlatDirectChat {
-            them,
-            date_created: chat.date_created(),
-            events: &chat.events,
-            unread_message_index_map: &chat.unread_message_index_map,
-            read_by_me_up_to: chat.read_by_me_up_to(),
-            read_by_them_up_to: chat.read_by_them_up_to(),
-            notifications_muted: &chat.notifications_muted,
-            archived: &chat.archived,
-            user_type: UserType::Bot,
-        };
-
-        // The shape from when the events and read positions were split out into a core, with
-        // `date_created` either on the chat or on the core
-        #[derive(Serialize)]
-        struct SplitDirectChat<'a> {
-            them: UserId,
-            user_type: UserType,
-            notifications_muted: &'a Timestamped<bool>,
-            archived: &'a Timestamped<bool>,
-            date_created: Option<TimestampMillis>,
-            unread_message_index_map: &'a UnreadMessageIndexMap,
-            min_visible_event_index: EventIndex,
-            self_chat: bool,
-            core: SplitCore<'a>,
-        }
-
-        #[derive(Serialize)]
-        struct SplitCore<'a> {
-            #[serde(skip_serializing_if = "Option::is_none")]
-            date_created: Option<TimestampMillis>,
-            events: &'a ChatEvents,
-            read_up_to: [&'a Timestamped<Option<MessageIndex>>; 2],
-        }
-
-        let split = |date_created_on_core: bool| SplitDirectChat {
-            them,
-            user_type: UserType::Bot,
-            notifications_muted: &chat.notifications_muted,
-            archived: &chat.archived,
-            date_created: (!date_created_on_core).then_some(chat.date_created()),
-            unread_message_index_map: &chat.unread_message_index_map,
-            min_visible_event_index: EventIndex::default(),
-            self_chat: false,
-            core: SplitCore {
-                date_created: date_created_on_core.then_some(chat.date_created()),
-                events: &chat.events,
-                read_up_to: [chat.read_by_me_up_to(), chat.read_by_them_up_to()],
-            },
-        };
-
-        let from_flat: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&flat));
-        let from_split: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(split(false)));
-        let from_split_with_date_created_on_core: DirectChat =
-            msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(split(true)));
-        let round_tripped: DirectChat = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&chat));
-
-        // Chats from before the latest change to the TTL was recorded don't know it
-        for deserialized in [&from_flat, &from_split, &from_split_with_date_created_on_core] {
-            assert_eq!(deserialized.events_ttl_latest_change(), EventsTtlLatestChange::Unknown);
-        }
-        assert_eq!(round_tripped.events_ttl_latest_change(), EventsTtlLatestChange::NeverChanged);
-
-        for deserialized in [from_flat, from_split, from_split_with_date_created_on_core, round_tripped] {
-            assert_eq!(deserialized.them, them);
-            assert_eq!(deserialized.user_type, UserType::Bot);
-            assert_eq!(deserialized.notifications_muted, chat.notifications_muted);
-            assert_eq!(deserialized.archived, chat.archived);
-            assert_eq!(deserialized.date_created(), 1);
-            assert!(!deserialized.self_chat);
-            assert_eq!(deserialized.read_by_me_up_to(), chat.read_by_me_up_to());
-            assert_eq!(deserialized.read_by_them_up_to(), chat.read_by_them_up_to());
-            assert_eq!(deserialized.last_updated(), chat.last_updated());
-            assert_eq!(deserialized.main_events_reader().latest_message_index(), Some(0.into()));
-        }
+        assert_eq!(deserialized.them, them);
+        assert_eq!(deserialized.user_type, UserType::Bot);
+        assert_eq!(deserialized.notifications_muted, chat.notifications_muted);
+        assert_eq!(deserialized.archived, chat.archived);
+        assert_eq!(deserialized.date_created(), 1);
+        assert!(!deserialized.self_chat);
+        assert_eq!(deserialized.read_by_me_up_to(), chat.read_by_me_up_to());
+        assert_eq!(deserialized.read_by_them_up_to(), chat.read_by_them_up_to());
+        assert_eq!(deserialized.events_ttl_latest_change(), EventsTtlLatestChange::NeverChanged);
+        assert_eq!(deserialized.last_updated(), chat.last_updated());
+        assert_eq!(deserialized.main_events_reader().latest_message_index(), Some(0.into()));
     }
 
     fn message(sender: UserId, message_id: u128, now: TimestampMillis) -> PushMessageArgs {

@@ -262,7 +262,7 @@
             hideBalance={payFromWallet}
             draftAmount={tokenState.draftAmount}
             bind:ledger />
-        <SourceWalletSelector bind:wallet={sourceWallet} />
+        <SourceWalletSelector bind:wallet={sourceWallet} {ledger} />
         {#if zero || toppingUp}
             <AccountInfo background={ColourVars.surface0} {ledger} />
             {#if zero}
@@ -352,7 +352,8 @@
                 bind:this={approval}
                 wallet={sourceWallet}
                 {ledger}
-                amount={tokenState.draftAmount} />
+                amount={tokenState.draftAmount}
+                chatId={messageContext.chatId} />
         {/if}
         <Column gap={"md"}>
             <Button disabled={!valid || approving} loading={approving} onClick={send}

@@ -110,7 +110,7 @@
             filter={payFromWallet ? undefined : (t) => t.balance > 0}
             bind:ledger />
 
-        <SourceWalletSelector bind:wallet={sourceWallet} />
+        <SourceWalletSelector bind:wallet={sourceWallet} {ledger} />
 
         <Column gap={"md"}>
             {#if multiUserChat}

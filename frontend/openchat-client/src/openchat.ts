@@ -356,7 +356,7 @@ import {
     isAndroidTauriApp,
     isIosTauriApp,
     isPrincipalValid,
-    userCanisterSpenderAccount,
+    paymentSpenderAccount,
 } from "@shared";
 import { tick } from "svelte";
 import { locale } from "svelte-i18n";
@@ -8490,7 +8490,8 @@ export class OpenChat {
     // payment's `fromAccount`, or undefined if the user backed out.
     //
     // `amount` must include the transfer fee, which the ledger charges against the allowance on top
-    // of the amount moved.
+    // of the amount moved. `chatId` is the chat a payment in a message or a tip is made in, which
+    // decides what pulls it, so what the wallet approves (see `paymentSpenderAccount`).
     //
     // Call this directly from a click handler and await nothing first: the wallet opens in a popup,
     // which browsers only allow while the click which asked for it is still being handled.
@@ -8498,6 +8499,7 @@ export class OpenChat {
         wallet: SignerWallet,
         ledger: string,
         amount: bigint,
+        chatId: ChatIdentifier | undefined,
         chooseAccount: (accounts: WalletAccount[]) => Promise<WalletAccount | undefined>,
         onApproving?: () => void,
     ): Promise<string | undefined> {
@@ -8506,10 +8508,9 @@ export class OpenChat {
                 wallet,
                 ledger,
                 amount,
-                // The user's canister pulls the funds, so the wallet has to name the account it
-                // spends as for this user as the spender
-                spender: userCanisterSpenderAccount(
+                spender: paymentSpenderAccount(
                     currentUserIdStore.value,
+                    chatId,
                     () => this.OcIdentityPrincipal,
                 ),
             },

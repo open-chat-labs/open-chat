@@ -9,7 +9,13 @@ import { Principal } from "@icp-sdk/core/principal";
 import { Signer, type PermissionScope, type PermissionState } from "@icp-sdk/signer";
 import { SignerAgent } from "@icp-sdk/signer/agent";
 import { PostMessageTransport } from "@icp-sdk/signer/web";
-import { APPROVAL_VALIDITY_MS, encodeIcrcAccount, isMainnet, type IcrcAccount } from "@shared";
+import {
+    APPROVAL_VALIDITY_MS,
+    encodeIcrcAccount,
+    isMainnet,
+    isTauriApp,
+    type IcrcAccount,
+} from "@shared";
 
 export type SignerWalletId = "oisy" | "nfid";
 
@@ -23,12 +29,10 @@ export type SignerWallet = {
     logo: string;
 };
 
-// Whether payment flows offer a choice of external wallet at all. The backends read the
-// `from_account` these flows send only once the user, group, community and user_index canisters
-// carrying that support are released; until then an older canister silently ignores the field and
-// pays from the user's OpenChat wallet, which is not what they were just asked to approve.
-// TODO: flip to true (or remove) once those canisters are live on prod
-export const EXTERNAL_WALLETS_ENABLED = false;
+// Whether payment flows offer a choice of external wallet. The wallet is opened in a popup which
+// is talked to via `postMessage`, which the native apps can't do, since their webview hands any
+// other site to the system browser.
+export const EXTERNAL_WALLETS_ENABLED = !isTauriApp();
 
 // Any wallet implementing ICRC-25/27/29/49 works here - these are just the ones we surface. The
 // endpoints and logos are the ones each wallet publishes via NFID's identitykit.

@@ -4,7 +4,7 @@ use chat_events::{ChatInternal, ChatMetricsInternal};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::RemovedChatKeyPrefix;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::HashMap;
 use types::{Chat, ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
 use utils::migrated_user_ids::MigratedUserIds;
 
@@ -13,21 +13,10 @@ pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
     pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
     metrics: ChatMetricsInternal,
-    // The chats removed which were held on the heap, which are all moved into stable memory in
-    // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
-    // TODO: Remove this after next release
-    #[serde(rename = "chats_removed", default, skip_serializing)]
-    removed_on_heap: BTreeSet<(TimestampMillis, ChatId)>,
-    // The private replies to groups which were held on the heap, which are all moved into stable
-    // memory in `post_upgrade` by `migrate_private_replies_to_stable_memory`, so this is always
-    // empty otherwise.
-    // TODO: Remove this after next release
-    #[serde(rename = "private_replies_to_groups", default, skip_serializing)]
-    private_replies_on_heap: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
     // Each new direct chat is assigned the next value, which is used in place of the other user's
     // id in its stable memory keys, so that if a chat is deleted then recreated with the same user
     // the new chat's keys never collide with the old chat's (which may not yet have been garbage
-    // collected). Chats created before this was introduced still use the other user's id.
+    // collected)
     #[serde(default)]
     next_key_id: u32,
 }
@@ -69,21 +58,6 @@ impl DirectChats {
                 now,
             )
         })
-    }
-
-    // Assigns a `key_id` to each chat created before `key_id`s were introduced, returning how many
-    // were assigned. Their events are then moved to the new keys by
-    // `jobs::migrate_direct_chat_events_to_key_id_keys`.
-    // TODO: Remove this once every user canister has been migrated
-    pub fn assign_key_ids(&mut self) -> usize {
-        let mut count = 0;
-        for chat in self.direct_chats.values_mut() {
-            if chat.assign_key_id(self.next_key_id + 1) {
-                self.next_key_id += 1;
-                count += 1;
-            }
-        }
-        count
     }
 
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &DirectChat> {
@@ -179,30 +153,6 @@ impl DirectChats {
         }
     }
 
-    // TODO: Remove this after next release
-    pub fn migrate_removed_to_stable_memory(&mut self) -> usize {
-        removed_chats::migrate_to_stable_memory(
-            &RemovedChatKeyPrefix::new_for_direct_chats(),
-            std::mem::take(&mut self.removed_on_heap)
-                .into_iter()
-                .map(|(timestamp, chat_id)| (timestamp, chat_id.into())),
-        )
-    }
-
-    // TODO: Remove this after next release
-    pub fn migrate_private_replies_to_stable_memory(&mut self) -> usize {
-        private_replies::migrate_to_stable_memory(std::mem::take(&mut self.private_replies_on_heap))
-    }
-
-    // Marks the user's chat with themselves as such, if they have one from before self chats were
-    // marked at creation. Returns whether it was marked.
-    // TODO: Remove this after next release
-    pub fn migrate_self_chat(&mut self, my_user_id: UserId) -> bool {
-        self.direct_chats
-            .get_mut(&my_user_id.into())
-            .is_some_and(|chat| chat.mark_as_self_chat())
-    }
-
     // Moves the user's chats onto their new id, once they are migrated to a MultiUser canister. Their
     // chat with themselves is keyed by their id, so is moved to the new id, along with its pin.
     pub fn migrate_own_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
@@ -270,39 +220,6 @@ mod tests {
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 
     #[test]
-    fn removed_direct_chats_serialized_before_the_migration_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-        let mut direct_chats = deserialize_legacy((1..=5).map(|i| (i as u64 * 10, chat(i))).collect(), BTreeMap::new());
-
-        assert!(!direct_chats.any_updated(0));
-        assert_eq!(direct_chats.migrate_removed_to_stable_memory(), 5);
-        assert_eq!(direct_chats.migrate_removed_to_stable_memory(), 0);
-        assert_eq!(direct_chats.removed_since(20), vec![chat(5), chat(4), chat(3)]);
-        assert!(direct_chats.any_updated(49));
-        assert!(!direct_chats.any_updated(50));
-    }
-
-    #[test]
-    fn private_replies_serialized_before_the_migration_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-        let mut direct_chats = deserialize_legacy(
-            BTreeSet::new(),
-            BTreeMap::from([
-                (chat(1), (1..=3u8).map(|i| (user(i), (i as u32).into())).collect()),
-                (chat(2), vec![(user(1), 1.into())]),
-            ]),
-        );
-
-        assert_eq!(direct_chats.migrate_private_replies_to_stable_memory(), 4);
-        assert_eq!(direct_chats.migrate_private_replies_to_stable_memory(), 0);
-        assert_eq!(
-            private_replies::take(chat(1)),
-            (1..=3u8).map(|i| (user(i), (i as u32).into())).collect::<Vec<_>>()
-        );
-        assert_eq!(private_replies::take(chat(2)), vec![(user(1), 1.into())]);
-    }
-
-    #[test]
     fn chat_with_a_migrated_user_is_moved_onto_their_new_id() {
         init_stable_memory_map();
         let (me, old, new) = (user(1), user(2), user(3));
@@ -343,36 +260,6 @@ mod tests {
         assert!(direct_chats.removed_since(0).is_empty());
         // Nor is anything done for a user there is no chat with
         assert!(!direct_chats.migrate_their_user_id(user(4), user(5), 100));
-    }
-
-    // The format `DirectChats` was serialized in before the removed chats and the private replies
-    // were moved into stable memory
-    fn deserialize_legacy(
-        chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
-        private_replies_to_groups: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
-    ) -> DirectChats {
-        #[derive(Serialize)]
-        struct LegacyDirectChats {
-            direct_chats: HashMap<ChatId, DirectChat>,
-            pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
-            metrics: ChatMetricsInternal,
-            chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
-            private_replies_to_groups: BTreeMap<ChatId, Vec<(UserId, MessageIndex)>>,
-        }
-
-        let legacy = LegacyDirectChats {
-            direct_chats: HashMap::new(),
-            pinned: Timestamped::default(),
-            metrics: ChatMetricsInternal::default(),
-            chats_removed,
-            private_replies_to_groups,
-        };
-
-        msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&legacy))
-    }
-
-    fn chat(i: u8) -> ChatId {
-        Principal::from_slice(&[i; 10]).into()
     }
 
     fn user(i: u8) -> UserId {

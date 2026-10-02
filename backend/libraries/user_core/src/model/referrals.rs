@@ -1,7 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{Entry, KeyPrefix, ReferralKey, ReferralKeyPrefix, with_map, with_map_mut};
-use std::collections::HashMap;
 use std::ops::RangeInclusive;
 use types::{ReferralStatus, TimestampMillis, Timestamped, UserId};
 use user_canister::Referral;
@@ -10,11 +9,6 @@ use user_canister::Referral;
 // user id, each value holding the referral's status and when it was last updated
 #[derive(Serialize, Deserialize, Default)]
 pub struct Referrals {
-    // The referrals which were held on the heap, which are all moved into stable memory in
-    // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
-    // TODO: Remove this after next release
-    #[serde(rename = "users", default, skip_serializing)]
-    on_heap: HashMap<UserId, Timestamped<ReferralStatus>>,
     #[serde(default)]
     last_updated: TimestampMillis,
 }
@@ -72,30 +66,6 @@ impl Referrals {
             return Vec::new();
         }
         self.referrals_updated_since(Some(since))
-    }
-
-    // Moves the referrals which were held on the heap into stable memory, returning how many were
-    // moved
-    // TODO: Remove this after next release
-    pub fn migrate_to_stable_memory(&mut self) -> usize {
-        if self.on_heap.is_empty() {
-            return 0;
-        }
-
-        let prefix = ReferralKeyPrefix::new();
-        let mut entries: Vec<_> = std::mem::take(&mut self.on_heap)
-            .into_iter()
-            .map(|(user_id, status)| {
-                self.last_updated = self.last_updated.max(status.timestamp);
-                (prefix.create_key(&user_id), value_to_bytes(status.value, status.timestamp))
-            })
-            .collect();
-        // Insert the entries in key order
-        entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-
-        let count = entries.len();
-        with_map_mut(|m| m.insert_many(entries));
-        count
     }
 
     fn referrals_updated_since(&self, since: Option<TimestampMillis>) -> Vec<Referral> {
@@ -249,41 +219,6 @@ mod tests {
         );
         assert!(referrals.list().iter().any(|r| r.user_id == user_id(4)));
         assert!(!referrals.list().iter().any(|r| r.user_id == user_id(5)));
-    }
-
-    #[test]
-    fn referrals_on_heap_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-        let statuses = [
-            ReferralStatus::Registered,
-            ReferralStatus::Diamond,
-            ReferralStatus::UniquePerson,
-            ReferralStatus::LifetimeDiamond,
-        ];
-        let mut referrals = Referrals {
-            on_heap: (1..=20u8)
-                .map(|i| (user_id(i), Timestamped::new(statuses[i as usize % 4], i as u64)))
-                .collect(),
-            last_updated: 0,
-        };
-
-        assert_eq!(referrals.migrate_to_stable_memory(), 20);
-        assert!(referrals.on_heap.is_empty());
-        assert_eq!(referrals.migrate_to_stable_memory(), 0);
-
-        let list = referrals.list();
-        assert_eq!(list.len(), 20);
-        for referral in list {
-            let i = (1..=20u8).find(|i| user_id(*i) == referral.user_id).unwrap();
-            assert_eq!(status_to_u8(referral.status), status_to_u8(statuses[i as usize % 4]));
-        }
-        assert_eq!(referrals.total_verified(), 15);
-        assert_eq!(referrals.updated_since(17).len(), 3);
-        assert!(referrals.updated_since(20).is_empty());
-
-        // The heap isn't serialized
-        let deserialized: Referrals = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&referrals));
-        assert_eq!(deserialized.updated_since(17).len(), 3);
     }
 
     #[test]

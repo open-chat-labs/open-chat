@@ -1,4 +1,4 @@
-use crate::{CommunityCanisterEvent, EventOrRemoval, RemovedFromCommunity, merge_in_removals, split_out_removals};
+use crate::{CommunityCanisterEvent, RemovedFromCommunity, merge_in_removals};
 use serde::{Deserialize, Serialize};
 use types::{IdempotentEnvelope, SuccessOnly, UserId};
 
@@ -6,22 +6,19 @@ use types::{IdempotentEnvelope, SuccessOnly, UserId};
 pub struct Args {
     pub user_id: UserId,
     pub events: Vec<IdempotentEnvelope<CommunityCanisterEvent>>,
-    // Kept apart from `events`, so that a canister which doesn't know of them ignores them (see
-    // `split_out_removals`)
+    // Removals sent apart from `events` by Group and Community canisters on 2.0.2088 and 2.0.2087,
+    // which are put back among the other events (see `merge_in_removals`)
+    // TODO: Remove once every Group and Community canister sends them among the other events
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub removals: Vec<IdempotentEnvelope<RemovedFromCommunity>>,
 }
 
 impl Args {
     pub fn new(user_id: UserId, events: Vec<IdempotentEnvelope<CommunityCanisterEvent>>) -> Args {
-        let (events, removals) = split_out_removals(events, |event| match event {
-            CommunityCanisterEvent::RemovedFromCommunity(removal) => EventOrRemoval::Removal(*removal),
-            event => EventOrRemoval::Event(event),
-        });
         Args {
             user_id,
             events,
-            removals,
+            removals: Vec::new(),
         }
     }
 
