@@ -9,7 +9,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
 use std::collections::btree_map::Entry::Vacant;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Bound;
 use types::{
     ChannelId, CommunityMember, CommunityPermissions, CommunityRole, OCResult, PushIfNotContains, TimestampMillis, Timestamped,
@@ -380,25 +380,6 @@ impl CommunityMembers {
 
     pub fn user_groups_last_updated(&self) -> TimestampMillis {
         self.user_groups.last_updated()
-    }
-
-    // Records each member who is a bot in `bots`, which `add` didn't use to. Returns them.
-    // TODO: Remove this once every Community canister has been upgraded
-    pub fn populate_bots(&mut self) -> BTreeMap<UserId, UserType> {
-        self.bots = self.members_map.bots();
-        self.bots.clone()
-    }
-
-    // Returns the number of members whose principal was set
-    pub fn populate_member_principals(&mut self) -> u32 {
-        let principals: HashMap<_, _> = self
-            .principal_to_user_id_map
-            .entries()
-            .into_iter()
-            .map(|(principal, user_id)| (user_id, principal))
-            .collect();
-
-        self.members_map.populate_principals(&principals)
     }
 
     pub fn mark_member_joined_channel(&mut self, user_id: UserId, channel_id: ChannelId) {
@@ -1166,6 +1147,7 @@ impl From<&CommunityMemberInternal> for CommunityMember {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use test_case::test_case;
@@ -1210,7 +1192,7 @@ mod tests {
     }
 
     #[test]
-    fn bots_recorded_when_added_and_when_populated() {
+    fn bots_recorded_when_added() {
         let memory = MemoryManager::init(DefaultMemoryImpl::default());
         stable_memory_map::init(memory.get(MemoryId::new(1)));
 
@@ -1221,12 +1203,6 @@ mod tests {
         let mut members = CommunityMembers::new(principal(1), user_id(1), UserType::User, Vec::new(), 0);
         members.add(user_id(2), principal(2), UserType::OcControlledBot, None, 0);
         members.add(user_id(3), principal(3), UserType::User, None, 0);
-        assert_eq!(members.bots(), &expected);
-        members.check_invariants();
-
-        // As held before `add` recorded bots
-        members.bots.clear();
-        assert_eq!(members.populate_bots(), expected);
         assert_eq!(members.bots(), &expected);
         members.check_invariants();
 
@@ -1622,67 +1598,6 @@ mod tests {
 
     fn test_principal(user_id: UserId) -> Principal {
         Principal::from_slice(&[100 + user_id.as_slice()[0]])
-    }
-
-    #[test]
-    fn member_principals_populated() {
-        let memory = MemoryManager::init(DefaultMemoryImpl::default());
-        stable_memory_map::init(memory.get(MemoryId::new(1)));
-
-        let principal1 = Principal::from_slice(&[1]);
-        let principal2 = Principal::from_slice(&[2]);
-        let principal3 = Principal::from_slice(&[3]);
-        let user_id1: UserId = Principal::from_slice(&[11]).into();
-        let user_id2: UserId = Principal::from_slice(&[12]).into();
-        let user_id3: UserId = Principal::from_slice(&[13]).into();
-
-        let mut members = CommunityMembers::new(principal1, user_id1, UserType::User, Vec::new(), 0);
-        members.add(user_id2, principal2, UserType::User, None, 0);
-        // An invited user who isn't a member
-        members.add_user_id(principal3, user_id3);
-
-        // Simulate members which were stored before principals were added
-        for user_id in [user_id1, user_id2] {
-            members.update_member(&user_id, |m| {
-                m.principal = Principal::anonymous();
-                true
-            });
-        }
-
-        assert_eq!(members.populate_member_principals(), 2);
-        assert_eq!(members.get_by_user_id(&user_id1).unwrap().principal, principal1);
-        assert_eq!(members.get_by_user_id(&user_id2).unwrap().principal, principal2);
-        assert!(members.get_by_user_id(&user_id3).is_none());
-
-        // Nothing is rewritten once the principals are populated
-        assert_eq!(members.populate_member_principals(), 0);
-    }
-
-    #[test]
-    fn member_principals_populated_across_batches() {
-        let memory = MemoryManager::init(DefaultMemoryImpl::default());
-        stable_memory_map::init(memory.get(MemoryId::new(1)));
-
-        let principal = |i: u32| Principal::from_slice(&[&[0], i.to_be_bytes().as_slice()].concat());
-        let user_id = |i: u32| UserId::from(Principal::from_slice(&[&[1], i.to_be_bytes().as_slice()].concat()));
-
-        // 2000 members, so the final batch is full and is followed by an empty read
-        let mut members = CommunityMembers::new(principal(0), user_id(0), UserType::User, Vec::new(), 0);
-        for i in 1..2000 {
-            members.add(user_id(i), principal(i), UserType::User, None, 0);
-        }
-        for i in 0..2000 {
-            members.update_member(&user_id(i), |m| {
-                m.principal = Principal::anonymous();
-                true
-            });
-        }
-
-        assert_eq!(members.populate_member_principals(), 2000);
-        for i in 0..2000 {
-            assert_eq!(members.get_by_user_id(&user_id(i)).unwrap().principal, principal(i));
-        }
-        assert_eq!(members.populate_member_principals(), 0);
     }
 
     #[test]

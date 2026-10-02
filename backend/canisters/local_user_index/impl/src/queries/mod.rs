@@ -7,7 +7,6 @@ pub mod bot_community_summary;
 pub mod bot_members;
 pub mod c2c_lookup_user;
 pub mod c2c_lookup_users;
-pub mod c2c_user_principals;
 pub mod chat_events;
 pub mod daily_puzzle_fetch;
 pub mod group_and_community_summary_updates_v2;

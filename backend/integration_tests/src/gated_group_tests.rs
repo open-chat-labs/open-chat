@@ -323,7 +323,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
         env,
         user2.user_id.canister_id(),
         canister_ids.icp_ledger,
-        Principal::from(group_id),
+        member_spender_account(group_id.into(), &user2),
         amount - fee,
     );
     client::group::happy_path::join_group(env, user2.principal, group_id);
@@ -341,30 +341,18 @@ enum Gated {
     Channel,
 }
 
-enum Approval {
-    SpenderSubaccount,
-    // TODO: Remove once the website approves the spender subaccount for gate payments, and the
-    // fallback to the default account is removed
-    DefaultAccount,
-}
-
 // A member approves the group or community to pull a gate's payment from their wallet, and it pulls
 // the payment when they join, spending the approval made under the member's own spender
 // subaccount, as for any other payment it pulls from a member's wallet. A user alone in their
 // canister has it make the approval, from its account. A user in a MultiUser canister holds their
 // own funds, in their principal's account, so the website makes the approval on the ledger itself.
-// For now, an approval to the canister's default account, which websites made before the move to
-// the spender subaccount, is spent if there isn't one under the spender subaccount.
-#[test_case(Gated::Group, true, Approval::SpenderSubaccount; "group_multi_user")]
-#[test_case(Gated::Community, true, Approval::SpenderSubaccount; "community_multi_user")]
-#[test_case(Gated::Channel, true, Approval::SpenderSubaccount; "channel_multi_user")]
-#[test_case(Gated::Group, false, Approval::SpenderSubaccount; "group_user_canister")]
-#[test_case(Gated::Community, false, Approval::SpenderSubaccount; "community_user_canister")]
-#[test_case(Gated::Channel, false, Approval::SpenderSubaccount; "channel_user_canister")]
-#[test_case(Gated::Group, true, Approval::DefaultAccount; "group_multi_user_default_account")]
-#[test_case(Gated::Community, false, Approval::DefaultAccount; "community_user_canister_default_account")]
-#[test_case(Gated::Channel, true, Approval::DefaultAccount; "channel_multi_user_default_account")]
-fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canister: bool, approval: Approval) {
+#[test_case(Gated::Group, true; "group_multi_user")]
+#[test_case(Gated::Community, true; "community_multi_user")]
+#[test_case(Gated::Channel, true; "channel_multi_user")]
+#[test_case(Gated::Group, false; "group_user_canister")]
+#[test_case(Gated::Community, false; "community_user_canister")]
+#[test_case(Gated::Channel, false; "channel_user_canister")]
+fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canister: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -384,13 +372,7 @@ fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canist
     let amount = 1_0000_0000;
     let fee = 10_000;
     let (spender, channel_id) = create_gated(env, &owner, &gated, canister_ids.icp_ledger, amount, fee);
-    let spender_account = Account {
-        owner: spender,
-        subaccount: match approval {
-            Approval::SpenderSubaccount => Some(ledger_utils::spender_subaccount(user.principal)),
-            Approval::DefaultAccount => None,
-        },
-    };
+    let spender_account = member_spender_account(spender, &user);
 
     let owner_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id);
 
@@ -461,10 +443,7 @@ fn payment_gate_is_not_paid_with_an_approval_under_another_members_spender_subac
         env,
         alice.principal,
         canister_ids.icp_ledger,
-        Account {
-            owner: group,
-            subaccount: Some(ledger_utils::spender_subaccount(bob.principal)),
-        },
+        member_spender_account(group, &bob),
         amount - fee,
     );
 
@@ -625,14 +604,14 @@ fn only_selected_composite_gate_checked_if_index_provided() {
         env,
         user2.user_id.canister_id(),
         canister_ids.icp_ledger,
-        Principal::from(group_id),
+        member_spender_account(group_id.into(), &user2),
         initial_balance,
     );
     client::ledger::happy_path::approve(
         env,
         user2.user_id.canister_id(),
         canister_ids.chat_ledger,
-        Principal::from(group_id),
+        member_spender_account(group_id.into(), &user2),
         initial_balance,
     );
 
@@ -661,4 +640,12 @@ fn only_selected_composite_gate_checked_if_index_provided() {
         initial_balance - 10_000
     );
     assert!(client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user2.user_id) < initial_balance - 100_000);
+}
+
+// The account a group or community pulls a member's gate payment as, which the member approves
+fn member_spender_account(spender: Principal, member: &User) -> Account {
+    Account {
+        owner: spender,
+        subaccount: Some(ledger_utils::spender_subaccount(member.principal)),
+    }
 }
