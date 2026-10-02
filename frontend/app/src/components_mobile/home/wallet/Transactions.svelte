@@ -2,7 +2,6 @@
     import { Body, BodySmall, ColourVars, CommonButton, Container } from "component-lib";
     import {
         type AccountTransaction,
-        type AccountTransactions,
         type OpenChat,
         allUsersStore,
         cryptoLookup,
@@ -22,6 +21,11 @@
     import TrayArrowUp from "svelte-material-icons/TrayArrowUp.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import type { RemoteData as RD } from "../../../utils/remoteData";
+    import {
+        type TransactionHistory,
+        addTransactionsPage,
+        nextPageStart,
+    } from "../../../utils/transactionHistory";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Translatable from "../../Translatable.svelte";
 
@@ -35,17 +39,13 @@
     let { ledger, urlFormat }: Props = $props();
 
     type LoadingMore<T> = { kind: "loading_more"; data: T };
-    type RemoteData = RD<AccountTransactions, string> | LoadingMore<AccountTransactions>;
+    type RemoteData = RD<TransactionHistory, string> | LoadingMore<TransactionHistory>;
 
     let transactionData = $state<RemoteData>({ kind: "loading" });
     let accountLookup = $derived(toRecord($namedAccountsStore, (a) => a.account));
 
     function moreTransactionsAvailable(trans: RemoteData): boolean {
-        if (trans.kind !== "success") return false;
-        if (trans.data.oldestTransactionId === undefined) return false;
-        if (trans.data.transactions.length === 0) return false;
-        const lastLoaded = trans.data.transactions[trans.data.transactions.length - 1];
-        return lastLoaded.id > trans.data.oldestTransactionId;
+        return trans.kind === "success" && nextPageStart(trans.data) !== undefined;
     }
 
     function isMe(address: string | undefined): boolean {
@@ -102,9 +102,8 @@
         if (ledgerIndex !== undefined) {
             let start = undefined;
             if (transactionData.kind === "success") {
-                start =
-                    transactionData.data.transactions[transactionData.data.transactions.length - 1]
-                        .id - 1n;
+                start = nextPageStart(transactionData.data);
+                if (start === undefined) return;
                 transactionData = { kind: "loading_more", data: transactionData.data };
             } else {
                 transactionData = { kind: "loading" };
@@ -117,25 +116,15 @@
                         console.warn("Error loading transactions: ", result);
                         // toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
                     } else {
-                        // Filter out approvals
-                        const transactions = result.transactions.filter(
-                            (t) => t.kind !== "approve",
-                        );
                         if (transactionData.kind === "loading") {
                             transactionData = {
                                 kind: "success",
-                                data: { ...result, transactions },
+                                data: addTransactionsPage(undefined, result),
                             };
                         } else if (transactionData.kind === "loading_more") {
                             transactionData = {
                                 kind: "success",
-                                data: {
-                                    oldestTransactionId: result.oldestTransactionId,
-                                    transactions: [
-                                        ...transactionData.data.transactions,
-                                        ...transactions,
-                                    ],
-                                },
+                                data: addTransactionsPage(transactionData.data, result),
                             };
                         }
                     }
