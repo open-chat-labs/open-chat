@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state};
+use crate::{RuntimeState, mutate_state, read_state};
 use constants::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 use event_store_producer::EventBuilder;
 use icrc_ledger_types::icrc3::transactions::{GetTransactionsRequest, Transaction};
@@ -15,8 +15,8 @@ thread_local! {
     static STARTED: Cell<bool> = Cell::default();
 }
 
-pub(crate) fn start_job_if_required() -> bool {
-    if !STARTED.get() {
+pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
+    if state.data.push_to_event_store && !STARTED.get() {
         ic_cdk_timers::set_timer(Duration::ZERO, async { run() });
         STARTED.set(true);
         true

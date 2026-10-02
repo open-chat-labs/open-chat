@@ -11,6 +11,10 @@ fn push_events(args: Args) {
 }
 
 fn push_events_impl(args: Args, state: &mut RuntimeState) {
+    if !state.data.push_to_event_store {
+        return;
+    }
+
     let now = state.env.now();
 
     state.data.event_store_client.push_many(
