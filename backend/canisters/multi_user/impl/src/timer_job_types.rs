@@ -1,5 +1,5 @@
 use crate::updates::end_video_call::end_video_call_impl;
-use crate::{can_borrow_state, mutate_state, openchat_bot, read_state};
+use crate::{can_borrow_state, mutate_state, openchat_bot, read_state, run_regular_jobs};
 use candid::Principal;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
@@ -153,7 +153,7 @@ impl Job for TimerJob {
         // Timer jobs which run within an update rely on it to run the regular jobs and flush events
         let can_borrow_state = can_borrow_state();
         if can_borrow_state {
-            mutate_state(|state| state.run_regular_jobs());
+            run_regular_jobs();
         }
 
         match self {

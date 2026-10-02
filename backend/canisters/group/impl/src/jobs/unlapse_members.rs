@@ -1,4 +1,4 @@
-use crate::{RuntimeState, jobs, mutate_state};
+use crate::{RuntimeState, jobs, mutate_state, run_regular_jobs};
 use group_community_common::ExpiringMember;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -30,6 +30,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 fn run() {
     trace!("'unlapse_members' job running");
     TIMER_ID.set(None);
+    run_regular_jobs();
 
     mutate_state(|state| {
         let now = state.env.now();

@@ -1,12 +1,11 @@
 use crate::communities::join_community_tests::wait_for_invitation;
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::set_freezing_threshold;
 use crate::{CanisterIds, TestEnv, User, client};
-use candid::{Nat, Principal};
+use candid::Principal;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use std::time::Duration;
 use testing::rng::random_string;
 use types::{CanisterId, ChannelId, CommunityId};
 
@@ -61,12 +60,6 @@ fn join_channel_tops_up_community_which_is_out_of_cycles() {
     // First user2 needs to leave the channel because they were joined automatically
     client::community::happy_path::leave_channel(env, user2.principal, community_id, channel_id);
 
-    // A new community starts below the balance it keeps, so it asks for top ups as it handles its
-    // first updates. Let those land, then move past the window in which the LocalUserIndex retries
-    // a call without topping the canister up again.
-    tick_many(env, 10);
-    env.advance_time(Duration::from_secs(2 * 60));
-
     // Raise the freezing threshold until the cycles it reserves are just above the balance, which
     // freezes the community, leaving it short by far less than a top up
     let canister_id = CanisterId::from(community_id);
@@ -96,18 +89,6 @@ fn join_channel_tops_up_community_which_is_out_of_cycles() {
     // Put the freezing threshold back, since the environment, and so this canister, is shared with
     // later tests
     set_freezing_threshold(env, canister_id, local_user_index, original_freezing_threshold);
-}
-
-fn set_freezing_threshold(env: &PocketIc, canister_id: CanisterId, controller: CanisterId, freezing_threshold: Nat) {
-    env.update_canister_settings(
-        canister_id,
-        Some(controller),
-        pocket_ic::CanisterSettings {
-            freezing_threshold: Some(freezing_threshold),
-            ..Default::default()
-        },
-    )
-    .unwrap();
 }
 
 #[test]
