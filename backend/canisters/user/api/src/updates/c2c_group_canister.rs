@@ -1,4 +1,4 @@
-use crate::{EventOrRemoval, GroupCanisterEvent, RemovedFromGroup, merge_in_removals, split_out_removals};
+use crate::{GroupCanisterEvent, RemovedFromGroup, merge_in_removals};
 use serde::{Deserialize, Serialize};
 use types::{IdempotentEnvelope, SuccessOnly, UserId};
 
@@ -6,22 +6,19 @@ use types::{IdempotentEnvelope, SuccessOnly, UserId};
 pub struct Args {
     pub user_id: UserId,
     pub events: Vec<IdempotentEnvelope<GroupCanisterEvent>>,
-    // Kept apart from `events`, so that a canister which doesn't know of them ignores them (see
-    // `split_out_removals`)
+    // Removals sent apart from `events` by Group and Community canisters on 2.0.2088 and 2.0.2087,
+    // which are put back among the other events (see `merge_in_removals`)
+    // TODO: Remove once every Group and Community canister sends them among the other events
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub removals: Vec<IdempotentEnvelope<RemovedFromGroup>>,
 }
 
 impl Args {
     pub fn new(user_id: UserId, events: Vec<IdempotentEnvelope<GroupCanisterEvent>>) -> Args {
-        let (events, removals) = split_out_removals(events, |event| match event {
-            GroupCanisterEvent::RemovedFromGroup(removal) => EventOrRemoval::Removal(*removal),
-            event => EventOrRemoval::Event(event),
-        });
         Args {
             user_id,
             events,
-            removals,
+            removals: Vec::new(),
         }
     }
 
@@ -37,25 +34,8 @@ pub type Response = SuccessOnly;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{MessageActivityEvent, P2PSwapCreated};
     use ic_principal::Principal;
     use types::Achievement;
-
-    // The args as a User canister on the previous version reads them
-    #[derive(Deserialize)]
-    struct PreviousArgs {
-        #[expect(dead_code)]
-        user_id: UserId,
-        events: Vec<IdempotentEnvelope<PreviousGroupCanisterEvent>>,
-    }
-
-    #[derive(Deserialize)]
-    #[expect(dead_code)]
-    enum PreviousGroupCanisterEvent {
-        MessageActivity(MessageActivityEvent),
-        Achievement(Achievement),
-        P2PSwapCreated(Box<P2PSwapCreated>),
-    }
 
     fn envelope(id: u64, value: GroupCanisterEvent) -> IdempotentEnvelope<GroupCanisterEvent> {
         IdempotentEnvelope {
@@ -65,20 +45,17 @@ mod tests {
         }
     }
 
-    fn events() -> Vec<IdempotentEnvelope<GroupCanisterEvent>> {
-        vec![
-            envelope(1, GroupCanisterEvent::Achievement(Achievement::JoinedGroup)),
-            envelope(
-                2,
-                GroupCanisterEvent::RemovedFromGroup(Box::new(RemovedFromGroup {
-                    removed_by: Principal::from_slice(&[2]).into(),
-                    blocked: true,
-                    group_name: "group".to_string(),
-                    public: false,
-                })),
-            ),
-            envelope(3, GroupCanisterEvent::Achievement(Achievement::SentImage)),
-        ]
+    fn removal(id: u64) -> IdempotentEnvelope<RemovedFromGroup> {
+        IdempotentEnvelope {
+            created_at: id * 10,
+            idempotency_id: id,
+            value: RemovedFromGroup {
+                removed_by: Principal::from_slice(&[2]).into(),
+                blocked: true,
+                group_name: "group".to_string(),
+                public: false,
+            },
+        }
     }
 
     fn user_id() -> UserId {
@@ -86,41 +63,32 @@ mod tests {
     }
 
     #[test]
-    fn previous_version_reads_the_other_events_and_ignores_removals() {
-        let bytes = msgpack::serialize_then_unwrap(Args::new(user_id(), events()));
-        let args: PreviousArgs = msgpack::deserialize_then_unwrap(&bytes);
-        let ids: Vec<_> = args.events.iter().map(|event| event.idempotency_id).collect();
-        assert_eq!(ids, vec![1, 3]);
-    }
-
-    #[test]
-    fn previous_version_fails_to_read_a_removal_among_the_other_events() {
-        let bytes = msgpack::serialize_then_unwrap(Args {
-            user_id: user_id(),
-            events: events(),
-            removals: Vec::new(),
-        });
-        assert!(msgpack::deserialize::<PreviousArgs, _>(bytes.as_slice()).is_err());
-    }
-
-    #[test]
-    fn removals_are_put_back_among_the_other_events_in_order() {
-        let bytes = msgpack::serialize_then_unwrap(Args::new(user_id(), events()));
+    fn removals_are_sent_among_the_other_events() {
+        let events = vec![
+            envelope(1, GroupCanisterEvent::Achievement(Achievement::JoinedGroup)),
+            envelope(2, GroupCanisterEvent::RemovedFromGroup(Box::new(removal(2).value))),
+        ];
+        let bytes = msgpack::serialize_then_unwrap(Args::new(user_id(), events));
         let args: Args = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(args.removals.len(), 1);
+        assert!(args.removals.is_empty());
+        let ids: Vec<_> = args.into_events().iter().map(|event| event.idempotency_id).collect();
+        assert_eq!(ids, vec![1, 2]);
+    }
+
+    #[test]
+    fn removals_sent_apart_are_put_back_among_the_other_events_in_order() {
+        let args = Args {
+            user_id: user_id(),
+            events: vec![
+                envelope(1, GroupCanisterEvent::Achievement(Achievement::JoinedGroup)),
+                envelope(3, GroupCanisterEvent::Achievement(Achievement::SentImage)),
+            ],
+            removals: vec![removal(2)],
+        };
+        let args: Args = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(args));
         let events = args.into_events();
         let ids: Vec<_> = events.iter().map(|event| event.idempotency_id).collect();
         assert_eq!(ids, vec![1, 2, 3]);
         assert!(matches!(&events[1].value, GroupCanisterEvent::RemovedFromGroup(removal) if removal.blocked));
-    }
-
-    #[test]
-    fn args_without_removals_are_read_by_either_version() {
-        let events = vec![envelope(1, GroupCanisterEvent::Achievement(Achievement::JoinedGroup))];
-        let bytes = msgpack::serialize_then_unwrap(Args::new(user_id(), events));
-        let args: PreviousArgs = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(args.events.len(), 1);
-        let args: Args = msgpack::deserialize_then_unwrap(&bytes);
-        assert!(args.removals.is_empty());
     }
 }

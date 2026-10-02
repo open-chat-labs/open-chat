@@ -132,9 +132,11 @@ fn validate_key<F: FnOnce(KeyType) -> bool>(key: &[u8], validator: F) -> Result<
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum KeyType {
-    // The events of direct chats created before `key_id`s were introduced stay under these two
-    // `Legacy` key types until they have been moved across to `DirectChatEvent` and
-    // `DirectChatThreadEvent`. Both can be removed once every user canister has been migrated.
+    // The events of direct chats created before `key_id`s were introduced were stored under these
+    // two `Legacy` key types, then moved across to `DirectChatEvent` and `DirectChatThreadEvent`.
+    // The events of a thread removed before they were moved may still be under them, so they are
+    // kept: those events are garbage collected along with their chat, and `insert_raw_entries`
+    // refuses entries of an unknown key type, which would stop the user being imported.
     DirectChatEventLegacy = 1,
     GroupChatEvent = 2,
     ChannelEvent = 3,

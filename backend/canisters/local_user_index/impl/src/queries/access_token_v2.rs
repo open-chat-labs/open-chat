@@ -271,21 +271,15 @@ async fn can_issue_access_token(scope: AutonomousBotScope, access_type_args: &Ac
     let c2c_response = match scope {
         AutonomousBotScope::Chat(Chat::Direct(chat_id)) => {
             let user_id = UserId::from(chat_id);
-            if user_id.is_indexed() {
-                // A MultiUser canister holds many users, so is told which one is being asked
-                user_canister_c2c_client::c2c_can_issue_access_token_v2(
-                    user_id.canister_id(),
-                    &user_canister::c2c_can_issue_access_token_v2::Args {
-                        user_id,
-                        args: access_type_args.clone(),
-                    },
-                )
-                .await
-            } else {
-                // TODO switch User canisters to `c2c_can_issue_access_token_v2` too once they all
-                // accept the new `{ user_id, args }` shape
-                user_canister_c2c_client::c2c_can_issue_access_token_v2_legacy(user_id.canister_id(), access_type_args).await
-            }
+            // A MultiUser canister holds many users, so is told which one is being asked
+            user_canister_c2c_client::c2c_can_issue_access_token_v2(
+                user_id.canister_id(),
+                &user_canister::c2c_can_issue_access_token_v2::Args {
+                    user_id,
+                    args: access_type_args.clone(),
+                },
+            )
+            .await
         }
         AutonomousBotScope::Chat(Chat::Group(chat_id)) => {
             group_canister_c2c_client::c2c_can_issue_access_token_v2(chat_id.into(), access_type_args).await

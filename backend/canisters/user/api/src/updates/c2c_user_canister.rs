@@ -4,8 +4,7 @@ use types::{IdempotentEnvelope, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
-    // TODO: Make this required once all User canisters are populating it
-    pub user_id: Option<UserId>,
+    pub user_id: UserId,
     pub events: Vec<IdempotentEnvelope<UserCanisterEvent>>,
 }
 

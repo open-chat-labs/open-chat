@@ -55,7 +55,7 @@ impl TimerJobItem for UserCanisterEventBatch {
             user_canister_c2c_client::c2c_user_canister(
                 canister_id,
                 &user_canister::c2c_user_canister::Args {
-                    user_id: Some(canister_id.into()),
+                    user_id: canister_id.into(),
                     events: self
                         .items
                         .iter()

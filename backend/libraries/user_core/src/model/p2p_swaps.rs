@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{KeyPrefix, P2PSwapKey, P2PSwapKeyPrefix, with_map, with_map_mut};
-use std::collections::HashMap;
 use types::{P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
 use user_canister::P2PSwapCreated;
 
@@ -8,11 +7,6 @@ use user_canister::P2PSwapCreated;
 // swap id
 #[derive(Serialize, Deserialize, Default)]
 pub struct P2PSwaps {
-    // The swaps which were held on the heap, which are all moved into stable memory in
-    // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
-    // TODO: Remove this after next release
-    #[serde(rename = "swaps", default, skip_serializing)]
-    on_heap: HashMap<u32, P2PSwap>,
     #[serde(default)]
     count: u32,
 }
@@ -66,27 +60,6 @@ impl P2PSwaps {
 
     pub fn len(&self) -> usize {
         self.count as usize
-    }
-
-    // Moves the swaps which were held on the heap into stable memory, returning how many were moved
-    // TODO: Remove this after next release
-    pub fn migrate_to_stable_memory(&mut self) -> usize {
-        if self.on_heap.is_empty() {
-            return 0;
-        }
-
-        let prefix = P2PSwapKeyPrefix::new();
-        let mut entries: Vec<_> = std::mem::take(&mut self.on_heap)
-            .into_iter()
-            .map(|(swap_id, swap)| (prefix.create_key(&swap_id), swap_to_bytes(&swap)))
-            .collect();
-        // Insert the entries in key order
-        entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-
-        let count = entries.len();
-        with_map_mut(|m| m.insert_many(entries));
-        self.count += count as u32;
-        count
     }
 }
 
@@ -170,49 +143,6 @@ mod tests {
         let mut swaps = P2PSwaps::default();
         swaps.add(swap(1));
         swaps.add(swap(1));
-    }
-
-    #[test]
-    fn swaps_on_heap_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-        let mut swaps = P2PSwaps {
-            on_heap: (1..=50).map(|id| (id, swap(id))).collect(),
-            count: 0,
-        };
-
-        assert_eq!(swaps.migrate_to_stable_memory(), 50);
-        assert!(swaps.on_heap.is_empty());
-        assert_eq!(swaps.migrate_to_stable_memory(), 0);
-
-        assert_eq!(swaps.len(), 50);
-        assert_eq!(stored_ids(), (1..=50).collect::<Vec<_>>());
-
-        swaps.add(swap(51));
-        assert_eq!(swaps.len(), 51);
-
-        // The heap isn't serialized
-        let deserialized: P2PSwaps = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&swaps));
-        assert_eq!(deserialized.len(), 51);
-    }
-
-    #[test]
-    fn swaps_serialized_before_the_migration_are_migrated_to_stable_memory() {
-        // The format `P2PSwaps` was serialized in before the swaps were moved into stable memory
-        #[derive(Serialize)]
-        struct LegacyP2PSwaps {
-            swaps: HashMap<u32, P2PSwap>,
-        }
-
-        init_stable_memory_map();
-        let legacy = LegacyP2PSwaps {
-            swaps: (1..=5).map(|id| (id, swap(id))).collect(),
-        };
-
-        let mut swaps: P2PSwaps = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&legacy));
-
-        assert_eq!(swaps.migrate_to_stable_memory(), 5);
-        assert_eq!(swaps.len(), 5);
-        assert_eq!(stored_ids(), (1..=5).collect::<Vec<_>>());
     }
 
     fn stored_ids() -> Vec<u32> {
