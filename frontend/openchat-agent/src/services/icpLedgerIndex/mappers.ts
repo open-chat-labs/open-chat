@@ -1,3 +1,4 @@
+import { AccountIdentifier, SubAccount } from "@icp-sdk/canisters/ledger/icp";
 import { identity, optional } from "../../utils/mapping";
 import type {
     ApiGetTransactions,
@@ -9,33 +10,55 @@ import {
     type AccountTransaction,
     type AccountTransactionResult,
     CommonResponses,
+    type IcrcAccount,
     UnsupportedValueError,
 } from "@shared";
-import { memoBytesToString } from "../ledgerIndex/mappers";
+import { memoBytesToString, type Wallets } from "../ledgerIndex/mappers";
 
-export function accountTransactions(candid: ApiGetTransactionsResult): AccountTransactionResult {
+export function accountTransactions(
+    candid: ApiGetTransactionsResult,
+    wallets: Wallets,
+): AccountTransactionResult {
     if ("Err" in candid) {
         return CommonResponses.failure();
     }
     if ("Ok" in candid) {
-        return getTransactions(candid.Ok);
+        return getTransactions(candid.Ok, wallets);
     }
     throw new UnsupportedValueError("Unknown ApiGetTransactionsResult type", candid);
 }
 
-function getTransactions(candid: ApiGetTransactions): AccountTransactionResult {
+function getTransactions(candid: ApiGetTransactions, wallets: Wallets): AccountTransactionResult {
+    // The index names each account by its AccountIdentifier. The wallets being listed are named by
+    // their user's id instead, as they are for any other ledger, which is what lets the UI resolve
+    // each of them, including the one the user had before being migrated to a MultiUser canister,
+    // to the user.
+    const walletIdentifiers = new Set(wallets.accounts.map(accountIdentifier));
+    const account = (identifier: string) =>
+        walletIdentifiers.has(identifier) ? wallets.userId : identifier;
+
     return {
         kind: "success",
-        transactions: candid.transactions.map(transaction),
+        transactions: candid.transactions.map((t) => transaction(t, account)),
         oldestTransactionId: optional(candid.oldest_tx_id, identity),
     };
+}
+
+function accountIdentifier({ owner, subaccount }: IcrcAccount): string {
+    return AccountIdentifier.fromPrincipal({
+        principal: owner,
+        subAccount: subaccount === undefined ? undefined : SubAccount.fromBytes(subaccount),
+    }).toHex();
 }
 
 function timestampToDate(ts: ApiTimeStamp): Date {
     return new Date(Number(ts.timestamp_nanos / 1_000_000n));
 }
 
-function transaction(candid: ApiTransactionWithId): AccountTransaction {
+function transaction(
+    candid: ApiTransactionWithId,
+    account: (identifier: string) => string,
+): AccountTransaction {
     // the candid types are quite fuzzy here - the old "product type when it should be sum type" thing
     const timestamp = optional(candid.transaction.timestamp, timestampToDate) ?? new Date();
     const memoBytes =
@@ -55,9 +78,9 @@ function transaction(candid: ApiTransactionWithId): AccountTransaction {
             createdAt,
             amount: transfer.amount.e8s,
             fee: transfer.fee.e8s,
-            to: transfer.to,
-            from: transfer.from,
-            spender: optional(transfer.spender, identity),
+            to: account(transfer.to),
+            from: account(transfer.from),
+            spender: optional(transfer.spender, account),
         };
     }
     if ("Burn" in candid.transaction.operation) {
@@ -69,8 +92,8 @@ function transaction(candid: ApiTransactionWithId): AccountTransaction {
             memo,
             createdAt,
             amount: burn.amount.e8s,
-            from: burn.from,
-            spender: optional(burn.spender, identity),
+            from: account(burn.from),
+            spender: optional(burn.spender, account),
         };
     }
     if ("Mint" in candid.transaction.operation) {
@@ -82,7 +105,7 @@ function transaction(candid: ApiTransactionWithId): AccountTransaction {
             memo,
             createdAt,
             amount: mint.amount.e8s,
-            to: mint.to,
+            to: account(mint.to),
         };
     }
     if ("Approve" in candid.transaction.operation) {
@@ -95,10 +118,10 @@ function transaction(candid: ApiTransactionWithId): AccountTransaction {
             createdAt,
             amount: approve.allowance.e8s,
             fee: approve.fee.e8s,
-            from: approve.from,
+            from: account(approve.from),
             expectedAllowance: optional(approve.expected_allowance, (a) => a.e8s),
             expiredAt: optional(approve.expires_at, (ts) => ts.timestamp_nanos),
-            spender: approve.spender,
+            spender: account(approve.spender),
         };
     }
 

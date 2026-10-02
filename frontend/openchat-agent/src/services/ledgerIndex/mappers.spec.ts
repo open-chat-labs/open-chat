@@ -2,13 +2,18 @@ import { Principal } from "@icp-sdk/core/principal";
 import type { AccountTransaction } from "@shared";
 import { describe, expect, test } from "vitest";
 import type { ApiAccount } from "./candid/idl";
-import { accountTransactions, type Wallet } from "./mappers";
+import { accountTransactions, type Wallets } from "./mappers";
 
 // A user in the MultiUser canister "dfdal-2uaaa-aaaaa-qaama-cai", at index 1, whose wallet is the
-// account of the principal they sign in with
+// account of the principal they sign in with, and whose wallet before they were migrated there was
+// the account of the User canister they had
 const userId = "qp43m-xeaaa-aaaaa-qaama-daa";
 const principal = Principal.fromUint8Array(new Uint8Array(29).fill(7));
-const wallet: Wallet = { account: { owner: principal }, userId };
+const previousUserId = "7ugoi-yiaaa-aaaaa-aabaa-cai";
+const wallets: Wallets = {
+    accounts: [{ owner: principal }, { owner: Principal.fromText(previousUserId) }],
+    userId,
+};
 
 const otherUserId = "rrkah-fqaaa-aaaaa-aaaaq-cai";
 
@@ -43,7 +48,7 @@ function transfer(from: ApiAccount, to: ApiAccount): AccountTransaction {
                 ],
             },
         },
-        wallet,
+        wallets,
     );
     if (result.kind !== "success") throw new Error("Expected success");
     return result.transactions[0];
@@ -58,6 +63,16 @@ describe("accountTransactions", () => {
 
         expect(t.kind === "transfer" && t.from).toBe(userId);
         expect(t.kind === "transfer" && t.to).toBe(otherUserId);
+    });
+
+    test("the wallet the user had before being migrated is named by their user id too", () => {
+        const t = transfer(
+            { owner: Principal.fromText(previousUserId), subaccount: [] },
+            { owner: principal, subaccount: [] },
+        );
+
+        expect(t.kind === "transfer" && t.from).toBe(userId);
+        expect(t.kind === "transfer" && t.to).toBe(userId);
     });
 
     test("the wallet is recognised with an explicit all-zero subaccount", () => {

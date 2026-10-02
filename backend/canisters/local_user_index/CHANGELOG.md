@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove `c2c_user_principals`, replaced by `c2c_user_principals_v2` ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))
 - Remove the Registry id from the upgrade args now that every LocalUserIndex has it ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))
 - Remove the code kept for User canisters on 2.0.2015, including the hold on notices of migrated users' new ids ([#9743](https://github.com/open-chat-labs/open-chat/pull/9743))
+- Remove the one-off hold on the weekly cycles balance checks, so they run as soon as the LocalUserIndex is upgraded ([#9744](https://github.com/open-chat-labs/open-chat/pull/9744))
 
 ## [[2.0.2086](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2086-local_user_index)] - 2026-10-02
 

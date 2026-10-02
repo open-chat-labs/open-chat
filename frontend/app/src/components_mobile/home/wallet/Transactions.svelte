@@ -48,8 +48,18 @@
         return trans.kind === "success" && nextPageStart(trans.data) !== undefined;
     }
 
+    function isMe(address: string | undefined): boolean {
+        return address === $currentUserIdStore || address === $currentUserStore.cryptoAccount;
+    }
+
     function fromMe({ from }: AccountTransaction): boolean {
-        return from === $currentUserIdStore || from === $currentUserStore.cryptoAccount;
+        return isMe(from);
+    }
+
+    // A transfer between two of the user's own wallets, such as that of their funds when they were
+    // migrated to a MultiUser canister, neither adds to nor takes from what they hold
+    function betweenMyWallets({ from, to }: AccountTransaction): boolean {
+        return isMe(from) && isMe(to);
     }
 
     function accountName(transaction: AccountTransaction) {
@@ -183,7 +193,9 @@
         </Container>
     {:else if transactionData.kind === "success" || transactionData.kind === "loading_more"}
         {#each transactionData.data.transactions as transaction (transaction.id)}
-            {@const negative = fromMe(transaction)}
+            {@const own = betweenMyWallets(transaction)}
+            {@const negative = !own && fromMe(transaction)}
+            {@const colour = own ? "textSecondary" : negative ? "secondary" : "primary"}
             <Container onClick={() => openDashboard(transaction.id)} crossAxisAlignment={"end"}>
                 <Container gap={"xxs"} direction={"vertical"}>
                     <BodySmall colour={"textSecondary"}>
@@ -198,20 +210,22 @@
                                 <Translatable resourceKey={i18nKey("from")} />
                             {/if}
                         </Body>
-                        <Body colour={negative ? "secondary" : "primary"}>
+                        <Body {colour}>
                             {accountName(transaction)}
                         </Body>
                     </Container>
                 </Container>
                 <Container width={"hug"} crossAxisAlignment={"center"} gap={"xs"}>
-                    <Body fontWeight={"bold"} colour={negative ? "secondary" : "primary"}>
-                        {#if negative}
-                            -
-                        {:else}
-                            +
-                        {/if}
-                    </Body>
-                    <Body fontWeight={"bold"} colour={negative ? "secondary" : "primary"}>
+                    {#if !own}
+                        <Body fontWeight={"bold"} {colour}>
+                            {#if negative}
+                                -
+                            {:else}
+                                +
+                            {/if}
+                        </Body>
+                    {/if}
+                    <Body fontWeight={"bold"} {colour}>
                         {client.formatTokens(transaction.amount, tokenDetails.decimals)}
                     </Body>
                 </Container>
