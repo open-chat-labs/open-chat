@@ -21,14 +21,7 @@ pub struct Streak {
     days_missed: u8,
     #[serde(skip)]
     payment_lock: bool,
-    // The insurance payments and claims are stored in the stable memory map for small entries.
-    // Those which were held on the heap are all moved into stable memory in `post_upgrade` by
-    // `migrate_to_stable_memory`, so these are always empty otherwise.
-    // TODO: Remove these after next release
-    #[serde(rename = "payments", default, skip_serializing)]
-    payments_on_heap: Vec<UserCanisterStreakInsurancePayment>,
-    #[serde(rename = "claims", default, skip_serializing)]
-    claims_on_heap: Vec<UserCanisterStreakInsuranceClaim>,
+    // The insurance payments and claims are stored in the stable memory map for small entries
     #[serde(default)]
     payments_count: u32,
     #[serde(default)]
@@ -217,43 +210,6 @@ impl Streak {
         self.payments_count += 1;
     }
 
-    // Moves the insurance payments and claims which were held on the heap into stable memory,
-    // returning how many were moved
-    // TODO: Remove this after next release
-    pub fn migrate_to_stable_memory(&mut self) -> usize {
-        let payments = std::mem::take(&mut self.payments_on_heap);
-        let claims = std::mem::take(&mut self.claims_on_heap);
-        let payments_prefix = StreakInsuranceKeyPrefix::new_for_payments();
-        let claims_prefix = StreakInsuranceKeyPrefix::new_for_claims();
-        let count = payments.len() + claims.len();
-
-        // Keys are assigned in order, so the entries are inserted in key order
-        let payments: Vec<_> = payments
-            .iter()
-            .map(|payment| {
-                let key = payments_prefix.create_key(&self.payments_count);
-                self.payments_count += 1;
-                (key, msgpack::serialize_then_unwrap(payment))
-            })
-            .collect();
-        let claims: Vec<_> = claims
-            .iter()
-            .map(|claim| {
-                let key = claims_prefix.create_key(&self.claims_count);
-                self.claims_count += 1;
-                (key, msgpack::serialize_then_unwrap(claim))
-            })
-            .collect();
-
-        if count > 0 {
-            with_map_mut(|m| {
-                m.insert_many(payments);
-                m.insert_many(claims);
-            });
-        }
-        count
-    }
-
     pub fn insurance_price(&self, days_currently_insured: u8, additional_days: u8) -> u128 {
         let mut total = 0;
         for i in 0..additional_days {
@@ -428,35 +384,6 @@ mod tests {
         assert_eq!(claims_in_stable_memory(), to_bytes(&[claim]));
     }
 
-    #[test]
-    fn insurance_payments_and_claims_on_heap_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-
-        let payments: Vec<_> = (1..=3).map(|i| payment(DAY_ZERO + i, i as u8)).collect();
-        let claims: Vec<_> = (1..=2).map(|i| claim(DAY_ZERO + i, i as u16)).collect();
-        let mut streak = Streak {
-            payments_on_heap: payments.clone(),
-            claims_on_heap: claims.clone(),
-            ..Default::default()
-        };
-
-        assert_eq!(streak.migrate_to_stable_memory(), 5);
-        assert!(streak.payments_on_heap.is_empty());
-        assert!(streak.claims_on_heap.is_empty());
-        assert_eq!(streak.payments_count, 3);
-        assert_eq!(streak.claims_count, 2);
-
-        // New entries are added after those which were migrated
-        let new_payment = payment(DAY_ZERO + 10, 4);
-        streak.mark_streak_insurance_payment(new_payment.clone());
-        let mut expected_payments = payments;
-        expected_payments.push(new_payment);
-
-        assert_eq!(payments_in_stable_memory(), to_bytes(&expected_payments));
-        assert_eq!(claims_in_stable_memory(), to_bytes(&claims));
-        assert_eq!(streak.migrate_to_stable_memory(), 0);
-    }
-
     fn payment(timestamp: TimestampMillis, new_days_insured: u8) -> UserCanisterStreakInsurancePayment {
         UserCanisterStreakInsurancePayment {
             timestamp,
@@ -464,15 +391,6 @@ mod tests {
             additional_days: 1,
             new_days_insured,
             transaction_index: timestamp,
-        }
-    }
-
-    fn claim(timestamp: TimestampMillis, streak_length: u16) -> UserCanisterStreakInsuranceClaim {
-        UserCanisterStreakInsuranceClaim {
-            timestamp,
-            streak_length,
-            new_days_claimed: 1,
-            insured_days_remaining: 0,
         }
     }
 
