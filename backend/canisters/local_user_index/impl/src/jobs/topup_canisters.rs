@@ -1,6 +1,5 @@
 use crate::updates::c2c_notify_low_balance::top_up_child_canister;
 use crate::{CanisterToRefund, RuntimeState, jobs, mutate_state, read_state};
-use candid::Nat;
 use constants::{DAY_IN_MS, multi_user_canister_min_cycles_balance};
 use oc_error_codes::OCErrorCode;
 use per_round_timer::PerRoundTimer;
@@ -110,9 +109,11 @@ async fn run_async(canister_id: CanisterId) {
             // the community is removed instead.
             if status.module_hash.is_none() && read_state(|state| state.data.local_communities.contains(&canister_id.into())) {
                 notify_community_uninstalled(canister_id.into()).await;
-            } else if status.cycles < read_state(|state| child_canister_min_cycles_balance(canister_id, state))
-                || status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day
-            {
+            } else if utils::cycles::is_cycles_balance_low(
+                status.cycles(),
+                status.freeze_threshold_cycles(),
+                read_state(|state| child_canister_min_cycles_balance(canister_id, state)),
+            ) {
                 top_up_child_canister(Some(canister_id)).await;
             }
         }
@@ -120,8 +121,8 @@ async fn run_async(canister_id: CanisterId) {
     }
 }
 
-// The balance below which a child canister is topped up, matching the one at which it asks for a
-// top up itself
+// The cycles above its freezing threshold below which a child canister is topped up, matching the
+// minimum at which it asks for a top up itself
 fn child_canister_min_cycles_balance(canister_id: CanisterId, state: &RuntimeState) -> Cycles {
     if state.data.local_multi_user_canisters.contains(&canister_id) {
         multi_user_canister_min_cycles_balance(state.data.test_mode)

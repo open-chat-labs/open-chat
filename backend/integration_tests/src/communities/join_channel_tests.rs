@@ -1,10 +1,12 @@
 use crate::communities::join_community_tests::wait_for_invitation;
 use crate::env::ENV;
+use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::{Nat, Principal};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use std::time::Duration;
 use testing::rng::random_string;
 use types::{CanisterId, ChannelId, CommunityId};
 
@@ -58,6 +60,12 @@ fn join_channel_tops_up_community_which_is_out_of_cycles() {
 
     // First user2 needs to leave the channel because they were joined automatically
     client::community::happy_path::leave_channel(env, user2.principal, community_id, channel_id);
+
+    // A new community starts below the balance it keeps, so it asks for top ups as it handles its
+    // first updates. Let those land, then move past the window in which the LocalUserIndex retries
+    // a call without topping the canister up again.
+    tick_many(env, 10);
+    env.advance_time(Duration::from_secs(2 * 60));
 
     // Raise the freezing threshold until the cycles it reserves are just above the balance, which
     // freezes the community, leaving it short by far less than a top up

@@ -7171,10 +7171,9 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
 
     // A new canister starts with the balance every child canister is given, which is below the
-    // minimum a MultiUser canister keeps, though above the one a User canister keeps
+    // minimum a MultiUser canister keeps
     let balance = env.cycle_balance(canister_id);
     assert!(balance < min_balance);
-    assert!(balance > utils::cycles::MIN_CYCLES_BALANCE);
 
     // So its first update asks for a top up, of the MultiUser amount
     let (principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
@@ -7193,14 +7192,15 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
         tick_many(env, 5);
     };
 
-    // It's topped up again as it handles updates until its balance reaches the minimum
+    // It's topped up again as it handles updates until the cycles above its freezing threshold
+    // reach the minimum
     for _ in 0..5 {
-        if env.cycle_balance(canister_id) >= min_balance {
+        if liquid_cycle_balance(env, canister_id, local_user_index) >= min_balance {
             break;
         }
         update_once_check_due(env);
     }
-    assert!(env.cycle_balance(canister_id) >= min_balance);
+    assert!(liquid_cycle_balance(env, canister_id, local_user_index) >= min_balance);
 
     // While the balance is healthy there's no top up
     let balance = env.cycle_balance(canister_id);
@@ -7208,8 +7208,8 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
     assert!(env.cycle_balance(canister_id) <= balance);
 
     // Raise the freezing threshold until the cycles it reserves are three quarters of the balance.
-    // The canister still runs, but its balance is now less than twice the reserve, which is when
-    // `check_cycles_balance` counts it as low.
+    // The canister still runs, but the cycles above the reserve are now less than twice it, which is
+    // when `check_cycles_balance` counts it as low.
     let balance = env.cycle_balance(canister_id);
     let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
     let original_freezing_threshold = status.settings.freezing_threshold.clone();
@@ -7240,6 +7240,16 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
         },
     )
     .unwrap();
+}
+
+// The cycles above the canister's freezing threshold, worked out as the IC does
+fn liquid_cycle_balance(env: &PocketIc, canister_id: CanisterId, controller: Principal) -> u128 {
+    let status = env.canister_status(canister_id, Some(controller)).unwrap();
+    let to_u128 = |nat: &candid::Nat| -> u128 { nat.0.clone().try_into().unwrap() };
+    let freeze_threshold = (to_u128(&status.idle_cycles_burned_per_day) * to_u128(&status.settings.freezing_threshold)
+        / (24 * 60 * 60))
+        .saturating_sub(to_u128(&status.reserved_cycles));
+    to_u128(&status.cycles).saturating_sub(freeze_threshold)
 }
 
 fn wait_for_cycle_balance_above(env: &mut PocketIc, canister_id: CanisterId, balance: u128) {
