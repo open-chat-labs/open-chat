@@ -45,15 +45,21 @@ jobs:
         run: |
           curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --default-toolchain none -y
       - uses: actions/checkout@v4
+      # The master runs write the cache which every run restores. It's only saved when its key (the
+      # manifests, lockfile and toolchain) has changed, so after a key change the first master run
+      # to finish saves it (runs which started before then try too, and fail harmlessly). Runs whose
+      # tests fail save it as well: they nearly always fail after the build has finished, and
+      # saving only on success would leave runs building from an older cache (or from nothing,
+      # after a toolchain change) until one passed
       - uses: ./.github/workflows/setup-rust
         with:
-          cache: read
+          cache: ${{ github.event_name == 'push' && 'write' || 'read' }}
+          cache-on-failure: 'true'
           shared-key: build-wasm
       - uses: arduino/setup-protoc@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-      # Builds the wasms natively (incrementally, from the cache written on master by
-      # build_caches.yaml) rather than from scratch in docker. Reproducible builds only matter
-      # for releases, which still go through docker.
+      # Builds the wasms natively (incrementally, from the cache) rather than from scratch in
+      # docker. Reproducible builds only matter for releases, which still go through docker.
       - name: Build canister wasms and run integration tests
         run: ./scripts/run-integration-tests.sh build

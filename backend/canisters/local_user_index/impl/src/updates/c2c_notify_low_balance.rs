@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_child_canister;
 use crate::{CHILD_CANISTER_TOP_UP_AMOUNT, RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::min_cycles_balance;
+use constants::{min_cycles_balance, multi_user_canister_top_up_amount};
 use types::{CanisterId, Cycles, CyclesTopUp, NotifyLowBalanceArgs, NotifyLowBalanceResponse};
 use utils::canister::deposit_cycles;
 use utils::cycles::can_spend_cycles;
@@ -14,7 +14,7 @@ async fn c2c_notify_low_balance(_args: NotifyLowBalanceArgs) -> NotifyLowBalance
 }
 
 pub(crate) async fn top_up_child_canister(canister_id: Option<CanisterId>) -> NotifyLowBalanceResponse {
-    let prepare_ok = match read_state(|state| prepare(canister_id, CHILD_CANISTER_TOP_UP_AMOUNT, state)) {
+    let prepare_ok = match read_state(|state| prepare(canister_id, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -33,23 +33,26 @@ struct PrepareResult {
     top_up: CyclesTopUp,
 }
 
-fn prepare(
-    canister_id: Option<CanisterId>,
-    amount: Cycles,
-    state: &RuntimeState,
-) -> Result<PrepareResult, NotifyLowBalanceResponse> {
+fn prepare(canister_id: Option<CanisterId>, state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
+    let canister_id = canister_id.unwrap_or_else(|| state.env.caller());
+    let amount = top_up_amount(canister_id, state);
     let top_up = CyclesTopUp {
         date: state.env.now(),
         amount,
     };
 
     if can_spend_cycles(amount, min_cycles_balance(state.data.test_mode)) {
-        Ok(PrepareResult {
-            canister_id: canister_id.unwrap_or_else(|| state.env.caller()),
-            top_up,
-        })
+        Ok(PrepareResult { canister_id, top_up })
     } else {
         Err(NotifyLowBalanceResponse::NotEnoughCyclesRemaining)
+    }
+}
+
+fn top_up_amount(canister_id: CanisterId, state: &RuntimeState) -> Cycles {
+    if state.data.local_multi_user_canisters.contains(&canister_id) {
+        multi_user_canister_top_up_amount(state.data.test_mode)
+    } else {
+        CHILD_CANISTER_TOP_UP_AMOUNT
     }
 }
 

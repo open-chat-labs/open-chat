@@ -10,18 +10,21 @@ set -a
 source "$ENV_FILE"
 set +a
 
+# Ports of this checkout's replica and dev server, so several checkouts can each run their own
+export OC_REPLICA_PORT=${OC_REPLICA_PORT:-8080}
+export OC_DEV_PORT=${OC_DEV_PORT:-5001}
+
 # OC specific env variables
-export OC_CANISTER_URL_PATH=http://{canisterId}.localhost:8080
+export OC_CANISTER_URL_PATH=http://{canisterId}.localhost:$OC_REPLICA_PORT
 export OC_BITCOIN_MAINNET_ENABLED=false
 export OC_ACCOUNT_LINKING_CODES_ENABLED=true
-export OC_BLOB_URL_PATTERN=http://{canisterId}.raw.localhost:8080/{blobType}
+export OC_BLOB_URL_PATTERN=http://{canisterId}.raw.localhost:$OC_REPLICA_PORT/{blobType}
 export OC_BUILD_ENV=$NODE_ENV
 export OC_WEBAUTHN_ORIGIN=localhost
-export OC_DEV_PORT=5001
 export OC_DFX_NETWORK=local
 export OC_INTERNET_IDENTITY_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
-export OC_INTERNET_IDENTITY_URL=http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080
-export OC_NFID_URL=http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:8080
+export OC_INTERNET_IDENTITY_URL=http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:$OC_REPLICA_PORT
+export OC_NFID_URL=http://qhbym-qaaaa-aaaaa-aaafq-cai.localhost:$OC_REPLICA_PORT
 export OC_NODE_ENV=$NODE_ENV
 export OC_PREVIEW_PROXY_URL=${OC_PREVIEW_PROXY_URL:-https://dy7sqxe9if6te.cloudfront.net}
 export OC_TRANSLATE_PROXY_URL=${OC_TRANSLATE_PROXY_URL:-https://5rabdwftr36yvlgf5xmr34swb40nxsgs.lambda-url.eu-west-2.on.aws}
@@ -32,7 +35,7 @@ export OC_VIDEO_BRIDGE_URL=http://localhost:5050
 export OC_NCA_REPORTER_URL=${OC_NCA_REPORTER_URL:-http://localhost:8180}
 export OC_WALLET_CONNECT_PROJECT_ID=b9aafebed2abfaf8341afd9428c947d5
 export OC_WEBSITE_VERSION=
-export OC_BASE_ORIGIN=http://localhost:5001
+export OC_BASE_ORIGIN=http://localhost:$OC_DEV_PORT
 
 # override klipy api key from local environment (app only)
 export OC_KLIPY_APIKEY="$OC_APP_KLIPY_APIKEY"

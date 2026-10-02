@@ -94,7 +94,7 @@ export function getProxyAdjustedBlobUrl(blobUrl: string | undefined): string | u
             const url = new URL(blobUrl);
             const icUrl = import.meta.env.OC_IC_URL;
 
-            if (url.host.includes("localhost:8080")) {
+            if (url.host.includes(`localhost:${import.meta.env.OC_REPLICA_PORT ?? "8080"}`)) {
                 const canisterId = url.hostname.split(".")[0];
                 const remainingPath = url.pathname + url.search;
 
