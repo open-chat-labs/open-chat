@@ -193,7 +193,7 @@ fn community_asks_for_top_up_while_only_running_background_jobs() {
     // which garbage collects the channel's stable memory, to run 10 seconds later.
     env.advance_time(Duration::from_secs(6 * 60));
     client::community::happy_path::delete_channel(env, user1.principal, community_id, channel_id1);
-    // Lets the community send the events which the deletion pushed, without advancing time
+    // Let the community send the events which the deletion pushed, without advancing time
     tick_many(env, 5);
 
     // Raise the freezing threshold until the cycles it reserves are 60% of the balance, which is less

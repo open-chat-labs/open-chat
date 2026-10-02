@@ -97,6 +97,7 @@ async fn import_group(group: GroupToImport) {
                             // We set a timer to trigger an upgrade in case deserializing the group requires
                             // more instructions than are allowed in a normal update call
                             ic_cdk_timers::set_timer(Duration::from_secs(10), async move {
+                                run_regular_jobs();
                                 trigger_upgrade_to_finalize_import(group_id)
                             });
 
@@ -489,7 +490,10 @@ fn complete_processing_channel_members(group_id: ChatId, channel_id: ChannelId, 
         })));
     });
 
-    ic_cdk_timers::set_timer(Duration::ZERO, async move { mark_import_complete(group_id, channel_id) });
+    ic_cdk_timers::set_timer(Duration::ZERO, async move {
+        run_regular_jobs();
+        mark_import_complete(group_id, channel_id)
+    });
     info!(%group_id, "'process_channel_members' completed");
 }
 
