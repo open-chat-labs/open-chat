@@ -40,6 +40,8 @@ fn pool_canisters_are_refunded_then_topped_up_when_used() {
     );
     assert!(matches!(response, SuccessOnly::Success));
     assert_eq!(canisters_in_pool(env, local_user_index), 2);
+    let refunded_from_users = metric(env, local_user_index, "cycles_refunded_from_deleted_users");
+    let refunded_from_pool = metric(env, local_user_index, "cycles_refunded_from_pool_canisters");
 
     let wasm = wasms::LOCAL_USER_INDEX.clone();
     let args = candid::encode_one(local_user_index_canister::post_upgrade::Args {
@@ -56,6 +58,13 @@ fn pool_canisters_are_refunded_then_topped_up_when_used() {
     assert_eq!(canisters_in_pool(env, local_user_index), 1);
     assert!(env.cycle_balance(pool_canister) < MAX_RESIDUAL_CYCLES);
     assert!(env.cycle_balance(uncontrolled_canister) >= 300 * B);
+
+    // Counted as refunded from the pool, leaving the count of deleted users' refunds unchanged
+    assert!(metric(env, local_user_index, "cycles_refunded_from_pool_canisters") > refunded_from_pool + 200 * B);
+    assert_eq!(
+        metric(env, local_user_index, "cycles_refunded_from_deleted_users"),
+        refunded_from_users
+    );
 
     // Past the IC's rate limit on installing code, which the refunder's install counts towards
     env.advance_time(Duration::from_secs(10 * 60));
@@ -87,6 +96,10 @@ fn create_empty_canister(env: &mut PocketIc, local_user_index: CanisterId, contr
     canister_id
 }
 
-fn canisters_in_pool(env: &PocketIc, local_user_index: CanisterId) -> u64 {
-    metrics(env, local_user_index)["canisters_in_pool"].as_u64().unwrap()
+fn canisters_in_pool(env: &PocketIc, local_user_index: CanisterId) -> u128 {
+    metric(env, local_user_index, "canisters_in_pool")
+}
+
+fn metric(env: &PocketIc, local_user_index: CanisterId, name: &str) -> u128 {
+    metrics(env, local_user_index)[name].as_u64().unwrap().into()
 }
