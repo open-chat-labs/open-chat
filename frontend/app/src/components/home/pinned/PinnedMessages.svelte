@@ -51,7 +51,9 @@
         unread = client.unreadPinned(chatId, dateLastPinned);
     });
 
-    let messagesDiv: HTMLDivElement | undefined = $state();
+    // bind:this sets this to null when the panel unmounts, which can happen
+    // before the tick() after a load resolves (Rollbar #31953).
+    let messagesDiv: HTMLDivElement | null | undefined = $state();
 
     let messages: RemoteData<EventWrapper<Message>[][], string> = $state({ kind: "idle" });
 
@@ -61,7 +63,7 @@
     }
 
     function scrollBottom() {
-        if (messagesDiv !== undefined) {
+        if (messagesDiv) {
             messagesDiv.scrollTo({
                 top: messagesDiv.scrollHeight - messagesDiv.clientHeight,
                 behavior: "auto",
