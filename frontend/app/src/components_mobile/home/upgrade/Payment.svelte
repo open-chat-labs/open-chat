@@ -353,7 +353,7 @@
                 {@render insufficientWarning()}
             {/if}
             {@render cryptoSelector()}
-            <SourceWalletSelector bind:wallet={sourceWallet} />
+            <SourceWalletSelector bind:wallet={sourceWallet} {ledger} />
 
             <Column
                 borderRadius={"lg"}
