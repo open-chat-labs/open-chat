@@ -92,6 +92,9 @@
     }
 
     function loadTransactions() {
+        // The "load more" button can still be clicked while it shows the next page loading
+        if (transactionData.kind === "loading_more") return;
+
         const ledgerIndex = $cryptoLookup.get(ledger)?.index;
         if (ledgerIndex !== undefined) {
             let start = undefined;
