@@ -160,7 +160,9 @@ export default defineConfig({
         proxy: isNativeApp
             ? undefined
             : {
-                  "/api": `http://${dfxJson.networks.local.bind}`,
+                  "/api": process.env.OC_REPLICA_PORT
+                      ? `http://127.0.0.1:${process.env.OC_REPLICA_PORT}`
+                      : `http://${dfxJson.networks.local.bind}`,
               },
         headers: {
             "Cache-Control": "no-store",

@@ -33,6 +33,8 @@ interface ImportMetaEnv {
     readonly OC_PROPOSALS_BOT_CANISTER: string;
     readonly OC_TRANSLATE_PROXY_URL: string;
     readonly OC_REGISTRY_CANISTER: string;
+    // Port of the local replica in dev builds (defaults to 8080)
+    readonly OC_REPLICA_PORT?: string;
     readonly OC_ROLLBAR_ACCESS_TOKEN: string;
     readonly OC_SERVICE_WORKER_PATH: string;
     readonly OC_SIGN_IN_WITH_EMAIL_CANISTER: string;
