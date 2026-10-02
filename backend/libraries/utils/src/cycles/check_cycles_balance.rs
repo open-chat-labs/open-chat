@@ -42,8 +42,13 @@ fn should_notify(min_cycles_balance: Cycles) -> bool {
 // 30 days the latter means below 60 days of idle burn, which is what a large canister runs out of
 // first.
 pub fn is_cycles_balance_low(cycles_balance: Cycles, freeze_threshold: Cycles, min_cycles_balance: Cycles) -> bool {
+    cycles_balance_shortfall(cycles_balance, freeze_threshold, min_cycles_balance) > 0
+}
+
+// How many more cycles the canister needs for its balance no longer to be low
+pub fn cycles_balance_shortfall(cycles_balance: Cycles, freeze_threshold: Cycles, min_cycles_balance: Cycles) -> Cycles {
     let liquid_cycles = cycles_balance.saturating_sub(freeze_threshold);
-    liquid_cycles < max(2 * freeze_threshold, min_cycles_balance)
+    max(2 * freeze_threshold, min_cycles_balance).saturating_sub(liquid_cycles)
 }
 
 // The cycles a canister must keep to not be frozen, worked out as the IC does: the cycles it burns
@@ -106,6 +111,36 @@ mod tests {
     #[test]
     fn a_canister_below_its_freezing_threshold_is_low() {
         assert!(is_cycles_balance_low(10 * B, 20 * B, MIN_CYCLES_BALANCE));
+    }
+
+    #[test]
+    fn the_shortfall_is_what_brings_the_cycles_above_the_freezing_threshold_up_to_the_minimum() {
+        let freeze_threshold = 40 * B;
+        assert_eq!(
+            cycles_balance_shortfall(freeze_threshold + 300 * B, freeze_threshold, MIN_CYCLES_BALANCE),
+            700 * B
+        );
+        assert_eq!(
+            cycles_balance_shortfall(MIN_CYCLES_BALANCE + freeze_threshold, freeze_threshold, MIN_CYCLES_BALANCE),
+            0
+        );
+    }
+
+    #[test]
+    fn the_shortfall_of_a_large_canister_is_up_to_twice_its_freezing_threshold() {
+        let freeze_threshold = MIN_CYCLES_BALANCE;
+        assert_eq!(
+            cycles_balance_shortfall(2 * freeze_threshold, freeze_threshold, MIN_CYCLES_BALANCE),
+            freeze_threshold
+        );
+    }
+
+    #[test]
+    fn the_shortfall_of_a_frozen_canister_counts_none_of_its_cycles() {
+        assert_eq!(
+            cycles_balance_shortfall(10 * B, 20 * B, MIN_CYCLES_BALANCE),
+            MIN_CYCLES_BALANCE
+        );
     }
 
     #[test]

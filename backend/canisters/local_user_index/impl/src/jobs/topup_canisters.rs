@@ -97,12 +97,19 @@ async fn run_async(canister_id: CanisterId) {
                     // Topping up a canister with no code would only strand the cycles in it
                     info!(%canister_id, "Not topping up a canister which has no code");
                 }
-            } else if utils::cycles::is_cycles_balance_low(
-                status.cycles(),
-                status.freeze_threshold_cycles(),
-                read_state(|state| child_canister_min_cycles_balance(canister_id, state)),
-            ) {
-                top_up_child_canister(Some(canister_id)).await;
+            } else {
+                let shortfall = utils::cycles::cycles_balance_shortfall(
+                    status.cycles(),
+                    status.freeze_threshold_cycles(),
+                    read_state(|state| child_canister_min_cycles_balance(canister_id, state)),
+                );
+                // A low balance is topped up by enough to bring it back to the minimum, plus the
+                // usual amount. Otherwise a canister which uses more than the usual amount in the
+                // time between these checks, and isn't asking to be topped up itself (eg. a large
+                // canister which has gone quiet), would keep falling further behind.
+                if shortfall > 0 {
+                    top_up_child_canister(Some(canister_id), shortfall).await;
+                }
             }
         }
         Err(error) => error!(%canister_id, ?error, "Error getting canister status"),
