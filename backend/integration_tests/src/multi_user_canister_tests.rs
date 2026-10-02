@@ -3,7 +3,10 @@ use crate::env::{ENV, VIDEO_CALL_OPERATOR};
 use crate::utils::{metrics, now_millis, tick_many, try_metrics};
 use crate::{CanisterIds, TestEnv, client, wasms};
 use candid::Principal;
-use constants::{HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID};
+use constants::{
+    HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID,
+    multi_user_canister_min_cycles_balance, multi_user_canister_top_up_amount,
+};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use serde::Deserialize;
@@ -7147,10 +7150,14 @@ fn private_replies_to_a_group_follow_it_into_a_community() {
 }
 
 // A MultiUser canister checks its cycles balance as it handles updates, as a User canister does, and
-// asks the LocalUserIndex for a top up once it runs low
+// asks the LocalUserIndex for a top up once it runs low. Since it hosts many users it keeps a larger
+// balance than a User canister, and is topped up by more each time.
 #[test]
 fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
-    const TOP_UP_AMOUNT: u128 = 200_000_000_000;
+    let top_up_amount = multi_user_canister_top_up_amount(true);
+    let min_balance = multi_user_canister_min_cycles_balance(true);
+    // Less a margin for the cycles the update and the check themselves use
+    let topped_up_from = |balance: u128| balance + top_up_amount - 10_000_000_000;
 
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -7162,7 +7169,16 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+
+    // A new canister starts with the balance every child canister is given, which is below the
+    // minimum a MultiUser canister keeps, though above the one a User canister keeps
+    let balance = env.cycle_balance(canister_id);
+    assert!(balance < min_balance);
+    assert!(balance > utils::cycles::MIN_CYCLES_BALANCE);
+
+    // So its first update asks for a top up, of the MultiUser amount
     let (principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
+    wait_for_cycle_balance_above(env, canister_id, topped_up_from(balance));
 
     // Runs an update once the check is due again, then gives the top up time to arrive
     let update_once_check_due = |env: &mut PocketIc| {
@@ -7176,6 +7192,15 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
         assert!(matches!(response, user_canister::set_bio::Response::Success));
         tick_many(env, 5);
     };
+
+    // It's topped up again as it handles updates until its balance reaches the minimum
+    for _ in 0..5 {
+        if env.cycle_balance(canister_id) >= min_balance {
+            break;
+        }
+        update_once_check_due(env);
+    }
+    assert!(env.cycle_balance(canister_id) >= min_balance);
 
     // While the balance is healthy there's no top up
     let balance = env.cycle_balance(canister_id);
@@ -7202,8 +7227,7 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
     .unwrap();
 
     update_once_check_due(env);
-    // Less a margin for the cycles the update and the check themselves use
-    assert!(env.cycle_balance(canister_id) > balance + TOP_UP_AMOUNT - 10_000_000_000);
+    assert!(env.cycle_balance(canister_id) > topped_up_from(balance));
 
     // Put the freezing threshold back, since the environment, and so this canister, is shared with
     // later tests
@@ -7216,6 +7240,19 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
         },
     )
     .unwrap();
+}
+
+fn wait_for_cycle_balance_above(env: &mut PocketIc, canister_id: CanisterId, balance: u128) {
+    for _ in 0..50 {
+        if env.cycle_balance(canister_id) > balance {
+            return;
+        }
+        env.tick();
+    }
+    panic!(
+        "Cycles balance of {canister_id} didn't rise above {balance}. Balance: {}",
+        env.cycle_balance(canister_id)
+    );
 }
 
 // A user in a MultiUser canister can read their direct chats via their LocalUserIndex's
