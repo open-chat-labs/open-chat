@@ -10,10 +10,10 @@
         allow_raw_access: false,
     },
     {
-        // Only a document takes these, and index.html is the only one the website serves: the
-        // canister serves it for every route. Kept off the other assets because a proposal to
-        // commit a release repeats each changed asset's headers, and over 2KB of them on every
-        // asset took one past the 2MiB ingress limit.
+        // Only a document takes these, and index.html is the only one in the build (public/ has
+        // its own config). The canister serves it for every route. Kept off the other assets
+        // because a proposal to commit a release repeats each changed asset's headers, and over
+        // 2KB of them on every asset took one past the 2MiB ingress limit.
         match: "index.html",
         headers: {
             // Permissions-Policy. Every enabled feature names its consumer; anything else is off.
