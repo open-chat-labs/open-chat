@@ -1,6 +1,7 @@
 use crate::updates::c2c_notify_low_balance::{top_up_amount, top_up_child_canister};
-use crate::{CanisterToRefund, RuntimeState, jobs, mutate_state, read_state};
-use constants::{DAY_IN_MS, min_cycles_balance, multi_user_canister_min_cycles_balance};
+use crate::{CanisterToRefund, RuntimeState, child_min_cycles_balance, jobs, mutate_state, read_state};
+use constants::{DAY_IN_MS, min_cycles_balance};
+use local_user_index_canister::ChildCanisterType;
 use oc_error_codes::OCErrorCode;
 use per_round_timer::PerRoundTimer;
 use std::cell::RefCell;
@@ -130,13 +131,9 @@ async fn run_async(canister_id: CanisterId) {
 // The cycles above its freezing threshold below which a child canister is topped up, matching the
 // minimum at which a child on the latest version asks for a top up itself
 fn child_canister_min_cycles_balance(canister_id: CanisterId, state: &RuntimeState) -> Cycles {
-    if state.data.local_multi_user_canisters.contains(&canister_id) {
-        multi_user_canister_min_cycles_balance(state.data.test_mode)
-    } else if state.data.local_users.contains(&canister_id.into()) {
-        utils::cycles::USER_CANISTER_MIN_CYCLES_BALANCE
-    } else {
-        utils::cycles::MIN_CYCLES_BALANCE
-    }
+    // Only this canister's children are checked, so the fallback should never be needed
+    let canister_type = state.child_canister_type(canister_id).unwrap_or(ChildCanisterType::Group);
+    child_min_cycles_balance(canister_type, state.data.test_mode)
 }
 
 // Tells the GroupIndex, which stops listing the community, then stops tracking it here. The

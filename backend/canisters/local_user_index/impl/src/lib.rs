@@ -20,7 +20,7 @@ use crate::model::web_push_subscriptions::WebPushSubscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use community_canister::LocalIndexEvent as CommunityEvent;
-use constants::MINUTE_IN_MS;
+use constants::{MINUTE_IN_MS, multi_user_canister_min_cycles_balance};
 use ct_codecs::{Base64UrlSafeNoPadding, Encoder};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -78,12 +78,26 @@ mod no_inline_anchor;
 mod queries;
 mod updates;
 
-const CHILD_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = utils::cycles::MIN_CYCLES_BALANCE + CHILD_CANISTER_TOP_UP_AMOUNT; // 1.2T cycles
-const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles =
-    utils::cycles::USER_CANISTER_MIN_CYCLES_BALANCE + CHILD_CANISTER_TOP_UP_AMOUNT; // 0.5T cycles
-const CHILD_CANISTER_TOP_UP_AMOUNT: Cycles = 200_000_000_000; // 0.2T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const MULTI_USER_UPGRADE_CONCURRENCY: usize = 1;
+
+// The cycles above its freezing threshold each type of child canister keeps. A child is created with
+// this plus one top up, and is topped up by half this at a time.
+fn child_min_cycles_balance(canister_type: ChildCanisterType, test_mode: bool) -> Cycles {
+    match canister_type {
+        ChildCanisterType::User => utils::cycles::USER_CANISTER_MIN_CYCLES_BALANCE, // 0.3T
+        ChildCanisterType::Group | ChildCanisterType::Community => utils::cycles::MIN_CYCLES_BALANCE, // 1T
+        ChildCanisterType::MultiUser => multi_user_canister_min_cycles_balance(test_mode), // 10T
+    }
+}
+
+fn child_top_up_amount(canister_type: ChildCanisterType, test_mode: bool) -> Cycles {
+    child_min_cycles_balance(canister_type, test_mode) / 2
+}
+
+fn child_initial_cycles_balance(canister_type: ChildCanisterType, test_mode: bool) -> Cycles {
+    child_min_cycles_balance(canister_type, test_mode) + child_top_up_amount(canister_type, test_mode)
+}
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -201,6 +215,20 @@ impl RuntimeState {
             || self.data.local_groups.contains(&caller.into())
             || self.data.local_communities.contains(&caller.into())
             || self.data.local_multi_user_canisters.contains(&caller)
+    }
+
+    pub fn child_canister_type(&self, canister_id: CanisterId) -> Option<ChildCanisterType> {
+        if self.data.local_multi_user_canisters.contains(&canister_id) {
+            Some(ChildCanisterType::MultiUser)
+        } else if self.data.local_users.contains(&canister_id.into()) {
+            Some(ChildCanisterType::User)
+        } else if self.data.local_groups.contains(&canister_id.into()) {
+            Some(ChildCanisterType::Group)
+        } else if self.data.local_communities.contains(&canister_id.into()) {
+            Some(ChildCanisterType::Community)
+        } else {
+            None
+        }
     }
 
     // The cycles top ups of one of this canister's children, or None if it isn't one

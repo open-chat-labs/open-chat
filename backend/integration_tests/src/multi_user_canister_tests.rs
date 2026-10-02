@@ -7,7 +7,7 @@ use crate::{CanisterIds, TestEnv, client, wasms};
 use candid::Principal;
 use constants::{
     HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID,
-    multi_user_canister_min_cycles_balance, multi_user_canister_top_up_amount,
+    multi_user_canister_min_cycles_balance,
 };
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
@@ -7156,8 +7156,8 @@ fn private_replies_to_a_group_follow_it_into_a_community() {
 // balance than a User canister, and is topped up by more each time.
 #[test]
 fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
-    let top_up_amount = multi_user_canister_top_up_amount(true);
     let min_balance = multi_user_canister_min_cycles_balance(true);
+    let top_up_amount = min_balance / 2;
     // Less a margin for the cycles the update and the check themselves use
     let topped_up_from = |balance: u128| balance + top_up_amount - 10_000_000_000;
 
@@ -7186,9 +7186,8 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
         tick_many(env, 5);
     };
 
-    // A new canister starts with more than the minimum a MultiUser canister keeps in test mode. So
-    // raise the freezing threshold until the cycles above it are just below that minimum, while
-    // still more than twice the cycles it reserves, so that it's the minimum which counts it as low.
+    // A new canister starts with the minimum a MultiUser canister keeps plus one top up. So raise the
+    // freezing threshold until the cycles above it are just below that minimum.
     let balance = env.cycle_balance(canister_id);
     let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
     let original_freezing_threshold = status.settings.freezing_threshold.clone();
@@ -7201,9 +7200,7 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
         local_user_index,
         (reserve * 24 * 60 * 60 / burned_per_day).into(),
     );
-    let liquid = liquid_cycle_balance(env, canister_id, local_user_index);
-    assert!(liquid < min_balance);
-    assert!(liquid > 2 * (balance - liquid));
+    assert!(liquid_cycle_balance(env, canister_id, local_user_index) < min_balance);
 
     // So its next update asks for a top up, of the MultiUser amount
     update_once_check_due(env);

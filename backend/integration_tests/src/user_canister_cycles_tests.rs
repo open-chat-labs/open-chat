@@ -21,11 +21,12 @@ fn weekly_check_holds_user_canisters_to_their_old_minimum() {
     let frozen_user = client::register_user_with_referrer_on(env, canister_ids, local_user_index, None);
 
     // Once the cycles its freezing threshold reserves are set aside, it holds less than the 1T other
-    // canisters keep, but more than the User canister minimum
+    // canisters keep, but more than the User canister minimum, with room for what it burns while idle
+    // over the weeks the clock is moved on below
     let balance = env.cycle_balance(user.canister());
     let liquid = liquid_cycle_balance(env, user.canister(), local_user_index);
     assert!(liquid < MIN_CYCLES_BALANCE);
-    assert!(liquid > USER_CANISTER_MIN_CYCLES_BALANCE + 100 * B);
+    assert!(liquid > USER_CANISTER_MIN_CYCLES_BALANCE + 50 * B, "{liquid}");
 
     // Raise the frozen user's freezing threshold until the cycles it reserves are just above its
     // balance, so it can't ask to be topped up itself
