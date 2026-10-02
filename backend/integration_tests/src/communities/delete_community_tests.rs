@@ -278,25 +278,9 @@ fn wait_for_community_deleted_notification_dropped(env: &mut PocketIc, group_ind
 
 // Whether searching the GroupIndex's public communities for `name` finds the community
 fn is_listed(env: &PocketIc, user: &User, group_index: Principal, name: &str, community_id: CommunityId) -> bool {
-    let response = client::group_index::explore_communities(
-        env,
-        user.principal,
-        group_index,
-        &group_index_canister::explore_communities::Args {
-            search_term: Some(name.to_string()),
-            languages: Vec::new(),
-            page_index: 0,
-            page_size: 50,
-            include_moderation_flags: 0,
-        },
-    );
-
-    match response {
-        group_index_canister::explore_communities::Response::Success(result) => {
-            result.matches.iter().any(|m| m.id == community_id)
-        }
-        response => panic!("'explore_communities' error: {response:?}"),
-    }
+    client::group_index::happy_path::explore_communities(env, user.principal, group_index, name)
+        .iter()
+        .any(|m| m.id == community_id)
 }
 
 // Whether the GroupIndex has recorded the community as deleted
