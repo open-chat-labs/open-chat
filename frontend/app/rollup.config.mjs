@@ -198,6 +198,7 @@ export default {
                 process.env.OC_ROLLBAR_ACCESS_TOKEN,
             ),
             "import.meta.env.OC_IC_URL": maybeStringify(process.env.OC_IC_URL),
+            "import.meta.env.OC_REPLICA_PORT": maybeStringify(process.env.OC_REPLICA_PORT),
             "import.meta.env.OC_II_DERIVATION_ORIGIN": maybeStringify(
                 process.env.OC_II_DERIVATION_ORIGIN,
             ),
