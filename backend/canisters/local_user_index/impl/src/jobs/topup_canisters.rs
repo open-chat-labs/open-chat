@@ -7,7 +7,7 @@ use per_round_timer::PerRoundTimer;
 use std::cell::RefCell;
 use std::time::Duration;
 use tracing::{error, info};
-use types::{CanisterId, CommunityId, Cycles, Milliseconds, TimestampMillis, UnitResult};
+use types::{CanisterId, CommunityId, Cycles, Milliseconds, UnitResult};
 use utils::canister_timers::run_now_then_interval;
 
 thread_local! {
@@ -16,24 +16,7 @@ thread_local! {
 
 const CYCLES_CHECK_INTERVAL: Milliseconds = 7 * DAY_IN_MS;
 
-// One-off: hold off checking balances and topping canisters up until 09:00 UTC on Monday
-// 5 October 2026, so that cycles can be recouped first. Otherwise the job runs as soon as the
-// LocalUserIndex is upgraded.
-// TODO remove in a release deployed after 2026-10-05T09:00:00Z. Removing it in an earlier release
-// would run the checks as soon as that release is deployed.
-const FIRST_RUN_NOT_BEFORE: TimestampMillis = 1_791_190_800_000; // 2026-10-05T09:00:00Z
-
-pub fn start_job(now: TimestampMillis) {
-    let delay = FIRST_RUN_NOT_BEFORE.saturating_sub(now);
-    if delay == 0 {
-        start_checks();
-    } else {
-        ic_cdk_timers::set_timer(Duration::from_millis(delay), async { start_checks() });
-        info!(delay, "Top up canisters job deferred");
-    }
-}
-
-fn start_checks() {
+pub fn start_job() {
     run_now_then_interval(Duration::from_millis(CYCLES_CHECK_INTERVAL), populate_canisters);
 }
 
