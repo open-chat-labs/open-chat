@@ -3,7 +3,6 @@ use stable_memory_map::{
     ChatEventKeyPrefix, DirectChatUnreadMessageIndexKey, DirectChatUnreadMessageIndexKeyPrefix, KeyPrefix, with_map,
     with_map_mut,
 };
-use std::collections::BTreeMap;
 use std::ops::RangeInclusive;
 use types::MessageIndex;
 
@@ -17,14 +16,10 @@ use types::MessageIndex;
 /// The entries are stored in the stable memory map for small entries under a prefix derived from
 /// the chat's events prefix (which contains the chat's `key_id`), so that must be passed in to
 /// identify them.
+///
+/// It has braces, rather than being a unit struct, since it is serialized as an empty map.
 #[derive(Serialize, Deserialize, Default)]
-pub(crate) struct UnreadMessageIndexMap {
-    // The entries which were held on the heap, which are all moved into stable memory in
-    // `post_upgrade` by `migrate_to_stable_memory`, so this is always empty otherwise.
-    // TODO: Remove this after next release
-    #[serde(rename = "map", default, skip_serializing)]
-    on_heap: BTreeMap<MessageIndex, MessageIndex>,
-}
+pub(crate) struct UnreadMessageIndexMap {}
 
 impl UnreadMessageIndexMap {
     pub(crate) fn add(&mut self, events_prefix: &ChatEventKeyPrefix, ours: MessageIndex, theirs: MessageIndex) {
@@ -59,32 +54,10 @@ impl UnreadMessageIndexMap {
             }
         });
     }
-
-    // Moves the entries which were held on the heap into stable memory, returning how many were
-    // moved
-    // TODO: Remove this after next release
-    pub(crate) fn migrate_to_stable_memory(&mut self, events_prefix: &ChatEventKeyPrefix) -> usize {
-        if self.on_heap.is_empty() {
-            return 0;
-        }
-
-        let prefix = prefix(events_prefix);
-        // The entries are in our message index order, so they are inserted in key order
-        let entries = std::mem::take(&mut self.on_heap);
-        let count = entries.len();
-        with_map_mut(|m| {
-            m.insert_many(
-                entries
-                    .into_iter()
-                    .map(|(ours, theirs)| (prefix.create_key(&ours), u32::from(theirs).to_be_bytes().to_vec())),
-            )
-        });
-        count
-    }
 }
 
 // Panics if the events prefix isn't for the main events list of a `key_id` based direct chat. Every
-// direct chat is assigned a `key_id` at the start of `post_upgrade`, so this always holds.
+// direct chat has a `key_id`, so this always holds.
 pub(crate) fn prefix(events_prefix: &ChatEventKeyPrefix) -> DirectChatUnreadMessageIndexKeyPrefix {
     DirectChatUnreadMessageIndexKeyPrefix::new_from_events_prefix(events_prefix)
 }
@@ -104,6 +77,13 @@ mod tests {
     use super::*;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+    #[test]
+    fn map_is_serialized_as_an_empty_map() {
+        let bytes = msgpack::serialize_then_unwrap(UnreadMessageIndexMap::default());
+        assert_eq!(bytes, [0x80]);
+        let _: UnreadMessageIndexMap = msgpack::deserialize_then_unwrap(&bytes);
+    }
 
     #[test]
     fn get_max_read_up_to_of_theirs() {
@@ -158,54 +138,6 @@ mod tests {
         map2.remove_up_to(&chat2, 21.into());
         assert!(entries(&chat2).is_empty());
         assert_eq!(entries(&chat1), vec![(1.into(), 10.into())]);
-    }
-
-    #[test]
-    fn entries_on_heap_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-        let chat = events_prefix(1);
-        let mut map = UnreadMessageIndexMap {
-            on_heap: (1..=50)
-                .map(|i| (MessageIndex::from(i), MessageIndex::from(i + 100)))
-                .collect(),
-        };
-
-        assert_eq!(map.migrate_to_stable_memory(&chat), 50);
-        assert!(map.on_heap.is_empty());
-        assert_eq!(map.migrate_to_stable_memory(&chat), 0);
-
-        assert_eq!(
-            entries(&chat),
-            (1..=50)
-                .map(|i| (MessageIndex::from(i), MessageIndex::from(i + 100)))
-                .collect::<Vec<_>>()
-        );
-        assert_eq!(map.get_max_read_up_to_of_theirs(&chat, &10.into()), Some(110.into()));
-    }
-
-    #[test]
-    fn entries_serialized_before_the_migration_are_migrated_to_stable_memory() {
-        // The format `UnreadMessageIndexMap` was serialized in before the entries were moved into
-        // stable memory
-        #[derive(Serialize)]
-        struct LegacyUnreadMessageIndexMap {
-            map: BTreeMap<MessageIndex, MessageIndex>,
-        }
-
-        init_stable_memory_map();
-        let chat = events_prefix(1);
-        let legacy = LegacyUnreadMessageIndexMap {
-            map: [(1.into(), 3.into()), (2.into(), 4.into())].into_iter().collect(),
-        };
-
-        let mut map: UnreadMessageIndexMap = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&legacy));
-
-        assert_eq!(map.migrate_to_stable_memory(&chat), 2);
-        assert_eq!(entries(&chat), vec![(1.into(), 3.into()), (2.into(), 4.into())]);
-
-        // The heap isn't serialized
-        let deserialized: UnreadMessageIndexMap = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&map));
-        assert!(deserialized.on_heap.is_empty());
     }
 
     fn entries(events_prefix: &ChatEventKeyPrefix) -> Vec<(MessageIndex, MessageIndex)> {

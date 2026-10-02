@@ -2078,9 +2078,7 @@ export class OpenChatAgent extends EventTarget {
                         // A debit (daily puzzle entry or hint) moves the balance without
                         // touching the total earned, so the balance must be compared too
                         userResponse.chitBalance !== chitState.value.chitBalance ||
-                        userResponse.streakEnds !== chitState.value.streakEnds ||
-                        // TODO remove this once User canisters have been upgraded
-                        userResponse.nextDailyClaim !== chitState.value.nextDailyChitClaim
+                        userResponse.streakEnds !== chitState.value.streakEnds
                     ) {
                         chitState.value = {
                             streakEnds: userResponse.streakEnds,

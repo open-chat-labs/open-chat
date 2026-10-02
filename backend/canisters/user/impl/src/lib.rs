@@ -1,4 +1,3 @@
-use crate::model::legacy_user_canister_event_batch::LegacyUserCanisterEventBatch;
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
@@ -35,7 +34,6 @@ use utils::migrated_user_ids::MigratedUserIds;
 use utils::regular_jobs::RegularJobs;
 
 mod crypto;
-mod data_previous;
 mod guards;
 mod jobs;
 mod lifecycle;
@@ -341,10 +339,6 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: git_commit_id::git_commit_id().to_string(),
             direct_chats: self.data.user.direct_chats.len() as u32,
-            // TODO: Remove this once every user canister has been migrated
-            direct_chats_with_legacy_events: jobs::migrate_direct_chat_events_to_key_id_keys::direct_chats_with_legacy_events(
-                self,
-            ) as u32,
             group_chats: self.data.user.group_chats.len() as u32,
             communities: self.data.user.communities.len() as u32,
             groups_created: self.data.user.group_chats.groups_created(),
@@ -402,8 +396,7 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    // The user this canister holds. Canisters upgraded from a version which held these fields
-    // directly in `Data` are read via `DataPrevious`.
+    // The user this canister holds
     pub user: User,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
@@ -413,9 +406,6 @@ struct Data {
     pub test_mode: bool,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub fire_and_forget_handler: FireAndForgetHandler,
-    // Events queued before they were batched per canister, which `post_upgrade` moves into
-    // `user_canister_events_by_canister`
-    pub user_canister_events_queue: GroupedTimerJobQueue<LegacyUserCanisterEventBatch>,
     #[serde(default = "new_user_canister_events_by_canister")]
     pub user_canister_events_by_canister: GroupedTimerJobQueue<UserCanisterEventBatch>,
     pub video_call_operators: Vec<Principal>,
@@ -496,9 +486,6 @@ impl Data {
     // Cancels the user's migration to the given MultiUser canister, if there is one, unfreezing the
     // canister and scheduling again the timer jobs which were cancelled when the migration started.
     // Returns whether there was one. A migration to another MultiUser canister is left in place.
-    //
-    // If the canister was upgraded during the migration, `post_upgrade` skipped that upgrade's data
-    // migrations, and they only run once the canister is upgraded again.
     pub fn cancel_migration(&mut self, multi_user_canister_id: CanisterId, now: TimestampMillis) -> OCResult<bool> {
         match &self.migration {
             Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => self.migration = None,
@@ -541,7 +528,7 @@ impl Data {
             })
         }) {
             Some("Timer jobs are pending")
-        } else if !self.user_canister_events_queue.is_idle() || !self.user_canister_events_by_canister.is_idle() {
+        } else if !self.user_canister_events_by_canister.is_idle() {
             Some("Events for other users are pending")
         } else if !self.local_user_index_event_sync_queue.is_idle() {
             Some("Events for the LocalUserIndex are pending")
@@ -549,34 +536,8 @@ impl Data {
             Some("Calls to other canisters are pending")
         } else if !self.stable_memory_keys_to_garbage_collect.is_empty() {
             Some("Stable memory is still being garbage collected")
-        } else if self
-            .user
-            .direct_chats
-            .iter()
-            .any(|c| c.events().has_legacy_events() || c.events().heap_entries_to_migrate_count() > 0)
-        {
-            Some("Direct chat events are still being migrated")
         } else {
             None
-        }
-    }
-
-    // Moves the events queued before they were batched per canister into the queue which does so,
-    // pairing each with the user it was queued for
-    // TODO: Remove this, along with `user_canister_events_queue`, once it has run in every canister
-    pub fn drain_legacy_user_canister_events_queue(&mut self) {
-        for (recipient, events) in self.user_canister_events_queue.take_all() {
-            self.user_canister_events_by_canister.push_many(
-                recipient.canister_id(),
-                events
-                    .into_iter()
-                    .map(|event| IdempotentEnvelope {
-                        created_at: event.created_at,
-                        idempotency_id: event.idempotency_id,
-                        value: (recipient, event.value),
-                    })
-                    .collect(),
-            );
         }
     }
 
@@ -604,7 +565,6 @@ impl Data {
             test_mode,
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
-            user_canister_events_queue: GroupedTimerJobQueue::new(10, true),
             user_canister_events_by_canister: new_user_canister_events_by_canister(),
             video_call_operators,
             rng_seed: [0; 32],
@@ -683,7 +643,6 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub direct_chats: u32,
-    pub direct_chats_with_legacy_events: u32,
     pub group_chats: u32,
     pub communities: u32,
     pub groups_created: u32,
