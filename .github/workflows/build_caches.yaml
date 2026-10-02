@@ -9,7 +9,6 @@ on:
       - "**.toml"
       - "**.did"
       - "**/Cargo.lock"
-      - "scripts/generate-all-canister-wasms.sh"
       - "scripts/build-benchmarks-wasm.sh"
       - "scripts/build-candid-generators.sh"
       - "canbench.yml"
@@ -56,31 +55,3 @@ jobs:
         run: cargo install canbench --version 0.6.0
       - name: Build benchmarks wasm
         run: ./scripts/build-benchmarks-wasm.sh
-
-  # Warms the cache the integration tests restore: the canister wasms, `ic-wasm`, and the debug
-  # build of the test crate. Uses the same runner spec as the integration tests so the cached
-  # artifacts are built at the same paths with the same toolchain.
-  build_wasms_and_integration_tests:
-    name: Build wasms and integration tests
-    runs-on:
-      - runs-on
-      - cpu=16
-      - image=ubuntu24-full-x64
-      - family=m7i
-      - run-id=${{ github.run_id }}
-    steps:
-      - name: Install Rustup
-        run: |
-          curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused -fsSL "https://sh.rustup.rs" | sh -s -- --default-toolchain none -y
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/setup-rust
-        with:
-          cache: write
-          shared-key: build-wasm
-      - uses: arduino/setup-protoc@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build canister wasms
-        run: ./scripts/generate-all-canister-wasms.sh
-      - name: Build integration tests
-        run: cargo test --package integration_tests --no-run
