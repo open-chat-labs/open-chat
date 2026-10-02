@@ -13,9 +13,8 @@ pub fn start_job() {
 }
 
 fn run() {
-    if let Some(registry_canister_id) = read_state(|state| state.data.registry_canister_id) {
-        utils::async_work::spawn_tracked(refresh(registry_canister_id));
-    }
+    let registry_canister_id = read_state(|state| state.data.registry_canister_id);
+    utils::async_work::spawn_tracked(refresh(registry_canister_id));
 }
 
 async fn refresh(registry_canister_id: CanisterId) {

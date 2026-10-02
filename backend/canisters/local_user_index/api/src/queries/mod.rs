@@ -8,7 +8,6 @@ pub mod bot_members;
 pub mod c2c_can_push_notifications;
 pub mod c2c_lookup_user;
 pub mod c2c_lookup_users;
-pub mod c2c_user_principals;
 pub mod c2c_verify_signature;
 pub mod chat_events;
 pub mod daily_puzzle_fetch;
