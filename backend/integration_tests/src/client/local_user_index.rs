@@ -18,6 +18,7 @@ generate_update_call!(bot_create_channel);
 generate_update_call!(bot_delete_channel);
 generate_update_call!(bot_send_message);
 generate_msgpack_update_call!(c2c_daily_puzzle_push);
+generate_msgpack_update_call!(c2c_notify_user_index_events);
 generate_msgpack_update_call!(claim_prize);
 generate_msgpack_update_call!(daily_puzzle_hint);
 generate_msgpack_update_call!(daily_puzzle_save_grid);

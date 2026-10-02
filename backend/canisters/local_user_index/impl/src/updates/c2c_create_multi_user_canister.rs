@@ -32,7 +32,7 @@ pub(crate) async fn create_multi_user_canister() -> Result<(CanisterId, BuildVer
         candid::encode_one(&prepare_ok.init_canister_args).unwrap(),
         prepare_ok.cycles_to_use,
         read_state(|state| min_cycles_balance(state.data.test_mode)),
-        on_canister_created,
+        on_cycles_spent,
     )
     .await
     {
@@ -68,15 +68,15 @@ fn prepare(state: &mut RuntimeState) -> OCResult<PrepareOk> {
     }
     let canister_wasm = state.child_canister_wasm_to_install(ChildCanisterType::MultiUser);
 
+    // A canister taken from the pool is given its cycles now
     let cycles_to_use = if state.data.canister_pool.is_empty() {
-        let cycles_required = CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-        if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
-            return Err(OCErrorCode::CyclesBalanceTooLow.into());
-        }
-        cycles_required
+        CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE
     } else {
-        0
+        CHILD_CANISTER_INITIAL_CYCLES_BALANCE
     };
+    if !utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(state.data.test_mode)) {
+        return Err(OCErrorCode::CyclesBalanceTooLow.into());
+    }
 
     let canister_id = state.data.canister_pool.pop();
     let init_canister_args = multi_user_canister::init::Args {
@@ -117,7 +117,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
 fn rollback(canister_id: Option<CanisterId>, error: &C2CError, state: &mut RuntimeState) {
     if let Some(canister_id) = canister_id {
         // If this canister is not controlled by the LocalUserIndex then installs into it can
-        // never succeed, so drop it from the pool and let the topup job replace it
+        // never succeed, so drop it from the pool
         if canister::is_invalid_controller_error(error.reject_code(), error.message()) {
             error!(%canister_id, "Dropping canister from pool - LocalUserIndex is not a controller");
             crate::jobs::topup_canister_pool::start_job_if_required(state, None);
@@ -127,6 +127,6 @@ fn rollback(canister_id: Option<CanisterId>, error: &C2CError, state: &mut Runti
     }
 }
 
-fn on_canister_created(cycles: Cycles) {
+fn on_cycles_spent(cycles: Cycles) {
     mutate_state(|state| state.data.total_cycles_spent_on_canisters += cycles);
 }

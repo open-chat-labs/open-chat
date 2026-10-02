@@ -8,6 +8,10 @@ mod inspect_message;
 mod post_upgrade;
 mod pre_upgrade;
 
+// Canisters are now created as they are needed, rather than ahead of time, so the pool is only drawn
+// down. Once it is empty it can be removed.
+const CANISTER_POOL_TARGET_SIZE: u16 = 0;
+
 fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
     Box::new(CanisterEnv::new(rng_seed))
 }
