@@ -292,6 +292,7 @@ import { createHttpAgentSync } from "../utils/httpAgent";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { withLatestUserIds } from "../utils/latestUserIds";
+import { mergeAccountTransactions } from "../utils/accountTransactions";
 import { mean } from "../utils/maths";
 import { extractMessagePreviews } from "@shared";
 import { AsyncMessageContextMap } from "../utils/messageContext";
@@ -322,6 +323,7 @@ import { IcpCoinsClient } from "./icpcoins/icpCoinsClient";
 import { IdentityClient } from "./identity/identity.client";
 import { LedgerClient } from "./ledger/ledger.client";
 import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
+import type { Wallets } from "./ledgerIndex/mappers";
 import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { NnsGovernanceClient } from "./nnsGovernance/nns.governance.client";
@@ -3576,27 +3578,52 @@ export class OpenChatAgent extends EventTarget {
         return this._ledgerClient.accountBalance(ledger, this.walletAccount(userId));
     }
 
-    getAccountTransactions(
+    // The transactions of each wallet `userId` has held funds in, merged into one history
+    async getAccountTransactions(
         ledgerIndex: string,
         userId: string,
         fromId?: bigint,
     ): Promise<AccountTransactionResult> {
+        const wallets = this.walletsOf(userId);
         const isNns = this._registryValue?.nervousSystemSummary.some(
             (ns) => ns.isNns && ns.indexCanisterId === ledgerIndex,
         );
+        const icpLedgerIndexClient = isNns
+            ? new IcpLedgerIndexClient(this.identity, this._agent, ledgerIndex)
+            : undefined;
 
-        if (isNns) {
-            return new IcpLedgerIndexClient(
-                this.identity,
-                this._agent,
-                ledgerIndex,
-            ).getAccountTransactions(this.walletAccount(userId), fromId);
-        }
-        return this._ledgerIndexClient.getAccountTransactions(
-            ledgerIndex,
-            { account: this.walletAccount(userId), userId },
-            fromId,
+        const results = await Promise.all(
+            wallets.accounts.map((account) =>
+                icpLedgerIndexClient !== undefined
+                    ? icpLedgerIndexClient.getAccountTransactions(account, wallets, fromId)
+                    : this._ledgerIndexClient.getAccountTransactions(
+                          ledgerIndex,
+                          account,
+                          wallets,
+                          fromId,
+                      ),
+            ),
         );
+        return mergeAccountTransactions(results);
+    }
+
+    // The wallet of `userId`, along with, for the current user, the wallet of each id they had before
+    // being migrated to a MultiUser canister, since until then their funds were held in their User
+    // canister's account rather than in their principal's. Each id of the user's maps to the same
+    // principal, so ids which were each in a MultiUser canister share a wallet, which is listed once.
+    private walletsOf(userId: string): Wallets {
+        const accounts = new Map<string, IcrcAccount>();
+        const add = (account: IcrcAccount) => accounts.set(encodeIcrcAccount(account), account);
+
+        add(this.walletAccount(userId));
+        if (userId === this._userClient.userId) {
+            for (const [ownUserId, latest] of this._ownLatestUserIds) {
+                if (latest === userId) {
+                    add(userWalletAccount(ownUserId, () => this.principal.toText()));
+                }
+            }
+        }
+        return { accounts: [...accounts.values()], userId };
     }
 
     getMessagesByMessageIndex(

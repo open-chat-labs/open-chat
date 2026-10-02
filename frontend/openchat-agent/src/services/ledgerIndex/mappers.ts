@@ -15,28 +15,30 @@ import {
     UnsupportedValueError,
 } from "@shared";
 
-// The wallet whose transactions are being listed, and the user it belongs to
-export type Wallet = {
-    account: IcrcAccount;
+// The wallets whose transactions are being listed, and the user they belong to. A user who has been
+// migrated to a MultiUser canister has had more than one (see `userWalletAccount`): the account of
+// the User canister they had before, then that of the principal they sign in with.
+export type Wallets = {
+    accounts: IcrcAccount[];
     userId: string;
 };
 
 export function accountTransactions(
     candid: ApiGetTransactionsResult,
-    wallet: Wallet,
+    wallets: Wallets,
 ): AccountTransactionResult {
     if ("Err" in candid) {
         return CommonResponses.failure();
     }
     if ("Ok" in candid) {
-        return getTransactions(candid.Ok, wallet);
+        return getTransactions(candid.Ok, wallets);
     }
     throw new UnsupportedValueError("Unknown ApiGetTransactionsResult type", candid);
 }
 
-function getTransactions(candid: ApiGetTransactions, wallet: Wallet): AccountTransactionResult {
-    const walletAddress = encodeIcrcAccount(wallet.account);
-    const account = (candid: ApiAccount) => accountName(candid, walletAddress, wallet.userId);
+function getTransactions(candid: ApiGetTransactions, wallets: Wallets): AccountTransactionResult {
+    const walletAddresses = new Set(wallets.accounts.map(encodeIcrcAccount));
+    const account = (candid: ApiAccount) => accountName(candid, walletAddresses, wallets.userId);
 
     return {
         kind: "success",
@@ -122,14 +124,15 @@ export function memoBytesToString(candid: Uint8Array | number[]): string {
 }
 
 // An account as the rest of the app names it: a userId where the account is a user's wallet, which
-// is what lets the UI resolve it to that user. The wallet being listed is named by its user's id,
-// since the wallet of a user in a MultiUser canister is their principal's account, which is not
-// their user id. Anything else - an exchange's subaccount, say - keeps its full textual encoding
-// rather than being flattened to its owner, since two subaccounts of one owner are different
-// counterparties.
+// is what lets the UI resolve it to that user. The wallets being listed are named by their user's
+// id, since the wallet of a user in a MultiUser canister is their principal's account, which is not
+// their user id, and the wallet they had before being migrated there is their User canister's, whose
+// id is their previous user id. Anything else - an exchange's subaccount, say - keeps its full
+// textual encoding rather than being flattened to its owner, since two subaccounts of one owner are
+// different counterparties.
 function accountName(
     { owner, subaccount }: ApiAccount,
-    walletAddress: string,
+    walletAddresses: ReadonlySet<string>,
     walletUserId: string,
 ): string {
     const account = {
@@ -137,7 +140,7 @@ function accountName(
         subaccount: optional(subaccount, (bytes) => Uint8Array.from(bytes)),
     };
     const address = encodeIcrcAccount(account);
-    if (address === walletAddress) return walletUserId;
+    if (walletAddresses.has(address)) return walletUserId;
 
     return icrcAccountToUserId(account) ?? address;
 }
