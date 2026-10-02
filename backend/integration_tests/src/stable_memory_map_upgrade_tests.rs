@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::utils::{metrics, tick_many};
+use crate::utils::{metrics, tick_many, try_metrics};
 use crate::{TestEnv, client, wasms};
 use pocket_ic::PocketIc;
 use std::collections::BTreeMap;
@@ -55,10 +55,11 @@ fn stable_memory_maps_survive_upgrades() {
         canister_ids.group_index,
         wasm(&wasms::COMMUNITY),
     );
-    tick_many(env, 30);
 
+    // Every canister in the environment is upgraded, so how long that takes depends on how many
+    // earlier tests have created, and until then a canister may be stopped for its upgrade
     for canister_id in canisters {
-        assert_eq!(wasm_version(env, canister_id), version, "{canister_id} not upgraded");
+        wait_for_wasm_version(env, canister_id, version);
         assert_stable_memory_maps_initialised(env, canister_id);
     }
 
@@ -86,6 +87,15 @@ fn assert_stable_memory_maps_initialised(env: &PocketIc, canister_id: CanisterId
     }
 }
 
-fn wasm_version(env: &PocketIc, canister_id: CanisterId) -> BuildVersion {
-    serde_json::from_value(metrics(env, canister_id)["wasm_version"].clone()).unwrap()
+fn wait_for_wasm_version(env: &mut PocketIc, canister_id: CanisterId, version: BuildVersion) {
+    for _ in 0..300 {
+        if try_metrics(env, canister_id)
+            .and_then(|metrics| serde_json::from_value::<BuildVersion>(metrics["wasm_version"].clone()).ok())
+            == Some(version)
+        {
+            return;
+        }
+        env.tick();
+    }
+    panic!("{canister_id} not upgraded");
 }

@@ -32,6 +32,15 @@ impl CanisterStatusMinimal {
     pub fn cycles(&self) -> u128 {
         nat_to_u128(&self.cycles)
     }
+
+    // The cycles the canister must keep to not be frozen
+    pub fn freeze_threshold_cycles(&self) -> u128 {
+        crate::cycles::freeze_threshold_cycles(
+            nat_to_u128(&self.idle_cycles_burned_per_day),
+            u64::try_from(self.settings.freezing_threshold.0.clone()).unwrap_or(u64::MAX),
+            nat_to_u128(&self.reserved_cycles),
+        )
+    }
 }
 
 fn nat_to_u128(nat: &Nat) -> u128 {

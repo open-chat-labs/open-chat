@@ -109,6 +109,18 @@ pub fn set_freezing_threshold(env: &PocketIc, canister_id: CanisterId, controlle
     .unwrap();
 }
 
+// The cycles above the canister's freezing threshold
+pub fn liquid_cycle_balance(env: &PocketIc, canister_id: CanisterId, controller: Principal) -> u128 {
+    let status = env.canister_status(canister_id, Some(controller)).unwrap();
+    let to_u128 = |nat: &Nat| -> u128 { nat.0.clone().try_into().unwrap() };
+    let freeze_threshold = utils::cycles::freeze_threshold_cycles(
+        to_u128(&status.idle_cycles_burned_per_day),
+        status.settings.freezing_threshold.0.clone().try_into().unwrap(),
+        to_u128(&status.reserved_cycles),
+    );
+    to_u128(&status.cycles).saturating_sub(freeze_threshold)
+}
+
 pub fn wait_for_cycle_balance_above(env: &mut PocketIc, canister_id: CanisterId, balance: u128) {
     for _ in 0..50 {
         if env.cycle_balance(canister_id) > balance {
