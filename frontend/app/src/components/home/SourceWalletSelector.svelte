@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { EXTERNAL_WALLETS_ENABLED, iconSize, SIGNER_WALLETS, type SignerWallet } from "@client";
+    import {
+        cryptoLookup,
+        EXTERNAL_WALLETS_ENABLED,
+        iconSize,
+        SIGNER_WALLETS,
+        type SignerWallet,
+    } from "@client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Menu from "../Menu.svelte";
@@ -13,12 +19,28 @@
         // The external wallet the payment will come from, or undefined for the user's own OpenChat
         // account, which is where payments have always come from
         wallet?: SignerWallet;
+        // The ledger of the token being paid
+        ledger: string;
     }
 
-    let { wallet = $bindable() }: Props = $props();
+    let { wallet = $bindable(), ledger }: Props = $props();
+
+    // A payment is only pulled from an external wallet once it has approved the spender, which
+    // needs the token's ledger to support ICRC-2
+    let available = $derived(
+        EXTERNAL_WALLETS_ENABLED &&
+            ($cryptoLookup.get(ledger)?.supportedStandards.includes("ICRC-2") ?? false),
+    );
+
+    // Switching to a token which can't be paid from an external wallet goes back to OpenChat's own
+    $effect(() => {
+        if (!available && wallet !== undefined) {
+            wallet = undefined;
+        }
+    });
 </script>
 
-{#if EXTERNAL_WALLETS_ENABLED}
+{#if available}
     <div class="source-wallet">
         <div class="label">
             <Translatable resourceKey={i18nKey("externalWallet.sourceWallet")} />

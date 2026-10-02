@@ -204,7 +204,7 @@
                     draftAmount={fromAmount}
                     showRefresh
                     onSelect={onSelectFromToken} />
-                <SourceWalletSelector bind:wallet={sourceWallet} />
+                <SourceWalletSelector bind:wallet={sourceWallet} ledger={fromLedger} />
                 <TokenInput
                     placeholder="Swap amount"
                     balance={fromState.cryptoBalance}

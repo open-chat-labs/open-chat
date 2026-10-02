@@ -90,7 +90,7 @@
                             insufficient ? "p2pSwap.insufficientBalance" : "areYouSure",
                         )} />
                 </div>
-                <SourceWalletSelector bind:wallet={sourceWallet} />
+                <SourceWalletSelector bind:wallet={sourceWallet} ledger={ledger1} />
                 <!-- The balance is the external wallet's business while one is selected, so only
                      show OpenChat's own - but keep its space so the selector does not move -->
                 <div class="oc-balance" class:hidden={sourceWallet !== undefined}>

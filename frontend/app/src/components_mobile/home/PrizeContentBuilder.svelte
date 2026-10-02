@@ -344,7 +344,7 @@
             <!-- An external wallet's balance is its own business, so while one is selected the
                  OpenChat balance is hidden -->
             <CryptoSelector {draftAmount} showRefresh hideBalance={payFromWallet} bind:ledger />
-            <SourceWalletSelector bind:wallet={sourceWallet} />
+            <SourceWalletSelector bind:wallet={sourceWallet} {ledger} />
         </Column>
 
         <!-- Withdrawal amount -->
