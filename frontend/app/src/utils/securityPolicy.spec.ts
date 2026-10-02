@@ -24,6 +24,14 @@ function permissionsPolicy(): Map<string, string> {
     );
 }
 
+type AssetRule = { match: string; headers?: Record<string, string> };
+
+// .ic-assets.json5 is a JavaScript literal (unquoted keys, comments, trailing commas)
+function assetRules(): AssetRule[] {
+    const file = readFileSync(join(__dirname, "../../.ic-assets.json5"), "utf8");
+    return new Function(`return ${file}`)();
+}
+
 function directive(csp: string, name: string): string {
     const found = csp
         .split(";")
@@ -74,6 +82,35 @@ describe("Permissions-Policy header", () => {
         for (const feature of ["clipboard-read", "encrypted-media", "idle-detection"]) {
             expect(policy.get(feature), feature).toBe("()");
         }
+    });
+});
+
+describe("Asset headers", () => {
+    const rules = assetRules();
+
+    // Invariant: the document-only headers are sent with index.html, which the canister serves
+    // for every route. A match of "/index.html" would match nothing, as dfx joins the pattern
+    // onto the config's folder.
+    test("the document-only headers are on the index.html rule", () => {
+        for (const header of ["Permissions-Policy", "Content-Security-Policy", "X-Frame-Options"]) {
+            const holding = rules.filter((rule) => rule.headers?.[header] !== undefined);
+            expect(
+                holding.map((rule) => rule.match),
+                header,
+            ).toEqual(["index.html"]);
+        }
+    });
+
+    // Invariant: the headers every asset carries stay small. A release proposal repeats each
+    // changed asset's headers in one call, so a few KB on every asset takes it past the 2MiB
+    // ingress limit.
+    test("the headers on every asset stay small", () => {
+        const everyAsset = rules.find((rule) => rule.match === "**/*");
+        const size = Object.entries(everyAsset?.headers ?? {}).reduce(
+            (total, [name, value]) => total + name.length + value.length,
+            0,
+        );
+        expect(size).toBeLessThan(300);
     });
 });
 
