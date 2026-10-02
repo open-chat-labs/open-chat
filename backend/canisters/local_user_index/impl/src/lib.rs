@@ -1184,10 +1184,11 @@ impl Data {
 
     // Queues every canister in the pool to have its cycles refunded, after which it goes back into
     // the pool. A pool canister is given its cycles when it is used, so until then it needn't hold
-    // any, and an empty canister still pays the IC's base fee. Returns how many were queued.
+    // any, and an empty canister still pays the IC's base fee. They are queued ahead of the canisters
+    // already queued, so that the pool is back in use sooner. Returns how many were queued.
     pub fn refund_pool_canisters(&mut self) -> usize {
         let mut queued: HashSet<CanisterId> = self.cycles_refund_queue.iter().map(|c| c.canister_id).collect();
-        let mut count = 0;
+        let mut pool_canisters = Vec::new();
         for canister_id in self.canister_pool.take_all() {
             // Belt and braces, a live canister should never be in the pool
             let is_live = self.local_users.contains(&canister_id.into())
@@ -1196,16 +1197,17 @@ impl Data {
                 || self.local_multi_user_canisters.contains(&canister_id);
 
             if !is_live && queued.insert(canister_id) {
-                self.cycles_refund_queue.push_back(CanisterToRefund {
+                pool_canisters.push(CanisterToRefund {
                     canister_id,
                     attempt: 0,
                     retry_after: 0,
                     delete_canister: false,
                     return_to_pool: true,
                 });
-                count += 1;
             }
         }
+        let count = pool_canisters.len();
+        jobs::refund_cycles::queue_ahead(&mut self.cycles_refund_queue, pool_canisters);
         count
     }
 }
