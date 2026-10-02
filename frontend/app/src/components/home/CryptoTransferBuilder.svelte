@@ -204,7 +204,7 @@
                         </div>
                     </div>
                 </div>
-                <SourceWalletSelector bind:wallet={sourceWallet} />
+                <SourceWalletSelector bind:wallet={sourceWallet} {ledger} />
                 <!-- The balance is the external wallet's business while one is selected, so only
                      show OpenChat's own - but keep its space so the selector does not move -->
                 <div class="oc-balance" class:hidden={payFromWallet}>
@@ -288,7 +288,8 @@
                             bind:this={approval}
                             wallet={sourceWallet}
                             {ledger}
-                            amount={draftAmount} />
+                            amount={draftAmount}
+                            chatId={messageContext.chatId} />
                     {/if}
                 </div>
             </form>

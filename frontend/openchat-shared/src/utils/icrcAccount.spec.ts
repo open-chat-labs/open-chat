@@ -5,6 +5,7 @@ import {
     encodeIcrcAccount,
     icrcAccountToUserId,
     isAccountOfMultiUserCanisterUserId,
+    paymentSpenderAccount,
     spenderSubaccount,
     userCanisterSpenderAccount,
     userWalletAccount,
@@ -54,6 +55,44 @@ describe("userCanisterSpenderAccount", () => {
 
         expect(account.owner.toText()).toBe(canisterId);
         expect(account.subaccount).toEqual(spenderSubaccount(Principal.fromText(principal)));
+    });
+});
+
+describe("paymentSpenderAccount", () => {
+    const groupId = "rrkah-fqaaa-aaaaa-aaaaq-cai";
+    const communityId = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+    const group = { kind: "group_chat", groupId } as const;
+    const channel = { kind: "channel", communityId, channelId: 1 } as const;
+    const direct = { kind: "direct_chat", userId: groupId } as const;
+
+    test("a User canister pulls every payment its user makes", () => {
+        for (const chatId of [group, channel, direct, undefined]) {
+            const account = paymentSpenderAccount(canisterId, chatId, noPrincipal);
+
+            expect(account.owner.toText()).toBe(canisterId);
+            expect(account.subaccount).toBeUndefined();
+        }
+    });
+
+    test("a group or community pulls a payment made in it by a user who holds their own funds", () => {
+        for (const [chatId, owner] of [
+            [group, groupId],
+            [channel, communityId],
+        ] as const) {
+            const account = paymentSpenderAccount(indexedUserId, chatId, getPrincipal);
+
+            expect(account.owner.toText()).toBe(owner);
+            expect(account.subaccount).toEqual(spenderSubaccount(Principal.fromText(principal)));
+        }
+    });
+
+    test("a MultiUser canister pulls any other payment made by a user who holds their own funds", () => {
+        for (const chatId of [direct, undefined]) {
+            const account = paymentSpenderAccount(indexedUserId, chatId, getPrincipal);
+
+            expect(account.owner.toText()).toBe(canisterId);
+            expect(account.subaccount).toEqual(spenderSubaccount(Principal.fromText(principal)));
+        }
     });
 });
 

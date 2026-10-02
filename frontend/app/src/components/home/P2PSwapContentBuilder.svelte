@@ -206,7 +206,7 @@
                 <div class="main-title">
                     <Translatable resourceKey={i18nKey("p2pSwap.builderTitle")} />
                 </div>
-                <SourceWalletSelector bind:wallet={sourceWallet} />
+                <SourceWalletSelector bind:wallet={sourceWallet} ledger={fromLedger} />
                 <!-- The balance is the external wallet's business while one is selected, so only
                      show OpenChat's own - but keep its space so the selector does not move -->
                 <div class="oc-balance" class:hidden={payFromWallet}>
@@ -288,7 +288,8 @@
                         wallet={sourceWallet}
                         ledger={fromLedger}
                         amount={fromAmount}
-                        fees={totalFees} />
+                        fees={totalFees}
+                        chatId={messageContext.chatId} />
                 {/if}
             </form>
         {/snippet}
