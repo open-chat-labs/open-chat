@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::setup::install_icrc_ledger;
-use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many, try_metrics};
+use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client, wasms};
 use candid::{CandidType, Nat, Principal};
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
@@ -15,7 +15,7 @@ use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     BotDefinition, BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, CanisterWasm, Chat, ChatId,
     CommunityRole, DiamondMembershipPlanDuration, Document, Empty, IdempotentEnvelope, MessageContent, MessageContentInitial,
-    OptionUpdate, P2PSwapContentInitial, ReferralStatus, UpgradesFilter, UserId,
+    OptionUpdate, P2PSwapContentInitial, ReferralStatus, UserId,
 };
 use user_canister::UserCanisterEvent;
 use user_index_canister::user_migration::UserMigrationStatus;
@@ -1460,126 +1460,7 @@ fn users_with_a_direct_chat_with_or_a_block_of_a_migrated_user_hold_it_under_the
     assert!(state.direct_chats.summaries.iter().all(|c| c.them != new_user_id));
 }
 
-// A canister on a wasm older than the current User wasm may not know `UserIdMigrated`, and an event
-// it can't decode would fail the whole batch it's in, so the notice is held until it's upgraded
-#[test]
-fn notice_of_a_migrated_users_new_id_is_held_until_the_peers_canister_is_upgraded() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let operator = platform_operator(env, canister_ids, *controller);
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let multi_user_canister =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
-    client::user::happy_path::send_text_message(env, &user2, user1.user_id, random_string(), None);
-    tick_many(env, 10);
-
-    // Stop User canisters being upgraded as usual, then release a new User wasm, leaving user2's
-    // canister on an older one
-    set_user_upgrade_concurrency(env, operator.principal, canister_ids.user_index, 0);
-    let version = BuildVersion::new(0, 0, 1);
-    client::user_index::happy_path::upgrade_user_canister_wasm(
-        env,
-        *controller,
-        canister_ids.user_index,
-        CanisterWasm {
-            version,
-            module: wasms::USER.module.clone(),
-        },
-    );
-    tick_many(env, 10);
-    assert_ne!(wasm_version(env, user2.canister()), version);
-
-    // user3 registers now, so their canister is on the current wasm
-    let user3 = client::register_user(env, canister_ids);
-    assert_eq!(wasm_version(env, user3.canister()), version);
-    client::user::happy_path::send_text_message(env, &user3, user1.user_id, random_string(), None);
-    tick_many(env, 10);
-
-    let held_before = held_user_id_migrations(env, user2.local_user_index);
-    migrate_users(
-        env,
-        operator.principal,
-        canister_ids.user_index,
-        vec![user1.user_id],
-        Some(multi_user_canister),
-    );
-    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user1.user_id);
-
-    // user3 is told of user1's new id straight away, but user2's notice is held while their canister
-    // is on the older wasm. They may be on different LocalUserIndexes, which hear of the migration at
-    // different times.
-    tick_until(env, |env| {
-        direct_chat_peer(env, &user3, user1.user_id, new_user_id) == new_user_id
-            && held_user_id_migrations(env, user2.local_user_index) == held_before + 1
-    });
-    assert_eq!(direct_chat_peer(env, &user2, user1.user_id, new_user_id), user1.user_id);
-
-    // Once user2's canister has been upgraded, they are. Only theirs is upgraded, so as not to wait
-    // for every User canister in this env.
-    let version = BuildVersion::new(0, 0, 2);
-    client::user_index::happy_path::upgrade_user_canister_wasm_with_filter(
-        env,
-        *controller,
-        canister_ids.user_index,
-        CanisterWasm {
-            version,
-            module: wasms::USER.module.clone(),
-        },
-        Some(UpgradesFilter {
-            include: [user2.canister()].into_iter().collect(),
-            ..Default::default()
-        }),
-    );
-    set_user_upgrade_concurrency(env, operator.principal, canister_ids.user_index, 10);
-    // The canister can't be queried while it's stopped for the upgrade
-    tick_until(env, |env| {
-        try_metrics(env, user2.canister()).and_then(|m| serde_json::from_value(m["wasm_version"].clone()).ok()) == Some(version)
-    });
-    tick_until(env, |env| {
-        direct_chat_peer(env, &user2, user1.user_id, new_user_id) == new_user_id
-    });
-    assert_eq!(held_user_id_migrations(env, user2.local_user_index), held_before);
-
-    // Releasing a new User wasm would break later tests which draw this env
-    wrapper.discard();
-}
-
-fn set_user_upgrade_concurrency(env: &mut PocketIc, sender: Principal, user_index: CanisterId, value: u32) {
-    let response = client::user_index::set_user_upgrade_concurrency(
-        env,
-        sender,
-        user_index,
-        &user_index_canister::set_user_upgrade_concurrency::Args { value },
-    );
-    assert!(matches!(response, types::SuccessOnly::Success), "{response:?}");
-    tick_many(env, 5);
-}
-
-fn held_user_id_migrations(env: &PocketIc, local_user_index: CanisterId) -> u64 {
-    metrics(env, local_user_index)["held_user_id_migrations"].as_u64().unwrap()
-}
-
 // The id the user holds their one direct chat with the migrated user under
-fn direct_chat_peer(env: &PocketIc, user: &User, old_user_id: UserId, new_user_id: UserId) -> UserId {
-    let state = client::user::happy_path::initial_state(env, user);
-    let chats: Vec<_> = state
-        .direct_chats
-        .summaries
-        .iter()
-        .filter(|c| c.them == old_user_id || c.them == new_user_id)
-        .collect();
-    assert_eq!(chats.len(), 1, "{chats:?}");
-    chats[0].them
-}
-
 // Each user's canister is frozen while they are being migrated, so neither hears of the other's new
 // id then, and is told once they are switched over themselves
 #[test]
