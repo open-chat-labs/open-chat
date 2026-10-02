@@ -48,7 +48,7 @@ use types::{
     BotDataEncoding, BotEventPayload, BotEventWrapper, BotNotification, BotNotificationEnvelope, BuildVersion,
     CLAIM_TYPE_DECLINE_VIDEO_CALL, CLAIM_TYPE_DIAMOND_MEMBERSHIP, CallDismissalKind, CanisterId, ChannelLatestMessageIndex,
     Chat, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles,
-    DailyPuzzleResult, DeclineVideoCallClaims, DiamondMembershipDetails, DirectCallDismissedNotification, FcmData,
+    CyclesTopUp, DailyPuzzleResult, DeclineVideoCallClaims, DiamondMembershipDetails, DirectCallDismissedNotification, FcmData,
     GroupCallDismissedNotification, IdempotentEnvelope, MediaScanConfig, MessageContentInitial, MessageId, Milliseconds,
     ModerationReferralConfig, Notification, NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId,
     UserNotificationEnvelope, UserNotificationPayload, VerifiedCredentialGateArgs,
@@ -200,6 +200,23 @@ impl RuntimeState {
             || self.data.local_groups.contains(&caller.into())
             || self.data.local_communities.contains(&caller.into())
             || self.data.local_multi_user_canisters.contains(&caller)
+    }
+
+    // The cycles top ups of one of this canister's children, or None if it isn't one
+    pub fn child_canister_cycle_top_ups(&self, canister_id: CanisterId) -> Option<&[CyclesTopUp]> {
+        self.data
+            .local_users
+            .get(&canister_id.into())
+            .map(|u| &u.cycle_top_ups)
+            .or_else(|| self.data.local_groups.get(&canister_id.into()).map(|g| &g.cycle_top_ups))
+            .or_else(|| self.data.local_communities.get(&canister_id.into()).map(|c| &c.cycle_top_ups))
+            .or_else(|| {
+                self.data
+                    .local_multi_user_canisters
+                    .get(&canister_id)
+                    .map(|c| &c.cycle_top_ups)
+            })
+            .map(|t| t.as_slice())
     }
 
     pub fn is_caller_notification_pusher(&self) -> bool {
@@ -943,6 +960,7 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub online_users_canister_id: CanisterId,
+    pub registry_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub website_canister_id: CanisterId,
     pub users_requiring_upgrade: CanistersRequiringUpgrade,
@@ -1037,10 +1055,6 @@ struct Data {
     // current User wasm (see `notify_user_of_migrated_user_id`)
     #[serde(default)]
     pub held_user_id_migrations: HeldUserIdMigrations,
-    // Passed in the init and upgrade args, so is set once this LocalUserIndex has been upgraded by a
-    // UserIndex which passes it
-    #[serde(default)]
-    pub registry_canister_id: Option<CanisterId>,
     // The ledgers from which migrated users' funds can be moved, refreshed from the Registry daily
     #[serde(default)]
     pub registry_tokens: RegistryTokens,
@@ -1116,6 +1130,7 @@ impl Data {
             cycles_dispenser_canister_id,
             escrow_canister_id,
             online_users_canister_id,
+            registry_canister_id,
             internet_identity_canister_id,
             website_canister_id,
             users_requiring_upgrade: CanistersRequiringUpgrade::default(),
@@ -1177,7 +1192,6 @@ impl Data {
             users_to_close_out: UsersToMigrate::default(),
             recent_joins: RecentJoins::default(),
             held_user_id_migrations: HeldUserIdMigrations::default(),
-            registry_canister_id: Some(registry_canister_id),
             registry_tokens: RegistryTokens::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
         }

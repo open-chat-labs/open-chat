@@ -80,7 +80,6 @@ pub(crate) fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &m
     // A user held in a MultiUser canister has no canister of their own to upgrade
     let current_wasm_version = user.wasm_version?;
     let new_wasm_version = user_canister_wasm.wasm.version;
-    let deposit_cycles_if_needed = ic_cdk::api::canister_cycle_balance() > min_cycles_balance(state.data.test_mode);
 
     // A user's canister may be being upgraded by the `start_user_migrations` job, which upgrades it
     // to the latest wasm
@@ -95,7 +94,7 @@ pub(crate) fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &m
         current_wasm_version,
         new_wasm_version,
         new_wasm: state.child_canister_wasm_to_install(ChildCanisterType::User).wasm,
-        deposit_cycles_if_needed,
+        top_up_keeping_balance_above: Some(min_cycles_balance(state.data.test_mode)),
         args: msgpack::serialize_then_unwrap(&user_canister::post_upgrade::Args {
             wasm_version: new_wasm_version,
         }),

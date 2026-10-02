@@ -361,8 +361,7 @@ async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIf
 
 // Pulls the gate's payment from the user's wallet, spending the approval they made under their own
 // spender subaccount (see `ledger_utils::spender_subaccount`), as for any other payment this
-// canister pulls from a member's wallet, or until the TODO below is done, an approval to this
-// canister's default account
+// canister pulls from a member's wallet
 async fn try_transfer_from(
     gate: &PaymentGate,
     user: UserIdAndPrincipal,
@@ -370,7 +369,7 @@ async fn try_transfer_from(
     now: TimestampMillis,
 ) -> CheckIfPassesGateResult {
     let amount = gate.amount - 2 * gate.fee;
-    let mut transfer_args = TransferFromArgs {
+    let transfer_args = TransferFromArgs {
         spender_subaccount: Some(ledger_utils::spender_subaccount(user.principal)),
         from: user.into(),
         to: this_canister_id.into(),
@@ -380,17 +379,7 @@ async fn try_transfer_from(
         memo: Some(MEMO_JOINING_FEE.to_vec().into()),
         created_at_time: Some(now * NANOS_PER_MILLISECOND),
     };
-    let mut response = icrc_ledger_canister_c2c_client::icrc2_transfer_from(gate.ledger_canister_id, &transfer_args).await;
-
-    // Websites released before gate payments moved to the spender subaccount approve this canister's
-    // default account instead, so that approval is spent if the user hasn't made the other.
-    // TODO: Remove this once the website approves the spender subaccount for gate payments.
-    if matches!(response, Ok(Err(TransferFromError::InsufficientAllowance { .. }))) {
-        transfer_args.spender_subaccount = None;
-        response = icrc_ledger_canister_c2c_client::icrc2_transfer_from(gate.ledger_canister_id, &transfer_args).await;
-    }
-
-    match response {
+    match icrc_ledger_canister_c2c_client::icrc2_transfer_from(gate.ledger_canister_id, &transfer_args).await {
         Ok(Ok(_)) => CheckIfPassesGateResult::Success(vec![GatePayment {
             ledger_canister_id: gate.ledger_canister_id,
             amount: gate.amount,

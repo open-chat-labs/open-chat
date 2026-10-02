@@ -1,3 +1,4 @@
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{
     bots::{BotAccessContext, extract_access_context_from_chat_context},
     mutate_state,
@@ -5,7 +6,7 @@ use crate::{
 use canister_api_macros::update;
 use local_user_index_canister::bot_delete_messages::*;
 use oc_error_codes::OCErrorCode;
-use types::{ChannelId, Chat, MessageId, MessageIndex};
+use types::{CanisterId, ChannelId, Chat, MessageId, MessageIndex};
 
 #[update(candid = true, json = true, msgpack = true)]
 async fn bot_delete_messages(args: Args) -> Response {
@@ -35,28 +36,34 @@ async fn call_chat_canister(
         Chat::Direct(_) => OCErrorCode::InvalidBotActionScope
             .with_message("Direct chats not supported")
             .into(),
-        Chat::Channel(community_id, channel_id) => community_canister_c2c_client::c2c_bot_delete_messages(
-            community_id.into(),
-            &community_canister::c2c_bot_delete_messages::Args {
+        Chat::Channel(community_id, channel_id) => {
+            let canister_id = CanisterId::from(community_id);
+            let c2c_args = community_canister::c2c_bot_delete_messages::Args {
                 bot_id: context.bot_id,
                 initiator: context.initiator,
                 channel_id,
                 message_ids,
                 thread,
-            },
-        )
-        .await
-        .into(),
-        Chat::Group(chat_id) => group_canister_c2c_client::c2c_bot_delete_messages(
-            chat_id.into(),
-            &group_canister::c2c_bot_delete_messages::Args {
+            };
+            top_up_and_retry_if_out_of_cycles(canister_id, || {
+                community_canister_c2c_client::c2c_bot_delete_messages(canister_id, &c2c_args)
+            })
+            .await
+            .into()
+        }
+        Chat::Group(chat_id) => {
+            let canister_id = CanisterId::from(chat_id);
+            let c2c_args = group_canister::c2c_bot_delete_messages::Args {
                 bot_id: context.bot_id,
                 initiator: context.initiator,
                 message_ids,
                 thread,
-            },
-        )
-        .await
-        .into(),
+            };
+            top_up_and_retry_if_out_of_cycles(canister_id, || {
+                group_canister_c2c_client::c2c_bot_delete_messages(canister_id, &c2c_args)
+            })
+            .await
+            .into()
+        }
     }
 }

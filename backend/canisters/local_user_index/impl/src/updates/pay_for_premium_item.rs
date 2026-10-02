@@ -1,4 +1,5 @@
 use crate::guards::caller_is_openchat_user;
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -12,15 +13,16 @@ use user_index_canister::LocalUserIndexEvent;
 async fn pay_for_premium_item(args: Args) -> Response {
     match read_state(|state| prepare(&args, state)) {
         Ok(PrepareResult { user_id }) => {
-            match user_canister_c2c_client::c2c_pay_for_premium_item(
-                user_id.canister_id(),
-                &user_canister::c2c_pay_for_premium_item::Args {
-                    user_id,
-                    item_id: args.item_id,
-                    pay_in_chat: args.pay_in_chat,
-                    cost: args.expected_cost,
-                },
-            )
+            let canister_id = user_id.canister_id();
+            let c2c_args = user_canister::c2c_pay_for_premium_item::Args {
+                user_id,
+                item_id: args.item_id,
+                pay_in_chat: args.pay_in_chat,
+                cost: args.expected_cost,
+            };
+            match top_up_and_retry_if_out_of_cycles(canister_id, || {
+                user_canister_c2c_client::c2c_pay_for_premium_item(canister_id, &c2c_args)
+            })
             .await
             {
                 Ok(user_canister::c2c_pay_for_premium_item::Response::Success(result)) => {

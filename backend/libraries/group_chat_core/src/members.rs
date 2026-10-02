@@ -11,7 +11,7 @@ use serde_bytes::ByteBuf;
 use stable_memory_map::StableMemoryMap;
 use std::cell::OnceCell;
 use std::cmp::max;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet};
 use std::ops::{Bound, Deref};
 use types::{
     BotNotification, EventIndex, GroupMember, GroupRole, MessageIndex, MultiUserChat, OCResult, TimestampMillis, Timestamped,
@@ -329,24 +329,6 @@ impl GroupMembers {
         self.member_ids.contains(user_id)
     }
 
-    // Records a member who was added as a user as the bot they are. Returns whether anything changed.
-    // TODO: Remove this once every Community canister has been upgraded, since only a community's
-    // channels had bots added as users (see `CommunityMembers::populate_bots`)
-    pub fn set_bot_user_type(&mut self, user_id: UserId, user_type: UserType) -> bool {
-        if !user_type.is_bot() || !self.member_ids.contains(&user_id) {
-            return false;
-        }
-        let bot_added = self.bots.insert(user_id, user_type) != Some(user_type);
-        let member_updated = self
-            .update_member(&user_id, |m| {
-                let updated = m.user_type != user_type;
-                m.user_type = user_type;
-                updated
-            })
-            .unwrap_or_default();
-        bot_added || member_updated
-    }
-
     pub fn update_member<F: FnOnce(&mut GroupMemberInternal) -> bool>(
         &mut self,
         user_id: &UserId,
@@ -362,11 +344,6 @@ impl GroupMembers {
             self.members_map.insert(member.user_id, member);
         }
         Some(updated)
-    }
-
-    // Returns the number of members whose principal was set
-    pub fn populate_principals(&mut self, principals: &HashMap<UserId, Principal>) -> u32 {
-        self.members_map.populate_principals(principals)
     }
 
     pub fn is_blocked(&self, user_id: &UserId) -> bool {
@@ -1136,6 +1113,7 @@ fn is_default_notifications_muted(value: &Timestamped<bool>) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -1207,50 +1185,6 @@ mod tests {
         assert_eq!(member_bytes_len, 184);
 
         let _deserialized: GroupMemberStableStorage = msgpack::deserialize_then_unwrap(&member_bytes);
-    }
-
-    #[test]
-    fn populate_principals() {
-        use ic_stable_structures::DefaultMemoryImpl;
-        use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-
-        let memory = MemoryManager::init(DefaultMemoryImpl::default());
-        stable_memory_map::init(memory.get(MemoryId::new(1)));
-
-        let user_id: UserId = Principal::from_slice(&[1]).into();
-        let principal = Principal::from_slice(&[2]);
-        let mut members = GroupMembers::new(
-            user_id,
-            None,
-            UserType::User,
-            MultiUserChat::Group(Principal::from_slice(&[3]).into()),
-            0,
-        );
-
-        assert_eq!(members.populate_principals(&[(user_id, principal)].into_iter().collect()), 1);
-        assert_eq!(members.get(&user_id).unwrap().principal(), Some(principal));
-        assert_eq!(members.populate_principals(&[(user_id, principal)].into_iter().collect()), 0);
-    }
-
-    #[test]
-    fn set_bot_user_type_records_a_bot_added_as_a_user() {
-        let mut members = members_for_migration_tests();
-        let [bot, user, non_member]: [UserId; 3] = [2, 3, 4].map(test_user_id);
-        members.add(bot, None, 1, 0.into(), 0.into(), false, UserType::User);
-        members.add(user, None, 1, 0.into(), 0.into(), false, UserType::User);
-
-        assert!(members.set_bot_user_type(bot, UserType::OcControlledBot));
-        assert_eq!(members.get(&bot).unwrap().user_type(), UserType::OcControlledBot);
-        assert_eq!(members.bots().get(&bot), Some(&UserType::OcControlledBot));
-        members.check_invariants();
-
-        // Nothing changes once it's recorded, nor for a user or someone who isn't a member
-        assert!(!members.set_bot_user_type(bot, UserType::OcControlledBot));
-        assert!(!members.set_bot_user_type(user, UserType::User));
-        assert!(!members.set_bot_user_type(non_member, UserType::OcControlledBot));
-        assert_eq!(members.get(&user).unwrap().user_type(), UserType::User);
-        assert!(!members.bots().contains_key(&non_member));
-        members.check_invariants();
     }
 
     #[test]

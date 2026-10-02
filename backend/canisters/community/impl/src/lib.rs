@@ -23,7 +23,6 @@ use installed_bots::InstalledBots;
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use ledger_utils::certified::CertifiedTransfers;
 use model::events::CommunityEventInternal;
-use model::legacy_user_event_batch::LegacyUserEventBatch;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use oc_error_codes::OCErrorCode;
@@ -641,9 +640,6 @@ struct Data {
     expiring_members: ExpiringMembers,
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
-    // Events queued before they were batched per canister, which `post_upgrade` moves into
-    // `user_events_queue`
-    user_event_sync_queue: GroupedTimerJobQueue<LegacyUserEventBatch>,
     #[serde(default = "new_user_events_queue")]
     user_events_queue: GroupedTimerJobQueue<UserEventBatch>,
     local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
@@ -663,48 +659,6 @@ struct Data {
 }
 
 impl Data {
-    // Records each member who is a bot as one, in the community and in each of its channels they're in.
-    // `CommunityMembers::add` didn't record them, so they were added to channels as users. Also drops
-    // any events queued for them, eg. a mention in such a channel, which a bot's canister doesn't take,
-    // so they would be retried forever. Returns the number of bots, of channel memberships updated
-    // and of events dropped.
-    // TODO: Remove this once every Community canister has been upgraded
-    pub fn populate_bots(&mut self) -> (usize, usize, usize) {
-        let bots = self.members.populate_bots();
-        let mut channel_memberships = 0;
-        for (user_id, user_type) in bots.iter() {
-            for channel_id in self.members.channels_for_member(*user_id) {
-                if let Some(channel) = self.channels.get_mut(channel_id)
-                    && channel.chat.members.set_bot_user_type(*user_id, *user_type)
-                {
-                    channel_memberships += 1;
-                }
-            }
-        }
-        let queued = self.user_events_queue.len();
-        self.user_events_queue.retain(|event| !bots.contains_key(&event.value.0));
-        (bots.len(), channel_memberships, queued - self.user_events_queue.len())
-    }
-
-    // Moves the events queued before they were batched per canister into the queue which does so,
-    // pairing each with the user it was queued for
-    // TODO: Remove this, along with `user_event_sync_queue`, once it has run in every canister
-    pub fn drain_legacy_user_event_queue(&mut self) {
-        for (user_id, events) in self.user_event_sync_queue.take_all() {
-            self.user_events_queue.push_many(
-                user_id.canister_id(),
-                events
-                    .into_iter()
-                    .map(|event| IdempotentEnvelope {
-                        created_at: event.created_at,
-                        idempotency_id: event.idempotency_id,
-                        value: (user_id, event.value),
-                    })
-                    .collect(),
-            );
-        }
-    }
-
     #[expect(clippy::too_many_arguments)]
     fn new(
         community_id: CommunityId,
@@ -805,7 +759,6 @@ impl Data {
             expiring_members: ExpiringMembers::default(),
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
-            user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             user_events_queue: new_user_events_queue(),
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),

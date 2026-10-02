@@ -1,4 +1,5 @@
 use crate::mutate_state;
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Serialize};
 use timer_job_queues::{TimerJobItem, TimerJobQueue};
@@ -43,16 +44,15 @@ pub enum GameChitOutcome {
 }
 
 pub async fn apply(credit: &GameChitCredit) -> GameChitOutcome {
-    let response = user_canister_c2c_client::c2c_game_chit(
-        credit.user_id.canister_id(),
-        &Args {
-            user_id: credit.user_id,
-            game_id: credit.game_id.clone(),
-            key: credit.key.clone(),
-            amount: credit.amount,
-        },
-    )
-    .await;
+    let canister_id = credit.user_id.canister_id();
+    let args = Args {
+        user_id: credit.user_id,
+        game_id: credit.game_id.clone(),
+        key: credit.key.clone(),
+        amount: credit.amount,
+    };
+    let response =
+        top_up_and_retry_if_out_of_cycles(canister_id, || user_canister_c2c_client::c2c_game_chit(canister_id, &args)).await;
 
     match response {
         Ok(Response::Success(result)) => GameChitOutcome::Applied(Some(result)),

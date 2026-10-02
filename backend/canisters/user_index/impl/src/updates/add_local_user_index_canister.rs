@@ -55,7 +55,8 @@ async fn add_local_user_index_canister(args: Args) -> Response {
                         wasm_hash: result.canister_wasm_hash,
                         store_canister_id: args.canister_id,
                     }),
-                    deposit_cycles_if_needed: true,
+                    // This canister's own balance isn't held back
+                    top_up_keeping_balance_above: Some(0),
                     args: candid::encode_one(&result.init_args).unwrap(),
                     mode: CanisterInstallMode::Reinstall,
                     stop_start_canister: false,
