@@ -63,7 +63,7 @@ fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToInstall> {
         new_wasm_version: new_wasm.version,
         new_wasm: WasmToInstall::Default(new_wasm.module),
         args: candid::encode_one(&storage_bucket_canister::post_upgrade::Args { wasm_version }).unwrap(),
-        deposit_cycles_if_needed: false,
+        top_up_keeping_balance_above: None,
         mode: CanisterInstallMode::Upgrade(None),
         stop_start_canister: true,
     })

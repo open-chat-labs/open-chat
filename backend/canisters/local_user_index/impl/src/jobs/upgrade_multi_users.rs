@@ -72,7 +72,6 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
     let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::MultiUser);
     let current_wasm_version = canister.wasm_version;
     let new_wasm_version = canister_wasm.wasm.version;
-    let deposit_cycles_if_needed = ic_cdk::api::canister_cycle_balance() > min_cycles_balance(state.data.test_mode);
 
     if current_wasm_version == new_wasm_version && !force {
         return None;
@@ -85,7 +84,7 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
         current_wasm_version,
         new_wasm_version,
         new_wasm: state.child_canister_wasm_to_install(ChildCanisterType::MultiUser).wasm,
-        deposit_cycles_if_needed,
+        top_up_keeping_balance_above: Some(min_cycles_balance(state.data.test_mode)),
         args: msgpack::serialize_then_unwrap(&multi_user_canister::post_upgrade::Args {
             wasm_version: new_wasm_version,
         }),
