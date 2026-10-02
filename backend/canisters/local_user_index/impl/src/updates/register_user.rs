@@ -1,6 +1,7 @@
 use crate::model::referral_codes::{ReferralCode, ReferralCodeError};
 use crate::updates::c2c_create_multi_user_canister::create_multi_user_canister;
-use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, UserEvent, UserIndexEvent, mutate_state};
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
+use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, UserEvent, UserIndexEvent, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -98,6 +99,7 @@ async fn create_user_canister(
         canister_wasm,
         candid::encode_one(&init_canister_args).unwrap(),
         cycles_to_use,
+        read_state(|state| min_cycles_balance(state.data.test_mode)),
         on_canister_created,
     )
     .await
@@ -150,7 +152,11 @@ async fn c2c_create_user(
     canister_id: CanisterId,
     args: &multi_user_canister::c2c_create_user::Args,
 ) -> Result<UserId, OCError> {
-    match multi_user_canister_c2c_client::c2c_create_user(canister_id, args).await? {
+    match top_up_and_retry_if_out_of_cycles(canister_id, || {
+        multi_user_canister_c2c_client::c2c_create_user(canister_id, args)
+    })
+    .await?
+    {
         multi_user_canister::c2c_create_user::Response::Success(user_id) => Ok(user_id),
         multi_user_canister::c2c_create_user::Response::Error(error) => Err(error),
     }

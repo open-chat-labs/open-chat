@@ -1,27 +1,23 @@
 use crate::CommunityEvent;
-use crate::updates::c2c_notify_low_balance::top_up_child_canister;
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{CanisterId, IdempotentEnvelope, Milliseconds};
-use utils::canister::{delay_if_should_retry_failed_c2c_call, is_out_of_cycles_error};
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 grouped_timer_job_batch!(CommunityEventBatch, CanisterId, IdempotentEnvelope<CommunityEvent>, 1000);
 
 impl TimerJobItem for CommunityEventBatch {
     async fn process(&self) -> Result<(), Option<Milliseconds>> {
-        let response = community_canister_c2c_client::c2c_local_index(
-            self.key,
-            &community_canister::c2c_local_index::Args {
-                events: self.items.clone(),
-            },
-        )
-        .await;
+        let args = community_canister::c2c_local_index::Args {
+            events: self.items.clone(),
+        };
+        let response =
+            top_up_and_retry_if_out_of_cycles(self.key, || community_canister_c2c_client::c2c_local_index(self.key, &args))
+                .await;
 
         match response {
             Ok(community_canister::c2c_local_index::Response::Success) => Ok(()),
             Err(error) => {
-                if is_out_of_cycles_error(error.reject_code(), error.message()) {
-                    top_up_child_canister(Some(self.key)).await;
-                }
                 let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
                 Err(delay_if_should_retry)
             }

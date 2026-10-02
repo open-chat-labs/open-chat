@@ -5,7 +5,7 @@ use candid::de::DecoderConfig;
 use candid::{CandidType, Nat};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::B;
+use constants::{B, min_cycles_balance};
 use futures::future::join_all;
 use ic_cdk::call::RejectCode;
 use ic_cdk_management_canister::CanisterInstallMode;
@@ -18,6 +18,7 @@ use std::collections::BTreeSet;
 use tracing::{error, info};
 use types::{BuildVersion, C2CError, CanisterId, Cycles, TimestampNanos, UserIdAndPrincipal};
 use utils::canister::{CanisterStatusMinimal, CanisterToInstall, WasmToInstall, is_invalid_controller_error};
+use utils::cycles::can_spend_cycles;
 
 // Only ledgers known to the Registry are called, but they are still outside our control, so to be
 // safe each call to one times out, the calls are made in a bounded number of rounds, and their
@@ -349,6 +350,9 @@ async fn install_relay(
     let balance = status.cycles();
     if balance < required {
         let top_up = required - balance;
+        if !read_state(|state| can_spend_cycles(top_up, min_cycles_balance(state.data.test_mode))) {
+            return Err(OCErrorCode::CyclesBalanceTooLow.into());
+        }
         utils::canister::deposit_cycles(canister_id, top_up).await?;
         mutate_state(|state| state.data.cycles_topped_up_for_refunds += top_up);
     }
@@ -362,7 +366,7 @@ async fn install_relay(
             new_wasm_version: BuildVersion::default(),
             args: Vec::new(),
             new_wasm: WasmToInstall::Default(call_relay::wasm()),
-            deposit_cycles_if_needed: false,
+            top_up_keeping_balance_above: None,
             mode: CanisterInstallMode::Install,
             stop_start_canister: false,
         })

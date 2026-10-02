@@ -1,5 +1,6 @@
 use crate::canister;
 use crate::canister::{convert_cdk_error, is_out_of_cycles_error};
+use crate::cycles::can_spend_cycles;
 use candid::CandidType;
 use constants::CYCLES_REQUIRED_FOR_UPGRADE;
 use ic_cdk_management_canister::{self as management_canister, CanisterInstallMode, ChunkHash};
@@ -12,7 +13,10 @@ pub struct CanisterToInstall {
     pub current_wasm_version: BuildVersion,
     pub new_wasm_version: BuildVersion,
     pub new_wasm: WasmToInstall,
-    pub deposit_cycles_if_needed: bool,
+    // If the canister doesn't have the cycles to install the code, it is topped up and the install
+    // retried, so long as that leaves this canister's own balance above the given amount. None if
+    // it is never topped up.
+    pub top_up_keeping_balance_above: Option<Cycles>,
     pub args: Vec<u8>,
     pub mode: CanisterInstallMode,
     pub stop_start_canister: bool,
@@ -75,7 +79,8 @@ pub async fn install_basic_raw(canister_id: CanisterId, wasm: CanisterWasm, init
         current_wasm_version: BuildVersion::default(),
         new_wasm_version: wasm.version,
         new_wasm: WasmToInstall::Default(wasm.module),
-        deposit_cycles_if_needed: true,
+        // This canister's own balance isn't held back
+        top_up_keeping_balance_above: Some(0),
         args: init_args,
         mode: CanisterInstallMode::Reinstall,
         stop_start_canister: false,
@@ -120,9 +125,11 @@ pub async fn install(canister_to_install: CanisterToInstall) -> Result<Option<Cy
     let mut cycles_used = None;
     let mut install_error = None;
     let mut attempt = 0;
-    while let ShouldDepositAndRetry::Yes(cycles) =
-        should_deposit_cycles_and_retry(&install_code_response, canister_to_install.deposit_cycles_if_needed, attempt)
-    {
+    while let ShouldDepositAndRetry::Yes(cycles) = should_deposit_cycles_and_retry(
+        &install_code_response,
+        canister_to_install.top_up_keeping_balance_above,
+        attempt,
+    ) {
         if canister::deposit_cycles(canister_id, cycles).await.is_ok() {
             cycles_used = Some(cycles_used.unwrap_or_default() + cycles);
             install_code_response = install_code_args.clone().install().await;
@@ -166,17 +173,27 @@ enum ShouldDepositAndRetry {
 
 fn should_deposit_cycles_and_retry(
     response: &Result<(), C2CError>,
-    deposit_cycles_if_needed: bool,
+    top_up_keeping_balance_above: Option<Cycles>,
     attempt: usize,
 ) -> ShouldDepositAndRetry {
-    if !deposit_cycles_if_needed || attempt > 5 {
+    let Some(min_cycles_balance) = top_up_keeping_balance_above else {
+        return ShouldDepositAndRetry::No;
+    };
+    if attempt > 5 {
         return ShouldDepositAndRetry::No;
     }
 
     if let Err(error) = response
         && is_out_of_cycles_error(error.reject_code(), error.message())
     {
-        return ShouldDepositAndRetry::Yes(CYCLES_REQUIRED_FOR_UPGRADE / 2);
+        let cycles = CYCLES_REQUIRED_FOR_UPGRADE / 2;
+        if can_spend_cycles(cycles, min_cycles_balance) {
+            return ShouldDepositAndRetry::Yes(cycles);
+        }
+        error!(
+            min_cycles_balance,
+            "Not topping up the canister to install it, this canister's cycles balance is too low"
+        );
     }
     ShouldDepositAndRetry::No
 }

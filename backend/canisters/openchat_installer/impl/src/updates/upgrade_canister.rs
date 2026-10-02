@@ -33,7 +33,7 @@ async fn upgrade_canister(args: Args) -> Response {
             wasm_hash: args.wasm_hash,
             store_canister_id: canister_id,
         }),
-        deposit_cycles_if_needed: false,
+        top_up_keeping_balance_above: None,
         args: candid::encode_one(&UpgradeArgs {
             wasm_version: args.version,
         })

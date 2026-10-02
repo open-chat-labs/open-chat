@@ -1,12 +1,12 @@
 use crate::communities::join_community_tests::wait_for_invitation;
 use crate::env::ENV;
 use crate::{CanisterIds, TestEnv, User, client};
-use candid::Principal;
+use candid::{Nat, Principal};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use testing::rng::random_string;
-use types::{ChannelId, CommunityId};
+use types::{CanisterId, ChannelId, CommunityId};
 
 #[test]
 fn join_public_channel_succeeds() {
@@ -35,6 +35,71 @@ fn join_public_channel_succeeds() {
     assert!(summary.channels.iter().any(|c| c.channel_id == channel_id));
 
     wait_for_channel_membership(env, &user2, community_id, channel_id);
+}
+
+// A community which has run out of cycles rejects the call to join it, so the LocalUserIndex tops
+// it up and makes the call again
+#[test]
+fn join_channel_tops_up_community_which_is_out_of_cycles() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1: _,
+        user2,
+        community_id,
+        channel_id,
+    } = init_test_data(env, canister_ids, *controller, true);
+
+    // First user2 needs to leave the channel because they were joined automatically
+    client::community::happy_path::leave_channel(env, user2.principal, community_id, channel_id);
+
+    // Raise the freezing threshold until the cycles it reserves are just above the balance, which
+    // freezes the community, leaving it short by far less than a top up
+    let canister_id = CanisterId::from(community_id);
+    let local_user_index = canister_ids.local_user_index(env, community_id);
+    let balance = env.cycle_balance(canister_id);
+    let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
+    let original_freezing_threshold = status.settings.freezing_threshold.clone();
+    let burned_per_day: u128 = status.idle_cycles_burned_per_day.0.try_into().unwrap();
+    assert!(burned_per_day > 0);
+    let freezing_threshold_secs = (balance + 50_000_000_000) * 24 * 60 * 60 / burned_per_day;
+    set_freezing_threshold(env, canister_id, local_user_index, freezing_threshold_secs.into());
+
+    // The payload doesn't matter, since a frozen canister rejects the call before decoding it
+    let frozen = env
+        .update_call(canister_id, user2.principal, "leave_channel_msgpack", Vec::new())
+        .unwrap_err();
+    assert!(frozen.reject_message.contains("out of cycles"), "{frozen:?}");
+
+    // Via the LocalUserIndex found above, since finding it again would query the frozen community
+    client::local_user_index::happy_path::join_channel(env, user2.principal, local_user_index, community_id, channel_id);
+
+    // Less a margin for the cycles the join itself uses
+    assert!(env.cycle_balance(canister_id) > balance + 150_000_000_000);
+
+    wait_for_channel_membership(env, &user2, community_id, channel_id);
+
+    // Put the freezing threshold back, since the environment, and so this canister, is shared with
+    // later tests
+    set_freezing_threshold(env, canister_id, local_user_index, original_freezing_threshold);
+}
+
+fn set_freezing_threshold(env: &PocketIc, canister_id: CanisterId, controller: CanisterId, freezing_threshold: Nat) {
+    env.update_canister_settings(
+        canister_id,
+        Some(controller),
+        pocket_ic::CanisterSettings {
+            freezing_threshold: Some(freezing_threshold),
+            ..Default::default()
+        },
+    )
+    .unwrap();
 }
 
 #[test]

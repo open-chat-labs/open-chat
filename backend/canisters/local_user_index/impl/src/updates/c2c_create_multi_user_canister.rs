@@ -1,5 +1,5 @@
 use crate::guards::caller_is_user_index;
-use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, UserIndexEvent, mutate_state};
+use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, UserIndexEvent, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{CREATE_CANISTER_CYCLES_FEE, min_cycles_balance};
@@ -31,6 +31,7 @@ pub(crate) async fn create_multi_user_canister() -> Result<(CanisterId, BuildVer
         prepare_ok.canister_wasm,
         candid::encode_one(&prepare_ok.init_canister_args).unwrap(),
         prepare_ok.cycles_to_use,
+        read_state(|state| min_cycles_balance(state.data.test_mode)),
         on_canister_created,
     )
     .await
