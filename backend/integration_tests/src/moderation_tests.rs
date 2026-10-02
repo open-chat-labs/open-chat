@@ -1478,9 +1478,6 @@ fn timed_suspension_expiry_never_lifts_a_later_csam_suspension() {
         "{:?}",
         suspension_details.action
     );
-
-    // A day was added to the clock: this env must not go back to the pool
-    wrapper.discard();
 }
 
 #[test]
@@ -3043,9 +3040,6 @@ fn repeat_attempts_tally_inside_window_and_report_outside_it() {
         3,
         "18 minutes after the latest report is outside its FIXED window even though only 9 minutes passed since the last tallied attempt"
     );
-
-    // 29 minutes were added to the clock: this env must not go back to the pool
-    wrapper.discard();
 }
 
 // I15: the declared-hash gate cannot be bypassed in either direction - declaring the
@@ -3450,9 +3444,6 @@ fn stalled_scan_pipeline_alerts_and_recovers() {
             .any(|t| t.contains("Media scan pipeline recovered")),
         "recovery must post the all-clear"
     );
-
-    // 31 minutes were added to the clock: this env must not go back to the pool
-    wrapper.discard();
 }
 
 // I3 (an unrelated report's dismissal never lifts an attempt sanction) and the full lifecycle
@@ -4151,9 +4142,6 @@ fn attempt_reports_never_escalate_an_upheld_downgrade() {
         "attempt reports must not escalate the downgrade to indefinite: {:?}",
         suspension_details.action
     );
-
-    // 22 minutes were added to the clock: this env must not go back to the pool
-    wrapper.discard();
 }
 
 // I1a: a manual moderator suspension is invisible to the sanction machinery and must

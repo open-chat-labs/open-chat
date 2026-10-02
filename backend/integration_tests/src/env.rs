@@ -50,9 +50,10 @@ impl TestEnvWrapper {
     // it next, which surfaces as unrelated flakes. A test which panics never returns its env to
     // the pool (see `Drop`), so this is only needed on the path where the test passes.
     //
-    // Moving the clock forward, even by days, doesn't need it. The first test to use a new env
+    // Moving the clock forward by hours or days doesn't need it. The first test to use a new env
     // takes around 40s longer, and dropping every env whose clock had moved on by more than an
-    // hour doubled the time the whole suite takes.
+    // hour doubled the time the whole suite takes. A jump of months or years still does, since it
+    // can drain canisters of their cycles (see `initialize_base_state`).
     pub fn discard(mut self) {
         self.env = None;
         std::mem::forget(self);
