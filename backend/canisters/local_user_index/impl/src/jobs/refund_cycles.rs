@@ -115,8 +115,9 @@ fn get_next(state: &mut RuntimeState) -> Result<CanisterToRefund, Option<Millise
 async fn process_canister(canister: CanisterToRefund) {
     let canister_id = canister.canister_id;
     let result = refund_cycles(canister_id, canister.delete_canister).await;
-    // Unless something unexpected is installed on it, or this canister doesn't control it
-    let can_return_to_pool = !matches!(result, Err(RefundError::NotController | RefundError::CanisterHasCode));
+    // Only once its cycles have been refunded, or it held too few to be worth refunding. Not, say,
+    // if this canister doesn't control it, or the refunder may still be installed on it.
+    let can_return_to_pool = matches!(result, Ok(_) | Err(RefundError::TooFewCycles(_)));
 
     mutate_state(|state| {
         IN_PROGRESS.set(false);
@@ -132,7 +133,11 @@ async fn process_canister(canister: CanisterToRefund) {
         let mut retrying = false;
         match result {
             Ok(cycles) => {
-                state.data.cycles_refunded_from_deleted_users += cycles;
+                if canister.return_to_pool {
+                    state.data.cycles_refunded_from_pool_canisters += cycles;
+                } else {
+                    state.data.cycles_refunded_from_deleted_users += cycles;
+                }
                 info!(%canister_id, cycles, "Refunded cycles from uninstalled canister");
             }
             Err(RefundError::NotController) => {

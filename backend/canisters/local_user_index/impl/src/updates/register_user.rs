@@ -109,9 +109,8 @@ async fn create_user_canister(
             if let Some(id) = canister_id {
                 mutate_state(|state| {
                     // If this canister is not controlled by the LocalUserIndex then installs into
-                    // it can never succeed, so drop it from the pool and let the topup job replace
-                    // it, else registrations would keep pulling the same unusable canisters out of
-                    // the pool
+                    // it can never succeed, so drop it from the pool, else registrations would keep
+                    // pulling the same unusable canisters out of the pool
                     if canister::is_invalid_controller_error(error.reject_code(), error.message()) {
                         error!(canister_id = %id, "Dropping canister from pool - LocalUserIndex is not a controller");
                         crate::jobs::topup_canister_pool::start_job_if_required(state, None);

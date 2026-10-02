@@ -167,8 +167,8 @@ fn commit(
 fn rollback(canister_id: Option<CanisterId>, error: &C2CError, state: &mut RuntimeState) {
     if let Some(canister_id) = canister_id {
         // If this canister is not controlled by the LocalUserIndex then installs into it can
-        // never succeed, so drop it from the pool and let the topup job replace it, else
-        // creations would keep pulling the same unusable canisters out of the pool
+        // never succeed, so drop it from the pool, else creations would keep pulling the same
+        // unusable canisters out of the pool
         if canister::is_invalid_controller_error(error.reject_code(), error.message()) {
             error!(%canister_id, "Dropping canister from pool - LocalUserIndex is not a controller");
             crate::jobs::topup_canister_pool::start_job_if_required(state, None);

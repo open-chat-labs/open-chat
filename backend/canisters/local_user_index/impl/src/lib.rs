@@ -869,6 +869,7 @@ impl RuntimeState {
             chunk_store: crate::jobs::refresh_chunk_store::metrics(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
+            cycles_refunded_from_pool_canisters: self.data.cycles_refunded_from_pool_canisters,
             cycles_topped_up_for_refunds: self.data.cycles_topped_up_for_refunds,
             registry_tokens: self.data.registry_tokens.len(),
             referral_codes: self.data.referral_codes.metrics(now),
@@ -976,6 +977,8 @@ struct Data {
     pub cycles_refund_queue: VecDeque<CanisterToRefund>,
     #[serde(default)]
     pub cycles_refunded_from_deleted_users: Cycles,
+    #[serde(default)]
+    pub cycles_refunded_from_pool_canisters: Cycles,
     #[serde(default)]
     pub cycles_topped_up_for_refunds: Cycles,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
@@ -1145,6 +1148,7 @@ impl Data {
             users_to_delete_queue: VecDeque::new(),
             cycles_refund_queue: VecDeque::new(),
             cycles_refunded_from_deleted_users: 0,
+            cycles_refunded_from_pool_canisters: 0,
             cycles_topped_up_for_refunds: 0,
             events_for_remote_users: Vec::new(),
             cycles_balance_check_queue: VecDeque::new(),
@@ -1267,6 +1271,7 @@ pub struct Metrics {
     pub chunk_store: crate::jobs::refresh_chunk_store::ChunkStoreMetrics,
     pub cycles_refund_queue_length: usize,
     pub cycles_refunded_from_deleted_users: Cycles,
+    pub cycles_refunded_from_pool_canisters: Cycles,
     pub cycles_topped_up_for_refunds: Cycles,
     pub registry_tokens: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,

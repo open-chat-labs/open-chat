@@ -1,6 +1,6 @@
 use crate::canister::{
-    CanisterToInstall, ChunkedInstallGuard, VersionedWasmToInstall, convert_cdk_error, deposit_cycles, install,
-    install_basic_raw, set_freezing_threshold,
+    CanisterToInstall, ChunkedInstallGuard, VersionedWasmToInstall, canister_status, convert_cdk_error, deposit_cycles,
+    install, install_basic_raw, set_freezing_threshold,
 };
 use candid::Principal;
 use ic_cdk_management_canister::{self as management_canister, CanisterInstallMode, CanisterSettings, CreateCanisterArgs};
@@ -11,9 +11,10 @@ use types::{BuildVersion, C2CError, CanisterId, CanisterWasm, Cycles};
 // The IC's default, of 30 days
 const DEFAULT_FREEZING_THRESHOLD_SECS: u64 = 30 * 24 * 60 * 60;
 
-// An existing canister (eg. one from a pool) is given `cycles_to_use` and the IC's default freezing
-// threshold before the code is installed, since it may hold no cycles and may have had its freezing
-// threshold set to 0 when its cycles were refunded
+// An existing canister (eg. one from a pool) is topped up to `cycles_to_use` and given the IC's
+// default freezing threshold before the code is installed, since it may hold few cycles and may have
+// had its freezing threshold set to 0 when its cycles were refunded. Its status is read first, which
+// also fails for a canister this canister doesn't control, before any cycles are sent to it.
 pub async fn create_and_install(
     existing_canister_id: Option<CanisterId>,
     additional_controller: Option<Principal>,
@@ -30,13 +31,17 @@ pub async fn create_and_install(
 
     let canister_id = match existing_canister_id {
         Some(id) => {
-            if cycles_to_use > 0 {
-                deposit_cycles(id, cycles_to_use).await.map_err(|error| (Some(id), error))?;
-                on_cycles_spent(cycles_to_use);
+            let status = canister_status(id).await.map_err(|error| (Some(id), error))?;
+            let top_up = cycles_to_use.saturating_sub(status.cycles());
+            if top_up > 0 {
+                deposit_cycles(id, top_up).await.map_err(|error| (Some(id), error))?;
+                on_cycles_spent(top_up);
             }
-            set_freezing_threshold(id, DEFAULT_FREEZING_THRESHOLD_SECS)
-                .await
-                .map_err(|error| (Some(id), error))?;
+            if status.settings.freezing_threshold != DEFAULT_FREEZING_THRESHOLD_SECS {
+                set_freezing_threshold(id, DEFAULT_FREEZING_THRESHOLD_SECS)
+                    .await
+                    .map_err(|error| (Some(id), error))?;
+            }
             id
         }
         None => match create(cycles_to_use, additional_controller).await {
