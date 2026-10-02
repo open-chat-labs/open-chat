@@ -3,6 +3,7 @@ import { idlFactory, type IcpLedgerIndexService } from "./candid/idl";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { apiIcrcAccount } from "../../utils/icrcAccount";
 import { accountTransactions } from "./mappers";
+import type { Wallets } from "../ledgerIndex/mappers";
 import type { AccountTransactionResult, IcrcAccount } from "@shared";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
@@ -12,8 +13,10 @@ export class IcpLedgerIndexClient extends CandidCanisterAgent<IcpLedgerIndexServ
         super(identity, agent, canisterId, idlFactory, "IcpLedgerIndex");
     }
 
+    // The transactions of `account`, one of `wallets`, which are named as their user's
     getAccountTransactions(
         account: IcrcAccount,
+        wallets: Wallets,
         fromId?: bigint,
     ): Promise<AccountTransactionResult> {
         return this.handleQueryResponse(
@@ -23,7 +26,7 @@ export class IcpLedgerIndexClient extends CandidCanisterAgent<IcpLedgerIndexServ
                     start: apiOptional(identity, fromId),
                     account: apiIcrcAccount(account),
                 }),
-            accountTransactions,
+            (resp) => accountTransactions(resp, wallets),
         );
     }
 }

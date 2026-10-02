@@ -2,7 +2,6 @@
     import { Body, BodySmall, ColourVars, CommonButton, Container } from "component-lib";
     import {
         type AccountTransaction,
-        type AccountTransactions,
         type OpenChat,
         allUsersStore,
         cryptoLookup,
@@ -22,6 +21,11 @@
     import TrayArrowUp from "svelte-material-icons/TrayArrowUp.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import type { RemoteData as RD } from "../../../utils/remoteData";
+    import {
+        type TransactionHistory,
+        addTransactionsPage,
+        nextPageStart,
+    } from "../../../utils/transactionHistory";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import Translatable from "../../Translatable.svelte";
 
@@ -35,21 +39,27 @@
     let { ledger, urlFormat }: Props = $props();
 
     type LoadingMore<T> = { kind: "loading_more"; data: T };
-    type RemoteData = RD<AccountTransactions, string> | LoadingMore<AccountTransactions>;
+    type RemoteData = RD<TransactionHistory, string> | LoadingMore<TransactionHistory>;
 
     let transactionData = $state<RemoteData>({ kind: "loading" });
     let accountLookup = $derived(toRecord($namedAccountsStore, (a) => a.account));
 
     function moreTransactionsAvailable(trans: RemoteData): boolean {
-        if (trans.kind !== "success") return false;
-        if (trans.data.oldestTransactionId === undefined) return false;
-        if (trans.data.transactions.length === 0) return false;
-        const lastLoaded = trans.data.transactions[trans.data.transactions.length - 1];
-        return lastLoaded.id > trans.data.oldestTransactionId;
+        return trans.kind === "success" && nextPageStart(trans.data) !== undefined;
+    }
+
+    function isMe(address: string | undefined): boolean {
+        return address === $currentUserIdStore || address === $currentUserStore.cryptoAccount;
     }
 
     function fromMe({ from }: AccountTransaction): boolean {
-        return from === $currentUserIdStore || from === $currentUserStore.cryptoAccount;
+        return isMe(from);
+    }
+
+    // A transfer between two of the user's own wallets, such as that of their funds when they were
+    // migrated to a MultiUser canister, neither adds to nor takes from what they hold
+    function betweenMyWallets({ from, to }: AccountTransaction): boolean {
+        return isMe(from) && isMe(to);
     }
 
     function accountName(transaction: AccountTransaction) {
@@ -92,9 +102,8 @@
         if (ledgerIndex !== undefined) {
             let start = undefined;
             if (transactionData.kind === "success") {
-                start =
-                    transactionData.data.transactions[transactionData.data.transactions.length - 1]
-                        .id - 1n;
+                start = nextPageStart(transactionData.data);
+                if (start === undefined) return;
                 transactionData = { kind: "loading_more", data: transactionData.data };
             } else {
                 transactionData = { kind: "loading" };
@@ -107,25 +116,15 @@
                         console.warn("Error loading transactions: ", result);
                         // toastStore.showFailureToast(i18nKey("cryptoAccount.transactionError"));
                     } else {
-                        // Filter out approvals
-                        const transactions = result.transactions.filter(
-                            (t) => t.kind !== "approve",
-                        );
                         if (transactionData.kind === "loading") {
                             transactionData = {
                                 kind: "success",
-                                data: { ...result, transactions },
+                                data: addTransactionsPage(undefined, result),
                             };
                         } else if (transactionData.kind === "loading_more") {
                             transactionData = {
                                 kind: "success",
-                                data: {
-                                    oldestTransactionId: result.oldestTransactionId,
-                                    transactions: [
-                                        ...transactionData.data.transactions,
-                                        ...transactions,
-                                    ],
-                                },
+                                data: addTransactionsPage(transactionData.data, result),
                             };
                         }
                     }
@@ -194,7 +193,9 @@
         </Container>
     {:else if transactionData.kind === "success" || transactionData.kind === "loading_more"}
         {#each transactionData.data.transactions as transaction (transaction.id)}
-            {@const negative = fromMe(transaction)}
+            {@const own = betweenMyWallets(transaction)}
+            {@const negative = !own && fromMe(transaction)}
+            {@const colour = own ? "textSecondary" : negative ? "secondary" : "primary"}
             <Container onClick={() => openDashboard(transaction.id)} crossAxisAlignment={"end"}>
                 <Container gap={"xxs"} direction={"vertical"}>
                     <BodySmall colour={"textSecondary"}>
@@ -209,20 +210,22 @@
                                 <Translatable resourceKey={i18nKey("from")} />
                             {/if}
                         </Body>
-                        <Body colour={negative ? "secondary" : "primary"}>
+                        <Body {colour}>
                             {accountName(transaction)}
                         </Body>
                     </Container>
                 </Container>
                 <Container width={"hug"} crossAxisAlignment={"center"} gap={"xs"}>
-                    <Body fontWeight={"bold"} colour={negative ? "secondary" : "primary"}>
-                        {#if negative}
-                            -
-                        {:else}
-                            +
-                        {/if}
-                    </Body>
-                    <Body fontWeight={"bold"} colour={negative ? "secondary" : "primary"}>
+                    {#if !own}
+                        <Body fontWeight={"bold"} {colour}>
+                            {#if negative}
+                                -
+                            {:else}
+                                +
+                            {/if}
+                        </Body>
+                    {/if}
+                    <Body fontWeight={"bold"} {colour}>
                         {client.formatTokens(transaction.amount, tokenDetails.decimals)}
                     </Body>
                 </Container>
