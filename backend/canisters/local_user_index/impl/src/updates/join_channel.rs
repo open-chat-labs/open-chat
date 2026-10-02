@@ -1,8 +1,10 @@
 use crate::guards::caller_is_openchat_user;
 use crate::mutate_state;
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::join_channel::{Response::*, *};
+use types::CanisterId;
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
 #[trace]
@@ -30,7 +32,12 @@ async fn join_channel(args: Args) -> Response {
         composite_gate_index: args.composite_gate_index,
         previous_user_ids,
     };
-    match community_canister_c2c_client::c2c_join_channel(args.community_id.into(), &c2c_args).await {
+    let canister_id = CanisterId::from(args.community_id);
+    match top_up_and_retry_if_out_of_cycles(canister_id, || {
+        community_canister_c2c_client::c2c_join_channel(canister_id, &c2c_args)
+    })
+    .await
+    {
         Ok(response) => match response {
             community_canister::c2c_join_channel::Response::Success(s)
             | community_canister::c2c_join_channel::Response::AlreadyInChannel(s) => {

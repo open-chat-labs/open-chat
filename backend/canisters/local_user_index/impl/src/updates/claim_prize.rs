@@ -1,3 +1,4 @@
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::updates::c2c_verify_sign_in_proof::verify_sign_in_proof;
 use crate::{guards::caller_is_openchat_user, read_state};
 use canister_api_macros::update;
@@ -5,7 +6,7 @@ use canister_tracing_macros::trace;
 use constants::LIFETIME_DIAMOND_TIMESTAMP;
 use local_user_index_canister::{GlobalUser, claim_prize::*};
 use types::{
-    DiamondMembershipStatus, MultiUserChat,
+    CanisterId, DiamondMembershipStatus, MultiUserChat,
     PrizeClaimResponse::{self, *},
 };
 
@@ -53,7 +54,11 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
                 streak_ends: chit.streak_ends,
                 user_reauthenticated,
             };
-            group_canister_c2c_client::c2c_claim_prize(chat_id.into(), &c2c_args).await
+            let canister_id = CanisterId::from(chat_id);
+            top_up_and_retry_if_out_of_cycles(canister_id, || {
+                group_canister_c2c_client::c2c_claim_prize(canister_id, &c2c_args)
+            })
+            .await
         }
         MultiUserChat::Channel(community_id, channel_id) => {
             let c2c_args = community_canister::c2c_claim_prize::Args {
@@ -67,7 +72,11 @@ async fn claim_prize(args: Args) -> PrizeClaimResponse {
                 streak_ends: chit.streak_ends,
                 user_reauthenticated,
             };
-            community_canister_c2c_client::c2c_claim_prize(community_id.into(), &c2c_args).await
+            let canister_id = CanisterId::from(community_id);
+            top_up_and_retry_if_out_of_cycles(canister_id, || {
+                community_canister_c2c_client::c2c_claim_prize(canister_id, &c2c_args)
+            })
+            .await
         }
     };
 

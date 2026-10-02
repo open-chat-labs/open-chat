@@ -20,7 +20,6 @@ use ic_principal::Principal;
 use installed_bots::InstalledBots;
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use ledger_utils::certified::CertifiedTransfers;
-use model::legacy_user_event_batch::LegacyUserEventBatch;
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
 use oc_error_codes::OCErrorCode;
@@ -697,9 +696,6 @@ struct Data {
     expiring_members: ExpiringMembers,
     expiring_member_actions: ExpiringMemberActions,
     user_cache: UserCache,
-    // Events queued before they were batched per canister, which `post_upgrade` moves into
-    // `user_events_queue`
-    user_event_sync_queue: GroupedTimerJobQueue<LegacyUserEventBatch>,
     #[serde(default = "new_user_events_queue")]
     user_events_queue: GroupedTimerJobQueue<UserEventBatch>,
     local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
@@ -725,25 +721,6 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
 
 #[expect(clippy::too_many_arguments)]
 impl Data {
-    // Moves the events queued before they were batched per canister into the queue which does so,
-    // pairing each with the user it was queued for
-    // TODO: Remove this, along with `user_event_sync_queue`, once it has run in every canister
-    pub fn drain_legacy_user_event_queue(&mut self) {
-        for (user_id, events) in self.user_event_sync_queue.take_all() {
-            self.user_events_queue.push_many(
-                user_id.canister_id(),
-                events
-                    .into_iter()
-                    .map(|event| IdempotentEnvelope {
-                        created_at: event.created_at,
-                        idempotency_id: event.idempotency_id,
-                        value: (user_id, event.value),
-                    })
-                    .collect(),
-            );
-        }
-    }
-
     pub fn new(
         chat_id: ChatId,
         is_public: bool,
@@ -824,7 +801,6 @@ impl Data {
             expiring_members: ExpiringMembers::default(),
             expiring_member_actions: ExpiringMemberActions::default(),
             user_cache: UserCache::default(),
-            user_event_sync_queue: GroupedTimerJobQueue::new(5, true),
             user_events_queue: new_user_events_queue(),
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),

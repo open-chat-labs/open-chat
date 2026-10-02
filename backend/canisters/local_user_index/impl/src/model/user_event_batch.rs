@@ -1,8 +1,8 @@
-use crate::updates::c2c_notify_low_balance::top_up_child_canister;
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{UserEvent, mutate_state};
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
-use types::{CanisterId, IdempotentEnvelope, Milliseconds, UserId};
-use utils::canister::{delay_if_should_retry_failed_c2c_call, is_out_of_cycles_error};
+use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 // Batched per canister, so that the events for every user a MultiUser canister holds are sent to it
 // together
@@ -12,42 +12,11 @@ impl TimerJobItem for UserEventBatch {
     async fn process(&self) -> Result<(), Option<Milliseconds>> {
         let canister_id = self.key;
 
-        // A MultiUser canister's users carry an index, and it takes the events for all of them in a
-        // single call. A User canister is sent its user's events via the original endpoint, so that
-        // this doesn't depend on every User canister having been upgraded to support the new one.
-        let response = if self.items.first().is_some_and(|event| event.value.0.index() != 0) {
-            user_canister_c2c_client::c2c_local_user_index_v2(
-                canister_id,
-                &user_canister::c2c_local_user_index_v2::Args {
-                    events: self.items.clone(),
-                },
-            )
-            .await
-        } else {
-            user_canister_c2c_client::c2c_local_user_index(
-                canister_id,
-                &user_canister::c2c_local_user_index::Args {
-                    user_id: canister_id.into(),
-                    events: self
-                        .items
-                        .iter()
-                        .map(|event| IdempotentEnvelope {
-                            created_at: event.created_at,
-                            idempotency_id: event.idempotency_id,
-                            value: event.value.1.clone(),
-                        })
-                        .collect(),
-                },
-            )
-            .await
-        };
+        let response = top_up_and_retry_if_out_of_cycles(canister_id, || self.send()).await;
 
         match response {
             Ok(types::SuccessOnly::Success) => Ok(()),
             Err(error) => {
-                if is_out_of_cycles_error(error.reject_code(), error.message()) {
-                    top_up_child_canister(Some(canister_id)).await;
-                }
                 // If the user has been migrated to a MultiUser canister, their events are sent on to
                 // them there instead, whatever the failure, since their old canister no longer serves
                 // them. Eg. a batch sent while they were being switched over fails because their old
@@ -78,6 +47,42 @@ impl TimerJobItem for UserEventBatch {
                 let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
                 Err(delay_if_should_retry)
             }
+        }
+    }
+}
+
+impl UserEventBatch {
+    async fn send(&self) -> Result<types::SuccessOnly, C2CError> {
+        let canister_id = self.key;
+
+        // A MultiUser canister's users carry an index, and it takes the events for all of them in a
+        // single call. A User canister is sent its user's events via the original endpoint, so that
+        // this doesn't depend on every User canister having been upgraded to support the new one.
+        if self.items.first().is_some_and(|event| event.value.0.index() != 0) {
+            user_canister_c2c_client::c2c_local_user_index_v2(
+                canister_id,
+                &user_canister::c2c_local_user_index_v2::Args {
+                    events: self.items.clone(),
+                },
+            )
+            .await
+        } else {
+            user_canister_c2c_client::c2c_local_user_index(
+                canister_id,
+                &user_canister::c2c_local_user_index::Args {
+                    user_id: canister_id.into(),
+                    events: self
+                        .items
+                        .iter()
+                        .map(|event| IdempotentEnvelope {
+                            created_at: event.created_at,
+                            idempotency_id: event.idempotency_id,
+                            value: event.value.1.clone(),
+                        })
+                        .collect(),
+                },
+            )
+            .await
         }
     }
 }

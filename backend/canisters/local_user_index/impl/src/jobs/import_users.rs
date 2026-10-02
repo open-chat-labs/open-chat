@@ -1,4 +1,5 @@
 use crate::model::users_to_migrate::UserToImport;
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{RuntimeState, UserIndexEvent, mutate_state};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
@@ -99,13 +100,13 @@ async fn start_import(user: &UserToImport) -> Result<(), ImportError> {
         ));
     }
 
-    match multi_user_canister_c2c_client::c2c_import_user(
-        multi_user_canister_id,
-        &multi_user_canister::c2c_import_user::Args {
-            user_id: user.user_id,
-            user_hash: user.user_hash,
-        },
-    )
+    let args = multi_user_canister::c2c_import_user::Args {
+        user_id: user.user_id,
+        user_hash: user.user_hash,
+    };
+    match top_up_and_retry_if_out_of_cycles(multi_user_canister_id, || {
+        multi_user_canister_c2c_client::c2c_import_user(multi_user_canister_id, &args)
+    })
     .await
     {
         Ok(multi_user_canister::c2c_import_user::Response::Success(new_user_id)) => {

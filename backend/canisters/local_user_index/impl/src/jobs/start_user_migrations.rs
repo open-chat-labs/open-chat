@@ -1,5 +1,6 @@
 use crate::jobs::upgrade_users;
 use crate::model::users_to_migrate::UserToMigrate;
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{RuntimeState, UserIndexEvent, mutate_state};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
@@ -120,10 +121,11 @@ async fn start_migration(
         }
     }
 
-    match user_canister_c2c_client::c2c_try_start_migration(
-        user_id.canister_id(),
-        &user_canister::c2c_try_start_migration::Args { multi_user_canister_id },
-    )
+    let canister_id = user_id.canister_id();
+    let args = user_canister::c2c_try_start_migration::Args { multi_user_canister_id };
+    match top_up_and_retry_if_out_of_cycles(canister_id, || {
+        user_canister_c2c_client::c2c_try_start_migration(canister_id, &args)
+    })
     .await
     {
         Ok(user_canister::c2c_try_start_migration::Response::Success(result)) => Ok(result),

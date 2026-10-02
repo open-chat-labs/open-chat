@@ -4604,7 +4604,6 @@ dependencies = [
  "icrc-ledger-types",
  "ledger_utils",
  "local_user_index_canister_c2c_client",
- "msgpack",
  "oc_error_codes",
  "serde",
  "serde_json",

@@ -1,4 +1,5 @@
 use crate::bots::validate_installation_location;
+use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
 use crate::{RuntimeState, UserIndexEvent, guards::caller_is_openchat_user, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_client::generate_c2c_call;
@@ -22,17 +23,15 @@ async fn install_bot_impl(args: Args) -> OCResult {
         default_subscriptions,
     } = read_state(|state| prepare(&args, state))?;
 
-    let response = c2c_install_bot(
-        args.location.canister_id(),
-        &c2c_install_bot::Args {
-            bot_id: args.bot_id,
-            caller: user_id,
-            granted_permissions: args.granted_permissions.clone(),
-            granted_autonomous_permissions: args.granted_autonomous_permissions.clone(),
-            default_subscriptions,
-        },
-    )
-    .await?;
+    let canister_id = args.location.canister_id();
+    let c2c_args = c2c_install_bot::Args {
+        bot_id: args.bot_id,
+        caller: user_id,
+        granted_permissions: args.granted_permissions.clone(),
+        granted_autonomous_permissions: args.granted_autonomous_permissions.clone(),
+        default_subscriptions,
+    };
+    let response = top_up_and_retry_if_out_of_cycles(canister_id, || c2c_install_bot(canister_id, &c2c_args)).await?;
 
     if let Response::Error(error) = response {
         return Err(error);

@@ -1,5 +1,5 @@
 use crate::guards::caller_is_group_index;
-use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, RuntimeState, mutate_state};
+use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, RuntimeState, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{CREATE_CANISTER_CYCLES_FEE, min_cycles_balance};
@@ -37,6 +37,7 @@ async fn c2c_create_group(args: Args) -> Response {
         prepare_ok.canister_wasm,
         msgpack::serialize_then_unwrap(&prepare_ok.init_canister_args),
         prepare_ok.cycles_to_use,
+        read_state(|state| min_cycles_balance(state.data.test_mode)),
         on_canister_created,
     )
     .await
