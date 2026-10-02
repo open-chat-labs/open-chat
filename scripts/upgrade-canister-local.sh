@@ -12,4 +12,4 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR
 
-./upgrade-canister.sh local http://127.0.0.1:8080/ $IDENTITY $CANISTER_NAME $VERSION $WASM_SRC
+./upgrade-canister.sh local http://127.0.0.1:${OC_REPLICA_PORT:-8080}/ $IDENTITY $CANISTER_NAME $VERSION $WASM_SRC
