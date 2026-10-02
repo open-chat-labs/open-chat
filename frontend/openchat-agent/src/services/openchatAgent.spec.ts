@@ -1064,3 +1064,91 @@ describe("OpenChatAgent approving a spender", () => {
         });
     });
 });
+
+// A user migrated to a MultiUser canister held their funds in their User canister's account until
+// then, and in their principal's account since, so their history is that of both
+describe("OpenChatAgent listing the transactions of each of the user's wallets", () => {
+    const PREVIOUS = USER_CANISTER_USER;
+    const CURRENT = MULTI_USER_CANISTER_USER;
+    const LEDGER_INDEX = "qhbym-qaaaa-aaaaa-aaafq-cai";
+
+    // The wallets fetched, by their owner, and the user each was named as being
+    let fetched: { owner: string; userId: string }[];
+
+    // An agent whose session is under `sessionUserId`, with the user's other ids mapped as given,
+    // and whose ledger index holds `history`, by wallet owner, of transaction ids
+    function setup(
+        sessionUserId: string,
+        ownLatestUserIds: [string, string][],
+        history: Record<string, bigint[]> = {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ): any {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const agent = Object.create(OpenChatAgent.prototype) as any;
+        agent.identity = { getPrincipal: () => ME };
+        agent._userClient = { userId: sessionUserId };
+        agent._ownLatestUserIds = new Map(ownLatestUserIds);
+        agent._ledgerIndexClient = {
+            getAccountTransactions: (
+                _ledgerIndex: string,
+                account: { owner: Principal },
+                wallets: { userId: string },
+            ) => {
+                const owner = account.owner.toText();
+                fetched.push({ owner, userId: wallets.userId });
+                const ids = history[owner] ?? [];
+                return Promise.resolve({
+                    kind: "success",
+                    transactions: ids.map((id) => ({ id, kind: "mint", timestamp: new Date(0) })),
+                    oldestTransactionId: ids.length > 0 ? ids[ids.length - 1] : undefined,
+                });
+            },
+        };
+        fetched = [];
+        return agent;
+    }
+
+    test("a migrated user's history is that of their principal's wallet and their User canister's", async () => {
+        const agent = setup(CURRENT, [[PREVIOUS, CURRENT]], {
+            [ME.toText()]: [9n, 4n],
+            [PREVIOUS]: [7n, 4n, 2n],
+        });
+
+        const result = await agent.getAccountTransactions(LEDGER_INDEX, CURRENT);
+
+        expect(fetched).toEqual([
+            { owner: ME.toText(), userId: CURRENT },
+            { owner: PREVIOUS, userId: CURRENT },
+        ]);
+        expect(result.transactions.map((t: { id: bigint }) => t.id)).toEqual([9n, 7n, 4n, 2n]);
+        expect(result.oldestTransactionId).toBe(2n);
+    });
+
+    test("an earlier id in a MultiUser canister shares the principal's wallet, fetched once", async () => {
+        const agent = setup(CURRENT, [[OTHER_MULTI_USER_CANISTER_USER, CURRENT]]);
+
+        await agent.getAccountTransactions(LEDGER_INDEX, CURRENT);
+
+        expect(fetched).toEqual([{ owner: ME.toText(), userId: CURRENT }]);
+    });
+
+    test("a session under the earlier id lists the latest id's wallet too", async () => {
+        const agent = setup(PREVIOUS, [[CURRENT, PREVIOUS]]);
+
+        await agent.getAccountTransactions(LEDGER_INDEX, PREVIOUS);
+
+        expect(fetched).toEqual([
+            { owner: PREVIOUS, userId: PREVIOUS },
+            { owner: ME.toText(), userId: PREVIOUS },
+        ]);
+    });
+
+    test("ids which aren't mapped onto the session's add no wallets", async () => {
+        // eg. a new account on the same principal as a deleted one
+        const agent = setup(CURRENT, [[PREVIOUS, THEM]]);
+
+        await agent.getAccountTransactions(LEDGER_INDEX, CURRENT);
+
+        expect(fetched).toEqual([{ owner: ME.toText(), userId: CURRENT }]);
+    });
+});
