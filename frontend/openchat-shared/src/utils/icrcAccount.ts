@@ -1,4 +1,5 @@
 import { Principal } from "@icp-sdk/core/principal";
+import type { ChatIdentifier } from "../domain/chat";
 import { isCanisterId, isMultiUserCanisterUser, userCanisterId } from "./userId";
 
 const BASE32_ALPHABET = "abcdefghijklmnopqrstuvwxyz234567";
@@ -165,6 +166,36 @@ export function userCanisterSpenderAccount(userId: string, principal: () => stri
         return { owner };
     }
     return { owner, subaccount: spenderSubaccount(Principal.fromText(principal())) };
+}
+
+// The account a group or community spends as when it pulls a payment from one of its members: its
+// own, given its canister id, under the subaccount derived from the member's principal, so that it
+// only ever spends a member's own approval. Mirrors `ledger_utils::spender_subaccount`.
+export function memberSpenderAccount(canisterId: string, principal: () => string): IcrcAccount {
+    return {
+        owner: Principal.fromText(canisterId),
+        subaccount: spenderSubaccount(Principal.fromText(principal())),
+    };
+}
+
+// The account which pulls a payment the user makes from their wallet, so the spender their wallet
+// has to approve. The user's canister pulls it, except that a user who holds their own funds has the
+// group or community pull a payment in a message or a tip in a group or channel, since their
+// canister can't make the transfer for them. `chatId` is the chat such a payment is made in, and is
+// left out for any other payment, eg. accepting a P2P swap, which the user's canister makes wherever
+// it is.
+export function paymentSpenderAccount(
+    userId: string,
+    chatId: ChatIdentifier | undefined,
+    principal: () => string,
+): IcrcAccount {
+    if (isMultiUserCanisterUser(userId) && chatId !== undefined && chatId.kind !== "direct_chat") {
+        return memberSpenderAccount(
+            chatId.kind === "channel" ? chatId.communityId : chatId.groupId,
+            principal,
+        );
+    }
+    return userCanisterSpenderAccount(userId, principal);
 }
 
 // How long an approval made for a single payment stays spendable. The allowance is the whole of the

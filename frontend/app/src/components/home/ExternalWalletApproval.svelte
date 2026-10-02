@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { cryptoLookup, type OpenChat, type SignerWallet, type WalletAccount } from "@client";
+    import {
+        cryptoLookup,
+        type ChatIdentifier,
+        type OpenChat,
+        type SignerWallet,
+        type WalletAccount,
+    } from "@client";
     import { getContext, onDestroy } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
@@ -15,9 +21,13 @@
         // single transfer fee, which is what a payment made as one transfer costs; a flow which
         // moves the funds more than once has to say so.
         fees?: bigint;
+        // The chat a payment in a message or a tip is made in, which decides what pulls the payment,
+        // so what the wallet approves. Left out for a payment the user's canister makes wherever it
+        // is, such as accepting a P2P swap.
+        chatId?: ChatIdentifier;
     }
 
-    let { wallet, ledger, amount, fees }: Props = $props();
+    let { wallet, ledger, amount, fees, chatId }: Props = $props();
 
     const client = getContext<OpenChat>("client");
 
@@ -52,7 +62,11 @@
     // synchronously from a click handler and await nothing first: the wallet opens in a popup,
     // which browsers only allow while the click which asked for it is still being handled.
     export function approve(): Promise<string | undefined> {
-        if (tokenDetails === undefined) return Promise.resolve(undefined);
+        const totalFees = fees ?? tokenDetails?.transferFee;
+        if (totalFees === undefined) {
+            error = true;
+            return Promise.resolve(undefined);
+        }
 
         error = false;
         flow = { kind: "connecting" };
@@ -61,7 +75,8 @@
             .approveExternalWalletSpending(
                 wallet,
                 ledger,
-                amount + (fees ?? tokenDetails.transferFee),
+                amount + totalFees,
+                chatId,
                 (accounts) =>
                     new Promise((resolve) => {
                         flow = { kind: "choosing", accounts, choose: resolve };

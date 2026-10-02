@@ -6,7 +6,7 @@ use timer_job_queues::{TimerJobItem, TimerJobQueue};
 use tracing::error;
 use types::{C2CError, GameId, Milliseconds, PuzzleNumber, UserId};
 use user_canister::c2c_game_chit::{Args, Response, SuccessResult};
-use utils::canister::delay_if_should_retry_failed_c2c_call_to_new_method;
+use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 // One CHIT credit or debit against a user canister. Keys are idempotent on the user side, so a
 // retry after an ambiguous failure is safe: a repeat answers `AlreadyAdded`, which counts as done.
@@ -87,10 +87,7 @@ fn next(outcome: &GameChitOutcome) -> Next {
     match outcome {
         GameChitOutcome::Applied(Some(_)) => Next::Done,
         GameChitOutcome::Applied(None) | GameChitOutcome::Refused(_) => Next::Abandon,
-        // Keep retrying if the User canister hasn't yet been upgraded to a version with
-        // `c2c_game_chit`
-        // TODO revert to `delay_if_should_retry_failed_c2c_call` once every User canister has it
-        GameChitOutcome::Failed(error) => match delay_if_should_retry_failed_c2c_call_to_new_method(error) {
+        GameChitOutcome::Failed(error) => match delay_if_should_retry_failed_c2c_call(error) {
             Some(delay) => Next::Retry(delay),
             None => Next::Abandon,
         },

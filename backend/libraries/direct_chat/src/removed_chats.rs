@@ -56,28 +56,6 @@ fn range(prefix: &RemovedChatKeyPrefix, since: TimestampMillis) -> Option<RangeI
     )
 }
 
-// Moves the records of removed chats which were held on the heap into stable memory, returning how
-// many were moved
-// TODO: Remove this after next release
-pub fn migrate_to_stable_memory(
-    prefix: &RemovedChatKeyPrefix,
-    entries: impl IntoIterator<Item = (TimestampMillis, Principal)>,
-) -> usize {
-    let mut entries: Vec<_> = entries
-        .into_iter()
-        .map(|entry| (prefix.create_key(&entry), Vec::new()))
-        .collect();
-    if entries.is_empty() {
-        return 0;
-    }
-    // Insert the entries in key order
-    entries.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
-
-    let count = entries.len();
-    with_map_mut(|m| m.insert_many(entries));
-    count
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -131,23 +109,6 @@ mod tests {
         assert_eq!(removed_since(&direct_chats, 0), vec![(10, chat(1))]);
         assert_eq!(removed_since(&group_chats, 0), vec![(20, chat(2))]);
         assert_eq!(removed_since(&communities, 0), vec![(30, chat(3))]);
-    }
-
-    #[test]
-    fn entries_are_migrated_to_stable_memory() {
-        init_stable_memory_map();
-        let prefix = RemovedChatKeyPrefix::new_for_communities();
-
-        assert_eq!(migrate_to_stable_memory(&prefix, Vec::new()), 0);
-        assert_eq!(
-            migrate_to_stable_memory(&prefix, (1..=50u8).rev().map(|i| (i as u64, chat(i)))),
-            50
-        );
-
-        assert_eq!(
-            removed_since(&prefix, 0),
-            (1..=50u8).rev().map(|i| (i as u64, chat(i))).collect::<Vec<_>>()
-        );
     }
 
     fn chat(i: u8) -> Principal {
