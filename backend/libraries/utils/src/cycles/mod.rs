@@ -8,5 +8,5 @@ pub use accept_cycles::accept_cycles;
 pub use can_spend_cycles::can_spend_cycles;
 pub use check_cycles_balance::{
     MIN_CYCLES_BALANCE, USER_CANISTER_MIN_CYCLES_BALANCE, check_cycles_balance, check_cycles_balance_with_min,
-    freeze_threshold_cycles, is_cycles_balance_low, send_low_balance_notification,
+    cycles_balance_shortfall, freeze_threshold_cycles, is_cycles_balance_low, send_low_balance_notification,
 };

@@ -20,6 +20,7 @@ mod client;
 mod communities;
 mod cycles_dispenser_tests;
 mod cycles_refunder_tests;
+mod cycles_top_up_tests;
 mod daily_puzzle_engine_tests;
 mod daily_puzzle_flow_tests;
 mod daily_puzzle_tests;

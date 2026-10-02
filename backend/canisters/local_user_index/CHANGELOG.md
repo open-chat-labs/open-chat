@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Don't top up a child canister which has no code ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748))
 - Create Group, Community and MultiUser canisters with 1.2T cycles, the minimum a Group or Community canister keeps plus one top up ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748))
 - Stop refilling the canister pool, and refund the cycles of the canisters in it, which are given cycles as they're used ([#9749](https://github.com/open-chat-labs/open-chat/pull/9749))
+- Top up a canister which the weekly check finds low by enough to bring it back to its minimum, plus the usual amount ([#9750](https://github.com/open-chat-labs/open-chat/pull/9750))
 - Hold User canisters to 0.3T cycles above the freezing threshold, about their old minimum, while they're migrated, still creating them with 0.5T ([#9751](https://github.com/open-chat-labs/open-chat/pull/9751))
 
 ### Removed

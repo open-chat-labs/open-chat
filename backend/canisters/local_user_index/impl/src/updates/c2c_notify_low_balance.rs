@@ -23,7 +23,7 @@ thread_local! {
 #[update(guard = "caller_is_local_child_canister", msgpack = true)]
 #[trace]
 async fn c2c_notify_low_balance(_args: NotifyLowBalanceArgs) -> NotifyLowBalanceResponse {
-    top_up_child_canister(None).await
+    top_up_child_canister(None, 0).await
 }
 
 // Makes a call to `canister_id`. If it is one of this canister's children and the call fails
@@ -58,7 +58,7 @@ async fn top_up_for_retry(canister_id: CanisterId) -> bool {
         OutOfCyclesAction::Retry => true,
         OutOfCyclesAction::TopUpThenRetry => match TopUpInProgressGuard::new(canister_id) {
             Some(_guard) => matches!(
-                top_up_child_canister(Some(canister_id)).await,
+                top_up_child_canister(Some(canister_id), 0).await,
                 NotifyLowBalanceResponse::Success(_)
             ),
             None => false,
@@ -102,8 +102,9 @@ impl Drop for TopUpInProgressGuard {
     }
 }
 
-pub(crate) async fn top_up_child_canister(canister_id: Option<CanisterId>) -> NotifyLowBalanceResponse {
-    let prepare_ok = match read_state(|state| prepare(canister_id, state)) {
+// Tops the canister up by the usual amount for its type, plus `additional`
+pub(crate) async fn top_up_child_canister(canister_id: Option<CanisterId>, additional: Cycles) -> NotifyLowBalanceResponse {
+    let prepare_ok = match read_state(|state| prepare(canister_id, additional, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -122,9 +123,13 @@ struct PrepareResult {
     top_up: CyclesTopUp,
 }
 
-fn prepare(canister_id: Option<CanisterId>, state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
+fn prepare(
+    canister_id: Option<CanisterId>,
+    additional: Cycles,
+    state: &RuntimeState,
+) -> Result<PrepareResult, NotifyLowBalanceResponse> {
     let canister_id = canister_id.unwrap_or_else(|| state.env.caller());
-    let amount = top_up_amount(canister_id, state);
+    let amount = top_up_amount(canister_id, state) + additional;
     let top_up = CyclesTopUp {
         date: state.env.now(),
         amount,
@@ -137,7 +142,7 @@ fn prepare(canister_id: Option<CanisterId>, state: &RuntimeState) -> Result<Prep
     }
 }
 
-fn top_up_amount(canister_id: CanisterId, state: &RuntimeState) -> Cycles {
+pub(crate) fn top_up_amount(canister_id: CanisterId, state: &RuntimeState) -> Cycles {
     if state.data.local_multi_user_canisters.contains(&canister_id) {
         multi_user_canister_top_up_amount(state.data.test_mode)
     } else {

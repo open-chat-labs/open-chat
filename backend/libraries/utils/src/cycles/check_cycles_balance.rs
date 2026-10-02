@@ -48,8 +48,13 @@ fn should_notify(min_cycles_balance: Cycles) -> bool {
 // 30 days the latter means below 60 days of idle burn, which is what a large canister runs out of
 // first.
 pub fn is_cycles_balance_low(cycles_balance: Cycles, freeze_threshold: Cycles, min_cycles_balance: Cycles) -> bool {
-    let liquid_cycles = cycles_balance.saturating_sub(freeze_threshold);
-    liquid_cycles < max(2 * freeze_threshold, min_cycles_balance)
+    cycles_balance_shortfall(cycles_balance, freeze_threshold, min_cycles_balance) > 0
+}
+
+// How many more cycles the canister needs for its balance no longer to be low. This counts the
+// whole freezing threshold, so for a frozen canister it includes however far it is below it.
+pub fn cycles_balance_shortfall(cycles_balance: Cycles, freeze_threshold: Cycles, min_cycles_balance: Cycles) -> Cycles {
+    (max(2 * freeze_threshold, min_cycles_balance) + freeze_threshold).saturating_sub(cycles_balance)
 }
 
 // The cycles a canister must keep to not be frozen, worked out as the IC does: the cycles it burns
@@ -112,6 +117,60 @@ mod tests {
     #[test]
     fn a_canister_below_its_freezing_threshold_is_low() {
         assert!(is_cycles_balance_low(10 * B, 20 * B, MIN_CYCLES_BALANCE));
+    }
+
+    #[test]
+    fn the_shortfall_is_what_brings_the_cycles_above_the_freezing_threshold_up_to_the_minimum() {
+        let freeze_threshold = 40 * B;
+        assert_eq!(
+            cycles_balance_shortfall(freeze_threshold + 300 * B, freeze_threshold, MIN_CYCLES_BALANCE),
+            700 * B
+        );
+        assert_eq!(
+            cycles_balance_shortfall(MIN_CYCLES_BALANCE + freeze_threshold, freeze_threshold, MIN_CYCLES_BALANCE),
+            0
+        );
+    }
+
+    #[test]
+    fn the_shortfall_of_a_large_canister_is_up_to_twice_its_freezing_threshold() {
+        let freeze_threshold = MIN_CYCLES_BALANCE;
+        assert_eq!(
+            cycles_balance_shortfall(2 * freeze_threshold, freeze_threshold, MIN_CYCLES_BALANCE),
+            freeze_threshold
+        );
+    }
+
+    #[test]
+    fn the_shortfall_of_a_frozen_canister_includes_how_far_it_is_below_its_freezing_threshold() {
+        assert_eq!(
+            cycles_balance_shortfall(10 * B, 20 * B, MIN_CYCLES_BALANCE),
+            MIN_CYCLES_BALANCE + 10 * B
+        );
+    }
+
+    #[test]
+    fn topping_up_by_the_shortfall_means_the_balance_is_no_longer_low() {
+        for freeze_threshold in [0, 40 * B, MIN_CYCLES_BALANCE / 2, MIN_CYCLES_BALANCE, 3 * MIN_CYCLES_BALANCE] {
+            for cycles_balance in [
+                0,
+                10 * B,
+                freeze_threshold,
+                freeze_threshold + 300 * B,
+                2 * MIN_CYCLES_BALANCE,
+            ] {
+                let shortfall = cycles_balance_shortfall(cycles_balance, freeze_threshold, MIN_CYCLES_BALANCE);
+                assert_eq!(
+                    shortfall > 0,
+                    is_cycles_balance_low(cycles_balance, freeze_threshold, MIN_CYCLES_BALANCE)
+                );
+                assert!(!is_cycles_balance_low(
+                    cycles_balance + shortfall,
+                    freeze_threshold,
+                    MIN_CYCLES_BALANCE
+                ));
+            }
+        }
     }
 
     #[test]
