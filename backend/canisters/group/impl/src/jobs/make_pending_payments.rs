@@ -1,4 +1,4 @@
-use crate::{RuntimeState, mutate_state, read_state};
+use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
 use constants::{
     MEMO_GROUP_IMPORT_INTO_COMMUNITY, MEMO_JOINING_FEE, OPENCHAT_TREASURY_CANISTER_ID, SNS_GOVERNANCE_CANISTER_ID,
 };
@@ -28,6 +28,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 pub fn run() {
     trace!("'make_pending_payments' job running");
     TIMER_ID.set(None);
+    run_regular_jobs();
 
     let (pending_payment, now_nanos) = mutate_state(|state| (state.data.pending_payments_queue.pop(), state.env.now_nanos()));
 

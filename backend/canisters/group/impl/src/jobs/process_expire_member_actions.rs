@@ -1,5 +1,5 @@
 use super::expire_members;
-use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, read_state};
+use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, read_state, run_regular_jobs};
 use gated_groups::{CheckGateArgs, CheckIfPassesGateResult, check_if_passes_gate};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
@@ -26,6 +26,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 fn run() {
     trace!("'process_expire_member_actions' job running");
     TIMER_ID.set(None);
+    run_regular_jobs();
 
     let actions = mutate_state(|state| state.data.expiring_member_actions.pop_batch());
 

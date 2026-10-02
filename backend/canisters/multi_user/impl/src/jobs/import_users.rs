@@ -1,5 +1,5 @@
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
-use crate::{RuntimeState, jobs, mutate_state, read_state};
+use crate::{RuntimeState, jobs, mutate_state, read_state, run_regular_jobs};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
 use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserImportFailed, UserImported};
@@ -47,6 +47,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 fn run() {
     trace!("'import_users' job running");
     TIMER_ID.set(None);
+    run_regular_jobs();
 
     let user_ids = read_state(|state| {
         let now = state.env.now();
