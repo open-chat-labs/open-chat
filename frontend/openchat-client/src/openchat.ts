@@ -628,6 +628,7 @@ import { hasOwnerRights } from "./utils/permissions";
 import { Poller } from "./utils/poller";
 import { watchForResume, type ResumeReason } from "./utils/resumeDetector";
 import { answerTouchesChat } from "./utils/answerTouchesChat";
+import { movedDirectChats } from "./utils/movedDirectChats";
 import { SyncPuller } from "./utils/syncPuller";
 import { passkeyProviderName } from "./utils/passkeyProvider";
 import { showTrace } from "./utils/profiling";
@@ -3765,19 +3766,28 @@ export class OpenChat {
     isDisplayNameValid = isDisplayNameValid;
     isUsernameValid = isUsernameValid;
 
-    async createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
+    // Returns the chat to go to, or undefined if there's no such user. That's the chat under the
+    // user's latest id if `chatId` is under one they had before being migrated to a MultiUser
+    // canister, eg. from an old link or notification, since their chat was moved onto that id.
+    async createDirectChat(
+        chatId: DirectChatIdentifier,
+    ): Promise<DirectChatIdentifier | undefined> {
         if (!userStore.has(chatId.userId)) {
             const user = await this.getUser(chatId.userId);
             if (user === undefined) {
-                return false;
+                return undefined;
             }
         }
+        const latestChatId: DirectChatIdentifier = {
+            kind: "direct_chat",
+            userId: userStore.latestUserId(chatId.userId),
+        };
         // The placeholder would shadow the real chat in allServerChatsStore, making it appear empty.
         // This must be checked after the await above, since the chat may have arrived in the meantime.
-        if (!serverDirectChatsStore.value.has(chatId)) {
-            localUpdates.addUninitialisedDirectChat(chatId);
+        if (!serverDirectChatsStore.value.has(latestChatId)) {
+            localUpdates.addUninitialisedDirectChat(latestChatId);
         }
-        return true;
+        return latestChatId;
     }
 
     #isPrivatePreview(chat: ChatSummary): boolean {
@@ -3821,8 +3831,27 @@ export class OpenChat {
                 return;
             }
             if (chatId.kind === "direct_chat") {
-                if (!(await this.createDirectChat(chatId))) {
+                const directChatId = await this.createDirectChat(chatId);
+                if (directChatId === undefined) {
                     publish("notFound");
+                } else if (directChatId.userId !== chatId.userId) {
+                    // The user has been migrated to a MultiUser canister since having the id in the
+                    // route, so go to the chat under their latest id instead, which keeps the
+                    // chat's messages, and so their indexes, in place of the old id in the history
+                    let url: string;
+                    if (messageIndex === undefined) {
+                        url = routeForChatIdentifier("chats", directChatId);
+                    } else if (threadMessageIndex === undefined) {
+                        url = routeForMessage("chats", { chatId: directChatId }, messageIndex);
+                    } else {
+                        url = routeForMessage(
+                            "chats",
+                            { chatId: directChatId, threadRootMessageIndex: messageIndex },
+                            threadMessageIndex,
+                        );
+                    }
+                    publish("navigateTo", { url, intent: "auto" });
+                    return;
                 } else {
                     publish("navigateTo", { url: routeForChatIdentifier("chats", chatId) });
                 }
@@ -7685,6 +7714,29 @@ export class OpenChat {
         }
     }
 
+    // The direct chats among those an updates answer removed which were moved onto the other user's
+    // new id, after they were migrated to a MultiUser canister, rather than deleted (see
+    // `movedDirectChats`). The users are looked up by the ids the chats were under, for which the
+    // UserIndex returns their latest ids.
+    async #movedDirectChats(
+        removed: string[],
+        addedUpdated: DirectChatSummary[],
+    ): Promise<Map<string, DirectChatIdentifier>> {
+        if (removed.length === 0) return new Map();
+
+        const unresolved = removed.filter((userId) => userStore.latestUserId(userId) === userId);
+        if (unresolved.length > 0) {
+            await this.getUsers({ userGroups: [{ users: unresolved, updatedSince: BigInt(0) }] });
+        }
+        return movedDirectChats(
+            removed,
+            (userId) => userStore.latestUserId(userId),
+            (chatId) =>
+                serverDirectChatsStore.value.has(chatId) ||
+                addedUpdated.some((chat) => chatIdentifiersEqual(chat.id, chatId)),
+        );
+    }
+
     async #handleChatsResponse(
         updateRegistryTask: Promise<void> | undefined,
         initialLoad: boolean,
@@ -7714,7 +7766,13 @@ export class OpenChat {
             userIds.add(currentUserIdStore.value);
         }
 
-        await this.getMissingUsers(userIds);
+        const [, movedChats] = await Promise.all([
+            this.getMissingUsers(userIds),
+            this.#movedDirectChats(
+                chatsResponse.directChatsRemoved,
+                chatsResponse.directChatsAddedUpdated,
+            ),
+        ]);
 
         // Held so the fold's answer can be compared with it: see `answerTouchesChat`
         const selectedBeforeFold = selectedServerChatSummaryStore.value;
@@ -7771,6 +7829,15 @@ export class OpenChat {
                 }
             }
 
+            // What's held for a moved chat under its old id goes with it: the placeholder for a
+            // chat created under the old id and moved before the server was asked for it, and
+            // anything the user was writing in it
+            for (const [userId, movedTo] of movedChats) {
+                const chatId: DirectChatIdentifier = { kind: "direct_chat", userId };
+                localUpdates.removeUninitialisedDirectChat(chatId);
+                localUpdates.draftMessages.moveChat(chatId, movedTo);
+            }
+
             if (chatsResponse.avatarId !== undefined) {
                 const currentUser = userStore.get(currentUserIdStore.value);
                 const blobReference =
@@ -7825,7 +7892,20 @@ export class OpenChat {
         const selectedChatId = selectedChatIdStore.value;
         if (selectedChatId !== undefined) {
             if (chatSummariesStore.value.get(selectedChatId) === undefined) {
-                publish("selectedChatInvalid");
+                const movedTo =
+                    selectedChatId.kind === "direct_chat"
+                        ? movedChats.get(selectedChatId.userId)
+                        : undefined;
+                if (movedTo !== undefined) {
+                    // The chat is open, so follow it onto the other user's new id, in place of
+                    // the old id in the history
+                    publish("navigateTo", {
+                        url: routeForChatIdentifier(chatListScopeStore.value.kind, movedTo),
+                        intent: "auto",
+                    });
+                } else {
+                    publish("selectedChatInvalid");
+                }
             } else {
                 const updatedEvents =
                     ChatMap.fromMap(chatsResponse.updatedEvents).get(selectedChatId) ?? [];
