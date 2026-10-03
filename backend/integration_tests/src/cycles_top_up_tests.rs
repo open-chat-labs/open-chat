@@ -29,7 +29,7 @@ fn weekly_check_tops_up_a_low_canister_back_to_its_minimum() {
     let original_freezing_threshold = status.settings.freezing_threshold.clone();
     let burned_per_day = to_u128(&status.idle_cycles_burned_per_day);
     assert!(burned_per_day > 0);
-    let freezing_threshold_secs = (balance + 250 * B) * 24 * 60 * 60 / burned_per_day;
+    let freezing_threshold_secs = (balance + 600 * B) * 24 * 60 * 60 / burned_per_day;
     set_freezing_threshold(env, canister_id, local_user_index, freezing_threshold_secs.into());
 
     // A check already under way (this environment is shared with other tests) won't include the
