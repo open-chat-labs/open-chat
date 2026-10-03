@@ -141,14 +141,14 @@ function updates(added: DirectChatSummary[], removed: string[]): UpdatesResult {
     } as unknown as UpdatesResult;
 }
 
-function selectChat(chatId: DirectChatIdentifier, messageIndex?: number) {
+function selectChat(chatId: DirectChatIdentifier, messageIndex?: number, open = false) {
     routeStore.set({
         kind: "global_chat_selected_route",
         scope: { kind: "chats" },
         chatId,
         chatType: "direct_chat",
         messageIndex,
-        open: false,
+        open,
     });
 }
 
@@ -258,6 +258,33 @@ describe("a direct chat moved onto the other user's new id", () => {
 
         expect(navigations).toEqual([]);
         expect(invalidated).toBe(1);
+    });
+
+    test("an open thread in a moved chat is still open under the new id", async () => {
+        migrated.set("old5", "new5");
+        serverDirectChatsStore.set(ChatMap.fromList([directChat("old5")]));
+        selectChat(direct("old5"), 7, true);
+
+        await fold(updates([directChat("new5")], ["old5"]));
+
+        expect(navigations).toEqual([{ url: "/chats/user/new5/7?open=true", intent: "auto" }]);
+    });
+
+    test("a chat under a migrated user's old id which is deleted, when there's already a chat under their new id, is left", async () => {
+        // Both are kept if the chat under the new id came first, rather than one being moved
+        migrated.set("old6", "new6");
+        serverDirectChatsStore.set(ChatMap.fromList([directChat("old6"), directChat("new6")]));
+        selectChat(direct("old6"));
+        localUpdates.draftMessages.setTextContent(
+            { chatId: direct("old6") },
+            "in the deleted chat",
+        );
+
+        await fold(updates([directChat("new6")], ["old6"]));
+
+        expect(navigations).toEqual([]);
+        expect(invalidated).toBe(1);
+        expect(localUpdates.draftMessages.value.get({ chatId: direct("new6") })).toBeUndefined();
     });
 
     test("an old link to a moved chat goes to the chat under the new id, at the same message", async () => {

@@ -628,7 +628,7 @@ import { hasOwnerRights } from "./utils/permissions";
 import { Poller } from "./utils/poller";
 import { watchForResume, type ResumeReason } from "./utils/resumeDetector";
 import { answerTouchesChat } from "./utils/answerTouchesChat";
-import { movedDirectChats } from "./utils/movedDirectChats";
+import { movedDirectChats, routeForMovedDirectChat } from "./utils/movedDirectChats";
 import { SyncPuller } from "./utils/syncPuller";
 import { passkeyProviderName } from "./utils/passkeyProvider";
 import { showTrace } from "./utils/profiling";
@@ -3840,21 +3840,19 @@ export class OpenChat {
                     publish("notFound");
                 } else if (directChatId.userId !== chatId.userId) {
                     // The user has been migrated to a MultiUser canister since having the id in the
-                    // route, so go to the chat under their latest id instead, which keeps the
-                    // chat's messages, and so their indexes, in place of the old id in the history
-                    let url: string;
-                    if (messageIndex === undefined) {
-                        url = routeForChatIdentifier("chats", directChatId);
-                    } else if (threadMessageIndex === undefined) {
-                        url = routeForMessage("chats", { chatId: directChatId }, messageIndex);
-                    } else {
-                        url = routeForMessage(
+                    // route, so go to the chat under their latest id instead, in place of the old
+                    // id in the history
+                    const route = routeStore.value;
+                    publish("navigateTo", {
+                        url: routeForMovedDirectChat(
                             "chats",
-                            { chatId: directChatId, threadRootMessageIndex: messageIndex },
+                            directChatId,
+                            messageIndex,
                             threadMessageIndex,
-                        );
-                    }
-                    publish("navigateTo", { url, intent: "auto" });
+                            route.kind === "global_chat_selected_route" && route.open,
+                        ),
+                        intent: "auto",
+                    });
                     return;
                 } else {
                     publish("navigateTo", { url: routeForChatIdentifier("chats", chatId) });
@@ -7721,7 +7719,8 @@ export class OpenChat {
     // The direct chats among those an updates answer removed which were moved onto the other user's
     // new id, after they were migrated to a MultiUser canister, rather than deleted (see
     // `movedDirectChats`). The users are looked up by the ids the chats were under, for which the
-    // UserIndex returns their latest ids.
+    // UserIndex returns their latest ids. Called before the answer is folded in, so a chat under a
+    // latest id which isn't held yet is one the answer adds.
     async #movedDirectChats(
         removed: string[],
         addedUpdated: DirectChatSummary[],
@@ -7736,7 +7735,7 @@ export class OpenChat {
             removed,
             (userId) => userStore.latestUserId(userId),
             (chatId) =>
-                serverDirectChatsStore.value.has(chatId) ||
+                !serverDirectChatsStore.value.has(chatId) &&
                 addedUpdated.some((chat) => chatIdentifiersEqual(chat.id, chatId)),
         );
     }
@@ -7902,9 +7901,17 @@ export class OpenChat {
                         : undefined;
                 if (movedTo !== undefined) {
                     // The chat is open, so follow it onto the other user's new id, in place of
-                    // the old id in the history
+                    // the old id in the history, keeping to the message or thread it was at
+                    const route = routeStore.value;
+                    const atRoute = route.kind === "global_chat_selected_route";
                     publish("navigateTo", {
-                        url: routeForChatIdentifier(chatListScopeStore.value.kind, movedTo),
+                        url: routeForMovedDirectChat(
+                            chatListScopeStore.value.kind,
+                            movedTo,
+                            atRoute ? route.messageIndex : undefined,
+                            atRoute ? route.threadMessageIndex : undefined,
+                            atRoute && route.open,
+                        ),
                         intent: "auto",
                     });
                 } else {
