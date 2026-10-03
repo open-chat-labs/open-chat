@@ -24,11 +24,14 @@ vi.mock("@icp-sdk/auth/client", async (importOriginal) => ({
 
 import {
     ChatMap,
+    MessageContextMap,
     ROLE_OWNER,
     Stream,
     subscribe,
     type DirectChatIdentifier,
     type DirectChatSummary,
+    type EventWrapper,
+    type Message,
     type SyncSinceResponse,
     type UpdatesResult,
     type UserSummary,
@@ -38,12 +41,14 @@ import {
 import type { OpenChatConfig } from "./config";
 import { OpenChat } from "./openchat";
 import { chatsInitialisedStore, localUpdates, routeStore, serverDirectChatsStore } from "./state";
+import { userStore } from "./state/users/state";
 import { WorkerAgent } from "./workerAgent";
 
 // When the other user in a direct chat is migrated to a MultiUser canister, the chat is moved onto
-// their new id, which the client hears of as the chat under the old id being removed and one under
-// the new id being added. The client looks the removed chat's user up by the old id, which the
-// UserIndex maps to the new id, and follows the chat there.
+// their new id. The worker finds the move, moves what it has cached for the chat, and says so in its
+// answer, alongside the chat under the old id being removed and the one under the new id being
+// added. The client follows the chat there, and moves what it holds for it. A link to the chat under
+// the old id is looked up by the client, which the UserIndex maps to the new id.
 
 class FakeWorker {
     onmessage: ((ev: MessageEvent) => void) | undefined;
@@ -110,10 +115,24 @@ function user(userId: string): UserSummary {
     } as unknown as UserSummary;
 }
 
-function updates(added: DirectChatSummary[], removed: string[]): UpdatesResult {
+function failedMessage(messageId: bigint): EventWrapper<Message> {
+    return {
+        kind: "event",
+        index: 0,
+        timestamp: 0n,
+        event: { kind: "message", messageId, messageIndex: 0 },
+    } as unknown as EventWrapper<Message>;
+}
+
+function updates(
+    added: DirectChatSummary[],
+    removed: string[],
+    moved: [string, string][] = [],
+): UpdatesResult {
     return {
         directChatsAddedUpdated: added,
         directChatsRemoved: removed,
+        directChatsMoved: new Map(moved),
         groupsAddedUpdated: [],
         groupsRemoved: [],
         communitiesAddedUpdated: [],
@@ -238,13 +257,15 @@ describe("a direct chat moved onto the other user's new id", () => {
         chatsInitialisedStore.set(false);
     });
 
-    test("an open chat is followed onto the new id, along with its draft", async () => {
-        migrated.set("old1", "new1");
+    test("an open chat the worker found moved is followed onto the new id, with what's held for it", async () => {
         serverDirectChatsStore.set(ChatMap.fromList([directChat("old1")]));
         selectChat(direct("old1"));
         localUpdates.draftMessages.setTextContent({ chatId: direct("old1") }, "half written");
+        const failed = new MessageContextMap<Map<bigint, EventWrapper<Message>>>();
+        failed.set({ chatId: direct("old1") }, new Map([[9n, failedMessage(9n)]]));
+        localUpdates.initialiseFailedMessages(failed);
 
-        await fold(updates([directChat("new1")], ["old1"]));
+        await fold(updates([directChat("new1")], ["old1"], [["old1", "new1"]]));
 
         expect(navigations).toEqual([{ url: "/chats/user/new1", intent: "auto" }]);
         expect(invalidated).toBe(0);
@@ -252,6 +273,16 @@ describe("a direct chat moved onto the other user's new id", () => {
             "half written",
         );
         expect(localUpdates.draftMessages.value.get({ chatId: direct("old1") })).toBeUndefined();
+        expect(
+            localUpdates
+                .failedMessagesForContext({ chatId: direct("new1") })
+                .map((m) => m.event.messageId),
+        ).toEqual([9n]);
+        expect(localUpdates.anyFailed({ chatId: direct("old1") })).toBe(false);
+        // Their messages from before the move refer to them by the old id
+        expect(userStore.latestUserId("old1")).toBe("new1");
+        // The worker found the move, so there's nothing for the client to look up
+        expect(usersAskedFor).not.toContain("old1");
     });
 
     test("an open chat which was deleted, not moved, is left", async () => {
@@ -262,32 +293,11 @@ describe("a direct chat moved onto the other user's new id", () => {
 
         expect(navigations).toEqual([]);
         expect(invalidated).toBe(1);
-        // With no chat added, there's no move to look for
-        expect(usersAskedFor).not.toContain("gone2");
     });
 
-    test("a deleted chat isn't looked up when the same answer only updates a chat already held", async () => {
-        serverDirectChatsStore.set(ChatMap.fromList([directChat("gone7"), directChat("other7")]));
-        selectChat(direct("gone7"));
-
-        await fold(updates([directChat("other7")], ["gone7"]));
-
-        expect(invalidated).toBe(1);
-        expect(usersAskedFor).not.toContain("gone7");
-    });
-
-    test("an open thread in a moved chat is still open under the new id", async () => {
-        migrated.set("old5", "new5");
-        serverDirectChatsStore.set(ChatMap.fromList([directChat("old5")]));
-        selectChat(direct("old5"), 7, true);
-
-        await fold(updates([directChat("new5")], ["old5"]));
-
-        expect(navigations).toEqual([{ url: "/chats/user/new5/7?open=true", intent: "auto" }]);
-    });
-
-    test("a chat under a migrated user's old id which is deleted, when there's already a chat under their new id, is left", async () => {
-        // Both are kept if the chat under the new id came first, rather than one being moved
+    test("an open chat the worker didn't find moved is left, even if its user has since been migrated", async () => {
+        // As when both were kept, the chat under the new id having come first, and the one under
+        // the old id is then deleted
         migrated.set("old6", "new6");
         serverDirectChatsStore.set(ChatMap.fromList([directChat("old6"), directChat("new6")]));
         selectChat(direct("old6"));
@@ -301,6 +311,15 @@ describe("a direct chat moved onto the other user's new id", () => {
         expect(navigations).toEqual([]);
         expect(invalidated).toBe(1);
         expect(localUpdates.draftMessages.value.get({ chatId: direct("new6") })).toBeUndefined();
+    });
+
+    test("an open thread in a moved chat is still open under the new id", async () => {
+        serverDirectChatsStore.set(ChatMap.fromList([directChat("old5")]));
+        selectChat(direct("old5"), 7, true);
+
+        await fold(updates([directChat("new5")], ["old5"], [["old5", "new5"]]));
+
+        expect(navigations).toEqual([{ url: "/chats/user/new5/7?open=true", intent: "auto" }]);
     });
 
     test("an old link to a moved chat goes to the chat under the new id, at the same message", async () => {

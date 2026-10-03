@@ -22,6 +22,7 @@ import type {
     CurrentUserSummary,
     DataContent,
     DiamondMembershipStatus,
+    DirectChatIdentifier,
     DirectChatSummary,
     EventWrapper,
     EventsResponse,
@@ -497,7 +498,16 @@ export class ChatsDb {
      */
     async setCachedChats(chatState: ChatStateFull, touched: SyncTouched): Promise<number> {
         const tx = (await this.getDb()).transaction(
-            ["chats", "chat_rows", "chat_tombstones", "chat_events", "thread_events", "sync"],
+            [
+                "chats",
+                "chat_rows",
+                "chat_tombstones",
+                "chat_events",
+                "thread_events",
+                "failed_chat_messages",
+                "failed_thread_messages",
+                "sync",
+            ],
             "readwrite",
         );
         const chatsStore = tx.objectStore("chats");
@@ -505,6 +515,8 @@ export class ChatsDb {
         const tombstonesStore = tx.objectStore("chat_tombstones");
         const eventsStore = tx.objectStore("chat_events");
         const threadsStore = tx.objectStore("thread_events");
+        const failedChatStore = tx.objectStore("failed_chat_messages");
+        const failedThreadStore = tx.objectStore("failed_thread_messages");
         const syncStore = tx.objectStore("sync");
 
         const version = (await readSyncHead(syncStore)) + 1;
@@ -519,9 +531,20 @@ export class ChatsDb {
             // a chat that is back no longer needs its tombstone
             return isNew ? [put, tombstonesStore.delete(key)] : [put];
         });
-        const removeRequests = rows.removed.flatMap(({ key, kind, id }) => [
-            rowsStore.delete(key),
-            tombstonesStore.put({ kind, id, version }, key),
+        const removeRequests = rows.removed.flatMap(({ key, kind, id }) => {
+            const movedTo = kind === "direct_chat" ? touched.movedDirectChats.get(id) : undefined;
+            const tombstone: ChatTombstone =
+                movedTo === undefined ? { kind, id, version } : { kind, id, version, movedTo };
+            return [rowsStore.delete(key), tombstonesStore.put(tombstone, key)];
+        });
+
+        // What's cached for a moved chat moves with it, in this transaction, so that by the time
+        // a UI hears of the move, the chat's events are under its new id
+        const moveRequests = [...touched.movedDirectChats].flatMap(([from, to]) => [
+            ...[eventsStore, threadsStore].map((store) => moveCachedEvents(store, from, to)),
+            ...[failedChatStore, failedThreadStore].map((store) =>
+                moveFailedMessages(store, from, to),
+            ),
         ]);
 
         const updatedEvents = touched.updatedEvents;
@@ -544,6 +567,7 @@ export class ChatsDb {
             chatsStore.put(globalsOf(chatState), this.principalString),
             ...rowRequests,
             ...removeRequests,
+            ...moveRequests,
             syncStore.put(stamps, "stamps"),
             syncStore.put(version, "head"),
             ...markDirtyRequests,
@@ -1353,6 +1377,81 @@ function padMessageIndex(i: number): string {
 }
 
 type FailedCacheKey = MessageContext & { messageId: bigint };
+
+// The parts of a store which moving a direct chat's cache uses
+type MovableStore<V> = {
+    getAllKeys(query?: IDBKeyRange): Promise<string[]>;
+    get(key: string): Promise<V | undefined>;
+    put(value: V, key: string): Promise<string>;
+    delete(key: string): Promise<void>;
+};
+
+// Moves the events cached for the direct chat with `from`, or for its threads, onto `to`, for a chat
+// moved onto the other user's new id after they were migrated to a MultiUser canister. The move
+// doesn't change the events, the messages keeping the ids they were sent under, so they're only
+// rekeyed, along with the chat they're recorded as being in. A reply to a message in the same chat
+// is cached without the chat, so needs nothing.
+async function moveCachedEvents(
+    store: MovableStore<EnhancedWrapper<ChatEvent> | ExpiredEventsRange>,
+    from: string,
+    to: string,
+): Promise<void> {
+    const prefix = `${from}_`;
+    const movedKey = (key: string) => `${to}_${key.slice(prefix.length)}`;
+    const chatId: DirectChatIdentifier = { kind: "direct_chat", userId: to };
+    const keys = await store.getAllKeys(IDBKeyRange.bound(prefix, `${prefix}￿`));
+    await Promise.all(
+        keys.map(async (key) => {
+            const value = await store.get(key);
+            if (value === undefined) return;
+            const moved =
+                value.kind === "event"
+                    ? {
+                          ...value,
+                          chatId,
+                          messageKey: value.messageKey?.startsWith(prefix)
+                              ? movedKey(value.messageKey)
+                              : value.messageKey,
+                      }
+                    : value;
+            await store.put(moved, movedKey(key));
+            await store.delete(key);
+        }),
+    );
+}
+
+// Moves the failed messages held for the direct chat with `from`, or for its threads, onto `to`, as
+// for its events in `moveCachedEvents`, so that they can still be retried
+async function moveFailedMessages(
+    store: MovableStore<EnhancedWrapper<Message>>,
+    from: string,
+    to: string,
+): Promise<void> {
+    const chatId: DirectChatIdentifier = { kind: "direct_chat", userId: to };
+    const keys = await store.getAllKeys();
+    await Promise.all(
+        keys.map(async (key) => {
+            const parsed = parseFailedCacheKey(key);
+            if (parsed?.chatId.kind !== "direct_chat" || parsed.chatId.userId !== from) return;
+            const value = await store.get(key);
+            if (value === undefined) return;
+            const movedKey = createFailedCacheKey(
+                { chatId, threadRootMessageIndex: parsed.threadRootMessageIndex },
+                value.event.messageId,
+            );
+            await store.put({ ...value, chatId, messageKey: movedKey }, movedKey);
+            await store.delete(key);
+        }),
+    );
+}
+
+function parseFailedCacheKey(key: string): FailedCacheKey | undefined {
+    try {
+        return JSON.parse(key) as FailedCacheKey;
+    } catch {
+        return undefined;
+    }
+}
 
 export function createFailedCacheKey(context: MessageContext, messageId: bigint): string {
     return JSON.stringify({

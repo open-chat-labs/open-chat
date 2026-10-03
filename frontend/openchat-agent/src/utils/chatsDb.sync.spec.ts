@@ -1,6 +1,7 @@
 import type {
     ChatIdentifier,
     ChatStateFull,
+    DirectChatIdentifier,
     DirectChatSummary,
     GroupChatIdentifier,
     GroupChatSummary,
@@ -9,15 +10,24 @@ import type {
 import { ChatMap } from "@shared";
 import type { Principal } from "@icp-sdk/core/principal";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
-import { ChatsDb, createCacheKey } from "./chatsDb";
+import { ChatsDb, createCacheKey, createFailedCacheKey } from "./chatsDb";
 import { emptyTouched, globalsOf, type ChatRow, type SyncStamps } from "./sync";
 
-// jsdom has no IndexedDB. The fake below only needs the lower bound of a key range.
+// jsdom has no IndexedDB. The fake below only needs the lower bound of a key range, and the bounds
+// of a range of keys.
 beforeAll(() => {
     vi.stubGlobal("IDBKeyRange", {
         lowerBound: (lower: number, open: boolean) => ({ lower, open }),
+        bound: (lower: string, upper: string) => ({ lower, upper }),
     });
 });
+
+// The worker serialises a failed message's key, which holds its message id, as JSON
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
+BigInt.prototype.toJSON = function () {
+    return this.toString();
+};
 afterAll(() => {
     vi.unstubAllGlobals();
 });
@@ -45,6 +55,8 @@ function fakeDb(initial: Record<string, Record<string, any>> = {}) {
         "chat_tombstones",
         "chat_events",
         "thread_events",
+        "failed_chat_messages",
+        "failed_thread_messages",
         "group_details",
         "cachePrimer",
         "sync",
@@ -69,9 +81,13 @@ function fakeDb(initial: Record<string, Record<string, any>> = {}) {
                 log.push(`getAll ${name}`);
                 return read(name, () => sortedKeys(store).map((k) => store.get(k)));
             },
-            getAllKeys: () => {
+            getAllKeys: (range?: { lower: string; upper: string }) => {
                 log.push(`getAllKeys ${name}`);
-                return read(name, () => sortedKeys(store));
+                return read(name, () =>
+                    sortedKeys(store).filter(
+                        (k) => range === undefined || (k >= range.lower && k <= range.upper),
+                    ),
+                );
             },
             index: (index: string) => ({
                 getAll: (range: { lower: number; open: boolean }) => {
@@ -302,6 +318,141 @@ describe("setCachedChats", () => {
             (stores.sync.get("stamps") as SyncStamps).updatedEvents.map((s) => s.eventIndex),
         ).toEqual([3, 4]);
     });
+
+    describe("a direct chat moved onto the other user's new id", () => {
+        const directId = (userId: string): DirectChatIdentifier => ({
+            kind: "direct_chat",
+            userId,
+        });
+        const eventKey = (userId: string, index: number, threadRootMessageIndex?: number) =>
+            createCacheKey({ chatId: directId(userId), threadRootMessageIndex }, index);
+        const failedKey = (userId: string, messageId: bigint, threadRootMessageIndex?: number) =>
+            createFailedCacheKey({ chatId: directId(userId), threadRootMessageIndex }, messageId);
+
+        // A message as `setCachedEvents` caches it
+        function cachedMessage(userId: string, index: number, threadRootMessageIndex?: number) {
+            return {
+                kind: "event",
+                index,
+                timestamp: BigInt(index),
+                event: { kind: "message", messageIndex: index, messageId: BigInt(index) },
+                chatId: directId(userId),
+                messageKey: eventKey(userId, index, threadRootMessageIndex),
+            };
+        }
+
+        // A message which failed to send, as `recordFailedMessage` holds it
+        function failedMessage(userId: string, messageId: bigint, threadRootMessageIndex?: number) {
+            return {
+                kind: "event",
+                index: 0,
+                timestamp: 0n,
+                event: { kind: "message", messageIndex: 0, messageId },
+                chatId: directId(userId),
+                messageKey: failedKey(userId, messageId, threadRootMessageIndex),
+            };
+        }
+
+        const expiredRange = { kind: "expired_events_range", start: 1, end: 2 };
+
+        function moved() {
+            return chatsDbWith({
+                chats: { principal: globals() },
+                chat_rows: {
+                    "direct_chat|old": directRow("old", 1),
+                    "direct_chat|other": directRow("other", 1),
+                },
+                chat_events: {
+                    [eventKey("old", 1)]: expiredRange,
+                    [eventKey("old", 3)]: cachedMessage("old", 3),
+                    [eventKey("other", 3)]: cachedMessage("other", 3),
+                },
+                thread_events: {
+                    [eventKey("old", 1, 3)]: cachedMessage("old", 1, 3),
+                },
+                failed_chat_messages: {
+                    [failedKey("old", 7n)]: failedMessage("old", 7n),
+                    [failedKey("other", 8n)]: failedMessage("other", 8n),
+                },
+                failed_thread_messages: {
+                    [failedKey("old", 9n, 3)]: failedMessage("old", 9n, 3),
+                },
+                sync: { head: 4 },
+            });
+        }
+
+        async function move(chatsDb: ChatsDb) {
+            await chatsDb.setCachedChats(state({ directChats: [direct("new"), direct("other")] }), {
+                ...emptyTouched(),
+                directChats: new Set(["new"]),
+                movedDirectChats: new Map([["old", "new"]]),
+            });
+        }
+
+        test("leaves a tombstone which records the move", async () => {
+            const { chatsDb, stores } = moved();
+
+            await move(chatsDb);
+
+            expect(stores.chat_rows.has("direct_chat|old")).toBe(false);
+            expect(stores.chat_rows.get("direct_chat|new").version).toBe(5);
+            expect(stores.chat_tombstones.get("direct_chat|old")).toEqual({
+                kind: "direct_chat",
+                id: "old",
+                version: 5,
+                movedTo: "new",
+            });
+        });
+
+        test("moves the chat's cached events, and those of its threads, onto the new id", async () => {
+            const { chatsDb, stores } = moved();
+
+            await move(chatsDb);
+
+            expect(sortedKeys(stores.chat_events)).toEqual(
+                [eventKey("new", 1), eventKey("new", 3), eventKey("other", 3)].sort(),
+            );
+            expect(stores.chat_events.get(eventKey("new", 1))).toEqual(expiredRange);
+            expect(stores.chat_events.get(eventKey("new", 3))).toEqual(cachedMessage("new", 3));
+            expect(stores.chat_events.get(eventKey("other", 3))).toEqual(cachedMessage("other", 3));
+            expect(sortedKeys(stores.thread_events)).toEqual([eventKey("new", 1, 3)]);
+            expect(stores.thread_events.get(eventKey("new", 1, 3))).toEqual(
+                cachedMessage("new", 1, 3),
+            );
+        });
+
+        test("moves the chat's failed messages, and those of its threads, onto the new id", async () => {
+            const { chatsDb, stores } = moved();
+
+            await move(chatsDb);
+
+            expect(sortedKeys(stores.failed_chat_messages)).toEqual(
+                [failedKey("new", 7n), failedKey("other", 8n)].sort(),
+            );
+            expect(stores.failed_chat_messages.get(failedKey("new", 7n))).toEqual(
+                failedMessage("new", 7n),
+            );
+            expect(sortedKeys(stores.failed_thread_messages)).toEqual([failedKey("new", 9n, 3)]);
+            expect(stores.failed_thread_messages.get(failedKey("new", 9n, 3))).toEqual(
+                failedMessage("new", 9n, 3),
+            );
+        });
+
+        test("a chat removed without being moved is left as it was", async () => {
+            const { chatsDb, stores } = moved();
+
+            await chatsDb.setCachedChats(state({ directChats: [direct("other")] }), emptyTouched());
+
+            expect(stores.chat_tombstones.get("direct_chat|old")).toEqual({
+                kind: "direct_chat",
+                id: "old",
+                version: 5,
+            });
+            expect(stores.chat_tombstones.get("direct_chat|old")).not.toHaveProperty("movedTo");
+            expect(stores.chat_events.get(eventKey("old", 3))).toEqual(cachedMessage("old", 3));
+            expect(stores.failed_chat_messages.has(failedKey("old", 7n))).toBe(true);
+        });
+    });
 });
 
 describe("getChatsForSync", () => {
@@ -329,6 +480,7 @@ describe("getChatsForSync", () => {
         expect(result.chats?.state.directChats.map((c) => c.id.userId)).toEqual(["u1"]);
         expect(result.chats?.removed).toEqual({
             directChats: [],
+            movedDirectChats: new Map(),
             groupChats: [],
             communities: ["y"],
         });

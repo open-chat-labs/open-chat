@@ -292,6 +292,7 @@ import { createHttpAgentSync } from "../utils/httpAgent";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { withLatestUserIds } from "../utils/latestUserIds";
+import { movedDirectChats } from "../utils/movedDirectChats";
 import { mergeAccountTransactions } from "../utils/accountTransactions";
 import { mean } from "../utils/maths";
 import { extractMessagePreviews } from "@shared";
@@ -1834,6 +1835,33 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
+    // The direct chats among those the User canister removed which were moved onto the other user's
+    // new id, after they were migrated to a MultiUser canister, rather than deleted, each mapped to
+    // that id (see `movedDirectChats`). A move adds the chat under the new id in the same answer, so
+    // only if the answer added a chat are the users looked up, by the ids the chats were under, for
+    // which the UserIndex returns their latest ids. If that fails, the chats are taken as deleted,
+    // as they were before moves were known of.
+    async #movedDirectChats(
+        removed: string[],
+        added: DirectChatSummary[],
+    ): Promise<Map<string, string>> {
+        if (removed.length === 0 || added.length === 0) return new Map();
+        try {
+            const resp = await this._userIndexClient.getUsers(
+                { userGroups: [{ users: removed, updatedSince: BigInt(0) }] },
+                false,
+            );
+            return movedDirectChats(
+                removed,
+                added.map((chat) => chat.id.userId),
+                resp.migratedUserIds ?? new Map(),
+            );
+        } catch (err) {
+            this._logger.error("Failed to look up the users of removed direct chats", err);
+            return new Map();
+        }
+    }
+
     private applyPinnedChannelUpdates(
         pinnedChannels: Updatable<ChannelIdentifier[]>,
         userResponse: UpdatesSuccessResponse,
@@ -1877,6 +1905,7 @@ export class OpenChatAgent extends EventTarget {
         let directChatsAdded: DirectChatSummary[] = [];
         let directChatUpdates: DirectChatSummaryUpdates[] = [];
         let directChatsRemoved: string[] = [];
+        let directChatsMoved = new Map<string, string>();
         let directChats: DirectChatSummary[] = [];
 
         let currentGroups: GroupChatSummary[] = [];
@@ -2039,8 +2068,15 @@ export class OpenChatAgent extends EventTarget {
                     directChatsAdded = userResponse.directChats.added;
                     directChatUpdates = userResponse.directChats.updated;
                     directChatsRemoved = userResponse.directChats.removed;
+                    directChatsMoved = await this.#movedDirectChats(
+                        directChatsRemoved,
+                        directChatsAdded,
+                    );
+                    // A moved chat's events move with it when the cache is written
                     directChatsRemoved.forEach((id) => {
-                        this._chatsDb.deleteEventsForChatOrCommunity(id);
+                        if (!directChatsMoved.has(id)) {
+                            this._chatsDb.deleteEventsForChatOrCommunity(id);
+                        }
                     });
 
                     groupsAdded = userResponse.groupChats.added;
@@ -2292,6 +2328,7 @@ export class OpenChatAgent extends EventTarget {
             try {
                 await this._chatsDb.setCachedChats(state, {
                     directChats: directChatsAddedUpdatedIds,
+                    movedDirectChats: directChatsMoved,
                     groupChats: groupsAddedUpdatedIds,
                     communities: communitiesAddedUpdatedIds,
                     fields: touchedFields({
