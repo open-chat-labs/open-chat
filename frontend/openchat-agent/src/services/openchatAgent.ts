@@ -292,7 +292,7 @@ import { createHttpAgentSync } from "../utils/httpAgent";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { withLatestUserIds } from "../utils/latestUserIds";
-import { movedDirectChats } from "../utils/movedDirectChats";
+import { findMovedDirectChats } from "../utils/movedDirectChats";
 import { mergeAccountTransactions } from "../utils/accountTransactions";
 import { mean } from "../utils/maths";
 import { extractMessagePreviews } from "@shared";
@@ -1837,29 +1837,21 @@ export class OpenChatAgent extends EventTarget {
 
     // The direct chats among those the User canister removed which were moved onto the other user's
     // new id, after they were migrated to a MultiUser canister, rather than deleted, each mapped to
-    // that id (see `movedDirectChats`). A move adds the chat under the new id in the same answer, so
-    // only if the answer added a chat are the users looked up, by the ids the chats were under, for
-    // which the UserIndex returns their latest ids. If that fails, the chats are taken as deleted,
-    // as they were before moves were known of.
-    async #movedDirectChats(
+    // that id (see `findMovedDirectChats`). The users are looked up by the ids the chats were under,
+    // for which the UserIndex returns their latest ids. Throws if they can't be.
+    #movedDirectChats(
         removed: string[],
         added: DirectChatSummary[],
+        cached: DirectChatSummary[],
     ): Promise<Map<string, string>> {
-        if (removed.length === 0 || added.length === 0) return new Map();
-        try {
-            const resp = await this._userIndexClient.getUsers(
-                { userGroups: [{ users: removed, updatedSince: BigInt(0) }] },
-                false,
-            );
-            return movedDirectChats(
-                removed,
-                added.map((chat) => chat.id.userId),
-                resp.migratedUserIds ?? new Map(),
-            );
-        } catch (err) {
+        return findMovedDirectChats(removed, added, cached, (users) =>
+            this._userIndexClient
+                .getUsers({ userGroups: [{ users, updatedSince: BigInt(0) }] }, false)
+                .then((resp) => resp.migratedUserIds ?? new Map()),
+        ).catch((err) => {
             this._logger.error("Failed to look up the users of removed direct chats", err);
-            return new Map();
-        }
+            throw err;
+        });
     }
 
     private applyPinnedChannelUpdates(
@@ -2060,6 +2052,17 @@ export class OpenChatAgent extends EventTarget {
                 const userResponse = await this.userClient.getUpdates(
                     current.latestUserCanisterUpdates,
                 );
+                // Found before anything is taken from the answer, so that if the users can't be
+                // looked up, the answer is dropped, as if the User canister hadn't given one, and
+                // is fetched again on the next pass, rather than a move being taken for a deletion
+                const moved =
+                    userResponse.kind === "success"
+                        ? await this.#movedDirectChats(
+                              userResponse.directChats.removed,
+                              userResponse.directChats.added,
+                              currentDirectChats,
+                          )
+                        : new Map<string, string>();
 
                 if (userResponse.kind === "success") {
                     anyUpdates = true;
@@ -2068,10 +2071,7 @@ export class OpenChatAgent extends EventTarget {
                     directChatsAdded = userResponse.directChats.added;
                     directChatUpdates = userResponse.directChats.updated;
                     directChatsRemoved = userResponse.directChats.removed;
-                    directChatsMoved = await this.#movedDirectChats(
-                        directChatsRemoved,
-                        directChatsAdded,
-                    );
+                    directChatsMoved = moved;
                     // A moved chat's events move with it when the cache is written
                     directChatsRemoved.forEach((id) => {
                         if (!directChatsMoved.has(id)) {

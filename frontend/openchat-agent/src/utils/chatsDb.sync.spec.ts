@@ -404,7 +404,7 @@ describe("setCachedChats", () => {
             });
         });
 
-        test("moves the chat's cached events, and those of its threads, onto the new id", async () => {
+        test("moves the chat's cached events, and those of its threads, onto the new id, to be fetched again when shown", async () => {
             const { chatsDb, stores } = moved();
 
             await move(chatsDb);
@@ -413,12 +413,52 @@ describe("setCachedChats", () => {
                 [eventKey("new", 1), eventKey("new", 3), eventKey("other", 3)].sort(),
             );
             expect(stores.chat_events.get(eventKey("new", 1))).toEqual(expiredRange);
-            expect(stores.chat_events.get(eventKey("new", 3))).toEqual(cachedMessage("new", 3));
+            expect(stores.chat_events.get(eventKey("new", 3))).toEqual({
+                ...cachedMessage("new", 3),
+                dirty: true,
+            });
             expect(stores.chat_events.get(eventKey("other", 3))).toEqual(cachedMessage("other", 3));
             expect(sortedKeys(stores.thread_events)).toEqual([eventKey("new", 1, 3)]);
-            expect(stores.thread_events.get(eventKey("new", 1, 3))).toEqual(
-                cachedMessage("new", 1, 3),
-            );
+            expect(stores.thread_events.get(eventKey("new", 1, 3))).toEqual({
+                ...cachedMessage("new", 1, 3),
+                dirty: true,
+            });
+        });
+
+        test("keeps what's already cached under the new id, and drops what's under the old id", async () => {
+            const { chatsDb, stores } = moved();
+            const newer = { ...cachedMessage("new", 3), timestamp: 100n };
+            stores.chat_events.set(eventKey("new", 3), newer);
+            const newerFailed = { ...failedMessage("new", 7n), timestamp: 100n };
+            stores.failed_chat_messages.set(failedKey("new", 7n), newerFailed);
+
+            await move(chatsDb);
+
+            expect(stores.chat_events.get(eventKey("new", 3))).toEqual(newer);
+            expect(stores.chat_events.has(eventKey("old", 3))).toBe(false);
+            expect(stores.failed_chat_messages.get(failedKey("new", 7n))).toEqual(newerFailed);
+            expect(stores.failed_chat_messages.has(failedKey("old", 7n))).toBe(false);
+        });
+
+        test("a moved chat which had no row still leaves a tombstone which records the move", async () => {
+            // eg. one created under the old id and moved before it was synced
+            const { chatsDb, stores } = chatsDbWith({
+                chats: { principal: globals() },
+                sync: { head: 4 },
+            });
+
+            await chatsDb.setCachedChats(state({ directChats: [direct("new")] }), {
+                ...emptyTouched(),
+                directChats: new Set(["new"]),
+                movedDirectChats: new Map([["old", "new"]]),
+            });
+
+            expect(stores.chat_tombstones.get("direct_chat|old")).toEqual({
+                kind: "direct_chat",
+                id: "old",
+                version: 5,
+                movedTo: "new",
+            });
         });
 
         test("moves the chat's failed messages, and those of its threads, onto the new id", async () => {

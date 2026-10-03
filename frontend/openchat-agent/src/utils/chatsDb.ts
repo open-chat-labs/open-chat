@@ -538,6 +538,17 @@ export class ChatsDb {
             return [rowsStore.delete(key), tombstonesStore.put(tombstone, key)];
         });
 
+        // A moved chat which had no row, eg. one created under the old id and moved before it was
+        // synced, still leaves a tombstone recording the move, so that a UI holding something for
+        // it under the old id, such as a placeholder, hears of the move
+        const tombstoned = new Set(rows.removed.map(({ key }) => key));
+        const movedTombstoneRequests = [...touched.movedDirectChats]
+            .map(([from, to]) => ({ key: chatRowKey("direct_chat", from), from, to }))
+            .filter(({ key }) => !tombstoned.has(key))
+            .map(({ key, from, to }) =>
+                tombstonesStore.put({ kind: "direct_chat", id: from, version, movedTo: to }, key),
+            );
+
         // What's cached for a moved chat moves with it, in this transaction, so that by the time
         // a UI hears of the move, the chat's events are under its new id
         const moveRequests = [...touched.movedDirectChats].flatMap(([from, to]) => [
@@ -567,6 +578,7 @@ export class ChatsDb {
             chatsStore.put(globalsOf(chatState), this.principalString),
             ...rowRequests,
             ...removeRequests,
+            ...movedTombstoneRequests,
             ...moveRequests,
             syncStore.put(stamps, "stamps"),
             syncStore.put(version, "head"),
@@ -1388,9 +1400,12 @@ type MovableStore<V> = {
 
 // Moves the events cached for the direct chat with `from`, or for its threads, onto `to`, for a chat
 // moved onto the other user's new id after they were migrated to a MultiUser canister. The move
-// doesn't change the events, the messages keeping the ids they were sent under, so they're only
-// rekeyed, along with the chat they're recorded as being in. A reply to a message in the same chat
-// is cached without the chat, so needs nothing.
+// doesn't change the events, the messages keeping the ids they were sent under, so they're rekeyed,
+// along with the chat they're recorded as being in. A reply to a message in the same chat is cached
+// without the chat, so needs nothing. The chat comes back from the User canister in full, which
+// can't say which of its events were updated since it was last synced, so the moved events are
+// marked dirty: they're shown at once, and fetched again when they are. An event already cached
+// under the new id, eg. one another tab loaded, is at least as new, so is kept.
 async function moveCachedEvents(
     store: MovableStore<EnhancedWrapper<ChatEvent> | ExpiredEventsRange>,
     from: string,
@@ -1399,22 +1414,25 @@ async function moveCachedEvents(
     const prefix = `${from}_`;
     const movedKey = (key: string) => `${to}_${key.slice(prefix.length)}`;
     const chatId: DirectChatIdentifier = { kind: "direct_chat", userId: to };
-    const keys = await store.getAllKeys(IDBKeyRange.bound(prefix, `${prefix}￿`));
+    const keys = await store.getAllKeys(IDBKeyRange.bound(prefix, `${prefix}\uffff`));
     await Promise.all(
         keys.map(async (key) => {
             const value = await store.get(key);
-            if (value === undefined) return;
-            const moved =
-                value.kind === "event"
-                    ? {
-                          ...value,
-                          chatId,
-                          messageKey: value.messageKey?.startsWith(prefix)
-                              ? movedKey(value.messageKey)
-                              : value.messageKey,
-                      }
-                    : value;
-            await store.put(moved, movedKey(key));
+            const target = movedKey(key);
+            if (value !== undefined && (await store.get(target)) === undefined) {
+                const moved =
+                    value.kind === "event"
+                        ? {
+                              ...value,
+                              chatId,
+                              messageKey: value.messageKey?.startsWith(prefix)
+                                  ? movedKey(value.messageKey)
+                                  : value.messageKey,
+                              dirty: true,
+                          }
+                        : value;
+                await store.put(moved, target);
+            }
             await store.delete(key);
         }),
     );
@@ -1434,12 +1452,15 @@ async function moveFailedMessages(
             const parsed = parseFailedCacheKey(key);
             if (parsed?.chatId.kind !== "direct_chat" || parsed.chatId.userId !== from) return;
             const value = await store.get(key);
-            if (value === undefined) return;
-            const movedKey = createFailedCacheKey(
-                { chatId, threadRootMessageIndex: parsed.threadRootMessageIndex },
-                value.event.messageId,
-            );
-            await store.put({ ...value, chatId, messageKey: movedKey }, movedKey);
+            if (value !== undefined) {
+                const movedKey = createFailedCacheKey(
+                    { chatId, threadRootMessageIndex: parsed.threadRootMessageIndex },
+                    value.event.messageId,
+                );
+                if ((await store.get(movedKey)) === undefined) {
+                    await store.put({ ...value, chatId, messageKey: movedKey }, movedKey);
+                }
+            }
             await store.delete(key);
         }),
     );
