@@ -1,9 +1,26 @@
-import type { DirectChatIdentifier, EnhancedReplyContext, GroupChatIdentifier } from "@shared";
+import type {
+    CryptocurrencyContent,
+    DirectChatIdentifier,
+    EnhancedReplyContext,
+    GroupChatIdentifier,
+} from "@shared";
 import { describe, expect, test } from "vitest";
 import { createDraftMessagesStore } from "./draft";
 
 const direct = (userId: string): DirectChatIdentifier => ({ kind: "direct_chat", userId });
 const group: GroupChatIdentifier = { kind: "group_chat", groupId: "g1" };
+
+const transferTo = (recipient: string): CryptocurrencyContent => ({
+    kind: "crypto_content",
+    transfer: {
+        kind: "pending",
+        ledger: "ledger",
+        token: "ICP",
+        recipient,
+        amountE8s: 100n,
+        createdAtNanos: 1n,
+    },
+});
 
 const replyTo = (chatId: DirectChatIdentifier | GroupChatIdentifier) =>
     ({
@@ -49,6 +66,15 @@ describe("draft messages moveChat", () => {
         expect(
             drafts.value.get({ chatId: direct("new") })?.replyingTo?.sourceContext.chatId,
         ).toEqual(group);
+    });
+
+    test("addresses a draft transfer to the other user to their new id", () => {
+        const drafts = createDraftMessagesStore();
+        drafts.setAttachment({ chatId: direct("old") }, transferTo("old"));
+
+        drafts.moveChat(direct("old"), direct("new"));
+
+        expect(drafts.value.get({ chatId: direct("new") })?.attachment).toEqual(transferTo("new"));
     });
 
     test("keeps a draft already held for the new id", () => {

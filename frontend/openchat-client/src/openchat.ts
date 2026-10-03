@@ -3778,16 +3778,16 @@ export class OpenChat {
                 return undefined;
             }
         }
-        const latestChatId: DirectChatIdentifier = {
+        const directChatId: DirectChatIdentifier = {
             kind: "direct_chat",
             userId: userStore.latestUserId(chatId.userId),
         };
         // The placeholder would shadow the real chat in allServerChatsStore, making it appear empty.
         // This must be checked after the await above, since the chat may have arrived in the meantime.
-        if (!serverDirectChatsStore.value.has(latestChatId)) {
-            localUpdates.addUninitialisedDirectChat(latestChatId);
+        if (!serverDirectChatsStore.value.has(directChatId)) {
+            localUpdates.addUninitialisedDirectChat(directChatId);
         }
-        return latestChatId;
+        return directChatId;
     }
 
     #isPrivatePreview(chat: ChatSummary): boolean {
@@ -3832,6 +3832,10 @@ export class OpenChat {
             }
             if (chatId.kind === "direct_chat") {
                 const directChatId = await this.createDirectChat(chatId);
+                // The user may have moved on while the user was being looked up
+                if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
+                    return;
+                }
                 if (directChatId === undefined) {
                     publish("notFound");
                 } else if (directChatId.userId !== chatId.userId) {

@@ -4,7 +4,7 @@ import {
     isAttachmentContent,
     MessageContextMap,
     type AttachmentContent,
-    type ChatIdentifier,
+    type DirectChatIdentifier,
     type EnhancedReplyContext,
     type EventWrapper,
     type Message,
@@ -19,6 +19,34 @@ export class DraftMessage {
     attachment?: AttachmentContent;
     editingEvent?: EventWrapper<Message>;
     replyingTo?: EnhancedReplyContext;
+}
+
+// A draft transfer to the other user in a chat moved onto their new id, addressed to the new id
+function movedAttachment(
+    attachment: AttachmentContent | undefined,
+    from: DirectChatIdentifier,
+    to: DirectChatIdentifier,
+): AttachmentContent | undefined {
+    if (
+        attachment?.kind !== "crypto_content" ||
+        attachment.transfer.kind !== "pending" ||
+        attachment.transfer.recipient !== from.userId
+    ) {
+        return attachment;
+    }
+    return { ...attachment, transfer: { ...attachment.transfer, recipient: to.userId } };
+}
+
+// A draft reply to a message in a chat moved onto the other user's new id, pointed at the new id
+function movedReplyingTo(
+    replyingTo: EnhancedReplyContext | undefined,
+    from: DirectChatIdentifier,
+    to: DirectChatIdentifier,
+): EnhancedReplyContext | undefined {
+    if (replyingTo === undefined || !chatIdentifiersEqual(replyingTo.sourceContext.chatId, from)) {
+        return replyingTo;
+    }
+    return { ...replyingTo, sourceContext: { ...replyingTo.sourceContext, chatId: to } };
 }
 
 export function createDraftMessagesStore() {
@@ -63,9 +91,10 @@ export function createDraftMessagesStore() {
         // Moves the drafts for `from`, in the chat and in each of its threads, onto `to`, for a
         // direct chat moved onto the other user's new id after they were migrated to a MultiUser
         // canister. The chat keeps its messages, so a draft replying to or editing one of them
-        // still applies, once a reply to one of them is pointed at the new id. A draft already held
-        // for `to` is kept.
-        moveChat(from: ChatIdentifier, to: ChatIdentifier) {
+        // still applies, once a reply to one of them is pointed at the new id. So is a draft
+        // transfer to them, which the canister would otherwise refuse as being to someone other
+        // than the user it's now sent to. A draft already held for `to` is kept.
+        moveChat(from: DirectChatIdentifier, to: DirectChatIdentifier) {
             const moving = [...store.value].filter(([key]) =>
                 chatIdentifiersEqual(key.chatId, from),
             );
@@ -76,15 +105,11 @@ export function createDraftMessagesStore() {
                     map.delete(key);
                     const movedKey = { ...key, chatId: to };
                     if (map.has(movedKey)) continue;
-                    const replyingTo =
-                        draft.replyingTo !== undefined &&
-                        chatIdentifiersEqual(draft.replyingTo.sourceContext.chatId, from)
-                            ? {
-                                  ...draft.replyingTo,
-                                  sourceContext: { ...draft.replyingTo.sourceContext, chatId: to },
-                              }
-                            : draft.replyingTo;
-                    map.set(movedKey, { ...draft, replyingTo });
+                    map.set(movedKey, {
+                        ...draft,
+                        attachment: movedAttachment(draft.attachment, from, to),
+                        replyingTo: movedReplyingTo(draft.replyingTo, from, to),
+                    });
                 }
                 return map;
             });

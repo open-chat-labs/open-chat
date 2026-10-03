@@ -24,7 +24,11 @@ describe("movedDirectChats", () => {
     });
 
     test("a chat whose migrated user there is no chat with under their new id was deleted, not moved", () => {
-        const moved = movedDirectChats(["old1", "old2"], latestUserId, (id) => id.userId === "new2");
+        const moved = movedDirectChats(
+            ["old1", "old2"],
+            latestUserId,
+            (id) => id.userId === "new2",
+        );
 
         expect(moved).toEqual(new Map([["old2", direct("new2")]]));
     });
