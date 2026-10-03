@@ -159,6 +159,8 @@ describe("a direct chat moved onto the other user's new id", () => {
     let snapshot: SyncSinceResponse | undefined;
     let navigations: { url: string; intent?: string }[];
     let invalidated: number;
+    // Each user id the UserIndex was asked for
+    let usersAskedFor: string[];
     let unsubscribes: (() => void)[];
 
     function answerGetUsers(userIds: string[]): UsersResponse {
@@ -199,6 +201,7 @@ describe("a direct chat moved onto the other user's new id", () => {
         snapshot = undefined;
         navigations = [];
         invalidated = 0;
+        usersAskedFor = [];
         unsubscribes = [
             subscribe("navigateTo", (ev) => navigations.push(ev)),
             subscribe("selectedChatInvalid", () => invalidated++),
@@ -215,10 +218,11 @@ describe("a direct chat moved onto the other user's new id", () => {
         }) as never);
         vi.spyOn(WorkerAgent.prototype, "send").mockImplementation(((req: WorkerRequest) => {
             switch (req.kind) {
-                case "getUsers":
-                    return Promise.resolve(
-                        answerGetUsers(req.users.userGroups.flatMap((g) => g.users)),
-                    );
+                case "getUsers": {
+                    const userIds = req.users.userGroups.flatMap((g) => g.users);
+                    usersAskedFor.push(...userIds);
+                    return Promise.resolve(answerGetUsers(userIds));
+                }
                 default:
                     return new Promise(() => {});
             }
@@ -258,6 +262,18 @@ describe("a direct chat moved onto the other user's new id", () => {
 
         expect(navigations).toEqual([]);
         expect(invalidated).toBe(1);
+        // With no chat added, there's no move to look for
+        expect(usersAskedFor).not.toContain("gone2");
+    });
+
+    test("a deleted chat isn't looked up when the same answer only updates a chat already held", async () => {
+        serverDirectChatsStore.set(ChatMap.fromList([directChat("gone7"), directChat("other7")]));
+        selectChat(direct("gone7"));
+
+        await fold(updates([directChat("other7")], ["gone7"]));
+
+        expect(invalidated).toBe(1);
+        expect(usersAskedFor).not.toContain("gone7");
     });
 
     test("an open thread in a moved chat is still open under the new id", async () => {

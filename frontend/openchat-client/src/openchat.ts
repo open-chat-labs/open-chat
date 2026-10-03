@@ -7719,13 +7719,17 @@ export class OpenChat {
     // The direct chats among those an updates answer removed which were moved onto the other user's
     // new id, after they were migrated to a MultiUser canister, rather than deleted (see
     // `movedDirectChats`). The users are looked up by the ids the chats were under, for which the
-    // UserIndex returns their latest ids. Called before the answer is folded in, so a chat under a
-    // latest id which isn't held yet is one the answer adds.
+    // UserIndex returns their latest ids. Called before the answer is folded in, so the chats it
+    // adds are those which aren't held yet. A move always adds one, so unless the answer does, the
+    // removed chats were deleted and there's nothing to look up.
     async #movedDirectChats(
         removed: string[],
         addedUpdated: DirectChatSummary[],
     ): Promise<Map<string, DirectChatIdentifier>> {
         if (removed.length === 0) return new Map();
+
+        const added = addedUpdated.filter((chat) => !serverDirectChatsStore.value.has(chat.id));
+        if (added.length === 0) return new Map();
 
         const unresolved = removed.filter((userId) => userStore.latestUserId(userId) === userId);
         if (unresolved.length > 0) {
@@ -7734,9 +7738,7 @@ export class OpenChat {
         return movedDirectChats(
             removed,
             (userId) => userStore.latestUserId(userId),
-            (chatId) =>
-                !serverDirectChatsStore.value.has(chatId) &&
-                addedUpdated.some((chat) => chatIdentifiersEqual(chat.id, chatId)),
+            (chatId) => added.some((chat) => chatIdentifiersEqual(chat.id, chatId)),
         );
     }
 
