@@ -63,6 +63,10 @@ export type SyncStamps = {
 /** What a write pass changed, in the writer's own terms. Anything not listed keeps its stamp. */
 export type SyncTouched = {
     directChats: Set<string>;
+    // Each removed direct chat which was moved onto the other user's new id, after they were
+    // migrated to a MultiUser canister, mapped to that id. Its tombstone records the move, and what
+    // was cached for it moves onto the new id.
+    movedDirectChats: Map<string, string>;
     groupChats: Set<string>;
     communities: Set<string>;
     fields: Set<SyncedField>;
@@ -81,9 +85,16 @@ export type ChatRow =
 
 export type ChatRowKind = ChatRow["kind"];
 
-export type ChatTombstone = { kind: ChatRowKind; id: string; version: number };
+// `movedTo` is set for a direct chat which was moved onto the other user's new id, rather than deleted
+export type ChatTombstone = { kind: ChatRowKind; id: string; version: number; movedTo?: string };
 
-export type RemovedChats = { directChats: string[]; groupChats: string[]; communities: string[] };
+export type RemovedChats = {
+    directChats: string[];
+    // Those of `directChats` which were moved, mapped to the id they were moved to
+    movedDirectChats: Map<string, string>;
+    groupChats: string[];
+    communities: string[];
+};
 
 /** The globals, the chats written after a version and the chats removed after it */
 export type ChatsSince = { state: ChatStateFull; removed: RemovedChats };
@@ -185,11 +196,19 @@ export function stateFromRows(globals: ChatGlobals, rows: ChatRow[]): ChatStateF
 }
 
 export function removedFromTombstones(tombstones: ChatTombstone[]): RemovedChats {
-    const removed: RemovedChats = { directChats: [], groupChats: [], communities: [] };
+    const removed: RemovedChats = {
+        directChats: [],
+        movedDirectChats: new Map(),
+        groupChats: [],
+        communities: [],
+    };
     for (const t of tombstones) {
         switch (t.kind) {
             case "direct_chat":
                 removed.directChats.push(t.id);
+                if (t.movedTo !== undefined) {
+                    removed.movedDirectChats.set(t.id, t.movedTo);
+                }
                 break;
             case "group_chat":
                 removed.groupChats.push(t.id);
@@ -244,6 +263,7 @@ export function emptySyncStamps(): SyncStamps {
 export function emptyTouched(): SyncTouched {
     return {
         directChats: new Set(),
+        movedDirectChats: new Map(),
         groupChats: new Set(),
         communities: new Set(),
         fields: new Set(),
@@ -366,6 +386,7 @@ export function updatesSince(
     return {
         directChatsAddedUpdated: state.directChats,
         directChatsRemoved: removed.directChats,
+        directChatsMoved: removed.movedDirectChats,
         groupsAddedUpdated: state.groupChats,
         groupsRemoved: removed.groupChats,
         communitiesAddedUpdated: state.communities,
@@ -429,6 +450,7 @@ export function emptyUpdatesResult(): UpdatesResult {
     return {
         directChatsAddedUpdated: [],
         directChatsRemoved: [],
+        directChatsMoved: new Map(),
         groupsAddedUpdated: [],
         groupsRemoved: [],
         communitiesAddedUpdated: [],
