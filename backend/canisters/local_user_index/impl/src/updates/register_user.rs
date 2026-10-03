@@ -1,7 +1,7 @@
 use crate::model::referral_codes::{ReferralCode, ReferralCodeError};
 use crate::updates::c2c_create_multi_user_canister::create_multi_user_canister;
 use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
-use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, RuntimeState, UserEvent, UserIndexEvent, mutate_state, read_state};
+use crate::{RuntimeState, UserEvent, UserIndexEvent, child_initial_cycles_balance, mutate_state, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -289,10 +289,11 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     }
 
     // A canister taken from the pool is given its cycles now
+    let initial_cycles_balance = child_initial_cycles_balance(ChildCanisterType::User);
     let cycles_to_use = if state.data.canister_pool.is_empty() {
-        CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE
+        initial_cycles_balance + CREATE_CANISTER_CYCLES_FEE
     } else {
-        CHILD_CANISTER_INITIAL_CYCLES_BALANCE
+        initial_cycles_balance
     };
     if !utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(state.data.test_mode)) {
         return Err(CyclesBalanceTooLow);

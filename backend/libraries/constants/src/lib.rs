@@ -28,22 +28,7 @@ const MIN_CYCLES_BALANCE_TEST: Cycles = MIN_CYCLES_BALANCE / 10; // 5T
 
 // MultiUser canisters each host many users, so they keep a larger balance than the other child
 // canisters and are topped up by more each time
-pub fn multi_user_canister_min_cycles_balance(test_mode: bool) -> Cycles {
-    if test_mode {
-        MULTI_USER_CANISTER_MIN_CYCLES_BALANCE_TEST
-    } else {
-        MULTI_USER_CANISTER_MIN_CYCLES_BALANCE
-    }
-}
-
-pub fn multi_user_canister_top_up_amount(test_mode: bool) -> Cycles {
-    if test_mode { MULTI_USER_CANISTER_TOP_UP_AMOUNT_TEST } else { MULTI_USER_CANISTER_TOP_UP_AMOUNT }
-}
-
-const MULTI_USER_CANISTER_MIN_CYCLES_BALANCE: Cycles = 10 * T; // 10T
-const MULTI_USER_CANISTER_MIN_CYCLES_BALANCE_TEST: Cycles = MULTI_USER_CANISTER_MIN_CYCLES_BALANCE / 10; // 1T
-const MULTI_USER_CANISTER_TOP_UP_AMOUNT: Cycles = 5 * T; // 5T
-const MULTI_USER_CANISTER_TOP_UP_AMOUNT_TEST: Cycles = MULTI_USER_CANISTER_TOP_UP_AMOUNT / 10; // 0.5T
+pub const MULTI_USER_CANISTER_MIN_CYCLES_BALANCE: Cycles = 10 * T; // 10T
 
 pub const CREATE_CANISTER_CYCLES_FEE: Cycles = 500 * B; // 0.5T cycles
 pub const CYCLES_REQUIRED_FOR_UPGRADE: Cycles = 300 * B; // 0.3T cycles

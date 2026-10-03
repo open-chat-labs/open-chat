@@ -1,5 +1,5 @@
 use crate::guards::caller_is_group_index;
-use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, RuntimeState, mutate_state, read_state};
+use crate::{MARK_ACTIVE_DURATION, RuntimeState, child_initial_cycles_balance, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::init::Args as InitCommunityCanisterArgs;
@@ -86,10 +86,11 @@ struct PrepareOk {
 
 fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     // A canister taken from the pool is given its cycles now
+    let initial_cycles_balance = child_initial_cycles_balance(ChildCanisterType::Community);
     let cycles_to_use = if state.data.canister_pool.is_empty() {
-        CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE
+        initial_cycles_balance + CREATE_CANISTER_CYCLES_FEE
     } else {
-        CHILD_CANISTER_INITIAL_CYCLES_BALANCE
+        initial_cycles_balance
     };
     if !utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(state.data.test_mode)) {
         return Err(OCErrorCode::CyclesBalanceTooLow.into());

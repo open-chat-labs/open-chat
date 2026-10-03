@@ -1,8 +1,9 @@
 use crate::guards::caller_is_local_child_canister;
-use crate::{CHILD_CANISTER_TOP_UP_AMOUNT, RuntimeState, mutate_state, read_state};
+use crate::{RuntimeState, child_top_up_amount, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{MINUTE_IN_MS, min_cycles_balance, multi_user_canister_top_up_amount};
+use constants::{MINUTE_IN_MS, min_cycles_balance};
+use local_user_index_canister::ChildCanisterType;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{
@@ -143,11 +144,9 @@ fn prepare(
 }
 
 pub(crate) fn top_up_amount(canister_id: CanisterId, state: &RuntimeState) -> Cycles {
-    if state.data.local_multi_user_canisters.contains(&canister_id) {
-        multi_user_canister_top_up_amount(state.data.test_mode)
-    } else {
-        CHILD_CANISTER_TOP_UP_AMOUNT
-    }
+    // Only this canister's children are topped up, so the fallback should never be needed
+    let canister_type = state.child_canister_type(canister_id).unwrap_or(ChildCanisterType::Group);
+    child_top_up_amount(canister_type)
 }
 
 fn commit(canister_id: CanisterId, top_up: CyclesTopUp, state: &mut RuntimeState) {
