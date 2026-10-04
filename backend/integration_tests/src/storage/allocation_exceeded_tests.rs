@@ -98,4 +98,8 @@ fn old_files_deleted_when_allocation_exceeded() {
         file4.canister_id,
         file4.blob_id
     ));
+
+    // Only the file still held counts towards the allowance
+    let bytes_used = client::storage_index::happy_path::user(env, user_id, canister_ids.storage_index).bytes_used;
+    assert_eq!(bytes_used, 600);
 }

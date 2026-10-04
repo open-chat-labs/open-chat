@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Remove the references to the files buckets report removing, so evictions lower a user's `bytes_used` ([#9760](https://github.com/open-chat-labs/open-chat/pull/9760))
+- Drop the index's references to files the buckets report removing, so evicting a user's oldest files lowers their `bytes_used` ([#9760](https://github.com/open-chat-labs/open-chat/pull/9760))
 
 ## [[2.0.2067](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2067-storage_index)] - 2026-09-29
 
