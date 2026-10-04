@@ -22,7 +22,7 @@ describe("ICPSwap quoteResponse", () => {
         ).toBeUndefined();
     });
 
-    test("an amount too large for the pool is a decline (the payloads behind Rollbar #31905)", () => {
+    test("a pool that cannot fill the swap (price at range edge, or input over its maximum) is a decline (the payloads behind Rollbar #31905)", () => {
         expect(
             quoteResponse({ err: { InternalError: 'preswap "price limit out of bound"' } }),
         ).toBeUndefined();

@@ -22,9 +22,10 @@ export function quoteResponse(candid: ApiNatResult): bigint | undefined {
 // failed to answer". InsufficientFunds and UnsupportedToken are declines by definition.
 // InternalError is nominally a failure, but ICPSwap reports the commonest decline of all through
 // it - `{"InternalError":"The amount of input token is too small."}` is the exact payload behind
-// Rollbar #31881 - so that one message is a decline too. So is the other end of the range: an
-// amount too large for the pool, reported as `preswap "price limit out of bound"` or "The maximum
-// amount of input tokens is N" (Rollbar #31905). Anything else keeps throwing, which keeps
+// Rollbar #31881 - so that one message is a decline too. So are the pool refusing a swap of this
+// size or direction: `preswap "price limit out of bound"` (its price is at the edge of its range,
+// with no liquidity that way) or "The maximum amount of input tokens is N" (Rollbar #31905).
+// Neither clears on a retry seconds later. Anything else keeps throwing, which keeps
 // executeQuery's retries for a pool that is genuinely struggling.
 function isDecline(err: ApiQuoteError): boolean {
     if ("InsufficientFunds" in err || "UnsupportedToken" in err) return true;
