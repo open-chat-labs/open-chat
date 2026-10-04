@@ -709,6 +709,9 @@
                     containsMarkdown = detectMarkdown(text);
                 }
             }
+        } else {
+            // Don't hold on to the destroyed editor while the entry has none
+            lastMarkdownEditor = undefined;
         }
 
         if (editingEvent === undefined) {
