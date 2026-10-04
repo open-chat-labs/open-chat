@@ -22,6 +22,17 @@ describe("ICPSwap quoteResponse", () => {
         ).toBeUndefined();
     });
 
+    test("a pool that cannot fill the swap (price at range edge, or input over its maximum) is a decline (the payloads behind Rollbar #31905)", () => {
+        expect(
+            quoteResponse({ err: { InternalError: 'preswap "price limit out of bound"' } }),
+        ).toBeUndefined();
+        expect(
+            quoteResponse({
+                err: { InternalError: "The maximum amount of input tokens is 38_248_330" },
+            }),
+        ).toBeUndefined();
+    });
+
     test("any other InternalError, and CommonError, still throw so they are retried", () => {
         expect(() => quoteResponse({ err: { InternalError: "pool is paused" } })).toThrow(
             /Unable to get quote/,
