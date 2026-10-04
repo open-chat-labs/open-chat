@@ -336,7 +336,9 @@ impl Files {
             self.remove_blob(&file.hash);
         }
 
-        for accessor_id in file.accessors.iter() {
+        // The owner is linked as well as the accessors (see `insert_completed_file` and `forward`)
+        self.accessors_map.unlink(file.owner, file_id);
+        for accessor_id in file.accessors.iter().filter(|a| **a != file.owner) {
             self.accessors_map.unlink(*accessor_id, file_id);
         }
 
@@ -434,13 +436,18 @@ impl Files {
         assert!(!files.is_empty());
         assert_eq!(files.len(), self.files.len());
 
-        let mut files_per_accessor: BTreeMap<AccessorId, Vec<FileId>> = BTreeMap::new();
+        // Each file's accessors must be linked to it. So must its owner, unless the owner was removed
+        // as an accessor and the file lived on through its other accessors, which drops the owner's
+        // link. Nothing else may be linked.
+        let mut required_links = BTreeSet::new();
+        let mut owner_links = BTreeSet::new();
         let mut reference_counts = BTreeMap::new();
 
         for (file_id, file) in files {
             for accessor in file.accessors.iter() {
-                files_per_accessor.entry(*accessor).or_default().push(file_id);
+                required_links.insert((*accessor, file_id));
             }
+            owner_links.insert((file.owner, file_id));
             *reference_counts.entry(file.hash).or_default() += 1;
         }
 
@@ -448,7 +455,15 @@ impl Files {
             *reference_counts.entry(*hash).or_default() += 1;
         }
 
-        assert_eq!(files_per_accessor, self.accessors_map.get_all());
+        let links: BTreeSet<(AccessorId, FileId)> = self
+            .accessors_map
+            .get_all()
+            .into_iter()
+            .flat_map(|(accessor, file_ids)| file_ids.into_iter().map(move |file_id| (accessor, file_id)))
+            .collect();
+
+        assert!(required_links.is_subset(&links));
+        assert!(links.difference(&required_links).all(|link| owner_links.contains(link)));
         assert_eq!(reference_counts, self.reference_counts.get_all());
     }
 }
@@ -651,13 +666,24 @@ mod tests {
 
     fn put(files: &mut Files, file_id: FileId, bytes: Vec<u8>, source_hash: Option<Hash>) -> Hash {
         let owner = Principal::from_slice(&[1]);
+        put_as(files, owner, vec![owner], file_id, bytes, source_hash)
+    }
+
+    fn put_as(
+        files: &mut Files,
+        owner: Principal,
+        accessors: Vec<AccessorId>,
+        file_id: FileId,
+        bytes: Vec<u8>,
+        source_hash: Option<Hash>,
+    ) -> Hash {
         let hash = hash_bytes(&bytes);
         let result = files.put_chunk(PutChunkArgs {
             owner,
             file_id,
             hash,
             mime_type: "video/mp4".to_string(),
-            accessors: vec![owner],
+            accessors,
             chunk_index: 0,
             chunk_size: bytes.len() as u32,
             total_size: bytes.len() as u64,
@@ -724,5 +750,40 @@ mod tests {
 
         files.vault_unpin(&hash);
         assert!(!files.blobs.exists(&hash));
+    }
+
+    #[test]
+    fn removing_an_accessor_leaves_the_files_of_accessors_sorting_after_it_alone() {
+        let mut files = files();
+        let accessor = Principal::from_slice(&[1]);
+        let owner = Principal::from_slice(&[1, 1]);
+        let other_owner = Principal::from_slice(&[2]);
+
+        put_as(&mut files, owner, vec![accessor], 1, b"shared".to_vec(), None);
+        // Linked only through their owners, both of whose keys sort after the accessor's
+        put_as(&mut files, owner, Vec::new(), 2, b"private".to_vec(), None);
+        put_as(&mut files, other_owner, Vec::new(), 3, b"other".to_vec(), None);
+
+        let removed = files.remove_accessor(&accessor);
+        assert_eq!(removed.iter().map(|f| f.file_id).collect::<Vec<_>>(), vec![1]);
+        assert!(files.get(&2).is_some());
+        assert!(files.get(&3).is_some());
+        assert_eq!(files.accessors_map.get(owner), vec![2]);
+        assert_eq!(files.accessors_map.get(other_owner), vec![3]);
+    }
+
+    #[test]
+    fn removing_a_file_unlinks_its_owner_as_well_as_its_accessors() {
+        let mut files = files();
+        let owner = Principal::from_slice(&[1]);
+        let accessor = Principal::from_slice(&[2]);
+
+        put_as(&mut files, owner, vec![accessor], 1, b"bytes".to_vec(), None);
+        assert_eq!(files.accessors_map.get(owner), vec![1]);
+        assert_eq!(files.accessors_map.get(accessor), vec![1]);
+
+        files.remove_file(1);
+        assert!(files.accessors_map.get(owner).is_empty());
+        assert!(files.accessors_map.get(accessor).is_empty());
     }
 }
