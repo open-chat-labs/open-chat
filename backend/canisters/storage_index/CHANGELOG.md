@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Decode only the `canister_status` fields needed when checking whether buckets are full ([#9618](https://github.com/open-chat-labs/open-chat/pull/9618))
 
+### Fixed
+
+- Remove the references to the files buckets report removing, so evictions lower a user's `bytes_used` ([#9760](https://github.com/open-chat-labs/open-chat/pull/9760))
+
 ## [[2.0.2067](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2067-storage_index)] - 2026-09-29
 
 ### Changed
