@@ -9,8 +9,15 @@ pub struct FilesPerAccessorStableMap {
 
 impl FilesPerAccessorStableMap {
     pub fn get(&self, accessor_id: AccessorId) -> Vec<FileId> {
+        // Keys aren't length prefixed, so other accessors' keys can sit among this accessor's: those
+        // of an accessor which this one is a byte-prefix of, and those of one which is a byte-prefix
+        // of this one where the file id carries on with this one's bytes. So the keys are filtered
+        // rather than taken while they match.
+        let start = self.prefix.create_key(&(accessor_id, FileId::MIN));
+        let end = self.prefix.create_key(&(accessor_id, FileId::MAX));
         with_map(|m| {
-            m.range(self.prefix.create_key(&(accessor_id, 0))..)
+            m.range(start..=end)
+                .filter(|(k, _)| k.accessor_id() == accessor_id)
                 .map(|(k, _)| k.file_id())
                 .collect()
         })
@@ -44,5 +51,44 @@ impl FilesPerAccessorStableMap {
             }
         });
         map
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+    #[test]
+    fn get_returns_only_the_given_accessors_files() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(2)));
+
+        // `a` is a byte-prefix of `b`, and `c` sorts after both
+        let a = AccessorId::from_slice(&[1]);
+        let b = AccessorId::from_slice(&[1, 1]);
+        let c = AccessorId::from_slice(&[2]);
+
+        // `a`'s files sort before `b`'s keys, among them (so within `b`'s range) and after them
+        let a_files = vec![1, (1 << 120) | 3, FileId::MAX];
+        let b_files = vec![2, 1 << 120];
+        let c_files = vec![4];
+
+        let mut map = FilesPerAccessorStableMap::default();
+        for (accessor_id, files) in [(a, &a_files), (b, &b_files), (c, &c_files)] {
+            for file_id in files {
+                map.link(accessor_id, *file_id);
+            }
+        }
+
+        assert_eq!(map.get(a), a_files);
+        assert_eq!(map.get(b), b_files);
+        assert_eq!(map.get(c), c_files);
+
+        assert_eq!(map.remove(a), a_files);
+        assert!(map.get(a).is_empty());
+        assert_eq!(map.get(b), b_files);
+        assert_eq!(map.get(c), c_files);
     }
 }

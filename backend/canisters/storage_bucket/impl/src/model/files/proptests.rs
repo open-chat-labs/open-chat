@@ -13,6 +13,7 @@ use utils::hasher::hash_bytes;
 enum Operation {
     Add {
         owner: Principal,
+        accessors: Vec<AccessorId>,
         file_id: FileId,
     },
     Remove {
@@ -20,6 +21,7 @@ enum Operation {
     },
     Forward {
         owner: Principal,
+        accessors: Vec<AccessorId>,
         file_index: usize,
         file_id_seed: u128,
     },
@@ -30,13 +32,18 @@ enum Operation {
 
 fn operation_strategy() -> impl Strategy<Value = Operation> {
     prop_oneof![
-        50 => (any::<usize>(), any::<FileId>())
-            .prop_map(|(user_index, file_id)| Operation::Add { owner: principal(user_index), file_id }),
+        50 => (any::<usize>(), accessors_strategy(), any::<FileId>())
+            .prop_map(|(user_index, accessors, file_id)| Operation::Add { owner: principal(user_index), accessors, file_id }),
         20 => any::<usize>()
             .prop_map(|file_index| Operation::Remove { file_index }),
-        10 => (any::<usize>(), any::<usize>(), any::<u128>()).prop_map(|(user_index, file_index, file_id_seed)| Operation::Forward { owner: principal(user_index), file_index, file_id_seed } ),
+        10 => (any::<usize>(), accessors_strategy(), any::<usize>(), any::<u128>()).prop_map(|(user_index, accessors, file_index, file_id_seed)| Operation::Forward { owner: principal(user_index), accessors, file_index, file_id_seed } ),
         3 => any::<usize>().prop_map(|user_index| Operation::RemoveAccessor { accessor: principal(user_index) }),
     ]
+}
+
+// The owner may or may not be among them
+fn accessors_strategy() -> impl Strategy<Value = Vec<AccessorId>> {
+    pvec(any::<usize>().prop_map(principal), 0..3)
 }
 
 #[proptest(cases = 10)]
@@ -50,7 +57,7 @@ fn comprehensive(#[strategy(pvec(operation_strategy(), 100..1_000))] ops: Vec<Op
 
     let mut timestamp = 1000;
     for op in ops.into_iter() {
-        if let Operation::Add { owner, file_id } = op {
+        if let Operation::Add { owner, file_id, .. } = op {
             file_ids.push((owner, file_id));
         }
 
@@ -63,14 +70,18 @@ fn comprehensive(#[strategy(pvec(operation_strategy(), 100..1_000))] ops: Vec<Op
 
 fn execute_operation(files: &mut Files, op: Operation, timestamp: TimestampMillis, file_ids: &mut [(Principal, FileId)]) {
     match op {
-        Operation::Add { owner, file_id } => {
+        Operation::Add {
+            owner,
+            accessors,
+            file_id,
+        } => {
             let bytes = file_bytes(file_id);
             files.put_chunk(PutChunkArgs {
                 owner,
                 file_id,
                 hash: hash_bytes(&bytes),
                 mime_type: "".to_string(),
-                accessors: vec![owner],
+                accessors,
                 chunk_index: 0,
                 chunk_size: 1,
                 total_size: bytes.len() as u64,
@@ -89,6 +100,7 @@ fn execute_operation(files: &mut Files, op: Operation, timestamp: TimestampMilli
         }
         Operation::Forward {
             owner,
+            accessors,
             file_index,
             file_id_seed,
         } => {
@@ -100,7 +112,7 @@ fn execute_operation(files: &mut Files, op: Operation, timestamp: TimestampMilli
                     file_id,
                     CanisterId::from_slice(&[1]),
                     file_id_seed,
-                    [owner].into_iter().collect(),
+                    accessors.into_iter().collect(),
                     timestamp,
                 );
             }
@@ -115,6 +127,9 @@ fn file_bytes(file_id: FileId) -> Vec<u8> {
     vec![file_id as u8]
 }
 
+// A small pool so that files share owners and accessors, which vary in length with some a
+// byte-prefix of others, as the keys linking accessors to files aren't length prefixed
 fn principal(index: usize) -> Principal {
-    Principal::from_slice(&index.to_be_bytes())
+    let index = index % 8;
+    Principal::from_slice(&vec![(index / 4) as u8 + 1; index % 4 + 1])
 }
