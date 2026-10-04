@@ -30,19 +30,15 @@ const replyTo = (chatId: DirectChatIdentifier | GroupChatIdentifier) =>
     }) as EnhancedReplyContext;
 
 describe("draft messages moveChat", () => {
-    test("moves the drafts for the chat and its threads onto the new id", () => {
+    test("moves the draft for the chat onto the new id", () => {
         const drafts = createDraftMessagesStore();
         drafts.setTextContent({ chatId: direct("old") }, "hello");
-        drafts.setTextContent({ chatId: direct("old"), threadRootMessageIndex: 5 }, "in a thread");
         drafts.setTextContent({ chatId: direct("other") }, "untouched");
 
         drafts.moveChat(direct("old"), direct("new"));
 
         expect(drafts.value.get({ chatId: direct("old") })).toBeUndefined();
         expect(drafts.value.get({ chatId: direct("new") })?.textContent).toBe("hello");
-        expect(
-            drafts.value.get({ chatId: direct("new"), threadRootMessageIndex: 5 })?.textContent,
-        ).toBe("in a thread");
         expect(drafts.value.get({ chatId: direct("other") })?.textContent).toBe("untouched");
     });
 

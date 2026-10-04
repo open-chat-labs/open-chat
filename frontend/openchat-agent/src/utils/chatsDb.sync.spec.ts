@@ -56,7 +56,6 @@ function fakeDb(initial: Record<string, Record<string, any>> = {}) {
         "chat_events",
         "thread_events",
         "failed_chat_messages",
-        "failed_thread_messages",
         "group_details",
         "cachePrimer",
         "sync",
@@ -324,32 +323,32 @@ describe("setCachedChats", () => {
             kind: "direct_chat",
             userId,
         });
-        const eventKey = (userId: string, index: number, threadRootMessageIndex?: number) =>
-            createCacheKey({ chatId: directId(userId), threadRootMessageIndex }, index);
-        const failedKey = (userId: string, messageId: bigint, threadRootMessageIndex?: number) =>
-            createFailedCacheKey({ chatId: directId(userId), threadRootMessageIndex }, messageId);
+        const eventKey = (userId: string, index: number) =>
+            createCacheKey({ chatId: directId(userId) }, index);
+        const failedKey = (userId: string, messageId: bigint) =>
+            createFailedCacheKey({ chatId: directId(userId) }, messageId);
 
         // A message as `setCachedEvents` caches it
-        function cachedMessage(userId: string, index: number, threadRootMessageIndex?: number) {
+        function cachedMessage(userId: string, index: number) {
             return {
                 kind: "event",
                 index,
                 timestamp: BigInt(index),
                 event: { kind: "message", messageIndex: index, messageId: BigInt(index) },
                 chatId: directId(userId),
-                messageKey: eventKey(userId, index, threadRootMessageIndex),
+                messageKey: eventKey(userId, index),
             };
         }
 
         // A message which failed to send, as `recordFailedMessage` holds it
-        function failedMessage(userId: string, messageId: bigint, threadRootMessageIndex?: number) {
+        function failedMessage(userId: string, messageId: bigint) {
             return {
                 kind: "event",
                 index: 0,
                 timestamp: 0n,
                 event: { kind: "message", messageIndex: 0, messageId },
                 chatId: directId(userId),
-                messageKey: failedKey(userId, messageId, threadRootMessageIndex),
+                messageKey: failedKey(userId, messageId),
             };
         }
 
@@ -367,15 +366,9 @@ describe("setCachedChats", () => {
                     [eventKey("old", 3)]: cachedMessage("old", 3),
                     [eventKey("other", 3)]: cachedMessage("other", 3),
                 },
-                thread_events: {
-                    [eventKey("old", 1, 3)]: cachedMessage("old", 1, 3),
-                },
                 failed_chat_messages: {
                     [failedKey("old", 7n)]: failedMessage("old", 7n),
                     [failedKey("other", 8n)]: failedMessage("other", 8n),
-                },
-                failed_thread_messages: {
-                    [failedKey("old", 9n, 3)]: failedMessage("old", 9n, 3),
                 },
                 sync: { head: 4 },
             });
@@ -404,7 +397,7 @@ describe("setCachedChats", () => {
             });
         });
 
-        test("moves the chat's cached events, and those of its threads, onto the new id, to be fetched again when shown", async () => {
+        test("moves the chat's cached events onto the new id, to be fetched again when shown", async () => {
             const { chatsDb, stores } = moved();
 
             await move(chatsDb);
@@ -418,11 +411,6 @@ describe("setCachedChats", () => {
                 dirty: true,
             });
             expect(stores.chat_events.get(eventKey("other", 3))).toEqual(cachedMessage("other", 3));
-            expect(sortedKeys(stores.thread_events)).toEqual([eventKey("new", 1, 3)]);
-            expect(stores.thread_events.get(eventKey("new", 1, 3))).toEqual({
-                ...cachedMessage("new", 1, 3),
-                dirty: true,
-            });
         });
 
         test("keeps what's already cached under the new id, and drops what's under the old id", async () => {
@@ -461,7 +449,7 @@ describe("setCachedChats", () => {
             });
         });
 
-        test("moves the chat's failed messages, and those of its threads, onto the new id", async () => {
+        test("moves the chat's failed messages onto the new id", async () => {
             const { chatsDb, stores } = moved();
 
             await move(chatsDb);
@@ -471,10 +459,6 @@ describe("setCachedChats", () => {
             );
             expect(stores.failed_chat_messages.get(failedKey("new", 7n))).toEqual(
                 failedMessage("new", 7n),
-            );
-            expect(sortedKeys(stores.failed_thread_messages)).toEqual([failedKey("new", 9n, 3)]);
-            expect(stores.failed_thread_messages.get(failedKey("new", 9n, 3))).toEqual(
-                failedMessage("new", 9n, 3),
             );
         });
 

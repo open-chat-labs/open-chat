@@ -1,6 +1,5 @@
 import { dequal } from "dequal";
 import {
-    chatIdentifiersEqual,
     chatIdentifierToString,
     ChatMap,
     CommunityMap,
@@ -194,21 +193,16 @@ export class GlobalLocalState {
         return state ? [...state.values()] : [];
     }
 
-    // Moves the failed messages held for `from`, in the chat and in each of its threads, onto `to`,
-    // for a direct chat moved onto the other user's new id after they were migrated to a MultiUser
-    // canister, as the worker moves those it has cached
+    // Moves the failed messages held for `from` onto `to`, for a direct chat moved onto the other
+    // user's new id after they were migrated to a MultiUser canister, as the worker moves those it
+    // has cached
     moveFailedMessages(from: DirectChatIdentifier, to: DirectChatIdentifier) {
-        const moving = [...this.#failedMessages.value].filter(([key]) =>
-            chatIdentifiersEqual(key.chatId, from),
-        );
-        if (moving.length === 0) return;
+        const messages = this.#failedMessages.value.get({ chatId: from });
+        if (messages === undefined) return;
 
         this.#failedMessages.update((map) => {
-            for (const [key, messages] of moving) {
-                map.delete(key);
-                const movedKey = { ...key, chatId: to };
-                map.set(movedKey, new Map([...(map.get(movedKey) ?? []), ...messages]));
-            }
+            map.delete({ chatId: from });
+            map.set({ chatId: to }, new Map([...(map.get({ chatId: to }) ?? []), ...messages]));
             return map;
         });
     }

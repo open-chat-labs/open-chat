@@ -3842,15 +3842,8 @@ export class OpenChat {
                     // The user has been migrated to a MultiUser canister since having the id in the
                     // route, so go to the chat under their latest id instead, in place of the old
                     // id in the history
-                    const route = routeStore.value;
                     publish("navigateTo", {
-                        url: routeForMovedDirectChat(
-                            "chats",
-                            directChatId,
-                            messageIndex,
-                            threadMessageIndex,
-                            route.kind === "global_chat_selected_route" && route.open,
-                        ),
+                        url: routeForMovedDirectChat("chats", directChatId, messageIndex),
                         intent: "auto",
                     });
                     return;
@@ -7886,16 +7879,15 @@ export class OpenChat {
                         : undefined;
                 if (movedTo !== undefined) {
                     // The chat is open, so follow it onto the other user's new id, in place of
-                    // the old id in the history, keeping to the message or thread it was at
+                    // the old id in the history, keeping to the message it was at
                     const route = routeStore.value;
-                    const atRoute = route.kind === "global_chat_selected_route";
                     publish("navigateTo", {
                         url: routeForMovedDirectChat(
                             chatListScopeStore.value.kind,
                             movedTo,
-                            atRoute ? route.messageIndex : undefined,
-                            atRoute ? route.threadMessageIndex : undefined,
-                            atRoute && route.open,
+                            route.kind === "global_chat_selected_route"
+                                ? route.messageIndex
+                                : undefined,
                         ),
                         intent: "auto",
                     });

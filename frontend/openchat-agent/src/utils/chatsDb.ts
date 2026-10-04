@@ -505,7 +505,6 @@ export class ChatsDb {
                 "chat_events",
                 "thread_events",
                 "failed_chat_messages",
-                "failed_thread_messages",
                 "sync",
             ],
             "readwrite",
@@ -516,7 +515,6 @@ export class ChatsDb {
         const eventsStore = tx.objectStore("chat_events");
         const threadsStore = tx.objectStore("thread_events");
         const failedChatStore = tx.objectStore("failed_chat_messages");
-        const failedThreadStore = tx.objectStore("failed_thread_messages");
         const syncStore = tx.objectStore("sync");
 
         const version = (await readSyncHead(syncStore)) + 1;
@@ -550,12 +548,11 @@ export class ChatsDb {
             );
 
         // What's cached for a moved chat moves with it, in this transaction, so that by the time
-        // a UI hears of the move, the chat's events are under its new id
+        // a UI hears of the move, the chat's events are under its new id. Direct chats have no
+        // threads, so there are no thread events or failed thread messages to move.
         const moveRequests = [...touched.movedDirectChats].flatMap(([from, to]) => [
-            ...[eventsStore, threadsStore].map((store) => moveCachedEvents(store, from, to)),
-            ...[failedChatStore, failedThreadStore].map((store) =>
-                moveFailedMessages(store, from, to),
-            ),
+            moveCachedEvents(eventsStore, from, to),
+            moveFailedMessages(failedChatStore, from, to),
         ]);
 
         const updatedEvents = touched.updatedEvents;
@@ -1398,8 +1395,8 @@ type MovableStore<V> = {
     delete(key: string): Promise<void>;
 };
 
-// Moves the events cached for the direct chat with `from`, or for its threads, onto `to`, for a chat
-// moved onto the other user's new id after they were migrated to a MultiUser canister. The move
+// Moves the events cached for the direct chat with `from` onto `to`, for a chat moved onto the other
+// user's new id after they were migrated to a MultiUser canister. The move
 // doesn't change the events, the messages keeping the ids they were sent under, so they're rekeyed,
 // along with the chat they're recorded as being in. A reply to a message in the same chat is cached
 // without the chat, so needs nothing. The chat comes back from the User canister in full, which
@@ -1438,8 +1435,8 @@ async function moveCachedEvents(
     );
 }
 
-// Moves the failed messages held for the direct chat with `from`, or for its threads, onto `to`, as
-// for its events in `moveCachedEvents`, so that they can still be retried
+// Moves the failed messages held for the direct chat with `from` onto `to`, as for its events in
+// `moveCachedEvents`, so that they can still be retried
 async function moveFailedMessages(
     store: MovableStore<EnhancedWrapper<Message>>,
     from: string,
@@ -1453,10 +1450,7 @@ async function moveFailedMessages(
             if (parsed?.chatId.kind !== "direct_chat" || parsed.chatId.userId !== from) return;
             const value = await store.get(key);
             if (value !== undefined) {
-                const movedKey = createFailedCacheKey(
-                    { chatId, threadRootMessageIndex: parsed.threadRootMessageIndex },
-                    value.event.messageId,
-                );
+                const movedKey = createFailedCacheKey({ chatId }, value.event.messageId);
                 if ((await store.get(movedKey)) === undefined) {
                     await store.put({ ...value, chatId, messageKey: movedKey }, movedKey);
                 }

@@ -88,28 +88,27 @@ export function createDraftMessagesStore() {
                 return map;
             });
         },
-        // Moves the drafts for `from`, in the chat and in each of its threads, onto `to`, for a
-        // direct chat moved onto the other user's new id after they were migrated to a MultiUser
-        // canister. The chat keeps its messages, so a draft replying to or editing one of them
-        // still applies, once a reply to one of them is pointed at the new id. So is a draft
-        // transfer to them, which the canister would otherwise refuse as being to someone other
-        // than the user it's now sent to. A draft already held for `to` is kept.
+        // Moves the draft for `from` onto `to`, for a direct chat moved onto the other user's new id
+        // after they were migrated to a MultiUser canister. The chat keeps its messages, so a draft
+        // replying to or editing one of them still applies, once a reply to one of them is pointed
+        // at the new id. So is a draft transfer to them, which the canister would otherwise refuse
+        // as being to someone other than the user it's now sent to. A draft already held for `to`
+        // is kept.
         moveChat(from: DirectChatIdentifier, to: DirectChatIdentifier) {
-            const moving = [...store.value].filter(([key]) =>
-                chatIdentifiersEqual(key.chatId, from),
-            );
-            if (moving.length === 0) return;
+            const draft = store.value.get({ chatId: from });
+            if (draft === undefined) return;
 
             store.update((map) => {
-                for (const [key, draft] of moving) {
-                    map.delete(key);
-                    const movedKey = { ...key, chatId: to };
-                    if (map.has(movedKey)) continue;
-                    map.set(movedKey, {
-                        ...draft,
-                        attachment: movedAttachment(draft.attachment, from, to),
-                        replyingTo: movedReplyingTo(draft.replyingTo, from, to),
-                    });
+                map.delete({ chatId: from });
+                if (!map.has({ chatId: to })) {
+                    map.set(
+                        { chatId: to },
+                        {
+                            ...draft,
+                            attachment: movedAttachment(draft.attachment, from, to),
+                            replyingTo: movedReplyingTo(draft.replyingTo, from, to),
+                        },
+                    );
                 }
                 return map;
             });

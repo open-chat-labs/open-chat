@@ -160,14 +160,14 @@ function updates(
     } as unknown as UpdatesResult;
 }
 
-function selectChat(chatId: DirectChatIdentifier, messageIndex?: number, open = false) {
+function selectChat(chatId: DirectChatIdentifier, messageIndex?: number) {
     routeStore.set({
         kind: "global_chat_selected_route",
         scope: { kind: "chats" },
         chatId,
         chatType: "direct_chat",
         messageIndex,
-        open,
+        open: false,
     });
 }
 
@@ -313,13 +313,13 @@ describe("a direct chat moved onto the other user's new id", () => {
         expect(localUpdates.draftMessages.value.get({ chatId: direct("new6") })).toBeUndefined();
     });
 
-    test("an open thread in a moved chat is still open under the new id", async () => {
+    test("an open chat at a message is followed to the same message under the new id", async () => {
         serverDirectChatsStore.set(ChatMap.fromList([directChat("old5")]));
-        selectChat(direct("old5"), 7, true);
+        selectChat(direct("old5"), 7);
 
         await fold(updates([directChat("new5")], ["old5"], [["old5", "new5"]]));
 
-        expect(navigations).toEqual([{ url: "/chats/user/new5/7?open=true", intent: "auto" }]);
+        expect(navigations).toEqual([{ url: "/chats/user/new5/7", intent: "auto" }]);
     });
 
     test("an old link to a moved chat goes to the chat under the new id, at the same message", async () => {

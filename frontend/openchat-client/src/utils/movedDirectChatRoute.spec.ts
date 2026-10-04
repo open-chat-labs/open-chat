@@ -6,26 +6,16 @@ const direct = (userId: string): DirectChatIdentifier => ({ kind: "direct_chat",
 
 describe("routeForMovedDirectChat", () => {
     test("the chat, if the route was to the chat", () => {
-        expect(routeForMovedDirectChat("chats", direct("new"), undefined, undefined, false)).toBe(
-            "/chats/user/new",
-        );
+        expect(routeForMovedDirectChat("chats", direct("new"), undefined)).toBe("/chats/user/new");
     });
 
     test("the same message", () => {
-        expect(routeForMovedDirectChat("chats", direct("new"), 5, undefined, false)).toBe(
-            "/chats/user/new/5",
-        );
+        expect(routeForMovedDirectChat("chats", direct("new"), 5)).toBe("/chats/user/new/5");
     });
 
-    test("the same thread, still open", () => {
-        expect(routeForMovedDirectChat("chats", direct("new"), 5, undefined, true)).toBe(
-            "/chats/user/new/5?open=true",
-        );
-    });
-
-    test("the same message in the same thread", () => {
-        expect(routeForMovedDirectChat("favourite", direct("new"), 5, 2, false)).toBe(
-            "/favourite/user/new/5/2?open=true",
+    test("in the scope given", () => {
+        expect(routeForMovedDirectChat("favourite", direct("new"), 5)).toBe(
+            "/favourite/user/new/5",
         );
     });
 });
