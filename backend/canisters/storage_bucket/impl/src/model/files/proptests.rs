@@ -1,10 +1,11 @@
-use crate::model::files::{Files, PutChunkArgs};
+use crate::model::files::{File, Files, PutChunkArgs};
 use candid::Principal;
 use ic_stable_structures::DefaultMemoryImpl;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use proptest::collection::vec as pvec;
 use proptest::prelude::*;
 use proptest::prop_oneof;
+use std::collections::BTreeMap;
 use test_strategy::proptest;
 use types::{AccessorId, CanisterId, FileId, TimestampMillis};
 use utils::hasher::hash_bytes;
@@ -118,7 +119,15 @@ fn execute_operation(files: &mut Files, op: Operation, timestamp: TimestampMilli
             }
         }
         Operation::RemoveAccessor { accessor } => {
-            files.remove_accessor(&accessor);
+            let files_before: BTreeMap<FileId, File> = files.files.get_all().into_iter().collect();
+
+            // Only files linked to the accessor which it was the last accessor of are removed
+            for file_removed in files.remove_accessor(&accessor) {
+                let file = &files_before[&file_removed.file_id];
+                assert!(file.owner == accessor || file.accessors.contains(&accessor));
+                assert!(file.accessors.iter().all(|a| *a == accessor));
+            }
+            assert!(files.files.get_all().iter().all(|(_, f)| !f.accessors.contains(&accessor)));
         }
     };
 }
