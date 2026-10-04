@@ -173,6 +173,10 @@
     // The markdown the editor last reported (or was last set to), so the effect below can compare
     // against it without re-serialising the whole document on every keystroke
     let lastMarkdown = "";
+    // The editor instance lastMarkdown was read from. The editor is rebuilt whenever it is shown
+    // again (e.g. after visiting a read-only chat or previewing a channel) and a new one starts out
+    // empty, so lastMarkdown must be re-read from it or the draft would never be put back into it
+    let lastMarkdownEditor: RichTextEditor | undefined;
 
     function onInput() {
         const inputContent = editor?.getMarkdown() ?? "";
@@ -377,6 +381,10 @@
     let frozen = $derived(client.isChatOrCommunityFrozen(chat, $selectedCommunitySummaryStore));
     $effect(() => {
         if (editor) {
+            if (editor !== lastMarkdownEditor) {
+                lastMarkdownEditor = editor;
+                lastMarkdown = editor.getMarkdown();
+            }
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
                     editor.setContent(
@@ -402,6 +410,9 @@
                     containsMarkdown = detectMarkdown(text);
                 }
             }
+        } else {
+            // Don't hold on to the destroyed editor while the entry has none
+            lastMarkdownEditor = undefined;
         }
 
         if (editingEvent === undefined) {
