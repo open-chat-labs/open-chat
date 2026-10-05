@@ -472,6 +472,8 @@ describe("looking up the members who appear in a chat when not all are held", ()
     let lookupResponses: (LookupMembersResponse | Promise<LookupMembersResponse>)[];
     let senders: string[];
     let events: () => EventWrapper<ChatEvent>[];
+    // What the details held are replaced by when next asked for, if anything
+    let replacement: GroupChatDetailsResponse | undefined;
 
     function messageFrom(sender: string, index: number) {
         return {
@@ -549,7 +551,10 @@ describe("looking up the members who appear in a chat when not all are held", ()
                     return Promise.resolve(
                         req.detailsSyncedUpTo === undefined
                             ? details
-                            : { kind: "success_no_updates", timestamp: req.detailsSyncedUpTo },
+                            : (replacement ?? {
+                                  kind: "success_no_updates",
+                                  timestamp: req.detailsSyncedUpTo,
+                              }),
                     );
                 case "lookupMembers":
                     lookups.push(req);
@@ -576,6 +581,7 @@ describe("looking up the members who appear in a chat when not all are held", ()
         selectedChatUserIdsStore.set(new Set());
         lookups = [];
         lookupResponses = [];
+        replacement = undefined;
         senders = [a, x, y];
         events = () => senders.map((s, i) => messageFrom(s, i + 1));
     });
@@ -685,6 +691,23 @@ describe("looking up the members who appear in a chat when not all are held", ()
         expect(lookups).toHaveLength(2);
         expect(lookups[1].userIds).toEqual([x]);
         expect(lookups[1].latestKnownUpdate).toBe(20n);
+    });
+
+    test("those found not to be members are looked up again once the details are replaced", async () => {
+        setup(someHeld());
+        await load();
+        expect(new Set(lookups[0].userIds)).toEqual(new Set([me, x, y]));
+
+        // y has since joined, and the details have been loaded in full, as a first page which
+        // doesn't hold them
+        replacement = { ...chatDetails(20n, [member(a), member(b)]), moreMembersAfter: b };
+        lookupResponses.push(found(member(y)));
+        await load();
+
+        expect(lookups).toHaveLength(2);
+        expect(new Set(lookups[1].userIds)).toEqual(new Set([me, x, y]));
+        expect(lookups[1].latestKnownUpdate).toBe(20n);
+        expect(selectedChatMembersStore.value.has(y)).toBe(true);
     });
 
     test("the anonymous user and user ids which aren't valid aren't looked up", async () => {

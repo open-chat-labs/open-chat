@@ -243,7 +243,8 @@ export type CommunityDetailsUpdatesResponse =
           kind: "success_no_updates";
           lastUpdated: bigint;
       }
-    // The details in full, because the canister no longer has all of the updates asked for
+    // The details in full, because the canister no longer has all of the updates asked for, or
+    // there are too many of them, as the canister found or as found when it couldn't return them
     | { kind: "snapshot"; details: CommunityDetails }
     | Failure;
 
