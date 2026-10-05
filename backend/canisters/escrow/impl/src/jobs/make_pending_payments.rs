@@ -11,7 +11,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, info, trace};
 use types::icrc1::{Account, CompletedCryptoTransaction};
-use types::{C2CError, Milliseconds, TimestampMillis};
+use types::{C2CError, C2CRetryPolicy, Milliseconds, TimestampMillis};
 use utils::canister::{delay_if_should_retry_failed_c2c_call, is_target_canister_uninstalled_or_deleted};
 
 // The shortest delay before retrying a payment, so that a ledger which fails in a way that calls for
@@ -85,13 +85,8 @@ async fn process_payment(mut pending_payment: PendingPayment, previous_failures:
         let ledger = pending_payment.token_info.ledger;
         let failures = previous_failures.saturating_add(1);
         let outcome_unknown = outcome_unknown || matches!(&response, Err(error) if may_have_made_transfer(error));
-        let already_refunded = state
-            .data
-            .swaps
-            .get(pending_payment.swap_id)
-            .is_some_and(|swap| swap.is_refunded(ledger, pending_payment.principal));
 
-        match next_step(&response, &pending_payment, failures, outcome_unknown, already_refunded, now) {
+        match next_step(&response, &pending_payment, failures, outcome_unknown, now) {
             NextStep::Record(block_index) => {
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
                     // A refund can be queued twice (eg. by two `notify_deposit` calls at once), in which
@@ -156,7 +151,9 @@ async fn process_payment(mut pending_payment: PendingPayment, previous_failures:
                         created_at = pending_payment.timestamp,
                         "Remaking payment which its ledger rejected as too old"
                     );
-                    pending_payment.timestamp = now;
+                    // Created as of when it will be sent, so that a ledger whose transaction window is
+                    // shorter than the delay doesn't reject it as too old again
+                    pending_payment.timestamp = now + delay;
                 }
 
                 let due = retry_due(pending_payment.timestamp, delay, now);
@@ -209,14 +206,12 @@ enum NextStep {
 }
 
 // `failures` counts this attempt, should it have failed, and `outcome_unknown` is whether this or any
-// earlier attempt may have made the transfer despite failing. `already_refunded` is whether a refund
-// to the payment's recipient from its ledger has been recorded against the swap.
+// earlier attempt may have made the transfer despite failing
 fn next_step(
     response: &Result<Result<u64, TransferError>, C2CError>,
     payment: &PendingPayment,
     failures: u32,
     outcome_unknown: bool,
-    already_refunded: bool,
     now: TimestampMillis,
 ) -> NextStep {
     match response {
@@ -267,10 +262,10 @@ fn next_step(
                 },
                 // A deposit's refund can be queued twice (eg. by two `notify_deposit` calls at once, or
                 // one racing the swap's expiry), in which case whichever is made second fails, there
-                // being nothing left to refund
-                TransferError::InsufficientFunds { .. }
-                    if already_refunded && matches!(payment.reason, PendingPaymentReason::Refund) =>
-                {
+                // being nothing left to refund. Nothing is lost by dropping a refund, since it is of the
+                // recipient's own deposit, whatever is left of which they can have refunded by
+                // notifying it again.
+                TransferError::InsufficientFunds { .. } if matches!(payment.reason, PendingPaymentReason::Refund) => {
                     NextStep::Drop { error: message("") }
                 }
                 _ => NextStep::Park {
@@ -281,12 +276,25 @@ fn next_step(
     }
 }
 
-// Whether a failed call into a ledger may have made the transfer nonetheless. `SysUnknown` means the
-// response was lost, and a response which couldn't be decoded is converted to `CanisterReject` (see
-// `C2CError::from_cdk_error`), which is otherwise unexpected, ledgers returning their own errors
-// rather than rejecting a transfer.
+// Whether a failed call into a ledger may have made the transfer nonetheless, which only failures
+// showing that the ledger never ran the call rule out. Ledgers commit a transfer before awaiting the
+// archiving of their blocks, so a trap after that await comes from a transfer which was made, as can
+// a response which couldn't be decoded (a `CanisterError` too, see `canister_client::make_c2c_call`)
+// or one which was lost (`SysUnknown`).
 fn may_have_made_transfer(error: &C2CError) -> bool {
-    matches!(error.reject_code(), RejectCode::SysUnknown | RejectCode::CanisterReject)
+    let never_ran = match error.reject_code() {
+        // The call couldn't be made, or the ledger couldn't take it, eg. as it is out of cycles
+        RejectCode::SysTransient | RejectCode::DestinationInvalid => true,
+        // The ledger is stopped (the only failure given `RetryAfterShortDelay`, see
+        // `C2CRetryPolicy::from_cdk_error`), has no Wasm module, or has no such method
+        RejectCode::CanisterError => {
+            error.retry_policy() == C2CRetryPolicy::RetryAfterShortDelay
+                || is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message())
+                || error.is_method_not_found()
+        }
+        _ => false,
+    };
+    !never_ran
 }
 
 // Returns the delay before retrying a payment, given the number of attempts at it which have failed,
@@ -329,7 +337,7 @@ mod tests {
     use super::*;
     use candid::{Nat, Principal};
     use constants::MINUTE_IN_MS;
-    use types::{C2CRetryPolicy, CanisterId, TokenInfo};
+    use types::{CanisterId, TokenInfo};
 
     const NOW: TimestampMillis = 1_000 * DAY_IN_MS;
 
@@ -411,9 +419,9 @@ mod tests {
     }
 
     // The next step after the ledger returns `error` for an attempt at `payment`, with no earlier
-    // attempt's outcome unknown and nothing refunded yet
+    // attempt's outcome unknown
     fn after_ledger_error(error: TransferError, payment: &PendingPayment, failures: u32) -> NextStep {
-        next_step(&Ok(Err(error)), payment, failures, false, false, NOW)
+        next_step(&Ok(Err(error)), payment, failures, false, NOW)
     }
 
     fn is_parked(step: &NextStep) -> bool {
@@ -510,7 +518,7 @@ mod tests {
     fn payment_rejected_as_too_old_after_an_attempt_with_an_unknown_outcome_is_parked() {
         let created_at = NOW - DAY_IN_MS - HOUR_IN_MS;
 
-        let step = next_step(&Ok(Err(TransferError::TooOld)), &refund(created_at), 30, true, false, NOW);
+        let step = next_step(&Ok(Err(TransferError::TooOld)), &refund(created_at), 30, true, NOW);
 
         assert_eq!(
             step,
@@ -523,23 +531,28 @@ mod tests {
     }
 
     #[test]
-    fn refund_with_insufficient_funds_is_dropped_only_once_refunded() {
+    fn refund_with_insufficient_funds_is_dropped() {
         let error = TransferError::InsufficientFunds {
             balance: Nat::from(0u32),
         };
-        let response = Ok(Err(error.clone()));
 
         assert_eq!(
-            next_step(&response, &refund(NOW), 1, false, true, NOW),
+            after_ledger_error(error.clone(), &refund(NOW), 1),
             NextStep::Drop {
                 error: format!("Ledger returned an error: {error:?}"),
             }
         );
-        assert!(is_parked(&next_step(&response, &refund(NOW), 1, false, false, NOW)));
+    }
 
-        // A swap's payout always comes from a deposit which was recorded and is held for it
+    // A swap's payout always comes from a deposit which was recorded and is held for it
+    #[test]
+    fn payout_with_insufficient_funds_is_parked() {
         let payout = payment(PendingPaymentReason::Swap(Principal::from_slice(&[3])), NOW);
-        assert!(is_parked(&next_step(&response, &payout, 1, false, true, NOW)));
+        let error = TransferError::InsufficientFunds {
+            balance: Nat::from(0u32),
+        };
+
+        assert!(is_parked(&after_ledger_error(error, &payout, 1)));
     }
 
     #[test]
@@ -566,20 +579,43 @@ mod tests {
     #[test]
     fn failed_call_which_may_have_made_the_transfer_leaves_its_outcome_unknown() {
         let lost = error(RejectCode::SysUnknown, "", C2CRetryPolicy::RetryImmediately);
-        let undecodable = error(RejectCode::CanisterReject, "failed to decode", C2CRetryPolicy::DoNotRetry);
+        // As `canister_client::make_c2c_call` reports a response it can't decode
+        let undecodable = error(
+            RejectCode::CanisterError,
+            "Deserialization error: ...",
+            C2CRetryPolicy::DoNotRetry,
+        );
+        let trapped = error(RejectCode::CanisterError, "Canister trapped", C2CRetryPolicy::RetryAfterDelay);
+        let rejected = error(RejectCode::CanisterReject, "", C2CRetryPolicy::DoNotRetry);
+
+        for error in [lost, undecodable, trapped, rejected] {
+            assert!(may_have_made_transfer(&error), "{error:?}");
+        }
+    }
+
+    #[test]
+    fn failed_call_which_the_ledger_never_ran_leaves_its_outcome_known() {
+        let out_of_cycles = error(RejectCode::SysTransient, "", C2CRetryPolicy::RetryAfterDelay);
+        let deleted = error(RejectCode::DestinationInvalid, "", C2CRetryPolicy::DoNotRetry);
         let stopped = error(
             RejectCode::CanisterError,
             "Canister x is stopped",
             C2CRetryPolicy::RetryAfterShortDelay,
         );
-        let trapped = error(RejectCode::CanisterError, "Canister trapped", C2CRetryPolicy::RetryAfterDelay);
-        let out_of_cycles = error(RejectCode::SysTransient, "", C2CRetryPolicy::RetryAfterDelay);
+        let uninstalled = error(
+            RejectCode::CanisterError,
+            "...contains no Wasm module.",
+            C2CRetryPolicy::RetryAfterDelay,
+        );
+        let no_such_method = error(
+            RejectCode::CanisterError,
+            "Canister has no update method 'icrc1_transfer'",
+            C2CRetryPolicy::DoNotRetry,
+        );
 
-        assert!(may_have_made_transfer(&lost));
-        assert!(may_have_made_transfer(&undecodable));
-        assert!(!may_have_made_transfer(&stopped));
-        assert!(!may_have_made_transfer(&trapped));
-        assert!(!may_have_made_transfer(&out_of_cycles));
+        for error in [out_of_cycles, deleted, stopped, uninstalled, no_such_method] {
+            assert!(!may_have_made_transfer(&error), "{error:?}");
+        }
     }
 
     #[test]
@@ -592,11 +628,11 @@ mod tests {
         let deleted = error(RejectCode::DestinationInvalid, "", C2CRetryPolicy::DoNotRetry);
 
         assert!(matches!(
-            next_step(&Err(stopped), &refund(NOW), 1, false, false, NOW),
+            next_step(&Err(stopped), &refund(NOW), 1, false, NOW),
             NextStep::Retry { delay: MIN_RETRY_DELAY, remake: false, error } if error.starts_with("Failed to call into ledger: ")
         ));
         assert!(matches!(
-            next_step(&Err(deleted), &refund(NOW), 1, false, false, NOW),
+            next_step(&Err(deleted), &refund(NOW), 1, false, NOW),
             NextStep::Park { error } if error.starts_with("Failed to call into ledger, so parked the payment")
         ));
     }
