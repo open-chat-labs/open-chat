@@ -13,6 +13,7 @@ import {
 import { Principal } from "@icp-sdk/core/principal";
 import { utf8ToBytes } from "@noble/hashes/utils";
 import type { Static, TSchema } from "@sinclair/typebox";
+import { redactSecrets } from "@shared";
 import { deserializeFromMsgPack, serializeToMsgPack } from "../../utils/msgpack";
 import { typeboxValidate } from "../../utils/typebox";
 import { toCanisterResponseError } from "../error";
@@ -35,7 +36,11 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
         let isError = false;
         try {
             const canisterIdPrincipal = Principal.fromText(canisterId);
-            const payload = MsgpackCanisterAgent.prepareMsgpackArgs(args, requestValidator);
+            const payload = MsgpackCanisterAgent.prepareMsgpackArgs(
+                methodName,
+                args,
+                requestValidator,
+            );
 
             return await this.executeQuery(
                 () =>
@@ -98,7 +103,11 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
         let isError = false;
         try {
             const canisterIdPrincipal = Principal.fromText(canisterId);
-            const payload = MsgpackCanisterAgent.prepareMsgpackArgs(args, requestValidator);
+            const payload = MsgpackCanisterAgent.prepareMsgpackArgs(
+                methodName,
+                args,
+                requestValidator,
+            );
 
             const { requestId, response } = await this.agent.call(canisterIdPrincipal, {
                 methodName: methodName + "_msgpack",
@@ -210,15 +219,19 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
             }
         } catch (err) {
             isError = true;
-            console.log(err, args);
+            console.log(err, redactSecrets(args, methodName));
             throw toCanisterResponseError(err as Error, this.identity);
         } finally {
             this.writeTrace(methodName, true, performance.now() - start, isError);
         }
     }
 
-    private static prepareMsgpackArgs<T extends TSchema>(value: unknown, validator: T): Uint8Array {
-        const validated = typeboxValidate(value, validator);
+    private static prepareMsgpackArgs<T extends TSchema>(
+        methodName: string,
+        value: unknown,
+        validator: T,
+    ): Uint8Array {
+        const validated = typeboxValidate(value, validator, methodName);
         return serializeToMsgPack(validated);
     }
 
