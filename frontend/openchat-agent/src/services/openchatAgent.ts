@@ -565,8 +565,8 @@ export class OpenChatAgent extends EventTarget {
     // pulled at once.
     //
     // The approval is made, and paid for, before the spender has checked anything, so a payment it
-    // then refuses, such as one with the wrong PIN, still costs the approval's fee, and leaves the
-    // spender approved for the payment until the approval lapses.
+    // then refuses still costs the approval's fee, and leaves the spender approved for the payment
+    // until the approval lapses.
     private async approveToPull(
         spender: IcrcAccount,
         ledger: string,
@@ -1018,7 +1018,8 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // Approves the user's canister to pull whatever a message in a direct chat takes from the
-    // user's wallet
+    // user's wallet. Only crypto is sent with a PIN the canister checks, not a swap offer, so only
+    // crypto has its PIN checked first.
     private approveTransferInMessage(
         content: MessageContent,
         pin: string | undefined,
@@ -1031,7 +1032,7 @@ export class OpenChatAgent extends EventTarget {
                   payment.amount,
                   payment.fee,
                   payment.fromAccount,
-                  pin,
+                  content.kind === "crypto_content" ? pin : undefined,
               );
     }
 

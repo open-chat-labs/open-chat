@@ -316,6 +316,15 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             },
         );
 
+        // Neither kind of canister checks the PIN a swap is offered with
+        test("a swap offered in a direct chat has no PIN checked first", async () => {
+            await sendDirectMessage(swapOffer(), "1234");
+
+            expect(pinChecks).toEqual([]);
+            expect(approvals.length).toEqual(1);
+            expect(calls).toEqual(["sendMessage"]);
+        });
+
         test("a payment from another account has no PIN checked, since it isn't approved", async () => {
             await agent.tipMessage({ chatId: DIRECT }, 1n, transfer(EXTERNAL_ACCOUNT), 8, "1234");
 
