@@ -294,8 +294,9 @@ fn complete(state: &mut RuntimeState) {
     jobs::refund_cycles::start_job_if_required(state, None);
 }
 
-// A canister is only handed over if it has no code, as each one is meant to be an empty pool
-// canister, so that nothing live is ever touched
+// A canister is only handed over if it has no code and the old LocalGroupIndex is its only
+// controller, as each one is meant to be an empty pool canister, so that nothing live is ever touched
+// and no other controller is ever removed
 async fn reclaim(
     old_local_group_index: CanisterId,
     canister_id: CanisterId,
@@ -304,11 +305,12 @@ async fn reclaim(
     let status = match relay_canister_status(old_local_group_index, canister_id).await {
         Ok(status) => status,
         // The old LocalGroupIndex no longer controls the canister, which may be because it was
-        // handed over by an earlier attempt whose outcome wasn't recorded
+        // handed over by an earlier attempt whose outcome wasn't recorded, in which case this
+        // LocalUserIndex is its only controller. Then it counts as reclaimed, and otherwise it is
+        // skipped, so that a canister which still has another controller never goes into the pool.
         Err(error) if is_invalid_controller_error(error.reject_code(), error.message()) => {
             return match utils::canister::canister_status(canister_id).await {
-                Ok(status) if status.module_hash.is_none() => Ok(Outcome::Reclaimed),
-                Ok(_) => Ok(Outcome::Skipped("Has code installed")),
+                Ok(status) => Ok(check(&status, this_canister_id).map_or(Outcome::Reclaimed, Outcome::Skipped)),
                 Err(error) if is_invalid_controller_error(error.reject_code(), error.message()) => Ok(Outcome::Skipped(
                     "Controlled by neither the old LocalGroupIndex nor this LocalUserIndex",
                 )),
@@ -318,12 +320,23 @@ async fn reclaim(
         Err(error) => return Err(error),
     };
 
-    if status.module_hash.is_some() {
-        return Ok(Outcome::Skipped("Has code installed"));
+    if let Some(reason) = check(&status, old_local_group_index) {
+        return Ok(Outcome::Skipped(reason));
     }
 
     relay_set_controllers(old_local_group_index, canister_id, vec![this_canister_id]).await?;
     Ok(Outcome::Reclaimed)
+}
+
+// Why the canister isn't to be reclaimed, if it has code or any controller other than `controller`
+fn check(status: &CanisterStatusMinimal, controller: CanisterId) -> Option<&'static str> {
+    if status.module_hash.is_some() {
+        Some("Has code installed")
+    } else if status.settings.controllers != [controller] {
+        Some("Has other controllers")
+    } else {
+        None
+    }
 }
 
 // Replaces the old LocalGroupIndex's code with the call relay. Nothing in its state is needed, since

@@ -10,10 +10,12 @@ pub struct OldLocalGroupIndex {
     pub canister_id: CanisterId,
     // Set once the call relay has been installed over the old LocalGroupIndex's code
     pub relay_installed: bool,
-    // Those still to be handed over to this LocalUserIndex
+    // Those still to be handed over to this LocalUserIndex. Each stays here until it is reclaimed or
+    // skipped, so that if a run is cut short, its batch is taken again by the next.
     pending: VecDeque<CanisterToReclaim>,
-    // Those being handed over right now, which a repeated request mustn't queue again
-    #[serde(default)]
+    // Those of `pending` which the run in progress is handing over. Not persisted, since no run is in
+    // progress once this LocalUserIndex has been stopped to be upgraded.
+    #[serde(skip)]
     in_flight: BTreeSet<CanisterId>,
     // Those handed over to this LocalUserIndex, and queued to have their cycles refunded, after which
     // they go into the canister pool
@@ -63,14 +65,13 @@ impl OldLocalGroupIndex {
         }
     }
 
-    // Queues the canisters not already reclaimed, queued or being handed over, so that a repeated
-    // request only retries those which were skipped. Returns how many were queued.
+    // Queues the canisters not already reclaimed or queued (which includes those in flight), so that a
+    // repeated request only retries those which were skipped. Returns how many were queued.
     pub fn add(&mut self, canister_ids: impl IntoIterator<Item = CanisterId>) -> usize {
         let mut count = 0;
         for canister_id in canister_ids {
             if canister_id != self.canister_id
                 && !self.reclaimed.contains(&canister_id)
-                && !self.in_flight.contains(&canister_id)
                 && !self.pending.iter().any(|c| c.canister_id == canister_id)
             {
                 self.skipped.remove(&canister_id);
@@ -89,16 +90,20 @@ impl OldLocalGroupIndex {
         count
     }
 
-    // The canisters taken are in flight until each is retried, reclaimed or skipped
+    // Takes up to `max` of the pending canisters, which are in flight until each is retried, reclaimed
+    // or skipped. Only one run is in progress at a time, taking a single batch, so any left in flight
+    // by a run which was cut short, eg. by a trap, are cleared first, to be taken again.
     pub fn take_batch(&mut self, max: usize) -> Vec<CanisterToReclaim> {
-        let count = max.min(self.pending.len());
-        let batch: Vec<_> = self.pending.drain(..count).collect();
+        self.in_flight.clear();
+        let batch: Vec<_> = self.pending.iter().take(max).copied().collect();
         self.in_flight.extend(batch.iter().map(|c| c.canister_id));
         batch
     }
 
+    // Moves the canister to the back of the queue, with its attempt counted
     pub fn retry(&mut self, canister: CanisterToReclaim) {
         self.in_flight.remove(&canister.canister_id);
+        self.remove_pending(canister.canister_id);
         self.pending.push_back(CanisterToReclaim {
             attempt: canister.attempt + 1,
             ..canister
@@ -107,12 +112,23 @@ impl OldLocalGroupIndex {
 
     pub fn mark_reclaimed(&mut self, canister_id: CanisterId) {
         self.in_flight.remove(&canister_id);
+        self.remove_pending(canister_id);
+        self.skipped.remove(&canister_id);
         self.reclaimed.insert(canister_id);
     }
 
+    // A canister already reclaimed isn't marked as skipped, eg. when a repeated request includes it and
+    // it is in the canister pool by then
     pub fn mark_skipped(&mut self, canister_id: CanisterId) {
         self.in_flight.remove(&canister_id);
-        self.skipped.insert(canister_id);
+        self.remove_pending(canister_id);
+        if !self.reclaimed.contains(&canister_id) {
+            self.skipped.insert(canister_id);
+        }
+    }
+
+    fn remove_pending(&mut self, canister_id: CanisterId) {
+        self.pending.retain(|c| c.canister_id != canister_id);
     }
 
     pub fn is_pending_empty(&self) -> bool {
@@ -210,6 +226,34 @@ mod tests {
         old.retry(batch[0]);
         assert_eq!(old.add([canister_id(1)]), 0);
         assert_eq!(old.take_batch(10).len(), 2);
+    }
+
+    #[test]
+    fn batch_of_a_run_cut_short_is_taken_again() {
+        let mut old = OldLocalGroupIndex::new(canister_id(0));
+        old.add([canister_id(1), canister_id(2)]);
+
+        // The run taking it is cut short, so nothing comes of it
+        old.take_batch(1);
+
+        assert_eq!(
+            old.take_batch(10).iter().map(|c| c.canister_id).collect::<Vec<_>>(),
+            vec![canister_id(1), canister_id(2)]
+        );
+    }
+
+    #[test]
+    fn reclaimed_canister_is_never_marked_as_skipped() {
+        let mut old = OldLocalGroupIndex::new(canister_id(0));
+        old.add([canister_id(1)]);
+        old.take_batch(1);
+        old.mark_reclaimed(canister_id(1));
+
+        old.mark_skipped(canister_id(1));
+
+        let metrics = old.metrics();
+        assert_eq!(metrics.reclaimed, 1);
+        assert!(metrics.skipped.is_empty());
     }
 
     #[test]

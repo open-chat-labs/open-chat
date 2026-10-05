@@ -4,6 +4,7 @@ use crate::{TestEnv, client};
 use candid::Principal;
 use constants::{B, ICP_TRANSFER_FEE, T};
 use pocket_ic::{CanisterSettings, CreateCanisterParams, CreateCanisterPlacement, PocketIc};
+use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{CanisterId, UnitResult};
@@ -118,8 +119,9 @@ fn canister_with_code_is_skipped() {
 }
 
 // A canister already controlled by the LocalUserIndex alone, as if handed over by an earlier attempt
-// whose outcome was lost, counts as reclaimed. One controlled by neither is skipped. A repeated
-// request while a batch is in flight changes nothing.
+// whose outcome was lost, counts as reclaimed. One controlled by neither is skipped, as is one which
+// the LocalUserIndex controls along with another controller. A repeated request while a batch is in
+// flight changes nothing.
 #[test]
 fn canister_already_handed_over_is_reclaimed_and_one_controlled_by_neither_skipped() {
     let mut wrapper = ENV.deref().get();
@@ -137,10 +139,11 @@ fn canister_already_handed_over_is_reclaimed_and_one_controlled_by_neither_skipp
         .collect();
     let already_handed_over = create_on_subnet(env, local_user_index, vec![local_user_index], 500 * B);
     let controlled_by_neither = create_on_subnet(env, local_user_index, vec![*controller], 500 * B);
+    let with_another_controller = create_on_subnet(env, local_user_index, vec![local_user_index, *controller], 500 * B);
     let all: Vec<_> = pool_canisters
         .iter()
         .copied()
-        .chain([already_handed_over, controlled_by_neither])
+        .chain([already_handed_over, controlled_by_neither, with_another_controller])
         .collect();
     let pool_size = canisters_in_pool(env, local_user_index);
 
@@ -154,18 +157,22 @@ fn canister_already_handed_over_is_reclaimed_and_one_controlled_by_neither_skipp
 
     let old = &metrics(env, local_user_index)["old_local_group_index"];
     assert_eq!(old["reclaimed"].as_u64(), Some(12));
+    let skipped: HashSet<_> = old["skipped"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|c| c.as_str().unwrap().to_string())
+        .collect();
     assert_eq!(
-        old["skipped"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|c| c.as_str().unwrap())
-            .collect::<Vec<_>>(),
-        vec![controlled_by_neither.to_text()]
+        skipped,
+        HashSet::from([controlled_by_neither.to_text(), with_another_controller.to_text()])
     );
 
     let status = env.canister_status(controlled_by_neither, Some(*controller)).unwrap();
     assert_eq!(status.settings.controllers, vec![*controller]);
+    let status = env.canister_status(with_another_controller, Some(*controller)).unwrap();
+    assert_eq!(status.settings.controllers.len(), 2);
+    assert_eq!(canisters_in_pool(env, local_user_index), pool_size + 12);
     wait_for_cycles_to_be_refunded(env, old_local_group_index, local_user_index);
 
     wrapper.discard();
