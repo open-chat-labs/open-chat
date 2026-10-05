@@ -137,7 +137,10 @@ function fakeDb(initial: Record<string, Record<string, any>> = {}) {
         }),
         transaction: (_names: string | string[], _mode: string) => ({
             objectStore,
-            done: Promise.resolve(),
+            get done() {
+                log.push("tx done");
+                return Promise.resolve();
+            },
         }),
         get: (name: string, key: string) => objectStore(name).get(key),
         clear: (name: string) => objectStore(name).clear(),
@@ -688,6 +691,7 @@ describe("getChatsForSync", () => {
         ]);
         expect(log.indexOf("phase waiting")).toBeLessThan(log.indexOf("get sync head"));
         expect(log.indexOf("get sync head")).toBeLessThan(log.indexOf("phase reading"));
+        expect(log.indexOf("tx done")).toBeLessThan(log.indexOf("phase building"));
         expect(log.at(-1)).toBe("phase building");
     });
 

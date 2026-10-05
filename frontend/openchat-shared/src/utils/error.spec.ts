@@ -209,9 +209,7 @@ describe("shouldReportError", () => {
             ),
         ).toBe(false);
         expect(
-            shouldReportError(
-                new HttpError(0, new Error("Failed to fetch HTTP request: Load failed")),
-            ),
+            shouldReportError(new HttpError(0, new Error("Failed to fetch HTTP request: Load failed"))),
         ).toBe(false);
         // the same words from a plain Error are still a signal
         expect(shouldReportError(new Error("Failed to fetch HTTP request: Failed to fetch"))).toBe(
@@ -465,6 +463,20 @@ describe("worker errors", () => {
         expect(error.name).toBe("AbortError");
         expect(error.message).toBe("The transaction was aborted");
         expect(toError({ code: 7 })).toMatchObject({ code: 7, message: '{"code":7}' });
+    });
+
+    // Invariant (#9757): a worker rejection the central filter counts as noise stays unreported
+    // once rebuilt, and any other one is reported. Before name crossed the worker, the client
+    // could not tell an aborted IndexedDB transaction from a real failure.
+    test("a rebuilt worker rejection goes through the same noise filter as the original", () => {
+        const fromWorker = (error: unknown) => toError(JSON.parse(serialiseWorkerError(error)));
+
+        expect(shouldReportError(fromWorker(new DOMException("aborted", "AbortError")))).toBe(
+            false,
+        );
+        expect(
+            shouldReportError(fromWorker(new DOMException("Internal error", "UnknownError"))),
+        ).toBe(true);
     });
 
     test("toError leaves an Error as it is and wraps anything else", () => {

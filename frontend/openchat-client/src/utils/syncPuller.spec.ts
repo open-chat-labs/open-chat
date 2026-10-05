@@ -213,8 +213,7 @@ describe("SyncPuller", () => {
     test("a pull the worker rejects is logged as an Error with the rejection's cause", async () => {
         const logged: unknown[] = [];
         const puller = new SyncPuller({
-            pull: () =>
-                Promise.reject({ name: "AbortError", message: "The transaction was aborted" }),
+            pull: () => Promise.reject({ name: "UnknownError", message: "Internal error" }),
             fold: async () => {},
             log: (_message, err) => logged.push(err),
         });
@@ -226,8 +225,8 @@ describe("SyncPuller", () => {
         expect(logged).toHaveLength(1);
         expect(logged[0]).toBeInstanceOf(Error);
         expect(logged[0]).toMatchObject({
-            name: "AbortError",
-            message: "The transaction was aborted",
+            name: "UnknownError",
+            message: "Internal error",
         });
     });
 
