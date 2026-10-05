@@ -346,6 +346,23 @@ describe("shouldReportError", () => {
         );
     });
 
+    // Invariant (#9757): a request the worker had no agent for is not reported from the caller,
+    // whatever the request kind; it arrives as the plain object the worker serialised
+    test("silences a request the worker had no agent for", () => {
+        const rejection = {
+            stack: "Error: Worker has no agent to handle request: syncSince\n    at worker.js:1:1",
+            message: "Worker has no agent to handle request: syncSince",
+        };
+        expect(shouldReportError(rejection)).toBe(false);
+        expect(
+            shouldReportError({
+                ...rejection,
+                message: "Worker has no agent to handle request: getUsers",
+            }),
+        ).toBe(false);
+        expect(shouldReportError({ ...rejection, message: "Worker not initialised" })).toBe(true);
+    });
+
     test("silences Safari storage and in-app browser bridge failures", () => {
         for (const message of [
             "Database deleted by request of the user",

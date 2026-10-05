@@ -7,6 +7,7 @@ use ic_stable_structures::storable::Bound;
 use ic_stable_structures::{StableBTreeMap, StableCell, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::collections::HashMap;
 use types::{CanisterId, FileAdded, FileId, FileRemoved, Hash, TimestampMillis};
 
 #[derive(Serialize, Deserialize)]
@@ -109,6 +110,52 @@ impl Files {
 
     pub fn bucket_for_blob(&self, hash: Hash) -> Option<CanisterId> {
         self.iter_blob_reference_counts(hash, None).next().map(|(r, _)| r.canister_id)
+    }
+
+    pub fn contains(&self, file: &FileAdded) -> bool {
+        self.files_by_user.contains_key(&file.into())
+    }
+
+    // The blobs the user's file references point to, in order of the oldest file referencing each,
+    // along with all of the user's files referencing it, or `None` if the user holds more than
+    // `max_files` files. A blob only stops counting towards the user's bytes once every one of those
+    // files is removed.
+    pub fn user_blobs_from_oldest(&self, user_id: Principal, max_files: usize) -> Option<Vec<UserBlob>> {
+        let mut blobs: Vec<UserBlob> = Vec::new();
+        let mut index_by_hash: HashMap<Hash, usize> = HashMap::new();
+        for (count, file) in self.iter_user_files_from_oldest(user_id).enumerate() {
+            if count == max_files {
+                return None;
+            }
+            let index = *index_by_hash.entry(file.hash).or_insert_with(|| {
+                blobs.push(UserBlob {
+                    size: self.blob_size(&file.hash).unwrap_or_default(),
+                    files: Vec::new(),
+                });
+                blobs.len() - 1
+            });
+            blobs[index].files.push(file);
+        }
+        Some(blobs)
+    }
+
+    // The user's oldest files, as few of them as add up to at least `bytes`, along with their total
+    pub fn oldest_user_files_totalling(&self, user_id: Principal, bytes: u64) -> (Vec<UserFile>, u64) {
+        let mut total_size = 0u64;
+        let files = self
+            .iter_user_files_from_oldest(user_id)
+            .take_while(|f| {
+                if total_size < bytes {
+                    let size = self.blob_size(&f.hash).unwrap_or_default();
+                    total_size = total_size.saturating_add(size);
+                    true
+                } else {
+                    false
+                }
+            })
+            .collect();
+
+        (files, total_size)
     }
 
     pub fn iter_user_files_from_oldest(&self, user_id: Principal) -> impl Iterator<Item = UserFile> + '_ {
@@ -228,12 +275,18 @@ impl FileIdByUserThenCreated {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct UserFile {
     pub file_id: FileId,
     #[allow(dead_code)]
     pub created: TimestampMillis,
     pub hash: Hash,
     pub bucket: CanisterId,
+}
+
+pub struct UserBlob {
+    pub size: u64,
+    pub files: Vec<UserFile>,
 }
 
 pub struct HashAndBucket {
@@ -413,6 +466,48 @@ mod tests {
         assert_eq!(files.metrics().total_blob_bytes, 500);
         assert!(files.remove(removed(file(2, 2)), bucket).is_ok());
         assert_eq!(files.metrics().total_blob_bytes, 0);
+    }
+
+    #[test]
+    fn user_blobs_from_oldest_groups_the_users_files_by_blob() {
+        let mut files = Files::default();
+        let bucket = CanisterId::from_slice(&[2]);
+        let user = Principal::from_slice(&[1]);
+        // Its bytes start with the first user's
+        let other_user = Principal::from_slice(&[1, 1]);
+        for (file_id, owner, hash, size) in [
+            (1u8, user, 1u8, 500u64),
+            (2, user, 2, 300),
+            (3, user, 1, 500),
+            (4, other_user, 3, 700),
+        ] {
+            files.add(
+                FileAdded {
+                    file_id: file_id.into(),
+                    hash: [hash; 32],
+                    size,
+                    meta_data: FileMetaData {
+                        owner,
+                        created: file_id.into(),
+                    },
+                },
+                bucket,
+            );
+        }
+
+        let blobs = |user_id| -> Vec<(u64, Vec<FileId>)> {
+            files
+                .user_blobs_from_oldest(user_id, 10)
+                .unwrap()
+                .into_iter()
+                .map(|b| (b.size, b.files.iter().map(|f| f.file_id).collect()))
+                .collect()
+        };
+        assert_eq!(blobs(user), vec![(500, vec![1, 3]), (300, vec![2])]);
+        assert_eq!(blobs(other_user), vec![(700, vec![4])]);
+        assert!(blobs(Principal::from_slice(&[9])).is_empty());
+        assert!(files.user_blobs_from_oldest(user, 3).is_some());
+        assert!(files.user_blobs_from_oldest(user, 2).is_none());
     }
 
     #[test]

@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Send each migrated user an OpenChat bot message detailing their new wallet address ([#9763](https://github.com/open-chat-labs/open-chat/pull/9763))
 - Add `check_pin_number`, so a payment's PIN can be checked before the user approves it ([#9777](https://github.com/open-chat-labs/open-chat/pull/9777))
+- Schedule the timer jobs a migrated user's canister handed over during migration ([#9779](https://github.com/open-chat-labs/open-chat/pull/9779))
 
 ### Changed
 
@@ -17,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Take a User canister missing a method as a sign its user may have been migrated, as the other canisters do ([#9743](https://github.com/open-chat-labs/open-chat/pull/9743))
 - Check the cycles balance as background jobs run, not only as updates are handled ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
 - Ask for a top up once the cycles above the freezing threshold fall below 10T, or below twice the threshold ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748))
+- Store each direct chat record in stable memory, keeping only a small entry per chat on the heap ([#9781](https://github.com/open-chat-labs/open-chat/pull/9781))
 
 ## [[2.0.2091](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2091-multi_user)] - 2026-10-02
 

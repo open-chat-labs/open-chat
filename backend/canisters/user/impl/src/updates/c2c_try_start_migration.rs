@@ -34,7 +34,8 @@ mod tests {
     use types::{
         BuildVersion, CanisterId, Chat, FrozenUserInfo, MessageId, P2PSwapLocation, TimestampMillis, Timestamped, TokenInfo,
     };
-    use user_core::{P2PSwap, User};
+    use user_core::P2PSwap;
+    use user_core::migration::MigratingUser;
     use utils::async_work::AsyncWorkGuard;
 
     fn data() -> Data {
@@ -78,12 +79,13 @@ mod tests {
 
         let migration = data.try_start_migration(multi_user_canister(1), 2).unwrap();
 
-        let user: User = msgpack::deserialize_then_unwrap(&migration.user);
+        let MigratingUser { user, timer_jobs }: MigratingUser = msgpack::deserialize_then_unwrap(&migration.user);
         assert_eq!(migration.multi_user_canister_id, multi_user_canister(1));
         assert_eq!(migration.started, 2);
         assert_eq!(migration.wasm_version, version(1));
         assert_eq!(user.principal, data.user.principal);
         assert_eq!(user.username.value, data.user.username.value);
+        assert!(timer_jobs.is_empty());
         assert!(data.is_frozen());
     }
 

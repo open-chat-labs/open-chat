@@ -30,7 +30,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .with_user_mut(my_index, |user| -> OCResult<_> {
             user.verify_not_suspended()?;
 
-            let chat = user.direct_chats.get_mut_or_err(&args.user_id.into())?;
+            let mut chat = user.direct_chats.get_mut_or_err(&args.user_id.into())?;
 
             let mut deleted = Vec::new();
             let mut my_messages = Vec::new();
