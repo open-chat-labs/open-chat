@@ -3,7 +3,7 @@ use crate::setup::install_icrc_ledger;
 use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client, wasms};
 use candid::{CandidType, Nat, Principal};
-use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
+use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use local_user_index_canister::move_funds_from_old_canister::{MoveFundsResult, Response as MoveFundsResponse};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
@@ -650,6 +650,12 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
     assert_eq!(latest_message(user2.user_id), message_to_user2);
     assert_eq!(latest_message(new_user_id), message_to_self);
     assert!(!state.direct_chats.summaries.iter().any(|c| c.them == user1.user_id));
+    // And the OpenChat bot has told them of their new wallet address, which is their principal
+    let migrated_message = latest_message(OPENCHAT_BOT_USER_ID);
+    assert!(
+        migrated_message.contains(&format!("\n\n{}\n\n", user1.principal)),
+        "{migrated_message}"
+    );
 
     // The old canister is uninstalled and its cycles are refunded
     crate::delete_user_tests::wait_for_cycles_to_be_refunded(env, &user1);

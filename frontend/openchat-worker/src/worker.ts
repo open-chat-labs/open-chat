@@ -752,6 +752,12 @@ function getAction(
         case "refreshAccountBalance":
             return agent.refreshAccountBalance(payload.ledger, payload.principal);
 
+        case "fundsInPreviousWallets":
+            return agent.fundsInPreviousWallets(payload.previousUserIds);
+
+        case "moveFundsFromPreviousWallets":
+            return agent.moveFundsFromPreviousWallets(payload.funds);
+
         case "getAccountTransactions":
             return agent.getAccountTransactions(
                 payload.ledgerIndex,
