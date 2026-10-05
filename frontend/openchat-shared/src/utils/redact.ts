@@ -22,38 +22,64 @@ const secretKeys = new Set(SECRET_KEYS);
 // set_pin_number's new PIN goes in a field with a name too generic to redact everywhere
 const setPinNumberSecretKeys = new Set([...SECRET_KEYS, "new"]);
 
-// A copy of a request, fit for logging, in which the value of every secret key is replaced with
-// REDACTED. Pass the canister method a request is for, if it is one.
+// What a reference back to an object still being redacted is replaced with
+export const CIRCULAR = "[Circular]";
+
+// The request, fit for logging, with the value of every secret key replaced with REDACTED. Pass the
+// canister method a request is for, if it is one. Hardly any request holds a secret, so nothing is
+// copied unless it has to be: only the objects on the way down to a secret are copied, and anything
+// without a secret in it, the request itself included, is returned as it is.
 export function redactSecrets(value: unknown, methodName?: string): unknown {
     const keys = methodName === "set_pin_number" ? setPinNumberSecretKeys : secretKeys;
-    return redact(value, keys, new WeakMap());
+    return redact(value, keys, new WeakSet());
 }
 
-function redact(value: unknown, keys: Set<string>, copies: WeakMap<object, unknown>): unknown {
+function redact(value: unknown, keys: Set<string>, ancestors: WeakSet<object>): unknown {
     if (value === null || typeof value !== "object") return value;
-    // Logging must never throw, so a cycle gets the copy already being built rather than recursing
-    const existing = copies.get(value);
-    if (existing !== undefined) return existing;
 
-    if (Array.isArray(value)) {
-        const copy: unknown[] = [];
-        copies.set(value, copy);
-        for (const item of value) {
-            copy.push(redact(item, keys, copies));
-        }
-        return copy;
+    // Only arrays and plain objects are looked inside: requests hold secrets nowhere else, and
+    // copying Uint8Arrays, Principals and the like field by field would mangle them in the log
+    if (!Array.isArray(value)) {
+        const proto = Object.getPrototypeOf(value);
+        if (proto !== Object.prototype && proto !== null) return value;
     }
 
-    // Only plain objects are copied: requests hold secrets nowhere else, and copying Uint8Arrays,
-    // Principals and the like field by field would mangle them in the log
-    const proto = Object.getPrototypeOf(value);
-    if (proto !== Object.prototype && proto !== null) return value;
+    // Logging must never throw, so a cycle is cut rather than followed. It can't be pointed at the
+    // original object instead: following it back up could reach a secret.
+    if (ancestors.has(value)) return CIRCULAR;
+    ancestors.add(value);
+    const redacted = Array.isArray(value)
+        ? redactArray(value, keys, ancestors)
+        : redactObject(value as Record<string, unknown>, keys, ancestors);
+    ancestors.delete(value);
+    return redacted;
+}
 
-    const copy: Record<string, unknown> = {};
-    copies.set(value, copy);
+function redactArray(value: unknown[], keys: Set<string>, ancestors: WeakSet<object>): unknown[] {
+    let copy: unknown[] | undefined;
+    for (let i = 0; i < value.length; i++) {
+        const item = redact(value[i], keys, ancestors);
+        if (item !== value[i]) {
+            copy ??= [...value];
+            copy[i] = item;
+        }
+    }
+    return copy ?? value;
+}
+
+function redactObject(
+    value: Record<string, unknown>,
+    keys: Set<string>,
+    ancestors: WeakSet<object>,
+): Record<string, unknown> {
+    let copy: Record<string, unknown> | undefined;
     for (const [key, item] of Object.entries(value)) {
         // An absent PIN is left as it is: it gives nothing away, and shows that none was sent
-        copy[key] = keys.has(key) && item != null ? REDACTED : redact(item, keys, copies);
+        const redacted = keys.has(key) && item != null ? REDACTED : redact(item, keys, ancestors);
+        if (redacted !== item) {
+            copy ??= { ...value };
+            copy[key] = redacted;
+        }
     }
-    return copy;
+    return copy ?? value;
 }

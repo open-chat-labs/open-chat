@@ -1,6 +1,6 @@
 import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, test } from "vitest";
-import { REDACTED, redactSecrets } from "./redact";
+import { CIRCULAR, REDACTED, redactSecrets } from "./redact";
 
 describe("redactSecrets", () => {
     test("redacts the PIN of a canister request, leaving the rest", () => {
@@ -20,6 +20,36 @@ describe("redactSecrets", () => {
         const args = { pin: "1234", inner: { pin: "5678" } };
         redactSecrets(args);
         expect(args).toEqual({ pin: "1234", inner: { pin: "5678" } });
+    });
+
+    test("returns a request without secrets as it is", () => {
+        const args = {
+            message_id: 123n,
+            content: { Text: { text: "hello" } },
+            mentioned: [{ user_id: "abc" }],
+            pin: undefined,
+        };
+        expect(redactSecrets(args, "send_message_v2")).toBe(args);
+        const list = [args, { other: [1, 2] }];
+        expect(redactSecrets(list)).toBe(list);
+    });
+
+    test("copies only the objects on the way down to a secret", () => {
+        const args = {
+            content: { Text: { text: "hello" } },
+            mentioned: [{ user_id: "abc" }],
+            transfer: { amount: 100n, verification: { pin: "1234" } },
+            batch: [{ other: "kept" }, { pin: "5678" }],
+        };
+        const redacted = redactSecrets(args) as typeof args;
+        expect(redacted).not.toBe(args);
+        expect(redacted.content).toBe(args.content);
+        expect(redacted.mentioned).toBe(args.mentioned);
+        expect(redacted.transfer).not.toBe(args.transfer);
+        expect(redacted.transfer.verification).toEqual({ pin: REDACTED });
+        expect(redacted.batch).not.toBe(args.batch);
+        expect(redacted.batch[0]).toBe(args.batch[0]);
+        expect(redacted.batch[1]).toEqual({ pin: REDACTED });
     });
 
     test("redacts PINs nested in objects and arrays", () => {
@@ -91,10 +121,8 @@ describe("redactSecrets", () => {
     });
 
     test("leaves an absent PIN as it is", () => {
-        expect(redactSecrets({ pin: undefined, other: { pin: null } })).toEqual({
-            pin: undefined,
-            other: { pin: null },
-        });
+        const args = { pin: undefined, other: { pin: null } };
+        expect(redactSecrets(args)).toBe(args);
     });
 
     test("passes values which are not plain objects through unchanged", () => {
@@ -114,11 +142,27 @@ describe("redactSecrets", () => {
         }
     });
 
-    test("copes with cycles", () => {
-        const args: Record<string, unknown> = { pin: "1234" };
+    test("cuts cycles without leaking a secret through them", () => {
+        const args: Record<string, unknown> = { pin: "1234", child: { other: "kept" } };
+        (args.child as Record<string, unknown>).parent = args;
         args.self = args;
-        const redacted = redactSecrets(args) as Record<string, unknown>;
-        expect(redacted.pin).toBe(REDACTED);
-        expect(redacted.self).toBe(redacted);
+        const redacted = redactSecrets(args);
+        expect(redacted).toEqual({
+            pin: REDACTED,
+            child: { other: "kept", parent: CIRCULAR },
+            self: CIRCULAR,
+        });
+        // Throws if a cycle remains
+        expect(JSON.stringify(redacted)).not.toMatch(/1234/);
+    });
+
+    test("an object referenced twice is not taken for a cycle", () => {
+        const shared = { pin: "1234" };
+        const plain = { other: "kept" };
+        expect(redactSecrets({ a: shared, b: shared, c: [plain, plain] })).toEqual({
+            a: { pin: REDACTED },
+            b: { pin: REDACTED },
+            c: [plain, plain],
+        });
     });
 });
