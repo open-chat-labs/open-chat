@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove the one-off which set the DailyPuzzle canister id, now that it has run (#TIDY)
+- Remove the one-off which set the DailyPuzzle canister id, now that it has run ([#9775](https://github.com/open-chat-labs/open-chat/pull/9775))
 
 ## [[2.0.2097](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2097-user_index)] - 2026-10-05
 
