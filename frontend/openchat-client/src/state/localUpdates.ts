@@ -172,6 +172,7 @@ export class GlobalLocalState {
         this.#failedMessages.update((map) => {
             const state = map.get(key) ?? new Map<bigint, EventWrapper<Message>>();
             state.set(message.event.messageId, message);
+            map.set(key, state);
             return map;
         });
     }
