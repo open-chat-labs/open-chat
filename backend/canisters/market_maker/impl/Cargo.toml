@@ -31,7 +31,6 @@ icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
 market_maker_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
-per_round_timer = { path = "../../../libraries/per_round_timer" }
 rand = { workspace = true }
 serde = { workspace = true }
 stable_memory = { path = "../../../libraries/stable_memory" }
