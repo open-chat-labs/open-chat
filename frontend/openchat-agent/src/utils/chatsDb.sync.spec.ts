@@ -462,6 +462,80 @@ describe("setCachedChats", () => {
             );
         });
 
+        describe("a move recorded earlier", () => {
+            const movedOldToNew = { kind: "direct_chat", id: "old", version: 5, movedTo: "new" };
+
+            function earlierMove() {
+                return chatsDbWith({
+                    chats: { principal: globals() },
+                    chat_rows: {
+                        "direct_chat|new": directRow("new", 5),
+                        "direct_chat|other": directRow("other", 1),
+                    },
+                    chat_tombstones: { "direct_chat|old": movedOldToNew },
+                    sync: { head: 5 },
+                });
+            }
+
+            test("is dropped once the chat it moved to is deleted", async () => {
+                // so that a UI which hasn't pulled it isn't sent to a chat which isn't there
+                const { chatsDb, stores } = earlierMove();
+
+                await chatsDb.setCachedChats(
+                    state({ directChats: [direct("other")] }),
+                    emptyTouched(),
+                );
+
+                expect(stores.chat_tombstones.get("direct_chat|old")).toEqual({
+                    kind: "direct_chat",
+                    id: "old",
+                    version: 5,
+                });
+                expect(stores.chat_tombstones.get("direct_chat|old")).not.toHaveProperty("movedTo");
+                expect(stores.chat_tombstones.get("direct_chat|new")).toEqual({
+                    kind: "direct_chat",
+                    id: "new",
+                    version: 6,
+                });
+            });
+
+            test("is pointed on to where the chat it moved to has moved since", async () => {
+                const { chatsDb, stores } = earlierMove();
+
+                await chatsDb.setCachedChats(
+                    state({ directChats: [direct("newer"), direct("other")] }),
+                    {
+                        ...emptyTouched(),
+                        directChats: new Set(["newer"]),
+                        movedDirectChats: new Map([["new", "newer"]]),
+                    },
+                );
+
+                expect(stores.chat_tombstones.get("direct_chat|old")).toEqual({
+                    ...movedOldToNew,
+                    movedTo: "newer",
+                });
+                expect(stores.chat_tombstones.get("direct_chat|new")).toEqual({
+                    kind: "direct_chat",
+                    id: "new",
+                    version: 6,
+                    movedTo: "newer",
+                });
+            });
+
+            test("is left as it is while the chat it moved to is there", async () => {
+                const { chatsDb, stores } = earlierMove();
+
+                await chatsDb.setCachedChats(
+                    state({ directChats: [direct("new")] }),
+                    emptyTouched(),
+                );
+
+                expect(stores.chat_tombstones.get("direct_chat|old")).toEqual(movedOldToNew);
+                expect(stores.chat_tombstones.get("direct_chat|other")?.version).toBe(6);
+            });
+        });
+
         test("a chat removed without being moved is left as it was", async () => {
             const { chatsDb, stores } = moved();
 

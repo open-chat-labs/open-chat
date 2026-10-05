@@ -3769,19 +3769,27 @@ export class OpenChat {
     // Returns the chat to go to, or undefined if there's no such user. That's the chat under the
     // user's latest id if `chatId` is under one they had before being migrated to a MultiUser
     // canister, eg. from an old link or notification, since their chat was moved onto that id.
+    //
+    // A user is only looked up if they aren't held, unless `lookUpIfHeld`, for an id from outside
+    // the app, such as a link: a user held under an old id, eg. from before an upgrade, may have
+    // been migrated since without that being known. If that lookup fails, eg. offline, the user
+    // held is gone with.
     async createDirectChat(
         chatId: DirectChatIdentifier,
+        lookUpIfHeld = false,
     ): Promise<DirectChatIdentifier | undefined> {
-        if (!userStore.has(chatId.userId)) {
+        const latestChatId = (): DirectChatIdentifier => ({
+            kind: "direct_chat",
+            userId: userStore.latestUserId(chatId.userId),
+        });
+        const held = userStore.has(chatId.userId);
+        if (!held || (lookUpIfHeld && !serverDirectChatsStore.value.has(latestChatId()))) {
             const user = await this.getUser(chatId.userId);
-            if (user === undefined) {
+            if (user === undefined && !held) {
                 return undefined;
             }
         }
-        const directChatId: DirectChatIdentifier = {
-            kind: "direct_chat",
-            userId: userStore.latestUserId(chatId.userId),
-        };
+        const directChatId = latestChatId();
         // The placeholder would shadow the real chat in allServerChatsStore, making it appear empty.
         // This must be checked after the await above, since the chat may have arrived in the meantime.
         if (!serverDirectChatsStore.value.has(directChatId)) {
@@ -3831,7 +3839,8 @@ export class OpenChat {
                 return;
             }
             if (chatId.kind === "direct_chat") {
-                const directChatId = await this.createDirectChat(chatId);
+                // The route may have come from outside the app, eg. an old link or notification
+                const directChatId = await this.createDirectChat(chatId, true);
                 // The user may have moved on while the user was being looked up
                 if (!chatIdentifiersEqual(chatId, selectedChatIdStore.value)) {
                     return;

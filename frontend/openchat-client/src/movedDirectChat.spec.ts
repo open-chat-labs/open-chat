@@ -333,6 +333,26 @@ describe("a direct chat moved onto the other user's new id", () => {
         expect(localUpdates.anyUninitialisedDirectChats()).toBe(false);
     });
 
+    test("an old link to a user held under their old id, not known to have moved, goes to the new id", async () => {
+        // eg. held in a cache from before an upgrade
+        userStore.addUser(user("old8"));
+        migrated.set("old8", "new8");
+        serverDirectChatsStore.set(ChatMap.fromList([directChat("new8")]));
+        selectChat(direct("old8"));
+
+        await client.setSelectedChat(direct("old8"));
+
+        expect(usersAskedFor).toContain("old8");
+        expect(navigations).toEqual([{ url: "/chats/user/new8", intent: "auto" }]);
+    });
+
+    test("a chat started from within the app with a user who's held isn't held up by a lookup", async () => {
+        userStore.addUser(user("held9"));
+
+        expect(await client.createDirectChat(direct("held9"))).toEqual(direct("held9"));
+        expect(usersAskedFor).not.toContain("held9");
+    });
+
     test("an old link isn't followed if another chat was chosen while the user was looked up", async () => {
         migrated.set("old4", "new4");
         serverDirectChatsStore.set(ChatMap.fromList([directChat("new4")]));

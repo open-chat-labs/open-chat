@@ -523,6 +523,32 @@ export class ChatsDb {
         const cachedKeys = new Set(await rowsStore.getAllKeys());
         const rows = chatRowsToWrite(chatState, touched, cachedKeys, !globalsCached);
 
+        // A move recorded earlier onto a direct chat which this write removes would send a UI which
+        // hasn't yet pulled it to a chat which isn't there, or which is a new chat if one is later
+        // added under that id. So it's pointed on to where that chat has now moved, if it has, and
+        // is otherwise dropped. The tombstone keeps its version, so a UI which has already pulled it
+        // isn't sent it again. Read before this write's own tombstones are.
+        const removedDirectChats = new Set(
+            rows.removed.filter(({ kind }) => kind === "direct_chat").map(({ id }) => id),
+        );
+        const earlierMoveRequests =
+            removedDirectChats.size === 0
+                ? []
+                : (await tombstonesStore.getAll())
+                      .filter(
+                          ({ kind, movedTo }) =>
+                              kind === "direct_chat" &&
+                              movedTo !== undefined &&
+                              removedDirectChats.has(movedTo),
+                      )
+                      .map(({ movedTo, ...tombstone }) => {
+                          const next = touched.movedDirectChats.get(movedTo as string);
+                          return tombstonesStore.put(
+                              next === undefined ? tombstone : { ...tombstone, movedTo: next },
+                              chatRowKey(tombstone.kind, tombstone.id),
+                          );
+                      });
+
         const rowRequests = rows.put.flatMap(({ key, isNew, summary }) => {
             const row = serialisableRow(summary, version);
             const put = rowsStore.put(row, key);
@@ -574,6 +600,7 @@ export class ChatsDb {
         const promises: Promise<unknown>[] = [
             chatsStore.put(globalsOf(chatState), this.principalString),
             ...rowRequests,
+            ...earlierMoveRequests,
             ...removeRequests,
             ...movedTombstoneRequests,
             ...moveRequests,
