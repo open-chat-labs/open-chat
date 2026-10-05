@@ -389,13 +389,25 @@
     // empty, so lastMarkdown must be re-read from it or the draft would never be put back into it
     let lastMarkdownEditor: RichTextEditor | undefined;
 
+    // Called for the user's own input only, never for content the entry puts into the editor
     function onInput() {
         const inputContent = editor?.getMarkdown() ?? "";
-        lastMarkdown = inputContent;
-        onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
+        syncDraft(inputContent);
         triggerCommandSelector(inputContent);
         triggerTypingTimer();
-        containsMarkdown = detectMarkdown(inputContent);
+    }
+
+    // Putting content into the editor doesn't call onInput (it isn't the user typing), so the
+    // draft is synced with the editor's markdown for it here
+    function setEditorContent(editor: RichTextEditor, text: string) {
+        editor.setContent(text);
+        syncDraft(editor.getMarkdown());
+    }
+
+    function syncDraft(markdown: string) {
+        lastMarkdown = markdown;
+        onSetTextContent(markdown.trim().length === 0 ? undefined : markdown);
+        containsMarkdown = detectMarkdown(markdown);
     }
 
     function triggerCommandSelector(inputContent: string | null): void {
@@ -647,8 +659,7 @@
 
     function afterSendMessage() {
         editor?.clear();
-        lastMarkdown = "";
-        onSetTextContent();
+        syncDraft("");
 
         onStopTyping();
 
@@ -686,7 +697,8 @@
             }
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
-                    editor.setContent(
+                    setEditorContent(
+                        editor,
                         formatUserGroupMentions(
                             formatUserMentions(
                                 client.stripLinkDisabledMarker(editingEvent.event.content.text),
@@ -694,19 +706,15 @@
                         ),
                     );
                 } else if ("caption" in editingEvent.event.content) {
-                    editor.setContent(editingEvent.event.content.caption ?? "");
+                    setEditorContent(editor, editingEvent.event.content.caption ?? "");
                 }
                 previousEditingEvent = editingEvent;
-                lastMarkdown = editor.getMarkdown();
-                containsMarkdown = detectMarkdown(lastMarkdown);
             } else {
                 const text = textContent ?? "";
                 // Only set the textbox text when required rather than every time, because doing so sets the focus back to
                 // the start of the textbox on some devices.
                 if (lastMarkdown !== text) {
-                    editor.setContent(text);
-                    lastMarkdown = editor.getMarkdown();
-                    containsMarkdown = detectMarkdown(text);
+                    setEditorContent(editor, text);
                 }
             }
         } else {
