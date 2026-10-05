@@ -2586,10 +2586,10 @@ fn migrated_users_chats_end_up_in_stable_memory() {
     }
 
     // Their groups and communities can still be read further, and leaving them removes them from
-    // stable memory
+    // stable memory. The direct chats aren't included, since one now has no messages left.
     for user in migrated.iter() {
         mark_group_and_channel_read(env, user, group_id, community_id, channel_ids[0], 10);
-        let after = snapshot(env, user, &partners);
+        let after = snapshot(env, user, &[]);
         assert_eq!(after.groups, vec![(group_id, Some(10.into()))]);
         assert!(after.communities[0].1.contains(&(channel_ids[0], Some(10.into()))));
 
@@ -2597,7 +2597,7 @@ fn migrated_users_chats_end_up_in_stable_memory() {
         client::user::happy_path::leave_community(env, user, community_id);
         assert_eq!(count_in_stable_memory(env, multi_user_canister, user, KeyType::GroupChat), 0);
         assert_eq!(count_in_stable_memory(env, multi_user_canister, user, KeyType::Community), 0);
-        let after = snapshot(env, user, &partners);
+        let after = snapshot(env, user, &[]);
         assert!(after.groups.is_empty() && after.communities.is_empty());
     }
 
