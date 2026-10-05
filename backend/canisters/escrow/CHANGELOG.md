@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Retry failed swap status notifications after a delay rather than every round, and drop those to uninstalled canisters ([#TBD](https://github.com/open-chat-labs/open-chat/pull/TBD))
+- Retry failed swap status notifications after a delay rather than every round, and drop those to uninstalled canisters ([#9785](https://github.com/open-chat-labs/open-chat/pull/9785))
 
 ## [[2.0.2069](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2069-escrow)] - 2026-09-29
 
