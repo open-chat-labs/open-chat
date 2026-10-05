@@ -1,12 +1,12 @@
-use ic_cdk_timers::TimerId;
-use std::cell::{Cell, RefCell};
+use per_round_timer::PerRoundTimer;
+use std::cell::RefCell;
 use std::time::Duration;
 use tracing::{error, info};
 use types::{CanisterId, Cycles, Milliseconds};
 
 thread_local! {
     static CONFIG: RefCell<Option<Config>> = RefCell::default();
-    static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
+    static TIMER: RefCell<Option<PerRoundTimer>> = RefCell::default();
 }
 
 pub struct Config {
@@ -54,20 +54,14 @@ pub fn start(config: Config) {
 
     CONFIG.set(Some(config));
 
-    let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(interval), || async { run_once() });
-
-    if let Some(previous) = TIMER_ID.replace(Some(timer_id)) {
-        ic_cdk_timers::clear_timer(previous);
-    }
+    TIMER.set(Some(PerRoundTimer::new_with_interval(
+        Duration::from_millis(interval),
+        run_once,
+    )));
 }
 
 pub fn stop() -> bool {
-    if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        true
-    } else {
-        false
-    }
+    TIMER.take().is_some()
 }
 
 fn run_once() {
