@@ -5,6 +5,7 @@ import {
     CanisterMethodNotFoundError,
     CanisterUnavailableError,
     DestinationInvalidError,
+    InstructionLimitExceededError,
     ResponseTooLargeError,
     SessionExpiryError,
     TypeboxValidationError,
@@ -53,6 +54,7 @@ export abstract class CanisterAgent {
                     !(responseErr instanceof DestinationInvalidError) &&
                     !(responseErr instanceof CanisterUnavailableError) &&
                     !(responseErr instanceof CanisterMethodNotFoundError) &&
+                    !(responseErr instanceof InstructionLimitExceededError) &&
                     !(responseErr instanceof AuthError) &&
                     !(responseErr instanceof TypeboxValidationError) &&
                     retries < MAX_RETRIES
