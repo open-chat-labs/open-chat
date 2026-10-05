@@ -7024,10 +7024,10 @@ export class OpenChat {
                     },
                 })),
             )
-            .then((outcomes) => {
-                for (const ledger of new Set(funds.map((f) => f.ledger))) {
-                    this.refreshAccountBalance(ledger);
-                }
+            .then(async (outcomes) => {
+                // Each refresh resolves, falling back to 0 if it fails or times out
+                const ledgers = new Set(funds.map((f) => f.ledger));
+                await Promise.all([...ledgers].map((ledger) => this.refreshAccountBalance(ledger)));
                 return outcomes;
             });
     }
