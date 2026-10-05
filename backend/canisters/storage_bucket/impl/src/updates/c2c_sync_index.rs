@@ -20,6 +20,10 @@ fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
         state.data.users.add(user_id);
     }
 
+    for (old_user_id, new_user_id) in args.user_ids_migrated.unwrap_or_default() {
+        state.data.files.add_migrated_user_id(old_user_id, new_user_id);
+    }
+
     let mut files_removed: Vec<FileRemoved> = Vec::new();
 
     for user_id in args.users_removed {

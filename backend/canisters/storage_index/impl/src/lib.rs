@@ -1,4 +1,5 @@
 use crate::model::bucket_event_batch::{BucketEventBatch, EventToSync};
+use crate::model::bucket_user_ids_migrated_batch::BucketUserIdsMigratedBatch;
 use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
 use crate::model::files_reconciliation::{FilesReconciliation, FilesReconciliationMetrics};
@@ -15,10 +16,11 @@ use storage_index_canister::init::CyclesDispenserConfig;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, Cycles, FileAdded, FileRejected, FileRejectedReason, FileRemoved, Hash,
-    TimestampMillis, Timestamped,
+    TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
+use utils::migrated_user_ids::MigratedUserIds;
 
 mod guards;
 mod jobs;
@@ -63,6 +65,12 @@ impl RuntimeState {
         self.data.buckets.get(&caller).is_some()
     }
 
+    pub fn push_user_ids_migrated_to_buckets(&mut self, user_ids: Vec<(UserId, UserId)>) {
+        for bucket in self.data.buckets.iter().map(|b| b.canister_id) {
+            self.data.bucket_user_ids_migrated_queue.push_many(bucket, user_ids.clone());
+        }
+    }
+
     pub fn push_event_to_buckets(&mut self, event: EventToSync) {
         for bucket in self.data.buckets.iter().map(|b| b.canister_id) {
             self.data.bucket_event_sync_queue.push(bucket, event.clone());
@@ -84,6 +92,7 @@ impl RuntimeState {
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             user_controllers: self.data.user_controllers.iter().copied().collect(),
             user_count: self.data.users.len() as u64,
+            migrated_user_ids: self.data.migrated_user_ids.len() as u64,
             blob_count: file_metrics.blob_count,
             total_blob_bytes: file_metrics.total_blob_bytes,
             file_count: file_metrics.file_count,
@@ -117,6 +126,8 @@ struct Data {
     pub files: Files,
     pub buckets: Buckets,
     pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
+    #[serde(default = "default_bucket_user_ids_migrated_queue")]
+    pub bucket_user_ids_migrated_queue: GroupedTimerJobQueue<BucketUserIdsMigratedBatch>,
     #[serde(default = "default_vault_event_sync_queue")]
     pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
     #[serde(default)]
@@ -138,6 +149,10 @@ struct Data {
     // bucket-detected CSAM re-uploads back to it
     #[serde(default)]
     pub user_index_canister_id: Option<CanisterId>,
+    // Each user migrated to a MultiUser canister, from their old id to their new one, held so that
+    // each new bucket is told of them all (see c2c_user_ids_migrated)
+    #[serde(default)]
+    pub migrated_user_ids: MigratedUserIds,
     #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
@@ -154,6 +169,10 @@ struct Data {
 }
 
 fn default_vault_event_sync_queue() -> GroupedTimerJobQueue<VaultEventBatch> {
+    GroupedTimerJobQueue::new(5, false)
+}
+
+fn default_bucket_user_ids_migrated_queue() -> GroupedTimerJobQueue<BucketUserIdsMigratedBatch> {
     GroupedTimerJobQueue::new(5, false)
 }
 
@@ -183,12 +202,14 @@ impl Data {
             files: Files::default(),
             buckets: Buckets::default(),
             bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
+            bucket_user_ids_migrated_queue: default_bucket_user_ids_migrated_queue(),
             vault_event_sync_queue: default_vault_event_sync_queue(),
             vault_reviewers: Vec::new(),
             authority_reporter: None,
             csam_hashes: BTreeMap::new(),
             derived_csam_hashes: BTreeMap::new(),
             user_index_canister_id: None,
+            migrated_user_ids: MigratedUserIds::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             files_reconciliation: FilesReconciliation::default(),
@@ -268,6 +289,10 @@ impl Data {
             bucket.canister_id,
             self.users.keys().map(|p| EventToSync::UserAdded(*p)).collect(),
         );
+        // A client which hasn't yet learned of a user's migration may still name their old id as an
+        // accessor of a file uploaded to the new bucket
+        self.bucket_user_ids_migrated_queue
+            .push_many(bucket.canister_id, self.migrated_user_ids.iter().collect());
         if !self.vault_reviewers.is_empty() {
             self.vault_event_sync_queue.push(
                 bucket.canister_id,
@@ -375,6 +400,7 @@ pub struct Metrics {
     pub governance_principals: Vec<Principal>,
     pub user_controllers: Vec<Principal>,
     pub user_count: u64,
+    pub migrated_user_ids: u64,
     pub blob_count: u64,
     pub total_blob_bytes: u64,
     pub file_count: u64,

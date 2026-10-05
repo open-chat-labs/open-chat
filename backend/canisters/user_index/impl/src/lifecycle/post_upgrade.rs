@@ -47,6 +47,26 @@ fn post_upgrade(args: Args) {
         });
     }
 
+    // One-off: point the new queue of migrated user ids at the StorageIndex, and queue every user
+    // migrated so far, so that the storage buckets let the canisters now holding them delete the
+    // files which name their old ids as accessors. They're queued from a timer because pushing to
+    // the queue makes c2c calls. Only release this once every bucket has been upgraded to a version
+    // which records them, since older buckets would ignore them.
+    // TODO remove after the release containing this has been deployed
+    mutate_state(|state| {
+        let storage_index_canister_id = state.data.storage_index_canister_id;
+        state
+            .data
+            .storage_index_user_ids_migrated_queue
+            .set_state(storage_index_canister_id);
+    });
+    ic_cdk_timers::set_timer(Duration::ZERO, async {
+        mutate_state(|state| {
+            let user_ids = state.data.migrated_user_ids.iter().collect();
+            state.data.storage_index_user_ids_migrated_queue.push_many(user_ids);
+        });
+    });
+
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
 }

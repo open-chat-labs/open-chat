@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_user_ids_migrated` for the UserIndex to pass migrated users' old and new ids on to every bucket ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+
 ### Changed
 
 - Decode only the `canister_status` fields needed when checking whether buckets are full ([#9618](https://github.com/open-chat-labs/open-chat/pull/9618))

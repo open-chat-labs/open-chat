@@ -10,9 +10,10 @@ use std::cmp::Ordering;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BTreeSet};
 use storage_bucket_canister::upload_chunk_v2::Args as UploadChunkArgs;
-use types::{AccessorId, CanisterId, FileAdded, FileId, FileMetaData, FileRemoved, Hash, TimestampMillis};
+use types::{AccessorId, CanisterId, FileAdded, FileId, FileMetaData, FileRemoved, Hash, TimestampMillis, UserId};
 use utils::file_id::generate_file_id;
 use utils::hasher::hash_bytes;
+use utils::migrated_user_ids::MigratedUserIds;
 
 #[cfg(test)]
 mod proptests;
@@ -40,6 +41,12 @@ pub struct Files {
     // copy of the same bytes re-declares its own source), so this cannot grow past the blobs.
     #[serde(default)]
     source_hashes: BTreeMap<Hash, BTreeSet<Hash>>,
+    // Each user migrated to a MultiUser canister, from their old id to their new one. A direct
+    // message's files name the canisters holding its users as accessors, which for a user who was
+    // in a User canister of their own is their id, so the files they sent or received before being
+    // migrated name their old id.
+    #[serde(default)]
+    migrated_user_ids: MigratedUserIds,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -57,9 +64,15 @@ pub struct File {
 }
 
 impl File {
-    pub fn can_be_removed_by(&self, principal: Principal) -> bool {
+    // An accessor which is a user's id is followed through to the canister holding the user now,
+    // which is a MultiUser canister if they have been migrated since
+    pub fn can_be_removed_by(&self, principal: Principal, migrated_user_ids: &MigratedUserIds) -> bool {
         // TODO accessors should have roles rather than always being allowed to remove files
-        self.owner == principal || self.accessors.contains(&principal)
+        self.owner == principal
+            || self
+                .accessors
+                .iter()
+                .any(|a| *a == principal || migrated_user_ids.latest(UserId::from(*a)).canister_id() == principal)
     }
 
     pub fn meta_data(&self) -> FileMetaData {
@@ -171,7 +184,7 @@ impl Files {
 
     pub fn remove(&mut self, caller: Principal, file_id: FileId) -> RemoveFileResult {
         if let Some(file) = self.get(&file_id) {
-            if file.can_be_removed_by(caller) {
+            if file.can_be_removed_by(caller, &self.migrated_user_ids) {
                 let file_removed = self.remove_file(file_id).unwrap();
 
                 RemoveFileResult::Success(file_removed)
@@ -233,6 +246,11 @@ impl Files {
             size,
             meta_data,
         })
+    }
+
+    // Returns false if the migration is already recorded
+    pub fn add_migrated_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) -> bool {
+        self.migrated_user_ids.insert(old_user_id, new_user_id)
     }
 
     pub fn remove_pending_file(&mut self, file_id: &FileId) -> bool {
@@ -314,6 +332,7 @@ impl Files {
             total_file_bytes: self.total_file_bytes,
             expiration_queue_len: self.expiration_queue.len() as u64,
             source_hashes: self.source_hashes.len() as u64,
+            migrated_user_ids: self.migrated_user_ids.len() as u64,
         }
     }
 
@@ -678,6 +697,7 @@ pub struct Metrics {
     pub total_file_bytes: u64,
     pub expiration_queue_len: u64,
     pub source_hashes: u64,
+    pub migrated_user_ids: u64,
 }
 
 #[cfg(test)]
@@ -814,6 +834,55 @@ mod tests {
         files.remove_file(1);
         assert!(files.accessors_map.get(owner).is_empty());
         assert!(files.accessors_map.get(accessor).is_empty());
+    }
+
+    fn canister(i: u8) -> CanisterId {
+        CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1])
+    }
+
+    #[test]
+    fn a_file_naming_a_migrated_users_old_id_can_be_removed_by_the_canister_holding_them_now() {
+        let mut files = files();
+        let owner = Principal::from_slice(&[1]);
+        let old_user_id = UserId::from(canister(2));
+        let multi_user_canister = canister(3);
+        let new_user_id = UserId::new_indexed(multi_user_canister, 5);
+
+        put_as(&mut files, owner, vec![old_user_id.as_principal()], 1, b"one".to_vec(), None);
+        put_as(&mut files, owner, vec![old_user_id.as_principal()], 2, b"two".to_vec(), None);
+        assert!(matches!(
+            files.remove(multi_user_canister, 1),
+            RemoveFileResult::NotAuthorized
+        ));
+
+        assert!(files.add_migrated_user_id(old_user_id, new_user_id));
+        assert!(matches!(files.remove(canister(4), 1), RemoveFileResult::NotAuthorized));
+        assert!(matches!(files.remove(multi_user_canister, 1), RemoveFileResult::Success(_)));
+
+        // Migrated again, the user's old id is followed through to the canister holding them now
+        let newer_multi_user_canister = canister(6);
+        assert!(files.add_migrated_user_id(new_user_id, UserId::new_indexed(newer_multi_user_canister, 7)));
+        assert!(matches!(
+            files.remove(multi_user_canister, 2),
+            RemoveFileResult::NotAuthorized
+        ));
+        assert!(matches!(
+            files.remove(newer_multi_user_canister, 2),
+            RemoveFileResult::Success(_)
+        ));
+    }
+
+    #[test]
+    fn a_file_naming_a_user_in_a_multi_user_canister_can_be_removed_by_that_canister() {
+        let mut files = files();
+        let owner = Principal::from_slice(&[1]);
+        let multi_user_canister = canister(2);
+        let user_id = UserId::new_indexed(multi_user_canister, 5);
+
+        put_as(&mut files, owner, vec![user_id.as_principal()], 1, b"bytes".to_vec(), None);
+
+        assert!(matches!(files.remove(canister(3), 1), RemoveFileResult::NotAuthorized));
+        assert!(matches!(files.remove(multi_user_canister, 1), RemoveFileResult::Success(_)));
     }
 
     #[test]

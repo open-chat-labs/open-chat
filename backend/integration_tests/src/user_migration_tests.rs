@@ -14,8 +14,8 @@ use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     BotDefinition, BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, CanisterWasm, Chat, ChatId,
-    CommunityRole, DiamondMembershipPlanDuration, Document, Empty, IdempotentEnvelope, MessageContent, MessageContentInitial,
-    OptionUpdate, P2PSwapContentInitial, ReferralStatus, UserId,
+    CommunityRole, DiamondMembershipPlanDuration, Document, Empty, FileContent, IdempotentEnvelope, MessageContent,
+    MessageContentInitial, OptionUpdate, P2PSwapContentInitial, ReferralStatus, UserId,
 };
 use user_canister::UserCanisterEvent;
 use user_index_canister::user_migration::UserMigrationStatus;
@@ -2354,6 +2354,80 @@ fn online_users_knows_migrated_user_by_their_new_id() {
     assert_eq!(result.minutes_online + result.minutes_online_last_month, 2);
     assert_eq!(last_online(env, new_user_id), Some(0));
     assert!(last_online(env, user.user_id).is_none());
+}
+
+#[test]
+fn migrated_user_deletes_the_files_of_a_message_they_sent_before_being_migrated() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    // A direct message's file names the canisters holding its users as accessors, which for users in
+    // canisters of their own are their ids
+    let file = client::storage_index::happy_path::upload_file(
+        env,
+        user1.principal,
+        canister_ids.storage_index,
+        100,
+        vec![user1.user_id.as_principal(), user2.user_id.as_principal()],
+    );
+    let message_id = random_from_u128();
+    client::user::happy_path::send_message(
+        env,
+        &user1,
+        user2.user_id,
+        None,
+        MessageContentInitial::File(FileContent {
+            name: random_string(),
+            caption: None,
+            mime_type: "application/pdf".to_string(),
+            file_size: 100,
+            blob_reference: Some(file.clone()),
+        }),
+        None,
+        Some(message_id),
+    );
+
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id],
+        Some(multi_user_canister),
+    );
+    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user1.user_id);
+    tick_many(env, 10);
+
+    // Only the sender's copy of a deleted message deletes its files, which here is in the MultiUser
+    // canister, while the file still names the user's old id
+    let response = client::user::delete_messages(
+        env,
+        user1.principal,
+        new_user_id.canister_id(),
+        &user_canister::delete_messages::Args {
+            user_id: user2.user_id,
+            thread_root_message_index: None,
+            message_ids: vec![message_id],
+        },
+    );
+    assert!(matches!(response, types::UnitResult::Success), "{response:?}");
+
+    // Once the message can no longer be undeleted, its content is removed and its file deleted
+    env.advance_time(Duration::from_secs(5 * 60));
+    tick_until(env, |env| {
+        !client::storage_bucket::happy_path::file_exists(env, user1.principal, file.canister_id, file.blob_id)
+    });
 }
 
 fn cancel_user_migration(
