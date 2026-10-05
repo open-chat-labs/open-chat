@@ -10,7 +10,11 @@
 //! plus its args, the time and whichever facts only the canister knows. Guards, resolving the
 //! caller and the canister's own side effects stay in the canisters, which get anything they must
 //! do afterwards back as data rather than through callbacks.
+//!
+//! `migration` holds what a User canister hands over when its user is migrated to a MultiUser
+//! canister.
 
+pub mod migration;
 pub mod model;
 pub mod openchat_bot;
 pub mod queries;
