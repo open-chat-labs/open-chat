@@ -45,5 +45,9 @@ fn oldest_files_deleted_once_limit_exceeded() {
             let exists = client::storage_bucket::happy_path::file_exists(env, user.principal, *canister_id, *blob_id);
             assert_eq!(exists, index < 2);
         }
+
+        // The files deleted to make room no longer count towards the limit
+        let bytes_used = client::storage_index::happy_path::user(env, user.principal, canister_ids.storage_index).bytes_used;
+        assert_eq!(bytes_used, 500 * files.len().min(2) as u64);
     }
 }
