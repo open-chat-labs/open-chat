@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Check the cycles balance as background jobs run, not only as updates are handled ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
 - Ask for a top up once the cycles above the freezing threshold fall below 0.3T, or below twice the threshold, keeping about the old minimum while User canisters are migrated ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748), [#9751](https://github.com/open-chat-labs/open-chat/pull/9751))
-- Hand a migrating user's message reminders and other timer jobs over to their MultiUser canister, rather than waiting for them to run ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Hand a migrating user's message reminders and other timer jobs over to their MultiUser canister, rather than waiting for them to run ([#9779](https://github.com/open-chat-labs/open-chat/pull/9779))
 
 ### Removed
 
