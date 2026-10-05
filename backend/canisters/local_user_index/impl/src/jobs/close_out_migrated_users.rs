@@ -67,7 +67,6 @@ async fn process_user(user: UserToCloseOut) {
                         attempt: 0,
                         retry_after: 0,
                         delete_canister: false,
-                        return_to_pool: false,
                     });
                     jobs::refund_cycles::start_job_if_required(state, None);
                 }

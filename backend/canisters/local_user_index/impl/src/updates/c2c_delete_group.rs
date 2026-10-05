@@ -38,7 +38,6 @@ pub(crate) fn spawn_refund_then_delete_canister(canister_id: CanisterId) {
                 attempt: 0,
                 retry_after: 0,
                 delete_canister: true,
-                return_to_pool: false,
             });
             jobs::refund_cycles::start_job_if_required(state, None);
         });

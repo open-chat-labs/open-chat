@@ -330,7 +330,6 @@ fn queue_refund(state: &mut RuntimeState, canister_id: CanisterId) {
             attempt: 0,
             retry_after: 0,
             delete_canister: false,
-            return_to_pool: false,
         });
     }
 }
