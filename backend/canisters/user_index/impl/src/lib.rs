@@ -499,6 +499,14 @@ impl RuntimeState {
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             event_store_client_info,
             pending_payments: self.data.pending_payments_queue.len(),
+            payments_awaiting_retry: self
+                .data
+                .timer_jobs
+                .iter()
+                // A job which has already run leaves an empty entry behind
+                .filter(|(_, wrapper)| matches!(wrapper.borrow().as_ref(), Some(TimerJob::RetryPayment(_))))
+                .count() as u32,
+            parked_payments: self.data.pending_payments_queue.parked_len() as u32,
             pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
             reporting_metrics: self.data.reported_messages.metrics(),
             authority_report_metrics: self.data.authority_reports.metrics(),
@@ -959,6 +967,8 @@ pub struct Metrics {
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub event_store_client_info: EventStoreClientInfo,
     pub pending_payments: usize,
+    pub payments_awaiting_retry: u32,
+    pub parked_payments: u32,
     pub pending_users_to_sync_to_storage_index: usize,
     pub reporting_metrics: ReportingMetrics,
     pub authority_report_metrics: AuthorityReportMetrics,

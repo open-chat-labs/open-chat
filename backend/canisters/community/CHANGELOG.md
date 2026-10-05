@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove the one-off `post_upgrade` jobs and the legacy user event queue now that they have run on prod ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))
 - Remove the fallback to an approval of the community's default account when taking an access gate's payment ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))
 
+### Fixed
+
+- Retry payments whose ledger can't be called after a growing delay rather than every round, and park those to uninstalled or deleted ledgers ([#PR_NUMBER](https://github.com/open-chat-labs/open-chat/pull/PR_NUMBER))
+
 ## [[2.0.2087](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2087-community)] - 2026-10-02
 
 ### Added
