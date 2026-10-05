@@ -50,6 +50,11 @@ describe("redactSecrets", () => {
             chat_id: "abc",
             sign_in_proof_jwt: REDACTED,
         });
+        expect(redactSecrets({ kind: "claimPrize", messageId: 1n, signInProof: "jwt" })).toEqual({
+            kind: "claimPrize",
+            messageId: 1n,
+            signInProof: REDACTED,
+        });
     });
 
     test("only redacts `new` for set_pin_number", () => {

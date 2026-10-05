@@ -13,8 +13,9 @@ export const SECRET_KEYS: readonly string[] = [
     // The setPinNumber worker request
     "newPin",
     "signInProofJwt",
-    // claim_prize
+    // claim_prize, and the claimPrize worker request
     "sign_in_proof_jwt",
+    "signInProof",
 ];
 
 const secretKeys = new Set(SECRET_KEYS);
