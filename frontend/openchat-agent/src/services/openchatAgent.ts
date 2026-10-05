@@ -277,6 +277,7 @@ import {
     mergeGroupChats,
 } from "../utils/chat";
 import { ChatsDb } from "../utils/chatsDb";
+import { reportIfSlow } from "../utils/slowSyncRead";
 import { mergeWaitAllResults, summaryUpdatesArgsByLocalUserIndex } from "../utils/summaryUpdates";
 import { CacheWriteQueue } from "../utils/cacheWriteQueue";
 import { applyRefresh, refreshArgs, refreshTarget } from "../utils/refreshChat";
@@ -2676,18 +2677,37 @@ export class OpenChatAgent extends EventTarget {
         if (userId === ANON_USER_ID) {
             return { userId, version: 0, updates: emptyUpdatesResult() };
         }
-        const { head, chats, stamps } = await this._chatsDb.getChatsForSync(since);
-        if (chats === undefined) {
-            // Nothing to answer from, which is not the same as nothing having changed: a cache
-            // found unusable has its globals cleared with its rows left in place, so that the
-            // full load which follows can tombstone what has gone. Answering at `head` would carry the
-            // UI's cursor past everything stamped since `since` with none of it delivered. The
-            // cursor stays where it is instead, and the write that refills the cache announces
-            // a head the UI then pulls to from here.
-            return { userId, version: Math.min(since, head), updates: emptyUpdatesResult() };
-        }
-        const updates = updatesSince(chats, stamps ?? emptySyncStamps(), since);
-        return { userId, version: head, updates: this.#hydrateUpdates(updates) };
+        // A pull the UI gives up on (it waits a minute) says nothing about why, so a slow read is
+        // reported from here, naming the phase it is in, even if it never finishes
+        return reportIfSlow(
+            async (setPhase) => {
+                const { head, chats, stamps } = await this._chatsDb.getChatsForSync(
+                    since,
+                    setPhase,
+                );
+                if (chats === undefined) {
+                    // Nothing to answer from, which is not the same as nothing having changed: a cache
+                    // found unusable has its globals cleared with its rows left in place, so that the
+                    // full load which follows can tombstone what has gone. Answering at `head` would carry the
+                    // UI's cursor past everything stamped since `since` with none of it delivered. The
+                    // cursor stays where it is instead, and the write that refills the cache announces
+                    // a head the UI then pulls to from here.
+                    return {
+                        userId,
+                        version: Math.min(since, head),
+                        updates: emptyUpdatesResult(),
+                    };
+                }
+                const updates = updatesSince(chats, stamps ?? emptySyncStamps(), since);
+                return { userId, version: head, updates: this.#hydrateUpdates(updates) };
+            },
+            (phase, slowMs) =>
+                this._logger.error(
+                    "Sync read slow",
+                    new Error(`Sync read still ${phase} after ${slowMs}ms`),
+                    { since },
+                ),
+        );
     }
 
     // Tells the UI where the cache's version counter is so it can pull what it has not seen.

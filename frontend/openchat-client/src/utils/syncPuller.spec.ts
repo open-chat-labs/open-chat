@@ -208,6 +208,29 @@ describe("SyncPuller", () => {
         expect(puller.cursor?.version).toBe(3);
     });
 
+    // Invariant (#9757): a pull the worker rejects is logged as an Error carrying the rejection's
+    // name and message, not the plain object the worker sends
+    test("a pull the worker rejects is logged as an Error with the rejection's cause", async () => {
+        const logged: unknown[] = [];
+        const puller = new SyncPuller({
+            pull: () =>
+                Promise.reject({ name: "AbortError", message: "The transaction was aborted" }),
+            fold: async () => {},
+            log: (_message, err) => logged.push(err),
+        });
+        await puller.seed(answer(1), async () => {});
+
+        puller.onHead({ userId: "u1", version: 2 });
+        await settle();
+
+        expect(logged).toHaveLength(1);
+        expect(logged[0]).toBeInstanceOf(Error);
+        expect(logged[0]).toMatchObject({
+            name: "AbortError",
+            message: "The transaction was aborted",
+        });
+    });
+
     test("a snapshot from a load begun before clear() is dropped", async () => {
         const { puller, folded, errors } = harness();
         const generation = puller.generation;

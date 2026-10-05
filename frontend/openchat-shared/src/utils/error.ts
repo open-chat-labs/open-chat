@@ -273,6 +273,25 @@ export function requiresLogout(error: unknown): boolean {
     return error.name === SESSION_EXPIRY_ERROR_NAME || error.name === INVALID_DELEGATION_ERROR_NAME;
 }
 
+// How the worker sends a failed request's error to the client. Its own properties alone would lose
+// a DOMException's name and message, which are inherited getters, and IndexedDB fails with
+// DOMExceptions, so those two are named as well.
+export function serialiseWorkerError(error: unknown): string {
+    return JSON.stringify(error, [...Object.getOwnPropertyNames(error), "name", "message"]);
+}
+
+// A rejection from the worker is a plain object (see `serialiseWorkerError`), which Rollbar takes
+// as a bare message with no exception. This rebuilds it as an Error with the same properties.
+export function toError(error: unknown): Error {
+    if (error instanceof Error) return error;
+    if (error == null || typeof error !== "object") return new Error(String(error));
+    const message =
+        "message" in error && typeof error.message === "string"
+            ? error.message
+            : JSON.stringify(error);
+    return Object.assign(new Error(message), error);
+}
+
 export function pinNumberFailureFromError(error: OCError): PinNumberFailures | undefined {
     function nextRetryAt(message: string | undefined): bigint {
         if (message === undefined) return BigInt(0);

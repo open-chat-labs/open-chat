@@ -58,6 +58,7 @@ import {
     updateCreatedUser,
 } from "@shared";
 import { IndexedDbConnectionManager } from "./indexedDb";
+import type { SyncReadPhase } from "./slowSyncRead";
 import {
     chatRowKey,
     chatRowsToWrite,
@@ -672,18 +673,26 @@ export class ChatsDb {
      * written, stale or unusable - and the caller must not move the UI's cursor on the strength
      * of it: the rows and tombstones may still hold changes the UI has not seen. Nothing is wiped
      * here; the updates loop does that when it reads the cache.
+     *
+     * `setPhase` is told where the read has got to (see `SyncReadPhase`).
      */
-    async getChatsForSync(since: number): Promise<{
+    async getChatsForSync(
+        since: number,
+        setPhase: (phase: SyncReadPhase) => void = () => undefined,
+    ): Promise<{
         head: number;
         chats: ChatsSince | undefined;
         stamps: SyncStamps | undefined;
     }> {
+        setPhase("opening");
         const tx = (await this.getDb()).transaction(
             ["sync", "chats", "chat_rows", "chat_tombstones"],
             "readonly",
         );
+        setPhase("waiting");
         const syncStore = tx.objectStore("sync");
         const head = await readSyncHead(syncStore);
+        setPhase("reading");
         const globals = await tx.objectStore("chats").get(this.principalString);
         if (globals == null || isStale(globals) || !globalsAreUsable(globals)) {
             await tx.done;
@@ -694,6 +703,7 @@ export class ChatsDb {
         const tombstones = await tx.objectStore("chat_tombstones").index("version").getAll(after);
         const stamps = await readSyncStamps(syncStore);
         await tx.done;
+        setPhase("building");
 
         const state = stateFromRows(globals, rows);
         if (!state.directChats.every(directChatIsUsable)) {

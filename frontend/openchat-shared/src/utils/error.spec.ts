@@ -8,9 +8,11 @@ import {
 } from "../domain";
 import {
     requiresLogout,
+    serialiseWorkerError,
     shouldReportError,
     shouldReportMessage,
     shouldReportWorkerError,
+    toError,
 } from "./error";
 
 // `toCanisterResponseError` copies the IC error code of the rejection onto the mapped error
@@ -207,7 +209,9 @@ describe("shouldReportError", () => {
             ),
         ).toBe(false);
         expect(
-            shouldReportError(new HttpError(0, new Error("Failed to fetch HTTP request: Load failed"))),
+            shouldReportError(
+                new HttpError(0, new Error("Failed to fetch HTTP request: Load failed")),
+            ),
         ).toBe(false);
         // the same words from a plain Error are still a signal
         expect(shouldReportError(new Error("Failed to fetch HTTP request: Failed to fetch"))).toBe(
@@ -423,5 +427,51 @@ describe("shouldReportMessage", () => {
         expect(shouldReportMessage("TypeError", "Cannot read properties of undefined")).toBe(true);
         expect(shouldReportMessage("", "something unexpected")).toBe(true);
         expect(shouldReportMessage("Error", 'Events response error: {"code":999}')).toBe(true);
+    });
+});
+
+describe("worker errors", () => {
+    // Invariant (#9757): an error sent from the worker keeps its name and message, including a
+    // DOMException's, whose name and message are not its own properties
+    test("a DOMException crossing the worker keeps its name and message", () => {
+        const sent = JSON.parse(
+            serialiseWorkerError(new DOMException("The transaction was aborted", "AbortError")),
+        );
+
+        expect(sent.name).toBe("AbortError");
+        expect(sent.message).toBe("The transaction was aborted");
+    });
+
+    test("an Error crossing the worker keeps its name, message, stack and other fields", () => {
+        const error = Object.assign(new Error("boom"), { code: 42 });
+        error.name = "CustomError";
+
+        const sent = JSON.parse(serialiseWorkerError(error));
+
+        expect(sent).toMatchObject({ name: "CustomError", message: "boom", code: 42 });
+        expect(sent.stack).toContain("boom");
+    });
+
+    // Invariant (#9757): a rejection from the worker is logged as an Error with the rejection's
+    // name, message and other fields, so Rollbar reports it as an exception rather than a bare message
+    test("toError rebuilds a worker rejection as an Error with the same fields", () => {
+        const rejection = JSON.parse(
+            serialiseWorkerError(new DOMException("The transaction was aborted", "AbortError")),
+        );
+
+        const error = toError(rejection);
+
+        expect(error).toBeInstanceOf(Error);
+        expect(error.name).toBe("AbortError");
+        expect(error.message).toBe("The transaction was aborted");
+        expect(toError({ code: 7 })).toMatchObject({ code: 7, message: '{"code":7}' });
+    });
+
+    test("toError leaves an Error as it is and wraps anything else", () => {
+        const error = new Error("as is");
+
+        expect(toError(error)).toBe(error);
+        expect(toError("text").message).toBe("text");
+        expect(toError(undefined).message).toBe("undefined");
     });
 });

@@ -668,6 +668,29 @@ describe("getChatsForSync", () => {
         expect(log).not.toContain("getAll chat_rows");
     });
 
+    // Invariant (#9757): a sync read reports its phases in the order it reaches them - opening,
+    // waiting until the transaction's first read answers, reading, then building the answer
+    test("tells the caller each phase of the read as it reaches it", async () => {
+        const { chatsDb, log } = chatsDbWith({
+            chats: { principal: globals() },
+            chat_rows: { "group_chat|a": groupRow("a", 2) },
+            sync: { head: 4 },
+        });
+
+        await chatsDb.getChatsForSync(0, (phase) => log.push(`phase ${phase}`));
+
+        const phases = log.filter((entry) => entry.startsWith("phase "));
+        expect(phases).toEqual([
+            "phase opening",
+            "phase waiting",
+            "phase reading",
+            "phase building",
+        ]);
+        expect(log.indexOf("phase waiting")).toBeLessThan(log.indexOf("get sync head"));
+        expect(log.indexOf("get sync head")).toBeLessThan(log.indexOf("phase reading"));
+        expect(log.at(-1)).toBe("phase building");
+    });
+
     test("an empty cache answers with the head and nothing to answer from", async () => {
         const { chatsDb } = chatsDbWith({ sync: { head: 4 } });
 

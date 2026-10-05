@@ -1,4 +1,4 @@
-import type { SyncHead, SyncSinceResponse, UpdatesResult } from "@shared";
+import { toError, type SyncHead, type SyncSinceResponse, type UpdatesResult } from "@shared";
 
 export const SYNC_PULL_TIMEOUT_MS = 60_000;
 
@@ -145,7 +145,8 @@ export class SyncPuller {
                 }
             });
         } catch (err) {
-            this.deps.log?.("Sync pull failed", err);
+            // An Error even when the worker rejected, so the report carries the cause
+            this.deps.log?.("Sync pull failed", toError(err));
         }
     }
 
