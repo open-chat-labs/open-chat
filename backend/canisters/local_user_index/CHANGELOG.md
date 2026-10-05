@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Reclaim the canisters which only the old LocalGroupIndex still controls, then refund and delete them and it ([#9773](https://github.com/open-chat-labs/open-chat/pull/9773))
+
 ### Removed
 
 - Remove the one-off refund of the pool canisters' cycles, which ran on the last upgrade ([#9770](https://github.com/open-chat-labs/open-chat/pull/9770))
