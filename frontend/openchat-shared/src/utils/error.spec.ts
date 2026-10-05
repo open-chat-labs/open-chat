@@ -360,9 +360,7 @@ describe("shouldReportError", () => {
                 message: "Worker has no agent to handle request: getUsers",
             }),
         ).toBe(false);
-        expect(
-            shouldReportError({ ...rejection, message: "Worker failed to handle request" }),
-        ).toBe(true);
+        expect(shouldReportError({ ...rejection, message: "Worker not initialised" })).toBe(true);
     });
 
     test("silences Safari storage and in-app browser bridge failures", () => {
