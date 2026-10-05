@@ -20,21 +20,11 @@ fn post_upgrade(args: Args) {
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
-    // One-off: `total_blob_bytes` was overcounted for blobs referenced by more than one user.
-    // TODO remove in the release after this one
-    let (previous_total_blob_bytes, total_blob_bytes) = data.files.recompute_total_blob_bytes();
-    info!(previous_total_blob_bytes, total_blob_bytes, "Recomputed total_blob_bytes");
-
     let env = init_env(data.rng_seed);
 
-    // One-off: check every file reference against the bucket holding the file, removing those
-    // whose file is gone (see `FilesReconciliation`). It only ever starts once.
-    // TODO remove once it has completed in prod
-    data.files_reconciliation.start(env.now());
-
     // One-off: add a reference for each file a bucket holds which the index has none for,
-    // charging its owner, as the forwarded copies' references were removed by the reconciliation
-    // (see `FilesBackfill`). It only ever starts once.
+    // charging its owner, as the forwarded copies' references were removed by the files
+    // reconciliation (see `FilesBackfill`). It only ever starts once.
     // TODO remove once it has completed in prod
     data.files_backfill.start(env.now());
 

@@ -9,6 +9,7 @@ import { offline } from "./network";
 import { NOOP } from "../constants";
 import type { LogLevel } from "../domain/logging";
 import { shouldReportError, shouldReportMessage } from "./error";
+import { SECRET_KEYS } from "./redact";
 
 let rollbar: Rollbar | undefined;
 
@@ -156,6 +157,9 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
             environment: env,
             enabled: env === "production",
             captureUnhandledRejections: true,
+            // Added to Rollbar's defaults. Requests are redacted before they are logged, this
+            // catches any which are not.
+            scrubFields: [...SECRET_KEYS],
             // Noise with no fix on our side: opaque cross-origin "Script error." (injected
             // scripts, extensions), and Chrome extension messaging failures
             ignoredMessages: [

@@ -5,9 +5,9 @@ use types::{CanisterId, FileId, TimestampMillis};
 
 // One-off: adds a reference for each file a bucket holds which the index has no reference for,
 // charging its owner as if they had uploaded it. Until #9761 a forwarded file was reported to the
-// index as the original file's, and `FilesReconciliation` removed those references, so no one was
-// charged for the forwarded copies, and once the original owner deleted their own file no one was
-// paying for the bytes at all.
+// index as the original file's, and the one-off files reconciliation (#9765) removed those
+// references, so no one was charged for the forwarded copies, and once the original owner deleted
+// their own file no one was paying for the bytes at all.
 //
 // Once every bucket has been paged through, each owner over their limit has their oldest files
 // removed, as an upload over the limit would. No more is freed than they were charged, so an owner

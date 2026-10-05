@@ -2,7 +2,6 @@ use crate::model::bucket_event_batch::{BucketEventBatch, EventToSync};
 use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::{Files, UserFile};
 use crate::model::files_backfill::{BackfilledReference, FilesBackfill, FilesBackfillMetrics, LimitCheck};
-use crate::model::files_reconciliation::{FilesReconciliation, FilesReconciliationMetrics};
 use crate::model::vault_event_batch::VaultEventBatch;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
@@ -99,7 +98,6 @@ impl RuntimeState {
             bucket_upgrades_in_progress: bucket_upgrade_metrics.in_progress,
             bucket_upgrades_failed: bucket_upgrade_metrics.failed,
             bucket_canister_wasm: self.data.bucket_canister_wasm.version,
-            files_reconciliation: self.data.files_reconciliation.metrics(),
             files_backfill: self.data.files_backfill.metrics(),
             cycles_dispenser_config: self.data.cycles_dispenser_config.clone(),
             stable_memory_sizes: memory::memory_sizes(),
@@ -145,8 +143,6 @@ struct Data {
     #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
-    #[serde(default)]
-    pub files_reconciliation: FilesReconciliation,
     #[serde(default)]
     pub files_backfill: FilesBackfill,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -197,7 +193,6 @@ impl Data {
             user_index_canister_id: None,
             fire_and_forget_handler: FireAndForgetHandler::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            files_reconciliation: FilesReconciliation::default(),
             files_backfill: FilesBackfill::default(),
             total_cycles_spent_on_canisters: 0,
             cycles_dispenser_config,
@@ -466,7 +461,6 @@ pub struct Metrics {
     pub bucket_upgrades_in_progress: u64,
     pub bucket_upgrades_failed: Vec<FailedUpgradeCount>,
     pub bucket_canister_wasm: BuildVersion,
-    pub files_reconciliation: FilesReconciliationMetrics,
     pub files_backfill: FilesBackfillMetrics,
     pub cycles_dispenser_config: CyclesDispenserConfig,
     pub stable_memory_sizes: BTreeMap<u8, u64>,

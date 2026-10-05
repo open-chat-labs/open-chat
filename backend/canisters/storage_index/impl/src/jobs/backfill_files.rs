@@ -1,6 +1,5 @@
 use crate::model::files_backfill::Stage;
 use crate::{RuntimeState, mutate_state, read_state};
-use constants::MINUTE_IN_MS;
 use std::cell::Cell;
 use std::time::Duration;
 use storage_bucket_canister::c2c_files::{Args, Response};
@@ -94,13 +93,6 @@ async fn add_references(bucket: CanisterId, after: Option<FileId>) {
 }
 
 fn remove_files() {
-    // The references the reconciliation removes still count towards their owners' bytes used,
-    // which decides who is over their limit, so it must have completed first
-    if read_state(|state| state.data.files_reconciliation.in_progress()) {
-        schedule(MINUTE_IN_MS);
-        return;
-    }
-
     let completed = mutate_state(|state| {
         while ic_cdk::api::instruction_counter() < MAX_INSTRUCTIONS_PER_RUN {
             let Some((user_id, charged)) = state.data.files_backfill.pop_charged() else {
