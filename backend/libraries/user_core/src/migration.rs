@@ -14,9 +14,9 @@ pub struct MigratingUser<U = User> {
 }
 
 // A timer job of a migrating user's, as the User canister hands it over, which the MultiUser canister
-// schedules again for the user once it has imported them. Jobs which act as the user's canister,
-// such as calls to the escrow canister or to a group made by it, can't be handed over, so the user
-// isn't migrated while they have any of those.
+// schedules again for the user once it has imported them. Jobs tied to the user's canister, such as
+// its calls to the escrow canister or to a group, or the expiry of a swap whose status the escrow
+// canister tells it of, can't be handed over, so the user isn't migrated while they have any of those.
 #[derive(Serialize, Deserialize, Debug)]
 pub enum MigratedTimerJob {
     HardDeleteMessageContent {
@@ -37,11 +37,6 @@ pub enum MigratedTimerJob {
     },
     MarkVideoCallEnded {
         them: UserId,
-        message_id: MessageId,
-    },
-    MarkP2PSwapExpired {
-        chat_id: ChatId,
-        thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
     },
 }

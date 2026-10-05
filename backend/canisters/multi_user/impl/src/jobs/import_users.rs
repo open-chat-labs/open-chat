@@ -299,7 +299,7 @@ fn deserialize_migrating_user(bytes: &[u8]) -> Result<MigratingUser, String> {
                 user,
                 timer_jobs: Vec::new(),
             })
-            .map_err(|_| format!("{error:?}"))
+            .map_err(|bare_user_error| format!("{error:?}, or as a bare user: {bare_user_error:?}"))
     })
 }
 
@@ -324,4 +324,54 @@ fn fail_import(old_user_id: UserId, error: OCError, state: &mut RuntimeState) {
         }),
         now,
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+    use user_core::migration::MigratedTimerJob;
+
+    fn user() -> User {
+        User::new(Principal::from_slice(&[1]), "username".to_string(), None, 1)
+    }
+
+    #[test]
+    fn migrating_user_is_deserialized_with_their_timer_jobs() {
+        let bytes = msgpack::serialize_then_unwrap(MigratingUser {
+            user: &user(),
+            timer_jobs: vec![(
+                MigratedTimerJob::MarkVideoCallEnded {
+                    them: Principal::from_slice(&[2]).into(),
+                    message_id: 3u64.into(),
+                },
+                4,
+            )],
+        });
+
+        let migrating_user = deserialize_migrating_user(&bytes).unwrap();
+
+        assert_eq!(migrating_user.user.principal, Principal::from_slice(&[1]));
+        assert!(matches!(
+            migrating_user.timer_jobs.as_slice(),
+            [(MigratedTimerJob::MarkVideoCallEnded { them, .. }, 4)] if *them == Principal::from_slice(&[2]).into()
+        ));
+    }
+
+    #[test]
+    fn bare_user_is_deserialized_with_no_timer_jobs() {
+        let bytes = msgpack::serialize_then_unwrap(user());
+
+        let migrating_user = deserialize_migrating_user(&bytes).unwrap();
+
+        assert_eq!(migrating_user.user.principal, Principal::from_slice(&[1]));
+        assert!(migrating_user.timer_jobs.is_empty());
+    }
+
+    #[test]
+    fn neither_shape_fails() {
+        let bytes = msgpack::serialize_then_unwrap(vec![1u8, 2, 3]);
+
+        assert!(deserialize_migrating_user(&bytes).is_err());
+    }
 }

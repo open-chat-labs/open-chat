@@ -142,16 +142,6 @@ impl TimerJob {
                 them,
                 message_id,
             }),
-            MigratedTimerJob::MarkP2PSwapExpired {
-                chat_id,
-                thread_root_message_index,
-                message_id,
-            } => TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
-                user_index,
-                chat_id,
-                thread_root_message_index,
-                message_id,
-            })),
         }
     }
 
