@@ -1,6 +1,7 @@
+import { AnonymousIdentity, type HttpAgent } from "@icp-sdk/core/agent";
 import { describe, expect, test, vi } from "vitest";
-import { TypeboxValidationError } from "@shared";
-import { CommunitySendMessageResponse } from "../../typebox";
+import { REDACTED, TypeboxValidationError } from "@shared";
+import { CommunitySendMessageResponse, UnitResult, UserSetPinNumberArgs } from "../../typebox";
 import { serializeToMsgPack } from "../../utils/msgpack";
 import { SingleCanisterMsgpackAgent } from "./msgpack";
 
@@ -47,6 +48,72 @@ describe("MsgpackCanisterAgent.deserializeResponse", () => {
             }
         } finally {
             spy.mockRestore();
+        }
+    });
+});
+
+// A user canister client whose every call fails before reaching the IC
+class FailingUserAgent extends SingleCanisterMsgpackAgent {
+    constructor() {
+        const agent = {
+            call: () => Promise.reject(new Error("call failed")),
+        } as unknown as HttpAgent;
+        super(new AnonymousIdentity(), agent, "rrkah-fqaaa-aaaaa-aaaaq-cai", "User");
+    }
+
+    setPinNumber(args: unknown): Promise<unknown> {
+        return this.update(
+            "set_pin_number",
+            args as UserSetPinNumberArgs,
+            (resp) => resp,
+            UserSetPinNumberArgs,
+            UnitResult,
+        );
+    }
+}
+
+describe("MsgpackCanisterAgent logging", () => {
+    function logged(spy: { mock: { calls: unknown[][] } }): string {
+        return spy.mock.calls.map((call) => String(JSON.stringify(call.slice(1)))).join();
+    }
+
+    test("a failed update logs its args without the PIN", async () => {
+        const spy = vi.spyOn(console, "log").mockImplementation(() => {});
+        try {
+            await expect(
+                new FailingUserAgent().setPinNumber({ new: "5678", verification: { PIN: "1234" } }),
+            ).rejects.toThrow();
+            expect(spy).toHaveBeenCalledWith(expect.any(Error), {
+                new: REDACTED,
+                verification: { PIN: REDACTED },
+            });
+            expect(logged(spy)).not.toMatch(/1234|5678/);
+        } finally {
+            spy.mockRestore();
+        }
+    });
+
+    test("args which fail validation are logged without the PIN", async () => {
+        const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+        try {
+            // Fails on `verification`, so typebox's own error holds the object with the PIN in it
+            await expect(
+                new FailingUserAgent().setPinNumber({
+                    new: "5678",
+                    verification: { PIN: ["1234"] },
+                }),
+            ).rejects.toThrow(TypeboxValidationError);
+            expect(errorSpy).toHaveBeenCalledWith(
+                "Typebox validation failed: ",
+                { new: REDACTED, verification: { PIN: REDACTED } },
+                expect.any(Error),
+            );
+            expect(logged(errorSpy)).not.toMatch(/1234|5678/);
+            expect(logged(logSpy)).not.toMatch(/1234|5678/);
+        } finally {
+            errorSpy.mockRestore();
+            logSpy.mockRestore();
         }
     });
 });
