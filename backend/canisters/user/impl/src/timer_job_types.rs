@@ -9,6 +9,7 @@ use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 use user_canister::C2CReplyContext;
 use user_core::TokenSwap;
+use user_core::migration::MigratedTimerJob;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -115,6 +116,54 @@ pub struct MarkVideoCallEndedJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ClaimOrResetStreakInsuranceJob;
+
+// What becomes of a timer job when the user is migrated to a MultiUser canister
+pub enum JobOnMigration {
+    // The MultiUser canister schedules it again from the user's state
+    RebuiltFromState,
+    // Handed over along with the user, for the MultiUser canister to schedule again
+    HandedOver(MigratedTimerJob),
+    // The job is tied to this canister, eg. calling the escrow canister or a group as the user, or
+    // moving funds held by it, so the user isn't migrated until it has run
+    BlocksMigration,
+}
+
+impl TimerJob {
+    pub fn on_migration(&self) -> JobOnMigration {
+        match self {
+            TimerJob::RemoveExpiredEvents(_) | TimerJob::ClaimOrResetStreakInsurance(_) => JobOnMigration::RebuiltFromState,
+            TimerJob::HardDeleteMessageContent(job) => JobOnMigration::HandedOver(MigratedTimerJob::HardDeleteMessageContent {
+                chat_id: job.chat_id,
+                thread_root_message_index: job.thread_root_message_index,
+                message_id: job.message_id,
+            }),
+            TimerJob::DeleteFileReferences(job) => JobOnMigration::HandedOver(MigratedTimerJob::DeleteFileReferences {
+                files: job.files.clone(),
+            }),
+            TimerJob::MessageReminder(job) => JobOnMigration::HandedOver(MigratedTimerJob::MessageReminder {
+                reminder_id: job.reminder_id,
+                chat: job.chat,
+                thread_root_message_index: job.thread_root_message_index,
+                event_index: job.event_index,
+                notes: job.notes.clone(),
+                reminder_created_message_index: job.reminder_created_message_index,
+            }),
+            TimerJob::MarkVideoCallEnded(job) => JobOnMigration::HandedOver(MigratedTimerJob::MarkVideoCallEnded {
+                them: job.them,
+                message_id: job.message_id,
+            }),
+            // The escrow canister tells this canister of each status change of a swap offered to the
+            // user in a direct chat, until the swap ends, whereas the swap is only in their
+            // `p2p_swaps` once they accept it
+            TimerJob::MarkP2PSwapExpired(_) => JobOnMigration::BlocksMigration,
+            TimerJob::ProcessTokenSwap(_)
+            | TimerJob::NotifyEscrowCanisterOfDeposit(_)
+            | TimerJob::CancelP2PSwapInEscrowCanister(_)
+            | TimerJob::SendMessageToGroup(_)
+            | TimerJob::SendMessageToChannel(_) => JobOnMigration::BlocksMigration,
+        }
+    }
+}
 
 impl Job for TimerJob {
     fn execute(self) {

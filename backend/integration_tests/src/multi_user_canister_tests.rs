@@ -2308,6 +2308,91 @@ fn pin_number_is_set_verified_and_reported() {
     ));
 }
 
+#[test]
+fn check_pin_number_counts_failed_attempts_towards_the_lock() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+
+    let (a_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
+
+    // Any PIN passes for a user who hasn't set one
+    let response = check_pin_number(env, a_principal, canister_id, "0000");
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    let response = set_pin_number(env, a_principal, canister_id, Some("1234"), PinNumberVerification::None);
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    let response = check_pin_number(env, a_principal, canister_id, "1234");
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    // The third failed attempt locks the PIN, for the user alone
+    for _ in 0..3 {
+        let incorrect = check_pin_number(env, a_principal, canister_id, "0000");
+        assert!(
+            matches!(&incorrect, UnitResult::Error(e) if e.matches_code(OCErrorCode::PinIncorrect)),
+            "{incorrect:?}"
+        );
+    }
+    assert!(
+        initial_state(env, a_principal, canister_id)
+            .pin_number_settings
+            .unwrap()
+            .attempts_blocked_until
+            .is_some()
+    );
+    let response = check_pin_number(env, b_principal, canister_id, "0000");
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    // While it is locked, even the right PIN fails, there and wherever else the PIN is checked
+    let locked = check_pin_number(env, a_principal, canister_id, "1234");
+    assert!(
+        matches!(&locked, UnitResult::Error(e) if e.matches_code(OCErrorCode::TooManyFailedPinAttempts)),
+        "{locked:?}"
+    );
+    let locked = set_pin_number(env, a_principal, canister_id, Some("5678"), pin("1234"));
+    assert!(
+        matches!(&locked, UnitResult::Error(e) if e.matches_code(OCErrorCode::TooManyFailedPinAttempts)),
+        "{locked:?}"
+    );
+
+    // Once the lock lapses the right PIN passes again, and clears the failed attempts
+    env.advance_time(Duration::from_secs(5 * 60));
+    let response = check_pin_number(env, a_principal, canister_id, "1234");
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    let incorrect = check_pin_number(env, a_principal, canister_id, "0000");
+    assert!(
+        matches!(&incorrect, UnitResult::Error(e) if e.matches_code(OCErrorCode::PinIncorrect)),
+        "{incorrect:?}"
+    );
+    assert!(
+        initial_state(env, a_principal, canister_id)
+            .pin_number_settings
+            .unwrap()
+            .attempts_blocked_until
+            .is_none()
+    );
+}
+
+fn check_pin_number(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, pin: &str) -> UnitResult {
+    client::user::check_pin_number(
+        env,
+        sender,
+        canister_id,
+        &user_canister::check_pin_number::Args {
+            pin: pin.to_string().into(),
+        },
+    )
+}
+
 fn saved_crypto_accounts(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> Vec<NamedAccount> {
     let user_canister::saved_crypto_accounts::Response::Success(accounts) =
         client::user::saved_crypto_accounts(env, sender, canister_id, &Empty {});
