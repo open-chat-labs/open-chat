@@ -13,9 +13,9 @@ const MODULE_WAT: &str = r#"(module (memory 1))"#;
 
 // The canisters which only the old LocalGroupIndex controls are handed over to the LocalUserIndex,
 // via the call relay installed over the old LocalGroupIndex, and their cycles refunded before they
-// are deleted, after which the old LocalGroupIndex is too
+// are deleted, after which the old LocalGroupIndex's own cycles are refunded too, though it is kept
 #[test]
-fn old_local_group_index_canisters_are_reclaimed_then_it_is_deleted() {
+fn old_local_group_index_canisters_are_reclaimed_then_its_cycles_refunded() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
@@ -24,7 +24,7 @@ fn old_local_group_index_canisters_are_reclaimed_then_it_is_deleted() {
     let pool_canisters: Vec<_> = (0..3)
         .map(|_| create_controlled_canister(env, old_local_group_index, local_user_index, false))
         .collect();
-    let cycles_dispenser_balance = env.cycle_balance(canister_ids.cycles_dispenser);
+    let refunded = cycles_refunded(env, local_user_index);
 
     reclaim(
         env,
@@ -34,9 +34,10 @@ fn old_local_group_index_canisters_are_reclaimed_then_it_is_deleted() {
         &pool_canisters,
     );
 
-    for canister_id in pool_canisters.iter().chain([&old_local_group_index]) {
+    for canister_id in &pool_canisters {
         wait_for_canister_to_be_deleted(env, *canister_id);
     }
+    wait_for_cycles_to_be_refunded(env, old_local_group_index, local_user_index);
 
     let old = &metrics(env, local_user_index)["old_local_group_index"];
     assert_eq!(old["reclaimed"].as_u64(), Some(3));
@@ -44,13 +45,12 @@ fn old_local_group_index_canisters_are_reclaimed_then_it_is_deleted() {
     assert_eq!(old["completed"].as_bool(), Some(true));
 
     // Most of the old LocalGroupIndex's 10T, and of the pool canisters' 1.5T, has been refunded
-    assert!(env.cycle_balance(canister_ids.cycles_dispenser) > cycles_dispenser_balance + 10 * T);
+    assert!(cycles_refunded(env, local_user_index) > refunded + 10 * T);
 }
 
-// A canister which has code is left as it is, so the old LocalGroupIndex, which may be all that
-// controls it, is kept
+// A canister which has code is left as it is, still controlled by the old LocalGroupIndex alone
 #[test]
-fn canister_with_code_is_skipped_and_old_local_group_index_kept() {
+fn canister_with_code_is_skipped() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
@@ -74,12 +74,63 @@ fn canister_with_code_is_skipped_and_old_local_group_index_kept() {
     assert_eq!(old["reclaimed"].as_u64(), Some(1));
     assert_eq!(old["skipped"][0].as_str(), Some(live_canister.to_text().as_str()));
 
-    // Neither the live canister nor the old LocalGroupIndex is touched further
     tick_many(env, 20);
     let status = env.canister_status(live_canister, Some(old_local_group_index)).unwrap();
     assert_eq!(status.settings.controllers, vec![old_local_group_index]);
     assert!(status.module_hash.is_some());
-    assert!(env.canister_exists(old_local_group_index));
+    wait_for_cycles_to_be_refunded(env, old_local_group_index, local_user_index);
+}
+
+// A canister already controlled by the LocalUserIndex alone, as if handed over by an earlier attempt
+// whose outcome was lost, counts as reclaimed. One controlled by neither is skipped. A repeated
+// request while a batch is in flight changes nothing.
+#[test]
+fn canister_already_handed_over_is_reclaimed_and_one_controlled_by_neither_skipped() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let old_local_group_index = create_old_local_group_index(env, canister_ids.group_index, local_user_index);
+    // More than a batch of them
+    let pool_canisters: Vec<_> = (0..11)
+        .map(|_| create_controlled_canister(env, old_local_group_index, local_user_index, false))
+        .collect();
+    let already_handed_over = create_on_subnet(env, local_user_index, vec![local_user_index], 500 * B);
+    let controlled_by_neither = create_on_subnet(env, local_user_index, vec![*controller], 500 * B);
+    let all: Vec<_> = pool_canisters
+        .iter()
+        .copied()
+        .chain([already_handed_over, controlled_by_neither])
+        .collect();
+
+    reclaim(env, canister_ids.group_index, local_user_index, old_local_group_index, &all);
+    tick_many(env, 3);
+    reclaim(env, canister_ids.group_index, local_user_index, old_local_group_index, &all);
+
+    for canister_id in pool_canisters.iter().chain([&already_handed_over]) {
+        wait_for_canister_to_be_deleted(env, *canister_id);
+    }
+    wait_until_completed(env, local_user_index);
+
+    let old = &metrics(env, local_user_index)["old_local_group_index"];
+    assert_eq!(old["reclaimed"].as_u64(), Some(12));
+    assert_eq!(
+        old["skipped"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|c| c.as_str().unwrap())
+            .collect::<Vec<_>>(),
+        vec![controlled_by_neither.to_text()]
+    );
+
+    let status = env.canister_status(controlled_by_neither, Some(*controller)).unwrap();
+    assert_eq!(status.settings.controllers, vec![*controller]);
+    wait_for_cycles_to_be_refunded(env, old_local_group_index, local_user_index);
 }
 
 fn reclaim(
@@ -137,6 +188,26 @@ fn create_on_subnet(env: &mut PocketIc, local_user_index: CanisterId, controller
         },
     )
     .unwrap()
+}
+
+fn cycles_refunded(env: &PocketIc, local_user_index: CanisterId) -> u128 {
+    metrics(env, local_user_index)["cycles_refunded_from_deleted_users"]
+        .as_u64()
+        .unwrap()
+        .into()
+}
+
+// The relay is uninstalled when the old LocalGroupIndex's cycles are refunded, but it is kept
+fn wait_for_cycles_to_be_refunded(env: &mut PocketIc, old_local_group_index: CanisterId, local_user_index: CanisterId) {
+    for _ in 0..100 {
+        let status = env.canister_status(old_local_group_index, Some(local_user_index)).unwrap();
+        if status.module_hash.is_none() && env.cycle_balance(old_local_group_index) < T {
+            return;
+        }
+        env.advance_time(Duration::from_secs(10));
+        tick_many(env, 5);
+    }
+    panic!("The old LocalGroupIndex's cycles weren't refunded");
 }
 
 fn wait_until_completed(env: &mut PocketIc, local_user_index: CanisterId) {

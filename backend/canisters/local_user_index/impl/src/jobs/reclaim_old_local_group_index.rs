@@ -1,9 +1,11 @@
 use crate::model::old_local_group_index::CanisterToReclaim;
 use crate::{CanisterToRefund, RuntimeState, call_relay, jobs, mutate_state, read_state};
-use constants::MINUTE_IN_MS;
+use constants::{MINUTE_IN_MS, min_cycles_balance};
 use futures::future::join_all;
 use ic_cdk::call::RejectCode;
-use ic_cdk_management_canister::{CanisterInstallMode, CanisterSettings, CanisterStatusArgs, UpdateSettingsArgs};
+use ic_cdk_management_canister::{
+    CanisterInstallMode, CanisterSettings, CanisterStatusArgs, CanisterStatusType, UpdateSettingsArgs,
+};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -19,13 +21,16 @@ const RELAY_CALL_TIMEOUT_SECONDS: u32 = 60;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
+    // Set while a run is in progress, so that a request which starts the job meanwhile doesn't start
+    // a second run alongside it. The run in progress schedules the next one once it finishes.
+    static IN_PROGRESS: Cell<bool> = Cell::default();
 }
 
 // Reclaims the canisters which the old LocalGroupIndex alone still controls, once the GroupIndex has
 // made this LocalUserIndex a controller of it. The call relay is installed over the old
 // LocalGroupIndex, through which each canister is made to have this LocalUserIndex as its only
 // controller, then queued to have its cycles refunded and be deleted. Finally the old
-// LocalGroupIndex itself is.
+// LocalGroupIndex's own cycles are refunded.
 pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Milliseconds>) -> bool {
     if TIMER_ID.get().is_none() && state.data.old_local_group_index.as_ref().is_some_and(|old| !old.completed) {
         let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(delay.unwrap_or_default()), async { run() });
@@ -38,7 +43,22 @@ pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Millisec
 
 fn run() {
     TIMER_ID.set(None);
-    utils::async_work::spawn_tracked(process());
+    if IN_PROGRESS.replace(true) {
+        return;
+    }
+    utils::async_work::spawn_tracked(async {
+        let _guard = InProgressGuard;
+        process().await;
+    });
+}
+
+// Clears `IN_PROGRESS` once a run finishes, however it finishes
+struct InProgressGuard;
+
+impl Drop for InProgressGuard {
+    fn drop(&mut self) {
+        IN_PROGRESS.set(false);
+    }
 }
 
 async fn process() {
@@ -50,6 +70,13 @@ async fn process() {
             .filter(|old| !old.completed)
             .map(|old| (old.canister_id, old.relay_installed))
     }) else {
+        return;
+    };
+
+    // Keeps the refund job off the old LocalGroupIndex while the relay is in use. Only a move of a
+    // migrated user's funds reserves any other canister, so this never fails.
+    let Some(_relay_guard) = call_relay::InUseGuard::new(old_local_group_index) else {
+        mutate_state(|state| start_job_if_required(state, Some(RETRY_DELAY)));
         return;
     };
 
@@ -125,7 +152,7 @@ fn on_reclaim_result(
     match result {
         Ok(Outcome::Reclaimed) => {
             old.mark_reclaimed(canister_id);
-            queue_refund_then_delete(state, canister_id);
+            queue_refund(state, canister_id, true);
         }
         Ok(Outcome::Skipped(reason)) => {
             error!(%canister_id, reason, "Canister of the old LocalGroupIndex left as it is");
@@ -143,8 +170,10 @@ fn on_reclaim_result(
     }
 }
 
-// Once every canister has been dealt with, the old LocalGroupIndex itself is queued to be refunded
-// and deleted. If any were skipped it is kept, since it may be all that still controls them.
+// Once every canister has been dealt with, the old LocalGroupIndex's own cycles are queued to be
+// refunded, which uninstalls the relay too. It is never deleted, since it may hold funds (`suaf3`
+// holds 5 ICP), or be all that controls a canister which was skipped or missed. While this
+// LocalUserIndex controls it, the relay can be installed again to deal with them.
 fn complete(state: &mut RuntimeState) {
     let Some(old) = state.data.old_local_group_index.as_mut() else {
         return;
@@ -154,17 +183,17 @@ fn complete(state: &mut RuntimeState) {
     let metrics = old.metrics();
 
     if metrics.skipped.is_empty() {
-        info!(%canister_id, reclaimed = metrics.reclaimed, "Reclaimed the old LocalGroupIndex's canisters, it is now to be refunded and deleted");
-        queue_refund_then_delete(state, canister_id);
-        jobs::refund_cycles::start_job_if_required(state, None);
+        info!(%canister_id, reclaimed = metrics.reclaimed, "Reclaimed the old LocalGroupIndex's canisters");
     } else {
         error!(
             %canister_id,
             reclaimed = metrics.reclaimed,
             skipped = ?metrics.skipped,
-            "Reclaimed the old LocalGroupIndex's canisters, but kept it since some were skipped"
+            "Reclaimed the old LocalGroupIndex's canisters, apart from those skipped"
         );
     }
+    queue_refund(state, canister_id, false);
+    jobs::refund_cycles::start_job_if_required(state, None);
 }
 
 // A canister is only handed over if it has no code, as each one is meant to be an empty pool
@@ -209,6 +238,10 @@ async fn install_relay(canister_id: CanisterId) -> Result<(), C2CError> {
         .as_ref()
         .is_some_and(|hash| *hash == call_relay::wasm().hash())
     {
+        // An earlier install which failed to restart the canister leaves it stopped
+        if status.status != CanisterStatusType::Running {
+            utils::canister::start(canister_id).await?;
+        }
         return Ok(());
     }
 
@@ -218,7 +251,8 @@ async fn install_relay(canister_id: CanisterId) -> Result<(), C2CError> {
         new_wasm_version: BuildVersion::default(),
         args: Vec::new(),
         new_wasm: WasmToInstall::Default(call_relay::wasm()),
-        top_up_keeping_balance_above: None,
+        // It may have had its cycles refunded, if this is a repeated request
+        top_up_keeping_balance_above: Some(read_state(|state| min_cycles_balance(state.data.test_mode))),
         mode: if status.module_hash.is_some() {
             CanisterInstallMode::Reinstall
         } else {
@@ -268,14 +302,14 @@ async fn relay_set_controllers(
     Ok(())
 }
 
-fn queue_refund_then_delete(state: &mut RuntimeState, canister_id: CanisterId) {
+fn queue_refund(state: &mut RuntimeState, canister_id: CanisterId, delete_canister: bool) {
     let queue = &mut state.data.cycles_refund_queue;
     if !queue.iter().any(|c| c.canister_id == canister_id) {
         queue.push_back(CanisterToRefund {
             canister_id,
             attempt: 0,
             retry_after: 0,
-            delete_canister: true,
+            delete_canister,
             return_to_pool: false,
         });
     }

@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_reclaim_old_local_group_index::*;
 use oc_error_codes::OCErrorCode;
-use tracing::info;
+use tracing::{error, info};
 use types::{CanisterId, OCResult};
 
 #[update(guard = "caller_is_group_index", msgpack = true)]
@@ -30,14 +30,32 @@ fn c2c_reclaim_old_local_group_index_impl(args: Args, state: &mut RuntimeState) 
         state.data.old_local_group_index = None;
     }
 
-    // Belt and braces, none of this LocalUserIndex's own canisters should be among them
-    let canister_ids: Vec<_> = args.canister_ids.into_iter().filter(|c| !is_live(*c, state)).collect();
+    // Belt and braces, none of this LocalUserIndex's own canisters should be among them. Any which
+    // are, are marked as skipped, which is what they would be if they were only controlled by the
+    // old LocalGroupIndex.
+    let (live, canister_ids): (Vec<_>, Vec<_>) = args.canister_ids.into_iter().partition(|c| is_live(*c, state));
+    for canister_id in &live {
+        error!(%canister_id, "Live canister of this LocalUserIndex not reclaimed");
+    }
 
-    let queued = state
+    let old = state
         .data
         .old_local_group_index
-        .get_or_insert_with(|| OldLocalGroupIndex::new(old_local_group_index))
-        .add(canister_ids);
+        .get_or_insert_with(|| OldLocalGroupIndex::new(old_local_group_index));
+    let was_completed = old.completed;
+    let queued = old.add(canister_ids);
+    for canister_id in live {
+        old.mark_skipped(canister_id);
+    }
+
+    // Restarted once completed, the old LocalGroupIndex may be waiting to have its cycles refunded,
+    // which would uninstall the relay, so it is taken out of the queue until done again
+    if was_completed && queued > 0 && !jobs::refund_cycles::is_in_progress(state, old_local_group_index) {
+        state
+            .data
+            .cycles_refund_queue
+            .retain(|c| c.canister_id != old_local_group_index);
+    }
 
     info!(%old_local_group_index, queued, "Queued the old LocalGroupIndex's canisters to be reclaimed");
     jobs::reclaim_old_local_group_index::start_job_if_required(state, None);

@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Reclaim the canisters which only the old LocalGroupIndex still controls, then refund and delete them and it ([#9773](https://github.com/open-chat-labs/open-chat/pull/9773))
+- Reclaim the canisters which only the old LocalGroupIndex still controls, refund and delete them, then refund its own cycles ([#9773](https://github.com/open-chat-labs/open-chat/pull/9773))
 
 ### Removed
 

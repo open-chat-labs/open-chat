@@ -14,11 +14,11 @@ pub struct OldLocalGroupIndex {
     pending: VecDeque<CanisterToReclaim>,
     // Those handed over to this LocalUserIndex, and queued to have their cycles refunded
     reclaimed: BTreeSet<CanisterId>,
-    // Those left as they are, eg. for having code installed. While there are any, the old
-    // LocalGroupIndex is kept, since it may be all that controls them.
+    // Those left as they are, eg. for having code installed, which the old LocalGroupIndex may be
+    // all that controls. A repeated request queues them again.
     skipped: BTreeSet<CanisterId>,
     // Set once every canister has been dealt with, whereupon the old LocalGroupIndex itself is queued
-    // to be refunded and deleted, unless any were skipped
+    // to have its cycles refunded
     pub completed: bool,
 }
 
@@ -41,22 +41,24 @@ impl OldLocalGroupIndex {
         }
     }
 
-    // Queues the canisters not seen before, so that a repeated request is a no-op. Returns how many
-    // were queued.
+    // Queues the canisters not already reclaimed or queued, so that a repeated request only retries
+    // those which were skipped. Returns how many were queued.
     pub fn add(&mut self, canister_ids: impl IntoIterator<Item = CanisterId>) -> usize {
         let mut count = 0;
         for canister_id in canister_ids {
             if canister_id != self.canister_id
                 && !self.reclaimed.contains(&canister_id)
-                && !self.skipped.contains(&canister_id)
                 && !self.pending.iter().any(|c| c.canister_id == canister_id)
             {
+                self.skipped.remove(&canister_id);
                 self.pending.push_back(CanisterToReclaim { canister_id, attempt: 0 });
                 count += 1;
             }
         }
-        if count > 0 {
+        if count > 0 && self.completed {
+            // The relay was uninstalled when the old LocalGroupIndex's cycles were refunded
             self.completed = false;
+            self.relay_installed = false;
         }
         count
     }
@@ -117,7 +119,7 @@ mod tests {
     }
 
     #[test]
-    fn add_skips_the_old_local_group_index_and_canisters_already_seen() {
+    fn add_skips_the_old_local_group_index_and_canisters_already_reclaimed_or_queued() {
         let mut old = OldLocalGroupIndex::new(canister_id(0));
 
         assert_eq!(old.add([canister_id(0), canister_id(1), canister_id(2), canister_id(1)]), 2);
@@ -128,9 +130,10 @@ mod tests {
         old.mark_skipped(batch[0].canister_id);
         assert!(old.is_pending_empty());
 
-        // A repeated request queues none of them again
-        assert_eq!(old.add([canister_id(1), canister_id(2)]), 0);
-        assert!(old.is_pending_empty());
+        // A repeated request only queues the one which was skipped
+        assert_eq!(old.add([canister_id(1), canister_id(2)]), 1);
+        assert_eq!(old.take_batch(10)[0].canister_id, canister_id(2));
+        assert_eq!(old.metrics().skipped.len(), 0);
         assert_eq!(old.add([canister_id(3)]), 1);
     }
 
@@ -165,7 +168,9 @@ mod tests {
         old.add([]);
         assert!(old.completed);
 
+        old.relay_installed = true;
         old.add([canister_id(1)]);
         assert!(!old.completed);
+        assert!(!old.relay_installed);
     }
 }

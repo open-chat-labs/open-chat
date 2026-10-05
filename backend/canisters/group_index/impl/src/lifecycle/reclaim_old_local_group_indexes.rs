@@ -5,7 +5,7 @@ use types::CanisterId;
 
 // One-off: hands each old LocalGroupIndex over to the LocalUserIndex on its subnet, which reclaims
 // the canisters the old LocalGroupIndex alone still controls, refunds their cycles and deletes them,
-// then does the same with the old LocalGroupIndex itself. They were in the old LocalGroupIndex's
+// then refunds the old LocalGroupIndex's own cycles, keeping it in case it holds anything else. They were in the old LocalGroupIndex's
 // canister pool, which was moved into the LocalUserIndex's without their controllers changing, so
 // the LocalUserIndex could neither use them nor refund their cycles. The lists are from the IC
 // dashboard, each canister checked against the certified state on 5 Oct 2026 to be controlled by the
