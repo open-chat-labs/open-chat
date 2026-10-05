@@ -61,7 +61,7 @@ export async function loadGroupDetails(
         );
     // The updates since the cached details were cached, if they have already been fetched
     let fetched: Updated<GroupChatDetailsUpdatesResponse> | undefined;
-    // The details in full, if the canister returned them instead of the updates
+    // The details in full, if they were returned instead of the updates (see `updatesOrDetailsInFull`)
     let snapshot: GroupChatDetails | undefined;
     const cachedTimestamp = cache.cachedGroupDetailsTimestamp(cacheKey);
 
