@@ -100,6 +100,9 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
             const canisterIdPrincipal = Principal.fromText(canisterId);
             const payload = MsgpackCanisterAgent.prepareMsgpackArgs(args, requestValidator);
 
+            let mustPoll = false;
+            let v4Status = "no v4 body";
+
             const { requestId, response } = await this.agent.call(canisterIdPrincipal, {
                 methodName: methodName + "_msgpack",
                 arg: payload,
@@ -117,9 +120,11 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                     blsVerify: undefined,
                 });
                 const path = [utf8ToBytes("request_status"), requestId];
-                const status = new TextDecoder().decode(
-                    lookupResultToBuffer(certificate.lookup_path([...path, "status"])),
+                const statusBuf = lookupResultToBuffer(
+                    certificate.lookup_path([...path, "status"]),
                 );
+                const status = statusBuf ? new TextDecoder().decode(statusBuf) : undefined;
+                v4Status = status ?? "none";
 
                 switch (status) {
                     case "replied": {
@@ -136,6 +141,7 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                                 ),
                             );
                         }
+                        v4Status = "replied without a reply";
                         break;
                     }
                     case "rejected": {
@@ -171,6 +177,12 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                         };
                         throw RejectError.fromCode(certifiedRejectErrorCode);
                     }
+                    case undefined: {
+                        // The certificate can lack an entry for our request, in which case
+                        // `HttpAgent.update` falls back to polling, so we do the same.
+                        mustPoll = true;
+                        break;
+                    }
                 }
             } else if (isV2ResponseBody(response.body)) {
                 // handle v2 response errors by throwing an UpdateCallRejectedError object
@@ -190,7 +202,7 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
             }
 
             // Fall back to polling if we receive an Accepted response code
-            if (response.status === 202) {
+            if (mustPoll || response.status === 202) {
                 if (onRequestAccepted !== undefined) {
                     onRequestAccepted();
                 }
@@ -205,7 +217,7 @@ abstract class MsgpackCanisterAgent extends CanisterAgent {
                 );
             } else {
                 throw new Error(
-                    `Failed to submit call to IC. CanisterId: ${canisterId}. MethodName: ${methodName}. Response: ${response}`,
+                    `Failed to submit call to IC. CanisterId: ${canisterId}. MethodName: ${methodName}. HTTP status: ${response.status}. Certificate status: ${v4Status}`,
                 );
             }
         } catch (err) {
