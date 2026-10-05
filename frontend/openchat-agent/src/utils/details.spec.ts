@@ -1,4 +1,7 @@
 import {
+    HttpError,
+    InstructionLimitExceededError,
+    ResponseTooLargeError,
     ROLE_MEMBER,
     type CommunityDetails,
     type CommunityDetailsUpdatesResponse,
@@ -21,6 +24,14 @@ function member(userId: string): Member {
 
 function memberIds(details: unknown): string[] {
     return (details as { members: Member[] }).members.map((m) => m.userId);
+}
+
+// As the canister fails when there are more updates since the cached details than it can read
+// within the instruction limit, as when many of a large chat's members are migrated to new user ids
+function tooManyUpdates(): Error {
+    return new InstructionLimitExceededError(
+        new Error("Canister exceeded the limit of 5000000000 instructions"),
+    );
 }
 
 afterEach(() => {
@@ -349,6 +360,67 @@ describe("loadGroupDetails", () => {
             expect(cache.setCachedGroupDetails).not.toHaveBeenCalled();
         });
     });
+    describe("when the canister can't return the updates because there are too many", () => {
+        test("the details are loaded in full and replace those cached", async () => {
+            const { load, stored, initial, updatesSince } = setup(details(5n, ["a", "x"]));
+            updatesSince.mockRejectedValue(tooManyUpdates());
+
+            const resp = await load(10n);
+
+            expect(updatesSince).toHaveBeenCalledWith(5n);
+            expect(initial).toHaveBeenCalledTimes(1);
+            expect(memberIds(resp)).toEqual(["a", "b"]);
+            expect(memberIds(stored.get(key))).toEqual(["a", "b"]);
+            expect(stored.get(key)?.timestamp).toBe(10n);
+        });
+
+        test("they replace those held by the caller", async () => {
+            const { load, loadToHold, stored, initial, updatesSince } = setup(
+                details(5n, ["a", "x"]),
+            );
+            await loadToHold();
+            updatesSince.mockRejectedValue(tooManyUpdates());
+
+            const resp = await load(10n, 5n);
+
+            expect(updatesSince.mock.calls).toEqual([[5n]]);
+            expect(initial).toHaveBeenCalledTimes(1);
+            expect(memberIds(resp)).toEqual(["a", "b"]);
+            expect(memberIds(stored.get(key))).toEqual(["a", "b"]);
+        });
+
+        test("as they are if the updates are too large to be returned", async () => {
+            const { load, stored, updatesSince } = setup(details(5n, ["a", "x"]));
+            updatesSince.mockRejectedValue(
+                new ResponseTooLargeError(new Error("too large"), 4_000_000, 3_145_728),
+            );
+
+            const resp = await load(10n);
+
+            expect(memberIds(resp)).toEqual(["a", "b"]);
+            expect(memberIds(stored.get(key))).toEqual(["a", "b"]);
+        });
+
+        test("the cached details are kept if the details in full can't be loaded", async () => {
+            const { load, stored, initial, updatesSince } = setup(details(5n, ["a", "x"]));
+            updatesSince.mockRejectedValue(tooManyUpdates());
+            initial.mockResolvedValue({ kind: "failure" } as never);
+
+            const resp = await load(10n);
+
+            expect(memberIds(resp)).toEqual(["a", "x"]);
+            expect(stored.get(key)?.timestamp).toBe(5n);
+        });
+
+        test("any other failure is thrown, as before", async () => {
+            const { load, initial, updatesSince } = setup(details(5n, ["a", "x"]));
+            const trapped = new HttpError(500, new Error("trapped"));
+            updatesSince.mockRejectedValue(trapped);
+
+            await expect(load(10n)).rejects.toBe(trapped);
+            expect(initial).not.toHaveBeenCalled();
+        });
+    });
 });
 
 describe("loadCommunityDetails", () => {
@@ -566,6 +638,40 @@ describe("loadCommunityDetails", () => {
 
             expect(memberIds(resp)).toEqual(["a", "c", "d"]);
             expect(stored.get(id)?.lastUpdated).toBe(40n);
+        });
+    });
+    describe("when the canister can't return the updates because there are too many", () => {
+        test("the details are loaded in full and replace those cached", async () => {
+            const { load, stored, initial, updatesSince } = setup(details(5n, ["a", "x"]));
+            updatesSince.mockRejectedValue(tooManyUpdates());
+
+            const resp = await load(10n);
+
+            expect(updatesSince).toHaveBeenCalledWith(5n);
+            expect(initial).toHaveBeenCalledTimes(1);
+            expect(memberIds(resp)).toEqual(["a", "b"]);
+            expect(memberIds(stored.get(id))).toEqual(["a", "b"]);
+            expect(stored.get(id)?.lastUpdated).toBe(10n);
+        });
+
+        test("they replace those held by the caller", async () => {
+            const { load, loadToHold, stored, updatesSince } = setup(details(5n, ["a", "x"]));
+            await loadToHold();
+            updatesSince.mockRejectedValue(tooManyUpdates());
+
+            const resp = await load(10n, 5n);
+
+            expect(memberIds(resp)).toEqual(["a", "b"]);
+            expect(memberIds(stored.get(id))).toEqual(["a", "b"]);
+        });
+
+        test("any other failure is thrown, as before", async () => {
+            const { load, initial, updatesSince } = setup(details(5n, ["a", "x"]));
+            const trapped = new HttpError(500, new Error("trapped"));
+            updatesSince.mockRejectedValue(trapped);
+
+            await expect(load(10n)).rejects.toBe(trapped);
+            expect(initial).not.toHaveBeenCalled();
         });
     });
 });

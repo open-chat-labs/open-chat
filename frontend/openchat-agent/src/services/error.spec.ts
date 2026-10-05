@@ -12,6 +12,7 @@ import {
     CanisterUnavailableError,
     DestinationInvalidError,
     HttpError,
+    InstructionLimitExceededError,
     InvalidDelegationError,
     SessionExpiryError,
 } from "@shared";
@@ -102,6 +103,21 @@ describe("toCanisterResponseError", () => {
 
         expect(error).toBeInstanceOf(CanisterMethodNotFoundError);
         expect(error).not.toBeInstanceOf(DestinationInvalidError);
+    });
+
+    // Retrying runs the call over much the same state, so it would only run out again
+    test("a call which runs out of instructions is not retryable", () => {
+        const error = toCanisterResponseError(
+            reject(
+                ReplicaRejectCode.CanisterError,
+                "Canister x exceeded the limit of 5000000000 instructions for single message execution.",
+                "IC0522",
+            ),
+            identity,
+        );
+
+        expect(error).toBeInstanceOf(InstructionLimitExceededError);
+        expect((error as HttpError).code).toBe(500);
     });
 
     // It may come back once topped up or reinstalled, so it must not be reported as a canister

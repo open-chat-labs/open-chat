@@ -16,6 +16,7 @@ import {
     CanisterMethodNotFoundError,
     CanisterUnavailableError,
     DestinationInvalidError,
+    InstructionLimitExceededError,
     InvalidDelegationError,
     TypeboxValidationError,
 } from "@shared";
@@ -133,6 +134,10 @@ function classifyError(
 
     if (rejectErrorCode(error) === ICErrorCode.CanisterMethodNotFound) {
         return new CanisterMethodNotFoundError(error);
+    }
+
+    if (rejectErrorCode(error) === ICErrorCode.CanisterInstructionLimitExceeded) {
+        return new InstructionLimitExceededError(error);
     }
 
     const tooLarge = responseTooLarge(error);

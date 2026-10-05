@@ -1,5 +1,7 @@
 import {
+    InstructionLimitExceededError,
     offline,
+    ResponseTooLargeError,
     type CommunityDetails,
     type CommunityDetailsResponse,
     type CommunityDetailsUpdatesResponse,
@@ -27,7 +29,9 @@ type Updated<T> = Extract<T, { kind: "success" }>;
  * `detailsLastUpdated`, which is when the chat's summary says they last changed, else from the
  * cache plus whatever the canister says has changed since, else in full from the canister. The
  * canister returns them in full instead of the changes since those cached if it no longer has all
- * of those changes (it keeps them for 31 days), in which case they replace those cached.
+ * of those changes (it keeps them for 31 days), in which case they replace those cached. They're
+ * also loaded in full to replace those cached if the canister can't return the changes, because
+ * there are too many of them (see `updatesOrDetailsInFull`).
  *
  * A caller which already holds the details passes the time up to which they are known to be up to
  * date as `detailsSyncedUpTo`, and is told only that they still are, unless they have changed. The
@@ -48,6 +52,13 @@ export async function loadGroupDetails(
     initial: () => Promise<GroupChatDetailsResponse>,
     updatesSince: (since: bigint) => Promise<GroupChatDetailsUpdatesResponse>,
 ): Promise<GroupChatDetailsResponse> {
+    const updatesOrInFull = (since: bigint) =>
+        updatesOrDetailsInFull(
+            () => updatesSince(since),
+            initial,
+            (details): GroupChatDetailsUpdatesResponse =>
+                "members" in details ? { kind: "snapshot", details } : { kind: "failure" },
+        );
     // The updates since the cached details were cached, if they have already been fetched
     let fetched: Updated<GroupChatDetailsUpdatesResponse> | undefined;
     // The details in full, if the canister returned them instead of the updates
@@ -62,7 +73,7 @@ export async function loadGroupDetails(
         if (detailsSyncedUpTo >= detailsLastUpdated || offline()) {
             return { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
         }
-        const updates = await updatesSince(cachedTimestamp);
+        const updates = await updatesOrInFull(cachedTimestamp);
         if (updates.kind === "failure") {
             return { kind: "success_no_updates", timestamp: detailsSyncedUpTo };
         }
@@ -110,7 +121,7 @@ export async function loadGroupDetails(
             if (cached.timestamp >= detailsLastUpdated || offline()) {
                 return cached;
             }
-            const updates = await updatesSince(cached.timestamp);
+            const updates = await updatesOrInFull(cached.timestamp);
             if (updates.kind === "failure") {
                 return cached;
             }
@@ -141,6 +152,13 @@ export async function loadCommunityDetails(
     initial: () => Promise<CommunityDetailsResponse>,
     updatesSince: (since: bigint) => Promise<CommunityDetailsUpdatesResponse>,
 ): Promise<CommunityDetailsResponse> {
+    const updatesOrInFull = (since: bigint) =>
+        updatesOrDetailsInFull(
+            () => updatesSince(since),
+            initial,
+            (details): CommunityDetailsUpdatesResponse =>
+                details.kind === "success" ? { kind: "snapshot", details } : { kind: "failure" },
+        );
     let fetched: Updated<CommunityDetailsUpdatesResponse> | undefined;
     let snapshot: CommunityDetails | undefined;
     const cachedTimestamp = cache.cachedCommunityDetailsTimestamp(communityId);
@@ -153,7 +171,7 @@ export async function loadCommunityDetails(
         if (detailsSyncedUpTo >= detailsLastUpdated || offline()) {
             return { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
         }
-        const updates = await updatesSince(cachedTimestamp);
+        const updates = await updatesOrInFull(cachedTimestamp);
         if (updates.kind === "failure") {
             return { kind: "success_no_updates", lastUpdated: detailsSyncedUpTo };
         }
@@ -197,7 +215,7 @@ export async function loadCommunityDetails(
             if (cached.lastUpdated >= detailsLastUpdated || offline()) {
                 return cached;
             }
-            const updates = await updatesSince(cached.lastUpdated);
+            const updates = await updatesOrInFull(cached.lastUpdated);
             if (updates.kind === "failure") {
                 return cached;
             }
@@ -215,6 +233,29 @@ export async function loadCommunityDetails(
         }
         return details;
     });
+}
+
+/**
+ * The updates to the details since they were cached, unless the canister can't return them because
+ * there are too many: it runs out of instructions reading them, or they don't fit in a response. A
+ * bulk change, such as many of a large chat's members being migrated to new user ids, can leave
+ * that many. The details are then loaded in full (only the first page of a large chat's members) and
+ * handed back as if the canister had returned them in full instead of the updates, so that they
+ * replace those cached. Otherwise the load fails each time until the updates are pruned.
+ */
+async function updatesOrDetailsInFull<Updates, Details>(
+    updatesSince: () => Promise<Updates>,
+    initial: () => Promise<Details>,
+    inFull: (details: Details) => Updates,
+): Promise<Updates> {
+    try {
+        return await updatesSince();
+    } catch (err) {
+        if (err instanceof InstructionLimitExceededError || err instanceof ResponseTooLargeError) {
+            return inFull(await initial());
+        }
+        throw err;
+    }
 }
 
 /**
