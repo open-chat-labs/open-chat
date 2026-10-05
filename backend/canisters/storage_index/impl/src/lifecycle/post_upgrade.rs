@@ -7,6 +7,7 @@ use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use storage_index_canister::post_upgrade::Args;
 use tracing::info;
+use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]
@@ -25,6 +26,11 @@ fn post_upgrade(args: Args) {
     info!(previous_total_blob_bytes, total_blob_bytes, "Recomputed total_blob_bytes");
 
     let env = init_env(data.rng_seed);
+
+    // One-off: check every file reference against the bucket holding the file, removing those
+    // whose file is gone (see `FilesReconciliation`). It only ever starts once.
+    // TODO remove once it has completed in prod
+    data.files_reconciliation.start(env.now());
     init_cycles_dispenser_client(
         data.cycles_dispenser_config.canister_id,
         data.cycles_dispenser_config.min_cycles_balance,
