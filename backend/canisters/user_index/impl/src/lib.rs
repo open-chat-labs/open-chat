@@ -341,8 +341,9 @@ impl RuntimeState {
         if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
             self.data.multi_user_canisters.on_user_removed(&old_user_id);
             self.data.multi_user_canisters.on_user_added(&new_user_id);
-            // The StorageIndex passes it on to the storage buckets, so that the canister now holding
-            // the user can delete the files naming their old id as an accessor
+            // The StorageIndex passes it on to the storage buckets, which replace the user's old id
+            // with their new one among the accessors of their files, so that the canister now
+            // holding them can delete those files
             self.data
                 .storage_index_user_ids_migrated_queue
                 .push((old_user_id, new_user_id));

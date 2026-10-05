@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Let the canister now holding a migrated user delete the files which name their old id as an accessor ([#9790](https://github.com/open-chat-labs/open-chat/pull/9790))
+- Replace a migrated user's old id with their new one among their files' accessors, so the canister now holding them can delete those files ([#9790](https://github.com/open-chat-labs/open-chat/pull/9790))
 
 ### Changed
 

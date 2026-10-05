@@ -8,12 +8,11 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::StableMemoryMap;
 use std::cmp::Ordering;
 use std::collections::btree_map::Entry::{Occupied, Vacant};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use storage_bucket_canister::upload_chunk_v2::Args as UploadChunkArgs;
 use types::{AccessorId, CanisterId, FileAdded, FileId, FileMetaData, FileRemoved, Hash, TimestampMillis, UserId};
 use utils::file_id::generate_file_id;
 use utils::hasher::hash_bytes;
-use utils::migrated_user_ids::MigratedUserIds;
 
 #[cfg(test)]
 mod proptests;
@@ -41,12 +40,15 @@ pub struct Files {
     // copy of the same bytes re-declares its own source), so this cannot grow past the blobs.
     #[serde(default)]
     source_hashes: BTreeMap<Hash, BTreeSet<Hash>>,
-    // Each user migrated to a MultiUser canister, from their old id to their new one. A direct
-    // message's files name the canisters holding its users as accessors, which for a user who was
-    // in a User canister of their own is their id, so the files they sent or received before being
-    // migrated name their old id.
+    // Accessors to be replaced by others among the accessors of the files naming them, each as
+    // (old, new), oldest first. A direct message's files name the canisters holding its users as
+    // accessors, which for a user who was in a User canister of their own is their id, so once they
+    // are migrated to a MultiUser canister their old id is replaced by their new one.
     #[serde(default)]
-    migrated_user_ids: MigratedUserIds,
+    accessor_replacements: VecDeque<(AccessorId, AccessorId)>,
+    // The number of files whose accessors have had one replaced
+    #[serde(default)]
+    accessors_replaced: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -64,15 +66,10 @@ pub struct File {
 }
 
 impl File {
-    // An accessor which is a user's id is followed through to the canister holding the user now,
-    // which is a MultiUser canister if they have been migrated since
-    pub fn can_be_removed_by(&self, principal: Principal, migrated_user_ids: &MigratedUserIds) -> bool {
+    // An accessor which is the id of a user sharing a canister with others is held by that canister
+    pub fn can_be_removed_by(&self, principal: Principal) -> bool {
         // TODO accessors should have roles rather than always being allowed to remove files
-        self.owner == principal
-            || self
-                .accessors
-                .iter()
-                .any(|a| *a == principal || migrated_user_ids.latest(UserId::from(*a)).canister_id() == principal)
+        self.owner == principal || self.accessors.iter().any(|a| UserId::from(*a).canister_id() == principal)
     }
 
     pub fn meta_data(&self) -> FileMetaData {
@@ -185,7 +182,7 @@ impl Files {
 
     pub fn remove(&mut self, caller: Principal, file_id: FileId) -> RemoveFileResult {
         if let Some(file) = self.get(&file_id) {
-            if file.can_be_removed_by(caller, &self.migrated_user_ids) {
+            if file.can_be_removed_by(caller) {
                 let file_removed = self.remove_file(file_id).unwrap();
 
                 RemoveFileResult::Success(file_removed)
@@ -249,9 +246,47 @@ impl Files {
         })
     }
 
-    // Returns false if the migration is already recorded
-    pub fn add_migrated_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) -> bool {
-        self.migrated_user_ids.insert(old_user_id, new_user_id)
+    pub fn queue_accessor_replacements(&mut self, replacements: impl IntoIterator<Item = (AccessorId, AccessorId)>) {
+        self.accessor_replacements.extend(replacements);
+    }
+
+    pub fn accessor_replacements_queued(&self) -> bool {
+        !self.accessor_replacements.is_empty()
+    }
+
+    // Makes the oldest queued replacement, returning the number of files whose accessors it changed,
+    // or None if none are queued
+    pub fn make_next_accessor_replacement(&mut self) -> Option<u64> {
+        let (old, new) = self.accessor_replacements.pop_front()?;
+        Some(self.replace_accessor(old, new))
+    }
+
+    // Replaces `old` with `new` among the accessors of each file naming `old`. The accessors map also
+    // links each file to its owner, so a file which `old` only owns is left alone, and the owner's
+    // link is kept.
+    fn replace_accessor(&mut self, old: AccessorId, new: AccessorId) -> u64 {
+        let mut replaced = 0;
+        for file_id in self.accessors_map.get(old) {
+            let mut owned_by_old = false;
+            let updated = self.files.update(&file_id, |file| {
+                owned_by_old = file.owner == old;
+                if file.accessors.remove(&old) {
+                    file.accessors.insert(new);
+                    true
+                } else {
+                    false
+                }
+            });
+            if updated == Some(true) {
+                if !owned_by_old {
+                    self.accessors_map.unlink(old, file_id);
+                }
+                self.accessors_map.link(new, file_id);
+                replaced += 1;
+            }
+        }
+        self.accessors_replaced = self.accessors_replaced.saturating_add(replaced);
+        replaced
     }
 
     pub fn remove_pending_file(&mut self, file_id: &FileId) -> bool {
@@ -333,7 +368,8 @@ impl Files {
             total_file_bytes: self.total_file_bytes,
             expiration_queue_len: self.expiration_queue.len() as u64,
             source_hashes: self.source_hashes.len() as u64,
-            migrated_user_ids: self.migrated_user_ids.len() as u64,
+            accessor_replacements_queued: self.accessor_replacements.len() as u64,
+            accessors_replaced: self.accessors_replaced,
         }
     }
 
@@ -698,7 +734,8 @@ pub struct Metrics {
     pub total_file_bytes: u64,
     pub expiration_queue_len: u64,
     pub source_hashes: u64,
-    pub migrated_user_ids: u64,
+    pub accessor_replacements_queued: u64,
+    pub accessors_replaced: u64,
 }
 
 #[cfg(test)]
@@ -842,27 +879,50 @@ mod tests {
     }
 
     #[test]
-    fn a_file_naming_a_migrated_users_old_id_can_be_removed_by_the_canister_holding_them_now() {
+    fn replacing_a_migrated_users_old_id_lets_the_canister_holding_them_remove_its_files() {
         let mut files = files();
         let owner = Principal::from_slice(&[1]);
-        let old_user_id = UserId::from(canister(2));
-        let multi_user_canister = canister(3);
+        let other_user = canister(2);
+        let old_user_id = UserId::from(canister(3));
+        let multi_user_canister = canister(4);
         let new_user_id = UserId::new_indexed(multi_user_canister, 5);
 
-        put_as(&mut files, owner, vec![old_user_id.as_principal()], 1, b"one".to_vec(), None);
+        put_as(
+            &mut files,
+            owner,
+            vec![old_user_id.as_principal(), other_user],
+            1,
+            b"one".to_vec(),
+            None,
+        );
         put_as(&mut files, owner, vec![old_user_id.as_principal()], 2, b"two".to_vec(), None);
+        // Owned by the old id but not naming it as an accessor, so linked to it only as its owner
+        put_as(&mut files, old_user_id.as_principal(), Vec::new(), 3, b"three".to_vec(), None);
         assert!(matches!(
             files.remove(multi_user_canister, 1),
             RemoveFileResult::NotAuthorized
         ));
 
-        assert!(files.add_migrated_user_id(old_user_id, new_user_id));
-        assert!(matches!(files.remove(canister(4), 1), RemoveFileResult::NotAuthorized));
+        files.queue_accessor_replacements([(old_user_id.as_principal(), new_user_id.as_principal())]);
+        assert_eq!(files.make_next_accessor_replacement(), Some(2));
+        assert_eq!(files.make_next_accessor_replacement(), None);
+        files.check_invariants();
+        assert_eq!(
+            files.get(&1).unwrap().accessors,
+            BTreeSet::from([new_user_id.as_principal(), other_user])
+        );
+        assert_eq!(files.accessors_map.get(old_user_id.as_principal()), vec![3]);
+        assert_eq!(files.accessors_map.get(new_user_id.as_principal()), vec![1, 2]);
+
+        assert!(matches!(files.remove(canister(6), 1), RemoveFileResult::NotAuthorized));
         assert!(matches!(files.remove(multi_user_canister, 1), RemoveFileResult::Success(_)));
 
-        // Migrated again, the user's old id is followed through to the canister holding them now
-        let newer_multi_user_canister = canister(6);
-        assert!(files.add_migrated_user_id(new_user_id, UserId::new_indexed(newer_multi_user_canister, 7)));
+        // Migrated again, the user's id is replaced by the newer one
+        let newer_multi_user_canister = canister(7);
+        let newer_user_id = UserId::new_indexed(newer_multi_user_canister, 8);
+        files.queue_accessor_replacements([(new_user_id.as_principal(), newer_user_id.as_principal())]);
+        assert_eq!(files.make_next_accessor_replacement(), Some(1));
+        files.check_invariants();
         assert!(matches!(
             files.remove(multi_user_canister, 2),
             RemoveFileResult::NotAuthorized

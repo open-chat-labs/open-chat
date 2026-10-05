@@ -5,8 +5,8 @@ use ic_cdk::update;
 use storage_bucket_canister::c2c_user_ids_migrated::*;
 use types::SuccessOnly;
 
-// Records the users migrated to MultiUser canisters, so that the canister now holding a user can
-// delete the files which name their old id as an accessor
+// Queues each migrated user's old id to be replaced by their new one among the accessors of the files
+// naming it, so that the canister now holding them can delete those files
 #[update(guard = "caller_is_storage_index_canister")]
 #[trace]
 fn c2c_user_ids_migrated(args: Args) -> Response {
@@ -14,8 +14,11 @@ fn c2c_user_ids_migrated(args: Args) -> Response {
 }
 
 fn c2c_user_ids_migrated_impl(args: Args, state: &mut RuntimeState) -> Response {
-    for (old_user_id, new_user_id) in args.user_ids {
-        state.data.files.add_migrated_user_id(old_user_id, new_user_id);
-    }
+    state.data.files.queue_accessor_replacements(
+        args.user_ids
+            .into_iter()
+            .map(|(old_user_id, new_user_id)| (old_user_id.as_principal(), new_user_id.as_principal())),
+    );
+    crate::jobs::replace_accessors::start_job_if_required(state);
     SuccessOnly::Success
 }

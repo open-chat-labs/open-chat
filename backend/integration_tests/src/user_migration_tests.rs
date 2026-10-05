@@ -2450,6 +2450,8 @@ fn migrated_user_deletes_the_files_of_a_message_they_sent_before_being_migrated(
         100,
         vec![user1.user_id.as_principal(), user2.user_id.as_principal()],
     );
+    let accessors_replaced = |env: &PocketIc| metrics(env, file.canister_id)["accessors_replaced"].as_u64().unwrap();
+    let accessors_replaced_before = accessors_replaced(env);
     let message_id = random_from_u128();
     client::user::happy_path::send_message(
         env,
@@ -2476,16 +2478,12 @@ fn migrated_user_deletes_the_files_of_a_message_they_sent_before_being_migrated(
     );
     let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user1.user_id);
 
-    // Wait for every migration the UserIndex knows of to reach the bucket holding the file, by way of
-    // the StorageIndex
-    let migrated_user_ids = |env: &PocketIc, canister_id| metrics(env, canister_id)["migrated_user_ids"].as_u64().unwrap();
-    tick_until(env, |env| {
-        let count = migrated_user_ids(env, canister_ids.user_index);
-        migrated_user_ids(env, canister_ids.storage_index) == count && migrated_user_ids(env, file.canister_id) == count
-    });
+    // The bucket holding the file is told of the migration by way of the StorageIndex, and replaces the
+    // user's old id with their new one among the file's accessors
+    tick_until(env, |env| accessors_replaced(env) > accessors_replaced_before);
 
     // Only the sender's copy of a deleted message deletes its files, which here is in the MultiUser
-    // canister, while the file still names the user's old id
+    // canister
     let response = client::user::delete_messages(
         env,
         user1.principal,

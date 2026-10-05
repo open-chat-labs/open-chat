@@ -19,7 +19,6 @@ use types::{
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
-use utils::migrated_user_ids::MigratedUserIds;
 
 mod guards;
 mod jobs;
@@ -91,7 +90,6 @@ impl RuntimeState {
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             user_controllers: self.data.user_controllers.iter().copied().collect(),
             user_count: self.data.users.len() as u64,
-            migrated_user_ids: self.data.migrated_user_ids.len() as u64,
             blob_count: file_metrics.blob_count,
             total_blob_bytes: file_metrics.total_blob_bytes,
             file_count: file_metrics.file_count,
@@ -147,10 +145,6 @@ struct Data {
     // bucket-detected CSAM re-uploads back to it
     #[serde(default)]
     pub user_index_canister_id: Option<CanisterId>,
-    // Each user migrated to a MultiUser canister, from their old id to their new one, held so that
-    // each new bucket is told of them all (see c2c_user_ids_migrated)
-    #[serde(default)]
-    pub migrated_user_ids: MigratedUserIds,
     #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
@@ -205,7 +199,6 @@ impl Data {
             csam_hashes: BTreeMap::new(),
             derived_csam_hashes: BTreeMap::new(),
             user_index_canister_id: None,
-            migrated_user_ids: MigratedUserIds::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
@@ -284,10 +277,6 @@ impl Data {
             bucket.canister_id,
             self.users.keys().map(|p| EventToSync::UserAdded(*p)).collect(),
         );
-        // A client which hasn't yet learned of a user's migration may still name their old id as an
-        // accessor of a file uploaded to the new bucket
-        self.bucket_user_ids_migrated_queue
-            .push_many(bucket.canister_id, self.migrated_user_ids.iter().collect());
         if !self.vault_reviewers.is_empty() {
             self.vault_event_sync_queue.push(
                 bucket.canister_id,
@@ -395,7 +384,6 @@ pub struct Metrics {
     pub governance_principals: Vec<Principal>,
     pub user_controllers: Vec<Principal>,
     pub user_count: u64,
-    pub migrated_user_ids: u64,
     pub blob_count: u64,
     pub total_blob_bytes: u64,
     pub file_count: u64,
