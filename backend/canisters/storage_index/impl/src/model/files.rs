@@ -53,8 +53,9 @@ impl Files {
         let total_file_bytes = self.total_file_bytes.get().saturating_add(file.size);
         self.total_file_bytes.set(total_file_bytes);
 
-        if count == 1 {
-            self.blob_sizes.insert(file.hash, file.size);
+        // Each blob counts once however many users reference it, as it's only subtracted once
+        // the last reference to it is removed
+        if count == 1 && self.blob_sizes.insert(file.hash, file.size).is_none() {
             let total_blob_bytes = self.total_blob_bytes.get().saturating_add(file.size);
             self.total_blob_bytes.set(total_blob_bytes);
         }
@@ -117,6 +118,15 @@ impl Files {
             hash: v.hash,
             bucket: v.bucket,
         })
+    }
+
+    // Sets `total_blob_bytes` to the sum of the blob sizes, since it used to be added to for each
+    // user's first reference to a blob rather than once per blob. Returns the old and new totals.
+    pub fn recompute_total_blob_bytes(&mut self) -> (u64, u64) {
+        let previous = *self.total_blob_bytes.get();
+        let total = self.blob_sizes.iter().map(|e| e.value()).sum();
+        self.total_blob_bytes.set(total);
+        (previous, total)
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -385,6 +395,59 @@ pub struct Metrics {
 mod tests {
     use super::*;
     use types::FileMetaData;
+
+    #[test]
+    fn a_blob_referenced_by_two_users_counts_once_towards_the_total_blob_bytes() {
+        let mut files = Files::default();
+        let bucket = CanisterId::from_slice(&[2]);
+        let file = |file_id: u8, user: u8| FileAdded {
+            file_id: file_id.into(),
+            hash: [1; 32],
+            size: 500,
+            meta_data: FileMetaData {
+                owner: Principal::from_slice(&[user]),
+                created: file_id.into(),
+            },
+        };
+
+        files.add(file(1, 1), bucket);
+        files.add(file(2, 2), bucket);
+        assert_eq!(files.metrics().total_blob_bytes, 500);
+
+        let removed = |f: FileAdded| FileRemoved {
+            file_id: f.file_id,
+            meta_data: f.meta_data,
+        };
+        assert!(files.remove(removed(file(1, 1)), bucket).is_ok());
+        assert_eq!(files.metrics().total_blob_bytes, 500);
+        assert!(files.remove(removed(file(2, 2)), bucket).is_ok());
+        assert_eq!(files.metrics().total_blob_bytes, 0);
+    }
+
+    #[test]
+    fn recomputing_the_total_blob_bytes_corrects_an_overcount() {
+        let mut files = Files::default();
+        let bucket = CanisterId::from_slice(&[2]);
+        for (file_id, hash, size) in [(1u8, 1u8, 500u64), (2, 2, 300)] {
+            files.add(
+                FileAdded {
+                    file_id: file_id.into(),
+                    hash: [hash; 32],
+                    size,
+                    meta_data: FileMetaData {
+                        owner: Principal::from_slice(&[1]),
+                        created: 0,
+                    },
+                },
+                bucket,
+            );
+        }
+        // As left by counting a second user's reference to the first blob
+        files.total_blob_bytes.set(1300);
+
+        assert_eq!(files.recompute_total_blob_bytes(), (1300, 800));
+        assert_eq!(files.metrics().total_blob_bytes, 800);
+    }
 
     #[test]
     fn iter_user_files_from_oldest_returns_oldest_first() {
