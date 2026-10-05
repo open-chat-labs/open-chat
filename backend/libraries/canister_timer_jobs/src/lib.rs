@@ -68,6 +68,12 @@ impl<J> TimerJobs<J> {
         removed
     }
 
+    // Removes the entries which jobs that have already run leave behind, which otherwise remain until
+    // `cancel_jobs` is next called or the jobs are next serialized
+    pub fn remove_completed_jobs(&mut self) {
+        self.jobs.retain(|_, (_, wrapper)| wrapper.deref().borrow().is_some());
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &(TimestampMillis, JobWrapper<J>)> {
         self.jobs.values()
     }

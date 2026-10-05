@@ -1,5 +1,6 @@
 use crate::env::ENV;
-use crate::utils::{chat_token_info, icp_token_info, now_millis, tick_many};
+use crate::setup::install_icrc_ledger;
+use crate::utils::{chat_token_info, icp_token_info, now_millis, tick_many, try_metrics};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
@@ -11,7 +12,9 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::time::Duration;
 use test_case::test_case;
-use types::{CanisterId, Chat, HttpRequest, P2PSwapLocation, UserId};
+use types::{CanisterId, Chat, HttpRequest, P2PSwapLocation, TokenInfo, UserId};
+
+const TEST_TOKEN_FEE: u128 = 10_000;
 
 #[test]
 fn swap_via_escrow_canister_succeeds() {
@@ -556,6 +559,94 @@ fn status_change_notification_to_uninstalled_canister_is_dropped() {
     assert_eq!(notification_failures(env, canister_ids.escrow, swap_id), 1);
 }
 
+// A payment whose ledger can't be called, eg. because the ledger is stopped or traps, is retried
+// after a delay which doubles with each failure, up to an hour, rather than round after round, and
+// is never given up on. A call to a stopped canister is first retried after 10 seconds. Only the
+// first 3 failures are recorded against the swap.
+#[test]
+fn payment_failing_to_call_into_ledger_is_retried_with_backoff() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let offerer = Principal::from_slice(&[10, 1]);
+    let amount = 1_000_000_000;
+    let (ledger, swap_id) = create_swap_with_deposit_on_new_ledger(env, canister_ids, *controller, offerer, amount);
+
+    let failures = |env: &PocketIc| ledger_call_failures(env, canister_ids.escrow, swap_id);
+    let awaiting_retry = |env: &PocketIc| escrow_metric(env, canister_ids.escrow, "payments_awaiting_retry");
+    let awaiting_retry_before = awaiting_retry(env);
+
+    client::stop_canister(env, *controller, ledger);
+    client::escrow::happy_path::cancel_swap(env, offerer, canister_ids.escrow, swap_id);
+
+    // Time doesn't pass as the rounds do, so however many there are, the refund isn't retried
+    tick_many(env, 20);
+    assert_eq!(failures(env), 1);
+
+    // Retried 10 seconds after the 1st failure
+    env.advance_time(Duration::from_secs(9));
+    tick_many(env, 10);
+    assert_eq!(failures(env), 1);
+    env.advance_time(Duration::from_secs(2));
+    tick_many(env, 10);
+    assert_eq!(failures(env), 2);
+
+    // Then 20 seconds after the 2nd
+    env.advance_time(Duration::from_secs(15));
+    tick_many(env, 10);
+    assert_eq!(failures(env), 2);
+    env.advance_time(Duration::from_secs(10));
+    tick_many(env, 10);
+    assert_eq!(failures(env), 3);
+
+    // Then 40 seconds after the 3rd, which fails again but isn't recorded
+    env.advance_time(Duration::from_secs(45));
+    tick_many(env, 10);
+    assert_eq!(failures(env), 3);
+    assert_eq!(awaiting_retry(env), awaiting_retry_before + 1);
+
+    // And 80 seconds after the 4th, by when the ledger is back, so the refund is made
+    client::start_canister(env, *controller, ledger);
+    env.advance_time(Duration::from_secs(90));
+    tick_many(env, 10);
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, offerer), amount);
+    assert_eq!(failures(env), 3);
+    assert_eq!(awaiting_retry(env), awaiting_retry_before);
+}
+
+// A ledger which has been deleted won't come back, and one which has been uninstalled has lost its
+// balances, so a payment from either is parked, being kept but not retried
+#[test]
+fn payment_from_uninstalled_ledger_is_parked() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let offerer = Principal::from_slice(&[10, 2]);
+    let (ledger, swap_id) = create_swap_with_deposit_on_new_ledger(env, canister_ids, *controller, offerer, 1_000_000_000);
+    let parked_payments = |env: &PocketIc| escrow_metric(env, canister_ids.escrow, "parked_payments");
+    let parked_before = parked_payments(env);
+
+    env.uninstall_canister(ledger, Some(*controller)).unwrap();
+    client::escrow::happy_path::cancel_swap(env, offerer, canister_ids.escrow, swap_id);
+
+    tick_many(env, 20);
+    // Longer than any retry delay
+    env.advance_time(Duration::from_millis(HOUR_IN_MS + MINUTE_IN_MS));
+    tick_many(env, 10);
+    let errors = swap_errors(env, canister_ids.escrow, swap_id);
+    assert_eq!(errors.len(), 1);
+    assert!(errors[0].starts_with("Failed to call into ledger, so parked the payment"));
+    assert_eq!(parked_payments(env), parked_before + 1);
+}
+
 fn create_icp_for_chat_swap(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
@@ -678,6 +769,75 @@ fn complete_swap_notifying(
 // The number of failed attempts to notify the swap's `canister_to_notify` of its status, each of
 // which the escrow canister records against the swap
 fn notification_failures(env: &PocketIc, escrow_canister_id: CanisterId, swap_id: u32) -> usize {
+    swap_errors(env, escrow_canister_id, swap_id)
+        .iter()
+        .filter(|error| error.starts_with("Failed to notify"))
+        .count()
+}
+
+// Creates a swap offering a token on a ledger of its own, which `offerer` deposits, so that the test
+// can stop or uninstall the ledger without affecting any other test. Returns the ledger and swap id.
+fn create_swap_with_deposit_on_new_ledger(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    offerer: Principal,
+    amount: u128,
+) -> (CanisterId, u32) {
+    let ledger = install_icrc_ledger(
+        env,
+        controller,
+        "Test".to_string(),
+        "TEST".to_string(),
+        TEST_TOKEN_FEE as u64,
+        None,
+        Vec::new(),
+    );
+
+    let swap_id = client::escrow::happy_path::create_swap(
+        env,
+        offerer,
+        canister_ids.escrow,
+        P2PSwapLocation::External,
+        TokenInfo {
+            symbol: "TEST".to_string(),
+            ledger,
+            decimals: 8,
+            fee: TEST_TOKEN_FEE,
+        },
+        amount,
+        None,
+        chat_token_info(),
+        1_000_000_000_000,
+        None,
+        now_millis(env) + DAY_IN_MS,
+    );
+
+    let account = Account {
+        owner: canister_ids.escrow,
+        subaccount: Some(deposit_subaccount(offerer, swap_id)),
+    };
+    client::ledger::happy_path::transfer(env, controller, ledger, account, amount + TEST_TOKEN_FEE);
+    client::escrow::happy_path::notify_deposit(env, offerer, canister_ids.escrow, swap_id, None);
+
+    (ledger, swap_id)
+}
+
+// The number of failed calls into a ledger to make the swap's payments which the escrow canister
+// has recorded against the swap
+fn ledger_call_failures(env: &PocketIc, escrow_canister_id: CanisterId, swap_id: u32) -> usize {
+    swap_errors(env, escrow_canister_id, swap_id)
+        .iter()
+        .filter(|error| error.starts_with("Failed to call into ledger"))
+        .count()
+}
+
+fn escrow_metric(env: &PocketIc, escrow_canister_id: CanisterId, name: &str) -> u64 {
+    try_metrics(env, escrow_canister_id).unwrap()[name].as_u64().unwrap()
+}
+
+// The errors the escrow canister has recorded against the swap
+fn swap_errors(env: &PocketIc, escrow_canister_id: CanisterId, swap_id: u32) -> Vec<String> {
     let response = client::http_request(
         env,
         Principal::anonymous(),
@@ -696,6 +856,6 @@ fn notification_failures(env: &PocketIc, escrow_canister_id: CanisterId, swap_id
         .as_array()
         .unwrap()
         .iter()
-        .filter(|error| error.as_str().unwrap().starts_with("Failed to notify"))
-        .count()
+        .map(|error| error.as_str().unwrap().to_string())
+        .collect()
 }
