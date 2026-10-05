@@ -17,9 +17,15 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> OCResult<Response>
         return Ok(SuccessNoUpdates(last_updated));
     }
 
-    // Only callers which pass `max_members` can read `SuccessSnapshot`
+    // Only callers which pass `max_members` can read `SuccessSnapshot`. They're given it when some of
+    // the updates since `updates_since` have been pruned, or when there are more updates to the
+    // members since then than `max_members`, since the details in full then cost no more to read and
+    // return than the updates. A bulk change, such as many members being migrated to new user ids,
+    // can leave more updates than can be read within the instruction limit.
+    let members = &state.data.chat.members;
     if let Some(max_members) = args.max_members
-        && (state.data.chat.members.any_updates_removed(args.updates_since)
+        && (members.any_updates_removed(args.updates_since)
+            || members.more_updates_since_than(args.updates_since, max_members)
             || state.data.bots.any_updates_removed(args.updates_since))
     {
         let args = group_canister::selected_initial::Args {

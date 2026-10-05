@@ -670,6 +670,12 @@ impl GroupMembers {
         self.latest_update_removed > since
     }
 
+    // Whether more than `limit` updates have been made after `since`. At most `limit + 1` of them are
+    // read, so this is cheap however many there are.
+    pub fn more_updates_since_than(&self, since: TimestampMillis, limit: u32) -> bool {
+        self.iter_latest_updates(since).nth(limit as usize).is_some()
+    }
+
     fn prune_then_insert_member_update(&mut self, user_id: UserId, update: MemberUpdate, now: TimestampMillis) {
         self.prune_member_updates(now);
         self.updates.insert((now, user_id, update));
@@ -1390,6 +1396,20 @@ mod tests {
         members.start_unlapsing(30);
         assert_eq!(members.unlapse_while(30, || true), user_ids([3]));
         assert!(members.lapsed().is_empty());
+    }
+
+    #[test]
+    fn more_updates_since_than_counts_the_updates_made_after_since() {
+        // Users 2 to 4 are added at 1
+        let mut members = members_for_page_tests(4);
+        // A migration records 2 updates, the removal of the old id and the addition of the new one
+        members.migrate_user_id(test_user_id(2), test_user_id(20), 10);
+
+        assert!(members.more_updates_since_than(9, 1));
+        assert!(!members.more_updates_since_than(9, 2));
+        assert!(members.more_updates_since_than(0, 4));
+        assert!(!members.more_updates_since_than(0, 5));
+        assert!(!members.more_updates_since_than(10, 0));
     }
 
     // Holds users 1 to `count`, of whom user 1 is the owner

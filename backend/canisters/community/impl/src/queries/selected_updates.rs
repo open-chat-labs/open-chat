@@ -33,9 +33,15 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         return SuccessNoUpdates(now);
     }
 
-    // Only callers which pass `max_members` can read `SuccessSnapshot`
+    // Only callers which pass `max_members` can read `SuccessSnapshot`. They're given it when some of
+    // the updates since `updates_since` have been pruned, or when there are more updates to the
+    // members since then than `max_members`, since the details in full then cost no more to read and
+    // return than the updates. A bulk change, such as many members being migrated to new user ids,
+    // can leave more updates than can be read within the instruction limit.
     if let Some(max_members) = args.max_members
-        && (data.members.any_updates_removed(args.updates_since) || data.bots.any_updates_removed(args.updates_since))
+        && (data.members.any_updates_removed(args.updates_since)
+            || data.members.more_updates_since_than(args.updates_since, max_members)
+            || data.bots.any_updates_removed(args.updates_since))
     {
         let args = community_canister::selected_initial::Args {
             invite_code: args.invite_code,
