@@ -1,5 +1,5 @@
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
-use crate::{RuntimeState, jobs, mutate_state, read_state, run_regular_jobs};
+use crate::{RuntimeState, jobs, mutate_state, openchat_bot, read_state, run_regular_jobs};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
 use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserImportFailed, UserImported};
@@ -228,7 +228,8 @@ async fn pull_next_page_inner(user_id: UserId) -> PullResult {
 }
 
 // Adds the user, now that everything has been pulled, moving what they hold under their old id onto
-// their new one, then scheduling their timer jobs, and tells the LocalUserIndex they were imported
+// their new one, then scheduling their timer jobs, tells them of their new wallet address via the
+// OpenChat bot, and tells the LocalUserIndex they were imported
 fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
     let Some(import) = state.data.user_imports.get(&old_user_id) else {
         return;
@@ -250,6 +251,7 @@ fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
     });
     let next_event_expiry = user.next_event_expiry;
     let canisters_to_notify = user.group_and_community_canisters();
+    let principal = user.principal;
 
     if state.data.users.add_imported(index, user).is_err() {
         let error = OCErrorCode::UserImportFailed.with_message("The user's principal is already registered");
@@ -268,6 +270,7 @@ fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
         );
     }
     state.set_up_streak_insurance_timer_job(index);
+    openchat_bot::send_account_migrated_message(index, principal, state);
 
     state.push_local_user_index_canister_event(
         index,
