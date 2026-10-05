@@ -3,7 +3,8 @@ use candid::Principal;
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, icrc1::CompletedCryptoTransaction};
+use types::icrc1::{CompletedCryptoTransaction, CryptoAccount};
+use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Swaps {
@@ -110,6 +111,22 @@ impl Swap {
 
     pub fn is_complete(&self) -> bool {
         self.token0_transfer_out.is_some() && self.token1_transfer_out.is_some()
+    }
+
+    // Whether a payment made in this block of this ledger has been recorded against the swap
+    pub fn is_payment_recorded(&self, ledger: CanisterId, block_index: u64) -> bool {
+        self.token0_transfer_out
+            .iter()
+            .chain(&self.token1_transfer_out)
+            .chain(&self.refunds)
+            .any(|transfer| transfer.ledger == ledger && transfer.block_index == block_index)
+    }
+
+    // Whether a refund to `principal` from this ledger has been recorded against the swap
+    pub fn is_refunded(&self, ledger: CanisterId, principal: Principal) -> bool {
+        self.refunds.iter().any(|refund| {
+            refund.ledger == ledger && matches!(&refund.to, CryptoAccount::Account(account) if account.owner == principal)
+        })
     }
 
     pub fn status(&self, now: TimestampMillis) -> SwapStatus {
