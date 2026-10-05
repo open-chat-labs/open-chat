@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 use user_canister::C2CReplyContext;
+use user_core::migration::MigratedTimerJob;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -104,6 +105,56 @@ pub struct MarkP2PSwapExpiredJob {
 }
 
 impl TimerJob {
+    // A job handed over by the canister of a user being migrated here, for the user at `user_index`
+    pub fn migrated(user_index: u16, job: MigratedTimerJob) -> TimerJob {
+        match job {
+            MigratedTimerJob::HardDeleteMessageContent {
+                chat_id,
+                thread_root_message_index,
+                message_id,
+            } => TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
+                user_index,
+                chat_id,
+                thread_root_message_index,
+                message_id,
+            })),
+            MigratedTimerJob::DeleteFileReferences { files } => {
+                TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files })
+            }
+            MigratedTimerJob::MessageReminder {
+                reminder_id,
+                chat,
+                thread_root_message_index,
+                event_index,
+                notes,
+                reminder_created_message_index,
+            } => TimerJob::MessageReminder(Box::new(MessageReminderJob {
+                user_index,
+                reminder_id,
+                chat,
+                thread_root_message_index,
+                event_index,
+                notes,
+                reminder_created_message_index,
+            })),
+            MigratedTimerJob::MarkVideoCallEnded { them, message_id } => TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob {
+                user_index,
+                them,
+                message_id,
+            }),
+            MigratedTimerJob::MarkP2PSwapExpired {
+                chat_id,
+                thread_root_message_index,
+                message_id,
+            } => TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
+                user_index,
+                chat_id,
+                thread_root_message_index,
+                message_id,
+            })),
+        }
+    }
+
     // The index of the user the job is for, if it is for one user's state rather than the escrow
     // canister's or the storage buckets'
     pub fn user_index(&self) -> Option<u16> {
