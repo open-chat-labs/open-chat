@@ -106,6 +106,18 @@ fn on_failed_to_call_ledger(
 
     match retry_delay(&error, failures) {
         Some(delay) => {
+            // A group being imported into a community is deleted once the import is complete, which
+            // doesn't wait for the group's funds to have been transferred to the community, so that
+            // transfer is retried straight away, as every payment used to be, rather than after a
+            // delay which could outlast the group
+            let delay = if matches!(
+                pending_payment.reason,
+                PendingPaymentReason::TransferToCommunityBeingImportedInto
+            ) {
+                0
+            } else {
+                delay
+            };
             // Only the first few failures are logged, so that a ledger which keeps failing doesn't
             // fill the logs
             if failures <= MAX_FAILURES_LOGGED {
