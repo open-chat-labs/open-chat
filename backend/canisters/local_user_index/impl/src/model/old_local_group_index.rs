@@ -15,7 +15,8 @@ pub struct OldLocalGroupIndex {
     // Those being handed over right now, which a repeated request mustn't queue again
     #[serde(default)]
     in_flight: BTreeSet<CanisterId>,
-    // Those handed over to this LocalUserIndex, and queued to have their cycles refunded
+    // Those handed over to this LocalUserIndex, and queued to have their cycles refunded, after which
+    // they go into the canister pool
     reclaimed: BTreeSet<CanisterId>,
     // Those left as they are, eg. for having code installed, which the old LocalGroupIndex may be
     // all that controls. A repeated request queues them again.

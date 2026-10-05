@@ -19,8 +19,7 @@ fn c2c_reclaim_old_local_group_index_impl(args: Args, state: &mut RuntimeState) 
     if old_local_group_index == state.env.canister_id() || is_live(old_local_group_index, state) {
         return Err(OCErrorCode::InvalidRequest.with_message("Not an old LocalGroupIndex"));
     }
-    // Only one is ever expected, but once one has been dealt with another can be, which lets the
-    // tests, whose environments are reused, each have their own
+    // Only one is ever expected, but once one has been dealt with another can be
     if let Some(old) = &state.data.old_local_group_index
         && old.canister_id != old_local_group_index
     {

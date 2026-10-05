@@ -37,7 +37,8 @@ thread_local! {
 // Reclaims the canisters which the old LocalGroupIndex alone still controls, once the GroupIndex has
 // made this LocalUserIndex a controller of it. The call relay is installed over the old
 // LocalGroupIndex, through which each canister is made to have this LocalUserIndex as its only
-// controller, then queued to have its cycles refunded and be deleted. Then any ICP the old
+// controller, then queued to have its cycles refunded, after which it goes into this
+// LocalUserIndex's canister pool, to be given cycles again when used. Then any ICP the old
 // LocalGroupIndex holds is moved to the CyclesDispenser through the relay, and finally the old
 // LocalGroupIndex's own cycles are refunded.
 pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Milliseconds>) -> bool {
@@ -399,15 +400,16 @@ async fn relay_set_controllers(
     Ok(())
 }
 
-fn queue_refund(state: &mut RuntimeState, canister_id: CanisterId, delete_canister: bool) {
+// A reclaimed canister is put into the canister pool once refunded. The old LocalGroupIndex isn't.
+fn queue_refund(state: &mut RuntimeState, canister_id: CanisterId, return_to_pool: bool) {
     let queue = &mut state.data.cycles_refund_queue;
     if !queue.iter().any(|c| c.canister_id == canister_id) {
         queue.push_back(CanisterToRefund {
             canister_id,
             attempt: 0,
             retry_after: 0,
-            delete_canister,
-            return_to_pool: false,
+            delete_canister: false,
+            return_to_pool,
         });
     }
 }
