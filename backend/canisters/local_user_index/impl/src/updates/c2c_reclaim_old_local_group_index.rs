@@ -29,6 +29,13 @@ fn c2c_reclaim_old_local_group_index_impl(args: Args, state: &mut RuntimeState) 
         }
         state.data.old_local_group_index = None;
     }
+    // Restarting a completed reclaim installs the relay again, which mustn't happen while the old
+    // LocalGroupIndex's cycles are being refunded, since that uninstalls whatever code it has
+    if state.data.old_local_group_index.as_ref().is_some_and(|old| old.completed)
+        && jobs::refund_cycles::is_in_progress(state, old_local_group_index)
+    {
+        return Err(OCErrorCode::AlreadyInProgress.with_message("The old LocalGroupIndex's cycles are being refunded"));
+    }
 
     // Belt and braces, none of this LocalUserIndex's own canisters should be among them. Any which
     // are, are marked as skipped, which is what they would be if they were only controlled by the
@@ -50,7 +57,7 @@ fn c2c_reclaim_old_local_group_index_impl(args: Args, state: &mut RuntimeState) 
 
     // Restarted once completed, the old LocalGroupIndex may be waiting to have its cycles refunded,
     // which would uninstall the relay, so it is taken out of the queue until done again
-    if was_completed && queued > 0 && !jobs::refund_cycles::is_in_progress(state, old_local_group_index) {
+    if was_completed && queued > 0 {
         state
             .data
             .cycles_refund_queue
@@ -63,7 +70,8 @@ fn c2c_reclaim_old_local_group_index_impl(args: Args, state: &mut RuntimeState) 
 }
 
 fn is_live(canister_id: CanisterId, state: &RuntimeState) -> bool {
-    state.data.local_users.contains(&canister_id.into())
+    state.data.canister_pool.contains(&canister_id)
+        || state.data.local_users.contains(&canister_id.into())
         || state.data.local_groups.contains(&canister_id.into())
         || state.data.local_communities.contains(&canister_id.into())
         || state.data.local_multi_user_canisters.contains(&canister_id)

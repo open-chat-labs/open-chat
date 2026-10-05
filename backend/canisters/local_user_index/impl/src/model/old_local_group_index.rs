@@ -12,6 +12,9 @@ pub struct OldLocalGroupIndex {
     pub relay_installed: bool,
     // Those still to be handed over to this LocalUserIndex
     pending: VecDeque<CanisterToReclaim>,
+    // Those being handed over right now, which a repeated request mustn't queue again
+    #[serde(default)]
+    in_flight: BTreeSet<CanisterId>,
     // Those handed over to this LocalUserIndex, and queued to have their cycles refunded
     reclaimed: BTreeSet<CanisterId>,
     // Those left as they are, eg. for having code installed, which the old LocalGroupIndex may be
@@ -35,19 +38,21 @@ impl OldLocalGroupIndex {
             canister_id,
             relay_installed: false,
             pending: VecDeque::new(),
+            in_flight: BTreeSet::new(),
             reclaimed: BTreeSet::new(),
             skipped: BTreeSet::new(),
             completed: false,
         }
     }
 
-    // Queues the canisters not already reclaimed or queued, so that a repeated request only retries
-    // those which were skipped. Returns how many were queued.
+    // Queues the canisters not already reclaimed, queued or being handed over, so that a repeated
+    // request only retries those which were skipped. Returns how many were queued.
     pub fn add(&mut self, canister_ids: impl IntoIterator<Item = CanisterId>) -> usize {
         let mut count = 0;
         for canister_id in canister_ids {
             if canister_id != self.canister_id
                 && !self.reclaimed.contains(&canister_id)
+                && !self.in_flight.contains(&canister_id)
                 && !self.pending.iter().any(|c| c.canister_id == canister_id)
             {
                 self.skipped.remove(&canister_id);
@@ -63,12 +68,16 @@ impl OldLocalGroupIndex {
         count
     }
 
+    // The canisters taken are in flight until each is retried, reclaimed or skipped
     pub fn take_batch(&mut self, max: usize) -> Vec<CanisterToReclaim> {
         let count = max.min(self.pending.len());
-        self.pending.drain(..count).collect()
+        let batch: Vec<_> = self.pending.drain(..count).collect();
+        self.in_flight.extend(batch.iter().map(|c| c.canister_id));
+        batch
     }
 
     pub fn retry(&mut self, canister: CanisterToReclaim) {
+        self.in_flight.remove(&canister.canister_id);
         self.pending.push_back(CanisterToReclaim {
             attempt: canister.attempt + 1,
             ..canister
@@ -76,10 +85,12 @@ impl OldLocalGroupIndex {
     }
 
     pub fn mark_reclaimed(&mut self, canister_id: CanisterId) {
+        self.in_flight.remove(&canister_id);
         self.reclaimed.insert(canister_id);
     }
 
     pub fn mark_skipped(&mut self, canister_id: CanisterId) {
+        self.in_flight.remove(&canister_id);
         self.skipped.insert(canister_id);
     }
 
@@ -158,6 +169,20 @@ mod tests {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn repeated_request_leaves_canisters_in_flight_alone() {
+        let mut old = OldLocalGroupIndex::new(canister_id(0));
+        old.add([canister_id(1), canister_id(2)]);
+
+        let batch = old.take_batch(1);
+        assert_eq!(old.add([canister_id(1), canister_id(2)]), 0);
+
+        // Once retried it is queued again, but only once
+        old.retry(batch[0]);
+        assert_eq!(old.add([canister_id(1)]), 0);
+        assert_eq!(old.take_batch(10).len(), 2);
     }
 
     #[test]
