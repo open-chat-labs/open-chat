@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Reclaim the canisters which only the old LocalGroupIndex still controls, refund and delete them, then refund its own cycles ([#9773](https://github.com/open-chat-labs/open-chat/pull/9773))
 
+### Changed
+
+- Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
+
 ### Removed
 
 - Remove the one-off refund of the pool canisters' cycles, which ran on the last upgrade ([#9770](https://github.com/open-chat-labs/open-chat/pull/9770))

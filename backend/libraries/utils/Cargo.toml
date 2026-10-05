@@ -21,6 +21,7 @@ ic-management-canister-types = { workspace = true }
 itertools = { workspace = true }
 msgpack = { path = "../msgpack" }
 oc_error_codes = { path = "../error_codes" }
+per_round_timer = { path = "../per_round_timer" }
 rand = { workspace = true }
 regex-lite = { workspace = true }
 serde = { workspace = true }

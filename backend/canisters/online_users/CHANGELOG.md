@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
+
 ### Removed
 
 - Remove `c2c_remove_user` now that the UserIndex sends `UserDeleted` events to `c2c_user_index` instead ([#9676](https://github.com/open-chat-labs/open-chat/pull/9676))

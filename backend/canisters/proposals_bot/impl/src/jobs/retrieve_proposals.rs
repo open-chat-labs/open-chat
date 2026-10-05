@@ -13,6 +13,7 @@ use std::collections::HashSet;
 use std::time::Duration;
 use types::{C2CError, CanisterId, NnsNeuronId, NnsProposal, Proposal, SnsNeuronId};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
+use utils::canister_timers::run_interval;
 
 pub const NNS_TOPIC_NEURON_MANAGEMENT: i32 = 1;
 pub const NNS_TOPIC_EXCHANGE_RATE: i32 = 2;
@@ -30,7 +31,7 @@ const NNS_TOPICS_TO_PUSH_SNS_PROPOSALS_FOR: [i32; 3] = [
 
 pub fn start_job(state: &RuntimeState) {
     let interval = Duration::from_millis(if state.data.test_mode { 30 * MINUTE_IN_MS } else { MINUTE_IN_MS });
-    ic_cdk_timers::set_timer_interval(interval, || async { run() });
+    run_interval(interval, run);
 }
 
 pub fn run() {

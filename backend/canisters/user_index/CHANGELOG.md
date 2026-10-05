@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - One-off in `post_upgrade` which records the prod DailyPuzzle canister id and pushes it to every LocalUserIndex, in place of a governance proposal. Release only once the DailyPuzzle canister has its wasm ([#9768](https://github.com/open-chat-labs/open-chat/pull/9768))
 
+### Changed
+
+- Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
+
 ### Removed
 
 - Remove the Registry id from the LocalUserIndexes' upgrade args ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))

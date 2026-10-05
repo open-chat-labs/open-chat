@@ -9,11 +9,12 @@ use std::collections::btree_map::Entry::Occupied;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{AggregatedOrders, C2CError, CancelOrderRequest, MakeOrderRequest, Milliseconds, Order, OrderType};
+use utils::canister_timers::run_interval;
 
 const RUN_MARKET_MAKER_INTERVAL: Milliseconds = MINUTE_IN_MS;
 
 pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(Duration::from_millis(RUN_MARKET_MAKER_INTERVAL), || async { run() });
+    run_interval(Duration::from_millis(RUN_MARKET_MAKER_INTERVAL), run);
 }
 
 fn run() {
