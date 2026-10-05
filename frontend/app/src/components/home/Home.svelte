@@ -864,12 +864,13 @@
     }
 
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
-        if (!(await client.createDirectChat(chatId))) {
+        const directChatId = await client.createDirectChat(chatId);
+        if (directChatId === undefined) {
             modal = { kind: "not_found" };
             return false;
         }
 
-        navigate(routeForChatIdentifier("chats", chatId));
+        navigate(routeForChatIdentifier("chats", directChatId));
         return true;
     }
 
