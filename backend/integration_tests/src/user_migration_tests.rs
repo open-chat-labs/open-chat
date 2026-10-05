@@ -4,9 +4,11 @@ use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_ma
 use crate::{CanisterIds, TestEnv, User, client, wasms};
 use candid::{CandidType, Nat, Principal};
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
+use ic_stable_structures::memory_manager::MemoryId;
 use local_user_index_canister::move_funds_from_old_canister::{MoveFundsResult, Response as MoveFundsResponse};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
+use stable_memory_map::KeyType;
 use std::collections::BTreeMap;
 use std::ops::Deref;
 use std::time::Duration;
@@ -15,7 +17,7 @@ use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     BotDefinition, BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, CanisterWasm, Chat, ChatId,
     CommunityRole, DiamondMembershipPlanDuration, Document, Empty, IdempotentEnvelope, MessageContent, MessageContentInitial,
-    OptionUpdate, P2PSwapContentInitial, ReferralStatus, UserId,
+    MessageIndex, OptionUpdate, P2PSwapContentInitial, ReferralStatus, UserId,
 };
 use user_canister::UserCanisterEvent;
 use user_index_canister::user_migration::UserMigrationStatus;
@@ -2354,6 +2356,206 @@ fn online_users_knows_migrated_user_by_their_new_id() {
     assert_eq!(result.minutes_online + result.minutes_online_last_month, 2);
     assert_eq!(last_online(env, new_user_id), Some(0));
     assert!(last_online(env, user.user_id).is_none());
+}
+
+// Users reach a MultiUser canister with their direct chats on the heap or already in stable memory,
+// depending on the versions of the canisters involved. Going through the release order (the
+// MultiUser canister first, then the User canisters), this checks each user ends up with every chat
+// in stable memory and still working: one imported by the MultiUser canister in production, whose
+// chats are moved when it's upgraded, one exported by the User canister in production after that,
+// whose chats are moved as they're imported, and one exported by the new User canister.
+#[test]
+fn migrated_users_direct_chats_end_up_in_stable_memory() {
+    // Installing the prod wasms would downgrade the canisters of any other test drawing a pooled env
+    let mut wrapper = ENV.deref().create_new();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let prod_version = BuildVersion::new(0, 0, 1);
+    let new_version = BuildVersion::new(0, 0, 2);
+    client::user_index::happy_path::upgrade_user_canister_wasm(
+        env,
+        *controller,
+        canister_ids.user_index,
+        CanisterWasm {
+            version: prod_version,
+            module: wasms::USER_PROD.module.clone(),
+        },
+    );
+    client::user_index::happy_path::upgrade_multi_user_canister_wasm(
+        env,
+        *controller,
+        canister_ids.user_index,
+        CanisterWasm {
+            version: prod_version,
+            module: wasms::MULTI_USER_PROD.module.clone(),
+        },
+    );
+    tick_many(env, 3);
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    assert_eq!(wasm_version(env, multi_user_canister), prod_version);
+
+    // Each user to be migrated has a chat with each of two users who stay in User canisters, one of
+    // which has disappearing messages
+    let partners: Vec<_> = (0..2).map(|_| client::register_user(env, canister_ids)).collect();
+    let users: Vec<_> = (0..3).map(|_| client::register_user(env, canister_ids)).collect();
+    let mut disappearing_messages = Vec::new();
+    for user in users.iter() {
+        assert_eq!(wasm_version(env, user.canister()), prod_version);
+        client::user::happy_path::update_chat_settings(
+            env,
+            user,
+            &user_canister::update_chat_settings::Args {
+                user_id: partners[1].user_id,
+                events_ttl: OptionUpdate::SetToSome(DAY_IN_MS),
+            },
+        );
+        for i in 0..3 {
+            client::user::happy_path::send_text_message(env, user, partners[0].user_id, format!("to partner {i}"), None);
+            client::user::happy_path::send_text_message(env, &partners[0], user.user_id, format!("from partner {i}"), None);
+        }
+        let message = client::user::happy_path::send_text_message(env, user, partners[1].user_id, random_string(), None);
+        disappearing_messages.push(message.event_index);
+    }
+    tick_many(env, 5);
+    let snapshots: Vec<_> = users.iter().map(|user| direct_chats_with(env, user, &partners)).collect();
+
+    // The MultiUser canister in production imports the first user's chats onto the heap
+    let migrated_0 = migrate(env, canister_ids, &operator, &users[0], multi_user_canister);
+    assert_eq!(direct_chats_in_stable_memory(env, multi_user_canister, &migrated_0), 0);
+
+    // Once upgraded, it moves them into stable memory
+    client::user_index::happy_path::upgrade_multi_user_canister_wasm(
+        env,
+        *controller,
+        canister_ids.user_index,
+        CanisterWasm {
+            version: new_version,
+            module: wasms::MULTI_USER.module.clone(),
+        },
+    );
+    tick_until(env, |env| wasm_version(env, multi_user_canister) == new_version);
+    assert_chats_in_stable_memory(env, multi_user_canister, &migrated_0, &partners, &snapshots[0]);
+
+    // A user exported by the User canister in production has their chats moved as they're imported
+    let migrated_1 = migrate(env, canister_ids, &operator, &users[1], multi_user_canister);
+    assert_chats_in_stable_memory(env, multi_user_canister, &migrated_1, &partners, &snapshots[1]);
+
+    // A user exported by the new User canister brings their chats with them in stable memory, where
+    // the upgrade moved them
+    client::user_index::happy_path::upgrade_user_canister_wasm(
+        env,
+        *controller,
+        canister_ids.user_index,
+        CanisterWasm {
+            version: new_version,
+            module: wasms::USER.module.clone(),
+        },
+    );
+    tick_until(env, |env| wasm_version(env, users[2].canister()) == new_version);
+    let migrated_2 = migrate(env, canister_ids, &operator, &users[2], multi_user_canister);
+    assert_chats_in_stable_memory(env, multi_user_canister, &migrated_2, &partners, &snapshots[2]);
+
+    // Every user's chats still work: messages are sent and received, and disappear when they expire
+    let migrated = [migrated_0, migrated_1, migrated_2];
+    for user in migrated.iter() {
+        client::user::happy_path::send_text_message(env, user, partners[0].user_id, "sent after", None);
+        client::user::happy_path::send_text_message(env, &partners[0], user.user_id, "received after", None);
+    }
+    tick_many(env, 10);
+    for user in migrated.iter() {
+        let latest_message = direct_chats_with(env, user, &partners)[0].2.clone();
+        assert_eq!(latest_message, "received after");
+        let partners_latest_message = direct_chats_with(env, &partners[0], std::slice::from_ref(user))[0].2.clone();
+        assert_eq!(partners_latest_message, "received after");
+    }
+
+    env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
+    tick_many(env, 5);
+    for (user, event_index) in migrated.iter().zip(disappearing_messages) {
+        let response = client::user::happy_path::events_by_index(env, user, partners[1].user_id, vec![event_index]);
+        assert!(response.events.is_empty(), "{response:?}");
+        assert!(!response.expired_event_ranges.is_empty());
+    }
+
+    // Releasing the prod wasms would break later tests which draw this env
+    wrapper.discard();
+}
+
+// Migrates the user to the MultiUser canister, returning them under their new id
+fn migrate(env: &mut PocketIc, canister_ids: &CanisterIds, operator: &User, user: &User, target: CanisterId) -> User {
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user.user_id],
+        Some(target),
+    );
+    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user.user_id);
+    User {
+        principal: user.principal,
+        user_id: new_user_id,
+        public_key: user.public_key.clone(),
+        local_user_index: user.local_user_index,
+    }
+}
+
+// The user's direct chats with each of the given users, as the other user, the index of the latest
+// message and its text
+fn direct_chats_with(env: &PocketIc, user: &User, others: &[User]) -> Vec<(UserId, MessageIndex, String)> {
+    let state = client::user::happy_path::initial_state(env, user);
+    others
+        .iter()
+        .map(|other| {
+            let chat = state
+                .direct_chats
+                .summaries
+                .iter()
+                .find(|c| c.them == other.user_id)
+                .unwrap_or_else(|| panic!("No chat with {}", other.user_id));
+            let latest_message = chat.latest_message.as_ref().unwrap();
+            let text = match &latest_message.event.content {
+                MessageContent::Text(text) => text.text.clone(),
+                content => panic!("Unexpected content: {content:?}"),
+            };
+            (other.user_id, latest_message.event.message_index, text)
+        })
+        .collect()
+}
+
+// Checks that every one of the user's direct chats is in the MultiUser canister's stable memory, and
+// that their chats with the given users are as they were before they were migrated
+fn assert_chats_in_stable_memory(
+    env: &PocketIc,
+    multi_user_canister: CanisterId,
+    user: &User,
+    partners: &[User],
+    snapshot: &[(UserId, MessageIndex, String)],
+) {
+    let chat_count = client::user::happy_path::initial_state(env, user)
+        .direct_chats
+        .summaries
+        .len();
+    assert!(chat_count > partners.len());
+    assert_eq!(direct_chats_in_stable_memory(env, multi_user_canister, user), chat_count);
+    assert_eq!(direct_chats_with(env, user, partners), snapshot);
+}
+
+// The number of the user's direct chats stored whole in the MultiUser canister's stable memory map
+fn direct_chats_in_stable_memory(env: &PocketIc, multi_user_canister: CanisterId, user: &User) -> usize {
+    let scope = user.user_id.index().to_be_bytes();
+    crate::stable_memory::get_stable_memory_map(env, multi_user_canister, MemoryId::new(1))
+        .keys()
+        .filter(|key| key.len() > 2 && key[..2] == scope && key[2] == KeyType::DirectChat as u8)
+        .count()
 }
 
 fn cancel_user_migration(

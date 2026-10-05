@@ -206,7 +206,7 @@ fn with_chat_mut<R>(
         .with_user_mut(recipient_index, |user| {
             user.direct_chats
                 .get_mut(&sender.into())
-                .map(|chat| f(chat, migrated_user_ids))
+                .map(|mut chat| f(&mut chat, migrated_user_ids))
         })
         .flatten()
 }

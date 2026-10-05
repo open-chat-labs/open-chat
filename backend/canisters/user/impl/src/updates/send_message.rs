@@ -356,7 +356,7 @@ fn send_message_impl(
         sender_context: None,
     };
 
-    let chat = state.data.user.direct_chats.get_or_create(
+    let mut chat = state.data.user.direct_chats.get_or_create(
         my_user_id,
         recipient,
         recipient_type.into(),
@@ -380,23 +380,27 @@ fn send_message_impl(
         }),
     );
 
+    // What the message replies to, as the recipient's copy of the chat receives it
+    let replies_to = replies_to.and_then(|r| {
+        if let Some((chat, thread_root_message_index)) = r.chat_if_other {
+            Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, r.event_index))
+        } else {
+            chat.events()
+                .main_events_reader()
+                .message_internal(r.event_index.into())
+                .map(|m| m.message_id)
+                .map(C2CReplyContext::ThisChat)
+        }
+    });
+    drop(chat);
+
     if !recipient_type.is_self() {
         let send_message_args = SendMessageArgs {
             thread_root_message_id,
             message_id,
             sender_message_index: message_event.event.message_index,
             content,
-            replies_to: replies_to.and_then(|r| {
-                if let Some((chat, thread_root_message_index)) = r.chat_if_other {
-                    Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, r.event_index))
-                } else {
-                    chat.events()
-                        .main_events_reader()
-                        .message_internal(r.event_index.into())
-                        .map(|m| m.message_id)
-                        .map(C2CReplyContext::ThisChat)
-                }
-            }),
+            replies_to,
             forwarding,
             block_level_markdown,
             message_filter_failed,
@@ -473,7 +477,7 @@ async fn send_to_bot_canister(
     match legacy_bot_c2c_client::handle_direct_message(recipient.canister_id(), &args).await {
         Ok(legacy_bot_api::handle_direct_message::Response::Success(result)) => {
             mutate_state(|state| {
-                if let Some(chat) = state.data.user.direct_chats.get_mut(&recipient.into()) {
+                if let Some(mut chat) = state.data.user.direct_chats.get_mut(&recipient.into()) {
                     let now = state.env.now();
                     for message in result.messages {
                         let push_message_args = PushMessageArgs {

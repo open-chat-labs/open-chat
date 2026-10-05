@@ -247,6 +247,9 @@ fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
     };
     let users_to_notify = with_key_scope(KeyScope::User(index), || {
         user.migrate_own_user_id(old_user_id, new_user_id);
+        // A user exported by a User canister from before direct chats were stored in stable memory
+        // holds their direct chats on the heap
+        user.direct_chats.migrate_to_stable_memory();
         user.direct_chat_user_ids(new_user_id)
     });
     let next_event_expiry = user.next_event_expiry;

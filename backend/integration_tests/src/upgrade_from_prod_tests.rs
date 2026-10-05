@@ -204,6 +204,12 @@ fn user_canisters_survive_upgrade_from_prod() {
     let total_keys = count_keys(env, user1.canister(), KeyType::DirectChatEvent);
     assert!(total_keys > total_events, "{total_keys} {total_events}");
 
+    // The chats themselves are on the heap until the upgrade
+    assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChat), 0);
+    let direct_chat_summaries_snapshot = direct_chat_summaries(env, &user1);
+    let direct_chat_count = direct_chat_summaries_snapshot.len();
+    assert_eq!(direct_chat_count, SMALL_CHATS + 2);
+
     client::user_index::happy_path::upgrade_user_canister_wasm(
         env,
         *controller,
@@ -226,6 +232,9 @@ fn user_canisters_survive_upgrade_from_prod() {
     assert_eq!(wasm_version(env, user1.canister()), new_version);
     assert_eq!(wasm_version(env, large_chat_user.canister()), new_version);
 
+    // Every chat is moved into stable memory, and reads as it did
+    assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChat), direct_chat_count);
+    assert_eq!(direct_chat_summaries(env, &user1), direct_chat_summaries_snapshot);
     for (user, snapshot) in chat_partners.iter().zip(snapshots.iter()) {
         assert_eq!(&all_events(env, &user1, user.user_id), snapshot);
     }
@@ -304,6 +313,7 @@ fn user_canisters_survive_upgrade_from_prod() {
         count_keys(env, user1.canister(), KeyType::DirectChatEvent),
         total_keys + 1 - snapshots[2].len()
     );
+    assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChat), direct_chat_count - 1);
 
     // The unread message indexes survive the upgrade. User1 hasn't read any of the messages sent by
     // large_chat_user nor the messages sent in the two small chats.
@@ -351,6 +361,8 @@ fn user_canisters_survive_upgrade_from_prod() {
         count_keys(env, user1.canister(), KeyType::DirectChatUnreadMessageIndex),
         unread_message_indexes
     );
+    // The new chat replaces the deleted one in stable memory
+    assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChat), direct_chat_count - 1);
 
     // In the new chat, the messages are indexes 0 and 1 for user1 but 6 and 7 for the sender, so
     // marking the first as read tells the sender that their message 6 has been read
@@ -504,6 +516,14 @@ impl From<EventWrapper<ChatEvent>> for EventSummary {
             },
         }
     }
+}
+
+// The user's direct chat summaries, ordered by the other user, each formatted for comparison since
+// the summaries can't be compared directly
+fn direct_chat_summaries(env: &PocketIc, user: &User) -> Vec<String> {
+    let mut summaries = client::user::happy_path::initial_state(env, user).direct_chats.summaries;
+    summaries.sort_by_key(|s| s.them);
+    summaries.iter().map(|s| format!("{s:?}")).collect()
 }
 
 // Reads every event in the chat, in pages

@@ -5,4 +5,4 @@ pub mod removed_chats;
 mod unread_message_index_map;
 
 pub use direct_chat::{DirectChat, EventsTtlChange, EventsTtlLatestChange};
-pub use direct_chats::DirectChats;
+pub use direct_chats::{DirectChatMut, DirectChatRef, DirectChats};

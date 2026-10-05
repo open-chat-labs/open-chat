@@ -71,7 +71,7 @@ fn commit(args: Args, their_user_type: UserType, state: &mut RuntimeState) -> OC
         .data
         .users
         .with_user_mut(my_index, |user| {
-            let chat = user
+            let mut chat = user
                 .direct_chats
                 .get_or_create(my_user_id, them, their_user_type, || anonymized_id, now);
 

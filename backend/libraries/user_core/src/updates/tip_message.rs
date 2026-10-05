@@ -65,7 +65,7 @@ pub fn tip_direct_chat_message<P: EventPusher>(
     migrated_user_ids: &MigratedUserIds,
     event_pusher: Option<P>,
 ) -> OCResult<user_canister::TipMessageArgs> {
-    let chat = user
+    let mut chat = user
         .direct_chats
         .get_mut(&args.recipient.into())
         .ok_or(OCErrorCode::ChatNotFound)?;
