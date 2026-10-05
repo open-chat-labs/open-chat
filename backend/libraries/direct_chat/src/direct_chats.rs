@@ -87,6 +87,14 @@ impl StoredValue for DirectChat {
     fn key(_: &ChatId, entry: &DirectChatEntry) -> DirectChatKey {
         DirectChatKeyPrefix::new().create_key(&entry.key_id)
     }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        msgpack::serialize_then_unwrap(self)
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Self {
+        msgpack::deserialize_then_unwrap(bytes)
+    }
 }
 
 impl DirectChats {

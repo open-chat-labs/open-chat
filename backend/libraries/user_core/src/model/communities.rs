@@ -63,6 +63,14 @@ impl StoredValue for Community {
     fn key(community_id: &CommunityId, _: &CommunityEntry) -> CommunityKey {
         CommunityKeyPrefix::new().create_key(community_id)
     }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        msgpack::serialize_then_unwrap(self)
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Self {
+        msgpack::deserialize_then_unwrap(bytes)
+    }
 }
 
 impl Communities {

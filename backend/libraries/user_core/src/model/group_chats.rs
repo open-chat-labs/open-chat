@@ -65,6 +65,14 @@ impl StoredValue for GroupChat {
     fn key(chat_id: &ChatId, _: &GroupChatEntry) -> GroupChatKey {
         GroupChatKeyPrefix::new().create_key(chat_id)
     }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        msgpack::serialize_then_unwrap(self)
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Self {
+        msgpack::deserialize_then_unwrap(bytes)
+    }
 }
 
 impl GroupChats {

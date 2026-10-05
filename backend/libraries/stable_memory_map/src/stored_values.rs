@@ -25,6 +25,13 @@ pub trait StoredValue: Serialize + DeserializeOwned {
 
     // The key the value is stored under, which must never change for a given value
     fn key(id: &Self::Id, entry: &Self::Entry) -> Self::Key;
+
+    // How the value is stored. These are left to each value type, rather than this crate
+    // serializing values itself, since depending on `msgpack` here makes the LocalUserIndex wasm
+    // about 0.5MB larger, which takes it over the size limit.
+    fn to_bytes(&self) -> Vec<u8>;
+
+    fn from_bytes(bytes: &[u8]) -> Self;
 }
 
 #[derive(Serialize, Deserialize)]
@@ -100,7 +107,7 @@ impl<V: StoredValue> StoredValues<V> {
         if let Some(entry) = self.in_stable_memory.remove(id) {
             let bytes = with_map_mut(|m| m.remove(V::key(id, &entry)))
                 .unwrap_or_else(|| panic!("Value with id {id:?} not found in stable memory"));
-            Some(msgpack::deserialize_then_unwrap(&bytes))
+            Some(V::from_bytes(&bytes))
         } else {
             self.on_heap.remove(id)
         }
@@ -189,7 +196,7 @@ impl<V: StoredValue> StoredValues<V> {
         let mut entries = Vec::with_capacity(count);
         for (id, value) in values {
             let entry = value.entry();
-            entries.push((V::key(&id, &entry), msgpack::serialize_then_unwrap(&value)));
+            entries.push((V::key(&id, &entry), value.to_bytes()));
             self.in_stable_memory.insert(id, entry);
         }
         // Sorted by key, since `insert_many` is far cheaper when the entries are in key order
@@ -276,7 +283,7 @@ impl<V: StoredValue> Drop for StoredMut<'_, V> {
 fn read<V: StoredValue>(id: &V::Id, entry: &V::Entry) -> V {
     let bytes =
         with_map(|m| m.get(V::key(id, entry))).unwrap_or_else(|| panic!("Value with id {id:?} not found in stable memory"));
-    msgpack::deserialize_then_unwrap(&bytes)
+    V::from_bytes(&bytes)
 }
 
 // Writes the value to stable memory, given its entry as of when it was last written, returning its
@@ -285,7 +292,7 @@ fn write<V: StoredValue>(id: &V::Id, previous_entry: &V::Entry, value: &V) -> V:
     let entry = value.entry();
     let key = V::key(id, &entry);
     debug_assert!(key == V::key(id, previous_entry), "A value's key must never change");
-    with_map_mut(|m| m.insert(key, msgpack::serialize_then_unwrap(value)));
+    with_map_mut(|m| m.insert(key, value.to_bytes()));
     entry
 }
 
@@ -314,6 +321,14 @@ mod tests {
 
         fn key(id: &u32, _: &u64) -> TestSmallEntriesKey {
             TestSmallEntriesKeyPrefix::new().create_key(id)
+        }
+
+        fn to_bytes(&self) -> Vec<u8> {
+            msgpack::serialize_then_unwrap(self)
+        }
+
+        fn from_bytes(bytes: &[u8]) -> Self {
+            msgpack::deserialize_then_unwrap(bytes)
         }
     }
 
