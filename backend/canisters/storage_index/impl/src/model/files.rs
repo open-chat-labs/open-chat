@@ -7,6 +7,7 @@ use ic_stable_structures::storable::Bound;
 use ic_stable_structures::{StableBTreeMap, StableCell, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::collections::BTreeSet;
 use std::ops::Bound::{Excluded, Unbounded};
 use types::{CanisterId, FileAdded, FileId, FileMetaData, FileRemoved, Hash, TimestampMillis};
 
@@ -110,6 +111,35 @@ impl Files {
 
     pub fn bucket_for_blob(&self, hash: Hash) -> Option<CanisterId> {
         self.iter_blob_reference_counts(hash, None).next().map(|(r, _)| r.canister_id)
+    }
+
+    pub fn contains(&self, file: &FileAdded) -> bool {
+        self.files_by_user.contains_key(&file.into())
+    }
+
+    // The bytes of the distinct blobs the user's file references point to
+    pub fn user_blob_bytes(&self, user_id: Principal) -> u64 {
+        let hashes: BTreeSet<Hash> = self.iter_user_files_from_oldest(user_id).map(|f| f.hash).collect();
+        hashes.iter().filter_map(|h| self.blob_size(h)).sum()
+    }
+
+    // The user's oldest files, as few of them as add up to at least `bytes`, along with their total
+    pub fn oldest_user_files_totalling(&self, user_id: Principal, bytes: u64) -> (Vec<UserFile>, u64) {
+        let mut total_size = 0u64;
+        let files = self
+            .iter_user_files_from_oldest(user_id)
+            .take_while(|f| {
+                if total_size < bytes {
+                    let size = self.blob_size(&f.hash).unwrap_or_default();
+                    total_size = total_size.saturating_add(size);
+                    true
+                } else {
+                    false
+                }
+            })
+            .collect();
+
+        (files, total_size)
     }
 
     pub fn iter_user_files_from_oldest(&self, user_id: Principal) -> impl Iterator<Item = UserFile> + '_ {
@@ -444,6 +474,38 @@ mod tests {
         assert_eq!(files.metrics().total_blob_bytes, 500);
         assert!(files.remove(removed(file(2, 2)), bucket).is_ok());
         assert_eq!(files.metrics().total_blob_bytes, 0);
+    }
+
+    #[test]
+    fn user_blob_bytes_counts_each_of_the_users_blobs_once() {
+        let mut files = Files::default();
+        let bucket = CanisterId::from_slice(&[2]);
+        let user = Principal::from_slice(&[1]);
+        // Its bytes start with the first user's
+        let other_user = Principal::from_slice(&[1, 1]);
+        for (file_id, owner, hash, size) in [
+            (1u8, user, 1u8, 500u64),
+            (2, user, 1, 500),
+            (3, user, 2, 300),
+            (4, other_user, 3, 700),
+        ] {
+            files.add(
+                FileAdded {
+                    file_id: file_id.into(),
+                    hash: [hash; 32],
+                    size,
+                    meta_data: FileMetaData {
+                        owner,
+                        created: file_id.into(),
+                    },
+                },
+                bucket,
+            );
+        }
+
+        assert_eq!(files.user_blob_bytes(user), 800);
+        assert_eq!(files.user_blob_bytes(other_user), 700);
+        assert_eq!(files.user_blob_bytes(Principal::from_slice(&[9])), 0);
     }
 
     #[test]

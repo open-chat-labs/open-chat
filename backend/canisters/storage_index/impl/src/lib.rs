@@ -1,6 +1,7 @@
 use crate::model::bucket_event_batch::{BucketEventBatch, EventToSync};
 use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
+use crate::model::files_backfill::{BackfilledReference, FilesBackfill, FilesBackfillMetrics};
 use crate::model::files_reconciliation::{FilesReconciliation, FilesReconciliationMetrics};
 use crate::model::vault_event_batch::VaultEventBatch;
 use candid::{CandidType, Principal};
@@ -97,6 +98,7 @@ impl RuntimeState {
             bucket_upgrades_failed: bucket_upgrade_metrics.failed,
             bucket_canister_wasm: self.data.bucket_canister_wasm.version,
             files_reconciliation: self.data.files_reconciliation.metrics(),
+            files_backfill: self.data.files_backfill.metrics(),
             cycles_dispenser_config: self.data.cycles_dispenser_config.clone(),
             stable_memory_sizes: memory::memory_sizes(),
             canister_ids: CanisterIds {
@@ -143,6 +145,8 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     #[serde(default)]
     pub files_reconciliation: FilesReconciliation,
+    #[serde(default)]
+    pub files_backfill: FilesBackfill,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_config: CyclesDispenserConfig,
     #[serde(default = "icp_ledger_canister_id")]
@@ -192,6 +196,7 @@ impl Data {
             fire_and_forget_handler: FireAndForgetHandler::default(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             files_reconciliation: FilesReconciliation::default(),
+            files_backfill: FilesBackfill::default(),
             total_cycles_spent_on_canisters: 0,
             cycles_dispenser_config,
             icp_ledger_canister_id,
@@ -213,20 +218,7 @@ impl Data {
                 let allowance_exceeded_by = bytes_used_after_upload.saturating_sub(user.byte_limit);
                 if allowance_exceeded_by > 0 {
                     if user.delete_oldest_if_limit_exceeded {
-                        let mut total_size = 0u64;
-                        let files_to_delete: Vec<_> = self
-                            .files
-                            .iter_user_files_from_oldest(user_id)
-                            .take_while(|f| {
-                                if total_size < allowance_exceeded_by {
-                                    let size = self.files.blob_size(&f.hash).unwrap_or_default();
-                                    total_size = total_size.saturating_add(size);
-                                    true
-                                } else {
-                                    false
-                                }
-                            })
-                            .collect();
+                        let (files_to_delete, _) = self.files.oldest_user_files_totalling(user_id, allowance_exceeded_by);
 
                         for file_to_delete in files_to_delete {
                             self.bucket_event_sync_queue
@@ -261,6 +253,47 @@ impl Data {
         {
             user.bytes_used = user.bytes_used.saturating_sub(result.size);
         }
+    }
+
+    // Adds a reference to a file a bucket holds if the index has none, charging its owner as an
+    // upload would, but without removing any of their files (see `FilesBackfill`)
+    pub fn add_missing_file_reference(&mut self, bucket: CanisterId, file: FileAdded) -> BackfilledReference {
+        if self.files.contains(&file) {
+            return BackfilledReference::AlreadyReferenced;
+        }
+
+        let user_id = file.meta_data.owner;
+        let Some(user) = self.users.get_mut(&user_id) else {
+            return BackfilledReference::UnknownOwner;
+        };
+
+        let charged = if self.files.user_owns_blob(user_id, file.hash) { 0 } else { file.size };
+        user.bytes_used = user.bytes_used.saturating_add(charged);
+        self.files.add(file, bucket);
+        BackfilledReference::Added { charged }
+    }
+
+    // Removes the user's oldest files if they're over their limit, as an upload over the limit
+    // would, but no more than `max_bytes` of them. Returns the number of files and their bytes.
+    //
+    // A user's `bytes_used` can be higher than the bytes of the blobs they hold references to,
+    // since some blob reference counts outlived the references they counted, so they're only
+    // treated as over their limit if they are by both measures.
+    pub fn remove_oldest_files_over_limit(&mut self, user_id: Principal, max_bytes: u64) -> Option<(u64, u64)> {
+        let user = self.users.get(&user_id).filter(|u| u.delete_oldest_if_limit_exceeded)?;
+        let bytes_used = user.bytes_used.min(self.files.user_blob_bytes(user_id));
+        let bytes_over_limit = bytes_used.saturating_sub(user.byte_limit).min(max_bytes);
+        if bytes_over_limit == 0 {
+            return None;
+        }
+
+        let (files_to_delete, total_size) = self.files.oldest_user_files_totalling(user_id, bytes_over_limit);
+        let count = files_to_delete.len() as u64;
+        for file_to_delete in files_to_delete {
+            self.bucket_event_sync_queue
+                .push(file_to_delete.bucket, EventToSync::FileToRemove(file_to_delete.file_id));
+        }
+        Some((count, total_size))
     }
 
     pub fn add_bucket(&mut self, bucket: BucketRecord) {
@@ -390,6 +423,7 @@ pub struct Metrics {
     pub bucket_upgrades_failed: Vec<FailedUpgradeCount>,
     pub bucket_canister_wasm: BuildVersion,
     pub files_reconciliation: FilesReconciliationMetrics,
+    pub files_backfill: FilesBackfillMetrics,
     pub cycles_dispenser_config: CyclesDispenserConfig,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub canister_ids: CanisterIds,

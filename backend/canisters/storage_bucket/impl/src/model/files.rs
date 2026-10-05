@@ -82,6 +82,29 @@ impl Files {
             .or_else(|| self.pending_files.get(file_id).map(|f| (f.owner, f.created)))
     }
 
+    // Up to `max_count` completed files in order of file id, from just after `after`, each as the
+    // index would have been told of it, along with the `after` for the next page if there may be
+    // more. A file whose blob is missing is left out, so the next page isn't given by the files.
+    pub fn files_after(&self, after: Option<FileId>, max_count: usize) -> (Vec<FileAdded>, Option<FileId>) {
+        let page = self.files.files_after(after, max_count);
+        let next = if page.len() == max_count { page.last().map(|(file_id, _)| *file_id) } else { None };
+
+        let files = page
+            .into_iter()
+            .filter_map(|(file_id, file)| {
+                let size = self.blobs.data_size(&file.hash)?;
+                Some(FileAdded {
+                    file_id,
+                    hash: file.hash,
+                    size,
+                    meta_data: file.meta_data(),
+                })
+            })
+            .collect();
+
+        (files, next)
+    }
+
     pub fn pending_file(&self, file_id: &FileId) -> Option<&PendingFile> {
         self.pending_files.get(file_id)
     }
@@ -835,6 +858,45 @@ mod tests {
         let removed = files.remove_file(added.file_id).unwrap();
         assert_eq!(removed.meta_data.owner, added.meta_data.owner);
         assert_eq!(removed.meta_data.created, added.meta_data.created);
+    }
+
+    #[test]
+    fn files_after_pages_through_every_completed_file_once() {
+        let mut files = files();
+        for file_id in [4, 1, 3] {
+            put(&mut files, file_id, vec![0; file_id as usize], None);
+        }
+        let forwarder = Principal::from_slice(&[2]);
+        let ForwardFileResult::Success(forwarded) =
+            files.forward(forwarder, 1, CanisterId::from_slice(&[3]), 0, BTreeSet::new(), 2000)
+        else {
+            panic!("Forward failed");
+        };
+        // An upload in progress is left out, the index having been told of it at its first chunk
+        put_first_chunk(&mut files, 2, 1000, None);
+
+        let mut pages = Vec::new();
+        let mut after = None;
+        loop {
+            let (page, next) = files.files_after(after, 2);
+            pages.push(page);
+            match next {
+                Some(next) => after = Some(next),
+                None => break,
+            }
+        }
+
+        let file_ids: Vec<_> = pages.iter().flatten().map(|f| f.file_id).collect();
+        let mut expected = vec![1, 3, 4, forwarded.file_id];
+        expected.sort();
+        assert_eq!(file_ids, expected);
+        assert!(pages.iter().all(|p| p.len() <= 2));
+
+        let given = pages.iter().flatten().find(|f| f.file_id == forwarded.file_id).unwrap();
+        assert_eq!((given.meta_data.owner, given.meta_data.created), (forwarder, 2000));
+        assert_eq!(given.size, 1);
+        let given = pages.iter().flatten().find(|f| f.file_id == 4).unwrap();
+        assert_eq!(given.size, 4);
     }
 
     // The first of two chunks

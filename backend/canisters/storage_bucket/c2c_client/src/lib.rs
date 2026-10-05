@@ -5,6 +5,7 @@ use storage_bucket_canister::*;
 generate_candid_c2c_call!(file_status);
 
 // Updates
+generate_candid_c2c_call!(c2c_files);
 generate_candid_c2c_call!(c2c_missing_files);
 generate_candid_c2c_call!(c2c_sync_index);
 generate_candid_c2c_call!(c2c_vault_sync);

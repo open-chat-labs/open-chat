@@ -31,6 +31,13 @@ fn post_upgrade(args: Args) {
     // whose file is gone (see `FilesReconciliation`). It only ever starts once.
     // TODO remove once it has completed in prod
     data.files_reconciliation.start(env.now());
+
+    // One-off: add a reference for each file a bucket holds which the index has none for,
+    // charging its owner, as the forwarded copies' references were removed by the reconciliation
+    // (see `FilesBackfill`). It only ever starts once.
+    // TODO remove once it has completed in prod
+    data.files_backfill.start(env.now());
+
     init_cycles_dispenser_client(
         data.cycles_dispenser_config.canister_id,
         data.cycles_dispenser_config.min_cycles_balance,
