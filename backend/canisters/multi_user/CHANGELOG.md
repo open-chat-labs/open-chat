@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Send each migrated user an OpenChat bot message detailing their new wallet address ([#9763](https://github.com/open-chat-labs/open-chat/pull/9763))
 - Add `check_pin_number`, so a payment's PIN can be checked before the user approves it ([#9777](https://github.com/open-chat-labs/open-chat/pull/9777))
-- Schedule the timer jobs a migrated user's canister hands over along with them ([#9779](https://github.com/open-chat-labs/open-chat/pull/9779))
+- Schedule the timer jobs a migrated user's canister handed over during migration ([#9779](https://github.com/open-chat-labs/open-chat/pull/9779))
 
 ### Changed
 
