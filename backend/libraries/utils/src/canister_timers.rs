@@ -9,5 +9,9 @@ thread_local! {
 
 pub fn run_now_then_interval(interval: Duration, func: fn()) {
     ic_cdk_timers::set_timer(Duration::ZERO, async move { func() });
+    run_interval(interval, func);
+}
+
+pub fn run_interval(interval: Duration, func: fn()) {
     TIMERS.with_borrow_mut(|timers| timers.push(PerRoundTimer::new_with_interval(interval, func)));
 }
