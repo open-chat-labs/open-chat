@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Only return the given accessor's files when looking them up, and unlink a file's owner when it is removed ([#9759](https://github.com/open-chat-labs/open-chat/pull/9759))
+- Report a forwarded file to the StorageIndex as the forwarder's ([#9761](https://github.com/open-chat-labs/open-chat/pull/9761))
 
 ## [[2.0.2066](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2066-storage_bucket)] - 2026-09-29
 
