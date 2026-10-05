@@ -17,6 +17,7 @@ import {
     type BlobReference,
     type BlockUserResponse,
     type CancelP2PSwapResponse,
+    type CheckPinNumberResponse,
     type CandidateGroupChat,
     type IcrcAccount,
     type ChannelIdentifier,
@@ -102,6 +103,7 @@ import {
     UserCancelMessageReminderArgs,
     UserCancelP2pSwapArgs,
     UserChatInList,
+    UserCheckPinNumberArgs,
     UserChitEventsArgs,
     UserChitEventsResponse,
     UserClaimDailyChitArgs,
@@ -1471,6 +1473,18 @@ export class UserClient
             },
             unitResult,
             UserSetPinNumberArgs,
+            UnitResult,
+        );
+    }
+
+    // Only a MultiUser canister checks a PIN on its own, which it does ahead of each payment the
+    // user approves from their wallet, so that one with the wrong PIN is never approved
+    checkPinNumber(pin: string): Promise<CheckPinNumberResponse> {
+        return this.update(
+            "check_pin_number",
+            { pin },
+            unitResult,
+            UserCheckPinNumberArgs,
             UnitResult,
         );
     }

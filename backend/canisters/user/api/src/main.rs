@@ -34,6 +34,7 @@ fn main() {
     generate_ts_method!(user, block_user);
     generate_ts_method!(user, cancel_message_reminder);
     generate_ts_method!(user, cancel_p2p_swap);
+    generate_ts_method!(user, check_pin_number);
     generate_ts_method!(user, claim_daily_chit);
     generate_ts_method!(user, configure_wallet);
     generate_ts_method!(user, create_community);
