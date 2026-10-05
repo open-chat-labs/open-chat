@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - One-off in `post_upgrade` which records the prod DailyPuzzle canister id and pushes it to every LocalUserIndex, in place of a governance proposal. Release only once the DailyPuzzle canister has its wasm ([#9768](https://github.com/open-chat-labs/open-chat/pull/9768))
-- Send each migrated user's old and new ids to the StorageIndex, including, once, those migrated so far ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Send each migrated user's old and new ids to the StorageIndex, including, once, those migrated so far ([#9790](https://github.com/open-chat-labs/open-chat/pull/9790))
 
 ### Changed
 

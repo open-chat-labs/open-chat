@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add `c2c_user_ids_migrated` for the UserIndex to pass migrated users' old and new ids on to every bucket ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Add `c2c_user_ids_migrated` for the UserIndex to pass migrated users' old and new ids on to every bucket ([#9790](https://github.com/open-chat-labs/open-chat/pull/9790))
 
 ### Changed
 
