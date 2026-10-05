@@ -18,8 +18,8 @@ pub struct ExpireSwapJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NotifyStatusChangeJob {
     pub swap_id: u32,
-    // The number of attempts which have failed so far
-    pub attempt: u32,
+    // The number of attempts at the notification which have failed so far
+    pub failures: u32,
 }
 
 impl Job for TimerJob {
@@ -46,6 +46,6 @@ impl Job for ExpireSwapJob {
 
 impl Job for NotifyStatusChangeJob {
     fn execute(self) {
-        crate::jobs::notify_status_change::retry(self.swap_id, self.attempt);
+        crate::jobs::notify_status_change::retry(self.swap_id, self.failures);
     }
 }

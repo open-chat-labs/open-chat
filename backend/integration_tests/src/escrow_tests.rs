@@ -485,8 +485,8 @@ fn only_one_of_two_users_accepting_at_once_is_accepted() {
 
 // The escrow canister notifies the canister a swap names of each change to its status. A failed
 // notification is retried once the delay the failure calls for has passed, rather than round after
-// round, and is given up on after 10 attempts. A call to a stopped canister is retried after 10
-// seconds.
+// round, until it succeeds or 10 attempts have failed. A call to a stopped canister is retried after
+// 10 seconds.
 #[test]
 fn status_change_notification_to_stopped_canister_is_retried_after_a_delay() {
     let mut wrapper = ENV.deref().get();
@@ -499,25 +499,36 @@ fn status_change_notification_to_stopped_canister_is_retried_after_a_delay() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
+    // Each swap notifies a stopped canister, one of which is started again part way through
+    client::stop_canister(env, user1.local_user_index, user1.canister());
     client::stop_canister(env, user2.local_user_index, user2.canister());
+    let restarted_swap_id = complete_swap_notifying(env, canister_ids, *controller, &user1, &user2, user2.canister());
+    let stopped_swap_id = complete_swap_notifying(env, canister_ids, *controller, &user1, &user2, user1.canister());
+    let failures = |env: &PocketIc| {
+        (
+            notification_failures(env, canister_ids.escrow, restarted_swap_id),
+            notification_failures(env, canister_ids.escrow, stopped_swap_id),
+        )
+    };
 
-    let swap_id = complete_swap_notifying(env, canister_ids, *controller, &user1, &user2, user2.canister());
-
-    // Time doesn't pass as the rounds do, so however many there are, the notification isn't retried
+    // Time doesn't pass as the rounds do, so however many there are, the notifications aren't retried
     tick_many(env, 20);
-    assert_eq!(notification_failures(env, canister_ids.escrow, swap_id), 1);
+    assert_eq!(failures(env), (1, 1));
 
     env.advance_time(Duration::from_secs(10));
     tick_many(env, 5);
-    assert_eq!(notification_failures(env, canister_ids.escrow, swap_id), 2);
+    assert_eq!(failures(env), (2, 2));
 
+    // Every failure is recorded, so the restarted canister's count staying put shows its next retry
+    // succeeded, while the other notification is given up on after 10 failures
+    client::start_canister(env, user2.local_user_index, user2.canister());
     for _ in 0..15 {
         env.advance_time(Duration::from_secs(10));
         tick_many(env, 5);
     }
-    assert_eq!(notification_failures(env, canister_ids.escrow, swap_id), 10);
+    assert_eq!(failures(env), (2, 10));
 
-    client::start_canister(env, user2.local_user_index, user2.canister());
+    client::start_canister(env, user1.local_user_index, user1.canister());
 }
 
 // A canister which has been uninstalled won't be reinstalled, eg. one whose user was deleted or
