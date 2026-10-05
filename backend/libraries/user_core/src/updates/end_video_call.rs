@@ -17,7 +17,7 @@ pub fn end_video_call<P: EventPusher>(
     now: TimestampMillis,
     event_pusher: impl FnOnce() -> P,
 ) -> OCResult<Option<DirectChatUserNotificationPayload>> {
-    let chat = user.direct_chats.get_mut(&them.into()).ok_or(OCErrorCode::MessageNotFound)?;
+    let mut chat = user.direct_chats.get_mut(&them.into()).ok_or(OCErrorCode::MessageNotFound)?;
     let was_started_by_me = chat
         .events()
         .main_events_reader()

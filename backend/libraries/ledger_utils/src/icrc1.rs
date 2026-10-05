@@ -37,7 +37,7 @@ pub async fn process_transaction(
             created: transaction.created,
             block_index,
         }),
-        Err(error_message) => Err(FailedCryptoTransaction {
+        Err(transfer_error) => Err(FailedCryptoTransaction {
             ledger: transaction.ledger,
             token_symbol: transaction.token_symbol,
             amount: transaction.amount,
@@ -46,17 +46,19 @@ pub async fn process_transaction(
             to: transaction.to.into(),
             memo: transaction.memo,
             created: transaction.created,
-            error_message,
+            error_message: format!("Transfer failed. {transfer_error:?}"),
         }),
     })
 }
 
-// Error response contains the error message and a boolean stating if the transfer should be retried
+// If `retry_if_bad_fee` and the ledger expects a different fee, the transfer is retried with the
+// expected fee, adjusting the amount so that the total taken from the sender is unchanged. If the
+// amount can't cover the difference, the ledger's `BadFee` error is returned.
 pub async fn make_transfer(
     ledger_canister_id: CanisterId,
     args: &TransferArg,
     retry_if_bad_fee: bool,
-) -> Result<Result<u64, String>, C2CError> {
+) -> Result<Result<u64, TransferError>, C2CError> {
     let mut response = icrc_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, args).await?;
 
     if retry_if_bad_fee {
@@ -72,9 +74,10 @@ pub async fn make_transfer(
                 let diff = fee - expected_fee;
                 updated_args.amount += diff;
             } else {
-                let diff = expected_fee - fee;
+                let diff = expected_fee.clone() - fee;
                 if updated_args.amount < diff {
-                    return Ok(Err("Transfer amount too low to cover fee".to_string()));
+                    error!(%ledger_canister_id, ?expected_fee, ?args, "Transfer amount too low to cover fee");
+                    return Ok(Err(TransferError::BadFee { expected_fee }));
                 }
                 updated_args.amount -= diff;
             }
@@ -86,7 +89,7 @@ pub async fn make_transfer(
         Ok(block_index) => Ok(block_index.0.try_into().unwrap()),
         Err(transfer_error) => {
             error!(%ledger_canister_id, ?transfer_error, ?args, "Transfer failed");
-            Err(format!("Transfer failed. {transfer_error:?}"))
+            Err(transfer_error)
         }
     })
 }
