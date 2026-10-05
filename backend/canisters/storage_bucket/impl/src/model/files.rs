@@ -75,9 +75,11 @@ impl Files {
         self.files.get(file_id)
     }
 
-    // Whether the file is held, either complete or still being uploaded
-    pub fn holds(&self, file_id: &FileId) -> bool {
-        self.files.contains_key(file_id) || self.pending_files.contains_key(file_id)
+    // The owner and created time of the file, if it's held, either complete or still being uploaded
+    pub fn owner_and_created(&self, file_id: &FileId) -> Option<(Principal, TimestampMillis)> {
+        self.get(file_id)
+            .map(|f| (f.owner, f.created))
+            .or_else(|| self.pending_files.get(file_id).map(|f| (f.owner, f.created)))
     }
 
     pub fn pending_file(&self, file_id: &FileId) -> Option<&PendingFile> {
@@ -827,6 +829,7 @@ mod tests {
         };
         assert_eq!(added.meta_data.owner, forwarder);
         assert_eq!(added.meta_data.created, 2000);
+        assert_eq!(files.owner_and_created(&added.file_id), Some((forwarder, 2000)));
 
         // The index finds the file it is removing by its owner and created time
         let removed = files.remove_file(added.file_id).unwrap();
@@ -877,8 +880,8 @@ mod tests {
         let removed = files.remove_old_pending_files(2000);
         let removed: Vec<_> = removed.iter().map(|f| (f.file_id, f.meta_data.created)).collect();
         assert_eq!(removed, vec![(1, 1000), (3, 1000)]);
-        assert!(!files.holds(&1));
-        assert!(files.holds(&2));
+        assert!(files.owner_and_created(&1).is_none());
+        assert_eq!(files.owner_and_created(&2), Some((Principal::from_slice(&[1]), 5000)));
 
         // An upload which has expired by the time its next chunk arrives
         assert!(matches!(
@@ -892,6 +895,6 @@ mod tests {
             (removed.file_id, removed.meta_data.owner, removed.meta_data.created),
             (4, Principal::from_slice(&[1]), 1000)
         );
-        assert!(!files.holds(&4));
+        assert!(files.owner_and_created(&4).is_none());
     }
 }

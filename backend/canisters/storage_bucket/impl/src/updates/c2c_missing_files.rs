@@ -11,11 +11,15 @@ fn c2c_missing_files(args: Args) -> Response {
 }
 
 fn c2c_missing_files_impl(args: Args, state: &RuntimeState) -> Response {
-    let missing = args
-        .file_ids
-        .into_iter()
-        .filter(|file_id| !state.data.files.holds(file_id))
-        .collect();
+    let mut missing = Vec::new();
+    let mut mismatched = Vec::new();
+    for file in args.files {
+        match state.data.files.owner_and_created(&file.file_id) {
+            None => missing.push(file.file_id),
+            Some(held) if held != (file.owner, file.created) => mismatched.push(file),
+            Some(_) => {}
+        }
+    }
 
-    Success(SuccessResult { missing })
+    Success(SuccessResult { missing, mismatched })
 }

@@ -1,10 +1,11 @@
+use crate::model::files_reconciliation::PageResult;
 use crate::{RuntimeState, mutate_state, read_state};
 use std::cell::Cell;
 use std::collections::{BTreeMap, HashSet};
 use std::time::Duration;
-use storage_bucket_canister::c2c_missing_files::{Args, Response};
+use storage_bucket_canister::c2c_missing_files::{Args, FileReference, Response};
 use tracing::{error, info};
-use types::{CanisterId, FileId, Milliseconds};
+use types::{CanisterId, Milliseconds};
 use utils::canister::delay_if_should_retry_failed_c2c_call_to_new_method;
 
 // Pages hold the references to several buckets' files, each of which is asked about its own
@@ -49,26 +50,39 @@ async fn run() {
         return;
     };
 
-    let mut file_ids_by_bucket: BTreeMap<CanisterId, Vec<FileId>> = BTreeMap::new();
+    let mut files_by_bucket: BTreeMap<CanisterId, Vec<FileReference>> = BTreeMap::new();
     for (file, bucket) in page.iter() {
-        file_ids_by_bucket.entry(*bucket).or_default().push(file.file_id);
+        files_by_bucket.entry(*bucket).or_default().push(FileReference {
+            file_id: file.file_id,
+            owner: file.meta_data.owner,
+            created: file.meta_data.created,
+        });
     }
 
-    let responses = futures::future::join_all(file_ids_by_bucket.into_iter().map(|(bucket, file_ids)| async move {
-        let response = storage_bucket_canister_c2c_client::c2c_missing_files(bucket, &Args { file_ids }).await;
+    let responses = futures::future::join_all(files_by_bucket.into_iter().map(|(bucket, files)| async move {
+        let response = storage_bucket_canister_c2c_client::c2c_missing_files(bucket, &Args { files }).await;
         (bucket, response)
     }))
     .await;
 
     let mut missing = HashSet::new();
+    let mut mismatched = HashSet::new();
     let mut buckets_skipped = HashSet::new();
     let mut retry_after = None;
     for (bucket, response) in responses {
         match response {
-            Ok(Response::Success(result)) => missing.extend(result.missing.into_iter().map(|file_id| (bucket, file_id))),
+            Ok(Response::Success(result)) => {
+                missing.extend(result.missing.into_iter().map(|file_id| (bucket, file_id)));
+                mismatched.extend(result.mismatched.into_iter().map(|f| (bucket, f.file_id, f.owner, f.created)));
+            }
             // Includes a bucket not yet upgraded to have `c2c_missing_files`, which will be once it is
             Err(error) => match delay_if_should_retry_failed_c2c_call_to_new_method(&error) {
-                Some(delay) => retry_after = Some(retry_after.map_or(delay, |d: Milliseconds| d.max(delay))),
+                Some(delay) => {
+                    if !error.is_method_not_found() {
+                        error!(%bucket, ?error, "Failed to check which files the bucket is missing, retrying");
+                    }
+                    retry_after = Some(retry_after.map_or(delay, |d: Milliseconds| d.max(delay)));
+                }
                 None => {
                     error!(%bucket, ?error, "Failed to check which files the bucket is missing");
                     buckets_skipped.insert(bucket);
@@ -84,21 +98,22 @@ async fn run() {
     }
 
     mutate_state(|state| {
-        let checked = page.len() as u64;
-        let mut removed = 0;
-        let mut skipped = 0;
+        let mut result = PageResult::default();
         for (file, bucket) in page {
             if buckets_skipped.contains(&bucket) {
-                skipped += 1;
-            } else if missing.contains(&(bucket, file.file_id)) {
+                result.skipped += 1;
+                continue;
+            }
+            result.checked += 1;
+            if missing.contains(&(bucket, file.file_id)) {
                 state.data.remove_file_reference(bucket, file);
-                removed += 1;
+                result.missing += 1;
+            } else if mismatched.contains(&(bucket, file.file_id, file.meta_data.owner, file.meta_data.created)) {
+                state.data.remove_file_reference(bucket, file);
+                result.mismatched += 1;
             }
         }
-        state
-            .data
-            .files_reconciliation
-            .record_page(last_checked, checked, removed, skipped);
+        state.data.files_reconciliation.record_page(last_checked, result);
     });
 
     schedule(0);
