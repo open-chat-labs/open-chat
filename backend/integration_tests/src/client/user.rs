@@ -45,6 +45,7 @@ generate_msgpack_update_call!(c2c_user_canister_v2);
 generate_msgpack_update_call!(c2c_withdraw_from_icpswap);
 generate_msgpack_update_call!(cancel_message_reminder);
 generate_msgpack_update_call!(cancel_p2p_swap);
+generate_msgpack_update_call!(check_pin_number);
 generate_msgpack_update_call!(claim_daily_chit);
 generate_msgpack_update_call!(configure_wallet);
 generate_msgpack_update_call!(create_community);
