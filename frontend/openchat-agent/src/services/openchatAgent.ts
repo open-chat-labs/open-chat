@@ -3618,11 +3618,17 @@ export class OpenChatAgent extends EventTarget {
     // The balances left behind in the wallets of the canisters the user had before being migrated to
     // a MultiUser canister, on each token in the Registry, which are large enough to be moved. Only
     // those of `previousUserIds` which were canisters of their own had wallets. A balance which
-    // can't be read, eg. on a ledger which has been decommissioned, is left out.
+    // can't be read, eg. on a ledger which has been decommissioned, is left out, but if none can be
+    // checked, while offline or before the Registry has loaded, this rejects.
     async fundsInPreviousWallets(previousUserIds: string[]): Promise<FundsInPreviousWallet[]> {
-        if (offline()) return [];
+        if (offline()) {
+            throw new Error("Offline, so the previous wallets can't be checked");
+        }
+        if (this._registryValue === undefined) {
+            throw new Error("The Registry hasn't loaded, so the previous wallets can't be checked");
+        }
 
-        const tokens = this._registryValue?.tokenDetails ?? [];
+        const tokens = this._registryValue.tokenDetails;
         const checks = previousUserIds
             .filter((id) => isCanisterId(Principal.fromText(id)))
             .flatMap((previousUserId) =>
