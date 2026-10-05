@@ -1477,8 +1477,8 @@ export class UserClient
         );
     }
 
-    // Only a MultiUser canister checks a PIN on its own, which it does ahead of a payment it will
-    // pull from the user's wallet, so that the user isn't asked to approve one it would refuse
+    // Only a MultiUser canister checks a PIN on its own, which it does ahead of each payment the
+    // user approves from their wallet, so that one with the wrong PIN is never approved
     checkPinNumber(pin: string): Promise<CheckPinNumberResponse> {
         return this.update(
             "check_pin_number",

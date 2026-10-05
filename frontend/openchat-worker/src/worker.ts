@@ -945,6 +945,7 @@ function getAction(
                 payload.recurring,
                 payload.expectedPriceE8s,
                 payload.fromAccount,
+                payload.pin,
             );
 
         case "updateMarketMakerConfig":

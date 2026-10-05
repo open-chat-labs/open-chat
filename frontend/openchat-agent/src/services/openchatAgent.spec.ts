@@ -171,6 +171,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         content: MessageContent,
         threadRootMessageIndex?: number,
         acceptedRules?: { chat: number; community: number },
+        pin?: string,
     ) =>
         new Promise((resolve, reject) =>
             agent
@@ -181,7 +182,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
                     message(content),
                     acceptedRules,
                     undefined,
-                    undefined,
+                    pin,
                     false,
                 )
                 .subscribe({
@@ -240,18 +241,58 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         ],
     ];
 
-    // Every payment made with a PIN, which the canister pulling it checks
-    const paymentsWithPin: [string, (pin: string) => Promise<unknown>][] = [
-        ["crypto sent in a direct chat", (pin) => sendDirectMessage(crypto(), pin)],
+    // Every payment made with a PIN, and whether the PIN is passed on to the canister which pulls
+    // the payment, so that it checks it again. A group or community has no way to check it.
+    const paymentsWithPin: [string, (pin: string) => Promise<unknown>, boolean][] = [
+        ["crypto sent in a direct chat", (pin) => sendDirectMessage(crypto(), pin), true],
+        ["swap offered in a direct chat", (pin) => sendDirectMessage(swapOffer(), pin), true],
         [
             "tip in a direct chat",
             (pin) => agent.tipMessage({ chatId: DIRECT }, 1n, transfer(), 8, pin),
+            true,
         ],
         [
             "swap accepted in a group",
             (pin) => agent.acceptP2PSwap(GROUP, undefined, 1n, ICP, 100n, pin, false, undefined),
+            true,
         ],
-        ["streak insurance", (pin) => agent.payForStreakInsurance(1, 5_000n, pin)],
+        ["streak insurance", (pin) => agent.payForStreakInsurance(1, 5_000n, pin), true],
+        [
+            "Diamond membership",
+            (pin) =>
+                agent.payForDiamondMembership(
+                    "",
+                    ICP_LEDGER,
+                    "one_month",
+                    false,
+                    100n,
+                    undefined,
+                    pin,
+                ),
+            false,
+        ],
+        ...transferMessages.flatMap(([what, content]) =>
+            (
+                [
+                    ["a group", GROUP],
+                    ["a channel", CHANNEL],
+                ] as const
+            ).map(([where, chatId]): (typeof paymentsWithPin)[number] => [
+                `${what} sent in ${where}`,
+                (pin) => send(chatId, content(), undefined, undefined, pin),
+                false,
+            ]),
+        ),
+        ...(
+            [
+                ["a group", GROUP],
+                ["a channel", CHANNEL],
+            ] as const
+        ).map(([where, chatId]): (typeof paymentsWithPin)[number] => [
+            `tip in ${where}`,
+            (pin) => agent.tipMessage({ chatId }, 1n, transfer(), 8, pin, "me", undefined, true),
+            false,
+        ]),
     ];
 
     beforeEach(() => {
@@ -278,14 +319,16 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         });
 
         test.each(paymentsWithPin)(
-            "%s has its PIN checked before it is approved, then made with it",
-            async (_, pay) => {
+            "%s has its PIN checked before it is approved",
+            async (_, pay, passedOn) => {
                 await pay("1234");
 
                 expect(pinChecks).toEqual([["1234", 0]]);
                 expect(approvals.length).toEqual(1);
                 expect(calls.length).toEqual(1);
-                expect(callArgs[0]).toContain("1234");
+                if (passedOn) {
+                    expect(callArgs[0]).toContain("1234");
+                }
             },
         );
 
@@ -302,27 +345,38 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             },
         );
 
-        // The canister checks the PIN again as it pulls the payment
         test.each(paymentsWithPin)(
-            "%s is approved and made if its PIN can't be checked first",
+            "%s is neither approved nor made if its PIN can't be checked",
             async (_, pay) => {
                 pinCheckResponse = "throws";
 
-                await pay("1234");
+                const response = await pay("1234");
 
-                expect(approvals.length).toEqual(1);
-                expect(calls.length).toEqual(1);
-                expect(callArgs[0]).toContain("1234");
+                expect([response].flat()[0]).toEqual({
+                    kind: "error",
+                    code: ErrorCode.ApprovalFailed,
+                    message: undefined,
+                });
+                expect(approvals).toEqual([]);
+                expect(calls).toEqual([]);
             },
         );
 
-        // Neither kind of canister checks the PIN a swap is offered with
-        test("a swap offered in a direct chat has no PIN checked first", async () => {
-            await sendDirectMessage(swapOffer(), "1234");
+        test("nothing has its PIN checked while the ledger's fee isn't known", async () => {
+            agent._registryValue = undefined;
+
+            await agent.payForDiamondMembership(
+                "",
+                ICP_LEDGER,
+                "one_month",
+                false,
+                100n,
+                undefined,
+                "1234",
+            );
 
             expect(pinChecks).toEqual([]);
-            expect(approvals.length).toEqual(1);
-            expect(calls).toEqual(["sendMessage"]);
+            expect(approvals).toEqual([]);
         });
 
         test("a payment from another account has no PIN checked, since it isn't approved", async () => {
@@ -640,13 +694,13 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         });
 
         test.each(paymentsWithPin)(
-            "%s is made with its PIN, which isn't checked first",
+            "%s has no PIN checked first, since nothing is approved",
             async (_, pay) => {
                 await pay("1234");
 
                 expect(pinChecks).toEqual([]);
+                expect(approvals).toEqual([]);
                 expect(calls.length).toEqual(1);
-                expect(callArgs[0]).toContain("1234");
             },
         );
 
@@ -1292,6 +1346,8 @@ describe("OpenChatAgent approving a spender", () => {
 
     let approvals: unknown[][];
     let approveResponse: "success" | "insufficient_funds" | "failure";
+    let pinChecks: [string, number][];
+    let pinCheckResponse: "success" | "incorrect";
     let userCanisterApprovals: unknown[][];
     let submitted: unknown[][];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1309,6 +1365,12 @@ describe("OpenChatAgent approving a spender", () => {
         };
         agent._userClient = {
             userId,
+            checkPinNumber: (pin: string) => {
+                pinChecks.push([pin, approvals.length]);
+                return Promise.resolve(
+                    pinCheckResponse === "success" ? { kind: "success" } : PIN_INCORRECT,
+                );
+            },
             approveTransfer: (...args: unknown[]) => {
                 userCanisterApprovals.push(args);
                 return Promise.resolve({ kind: "success" });
@@ -1352,6 +1414,8 @@ describe("OpenChatAgent approving a spender", () => {
     beforeEach(() => {
         approvals = [];
         approveResponse = "success";
+        pinChecks = [];
+        pinCheckResponse = "success";
         userCanisterApprovals = [];
         submitted = [];
     });
@@ -1388,6 +1452,26 @@ describe("OpenChatAgent approving a spender", () => {
                 [ICP_LEDGER, proposalsBotSpender, 100n, FEE, Number(FIVE_MINUTES)],
             ]);
             expect(userCanisterApprovals).toEqual([]);
+        });
+
+        test.each([
+            ["a gate's payment", approveGatePayment],
+            ["a proposal's fee", approveProposalFee],
+        ])("%s has its PIN checked by their canister first", async (_, approve) => {
+            await approve();
+
+            expect(pinChecks).toEqual([["1234", 0]]);
+            expect(approvals.length).toEqual(1);
+        });
+
+        test.each([
+            ["a gate's payment", approveGatePayment],
+            ["a proposal's fee", approveProposalFee],
+        ])("%s isn't approved with the wrong PIN", async (_, approve) => {
+            pinCheckResponse = "incorrect";
+
+            expect(await approve()).toEqual(PIN_INCORRECT);
+            expect(approvals).toEqual([]);
         });
 
         test("with no expiry, the approval lasts only as long as a payment pulled at once needs", async () => {
@@ -1442,6 +1526,7 @@ describe("OpenChatAgent approving a spender", () => {
                     [memberSpender(canisterId), ICP_LEDGER, GATE_APPROVAL, FIVE_MINUTES, "1234"],
                 ]);
                 expect(approvals).toEqual([]);
+                expect(pinChecks).toEqual([]);
             },
         );
 

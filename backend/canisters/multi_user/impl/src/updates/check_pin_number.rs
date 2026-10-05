@@ -4,10 +4,11 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use user_canister::check_pin_number::*;
 
-// Checks the user's PIN ahead of a payment this canister will pull from their wallet, so that a
-// payment with the wrong PIN is refused before the user approves it, and pays the approval's fee.
-// The request which makes the payment checks the PIN again. A failed check counts towards the
-// attempts allowed before the PIN is locked, as any other does, so this is no easier to guess with.
+// Checks the user's PIN ahead of each payment they approve from their wallet, whichever canister is
+// to pull it, so that a payment with the wrong PIN is refused before the user pays for its approval.
+// Where this canister pulls the payment, the request which makes it checks the PIN again. A failed
+// check counts towards the attempts allowed before the PIN is locked, as any other does, so this is
+// no easier to guess with.
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn check_pin_number(args: Args) -> Response {
