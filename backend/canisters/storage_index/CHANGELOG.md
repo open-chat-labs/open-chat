@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Count each blob once towards `total_blob_bytes`, however many users reference it ([#9761](https://github.com/open-chat-labs/open-chat/pull/9761))
 - Remove the references to files the buckets no longer hold, once, by checking every reference with its bucket ([#9765](https://github.com/open-chat-labs/open-chat/pull/9765))
 - Report each bucket's stable memory, not its heap memory, as `stable_memory_used` in the metrics ([#9776](https://github.com/open-chat-labs/open-chat/pull/9776))
+- Charge forwarders for the forwarded copies whose references were removed, once, removing the oldest files of those it takes over their limit ([#9780](https://github.com/open-chat-labs/open-chat/pull/9780))
 
 ## [[2.0.2067](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2067-storage_index)] - 2026-09-29
 

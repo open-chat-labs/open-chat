@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `c2c_missing_files` for the StorageIndex to check which of its file references are stale ([#9765](https://github.com/open-chat-labs/open-chat/pull/9765))
+- Add `c2c_files` for the StorageIndex to page through the bucket's files ([#9780](https://github.com/open-chat-labs/open-chat/pull/9780))
 
 ### Changed
 
