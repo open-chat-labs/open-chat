@@ -3,6 +3,8 @@ use crate::{Config, RuntimeState, mutate_state, read_state};
 use constants::MINUTE_IN_MS;
 use itertools::Itertools;
 use market_maker_canister::ExchangeId;
+use per_round_timer::PerRoundTimer;
+use std::cell::RefCell;
 use std::cmp::{Reverse, max, min};
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry::Occupied;
@@ -10,10 +12,17 @@ use std::time::Duration;
 use tracing::{error, trace};
 use types::{AggregatedOrders, C2CError, CancelOrderRequest, MakeOrderRequest, Milliseconds, Order, OrderType};
 
+thread_local! {
+    static TIMER: RefCell<Option<PerRoundTimer>> = RefCell::default();
+}
+
 const RUN_MARKET_MAKER_INTERVAL: Milliseconds = MINUTE_IN_MS;
 
 pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(Duration::from_millis(RUN_MARKET_MAKER_INTERVAL), || async { run() });
+    TIMER.set(Some(PerRoundTimer::new_with_interval(
+        Duration::from_millis(RUN_MARKET_MAKER_INTERVAL),
+        run,
+    )));
 }
 
 fn run() {

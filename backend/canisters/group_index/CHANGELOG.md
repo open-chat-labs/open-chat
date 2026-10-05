@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
+
 ## [[2.0.2084](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2084-group_index)] - 2026-10-02
 
 ### Added

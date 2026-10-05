@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
+
 ### Removed
 
 - Remove the one-off `post_upgrade` sweep of orphaned WebAuthn keys now that it has run on prod ([#9649](https://github.com/open-chat-labs/open-chat/pull/9649))
