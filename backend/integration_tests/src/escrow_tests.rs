@@ -641,7 +641,9 @@ fn payment_from_uninstalled_ledger_is_parked() {
     // Longer than any retry delay
     env.advance_time(Duration::from_millis(HOUR_IN_MS + MINUTE_IN_MS));
     tick_many(env, 10);
-    assert_eq!(ledger_call_failures(env, canister_ids.escrow, swap_id), 1);
+    let errors = swap_errors(env, canister_ids.escrow, swap_id);
+    assert_eq!(errors.len(), 1);
+    assert!(errors[0].starts_with("Failed to call into ledger, so parked the payment"));
     assert_eq!(parked_payments(env), parked_before + 1);
 }
 
