@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the one-off refund of the pool canisters' cycles, which ran on the last upgrade ([#9770](https://github.com/open-chat-labs/open-chat/pull/9770))
+
+## [[2.0.2094](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2094-local_user_index)] - 2026-10-05
+
 ### Changed
 
 - Top up MultiUser canisters by 5T cycles at a time, and when below 10T ([#9735](https://github.com/open-chat-labs/open-chat/pull/9735))

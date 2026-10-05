@@ -4,7 +4,6 @@ use constants::{B, CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS, min_cycles_balance
 use ic_cdk_management_canister::{CanisterInstallMode, CanisterStatusType};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
-use std::collections::VecDeque;
 use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{BuildVersion, C2CError, CanisterId, CanisterWasmBytes, Cycles, Milliseconds};
@@ -332,55 +331,4 @@ async fn install_refunder(
     })
     .await
     .map(|_| ())
-}
-
-// Puts the canisters at the front of the queue, in order, though behind the canister already at the
-// front. That one may have been part way through being refunded when this canister was upgraded,
-// and stays first so that its refund is picked up again where it left off.
-pub(crate) fn queue_ahead(queue: &mut VecDeque<CanisterToRefund>, canisters: Vec<CanisterToRefund>) {
-    let first = queue.pop_front();
-    for canister in canisters.into_iter().rev() {
-        queue.push_front(canister);
-    }
-    if let Some(first) = first {
-        queue.push_front(first);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use candid::Principal;
-
-    fn canister(index: u8) -> CanisterToRefund {
-        CanisterToRefund {
-            canister_id: Principal::from_slice(&[index]),
-            attempt: 0,
-            retry_after: 0,
-            delete_canister: false,
-            return_to_pool: false,
-        }
-    }
-
-    fn ids(queue: &VecDeque<CanisterToRefund>) -> Vec<CanisterId> {
-        queue.iter().map(|c| c.canister_id).collect()
-    }
-
-    #[test]
-    fn canisters_are_queued_behind_the_first_and_ahead_of_the_rest() {
-        let mut queue: VecDeque<_> = [canister(0), canister(1), canister(2)].into();
-        queue_ahead(&mut queue, vec![canister(10), canister(11)]);
-
-        let expected: Vec<_> = [0, 10, 11, 1, 2].map(|i| canister(i).canister_id).into();
-        assert_eq!(ids(&queue), expected);
-    }
-
-    #[test]
-    fn canisters_are_queued_in_order_when_the_queue_is_empty() {
-        let mut queue = VecDeque::new();
-        queue_ahead(&mut queue, vec![canister(10), canister(11)]);
-
-        let expected: Vec<_> = [10, 11].map(|i| canister(i).canister_id).into();
-        assert_eq!(ids(&queue), expected);
-    }
 }
