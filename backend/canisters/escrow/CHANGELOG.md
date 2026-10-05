@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the unused cache of the latest ids of users migrated to MultiUser canisters ([#9617](https://github.com/open-chat-labs/open-chat/pull/9617))
 
+### Fixed
+
+- Retry payments whose ledger can't be called after a growing delay rather than every round, and park those to uninstalled or deleted ledgers ([#9789](https://github.com/open-chat-labs/open-chat/pull/9789))
+
 ## [[2.0.2069](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2069-escrow)] - 2026-09-29
 
 ### Added
