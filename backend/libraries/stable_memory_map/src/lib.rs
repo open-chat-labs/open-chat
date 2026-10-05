@@ -13,10 +13,12 @@ use std::ops::{Bound, RangeBounds};
 
 mod key_scope;
 mod keys;
+mod stored_values;
 
 pub use ic_stable_structures::btreemap::entry::{OccupiedEntry, VacantEntry};
 pub use key_scope::{KeyScope, with_key_scope};
 pub use keys::*;
+pub use stored_values::{StoredMut, StoredRef, StoredValue, StoredValues};
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -1004,6 +1006,8 @@ mod tests {
             KeyType::Contact,
             KeyType::ProfileDocument,
             KeyType::DirectChat,
+            KeyType::GroupChat,
+            KeyType::Community,
         ];
         for key_type in added_to_main_map {
             assert_eq!(key_type.map_class(), MapClass::Default, "{key_type:?}");

@@ -28,7 +28,7 @@ pub fn c2c_notify_group_deleted(
     // Removing the group deletes how far the user has read each of its threads from stable memory,
     // so if the group has been imported into a community, move those entries to the channel first
     if let Some(imported_into) = &deleted_group.community_imported_into
-        && let Some(group) = user.group_chats.get_mut(&chat_id)
+        && let Some(mut group) = user.group_chats.get_mut(&chat_id)
     {
         group.messages_read.threads_read.move_entries(
             MultiUserChat::Group(chat_id),
@@ -67,7 +67,7 @@ pub fn c2c_notify_group_deleted(
         now,
     );
 
-    let (community, newly_joined) = user.communities.join(community_id, local_user_index_canister_id, now);
+    let (mut community, newly_joined) = user.communities.join(community_id, local_user_index_canister_id, now);
 
     if let Some(group) = group_removed {
         community.import_group(channel.channel_id, group, now);

@@ -17,7 +17,7 @@ pub fn pin_chat_v2(user: &mut User, args: Args, now: TimestampMillis) -> OCResul
             user.favourite_chats.pin(chat, now);
         }
         ChatInList::Community(community_id, channel_id) => {
-            let community = user.communities.get_mut(&community_id).ok_or(OCErrorCode::ChatNotFound)?;
+            let mut community = user.communities.get_mut(&community_id).ok_or(OCErrorCode::ChatNotFound)?;
             community.pin(channel_id, now);
         }
     }
