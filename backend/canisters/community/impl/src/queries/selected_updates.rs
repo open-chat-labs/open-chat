@@ -2,6 +2,7 @@ use crate::queries::selected_initial::selected_initial_impl;
 use crate::{RuntimeState, model::members::CommunityMembers, read_state};
 use canister_api_macros::query;
 use community_canister::selected_updates_v2::{Response::*, *};
+use constants::MAX_MEMBERS_PER_QUERY;
 use group_community_common::MemberUpdate;
 use installed_bots::BotUpdate;
 use oc_error_codes::OCErrorCode;
@@ -33,9 +34,16 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         return SuccessNoUpdates(now);
     }
 
-    // Only callers which pass `max_members` can read `SuccessSnapshot`
+    // Only callers which pass `max_members` can read `SuccessSnapshot`. They're given it when some of
+    // the updates since `updates_since` have been pruned, or when there are more updates to the
+    // members since then than the page of members the details in full would hold, since those then
+    // cost no more to read and return than the updates. A bulk change, such as many members being
+    // migrated to new user ids, can leave more updates than can be read within the instruction limit.
+    let members = &data.members;
     if let Some(max_members) = args.max_members
-        && (data.members.any_updates_removed(args.updates_since) || data.bots.any_updates_removed(args.updates_since))
+        && (members.any_updates_removed(args.updates_since)
+            || members.more_updates_since_than(args.updates_since, max_members.min(MAX_MEMBERS_PER_QUERY))
+            || data.bots.any_updates_removed(args.updates_since))
     {
         let args = community_canister::selected_initial::Args {
             invite_code: args.invite_code,
