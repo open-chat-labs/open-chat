@@ -4,16 +4,26 @@ use tracing::{error, info};
 use types::CanisterId;
 
 // One-off: hands each old LocalGroupIndex over to the LocalUserIndex on its subnet, which reclaims
-// the canisters the old LocalGroupIndex alone still controls, refunds their cycles and deletes them,
-// then refunds the old LocalGroupIndex's own cycles, keeping it in case it holds anything else. They were in the old LocalGroupIndex's
+// the canisters the old LocalGroupIndex alone still controls, refunds their cycles and puts them into
+// its canister pool, then moves the old LocalGroupIndex's ICP to the CyclesDispenser and refunds its
+// own cycles, keeping it in case it holds anything else. They were in the old LocalGroupIndex's
 // canister pool, which was moved into the LocalUserIndex's without their controllers changing, so
 // the LocalUserIndex could neither use them nor refund their cycles. The lists are from the IC
 // dashboard, each canister checked against the certified state on 5 Oct 2026 to be controlled by the
 // old LocalGroupIndex alone and to have no code. `lrqxq` has none, but is still handed over so that
 // its own cycles are refunded. Release this after the LocalUserIndexes, which must already have
 // `c2c_reclaim_old_local_group_index`.
+//
+// The lists are picked by this GroupIndex's own id, so that it runs on the prod test environment as
+// well as in prod, and does nothing anywhere else.
 // TODO remove after the release containing this has been deployed
-const OLD_LOCAL_GROUP_INDEXES: [(&str, &str, &str); 3] = [
+const PROD_GROUP_INDEX: &str = "4ijyc-kiaaa-aaaaf-aaaja-cai";
+const TEST_GROUP_INDEX: &str = "7kifq-3yaaa-aaaaf-ab2cq-cai";
+
+// Each old LocalGroupIndex, with its LocalUserIndex and the canisters to reclaim
+type OldLocalGroupIndexList = &'static [(&'static str, &'static str, &'static str)];
+
+const PROD: OldLocalGroupIndexList = &[
     (
         "suaf3-hqaaa-aaaaf-bfyoa-cai",
         "nq4qv-wqaaa-aaaaf-bhdgq-cai",
@@ -27,15 +37,27 @@ const OLD_LOCAL_GROUP_INDEXES: [(&str, &str, &str); 3] = [
     ("lrqxq-2qaaa-aaaac-aadla-cai", "lyt4m-myaaa-aaaac-aadkq-cai", ""),
 ];
 
+const TEST: OldLocalGroupIndexList = &[(
+    "sbhuw-gyaaa-aaaaf-bfynq-cai",
+    "pecvb-tqaaa-aaaaf-bhdiq-cai",
+    include_str!("old_local_group_indexes/sbhuw-gyaaa-aaaaf-bfynq-cai.txt"),
+)];
+
 struct OldLocalGroupIndex {
     canister_id: CanisterId,
     local_user_index: CanisterId,
     canister_ids: Vec<CanisterId>,
 }
 
-fn old_local_group_indexes() -> Vec<OldLocalGroupIndex> {
-    OLD_LOCAL_GROUP_INDEXES
-        .iter()
+fn old_local_group_indexes(group_index: CanisterId) -> Vec<OldLocalGroupIndex> {
+    let list = if group_index == CanisterId::from_text(PROD_GROUP_INDEX).unwrap() {
+        PROD
+    } else if group_index == CanisterId::from_text(TEST_GROUP_INDEX).unwrap() {
+        TEST
+    } else {
+        &[]
+    };
+    list.iter()
         .map(|(canister_id, local_user_index, canister_ids)| OldLocalGroupIndex {
             canister_id: CanisterId::from_text(canister_id).unwrap(),
             local_user_index: CanisterId::from_text(local_user_index).unwrap(),
@@ -46,11 +68,12 @@ fn old_local_group_indexes() -> Vec<OldLocalGroupIndex> {
 
 // Run from a timer because it makes c2c calls, which can't be made from post_upgrade
 pub(crate) fn start() {
-    if read_state(|state| state.data.test_mode) {
+    let old_local_group_indexes = old_local_group_indexes(read_state(|state| state.env.canister_id()));
+    if old_local_group_indexes.is_empty() {
         return;
     }
     ic_cdk_timers::set_timer(Duration::ZERO, async {
-        for old in old_local_group_indexes() {
+        for old in old_local_group_indexes {
             hand_over(old).await;
         }
     });
@@ -93,22 +116,26 @@ mod tests {
 
     #[test]
     fn lists_parse_and_hold_the_canisters_checked_on_chain() {
-        let old = old_local_group_indexes();
+        for (group_index, counts) in [(PROD_GROUP_INDEX, vec![881, 538, 0]), (TEST_GROUP_INDEX, vec![3])] {
+            let old = old_local_group_indexes(CanisterId::from_text(group_index).unwrap());
 
-        assert_eq!(
-            old.iter().map(|o| o.canister_ids.len()).collect::<Vec<_>>(),
-            vec![881, 538, 0]
-        );
+            assert_eq!(old.iter().map(|o| o.canister_ids.len()).collect::<Vec<_>>(), counts);
 
-        let mut all = HashSet::new();
-        for o in &old {
-            for canister_id in &o.canister_ids {
-                assert!(all.insert(*canister_id), "{canister_id} is listed twice");
+            let mut all = HashSet::new();
+            for o in &old {
+                for canister_id in &o.canister_ids {
+                    assert!(all.insert(*canister_id), "{canister_id} is listed twice");
+                }
+            }
+            for o in &old {
+                assert!(!all.contains(&o.canister_id));
+                assert!(!all.contains(&o.local_user_index));
             }
         }
-        for o in &old {
-            assert!(!all.contains(&o.canister_id));
-            assert!(!all.contains(&o.local_user_index));
-        }
+    }
+
+    #[test]
+    fn nothing_is_handed_over_by_any_other_group_index() {
+        assert!(old_local_group_indexes(CanisterId::from_slice(&[1])).is_empty());
     }
 }
