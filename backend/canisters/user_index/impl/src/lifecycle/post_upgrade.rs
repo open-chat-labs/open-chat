@@ -50,8 +50,7 @@ fn post_upgrade(args: Args) {
     // One-off: point the new queue of migrated user ids at the StorageIndex, and queue every user
     // migrated so far, so that the storage buckets let the canisters now holding them delete the
     // files which name their old ids as accessors. They're queued from a timer because pushing to
-    // the queue makes c2c calls. Only release this once every bucket has been upgraded to a version
-    // which records them, since older buckets would ignore them.
+    // the queue makes c2c calls.
     // TODO remove after the release containing this has been deployed
     mutate_state(|state| {
         let storage_index_canister_id = state.data.storage_index_canister_id;

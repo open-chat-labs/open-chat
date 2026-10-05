@@ -2407,7 +2407,14 @@ fn migrated_user_deletes_the_files_of_a_message_they_sent_before_being_migrated(
         Some(multi_user_canister),
     );
     let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user1.user_id);
-    tick_many(env, 10);
+
+    // Wait for every migration the UserIndex knows of to reach the bucket holding the file, by way of
+    // the StorageIndex
+    let migrated_user_ids = |env: &PocketIc, canister_id| metrics(env, canister_id)["migrated_user_ids"].as_u64().unwrap();
+    tick_until(env, |env| {
+        let count = migrated_user_ids(env, canister_ids.user_index);
+        migrated_user_ids(env, canister_ids.storage_index) == count && migrated_user_ids(env, file.canister_id) == count
+    });
 
     // Only the sender's copy of a deleted message deletes its files, which here is in the MultiUser
     // canister, while the file still names the user's old id

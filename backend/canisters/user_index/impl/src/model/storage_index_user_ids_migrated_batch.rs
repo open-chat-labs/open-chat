@@ -1,6 +1,6 @@
 use timer_job_queues::{TimerJobItem, timer_job_batch};
 use types::{CanisterId, Milliseconds, UserId};
-use utils::canister::delay_if_should_retry_failed_c2c_call;
+use utils::canister::delay_if_should_retry_failed_c2c_call_to_new_method;
 
 timer_job_batch!(StorageIndexUserIdsMigratedBatch, CanisterId, (UserId, UserId), 1000);
 
@@ -16,10 +16,9 @@ impl TimerJobItem for StorageIndexUserIdsMigratedBatch {
 
         match response {
             Ok(_) => Ok(()),
-            Err(error) => {
-                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
-                Err(delay_if_should_retry)
-            }
+            // Includes a StorageIndex not yet upgraded to have `c2c_user_ids_migrated`, which is
+            // retried until it has been
+            Err(error) => Err(delay_if_should_retry_failed_c2c_call_to_new_method(&error)),
         }
     }
 }
