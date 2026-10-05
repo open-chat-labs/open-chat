@@ -52,8 +52,4 @@ impl Pool {
     pub fn set_target_size(&mut self, target_size: u16) {
         self.target_size = target_size;
     }
-
-    pub fn take_all(&mut self) -> Vec<CanisterId> {
-        self.canister_ids.drain(..).collect()
-    }
 }
