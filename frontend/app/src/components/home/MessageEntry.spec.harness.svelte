@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { EventWrapper, Message } from "@client";
     import type { Component } from "svelte";
 
     interface Props {
@@ -13,10 +14,29 @@
     // Stands in for the chat's draft, which the entry writes to as the user types
     let textContent = $state(initialTextContent);
     let blocked = $state(false);
+    let editingEvent = $state<EventWrapper<Message>>();
 
     export function setBlocked(value: boolean) {
         blocked = value;
     }
+
+    // Switching chats hands the entry the new chat's draft
+    export function setTextContent(value: string | undefined) {
+        textContent = value;
+    }
+
+    export function getTextContent(): string | undefined {
+        return textContent;
+    }
+
+    export function setEditingEvent(value: EventWrapper<Message> | undefined) {
+        editingEvent = value;
+    }
 </script>
 
-<Entry {...props} {blocked} {textContent} onSetTextContent={(txt?: string) => (textContent = txt)} />
+<Entry
+    {...props}
+    {blocked}
+    {textContent}
+    {editingEvent}
+    onSetTextContent={(txt?: string) => (textContent = txt)} />

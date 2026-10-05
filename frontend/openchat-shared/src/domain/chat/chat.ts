@@ -1342,6 +1342,10 @@ export type EventsSuccessResult<T extends ChatEvent> = {
 export type UpdatesResult = {
     directChatsAddedUpdated: DirectChatSummary[];
     directChatsRemoved: string[];
+    // Each of `directChatsRemoved` which was moved rather than deleted, onto the other user's new
+    // id after they were migrated to a MultiUser canister, mapped to that id. The chat under the new
+    // id is in `directChatsAddedUpdated`, and its cached events have been moved onto it.
+    directChatsMoved: Map<string, string>;
     groupsAddedUpdated: GroupChatSummary[];
     groupsRemoved: string[];
     communitiesAddedUpdated: CommunitySummary[];
@@ -1738,7 +1742,8 @@ export type GroupChatDetailsResponse =
 export type GroupChatDetailsUpdatesResponse =
     | ({ kind: "success" } & GroupChatDetailsUpdates)
     | { kind: "success_no_updates"; timestamp: bigint }
-    // The details in full, because the canister no longer has all of the updates asked for
+    // The details in full, because the canister no longer has all of the updates asked for, or
+    // there are too many of them, as the canister found or as found when it couldn't return them
     | { kind: "snapshot"; details: GroupChatDetails }
     | Failure;
 
