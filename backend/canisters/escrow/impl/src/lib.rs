@@ -104,7 +104,8 @@ impl Data {
     // Counts the refunds which are queued, parked or awaiting retry against their deposits, so that
     // those queued before refunds were counted aren't missed. Each deposit's outstanding refunds are
     // counted afresh, so this is safe to run more than once.
-    // TODO remove after the release containing this has been deployed, along with `Swaps::iter_mut`
+    // TODO remove after the release containing this has been deployed, along with `Swaps::iter_mut` and
+    // `PendingPaymentsQueue::iter`
     pub fn count_outstanding_refunds(&mut self) {
         let awaiting_retry: Vec<PendingPayment> = self
             .timer_jobs
@@ -180,6 +181,7 @@ pub(crate) fn deposit_address(principal: Principal, swap_id: u32, escrow_caniste
 mod tests {
     use super::*;
     use crate::model::swaps::DepositRefunds;
+    use std::collections::VecDeque;
     use types::{P2PSwapLocation, TokenInfo};
 
     fn token() -> TokenInfo {
@@ -226,13 +228,26 @@ mod tests {
         );
         let depositor = Principal::from_slice(&[3]);
         let other_depositor = Principal::from_slice(&[4]);
-        data.pending_payments_queue.push(refund(swap_id, depositor, 100));
-        data.pending_payments_queue.push(refund(swap_id, depositor, 200));
-        data.pending_payments_queue.park(refund(swap_id, other_depositor, 50));
-        data.pending_payments_queue.push(PendingPayment {
-            reason: PendingPaymentReason::Swap(other_depositor),
-            ..refund(swap_id, depositor, 1_000)
-        });
+
+        // As the escrow canister in production stores its queue, with refunds not noted against
+        // their deposits
+        #[derive(Serialize)]
+        struct QueueBeforeRefundsWereCounted {
+            pending_payments: VecDeque<PendingPayment>,
+            parked: Vec<PendingPayment>,
+        }
+        let queue = QueueBeforeRefundsWereCounted {
+            pending_payments: VecDeque::from([
+                refund(swap_id, depositor, 100),
+                refund(swap_id, depositor, 200),
+                PendingPayment {
+                    reason: PendingPaymentReason::Swap(other_depositor),
+                    ..refund(swap_id, depositor, 1_000)
+                },
+            ]),
+            parked: vec![refund(swap_id, other_depositor, 50)],
+        };
+        data.pending_payments_queue = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(queue));
 
         for _ in 0..2 {
             data.count_outstanding_refunds();

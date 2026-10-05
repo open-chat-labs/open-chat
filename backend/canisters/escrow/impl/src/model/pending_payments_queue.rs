@@ -14,9 +14,10 @@ pub struct PendingPaymentsQueue {
 }
 
 impl PendingPaymentsQueue {
-    // Queues a swap's payout. Refunds are queued with `push_refund`.
-    pub fn push(&mut self, pending_payment: PendingPayment) {
-        self.pending_payments.push_back(pending_payment);
+    // Queues a swap's payout. Refunds are queued with `push_refund`, which notes them against their
+    // deposits.
+    pub fn push_payout(&mut self, payout: PendingPayment) {
+        self.pending_payments.push_back(payout);
     }
 
     // Queues a refund of `amount` to the depositor from their deposit subaccount, noting it against the
@@ -38,7 +39,7 @@ impl PendingPaymentsQueue {
             reason: PendingPaymentReason::Refund,
         };
         swap.on_refund_queued(depositor, refund.debit());
-        self.push(refund);
+        self.pending_payments.push_back(refund);
     }
 
     pub fn push_refunds(&mut self, swap: &mut Swap, now: TimestampMillis) {
@@ -71,6 +72,7 @@ impl PendingPaymentsQueue {
     }
 
     // The payments queued or parked
+    // TODO remove along with `Data::count_outstanding_refunds`
     pub fn iter(&self) -> impl Iterator<Item = &PendingPayment> {
         self.pending_payments.iter().chain(&self.parked)
     }

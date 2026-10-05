@@ -758,7 +758,12 @@ fn refund_queued_twice_is_recorded_once() {
     assert_eq!(swap["refunds"].as_array().unwrap().len(), 1);
     assert_eq!(swap_errors(env, canister_ids.escrow, swap_id), Vec::<String>::new());
     // Both refunds were made, the second being rejected as a duplicate
-    assert!(escrow_errors_logged_since(env, canister_ids.escrow, start).contains("Duplicate"));
+    assert!(escrow_logged_since(env, canister_ids.escrow, "errors", start).contains("Duplicate"));
+    // Each refund counted against the deposit until it was made or rejected
+    assert_eq!(
+        deposit_refunds(env, canister_ids.escrow, swap_id, user1.user_id.as_principal()),
+        (0, 2)
+    );
 }
 
 // A ledger error which retrying won't fix parks the payment, rather than dropping it, so that it can be
@@ -942,12 +947,13 @@ fn deposit_topped_up_before_its_refund_is_made_counts_only_what_will_be_left(by_
     );
     assert_eq!(client::ledger::happy_path::balance_of(env, ledger, account(depositor)), 0);
     assert_eq!(swap_errors(env, canister_ids.escrow, swap_id), Vec::<String>::new());
+    assert_eq!(deposit_refunds(env, canister_ids.escrow, swap_id, depositor), (0, 1));
 }
 
 // A deposit too small for its swap is topped up and notified again around when its refund is made,
 // over a range of timings. Whichever way the timing falls, the deposit isn't recorded. If the refund is
 // made while the deposit's balance is being checked, the balance may or may not show the refund, so
-// the notification fails, to be retried.
+// the balance is checked again.
 #[test]
 fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
     let mut wrapper = ENV.deref().get();
@@ -959,7 +965,8 @@ fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
 
     let icp_amount = 100_000_000_000;
     let required = icp_amount + ICP_TRANSFER_FEE;
-    let mut retries = 0;
+    let start = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
 
     for rounds_before_top_up in 0..6 {
         let offerer = Principal::from_slice(&[10, 8, rounds_before_top_up]);
@@ -980,21 +987,10 @@ fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
             owner: canister_ids.escrow,
             subaccount: Some(deposit_subaccount(offerer, swap_id)),
         };
-        let notify = |env: &mut PocketIc| {
-            client::escrow::notify_deposit(
-                env,
-                offerer,
-                canister_ids.escrow,
-                &escrow_canister::notify_deposit::Args {
-                    swap_id,
-                    deposited_by: None,
-                },
-            )
-        };
 
         // 1 short, so it's refunded, the refund being made over the next few rounds
         client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, account, required - 1);
-        let response = notify(env);
+        let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()));
         assert!(
             matches!(response, escrow_canister::notify_deposit::Response::BalanceTooLow(_)),
             "{response:?}"
@@ -1018,13 +1014,9 @@ fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
             )
             .unwrap();
         env.tick();
-        let mut response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()));
+        let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()));
         env.await_call(top_up).unwrap();
 
-        if matches!(response, escrow_canister::notify_deposit::Response::InternalError(_)) {
-            retries += 1;
-            response = notify(env);
-        }
         // All that will be left once the refund is made is the top-up
         assert!(
             matches!(
@@ -1038,10 +1030,13 @@ fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
             false,
             "Top-up after {rounds_before_top_up} rounds"
         );
+
+        tick_many(env, 10);
+        assert_eq!(deposit_refunds(env, canister_ids.escrow, swap_id, offerer), (0, 1));
     }
 
     // At least one of the notifications checked the balance while the refund was being made
-    assert!(retries > 0);
+    assert!(escrow_logged_since(env, canister_ids.escrow, "logs", start).contains("so checking it again"));
 }
 
 fn create_icp_for_chat_swap(
@@ -1263,6 +1258,16 @@ fn ledger_call_failures(env: &PocketIc, escrow_canister_id: CanisterId, swap_id:
         .count()
 }
 
+// The amount which the refunds from the depositor's subaccount that are yet to finish will take out of
+// it, and the number of refunds from it which have finished, as the escrow canister has noted them
+fn deposit_refunds(env: &PocketIc, escrow_canister_id: CanisterId, swap_id: u32, depositor: Principal) -> (u64, u64) {
+    let refunds = &swap_logs(env, escrow_canister_id, swap_id)["deposit_refunds"][depositor.to_text()];
+    (
+        refunds["outstanding"].as_u64().unwrap(),
+        refunds["finished"].as_u64().unwrap(),
+    )
+}
+
 fn escrow_metric(env: &PocketIc, escrow_canister_id: CanisterId, name: &str) -> u64 {
     try_metrics(env, escrow_canister_id).unwrap()[name].as_u64().unwrap()
 }
@@ -1277,15 +1282,15 @@ fn swap_errors(env: &PocketIc, escrow_canister_id: CanisterId, swap_id: u32) -> 
         .collect()
 }
 
-// The errors the escrow canister has logged since `since`
-fn escrow_errors_logged_since(env: &PocketIc, escrow_canister_id: CanisterId, since: u64) -> String {
+// What the escrow canister has written to the log (eg. "errors" or "logs") since `since`
+fn escrow_logged_since(env: &PocketIc, escrow_canister_id: CanisterId, log: &str, since: u64) -> String {
     let response = client::http_request(
         env,
         Principal::anonymous(),
         escrow_canister_id,
         &HttpRequest {
             method: "GET".to_string(),
-            url: format!("/errors/{since}"),
+            url: format!("/{log}/{since}"),
             headers: Vec::new(),
             body: Vec::new(),
         },
