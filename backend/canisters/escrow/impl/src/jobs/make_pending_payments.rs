@@ -52,6 +52,9 @@ pub fn run() {
 
 // Called once a payment whose ledger couldn't be called is due to be retried
 pub(crate) fn retry(pending_payment: PendingPayment, failures: u32) {
+    // Clears out the entry which the retry's timer job has left behind, along with any others, whatever
+    // the outcome of the retry
+    mutate_state(|state| state.data.timer_jobs.remove_completed_jobs());
     utils::async_work::spawn_tracked(process_payment(pending_payment, failures));
 }
 
@@ -144,7 +147,6 @@ async fn process_payment(pending_payment: PendingPayment, previous_failures: u32
                 Some(delay) => {
                     let now = state.env.now();
                     let due = retry_due(pending_payment.timestamp, delay, now);
-                    state.data.timer_jobs.remove_completed_jobs();
                     state.data.timer_jobs.enqueue_job(
                         TimerJob::RetryPayment(Box::new(RetryPaymentJob {
                             payment: pending_payment,
