@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store with each hint the cells each of its conclusions is drawn on, so the LocalUserIndex can compare them with the hint's cells ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 - Make every hint step in Light Up, Tents, Slant and Bridges list the cells it relies on, and outline what the step is about rather than the cell it decides ([#9675](https://github.com/open-chat-labs/open-chat/pull/9675))
 - Generate CHAT Rooms candidates several times faster by holding each cell's shadow as a bit mask, so a 9x9 Tricky candidate stays far inside the 40B instruction limit ([#9716](https://github.com/open-chat-labs/open-chat/pull/9716))
+- Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
 
 ### Fixed
 
