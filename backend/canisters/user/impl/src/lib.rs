@@ -481,7 +481,14 @@ impl Data {
                 let (timer_jobs, handed_over): (Vec<_>, Vec<_>) = timer_jobs
                     .into_iter()
                     .filter_map(|(job, due)| match job.on_migration() {
-                        JobOnMigration::HandedOver(migrated) => Some(((job, due), (migrated, due))),
+                        JobOnMigration::HandedOver(mut migrated) => {
+                            // Other users the job names may have been migrated since it was scheduled,
+                            // which this canister knows of but the MultiUser canister may not
+                            migrated.map_user_ids(|user_id| {
+                                self.user.direct_chats.latest_user_id(user_id, &self.migrated_user_ids)
+                            });
+                            Some(((job, due), (migrated, due)))
+                        }
                         JobOnMigration::RebuiltFromState | JobOnMigration::BlocksMigration => None,
                     })
                     .unzip();

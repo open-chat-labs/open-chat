@@ -273,7 +273,10 @@ fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
     }
     state.set_up_streak_insurance_timer_job(index);
     // Any which fell due while the user was being migrated run straight away
-    for (job, due) in timer_jobs {
+    for (mut job, due) in timer_jobs {
+        // As the user's chat with themselves now is, so that eg. undeleting a message in it cancels
+        // its job
+        job.map_user_ids(|user_id| if user_id == old_user_id { new_user_id } else { user_id });
         state.data.timer_jobs.enqueue_job(TimerJob::migrated(index, job), due, now);
     }
     openchat_bot::send_account_migrated_message(index, principal, state);

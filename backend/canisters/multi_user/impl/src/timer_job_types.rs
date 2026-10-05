@@ -331,7 +331,18 @@ impl Job for ClaimOrResetStreakInsuranceJob {
 
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
-        let result = mutate_state(|state| end_video_call_impl(self.user_index, self.them, self.message_id, state));
+        let result = mutate_state(|state| {
+            // The other user may have been migrated since the call started, moving the chat onto
+            // their new id
+            let them = state
+                .data
+                .users
+                .with_user(self.user_index, |user| {
+                    user.direct_chats.latest_user_id(self.them, &state.data.migrated_user_ids)
+                })
+                .unwrap_or(self.them);
+            end_video_call_impl(self.user_index, them, self.message_id, state)
+        });
         if let Err(error) = result {
             error!(
                 ?error,

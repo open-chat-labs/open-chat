@@ -40,3 +40,68 @@ pub enum MigratedTimerJob {
         message_id: MessageId,
     },
 }
+
+impl MigratedTimerJob {
+    // Replaces each id the job knows a user by, such as that of the other user in a direct chat, with
+    // the one `f` returns, eg. the latest id of a user who has since been migrated
+    pub fn map_user_ids(&mut self, f: impl Fn(UserId) -> UserId) {
+        match self {
+            MigratedTimerJob::HardDeleteMessageContent { chat_id, .. }
+            | MigratedTimerJob::MessageReminder {
+                chat: Chat::Direct(chat_id),
+                ..
+            } => *chat_id = f((*chat_id).into()).into(),
+            MigratedTimerJob::MarkVideoCallEnded { them, .. } => *them = f(*them),
+            MigratedTimerJob::MessageReminder { .. } | MigratedTimerJob::DeleteFileReferences { .. } => {}
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+
+    fn user_id(i: u8) -> UserId {
+        Principal::from_slice(&[i]).into()
+    }
+
+    #[test]
+    fn user_ids_in_direct_chats_are_mapped() {
+        let f = |id: UserId| if id == user_id(1) { user_id(2) } else { id };
+        let mut jobs = [
+            MigratedTimerJob::HardDeleteMessageContent {
+                chat_id: user_id(1).into(),
+                thread_root_message_index: None,
+                message_id: 1u64.into(),
+            },
+            MigratedTimerJob::MessageReminder {
+                reminder_id: 1,
+                chat: Chat::Direct(user_id(1).into()),
+                thread_root_message_index: None,
+                event_index: 1.into(),
+                notes: None,
+                reminder_created_message_index: 1.into(),
+            },
+            MigratedTimerJob::MarkVideoCallEnded {
+                them: user_id(1),
+                message_id: 1u64.into(),
+            },
+            MigratedTimerJob::MarkVideoCallEnded {
+                them: user_id(3),
+                message_id: 1u64.into(),
+            },
+        ];
+
+        for job in jobs.iter_mut() {
+            job.map_user_ids(f);
+        }
+
+        assert!(matches!(jobs[0], MigratedTimerJob::HardDeleteMessageContent { chat_id, .. } if chat_id == user_id(2).into()));
+        assert!(
+            matches!(jobs[1], MigratedTimerJob::MessageReminder { chat: Chat::Direct(chat_id), .. } if chat_id == user_id(2).into())
+        );
+        assert!(matches!(jobs[2], MigratedTimerJob::MarkVideoCallEnded { them, .. } if them == user_id(2)));
+        assert!(matches!(jobs[3], MigratedTimerJob::MarkVideoCallEnded { them, .. } if them == user_id(3)));
+    }
+}
