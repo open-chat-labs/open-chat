@@ -35,6 +35,10 @@ fn old_local_group_index_canisters_are_reclaimed_then_its_icp_moved_and_cycles_r
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, old_local_group_index, icp);
     let cycles_dispenser_icp =
         client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, canister_ids.cycles_dispenser);
+    let icp_burn_amount: u128 = metrics(env, canister_ids.cycles_dispenser)["icp_burn_amount"]["e8s"]
+        .as_u64()
+        .unwrap()
+        .into();
 
     reclaim(
         env,
@@ -53,15 +57,16 @@ fn old_local_group_index_canisters_are_reclaimed_then_its_icp_moved_and_cycles_r
     assert_eq!(old["reclaimed"].as_u64(), Some(3));
     assert_eq!(old["skipped"].as_array().map(|s| s.len()), Some(0));
     assert_eq!(old["completed"].as_bool(), Some(true));
+    assert_eq!(old["icp_found"].as_u64(), Some(icp as u64));
     assert_eq!(old["icp_moved"].as_u64(), Some((icp - ICP_TRANSFER_FEE) as u64));
 
     assert_eq!(
         client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, old_local_group_index),
         0
     );
-    // The CyclesDispenser burns 10 ICP (plus the fee) for cycles whenever its cycles balance is low,
-    // which it may do meanwhile, so allow for any number of those
-    let burn = 1_000_000_000 + ICP_TRANSFER_FEE;
+    // The CyclesDispenser burns ICP for cycles whenever its cycles balance is low, which it may do
+    // meanwhile, so allow for any number of burns. The amount is read since other tests change it.
+    let burn = icp_burn_amount + ICP_TRANSFER_FEE;
     let expected = cycles_dispenser_icp + icp - ICP_TRANSFER_FEE;
     let actual = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, canister_ids.cycles_dispenser);
     assert!(

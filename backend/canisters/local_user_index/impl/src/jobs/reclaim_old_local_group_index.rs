@@ -1,7 +1,7 @@
 use crate::model::old_local_group_index::CanisterToReclaim;
 use crate::updates::move_funds_from_old_canister::{Transfer, balance_of, make_transfer};
 use crate::{CanisterToRefund, RuntimeState, call_relay, jobs, mutate_state, read_state};
-use constants::{ICP_LEDGER_CANISTER_ID, ICP_TRANSFER_FEE, MINUTE_IN_MS, min_cycles_balance};
+use constants::{HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_TRANSFER_FEE, MINUTE_IN_MS, min_cycles_balance};
 use futures::future::join_all;
 use ic_cdk::call::RejectCode;
 use ic_cdk_management_canister::{
@@ -20,6 +20,10 @@ use utils::canister::{CanisterStatusMinimal, CanisterToInstall, WasmToInstall, i
 const BATCH_SIZE: usize = 10;
 const MAX_ATTEMPTS: u32 = 10;
 const RETRY_DELAY: Milliseconds = MINUTE_IN_MS;
+// Moving the ICP is retried for longer, about 14 hours in all, backing off to an hour between
+// attempts, so as to outlast an outage of the ICP ledger
+const MAX_ICP_ATTEMPTS: u32 = 20;
+const MAX_ICP_RETRY_DELAY: Milliseconds = HOUR_IN_MS;
 // The relay's calls to the management canister are answered within a round or two
 const RELAY_CALL_TIMEOUT_SECONDS: u32 = 60;
 
@@ -181,8 +185,8 @@ fn on_reclaim_result(
 
 // Moves any ICP the old LocalGroupIndex holds to the CyclesDispenser's account, from which it burns
 // ICP for cycles when low. Of the old LocalGroupIndexes, only `suaf3` holds any (5 ICP). If the move
-// keeps failing it is given up on, leaving the ICP where it is, since the old LocalGroupIndex is
-// kept and the relay can be installed again.
+// keeps failing it is given up on, leaving the ICP where it is, from where a later change can move
+// it, since the old LocalGroupIndex is kept.
 async fn move_icp(old_local_group_index: CanisterId) {
     let (cycles_dispenser, fee, now_nanos) = read_state(|state| {
         (
@@ -206,17 +210,27 @@ async fn move_icp(old_local_group_index: CanisterId) {
             Ok(moved) => {
                 old.icp_dealt_with = true;
                 old.icp_moved += moved;
-                info!(%old_local_group_index, moved, "Moved the old LocalGroupIndex's ICP to the CyclesDispenser");
+                if moved > 0 {
+                    info!(%old_local_group_index, moved, "Moved the old LocalGroupIndex's ICP to the CyclesDispenser");
+                } else if old.icp_found > fee {
+                    info!(
+                        %old_local_group_index,
+                        found = old.icp_found,
+                        "No ICP left to move, so an earlier attempt's transfer went through, its outcome lost"
+                    );
+                } else {
+                    info!(%old_local_group_index, "The old LocalGroupIndex held no ICP to move");
+                }
                 None
             }
             Err(error) => {
                 old.icp_attempts += 1;
-                if old.icp_attempts >= MAX_ATTEMPTS {
+                if old.icp_attempts >= MAX_ICP_ATTEMPTS {
                     old.icp_dealt_with = true;
                     error!(%old_local_group_index, ?error, "Failed to move the old LocalGroupIndex's ICP to the CyclesDispenser, giving up");
                     None
                 } else {
-                    Some(RETRY_DELAY)
+                    Some(icp_retry_delay(old.icp_attempts))
                 }
             }
         };
@@ -224,11 +238,22 @@ async fn move_icp(old_local_group_index: CanisterId) {
     });
 }
 
+// 1 minute after the first failure, doubling each time up to an hour
+fn icp_retry_delay(attempts: u32) -> Milliseconds {
+    (RETRY_DELAY << attempts.saturating_sub(1).min(16)).min(MAX_ICP_RETRY_DELAY)
+}
+
 // Returns the amount moved, after the fee, which is 0 if the balance doesn't exceed the fee. If an
-// earlier attempt's transfer went through but its outcome was lost, this finds nothing to move.
+// earlier attempt's transfer went through but its outcome was lost, this finds nothing to move. The
+// balance found is recorded, so the ICP moved can be told from the ICP there was to move.
 async fn transfer_icp(from: CanisterId, to: CanisterId, fee: u128, now_nanos: TimestampNanos) -> Result<u128, OCError> {
     let ledger = ICP_LEDGER_CANISTER_ID;
     let balance = balance_of(ledger, Account::from(from)).await?;
+    mutate_state(|state| {
+        if let Some(old) = state.data.old_local_group_index.as_mut() {
+            old.icp_found = old.icp_found.max(balance);
+        }
+    });
     if balance <= fee {
         return Ok(0);
     }
@@ -241,10 +266,11 @@ async fn transfer_icp(from: CanisterId, to: CanisterId, fee: u128, now_nanos: Ti
     }
 }
 
-// Once every canister has been dealt with, the old LocalGroupIndex's own cycles are queued to be
-// refunded, which uninstalls the relay too. It is never deleted, since it may hold funds (`suaf3`
-// holds 5 ICP), or be all that controls a canister which was skipped or missed. While this
-// LocalUserIndex controls it, the relay can be installed again to deal with them.
+// Once every canister and the ICP have been dealt with, the old LocalGroupIndex's own cycles are
+// queued to be refunded, which uninstalls the relay too. It is never deleted, since it may still hold
+// funds, eg. if moving its ICP was given up on, or be all that controls a canister which was skipped
+// or missed. While this LocalUserIndex controls it, a later change can install the relay again to
+// deal with them.
 fn complete(state: &mut RuntimeState) {
     let Some(old) = state.data.old_local_group_index.as_mut() else {
         return;
@@ -383,5 +409,26 @@ fn queue_refund(state: &mut RuntimeState, canister_id: CanisterId, delete_canist
             delete_canister,
             return_to_pool: false,
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn icp_retry_delay_doubles_up_to_an_hour() {
+        assert_eq!(icp_retry_delay(1), MINUTE_IN_MS);
+        assert_eq!(icp_retry_delay(2), 2 * MINUTE_IN_MS);
+        assert_eq!(icp_retry_delay(6), 32 * MINUTE_IN_MS);
+        assert_eq!(icp_retry_delay(7), HOUR_IN_MS);
+        assert_eq!(icp_retry_delay(MAX_ICP_ATTEMPTS), HOUR_IN_MS);
+    }
+
+    // About 14 hours, long enough to outlast an outage of the ICP ledger
+    #[test]
+    fn icp_attempts_span_about_14_hours() {
+        let total: Milliseconds = (1..MAX_ICP_ATTEMPTS).map(icp_retry_delay).sum();
+        assert_eq!(total, 843 * MINUTE_IN_MS);
     }
 }

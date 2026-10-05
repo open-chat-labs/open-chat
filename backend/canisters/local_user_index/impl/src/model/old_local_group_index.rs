@@ -20,13 +20,17 @@ pub struct OldLocalGroupIndex {
     // Those left as they are, eg. for having code installed, which the old LocalGroupIndex may be
     // all that controls. A repeated request queues them again.
     skipped: BTreeSet<CanisterId>,
-    // Set once any ICP the old LocalGroupIndex held has been moved to the CyclesDispenser, or the
-    // attempts to have given up, which happens once every canister has been dealt with
+    // Set once every canister has been dealt with and then any ICP the old LocalGroupIndex held has
+    // been moved to the CyclesDispenser, or the attempts to move it have been given up on
     #[serde(default)]
     pub icp_dealt_with: bool,
     #[serde(default)]
     pub icp_attempts: u32,
-    // In e8s, after the fee
+    // The largest ICP balance seen on the old LocalGroupIndex, in e8s
+    #[serde(default)]
+    pub icp_found: u128,
+    // In e8s, after the fee. Less than was found if an attempt's transfer went through but its
+    // outcome was lost.
     #[serde(default)]
     pub icp_moved: u128,
     // Set once the ICP has been dealt with too, whereupon the old LocalGroupIndex itself is queued to
@@ -52,6 +56,7 @@ impl OldLocalGroupIndex {
             skipped: BTreeSet::new(),
             icp_dealt_with: false,
             icp_attempts: 0,
+            icp_found: 0,
             icp_moved: 0,
             completed: false,
         }
@@ -121,6 +126,7 @@ impl OldLocalGroupIndex {
             reclaimed: self.reclaimed.len(),
             skipped: self.skipped.iter().copied().collect(),
             icp_dealt_with: self.icp_dealt_with,
+            icp_found: self.icp_found,
             icp_moved: self.icp_moved,
             completed: self.completed,
         }
@@ -135,6 +141,7 @@ pub struct OldLocalGroupIndexMetrics {
     pub reclaimed: usize,
     pub skipped: Vec<CanisterId>,
     pub icp_dealt_with: bool,
+    pub icp_found: u128,
     pub icp_moved: u128,
     pub completed: bool,
 }
@@ -208,13 +215,18 @@ mod tests {
     fn adding_canisters_once_completed_restarts_it() {
         let mut old = OldLocalGroupIndex::new(canister_id(0));
         old.completed = true;
+        old.relay_installed = true;
+        old.icp_dealt_with = true;
+        old.icp_attempts = 3;
 
         old.add([]);
         assert!(old.completed);
 
-        old.relay_installed = true;
+        // The relay is installed again and the ICP balance checked again
         old.add([canister_id(1)]);
         assert!(!old.completed);
         assert!(!old.relay_installed);
+        assert!(!old.icp_dealt_with);
+        assert_eq!(old.icp_attempts, 0);
     }
 }
