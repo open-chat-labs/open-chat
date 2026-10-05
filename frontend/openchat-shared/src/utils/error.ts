@@ -169,6 +169,9 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     // emoji-picker-element getting a 5xx back from the jsDelivr CDN for its emoji data (#31998):
     // the CDN's outage, not our code. A 4xx would mean the data URL itself broke, so it reports.
     /emoji-picker-element-data\S*:\s+5\d\d\b/i,
+    // A request reaching the worker before its agent exists or after it has gone, around login
+    // and logout. The worker leaves it unreported, but the caller sees it as a rejection (#9757)
+    /worker has no agent to handle request/i,
 ];
 
 function errorName(error: unknown): string {

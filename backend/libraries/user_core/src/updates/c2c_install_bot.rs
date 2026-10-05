@@ -24,7 +24,7 @@ pub fn c2c_install_bot(user: &mut User, args: Args, my_user_id: UserId, anonymiz
     }
 
     // If there isn't already a direct chat with the bot, create one now
-    let chat = user
+    let mut chat = user
         .direct_chats
         .get_or_create(my_user_id, args.bot_id, UserType::BotV2, || anonymized_id, now);
 

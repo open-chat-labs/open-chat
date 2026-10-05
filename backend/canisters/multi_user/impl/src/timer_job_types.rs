@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 use user_canister::C2CReplyContext;
+use user_core::migration::MigratedTimerJob;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -104,6 +105,46 @@ pub struct MarkP2PSwapExpiredJob {
 }
 
 impl TimerJob {
+    // A job handed over by the canister of a user being migrated here, for the user at `user_index`
+    pub fn migrated(user_index: u16, job: MigratedTimerJob) -> TimerJob {
+        match job {
+            MigratedTimerJob::HardDeleteMessageContent {
+                chat_id,
+                thread_root_message_index,
+                message_id,
+            } => TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
+                user_index,
+                chat_id,
+                thread_root_message_index,
+                message_id,
+            })),
+            MigratedTimerJob::DeleteFileReferences { files } => {
+                TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files })
+            }
+            MigratedTimerJob::MessageReminder {
+                reminder_id,
+                chat,
+                thread_root_message_index,
+                event_index,
+                notes,
+                reminder_created_message_index,
+            } => TimerJob::MessageReminder(Box::new(MessageReminderJob {
+                user_index,
+                reminder_id,
+                chat,
+                thread_root_message_index,
+                event_index,
+                notes,
+                reminder_created_message_index,
+            })),
+            MigratedTimerJob::MarkVideoCallEnded { them, message_id } => TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob {
+                user_index,
+                them,
+                message_id,
+            }),
+        }
+    }
+
     // The index of the user the job is for, if it is for one user's state rather than the escrow
     // canister's or the storage buckets'
     pub fn user_index(&self) -> Option<u16> {
@@ -187,7 +228,7 @@ impl Job for HardDeleteMessageContentJob {
                         .direct_chats
                         .latest_user_id(self.chat_id.into(), &state.data.migrated_user_ids)
                         .into();
-                    user.direct_chats.get_mut(&chat_id).and_then(|chat| {
+                    user.direct_chats.get_mut(&chat_id).and_then(|mut chat| {
                         chat.remove_deleted_message_content(self.thread_root_message_index, self.message_id, now)
                     })
                 })
@@ -290,7 +331,18 @@ impl Job for ClaimOrResetStreakInsuranceJob {
 
 impl Job for MarkVideoCallEndedJob {
     fn execute(self) {
-        let result = mutate_state(|state| end_video_call_impl(self.user_index, self.them, self.message_id, state));
+        let result = mutate_state(|state| {
+            // The other user may have been migrated since the call started, moving the chat onto
+            // their new id
+            let them = state
+                .data
+                .users
+                .with_user(self.user_index, |user| {
+                    user.direct_chats.latest_user_id(self.them, &state.data.migrated_user_ids)
+                })
+                .unwrap_or(self.them);
+            end_video_call_impl(self.user_index, them, self.message_id, state)
+        });
         if let Err(error) = result {
             error!(
                 ?error,
@@ -403,7 +455,7 @@ impl Job for MarkP2PSwapExpiredJob {
                     .direct_chats
                     .latest_user_id(self.chat_id.into(), migrated_user_ids)
                     .into();
-                if let Some(chat) = user.direct_chats.get_mut(&chat_id) {
+                if let Some(mut chat) = user.direct_chats.get_mut(&chat_id) {
                     let _ = chat.mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, now);
                 }
             });

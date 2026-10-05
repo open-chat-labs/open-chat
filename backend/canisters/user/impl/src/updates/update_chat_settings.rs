@@ -33,14 +33,20 @@ async fn update_chat_settings_impl(args: Args) -> OCResult {
     }
 
     mutate_state(|state| {
-        let chat = state.data.user.direct_chats.get_mut(&args.user_id.into()).unwrap();
-
         if let Some(events_ttl) = args.events_ttl.expand() {
             let now = state.env.now();
+            let my_user_id = state.env.canister_id().into();
+            let changed_at = state
+                .data
+                .user
+                .direct_chats
+                .get_mut(&args.user_id.into())
+                .unwrap()
+                .set_events_time_to_live(my_user_id, events_ttl, now);
 
             // Only a change is sent, since sending the TTL the chat already has would count as
             // setting it in the other user's copy, which may not have it
-            if let Some(changed_at) = chat.set_events_time_to_live(state.env.canister_id().into(), events_ttl, now) {
+            if let Some(changed_at) = changed_at {
                 state.push_user_canister_event(
                     args.user_id,
                     UserCanisterEvent::SetEventsTtl(Box::new(SetEventsTtl {

@@ -44,7 +44,7 @@ fn get_sender_status(state: &RuntimeState) -> SenderStatus {
     let sender: UserId = state.env.caller().into();
     if state.data.user.blocked_users.contains(&sender) {
         SenderStatus::Blocked
-    } else if let Some(user_type) = state.data.user.direct_chats.get(&sender.into()).map(|c| c.user_type) {
+    } else if let Some(user_type) = state.data.user.direct_chats.user_type(&sender.into()) {
         SenderStatus::Ok(sender, user_type)
     } else {
         SenderStatus::UnknownUser(state.data.local_user_index_canister_id, sender)
@@ -102,9 +102,9 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
             send_messages(*args, caller_user_id, state);
         }
         UserCanisterEvent::EditMessage(args) => {
-            if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
+            if let Some(mut chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
                 user_core::updates::c2c_user_canister::edit_message(
-                    chat,
+                    &mut chat,
                     caller_user_id,
                     *args,
                     now,
@@ -125,7 +125,7 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
             tip_message(*args, caller_user_id, state);
         }
         UserCanisterEvent::MarkMessagesRead(args) => {
-            if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
+            if let Some(mut chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
                 chat.mark_read_by_them_up_to(args.read_up_to, now);
             }
         }
@@ -133,8 +133,8 @@ pub(crate) fn process_event(event: UserCanisterEvent, caller_user_id: UserId, st
             p2p_swap_change_status(*c, caller_user_id, state);
         }
         UserCanisterEvent::JoinVideoCall(c) => {
-            if let Some(chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
-                user_core::updates::c2c_user_canister::join_video_call(chat, caller_user_id, c.message_id, now);
+            if let Some(mut chat) = state.data.user.direct_chats.get_mut(&caller_user_id.into()) {
+                user_core::updates::c2c_user_canister::join_video_call(&mut chat, caller_user_id, c.message_id, now);
             }
         }
         UserCanisterEvent::StartVideoCall(args) => {
@@ -205,8 +205,14 @@ fn send_messages(args: SendMessagesArgs, sender: UserId, state: &mut RuntimeStat
 fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     let chat_id = caller_user_id.into();
     let now = state.env.now();
-    let Some((thread_root_message_index, deleted)) = state.data.user.direct_chats.get_mut(&chat_id).and_then(|chat| {
-        user_core::updates::c2c_user_canister::delete_messages(chat, caller_user_id, args, now, &state.data.migrated_user_ids)
+    let Some((thread_root_message_index, deleted)) = state.data.user.direct_chats.get_mut(&chat_id).and_then(|mut chat| {
+        user_core::updates::c2c_user_canister::delete_messages(
+            &mut chat,
+            caller_user_id,
+            args,
+            now,
+            &state.data.migrated_user_ids,
+        )
     }) else {
         return;
     };
@@ -228,8 +234,14 @@ fn delete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_
 fn undelete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     let chat_id = caller_user_id.into();
     let now = state.env.now();
-    let Some((thread_root_message_index, undeleted)) = state.data.user.direct_chats.get_mut(&chat_id).and_then(|chat| {
-        user_core::updates::c2c_user_canister::undelete_messages(chat, caller_user_id, args, now, &state.data.migrated_user_ids)
+    let Some((thread_root_message_index, undeleted)) = state.data.user.direct_chats.get_mut(&chat_id).and_then(|mut chat| {
+        user_core::updates::c2c_user_canister::undelete_messages(
+            &mut chat,
+            caller_user_id,
+            args,
+            now,
+            &state.data.migrated_user_ids,
+        )
     }) else {
         return;
     };
@@ -239,9 +251,21 @@ fn undelete_messages(args: user_canister::DeleteUndeleteMessagesArgs, caller_use
 
 fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     let now = state.env.now();
-    let Some(reaction) = state.data.user.direct_chats.get_mut(&caller_user_id.into()).and_then(|chat| {
-        user_core::updates::c2c_user_canister::toggle_reaction(chat, caller_user_id, args, now, &state.data.migrated_user_ids)
-    }) else {
+    let Some(reaction) = state
+        .data
+        .user
+        .direct_chats
+        .get_mut(&caller_user_id.into())
+        .and_then(|mut chat| {
+            user_core::updates::c2c_user_canister::toggle_reaction(
+                &mut chat,
+                caller_user_id,
+                args,
+                now,
+                &state.data.migrated_user_ids,
+            )
+        })
+    else {
         return;
     };
 
@@ -264,16 +288,22 @@ fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, sta
 fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {
     let now = state.env.now();
     let my_user_id = state.env.canister_id().into();
-    let Some(received) = state.data.user.direct_chats.get_mut(&caller_user_id.into()).and_then(|chat| {
-        user_core::updates::c2c_user_canister::tip_message(
-            chat,
-            caller_user_id,
-            my_user_id,
-            args,
-            now,
-            &state.data.migrated_user_ids,
-        )
-    }) else {
+    let Some(received) = state
+        .data
+        .user
+        .direct_chats
+        .get_mut(&caller_user_id.into())
+        .and_then(|mut chat| {
+            user_core::updates::c2c_user_canister::tip_message(
+                &mut chat,
+                caller_user_id,
+                my_user_id,
+                args,
+                now,
+                &state.data.migrated_user_ids,
+            )
+        })
+    else {
         return;
     };
 

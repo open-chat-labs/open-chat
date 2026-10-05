@@ -1,10 +1,15 @@
 use crate::env::ENV;
-use crate::utils::tick_many;
+use crate::utils::{tick_many, try_metrics};
 use crate::{TestEnv, User, client};
-use candid::Principal;
+use candid::{Nat, Principal};
+use constants::{HOUR_IN_MS, MINUTE_IN_MS};
 use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::TransferError;
+use icrc_ledger_types::icrc2::transfer_from::TransferFromError;
 use pocket_ic::PocketIc;
+use pocket_ic::common::rest::RawMessageId;
 use std::ops::Deref;
+use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_string;
 use types::{
@@ -649,6 +654,269 @@ fn only_selected_composite_gate_checked_if_index_provided() {
         initial_balance - 10_000
     );
     assert!(client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user2.user_id) < initial_balance - 100_000);
+}
+
+// A payment gate's ledger can be any canister the owner names, so it may accept the gate's payment
+// but then fail every transfer out of the group or community. Each payment out is then retried after a
+// delay which doubles with each failure, up to an hour, rather than round after round. A rejected
+// transfer calls for no retry, so is retried after an hour, and a stopped ledger after 10 seconds, so
+// after 20 seconds for a 2nd failure.
+#[test_case(Gated::Group)]
+#[test_case(Gated::Community)]
+fn gate_payment_failing_to_call_into_ledger_is_retried_with_backoff(gated: Gated) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+    let ledger = install_failing_ledger(env, *controller);
+    let canister_id = create_gated_and_join(env, &owner, &user, &gated, ledger);
+
+    let awaiting_retry = |env: &PocketIc| metric(env, canister_id, "payments_awaiting_retry");
+
+    // Time doesn't pass as the rounds do, so however many there are, the payment to the owner (the
+    // only one, the treasury's share being less than a fee) isn't retried
+    tick_many(env, 20);
+    assert_eq!(failing_ledger_transfer_calls(env, ledger), 1);
+    assert_eq!(awaiting_retry(env), 1);
+
+    // Retried an hour after the ledger rejected it
+    env.advance_time(Duration::from_millis(HOUR_IN_MS - MINUTE_IN_MS));
+    tick_many(env, 10);
+    assert_eq!(failing_ledger_transfer_calls(env, ledger), 1);
+
+    // By when the ledger is stopped, so the payment is retried 20 seconds later
+    client::stop_canister(env, *controller, ledger);
+    env.advance_time(Duration::from_millis(2 * MINUTE_IN_MS));
+    tick_many(env, 10);
+    client::start_canister(env, *controller, ledger);
+    env.advance_time(Duration::from_secs(15));
+    tick_many(env, 10);
+    assert_eq!(failing_ledger_transfer_calls(env, ledger), 1);
+    env.advance_time(Duration::from_secs(10));
+    tick_many(env, 10);
+    assert_eq!(failing_ledger_transfer_calls(env, ledger), 2);
+
+    // Rejected again, so retried an hour later, by when the ledger accepts the transfer
+    env.update_call(ledger, *controller, "set_succeeding", vec![1]).unwrap();
+    env.advance_time(Duration::from_millis(HOUR_IN_MS));
+    tick_many(env, 10);
+    assert_eq!(failing_ledger_transfer_calls(env, ledger), 3);
+    assert_eq!(awaiting_retry(env), 0);
+    assert_eq!(metric(env, canister_id, "parked_payments"), 0);
+}
+
+// A ledger which has been deleted won't come back, and one which has been uninstalled has lost its
+// balances, so a payment from either is parked, being kept but not retried
+#[test_case(Gated::Group)]
+#[test_case(Gated::Community)]
+fn gate_payment_from_uninstalled_ledger_is_parked(gated: Gated) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+    let ledger = install_failing_ledger(env, *controller);
+    let canister_id = create_gated_and_join(env, &owner, &user, &gated, ledger);
+
+    tick_many(env, 20);
+    assert_eq!(failing_ledger_transfer_calls(env, ledger), 1);
+    env.uninstall_canister(ledger, Some(*controller)).unwrap();
+
+    // The retry an hour later finds the ledger uninstalled, so parks the payment
+    env.advance_time(Duration::from_millis(HOUR_IN_MS + MINUTE_IN_MS));
+    tick_many(env, 10);
+    assert_eq!(metric(env, canister_id, "parked_payments"), 1);
+    assert_eq!(metric(env, canister_id, "payments_awaiting_retry"), 0);
+
+    // Which is never retried
+    env.advance_time(Duration::from_millis(2 * HOUR_IN_MS));
+    tick_many(env, 10);
+    assert_eq!(metric(env, canister_id, "parked_payments"), 1);
+    assert_eq!(metric(env, canister_id, "payments_awaiting_retry"), 0);
+}
+
+// Two members joining make two equal payments to the owner. If both have to be retried, and the
+// retries fall due in the same round, they are still made as distinct transfers, rather than the
+// ledger rejecting the second as a duplicate of the first, which would leave the owner paid once.
+#[test_case(Gated::Group)]
+#[test_case(Gated::Community)]
+fn equal_gate_payments_retried_in_the_same_round_are_both_made(gated: Gated) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let ledger = canister_ids.icp_ledger;
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let amount = 1_000_000;
+    let fee = 10_000;
+    let (canister_id, _) = create_gated(env, &owner, &gated, ledger, amount, fee);
+    let owner_balance = client::ledger::happy_path::balance_of(env, ledger, owner.user_id);
+
+    // Each member's payment is taken while the ledger is running, but the ledger is stopped before
+    // the owner is paid, so the payment to the owner is retried 10 seconds later. Time doesn't pass
+    // as the rounds do, so both retries fall due at the same time.
+    for _ in 0..2 {
+        let user = client::register_user(env, canister_ids);
+        client::ledger::happy_path::transfer(env, *controller, ledger, user.user_id, amount);
+        client::user::happy_path::approve_transfer(
+            env,
+            &user,
+            &user_canister::approve_transfer::Args {
+                spender: member_spender_account(canister_id, &user).into(),
+                ledger_canister_id: ledger,
+                amount: amount - fee,
+                expires_in: None,
+                pin: None,
+            },
+        );
+
+        let balance = client::ledger::happy_path::balance_of(env, ledger, user.user_id);
+
+        let message_id = submit_join(env, &user, &gated, canister_id);
+        let charged = (0..50).any(|_| {
+            env.tick();
+            client::ledger::happy_path::balance_of(env, ledger, user.user_id) < balance
+        });
+        assert!(charged);
+        client::stop_canister(env, *controller, ledger);
+        env.await_call(message_id).unwrap();
+        tick_many(env, 10);
+        client::start_canister(env, *controller, ledger);
+    }
+    assert_eq!(metric(env, canister_id, "payments_awaiting_retry"), 2);
+
+    env.advance_time(Duration::from_secs(11));
+    tick_many(env, 10);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, ledger, owner.user_id) - owner_balance,
+        2 * 970_000
+    );
+    assert_eq!(metric(env, canister_id, "payments_awaiting_retry"), 0);
+}
+
+// Submits `user`'s request to join the group or community without waiting for it to complete
+fn submit_join(env: &PocketIc, user: &User, gated: &Gated, canister_id: Principal) -> RawMessageId {
+    let (local_user_index, method, args) = match gated {
+        Gated::Group => (
+            client::group::happy_path::local_user_index(env, canister_id.into()),
+            "join_group_msgpack",
+            msgpack::serialize_then_unwrap(&local_user_index_canister::join_group::Args {
+                chat_id: canister_id.into(),
+                invite_code: None,
+                verified_credential_args: None,
+                composite_gate_index: None,
+            }),
+        ),
+        Gated::Community => (
+            client::community::happy_path::local_user_index(env, canister_id.into()),
+            "join_community_msgpack",
+            msgpack::serialize_then_unwrap(&local_user_index_canister::join_community::Args {
+                community_id: canister_id.into(),
+                invite_code: None,
+                referred_by: None,
+                verified_credential_args: None,
+                composite_gate_index: None,
+            }),
+        ),
+        Gated::Channel => unreachable!(),
+    };
+    env.submit_call(local_user_index, user.principal, method, args).unwrap()
+}
+
+// Creates a group or community with a payment gate on `ledger`, which `user` joins, returning the
+// group or community
+fn create_gated_and_join(env: &mut PocketIc, owner: &User, user: &User, gated: &Gated, ledger: CanisterId) -> Principal {
+    // The owner's share is all that's left after the fees, so the treasury isn't paid
+    let (canister_id, _) = create_gated(env, owner, gated, ledger, 1_000_000, 10_000);
+    match gated {
+        Gated::Group => client::group::happy_path::join_group(env, user.principal, canister_id.into()),
+        Gated::Community => {
+            client::community::happy_path::join_community(env, user.principal, canister_id.into());
+        }
+        Gated::Channel => unreachable!(),
+    }
+    canister_id
+}
+
+// Installs a ledger which accepts any `icrc2_transfer_from`, so that a gate's payment is taken, but
+// rejects every `icrc1_transfer` until `set_succeeding` is called with a 1, counting each call
+fn install_failing_ledger(env: &mut PocketIc, controller: Principal) -> CanisterId {
+    const REJECT_MESSAGE: &str = "Transfer rejected";
+
+    let transfer_from_ok = candid::encode_one(Result::<Nat, TransferFromError>::Ok(Nat::from(0u32))).unwrap();
+    let transfer_ok = candid::encode_one(Result::<Nat, TransferError>::Ok(Nat::from(0u32))).unwrap();
+    let escape = |bytes: &[u8]| bytes.iter().map(|b| format!("\\{b:02x}")).collect::<String>();
+
+    let wat = format!(
+        r#"
+(module
+  (import "ic0" "msg_arg_data_copy" (func $msg_arg_data_copy (param i32 i32 i32)))
+  (import "ic0" "msg_reply_data_append" (func $msg_reply_data_append (param i32 i32)))
+  (import "ic0" "msg_reply" (func $msg_reply))
+  (import "ic0" "msg_reject" (func $msg_reject (param i32 i32)))
+  (memory 1)
+  ;; The number of calls to `icrc1_transfer` is kept at 0, and whether they succeed at 4
+  (data (i32.const 1000) "{transfer_from_ok}")
+  (data (i32.const 2000) "{transfer_ok}")
+  (data (i32.const 3000) "{REJECT_MESSAGE}")
+  (func $transfer_from
+    (call $msg_reply_data_append (i32.const 1000) (i32.const {transfer_from_ok_len}))
+    (call $msg_reply))
+  (func $transfer
+    (i32.store (i32.const 0) (i32.add (i32.load (i32.const 0)) (i32.const 1)))
+    (if (i32.load8_u (i32.const 4))
+      (then
+        (call $msg_reply_data_append (i32.const 2000) (i32.const {transfer_ok_len}))
+        (call $msg_reply))
+      (else
+        (call $msg_reject (i32.const 3000) (i32.const {reject_message_len})))))
+  (func $set_succeeding
+    (call $msg_arg_data_copy (i32.const 4) (i32.const 0) (i32.const 1))
+    (call $msg_reply))
+  (func $transfer_calls
+    (call $msg_reply_data_append (i32.const 0) (i32.const 4))
+    (call $msg_reply))
+  (export "canister_update icrc2_transfer_from" (func $transfer_from))
+  (export "canister_update icrc1_transfer" (func $transfer))
+  (export "canister_update set_succeeding" (func $set_succeeding))
+  (export "canister_query transfer_calls" (func $transfer_calls)))
+"#,
+        transfer_from_ok = escape(&transfer_from_ok),
+        transfer_from_ok_len = transfer_from_ok.len(),
+        transfer_ok = escape(&transfer_ok),
+        transfer_ok_len = transfer_ok.len(),
+        reject_message_len = REJECT_MESSAGE.len(),
+    );
+
+    let canister_id = client::create_canister(env, controller);
+    env.install_canister(canister_id, wat::parse_str(wat).unwrap(), vec![], Some(controller));
+    canister_id
+}
+
+fn failing_ledger_transfer_calls(env: &PocketIc, ledger: CanisterId) -> u32 {
+    let bytes = env
+        .query_call(ledger, Principal::anonymous(), "transfer_calls", Vec::new())
+        .unwrap();
+    u32::from_le_bytes(bytes.try_into().unwrap())
+}
+
+fn metric(env: &PocketIc, canister_id: Principal, name: &str) -> u64 {
+    try_metrics(env, canister_id).unwrap()[name].as_u64().unwrap()
 }
 
 // The account a group or community pulls a member's gate payment as, which the member approves
