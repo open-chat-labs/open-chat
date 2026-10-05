@@ -5,16 +5,16 @@ use crate::canister::{delay_if_should_retry_failed_c2c_call, is_target_canister_
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, SECOND_IN_MS};
 use types::{C2CError, Milliseconds, TimestampMillis};
 
-// The shortest delay before retrying a payment whose ledger couldn't be called, so that a ledger
-// which fails in a way that calls for an immediate retry isn't called round after round
-const MIN_RETRY_DELAY: Milliseconds = 10 * SECOND_IN_MS;
+// The shortest delay before retrying a payment, so that a ledger which fails in a way that calls for
+// an immediate retry isn't called round after round
+pub const MIN_RETRY_DELAY: Milliseconds = 10 * SECOND_IN_MS;
 // The longest delay before retrying a payment, so that it is made within an hour of its ledger
 // recovering
-const MAX_RETRY_DELAY: Milliseconds = HOUR_IN_MS;
+pub const MAX_RETRY_DELAY: Milliseconds = HOUR_IN_MS;
 // Ledgers reject a transfer whose `created_at_time` is more than 24 hours old. A retry which would
 // fall after then is brought forward to this long before, so that a ledger which recovers in the
 // meantime is still paid, as it would have been were the payment retried every round.
-const FINAL_RETRY_BEFORE_TOO_OLD: Milliseconds = 5 * MINUTE_IN_MS;
+pub const FINAL_RETRY_BEFORE_TOO_OLD: Milliseconds = 5 * MINUTE_IN_MS;
 
 // Returns the delay before retrying a payment, given the number of attempts at it which have failed
 // to call into its ledger, or `None` if it is to be parked
@@ -25,20 +25,30 @@ pub fn retry_delay(error: &C2CError, failures: u32) -> Option<Milliseconds> {
         None
     } else {
         // Funds are at stake, so a payment is never given up on, even after a failure which calls
-        // for no retry, in case the ledger is fixed. The delay doubles with each failure.
-        let delay = delay_if_should_retry_failed_c2c_call(error)
-            .unwrap_or(MAX_RETRY_DELAY)
-            .max(MIN_RETRY_DELAY);
-        let multiplier = 2u64.saturating_pow(failures.saturating_sub(1));
-        Some(delay.saturating_mul(multiplier).min(MAX_RETRY_DELAY))
+        // for no retry, in case the ledger is fixed
+        let delay = delay_if_should_retry_failed_c2c_call(error).unwrap_or(MAX_RETRY_DELAY);
+        Some(backoff(delay, failures))
     }
+}
+
+// Returns `delay`, but at least `MIN_RETRY_DELAY`, doubled for each of the payment's failures after the
+// first, up to `MAX_RETRY_DELAY`
+pub fn backoff(delay: Milliseconds, failures: u32) -> Milliseconds {
+    let multiplier = 2u64.saturating_pow(failures.saturating_sub(1));
+    delay.max(MIN_RETRY_DELAY).saturating_mul(multiplier).min(MAX_RETRY_DELAY)
+}
+
+// Returns when a payment whose transfer has a `created_at_time` of `created_at` is last retried
+// before its ledger would reject it as too old
+pub fn final_retry(created_at: TimestampMillis) -> TimestampMillis {
+    (created_at + DAY_IN_MS).saturating_sub(FINAL_RETRY_BEFORE_TOO_OLD)
 }
 
 // Returns when to retry a payment whose transfer has a `created_at_time` of `created_at`, after a
 // failure which calls for `delay`. Only needed where a payment keeps its `created_at_time` across
 // attempts.
 pub fn retry_due(created_at: TimestampMillis, delay: Milliseconds, now: TimestampMillis) -> TimestampMillis {
-    let final_retry = (created_at + DAY_IN_MS).saturating_sub(FINAL_RETRY_BEFORE_TOO_OLD);
+    let final_retry = final_retry(created_at);
     let due = now + delay;
     if now < final_retry { due.min(final_retry) } else { due }
 }
