@@ -20,8 +20,17 @@ pub struct OldLocalGroupIndex {
     // Those left as they are, eg. for having code installed, which the old LocalGroupIndex may be
     // all that controls. A repeated request queues them again.
     skipped: BTreeSet<CanisterId>,
-    // Set once every canister has been dealt with, whereupon the old LocalGroupIndex itself is queued
-    // to have its cycles refunded
+    // Set once any ICP the old LocalGroupIndex held has been moved to the CyclesDispenser, or the
+    // attempts to have given up, which happens once every canister has been dealt with
+    #[serde(default)]
+    pub icp_dealt_with: bool,
+    #[serde(default)]
+    pub icp_attempts: u32,
+    // In e8s, after the fee
+    #[serde(default)]
+    pub icp_moved: u128,
+    // Set once the ICP has been dealt with too, whereupon the old LocalGroupIndex itself is queued to
+    // have its cycles refunded
     pub completed: bool,
 }
 
@@ -41,6 +50,9 @@ impl OldLocalGroupIndex {
             in_flight: BTreeSet::new(),
             reclaimed: BTreeSet::new(),
             skipped: BTreeSet::new(),
+            icp_dealt_with: false,
+            icp_attempts: 0,
+            icp_moved: 0,
             completed: false,
         }
     }
@@ -61,9 +73,12 @@ impl OldLocalGroupIndex {
             }
         }
         if count > 0 && self.completed {
-            // The relay was uninstalled when the old LocalGroupIndex's cycles were refunded
+            // The relay was uninstalled when the old LocalGroupIndex's cycles were refunded, and its
+            // balance is checked again, in case it has received any ICP since
             self.completed = false;
             self.relay_installed = false;
+            self.icp_dealt_with = false;
+            self.icp_attempts = 0;
         }
         count
     }
@@ -105,6 +120,8 @@ impl OldLocalGroupIndex {
             pending: self.pending.len(),
             reclaimed: self.reclaimed.len(),
             skipped: self.skipped.iter().copied().collect(),
+            icp_dealt_with: self.icp_dealt_with,
+            icp_moved: self.icp_moved,
             completed: self.completed,
         }
     }
@@ -117,6 +134,8 @@ pub struct OldLocalGroupIndexMetrics {
     pub pending: usize,
     pub reclaimed: usize,
     pub skipped: Vec<CanisterId>,
+    pub icp_dealt_with: bool,
+    pub icp_moved: u128,
     pub completed: bool,
 }
 

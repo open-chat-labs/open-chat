@@ -1,16 +1,20 @@
 use crate::model::old_local_group_index::CanisterToReclaim;
+use crate::updates::move_funds_from_old_canister::{Transfer, balance_of, make_transfer};
 use crate::{CanisterToRefund, RuntimeState, call_relay, jobs, mutate_state, read_state};
-use constants::{MINUTE_IN_MS, min_cycles_balance};
+use constants::{ICP_LEDGER_CANISTER_ID, ICP_TRANSFER_FEE, MINUTE_IN_MS, min_cycles_balance};
 use futures::future::join_all;
 use ic_cdk::call::RejectCode;
 use ic_cdk_management_canister::{
     CanisterInstallMode, CanisterSettings, CanisterStatusArgs, CanisterStatusType, UpdateSettingsArgs,
 };
 use ic_cdk_timers::TimerId;
+use icrc_ledger_types::icrc1::account::Account;
+use local_user_index_canister::move_funds_from_old_canister::MoveFundsResult;
+use oc_error_codes::OCError;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, info};
-use types::{BuildVersion, C2CError, CanisterId, Milliseconds};
+use types::{BuildVersion, C2CError, CanisterId, Milliseconds, TimestampNanos};
 use utils::canister::{CanisterStatusMinimal, CanisterToInstall, WasmToInstall, is_invalid_controller_error};
 
 const BATCH_SIZE: usize = 10;
@@ -29,7 +33,8 @@ thread_local! {
 // Reclaims the canisters which the old LocalGroupIndex alone still controls, once the GroupIndex has
 // made this LocalUserIndex a controller of it. The call relay is installed over the old
 // LocalGroupIndex, through which each canister is made to have this LocalUserIndex as its only
-// controller, then queued to have its cycles refunded and be deleted. Finally the old
+// controller, then queued to have its cycles refunded and be deleted. Then any ICP the old
+// LocalGroupIndex holds is moved to the CyclesDispenser through the relay, and finally the old
 // LocalGroupIndex's own cycles are refunded.
 pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Milliseconds>) -> bool {
     if TIMER_ID.get().is_none() && state.data.old_local_group_index.as_ref().is_some_and(|old| !old.completed) {
@@ -62,13 +67,13 @@ impl Drop for InProgressGuard {
 }
 
 async fn process() {
-    let Some((old_local_group_index, relay_installed)) = read_state(|state| {
+    let Some((old_local_group_index, relay_installed, icp_dealt_with)) = read_state(|state| {
         state
             .data
             .old_local_group_index
             .as_ref()
             .filter(|old| !old.completed)
-            .map(|old| (old.canister_id, old.relay_installed))
+            .map(|old| (old.canister_id, old.relay_installed, old.icp_dealt_with))
     }) else {
         return;
     };
@@ -112,7 +117,11 @@ async fn process() {
     });
 
     if batch.is_empty() {
-        mutate_state(complete);
+        if icp_dealt_with {
+            mutate_state(complete);
+        } else {
+            move_icp(old_local_group_index).await;
+        }
         return;
     }
 
@@ -167,6 +176,68 @@ fn on_reclaim_result(
                 old.mark_skipped(canister_id);
             }
         }
+    }
+}
+
+// Moves any ICP the old LocalGroupIndex holds to the CyclesDispenser's account, from which it burns
+// ICP for cycles when low. Of the old LocalGroupIndexes, only `suaf3` holds any (5 ICP). If the move
+// keeps failing it is given up on, leaving the ICP where it is, since the old LocalGroupIndex is
+// kept and the relay can be installed again.
+async fn move_icp(old_local_group_index: CanisterId) {
+    let (cycles_dispenser, fee, now_nanos) = read_state(|state| {
+        (
+            state.data.cycles_dispenser_canister_id,
+            state
+                .data
+                .registry_tokens
+                .fee(&ICP_LEDGER_CANISTER_ID)
+                .unwrap_or(ICP_TRANSFER_FEE),
+            state.env.now_nanos(),
+        )
+    });
+
+    let result = transfer_icp(old_local_group_index, cycles_dispenser, fee, now_nanos).await;
+
+    mutate_state(|state| {
+        let Some(old) = state.data.old_local_group_index.as_mut() else {
+            return;
+        };
+        let delay = match result {
+            Ok(moved) => {
+                old.icp_dealt_with = true;
+                old.icp_moved += moved;
+                info!(%old_local_group_index, moved, "Moved the old LocalGroupIndex's ICP to the CyclesDispenser");
+                None
+            }
+            Err(error) => {
+                old.icp_attempts += 1;
+                if old.icp_attempts >= MAX_ATTEMPTS {
+                    old.icp_dealt_with = true;
+                    error!(%old_local_group_index, ?error, "Failed to move the old LocalGroupIndex's ICP to the CyclesDispenser, giving up");
+                    None
+                } else {
+                    Some(RETRY_DELAY)
+                }
+            }
+        };
+        start_job_if_required(state, delay);
+    });
+}
+
+// Returns the amount moved, after the fee, which is 0 if the balance doesn't exceed the fee. If an
+// earlier attempt's transfer went through but its outcome was lost, this finds nothing to move.
+async fn transfer_icp(from: CanisterId, to: CanisterId, fee: u128, now_nanos: TimestampNanos) -> Result<u128, OCError> {
+    let ledger = ICP_LEDGER_CANISTER_ID;
+    let balance = balance_of(ledger, Account::from(from)).await?;
+    if balance <= fee {
+        return Ok(0);
+    }
+
+    let outcome = make_transfer(from, Account::from(to), &Transfer { ledger, balance, fee }, now_nanos).await;
+    match outcome.result {
+        MoveFundsResult::Moved { amount, .. } => Ok(amount),
+        MoveFundsResult::NothingToMove => Ok(0),
+        MoveFundsResult::Failed(error) => Err(error),
     }
 }
 

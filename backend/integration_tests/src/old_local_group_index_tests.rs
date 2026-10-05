@@ -2,7 +2,7 @@ use crate::env::ENV;
 use crate::utils::{metrics, tick_many, wait_for_canister_to_be_deleted};
 use crate::{TestEnv, client};
 use candid::Principal;
-use constants::{B, T};
+use constants::{B, ICP_TRANSFER_FEE, T};
 use pocket_ic::{CanisterSettings, CreateCanisterParams, CreateCanisterPlacement, PocketIc};
 use std::ops::Deref;
 use std::time::Duration;
@@ -13,11 +13,16 @@ const MODULE_WAT: &str = r#"(module (memory 1))"#;
 
 // The canisters which only the old LocalGroupIndex controls are handed over to the LocalUserIndex,
 // via the call relay installed over the old LocalGroupIndex, and their cycles refunded before they
-// are deleted, after which the old LocalGroupIndex's own cycles are refunded too, though it is kept
+// are deleted. Then the old LocalGroupIndex's ICP is moved to the CyclesDispenser, and its own cycles
+// refunded too, though it is kept.
 #[test]
-fn old_local_group_index_canisters_are_reclaimed_then_its_cycles_refunded() {
+fn old_local_group_index_canisters_are_reclaimed_then_its_icp_moved_and_cycles_refunded() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let old_local_group_index = create_old_local_group_index(env, canister_ids.group_index, local_user_index);
@@ -25,6 +30,11 @@ fn old_local_group_index_canisters_are_reclaimed_then_its_cycles_refunded() {
         .map(|_| create_controlled_canister(env, old_local_group_index, local_user_index, false))
         .collect();
     let refunded = cycles_refunded(env, local_user_index);
+
+    let icp = 500_000_000;
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, old_local_group_index, icp);
+    let cycles_dispenser_icp =
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, canister_ids.cycles_dispenser);
 
     reclaim(
         env,
@@ -43,6 +53,21 @@ fn old_local_group_index_canisters_are_reclaimed_then_its_cycles_refunded() {
     assert_eq!(old["reclaimed"].as_u64(), Some(3));
     assert_eq!(old["skipped"].as_array().map(|s| s.len()), Some(0));
     assert_eq!(old["completed"].as_bool(), Some(true));
+    assert_eq!(old["icp_moved"].as_u64(), Some((icp - ICP_TRANSFER_FEE) as u64));
+
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, old_local_group_index),
+        0
+    );
+    // The CyclesDispenser burns 10 ICP (plus the fee) for cycles whenever its cycles balance is low,
+    // which it may do meanwhile, so allow for any number of those
+    let burn = 1_000_000_000 + ICP_TRANSFER_FEE;
+    let expected = cycles_dispenser_icp + icp - ICP_TRANSFER_FEE;
+    let actual = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, canister_ids.cycles_dispenser);
+    assert!(
+        actual <= expected && (expected - actual).is_multiple_of(burn),
+        "expected {expected} less some burns, got {actual}"
+    );
 
     // Most of the old LocalGroupIndex's 10T, and of the pool canisters' 1.5T, has been refunded
     assert!(cycles_refunded(env, local_user_index) > refunded + 10 * T);
