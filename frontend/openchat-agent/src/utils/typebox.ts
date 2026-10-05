@@ -137,8 +137,10 @@ export function typeboxValidate<T extends TSchema>(
         Value.Assert(validator, converted);
         return converted as Static<T>;
     } catch (err) {
-        console.error("Typebox validation failed: ", redactSecrets(value, methodName), err);
-        throw new TypeboxValidationError(withPath(err));
+        // Not `err` itself: an AssertError holds the value which failed, PIN and all
+        const error = withPath(err);
+        console.error("Typebox validation failed: ", redactSecrets(value, methodName), error);
+        throw new TypeboxValidationError(error);
     }
 }
 

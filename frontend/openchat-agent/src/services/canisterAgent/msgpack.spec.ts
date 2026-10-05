@@ -97,16 +97,20 @@ describe("MsgpackCanisterAgent logging", () => {
         const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
         const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
         try {
+            // Fails on `verification`, so typebox's own error holds the object with the PIN in it
             await expect(
-                new FailingUserAgent().setPinNumber({ new: "5678", verification: "Bogus" }),
+                new FailingUserAgent().setPinNumber({
+                    new: "5678",
+                    verification: { PIN: ["1234"] },
+                }),
             ).rejects.toThrow(TypeboxValidationError);
             expect(errorSpy).toHaveBeenCalledWith(
                 "Typebox validation failed: ",
-                { new: REDACTED, verification: "Bogus" },
-                expect.anything(),
+                { new: REDACTED, verification: { PIN: REDACTED } },
+                expect.any(Error),
             );
-            expect(logged(errorSpy)).not.toMatch(/5678/);
-            expect(logged(logSpy)).not.toMatch(/5678/);
+            expect(logged(errorSpy)).not.toMatch(/1234|5678/);
+            expect(logged(logSpy)).not.toMatch(/1234|5678/);
         } finally {
             errorSpy.mockRestore();
             logSpy.mockRestore();
