@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
 
+### Removed
+
+- Remove the one-off files reconciliation and `total_blob_bytes` recompute, which have run in prod ([#9788](https://github.com/open-chat-labs/open-chat/pull/9788))
+
 ### Fixed
 
 - Report each bucket's stable memory, not its heap memory, as `stable_memory_used` in the metrics ([#9776](https://github.com/open-chat-labs/open-chat/pull/9776))

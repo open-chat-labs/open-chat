@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
 
+### Removed
+
+- Remove `c2c_missing_files`, only needed for the StorageIndex's one-off files reconciliation ([#9788](https://github.com/open-chat-labs/open-chat/pull/9788))
+
 ## [[2.0.2095](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2095-storage_bucket)] - 2026-10-05
 
 ### Added
