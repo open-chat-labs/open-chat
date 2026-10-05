@@ -29,7 +29,7 @@ pub fn prepare(
     user.pin_number.verify(args.pin.as_mut(), now)?;
     ledger_utils::validate_from_account(args.from_account, this_canister_id)?;
 
-    let chat = user
+    let mut chat = user
         .direct_chats
         .get_mut(&args.user_id.into())
         .ok_or(OCErrorCode::ChatNotFound)?;
@@ -69,7 +69,7 @@ pub fn deposited(
         expires_at: content.expires_at,
     });
 
-    let chat = user.direct_chats.get_mut(&args.user_id.into())?;
+    let mut chat = user.direct_chats.get_mut(&args.user_id.into())?;
     chat.accept_p2p_swap(
         my_user_id,
         args.thread_root_message_index,
@@ -83,7 +83,7 @@ pub fn deposited(
 
 // Frees the swap again, the deposit having failed
 pub fn deposit_failed(user: &mut User, my_user_id: UserId, args: &Args, now: TimestampMillis) {
-    if let Some(chat) = user.direct_chats.get_mut(&args.user_id.into()) {
+    if let Some(mut chat) = user.direct_chats.get_mut(&args.user_id.into()) {
         chat.unreserve_p2p_swap(my_user_id, args.thread_root_message_index, args.message_id, now);
     }
 }
