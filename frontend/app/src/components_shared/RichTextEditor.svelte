@@ -222,9 +222,11 @@
         node.content?.forEach((child) => collectMentionedUsers(child, users));
     }
 
+    // clear and setContent emit no update, so `oninput` only reports the user's own input (callers
+    // treat it as the user typing)
     export function clear(): void {
-        editor?.commands.clearContent(true);
-        empty = editor?.isEmpty ?? true;
+        editor?.commands.clearContent(false);
+        afterContentSet();
     }
 
     export function focus(): void {
@@ -232,9 +234,19 @@
     }
 
     export function setContent(markdown: string): void {
-        editor?.commands.setContent(resolveMentionLabels(markdownToDoc(markdown)));
+        editor?.commands.setContent(resolveMentionLabels(markdownToDoc(markdown)), {
+            emitUpdate: false,
+        });
         editor?.commands.focus("end");
+        afterContentSet();
+    }
+
+    // What onUpdate would have done, bar calling `oninput`
+    function afterContentSet() {
         empty = editor?.isEmpty ?? true;
+        if (editor) {
+            checkSuggestion();
+        }
     }
 
     // markdownToDoc has no access to the user/group stores, so mention nodes it
@@ -375,7 +387,9 @@
                         return true;
                     }
                     onKeydown?.(event);
-                    return false;
+                    // A key the caller has handled (e.g. Enter to send) isn't handled again by
+                    // the editor's keymap, which would otherwise split the block
+                    return event.defaultPrevented;
                 },
             },
             onUpdate: () => {

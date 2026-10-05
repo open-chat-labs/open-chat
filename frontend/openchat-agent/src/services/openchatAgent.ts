@@ -292,6 +292,7 @@ import { createHttpAgentSync } from "../utils/httpAgent";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { withLatestUserIds } from "../utils/latestUserIds";
+import { findMovedDirectChats } from "../utils/movedDirectChats";
 import { mergeAccountTransactions } from "../utils/accountTransactions";
 import { mean } from "../utils/maths";
 import { extractMessagePreviews } from "@shared";
@@ -1834,6 +1835,25 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
+    // The direct chats among those the User canister removed which were moved onto the other user's
+    // new id, after they were migrated to a MultiUser canister, rather than deleted, each mapped to
+    // that id (see `findMovedDirectChats`). The users are looked up by the ids the chats were under,
+    // for which the UserIndex returns their latest ids. Throws if they can't be.
+    #movedDirectChats(
+        removed: string[],
+        added: DirectChatSummary[],
+        cached: DirectChatSummary[],
+    ): Promise<Map<string, string>> {
+        return findMovedDirectChats(removed, added, cached, (users) =>
+            this._userIndexClient
+                .getUsers({ userGroups: [{ users, updatedSince: BigInt(0) }] }, false)
+                .then((resp) => resp.migratedUserIds ?? new Map()),
+        ).catch((err) => {
+            this._logger.error("Failed to look up the users of removed direct chats", err);
+            throw err;
+        });
+    }
+
     private applyPinnedChannelUpdates(
         pinnedChannels: Updatable<ChannelIdentifier[]>,
         userResponse: UpdatesSuccessResponse,
@@ -1877,6 +1897,7 @@ export class OpenChatAgent extends EventTarget {
         let directChatsAdded: DirectChatSummary[] = [];
         let directChatUpdates: DirectChatSummaryUpdates[] = [];
         let directChatsRemoved: string[] = [];
+        let directChatsMoved = new Map<string, string>();
         let directChats: DirectChatSummary[] = [];
 
         let currentGroups: GroupChatSummary[] = [];
@@ -2031,6 +2052,17 @@ export class OpenChatAgent extends EventTarget {
                 const userResponse = await this.userClient.getUpdates(
                     current.latestUserCanisterUpdates,
                 );
+                // Found before anything is taken from the answer, so that if the users can't be
+                // looked up, the answer is dropped, as if the User canister hadn't given one, and
+                // is fetched again on the next pass, rather than a move being taken for a deletion
+                const moved =
+                    userResponse.kind === "success"
+                        ? await this.#movedDirectChats(
+                              userResponse.directChats.removed,
+                              userResponse.directChats.added,
+                              currentDirectChats,
+                          )
+                        : new Map<string, string>();
 
                 if (userResponse.kind === "success") {
                     anyUpdates = true;
@@ -2039,8 +2071,12 @@ export class OpenChatAgent extends EventTarget {
                     directChatsAdded = userResponse.directChats.added;
                     directChatUpdates = userResponse.directChats.updated;
                     directChatsRemoved = userResponse.directChats.removed;
+                    directChatsMoved = moved;
+                    // A moved chat's events move with it when the cache is written
                     directChatsRemoved.forEach((id) => {
-                        this._chatsDb.deleteEventsForChatOrCommunity(id);
+                        if (!directChatsMoved.has(id)) {
+                            this._chatsDb.deleteEventsForChatOrCommunity(id);
+                        }
                     });
 
                     groupsAdded = userResponse.groupChats.added;
@@ -2292,6 +2328,7 @@ export class OpenChatAgent extends EventTarget {
             try {
                 await this._chatsDb.setCachedChats(state, {
                     directChats: directChatsAddedUpdatedIds,
+                    movedDirectChats: directChatsMoved,
                     groupChats: groupsAddedUpdatedIds,
                     communities: communitiesAddedUpdatedIds,
                     fields: touchedFields({
