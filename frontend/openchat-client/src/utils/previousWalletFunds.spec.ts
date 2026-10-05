@@ -67,6 +67,44 @@ describe("movePreviousWalletFunds", () => {
         ]);
     });
 
+    test("checks again a day later if nothing was found", async () => {
+        find = vi.fn(() => Promise.resolve([]));
+        expect(await run(NOW)).toEqual([]);
+
+        expect(await run(NOW + PREVIOUS_WALLETS_CHECK_INTERVAL - 1)).toBeUndefined();
+        expect(await run(NOW + PREVIOUS_WALLETS_CHECK_INTERVAL)).toEqual([]);
+    });
+
+    test("checks again an hour later if any of several moves failed", async () => {
+        move = vi.fn(() =>
+            Promise.resolve([
+                { previousUserId: "previous", ledger: "icp", result: MOVED },
+                { previousUserId: "previous", ledger: "chat", result: FAILED },
+            ]),
+        );
+        await run(NOW);
+
+        expect(await run(NOW + PREVIOUS_WALLETS_RETRY_INTERVAL - 1)).toBeUndefined();
+        expect(await run(NOW + PREVIOUS_WALLETS_RETRY_INTERVAL)).toBeDefined();
+    });
+
+    // Eg. while offline, rather than counting it as a check which found nothing
+    test("checks again an hour later if the wallets couldn't be checked", async () => {
+        find = vi.fn(() => Promise.reject(new Error("Offline")));
+        expect(await run(NOW)).toBeUndefined();
+        expect(move).not.toHaveBeenCalled();
+
+        find = vi.fn(() => Promise.resolve(FUNDS));
+        expect(await run(NOW + PREVIOUS_WALLETS_RETRY_INTERVAL - 1)).toBeUndefined();
+        expect(await run(NOW + PREVIOUS_WALLETS_RETRY_INTERVAL)).toBeDefined();
+    });
+
+    test("a check put off by a clock which was ahead is due once the clock is right", async () => {
+        await run(NOW + 365 * PREVIOUS_WALLETS_CHECK_INTERVAL);
+
+        expect(await run(NOW)).toBeDefined();
+    });
+
     test("a check made while another is in progress, eg. in another tab, is skipped", async () => {
         const first = run(NOW);
 

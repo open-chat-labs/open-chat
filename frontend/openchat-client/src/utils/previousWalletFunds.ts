@@ -12,7 +12,8 @@ export const PREVIOUS_WALLETS_RETRY_INTERVAL = ONE_HOUR;
 // Moves anything left in the user's previous wallets to their wallet, if they have any and a check
 // is due, returning the outcome on each ledger moved from, or undefined if no check was made. The
 // next check is put off before this one starts, so that tabs loading at the same time don't each
-// make it, and one which is cut short is tried again later.
+// make it, and one which is cut short, or in which the wallets couldn't be checked, is tried again
+// later.
 export async function movePreviousWalletFunds(
     user: { userId: string; previousUserIds?: string[] },
     find: () => Promise<FundsInPreviousWallet[]>,
@@ -22,10 +23,18 @@ export async function movePreviousWalletFunds(
     if ((user.previousUserIds ?? []).length === 0) return undefined;
 
     const key = `openchat_previous_wallets_next_check_${user.userId}`;
-    if (now < nextCheck(key)) return undefined;
+    const next = nextCheck(key);
+    // A check further off than any is put off for was put off by a clock which was ahead
+    if (now < next && next <= now + PREVIOUS_WALLETS_CHECK_INTERVAL) return undefined;
     setNextCheck(key, now + PREVIOUS_WALLETS_RETRY_INTERVAL);
 
-    const outcomes = await move(await find());
+    let funds: FundsInPreviousWallet[];
+    try {
+        funds = await find();
+    } catch {
+        return undefined;
+    }
+    const outcomes = await move(funds);
     const failed = outcomes.some((o) => o.result.kind === "failed");
     setNextCheck(
         key,

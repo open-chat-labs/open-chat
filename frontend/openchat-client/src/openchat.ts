@@ -631,7 +631,10 @@ import { Poller } from "./utils/poller";
 import { watchForResume, type ResumeReason } from "./utils/resumeDetector";
 import { answerTouchesChat } from "./utils/answerTouchesChat";
 import { routeForMovedDirectChat } from "./utils/movedDirectChatRoute";
-import { movePreviousWalletFunds } from "./utils/previousWalletFunds";
+import {
+    movePreviousWalletFunds,
+    PREVIOUS_WALLETS_RETRY_INTERVAL,
+} from "./utils/previousWalletFunds";
 import { SyncPuller } from "./utils/syncPuller";
 import { passkeyProviderName } from "./utils/passkeyProvider";
 import { showTrace } from "./utils/profiling";
@@ -789,6 +792,7 @@ export class OpenChat {
         (response: SendMessageSuccess | TransferSuccess) => void
     > = new Map();
     #refreshBalanceSemaphore: Semaphore = new Semaphore(10);
+    #movePreviousWalletFundsTimer: number | undefined;
     #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
     #videoCallsInProgress: Set<bigint> = new Set();
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
@@ -7013,15 +7017,13 @@ export class OpenChat {
 
     // The balances left behind in the wallets of the canisters the user had before being migrated to
     // a MultiUser canister. They aren't in the user's wallet until moved there with
-    // `moveFundsFromPreviousWallets`.
+    // `moveFundsFromPreviousWallets`. Rejects if the wallets couldn't be checked at all.
     fundsInPreviousWallets(): Promise<FundsInPreviousWallet[]> {
         const previousUserIds = currentUserStore.value.previousUserIds ?? [];
         if (previousUserIds.length === 0) {
             return Promise.resolve([]);
         }
-        return this.#worker
-            .send({ kind: "fundsInPreviousWallets", previousUserIds })
-            .catch(() => []);
+        return this.#worker.send({ kind: "fundsInPreviousWallets", previousUserIds });
     }
 
     // Moves the given balances, from `fundsInPreviousWallets`, to the user's wallet, then refreshes
@@ -7039,7 +7041,8 @@ export class OpenChat {
                     ledger,
                     result: {
                         kind: "failed",
-                        error: { kind: "error", code: -1, message: String(err) },
+                        // The worker's errors arrive as plain objects
+                        error: { kind: "error", code: -1, message: err?.message ?? String(err) },
                     },
                 })),
             )
@@ -7052,21 +7055,46 @@ export class OpenChat {
     }
 
     // Moves anything left in the wallets of the canisters the user had before being migrated to a
-    // MultiUser canister to their wallet, as the message telling them of their new wallet promises,
-    // reporting any which fails to move
+    // MultiUser canister to their wallet, as the message telling them of their new wallet promises.
+    // While the website stays open, this is tried again every hour, which only checks the wallets
+    // when a check is due (see `movePreviousWalletFunds`).
     async #movePreviousWalletFunds(): Promise<void> {
-        const outcomes = await movePreviousWalletFunds(
-            currentUserStore.value,
-            () => this.fundsInPreviousWallets(),
-            (funds) => this.moveFundsFromPreviousWallets(funds),
-        );
-        for (const { previousUserId, ledger, result } of outcomes ?? []) {
-            if (result.kind === "failed") {
-                this.#logger.error("Failed to move funds from a previous wallet", result.error, {
-                    previousUserId,
-                    ledger,
-                });
+        window.clearTimeout(this.#movePreviousWalletFundsTimer);
+        const user = currentUserStore.value;
+        if ((user.previousUserIds ?? []).length === 0) return;
+
+        try {
+            // Left for the next try rather than counted as a check which found nothing
+            if (get(offlineStore)) return;
+
+            const outcomes = await movePreviousWalletFunds(
+                user,
+                () => this.fundsInPreviousWallets(),
+                (funds) => this.moveFundsFromPreviousWallets(funds),
+            );
+            // `AlreadyInProgress` is left out, since it only means the old canister was still
+            // busy, eg. being closed out straight after the migration, so is expected now and then
+            const failures = (outcomes ?? []).flatMap(({ previousUserId, ledger, result }) =>
+                result.kind === "failed" && result.error.code !== ErrorCode.AlreadyInProgress
+                    ? [
+                          {
+                              previousUserId,
+                              ledger,
+                              code: result.error.code,
+                              message: result.error.message,
+                          },
+                      ]
+                    : [],
+            );
+            if (failures.length > 0) {
+                const message = "Failed to move funds from previous wallets";
+                this.#logger.error(message, new Error(message), { failures });
             }
+        } finally {
+            this.#movePreviousWalletFundsTimer = window.setTimeout(
+                () => this.#movePreviousWalletFunds(),
+                PREVIOUS_WALLETS_RETRY_INTERVAL,
+            );
         }
     }
 
@@ -8084,10 +8112,15 @@ export class OpenChat {
                 this.#initWebRtc();
                 startMessagesReadTracker(this);
                 this.refreshSwappableTokens();
-                window.setTimeout(() => this.refreshBalancesInSeries(), 1000);
-                // Left until the balances have started refreshing, since it queries every token
-                // too, and nothing waits on it
-                window.setTimeout(() => this.#movePreviousWalletFunds(), 5000);
+                // Previous wallets are checked once the balances have refreshed, since checking
+                // them queries every token too
+                window.setTimeout(
+                    () =>
+                        this.refreshBalancesInSeries().finally(() =>
+                            this.#movePreviousWalletFunds(),
+                        ),
+                    1000,
+                );
             }
 
             // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete

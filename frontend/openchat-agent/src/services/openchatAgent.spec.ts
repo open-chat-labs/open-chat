@@ -773,6 +773,16 @@ describe("OpenChatAgent moving funds from the user's previous wallets", () => {
         expect(balanceOwners).toEqual(new Set([PREVIOUS, OTHER_PREVIOUS]));
     });
 
+    // Rather than find nothing, which would look like a check which found the wallets empty
+    test("rejects if the previous wallets can't be checked before the Registry has loaded", async () => {
+        agent._registryValue = undefined;
+
+        await expect(agent.fundsInPreviousWallets([PREVIOUS])).rejects.toThrow(
+            "The Registry hasn't loaded",
+        );
+        expect(balanceOwners.size).toBe(0);
+    });
+
     test("moves through the LocalUserIndex controlling each previous canister, one canister at a time", async () => {
         const events: string[] = [];
         moveResponse = async (localUserIndex, ledgers) => {
