@@ -486,6 +486,79 @@ fn only_one_of_two_users_accepting_at_once_is_accepted() {
     );
 }
 
+// The escrow canister notifies the canister a swap names of each change to its status. A failed
+// notification is retried once the delay the failure calls for has passed, rather than round after
+// round, until it succeeds or 10 attempts have failed. A call to a stopped canister is retried after
+// 10 seconds.
+#[test]
+fn status_change_notification_to_stopped_canister_is_retried_after_a_delay() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    // Each swap notifies a stopped canister, one of which is started again part way through
+    client::stop_canister(env, user1.local_user_index, user1.canister());
+    client::stop_canister(env, user2.local_user_index, user2.canister());
+    let restarted_swap_id = complete_swap_notifying(env, canister_ids, *controller, &user1, &user2, user2.canister());
+    let stopped_swap_id = complete_swap_notifying(env, canister_ids, *controller, &user1, &user2, user1.canister());
+    let failures = |env: &PocketIc| {
+        (
+            notification_failures(env, canister_ids.escrow, restarted_swap_id),
+            notification_failures(env, canister_ids.escrow, stopped_swap_id),
+        )
+    };
+
+    // Time doesn't pass as the rounds do, so however many there are, the notifications aren't retried
+    tick_many(env, 20);
+    assert_eq!(failures(env), (1, 1));
+
+    env.advance_time(Duration::from_secs(10));
+    tick_many(env, 5);
+    assert_eq!(failures(env), (2, 2));
+
+    // Every failure is recorded, so the restarted canister's count staying put shows its next retry
+    // succeeded, while the other notification is given up on after 10 failures
+    client::start_canister(env, user2.local_user_index, user2.canister());
+    for _ in 0..15 {
+        env.advance_time(Duration::from_secs(10));
+        tick_many(env, 5);
+    }
+    assert_eq!(failures(env), (2, 10));
+
+    client::start_canister(env, user1.local_user_index, user1.canister());
+}
+
+// A canister which has been uninstalled won't be reinstalled, eg. one whose user was deleted or
+// migrated to a MultiUser canister, so a notification to it is dropped rather than retried
+#[test]
+fn status_change_notification_to_uninstalled_canister_is_dropped() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    // A canister with no wasm, as an uninstalled one has
+    let canister_to_notify = client::create_canister(env, *controller);
+
+    let swap_id = complete_swap_notifying(env, canister_ids, *controller, &user1, &user2, canister_to_notify);
+
+    tick_many(env, 20);
+    // Longer than any retry delay
+    env.advance_time(Duration::from_millis(10 * MINUTE_IN_MS));
+    tick_many(env, 5);
+    assert_eq!(notification_failures(env, canister_ids.escrow, swap_id), 1);
+}
+
 // A payment whose ledger can't be called, eg. because the ledger is stopped or traps, is retried
 // after a delay which doubles with each failure, up to an hour, rather than round after round, and
 // is never given up on. A call to a stopped canister is first retried after 10 seconds. Only the
@@ -627,6 +700,77 @@ fn submit_notify_deposit(env: &PocketIc, escrow_canister_id: CanisterId, swap_id
 
 fn await_notify_deposit(env: &PocketIc, message_id: RawMessageId) -> escrow_canister::notify_deposit::Response {
     msgpack::deserialize_then_unwrap(&env.await_call(message_id).unwrap())
+}
+
+// Creates a swap of ICP offered by `offerer` for CHAT, which names `canister_to_notify` to be
+// notified of its status changes, and has `accepter` accept it, completing it
+fn complete_swap_notifying(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    offerer: &User,
+    accepter: &User,
+    canister_to_notify: CanisterId,
+) -> u32 {
+    let icp_amount = 100_000_000_000;
+    let chat_amount = 1_000_000_000_000;
+
+    let response = client::escrow::create_swap(
+        env,
+        offerer.user_id.canister_id(),
+        canister_ids.escrow,
+        &escrow_canister::create_swap::Args {
+            location: P2PSwapLocation::from_message(Chat::Direct(accepter.user_id.into()), None, 0u64.into()),
+            token0: icp_token_info(),
+            token0_amount: icp_amount,
+            token0_principal: None,
+            token1: chat_token_info(),
+            token1_amount: chat_amount,
+            token1_principal: None,
+            expires_at: now_millis(env) + HOUR_IN_MS,
+            additional_admins: Vec::new(),
+            canister_to_notify: Some(canister_to_notify),
+            is_public: false,
+        },
+    );
+    let escrow_canister::create_swap::Response::Success(result) = response else {
+        panic!("'create_swap' error: {response:?}");
+    };
+    let swap_id = result.id;
+
+    deposit(
+        env,
+        canister_ids,
+        controller,
+        swap_id,
+        offerer.user_id,
+        canister_ids.icp_ledger,
+        icp_amount + 10_000,
+    );
+    client::escrow::happy_path::notify_deposit(env, offerer.user_id.canister_id(), canister_ids.escrow, swap_id, None);
+    deposit(
+        env,
+        canister_ids,
+        controller,
+        swap_id,
+        accepter.user_id,
+        canister_ids.chat_ledger,
+        chat_amount + 100_000,
+    );
+    let result =
+        client::escrow::happy_path::notify_deposit(env, accepter.user_id.canister_id(), canister_ids.escrow, swap_id, None);
+    assert!(result.complete);
+
+    swap_id
+}
+
+// The number of failed attempts to notify the swap's `canister_to_notify` of its status, each of
+// which the escrow canister records against the swap
+fn notification_failures(env: &PocketIc, escrow_canister_id: CanisterId, swap_id: u32) -> usize {
+    swap_errors(env, escrow_canister_id, swap_id)
+        .iter()
+        .filter(|error| error.starts_with("Failed to notify"))
+        .count()
 }
 
 // Creates a swap offering a token on a ledger of its own, which `offerer` deposits, so that the test

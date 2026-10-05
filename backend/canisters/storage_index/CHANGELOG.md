@@ -8,15 +8,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Decode only the `canister_status` fields needed when checking whether buckets are full ([#9618](https://github.com/open-chat-labs/open-chat/pull/9618))
 - Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
+
+### Removed
+
+- Remove the one-off files reconciliation and `total_blob_bytes` recompute, which have run in prod ([#9788](https://github.com/open-chat-labs/open-chat/pull/9788))
+
+### Fixed
+
+- Report each bucket's stable memory, not its heap memory, as `stable_memory_used` in the metrics ([#9776](https://github.com/open-chat-labs/open-chat/pull/9776))
+
+## [[2.0.2096](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2096-storage_index)] - 2026-10-05
+
+### Changed
+
+- Decode only the `canister_status` fields needed when checking whether buckets are full ([#9618](https://github.com/open-chat-labs/open-chat/pull/9618))
 
 ### Fixed
 
 - Drop the index's references to files the buckets report removing, so evicting a user's oldest files lowers their `bytes_used` ([#9760](https://github.com/open-chat-labs/open-chat/pull/9760))
 - Count each blob once towards `total_blob_bytes`, however many users reference it ([#9761](https://github.com/open-chat-labs/open-chat/pull/9761))
 - Remove the references to files the buckets no longer hold, once, by checking every reference with its bucket ([#9765](https://github.com/open-chat-labs/open-chat/pull/9765))
-- Report each bucket's stable memory, not its heap memory, as `stable_memory_used` in the metrics ([#9776](https://github.com/open-chat-labs/open-chat/pull/9776))
 
 ## [[2.0.2067](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2067-storage_index)] - 2026-09-29
 
