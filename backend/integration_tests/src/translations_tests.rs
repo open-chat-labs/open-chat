@@ -92,4 +92,7 @@ fn payment_failing_to_call_into_ledger_is_retried_with_backoff() {
     tick_many(env, 10);
     assert_eq!(proposer_balance(env), PAYMENT_AMOUNT);
     assert_eq!(awaiting_retry(env), awaiting_retry_before);
+
+    // The Translations canister was upgraded, so the env isn't returned to the pool
+    wrapper.discard();
 }
