@@ -128,6 +128,12 @@ function nextFrame(): Promise<void> {
     return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
+// Moves the clock on far enough for the entry to send another typing notification
+function passTypingInterval() {
+    const now = Date.now();
+    vi.spyOn(Date, "now").mockReturnValue(now + 2000);
+}
+
 class FakeObserver {
     observe() {}
     unobserve() {}
@@ -144,6 +150,9 @@ beforeAll(async () => {
     Range.prototype.getClientRects = () => [] as unknown as DOMRectList;
     Element.prototype.scrollIntoView = () => {};
     document.elementFromPoint = () => null;
+
+    // jsdom passes for a touch device, which doesn't send on Enter by default
+    enterSend.set(true);
 
     // Anonymous users can't send messages, so the entry would show no editor
     currentUserStore.set({ ...currentUserStore.value, userId: "me", username: "me" });
@@ -164,6 +173,7 @@ describe.each<[string, Component]>([
     afterEach(() => {
         destroy?.();
         vi.restoreAllMocks();
+        botState.cancel();
     });
 
     test("shows the draft when mounted", async () => {
@@ -207,25 +217,32 @@ describe.each<[string, Component]>([
 
     // Neither the Enter that sends the message nor clearing the editor afterwards is typing
     test("doesn't count sending a message as the user typing", async () => {
-        // jsdom passes for a touch device, which doesn't send on Enter by default
-        const sendsOnEnter = enterSend.value;
-        enterSend.set(true);
-        try {
-            const r = await render(Entry, undefined);
-            destroy = r.destroy;
-            r.type("hi");
-            await nextFrame();
-            expect(r.onStartTyping).toHaveBeenCalledOnce();
+        const r = await render(Entry, undefined);
+        destroy = r.destroy;
+        r.type("hi");
+        await nextFrame();
+        expect(r.onStartTyping).toHaveBeenCalledOnce();
 
-            // Long enough after the last typing notification for the entry to send another
-            vi.spyOn(Date, "now").mockReturnValue(Date.now() + 2000);
-            r.pressEnter();
-            expect(r.onSendMessage).toHaveBeenCalledOnce();
-            await nextFrame();
-            expect(r.onStartTyping).toHaveBeenCalledOnce();
-        } finally {
-            enterSend.set(sendsOnEnter);
-        }
+        passTypingInterval();
+        r.pressEnter();
+        expect(r.onSendMessage).toHaveBeenCalledOnce();
+        await nextFrame();
+        expect(r.onStartTyping).toHaveBeenCalledOnce();
+    });
+
+    // The command selector picks the command on Enter, so the editor mustn't take it as a newline
+    test("doesn't count picking a command with Enter as the user typing", async () => {
+        const r = await render(Entry, undefined);
+        destroy = r.destroy;
+        r.type("/");
+        expect(botState.prefix).toBe("/");
+        await nextFrame();
+        expect(r.onStartTyping).toHaveBeenCalledOnce();
+
+        passTypingInterval();
+        r.pressEnter();
+        await nextFrame();
+        expect(r.onStartTyping).toHaveBeenCalledOnce();
     });
 
     test("doesn't open the command selector for a restored draft", async () => {
@@ -244,7 +261,35 @@ describe.each<[string, Component]>([
         expect(setPrefix).toHaveBeenCalledWith("/another more");
     });
 
-    // Invariant: the draft holds the message being edited, as sending reads it from there
+    // Invariant: a command selector opened for what the user typed closes when the entry puts
+    // other content into the editor, or Enter would pick a command rather than send the message
+    test("closes the command selector when another chat's draft is put into the editor", async () => {
+        const r = await render(Entry, undefined);
+        destroy = r.destroy;
+        r.type("/");
+        expect(botState.prefix).toBe("/");
+
+        r.switchDraft("hello there");
+        expect(r.text()).toBe("hello there");
+        expect(botState.prefix).toBe("");
+
+        r.pressEnter();
+        expect(r.onSendMessage).toHaveBeenCalledOnce();
+    });
+
+    test("closes the command selector when editing a message", async () => {
+        const r = await render(Entry, undefined);
+        destroy = r.destroy;
+        r.type("/");
+        expect(botState.prefix).toBe("/");
+
+        r.edit("the original");
+        expect(r.text()).toBe("the original");
+        expect(botState.prefix).toBe("");
+    });
+
+    // Invariant: the draft holds the message being edited, as whether there's anything to send is
+    // read from it
     test("puts the message being edited into the draft", async () => {
         const r = await render(Entry, undefined);
         destroy = r.destroy;

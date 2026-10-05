@@ -41,7 +41,7 @@
         userGroupMentionRegex,
         userIdMentionRegex,
     } from "@client";
-    import { getContext, tick } from "svelte";
+    import { getContext, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -187,10 +187,14 @@
     }
 
     // Putting content into the editor doesn't call onInput (it isn't the user typing), so the
-    // draft is synced with the editor's markdown for it here
+    // draft is synced with the editor's markdown for it here, and a command selector opened for
+    // what was in the editor is closed
     function setEditorContent(editor: RichTextEditor, text: string) {
         editor.setContent(text);
         syncDraft(editor.getMarkdown());
+        if (untrack(() => showCommandSelector)) {
+            cancelCommandSelector(false);
+        }
     }
 
     function syncDraft(markdown: string) {
@@ -273,11 +277,13 @@
                     showDirectBotChatWarning = true;
                 }
                 e.preventDefault();
-            } else {
-                if (!showCommandSelector && $enterSend) {
-                    e.preventDefault();
-                    sendMessage();
-                }
+            } else if (showCommandSelector) {
+                // The command selector picks the focused command, so the editor mustn't also take
+                // the Enter as a newline
+                e.preventDefault();
+            } else if ($enterSend) {
+                e.preventDefault();
+                sendMessage();
             }
             commandSent = false;
         }
