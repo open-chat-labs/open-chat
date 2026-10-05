@@ -246,27 +246,44 @@ impl Files {
         })
     }
 
+    // A replacement of an accessor by itself is dropped, since its files would go on naming it, so it
+    // would never be finished
     pub fn queue_accessor_replacements(&mut self, replacements: impl IntoIterator<Item = (AccessorId, AccessorId)>) {
-        self.accessor_replacements.extend(replacements);
+        self.accessor_replacements
+            .extend(replacements.into_iter().filter(|(old, new)| old != new));
     }
 
     pub fn accessor_replacements_queued(&self) -> bool {
         !self.accessor_replacements.is_empty()
     }
 
-    // Makes the oldest queued replacement, returning the number of files whose accessors it changed,
-    // or None if none are queued
-    pub fn make_next_accessor_replacement(&mut self) -> Option<u64> {
-        let (old, new) = self.accessor_replacements.pop_front()?;
-        Some(self.replace_accessor(old, new))
+    // Makes the oldest queued replacement, changing at most `max_files` files at a time, and removes it
+    // from the queue once no more files name its old accessor. Returns the number of files changed, or
+    // None if no replacements are queued.
+    pub fn make_next_accessor_replacement(&mut self, max_files: u64) -> Option<u64> {
+        let (old, new) = *self.accessor_replacements.front()?;
+        let replaced = self.replace_accessor(old, new, max_files);
+        if replaced < max_files {
+            self.accessor_replacements.pop_front();
+        }
+        Some(replaced)
     }
 
-    // Replaces `old` with `new` among the accessors of each file naming `old`. The accessors map also
-    // links each file to its owner, so a file which `old` only owns is left alone, and the owner's
-    // link is kept.
-    fn replace_accessor(&mut self, old: AccessorId, new: AccessorId) -> u64 {
+    // Replaces `old` with `new` among the accessors of uploads not yet completed, and of up to
+    // `max_files` of the files naming `old`. The accessors map also links each file to its owner, so a
+    // file which `old` only owns is left alone, and the owner's link is kept.
+    fn replace_accessor(&mut self, old: AccessorId, new: AccessorId, max_files: u64) -> u64 {
+        for pending_file in self.pending_files.values_mut() {
+            if pending_file.accessors.remove(&old) {
+                pending_file.accessors.insert(new);
+            }
+        }
+
         let mut replaced = 0;
         for file_id in self.accessors_map.get(old) {
+            if replaced >= max_files {
+                break;
+            }
             let mut owned_by_old = false;
             let updated = self.files.update(&file_id, |file| {
                 owned_by_old = file.owner == old;
@@ -898,21 +915,33 @@ mod tests {
         put_as(&mut files, owner, vec![old_user_id.as_principal()], 2, b"two".to_vec(), None);
         // Owned by the old id but not naming it as an accessor, so linked to it only as its owner
         put_as(&mut files, old_user_id.as_principal(), Vec::new(), 3, b"three".to_vec(), None);
+        // Owned by the old id and naming it as an accessor, so linked to it as both
+        put_as(
+            &mut files,
+            old_user_id.as_principal(),
+            vec![old_user_id.as_principal()],
+            4,
+            b"four".to_vec(),
+            None,
+        );
         assert!(matches!(
             files.remove(multi_user_canister, 1),
             RemoveFileResult::NotAuthorized
         ));
 
+        // Two files at a time, so the replacement stays queued until no more files name the old id
         files.queue_accessor_replacements([(old_user_id.as_principal(), new_user_id.as_principal())]);
-        assert_eq!(files.make_next_accessor_replacement(), Some(2));
-        assert_eq!(files.make_next_accessor_replacement(), None);
+        assert_eq!(files.make_next_accessor_replacement(2), Some(2));
+        assert_eq!(files.make_next_accessor_replacement(2), Some(1));
+        assert_eq!(files.make_next_accessor_replacement(2), None);
         files.check_invariants();
         assert_eq!(
             files.get(&1).unwrap().accessors,
             BTreeSet::from([new_user_id.as_principal(), other_user])
         );
-        assert_eq!(files.accessors_map.get(old_user_id.as_principal()), vec![3]);
-        assert_eq!(files.accessors_map.get(new_user_id.as_principal()), vec![1, 2]);
+        assert_eq!(files.get(&4).unwrap().accessors, BTreeSet::from([new_user_id.as_principal()]));
+        assert_eq!(files.accessors_map.get(old_user_id.as_principal()), vec![3, 4]);
+        assert_eq!(files.accessors_map.get(new_user_id.as_principal()), vec![1, 2, 4]);
 
         assert!(matches!(files.remove(canister(6), 1), RemoveFileResult::NotAuthorized));
         assert!(matches!(files.remove(multi_user_canister, 1), RemoveFileResult::Success(_)));
@@ -921,7 +950,7 @@ mod tests {
         let newer_multi_user_canister = canister(7);
         let newer_user_id = UserId::new_indexed(newer_multi_user_canister, 8);
         files.queue_accessor_replacements([(new_user_id.as_principal(), newer_user_id.as_principal())]);
-        assert_eq!(files.make_next_accessor_replacement(), Some(1));
+        assert_eq!(files.make_next_accessor_replacement(10), Some(2));
         files.check_invariants();
         assert!(matches!(
             files.remove(multi_user_canister, 2),
@@ -931,6 +960,36 @@ mod tests {
             files.remove(newer_multi_user_canister, 2),
             RemoveFileResult::Success(_)
         ));
+    }
+
+    #[test]
+    fn an_upload_completed_after_its_accessor_is_replaced_names_the_new_one() {
+        let mut files = files();
+        let owner = Principal::from_slice(&[1]);
+        let old = canister(2);
+        let new = UserId::new_indexed(canister(3), 4).as_principal();
+        let chunk = |chunk_index: u32| PutChunkArgs {
+            owner,
+            file_id: 1,
+            hash: hash_bytes([0, 1]),
+            mime_type: "video/mp4".to_string(),
+            accessors: vec![old],
+            chunk_index,
+            chunk_size: 1,
+            total_size: 2,
+            bytes: vec![chunk_index as u8],
+            expiry: None,
+            source_hash: None,
+            now: 1000,
+        };
+
+        assert!(matches!(files.put_chunk(chunk(0)), PutChunkResult::Success(_)));
+        files.queue_accessor_replacements([(old, new)]);
+        assert_eq!(files.make_next_accessor_replacement(10), Some(0));
+        assert!(matches!(files.put_chunk(chunk(1)), PutChunkResult::Success(_)));
+
+        assert_eq!(files.get(&1).unwrap().accessors, BTreeSet::from([new]));
+        files.check_invariants();
     }
 
     #[test]
