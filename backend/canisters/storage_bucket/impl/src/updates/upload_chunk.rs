@@ -127,7 +127,10 @@ fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
         PutChunkResult::FileAlreadyExists => FileAlreadyExists,
         PutChunkResult::FileTooBig(_) => FileTooBig,
-        PutChunkResult::FileExpired => {
+        PutChunkResult::FileExpired(file_removed) => {
+            if let Some(file_removed) = file_removed {
+                state.data.push_event_to_index(EventToSync::FileRemoved(file_removed));
+            }
             status = Some(FileStatusInternal::Rejected(RejectedReason::FileExpired));
             FileExpired
         }

@@ -7,7 +7,8 @@ use ic_stable_structures::storable::Bound;
 use ic_stable_structures::{StableBTreeMap, StableCell, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use types::{CanisterId, FileAdded, FileId, FileRemoved, Hash, TimestampMillis};
+use std::ops::Bound::{Excluded, Unbounded};
+use types::{CanisterId, FileAdded, FileId, FileMetaData, FileRemoved, Hash, TimestampMillis};
 
 #[derive(Serialize, Deserialize)]
 pub struct Files {
@@ -127,6 +128,28 @@ impl Files {
         let total = self.blob_sizes.iter().map(|e| e.value()).sum();
         self.total_blob_bytes.set(total);
         (previous, total)
+    }
+
+    // Up to `max_count` file references from just after `after`, or from the first if it is `None`.
+    // Each is given as the bucket holding the file would report removing it, along with the bucket.
+    pub fn file_references_after(&self, after: Option<&FileRemoved>, max_count: usize) -> Vec<(FileRemoved, CanisterId)> {
+        let start = after.map_or(Unbounded, |f| Excluded(FileIdByUserThenCreated::from(f)));
+
+        self.files_by_user
+            .range((start, Unbounded))
+            .take(max_count)
+            .map(|e| {
+                let (key, value) = e.into_pair();
+                let file = FileRemoved {
+                    file_id: key.file_id,
+                    meta_data: FileMetaData {
+                        owner: key.user_id,
+                        created: key.created,
+                    },
+                };
+                (file, value.bucket)
+            })
+            .collect()
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -394,7 +417,6 @@ pub struct Metrics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use types::FileMetaData;
 
     #[test]
     fn a_blob_referenced_by_two_users_counts_once_towards_the_total_blob_bytes() {
@@ -447,6 +469,49 @@ mod tests {
 
         assert_eq!(files.recompute_total_blob_bytes(), (1300, 800));
         assert_eq!(files.metrics().total_blob_bytes, 800);
+    }
+
+    #[test]
+    fn file_references_after_pages_through_every_reference_once() {
+        let mut files = Files::default();
+        let bucket = CanisterId::from_slice(&[2]);
+        // Owners of varying lengths, one a byte-prefix of another
+        let owners = [vec![1u8], vec![1, 1], vec![2]];
+        let mut expected = Vec::new();
+        for (index, owner) in owners.iter().enumerate() {
+            for created in 0..5u8 {
+                let file_id = index as u128 * 10 + created as u128;
+                files.add(
+                    FileAdded {
+                        file_id,
+                        hash: [file_id as u8; 32],
+                        size: 1,
+                        meta_data: FileMetaData {
+                            owner: Principal::from_slice(owner),
+                            created: created.into(),
+                        },
+                    },
+                    bucket,
+                );
+                expected.push(file_id);
+            }
+        }
+
+        let mut seen = Vec::new();
+        let mut after = None;
+        loop {
+            let page = files.file_references_after(after.as_ref(), 4);
+            let Some((last, _)) = page.last().cloned() else {
+                break;
+            };
+            assert!(page.len() <= 4);
+            assert!(page.iter().all(|(_, b)| *b == bucket));
+            seen.extend(page.into_iter().map(|(f, _)| f.file_id));
+            after = Some(last);
+        }
+
+        seen.sort();
+        assert_eq!(seen, expected);
     }
 
     #[test]
