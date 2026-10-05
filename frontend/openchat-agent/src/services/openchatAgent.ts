@@ -599,14 +599,29 @@ export class OpenChatAgent extends EventTarget {
     // payment it will pull, if the user holds their own funds. A user alone in their canister needs
     // no approval, since the canister holds their funds itself, and neither does a payment from
     // another account (`fromAccount`), whose owner has approved it already.
-    private approveUserCanisterToPull(
+    //
+    // `pin` is the PIN the payment is made with, which the canister checks first, so that a payment
+    // it would refuse for the wrong PIN is refused before the user pays for its approval. The
+    // canister checks it again as it pulls the payment, so if it can't be checked here, eg. since
+    // the canister doesn't check PINs on their own yet, the payment is approved regardless.
+    private async approveUserCanisterToPull(
         ledger: string,
         amount: bigint,
         fee: bigint | undefined,
         fromAccount: string | undefined,
+        pin: string | undefined,
     ): Promise<OCError | undefined> {
         if (fromAccount !== undefined || !this.holdsOwnFunds()) {
-            return Promise.resolve(undefined);
+            return undefined;
+        }
+        if (pin !== undefined) {
+            const response = await this.userClient.checkPinNumber(pin).catch((err: unknown) => {
+                console.warn("Failed to check the PIN ahead of approving a payment", err);
+                return CommonResponses.success();
+            });
+            if (response.kind === "error") {
+                return response;
+            }
         }
         const userId = this._userClient.userId;
         const spender = userCanisterSpenderAccount(userId, () => this.principal.toText());
@@ -1004,7 +1019,10 @@ export class OpenChatAgent extends EventTarget {
 
     // Approves the user's canister to pull whatever a message in a direct chat takes from the
     // user's wallet
-    private approveTransferInMessage(content: MessageContent): Promise<OCError | undefined> {
+    private approveTransferInMessage(
+        content: MessageContent,
+        pin: string | undefined,
+    ): Promise<OCError | undefined> {
         const payment = this.paymentInMessage(content);
         return payment === undefined
             ? Promise.resolve(undefined)
@@ -1013,6 +1031,7 @@ export class OpenChatAgent extends EventTarget {
                   payment.amount,
                   payment.fee,
                   payment.fromAccount,
+                  pin,
               );
     }
 
@@ -1085,7 +1104,7 @@ export class OpenChatAgent extends EventTarget {
         pin: string | undefined,
         onRequestAccepted: () => void,
     ): Promise<[SendMessageResponse, Message]> {
-        const error = await this.approveTransferInMessage(event.event.content);
+        const error = await this.approveTransferInMessage(event.event.content, pin);
         if (error !== undefined) {
             return [error, event.event];
         }
@@ -4403,6 +4422,7 @@ export class OpenChatAgent extends EventTarget {
             expectedPriceE8s,
             this.ledgerFee(ledger),
             fromAccount,
+            undefined,
         );
         if (error !== undefined) {
             return error;
@@ -5062,6 +5082,7 @@ export class OpenChatAgent extends EventTarget {
                 amount,
                 fee,
                 transfer.fromAccount,
+                pin,
             );
             if (error !== undefined) {
                 return error;
@@ -5121,6 +5142,7 @@ export class OpenChatAgent extends EventTarget {
             token1Amount + 2n * token1.fee,
             token1.fee,
             fromAccount,
+            pin,
         );
         if (error !== undefined) {
             return error;
@@ -5715,6 +5737,7 @@ export class OpenChatAgent extends EventTarget {
             expectedPrice,
             this.ledgerFee(LEDGER_CANISTER_CHAT),
             undefined,
+            pin,
         );
         if (error !== undefined) {
             return error;

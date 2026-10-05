@@ -30,6 +30,7 @@ pub(crate) mod c2c_user_canister_v2;
 mod c2c_withdraw_from_icpswap;
 mod cancel_message_reminder;
 mod cancel_p2p_swap;
+mod check_pin_number;
 mod claim_daily_chit;
 mod configure_wallet;
 mod create_community;

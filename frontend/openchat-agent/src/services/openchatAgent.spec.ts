@@ -93,11 +93,16 @@ function message(content: MessageContent): EventWrapper<Message> {
     return { event: { content } } as EventWrapper<Message>;
 }
 
+const PIN_INCORRECT = { kind: "error", code: ErrorCode.PinIncorrect, message: "0" } as const;
+
 // The payments the user's canister pulls from the user's wallet, each of which a user in a
 // MultiUser canister has to approve it for first
 describe("OpenChatAgent paying from the user's wallet", () => {
     let approvals: unknown[][];
     let approveResponse: "success" | "insufficient_funds" | "failure" | "throws";
+    // Each PIN checked, with how many approvals had been made by then
+    let pinChecks: [string, number][];
+    let pinCheckResponse: "success" | "incorrect" | "throws";
     let calls: string[];
     let callArgs: unknown[][];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -129,6 +134,17 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         };
         agent._userClient = {
             userId,
+            checkPinNumber: (pin: string) => {
+                pinChecks.push([pin, approvals.length]);
+                switch (pinCheckResponse) {
+                    case "success":
+                        return Promise.resolve({ kind: "success" });
+                    case "incorrect":
+                        return Promise.resolve(PIN_INCORRECT);
+                    case "throws":
+                        return Promise.reject(new Error("The canister has no such method"));
+                }
+            },
             sendMessage: called("sendMessage"),
             sendMessageWithTransferToGroup: called("sendMessageWithTransferToGroup"),
             sendMessageWithTransferToChannel: called("sendMessageWithTransferToChannel"),
@@ -181,15 +197,8 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         ["a swap offer", swapOffer, 120n],
     ];
 
-    const sendDirectMessage = (content: MessageContent) =>
-        agent.sendDirectMessage(
-            DIRECT,
-            message(content),
-            undefined,
-            undefined,
-            undefined,
-            () => {},
-        );
+    const sendDirectMessage = (content: MessageContent, pin?: string) =>
+        agent.sendDirectMessage(DIRECT, message(content), undefined, undefined, pin, () => {});
 
     // Every payment, with what it takes from the wallet
     const payments: [string, (fromAccount?: string) => Promise<unknown>, string, bigint][] = [
@@ -231,9 +240,25 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         ],
     ];
 
+    // Every payment made with a PIN, which the canister pulling it checks
+    const paymentsWithPin: [string, (pin: string) => Promise<unknown>][] = [
+        ["crypto sent in a direct chat", (pin) => sendDirectMessage(crypto(), pin)],
+        [
+            "tip in a direct chat",
+            (pin) => agent.tipMessage({ chatId: DIRECT }, 1n, transfer(), 8, pin),
+        ],
+        [
+            "swap accepted in a group",
+            (pin) => agent.acceptP2PSwap(GROUP, undefined, 1n, ICP, 100n, pin, false, undefined),
+        ],
+        ["streak insurance", (pin) => agent.payForStreakInsurance(1, 5_000n, pin)],
+    ];
+
     beforeEach(() => {
         approvals = [];
         approveResponse = "success";
+        pinChecks = [];
+        pinCheckResponse = "success";
         calls = [];
         callArgs = [];
         vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -249,6 +274,53 @@ describe("OpenChatAgent paying from the user's wallet", () => {
 
             expect(approvals).toEqual([[ledger, spender, amount, FEE, APPROVAL_VALIDITY_MS]]);
             expect(calls.length).toEqual(1);
+            expect(pinChecks).toEqual([]);
+        });
+
+        test.each(paymentsWithPin)(
+            "%s has its PIN checked before it is approved, then made with it",
+            async (_, pay) => {
+                await pay("1234");
+
+                expect(pinChecks).toEqual([["1234", 0]]);
+                expect(approvals.length).toEqual(1);
+                expect(calls.length).toEqual(1);
+                expect(callArgs[0]).toContain("1234");
+            },
+        );
+
+        test.each(paymentsWithPin)(
+            "%s is neither approved nor made with the wrong PIN",
+            async (_, pay) => {
+                pinCheckResponse = "incorrect";
+
+                const response = await pay("0000");
+
+                expect([response].flat()[0]).toEqual(PIN_INCORRECT);
+                expect(approvals).toEqual([]);
+                expect(calls).toEqual([]);
+            },
+        );
+
+        // The canister checks the PIN again as it pulls the payment
+        test.each(paymentsWithPin)(
+            "%s is approved and made if its PIN can't be checked first",
+            async (_, pay) => {
+                pinCheckResponse = "throws";
+
+                await pay("1234");
+
+                expect(approvals.length).toEqual(1);
+                expect(calls.length).toEqual(1);
+                expect(callArgs[0]).toContain("1234");
+            },
+        );
+
+        test("a payment from another account has no PIN checked, since it isn't approved", async () => {
+            await agent.tipMessage({ chatId: DIRECT }, 1n, transfer(EXTERNAL_ACCOUNT), 8, "1234");
+
+            expect(pinChecks).toEqual([]);
+            expect(calls).toEqual(["tipMessage"]);
         });
 
         test("streak insurance is approved first, with no fee since it is burned", async () => {
@@ -557,6 +629,17 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             expect(approvals).toEqual([]);
             expect(calls.length).toEqual(1);
         });
+
+        test.each(paymentsWithPin)(
+            "%s is made with its PIN, which isn't checked first",
+            async (_, pay) => {
+                await pay("1234");
+
+                expect(pinChecks).toEqual([]);
+                expect(calls.length).toEqual(1);
+                expect(callArgs[0]).toContain("1234");
+            },
+        );
 
         test.each(transferMessages)(
             "%s in a group is sent via their canister, which makes the transfer",
