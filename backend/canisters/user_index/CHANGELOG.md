@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the Registry id from the LocalUserIndexes' upgrade args ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))
 
+### Fixed
+
+- Retry payments whose ledger can't be called after a growing delay rather than every round, and park those to uninstalled or deleted ledgers ([#9792](https://github.com/open-chat-labs/open-chat/pull/9792))
+
 ## [[2.0.2085](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2085-user_index)] - 2026-10-02
 
 ### Added
