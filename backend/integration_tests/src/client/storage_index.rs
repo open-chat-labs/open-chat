@@ -10,6 +10,7 @@ generate_query_call!(vault_buckets);
 // Updates
 generate_update_call!(add_bucket_canister);
 generate_update_call!(add_or_update_users);
+generate_update_call!(c2c_sync_bucket);
 generate_update_call!(remove_accessors);
 generate_update_call!(remove_users);
 generate_update_call!(upgrade_bucket_canister_wasm);

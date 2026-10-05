@@ -75,6 +75,13 @@ impl Files {
         self.files.get(file_id)
     }
 
+    // The owner and created time of the file, if it's held, either complete or still being uploaded
+    pub fn owner_and_created(&self, file_id: &FileId) -> Option<(Principal, TimestampMillis)> {
+        self.get(file_id)
+            .map(|f| (f.owner, f.created))
+            .or_else(|| self.pending_files.get(file_id).map(|f| (f.owner, f.created)))
+    }
+
     pub fn pending_file(&self, file_id: &FileId) -> Option<&PendingFile> {
         self.pending_files.get(file_id)
     }
@@ -100,8 +107,8 @@ impl Files {
         }
 
         if args.expiry.is_some_and(|e| e < args.now) {
-            self.pending_files.remove(&args.file_id);
-            return PutChunkResult::FileExpired;
+            let file_removed = self.pending_files.remove(&args.file_id).map(|f| f.removed(args.file_id));
+            return PutChunkResult::FileExpired(file_removed);
         }
 
         let file_id = args.file_id;
@@ -274,10 +281,17 @@ impl Files {
         files_removed
     }
 
-    pub fn remove_old_pending_files(&mut self, cutoff: TimestampMillis) -> u32 {
-        let old_count = self.pending_files.len();
-        self.pending_files.retain(|_, f| f.created > cutoff);
-        (old_count - self.pending_files.len()) as u32
+    pub fn remove_old_pending_files(&mut self, cutoff: TimestampMillis) -> Vec<FileRemoved> {
+        let old: Vec<_> = self
+            .pending_files
+            .iter()
+            .filter(|(_, f)| f.created <= cutoff)
+            .map(|(file_id, _)| *file_id)
+            .collect();
+
+        old.into_iter()
+            .filter_map(|file_id| self.pending_files.remove(&file_id).map(|f| f.removed(file_id)))
+            .collect()
     }
 
     pub fn next_expiry(&self) -> Option<TimestampMillis> {
@@ -529,6 +543,18 @@ impl PendingFile {
         self.remaining_chunks.is_empty()
     }
 
+    // The index is told of an upload once its first chunk arrives, so must be told when an upload
+    // is removed before completing
+    pub fn removed(&self, file_id: FileId) -> FileRemoved {
+        FileRemoved {
+            file_id,
+            meta_data: FileMetaData {
+                owner: self.owner,
+                created: self.created,
+            },
+        }
+    }
+
     fn expected_chunk_size(&self, chunk_index: u32) -> Option<u32> {
         let last_index = self.chunk_count() - 1;
         match chunk_index.cmp(&last_index) {
@@ -607,7 +633,8 @@ pub enum PutChunkResult {
     Success(PutChunkResultSuccess),
     FileAlreadyExists,
     FileTooBig(u64),
-    FileExpired,
+    // With the upload in progress which it removed, if there was one
+    FileExpired(Option<FileRemoved>),
     ChunkAlreadyExists,
     ChunkIndexTooHigh,
     ChunkSizeMismatch(ChunkSizeMismatch),
@@ -802,10 +829,72 @@ mod tests {
         };
         assert_eq!(added.meta_data.owner, forwarder);
         assert_eq!(added.meta_data.created, 2000);
+        assert_eq!(files.owner_and_created(&added.file_id), Some((forwarder, 2000)));
 
         // The index finds the file it is removing by its owner and created time
         let removed = files.remove_file(added.file_id).unwrap();
         assert_eq!(removed.meta_data.owner, added.meta_data.owner);
         assert_eq!(removed.meta_data.created, added.meta_data.created);
+    }
+
+    // The first of two chunks
+    fn put_first_chunk(
+        files: &mut Files,
+        file_id: FileId,
+        now: TimestampMillis,
+        expiry: Option<TimestampMillis>,
+    ) -> PutChunkResult {
+        files.put_chunk(PutChunkArgs {
+            owner: Principal::from_slice(&[1]),
+            file_id,
+            hash: [1; 32],
+            mime_type: "video/mp4".to_string(),
+            accessors: Vec::new(),
+            chunk_index: 0,
+            chunk_size: 1,
+            total_size: 2,
+            bytes: vec![0],
+            expiry,
+            source_hash: None,
+            now,
+        })
+    }
+
+    #[test]
+    fn uploads_removed_before_completing_are_returned_to_be_reported_to_the_index() {
+        let mut files = files();
+        assert!(matches!(
+            put_first_chunk(&mut files, 1, 1000, None),
+            PutChunkResult::Success(_)
+        ));
+        assert!(matches!(
+            put_first_chunk(&mut files, 2, 5000, None),
+            PutChunkResult::Success(_)
+        ));
+        assert!(matches!(
+            put_first_chunk(&mut files, 3, 1000, Some(10_000)),
+            PutChunkResult::Success(_)
+        ));
+
+        // Abandoned uploads
+        let removed = files.remove_old_pending_files(2000);
+        let removed: Vec<_> = removed.iter().map(|f| (f.file_id, f.meta_data.created)).collect();
+        assert_eq!(removed, vec![(1, 1000), (3, 1000)]);
+        assert!(files.owner_and_created(&1).is_none());
+        assert_eq!(files.owner_and_created(&2), Some((Principal::from_slice(&[1]), 5000)));
+
+        // An upload which has expired by the time its next chunk arrives
+        assert!(matches!(
+            put_first_chunk(&mut files, 4, 1000, Some(10_000)),
+            PutChunkResult::Success(_)
+        ));
+        let PutChunkResult::FileExpired(Some(removed)) = put_first_chunk(&mut files, 4, 20_000, Some(10_000)) else {
+            panic!("Expected the upload to be removed as expired");
+        };
+        assert_eq!(
+            (removed.file_id, removed.meta_data.owner, removed.meta_data.created),
+            (4, Principal::from_slice(&[1]), 1000)
+        );
+        assert!(files.owner_and_created(&4).is_none());
     }
 }
