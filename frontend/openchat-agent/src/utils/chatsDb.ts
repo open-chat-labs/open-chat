@@ -967,10 +967,12 @@ export class ChatsDb {
             threadRootMessageIndex !== undefined
                 ? "failed_thread_messages"
                 : "failed_chat_messages";
-        (await this.getDb()).delete(
-            store,
-            createFailedCacheKey({ chatId, threadRootMessageIndex }, messageId),
-        );
+        const tx = (await this.getDb()).transaction([store, "chat_tombstones"], "readwrite");
+        const latest = await latestChatId(tx.objectStore("chat_tombstones"), chatId);
+        await tx
+            .objectStore(store)
+            .delete(createFailedCacheKey({ chatId: latest, threadRootMessageIndex }, messageId));
+        await tx.done;
     }
 
     async recordFailedMessage<T extends Message>(
@@ -986,15 +988,21 @@ export class ChatsDb {
             threadRootMessageIndex !== undefined
                 ? "failed_thread_messages"
                 : "failed_chat_messages";
-        const key = createFailedCacheKey({ chatId, threadRootMessageIndex }, event.event.messageId);
-        (await this.getDb()).put(
-            store,
+        const tx = (await this.getDb()).transaction([store, "chat_tombstones"], "readwrite");
+        // The chat may have moved since the message began being sent
+        const latest = await latestChatId(tx.objectStore("chat_tombstones"), chatId);
+        const key = createFailedCacheKey(
+            { chatId: latest, threadRootMessageIndex },
+            event.event.messageId,
+        );
+        await tx.objectStore(store).put(
             {
-                ...makeSerialisable<T>(event, chatId, false, threadRootMessageIndex),
+                ...makeSerialisable<T>(event, latest, false, threadRootMessageIndex),
                 messageKey: key,
             },
             key,
         );
+        await tx.done;
     }
 
     async loadFailedMessages(): Promise<MessageContextMap<Record<string, EventWrapper<Message>>>> {
@@ -1145,15 +1153,17 @@ export class ChatsDb {
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex?: number,
     ): Promise<void> {
-        const key = createCacheKey({ chatId, threadRootMessageIndex }, messageEvent.index);
         const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
-        const tx = (await this.getDb()).transaction([store], "readwrite", {
+        const tx = (await this.getDb()).transaction([store, "chat_tombstones"], "readwrite", {
             durability: "relaxed",
         });
+        // The chat may have moved since the message began being sent
+        const latest = await latestChatId(tx.objectStore("chat_tombstones"), chatId);
+        const key = createCacheKey({ chatId: latest, threadRootMessageIndex }, messageEvent.index);
         const eventStore = tx.objectStore(store);
         if ((await eventStore.count(key)) === 0) {
             await eventStore.add(
-                makeSerialisable<Message>(messageEvent, chatId, true, threadRootMessageIndex),
+                makeSerialisable<Message>(messageEvent, latest, true, threadRootMessageIndex),
                 key,
             );
         }
@@ -1413,6 +1423,21 @@ function padMessageIndex(i: number): string {
 }
 
 type FailedCacheKey = MessageContext & { messageId: bigint };
+
+// The chat which `chatId` is cached under now, which is the one a direct chat was moved onto if the
+// other user has been migrated to a MultiUser canister since, as its tombstone records (a later move
+// of that chat points the tombstone on). For a write which began before the move, such as for a
+// message which was being sent, so that it lands with the rest of the chat rather than under the old
+// id once the chat's cache has moved. Read in the write's own transaction, which takes in the
+// tombstones, so that the write and the move are made one after the other.
+async function latestChatId(
+    tombstones: { get(key: string): Promise<ChatTombstone | undefined> },
+    chatId: ChatIdentifier,
+): Promise<ChatIdentifier> {
+    if (chatId.kind !== "direct_chat") return chatId;
+    const movedTo = (await tombstones.get(chatRowKey("direct_chat", chatId.userId)))?.movedTo;
+    return movedTo === undefined ? chatId : { kind: "direct_chat", userId: movedTo };
+}
 
 // The parts of a store which moving a direct chat's cache uses
 type MovableStore<V> = {

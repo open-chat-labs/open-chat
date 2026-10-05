@@ -789,6 +789,10 @@ export class OpenChat {
     #inflightBalanceRefreshPromises: Map<string, Promise<bigint>> = new Map();
     #videoCallsInProgress: Set<bigint> = new Set();
     #serverVideoCallsInProgress: ChatMap<bigint> = new ChatMap();
+    // The direct chats moved onto the other user's new id this session, after they were migrated to
+    // a MultiUser canister, by the user id each was under, mapped to where it is now. See
+    // `#latestChatId`.
+    #movedDirectChats: Map<string, DirectChatIdentifier> = new Map();
     #locale!: string;
     #vapidPublicKey: string;
     #getBtcAddressPromise: Promise<string> | undefined = undefined;
@@ -5153,6 +5157,27 @@ export class OpenChat {
         });
     }
 
+    // Records that the direct chat under `userId` has moved to `movedTo`, including for any chat
+    // which had moved to it before
+    #recordMovedDirectChat(userId: string, movedTo: DirectChatIdentifier) {
+        for (const [earlier, latest] of this.#movedDirectChats) {
+            if (latest.userId === userId) {
+                this.#movedDirectChats.set(earlier, movedTo);
+            }
+        }
+        this.#movedDirectChats.set(userId, movedTo);
+    }
+
+    // The chat which `chatId` is now, which is the one a direct chat was moved onto if the other user
+    // has been migrated to a MultiUser canister since, eg. for a message whose sending began before
+    // the move and finished after it, which belongs in the chat under the new id along with
+    // everything else held for the chat
+    #latestChatId(chatId: ChatIdentifier): ChatIdentifier {
+        return chatId.kind === "direct_chat"
+            ? (this.#movedDirectChats.get(chatId.userId) ?? chatId)
+            : chatId;
+    }
+
     #rtcMessageRecipients(chatId: ChatIdentifier) {
         // a DM should only ever be sent to the recipient regardless of selectedChatUserIdsStore
         return chatId.kind === "direct_chat"
@@ -5248,8 +5273,13 @@ export class OpenChat {
                 })
                 .subscribe({
                     onResult: (response) => {
+                        // The chat may have moved since the message began being sent
+                        const latestChatId = this.#latestChatId(chatId);
                         if (response === "accepted") {
-                            localUpdates.markUnconfirmedAccepted(messageContext, messageId);
+                            localUpdates.markUnconfirmedAccepted(
+                                { chatId: latestChatId, threadRootMessageIndex },
+                                messageId,
+                            );
 
                             if (!isTransfer(message.content)) {
                                 rtcConnectionsManager.sendMessage(messageRecipients, {
@@ -5267,7 +5297,7 @@ export class OpenChat {
                         if (resp.kind === "success" || resp.kind === "transfer_success") {
                             const event = mergeSendMessageResponse(msg, resp);
                             this.#addServerEventsToStores(
-                                chat.id,
+                                latestChatId,
                                 [event],
                                 threadRootMessageIndex,
                                 [],
@@ -5283,7 +5313,7 @@ export class OpenChat {
                             }
 
                             this.#onSendMessageFailure(
-                                chatId,
+                                latestChatId,
                                 msg.messageId,
                                 threadRootMessageIndex,
                                 messageEvent,
@@ -5297,7 +5327,7 @@ export class OpenChat {
                     onError: () => {
                         this.#inflightMessagePromises.delete(messageId);
                         this.#onSendMessageFailure(
-                            chatId,
+                            this.#latestChatId(chatId),
                             messageId,
                             threadRootMessageIndex,
                             messageEvent,
@@ -7826,6 +7856,8 @@ export class OpenChat {
                 localUpdates.removeUninitialisedDirectChat(chatId);
                 localUpdates.draftMessages.moveChat(chatId, movedTo);
                 localUpdates.moveFailedMessages(chatId, movedTo);
+                localUpdates.moveUnconfirmed(chatId, movedTo);
+                this.#recordMovedDirectChat(userId, movedTo);
             }
 
             if (chatsResponse.avatarId !== undefined) {

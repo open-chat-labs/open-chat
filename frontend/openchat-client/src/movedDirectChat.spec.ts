@@ -180,6 +180,11 @@ describe("a direct chat moved onto the other user's new id", () => {
     let invalidated: number;
     // Each user id the UserIndex was asked for
     let usersAskedFor: string[];
+    // The sends the worker has been asked for, to be answered by the test
+    let sends: {
+        resolve: (value: unknown, final: boolean) => void;
+        reject: (err: unknown) => void;
+    }[];
     let unsubscribes: (() => void)[];
 
     function answerGetUsers(userIds: string[]): UsersResponse {
@@ -221,6 +226,7 @@ describe("a direct chat moved onto the other user's new id", () => {
         navigations = [];
         invalidated = 0;
         usersAskedFor = [];
+        sends = [];
         unsubscribes = [
             subscribe("navigateTo", (ev) => navigations.push(ev)),
             subscribe("selectedChatInvalid", () => invalidated++),
@@ -232,6 +238,11 @@ describe("a direct chat moved onto the other user's new id", () => {
                 snapshot = undefined;
                 // Answered once the client has subscribed
                 return new Stream((resolve) => setTimeout(() => resolve(answer, true), 0));
+            }
+            if (req.kind === "sendMessage") {
+                return new Stream((resolve, reject) => {
+                    sends.push({ resolve, reject });
+                });
             }
             return new Stream(() => {});
         }) as never);
@@ -320,6 +331,69 @@ describe("a direct chat moved onto the other user's new id", () => {
         await fold(updates([directChat("new5")], ["old5"], [["old5", "new5"]]));
 
         expect(navigations).toEqual([{ url: "/chats/user/new5/7", intent: "auto" }]);
+    });
+
+    describe("a message being sent when its chat moves", () => {
+        // Starts sending a message in the chat with `userId`, and waits until it's shown as being sent
+        async function startSending(
+            userId: string,
+        ): Promise<{ sending: Promise<unknown>; messageId: bigint }> {
+            const sending = client.sendMessageWithContent(
+                { chatId: direct(userId) },
+                { kind: "text_content", text: "in flight" },
+                false,
+            );
+            await vi.waitFor(() => expect(sends).toHaveLength(1));
+            await vi.waitFor(() =>
+                expect(localUpdates.unconfirmedMessages({ chatId: direct(userId) })).toHaveLength(
+                    1,
+                ),
+            );
+            const [message] = localUpdates.unconfirmedMessages({ chatId: direct(userId) });
+            return { sending, messageId: message.event.messageId };
+        }
+
+        test("is still shown as being sent, in the chat under the new id", async () => {
+            serverDirectChatsStore.set(ChatMap.fromList([directChat("old10")]));
+            selectChat(direct("old10"));
+            const { messageId } = await startSending("old10");
+
+            await fold(updates([directChat("new10")], ["old10"], [["old10", "new10"]]));
+
+            expect(localUpdates.isUnconfirmed({ chatId: direct("new10") }, messageId)).toBe(true);
+            expect(localUpdates.isUnconfirmed({ chatId: direct("old10") }, messageId)).toBe(false);
+        });
+
+        test("is confirmed in the chat under the new id once sent", async () => {
+            serverDirectChatsStore.set(ChatMap.fromList([directChat("old11")]));
+            selectChat(direct("old11"));
+            const { sending, messageId } = await startSending("old11");
+            const [unconfirmed] = localUpdates.unconfirmedMessages({ chatId: direct("old11") });
+            await fold(updates([directChat("new11")], ["old11"], [["old11", "new11"]]));
+
+            sends[0].resolve(
+                [
+                    { kind: "success", timestamp: 1n, messageIndex: 3, eventIndex: 4 },
+                    unconfirmed.event,
+                ],
+                true,
+            );
+            await sending;
+
+            expect(localUpdates.isUnconfirmed({ chatId: direct("new11") }, messageId)).toBe(false);
+        });
+
+        test("is taken out of the chat under the new id if sending it fails", async () => {
+            serverDirectChatsStore.set(ChatMap.fromList([directChat("old12")]));
+            selectChat(direct("old12"));
+            const { sending, messageId } = await startSending("old12");
+            await fold(updates([directChat("new12")], ["old12"], [["old12", "new12"]]));
+
+            sends[0].reject(new Error("offline"));
+            await sending;
+
+            expect(localUpdates.isUnconfirmed({ chatId: direct("new12") }, messageId)).toBe(false);
+        });
     });
 
     test("an old link to a moved chat goes to the chat under the new id, at the same message", async () => {

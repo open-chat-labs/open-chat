@@ -195,14 +195,27 @@ export class GlobalLocalState {
 
     // Moves the failed messages held for `from` onto `to`, for a direct chat moved onto the other
     // user's new id after they were migrated to a MultiUser canister, as the worker moves those it
-    // has cached
+    // has cached. One already held under `to` is kept, as the worker keeps one it has cached there.
     moveFailedMessages(from: DirectChatIdentifier, to: DirectChatIdentifier) {
         const messages = this.#failedMessages.value.get({ chatId: from });
         if (messages === undefined) return;
 
         this.#failedMessages.update((map) => {
             map.delete({ chatId: from });
-            map.set({ chatId: to }, new Map([...(map.get({ chatId: to }) ?? []), ...messages]));
+            map.set({ chatId: to }, new Map([...messages, ...(map.get({ chatId: to }) ?? [])]));
+            return map;
+        });
+    }
+
+    // Moves the messages still being sent in `from` onto `to`, as for failed messages in
+    // `moveFailedMessages`, so that they're still shown in the chat, and found there once sent
+    moveUnconfirmed(from: DirectChatIdentifier, to: DirectChatIdentifier) {
+        const messages = this.#unconfirmed.value.get({ chatId: from });
+        if (messages === undefined) return;
+
+        this.#unconfirmed.update((map) => {
+            map.delete({ chatId: from });
+            map.set({ chatId: to }, new Map([...messages, ...(map.get({ chatId: to }) ?? [])]));
             return map;
         });
     }

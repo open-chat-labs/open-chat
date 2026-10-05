@@ -3,6 +3,8 @@ import type {
     ChatStateFull,
     DirectChatIdentifier,
     DirectChatSummary,
+    EventWrapper,
+    Message,
     GroupChatIdentifier,
     GroupChatSummary,
     Tally,
@@ -111,6 +113,16 @@ function fakeDb(initial: Record<string, Record<string, any>> = {}) {
                 log.push(`delete ${name} ${key}`);
                 store.delete(key);
                 return Promise.resolve();
+            },
+            count: (key: string) => {
+                log.push(`count ${name} ${key}`);
+                return read(name, () => (store.has(key) ? 1 : 0));
+            },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            add: (value: any, key: string) => {
+                log.push(`add ${name} ${key}`);
+                store.set(key, value);
+                return Promise.resolve(key);
             },
             clear: () => {
                 log.push(`clear ${name}`);
@@ -550,6 +562,76 @@ describe("setCachedChats", () => {
             expect(stores.chat_events.get(eventKey("old", 3))).toEqual(cachedMessage("old", 3));
             expect(stores.failed_chat_messages.has(failedKey("old", 7n))).toBe(true);
         });
+    });
+});
+
+describe("a write for a message which was being sent when its chat moved", () => {
+    // eg. the chat was moved onto the other user's new id while the message was being sent, so
+    // the write which follows the send names the chat by its old id
+    const directId = (userId: string): DirectChatIdentifier => ({ kind: "direct_chat", userId });
+    const failedKey = (userId: string, messageId: bigint) =>
+        createFailedCacheKey({ chatId: directId(userId) }, messageId);
+    const eventKey = (userId: string, index: number) =>
+        createCacheKey({ chatId: directId(userId) }, index);
+
+    function message(messageId: bigint, index = 0): EventWrapper<Message> {
+        return {
+            index,
+            timestamp: 0n,
+            event: {
+                kind: "message",
+                messageIndex: index,
+                messageId,
+                content: { kind: "text_content", text: "hi" },
+            },
+        } as unknown as EventWrapper<Message>;
+    }
+
+    function withMove() {
+        return chatsDbWith({
+            chat_tombstones: {
+                "direct_chat|old": { kind: "direct_chat", id: "old", version: 5, movedTo: "new" },
+            },
+        });
+    }
+
+    test("records a failed message under the chat's new id", async () => {
+        const { chatsDb, stores } = withMove();
+
+        await chatsDb.recordFailedMessage(directId("old"), message(7n));
+
+        expect(sortedKeys(stores.failed_chat_messages)).toEqual([failedKey("new", 7n)]);
+        expect(stores.failed_chat_messages.get(failedKey("new", 7n)).chatId).toEqual(
+            directId("new"),
+        );
+    });
+
+    test("removes a failed message from under the chat's new id", async () => {
+        const { chatsDb, stores } = withMove();
+        await chatsDb.recordFailedMessage(directId("old"), message(7n));
+
+        await chatsDb.removeFailedMessage(directId("old"), 7n);
+
+        expect(stores.failed_chat_messages.size).toBe(0);
+    });
+
+    test("caches the sent message under the chat's new id", async () => {
+        const { chatsDb, stores } = withMove();
+
+        await chatsDb.setCachedMessageIfNotExists(directId("old"), message(7n, 4));
+
+        expect(sortedKeys(stores.chat_events)).toEqual([eventKey("new", 4)]);
+        expect(stores.chat_events.get(eventKey("new", 4)).chatId).toEqual(directId("new"));
+    });
+
+    test("writes under the id given for a chat which hasn't moved", async () => {
+        const { chatsDb, stores } = withMove();
+
+        await chatsDb.recordFailedMessage(directId("other"), message(8n));
+        await chatsDb.setCachedMessageIfNotExists(directId("other"), message(8n, 2));
+
+        expect(sortedKeys(stores.failed_chat_messages)).toEqual([failedKey("other", 8n)]);
+        expect(sortedKeys(stores.chat_events)).toEqual([eventKey("other", 2)]);
     });
 });
 
