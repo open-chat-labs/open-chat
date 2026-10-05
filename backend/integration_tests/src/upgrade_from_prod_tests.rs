@@ -709,7 +709,9 @@ fn wasm_version(env: &PocketIc, canister_id: CanisterId) -> BuildVersion {
     serde_json::from_value(metrics(env, canister_id)["wasm_version"].clone()).unwrap()
 }
 
-fn try_wasm_version(env: &PocketIc, canister_id: CanisterId) -> Option<BuildVersion> {
+// The canister's wasm version, or `None` if it can't be read, eg. while the canister is stopped to be
+// upgraded
+pub(crate) fn try_wasm_version(env: &PocketIc, canister_id: CanisterId) -> Option<BuildVersion> {
     let request = HttpRequest {
         method: "GET".to_string(),
         url: "/metrics".to_string(),

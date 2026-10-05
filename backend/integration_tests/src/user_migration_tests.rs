@@ -1,5 +1,6 @@
 use crate::env::ENV;
 use crate::setup::install_icrc_ledger;
+use crate::upgrade_from_prod_tests::try_wasm_version;
 use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client, wasms};
 use candid::{CandidType, Nat, Principal};
@@ -2442,7 +2443,7 @@ fn migrated_users_direct_chats_end_up_in_stable_memory() {
             module: wasms::MULTI_USER.module.clone(),
         },
     );
-    tick_until(env, |env| wasm_version(env, multi_user_canister) == new_version);
+    tick_until(env, |env| try_wasm_version(env, multi_user_canister) == Some(new_version));
     assert_chats_in_stable_memory(env, multi_user_canister, &migrated_0, &partners, &snapshots[0]);
 
     // A user exported by the User canister in production has their chats moved as they're imported
@@ -2460,7 +2461,7 @@ fn migrated_users_direct_chats_end_up_in_stable_memory() {
             module: wasms::USER.module.clone(),
         },
     );
-    tick_until(env, |env| wasm_version(env, users[2].canister()) == new_version);
+    tick_until(env, |env| try_wasm_version(env, users[2].canister()) == Some(new_version));
     let migrated_2 = migrate(env, canister_ids, &operator, &users[2], multi_user_canister);
     assert_chats_in_stable_memory(env, multi_user_canister, &migrated_2, &partners, &snapshots[2]);
 
