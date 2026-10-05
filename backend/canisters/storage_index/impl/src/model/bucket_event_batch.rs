@@ -1,5 +1,7 @@
+use crate::mutate_state;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
+use storage_bucket_canister::c2c_sync_index::Response;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{AccessorId, CanisterId, FileId, Milliseconds};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
@@ -29,7 +31,16 @@ impl TimerJobItem for BucketEventBatch {
         let response = storage_bucket_canister_c2c_client::c2c_sync_index(self.key, &args).await;
 
         match response {
-            Ok(_) => Ok(()),
+            Ok(Response::Success(result)) => {
+                // The bucket reports the files it removed here, up to its batch limit, syncing back
+                // any beyond that separately
+                mutate_state(|state| {
+                    for file in result.files_removed {
+                        state.data.remove_file_reference(self.key, file);
+                    }
+                });
+                Ok(())
+            }
             Err(error) => {
                 let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
                 Err(delay_if_should_retry)

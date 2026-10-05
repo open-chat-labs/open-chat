@@ -1,14 +1,14 @@
-use crate::updates::c2c_notify_low_balance::top_up_child_canister;
-use crate::{CanisterToRefund, RuntimeState, jobs, mutate_state, read_state};
-use candid::Nat;
-use constants::{DAY_IN_MS, multi_user_canister_min_cycles_balance};
+use crate::updates::c2c_notify_low_balance::{top_up_amount, top_up_child_canister};
+use crate::{CanisterToRefund, RuntimeState, child_min_cycles_balance, jobs, mutate_state, read_state};
+use constants::{DAY_IN_MS, min_cycles_balance};
 use oc_error_codes::OCErrorCode;
 use per_round_timer::PerRoundTimer;
 use std::cell::RefCell;
 use std::time::Duration;
 use tracing::{error, info};
-use types::{CanisterId, CommunityId, Cycles, Milliseconds, UnitResult};
+use types::{CanisterId, CommunityId, Cycles, Milliseconds, NotifyLowBalanceResponse, UnitResult};
 use utils::canister_timers::run_now_then_interval;
+use utils::cycles::can_spend_cycles;
 
 thread_local! {
     static TIMER: RefCell<Option<PerRoundTimer>> = RefCell::default();
@@ -91,26 +91,50 @@ async fn run_async(canister_id: CanisterId) {
             // A community's canister only loses its code by being uninstalled, which the IC does
             // once a canister runs out of cycles. Topping it up can't bring its state back, so
             // the community is removed instead.
-            if status.module_hash.is_none() && read_state(|state| state.data.local_communities.contains(&canister_id.into())) {
-                notify_community_uninstalled(canister_id.into()).await;
-            } else if status.cycles < read_state(|state| child_canister_min_cycles_balance(canister_id, state))
-                || status.cycles < Nat::from(60u32) * status.idle_cycles_burned_per_day
-            {
-                top_up_child_canister(Some(canister_id)).await;
+            if status.module_hash.is_none() {
+                if read_state(|state| state.data.local_communities.contains(&canister_id.into())) {
+                    notify_community_uninstalled(canister_id.into()).await;
+                } else {
+                    // Topping up a canister with no code would only strand the cycles in it
+                    info!(%canister_id, "Not topping up a canister which has no code");
+                }
+            } else {
+                // The canister may have stopped being one of this canister's children while its
+                // status was being fetched, eg. a migrated user's canister, which is uninstalled
+                // as the user is closed out
+                let Some(child_min) = read_state(|state| child_canister_min_cycles_balance(canister_id, state)) else {
+                    return;
+                };
+                let shortfall =
+                    utils::cycles::cycles_balance_shortfall(status.cycles(), status.freeze_threshold_cycles(), child_min);
+                // A low balance is topped up by enough to bring it back to the minimum, plus the
+                // usual amount. Otherwise a canister which uses more than the usual amount in the
+                // time between these checks, and isn't asking to be topped up itself (eg. a large
+                // canister which has gone quiet), would keep falling further behind.
+                if shortfall > 0 {
+                    // The shortfall is only added while this canister would keep twice its own
+                    // minimum. A pass which finds many canisters low would otherwise hold it at
+                    // its minimum, blocking every other top up, eg. those its children ask for.
+                    let additional = read_state(|state| {
+                        let amount = top_up_amount(canister_id, state) + shortfall;
+                        if can_spend_cycles(amount, 2 * min_cycles_balance(state.data.test_mode)) { shortfall } else { 0 }
+                    });
+                    let response = top_up_child_canister(Some(canister_id), additional).await;
+                    if !matches!(response, NotifyLowBalanceResponse::Success(_)) {
+                        info!(%canister_id, ?response, "Canister found low by the weekly check not topped up");
+                    }
+                }
             }
         }
         Err(error) => error!(%canister_id, ?error, "Error getting canister status"),
     }
 }
 
-// The balance below which a child canister is topped up, matching the one at which it asks for a
-// top up itself
-fn child_canister_min_cycles_balance(canister_id: CanisterId, state: &RuntimeState) -> Cycles {
-    if state.data.local_multi_user_canisters.contains(&canister_id) {
-        multi_user_canister_min_cycles_balance(state.data.test_mode)
-    } else {
-        utils::cycles::MIN_CYCLES_BALANCE
-    }
+// The cycles above its freezing threshold below which a child canister is topped up, matching the
+// minimum at which a child on the latest version asks for a top up itself. None if the canister is
+// no longer one of this canister's children.
+fn child_canister_min_cycles_balance(canister_id: CanisterId, state: &RuntimeState) -> Option<Cycles> {
+    state.child_canister_type(canister_id).map(child_min_cycles_balance)
 }
 
 // Tells the GroupIndex, which stops listing the community, then stops tracking it here. The
@@ -142,6 +166,7 @@ async fn notify_community_uninstalled(community_id: CommunityId) {
                 retry_after: 0,
                 // Kept, since it may hold tokens (see above)
                 delete_canister: false,
+                return_to_pool: false,
             });
             jobs::refund_cycles::start_job_if_required(state, None);
             info!(%community_id, "Uninstalled community removed");

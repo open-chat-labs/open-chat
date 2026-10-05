@@ -48,7 +48,7 @@
         videoProcessingProgress,
         type CreatedUser,
     } from "@client";
-    import { getContext, onMount, tick } from "svelte";
+    import { getContext, onMount, tick, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/Alert.svelte";
     import Camera from "svelte-material-icons/CameraOutline.svelte";
@@ -384,14 +384,34 @@
     // The markdown the editor last reported (or was last set to), so the effect below can compare
     // against it without re-serialising the whole document on every keystroke
     let lastMarkdown = "";
+    // The editor instance lastMarkdown was read from. The editor is rebuilt whenever it is shown
+    // again (e.g. after visiting a read-only chat or previewing a channel) and a new one starts out
+    // empty, so lastMarkdown must be re-read from it or the draft would never be put back into it
+    let lastMarkdownEditor: RichTextEditor | undefined;
 
+    // Called for the user's own input only, never for content the entry puts into the editor
     function onInput() {
         const inputContent = editor?.getMarkdown() ?? "";
-        lastMarkdown = inputContent;
-        onSetTextContent(inputContent.trim().length === 0 ? undefined : inputContent);
+        syncDraft(inputContent);
         triggerCommandSelector(inputContent);
         triggerTypingTimer();
-        containsMarkdown = detectMarkdown(inputContent);
+    }
+
+    // Putting content into the editor doesn't call onInput (it isn't the user typing), so the
+    // draft is synced with the editor's markdown for it here, and a command selector opened for
+    // what was in the editor is closed
+    function setEditorContent(editor: RichTextEditor, text: string) {
+        editor.setContent(text);
+        syncDraft(editor.getMarkdown());
+        if (untrack(() => showCommandSelector)) {
+            cancelCommandSelector(false);
+        }
+    }
+
+    function syncDraft(markdown: string) {
+        lastMarkdown = markdown;
+        onSetTextContent(markdown.trim().length === 0 ? undefined : markdown);
+        containsMarkdown = detectMarkdown(markdown);
     }
 
     function triggerCommandSelector(inputContent: string | null): void {
@@ -468,11 +488,13 @@
                     showDirectBotChatWarning = true;
                 }
                 e.preventDefault();
-            } else {
-                if (!showCommandSelector && $enterSend) {
-                    e.preventDefault();
-                    sendMessage();
-                }
+            } else if (showCommandSelector) {
+                // The command selector picks the focused command, so the editor mustn't also take
+                // the Enter as a newline
+                e.preventDefault();
+            } else if ($enterSend) {
+                e.preventDefault();
+                sendMessage();
             }
             commandSent = false;
         }
@@ -643,8 +665,7 @@
 
     function afterSendMessage() {
         editor?.clear();
-        lastMarkdown = "";
-        onSetTextContent();
+        syncDraft("");
 
         onStopTyping();
 
@@ -676,9 +697,14 @@
 
     $effect(() => {
         if (editor) {
+            if (editor !== lastMarkdownEditor) {
+                lastMarkdownEditor = editor;
+                lastMarkdown = editor.getMarkdown();
+            }
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
-                    editor.setContent(
+                    setEditorContent(
+                        editor,
                         formatUserGroupMentions(
                             formatUserMentions(
                                 client.stripLinkDisabledMarker(editingEvent.event.content.text),
@@ -686,21 +712,20 @@
                         ),
                     );
                 } else if ("caption" in editingEvent.event.content) {
-                    editor.setContent(editingEvent.event.content.caption ?? "");
+                    setEditorContent(editor, editingEvent.event.content.caption ?? "");
                 }
                 previousEditingEvent = editingEvent;
-                lastMarkdown = editor.getMarkdown();
-                containsMarkdown = detectMarkdown(lastMarkdown);
             } else {
                 const text = textContent ?? "";
                 // Only set the textbox text when required rather than every time, because doing so sets the focus back to
                 // the start of the textbox on some devices.
                 if (lastMarkdown !== text) {
-                    editor.setContent(text);
-                    lastMarkdown = editor.getMarkdown();
-                    containsMarkdown = detectMarkdown(text);
+                    setEditorContent(editor, text);
                 }
             }
+        } else {
+            // Don't hold on to the destroyed editor while the entry has none
+            lastMarkdownEditor = undefined;
         }
 
         if (editingEvent === undefined) {

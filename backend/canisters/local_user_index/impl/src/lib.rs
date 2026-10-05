@@ -20,7 +20,7 @@ use crate::model::web_push_subscriptions::WebPushSubscriptions;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use community_canister::LocalIndexEvent as CommunityEvent;
-use constants::{CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS};
+use constants::{MINUTE_IN_MS, MULTI_USER_CANISTER_MIN_CYCLES_BALANCE};
 use ct_codecs::{Base64UrlSafeNoPadding, Encoder};
 use event_store_producer::{EventStoreClient, EventStoreClientBuilder, EventStoreClientInfo};
 use event_store_producer_cdk_runtime::CdkRuntime;
@@ -78,10 +78,26 @@ mod no_inline_anchor;
 mod queries;
 mod updates;
 
-const CHILD_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + CHILD_CANISTER_TOP_UP_AMOUNT; // 0.5T cycles
-const CHILD_CANISTER_TOP_UP_AMOUNT: Cycles = 200_000_000_000; // 0.2T cycles
 const MARK_ACTIVE_DURATION: Milliseconds = 10 * 60 * 1000; // 10 minutes
 const MULTI_USER_UPGRADE_CONCURRENCY: usize = 1;
+
+// The cycles above its freezing threshold each type of child canister keeps. A child is created with
+// this plus one top up, and is topped up by half this at a time.
+fn child_min_cycles_balance(canister_type: ChildCanisterType) -> Cycles {
+    match canister_type {
+        ChildCanisterType::User => utils::cycles::USER_CANISTER_MIN_CYCLES_BALANCE, // 0.3T
+        ChildCanisterType::Group | ChildCanisterType::Community => utils::cycles::MIN_CYCLES_BALANCE, // 1T
+        ChildCanisterType::MultiUser => MULTI_USER_CANISTER_MIN_CYCLES_BALANCE,     // 10T
+    }
+}
+
+fn child_top_up_amount(canister_type: ChildCanisterType) -> Cycles {
+    child_min_cycles_balance(canister_type) / 2
+}
+
+fn child_initial_cycles_balance(canister_type: ChildCanisterType) -> Cycles {
+    child_min_cycles_balance(canister_type) + child_top_up_amount(canister_type)
+}
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -199,6 +215,20 @@ impl RuntimeState {
             || self.data.local_groups.contains(&caller.into())
             || self.data.local_communities.contains(&caller.into())
             || self.data.local_multi_user_canisters.contains(&caller)
+    }
+
+    pub fn child_canister_type(&self, canister_id: CanisterId) -> Option<ChildCanisterType> {
+        if self.data.local_multi_user_canisters.contains(&canister_id) {
+            Some(ChildCanisterType::MultiUser)
+        } else if self.data.local_users.contains(&canister_id.into()) {
+            Some(ChildCanisterType::User)
+        } else if self.data.local_groups.contains(&canister_id.into()) {
+            Some(ChildCanisterType::Group)
+        } else if self.data.local_communities.contains(&canister_id.into()) {
+            Some(ChildCanisterType::Community)
+        } else {
+            None
+        }
     }
 
     // The cycles top ups of one of this canister's children, or None if it isn't one
@@ -869,6 +899,7 @@ impl RuntimeState {
             chunk_store: crate::jobs::refresh_chunk_store::metrics(),
             cycles_refund_queue_length: self.data.cycles_refund_queue.len(),
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
+            cycles_refunded_from_pool_canisters: self.data.cycles_refunded_from_pool_canisters,
             cycles_topped_up_for_refunds: self.data.cycles_topped_up_for_refunds,
             registry_tokens: self.data.registry_tokens.len(),
             referral_codes: self.data.referral_codes.metrics(now),
@@ -977,6 +1008,8 @@ struct Data {
     #[serde(default)]
     pub cycles_refunded_from_deleted_users: Cycles,
     #[serde(default)]
+    pub cycles_refunded_from_pool_canisters: Cycles,
+    #[serde(default)]
     pub cycles_topped_up_for_refunds: Cycles,
     pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
@@ -1066,6 +1099,10 @@ pub struct CanisterToRefund {
     // been refunded
     #[serde(default)]
     pub delete_canister: bool,
+    // Set for a canister from the canister pool, which goes back into the pool once its cycles have
+    // been refunded
+    #[serde(default)]
+    pub return_to_pool: bool,
 }
 
 impl Data {
@@ -1141,6 +1178,7 @@ impl Data {
             users_to_delete_queue: VecDeque::new(),
             cycles_refund_queue: VecDeque::new(),
             cycles_refunded_from_deleted_users: 0,
+            cycles_refunded_from_pool_canisters: 0,
             cycles_topped_up_for_refunds: 0,
             events_for_remote_users: Vec::new(),
             cycles_balance_check_queue: VecDeque::new(),
@@ -1172,6 +1210,35 @@ impl Data {
             registry_tokens: RegistryTokens::default(),
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
+    }
+
+    // Queues every canister in the pool to have its cycles refunded, after which it goes back into
+    // the pool. A pool canister is given its cycles when it is used, so until then it needn't hold
+    // any, and an empty canister still pays the IC's base fee. They are queued ahead of the canisters
+    // already queued, so that the pool is back in use sooner. Returns how many were queued.
+    pub fn refund_pool_canisters(&mut self) -> usize {
+        let mut queued: HashSet<CanisterId> = self.cycles_refund_queue.iter().map(|c| c.canister_id).collect();
+        let mut pool_canisters = Vec::new();
+        for canister_id in self.canister_pool.take_all() {
+            // Belt and braces, a live canister should never be in the pool
+            let is_live = self.local_users.contains(&canister_id.into())
+                || self.local_groups.contains(&canister_id.into())
+                || self.local_communities.contains(&canister_id.into())
+                || self.local_multi_user_canisters.contains(&canister_id);
+
+            if !is_live && queued.insert(canister_id) {
+                pool_canisters.push(CanisterToRefund {
+                    canister_id,
+                    attempt: 0,
+                    retry_after: 0,
+                    delete_canister: false,
+                    return_to_pool: true,
+                });
+            }
+        }
+        let count = pool_canisters.len();
+        jobs::refund_cycles::queue_ahead(&mut self.cycles_refund_queue, pool_canisters);
+        count
     }
 }
 
@@ -1236,6 +1303,7 @@ pub struct Metrics {
     pub chunk_store: crate::jobs::refresh_chunk_store::ChunkStoreMetrics,
     pub cycles_refund_queue_length: usize,
     pub cycles_refunded_from_deleted_users: Cycles,
+    pub cycles_refunded_from_pool_canisters: Cycles,
     pub cycles_topped_up_for_refunds: Cycles,
     pub registry_tokens: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,

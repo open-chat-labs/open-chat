@@ -257,6 +257,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         attempt: 0,
                         retry_after: 0,
                         delete_canister: false,
+                        return_to_pool: false,
                     });
                 }
             }

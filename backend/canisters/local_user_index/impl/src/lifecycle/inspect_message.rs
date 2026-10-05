@@ -31,8 +31,9 @@ fn accept_if_valid(state: &RuntimeState) {
         | "withdraw_from_icpswap" => state.is_caller_platform_operator(),
         "register_user" => true,
         "video_call_declined" => state.is_caller_video_call_operator(),
-        // Canister callers bypass inspect_message; this only matters for tests that impersonate the daily_puzzle canister
+        // Canister callers bypass inspect_message; these only matter for tests that impersonate the canisters
         "c2c_daily_puzzle_push" => state.is_caller_daily_puzzle_canister(),
+        "c2c_notify_user_index_events" => state.is_caller_user_index(),
         "remove_notifications" => state.is_caller_notification_pusher(),
         "submit_media_scan_verdicts" => state.is_caller_media_scanner(),
         _ => false,

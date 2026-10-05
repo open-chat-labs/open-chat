@@ -1,5 +1,5 @@
 use crate::guards::caller_is_group_index;
-use crate::{CHILD_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION, RuntimeState, mutate_state, read_state};
+use crate::{MARK_ACTIVE_DURATION, RuntimeState, child_initial_cycles_balance, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{CREATE_CANISTER_CYCLES_FEE, min_cycles_balance};
@@ -38,7 +38,7 @@ async fn c2c_create_group(args: Args) -> Response {
         msgpack::serialize_then_unwrap(&prepare_ok.init_canister_args),
         prepare_ok.cycles_to_use,
         read_state(|state| min_cycles_balance(state.data.test_mode)),
-        on_canister_created,
+        on_cycles_spent,
     )
     .await
     {
@@ -78,15 +78,16 @@ struct PrepareOk {
 }
 
 fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
+    // A canister taken from the pool is given its cycles now
+    let initial_cycles_balance = child_initial_cycles_balance(ChildCanisterType::Group);
     let cycles_to_use = if state.data.canister_pool.is_empty() {
-        let cycles_required = CHILD_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-        if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
-            return Err(OCErrorCode::CanisterNotFound.into());
-        }
-        cycles_required
+        initial_cycles_balance + CREATE_CANISTER_CYCLES_FEE
     } else {
-        0
+        initial_cycles_balance
     };
+    if !utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(state.data.test_mode)) {
+        return Err(OCErrorCode::CanisterNotFound.into());
+    }
 
     let canister_id = state.data.canister_pool.pop();
     let canister_wasm = state.child_canister_wasm_to_install(ChildCanisterType::Group);
@@ -158,8 +159,8 @@ fn commit(
 fn rollback(canister_id: Option<CanisterId>, error: &C2CError, state: &mut RuntimeState) {
     if let Some(canister_id) = canister_id {
         // If this canister is not controlled by the LocalUserIndex then installs into it can
-        // never succeed, so drop it from the pool and let the topup job replace it, else
-        // creations would keep pulling the same unusable canisters out of the pool
+        // never succeed, so drop it from the pool, else creations would keep pulling the same
+        // unusable canisters out of the pool
         if canister::is_invalid_controller_error(error.reject_code(), error.message()) {
             error!(%canister_id, "Dropping canister from pool - LocalUserIndex is not a controller");
             crate::jobs::topup_canister_pool::start_job_if_required(state, None);
@@ -169,6 +170,6 @@ fn rollback(canister_id: Option<CanisterId>, error: &C2CError, state: &mut Runti
     }
 }
 
-fn on_canister_created(cycles: Cycles) {
+fn on_cycles_spent(cycles: Cycles) {
     mutate_state(|state| state.data.total_cycles_spent_on_canisters += cycles);
 }

@@ -1,11 +1,13 @@
 use crate::chit_tests::DAY_ZERO;
 use crate::env::{ENV, VIDEO_CALL_OPERATOR};
-use crate::utils::{metrics, now_millis, tick_many, try_metrics, wait_for_cycle_balance_above};
+use crate::utils::{
+    liquid_cycle_balance, metrics, now_millis, set_freezing_threshold, tick_many, try_metrics, wait_for_cycle_balance_above,
+};
 use crate::{CanisterIds, TestEnv, client, wasms};
 use candid::Principal;
 use constants::{
-    HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, OPENCHAT_BOT_USER_ID,
-    multi_user_canister_min_cycles_balance, multi_user_canister_top_up_amount,
+    HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, MULTI_USER_CANISTER_MIN_CYCLES_BALANCE,
+    OPENCHAT_BOT_USER_ID,
 };
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
@@ -7154,8 +7156,8 @@ fn private_replies_to_a_group_follow_it_into_a_community() {
 // balance than a User canister, and is topped up by more each time.
 #[test]
 fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
-    let top_up_amount = multi_user_canister_top_up_amount(true);
-    let min_balance = multi_user_canister_min_cycles_balance(true);
+    let min_balance = MULTI_USER_CANISTER_MIN_CYCLES_BALANCE;
+    let top_up_amount = min_balance / 2;
     // Less a margin for the cycles the update and the check themselves use
     let topped_up_from = |balance: u128| balance + top_up_amount - 10_000_000_000;
 
@@ -7169,16 +7171,7 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-
-    // A new canister starts with the balance every child canister is given, which is below the
-    // minimum a MultiUser canister keeps, though above the one a User canister keeps
-    let balance = env.cycle_balance(canister_id);
-    assert!(balance < min_balance);
-    assert!(balance > utils::cycles::MIN_CYCLES_BALANCE);
-
-    // So its first update asks for a top up, of the MultiUser amount
     let (principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
-    wait_for_cycle_balance_above(env, canister_id, topped_up_from(balance));
 
     // Runs an update once the check is due again, then gives the top up time to arrive
     let update_once_check_due = |env: &mut PocketIc| {
@@ -7193,14 +7186,25 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
         tick_many(env, 5);
     };
 
-    // It's topped up again as it handles updates until its balance reaches the minimum
-    for _ in 0..5 {
-        if env.cycle_balance(canister_id) >= min_balance {
-            break;
-        }
-        update_once_check_due(env);
-    }
-    assert!(env.cycle_balance(canister_id) >= min_balance);
+    // A new canister starts with the minimum a MultiUser canister keeps plus one top up. So raise the
+    // freezing threshold until the cycles above it are just below that minimum.
+    let balance = env.cycle_balance(canister_id);
+    let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
+    let original_freezing_threshold = status.settings.freezing_threshold.clone();
+    let burned_per_day: u128 = status.idle_cycles_burned_per_day.0.try_into().unwrap();
+    assert!(burned_per_day > 0);
+    let reserve = balance + 100_000_000_000 - min_balance;
+    set_freezing_threshold(
+        env,
+        canister_id,
+        local_user_index,
+        (reserve * 24 * 60 * 60 / burned_per_day).into(),
+    );
+    assert!(liquid_cycle_balance(env, canister_id, local_user_index) < min_balance);
+
+    // So its next update asks for a top up, of the MultiUser amount
+    update_once_check_due(env);
+    wait_for_cycle_balance_above(env, canister_id, topped_up_from(balance));
 
     // While the balance is healthy there's no top up
     let balance = env.cycle_balance(canister_id);
@@ -7208,40 +7212,19 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
     assert!(env.cycle_balance(canister_id) <= balance);
 
     // Raise the freezing threshold until the cycles it reserves are three quarters of the balance.
-    // The canister still runs, but its balance is now less than twice the reserve, which is when
-    // `check_cycles_balance` counts it as low.
+    // The canister still runs, but the cycles above the reserve are now less than twice it, which is
+    // when `check_cycles_balance` counts it as low.
     let balance = env.cycle_balance(canister_id);
-    let status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
-    let original_freezing_threshold = status.settings.freezing_threshold.clone();
-    let burned_per_day: u128 = status.idle_cycles_burned_per_day.0.try_into().unwrap();
-    assert!(burned_per_day > 0);
     let freezing_threshold_secs = balance * 3 / 4 * 24 * 60 * 60 / burned_per_day;
-    env.update_canister_settings(
-        canister_id,
-        Some(local_user_index),
-        pocket_ic::CanisterSettings {
-            freezing_threshold: Some(freezing_threshold_secs.into()),
-            ..Default::default()
-        },
-    )
-    .unwrap();
+    set_freezing_threshold(env, canister_id, local_user_index, freezing_threshold_secs.into());
 
     update_once_check_due(env);
     assert!(env.cycle_balance(canister_id) > topped_up_from(balance));
 
     // Put the freezing threshold back, since the environment, and so this canister, is shared with
     // later tests
-    env.update_canister_settings(
-        canister_id,
-        Some(local_user_index),
-        pocket_ic::CanisterSettings {
-            freezing_threshold: Some(original_freezing_threshold),
-            ..Default::default()
-        },
-    )
-    .unwrap();
+    set_freezing_threshold(env, canister_id, local_user_index, original_freezing_threshold);
 }
-
 // A user in a MultiUser canister can read their direct chats via their LocalUserIndex's
 // `chat_events`, which asks the canister for that user's copy of the chat
 #[test]

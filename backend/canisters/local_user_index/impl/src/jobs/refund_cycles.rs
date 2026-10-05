@@ -4,6 +4,7 @@ use constants::{B, CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS, min_cycles_balance
 use ic_cdk_management_canister::{CanisterInstallMode, CanisterStatusType};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
+use std::collections::VecDeque;
 use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{BuildVersion, C2CError, CanisterId, CanisterWasmBytes, Cycles, Milliseconds};
@@ -115,6 +116,9 @@ fn get_next(state: &mut RuntimeState) -> Result<CanisterToRefund, Option<Millise
 async fn process_canister(canister: CanisterToRefund) {
     let canister_id = canister.canister_id;
     let result = refund_cycles(canister_id, canister.delete_canister).await;
+    // Only once its cycles have been refunded, or it held too few to be worth refunding. Not, say,
+    // if this canister doesn't control it, or the refunder may still be installed on it.
+    let can_return_to_pool = matches!(result, Ok(_) | Err(RefundError::TooFewCycles(_)));
 
     mutate_state(|state| {
         IN_PROGRESS.set(false);
@@ -130,7 +134,11 @@ async fn process_canister(canister: CanisterToRefund) {
         let mut retrying = false;
         match result {
             Ok(cycles) => {
-                state.data.cycles_refunded_from_deleted_users += cycles;
+                if canister.return_to_pool {
+                    state.data.cycles_refunded_from_pool_canisters += cycles;
+                } else {
+                    state.data.cycles_refunded_from_deleted_users += cycles;
+                }
                 info!(%canister_id, cycles, "Refunded cycles from uninstalled canister");
             }
             Err(RefundError::NotController) => {
@@ -152,6 +160,7 @@ async fn process_canister(canister: CanisterToRefund) {
                     attempt: canister.attempt,
                     retry_after: state.env.now() + CYCLES_BALANCE_TOO_LOW_RETRY_DELAY,
                     delete_canister: canister.delete_canister,
+                    return_to_pool: canister.return_to_pool,
                 });
                 retrying = true;
                 info!(%canister_id, "Cycles refund deferred, this canister's cycles balance is too low");
@@ -166,6 +175,7 @@ async fn process_canister(canister: CanisterToRefund) {
                         attempt,
                         retry_after: state.env.now() + delay,
                         delete_canister: canister.delete_canister,
+                        return_to_pool: canister.return_to_pool,
                     });
                     retrying = true;
                 } else {
@@ -178,6 +188,11 @@ async fn process_canister(canister: CanisterToRefund) {
         // refunded from it
         if canister.delete_canister && !retrying {
             spawn_delete_canister(canister_id);
+        }
+
+        // A pool canister goes back into the pool, to be given cycles again when it is used
+        if canister.return_to_pool && !retrying && can_return_to_pool && !state.data.canister_pool.contains(&canister_id) {
+            state.data.canister_pool.push(canister_id);
         }
         start_job_if_required(state, None);
     });
@@ -317,4 +332,55 @@ async fn install_refunder(
     })
     .await
     .map(|_| ())
+}
+
+// Puts the canisters at the front of the queue, in order, though behind the canister already at the
+// front. That one may have been part way through being refunded when this canister was upgraded,
+// and stays first so that its refund is picked up again where it left off.
+pub(crate) fn queue_ahead(queue: &mut VecDeque<CanisterToRefund>, canisters: Vec<CanisterToRefund>) {
+    let first = queue.pop_front();
+    for canister in canisters.into_iter().rev() {
+        queue.push_front(canister);
+    }
+    if let Some(first) = first {
+        queue.push_front(first);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+
+    fn canister(index: u8) -> CanisterToRefund {
+        CanisterToRefund {
+            canister_id: Principal::from_slice(&[index]),
+            attempt: 0,
+            retry_after: 0,
+            delete_canister: false,
+            return_to_pool: false,
+        }
+    }
+
+    fn ids(queue: &VecDeque<CanisterToRefund>) -> Vec<CanisterId> {
+        queue.iter().map(|c| c.canister_id).collect()
+    }
+
+    #[test]
+    fn canisters_are_queued_behind_the_first_and_ahead_of_the_rest() {
+        let mut queue: VecDeque<_> = [canister(0), canister(1), canister(2)].into();
+        queue_ahead(&mut queue, vec![canister(10), canister(11)]);
+
+        let expected: Vec<_> = [0, 10, 11, 1, 2].map(|i| canister(i).canister_id).into();
+        assert_eq!(ids(&queue), expected);
+    }
+
+    #[test]
+    fn canisters_are_queued_in_order_when_the_queue_is_empty() {
+        let mut queue = VecDeque::new();
+        queue_ahead(&mut queue, vec![canister(10), canister(11)]);
+
+        let expected: Vec<_> = [10, 11].map(|i| canister(i).canister_id).into();
+        assert_eq!(ids(&queue), expected);
+    }
 }

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Check the cycles balance as background jobs run, not only as updates are handled ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
+- Ask for a top up once the cycles above the freezing threshold fall below 0.3T, or below twice the threshold, keeping about the old minimum while User canisters are migrated ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748), [#9751](https://github.com/open-chat-labs/open-chat/pull/9751))
 
 ### Removed
 

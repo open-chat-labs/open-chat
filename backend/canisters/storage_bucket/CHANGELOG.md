@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_missing_files` for the StorageIndex to check which of its file references are stale ([#9765](https://github.com/open-chat-labs/open-chat/pull/9765))
+
+### Changed
+
+- Ask for a top up once the cycles above the freezing threshold fall below 1T, or below twice the threshold ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748))
+- Check the cycles balance at most once every 5 minutes, so a burst of calls asks for one top up ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748))
+
+### Fixed
+
+- Only return the given accessor's files when looking them up, and unlink a file's owner when it is removed ([#9759](https://github.com/open-chat-labs/open-chat/pull/9759))
+- Report a forwarded file to the StorageIndex as the forwarder's ([#9761](https://github.com/open-chat-labs/open-chat/pull/9761))
+- Report an upload to the StorageIndex as removed when it's abandoned or expires part way through ([#9765](https://github.com/open-chat-labs/open-chat/pull/9765))
+
 ## [[2.0.2066](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2066-storage_bucket)] - 2026-09-29
 
 ### Changed
