@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Reclaim the canisters which only the old LocalGroupIndex still controls, refund them and put them into the pool, then move its ICP to the CyclesDispenser and refund its own cycles ([#9773](https://github.com/open-chat-labs/open-chat/pull/9773))
+- Reclaim the canisters which only the old LocalGroupIndex still controls and put them into the pool, then move its ICP to the CyclesDispenser and refund its own cycles ([#9773](https://github.com/open-chat-labs/open-chat/pull/9773))
 
 ### Changed
 
