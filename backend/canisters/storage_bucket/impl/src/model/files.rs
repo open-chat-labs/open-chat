@@ -89,6 +89,7 @@ impl Files {
     }
 
     // The owner and created time of the file, if it's held, either complete or still being uploaded
+    #[cfg(test)]
     pub fn owner_and_created(&self, file_id: &FileId) -> Option<(Principal, TimestampMillis)> {
         self.get(file_id)
             .map(|f| (f.owner, f.created))
