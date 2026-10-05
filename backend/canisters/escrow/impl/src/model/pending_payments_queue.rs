@@ -14,32 +14,43 @@ pub struct PendingPaymentsQueue {
 }
 
 impl PendingPaymentsQueue {
+    // Queues a swap's payout. Refunds are queued with `push_refund`.
     pub fn push(&mut self, pending_payment: PendingPayment) {
         self.pending_payments.push_back(pending_payment);
     }
 
-    pub fn push_refunds(&mut self, swap: &Swap, now: TimestampMillis) {
+    // Queues a refund of `amount` to the depositor from their deposit subaccount, noting it against the
+    // swap until it's made or given up on
+    pub fn push_refund(
+        &mut self,
+        swap: &mut Swap,
+        depositor: Principal,
+        token_info: TokenInfo,
+        amount: u128,
+        now: TimestampMillis,
+    ) {
+        let refund = PendingPayment {
+            principal: depositor,
+            timestamp: now,
+            token_info,
+            amount,
+            swap_id: swap.id,
+            reason: PendingPaymentReason::Refund,
+        };
+        swap.on_refund_queued(depositor, refund.debit());
+        self.push(refund);
+    }
+
+    pub fn push_refunds(&mut self, swap: &mut Swap, now: TimestampMillis) {
         if swap.token0_received {
-            self.push(PendingPayment {
-                principal: swap.offered_by,
-                timestamp: now,
-                token_info: swap.token0.clone(),
-                amount: swap.amount0,
-                swap_id: swap.id,
-                reason: PendingPaymentReason::Refund,
-            });
+            let (offered_by, token_info, amount) = (swap.offered_by, swap.token0.clone(), swap.amount0);
+            self.push_refund(swap, offered_by, token_info, amount, now);
         }
         if swap.token1_received
             && let Some((accepted_by, _)) = swap.accepted_by
         {
-            self.push(PendingPayment {
-                principal: accepted_by,
-                timestamp: now,
-                token_info: swap.token1.clone(),
-                amount: swap.amount1,
-                swap_id: swap.id,
-                reason: PendingPaymentReason::Refund,
-            });
+            let (token_info, amount) = (swap.token1.clone(), swap.amount1);
+            self.push_refund(swap, accepted_by, token_info, amount, now);
         }
     }
 
@@ -58,6 +69,11 @@ impl PendingPaymentsQueue {
     pub fn parked_len(&self) -> usize {
         self.parked.len()
     }
+
+    // The payments queued or parked
+    pub fn iter(&self) -> impl Iterator<Item = &PendingPayment> {
+        self.pending_payments.iter().chain(&self.parked)
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -69,6 +85,13 @@ pub struct PendingPayment {
     pub amount: u128,
     pub swap_id: u32,
     pub reason: PendingPaymentReason,
+}
+
+impl PendingPayment {
+    // The amount the payment takes out of the subaccount it's made from, including the fee
+    pub fn debit(&self) -> u128 {
+        self.amount.saturating_add(self.token_info.fee)
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy)]

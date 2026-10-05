@@ -1,5 +1,5 @@
 use crate::model::notify_status_change_queue::NotifyStatusChangeQueue;
-use crate::model::pending_payments_queue::PendingPaymentsQueue;
+use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
 use crate::model::swaps::Swaps;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
@@ -100,6 +100,37 @@ impl Data {
             test_mode,
         }
     }
+
+    // Counts the refunds which are queued, parked or awaiting retry against their deposits, so that
+    // those queued before refunds were counted aren't missed. Each deposit's outstanding refunds are
+    // counted afresh, so this is safe to run more than once.
+    // TODO remove after the release containing this has been deployed, along with `Swaps::iter_mut`
+    pub fn count_outstanding_refunds(&mut self) {
+        let awaiting_retry: Vec<PendingPayment> = self
+            .timer_jobs
+            .iter()
+            .filter_map(|(_, wrapper)| match wrapper.deref().borrow().as_ref() {
+                Some(TimerJob::RetryPayment(job)) => Some(job.payment.clone()),
+                _ => None,
+            })
+            .collect();
+
+        for swap in self.swaps.iter_mut() {
+            for refunds in swap.deposit_refunds.values_mut() {
+                refunds.outstanding = 0;
+            }
+        }
+        for refund in self
+            .pending_payments_queue
+            .iter()
+            .chain(&awaiting_retry)
+            .filter(|payment| matches!(payment.reason, PendingPaymentReason::Refund))
+        {
+            if let Some(swap) = self.swaps.get_mut(refund.swap_id) {
+                swap.on_refund_queued(refund.principal, refund.debit());
+            }
+        }
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -143,4 +174,84 @@ pub(crate) fn deposit_address(principal: Principal, swap_id: u32, escrow_caniste
     };
 
     account.to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::swaps::DepositRefunds;
+    use types::{P2PSwapLocation, TokenInfo};
+
+    fn token() -> TokenInfo {
+        TokenInfo {
+            symbol: "TEST".to_string(),
+            ledger: CanisterId::from_slice(&[1]),
+            decimals: 8,
+            fee: 10,
+        }
+    }
+
+    fn refund(swap_id: u32, depositor: Principal, amount: u128) -> PendingPayment {
+        PendingPayment {
+            principal: depositor,
+            timestamp: 0,
+            token_info: token(),
+            amount,
+            swap_id,
+            reason: PendingPaymentReason::Refund,
+        }
+    }
+
+    // Refunds queued before refunds were counted are counted once the canister is upgraded, however
+    // many times it's upgraded
+    #[test]
+    fn refunds_queued_or_parked_are_counted_as_outstanding() {
+        let mut data = Data::new(Principal::anonymous(), Principal::anonymous(), true);
+        let swap_id = data.swaps.push(
+            Principal::from_slice(&[2]),
+            escrow_canister::create_swap::Args {
+                location: P2PSwapLocation::External,
+                token0: token(),
+                token0_amount: 1_000,
+                token0_principal: None,
+                token1: token(),
+                token1_amount: 1_000,
+                token1_principal: None,
+                expires_at: 1,
+                additional_admins: Vec::new(),
+                canister_to_notify: None,
+                is_public: false,
+            },
+            0,
+        );
+        let depositor = Principal::from_slice(&[3]);
+        let other_depositor = Principal::from_slice(&[4]);
+        data.pending_payments_queue.push(refund(swap_id, depositor, 100));
+        data.pending_payments_queue.push(refund(swap_id, depositor, 200));
+        data.pending_payments_queue.park(refund(swap_id, other_depositor, 50));
+        data.pending_payments_queue.push(PendingPayment {
+            reason: PendingPaymentReason::Swap(other_depositor),
+            ..refund(swap_id, depositor, 1_000)
+        });
+
+        for _ in 0..2 {
+            data.count_outstanding_refunds();
+
+            let swap = data.swaps.get(swap_id).unwrap();
+            assert_eq!(
+                swap.deposit_refunds(depositor),
+                DepositRefunds {
+                    outstanding: 320,
+                    finished: 0
+                }
+            );
+            assert_eq!(
+                swap.deposit_refunds(other_depositor),
+                DepositRefunds {
+                    outstanding: 60,
+                    finished: 0
+                }
+            );
+        }
+    }
 }

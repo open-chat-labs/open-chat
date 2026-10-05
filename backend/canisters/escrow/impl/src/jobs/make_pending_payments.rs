@@ -89,6 +89,10 @@ async fn process_payment(mut pending_payment: PendingPayment, previous_failures:
         match next_step(&response, &pending_payment, failures, outcome_unknown, now) {
             NextStep::Record(block_index) => {
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
+                    if matches!(pending_payment.reason, PendingPaymentReason::Refund) {
+                        swap.on_refund_finished(pending_payment.principal, pending_payment.debit());
+                    }
+
                     // A refund can be queued twice (eg. by two `notify_deposit` calls at once), in which
                     // case the ledger reports the second as a duplicate of the first, which is already
                     // recorded
@@ -169,6 +173,7 @@ async fn process_payment(mut pending_payment: PendingPayment, previous_failures:
             }
             NextStep::Park { error } => {
                 error!(swap_id = pending_payment.swap_id, %ledger, error, "Parked payment");
+                // A parked refund may yet be made by hand, so it's left outstanding against its deposit
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
                     swap.errors.push(error);
                 }
@@ -178,6 +183,9 @@ async fn process_payment(mut pending_payment: PendingPayment, previous_failures:
                 error!(?args, error, "Failed to process payment");
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
                     swap.errors.push(error);
+                    if matches!(pending_payment.reason, PendingPaymentReason::Refund) {
+                        swap.on_refund_finished(pending_payment.principal, pending_payment.debit());
+                    }
                 }
             }
         }

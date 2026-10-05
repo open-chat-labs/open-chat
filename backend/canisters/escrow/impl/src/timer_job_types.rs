@@ -48,10 +48,11 @@ impl Job for TimerJob {
 impl Job for ExpireSwapJob {
     fn execute(self) {
         mutate_state(|state| {
-            if let Some(swap) = state.data.swaps.get(self.swap_id)
-                && matches!(swap.status(state.env.now()), SwapStatus::Expired(_))
+            let now = state.env.now();
+            if let Some(swap) = state.data.swaps.get_mut(self.swap_id)
+                && matches!(swap.status(now), SwapStatus::Expired(_))
             {
-                state.data.pending_payments_queue.push_refunds(swap, state.env.now());
+                state.data.pending_payments_queue.push_refunds(swap, now);
                 crate::jobs::make_pending_payments::start_job_if_required(state);
             }
         });

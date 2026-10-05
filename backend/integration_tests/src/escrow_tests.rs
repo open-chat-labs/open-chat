@@ -3,9 +3,11 @@ use crate::setup::install_icrc_ledger;
 use crate::utils::{chat_token_info, icp_token_info, now_millis, tick_many, try_metrics};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
-use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
+use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, HOUR_IN_MS, ICP_TRANSFER_FEE, MINUTE_IN_MS};
 use escrow_canister::deposit_subaccount;
+use escrow_canister::notify_deposit::{BalanceTooLowResult, SuccessResult};
 use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::TransferArg;
 use pocket_ic::PocketIc;
 use pocket_ic::common::rest::RawMessageId;
 use std::ops::Deref;
@@ -792,6 +794,256 @@ fn payment_rejected_by_ledger_is_parked() {
     assert_eq!(client::ledger::happy_path::balance_of(env, ledger, offerer), 0);
 }
 
+// A deposit too small for its swap is refunded. If it's topped up and notified again before that
+// refund is made, the refund still takes most of it, so only what will be left counts towards the
+// deposit. Otherwise the swap would pay out the deposit before the refund drains it, and the other
+// side's payout would fail. Anyone can hold up the refund by filling the queue of payments, as here,
+// so that the top-ups and notifications land first.
+#[test_case(false; "acceptor")]
+#[test_case(true; "offerer")]
+fn deposit_topped_up_before_its_refund_is_made_counts_only_what_will_be_left(by_offerer: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let offerer = Principal::from_slice(&[10, 5, by_offerer as u8]);
+    let acceptor = Principal::from_slice(&[10, 6, by_offerer as u8]);
+    let icp_amount = 100_000_000_000;
+    let chat_amount = 1_000_000_000_000;
+    let swap_id = client::escrow::happy_path::create_swap(
+        env,
+        offerer,
+        canister_ids.escrow,
+        P2PSwapLocation::External,
+        icp_token_info(),
+        icp_amount,
+        None,
+        chat_token_info(),
+        chat_amount,
+        None,
+        now_millis(env) + DAY_IN_MS,
+    );
+    let account = |principal: Principal| Account {
+        owner: canister_ids.escrow,
+        subaccount: Some(deposit_subaccount(principal, swap_id)),
+    };
+
+    let (depositor, ledger, fee, required) = if by_offerer {
+        (
+            offerer,
+            canister_ids.icp_ledger,
+            ICP_TRANSFER_FEE,
+            icp_amount + ICP_TRANSFER_FEE,
+        )
+    } else {
+        client::ledger::happy_path::transfer(
+            env,
+            *controller,
+            canister_ids.icp_ledger,
+            account(offerer),
+            icp_amount + ICP_TRANSFER_FEE,
+        );
+        client::escrow::happy_path::notify_deposit(env, offerer, canister_ids.escrow, swap_id, None);
+        (
+            acceptor,
+            canister_ids.chat_ledger,
+            CHAT_TRANSFER_FEE,
+            chat_amount + CHAT_TRANSFER_FEE,
+        )
+    };
+    let deposit = |env: &mut PocketIc, amount: u128| {
+        client::ledger::happy_path::transfer(env, *controller, ledger, account(depositor), amount);
+        client::escrow::notify_deposit(
+            env,
+            depositor,
+            canister_ids.escrow,
+            &escrow_canister::notify_deposit::Args {
+                swap_id,
+                deposited_by: None,
+            },
+        )
+    };
+    let refunded = |env: &PocketIc| client::ledger::happy_path::balance_of(env, ledger, depositor);
+
+    // 1 short, so it's refunded, less the fee for refunding it, once the payments ahead of it are made
+    fill_payments_queue(
+        env,
+        canister_ids,
+        *controller,
+        Principal::from_slice(&[10, 7, by_offerer as u8]),
+        40,
+    );
+    let response = deposit(env, required - 1);
+    assert!(
+        matches!(
+            response,
+            escrow_canister::notify_deposit::Response::BalanceTooLow(BalanceTooLowResult { balance, balance_required })
+                if balance == required - 1 && balance_required == required
+        ),
+        "{response:?}"
+    );
+
+    // Topping up the shortfall makes up the balance, but not what will be left once the refund is made
+    let response = deposit(env, 1);
+    assert_eq!(refunded(env), 0, "The refund was made too soon for the test");
+    assert!(
+        matches!(
+            response,
+            escrow_canister::notify_deposit::Response::BalanceTooLow(BalanceTooLowResult { balance: 1, .. })
+        ),
+        "{response:?}"
+    );
+
+    // Whereas a further deposit in full, on top of the refund, is recorded before the refund is made
+    let response = deposit(env, required - 1);
+    assert_eq!(refunded(env), 0, "The refund was made too soon for the test");
+    assert!(
+        matches!(
+            response,
+            escrow_canister::notify_deposit::Response::Success(SuccessResult { complete }) if complete != by_offerer
+        ),
+        "{response:?}"
+    );
+
+    if by_offerer {
+        client::ledger::happy_path::transfer(
+            env,
+            *controller,
+            canister_ids.chat_ledger,
+            account(acceptor),
+            chat_amount + CHAT_TRANSFER_FEE,
+        );
+        let result = client::escrow::happy_path::notify_deposit(env, acceptor, canister_ids.escrow, swap_id, None);
+        assert!(result.complete);
+    }
+
+    // The refund and both payouts are made in full
+    let swap_completed = |env: &PocketIc| {
+        let swap = swap_logs(env, canister_ids.escrow, swap_id);
+        swap["token0_transfer_out"].is_object() && swap["token1_transfer_out"].is_object()
+    };
+    for _ in 0..200 {
+        if refunded(env) > 0 && swap_completed(env) {
+            break;
+        }
+        env.tick();
+    }
+    assert_eq!(refunded(env), required - 1 - fee);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, offerer),
+        chat_amount
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, acceptor),
+        icp_amount
+    );
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, account(depositor)), 0);
+    assert_eq!(swap_errors(env, canister_ids.escrow, swap_id), Vec::<String>::new());
+}
+
+// A deposit too small for its swap is topped up and notified again around when its refund is made,
+// over a range of timings. Whichever way the timing falls, the deposit isn't recorded. If the refund is
+// made while the deposit's balance is being checked, the balance may or may not show the refund, so
+// the notification fails, to be retried.
+#[test]
+fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let icp_amount = 100_000_000_000;
+    let required = icp_amount + ICP_TRANSFER_FEE;
+    let mut retries = 0;
+
+    for rounds_before_top_up in 0..6 {
+        let offerer = Principal::from_slice(&[10, 8, rounds_before_top_up]);
+        let swap_id = client::escrow::happy_path::create_swap(
+            env,
+            offerer,
+            canister_ids.escrow,
+            P2PSwapLocation::External,
+            icp_token_info(),
+            icp_amount,
+            None,
+            chat_token_info(),
+            1_000_000_000_000,
+            None,
+            now_millis(env) + DAY_IN_MS,
+        );
+        let account = Account {
+            owner: canister_ids.escrow,
+            subaccount: Some(deposit_subaccount(offerer, swap_id)),
+        };
+        let notify = |env: &mut PocketIc| {
+            client::escrow::notify_deposit(
+                env,
+                offerer,
+                canister_ids.escrow,
+                &escrow_canister::notify_deposit::Args {
+                    swap_id,
+                    deposited_by: None,
+                },
+            )
+        };
+
+        // 1 short, so it's refunded, the refund being made over the next few rounds
+        client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, account, required - 1);
+        let response = notify(env);
+        assert!(
+            matches!(response, escrow_canister::notify_deposit::Response::BalanceTooLow(_)),
+            "{response:?}"
+        );
+
+        tick_many(env, rounds_before_top_up as usize);
+        let top_up = env
+            .submit_call(
+                canister_ids.icp_ledger,
+                *controller,
+                "icrc1_transfer",
+                candid::encode_one(TransferArg {
+                    from_subaccount: None,
+                    to: account,
+                    fee: None,
+                    created_at_time: None,
+                    memo: None,
+                    amount: 1u32.into(),
+                })
+                .unwrap(),
+            )
+            .unwrap();
+        env.tick();
+        let mut response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()));
+        env.await_call(top_up).unwrap();
+
+        if matches!(response, escrow_canister::notify_deposit::Response::InternalError(_)) {
+            retries += 1;
+            response = notify(env);
+        }
+        // All that will be left once the refund is made is the top-up
+        assert!(
+            matches!(
+                response,
+                escrow_canister::notify_deposit::Response::BalanceTooLow(BalanceTooLowResult { balance: 1, .. })
+            ),
+            "Top-up after {rounds_before_top_up} rounds: {response:?}"
+        );
+        assert_eq!(
+            swap_logs(env, canister_ids.escrow, swap_id)["token0_received"],
+            false,
+            "Top-up after {rounds_before_top_up} rounds"
+        );
+    }
+
+    // At least one of the notifications checked the balance while the refund was being made
+    assert!(retries > 0);
+}
+
 fn create_icp_for_chat_swap(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
@@ -968,6 +1220,38 @@ fn create_swap_with_deposit_on_new_ledger(
     client::escrow::happy_path::notify_deposit(env, offerer, canister_ids.escrow, swap_id, None);
 
     (ledger, swap_id)
+}
+
+// Fills the escrow canister's queue of payments with `count` refunds, as anyone can, by having a
+// deposit to a cancelled swap notified that many times at once. Each notification queues a refund of
+// the deposit. The swap's token has a lower fee than its ledger charges, so the ledger rejects each
+// refund, leaving the deposit in place to be refunded again by the next.
+fn fill_payments_queue(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, depositor: Principal, count: u8) {
+    let (_, swap_id) = create_swap_with_deposit_on_new_ledger(env, canister_ids, controller, depositor, 1, 0);
+    client::escrow::happy_path::cancel_swap(env, depositor, canister_ids.escrow, swap_id);
+
+    // Sent by different principals, so that they're different messages
+    let message_ids: Vec<_> = (0..count)
+        .map(|i| {
+            env.submit_call(
+                canister_ids.escrow,
+                Principal::from_slice(&[11, i]),
+                "notify_deposit_msgpack",
+                msgpack::serialize_then_unwrap(&escrow_canister::notify_deposit::Args {
+                    swap_id,
+                    deposited_by: Some(depositor),
+                }),
+            )
+            .unwrap()
+        })
+        .collect();
+    for message_id in message_ids {
+        let response = await_notify_deposit(env, message_id);
+        assert!(
+            matches!(response, escrow_canister::notify_deposit::Response::SwapCancelled),
+            "{response:?}"
+        );
+    }
 }
 
 // The number of failed calls into a ledger to make the swap's payments which the escrow canister

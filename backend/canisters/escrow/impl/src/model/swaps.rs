@@ -25,6 +25,10 @@ impl Swaps {
         self.map.get_mut(&id)
     }
 
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Swap> {
+        self.map.values_mut()
+    }
+
     pub fn metrics(&self, now: TimestampMillis) -> SwapMetrics {
         let mut metrics = SwapMetrics {
             total: self.map.len() as u32,
@@ -69,6 +73,20 @@ pub struct Swap {
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
     pub errors: Vec<String>,
+    // The refunds from each depositor's deposit subaccount
+    #[serde(default)]
+    pub deposit_refunds: BTreeMap<Principal, DepositRefunds>,
+}
+
+// The refunds from a deposit subaccount. Those queued but not yet made will take funds out of the
+// subaccount, which therefore don't count towards the deposit.
+#[derive(Serialize, Deserialize, Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub struct DepositRefunds {
+    // The amount, fees included, which the refunds yet to be made or given up on will take out of the
+    // subaccount if they're made
+    pub outstanding: u128,
+    // The number of refunds which have been made or given up on
+    pub finished: u32,
 }
 
 impl Swap {
@@ -98,6 +116,7 @@ impl Swap {
             additional_admins: args.additional_admins,
             canister_to_notify: args.canister_to_notify,
             errors: Vec::new(),
+            deposit_refunds: BTreeMap::new(),
         }
     }
 
@@ -119,6 +138,24 @@ impl Swap {
             .chain(&self.token1_transfer_out)
             .chain(&self.refunds)
             .any(|transfer| transfer.ledger == ledger && transfer.block_index == block_index)
+    }
+
+    pub fn deposit_refunds(&self, depositor: Principal) -> DepositRefunds {
+        self.deposit_refunds.get(&depositor).copied().unwrap_or_default()
+    }
+
+    // Notes a refund queued from the depositor's subaccount, which will take `debit` out of it
+    pub fn on_refund_queued(&mut self, depositor: Principal, debit: u128) {
+        let refunds = self.deposit_refunds.entry(depositor).or_default();
+        refunds.outstanding = refunds.outstanding.saturating_add(debit);
+    }
+
+    // Notes a refund from the depositor's subaccount, queued to take `debit` out of it, having been
+    // made or given up on
+    pub fn on_refund_finished(&mut self, depositor: Principal, debit: u128) {
+        let refunds = self.deposit_refunds.entry(depositor).or_default();
+        refunds.outstanding = refunds.outstanding.saturating_sub(debit);
+        refunds.finished = refunds.finished.saturating_add(1);
     }
 
     pub fn status(&self, now: TimestampMillis) -> SwapStatus {
@@ -183,9 +220,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn payment_is_recorded_only_for_its_ledger_and_block() {
-        let mut swap = Swap::new(
+    fn swap() -> Swap {
+        Swap::new(
             0,
             Principal::from_slice(&[9]),
             escrow_canister::create_swap::Args {
@@ -202,7 +238,12 @@ mod tests {
                 is_public: false,
             },
             0,
-        );
+        )
+    }
+
+    #[test]
+    fn payment_is_recorded_only_for_its_ledger_and_block() {
+        let mut swap = swap();
         swap.token0_transfer_out = Some(transfer(1, 5));
         swap.token1_transfer_out = Some(transfer(2, 6));
         swap.refunds.push(transfer(1, 7));
@@ -213,5 +254,33 @@ mod tests {
         // Block indexes are per ledger
         assert!(!swap.is_payment_recorded(CanisterId::from_slice(&[2]), 5));
         assert!(!swap.is_payment_recorded(CanisterId::from_slice(&[1]), 8));
+    }
+
+    #[test]
+    fn refunds_are_noted_per_depositor() {
+        let mut swap = swap();
+        let depositor = Principal::from_slice(&[3]);
+        let other_depositor = Principal::from_slice(&[4]);
+
+        swap.on_refund_queued(depositor, 100);
+        swap.on_refund_queued(depositor, 50);
+        swap.on_refund_queued(other_depositor, 10);
+        swap.on_refund_finished(depositor, 100);
+
+        assert_eq!(
+            swap.deposit_refunds(depositor),
+            DepositRefunds {
+                outstanding: 50,
+                finished: 1
+            }
+        );
+        assert_eq!(
+            swap.deposit_refunds(other_depositor),
+            DepositRefunds {
+                outstanding: 10,
+                finished: 0
+            }
+        );
+        assert_eq!(swap.deposit_refunds(Principal::from_slice(&[5])), DepositRefunds::default());
     }
 }

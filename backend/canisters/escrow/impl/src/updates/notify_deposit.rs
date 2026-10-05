@@ -19,6 +19,7 @@ async fn notify_deposit(args: Args) -> Response {
                 success.token_info,
                 success.account,
                 success.balance_required,
+                success.refunds_finished,
             )
             .await
         }
@@ -39,6 +40,7 @@ async fn process_swap(
     token_info: TokenInfo,
     account: Account,
     balance_required: u128,
+    refunds_finished: u32,
 ) -> Response {
     match icrc_ledger_canister_c2c_client::icrc1_balance_of(token_info.ledger, &account)
         .await
@@ -75,29 +77,39 @@ async fn process_swap(
             };
             if let Some(response) = unavailable {
                 if balance > token_info.fee {
-                    state.data.pending_payments_queue.push(PendingPayment {
-                        principal,
-                        timestamp: now,
-                        amount: balance - token_info.fee,
-                        token_info,
-                        swap_id,
-                        reason: PendingPaymentReason::Refund,
-                    });
+                    let amount = balance - token_info.fee;
+                    state
+                        .data
+                        .pending_payments_queue
+                        .push_refund(swap, principal, token_info, amount, now);
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
                 return response;
             }
 
+            // A refund from the deposit's subaccount which was made (or given up on) while the balance
+            // was being checked may or may not show in the balance, so the balance can't be relied on
+            let refunds = swap.deposit_refunds(principal);
+            if refunds.finished != refunds_finished {
+                return InternalError(
+                    "A refund from the deposit's subaccount was made while its balance was being checked. Please try again."
+                        .to_string(),
+                );
+            }
+
+            // Refunds from the subaccount which are yet to be made will take funds out of it, which
+            // therefore don't count towards the deposit. Otherwise a deposit which is too low could be
+            // topped up and recorded before its refund is made, which would then drain it, leaving the
+            // swap's payout from it short.
+            let balance = balance.saturating_sub(refunds.outstanding);
+
             if balance < balance_required {
                 if balance > token_info.fee {
-                    state.data.pending_payments_queue.push(PendingPayment {
-                        principal,
-                        timestamp: state.env.now(),
-                        amount: balance - token_info.fee,
-                        token_info,
-                        swap_id,
-                        reason: PendingPaymentReason::Refund,
-                    });
+                    let amount = balance - token_info.fee;
+                    state
+                        .data
+                        .pending_payments_queue
+                        .push_refund(swap, principal, token_info, amount, now);
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
                 BalanceTooLow(BalanceTooLowResult {
@@ -147,14 +159,13 @@ async fn check_for_refund(swap_id: u32, principal: Principal, token_info: TokenI
         Ok(balance) => {
             if balance > token_info.fee {
                 mutate_state(|state| {
-                    state.data.pending_payments_queue.push(PendingPayment {
-                        principal,
-                        timestamp: state.env.now(),
-                        amount: balance - token_info.fee,
-                        token_info,
-                        swap_id,
-                        reason: PendingPaymentReason::Refund,
-                    });
+                    let now = state.env.now();
+                    let swap = state.data.swaps.get_mut(swap_id).unwrap();
+                    let amount = balance - token_info.fee;
+                    state
+                        .data
+                        .pending_payments_queue
+                        .push_refund(swap, principal, token_info, amount, now);
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 });
             }
@@ -174,6 +185,9 @@ struct PrepareSuccess {
     token_info: TokenInfo,
     account: Account,
     balance_required: u128,
+    // The number of refunds from the deposit's subaccount which had been made or given up on before
+    // its balance was checked
+    refunds_finished: u32,
 }
 
 struct PrepareError {
@@ -228,6 +242,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
                 account,
                 balance_required: swap.amount0 + swap.token0.fee,
                 token_info,
+                refunds_finished: swap.deposit_refunds(principal).finished,
             });
         };
         PrepareResult::ErrorCheckForRefund(PrepareError {
@@ -274,6 +289,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
                 account,
                 balance_required: swap.amount1 + token_info.fee,
                 token_info,
+                refunds_finished: swap.deposit_refunds(principal).finished,
             });
         } else {
             NotAuthorized
