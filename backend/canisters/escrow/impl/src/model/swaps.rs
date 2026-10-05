@@ -174,7 +174,7 @@ mod tests {
             ledger: CanisterId::from_slice(&[ledger]),
             token_symbol: format!("TOKEN{ledger}"),
             amount: 1_000,
-            from: account.clone().into(),
+            from: account.into(),
             to: account.into(),
             fee: 10_000,
             memo: None,
