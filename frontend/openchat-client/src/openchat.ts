@@ -631,6 +631,7 @@ import { Poller } from "./utils/poller";
 import { watchForResume, type ResumeReason } from "./utils/resumeDetector";
 import { answerTouchesChat } from "./utils/answerTouchesChat";
 import { routeForMovedDirectChat } from "./utils/movedDirectChatRoute";
+import { movePreviousWalletFunds } from "./utils/previousWalletFunds";
 import { SyncPuller } from "./utils/syncPuller";
 import { passkeyProviderName } from "./utils/passkeyProvider";
 import { showTrace } from "./utils/profiling";
@@ -7050,6 +7051,25 @@ export class OpenChat {
             });
     }
 
+    // Moves anything left in the wallets of the canisters the user had before being migrated to a
+    // MultiUser canister to their wallet, as the message telling them of their new wallet promises,
+    // reporting any which fails to move
+    async #movePreviousWalletFunds(): Promise<void> {
+        const outcomes = await movePreviousWalletFunds(
+            currentUserStore.value,
+            () => this.fundsInPreviousWallets(),
+            (funds) => this.moveFundsFromPreviousWallets(funds),
+        );
+        for (const { previousUserId, ledger, result } of outcomes ?? []) {
+            if (result.kind === "failed") {
+                this.#logger.error("Failed to move funds from a previous wallet", result.error, {
+                    previousUserId,
+                    ledger,
+                });
+            }
+        }
+    }
+
     refreshTranslationsBalance(): Promise<bigint> {
         return this.#worker
             .send({
@@ -8065,6 +8085,9 @@ export class OpenChat {
                 startMessagesReadTracker(this);
                 this.refreshSwappableTokens();
                 window.setTimeout(() => this.refreshBalancesInSeries(), 1000);
+                // Left until the balances have started refreshing, since it queries every token
+                // too, and nothing waits on it
+                window.setTimeout(() => this.#movePreviousWalletFunds(), 5000);
             }
 
             // horribly enough - we need to slightly defer this so that all the cascade of derived stuff is complete
