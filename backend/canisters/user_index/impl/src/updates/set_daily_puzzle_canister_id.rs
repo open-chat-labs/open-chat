@@ -16,7 +16,7 @@ async fn set_daily_puzzle_canister_id(args: Args) -> Response {
     mutate_state(|state| set_daily_puzzle_canister_id_impl(args, state))
 }
 
-fn set_daily_puzzle_canister_id_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn set_daily_puzzle_canister_id_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.data.daily_puzzle_canister_id = Some(args.canister_id);
 
     state.push_event_to_all_local_user_indexes(UserIndexEvent::SetDailyPuzzleCanisterId(args.canister_id), None);
