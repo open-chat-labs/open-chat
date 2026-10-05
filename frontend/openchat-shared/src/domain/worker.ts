@@ -243,6 +243,8 @@ import type {
     MigrateUsersResponse,
     UserMigrationResponse,
     UsersToMigrate,
+    FundsInPreviousWallet,
+    MoveFundsOutcome,
     SubmitProofOfUniquePersonhoodResponse,
     SubmitProposalResponse,
     SuspendUserResponse,
@@ -333,6 +335,8 @@ export type WorkerRequest =
     | SearchGroupChat
     | SearchDirectChat
     | RefreshAccountBalance
+    | GetFundsInPreviousWallets
+    | MoveFundsFromPreviousWallets
     | GetAccountTransactions
     | GetThreadPreviews
     | GetUser
@@ -1263,6 +1267,16 @@ type RefreshAccountBalance = {
     ledger: string;
     principal: string;
     kind: "refreshAccountBalance";
+};
+
+type GetFundsInPreviousWallets = {
+    previousUserIds: string[];
+    kind: "fundsInPreviousWallets";
+};
+
+type MoveFundsFromPreviousWallets = {
+    funds: FundsInPreviousWallet[];
+    kind: "moveFundsFromPreviousWallets";
 };
 
 type GetAccountTransactions = {
@@ -2737,6 +2751,10 @@ export type WorkerResult<T> = T extends Init
     ? SearchDirectChatResponse
     : T extends RefreshAccountBalance
     ? bigint
+    : T extends GetFundsInPreviousWallets
+    ? FundsInPreviousWallet[]
+    : T extends MoveFundsFromPreviousWallets
+    ? MoveFundsOutcome[]
     : T extends GetAccountTransactions
     ? AccountTransactionResult
     : T extends GetThreadPreviews

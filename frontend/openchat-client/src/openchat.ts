@@ -175,6 +175,8 @@ import {
     type MigrateUsersResponse,
     type UserMigrationResponse,
     type UsersToMigrate,
+    type FundsInPreviousWallet,
+    type MoveFundsOutcome,
     type CreateUserGroupResponse,
     type CreatedUser,
     type CryptocurrencyContent,
@@ -7006,6 +7008,46 @@ export class OpenChat {
         this.#inflightBalanceRefreshPromises.set(ledger, promise);
 
         return promise;
+    }
+
+    // The balances left behind in the wallets of the canisters the user had before being migrated to
+    // a MultiUser canister. They aren't in the user's wallet until moved there with
+    // `moveFundsFromPreviousWallets`.
+    fundsInPreviousWallets(): Promise<FundsInPreviousWallet[]> {
+        const previousUserIds = currentUserStore.value.previousUserIds ?? [];
+        if (previousUserIds.length === 0) {
+            return Promise.resolve([]);
+        }
+        return this.#worker
+            .send({ kind: "fundsInPreviousWallets", previousUserIds })
+            .catch(() => []);
+    }
+
+    // Moves the given balances, from `fundsInPreviousWallets`, to the user's wallet, then refreshes
+    // the wallet's balance of each of their tokens, including those which failed to move, since a
+    // transfer which timed out may still have been made
+    moveFundsFromPreviousWallets(funds: FundsInPreviousWallet[]): Promise<MoveFundsOutcome[]> {
+        if (funds.length === 0) {
+            return Promise.resolve([]);
+        }
+        return this.#worker
+            .send({ kind: "moveFundsFromPreviousWallets", funds })
+            .catch((err): MoveFundsOutcome[] =>
+                funds.map(({ previousUserId, ledger }) => ({
+                    previousUserId,
+                    ledger,
+                    result: {
+                        kind: "failed",
+                        error: { kind: "error", code: -1, message: String(err) },
+                    },
+                })),
+            )
+            .then(async (outcomes) => {
+                // Each refresh resolves, falling back to 0 if it fails or times out
+                const ledgers = new Set(funds.map((f) => f.ledger));
+                await Promise.all([...ledgers].map((ledger) => this.refreshAccountBalance(ledger)));
+                return outcomes;
+            });
     }
 
     refreshTranslationsBalance(): Promise<bigint> {

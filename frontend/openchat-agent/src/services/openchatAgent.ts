@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import { HttpAgent, type Identity } from "@icp-sdk/core/agent";
+import { CanisterStatus, HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import type {
     ModerationConfig,
@@ -163,6 +163,10 @@ import type {
     MigrateUsersResponse,
     UserMigrationResponse,
     UsersToMigrate,
+    FundsInPreviousWallet,
+    MoveFundsFromOldCanisterResponse,
+    MoveFundsOutcome,
+    MoveFundsResult,
     SetUsernameResponse,
     SetVideoCallPresenceResponse,
     SiwePrepareLoginResponse,
@@ -355,6 +359,11 @@ function emptyResolvedMessagePreviews(): ResolvedMessagePreviews {
 }
 
 const NNS_ERROR_TYPE_NEURON_ALREADY_VOTED = 19;
+const MAX_CONCURRENT_PREVIOUS_WALLET_BALANCE_CHECKS = 10;
+// The most ledgers the LocalUserIndex moves funds from in one call
+const MAX_LEDGERS_PER_FUNDS_MOVE = 20;
+const MAX_FUNDS_MOVE_RETRIES = 3;
+const FUNDS_MOVE_RETRY_INTERVAL_MS = 10_000;
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -3604,6 +3613,167 @@ export class OpenChatAgent extends EventTarget {
         if (offline()) return Promise.resolve(0n);
 
         return this._ledgerClient.accountBalance(ledger, this.walletAccount(userId));
+    }
+
+    // The balances left behind in the wallets of the canisters the user had before being migrated to
+    // a MultiUser canister, on each token in the Registry, which are large enough to be moved. Only
+    // those of `previousUserIds` which were canisters of their own had wallets. A balance which
+    // can't be read, eg. on a ledger which has been decommissioned, is left out.
+    async fundsInPreviousWallets(previousUserIds: string[]): Promise<FundsInPreviousWallet[]> {
+        if (offline()) return [];
+
+        const tokens = this._registryValue?.tokenDetails ?? [];
+        const checks = previousUserIds
+            .filter((id) => isCanisterId(Principal.fromText(id)))
+            .flatMap((previousUserId) =>
+                tokens.map((t) => ({ previousUserId, ledger: t.ledger, fee: t.transferFee })),
+            );
+
+        const funds: FundsInPreviousWallet[] = [];
+        for (const batch of chunk(checks, MAX_CONCURRENT_PREVIOUS_WALLET_BALANCE_CHECKS)) {
+            const balances = await Promise.allSettled(
+                batch.map(({ previousUserId, ledger }) =>
+                    this._ledgerClient.accountBalance(ledger, this.walletAccount(previousUserId)),
+                ),
+            );
+            batch.forEach(({ previousUserId, ledger, fee }, i) => {
+                const balance = balances[i];
+                if (balance.status === "fulfilled" && balance.value > fee) {
+                    funds.push({ previousUserId, ledger, balance: balance.value });
+                }
+            });
+        }
+        return funds;
+    }
+
+    // Moves the given balances, left behind in the wallets of the canisters the user had before
+    // being migrated to a MultiUser canister, to the user's wallet, returning the outcome on each
+    // ledger. The canisters are moved from one after another.
+    async moveFundsFromPreviousWallets(
+        funds: FundsInPreviousWallet[],
+    ): Promise<MoveFundsOutcome[]> {
+        const ledgersByPreviousUserId = new Map<string, Set<string>>();
+        for (const { previousUserId, ledger } of funds) {
+            const ledgers = ledgersByPreviousUserId.get(previousUserId) ?? new Set();
+            ledgers.add(ledger);
+            ledgersByPreviousUserId.set(previousUserId, ledgers);
+        }
+
+        const outcomes: MoveFundsOutcome[] = [];
+        for (const [previousUserId, ledgers] of ledgersByPreviousUserId) {
+            const results = await this.moveFundsFromPreviousWallet(previousUserId, [...ledgers]);
+            outcomes.push(...results.map((r) => ({ previousUserId, ...r })));
+        }
+        return outcomes;
+    }
+
+    private async moveFundsFromPreviousWallet(
+        previousUserId: string,
+        ledgers: string[],
+    ): Promise<{ ledger: string; result: MoveFundsResult }[]> {
+        const outcomes: { ledger: string; result: MoveFundsResult }[] = [];
+        let localUserIndexes: string[] | undefined = undefined;
+        for (const batch of chunk(ledgers, MAX_LEDGERS_PER_FUNDS_MOVE)) {
+            let response: MoveFundsFromOldCanisterResponse;
+            try {
+                localUserIndexes ??= await this.canisterControllers(previousUserId);
+                const moved = await this.moveFundsThroughController(
+                    localUserIndexes,
+                    previousUserId,
+                    batch,
+                );
+                response = moved.response;
+                if (moved.localUserIndex !== undefined) {
+                    localUserIndexes = [moved.localUserIndex];
+                }
+            } catch (err) {
+                response = { kind: "error", code: ErrorCode.Unknown, message: String(err) };
+            }
+
+            if (response.kind === "success") {
+                outcomes.push(...response.outcomes);
+            } else {
+                const result: MoveFundsResult = { kind: "failed", error: response };
+                outcomes.push(...batch.map((ledger) => ({ ledger, result })));
+            }
+        }
+        return outcomes;
+    }
+
+    // Moves the funds on `ledgers` from the canister of `previousUserId` through whichever of its
+    // controllers is the LocalUserIndex which controls it, giving that LocalUserIndex if found. The
+    // others are passed over, since a LocalUserIndex which doesn't control the canister returns
+    // `CanisterNotFound`, and a canister which isn't a LocalUserIndex rejects the call.
+    private async moveFundsThroughController(
+        controllers: string[],
+        previousUserId: string,
+        ledgers: string[],
+    ): Promise<{ localUserIndex?: string; response: MoveFundsFromOldCanisterResponse }> {
+        let response: MoveFundsFromOldCanisterResponse = {
+            kind: "error",
+            code: ErrorCode.CanisterNotFound,
+            message: "No LocalUserIndex controls the previous canister",
+        };
+        for (const controller of controllers) {
+            try {
+                response = await this.moveFundsFromOldCanister(controller, previousUserId, ledgers);
+            } catch (err) {
+                response = { kind: "error", code: ErrorCode.Unknown, message: String(err) };
+                continue;
+            }
+            if (!isError(response) || response.code !== ErrorCode.CanisterNotFound) {
+                return { localUserIndex: controller, response };
+            }
+        }
+        return { response };
+    }
+
+    // The LocalUserIndex turns a move away with `AlreadyInProgress` while the canister is busy,
+    // which it is for a few seconds while its cycles are refunded. That happens once the canister
+    // is uninstalled, and again straight after each move which makes a transfer from it, so is to
+    // be expected before each batch of ledgers after the first.
+    private async moveFundsFromOldCanister(
+        localUserIndex: string,
+        previousUserId: string,
+        ledgers: string[],
+    ): Promise<MoveFundsFromOldCanisterResponse> {
+        for (let attempt = 0; ; attempt++) {
+            const response = await this._localUserIndexClient.moveFundsFromOldCanister(
+                localUserIndex,
+                previousUserId,
+                ledgers,
+            );
+            if (
+                !isError(response) ||
+                response.code !== ErrorCode.AlreadyInProgress ||
+                attempt >= MAX_FUNDS_MOVE_RETRIES
+            ) {
+                return response;
+            }
+            await new Promise((resolve) => setTimeout(resolve, FUNDS_MOVE_RETRY_INTERVAL_MS));
+        }
+    }
+
+    // The canisters which control `canisterId`. The IC certifies these for any canister, so unlike
+    // a canister's own `local_user_index` query, they can be had for a User canister which has been
+    // uninstalled, as one is once its user has been migrated to a MultiUser canister. A User
+    // canister is controlled by the LocalUserIndex which created it.
+    private async canisterControllers(canisterId: string): Promise<string[]> {
+        // `CanisterStatus` doesn't fetch the root key itself, as calls do, when the agent has to
+        if (this._agent.rootKey === null) {
+            await this._agent.fetchRootKey();
+        }
+        const status = await CanisterStatus.request({
+            canisterId: Principal.fromText(canisterId),
+            agent: this._agent,
+            paths: ["controllers"],
+        });
+        // Rather than throwing, `CanisterStatus` gives null for a path it couldn't read
+        const controllers = status.get("controllers");
+        if (!Array.isArray(controllers)) {
+            throw new Error(`Unable to read the controllers of ${canisterId}`);
+        }
+        return (controllers as Principal[]).filter(isCanisterId).map((c) => c.toText());
     }
 
     // The transactions of each wallet `userId` has held funds in, merged into one history
