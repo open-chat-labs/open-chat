@@ -1,6 +1,7 @@
 use crate::model::files::File;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{FileIdToFileKeyPrefix, LazyValue, StableMemoryMap};
+use stable_memory_map::{FileIdToFileKeyPrefix, KeyPrefix, LazyValue, StableMemoryMap, with_map};
+use std::ops::Bound::{Excluded, Included};
 use types::FileId;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -38,9 +39,22 @@ impl FilesMap {
         self.len
     }
 
+    // Up to `max_count` files in order of file id, from just after `after`, or from the first if it
+    // is `None`
+    pub fn files_after(&self, after: Option<FileId>, max_count: usize) -> Vec<(FileId, File)> {
+        let start = after.map_or(Included(self.prefix.create_key(&0)), |f| Excluded(self.prefix.create_key(&f)));
+        let end = Included(self.prefix.create_key(&FileId::MAX));
+
+        with_map(|m| {
+            m.range((start, end))
+                .take(max_count)
+                .map(|(k, v)| (k.file_id(), bytes_to_file(v)))
+                .collect()
+        })
+    }
+
     #[cfg(test)]
     pub fn get_all(&self) -> Vec<(FileId, File)> {
-        use stable_memory_map::{KeyPrefix, with_map};
         with_map(|m| {
             m.range(self.prefix.create_key(&0)..)
                 .map(|(k, v)| (k.file_id(), bytes_to_file(v)))
