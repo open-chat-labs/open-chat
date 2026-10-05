@@ -11,6 +11,7 @@ pub mod local_multi_user_canister_map;
 pub mod local_user_map;
 pub mod media_scan_job_log;
 pub mod moderation_queue;
+pub mod old_local_group_index;
 pub mod premium_items;
 pub mod recent_joins;
 pub mod referral_codes;

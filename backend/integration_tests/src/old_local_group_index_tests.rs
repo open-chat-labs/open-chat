@@ -1,0 +1,155 @@
+use crate::env::ENV;
+use crate::utils::{metrics, tick_many, wait_for_canister_to_be_deleted};
+use crate::{TestEnv, client};
+use candid::Principal;
+use constants::{B, T};
+use pocket_ic::{CanisterSettings, CreateCanisterParams, CreateCanisterPlacement, PocketIc};
+use std::ops::Deref;
+use std::time::Duration;
+use types::{CanisterId, UnitResult};
+
+// Stands in for the old LocalGroupIndex's code, and for a live canister's
+const MODULE_WAT: &str = r#"(module (memory 1))"#;
+
+// The canisters which only the old LocalGroupIndex controls are handed over to the LocalUserIndex,
+// via the call relay installed over the old LocalGroupIndex, and their cycles refunded before they
+// are deleted, after which the old LocalGroupIndex is too
+#[test]
+fn old_local_group_index_canisters_are_reclaimed_then_it_is_deleted() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let old_local_group_index = create_old_local_group_index(env, canister_ids.group_index, local_user_index);
+    let pool_canisters: Vec<_> = (0..3)
+        .map(|_| create_controlled_canister(env, old_local_group_index, local_user_index, false))
+        .collect();
+    let cycles_dispenser_balance = env.cycle_balance(canister_ids.cycles_dispenser);
+
+    reclaim(
+        env,
+        canister_ids.group_index,
+        local_user_index,
+        old_local_group_index,
+        &pool_canisters,
+    );
+
+    for canister_id in pool_canisters.iter().chain([&old_local_group_index]) {
+        wait_for_canister_to_be_deleted(env, *canister_id);
+    }
+
+    let old = &metrics(env, local_user_index)["old_local_group_index"];
+    assert_eq!(old["reclaimed"].as_u64(), Some(3));
+    assert_eq!(old["skipped"].as_array().map(|s| s.len()), Some(0));
+    assert_eq!(old["completed"].as_bool(), Some(true));
+
+    // Most of the old LocalGroupIndex's 10T, and of the pool canisters' 1.5T, has been refunded
+    assert!(env.cycle_balance(canister_ids.cycles_dispenser) > cycles_dispenser_balance + 10 * T);
+}
+
+// A canister which has code is left as it is, so the old LocalGroupIndex, which may be all that
+// controls it, is kept
+#[test]
+fn canister_with_code_is_skipped_and_old_local_group_index_kept() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let old_local_group_index = create_old_local_group_index(env, canister_ids.group_index, local_user_index);
+    let pool_canister = create_controlled_canister(env, old_local_group_index, local_user_index, false);
+    let live_canister = create_controlled_canister(env, old_local_group_index, local_user_index, true);
+
+    reclaim(
+        env,
+        canister_ids.group_index,
+        local_user_index,
+        old_local_group_index,
+        &[pool_canister, live_canister],
+    );
+
+    wait_for_canister_to_be_deleted(env, pool_canister);
+    wait_until_completed(env, local_user_index);
+
+    let old = &metrics(env, local_user_index)["old_local_group_index"];
+    assert_eq!(old["reclaimed"].as_u64(), Some(1));
+    assert_eq!(old["skipped"][0].as_str(), Some(live_canister.to_text().as_str()));
+
+    // Neither the live canister nor the old LocalGroupIndex is touched further
+    tick_many(env, 20);
+    let status = env.canister_status(live_canister, Some(old_local_group_index)).unwrap();
+    assert_eq!(status.settings.controllers, vec![old_local_group_index]);
+    assert!(status.module_hash.is_some());
+    assert!(env.canister_exists(old_local_group_index));
+}
+
+fn reclaim(
+    env: &mut PocketIc,
+    group_index: CanisterId,
+    local_user_index: CanisterId,
+    old_local_group_index: CanisterId,
+    canister_ids: &[CanisterId],
+) {
+    let response = client::local_user_index::c2c_reclaim_old_local_group_index(
+        env,
+        group_index,
+        local_user_index,
+        &local_user_index_canister::c2c_reclaim_old_local_group_index::Args {
+            local_group_index_canister_id: old_local_group_index,
+            canister_ids: canister_ids.to_vec(),
+        },
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+}
+
+// As the GroupIndex leaves it: with code, and the LocalUserIndex as a controller alongside the
+// GroupIndex
+fn create_old_local_group_index(env: &mut PocketIc, group_index: CanisterId, local_user_index: CanisterId) -> CanisterId {
+    let canister_id = create_on_subnet(env, local_user_index, vec![group_index, local_user_index], 10 * T);
+    env.install_canister(canister_id, module(), Vec::new(), Some(group_index));
+    canister_id
+}
+
+// Controlled by the old LocalGroupIndex alone, as its pool canisters were
+fn create_controlled_canister(
+    env: &mut PocketIc,
+    old_local_group_index: CanisterId,
+    local_user_index: CanisterId,
+    with_code: bool,
+) -> CanisterId {
+    let canister_id = create_on_subnet(env, local_user_index, vec![old_local_group_index], 500 * B);
+    if with_code {
+        env.install_canister(canister_id, module(), Vec::new(), Some(old_local_group_index));
+    }
+    canister_id
+}
+
+fn create_on_subnet(env: &mut PocketIc, local_user_index: CanisterId, controllers: Vec<Principal>, cycles: u128) -> CanisterId {
+    let subnet_id = env.get_subnet(local_user_index).unwrap();
+    env.create_canister_with_params(
+        Some(controllers[0]),
+        CreateCanisterParams {
+            cycles: Some(cycles),
+            settings: Some(CanisterSettings {
+                controllers: Some(controllers),
+                ..Default::default()
+            }),
+            placement: Some(CreateCanisterPlacement::SubnetId(subnet_id)),
+        },
+    )
+    .unwrap()
+}
+
+fn wait_until_completed(env: &mut PocketIc, local_user_index: CanisterId) {
+    for _ in 0..100 {
+        if metrics(env, local_user_index)["old_local_group_index"]["completed"].as_bool() == Some(true) {
+            return;
+        }
+        env.advance_time(Duration::from_secs(10));
+        tick_many(env, 5);
+    }
+    panic!("Reclaiming the old LocalGroupIndex's canisters didn't complete");
+}
+
+fn module() -> Vec<u8> {
+    wat::parse_str(MODULE_WAT).unwrap()
+}
