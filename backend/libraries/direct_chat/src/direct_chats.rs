@@ -36,12 +36,14 @@ pub struct DirectChats {
 }
 
 // What is kept on the heap for a chat stored in stable memory. Besides the chat's `key_id`, it
-// holds the chat's `last_updated` and `next_event_expiry` as of when the chat was last written,
-// which can only change when the chat is written.
+// holds the chat's `user_type`, `last_updated` and `next_event_expiry` as of when the chat was last
+// written, which can only change when the chat is written.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 struct DirectChatEntry {
     #[serde(rename = "k")]
     key_id: u32,
+    #[serde(rename = "t")]
+    user_type: UserType,
     #[serde(rename = "u")]
     last_updated: TimestampMillis,
     #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
@@ -52,6 +54,7 @@ impl DirectChatEntry {
     fn new(chat: &DirectChat) -> DirectChatEntry {
         DirectChatEntry {
             key_id: chat.key_id(),
+            user_type: chat.user_type,
             last_updated: chat.last_updated(),
             next_event_expiry: chat.events().next_event_expiry(),
         }
@@ -230,6 +233,15 @@ impl DirectChats {
 
     pub fn exists(&self, chat_id: &ChatId) -> bool {
         self.in_stable_memory.contains_key(chat_id) || self.on_heap.contains_key(chat_id)
+    }
+
+    // The type of the other user in the chat, if there is one, without reading the chat
+    pub fn user_type(&self, chat_id: &ChatId) -> Option<UserType> {
+        if let Some(entry) = self.in_stable_memory.get(chat_id) {
+            Some(entry.user_type)
+        } else {
+            self.on_heap.get(chat_id).map(|chat| chat.user_type)
+        }
     }
 
     pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {
@@ -647,17 +659,31 @@ mod tests {
     }
 
     #[test]
-    fn expiring_events_are_found_without_reading_the_chats() {
+    fn expiring_events_and_user_types_are_found_without_reading_the_chats() {
         init_stable_memory_map();
         let me = user(1);
         let mut direct_chats = DirectChats::default();
-        for (i, ttl) in [(2, Some(100)), (3, None), (4, Some(50))] {
-            let mut chat = direct_chats.get_or_create(me, user(i), UserType::User, || i as u128, 0);
+        for (i, ttl, user_type) in [
+            (2, Some(100), UserType::User),
+            (3, None, UserType::BotV2),
+            (4, Some(50), UserType::User),
+        ] {
+            let mut chat = direct_chats.get_or_create(me, user(i), user_type, || i as u128, 0);
             if let Some(ttl) = ttl {
                 chat.set_events_time_to_live(me, Some(ttl), 0);
             }
             chat.push_message::<NullEventPusher>(message(me, i as u128, 10), None, None);
         }
+
+        // The chats are replaced with bytes which can't be read, so that reading any of them panics
+        let stored: Vec<_> = (2..=4).map(|i| (i, stable_memory_bytes(&direct_chats, user(i)))).collect();
+        for (i, _) in stored.iter() {
+            let key_id = entry(&direct_chats, user(*i)).key_id;
+            with_map_mut(|m| m.insert(DirectChatKeyPrefix::new().create_key(&key_id), vec![1, 2, 3]));
+        }
+        assert_eq!(direct_chats.user_type(&user(2).into()), Some(UserType::User));
+        assert_eq!(direct_chats.user_type(&user(3).into()), Some(UserType::BotV2));
+        assert_eq!(direct_chats.user_type(&user(5).into()), None);
         assert_eq!(direct_chats.next_event_expiry(), Some(60));
         assert!(direct_chats.chats_with_events_expiring_by(59).is_empty());
         assert_eq!(direct_chats.chats_with_events_expiring_by(60), vec![ChatId::from(user(4))]);
@@ -666,6 +692,10 @@ mod tests {
         let mut expected = vec![ChatId::from(user(2)), ChatId::from(user(4))];
         expected.sort();
         assert_eq!(due, expected);
+        for (i, bytes) in stored {
+            let key_id = entry(&direct_chats, user(i)).key_id;
+            with_map_mut(|m| m.insert(DirectChatKeyPrefix::new().create_key(&key_id), bytes));
+        }
 
         direct_chats.get_mut(&user(4).into()).unwrap().remove_expired_events(60);
         assert_eq!(direct_chats.next_event_expiry(), Some(110));

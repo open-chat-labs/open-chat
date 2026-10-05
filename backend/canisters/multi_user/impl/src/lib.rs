@@ -258,8 +258,8 @@ impl RuntimeState {
                 .users
                 .with_user(sender_index, |user| {
                     user.direct_chats
-                        .get(&recipient.into())
-                        .is_some_and(|chat| chat.user_type.is_bot())
+                        .user_type(&recipient.into())
+                        .is_some_and(|user_type| user_type.is_bot())
                 })
                 .unwrap_or_default();
         if recipient == sender || recipient_is_bot {

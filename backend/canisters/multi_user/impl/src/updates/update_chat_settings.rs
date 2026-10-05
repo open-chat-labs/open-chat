@@ -41,7 +41,7 @@ fn check_chat_exists(them: UserId, state: &RuntimeState) -> Result<(), CanisterI
             state
                 .data
                 .users
-                .with_user(my_index, |user| user.direct_chats.get(&them.into()).is_some())
+                .with_user(my_index, |user| user.direct_chats.exists(&them.into()))
         })
         .unwrap_or_default();
     if has_chat { Ok(()) } else { Err(state.data.local_user_index_canister_id) }

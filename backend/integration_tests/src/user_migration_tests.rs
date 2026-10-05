@@ -2467,16 +2467,21 @@ fn migrated_users_direct_chats_end_up_in_stable_memory() {
 
     // Every user's chats still work: messages are sent and received, and disappear when they expire
     let migrated = [migrated_0, migrated_1, migrated_2];
+    let latest_message =
+        |env: &PocketIc, user: &User, them: &User| direct_chats_with(env, user, std::slice::from_ref(them))[0].2.clone();
     for user in migrated.iter() {
         client::user::happy_path::send_text_message(env, user, partners[0].user_id, "sent after", None);
+    }
+    tick_many(env, 10);
+    for user in migrated.iter() {
+        assert_eq!(latest_message(env, user, &partners[0]), "sent after");
+        assert_eq!(latest_message(env, &partners[0], user), "sent after");
         client::user::happy_path::send_text_message(env, &partners[0], user.user_id, "received after", None);
     }
     tick_many(env, 10);
     for user in migrated.iter() {
-        let latest_message = direct_chats_with(env, user, &partners)[0].2.clone();
-        assert_eq!(latest_message, "received after");
-        let partners_latest_message = direct_chats_with(env, &partners[0], std::slice::from_ref(user))[0].2.clone();
-        assert_eq!(partners_latest_message, "received after");
+        assert_eq!(latest_message(env, user, &partners[0]), "received after");
+        assert_eq!(latest_message(env, &partners[0], user), "received after");
     }
 
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));

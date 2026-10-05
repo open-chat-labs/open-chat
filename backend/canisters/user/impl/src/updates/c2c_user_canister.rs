@@ -44,7 +44,7 @@ fn get_sender_status(state: &RuntimeState) -> SenderStatus {
     let sender: UserId = state.env.caller().into();
     if state.data.user.blocked_users.contains(&sender) {
         SenderStatus::Blocked
-    } else if let Some(user_type) = state.data.user.direct_chats.get(&sender.into()).map(|c| c.user_type) {
+    } else if let Some(user_type) = state.data.user.direct_chats.user_type(&sender.into()) {
         SenderStatus::Ok(sender, user_type)
     } else {
         SenderStatus::UnknownUser(state.data.local_user_index_canister_id, sender)
