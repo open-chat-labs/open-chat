@@ -7,6 +7,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferError;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromError;
 use pocket_ic::PocketIc;
+use pocket_ic::common::rest::RawMessageId;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -743,6 +744,98 @@ fn gate_payment_from_uninstalled_ledger_is_parked(gated: Gated) {
     tick_many(env, 10);
     assert_eq!(metric(env, canister_id, "parked_payments"), 1);
     assert_eq!(metric(env, canister_id, "payments_awaiting_retry"), 0);
+}
+
+// Two members joining make two equal payments to the owner. If both have to be retried, and the
+// retries fall due in the same round, they are still made as distinct transfers, rather than the
+// ledger rejecting the second as a duplicate of the first, which would leave the owner paid once.
+#[test_case(Gated::Group)]
+#[test_case(Gated::Community)]
+fn equal_gate_payments_retried_in_the_same_round_are_both_made(gated: Gated) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let ledger = canister_ids.icp_ledger;
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let amount = 1_000_000;
+    let fee = 10_000;
+    let (canister_id, _) = create_gated(env, &owner, &gated, ledger, amount, fee);
+    let owner_balance = client::ledger::happy_path::balance_of(env, ledger, owner.user_id);
+
+    // Each member's payment is taken while the ledger is running, but the ledger is stopped before
+    // the owner is paid, so the payment to the owner is retried 10 seconds later. Time doesn't pass
+    // as the rounds do, so both retries fall due at the same time.
+    for _ in 0..2 {
+        let user = client::register_user(env, canister_ids);
+        client::ledger::happy_path::transfer(env, *controller, ledger, user.user_id, amount);
+        client::user::happy_path::approve_transfer(
+            env,
+            &user,
+            &user_canister::approve_transfer::Args {
+                spender: member_spender_account(canister_id, &user).into(),
+                ledger_canister_id: ledger,
+                amount: amount - fee,
+                expires_in: None,
+                pin: None,
+            },
+        );
+
+        let balance = client::ledger::happy_path::balance_of(env, ledger, user.user_id);
+
+        let message_id = submit_join(env, &user, &gated, canister_id);
+        let charged = (0..50).any(|_| {
+            env.tick();
+            client::ledger::happy_path::balance_of(env, ledger, user.user_id) < balance
+        });
+        assert!(charged);
+        client::stop_canister(env, *controller, ledger);
+        env.await_call(message_id).unwrap();
+        tick_many(env, 10);
+        client::start_canister(env, *controller, ledger);
+    }
+    assert_eq!(metric(env, canister_id, "payments_awaiting_retry"), 2);
+
+    env.advance_time(Duration::from_secs(11));
+    tick_many(env, 10);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, ledger, owner.user_id) - owner_balance,
+        2 * 970_000
+    );
+    assert_eq!(metric(env, canister_id, "payments_awaiting_retry"), 0);
+}
+
+// Submits `user`'s request to join the group or community without waiting for it to complete
+fn submit_join(env: &PocketIc, user: &User, gated: &Gated, canister_id: Principal) -> RawMessageId {
+    let (local_user_index, method, args) = match gated {
+        Gated::Group => (
+            client::group::happy_path::local_user_index(env, canister_id.into()),
+            "join_group_msgpack",
+            msgpack::serialize_then_unwrap(&local_user_index_canister::join_group::Args {
+                chat_id: canister_id.into(),
+                invite_code: None,
+                verified_credential_args: None,
+                composite_gate_index: None,
+            }),
+        ),
+        Gated::Community => (
+            client::community::happy_path::local_user_index(env, canister_id.into()),
+            "join_community_msgpack",
+            msgpack::serialize_then_unwrap(&local_user_index_canister::join_community::Args {
+                community_id: canister_id.into(),
+                invite_code: None,
+                referred_by: None,
+                verified_credential_args: None,
+                composite_gate_index: None,
+            }),
+        ),
+        Gated::Channel => unreachable!(),
+    };
+    env.submit_call(local_user_index, user.principal, method, args).unwrap()
 }
 
 // Creates a group or community with a payment gate on `ledger`, which `user` joins, returning the

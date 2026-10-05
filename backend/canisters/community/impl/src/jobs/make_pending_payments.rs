@@ -18,6 +18,7 @@ const MAX_FAILURES_LOGGED: u32 = 3;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
+    static LAST_CREATED_AT_TIME: Cell<TimestampNanos> = Cell::default();
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
@@ -70,7 +71,7 @@ async fn process_payment(pending_payment: PendingPayment, previous_failures: u32
         from_subaccount: None,
         to,
         fee: Some(pending_payment.fee.into()),
-        created_at_time: Some(now_nanos),
+        created_at_time: Some(unique_created_at_time(now_nanos)),
         memo: Some(memo(pending_payment.reason)),
         amount: pending_payment.amount.into(),
     };
@@ -148,6 +149,17 @@ fn on_failed_to_call_ledger(
             state.data.pending_payments_queue.park(pending_payment);
         }
     }
+}
+
+// Returns a `created_at_time` which no earlier transfer from this canister has had. Time doesn't pass
+// within a round, and several payments can be attempted in one (eg. retries which all fell due while
+// the canister was being upgraded), so two equal payments to the same member would otherwise be
+// identical, and the ledger would reject the second as a duplicate. The last one given isn't
+// persisted across upgrades, since time moves on while the canister is upgraded.
+fn unique_created_at_time(now_nanos: TimestampNanos) -> TimestampNanos {
+    let created_at_time = now_nanos.max(LAST_CREATED_AT_TIME.get() + 1);
+    LAST_CREATED_AT_TIME.set(created_at_time);
+    created_at_time
 }
 
 fn memo(reason: PendingPaymentReason) -> Memo {
