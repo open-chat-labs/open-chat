@@ -16,9 +16,11 @@ vi.hoisted(() => {
         }) as unknown as MediaQueryList) as typeof window.matchMedia;
 });
 
-import type { ChatSummary, MessageContext, OpenChat } from "@client";
-import { currentUserStore } from "@client";
+import type { ChatSummary, EventWrapper, Message, MessageContext, OpenChat } from "@client";
+import { botState, currentUserStore } from "@client";
+import type { Editor } from "@tiptap/core";
 import { loadRichTextEditor } from "@shared_components/richTextEditorLoader";
+import { enterSend } from "@stores/settings";
 import MobileMessageEntry from "../../components_mobile/home/MessageEntry.svelte";
 import en from "../../i18n/en.json";
 import Harness from "./MessageEntry.spec.harness.svelte";
@@ -51,6 +53,8 @@ function fakeClient(): OpenChat {
 }
 
 async function render(Entry: Component, textContent: string | undefined) {
+    const onStartTyping = vi.fn();
+    const onSendMessage = vi.fn();
     const target = document.createElement("div");
     document.body.appendChild(target);
     const app = mount(Harness, {
@@ -64,13 +68,13 @@ async function render(Entry: Component, textContent: string | undefined) {
                 lapsed: false,
                 joining: undefined,
                 attachment: undefined,
-                editingEvent: undefined,
                 replyingTo: undefined,
                 externalContent: false,
                 messageContext,
                 user: { kind: "created_user", userId: "me", username: "me" },
                 inputTrayVisible: false,
-                onStartTyping: () => {},
+                onStartTyping,
+                onSendMessage,
                 onStopTyping: () => {},
             },
         },
@@ -78,10 +82,38 @@ async function render(Entry: Component, textContent: string | undefined) {
     });
     flushSync();
     await tick();
+    const editorEl = () => target.querySelector(".ProseMirror") as HTMLElement | null;
     return {
-        text: () => (target.querySelector(".ProseMirror") as HTMLElement | null)?.textContent,
+        text: () => editorEl()?.textContent,
+        draft: () => app.getTextContent(),
+        onStartTyping,
+        onSendMessage,
         setBlocked(value: boolean) {
             app.setBlocked(value);
+            flushSync();
+        },
+        // Hands the entry another chat's draft, as switching chats does
+        switchDraft(value: string | undefined) {
+            app.setTextContent(value);
+            flushSync();
+        },
+        edit(text: string) {
+            app.setEditingEvent({
+                event: { kind: "message", content: { kind: "text_content", text } },
+                index: 1,
+                timestamp: 0n,
+            } as unknown as EventWrapper<Message>);
+            flushSync();
+        },
+        // Types into the editor as the user would. TipTap hangs the editor off its element.
+        type(text: string) {
+            (editorEl() as unknown as { editor: Editor }).editor.commands.insertContent(text);
+            flushSync();
+        },
+        pressEnter() {
+            editorEl()?.dispatchEvent(
+                new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }),
+            );
             flushSync();
         },
         destroy: () => {
@@ -89,6 +121,17 @@ async function render(Entry: Component, textContent: string | undefined) {
             target.remove();
         },
     };
+}
+
+// The entry reports typing on the next animation frame
+function nextFrame(): Promise<void> {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+// Moves the clock on far enough for the entry to send another typing notification
+function passTypingInterval() {
+    const now = Date.now();
+    vi.spyOn(Date, "now").mockReturnValue(now + 2000);
 }
 
 class FakeObserver {
@@ -108,6 +151,9 @@ beforeAll(async () => {
     Element.prototype.scrollIntoView = () => {};
     document.elementFromPoint = () => null;
 
+    // jsdom passes for a touch device, which doesn't send on Enter by default
+    enterSend.set(true);
+
     // Anonymous users can't send messages, so the entry would show no editor
     currentUserStore.set({ ...currentUserStore.value, userId: "me", username: "me" });
 
@@ -124,7 +170,11 @@ describe.each<[string, Component]>([
     ["mobile", MobileMessageEntry],
 ])("MessageEntry (%s)", (_, Entry) => {
     let destroy: (() => void) | undefined;
-    afterEach(() => destroy?.());
+    afterEach(() => {
+        destroy?.();
+        vi.restoreAllMocks();
+        botState.cancel();
+    });
 
     test("shows the draft when mounted", async () => {
         const r = await render(Entry, "my draft");
@@ -144,5 +194,110 @@ describe.each<[string, Component]>([
 
         r.setBlocked(false);
         expect(r.text()).toBe("my draft");
+    });
+
+    // Invariant: only the user's own input counts as typing, so putting a draft into the editor
+    // (when the entry is mounted or the user switches chats) doesn't tell the chat's members that
+    // the user is typing
+    test("doesn't count restoring a draft as the user typing", async () => {
+        const r = await render(Entry, "my draft");
+        destroy = r.destroy;
+        await nextFrame();
+        expect(r.onStartTyping).not.toHaveBeenCalled();
+
+        r.switchDraft("another draft");
+        expect(r.text()).toBe("another draft");
+        await nextFrame();
+        expect(r.onStartTyping).not.toHaveBeenCalled();
+
+        r.type("!");
+        await nextFrame();
+        expect(r.onStartTyping).toHaveBeenCalledOnce();
+    });
+
+    // Neither the Enter that sends the message nor clearing the editor afterwards is typing
+    test("doesn't count sending a message as the user typing", async () => {
+        const r = await render(Entry, undefined);
+        destroy = r.destroy;
+        r.type("hi");
+        await nextFrame();
+        expect(r.onStartTyping).toHaveBeenCalledOnce();
+
+        passTypingInterval();
+        r.pressEnter();
+        expect(r.onSendMessage).toHaveBeenCalledOnce();
+        await nextFrame();
+        expect(r.onStartTyping).toHaveBeenCalledOnce();
+    });
+
+    // The command selector picks the command on Enter, so the editor mustn't take it as a newline
+    test("doesn't count picking a command with Enter as the user typing", async () => {
+        const r = await render(Entry, undefined);
+        destroy = r.destroy;
+        r.type("/");
+        expect(botState.prefix).toBe("/");
+        await nextFrame();
+        expect(r.onStartTyping).toHaveBeenCalledOnce();
+
+        passTypingInterval();
+        r.pressEnter();
+        await nextFrame();
+        expect(r.onStartTyping).toHaveBeenCalledOnce();
+    });
+
+    test("doesn't open the command selector for a restored draft", async () => {
+        const setPrefix = vi.spyOn(botState, "prefix", "set");
+        const r = await render(Entry, "/command");
+        destroy = r.destroy;
+        expect(r.text()).toBe("/command");
+        expect(setPrefix).not.toHaveBeenCalled();
+
+        r.switchDraft(undefined);
+        r.switchDraft("/another");
+        expect(r.text()).toBe("/another");
+        expect(setPrefix).not.toHaveBeenCalled();
+
+        r.type(" more");
+        expect(setPrefix).toHaveBeenCalledWith("/another more");
+    });
+
+    // Invariant: a command selector opened for what the user typed closes when the entry puts
+    // other content into the editor, or Enter would pick a command rather than send the message
+    test("closes the command selector when another chat's draft is put into the editor", async () => {
+        const r = await render(Entry, undefined);
+        destroy = r.destroy;
+        r.type("/");
+        expect(botState.prefix).toBe("/");
+
+        r.switchDraft("hello there");
+        expect(r.text()).toBe("hello there");
+        expect(botState.prefix).toBe("");
+
+        r.pressEnter();
+        expect(r.onSendMessage).toHaveBeenCalledOnce();
+    });
+
+    test("closes the command selector when editing a message", async () => {
+        const r = await render(Entry, undefined);
+        destroy = r.destroy;
+        r.type("/");
+        expect(botState.prefix).toBe("/");
+
+        r.edit("the original");
+        expect(r.text()).toBe("the original");
+        expect(botState.prefix).toBe("");
+    });
+
+    // Invariant: the draft holds the message being edited, as whether there's anything to send is
+    // read from it
+    test("puts the message being edited into the draft", async () => {
+        const r = await render(Entry, undefined);
+        destroy = r.destroy;
+
+        r.edit("the original");
+        expect(r.text()).toBe("the original");
+        expect(r.draft()).toBe("the original");
+        await nextFrame();
+        expect(r.onStartTyping).not.toHaveBeenCalled();
     });
 });
