@@ -207,7 +207,6 @@ impl Files {
         }
         self.reference_counts.incr(hash);
 
-        let meta_data = file.meta_data();
         let new_file = File {
             owner: caller,
             created: now,
@@ -215,6 +214,9 @@ impl Files {
             hash,
             mime_type: file.mime_type,
         };
+        // Reported as the forwarder's, as it will be once removed, since the index keys files by
+        // their owner and created time
+        let meta_data = new_file.meta_data();
 
         self.files.insert(new_file_id, new_file);
 
@@ -785,5 +787,25 @@ mod tests {
         files.remove_file(1);
         assert!(files.accessors_map.get(owner).is_empty());
         assert!(files.accessors_map.get(accessor).is_empty());
+    }
+
+    #[test]
+    fn a_forwarded_file_is_reported_as_the_forwarders_both_when_added_and_when_removed() {
+        let mut files = files();
+        put(&mut files, 1, b"bytes".to_vec(), None);
+        let forwarder = Principal::from_slice(&[2]);
+
+        let ForwardFileResult::Success(added) =
+            files.forward(forwarder, 1, CanisterId::from_slice(&[3]), 0, BTreeSet::new(), 2000)
+        else {
+            panic!("Forward failed");
+        };
+        assert_eq!(added.meta_data.owner, forwarder);
+        assert_eq!(added.meta_data.created, 2000);
+
+        // The index finds the file it is removing by its owner and created time
+        let removed = files.remove_file(added.file_id).unwrap();
+        assert_eq!(removed.meta_data.owner, added.meta_data.owner);
+        assert_eq!(removed.meta_data.created, added.meta_data.created);
     }
 }
