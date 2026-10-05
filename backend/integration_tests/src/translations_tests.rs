@@ -1,7 +1,7 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{tick_many, try_metrics};
-use crate::{TestEnv, client};
+use crate::{TestEnv, client, wasms};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
@@ -63,6 +63,18 @@ fn payment_failing_to_call_into_ledger_is_retried_with_backoff() {
     assert!(matches!(response, translations_canister::approve::Response::Success));
 
     tick_many(env, 20);
+    assert_eq!(awaiting_retry(env), awaiting_retry_before + 1);
+
+    // The retry is persisted, so it survives an upgrade of the canister
+    let wasm = wasms::TRANSLATIONS.clone();
+    let args = candid::encode_one(translations_canister::post_upgrade::Args {
+        wasm_version: wasm.version,
+    })
+    .unwrap();
+    stop_canister(env, *controller, translations);
+    env.upgrade_canister(translations, wasm.module.into(), args, Some(*controller))
+        .unwrap();
+    start_canister(env, *controller, translations);
     assert_eq!(awaiting_retry(env), awaiting_retry_before + 1);
 
     // Retried 10 seconds after the 1st failure, by when the ledger is still stopped

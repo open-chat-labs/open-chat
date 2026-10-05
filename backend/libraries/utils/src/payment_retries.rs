@@ -1,6 +1,7 @@
-// For payments which failed to call into their ledger (eg. because it is stopped, traps or is out of
-// cycles). Rather than being retried round after round, which burns the payer's cycles for as long as
-// the ledger keeps failing, they are retried after a delay which grows with each failure.
+// For payments which failed, whether to call into their ledger (eg. because it is stopped, traps or is
+// out of cycles) or with an error from it (eg. `TemporarilyUnavailable`). Rather than being retried
+// round after round, which burns the payer's cycles for as long as the ledger keeps failing, they are
+// retried after a delay which grows with each failure.
 use crate::canister::{delay_if_should_retry_failed_c2c_call, is_target_canister_uninstalled_or_deleted};
 use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, SECOND_IN_MS};
 use types::{C2CError, Milliseconds, TimestampMillis};
