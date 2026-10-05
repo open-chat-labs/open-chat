@@ -7,6 +7,7 @@ pub mod delete_users;
 pub mod import_users;
 pub mod moderate_messages;
 pub mod pull_daily_puzzle;
+pub mod reclaim_old_local_group_index;
 pub mod refresh_chunk_store;
 pub mod refresh_registry_tokens;
 pub mod refund_cycles;
@@ -26,6 +27,7 @@ pub(crate) fn start(state: &RuntimeState) {
     import_users::start_job_if_required(state);
     moderate_messages::start_job_if_required(state);
     pull_daily_puzzle::start_job();
+    reclaim_old_local_group_index::start_job_if_required(state, None);
     refresh_chunk_store::start_job();
     refresh_registry_tokens::start_job();
     refund_cycles::start_job_if_required(state, None);

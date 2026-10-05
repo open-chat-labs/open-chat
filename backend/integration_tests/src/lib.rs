@@ -50,6 +50,7 @@ mod message_activity_tests;
 mod moderation_tests;
 mod multi_user_canister_tests;
 mod notification_tests;
+mod old_local_group_index_tests;
 mod online_users_tests;
 mod p2p_swap_tests;
 mod pin_number_tests;

@@ -26,6 +26,7 @@ generate_c2c_call!(c2c_notifications_index, 300);
 generate_c2c_call!(c2c_notify_low_balance);
 generate_c2c_call!(c2c_notify_user_index_events);
 generate_c2c_call!(c2c_push_wasm_chunk);
+generate_c2c_call!(c2c_reclaim_old_local_group_index);
 generate_c2c_call!(c2c_set_community_upgrade_concurrency);
 generate_c2c_call!(c2c_set_group_upgrade_concurrency);
 generate_c2c_call!(c2c_set_max_concurrent_community_upgrades);
