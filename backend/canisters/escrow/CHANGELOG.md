@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Retry failed swap status notifications after a delay rather than every round, and drop those to uninstalled canisters ([#9785](https://github.com/open-chat-labs/open-chat/pull/9785))
 - Retry payments whose ledger can't be called after a growing delay rather than every round, and park those to uninstalled or deleted ledgers ([#9789](https://github.com/open-chat-labs/open-chat/pull/9789))
 - Handle each ledger error from a payment rather than dropping the payment: retry, remake if too old, record duplicates as made, or park ([#9791](https://github.com/open-chat-labs/open-chat/pull/9791))
-- Don't count funds which a refund is yet to take out of a deposit towards the deposit, so a deposit topped up before its refund is made can't leave the other side's payout short
+- Don't count funds which a refund is yet to take out of a deposit towards the deposit, so a deposit topped up before its refund is made can't leave the other side's payout short ([#9793](https://github.com/open-chat-labs/open-chat/pull/9793))
 
 ## [[2.0.2069](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2069-escrow)] - 2026-09-29
 
