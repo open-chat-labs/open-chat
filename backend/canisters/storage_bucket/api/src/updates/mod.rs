@@ -1,3 +1,4 @@
+pub mod c2c_files;
 pub mod c2c_sync_index;
 pub mod c2c_vault_sync;
 pub mod delete_file;

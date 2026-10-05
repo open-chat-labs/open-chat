@@ -281,7 +281,7 @@ impl User {
 
     fn apply_bot_update(&mut self, bot_id: UserId, updated_by: Option<UserId>, now: TimestampMillis) {
         // The user may have deleted their chat with the bot while keeping it installed
-        let Some(chat) = self.direct_chats.get_mut(&bot_id.into()) else {
+        let Some(mut chat) = self.direct_chats.get_mut(&bot_id.into()) else {
             return;
         };
 

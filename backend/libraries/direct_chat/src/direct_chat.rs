@@ -120,6 +120,14 @@ impl DirectChat {
         self.them_migrated_at = Some(now);
     }
 
+    // The id unique to the chat which its stable memory keys are built from
+    pub fn key_id(&self) -> u32 {
+        self.events
+            .stable_memory_prefix()
+            .direct_chat_key_id()
+            .expect("Every direct chat is keyed by its key_id")
+    }
+
     pub fn events(&self) -> &ChatEvents {
         &self.events
     }
