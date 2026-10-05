@@ -51,7 +51,8 @@ fn account_migrated_text(wallet: Principal) -> String {
 
 {wallet}
 
-To vote on proposals from within OpenChat, add this address as a hotkey to each neuron you vote with. Any tokens held by your old wallet will be transferred to your new wallet."
+To vote on proposals from within OpenChat, add this address as a hotkey to each neuron you would like to vote with.
+Any tokens held by your old wallet will be transferred to your new wallet."
     )
 }
 
