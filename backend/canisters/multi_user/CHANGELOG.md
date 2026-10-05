@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Send a migrated user an OpenChat bot message giving their new wallet address ([#9763](https://github.com/open-chat-labs/open-chat/pull/9763))
+- Send each migrated user an OpenChat bot message detailing their new wallet address ([#9763](https://github.com/open-chat-labs/open-chat/pull/9763))
 
 ### Changed
 
