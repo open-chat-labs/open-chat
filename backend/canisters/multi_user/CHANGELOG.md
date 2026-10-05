@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Check the cycles balance as background jobs run, not only as updates are handled ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
 - Ask for a top up once the cycles above the freezing threshold fall below 10T, or below twice the threshold ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748))
 - Store each direct chat record in stable memory, keeping only a small entry per chat on the heap ([#9781](https://github.com/open-chat-labs/open-chat/pull/9781))
+- Store each group and community record in stable memory, keeping only a small entry for each on the heap ([#9795](https://github.com/open-chat-labs/open-chat/pull/9795))
 
 ## [[2.0.2091](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2091-multi_user)] - 2026-10-02
 
