@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Send each migrated user an OpenChat bot message detailing their new wallet address ([#9763](https://github.com/open-chat-labs/open-chat/pull/9763))
+
 ### Changed
 
 - Keep a minimum balance of 10T cycles, rather than the User canister's 0.3T ([#9735](https://github.com/open-chat-labs/open-chat/pull/9735))
