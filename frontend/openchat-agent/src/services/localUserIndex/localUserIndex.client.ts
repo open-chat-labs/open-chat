@@ -21,6 +21,7 @@ import type {
     JoinCommunityResponse,
     JoinGroupResponse,
     MessageContext,
+    MoveFundsFromOldCanisterResponse,
     MultiUserChatIdentifier,
     OCError,
     PayForPremiumItemResponse,
@@ -63,6 +64,8 @@ import {
     LocalUserIndexJoinCommunityResponse,
     LocalUserIndexJoinGroupArgs,
     LocalUserIndexJoinGroupResponse,
+    LocalUserIndexMoveFundsFromOldCanisterArgs,
+    LocalUserIndexMoveFundsFromOldCanisterResponse,
     LocalUserIndexPayForPremiumItemArgs,
     LocalUserIndexPayForPremiumItemResponse,
     LocalUserIndexRegisterUserArgs,
@@ -101,6 +104,7 @@ import {
     inviteUsersResponse,
     joinChannelResponse,
     joinCommunityResponse,
+    moveFundsFromOldCanisterResponse,
     payForPremiumItemResponse,
     registerUserResponse,
     withdrawFromIcpSwapResponse,
@@ -682,6 +686,27 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
             isSuccess,
             LocalUserIndexReinstateMissedDailyClaimsArgs,
             UnitResult,
+        );
+    }
+
+    // Moves the funds held on each of `ledgers` (at most 20) by the canister of `oldUserId`, the id
+    // the user had before being migrated to a MultiUser canister, to the user's wallet. Must be
+    // called on the LocalUserIndex which controls that canister.
+    moveFundsFromOldCanister(
+        localUserIndex: string,
+        oldUserId: string,
+        ledgers: string[],
+    ): Promise<MoveFundsFromOldCanisterResponse> {
+        return this.update(
+            localUserIndex,
+            "move_funds_from_old_canister",
+            {
+                old_user_id: principalStringToBytes(oldUserId),
+                ledgers: ledgers.map(principalStringToBytes),
+            },
+            moveFundsFromOldCanisterResponse,
+            LocalUserIndexMoveFundsFromOldCanisterArgs,
+            LocalUserIndexMoveFundsFromOldCanisterResponse,
         );
     }
 
