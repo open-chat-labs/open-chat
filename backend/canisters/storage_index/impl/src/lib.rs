@@ -1,4 +1,5 @@
 use crate::model::bucket_event_batch::{BucketEventBatch, EventToSync};
+use crate::model::bucket_user_ids_migrated_batch::BucketUserIdsMigratedBatch;
 use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::{Files, UserFile};
 use crate::model::files_backfill::{BackfilledReference, FilesBackfill, FilesBackfillMetrics, LimitCheck};
@@ -15,7 +16,7 @@ use storage_index_canister::init::CyclesDispenserConfig;
 use timer_job_queues::GroupedTimerJobQueue;
 use types::{
     BuildVersion, CanisterId, CanisterWasm, Cycles, FileAdded, FileRejected, FileRejectedReason, FileRemoved, Hash,
-    TimestampMillis, Timestamped,
+    TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -63,6 +64,12 @@ impl RuntimeState {
     pub fn is_caller_bucket(&self) -> bool {
         let caller = self.env.caller();
         self.data.buckets.get(&caller).is_some()
+    }
+
+    pub fn push_user_ids_migrated_to_buckets(&mut self, user_ids: Vec<(UserId, UserId)>) {
+        for bucket in self.data.buckets.iter().map(|b| b.canister_id) {
+            self.data.bucket_user_ids_migrated_queue.push_many(bucket, user_ids.clone());
+        }
     }
 
     pub fn push_event_to_buckets(&mut self, event: EventToSync) {
@@ -119,6 +126,8 @@ struct Data {
     pub files: Files,
     pub buckets: Buckets,
     pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
+    #[serde(default = "default_bucket_user_ids_migrated_queue")]
+    pub bucket_user_ids_migrated_queue: GroupedTimerJobQueue<BucketUserIdsMigratedBatch>,
     #[serde(default = "default_vault_event_sync_queue")]
     pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
     #[serde(default)]
@@ -159,6 +168,10 @@ fn default_vault_event_sync_queue() -> GroupedTimerJobQueue<VaultEventBatch> {
     GroupedTimerJobQueue::new(5, false)
 }
 
+fn default_bucket_user_ids_migrated_queue() -> GroupedTimerJobQueue<BucketUserIdsMigratedBatch> {
+    GroupedTimerJobQueue::new(5, false)
+}
+
 fn icp_ledger_canister_id() -> CanisterId {
     ICP_LEDGER_CANISTER_ID
 }
@@ -185,6 +198,7 @@ impl Data {
             files: Files::default(),
             buckets: Buckets::default(),
             bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
+            bucket_user_ids_migrated_queue: default_bucket_user_ids_migrated_queue(),
             vault_event_sync_queue: default_vault_event_sync_queue(),
             vault_reviewers: Vec::new(),
             authority_reporter: None,

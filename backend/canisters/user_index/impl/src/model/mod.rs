@@ -14,6 +14,7 @@ pub mod premium_items;
 pub mod protected_actions;
 pub mod reported_messages;
 pub mod storage_index_user_config_batch;
+pub mod storage_index_user_ids_migrated_batch;
 pub mod storage_index_users_to_remove_batch;
 pub mod streak_insurance_logs;
 pub mod user;
