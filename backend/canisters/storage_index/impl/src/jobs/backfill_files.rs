@@ -104,7 +104,7 @@ fn remove_files() {
     let completed = mutate_state(|state| {
         for (user_id, charged) in state.data.files_backfill.take_charged(OWNERS_PER_BATCH) {
             if let Some((count, bytes)) = state.data.remove_oldest_files_over_limit(user_id, charged) {
-                state.data.files_backfill.record_files_removed(count, bytes);
+                state.data.files_backfill.record_over_limit(count, bytes);
             }
         }
         if state.data.files_backfill.is_complete_after_removing_files() {

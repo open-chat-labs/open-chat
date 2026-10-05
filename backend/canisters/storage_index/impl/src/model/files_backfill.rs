@@ -9,10 +9,10 @@ use types::{CanisterId, FileId, TimestampMillis};
 // charged for the forwarded copies, and once the original owner deleted their own file no one was
 // paying for the bytes at all.
 //
-// Once every bucket has been paged through, each owner whose charges took them over their limit
-// has their oldest files removed, as an upload over the limit would. Only up to the bytes they were
-// charged are removed, so an owner who was already over their limit (eg. whose Diamond membership
-// lapsed) loses no more than the backfill added.
+// Once every bucket has been paged through, each owner over their limit has their oldest files
+// removed, as an upload over the limit would. No more is freed than they were charged, so an owner
+// who was already over their limit (eg. whose Diamond membership lapsed) loses no more than the
+// backfill added, and may be left over it.
 // TODO remove once it has completed in prod
 #[derive(Serialize, Deserialize, Default)]
 pub struct FilesBackfill {
@@ -110,10 +110,10 @@ impl FilesBackfill {
         (0..max_count).map_while(|_| self.charged.pop_first()).collect()
     }
 
-    pub fn record_files_removed(&mut self, count: u64, bytes: u64) {
+    pub fn record_over_limit(&mut self, files_removed: u64, bytes_removed: u64) {
         self.owners_over_limit += 1;
-        self.files_removed += count;
-        self.bytes_removed += bytes;
+        self.files_removed += files_removed;
+        self.bytes_removed += bytes_removed;
     }
 
     pub fn complete(&mut self, now: TimestampMillis) {
