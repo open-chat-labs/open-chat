@@ -29,11 +29,14 @@ fn pool_canisters_are_topped_up_when_used() {
     );
     assert!(matches!(response, SuccessOnly::Success));
     assert_eq!(canisters_in_pool(env, local_user_index), 1);
+    let cycles_spent = metric(env, local_user_index, "total_cycles_spent_on_canisters");
 
-    // A new user's canister is taken from the pool, then topped up and given the default threshold
-    let user = client::register_user(env, canister_ids);
+    // A new user's canister is taken from the pool, then topped up and given the default threshold.
+    // The top-up is counted as spent, unlike any cycles sent by the install's own retries.
+    let user = client::register_user_with_referrer_on(env, canister_ids, local_user_index, None);
     assert_eq!(user.canister(), pool_canister);
     assert_eq!(canisters_in_pool(env, local_user_index), 0);
+    assert!(metric(env, local_user_index, "total_cycles_spent_on_canisters") > cycles_spent + 300 * B);
     assert!(env.cycle_balance(pool_canister) > 400 * B);
     let status = env.canister_status(pool_canister, Some(local_user_index)).unwrap();
     assert_eq!(status.settings.freezing_threshold, 30u64 * 24 * 60 * 60);
@@ -57,5 +60,9 @@ fn create_refunded_canister(env: &mut PocketIc, local_user_index: CanisterId) ->
 }
 
 fn canisters_in_pool(env: &PocketIc, local_user_index: CanisterId) -> u128 {
-    metrics(env, local_user_index)["canisters_in_pool"].as_u64().unwrap().into()
+    metric(env, local_user_index, "canisters_in_pool")
+}
+
+fn metric(env: &PocketIc, local_user_index: CanisterId, name: &str) -> u128 {
+    metrics(env, local_user_index)[name].as_u64().unwrap().into()
 }

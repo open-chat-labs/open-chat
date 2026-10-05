@@ -1100,7 +1100,8 @@ pub struct CanisterToRefund {
     #[serde(default)]
     pub delete_canister: bool,
     // Set for a canister from the canister pool, which goes back into the pool once its cycles have
-    // been refunded
+    // been refunded. Only the one-off refund of the pool canisters on the 2.0.2094 upgrade set it.
+    // TODO remove once no pool canister is left in any LocalUserIndex's refund queue
     #[serde(default)]
     pub return_to_pool: bool,
 }
