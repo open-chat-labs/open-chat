@@ -112,6 +112,15 @@ impl Swap {
         self.token0_transfer_out.is_some() && self.token1_transfer_out.is_some()
     }
 
+    // Whether a payment made in this block of this ledger has been recorded against the swap
+    pub fn is_payment_recorded(&self, ledger: CanisterId, block_index: u64) -> bool {
+        self.token0_transfer_out
+            .iter()
+            .chain(&self.token1_transfer_out)
+            .chain(&self.refunds)
+            .any(|transfer| transfer.ledger == ledger && transfer.block_index == block_index)
+    }
+
     pub fn status(&self, now: TimestampMillis) -> SwapStatus {
         if let Some((accepted_by, accepted_at)) = self.token0_received.then_some(self.accepted_by).flatten() {
             if let (Some(token0_transfer_out), Some(token1_transfer_out)) =
@@ -142,5 +151,67 @@ impl Swap {
         } else {
             SwapStatus::Open
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use types::icrc1::Account;
+
+    fn token(ledger: u8) -> TokenInfo {
+        TokenInfo {
+            symbol: format!("TOKEN{ledger}"),
+            ledger: CanisterId::from_slice(&[ledger]),
+            decimals: 8,
+            fee: 10_000,
+        }
+    }
+
+    fn transfer(ledger: u8, block_index: u64) -> CompletedCryptoTransaction {
+        let account = Account::from(Principal::from_slice(&[9]));
+        CompletedCryptoTransaction {
+            ledger: CanisterId::from_slice(&[ledger]),
+            token_symbol: format!("TOKEN{ledger}"),
+            amount: 1_000,
+            from: account.into(),
+            to: account.into(),
+            fee: 10_000,
+            memo: None,
+            created: 0,
+            block_index,
+        }
+    }
+
+    #[test]
+    fn payment_is_recorded_only_for_its_ledger_and_block() {
+        let mut swap = Swap::new(
+            0,
+            Principal::from_slice(&[9]),
+            escrow_canister::create_swap::Args {
+                location: P2PSwapLocation::External,
+                token0: token(1),
+                token0_amount: 1_000,
+                token0_principal: None,
+                token1: token(2),
+                token1_amount: 1_000,
+                token1_principal: None,
+                expires_at: 1,
+                additional_admins: Vec::new(),
+                canister_to_notify: None,
+                is_public: false,
+            },
+            0,
+        );
+        swap.token0_transfer_out = Some(transfer(1, 5));
+        swap.token1_transfer_out = Some(transfer(2, 6));
+        swap.refunds.push(transfer(1, 7));
+
+        assert!(swap.is_payment_recorded(CanisterId::from_slice(&[1]), 5));
+        assert!(swap.is_payment_recorded(CanisterId::from_slice(&[2]), 6));
+        assert!(swap.is_payment_recorded(CanisterId::from_slice(&[1]), 7));
+        // Block indexes are per ledger
+        assert!(!swap.is_payment_recorded(CanisterId::from_slice(&[2]), 5));
+        assert!(!swap.is_payment_recorded(CanisterId::from_slice(&[1]), 8));
     }
 }

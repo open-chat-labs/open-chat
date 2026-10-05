@@ -24,12 +24,15 @@ pub struct NotifyStatusChangeJob {
     pub failures: u32,
 }
 
-// Retries a payment, after a failed attempt to call into its ledger
+// Retries a payment, after a failed attempt at it
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RetryPaymentJob {
     pub payment: PendingPayment,
-    // The number of attempts at the payment which have failed to call into its ledger so far
+    // The number of attempts at the payment which have failed so far
     pub failures: u32,
+    // Whether any of those attempts may have made the transfer nonetheless, its outcome being unknown
+    #[serde(default)]
+    pub outcome_unknown: bool,
 }
 
 impl Job for TimerJob {
@@ -63,6 +66,6 @@ impl Job for NotifyStatusChangeJob {
 
 impl Job for RetryPaymentJob {
     fn execute(self) {
-        crate::jobs::make_pending_payments::retry(self.payment, self.failures);
+        crate::jobs::make_pending_payments::retry(self.payment, self.failures, self.outcome_unknown);
     }
 }
