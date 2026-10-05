@@ -116,7 +116,7 @@ pub fn send<P: EventPusher>(
     let bot_id = message.bot_caller.bot;
     let chat_id = bot_id.into();
 
-    if let Some(chat) = user.direct_chats.get_mut(&chat_id)
+    if let Some(mut chat) = user.direct_chats.get_mut(&chat_id)
         && let Some((existing, _)) = chat.message_internal(message.thread_root_message_index, message.message_id.into())
     {
         let bot_caller = &message.bot_caller;
@@ -177,7 +177,7 @@ pub fn send<P: EventPusher>(
         });
     }
 
-    let chat = user
+    let mut chat = user
         .direct_chats
         .get_or_create(my_user_id, bot_id, UserType::BotV2, anonymized_chat_id, now);
 

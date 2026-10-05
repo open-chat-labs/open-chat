@@ -54,7 +54,7 @@ pub(crate) fn toggle_reaction(
         .with_user_mut(my_index, |user| {
             user.verify_not_suspended()?;
 
-            let chat = user.direct_chats.get_mut_or_err(&them.into())?;
+            let mut chat = user.direct_chats.get_mut_or_err(&them.into())?;
             let args = AddRemoveReactionArgs {
                 user_id: my_user_id,
                 min_visible_event_index: EventIndex::default(),

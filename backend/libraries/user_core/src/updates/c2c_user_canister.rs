@@ -80,12 +80,12 @@ pub fn receive_message<P: EventPusher>(
     let sender = args.sender;
     let chat_id = sender.into();
     let existing_chat = user.direct_chats.get(&chat_id);
-    let thread_root_message_index = match existing_chat {
+    let thread_root_message_index = match &existing_chat {
         Some(chat) => chat.thread_root_message_index(args.thread_root_message_id).ok()?,
         None if args.thread_root_message_id.is_none() => None,
         None => return None,
     };
-    if existing_chat.is_some_and(|chat| {
+    if existing_chat.as_ref().is_some_and(|chat| {
         chat.events()
             .message_already_finalised(thread_root_message_index, args.message_id, false)
     }) {
@@ -111,7 +111,7 @@ pub fn receive_message<P: EventPusher>(
         _ => None,
     };
 
-    let chat = user
+    let mut chat = user
         .direct_chats
         .get_or_create(my_user_id, sender, args.sender_user_type, || anonymized_id, now);
 
@@ -157,6 +157,7 @@ pub fn receive_message<P: EventPusher>(
             call: None,
         })
     });
+    drop(chat);
 
     if matches!(message_event.event.content, MessageContent::Crypto(_)) {
         user.push_message_activity(
@@ -413,7 +414,7 @@ pub fn tip_message(
 // Applies the sender's change to the status of a P2P swap between them, adding the swap's
 // completion to the recipient's message activity feed
 pub fn p2p_swap_change_status(user: &mut User, sender: UserId, args: P2PSwapStatusChange, now: TimestampMillis) {
-    let Some(chat) = user.direct_chats.get_mut(&sender.into()) else {
+    let Some(mut chat) = user.direct_chats.get_mut(&sender.into()) else {
         return;
     };
     let completed = matches!(args.status, P2PSwapStatus::Completed(_));
@@ -436,6 +437,7 @@ pub fn p2p_swap_change_status(user: &mut User, sender: UserId, args: P2PSwapStat
             timestamp: now,
             user_id: Some(sender),
         };
+        drop(chat);
         user.push_message_activity(activity, now);
     }
 }
@@ -457,7 +459,7 @@ pub fn set_events_ttl(
     anonymized_chat_id: impl FnOnce() -> u128,
     now: TimestampMillis,
 ) {
-    let chat = user
+    let mut chat = user
         .direct_chats
         .get_or_create(my_user_id, sender, UserType::User, anonymized_chat_id, now);
     let change = EventsTtlChange {
@@ -490,11 +492,32 @@ mod tests {
     use candid::Principal;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use stable_memory_map::{KeyScope, with_key_scope};
+    use std::cell::Cell;
 
+    thread_local! {
+        static USERS_CREATED: Cell<u8> = const { Cell::new(0) };
+    }
+
+    // Each user is given their own key scope, as in a MultiUser canister, since a test can hold two
+    // users, whose direct chats are each keyed by `key_id`s counting up from 1
     fn user() -> User {
-        let memory = MemoryManager::init(DefaultMemoryImpl::default());
-        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
-        User::new(Principal::from_slice(&[9]), "username".to_string(), None, 100)
+        let count = USERS_CREATED.get();
+        if count == 0 {
+            let memory = MemoryManager::init(DefaultMemoryImpl::default());
+            stable_memory_map::init_multi_user(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
+        }
+        USERS_CREATED.set(count + 1);
+        User::new(Principal::from_slice(&[count + 1]), "username".to_string(), None, 100)
+    }
+
+    // Runs `f` against the user within their key scope
+    fn with_user<U, R>(user: U, f: impl FnOnce(U) -> R) -> R
+    where
+        U: std::ops::Deref<Target = User>,
+    {
+        let scope = KeyScope::User(user.principal.as_slice()[0] as u16);
+        with_key_scope(scope, || f(user))
     }
 
     fn user_id(i: u8) -> UserId {
@@ -528,51 +551,65 @@ mod tests {
         let replies_to = Some(C2CReplyContext::OtherChat(Chat::Group(group), None, 5.into()));
         let mut user = user();
 
-        let received =
-            receive_message::<NullEventPusher>(&mut user, me, text_message(sender, 1, replies_to.clone()), None, 1, 100)
-                .unwrap();
+        with_user(&mut user, |user| {
+            let received =
+                receive_message::<NullEventPusher>(user, me, text_message(sender, 1, replies_to.clone()), None, 1, 100)
+                    .unwrap();
 
-        assert_eq!(
-            direct_chat::private_replies::take(group),
-            vec![(sender, received.message_event.event.message_index)]
-        );
+            assert_eq!(
+                direct_chat::private_replies::take(group),
+                vec![(sender, received.message_event.event.message_index)]
+            );
 
-        // The same message, retried, is skipped
-        assert!(receive_message::<NullEventPusher>(&mut user, me, text_message(sender, 1, replies_to), None, 1, 101).is_none());
-        assert!(direct_chat::private_replies::take(group).is_empty());
+            // The same message, retried, is skipped
+            assert!(receive_message::<NullEventPusher>(user, me, text_message(sender, 1, replies_to), None, 1, 101).is_none());
+            assert!(direct_chat::private_replies::take(group).is_empty());
+        });
     }
 
     fn events_ttl(user: &User, them: UserId) -> Option<u64> {
-        user.direct_chats
-            .get(&them.into())
-            .unwrap()
-            .events()
-            .get_events_time_to_live()
-            .value
+        with_user(user, |user| {
+            user.direct_chats
+                .get(&them.into())
+                .unwrap()
+                .events()
+                .get_events_time_to_live()
+                .value
+        })
     }
 
     // The user `me` changes the TTL at `now`, creating the chat if they don't have it, returning
     // the time the change is given, which is what is sent to the other user
     fn change(user: &mut User, me: UserId, them: UserId, value: u64, now: TimestampMillis) -> TimestampMillis {
-        user.direct_chats
-            .get_or_create(me, them, UserType::User, || 1, now)
-            .set_events_time_to_live(me, Some(value), now)
-            .unwrap()
+        with_user(user, |user| {
+            user.direct_chats
+                .get_or_create(me, them, UserType::User, || 1, now)
+                .set_events_time_to_live(me, Some(value), now)
+                .unwrap()
+        })
+    }
+
+    fn create_chat(user: &mut User, me: UserId, them: UserId, now: TimestampMillis) {
+        with_user(user, |user| {
+            user.direct_chats.get_or_create(me, them, UserType::User, || 1, now);
+        });
     }
 
     // The user `me` receives the other user's change, which they made at `timestamp`
     fn receive(user: &mut User, me: UserId, sender: UserId, value: u64, timestamp: TimestampMillis, now: TimestampMillis) {
-        set_events_ttl(
-            user,
-            me,
-            sender,
-            SetEventsTtl {
-                events_ttl: Some(value),
-                timestamp,
-            },
-            || 1,
-            now,
-        );
+        with_user(user, |user| {
+            set_events_ttl(
+                user,
+                me,
+                sender,
+                SetEventsTtl {
+                    events_ttl: Some(value),
+                    timestamp,
+                },
+                || 1,
+                now,
+            )
+        });
     }
 
     #[test]
@@ -581,7 +618,7 @@ mod tests {
         // when their events are batched
         let (me, sender) = (user_id(1), user_id(2));
         let mut user = user();
-        user.direct_chats.get_or_create(me, sender, UserType::User, || 1, 100);
+        create_chat(&mut user, me, sender, 100);
 
         receive(&mut user, me, sender, 1000, 50, 100);
 
@@ -656,7 +693,7 @@ mod tests {
         // The sender changed the TTL twice before either change was delivered
         let (me, sender) = (user_id(1), user_id(2));
         let mut user = user();
-        user.direct_chats.get_or_create(me, sender, UserType::User, || 1, 0);
+        create_chat(&mut user, me, sender, 0);
 
         receive(&mut user, me, sender, 1000, 10, 100);
         receive(&mut user, me, sender, 2000, 20, 100);
@@ -728,7 +765,7 @@ mod tests {
         // B's id sorts after A's, so the tie-break on user ids alone wouldn't apply B's second change
         let (a, b) = (user_id(1), user_id(2));
         let (mut user_a, mut user_b) = (user(), user());
-        user_a.direct_chats.get_or_create(a, b, UserType::User, || 1, 0);
+        create_chat(&mut user_a, a, b, 0);
 
         change(&mut user_b, b, a, 1000, 100);
         change(&mut user_b, b, a, 2000, 100);

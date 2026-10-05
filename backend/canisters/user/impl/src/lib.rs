@@ -138,15 +138,12 @@ impl RuntimeState {
 
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
-        let mut next_event_expiry = None;
         let mut files_to_delete = Vec::new();
-        for chat in self.data.user.direct_chats.iter_mut() {
+        for chat_id in self.data.user.direct_chats.chats_with_events_expiring_by(now) {
+            let Some(mut chat) = self.data.user.direct_chats.get_mut(&chat_id) else {
+                continue;
+            };
             let result = chat.remove_expired_events(now);
-            if let Some(expiry) = chat.events().next_event_expiry()
-                && next_event_expiry.is_none_or(|current| expiry < current)
-            {
-                next_event_expiry = Some(expiry);
-            }
             files_to_delete.extend(result.files);
             // Threads aren't currently enabled for direct chats, but if a thread's root message
             // expires then its entries in stable memory must be garbage collected
@@ -163,7 +160,7 @@ impl RuntimeState {
             let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
             delete_files_job.execute();
         }
-        self.data.user.next_event_expiry = next_event_expiry;
+        self.data.user.next_event_expiry = self.data.user.direct_chats.next_event_expiry();
         if let Some(expiry) = self.data.user.next_event_expiry {
             self.data
                 .timer_jobs

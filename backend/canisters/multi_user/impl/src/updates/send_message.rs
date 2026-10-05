@@ -478,7 +478,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
             }
 
             let chat = user.direct_chats.get(&args.recipient.into());
-            if chat.is_some_and(|chat| {
+            if chat.as_ref().is_some_and(|chat| {
                 chat.events()
                     .message_already_finalised(args.thread_root_message_index, args.message_id, false)
             }) {
@@ -488,7 +488,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
             // Checked before any transfer is made for the message, so that funds aren't moved for a
             // message which can't then be sent
             if args.thread_root_message_index.is_some() {
-                chat.ok_or(OCErrorCode::ThreadNotFound)?
+                chat.as_ref()
+                    .ok_or(OCErrorCode::ThreadNotFound)?
                     .thread_root_message_id(args.thread_root_message_index)?;
             }
 
@@ -579,9 +580,9 @@ fn send_message_impl(
 
     // Push the message to the sender's copy of the chat, creating the chat if they have none
     let result = state.data.users.with_user_mut(my_index, |user| {
-        let chat = user
-            .direct_chats
-            .get_or_create(my_user_id, recipient, recipient_kind.user_type(), || anonymized_id, now);
+        let mut chat =
+            user.direct_chats
+                .get_or_create(my_user_id, recipient, recipient_kind.user_type(), || anonymized_id, now);
 
         // Checked before the message is pushed, since pushing a message to a thread creates the thread
         let thread_root_message_id = chat.thread_root_message_id(thread_root_message_index)?;
@@ -611,6 +612,7 @@ fn send_message_impl(
             message_filter_failed,
             og_previews,
         };
+        drop(chat);
         let sender_details = SenderDetails {
             name: user.username.value.clone(),
             display_name: user.display_name.value.clone(),
