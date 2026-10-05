@@ -17,6 +17,7 @@ export class UnsupportedValueError extends Error {
 export const ICErrorCode = {
     CanisterOutOfCycles: "IC0207", // the canister is frozen
     CanisterNotFound: "IC0301", // the canister has been deleted
+    CanisterInstructionLimitExceeded: "IC0522", // the call ran out of instructions
     CanisterMethodNotFound: "IC0536", // the canister has no such method, eg. it hasn't been upgraded
     CanisterWasmModuleNotFound: "IC0537", // the canister has been uninstalled
 } as const;
@@ -88,6 +89,15 @@ export class CanisterMethodNotFoundError extends HttpError {
     constructor(error: Error) {
         super(501, error);
         this.name = "CanisterMethodNotFoundError";
+    }
+}
+
+// The canister ran out of instructions handling the call. A retry runs it over much the same
+// state, so would only run out again.
+export class InstructionLimitExceededError extends HttpError {
+    constructor(error: Error) {
+        super(500, error);
+        this.name = "InstructionLimitExceededError";
     }
 }
 

@@ -1742,7 +1742,8 @@ export type GroupChatDetailsResponse =
 export type GroupChatDetailsUpdatesResponse =
     | ({ kind: "success" } & GroupChatDetailsUpdates)
     | { kind: "success_no_updates"; timestamp: bigint }
-    // The details in full, because the canister no longer has all of the updates asked for
+    // The details in full, because the canister no longer has all of the updates asked for, or
+    // there are too many of them, as the canister found or as found when it couldn't return them
     | { kind: "snapshot"; details: GroupChatDetails }
     | Failure;
 

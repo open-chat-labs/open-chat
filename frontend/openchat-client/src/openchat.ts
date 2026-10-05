@@ -3311,6 +3311,19 @@ export class OpenChat {
         return new Set(resp.members.filter((m) => !m.lapsed).map((m) => m.userId));
     }
 
+    // Called as the details held for the chat or community with this key are replaced by newer ones.
+    // Those found not to be members may have joined since, and the newer details only hold them if
+    // they were brought up to date by the updates since. Details loaded in full instead (when the
+    // updates since have been pruned, or there are too many) hold only the first page of members.
+    // So everyone is looked up again when next seen. Lookups in flight note those they find not to
+    // be members in the set they started with, which is dropped, since they were asked as of the
+    // details being replaced.
+    #forgetNotMembers(lookups: MemberLookups, key: string): void {
+        if (lookups.key === key) {
+            lookups.notMembers = new Set();
+        }
+    }
+
     // The members held for the selected chat or community with this id, and the lookups made of
     // those which aren't, or undefined if it isn't the one selected
     #selectedMembers(
@@ -4592,6 +4605,7 @@ export class OpenChat {
             } else {
                 const [lapsed, members] = partition(resp.members, (m) => m.lapsed);
 
+                this.#forgetNotMembers(this.#communityMemberLookups, community.id.communityId);
                 selectedServerCommunityStore.set(
                     new CommunityDetailsState(
                         community.id,
@@ -4683,6 +4697,10 @@ export class OpenChat {
                         });
                     }
 
+                    this.#forgetNotMembers(
+                        this.#chatMemberLookups,
+                        chatIdentifierToString(serverChat.id),
+                    );
                     selectedServerChatStore.set(
                         new ChatDetailsState(
                             serverChat.id,

@@ -889,6 +889,12 @@ impl CommunityMembers {
         self.latest_update_removed > since
     }
 
+    // Whether more than `limit` updates have been made after `since`. At most `limit + 1` of them are
+    // read, so this is cheap however many there are.
+    pub fn more_updates_since_than(&self, since: TimestampMillis, limit: u32) -> bool {
+        self.iter_latest_updates(since).nth(limit as usize).is_some()
+    }
+
     fn prune_then_insert_member_update(&mut self, user_id: UserId, update: MemberUpdate, now: TimestampMillis) {
         self.prune_member_updates(now);
         self.updates.insert((now, user_id, update));
