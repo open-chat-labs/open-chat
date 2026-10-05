@@ -118,12 +118,16 @@ impl Files {
     }
 
     // The blobs the user's file references point to, in order of the oldest file referencing each,
-    // along with all of the user's files referencing it. A blob only stops counting towards the
-    // user's bytes once every one of those files is removed.
-    pub fn user_blobs_from_oldest(&self, user_id: Principal) -> Vec<UserBlob> {
+    // along with all of the user's files referencing it, or `None` if the user holds more than
+    // `max_files` files. A blob only stops counting towards the user's bytes once every one of those
+    // files is removed.
+    pub fn user_blobs_from_oldest(&self, user_id: Principal, max_files: usize) -> Option<Vec<UserBlob>> {
         let mut blobs: Vec<UserBlob> = Vec::new();
         let mut index_by_hash: HashMap<Hash, usize> = HashMap::new();
-        for file in self.iter_user_files_from_oldest(user_id) {
+        for (count, file) in self.iter_user_files_from_oldest(user_id).enumerate() {
+            if count == max_files {
+                return None;
+            }
             let index = *index_by_hash.entry(file.hash).or_insert_with(|| {
                 blobs.push(UserBlob {
                     size: self.blob_size(&file.hash).unwrap_or_default(),
@@ -133,7 +137,7 @@ impl Files {
             });
             blobs[index].files.push(file);
         }
-        blobs
+        Some(blobs)
     }
 
     // The user's oldest files, as few of them as add up to at least `bytes`, along with their total
@@ -303,6 +307,7 @@ impl FileIdByUserThenCreated {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct UserFile {
     pub file_id: FileId,
     #[allow(dead_code)]
@@ -523,7 +528,8 @@ mod tests {
 
         let blobs = |user_id| -> Vec<(u64, Vec<FileId>)> {
             files
-                .user_blobs_from_oldest(user_id)
+                .user_blobs_from_oldest(user_id, 10)
+                .unwrap()
                 .into_iter()
                 .map(|b| (b.size, b.files.iter().map(|f| f.file_id).collect()))
                 .collect()
@@ -531,6 +537,8 @@ mod tests {
         assert_eq!(blobs(user), vec![(500, vec![1, 3]), (300, vec![2])]);
         assert_eq!(blobs(other_user), vec![(700, vec![4])]);
         assert!(blobs(Principal::from_slice(&[9])).is_empty());
+        assert!(files.user_blobs_from_oldest(user, 3).is_some());
+        assert!(files.user_blobs_from_oldest(user, 2).is_none());
     }
 
     #[test]

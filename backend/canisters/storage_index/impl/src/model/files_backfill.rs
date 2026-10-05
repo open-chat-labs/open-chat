@@ -28,6 +28,9 @@ pub struct FilesBackfill {
     owners_charged: u64,
     bytes_charged: u64,
     owners_over_limit: u64,
+    // Owners over their limit holding too many files to check in one go, who are left to be
+    // brought under it by their next upload
+    owners_with_too_many_files: u64,
     files_removed: u64,
     bytes_removed: u64,
     // Buckets whose files couldn't all be paged through
@@ -53,6 +56,13 @@ impl Default for Stage {
             after: None,
         }
     }
+}
+
+// The outcome of checking an owner the backfill charged against their limit
+pub enum LimitCheck {
+    NotOverLimit,
+    TooManyFiles,
+    FilesRemoved { files: u64, bytes: u64 },
 }
 
 // The outcome of backfilling a reference to a file a bucket holds
@@ -104,16 +114,24 @@ impl FilesBackfill {
         self.buckets_skipped.push(bucket);
     }
 
-    // Up to `max_count` of the owners charged, along with what they were charged, which are then no
-    // longer held
-    pub fn take_charged(&mut self, max_count: usize) -> Vec<(Principal, u64)> {
-        (0..max_count).map_while(|_| self.charged.pop_first()).collect()
+    // The next owner charged, along with what they were charged, which is then no longer held
+    pub fn pop_charged(&mut self) -> Option<(Principal, u64)> {
+        self.charged.pop_first()
     }
 
-    pub fn record_over_limit(&mut self, files_removed: u64, bytes_removed: u64) {
-        self.owners_over_limit += 1;
-        self.files_removed += files_removed;
-        self.bytes_removed += bytes_removed;
+    pub fn record_limit_check(&mut self, check: LimitCheck) {
+        match check {
+            LimitCheck::NotOverLimit => {}
+            LimitCheck::TooManyFiles => {
+                self.owners_over_limit += 1;
+                self.owners_with_too_many_files += 1;
+            }
+            LimitCheck::FilesRemoved { files, bytes } => {
+                self.owners_over_limit += 1;
+                self.files_removed += files;
+                self.bytes_removed += bytes;
+            }
+        }
     }
 
     pub fn complete(&mut self, now: TimestampMillis) {
@@ -135,6 +153,7 @@ impl FilesBackfill {
             owners_charged: self.owners_charged,
             bytes_charged: self.bytes_charged,
             owners_over_limit: self.owners_over_limit,
+            owners_with_too_many_files: self.owners_with_too_many_files,
             files_removed: self.files_removed,
             bytes_removed: self.bytes_removed,
             buckets_skipped: self.buckets_skipped.clone(),
@@ -153,6 +172,7 @@ pub struct FilesBackfillMetrics {
     pub owners_charged: u64,
     pub bytes_charged: u64,
     pub owners_over_limit: u64,
+    pub owners_with_too_many_files: u64,
     pub files_removed: u64,
     pub bytes_removed: u64,
     pub buckets_skipped: Vec<CanisterId>,

@@ -9,9 +9,9 @@ use types::{CanisterId, FileId, Milliseconds};
 use utils::canister::delay_if_should_retry_failed_c2c_call_to_new_method;
 
 const PAGE_SIZE: u32 = 2_000;
-// The owners checked against their limits at a time, once every bucket has been paged through. Each
-// owner's references are read to work out the bytes they hold.
-const OWNERS_PER_BATCH: usize = 100;
+// Owners are checked against their limits until this many instructions have been used, once every
+// bucket has been paged through
+const MAX_INSTRUCTIONS_PER_RUN: u64 = 2_000_000_000;
 
 thread_local! {
     static RUNNING: Cell<bool> = Cell::default();
@@ -102,10 +102,12 @@ fn remove_files() {
     }
 
     let completed = mutate_state(|state| {
-        for (user_id, charged) in state.data.files_backfill.take_charged(OWNERS_PER_BATCH) {
-            if let Some((count, bytes)) = state.data.remove_oldest_files_over_limit(user_id, charged) {
-                state.data.files_backfill.record_over_limit(count, bytes);
-            }
+        while ic_cdk::api::instruction_counter() < MAX_INSTRUCTIONS_PER_RUN {
+            let Some((user_id, charged)) = state.data.files_backfill.pop_charged() else {
+                break;
+            };
+            let check = state.data.remove_oldest_files_over_limit(user_id, charged);
+            state.data.files_backfill.record_limit_check(check);
         }
         if state.data.files_backfill.is_complete_after_removing_files() {
             let now = state.env.now();
