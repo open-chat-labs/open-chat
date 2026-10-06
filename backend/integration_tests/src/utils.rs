@@ -5,7 +5,7 @@ use constants::{
 };
 use pocket_ic::PocketIc;
 use rand::{RngExt, SeedableRng, rngs::StdRng};
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 use std::{path::PathBuf, time::UNIX_EPOCH};
 use types::{CanisterId, Hash, HttpRequest, HttpResponse, TimestampMillis, TimestampNanos, TokenInfo, UserId};
 
