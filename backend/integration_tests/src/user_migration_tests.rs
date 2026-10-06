@@ -17,10 +17,10 @@ use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     AutonomousConfig, BotChatContext, BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, BuildVersion,
-    CanisterId, CanisterWasm, ChannelId, Chat, ChatEvent, ChatId, CommunityId, CommunityRole, DiamondMembershipPlanDuration,
-    Document, Empty, EventIndex, EventsResponse, FileContent, IdempotentEnvelope, MessageContent, MessageContentInitial,
-    MessageIndex, OptionUpdate, P2PSwapContentInitial, PendingCryptoTransaction, ReferralStatus, TextContent, UnitResult,
-    UserId, VideoCallType, icrc1, icrc2,
+    CLAIM_TYPE_START_VIDEO_CALL, CanisterId, CanisterWasm, ChannelId, Chat, ChatEvent, ChatId, CommunityId, CommunityRole,
+    DiamondMembershipPlanDuration, Document, Empty, EventIndex, EventsResponse, FileContent, IdempotentEnvelope,
+    MessageContent, MessageContentInitial, MessageIndex, OptionUpdate, P2PSwapContentInitial, PendingCryptoTransaction,
+    ReferralStatus, StartVideoCallClaims, TextContent, UnitResult, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::{MessageActivity, UserCanisterEvent};
 use user_index_canister::user_migration::UserMigrationStatus;
@@ -2251,7 +2251,8 @@ fn bot_acting_autonomously_in_a_migrated_users_direct_chat_by_their_old_id_reach
         "{result:?}"
     );
 
-    // A video call to the user by their old id is checked against their new canister too
+    // A video call to the user by their old id is checked against their new canister too, and the
+    // token names them by their new id, since the video bridge starts the call in that chat
     let response = client::local_user_index::access_token_v2(
         env,
         other_user.principal,
@@ -2264,10 +2265,13 @@ fn bot_acting_autonomously_in_a_migrated_users_direct_chat_by_their_old_id_reach
             },
         ),
     );
-    assert!(
-        matches!(response, local_user_index_canister::access_token_v2::Response::Success(_)),
-        "{response:?}"
-    );
+    let local_user_index_canister::access_token_v2::Response::Success(token) = response else {
+        panic!("{response:?}");
+    };
+    let public_key = client::user_index::happy_path::public_key(env, canister_ids.user_index);
+    let claims: jwt::Claims<StartVideoCallClaims> =
+        jwt::verify_and_decode(&token, &public_key, CLAIM_TYPE_START_VIDEO_CALL).unwrap();
+    assert_eq!(claims.custom().chat_id, Chat::Direct(new_user.user_id.into()));
 }
 
 #[test_case(true; "registered_with_the_same_local_user_index")]
