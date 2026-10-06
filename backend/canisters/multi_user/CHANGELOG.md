@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove the one-off which moved every user's direct chats, groups and communities into stable memory, which has run in prod ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Remove the one-off which moved every user's direct chats, groups and communities into stable memory, which has run in prod ([#9813](https://github.com/open-chat-labs/open-chat/pull/9813))
 
 ## [[2.0.2101](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2101-multi_user)] - 2026-10-06
 

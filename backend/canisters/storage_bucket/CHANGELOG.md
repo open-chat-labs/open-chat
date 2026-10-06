@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove `c2c_files`, only needed for the StorageIndex's one-off files backfill ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Remove `c2c_files`, only needed for the StorageIndex's one-off files backfill ([#9813](https://github.com/open-chat-labs/open-chat/pull/9813))
 
 ## [[2.0.2104](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2104-storage_bucket)] - 2026-10-06
 
