@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, execute_update};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
@@ -12,15 +12,50 @@ const MAX_LENGTH: usize = 20;
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 async fn set_pin_number(args: Args) -> Response {
-    // TODO: This is async because verifying by reauthenticating calls the LocalUserIndex, as in the
-    // User canister, which isn't supported yet
-    execute_update(|state| set_pin_number_impl(args, state))
+    execute_update_async(|| set_pin_number_impl(args)).await
 }
 
-fn set_pin_number_impl(args: Args, state: &mut RuntimeState) -> Response {
+async fn set_pin_number_impl(args: Args) -> Response {
+    let (my_index, my_user_id, pin_enabled, local_user_index_canister_id) = read_state(|state| {
+        state.with_caller_user(|my_index, user| {
+            (
+                my_index,
+                state.user_id(my_index),
+                user.pin_number.enabled(),
+                state.data.local_user_index_canister_id,
+            )
+        })
+    });
+
+    // A user who has forgotten their PIN resets it by signing in again, which the LocalUserIndex
+    // verifies for them, as it does for a user in a canister of their own
+    let signed_in_again = match &args.verification {
+        PinNumberVerification::Reauthenticated(sign_in_proof_jwt) if pin_enabled => {
+            match local_user_index_canister_c2c_client::c2c_verify_sign_in_proof(
+                local_user_index_canister_id,
+                &local_user_index_canister::c2c_verify_sign_in_proof::Args {
+                    sign_in_proof_jwt: sign_in_proof_jwt.clone(),
+                    user_id: Some(my_user_id),
+                },
+            )
+            .await
+            {
+                Ok(Response::Success) => true,
+                Ok(error) => return error,
+                Err(error) => return Response::Error(error.into()),
+            }
+        }
+        _ => false,
+    };
+
+    mutate_state(|state| set_pin_number_impl_inner(args, my_index, signed_in_again, state))
+}
+
+fn set_pin_number_impl_inner(args: Args, my_index: u16, signed_in_again: bool, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
 
-    let result = state.with_caller_user_mut(|my_index, user| {
+    // The user is looked up again, since they may have been deleted while their sign in was verified
+    let result = state.data.users.with_user_mut(my_index, |user| {
         if user.pin_number.enabled() {
             match args.verification {
                 PinNumberVerification::None => return Err(Response::Error(OCErrorCode::PinRequired.into())),
@@ -29,13 +64,11 @@ fn set_pin_number_impl(args: Args, state: &mut RuntimeState) -> Response {
                         return Err(Response::Error(error.into()));
                     }
                 }
+                PinNumberVerification::Reauthenticated(_) if signed_in_again => {}
+                // Can't happen, since the sign in is verified whenever the PIN was set, and nothing
+                // is awaited otherwise, but fails closed rather than skip the check
                 PinNumberVerification::Reauthenticated(_) => {
-                    // TODO: The LocalUserIndex's `c2c_verify_sign_in_proof` identifies the user by
-                    // the canister calling it, so it needs to take the user id before a user in
-                    // this canister can be verified this way
-                    return Err(Response::Error(OCErrorCode::InvalidRequest.with_message(
-                        "Verifying by reauthenticating is not yet supported by the MultiUser canister",
-                    )));
+                    return Err(Response::Error(OCErrorCode::PinRequired.into()));
                 }
             }
         }
@@ -57,14 +90,15 @@ fn set_pin_number_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         user.pin_number.set(args.new.map(|mut p| p.consume()), now);
-        Ok(my_index)
+        Ok(())
     });
 
     match result {
-        Ok(my_index) => {
+        Some(Ok(())) => {
             state.award_achievement_and_notify(my_index, Achievement::SetPin, now);
             Response::Success
         }
-        Err(response) => response,
+        Some(Err(response)) => response,
+        None => Response::Error(OCErrorCode::InitiatorNotFound.into()),
     }
 }
