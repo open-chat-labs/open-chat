@@ -121,6 +121,7 @@ code_section_size() {
   while [ "${OFFSET}" -lt "${FILE_SIZE}" ]
   do
     BYTES=($(od -An -tu1 -j "${OFFSET}" -N 6 "${WASM}"))
+    [ "${#BYTES[@]}" -ge 2 ] || break
     ID=${BYTES[0]}
     SIZE=0
     SHIFT=0
@@ -152,7 +153,15 @@ optimise_and_compress() {
   ${CARGO_HOME}/bin/ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink || exit 1
   ${CARGO_HOME}/bin/ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm optimize Oz || exit 1
   CODE_SIZE=$(code_section_size ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm)
-  if [ "${CODE_SIZE}" -gt $((MAX_CODE_SECTION_SIZE - CODE_SECTION_SIZE_MARGIN)) ]
+  if ! [ "${CODE_SIZE:-0}" -gt 0 ] 2>/dev/null
+  then
+    echo "Failed to read the size of the code section of the $CANISTER wasm"
+    exit 1
+  elif [ "${CODE_SIZE}" -gt "${MAX_CODE_SECTION_SIZE}" ]
+  then
+    echo "The code section of the $CANISTER wasm is $CODE_SIZE bytes, over the IC's limit of $MAX_CODE_SECTION_SIZE bytes"
+    exit 1
+  elif [ "${CODE_SIZE}" -gt $((MAX_CODE_SECTION_SIZE - CODE_SECTION_SIZE_MARGIN)) ]
   then
     echo "The code section of the $CANISTER wasm is $CODE_SIZE bytes, within $CODE_SECTION_SIZE_MARGIN bytes of the IC's limit of $MAX_CODE_SECTION_SIZE bytes"
     exit 1
