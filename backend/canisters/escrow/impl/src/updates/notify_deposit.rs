@@ -50,9 +50,9 @@ async fn process_swap(
             // The check is over, so the deposit is unlocked, unless it's refunded for being too low below
             swap.locked_deposits.remove(&principal);
 
-            // Another call for the same deposit may have recorded it while the balance was being
-            // checked, in which case it is left as it is: refunding it would take back funds the
-            // swap still holds for its payouts
+            // The lock keeps any other call from recording the deposit while the balance is checked,
+            // but should it have been recorded, it's left as it is: refunding it would take back funds
+            // the swap still holds for its payouts
             let offered_by_depositor = principal == swap.offered_by;
             if (offered_by_depositor && swap.token0_received)
                 || (swap.accepted_by.is_some_and(|(accepted_by, _)| accepted_by == principal) && swap.token1_received)
