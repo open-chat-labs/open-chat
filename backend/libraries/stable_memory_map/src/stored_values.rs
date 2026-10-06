@@ -55,16 +55,8 @@ impl<V: StoredValue> Default for StoredValues<V> {
 }
 
 impl<V: StoredValue> StoredValues<V> {
-    // Values from the heap layout which preceded this one, to be moved into stable memory by
+    // Adds values from the heap layout which preceded this one, to be moved into stable memory by
     // `migrate_to_stable_memory`
-    pub fn from_heap(values: HashMap<V::Id, V>) -> Self {
-        StoredValues {
-            on_heap: values,
-            in_stable_memory: HashMap::new(),
-        }
-    }
-
-    // Adds the values from the heap layout which preceded this one, as `from_heap` does
     pub fn extend_from_heap(&mut self, values: HashMap<V::Id, V>) {
         self.on_heap.extend(values);
     }
@@ -94,7 +86,16 @@ impl<V: StoredValue> StoredValues<V> {
     // the `StoredMut` is dropped.
     pub fn insert(&mut self, id: V::Id, value: V) -> StoredMut<'_, V> {
         self.on_heap.remove(&id);
-        let entry = self.in_stable_memory.entry(id).insert_entry(value.entry()).into_mut();
+        let new_entry = value.entry();
+        if let Some(previous_entry) = self.in_stable_memory.insert(id, new_entry) {
+            // The value being replaced is stored under a different key if the key depends on the
+            // entry, in which case it is removed rather than left behind
+            let previous_key = V::key(&id, &previous_entry);
+            if previous_key != V::key(&id, &new_entry) {
+                with_map_mut(|m| m.remove(previous_key));
+            }
+        }
+        let entry = self.in_stable_memory.get_mut(&id).unwrap();
         StoredMut(StoredMutInner::InStableMemory {
             id,
             value: Box::new(value),
@@ -401,8 +402,16 @@ mod tests {
     #[test]
     fn values_on_the_heap_are_read_and_changed_until_moved_into_stable_memory() {
         init();
-        let mut values = StoredValues::from_heap(HashMap::from([(1, item("a", 10)), (2, item("b", 20))]));
+        let mut values = StoredValues::default();
+        values.extend_from_heap(HashMap::from([(1, item("a", 10)), (2, item("b", 20))]));
         values.insert(3, item("c", 30));
+
+        // Values on the heap survive being serialized, as when a User canister whose user is being
+        // migrated is upgraded again
+        let mut values: StoredValues<Item> = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&values));
+        assert_eq!(values.count_on_heap(), 2);
+        assert_eq!(*values.get(&2).unwrap(), item("b", 20));
+        assert_eq!(*values.get(&3).unwrap(), item("c", 30));
 
         values.get_mut(&1).unwrap().updated = 15;
         assert_eq!(values.get(&1).unwrap().updated, 15);
@@ -434,6 +443,45 @@ mod tests {
         }
         let fields: Fields = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&values));
         assert!(fields.on_heap.is_none());
+    }
+
+    #[test]
+    fn replacing_a_value_stored_under_another_key_removes_it() {
+        // A value whose key depends on its entry, as a direct chat's does on its `key_id`
+        #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+        struct Keyed(u32);
+
+        impl StoredValue for Keyed {
+            type Id = u32;
+            type Entry = u32;
+            type Key = TestSmallEntriesKey;
+
+            fn entry(&self) -> u32 {
+                self.0
+            }
+
+            fn key(_: &u32, entry: &u32) -> TestSmallEntriesKey {
+                TestSmallEntriesKeyPrefix::new().create_key(entry)
+            }
+
+            fn to_bytes(&self) -> Vec<u8> {
+                msgpack::serialize_then_unwrap(self)
+            }
+
+            fn from_bytes(bytes: &[u8]) -> Self {
+                msgpack::deserialize_then_unwrap(bytes)
+            }
+        }
+
+        init();
+        let mut values = StoredValues::default();
+        values.insert(1, Keyed(5));
+        values.insert(1, Keyed(6));
+        assert_eq!(stored_count(), 1);
+        assert_eq!(*values.get(&1).unwrap(), Keyed(6));
+        // Replacing a value with one under the same key leaves just the new one
+        values.insert(1, Keyed(6));
+        assert_eq!(stored_count(), 1);
     }
 
     #[test]

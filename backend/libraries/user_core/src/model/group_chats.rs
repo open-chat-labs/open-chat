@@ -272,12 +272,20 @@ mod tests {
             ]),
             pinned: Timestamped::new(HashMap::from([(chat(2), 30)]), 30),
         };
-        let mut group_chats: GroupChats = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(previous));
+        let group_chats: GroupChats = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(previous));
 
         // The groups are read from the heap until they are moved
         assert_eq!(group_chats.len(), 2);
         assert_eq!(group_chats.groups_created(), 4);
         assert_eq!(group_chats.pinned_chats().len(), 1);
+        assert_eq!(group_chats.updated_since(25).count(), 1);
+        assert!(!is_stored(chat(1)));
+
+        // They survive being serialized while still on the heap, as when a User canister whose user
+        // is being migrated is upgraded again
+        let mut group_chats: GroupChats = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&group_chats));
+        assert_eq!(group_chats.len(), 2);
+        assert_eq!(group_chats.groups_created(), 4);
         assert_eq!(group_chats.updated_since(25).count(), 1);
         assert!(!is_stored(chat(1)));
 
