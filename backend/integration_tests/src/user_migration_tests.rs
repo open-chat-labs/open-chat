@@ -2900,7 +2900,12 @@ fn message_sent_before_its_sender_was_migrated_can_be_tipped(tipped_in: TippedIn
     let owner = client::register_diamond_user(env, canister_ids, *controller);
     let sender = client::register_user(env, canister_ids);
     let tipper = if tipper_in_multi_user_canister {
-        client::register_user_in_multi_user_canister(env, canister_ids)
+        // In a MultiUser canister other than the one the sender is migrated into, so that it hears of
+        // the migration from the LocalUserIndex, and a tip in a direct chat reaches the sender's new
+        // canister from another canister
+        let tippers_canister =
+            client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+        client::register_user_in_multi_user_canister_on(env, canister_ids, local_user_index, tippers_canister, None)
     } else {
         client::register_user(env, canister_ids)
     };
@@ -2953,6 +2958,7 @@ fn message_sent_before_its_sender_was_migrated_can_be_tipped(tipped_in: TippedIn
 
     let migrated = migrate(env, canister_ids, &operator, &sender, multi_user_canister);
     let new_user_id = migrated.user_id;
+    assert_ne!(migrated.canister(), tipper.canister());
 
     // Wait until the chat holds the sender under their new id, as the tipper's client knows them
     let chat = match chat {
