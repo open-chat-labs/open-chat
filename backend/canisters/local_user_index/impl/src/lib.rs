@@ -8,7 +8,6 @@ use crate::model::local_group_map::LocalGroupMap;
 use crate::model::local_multi_user_canister_map::LocalMultiUserCanisterMap;
 use crate::model::media_scan_job_log::MediaScanJobLog;
 use crate::model::moderation_queue::ModerationQueue;
-use crate::model::old_local_group_index::{OldLocalGroupIndex, OldLocalGroupIndexMetrics};
 use crate::model::premium_items::PremiumItems;
 use crate::model::recent_joins::RecentJoins;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
@@ -902,7 +901,6 @@ impl RuntimeState {
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
             cycles_refunded_from_pool_canisters: self.data.cycles_refunded_from_pool_canisters,
             cycles_topped_up_for_refunds: self.data.cycles_topped_up_for_refunds,
-            old_local_group_index: self.data.old_local_group_index.as_ref().map(|old| old.metrics()),
             registry_tokens: self.data.registry_tokens.len(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
@@ -1071,10 +1069,6 @@ struct Data {
     // The ledgers from which migrated users' funds can be moved, refreshed from the Registry daily
     #[serde(default)]
     pub registry_tokens: RegistryTokens,
-    // The LocalGroupIndex which ran alongside this LocalUserIndex before its work was moved in here,
-    // whose canisters are being reclaimed (see `jobs::reclaim_old_local_group_index`)
-    #[serde(default)]
-    pub old_local_group_index: Option<OldLocalGroupIndex>,
     // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
     #[serde(skip)]
     pub top_up_leaderboards: TopUpLeaderboards,
@@ -1214,7 +1208,6 @@ impl Data {
             users_to_close_out: UsersToMigrate::default(),
             recent_joins: RecentJoins::default(),
             registry_tokens: RegistryTokens::default(),
-            old_local_group_index: None,
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
     }
@@ -1283,7 +1276,6 @@ pub struct Metrics {
     pub cycles_refunded_from_deleted_users: Cycles,
     pub cycles_refunded_from_pool_canisters: Cycles,
     pub cycles_topped_up_for_refunds: Cycles,
-    pub old_local_group_index: Option<OldLocalGroupIndexMetrics>,
     pub registry_tokens: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,

@@ -17,15 +17,10 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
-
-    // One-off: moves every user's direct chats, groups and communities into stable memory
-    let mut moved = 0;
-    data.users.for_each_mut(|_, user| moved += user.migrate_to_stable_memory());
-    info!(moved, "Moved the direct chats, groups and communities into stable memory");
 
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);

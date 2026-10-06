@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the one-off files backfill, which has completed in prod ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+
+## [[2.0.2105](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2105-storage_index)] - 2026-10-06
+
 ### Added
 
 - Add `c2c_user_ids_migrated` for the UserIndex to pass migrated users' old and new ids on to every bucket ([#9790](https://github.com/open-chat-labs/open-chat/pull/9790))
