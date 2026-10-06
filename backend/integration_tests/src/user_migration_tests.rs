@@ -2787,13 +2787,14 @@ fn count_in_stable_memory(env: &PocketIc, multi_user_canister: CanisterId, user:
         .count()
 }
 
-// A migrated user's messages from before their migration keep the id they were sent under, while
-// the group or community holds the user as a member under their new id. Reactions and quote replies
-// to those messages still reach the user, in their new canister.
+// A migrated user's messages sent before their migration keep the id they were sent under, while
+// the group or community holds the user as a member under their new id. Reactions, quote replies
+// and poll votes on those messages still reach the user, in their new canister.
 #[test_case(false; "group")]
 #[test_case(true; "channel")]
-fn reactions_and_quote_replies_to_a_message_sent_before_its_sender_was_migrated_reach_them(in_community: bool) {
-    use types::{GroupReplyContext, MessageId, TextContent};
+fn activity_on_messages_sent_before_their_sender_was_migrated_reaches_them(in_community: bool) {
+    use std::collections::HashMap;
+    use types::{GroupReplyContext, MessageId, PollConfig, PollContent, PollVotes, TextContent, TotalVotes};
     use user_canister::MessageActivity;
 
     let mut wrapper = ENV.deref().get();
@@ -2814,7 +2815,24 @@ fn reactions_and_quote_replies_to_a_message_sent_before_its_sender_was_migrated_
     let other = client::register_user(env, canister_ids);
 
     let message_id = random_from_u128();
-    let (chat, event_index) = if in_community {
+    let poll_message_id = random_from_u128();
+    let poll = MessageContentInitial::Poll(PollContent {
+        config: PollConfig {
+            text: None,
+            options: vec!["a".to_string(), "b".to_string()],
+            end_date: None,
+            anonymous: false,
+            show_votes_before_end_date: true,
+            allow_multiple_votes_per_user: false,
+            allow_user_to_change_vote: false,
+        },
+        votes: PollVotes {
+            total: TotalVotes::Visible(HashMap::new()),
+            user: Vec::new(),
+        },
+        ended: false,
+    });
+    let (chat, event_index, poll_message_index) = if in_community {
         let community_id =
             client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
         let channel_id =
@@ -2832,7 +2850,21 @@ fn reactions_and_quote_replies_to_a_message_sent_before_its_sender_was_migrated_
             random_string(),
             Some(message_id),
         );
-        (Chat::Channel(community_id, channel_id), result.event_index)
+        let poll = client::community::happy_path::send_message(
+            env,
+            &sender,
+            community_id,
+            channel_id,
+            None,
+            poll,
+            None,
+            Some(poll_message_id),
+        );
+        (
+            Chat::Channel(community_id, channel_id),
+            result.event_index,
+            poll.message_index,
+        )
     } else {
         let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
         for user in [&sender, &other] {
@@ -2840,7 +2872,8 @@ fn reactions_and_quote_replies_to_a_message_sent_before_its_sender_was_migrated_
         }
         let result =
             client::group::happy_path::send_text_message(env, &sender, group_id, None, random_string(), Some(message_id));
-        (Chat::Group(group_id), result.event_index)
+        let poll = client::group::happy_path::send_message(env, &sender, group_id, None, poll, None, Some(poll_message_id));
+        (Chat::Group(group_id), result.event_index, poll.message_index)
     };
 
     let migrated = migrate(env, canister_ids, &operator, &sender, multi_user_canister);
@@ -2854,6 +2887,7 @@ fn reactions_and_quote_replies_to_a_message_sent_before_its_sender_was_migrated_
         Chat::Group(group_id) => {
             client::group::happy_path::add_reaction(env, &other, group_id, "👍", message_id);
             client::group::happy_path::send_message(env, &other, group_id, None, reply, replies_to, Some(reply_message_id));
+            client::group::happy_path::register_poll_vote(env, &other, group_id, poll_message_index, 0);
         }
         Chat::Channel(community_id, channel_id) => {
             client::community::happy_path::add_reaction(env, &other, community_id, channel_id, "👍", message_id);
@@ -2867,6 +2901,7 @@ fn reactions_and_quote_replies_to_a_message_sent_before_its_sender_was_migrated_
                 replies_to,
                 Some(reply_message_id),
             );
+            client::community::happy_path::register_poll_vote(env, &other, community_id, channel_id, poll_message_index, 0);
         }
         Chat::Direct(_) => unreachable!(),
     }
@@ -2876,7 +2911,9 @@ fn reactions_and_quote_replies_to_a_message_sent_before_its_sender_was_migrated_
         let events = client::user::happy_path::message_activity_feed(env, &migrated, 0).events;
         let has =
             |id: MessageId, activity: MessageActivity| events.iter().any(|e| e.message_id == id && e.activity == activity);
-        has(message_id, MessageActivity::Reaction) && has(reply_message_id, MessageActivity::QuoteReply)
+        has(message_id, MessageActivity::Reaction)
+            && has(reply_message_id, MessageActivity::QuoteReply)
+            && has(poll_message_id, MessageActivity::PollVote)
     });
 }
 

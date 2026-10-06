@@ -28,63 +28,60 @@ async fn accept_p2p_swap_impl(args: Args) -> Response {
         Err(response) => return Error(response),
     };
 
-    let result = match user_canister_c2c_client::c2c_accept_p2p_swap(user_id.canister_id(), &c2c_args).await {
-        Ok(user_canister::c2c_accept_p2p_swap::Response::Success(transaction_index)) => {
-            NotifyEscrowCanisterOfDepositJob::run(
-                depositor,
-                c2c_args.swap_id,
-                thread_root_message_index,
-                message_id,
-                transaction_index,
-            );
+    let result =
+        match user_canister_c2c_client::c2c_accept_p2p_swap(user_id.canister_id(), &c2c_args).await {
+            Ok(user_canister::c2c_accept_p2p_swap::Response::Success(transaction_index)) => {
+                NotifyEscrowCanisterOfDepositJob::run(
+                    depositor,
+                    c2c_args.swap_id,
+                    thread_root_message_index,
+                    message_id,
+                    transaction_index,
+                );
 
-            mutate_state(|state| {
-                let now = state.env.now();
-                if new_achievement {
-                    state.notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer, now);
-                }
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    if new_achievement {
+                        state.notify_user_of_achievement(user_id, Achievement::AcceptedP2PSwapOffer, now);
+                    }
 
-                if let Some((message, event_index)) = state.data.chat.events.message_internal(
+                    if let Some((message, event_index)) = state.data.chat.events.message_internal(
                         EventIndex::default(),
                         thread_root_message_index,
                         message_id.into(),
-                    )
-                        // The sender is a member under their latest id, in case they have been
-                        // migrated since sending the message
-                        && let sender_id = state.data.migrated_user_ids.latest(message.sender)
-                        && state
-                            .data
-                            .chat
-                            .members
-                            .get(&sender_id)
-                            .is_some_and(|m| !m.user_type().is_bot())
-                {
-                    state.push_event_to_user(
-                        sender_id,
-                        GroupCanisterEvent::MessageActivity(MessageActivityEvent {
-                            chat: Chat::Group(state.env.canister_id().into()),
-                            thread_root_message_index,
-                            message_index: message.message_index,
-                            message_id: message.message_id,
-                            event_index,
-                            activity: MessageActivity::P2PSwapAccepted,
-                            timestamp: now,
-                            user_id: Some(user_id),
-                        }),
-                        now,
-                    );
-                }
+                    ) && state
+                        .data
+                        .chat
+                        .members
+                        .get(&message.sender)
+                        .is_some_and(|m| !m.user_type().is_bot())
+                    {
+                        state.push_event_to_user(
+                            message.sender,
+                            GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                                chat: Chat::Group(state.env.canister_id().into()),
+                                thread_root_message_index,
+                                message_index: message.message_index,
+                                message_id: message.message_id,
+                                event_index,
+                                activity: MessageActivity::P2PSwapAccepted,
+                                timestamp: now,
+                                user_id: Some(user_id),
+                            }),
+                            now,
+                        );
+                    }
 
-                handle_activity_notification(state);
-            });
+                    handle_activity_notification(state);
+                });
 
-            Success(AcceptSwapSuccess {
-                token1_txn_in: transaction_index,
-            })
-        }
-        Ok(user_canister::c2c_accept_p2p_swap::Response::Error(error)) => Error(error),
-        Err(error) => Error(error.into()),
-    };
+                Success(AcceptSwapSuccess {
+                    token1_txn_in: transaction_index,
+                })
+            }
+            Ok(user_canister::c2c_accept_p2p_swap::Response::Error(error)) => Error(error),
+            Err(error) => Error(error.into()),
+        };
 
     if !matches!(result, Success(_)) {
         mutate_state(|state| rollback(user_id, thread_root_message_index, message_id, state));

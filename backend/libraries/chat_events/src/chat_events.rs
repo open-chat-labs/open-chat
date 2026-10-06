@@ -927,16 +927,18 @@ impl ChatEvents {
 
         p.change_voter_ids(args.user_id, migrated_user_ids);
         let result = p.register_vote(args.user_id, args.option_index, args.operation);
+        // The creator under their latest id, in case they have been migrated since creating the poll
+        let poll_creator = migrated_user_ids.latest(message.sender);
 
         match result {
             RegisterVoteResult::Success(existing_vote_removed) => Ok(RegisterPollVoteSuccess {
-                poll_creator: message.sender,
+                poll_creator,
                 votes: p.votes(Some(args.user_id)),
                 existing_vote_removed,
                 updated: true,
             }),
             RegisterVoteResult::SuccessNoChange => Ok(RegisterPollVoteSuccess {
-                poll_creator: message.sender,
+                poll_creator,
                 votes: p.votes(Some(args.user_id)),
                 existing_vote_removed: false,
                 updated: false,
