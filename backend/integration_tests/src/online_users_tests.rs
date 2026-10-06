@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::utils::now_millis;
+use crate::utils::{next_event_store_index, now_millis, wait_for_event_store_events};
 use crate::{TestEnv, client};
 use constants::MINUTE_IN_MS;
 use std::ops::Deref;
@@ -50,37 +50,18 @@ fn mark_online_pushes_event() {
     env.advance_time(Duration::from_millis(MINUTE_IN_MS));
     env.tick();
 
+    let since = next_event_store_index(env, *controller, canister_ids.event_store);
     let timestamp = now_millis(env);
     client::online_users::happy_path::mark_as_online(env, user.principal, canister_ids.online_users);
 
-    env.advance_time(Duration::from_millis(MINUTE_IN_MS));
-    env.tick();
-    env.advance_time(Duration::from_millis(MINUTE_IN_MS));
-    env.tick();
-    env.tick();
-
-    // The event store is shared with every other test running against this env, so events from
-    // unrelated tests can land after ours. Look for our event among the most recent ones rather
-    // than asserting it is the very latest.
-    let latest_event_index = client::event_store::happy_path::events(env, *controller, canister_ids.event_store, 0, 0)
-        .latest_event_index
-        .unwrap();
-
-    let window = 100;
-    let events = client::event_store::happy_path::events(
+    let counts = wait_for_event_store_events(
         env,
         *controller,
         canister_ids.event_store,
-        latest_event_index.saturating_sub(window),
-        window + 1,
-    )
-    .events;
-
-    assert!(
-        events.iter().any(|e| e.name == "user_online" && e.timestamp == timestamp),
-        "no user_online event at {timestamp} in the last {window} events: {:?}",
-        events.iter().map(|e| (e.name.as_str(), e.timestamp)).collect::<Vec<_>>()
+        since,
+        &[("user_online", timestamp)],
     );
+    assert_eq!(counts, vec![1], "user_online events at {timestamp}");
 }
 
 #[test]
