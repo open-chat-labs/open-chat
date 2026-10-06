@@ -29,7 +29,10 @@ async fn set_pin_number_impl(args: Args) -> Response {
                 let local_user_index_canister_id = read_state(|state| state.data.local_user_index_canister_id);
                 match local_user_index_canister_c2c_client::c2c_verify_sign_in_proof(
                     local_user_index_canister_id,
-                    &local_user_index_canister::c2c_verify_sign_in_proof::Args { sign_in_proof_jwt },
+                    &local_user_index_canister::c2c_verify_sign_in_proof::Args {
+                        sign_in_proof_jwt,
+                        user_id: None,
+                    },
                 )
                 .await
                 {
