@@ -110,13 +110,6 @@ impl Users {
             .map(|user| with_key_scope(KeyScope::User(index), || f(user)))
     }
 
-    // Runs `f` against every user, each within their own key scope
-    pub fn for_each_mut(&mut self, mut f: impl FnMut(u16, &mut User)) {
-        for (&index, user) in self.users.iter_mut() {
-            with_key_scope(KeyScope::User(index), || f(index, user));
-        }
-    }
-
     pub fn len(&self) -> usize {
         self.users.len()
     }

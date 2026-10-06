@@ -34,7 +34,6 @@ fn accept_if_valid(state: &RuntimeState) {
         // Canister callers bypass inspect_message; these only matter for tests that impersonate the canisters
         "c2c_daily_puzzle_push" => state.is_caller_daily_puzzle_canister(),
         "c2c_notify_user_index_events" => state.is_caller_user_index(),
-        "c2c_reclaim_old_local_group_index" => state.is_caller_group_index(),
         "remove_notifications" => state.is_caller_notification_pusher(),
         "submit_media_scan_verdicts" => state.is_caller_media_scanner(),
         _ => false,
