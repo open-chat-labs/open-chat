@@ -215,10 +215,10 @@ fn user_canisters_survive_upgrade_from_prod() {
     let total_keys = count_keys(env, user1.canister(), KeyType::DirectChatEvent);
     assert!(total_keys > total_events, "{total_keys} {total_events}");
 
-    // The chats themselves, and the groups and communities, are on the heap until the upgrade
-    for key_type in [KeyType::DirectChat, KeyType::GroupChat, KeyType::Community] {
-        assert_eq!(count_keys(env, user1.canister(), key_type), 0);
-    }
+    // The User canister in production may hold the chats themselves, and the groups and communities,
+    // on the heap, until the upgrade moves them into stable memory. Once a User canister which keeps
+    // them in stable memory is in production, they're already there, so only where they end up after
+    // the upgrade is checked.
     let direct_chat_summaries_snapshot = direct_chat_summaries(env, &user1);
     let direct_chat_count = direct_chat_summaries_snapshot.len();
     assert_eq!(direct_chat_count, SMALL_CHATS + 2);

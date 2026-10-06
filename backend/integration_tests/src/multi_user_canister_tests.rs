@@ -1,7 +1,8 @@
 use crate::chit_tests::DAY_ZERO;
 use crate::env::{ENV, VIDEO_CALL_OPERATOR};
 use crate::utils::{
-    liquid_cycle_balance, metrics, now_millis, set_freezing_threshold, tick_many, try_metrics, wait_for_cycle_balance_above,
+    liquid_cycle_balance, metrics, next_event_store_index, now_millis, set_freezing_threshold, tick_many, try_metrics,
+    wait_for_cycle_balance_above, wait_for_event_store_events,
 };
 use crate::{CanisterIds, TestEnv, client, wasms};
 use candid::Principal;
@@ -1500,7 +1501,7 @@ fn message_events_are_pushed_to_the_event_store_as_by_user_canisters() {
 
     // Past when the welcome messages were sent, so that they aren't counted as the message sent below
     env.advance_time(Duration::from_millis(1000));
-    let since = next_event_store_index(env, *controller, canister_ids);
+    let since = next_event_store_index(env, *controller, canister_ids.event_store);
     let message_id = random_from_u128();
     let sent = now_millis(env);
     send_text_message(env, a_principal, canister_id, b, "hello", message_id);
@@ -1527,68 +1528,9 @@ fn message_events_are_pushed_to_the_event_store_as_by_user_canisters() {
         ("message_edited", edited),
         ("reaction_added", reacted),
     ];
-    let counts = wait_for_event_store_events(env, *controller, canister_ids, since, &events);
+    let counts = wait_for_event_store_events(env, *controller, canister_ids.event_store, since, &events);
     for ((name, timestamp), count) in events.iter().zip(counts) {
         assert_eq!(count, 1, "{name} at {timestamp}");
-    }
-}
-
-// The index the next event to reach the event store will have
-fn next_event_store_index(env: &mut PocketIc, controller: Principal, canister_ids: &CanisterIds) -> u64 {
-    client::event_store::happy_path::events(env, controller, canister_ids.event_store, 0, 0)
-        .latest_event_index
-        .map_or(0, |index| index + 1)
-}
-
-// Moves time on a minute at a time, since events are batched by the canister which pushes them and
-// then by the LocalUserIndex before reaching the event store, until each of the events (by name and
-// timestamp) has reached it at or after the index `since`, then returns how many times each has.
-// Time moves on by at least 4 minutes, so that a duplicate has time to arrive too. Every event since
-// `since` is searched, rather than only the latest, since the canisters left by the other tests
-// which have drawn the env push their own events as time moves on.
-fn wait_for_event_store_events(
-    env: &mut PocketIc,
-    controller: Principal,
-    canister_ids: &CanisterIds,
-    since: u64,
-    events: &[(&str, TimestampMillis)],
-) -> Vec<usize> {
-    let mut counts = Vec::new();
-    for minute in 1..=10 {
-        env.advance_time(Duration::from_millis(60_000));
-        tick_many(env, 3);
-        counts = event_store_counts(env, controller, canister_ids, since, events);
-        if minute >= 4 && counts.iter().all(|&count| count > 0) {
-            break;
-        }
-    }
-    counts
-}
-
-// How many times each of the events (by name and timestamp) is in the event store at or after the
-// index `since`
-fn event_store_counts(
-    env: &mut PocketIc,
-    controller: Principal,
-    canister_ids: &CanisterIds,
-    since: u64,
-    events: &[(&str, TimestampMillis)],
-) -> Vec<usize> {
-    let mut counts = vec![0; events.len()];
-    let mut start = since;
-    loop {
-        let page = client::event_store::happy_path::events(env, controller, canister_ids.event_store, start, 500).events;
-        if page.is_empty() {
-            return counts;
-        }
-        start += page.len() as u64;
-        for event in page.iter() {
-            for (count, (name, timestamp)) in counts.iter_mut().zip(events) {
-                if event.name == *name && event.timestamp == *timestamp {
-                    *count += 1;
-                }
-            }
-        }
     }
 }
 
@@ -6207,7 +6149,7 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     // directly, and the tip goes from Alice's wallet to Bob's.
     let message_id = random_from_u128();
     send_text_message(env, bob, canister_id, alice_id, "tip me", message_id);
-    let since = next_event_store_index(env, *controller, canister_ids);
+    let since = next_event_store_index(env, *controller, canister_ids.event_store);
     let tipped = now_millis(env);
     let response = alice_tips(env, bob_id, message_id);
     assert!(
@@ -6347,7 +6289,13 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     assert_eq!(client::ledger::happy_path::balance_of(env, ledger, alice), alices_balance);
 
     // Alice's first tip was pushed to the event store, as a User canister's is
-    let counts = wait_for_event_store_events(env, *controller, canister_ids, since, &[("message_tipped", tipped)]);
+    let counts = wait_for_event_store_events(
+        env,
+        *controller,
+        canister_ids.event_store,
+        since,
+        &[("message_tipped", tipped)],
+    );
     assert_eq!(counts, vec![1]);
 }
 

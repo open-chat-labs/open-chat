@@ -2509,7 +2509,9 @@ fn migrated_users_chats_end_up_in_stable_memory() {
         assert_eq!(snapshot.communities.len(), 1);
     }
 
-    // A user exported by the User canister in production has their chats moved as they're imported
+    // A user exported by the User canister in production has their chats moved as they're imported.
+    // Once a User canister which keeps them in stable memory is in production, this step repeats the
+    // next one, and the MultiUser canister's import of chats from the heap can be removed.
     let migrated_0 = migrate(env, canister_ids, &operator, &users[0], multi_user_canister);
     assert_chats_in_stable_memory(env, multi_user_canister, &migrated_0, &partners, &snapshots[0]);
 
