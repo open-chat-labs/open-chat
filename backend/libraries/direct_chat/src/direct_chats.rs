@@ -1,6 +1,7 @@
 use crate::direct_chat::DirectChat;
 use crate::{private_replies, removed_chats};
 use chat_events::{ChatInternal, ChatMetricsInternal};
+use constants::MAX_PINNED_CHATS;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{
@@ -8,7 +9,7 @@ use stable_memory_map::{
     HeapStableSplitMapValue, KeyPrefix, RemovedChatKeyPrefix,
 };
 use std::collections::HashMap;
-use types::{Chat, ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
+use types::{Chat, ChatId, MessageIndex, OCResult, TimestampMillis, Timestamped, UserId, UserType};
 use utils::migrated_user_ids::MigratedUserIds;
 
 pub type DirectChatRef<'a> = HeapStableSplitMapRef<'a, DirectChat>;
@@ -235,11 +236,17 @@ impl DirectChats {
         self.direct_chats_v2.entry(chat_id).map(|entry| entry.user_type)
     }
 
-    pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {
+    // Pins the chat, provided fewer than `MAX_PINNED_CHATS` chats are pinned. The chat needn't exist
+    // yet, since the website lets the user pin a chat before its first message has been sent.
+    pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) -> OCResult {
         if !self.pinned.value.contains_key(&chat_id) {
+            if self.pinned.value.len() >= MAX_PINNED_CHATS {
+                return Err(OCErrorCode::LimitReached.with_message(MAX_PINNED_CHATS));
+            }
             self.pinned.timestamp = now;
             self.pinned.value.insert(chat_id, now);
         }
+        Ok(())
     }
 
     pub fn unpin(&mut self, chat_id: &ChatId, now: TimestampMillis) {
@@ -297,6 +304,7 @@ impl DirectChats {
     pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<DirectChat> {
         let chat = self.direct_chats_v2.remove(&chat_id)?;
         removed_chats::add(&RemovedChatKeyPrefix::new_for_direct_chats(), chat_id.into(), now);
+        self.unpin(&chat_id, now);
         Some(chat)
     }
 
@@ -322,7 +330,7 @@ mod tests {
         let (me, old, new) = (user(1), user(2), user(3));
         let mut direct_chats = DirectChats::default();
         direct_chats.get_or_create(me, old, UserType::User, || 1, 10);
-        direct_chats.pin(old.into(), 20);
+        direct_chats.pin(old.into(), 20).unwrap();
 
         assert!(direct_chats.migrate_their_user_id(old, new, 100));
 
@@ -542,7 +550,7 @@ mod tests {
         let mut direct_chats = legacy_direct_chats(old, &[old]);
         direct_chats.migrate_to_stable_memory();
         direct_chats.get_or_create(old, them, UserType::User, || 2, 10);
-        direct_chats.pin(old.into(), 20);
+        direct_chats.pin(old.into(), 20).unwrap();
 
         direct_chats.migrate_own_user_id(old, new);
 
@@ -577,6 +585,30 @@ mod tests {
         with_key_scope(KeyScope::User(2), || {
             assert!(!second.get(&them.into()).unwrap().archived.value)
         });
+    }
+
+    #[test]
+    fn chats_are_pinned_up_to_the_limit_and_removing_a_chat_unpins_it() {
+        init_stable_memory_map();
+        let me = user(1);
+        let mut direct_chats = DirectChats::default();
+
+        for i in 0..MAX_PINNED_CHATS as u8 {
+            direct_chats.get_or_create(me, user(i + 10), UserType::User, || 1, 10);
+            direct_chats.pin(user(i + 10).into(), 20).unwrap();
+        }
+        let extra = user(MAX_PINNED_CHATS as u8 + 10);
+        direct_chats.get_or_create(me, extra, UserType::User, || 1, 10);
+        let error = direct_chats.pin(extra.into(), 30).unwrap_err();
+        assert!(error.matches_code(OCErrorCode::LimitReached), "{error:?}");
+        // Pinning a chat which is already pinned changes nothing
+        direct_chats.pin(user(10).into(), 30).unwrap();
+        assert_eq!(direct_chats.pinned_chats()[&Chat::Direct(user(10).into())], 20);
+
+        direct_chats.remove(user(10).into(), 40);
+        assert_eq!(direct_chats.pinned_chats().len(), MAX_PINNED_CHATS - 1);
+        assert!(direct_chats.pinned_chats_if_updated(39).is_some());
+        direct_chats.pin(extra.into(), 50).unwrap();
     }
 
     fn legacy_direct_chats(me: UserId, others: &[UserId]) -> DirectChats {
