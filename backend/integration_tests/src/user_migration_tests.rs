@@ -346,11 +346,15 @@ fn cancelled_migration_is_never_imported() {
         vec![user.user_id],
         Some(multi_user_canister),
     );
-    tick_many(env, 10);
-    assert!(matches!(
-        user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
-        Some(UserMigrationStatus::Started { .. })
-    ));
+    // Waits for the migration to start rather than for a fixed number of rounds, since the
+    // LocalUserIndex tries again 30 seconds later if the newly registered user's canister isn't yet
+    // ready to be migrated
+    tick_until(env, |env| {
+        matches!(
+            user_migration_status(env, operator.principal, canister_ids.user_index, user.user_id),
+            Some(UserMigrationStatus::Started { .. })
+        )
+    });
 
     // Nor can it be made to abandon the import, so the migration isn't cancelled
     let cancel = |env: &mut PocketIc| {
