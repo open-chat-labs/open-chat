@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Notify a migrated user of activity on their messages from before their migration, and refund their prizes from then to their new wallet ([#9817](https://github.com/open-chat-labs/open-chat/pull/9817))
+
 ## [[2.0.2102](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2102-group)] - 2026-10-06
 
 ### Changed
