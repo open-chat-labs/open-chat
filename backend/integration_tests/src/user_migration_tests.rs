@@ -2435,6 +2435,66 @@ fn online_users_knows_migrated_user_by_their_new_id() {
     assert!(last_online(env, user.user_id).is_none());
 }
 
+#[test]
+fn migrated_user_who_has_forgotten_their_pin_resets_it_by_signing_in_again() {
+    use user_canister::set_pin_number::{Args, PinNumberVerification};
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (user, user_auth) = client::register_user_and_include_auth(env, canister_ids);
+    client::user::happy_path::set_pin_number(env, &user, None, Some("1234".to_string()));
+
+    let user = migrate(env, canister_ids, &operator, &user, multi_user_canister);
+    let pin_number_settings = |env: &PocketIc| client::user::happy_path::initial_state(env, &user).pin_number_settings;
+    assert_eq!(pin_number_settings(env).unwrap().length, 4);
+
+    // Failed attempts lock the PIN, as they may for a user who has forgotten it
+    for _ in 0..3 {
+        client::user::set_pin_number(
+            env,
+            user.principal,
+            user.canister(),
+            &Args {
+                new: None,
+                verification: PinNumberVerification::PIN("0000".to_string().into()),
+            },
+        );
+    }
+    assert!(pin_number_settings(env).unwrap().attempts_blocked_until.is_some());
+
+    // Signing in again replaces the PIN, and lifts the lock
+    let session_key = rand::random::<[u8; 32]>().to_vec();
+    let proof_jwt =
+        client::identity::happy_path::prepare_delegation(env, user_auth.auth_principal(), canister_ids.identity, session_key)
+            .proof_jwt;
+    let response = client::user::set_pin_number(
+        env,
+        user.principal,
+        user.canister(),
+        &Args {
+            new: Some("56789".to_string().into()),
+            verification: PinNumberVerification::Reauthenticated(proof_jwt),
+        },
+    );
+    assert!(
+        matches!(response, user_canister::set_pin_number::Response::Success),
+        "{response:?}"
+    );
+    let settings = pin_number_settings(env).unwrap();
+    assert_eq!(settings.length, 5);
+    assert!(settings.attempts_blocked_until.is_none());
+}
+
 // Users reach a MultiUser canister with their direct chats, groups and communities on the heap or
 // already in stable memory, depending on the version of the User canister which exports them. This
 // checks each user ends up with all of them in stable memory and still working: one exported by the

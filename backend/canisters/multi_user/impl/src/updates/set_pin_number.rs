@@ -65,7 +65,8 @@ fn set_pin_number_impl_inner(args: Args, my_index: u16, signed_in_again: bool, s
                     }
                 }
                 PinNumberVerification::Reauthenticated(_) if signed_in_again => {}
-                // The PIN was set while the sign in was being verified, so it wasn't checked
+                // Can't happen, since the sign in is verified whenever the PIN was set, and nothing
+                // is awaited otherwise, but fails closed rather than skip the check
                 PinNumberVerification::Reauthenticated(_) => {
                     return Err(Response::Error(OCErrorCode::PinRequired.into()));
                 }
