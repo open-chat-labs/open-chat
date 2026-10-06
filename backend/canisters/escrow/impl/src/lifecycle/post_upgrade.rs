@@ -19,7 +19,7 @@ fn post_upgrade(args: Args) {
         msgpack::deserialize(reader).unwrap();
 
     // TODO remove after the release containing this has been deployed
-    data.count_outstanding_refunds();
+    data.lock_deposits_being_refunded();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 

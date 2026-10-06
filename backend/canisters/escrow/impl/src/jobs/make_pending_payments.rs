@@ -79,8 +79,8 @@ async fn process_payment(mut pending_payment: PendingPayment, previous_failures:
         match next_step(&response, &pending_payment, failures, outcome_unknown, now) {
             NextStep::Record(block_index) => {
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
-                    if matches!(pending_payment.reason, PendingPaymentReason::Refund) {
-                        swap.on_refund_finished(pending_payment.principal, pending_payment.debit());
+                    if pending_payment.holds_deposit_lock {
+                        swap.unlock_deposit(pending_payment.principal);
                     }
 
                     // A refund can be queued twice (eg. by two `notify_deposit` calls at once), in which
@@ -163,7 +163,7 @@ async fn process_payment(mut pending_payment: PendingPayment, previous_failures:
             }
             NextStep::Park { error } => {
                 error!(swap_id = pending_payment.swap_id, %ledger, error, "Parked payment");
-                // A parked refund may yet be made by hand, so it's left outstanding against its deposit
+                // A parked refund keeps any lock it holds on its deposit, as it may yet be made by hand
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
                     swap.errors.push(error);
                 }
@@ -173,8 +173,8 @@ async fn process_payment(mut pending_payment: PendingPayment, previous_failures:
                 error!(?args, error, "Failed to process payment");
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
                     swap.errors.push(error);
-                    if matches!(pending_payment.reason, PendingPaymentReason::Refund) {
-                        swap.on_refund_finished(pending_payment.principal, pending_payment.debit());
+                    if pending_payment.holds_deposit_lock {
+                        swap.unlock_deposit(pending_payment.principal);
                     }
                 }
             }
@@ -328,6 +328,7 @@ mod tests {
             amount: 1_000_000,
             swap_id: 0,
             reason,
+            holds_deposit_lock: false,
         }
     }
 

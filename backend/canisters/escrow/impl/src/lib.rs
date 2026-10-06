@@ -101,34 +101,30 @@ impl Data {
         }
     }
 
-    // Counts the refunds which are queued, parked or awaiting retry against their deposits, so that
-    // those queued before refunds were counted aren't missed. Each deposit's outstanding refunds are
-    // counted afresh, so this is safe to run more than once.
+    // Has each refund which is queued, parked or awaiting retry hold a lock on its deposit, since those
+    // queued before deposits were locked may include refunds of deposits found too low. The locks are
+    // taken afresh, so this is safe to run more than once.
     // TODO remove after the release containing this has been deployed, along with `Swaps::iter_mut` and
-    // `PendingPaymentsQueue::iter`
-    pub fn count_outstanding_refunds(&mut self) {
-        let awaiting_retry: Vec<PendingPayment> = self
-            .timer_jobs
-            .iter()
-            .filter_map(|(_, wrapper)| match wrapper.deref().borrow().as_ref() {
-                Some(TimerJob::RetryPayment(job)) => Some(job.payment.clone()),
-                _ => None,
-            })
-            .collect();
-
-        for swap in self.swaps.iter_mut() {
-            for refunds in swap.deposit_refunds.values_mut() {
-                refunds.outstanding = 0;
+    // `PendingPaymentsQueue::iter_mut`
+    pub fn lock_deposits_being_refunded(&mut self) {
+        fn lock(swaps: &mut Swaps, payment: &mut PendingPayment) {
+            if matches!(payment.reason, PendingPaymentReason::Refund)
+                && let Some(swap) = swaps.get_mut(payment.swap_id)
+            {
+                payment.holds_deposit_lock = true;
+                swap.lock_deposit(payment.principal);
             }
         }
-        for refund in self
-            .pending_payments_queue
-            .iter()
-            .chain(&awaiting_retry)
-            .filter(|payment| matches!(payment.reason, PendingPaymentReason::Refund))
-        {
-            if let Some(swap) = self.swaps.get_mut(refund.swap_id) {
-                swap.on_refund_queued(refund.principal, refund.debit());
+
+        for swap in self.swaps.iter_mut() {
+            swap.deposit_locks.clear();
+        }
+        for payment in self.pending_payments_queue.iter_mut() {
+            lock(&mut self.swaps, payment);
+        }
+        for (_, wrapper) in self.timer_jobs.iter() {
+            if let Some(TimerJob::RetryPayment(job)) = wrapper.borrow_mut().as_mut() {
+                lock(&mut self.swaps, &mut job.payment);
             }
         }
     }
@@ -180,7 +176,6 @@ pub(crate) fn deposit_address(principal: Principal, swap_id: u32, escrow_caniste
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::swaps::DepositRefunds;
     use std::collections::VecDeque;
     use types::{P2PSwapLocation, TokenInfo};
 
@@ -193,21 +188,22 @@ mod tests {
         }
     }
 
-    fn refund(swap_id: u32, depositor: Principal, amount: u128) -> PendingPayment {
+    fn refund(swap_id: u32, depositor: Principal) -> PendingPayment {
         PendingPayment {
             principal: depositor,
             timestamp: 0,
             token_info: token(),
-            amount,
+            amount: 100,
             swap_id,
             reason: PendingPaymentReason::Refund,
+            holds_deposit_lock: false,
         }
     }
 
-    // Refunds queued before refunds were counted are counted once the canister is upgraded, however
-    // many times it's upgraded
+    // Refunds queued before deposits were locked lock their deposits once the canister is upgraded,
+    // however many times it's upgraded
     #[test]
-    fn refunds_queued_or_parked_are_counted_as_outstanding() {
+    fn refunds_queued_or_parked_lock_their_deposits() {
         let mut data = Data::new(Principal::anonymous(), Principal::anonymous(), true);
         let swap_id = data.swaps.push(
             Principal::from_slice(&[2]),
@@ -228,44 +224,36 @@ mod tests {
         );
         let depositor = Principal::from_slice(&[3]);
         let other_depositor = Principal::from_slice(&[4]);
+        let unrefunded_depositor = Principal::from_slice(&[5]);
 
-        // As the escrow canister in production stores its queue, with refunds not noted against
-        // their deposits
+        // As the escrow canister in production stores its queue, with no refund holding a lock
         #[derive(Serialize)]
-        struct QueueBeforeRefundsWereCounted {
+        struct QueueBeforeDepositsWereLocked {
             pending_payments: VecDeque<PendingPayment>,
             parked: Vec<PendingPayment>,
         }
-        let queue = QueueBeforeRefundsWereCounted {
+        let queue = QueueBeforeDepositsWereLocked {
             pending_payments: VecDeque::from([
-                refund(swap_id, depositor, 100),
-                refund(swap_id, depositor, 200),
+                refund(swap_id, depositor),
+                refund(swap_id, depositor),
                 PendingPayment {
                     reason: PendingPaymentReason::Swap(other_depositor),
-                    ..refund(swap_id, depositor, 1_000)
+                    ..refund(swap_id, unrefunded_depositor)
                 },
             ]),
-            parked: vec![refund(swap_id, other_depositor, 50)],
+            parked: vec![refund(swap_id, other_depositor)],
         };
         data.pending_payments_queue = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(queue));
 
         for _ in 0..2 {
-            data.count_outstanding_refunds();
+            data.lock_deposits_being_refunded();
 
             let swap = data.swaps.get(swap_id).unwrap();
-            assert_eq!(
-                swap.deposit_refunds(depositor),
-                DepositRefunds {
-                    outstanding: 320,
-                    finished: 0
-                }
-            );
-            assert_eq!(
-                swap.deposit_refunds(other_depositor),
-                DepositRefunds {
-                    outstanding: 60,
-                    finished: 0
-                }
+            assert_eq!(swap.deposit_locks, BTreeMap::from([(depositor, 2), (other_depositor, 1)]));
+            assert!(
+                data.pending_payments_queue
+                    .iter_mut()
+                    .all(|payment| payment.holds_deposit_lock == matches!(payment.reason, PendingPaymentReason::Refund))
             );
         }
     }

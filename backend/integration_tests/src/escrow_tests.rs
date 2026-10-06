@@ -694,9 +694,9 @@ fn payment_rejected_as_too_old_is_remade() {
     assert!(refunds[0]["created"].as_u64().unwrap() > back_at * 1_000_000);
 }
 
-// A deposit notified twice at once, after its swap has expired, is refunded by each notification. The
-// two refunds are identical, so the ledger rejects the second as a duplicate of the first, and the
-// refund is recorded once, without an error.
+// A recorded deposit to a swap which expires is refunded by the expiry, and also by a notification of
+// it which checks its balance before that refund is made. The two refunds are identical, so the ledger
+// rejects the second as a duplicate of the first, and the refund is recorded once, without an error.
 #[test]
 fn refund_queued_twice_is_recorded_once() {
     let mut wrapper = ENV.deref().get();
@@ -720,33 +720,15 @@ fn refund_queued_twice_is_recorded_once() {
         canister_ids.icp_ledger,
         icp_amount + 10_000,
     );
+    client::escrow::happy_path::notify_deposit(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id, None);
 
-    // The depositor and someone naming them both notify the deposit, and the swap expires while its
-    // balance is checked
-    let message_ids = [
-        submit_notify_deposit(env, canister_ids.escrow, swap_id, user1.user_id),
-        env.submit_call(
-            canister_ids.escrow,
-            user2.user_id.canister_id(),
-            "notify_deposit_msgpack",
-            msgpack::serialize_then_unwrap(&escrow_canister::notify_deposit::Args {
-                swap_id,
-                deposited_by: Some(user1.user_id.as_principal()),
-            }),
-        )
-        .unwrap(),
-    ];
-    env.tick();
+    // The swap expires, and the deposit is notified again before the expiry's refund is made
     env.advance_time(Duration::from_millis(HOUR_IN_MS + 1));
-    env.tick();
-
-    for message_id in message_ids {
-        let response = await_notify_deposit(env, message_id);
-        assert!(
-            matches!(response, escrow_canister::notify_deposit::Response::SwapExpired),
-            "{response:?}"
-        );
-    }
+    let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, user1.user_id));
+    assert!(
+        matches!(response, escrow_canister::notify_deposit::Response::SwapExpired),
+        "{response:?}"
+    );
 
     tick_many(env, 10);
 
@@ -758,12 +740,7 @@ fn refund_queued_twice_is_recorded_once() {
     assert_eq!(swap["refunds"].as_array().unwrap().len(), 1);
     assert_eq!(swap_errors(env, canister_ids.escrow, swap_id), Vec::<String>::new());
     // Both refunds were made, the second being rejected as a duplicate
-    assert!(escrow_logged_since(env, canister_ids.escrow, "errors", start).contains("Duplicate"));
-    // Each refund counted against the deposit until it was made or rejected
-    assert_eq!(
-        deposit_refunds(env, canister_ids.escrow, swap_id, user1.user_id.as_principal()),
-        (0, 2)
-    );
+    assert!(escrow_errors_logged_since(env, canister_ids.escrow, start).contains("Duplicate"));
 }
 
 // A ledger error which retrying won't fix parks the payment, rather than dropping it, so that it can be
@@ -799,14 +776,12 @@ fn payment_rejected_by_ledger_is_parked() {
     assert_eq!(client::ledger::happy_path::balance_of(env, ledger, offerer), 0);
 }
 
-// A deposit too small for its swap is refunded. If it's topped up and notified again before that
-// refund is made, the refund still takes most of it, so only what will be left counts towards the
-// deposit. Otherwise the swap would pay out the deposit before the refund drains it, and the other
-// side's payout would fail. Anyone can hold up the refund by filling the queue of payments, as here,
-// so that the top-ups and notifications land first.
+// A deposit too small for its swap is refunded. Until the refund is made, the deposit is locked, so it
+// can't be topped up and recorded before the refund drains it, which would leave the other side's
+// payout short. Anyone can hold up the refund by filling the queue of payments, as here.
 #[test_case(false; "acceptor")]
 #[test_case(true; "offerer")]
-fn deposit_topped_up_before_its_refund_is_made_counts_only_what_will_be_left(by_offerer: bool) {
+fn deposit_is_locked_until_its_refund_is_made(by_offerer: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -859,17 +834,15 @@ fn deposit_topped_up_before_its_refund_is_made_counts_only_what_will_be_left(by_
             chat_amount + CHAT_TRANSFER_FEE,
         )
     };
+    let notify = |env: &mut PocketIc| {
+        await_notify_deposit(
+            env,
+            submit_notify_deposit(env, canister_ids.escrow, swap_id, depositor.into()),
+        )
+    };
     let deposit = |env: &mut PocketIc, amount: u128| {
         client::ledger::happy_path::transfer(env, *controller, ledger, account(depositor), amount);
-        client::escrow::notify_deposit(
-            env,
-            depositor,
-            canister_ids.escrow,
-            &escrow_canister::notify_deposit::Args {
-                swap_id,
-                deposited_by: None,
-            },
-        )
+        notify(env)
     };
     let refunded = |env: &PocketIc| client::ledger::happy_path::balance_of(env, ledger, depositor);
 
@@ -891,9 +864,23 @@ fn deposit_topped_up_before_its_refund_is_made_counts_only_what_will_be_left(by_
         "{response:?}"
     );
 
-    // Topping up the shortfall makes up the balance, but not what will be left once the refund is made
+    // Topping up the shortfall before the refund is made is turned away, as the deposit is locked
     let response = deposit(env, 1);
     assert_eq!(refunded(env), 0, "The refund was made too soon for the test");
+    assert!(
+        matches!(response, escrow_canister::notify_deposit::Response::InternalError(_)),
+        "{response:?}"
+    );
+
+    // Once the refund is made, all that's left is the top-up
+    for _ in 0..200 {
+        if refunded(env) > 0 {
+            break;
+        }
+        env.tick();
+    }
+    assert_eq!(refunded(env), required - 1 - fee);
+    let response = notify(env);
     assert!(
         matches!(
             response,
@@ -902,9 +889,8 @@ fn deposit_topped_up_before_its_refund_is_made_counts_only_what_will_be_left(by_
         "{response:?}"
     );
 
-    // Whereas a further deposit in full, on top of the refund, is recorded before the refund is made
+    // And a deposit in full is recorded
     let response = deposit(env, required - 1);
-    assert_eq!(refunded(env), 0, "The refund was made too soon for the test");
     assert!(
         matches!(
             response,
@@ -912,7 +898,6 @@ fn deposit_topped_up_before_its_refund_is_made_counts_only_what_will_be_left(by_
         ),
         "{response:?}"
     );
-
     if by_offerer {
         client::ledger::happy_path::transfer(
             env,
@@ -925,18 +910,17 @@ fn deposit_topped_up_before_its_refund_is_made_counts_only_what_will_be_left(by_
         assert!(result.complete);
     }
 
-    // The refund and both payouts are made in full
+    // Both payouts are made in full
     let swap_completed = |env: &PocketIc| {
         let swap = swap_logs(env, canister_ids.escrow, swap_id);
         swap["token0_transfer_out"].is_object() && swap["token1_transfer_out"].is_object()
     };
     for _ in 0..200 {
-        if refunded(env) > 0 && swap_completed(env) {
+        if swap_completed(env) {
             break;
         }
         env.tick();
     }
-    assert_eq!(refunded(env), required - 1 - fee);
     assert_eq!(
         client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, offerer),
         chat_amount
@@ -947,13 +931,15 @@ fn deposit_topped_up_before_its_refund_is_made_counts_only_what_will_be_left(by_
     );
     assert_eq!(client::ledger::happy_path::balance_of(env, ledger, account(depositor)), 0);
     assert_eq!(swap_errors(env, canister_ids.escrow, swap_id), Vec::<String>::new());
-    assert_eq!(deposit_refunds(env, canister_ids.escrow, swap_id, depositor), (0, 1));
+    assert_eq!(
+        swap_logs(env, canister_ids.escrow, swap_id)["deposit_locks"],
+        serde_json::json!({})
+    );
 }
 
 // A deposit too small for its swap is topped up and notified again around when its refund is made,
-// over a range of timings. Whichever way the timing falls, the deposit isn't recorded. If the refund is
-// made while the deposit's balance is being checked, the balance may or may not show the refund, so
-// the balance is checked again.
+// over a range of timings. Whichever way the timing falls, the deposit isn't recorded: either it's
+// locked, as its refund is still to be made, or its balance is checked once the refund is made.
 #[test]
 fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
     let mut wrapper = ENV.deref().get();
@@ -965,8 +951,7 @@ fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
 
     let icp_amount = 100_000_000_000;
     let required = icp_amount + ICP_TRANSFER_FEE;
-    let start = now_millis(env);
-    env.advance_time(Duration::from_millis(1));
+    let mut turned_away = 0;
 
     for rounds_before_top_up in 0..6 {
         let offerer = Principal::from_slice(&[10, 8, rounds_before_top_up]);
@@ -987,10 +972,13 @@ fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
             owner: canister_ids.escrow,
             subaccount: Some(deposit_subaccount(offerer, swap_id)),
         };
+        let notify = |env: &mut PocketIc| {
+            await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()))
+        };
 
         // 1 short, so it's refunded, the refund being made over the next few rounds
         client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, account, required - 1);
-        let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()));
+        let response = notify(env);
         assert!(
             matches!(response, escrow_canister::notify_deposit::Response::BalanceTooLow(_)),
             "{response:?}"
@@ -1014,10 +1002,15 @@ fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
             )
             .unwrap();
         env.tick();
-        let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()));
+        let mut response = notify(env);
         env.await_call(top_up).unwrap();
 
-        // All that will be left once the refund is made is the top-up
+        if matches!(response, escrow_canister::notify_deposit::Response::InternalError(_)) {
+            turned_away += 1;
+            tick_many(env, 10);
+            response = notify(env);
+        }
+        // All that's left once the refund is made is the top-up
         assert!(
             matches!(
                 response,
@@ -1025,18 +1018,17 @@ fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
             ),
             "Top-up after {rounds_before_top_up} rounds: {response:?}"
         );
+        let swap = swap_logs(env, canister_ids.escrow, swap_id);
+        assert_eq!(swap["token0_received"], false, "Top-up after {rounds_before_top_up} rounds");
         assert_eq!(
-            swap_logs(env, canister_ids.escrow, swap_id)["token0_received"],
-            false,
+            swap["deposit_locks"],
+            serde_json::json!({}),
             "Top-up after {rounds_before_top_up} rounds"
         );
-
-        tick_many(env, 10);
-        assert_eq!(deposit_refunds(env, canister_ids.escrow, swap_id, offerer), (0, 1));
     }
 
-    // At least one of the notifications checked the balance while the refund was being made
-    assert!(escrow_logged_since(env, canister_ids.escrow, "logs", start).contains("so checking it again"));
+    // At least one notification came while the refund was still to be made
+    assert!(turned_away > 0);
 }
 
 fn create_icp_for_chat_swap(
@@ -1258,16 +1250,6 @@ fn ledger_call_failures(env: &PocketIc, escrow_canister_id: CanisterId, swap_id:
         .count()
 }
 
-// The amount which the refunds from the depositor's subaccount that are yet to finish will take out of
-// it, and the number of refunds from it which have finished, as the escrow canister has noted them
-fn deposit_refunds(env: &PocketIc, escrow_canister_id: CanisterId, swap_id: u32, depositor: Principal) -> (u64, u64) {
-    let refunds = &swap_logs(env, escrow_canister_id, swap_id)["deposit_refunds"][depositor.to_text()];
-    (
-        refunds["outstanding"].as_u64().unwrap(),
-        refunds["finished"].as_u64().unwrap(),
-    )
-}
-
 fn escrow_metric(env: &PocketIc, escrow_canister_id: CanisterId, name: &str) -> u64 {
     try_metrics(env, escrow_canister_id).unwrap()[name].as_u64().unwrap()
 }
@@ -1282,15 +1264,15 @@ fn swap_errors(env: &PocketIc, escrow_canister_id: CanisterId, swap_id: u32) -> 
         .collect()
 }
 
-// What the escrow canister has written to the log (eg. "errors" or "logs") since `since`
-fn escrow_logged_since(env: &PocketIc, escrow_canister_id: CanisterId, log: &str, since: u64) -> String {
+// The errors the escrow canister has logged since `since`
+fn escrow_errors_logged_since(env: &PocketIc, escrow_canister_id: CanisterId, since: u64) -> String {
     let response = client::http_request(
         env,
         Principal::anonymous(),
         escrow_canister_id,
         &HttpRequest {
             method: "GET".to_string(),
-            url: format!("/{log}/{since}"),
+            url: format!("/errors/{since}"),
             headers: Vec::new(),
             body: Vec::new(),
         },

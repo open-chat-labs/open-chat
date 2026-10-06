@@ -3,6 +3,7 @@ use candid::Principal;
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+use std::collections::btree_map::Entry;
 use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, icrc1::CompletedCryptoTransaction};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -73,20 +74,12 @@ pub struct Swap {
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
     pub errors: Vec<String>,
-    // The refunds from each depositor's deposit subaccount
+    // The number of locks held on each depositor's deposit. A deposit is locked while a notification
+    // checks its balance, and while it's refunded for being too low. Nothing else takes funds out of a
+    // deposit which may yet be recorded, so its balance, checked under the lock, is exactly what's been
+    // deposited.
     #[serde(default)]
-    pub deposit_refunds: BTreeMap<Principal, DepositRefunds>,
-}
-
-// The refunds from a deposit subaccount. Those queued but not yet made will take funds out of the
-// subaccount, which therefore don't count towards the deposit.
-#[derive(Serialize, Deserialize, Clone, Copy, Default, Debug, PartialEq, Eq)]
-pub struct DepositRefunds {
-    // The amount, fees included, which the refunds yet to be made or given up on will take out of the
-    // subaccount if they're made
-    pub outstanding: u128,
-    // The number of refunds which have been made or given up on
-    pub finished: u32,
+    pub deposit_locks: BTreeMap<Principal, u32>,
 }
 
 impl Swap {
@@ -116,7 +109,7 @@ impl Swap {
             additional_admins: args.additional_admins,
             canister_to_notify: args.canister_to_notify,
             errors: Vec::new(),
-            deposit_refunds: BTreeMap::new(),
+            deposit_locks: BTreeMap::new(),
         }
     }
 
@@ -140,22 +133,30 @@ impl Swap {
             .any(|transfer| transfer.ledger == ledger && transfer.block_index == block_index)
     }
 
-    pub fn deposit_refunds(&self, depositor: Principal) -> DepositRefunds {
-        self.deposit_refunds.get(&depositor).copied().unwrap_or_default()
+    // Locks the depositor's deposit, unless it's locked already. Returns whether it was locked.
+    pub fn try_lock_deposit(&mut self, depositor: Principal) -> bool {
+        match self.deposit_locks.entry(depositor) {
+            Entry::Occupied(_) => false,
+            Entry::Vacant(locks) => {
+                locks.insert(1);
+                true
+            }
+        }
     }
 
-    // Notes a refund queued from the depositor's subaccount, which will take `debit` out of it
-    pub fn on_refund_queued(&mut self, depositor: Principal, debit: u128) {
-        let refunds = self.deposit_refunds.entry(depositor).or_default();
-        refunds.outstanding = refunds.outstanding.saturating_add(debit);
+    // Takes a further lock on the depositor's deposit, whether or not it's locked already
+    pub fn lock_deposit(&mut self, depositor: Principal) {
+        *self.deposit_locks.entry(depositor).or_default() += 1;
     }
 
-    // Notes a refund from the depositor's subaccount, queued to take `debit` out of it, having been
-    // made or given up on
-    pub fn on_refund_finished(&mut self, depositor: Principal, debit: u128) {
-        let refunds = self.deposit_refunds.entry(depositor).or_default();
-        refunds.outstanding = refunds.outstanding.saturating_sub(debit);
-        refunds.finished = refunds.finished.saturating_add(1);
+    pub fn unlock_deposit(&mut self, depositor: Principal) {
+        if let Entry::Occupied(mut locks) = self.deposit_locks.entry(depositor) {
+            if *locks.get() > 1 {
+                *locks.get_mut() -= 1;
+            } else {
+                locks.remove();
+            }
+        }
     }
 
     pub fn status(&self, now: TimestampMillis) -> SwapStatus {
@@ -257,30 +258,19 @@ mod tests {
     }
 
     #[test]
-    fn refunds_are_noted_per_depositor() {
+    fn deposit_is_locked_until_every_lock_on_it_is_released() {
         let mut swap = swap();
         let depositor = Principal::from_slice(&[3]);
-        let other_depositor = Principal::from_slice(&[4]);
 
-        swap.on_refund_queued(depositor, 100);
-        swap.on_refund_queued(depositor, 50);
-        swap.on_refund_queued(other_depositor, 10);
-        swap.on_refund_finished(depositor, 100);
+        assert!(swap.try_lock_deposit(depositor));
+        assert!(!swap.try_lock_deposit(depositor));
+        // Other deposits are locked separately
+        assert!(swap.try_lock_deposit(Principal::from_slice(&[4])));
 
-        assert_eq!(
-            swap.deposit_refunds(depositor),
-            DepositRefunds {
-                outstanding: 50,
-                finished: 1
-            }
-        );
-        assert_eq!(
-            swap.deposit_refunds(other_depositor),
-            DepositRefunds {
-                outstanding: 10,
-                finished: 0
-            }
-        );
-        assert_eq!(swap.deposit_refunds(Principal::from_slice(&[5])), DepositRefunds::default());
+        swap.lock_deposit(depositor);
+        swap.unlock_deposit(depositor);
+        assert!(!swap.try_lock_deposit(depositor));
+        swap.unlock_deposit(depositor);
+        assert!(swap.try_lock_deposit(depositor));
     }
 }
