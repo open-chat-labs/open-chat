@@ -2,7 +2,7 @@ use crate::SwapMetrics;
 use candid::Principal;
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, icrc1::CompletedCryptoTransaction};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -69,6 +69,12 @@ pub struct Swap {
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
     pub errors: Vec<String>,
+    // The depositors whose deposit is locked. A deposit is locked while a notification checks its
+    // balance, and if the balance is too low, until the deposit's refund is made. So no two checks of a
+    // deposit overlap, and none overlaps its refund, so a deposit can't be topped up and recorded before
+    // its refund drains it.
+    #[serde(default)]
+    pub locked_deposits: BTreeSet<Principal>,
 }
 
 impl Swap {
@@ -98,6 +104,7 @@ impl Swap {
             additional_admins: args.additional_admins,
             canister_to_notify: args.canister_to_notify,
             errors: Vec::new(),
+            locked_deposits: BTreeSet::new(),
         }
     }
 

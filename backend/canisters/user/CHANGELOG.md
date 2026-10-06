@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Hand a migrating user's message reminders and other timer jobs over to their MultiUser canister, rather than waiting for them to run ([#9779](https://github.com/open-chat-labs/open-chat/pull/9779))
 - Store each direct chat record in stable memory, keeping only a small entry per chat on the heap ([#9781](https://github.com/open-chat-labs/open-chat/pull/9781))
 - Store each group and community record in stable memory, keeping only a small entry for each on the heap ([#9795](https://github.com/open-chat-labs/open-chat/pull/9795))
+- Instantiate the msgpack (de)serializers of widely shared types once, in `types`, cutting the code by 864KB ([#9804](https://github.com/open-chat-labs/open-chat/pull/9804))
 - Limit how many reminders, saved crypto accounts, favourites, pins and manual wallet tokens a user can have ([#9805](https://github.com/open-chat-labs/open-chat/pull/9805))
 
 ### Removed
