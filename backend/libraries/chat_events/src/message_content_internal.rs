@@ -1665,7 +1665,12 @@ impl PrizeContentInternal {
         }
     }
 
-    pub fn final_payments(&mut self, sender: UserId, now_nanos: TimestampNanos) -> Vec<PendingCryptoTransaction> {
+    pub fn final_payments(
+        &mut self,
+        sender: UserId,
+        migrated_user_ids: &MigratedUserIds,
+        now_nanos: TimestampNanos,
+    ) -> Vec<PendingCryptoTransaction> {
         if self.final_payments_started {
             return Vec::new();
         }
@@ -1700,12 +1705,16 @@ impl PrizeContentInternal {
         }
 
         if refund > transaction_fee {
+            // The refund goes to the sender's wallet under their latest id, in case they have been
+            // migrated since sending the prize. A prize sent before the sender's principal was
+            // recorded is refunded at the id it was sent under, which alone gives its wallet.
+            let refund_to = if self.principal == Principal::anonymous() { sender } else { migrated_user_ids.latest(sender) };
             payments.push(create_pending_transaction(
                 token_symbol,
                 ledger,
                 refund - transaction_fee,
                 transaction_fee,
-                UserIdAndPrincipal::new(sender, self.principal).into(),
+                UserIdAndPrincipal::new(refund_to, self.principal).into(),
                 Some(&MEMO_PRIZE_REFUND),
                 now_nanos,
             ));

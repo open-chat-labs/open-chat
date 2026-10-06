@@ -54,16 +54,19 @@ async fn accept_p2p_swap_impl(args: Args) -> Response {
                         thread_root_message_index,
                         message_id.into(),
                     )
+                    // The sender is a member under their latest id, in case they have been migrated
+                    // since sending the message
+                    && let sender_id = state.data.migrated_user_ids.latest(message.sender)
                     && channel
                         .chat
                         .members
-                        .get(&message.sender)
+                        .get(&sender_id)
                         .is_some_and(|m| !m.user_type().is_bot())
                 {
                     let community_id = state.env.canister_id().into();
 
                     state.push_event_to_user(
-                        message.sender,
+                        sender_id,
                         CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
                             chat: Chat::Channel(community_id, channel.id),
                             thread_root_message_index,
