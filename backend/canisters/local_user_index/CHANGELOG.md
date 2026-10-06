@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Uninstall a deleted group's or community's canister straight away, and keep it rather than deleting it ([#9812](https://github.com/open-chat-labs/open-chat/pull/9812))
+- Verify a sign in for a MultiUser canister acting for one of its users ([#9815](https://github.com/open-chat-labs/open-chat/pull/9815))
 
 ### Removed
 

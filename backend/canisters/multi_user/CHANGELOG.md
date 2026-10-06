@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Let a user reset a forgotten PIN by signing in again ([#9815](https://github.com/open-chat-labs/open-chat/pull/9815))
+
 ### Changed
 
 - Update the OpenChat bot message sent to users after their account is migrated ([#9814](https://github.com/open-chat-labs/open-chat/pull/9814))
