@@ -47,10 +47,12 @@ async fn process_swap(
         Ok(balance) => mutate_state(|state| {
             let now = state.env.now();
             let swap = state.data.swaps.get_mut(swap_id).unwrap();
+            // The check is over, so the deposit is unlocked, unless it's refunded for being too low below
+            swap.locked_deposits.remove(&principal);
 
-            // Another call for the same deposit may have recorded it while the balance was being
-            // checked, in which case it is left as it is: refunding it would take back funds the
-            // swap still holds for its payouts
+            // The lock keeps any other call from recording the deposit while the balance is checked,
+            // but should it have been recorded, it's left as it is: refunding it would take back funds
+            // the swap still holds for its payouts
             let offered_by_depositor = principal == swap.offered_by;
             if (offered_by_depositor && swap.token0_received)
                 || (swap.accepted_by.is_some_and(|(accepted_by, _)| accepted_by == principal) && swap.token1_received)
@@ -82,6 +84,7 @@ async fn process_swap(
                         token_info,
                         swap_id,
                         reason: PendingPaymentReason::Refund,
+                        holds_deposit_lock: false,
                     });
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
@@ -90,6 +93,8 @@ async fn process_swap(
 
             if balance < balance_required {
                 if balance > token_info.fee {
+                    // The deposit stays locked until it's refunded
+                    swap.locked_deposits.insert(principal);
                     state.data.pending_payments_queue.push(PendingPayment {
                         principal,
                         timestamp: state.env.now(),
@@ -97,6 +102,7 @@ async fn process_swap(
                         token_info,
                         swap_id,
                         reason: PendingPaymentReason::Refund,
+                        holds_deposit_lock: true,
                     });
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
@@ -121,6 +127,7 @@ async fn process_swap(
                         amount: swap.amount1,
                         swap_id: swap.id,
                         reason: PendingPaymentReason::Swap(accepted_by),
+                        holds_deposit_lock: false,
                     });
                     state.data.pending_payments_queue.push(PendingPayment {
                         principal: accepted_by,
@@ -129,13 +136,19 @@ async fn process_swap(
                         amount: swap.amount0,
                         swap_id: swap.id,
                         reason: PendingPaymentReason::Swap(swap.offered_by),
+                        holds_deposit_lock: false,
                     });
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
                 Success(SuccessResult { complete })
             }
         }),
-        Err(error) => InternalError(format!("{error:?}")),
+        Err(error) => {
+            mutate_state(|state| {
+                state.data.swaps.get_mut(swap_id).unwrap().locked_deposits.remove(&principal);
+            });
+            InternalError(format!("{error:?}"))
+        }
     }
 }
 
@@ -154,6 +167,7 @@ async fn check_for_refund(swap_id: u32, principal: Principal, token_info: TokenI
                         token_info,
                         swap_id,
                         reason: PendingPaymentReason::Refund,
+                        holds_deposit_lock: false,
                     });
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 });
@@ -223,6 +237,9 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
                 complete: swap.token1_received,
             })
         } else {
+            if !swap.locked_deposits.insert(principal) {
+                return PrepareResult::Error(deposit_locked());
+            }
             return PrepareResult::Success(PrepareSuccess {
                 principal,
                 account,
@@ -269,6 +286,9 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
                 SwapAlreadyAccepted
             }
         } else if swap.restricted_to.is_none_or(|p| p == principal) {
+            if !swap.locked_deposits.insert(principal) {
+                return PrepareResult::Error(deposit_locked());
+            }
             return PrepareResult::Success(PrepareSuccess {
                 principal,
                 account,
@@ -286,4 +306,8 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
             response,
         })
     }
+}
+
+fn deposit_locked() -> Response {
+    InternalError("The deposit is already being checked or refunded. Please try again shortly.".to_string())
 }
