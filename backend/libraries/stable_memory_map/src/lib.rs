@@ -11,14 +11,14 @@ use std::cell::{Cell, OnceCell, RefCell};
 use std::marker::PhantomData;
 use std::ops::{Bound, RangeBounds};
 
+mod heap_stable_split_map;
 mod key_scope;
 mod keys;
-mod stored_values;
 
+pub use heap_stable_split_map::{HeapStableSplitMap, HeapStableSplitMapMut, HeapStableSplitMapRef, HeapStableSplitMapValue};
 pub use ic_stable_structures::btreemap::entry::{OccupiedEntry, VacantEntry};
 pub use key_scope::{KeyScope, with_key_scope};
 pub use keys::*;
-pub use stored_values::{StoredMut, StoredRef, StoredValue, StoredValues};
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 

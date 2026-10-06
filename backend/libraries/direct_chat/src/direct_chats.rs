@@ -4,22 +4,23 @@ use chat_events::{ChatInternal, ChatMetricsInternal};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{
-    DirectChatKey, DirectChatKeyPrefix, KeyPrefix, RemovedChatKeyPrefix, StoredMut, StoredRef, StoredValue, StoredValues,
+    DirectChatKey, DirectChatKeyPrefix, HeapStableSplitMap, HeapStableSplitMapMut, HeapStableSplitMapRef,
+    HeapStableSplitMapValue, KeyPrefix, RemovedChatKeyPrefix,
 };
 use std::collections::HashMap;
 use types::{Chat, ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
 use utils::migrated_user_ids::MigratedUserIds;
 
-pub type DirectChatRef<'a> = StoredRef<'a, DirectChat>;
-pub type DirectChatMut<'a> = StoredMut<'a, DirectChat>;
+pub type DirectChatRef<'a> = HeapStableSplitMapRef<'a, DirectChat>;
+pub type DirectChatMut<'a> = HeapStableSplitMapMut<'a, DirectChat>;
 
 // The user's direct chats, each of which is stored whole in the stable memory map, keyed by its
-// `key_id` (see `StoredValues`). The heap only holds a small entry per chat, from which the chats
+// `key_id` (see `HeapStableSplitMap`). The heap only holds a small entry per chat, from which the chats
 // which have been updated or have events due to expire can be found without reading them.
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "DirectChatsCombined")]
 pub struct DirectChats {
-    direct_chats_v2: StoredValues<DirectChat>,
+    direct_chats_v2: HeapStableSplitMap<DirectChat>,
     pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
     // Each new direct chat is assigned the next value, which is used in place of the other user's
     // id in its stable memory keys, so that if a chat is deleted then recreated with the same user
@@ -39,7 +40,7 @@ struct DirectChatsCombined {
     #[serde(default)]
     direct_chats: HashMap<ChatId, DirectChat>,
     #[serde(default)]
-    direct_chats_v2: StoredValues<DirectChat>,
+    direct_chats_v2: HeapStableSplitMap<DirectChat>,
     pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
     #[serde(default)]
     next_key_id: u32,
@@ -70,7 +71,7 @@ pub struct DirectChatEntry {
     next_event_expiry: Option<TimestampMillis>,
 }
 
-impl StoredValue for DirectChat {
+impl HeapStableSplitMapValue for DirectChat {
     type Id = ChatId;
     type Entry = DirectChatEntry;
     type Key = DirectChatKey;

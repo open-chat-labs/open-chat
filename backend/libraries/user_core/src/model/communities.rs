@@ -2,19 +2,20 @@ use crate::model::community::Community;
 use direct_chat::removed_chats;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{
-    CommunityKey, CommunityKeyPrefix, KeyPrefix, RemovedChatKeyPrefix, StoredMut, StoredRef, StoredValue, StoredValues,
+    CommunityKey, CommunityKeyPrefix, HeapStableSplitMap, HeapStableSplitMapMut, HeapStableSplitMapRef,
+    HeapStableSplitMapValue, KeyPrefix, RemovedChatKeyPrefix,
 };
 use std::collections::HashMap;
 use types::{CanisterId, CommunityId, TimestampMillis};
 
 // The communities the user is in, each of which (with each of its channels) is stored whole in the
-// stable memory map (see `StoredValues`). The heap only holds each community's index and when it was
+// stable memory map (see `HeapStableSplitMap`). The heap only holds each community's index and when it was
 // last updated.
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "CommunitiesCombined")]
 pub struct Communities {
     communities_created: u32,
-    communities_v2: StoredValues<Community>,
+    communities_v2: HeapStableSplitMap<Community>,
 }
 
 // Reads both the current layout and the one before it, in which every community was on the heap (see
@@ -25,7 +26,7 @@ struct CommunitiesCombined {
     #[serde(default)]
     communities: HashMap<CommunityId, Community>,
     #[serde(default)]
-    communities_v2: StoredValues<Community>,
+    communities_v2: HeapStableSplitMap<Community>,
 }
 
 impl From<CommunitiesCombined> for Communities {
@@ -48,7 +49,7 @@ pub struct CommunityEntry {
     last_updated: TimestampMillis,
 }
 
-impl StoredValue for Community {
+impl HeapStableSplitMapValue for Community {
     type Id = CommunityId;
     type Entry = CommunityEntry;
     type Key = CommunityKey;
@@ -78,7 +79,7 @@ impl Communities {
         self.communities_v2.contains_key(community_id)
     }
 
-    pub fn get_mut(&mut self, community_id: &CommunityId) -> Option<StoredMut<'_, Community>> {
+    pub fn get_mut(&mut self, community_id: &CommunityId) -> Option<HeapStableSplitMapMut<'_, Community>> {
         self.communities_v2.get_mut(community_id)
     }
 
@@ -104,7 +105,7 @@ impl Communities {
         community_id: CommunityId,
         local_user_index_canister_id: CanisterId,
         now: TimestampMillis,
-    ) -> (StoredMut<'_, Community>, bool) {
+    ) -> (HeapStableSplitMapMut<'_, Community>, bool) {
         if self.exists(&community_id) {
             return (self.communities_v2.get_mut(&community_id).unwrap(), false);
         }
@@ -118,12 +119,12 @@ impl Communities {
         self.communities_v2.remove(&community_id)
     }
 
-    pub fn updated_since(&self, updated_since: TimestampMillis) -> impl Iterator<Item = StoredRef<'_, Community>> {
+    pub fn updated_since(&self, updated_since: TimestampMillis) -> impl Iterator<Item = HeapStableSplitMapRef<'_, Community>> {
         self.communities_v2.filter(move |entry| entry.last_updated > updated_since)
     }
 
     // Every community, each of which is read from stable memory as the iterator reaches it
-    pub fn iter(&self) -> impl Iterator<Item = StoredRef<'_, Community>> {
+    pub fn iter(&self) -> impl Iterator<Item = HeapStableSplitMapRef<'_, Community>> {
         self.communities_v2.iter()
     }
 

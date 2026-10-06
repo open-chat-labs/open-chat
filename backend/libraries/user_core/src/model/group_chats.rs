@@ -2,18 +2,19 @@ use crate::model::group_chat::GroupChat;
 use direct_chat::removed_chats;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{
-    GroupChatKey, GroupChatKeyPrefix, KeyPrefix, RemovedChatKeyPrefix, StoredMut, StoredRef, StoredValue, StoredValues,
+    GroupChatKey, GroupChatKeyPrefix, HeapStableSplitMap, HeapStableSplitMapMut, HeapStableSplitMapRef,
+    HeapStableSplitMapValue, KeyPrefix, RemovedChatKeyPrefix,
 };
 use std::collections::HashMap;
 use types::{CanisterId, Chat, ChatId, MessageIndex, TimestampMillis, Timestamped};
 
 // The groups the user is in, each of which is stored whole in the stable memory map (see
-// `StoredValues`). The heap only holds when each was last updated.
+// `HeapStableSplitMap`). The heap only holds when each was last updated.
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "GroupChatsCombined")]
 pub struct GroupChats {
     groups_created: u32,
-    group_chats_v2: StoredValues<GroupChat>,
+    group_chats_v2: HeapStableSplitMap<GroupChat>,
     pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
 }
 
@@ -28,7 +29,7 @@ struct GroupChatsCombined {
     #[serde(default)]
     group_chats: HashMap<ChatId, GroupChat>,
     #[serde(default)]
-    group_chats_v2: StoredValues<GroupChat>,
+    group_chats_v2: HeapStableSplitMap<GroupChat>,
     pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
 }
 
@@ -51,7 +52,7 @@ pub struct GroupChatEntry {
     last_updated: TimestampMillis,
 }
 
-impl StoredValue for GroupChat {
+impl HeapStableSplitMapValue for GroupChat {
     type Id = ChatId;
     type Entry = GroupChatEntry;
     type Key = GroupChatKey;
@@ -80,7 +81,7 @@ impl GroupChats {
         self.group_chats_v2.contains_key(chat_id)
     }
 
-    pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = StoredRef<'_, GroupChat>> {
+    pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = HeapStableSplitMapRef<'_, GroupChat>> {
         self.group_chats_v2.filter(move |entry| entry.last_updated > since)
     }
 
@@ -100,7 +101,7 @@ impl GroupChats {
         })
     }
 
-    pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<StoredMut<'_, GroupChat>> {
+    pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<HeapStableSplitMapMut<'_, GroupChat>> {
         self.group_chats_v2.get_mut(chat_id)
     }
 
@@ -140,7 +141,7 @@ impl GroupChats {
     }
 
     // Every group, each of which is read from stable memory as the iterator reaches it
-    pub fn iter(&self) -> impl Iterator<Item = StoredRef<'_, GroupChat>> {
+    pub fn iter(&self) -> impl Iterator<Item = HeapStableSplitMapRef<'_, GroupChat>> {
         self.group_chats_v2.iter()
     }
 
