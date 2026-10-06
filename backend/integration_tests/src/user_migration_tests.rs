@@ -16,9 +16,10 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    BotDefinition, BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, CanisterWasm, Chat, ChatEvent, ChatId,
-    CommunityRole, DiamondMembershipPlanDuration, Document, Empty, EventIndex, FileContent, IdempotentEnvelope, MessageContent,
-    MessageContentInitial, MessageIndex, OptionUpdate, P2PSwapContentInitial, ReferralStatus, UserId,
+    BotDefinition, BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, Chat, ChatEvent,
+    ChatId, CommunityId, CommunityRole, DiamondMembershipPlanDuration, Document, Empty, EventIndex, FileContent,
+    IdempotentEnvelope, MessageContent, MessageContentInitial, MessageIndex, OptionUpdate, P2PSwapContentInitial,
+    ReferralStatus, UserId,
 };
 use user_canister::UserCanisterEvent;
 use user_index_canister::user_migration::UserMigrationStatus;
@@ -2427,14 +2428,15 @@ fn online_users_knows_migrated_user_by_their_new_id() {
     assert!(last_online(env, user.user_id).is_none());
 }
 
-// Users reach a MultiUser canister with their direct chats on the heap or already in stable memory,
-// depending on the versions of the canisters involved. Going through the release order (the
-// MultiUser canister first, then the User canisters), this checks each user ends up with every chat
-// in stable memory and still working: one imported by the MultiUser canister in production, whose
-// chats are moved when it's upgraded, one exported by the User canister in production after that,
-// whose chats are moved as they're imported, and one exported by the new User canister.
+// Users reach a MultiUser canister with their direct chats, groups and communities on the heap or
+// already in stable memory, depending on the versions of the canisters involved. Going through the
+// release order (the MultiUser canister first, then the User canisters), this checks each user ends
+// up with all of them in stable memory and still working: one imported by the MultiUser canister in
+// production, whose chats are moved when it's upgraded, one exported by the User canister in
+// production after that, whose chats are moved as they're imported, and one exported by the new
+// User canister.
 #[test]
-fn migrated_users_direct_chats_end_up_in_stable_memory() {
+fn migrated_users_chats_end_up_in_stable_memory() {
     // Installing the prod wasms would downgrade the canisters of any other test drawing a pooled env
     let mut wrapper = ENV.deref().create_new();
     let TestEnv {
@@ -2494,12 +2496,35 @@ fn migrated_users_direct_chats_end_up_in_stable_memory() {
         let message = client::user::happy_path::send_text_message(env, user, partners[1].user_id, random_string(), None);
         disappearing_messages.push(message.event_index);
     }
+
+    // Each is also in a group and a community, having read some of each
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    let community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string(), random_string()]);
+    let mut channel_ids = Vec::new();
+    for user in users.iter() {
+        client::group::happy_path::join_group(env, user.principal, group_id);
+        let community = client::community::happy_path::join_community(env, user.principal, community_id);
+        channel_ids = community.channels.iter().map(|c| c.channel_id).collect();
+    }
+    assert_eq!(channel_ids.len(), 2);
     tick_many(env, 5);
-    let snapshots: Vec<_> = users.iter().map(|user| direct_chats_with(env, user, &partners)).collect();
+    for (i, user) in users.iter().enumerate() {
+        mark_group_and_channel_read(env, user, group_id, community_id, channel_ids[0], i as u32 + 1);
+    }
+    tick_many(env, 5);
+    let snapshots: Vec<_> = users.iter().map(|user| snapshot(env, user, &partners)).collect();
+    for snapshot in snapshots.iter() {
+        assert_eq!(snapshot.groups.len(), 1);
+        assert_eq!(snapshot.communities.len(), 1);
+    }
 
     // The MultiUser canister in production imports the first user's chats onto the heap
     let migrated_0 = migrate(env, canister_ids, &operator, &users[0], multi_user_canister);
-    assert_eq!(direct_chats_in_stable_memory(env, multi_user_canister, &migrated_0), 0);
+    for key_type in [KeyType::DirectChat, KeyType::GroupChat, KeyType::Community] {
+        assert_eq!(count_in_stable_memory(env, multi_user_canister, &migrated_0, key_type), 0);
+    }
 
     // Once upgraded, it moves them into stable memory
     client::user_index::happy_path::upgrade_multi_user_canister_wasm(
@@ -2536,7 +2561,7 @@ fn migrated_users_direct_chats_end_up_in_stable_memory() {
     // Every user's chats still work: messages are sent and received, and disappear when they expire
     let migrated = [migrated_0, migrated_1, migrated_2];
     let latest_message =
-        |env: &PocketIc, user: &User, them: &User| direct_chats_with(env, user, std::slice::from_ref(them))[0].2.clone();
+        |env: &PocketIc, user: &User, them: &User| snapshot(env, user, std::slice::from_ref(them)).direct_chats[0].2.clone();
     for user in migrated.iter() {
         client::user::happy_path::send_text_message(env, user, partners[0].user_id, "sent after", None);
     }
@@ -2558,6 +2583,22 @@ fn migrated_users_direct_chats_end_up_in_stable_memory() {
         let response = client::user::happy_path::events_by_index(env, user, partners[1].user_id, vec![event_index]);
         assert!(response.events.is_empty(), "{response:?}");
         assert!(!response.expired_event_ranges.is_empty());
+    }
+
+    // Their groups and communities can still be read further, and leaving them removes them from
+    // stable memory. The direct chats aren't included, since one now has no messages left.
+    for user in migrated.iter() {
+        mark_group_and_channel_read(env, user, group_id, community_id, channel_ids[0], 10);
+        let after = snapshot(env, user, &[]);
+        assert_eq!(after.groups, vec![(group_id, Some(10.into()))]);
+        assert!(after.communities[0].1.contains(&(channel_ids[0], Some(10.into()))));
+
+        client::user::happy_path::leave_group(env, user, group_id);
+        client::user::happy_path::leave_community(env, user, community_id);
+        assert_eq!(count_in_stable_memory(env, multi_user_canister, user, KeyType::GroupChat), 0);
+        assert_eq!(count_in_stable_memory(env, multi_user_canister, user, KeyType::Community), 0);
+        let after = snapshot(env, user, &[]);
+        assert!(after.groups.is_empty() && after.communities.is_empty());
     }
 
     // Releasing the prod wasms would break later tests which draw this env
@@ -2582,11 +2623,23 @@ fn migrate(env: &mut PocketIc, canister_ids: &CanisterIds, operator: &User, user
     }
 }
 
-// The user's direct chats with each of the given users, as the other user, the index of the latest
-// message and its text
-fn direct_chats_with(env: &PocketIc, user: &User, others: &[User]) -> Vec<(UserId, MessageIndex, String)> {
+// How far the user has read each of a community's channels
+type ChannelsRead = Vec<(ChannelId, Option<MessageIndex>)>;
+
+#[derive(Debug, PartialEq, Eq)]
+struct ChatsSnapshot {
+    // The user's direct chats with each of the given users, as the other user, the index of the
+    // latest message and its text
+    direct_chats: Vec<(UserId, MessageIndex, String)>,
+    // The groups the user is in, and how far they've read each
+    groups: Vec<(ChatId, Option<MessageIndex>)>,
+    // The communities the user is in, and how far they've read each of their channels
+    communities: Vec<(CommunityId, ChannelsRead)>,
+}
+
+fn snapshot(env: &PocketIc, user: &User, others: &[User]) -> ChatsSnapshot {
     let state = client::user::happy_path::initial_state(env, user);
-    others
+    let direct_chats = others
         .iter()
         .map(|other| {
             let chat = state
@@ -2602,33 +2655,96 @@ fn direct_chats_with(env: &PocketIc, user: &User, others: &[User]) -> Vec<(UserI
             };
             (other.user_id, latest_message.event.message_index, text)
         })
-        .collect()
+        .collect();
+    let mut groups: Vec<_> = state
+        .group_chats
+        .summaries
+        .iter()
+        .map(|g| (g.chat_id, g.read_by_me_up_to))
+        .collect();
+    groups.sort();
+    let mut communities: Vec<_> = state
+        .communities
+        .summaries
+        .iter()
+        .map(|c| {
+            let mut channels: Vec<_> = c.channels.iter().map(|ch| (ch.channel_id, ch.read_by_me_up_to)).collect();
+            channels.sort();
+            (c.community_id, channels)
+        })
+        .collect();
+    communities.sort();
+    ChatsSnapshot {
+        direct_chats,
+        groups,
+        communities,
+    }
 }
 
-// Checks that every one of the user's direct chats is in the MultiUser canister's stable memory, and
-// that their chats with the given users are as they were before they were migrated
+pub(crate) fn mark_group_and_channel_read(
+    env: &mut PocketIc,
+    user: &User,
+    group_id: ChatId,
+    community_id: CommunityId,
+    channel_id: ChannelId,
+    read_up_to: u32,
+) {
+    client::user::happy_path::mark_read(
+        env,
+        user,
+        vec![user_canister::mark_read::ChatMessagesRead {
+            chat_id: group_id,
+            read_up_to: Some(read_up_to.into()),
+            threads: Vec::new(),
+            date_read_pinned: None,
+        }],
+        vec![user_canister::mark_read::CommunityMessagesRead {
+            community_id,
+            channels_read: vec![user_canister::mark_read::ChannelMessagesRead {
+                channel_id,
+                read_up_to: Some(read_up_to.into()),
+                threads: Vec::new(),
+                date_read_pinned: None,
+            }],
+        }],
+    );
+}
+
+// Checks that every one of the user's direct chats, groups and communities is in the MultiUser
+// canister's stable memory, and that they are as they were before the user was migrated
 fn assert_chats_in_stable_memory(
     env: &PocketIc,
     multi_user_canister: CanisterId,
     user: &User,
     partners: &[User],
-    snapshot: &[(UserId, MessageIndex, String)],
+    expected: &ChatsSnapshot,
 ) {
-    let chat_count = client::user::happy_path::initial_state(env, user)
+    let direct_chat_count = client::user::happy_path::initial_state(env, user)
         .direct_chats
         .summaries
         .len();
-    assert!(chat_count > partners.len());
-    assert_eq!(direct_chats_in_stable_memory(env, multi_user_canister, user), chat_count);
-    assert_eq!(direct_chats_with(env, user, partners), snapshot);
+    assert!(direct_chat_count > partners.len());
+    assert_eq!(
+        count_in_stable_memory(env, multi_user_canister, user, KeyType::DirectChat),
+        direct_chat_count
+    );
+    assert_eq!(
+        count_in_stable_memory(env, multi_user_canister, user, KeyType::GroupChat),
+        expected.groups.len()
+    );
+    assert_eq!(
+        count_in_stable_memory(env, multi_user_canister, user, KeyType::Community),
+        expected.communities.len()
+    );
+    assert_eq!(&snapshot(env, user, partners), expected);
 }
 
-// The number of the user's direct chats stored whole in the MultiUser canister's stable memory map
-fn direct_chats_in_stable_memory(env: &PocketIc, multi_user_canister: CanisterId, user: &User) -> usize {
+// The number of the user's entries of the given key type in the MultiUser canister's stable memory map
+fn count_in_stable_memory(env: &PocketIc, multi_user_canister: CanisterId, user: &User, key_type: KeyType) -> usize {
     let scope = user.user_id.index().to_be_bytes();
     crate::stable_memory::get_stable_memory_map(env, multi_user_canister, MemoryId::new(1))
         .keys()
-        .filter(|key| key.len() > 2 && key[..2] == scope && key[2] == KeyType::DirectChat as u8)
+        .filter(|key| key.len() > 2 && key[..2] == scope && key[2] == key_type as u8)
         .count()
 }
 

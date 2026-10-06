@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
 - Hand each old LocalGroupIndex over to its LocalUserIndex to reclaim the canisters it alone controls ([#9773](https://github.com/open-chat-labs/open-chat/pull/9773))
+- Instantiate the msgpack (de)serializers of widely shared types once, in `types`, cutting the code by 106KB ([#9804](https://github.com/open-chat-labs/open-chat/pull/9804))
 
 ## [[2.0.2084](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2084-group_index)] - 2026-10-02
 

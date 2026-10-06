@@ -16,7 +16,7 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
 
     for chat_messages_read in args.messages_read {
-        if let Some(group_chat) = state.data.user.group_chats.get_mut(&chat_messages_read.chat_id) {
+        if let Some(mut group_chat) = state.data.user.group_chats.get_mut(&chat_messages_read.chat_id) {
             group_chat.mark_read(
                 chat_messages_read.read_up_to,
                 chat_messages_read.threads,
@@ -53,7 +53,7 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     for community_messages_read in args.community_messages_read {
-        if let Some(community) = state.data.user.communities.get_mut(&community_messages_read.community_id) {
+        if let Some(mut community) = state.data.user.communities.get_mut(&community_messages_read.community_id) {
             community.mark_read(community_messages_read.channels_read, now);
         }
     }

@@ -1,45 +1,67 @@
 use crate::direct_chat::DirectChat;
 use crate::{private_replies, removed_chats};
 use chat_events::{ChatInternal, ChatMetricsInternal};
+use constants::MAX_PINNED_CHATS;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{DirectChatKeyPrefix, KeyPrefix, RemovedChatKeyPrefix, with_map, with_map_mut};
+use stable_memory_map::{
+    DirectChatKey, DirectChatKeyPrefix, HeapStableSplitMap, HeapStableSplitMapMut, HeapStableSplitMapRef,
+    HeapStableSplitMapValue, KeyPrefix, RemovedChatKeyPrefix,
+};
 use std::collections::HashMap;
-use std::ops::{Deref, DerefMut};
-use types::{Chat, ChatId, MessageIndex, TimestampMillis, Timestamped, UserId, UserType};
+use types::{Chat, ChatId, MessageIndex, OCResult, TimestampMillis, Timestamped, UserId, UserType};
 use utils::migrated_user_ids::MigratedUserIds;
 
+pub type DirectChatRef<'a> = HeapStableSplitMapRef<'a, DirectChat>;
+pub type DirectChatMut<'a> = HeapStableSplitMapMut<'a, DirectChat>;
+
 // The user's direct chats, each of which is stored whole in the stable memory map, keyed by its
-// `key_id`. The heap only holds a small entry per chat, from which the chats which have been updated
-// or have events due to expire can be found without reading them.
-//
-// A chat is read from stable memory each time it is accessed. A chat accessed via `get_mut` is
-// written back once the `DirectChatMut` is dropped, if it was changed.
+// `key_id` (see `HeapStableSplitMap`). The heap only holds a small entry per chat, from which the chats
+// which have been updated or have events due to expire can be found without reading them.
 #[derive(Serialize, Deserialize, Default)]
+#[serde(from = "DirectChatsCombined")]
 pub struct DirectChats {
-    // Chats which haven't yet been moved into stable memory, which `migrate_to_stable_memory` moves
-    // across. Only a User canister whose user was being migrated when it was upgraded can still have
-    // any, since its user mustn't change until the migration completes or is cancelled, as can a user
-    // imported from such a canister until their import completes. This can be removed once every
-    // User canister has been upgraded with no migration in progress.
-    #[serde(rename = "direct_chats", default, skip_serializing_if = "HashMap::is_empty")]
-    on_heap: HashMap<ChatId, DirectChat>,
-    #[serde(default)]
-    in_stable_memory: HashMap<ChatId, DirectChatEntry>,
+    direct_chats_v2: HeapStableSplitMap<DirectChat>,
     pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
     // Each new direct chat is assigned the next value, which is used in place of the other user's
     // id in its stable memory keys, so that if a chat is deleted then recreated with the same user
     // the new chat's keys never collide with the old chat's (which may not yet have been garbage
     // collected)
+    next_key_id: u32,
+}
+
+// Reads both the current layout and the one before it, in which every chat was on the heap. Chats
+// read from the previous layout are moved into stable memory by `migrate_to_stable_memory`. Only a
+// User canister whose user was being migrated when it was upgraded can still have any, since its
+// user mustn't change until the migration completes or is cancelled, as can a user imported from such
+// a canister until their import completes. This can be removed once every User canister has been
+// upgraded with no migration in progress.
+#[derive(Deserialize)]
+struct DirectChatsCombined {
+    #[serde(default)]
+    direct_chats: HashMap<ChatId, DirectChat>,
+    #[serde(default)]
+    direct_chats_v2: HeapStableSplitMap<DirectChat>,
+    pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
     #[serde(default)]
     next_key_id: u32,
 }
 
-// What is kept on the heap for a chat stored in stable memory. Besides the chat's `key_id`, it
-// holds the chat's `user_type`, `last_updated` and `next_event_expiry` as of when the chat was last
-// written, which can only change when the chat is written.
+impl From<DirectChatsCombined> for DirectChats {
+    fn from(value: DirectChatsCombined) -> Self {
+        let mut direct_chats_v2 = value.direct_chats_v2;
+        direct_chats_v2.extend_from_heap(value.direct_chats);
+        DirectChats {
+            direct_chats_v2,
+            pinned: value.pinned,
+            next_key_id: value.next_key_id,
+        }
+    }
+}
+
+// What is kept on the heap for each chat
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
-struct DirectChatEntry {
+pub struct DirectChatEntry {
     #[serde(rename = "k")]
     key_id: u32,
     #[serde(rename = "t")]
@@ -50,24 +72,36 @@ struct DirectChatEntry {
     next_event_expiry: Option<TimestampMillis>,
 }
 
-impl DirectChatEntry {
-    fn new(chat: &DirectChat) -> DirectChatEntry {
+impl HeapStableSplitMapValue for DirectChat {
+    type Id = ChatId;
+    type Entry = DirectChatEntry;
+    type Key = DirectChatKey;
+
+    fn entry(&self) -> DirectChatEntry {
         DirectChatEntry {
-            key_id: chat.key_id(),
-            user_type: chat.user_type,
-            last_updated: chat.last_updated(),
-            next_event_expiry: chat.events().next_event_expiry(),
+            key_id: self.key_id(),
+            user_type: self.user_type,
+            last_updated: self.last_updated(),
+            next_event_expiry: self.events().next_event_expiry(),
         }
+    }
+
+    fn key(_: &ChatId, entry: &DirectChatEntry) -> DirectChatKey {
+        DirectChatKeyPrefix::new().create_key(&entry.key_id)
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        msgpack::serialize_then_unwrap(self)
+    }
+
+    fn from_bytes(bytes: &[u8]) -> Self {
+        msgpack::deserialize_then_unwrap(bytes)
     }
 }
 
 impl DirectChats {
     pub fn get(&self, chat_id: &ChatId) -> Option<DirectChatRef<'_>> {
-        if let Some(entry) = self.in_stable_memory.get(chat_id) {
-            Some(DirectChatRef::read(entry))
-        } else {
-            self.on_heap.get(chat_id).map(DirectChatRef::on_heap)
-        }
+        self.direct_chats_v2.get(chat_id)
     }
 
     pub fn get_or_err(&self, chat_id: &ChatId) -> Result<DirectChatRef<'_>, OCErrorCode> {
@@ -75,17 +109,7 @@ impl DirectChats {
     }
 
     pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<DirectChatMut<'_>> {
-        if let Some(entry) = self.in_stable_memory.get_mut(chat_id) {
-            Some(DirectChatMut(DirectChatMutInner::InStableMemory {
-                chat: Box::new(read_chat(entry.key_id)),
-                entry,
-                changed: false,
-            }))
-        } else {
-            self.on_heap
-                .get_mut(chat_id)
-                .map(|chat| DirectChatMut(DirectChatMutInner::OnHeap(chat)))
-        }
+        self.direct_chats_v2.get_mut(chat_id)
     }
 
     pub fn get_mut_or_err(&mut self, chat_id: &ChatId) -> Result<DirectChatMut<'_>, OCErrorCode> {
@@ -115,26 +139,11 @@ impl DirectChats {
             anonymized_id(),
             now,
         );
-        let entry = self.in_stable_memory.entry(chat_id).or_insert(DirectChatEntry::new(&chat));
-        // Marked as changed so that the new chat is written when the `DirectChatMut` is dropped
-        DirectChatMut(DirectChatMutInner::InStableMemory {
-            chat: Box::new(chat),
-            entry,
-            changed: true,
-        })
+        self.direct_chats_v2.insert(chat_id, chat)
     }
 
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = DirectChatRef<'_>> {
-        self.on_heap
-            .values()
-            .filter(move |chat| chat.has_updates_since(since))
-            .map(DirectChatRef::on_heap)
-            .chain(
-                self.in_stable_memory
-                    .values()
-                    .filter(move |entry| entry.last_updated > since)
-                    .map(DirectChatRef::read),
-            )
+        self.direct_chats_v2.filter(move |entry| entry.last_updated > since)
     }
 
     pub fn removed_since(&self, since: TimestampMillis) -> Vec<ChatId> {
@@ -155,26 +164,22 @@ impl DirectChats {
     }
 
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
-        self.on_heap.values().any(|c| c.has_updates_since(since))
-            || self.in_stable_memory.values().any(|e| e.last_updated > since)
+        self.direct_chats_v2.entries().any(|(_, entry)| entry.last_updated > since)
             || self.pinned.timestamp > since
             || removed_chats::any_removed_since(&RemovedChatKeyPrefix::new_for_direct_chats(), since)
     }
 
     // Every chat, each of which is read from stable memory as the iterator reaches it
     pub fn iter(&self) -> impl Iterator<Item = DirectChatRef<'_>> {
-        self.on_heap
-            .values()
-            .map(DirectChatRef::on_heap)
-            .chain(self.in_stable_memory.values().map(DirectChatRef::read))
+        self.direct_chats_v2.iter()
     }
 
     pub fn len(&self) -> usize {
-        self.on_heap.len() + self.in_stable_memory.len()
+        self.direct_chats_v2.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.direct_chats_v2.is_empty()
     }
 
     pub fn mark_private_reply(&mut self, user_id: UserId, chat: ChatInternal, message_index: MessageIndex) {
@@ -207,48 +212,41 @@ impl DirectChats {
 
     // The chats which have events due to expire by `now`
     pub fn chats_with_events_expiring_by(&self, now: TimestampMillis) -> Vec<ChatId> {
-        let is_due = |expiry: Option<TimestampMillis>| expiry.is_some_and(|ts| ts <= now);
-
-        self.on_heap
-            .iter()
-            .filter(|(_, chat)| is_due(chat.events().next_event_expiry()))
-            .map(|(chat_id, _)| *chat_id)
-            .chain(
-                self.in_stable_memory
-                    .iter()
-                    .filter(|(_, entry)| is_due(entry.next_event_expiry))
-                    .map(|(chat_id, _)| *chat_id),
-            )
+        self.direct_chats_v2
+            .entries()
+            .filter(|(_, entry)| entry.next_event_expiry.is_some_and(|ts| ts <= now))
+            .map(|(chat_id, _)| chat_id)
             .collect()
     }
 
     // When the next event due to expire in any of the chats expires
     pub fn next_event_expiry(&self) -> Option<TimestampMillis> {
-        self.on_heap
-            .values()
-            .filter_map(|chat| chat.events().next_event_expiry())
-            .chain(self.in_stable_memory.values().filter_map(|entry| entry.next_event_expiry))
+        self.direct_chats_v2
+            .entries()
+            .filter_map(|(_, entry)| entry.next_event_expiry)
             .min()
     }
 
     pub fn exists(&self, chat_id: &ChatId) -> bool {
-        self.in_stable_memory.contains_key(chat_id) || self.on_heap.contains_key(chat_id)
+        self.direct_chats_v2.contains_key(chat_id)
     }
 
     // The type of the other user in the chat, if there is one, without reading the chat
     pub fn user_type(&self, chat_id: &ChatId) -> Option<UserType> {
-        if let Some(entry) = self.in_stable_memory.get(chat_id) {
-            Some(entry.user_type)
-        } else {
-            self.on_heap.get(chat_id).map(|chat| chat.user_type)
-        }
+        self.direct_chats_v2.entry(chat_id).map(|entry| entry.user_type)
     }
 
-    pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {
+    // Pins the chat, provided fewer than `MAX_PINNED_CHATS` chats are pinned. The chat needn't exist
+    // yet, since the website lets the user pin a chat before its first message has been sent.
+    pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) -> OCResult {
         if !self.pinned.value.contains_key(&chat_id) {
+            if self.pinned.value.len() >= MAX_PINNED_CHATS {
+                return Err(OCErrorCode::LimitReached.with_message(MAX_PINNED_CHATS));
+            }
             self.pinned.timestamp = now;
             self.pinned.value.insert(chat_id, now);
         }
+        Ok(())
     }
 
     pub fn unpin(&mut self, chat_id: &ChatId, now: TimestampMillis) {
@@ -261,19 +259,10 @@ impl DirectChats {
     // Moves the user's chats onto their new id, once they are migrated to a MultiUser canister. Their
     // chat with themselves is keyed by their id, so is moved to the new id, along with its pin.
     pub fn migrate_own_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
-        for chat in self.on_heap.values_mut() {
-            chat.migrate_own_user_id(old_user_id, new_user_id);
-        }
-        for entry in self.in_stable_memory.values_mut() {
-            let mut chat = read_chat(entry.key_id);
-            chat.migrate_own_user_id(old_user_id, new_user_id);
-            *entry = write_chat(&chat);
-        }
-        if let Some(chat) = self.on_heap.remove(&old_user_id.into()) {
-            self.on_heap.insert(new_user_id.into(), chat);
-        }
-        if let Some(entry) = self.in_stable_memory.remove(&old_user_id.into()) {
-            self.in_stable_memory.insert(new_user_id.into(), entry);
+        self.direct_chats_v2
+            .for_each_mut(|_, chat| chat.migrate_own_user_id(old_user_id, new_user_id));
+        if let Some(chat) = self.direct_chats_v2.remove(&old_user_id.into()) {
+            self.direct_chats_v2.insert(new_user_id.into(), chat);
         }
         if let Some(pinned_at) = self.pinned.value.remove(&old_user_id.into()) {
             self.pinned.value.insert(new_user_id.into(), pinned_at);
@@ -291,16 +280,11 @@ impl DirectChats {
         if self.exists(&new_chat_id) {
             return false;
         }
-        if let Some(mut chat) = self.on_heap.remove(&old_chat_id) {
-            chat.migrate_their_user_id(new_user_id, now);
-            self.on_heap.insert(new_chat_id, chat);
-        } else if let Some(entry) = self.in_stable_memory.remove(&old_chat_id) {
-            let mut chat = read_chat(entry.key_id);
-            chat.migrate_their_user_id(new_user_id, now);
-            self.in_stable_memory.insert(new_chat_id, write_chat(&chat));
-        } else {
+        let Some(mut chat) = self.direct_chats_v2.remove(&old_chat_id) else {
             return false;
-        }
+        };
+        chat.migrate_their_user_id(new_user_id, now);
+        self.direct_chats_v2.insert(new_chat_id, chat);
         if let Some(pinned_at) = self.pinned.value.remove(&old_chat_id) {
             self.pinned.value.insert(new_chat_id, pinned_at);
             self.pinned.timestamp = now;
@@ -318,146 +302,16 @@ impl DirectChats {
     }
 
     pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<DirectChat> {
-        let chat = if let Some(entry) = self.in_stable_memory.remove(&chat_id) {
-            take_chat(entry.key_id)
-        } else {
-            self.on_heap.remove(&chat_id)?
-        };
+        let chat = self.direct_chats_v2.remove(&chat_id)?;
         removed_chats::add(&RemovedChatKeyPrefix::new_for_direct_chats(), chat_id.into(), now);
+        self.unpin(&chat_id, now);
         Some(chat)
     }
 
     // Moves every chat still on the heap into stable memory, returning how many were moved
     pub fn migrate_to_stable_memory(&mut self) -> usize {
-        if self.on_heap.is_empty() {
-            return 0;
-        }
-
-        let mut chats: Vec<_> = std::mem::take(&mut self.on_heap).into_iter().collect();
-        // Sorted by key, since `insert_many` is far cheaper when the entries are in key order
-        chats.sort_unstable_by_key(|(_, chat)| chat.key_id());
-        let prefix = DirectChatKeyPrefix::new();
-        let entries: Vec<_> = chats
-            .iter()
-            .map(|(_, chat)| (prefix.create_key(&chat.key_id()), chat_to_bytes(chat)))
-            .collect();
-        with_map_mut(|m| m.insert_many(entries));
-
-        let count = chats.len();
-        for (chat_id, chat) in chats {
-            self.in_stable_memory.insert(chat_id, DirectChatEntry::new(&chat));
-        }
-        count
+        self.direct_chats_v2.migrate_to_stable_memory()
     }
-}
-
-// A direct chat read from `DirectChats`
-pub struct DirectChatRef<'a>(DirectChatRefInner<'a>);
-
-enum DirectChatRefInner<'a> {
-    OnHeap(&'a DirectChat),
-    InStableMemory(Box<DirectChat>),
-}
-
-impl<'a> DirectChatRef<'a> {
-    fn on_heap(chat: &'a DirectChat) -> Self {
-        DirectChatRef(DirectChatRefInner::OnHeap(chat))
-    }
-
-    fn read(entry: &DirectChatEntry) -> Self {
-        DirectChatRef(DirectChatRefInner::InStableMemory(Box::new(read_chat(entry.key_id))))
-    }
-}
-
-impl Deref for DirectChatRef<'_> {
-    type Target = DirectChat;
-
-    fn deref(&self) -> &DirectChat {
-        match &self.0 {
-            DirectChatRefInner::OnHeap(chat) => chat,
-            DirectChatRefInner::InStableMemory(chat) => chat,
-        }
-    }
-}
-
-// A direct chat borrowed mutably from `DirectChats`. A chat stored in stable memory is written back
-// when this is dropped, if it was changed, which is taken to be whenever it was dereferenced mutably.
-pub struct DirectChatMut<'a>(DirectChatMutInner<'a>);
-
-enum DirectChatMutInner<'a> {
-    OnHeap(&'a mut DirectChat),
-    InStableMemory {
-        chat: Box<DirectChat>,
-        entry: &'a mut DirectChatEntry,
-        changed: bool,
-    },
-}
-
-impl Deref for DirectChatMut<'_> {
-    type Target = DirectChat;
-
-    fn deref(&self) -> &DirectChat {
-        match &self.0 {
-            DirectChatMutInner::OnHeap(chat) => chat,
-            DirectChatMutInner::InStableMemory { chat, .. } => chat,
-        }
-    }
-}
-
-impl DerefMut for DirectChatMut<'_> {
-    fn deref_mut(&mut self) -> &mut DirectChat {
-        match &mut self.0 {
-            DirectChatMutInner::OnHeap(chat) => chat,
-            DirectChatMutInner::InStableMemory { chat, changed, .. } => {
-                *changed = true;
-                chat
-            }
-        }
-    }
-}
-
-impl Drop for DirectChatMut<'_> {
-    fn drop(&mut self) {
-        // Nothing is written while unwinding from a panic, which in a canister would trap anyway
-        if std::thread::panicking() {
-            return;
-        }
-        if let DirectChatMutInner::InStableMemory {
-            chat,
-            entry,
-            changed: true,
-        } = &mut self.0
-        {
-            **entry = write_chat(chat);
-        }
-    }
-}
-
-fn read_chat(key_id: u32) -> DirectChat {
-    let bytes = with_map(|m| m.get(DirectChatKeyPrefix::new().create_key(&key_id)))
-        .unwrap_or_else(|| panic!("Direct chat with key_id {key_id} not found in stable memory"));
-    bytes_to_chat(&bytes)
-}
-
-// Writes the chat to stable memory, returning its new entry
-fn write_chat(chat: &DirectChat) -> DirectChatEntry {
-    let entry = DirectChatEntry::new(chat);
-    with_map_mut(|m| m.insert(DirectChatKeyPrefix::new().create_key(&entry.key_id), chat_to_bytes(chat)));
-    entry
-}
-
-fn take_chat(key_id: u32) -> DirectChat {
-    let bytes = with_map_mut(|m| m.remove(DirectChatKeyPrefix::new().create_key(&key_id)))
-        .unwrap_or_else(|| panic!("Direct chat with key_id {key_id} not found in stable memory"));
-    bytes_to_chat(&bytes)
-}
-
-fn chat_to_bytes(chat: &DirectChat) -> Vec<u8> {
-    msgpack::serialize_then_unwrap(chat)
-}
-
-fn bytes_to_chat(bytes: &[u8]) -> DirectChat {
-    msgpack::deserialize_then_unwrap(bytes)
 }
 
 #[cfg(test)]
@@ -467,7 +321,7 @@ mod tests {
     use chat_events::{MessageContentInternal, NullEventPusher, PushMessageArgs, TextContentInternal};
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-    use stable_memory_map::{KeyScope, with_key_scope};
+    use stable_memory_map::{KeyScope, with_key_scope, with_map, with_map_mut};
     use types::MessageId;
 
     #[test]
@@ -476,7 +330,7 @@ mod tests {
         let (me, old, new) = (user(1), user(2), user(3));
         let mut direct_chats = DirectChats::default();
         direct_chats.get_or_create(me, old, UserType::User, || 1, 10);
-        direct_chats.pin(old.into(), 20);
+        direct_chats.pin(old.into(), 20).unwrap();
 
         assert!(direct_chats.migrate_their_user_id(old, new, 100));
 
@@ -523,7 +377,7 @@ mod tests {
 
         direct_chats.get_or_create(me, them, UserType::User, || 1, 10);
         assert_eq!(chat_count_in_stable_memory(), 1);
-        assert!(direct_chats.on_heap.is_empty());
+        assert_eq!(direct_chats.direct_chats_v2.count_on_heap(), 0);
         assert_eq!(direct_chats.len(), 1);
         assert!(direct_chats.exists(&them.into()));
 
@@ -602,11 +456,13 @@ mod tests {
         assert_eq!(chat_count_in_stable_memory(), 1);
         assert_eq!(direct_chats.len(), 4);
 
-        // Moving them into stable memory keeps everything about them
+        // A chat moved onto a migrated user's new id is put into stable memory as it moves, and
+        // moving the others there keeps everything about them
         let before = sorted_summaries(&direct_chats);
         assert!(direct_chats.migrate_their_user_id(moved, user(6), 70));
-        assert_eq!(direct_chats.migrate_to_stable_memory(), 3);
-        assert!(direct_chats.on_heap.is_empty());
+        assert_eq!(chat_count_in_stable_memory(), 2);
+        assert_eq!(direct_chats.migrate_to_stable_memory(), 2);
+        assert_eq!(direct_chats.direct_chats_v2.count_on_heap(), 0);
         assert_eq!(chat_count_in_stable_memory(), 4);
         assert_eq!(direct_chats.migrate_to_stable_memory(), 0);
         let mut expected: Vec<_> = before
@@ -623,27 +479,12 @@ mod tests {
     fn state_from_before_chats_were_in_stable_memory_is_read_as_on_the_heap() {
         init_stable_memory_map();
         let me = user(1);
-        let mut direct_chats = legacy_direct_chats(me, &[user(2)]);
-        direct_chats.pin(user(2).into(), 10);
+        let pinned = Timestamped::new(HashMap::from([(ChatId::from(user(2)), 10)]), 10);
 
-        // The shape the previous version serialized
-        #[derive(Serialize)]
-        struct DirectChatsPrevious<'a> {
-            direct_chats: &'a HashMap<ChatId, DirectChat>,
-            pinned: &'a Timestamped<HashMap<ChatId, TimestampMillis>>,
-            metrics: ChatMetricsInternal,
-            next_key_id: u32,
-        }
-        let bytes = msgpack::serialize_then_unwrap(DirectChatsPrevious {
-            direct_chats: &direct_chats.on_heap,
-            pinned: &direct_chats.pinned,
-            metrics: ChatMetricsInternal::default(),
-            next_key_id: 1,
-        });
-
-        let mut deserialized: DirectChats = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(deserialized.on_heap.len(), 1);
-        assert!(deserialized.in_stable_memory.is_empty());
+        let mut deserialized = previous_layout(me, &[user(2)], pinned);
+        assert_eq!(deserialized.direct_chats_v2.count_on_heap(), 1);
+        assert_eq!(deserialized.len(), 1);
+        assert_eq!(chat_count_in_stable_memory(), 0);
         assert_eq!(deserialized.next_key_id, 1);
         assert_eq!(deserialized.pinned_chats().len(), 1);
         assert_eq!(deserialized.migrate_to_stable_memory(), 1);
@@ -709,7 +550,7 @@ mod tests {
         let mut direct_chats = legacy_direct_chats(old, &[old]);
         direct_chats.migrate_to_stable_memory();
         direct_chats.get_or_create(old, them, UserType::User, || 2, 10);
-        direct_chats.pin(old.into(), 20);
+        direct_chats.pin(old.into(), 20).unwrap();
 
         direct_chats.migrate_own_user_id(old, new);
 
@@ -746,14 +587,56 @@ mod tests {
         });
     }
 
-    fn legacy_direct_chats(me: UserId, others: &[UserId]) -> DirectChats {
+    #[test]
+    fn chats_are_pinned_up_to_the_limit_and_removing_a_chat_unpins_it() {
+        init_stable_memory_map();
+        let me = user(1);
         let mut direct_chats = DirectChats::default();
-        for &them in others {
-            direct_chats.next_key_id += 1;
-            let chat = DirectChat::new(me, them, UserType::User, direct_chats.next_key_id, None, 1, 10);
-            direct_chats.on_heap.insert(them.into(), chat);
+
+        for i in 0..MAX_PINNED_CHATS as u8 {
+            direct_chats.get_or_create(me, user(i + 10), UserType::User, || 1, 10);
+            direct_chats.pin(user(i + 10).into(), 20).unwrap();
         }
-        direct_chats
+        let extra = user(MAX_PINNED_CHATS as u8 + 10);
+        direct_chats.get_or_create(me, extra, UserType::User, || 1, 10);
+        let error = direct_chats.pin(extra.into(), 30).unwrap_err();
+        assert!(error.matches_code(OCErrorCode::LimitReached), "{error:?}");
+        // Pinning a chat which is already pinned changes nothing
+        direct_chats.pin(user(10).into(), 30).unwrap();
+        assert_eq!(direct_chats.pinned_chats()[&Chat::Direct(user(10).into())], 20);
+
+        direct_chats.remove(user(10).into(), 40);
+        assert_eq!(direct_chats.pinned_chats().len(), MAX_PINNED_CHATS - 1);
+        assert!(direct_chats.pinned_chats_if_updated(39).is_some());
+        direct_chats.pin(extra.into(), 50).unwrap();
+    }
+
+    fn legacy_direct_chats(me: UserId, others: &[UserId]) -> DirectChats {
+        previous_layout(me, others, Timestamped::default())
+    }
+
+    // The user's chats with `others`, read from the layout the previous version serialized, in which
+    // every chat was on the heap
+    fn previous_layout(me: UserId, others: &[UserId], pinned: Timestamped<HashMap<ChatId, TimestampMillis>>) -> DirectChats {
+        #[derive(Serialize)]
+        struct DirectChatsPrevious {
+            direct_chats: HashMap<ChatId, DirectChat>,
+            pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
+            metrics: ChatMetricsInternal,
+            next_key_id: u32,
+        }
+
+        let direct_chats = others
+            .iter()
+            .zip(1..)
+            .map(|(&them, key_id)| (them.into(), DirectChat::new(me, them, UserType::User, key_id, None, 1, 10)))
+            .collect();
+        msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(DirectChatsPrevious {
+            direct_chats,
+            pinned,
+            metrics: ChatMetricsInternal::default(),
+            next_key_id: others.len() as u32,
+        }))
     }
 
     fn sorted_summaries(direct_chats: &DirectChats) -> Vec<(UserId, TimestampMillis)> {
@@ -767,7 +650,7 @@ mod tests {
     }
 
     fn entry(direct_chats: &DirectChats, them: UserId) -> DirectChatEntry {
-        *direct_chats.in_stable_memory.get(&them.into()).unwrap()
+        direct_chats.direct_chats_v2.entry(&them.into()).unwrap()
     }
 
     fn stable_memory_bytes(direct_chats: &DirectChats, them: UserId) -> Vec<u8> {

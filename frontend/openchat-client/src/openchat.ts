@@ -6967,7 +6967,8 @@ export class OpenChat {
 
     refreshAccountBalance(ledger: string, allowCached: boolean = false): Promise<bigint> {
         const user = currentUserStore.value;
-        if (user === undefined) {
+        // The anonymous user has no wallet, and its id isn't a principal
+        if (user === undefined || user.userId === ANON_USER_ID) {
             return Promise.resolve(0n);
         }
 

@@ -27,6 +27,7 @@ impl PendingPaymentsQueue {
                 amount: swap.amount0,
                 swap_id: swap.id,
                 reason: PendingPaymentReason::Refund,
+                holds_deposit_lock: false,
             });
         }
         if swap.token1_received
@@ -39,6 +40,7 @@ impl PendingPaymentsQueue {
                 amount: swap.amount1,
                 swap_id: swap.id,
                 reason: PendingPaymentReason::Refund,
+                holds_deposit_lock: false,
             });
         }
     }
@@ -69,6 +71,10 @@ pub struct PendingPayment {
     pub amount: u128,
     pub swap_id: u32,
     pub reason: PendingPaymentReason,
+    // Whether this is the refund of a deposit which was too low, which keeps the deposit locked until
+    // the refund is made or dropped
+    #[serde(default)]
+    pub holds_deposit_lock: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy)]

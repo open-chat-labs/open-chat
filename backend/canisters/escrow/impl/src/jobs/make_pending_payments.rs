@@ -1,7 +1,7 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::timer_job_types::{RetryPaymentJob, TimerJob};
 use crate::{RuntimeState, mutate_state, read_state};
-use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
+use constants::NANOS_PER_MILLISECOND;
 use escrow_canister::{SwapStatus, deposit_subaccount};
 use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
@@ -12,19 +12,9 @@ use std::time::Duration;
 use tracing::{error, info, trace};
 use types::icrc1::{Account, CompletedCryptoTransaction};
 use types::{C2CError, C2CRetryPolicy, Milliseconds, TimestampMillis};
-use utils::canister::{delay_if_should_retry_failed_c2c_call, is_target_canister_uninstalled_or_deleted};
+use utils::canister::is_target_canister_uninstalled_or_deleted;
+use utils::payment_retries::{MIN_RETRY_DELAY, backoff, final_retry, retry_delay, retry_due};
 
-// The shortest delay before retrying a payment, so that a ledger which fails in a way that calls for
-// an immediate retry isn't called round after round
-const MIN_RETRY_DELAY: Milliseconds = 10 * SECOND_IN_MS;
-// The longest delay before retrying a payment, so that it is made within an hour of its ledger
-// recovering
-const MAX_RETRY_DELAY: Milliseconds = HOUR_IN_MS;
-// Ledgers reject a transfer whose `created_at_time` is more than 24 hours old. A retry which would
-// fall after then is brought forward to this long before, so that a ledger which recovers in the
-// meantime is still paid, as it would have been were the payment retried every round, without the
-// payment needing to be remade.
-const FINAL_RETRY_BEFORE_TOO_OLD: Milliseconds = 5 * MINUTE_IN_MS;
 // The number of a payment's failed attempts which are recorded in its swap's errors
 const MAX_FAILURES_RECORDED: u32 = 3;
 
@@ -89,6 +79,10 @@ async fn process_payment(mut pending_payment: PendingPayment, previous_failures:
         match next_step(&response, &pending_payment, failures, outcome_unknown, now) {
             NextStep::Record(block_index) => {
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
+                    if pending_payment.holds_deposit_lock {
+                        swap.locked_deposits.remove(&pending_payment.principal);
+                    }
+
                     // A refund can be queued twice (eg. by two `notify_deposit` calls at once), in which
                     // case the ledger reports the second as a duplicate of the first, which is already
                     // recorded
@@ -169,6 +163,7 @@ async fn process_payment(mut pending_payment: PendingPayment, previous_failures:
             }
             NextStep::Park { error } => {
                 error!(swap_id = pending_payment.swap_id, %ledger, error, "Parked payment");
+                // A parked refund keeps its deposit locked, as it may yet be made by hand
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
                     swap.errors.push(error);
                 }
@@ -178,6 +173,9 @@ async fn process_payment(mut pending_payment: PendingPayment, previous_failures:
                 error!(?args, error, "Failed to process payment");
                 if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
                     swap.errors.push(error);
+                    if pending_payment.holds_deposit_lock {
+                        swap.locked_deposits.remove(&pending_payment.principal);
+                    }
                 }
             }
         }
@@ -297,47 +295,13 @@ fn may_have_made_transfer(error: &C2CError) -> bool {
     !never_ran
 }
 
-// Returns the delay before retrying a payment, given the number of attempts at it which have failed,
-// the last having failed to call into its ledger, or `None` if it is to be parked
-fn retry_delay(error: &C2CError, failures: u32) -> Option<Milliseconds> {
-    // A ledger which has been deleted won't come back, and one which has been uninstalled has lost
-    // its balances, so the payment can't be made
-    if is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) {
-        None
-    } else {
-        // Funds are at stake, so a payment is never given up on, even after a failure which calls
-        // for no retry, in case the ledger is fixed
-        let delay = delay_if_should_retry_failed_c2c_call(error).unwrap_or(MAX_RETRY_DELAY);
-        Some(backoff(delay, failures))
-    }
-}
-
-// Returns `delay`, but at least `MIN_RETRY_DELAY`, doubled for each of the payment's failures after the
-// first, up to `MAX_RETRY_DELAY`
-fn backoff(delay: Milliseconds, failures: u32) -> Milliseconds {
-    let multiplier = 2u64.saturating_pow(failures.saturating_sub(1));
-    delay.max(MIN_RETRY_DELAY).saturating_mul(multiplier).min(MAX_RETRY_DELAY)
-}
-
-// Returns when a payment created at `created_at` is last retried before its ledger would reject it as
-// too old
-fn final_retry(created_at: TimestampMillis) -> TimestampMillis {
-    (created_at + DAY_IN_MS).saturating_sub(FINAL_RETRY_BEFORE_TOO_OLD)
-}
-
-// Returns when to retry a payment created at `created_at`, after a failure which calls for `delay`
-fn retry_due(created_at: TimestampMillis, delay: Milliseconds, now: TimestampMillis) -> TimestampMillis {
-    let final_retry = final_retry(created_at);
-    let due = now + delay;
-    if now < final_retry { due.min(final_retry) } else { due }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use candid::{Nat, Principal};
-    use constants::MINUTE_IN_MS;
+    use constants::{DAY_IN_MS, HOUR_IN_MS};
     use types::{CanisterId, TokenInfo};
+    use utils::payment_retries::{FINAL_RETRY_BEFORE_TOO_OLD, MAX_RETRY_DELAY};
 
     const NOW: TimestampMillis = 1_000 * DAY_IN_MS;
 
@@ -349,53 +313,6 @@ mod tests {
             message.to_string(),
             retry_policy,
         )
-    }
-
-    #[test]
-    fn payment_to_uninstalled_or_deleted_ledger_is_parked() {
-        let uninstalled = error(
-            RejectCode::CanisterError,
-            "...contains no Wasm module.",
-            C2CRetryPolicy::RetryAfterDelay,
-        );
-        let deleted = error(RejectCode::DestinationInvalid, "", C2CRetryPolicy::DoNotRetry);
-
-        assert_eq!(retry_delay(&uninstalled, 1), None);
-        assert_eq!(retry_delay(&deleted, 1), None);
-    }
-
-    #[test]
-    fn retry_delay_doubles_with_each_failure_up_to_the_max() {
-        let stopped = error(
-            RejectCode::CanisterError,
-            "Canister x is stopped",
-            C2CRetryPolicy::RetryAfterShortDelay,
-        );
-        let trapped = error(RejectCode::CanisterError, "Canister trapped", C2CRetryPolicy::RetryAfterDelay);
-
-        assert_eq!(retry_delay(&stopped, 1), Some(10 * SECOND_IN_MS));
-        assert_eq!(retry_delay(&stopped, 2), Some(20 * SECOND_IN_MS));
-        assert_eq!(retry_delay(&stopped, 9), Some(2560 * SECOND_IN_MS));
-        assert_eq!(retry_delay(&stopped, 10), Some(MAX_RETRY_DELAY));
-        assert_eq!(retry_delay(&stopped, u32::MAX), Some(MAX_RETRY_DELAY));
-        assert_eq!(retry_delay(&trapped, 1), Some(5 * MINUTE_IN_MS));
-        assert_eq!(retry_delay(&trapped, 4), Some(40 * MINUTE_IN_MS));
-        assert_eq!(retry_delay(&trapped, 5), Some(MAX_RETRY_DELAY));
-    }
-
-    #[test]
-    fn failure_calling_for_an_immediate_retry_waits_the_min_delay() {
-        let error = error(RejectCode::SysTransient, "", C2CRetryPolicy::RetryImmediately);
-
-        assert_eq!(retry_delay(&error, 1), Some(MIN_RETRY_DELAY));
-        assert_eq!(retry_delay(&error, 2), Some(2 * MIN_RETRY_DELAY));
-    }
-
-    #[test]
-    fn failure_calling_for_no_retry_is_retried_after_the_max_delay() {
-        let error = error(RejectCode::CanisterReject, "", C2CRetryPolicy::DoNotRetry);
-
-        assert_eq!(retry_delay(&error, 1), Some(MAX_RETRY_DELAY));
     }
 
     fn payment(reason: PendingPaymentReason, timestamp: TimestampMillis) -> PendingPayment {
@@ -411,6 +328,7 @@ mod tests {
             amount: 1_000_000,
             swap_id: 0,
             reason,
+            holds_deposit_lock: false,
         }
     }
 
@@ -635,19 +553,5 @@ mod tests {
             next_step(&Err(deleted), &refund(NOW), 1, false, NOW),
             NextStep::Park { error } if error.starts_with("Failed to call into ledger, so parked the payment")
         ));
-    }
-
-    #[test]
-    fn retry_which_would_be_too_old_for_the_ledger_is_brought_forward() {
-        let created_at = 1_000 * DAY_IN_MS;
-        let final_retry = created_at + DAY_IN_MS - FINAL_RETRY_BEFORE_TOO_OLD;
-
-        assert_eq!(
-            retry_due(created_at, HOUR_IN_MS, created_at + HOUR_IN_MS),
-            created_at + 2 * HOUR_IN_MS
-        );
-        assert_eq!(retry_due(created_at, HOUR_IN_MS, final_retry - MINUTE_IN_MS), final_retry);
-        // Once the final retry has failed, the payment is retried after the usual delay
-        assert_eq!(retry_due(created_at, HOUR_IN_MS, final_retry), final_retry + HOUR_IN_MS);
     }
 }
