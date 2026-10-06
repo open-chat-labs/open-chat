@@ -165,7 +165,6 @@ async fn notify_community_uninstalled(community_id: CommunityId) {
                 canister_id,
                 attempt: 0,
                 retry_after: 0,
-                uninstall_code: false,
                 return_to_pool: false,
             });
             jobs::refund_cycles::start_job_if_required(state, None);

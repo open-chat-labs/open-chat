@@ -36,9 +36,9 @@ pub(crate) fn spawn_uninstall_then_refund_canister(canister_id: CanisterId) {
         // stop, those calls are rejected when the canister is uninstalled.
         let _ = stop(canister_id).await;
 
-        // If this fails, the refund job uninstalls the canister instead, since it's queued to have
-        // its code uninstalled. It's started again once empty so that callers are told it has no
-        // code, from which they know it's gone, rather than that it's stopped, which they retry.
+        // If this fails, the refund job uninstalls the canister instead. It's started again once
+        // empty so that callers are told it has no code, from which they know it's gone, rather
+        // than that it's stopped, which they retry.
         if uninstall(canister_id).await.is_ok() {
             let _ = start(canister_id).await;
         }
@@ -48,7 +48,6 @@ pub(crate) fn spawn_uninstall_then_refund_canister(canister_id: CanisterId) {
                 canister_id,
                 attempt: 0,
                 retry_after: 0,
-                uninstall_code: true,
                 return_to_pool: false,
             });
             jobs::refund_cycles::start_job_if_required(state, None);

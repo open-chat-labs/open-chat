@@ -1113,10 +1113,6 @@ pub struct CanisterToRefund {
     pub canister_id: CanisterId,
     pub attempt: usize,
     pub retry_after: TimestampMillis,
-    // Set for a deleted group's or community's canister, whose code is uninstalled before its
-    // cycles are refunded if it wasn't when the group or community was deleted
-    #[serde(default, alias = "delete_canister")]
-    pub uninstall_code: bool,
     // Set for a canister from the canister pool, which goes back into the pool once its cycles have
     // been refunded
     #[serde(default)]
@@ -1390,7 +1386,7 @@ mod tests {
         assert_eq!(state.data.community_event_sync_queue.len(), 0);
     }
 
-    fn setup_runtime_state() -> RuntimeState {
+    pub(crate) fn setup_runtime_state() -> RuntimeState {
         let canister_id = Principal::from_slice(&[1]);
         let data = Data::new(
             canister_id,
