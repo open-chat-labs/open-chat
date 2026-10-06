@@ -38,18 +38,20 @@ fn update_chat(user: &mut User, chat: &Chat, archive: bool, now: TimestampMillis
             }
             found
         }
-        Chat::Group(chat_id) => match user.group_chats.get_mut(chat_id) {
-            Some(group) => {
+        Chat::Group(chat_id) => {
+            let found = if let Some(mut group) = user.group_chats.get_mut(chat_id) {
                 group.archived = Timestamped::new(archive, now);
-                if archive {
-                    user.group_chats.unpin(chat_id, now);
-                }
                 true
+            } else {
+                false
+            };
+            if found && archive {
+                user.group_chats.unpin(chat_id, now);
             }
-            None => false,
-        },
+            found
+        }
         Chat::Channel(community_id, channel_id) => match user.communities.get_mut(community_id) {
-            Some(community) => match community.channels.get_mut(channel_id) {
+            Some(mut community) => match community.channels.get_mut(channel_id) {
                 Some(channel) => {
                     channel.archived = Timestamped::new(archive, now);
                     if archive {

@@ -1,5 +1,6 @@
 use crate::env::ENV;
 use crate::stable_memory::get_stable_memory_map;
+use crate::user_migration_tests::mark_group_and_channel_read;
 use crate::utils::{metrics, now_millis, tick_many};
 use crate::{TestEnv, User, client, wasms};
 use candid::Principal;
@@ -200,15 +201,29 @@ fn user_canisters_survive_upgrade_from_prod() {
         )
     );
 
+    // A group and a community which user1 stays in, having read some of each
+    let kept_group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+    let kept_community_id =
+        client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string(), random_string()]);
+    client::group::happy_path::join_group(env, user1.principal, kept_group_id);
+    let kept_channel_id =
+        client::community::happy_path::join_community(env, user1.principal, kept_community_id).channels[0].channel_id;
+    tick_many(env, 3);
+    mark_group_and_channel_read(env, &user1, kept_group_id, kept_community_id, kept_channel_id, 4);
+
     // User1 also has a chat with the OpenChat bot, whose events are included in the key count
     let total_keys = count_keys(env, user1.canister(), KeyType::DirectChatEvent);
     assert!(total_keys > total_events, "{total_keys} {total_events}");
 
-    // The chats themselves are on the heap until the upgrade
-    assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChat), 0);
+    // The chats themselves, and the groups and communities, are on the heap until the upgrade
+    for key_type in [KeyType::DirectChat, KeyType::GroupChat, KeyType::Community] {
+        assert_eq!(count_keys(env, user1.canister(), key_type), 0);
+    }
     let direct_chat_summaries_snapshot = direct_chat_summaries(env, &user1);
     let direct_chat_count = direct_chat_summaries_snapshot.len();
     assert_eq!(direct_chat_count, SMALL_CHATS + 2);
+    let group_and_community_summaries_snapshot = group_and_community_summaries(env, &user1);
+    assert_eq!(group_and_community_summaries_snapshot.len(), 2);
 
     client::user_index::happy_path::upgrade_user_canister_wasm(
         env,
@@ -232,9 +247,25 @@ fn user_canisters_survive_upgrade_from_prod() {
     assert_eq!(wasm_version(env, user1.canister()), new_version);
     assert_eq!(wasm_version(env, large_chat_user.canister()), new_version);
 
-    // Every chat is moved into stable memory, and reads as it did
+    // Every chat, group and community is moved into stable memory, and reads as it did
     assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChat), direct_chat_count);
     assert_eq!(direct_chat_summaries(env, &user1), direct_chat_summaries_snapshot);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::GroupChat), 1);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::Community), 1);
+    assert_eq!(
+        group_and_community_summaries(env, &user1),
+        group_and_community_summaries_snapshot
+    );
+
+    // And the group and community can still be read further
+    let read_since = now_millis(env);
+    env.advance_time(Duration::from_millis(1));
+    mark_group_and_channel_read(env, &user1, kept_group_id, kept_community_id, kept_channel_id, 6);
+    let updates = client::user::happy_path::updates(env, &user1, read_since).unwrap();
+    assert_eq!(updates.group_chats.updated.len(), 1);
+    assert_eq!(updates.group_chats.updated[0].read_by_me_up_to, Some(6.into()));
+    assert_eq!(updates.communities.updated.len(), 1);
+    assert_eq!(updates.communities.updated[0].channels[0].read_by_me_up_to, Some(6.into()));
     for (user, snapshot) in chat_partners.iter().zip(snapshots.iter()) {
         assert_eq!(&all_events(env, &user1, user.user_id), snapshot);
     }
@@ -257,10 +288,12 @@ fn user_canisters_survive_upgrade_from_prod() {
         env.tick();
     }
     assert_eq!(removed_chats(env, &user1, removed_since).1, vec![removed_group_ids[1]]);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::GroupChat), 2);
     env.advance_time(Duration::from_secs(1));
     client::user::happy_path::leave_group(env, &user1, removed_group_ids[0]);
     assert_eq!(removed_chats(env, &user1, removed_since).1, removed_group_ids_sorted);
     assert_eq!(count_keys(env, user1.canister(), KeyType::GroupChatRemoved), 3);
+    assert_eq!(count_keys(env, user1.canister(), KeyType::GroupChat), 1);
 
     // Messages from before the upgrade can still be updated, and new messages sent
     client::user::happy_path::edit_text_message(
@@ -524,6 +557,24 @@ fn direct_chat_summaries(env: &PocketIc, user: &User) -> Vec<String> {
     let mut summaries = client::user::happy_path::initial_state(env, user).direct_chats.summaries;
     summaries.sort_by_key(|s| s.them);
     summaries.iter().map(|s| format!("{s:?}")).collect()
+}
+
+// The user's group and community summaries, ordered by id, each formatted for comparison since the
+// summaries can't be compared directly
+fn group_and_community_summaries(env: &PocketIc, user: &User) -> Vec<String> {
+    let state = client::user::happy_path::initial_state(env, user);
+    let mut groups = state.group_chats.summaries;
+    groups.sort_by_key(|g| g.chat_id);
+    let mut communities = state.communities.summaries;
+    communities.sort_by_key(|c| c.community_id);
+    for community in communities.iter_mut() {
+        community.channels.sort_by_key(|c| c.channel_id);
+    }
+    groups
+        .iter()
+        .map(|g| format!("{g:?}"))
+        .chain(communities.iter().map(|c| format!("{c:?}")))
+        .collect()
 }
 
 // Reads every event in the chat, in pages
