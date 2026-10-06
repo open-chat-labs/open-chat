@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
 - Instantiate the msgpack (de)serializers of widely shared types once, in `types`, cutting the code by 1.8MB ([#9804](https://github.com/open-chat-labs/open-chat/pull/9804))
 - Bump the rmp-serde fork to one which reads numbers before visiting them, cutting the code by 933KB ([#9808](https://github.com/open-chat-labs/open-chat/pull/9808))
-- Uninstall a deleted group's or community's canister straight away, and keep it rather than deleting it ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Uninstall a deleted group's or community's canister straight away, and keep it rather than deleting it ([#9812](https://github.com/open-chat-labs/open-chat/pull/9812))
 
 ### Removed
 
@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Stop sending and retrying events to deleted groups and communities ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Stop sending and retrying events to deleted groups and communities ([#9812](https://github.com/open-chat-labs/open-chat/pull/9812))
 
 ## [[2.0.2094](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2094-local_user_index)] - 2026-10-05
 
