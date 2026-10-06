@@ -46,9 +46,9 @@ pub fn extract_access_context_from_chat_context(
         username: bot.name.clone(),
     };
 
-    match chat_context {
-        BotChatContext::Command(jwt) => extract_access_context_from_jwt(&jwt, &user, state),
-        BotChatContext::Autonomous(chat) => Ok(BotAccessContext {
+    let mut context = match chat_context {
+        BotChatContext::Command(jwt) => extract_access_context_from_jwt(&jwt, &user, state)?,
+        BotChatContext::Autonomous(chat) => BotAccessContext {
             bot_id: user.user_id,
             bot_name: user.username,
             initiator: BotInitiator::Autonomous,
@@ -58,8 +58,12 @@ pub fn extract_access_context_from_chat_context(
                 message_id: state.env.rng().random::<u64>().into(),
                 user_message_id: None,
             }),
-        }),
+        },
+    };
+    if let BotActionScope::Chat(details) = &mut context.scope {
+        details.chat = state.latest_chat(details.chat);
     }
+    Ok(context)
 }
 
 pub fn extract_access_context_from_community_or_group_context(

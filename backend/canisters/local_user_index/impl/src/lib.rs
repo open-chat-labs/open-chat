@@ -332,6 +332,16 @@ impl RuntimeState {
         self.data.local_users.contains(&self.data.migrated_user_ids.latest(user_id))
     }
 
+    // A direct chat may name the user by an id they had before being migrated to a MultiUser canister,
+    // eg. a bot installed in their direct chats before then, which still knows them by it. Their old
+    // canister is uninstalled once they've been migrated, so the chat is named by their latest id.
+    pub fn latest_chat(&self, chat: Chat) -> Chat {
+        match chat {
+            Chat::Direct(chat_id) => Chat::Direct(self.data.migrated_user_ids.latest(chat_id.into()).into()),
+            chat => chat,
+        }
+    }
+
     // Queues an event for the user, by their latest id if they've been migrated to a MultiUser canister.
     // Returns false if this LocalUserIndex doesn't hold them by that id. So an event naming a migrated
     // user by an old id, sent to every LocalUserIndex, is queued only by the one now holding them.
