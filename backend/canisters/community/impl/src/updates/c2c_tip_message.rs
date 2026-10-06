@@ -50,8 +50,11 @@ pub(crate) fn tip_message_with_completed_transfer(user_id: UserId, args: Args, s
             .chat
             .events
             .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
-        && let Some(sender) = channel.chat.members.get(&message.sender)
-        && message.sender != user_id
+        // The sender is a member under their latest id, in case they have been migrated since
+        // sending the message
+        && let sender_id = state.data.migrated_user_ids.latest(message.sender)
+        && let Some(sender) = channel.chat.members.get(&sender_id)
+        && sender_id != user_id
         && !sender.user_type().is_bot()
     {
         let community_id = state.env.canister_id().into();
@@ -84,9 +87,9 @@ pub(crate) fn tip_message_with_completed_transfer(user_id: UserId, args: Args, s
             channel_avatar_id,
         });
 
-        state.push_notification(Some(user_id), vec![message.sender], notification);
-        state.push_event_to_user(message.sender, event, now);
-        state.notify_user_of_achievement(message.sender, Achievement::HadMessageTipped, now);
+        state.push_notification(Some(user_id), vec![sender_id], notification);
+        state.push_event_to_user(sender_id, event, now);
+        state.notify_user_of_achievement(sender_id, Achievement::HadMessageTipped, now);
     }
 
     state.push_bot_notification(result.bot_notification);

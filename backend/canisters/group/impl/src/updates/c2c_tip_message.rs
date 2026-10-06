@@ -50,8 +50,11 @@ pub(crate) fn tip_message_with_completed_transfer(user_id: UserId, args: Args, s
             .chat
             .events
             .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
-        && let Some(sender) = state.data.chat.members.get(&message.sender)
-        && message.sender != user_id
+        // The sender is a member under their latest id, in case they have been migrated since
+        // sending the message
+        && let sender_id = state.data.migrated_user_ids.latest(message.sender)
+        && let Some(sender) = state.data.chat.members.get(&sender_id)
+        && sender_id != user_id
         && !sender.user_type().is_bot()
     {
         let chat_id: ChatId = state.env.canister_id().into();
@@ -69,10 +72,10 @@ pub(crate) fn tip_message_with_completed_transfer(user_id: UserId, args: Args, s
             group_avatar_id: state.data.chat.avatar.as_ref().map(|a| a.id),
         });
 
-        state.push_notification(Some(user_id), vec![message.sender], user_notification_payload);
+        state.push_notification(Some(user_id), vec![sender_id], user_notification_payload);
 
         state.push_event_to_user(
-            message.sender,
+            sender_id,
             GroupCanisterEvent::MessageActivity(MessageActivityEvent {
                 chat: Chat::Group(chat_id),
                 thread_root_message_index: args.thread_root_message_index,
@@ -86,7 +89,7 @@ pub(crate) fn tip_message_with_completed_transfer(user_id: UserId, args: Args, s
             now,
         );
 
-        state.notify_user_of_achievement(message.sender, Achievement::HadMessageTipped, now);
+        state.notify_user_of_achievement(sender_id, Achievement::HadMessageTipped, now);
     }
 
     state.push_bot_notification(result.bot_notification);
