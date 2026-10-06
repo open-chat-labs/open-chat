@@ -256,7 +256,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         canister_id,
                         attempt: 0,
                         retry_after: 0,
-                        delete_canister: false,
+                        uninstall_code: false,
                         return_to_pool: false,
                     });
                 }

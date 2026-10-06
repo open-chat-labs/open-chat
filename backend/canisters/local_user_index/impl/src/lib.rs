@@ -431,7 +431,12 @@ impl RuntimeState {
         }
     }
 
+    // Events for a group this LocalUserIndex doesn't hold, eg. one which has been deleted, are
+    // dropped, since they could never be delivered
     pub fn push_event_to_group(&mut self, canister_id: CanisterId, event: GroupEvent, now: TimestampMillis) {
+        if !self.data.local_groups.contains(&canister_id.into()) {
+            return;
+        }
         self.data.group_event_sync_queue.push(
             canister_id,
             IdempotentEnvelope {
@@ -442,7 +447,12 @@ impl RuntimeState {
         );
     }
 
+    // Events for a community this LocalUserIndex doesn't hold, eg. one which has been deleted, are
+    // dropped, since they could never be delivered
     pub fn push_event_to_community(&mut self, canister_id: CanisterId, event: CommunityEvent, now: TimestampMillis) {
+        if !self.data.local_communities.contains(&canister_id.into()) {
+            return;
+        }
         self.data.community_event_sync_queue.push(
             canister_id,
             IdempotentEnvelope {
@@ -889,6 +899,8 @@ impl RuntimeState {
             recent_multi_user_upgrades: multi_user_upgrades_metrics.recently_competed,
             user_events_queue_length: self.data.user_events_queue.len(),
             user_events_queue_in_progress: self.data.user_events_queue.in_progress(),
+            group_events_queue_length: self.data.group_event_sync_queue.len(),
+            community_events_queue_length: self.data.community_event_sync_queue.len(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             users_to_migrate_pending: self.data.users_to_migrate.pending(),
             users_to_migrate_in_progress: self.data.users_to_migrate.in_progress(),
@@ -1101,10 +1113,10 @@ pub struct CanisterToRefund {
     pub canister_id: CanisterId,
     pub attempt: usize,
     pub retry_after: TimestampMillis,
-    // Set for a deleted group's or community's canister, which is deleted once its cycles have
-    // been refunded
-    #[serde(default)]
-    pub delete_canister: bool,
+    // Set for a deleted group's or community's canister, whose code is uninstalled before its
+    // cycles are refunded if it wasn't when the group or community was deleted
+    #[serde(default, alias = "delete_canister")]
+    pub uninstall_code: bool,
     // Set for a canister from the canister pool, which goes back into the pool once its cycles have
     // been refunded
     #[serde(default)]
@@ -1270,6 +1282,8 @@ pub struct Metrics {
     // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one
     // whose last batch is still awaiting its reply
     pub user_events_queue_in_progress: usize,
+    pub group_events_queue_length: usize,
+    pub community_events_queue_length: usize,
     pub users_to_delete_queue_length: usize,
     pub users_to_migrate_pending: usize,
     pub users_to_migrate_in_progress: usize,

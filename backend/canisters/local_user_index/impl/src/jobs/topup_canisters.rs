@@ -158,6 +158,7 @@ async fn notify_community_uninstalled(community_id: CommunityId) {
         if state.data.local_communities.delete(&community_id) {
             let canister_id = community_id.into();
             state.data.communities_requiring_upgrade.remove_failed(&canister_id);
+            state.data.community_event_sync_queue.take(&canister_id);
 
             // Any cycles the canister still holds are refunded, as for a deleted user's canister
             state.data.cycles_refund_queue.push_back(CanisterToRefund {
@@ -165,7 +166,7 @@ async fn notify_community_uninstalled(community_id: CommunityId) {
                 attempt: 0,
                 retry_after: 0,
                 // Kept, since it may hold tokens (see above)
-                delete_canister: false,
+                uninstall_code: false,
                 return_to_pool: false,
             });
             jobs::refund_cycles::start_job_if_required(state, None);

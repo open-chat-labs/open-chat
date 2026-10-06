@@ -238,8 +238,8 @@ import {
     APPROVAL_VALIDITY_MS,
     ChatMap,
     CommonResponses,
-    DestinationInvalidError,
     ErrorCode,
+    isCanisterGoneError,
     LEDGER_CANISTER_CHAT,
     Lazy,
     MAX_ACTIVITY_EVENTS,
@@ -3543,7 +3543,8 @@ export class OpenChatAgent extends EventTarget {
                 return resp;
             })
             .catch((err) => {
-                if (err instanceof DestinationInvalidError) {
+                // An imported group's canister is gone, so look up the channel it was imported as
+                if (isCanisterGoneError(err)) {
                     return this._groupIndexClient.lookupChannelByGroupId(chatId).then((resp) => {
                         if (resp === undefined) return CommonResponses.failure();
                         return {
