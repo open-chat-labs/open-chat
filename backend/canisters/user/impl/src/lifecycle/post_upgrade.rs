@@ -29,8 +29,8 @@ fn post_upgrade(args: Args) {
     // (`data.is_migrating()`), since the MultiUser canister pulls the user's stable memory entries
     // as they are. If that migration is then cancelled, the one-off only runs on the next upgrade.
     if !data.is_migrating() {
-        let direct_chats_moved = data.user.direct_chats.migrate_to_stable_memory();
-        info!(direct_chats_moved, "Moved the direct chats into stable memory");
+        let moved = data.user.migrate_to_stable_memory();
+        info!(moved, "Moved the direct chats, groups and communities into stable memory");
     }
 
     let env = Box::new(CanisterEnv::new(data.rng_seed));
