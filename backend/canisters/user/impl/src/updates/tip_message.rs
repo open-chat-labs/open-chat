@@ -112,6 +112,7 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<(PrepareResult
                 &state.data.user,
                 my_user_id,
                 args,
+                &state.data.migrated_user_ids,
                 now,
             )?),
             now_nanos,

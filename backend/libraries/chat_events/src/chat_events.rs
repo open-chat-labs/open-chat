@@ -1392,7 +1392,9 @@ impl ChatEvents {
         if migrated_user_ids.is_same_user(message.sender, args.user_id) {
             return Err(UpdateEventError::NoChange(OCErrorCode::CannotTipSelf.into()));
         }
-        if message.sender != args.recipient {
+        // The message may have been sent under an id its sender has since been migrated from, in
+        // which case the tip is to their latest id
+        if !migrated_user_ids.is_same_user(message.sender, args.recipient) {
             error!(
                 user = %args.user_id,
                 recipient = %args.recipient,
@@ -3671,6 +3673,36 @@ mod tests {
         let result = events.tip_message::<NullEventPusher>(args, EventIndex::default(), &migrated(), None);
 
         assert!(matches!(result, Err(e) if e.matches_code(OCErrorCode::CannotTipSelf)));
+    }
+
+    #[test]
+    fn message_sent_under_an_earlier_id_can_be_tipped_to_its_senders_latest_id() {
+        let (mut events, _, text_message_index) = setup_events();
+        let tipper: UserId = Principal::from_slice(&[10]).into();
+        let ledger = Principal::from_slice(&[5]);
+
+        let tip = |events: &mut ChatEvents, migrated_user_ids: &MigratedUserIds, now| {
+            let args = TipMessageArgs {
+                user_id: tipper,
+                recipient: new_user_id(),
+                thread_root_message_index: None,
+                message_id: MessageId::from(2u128),
+                ledger,
+                token_symbol: "ICP".to_string(),
+                amount: 1,
+                now,
+            };
+            events.tip_message::<NullEventPusher>(args, EventIndex::default(), migrated_user_ids, None)
+        };
+
+        let result = tip(&mut events, &none(), 20);
+        assert!(matches!(result, Err(e) if e.matches_code(OCErrorCode::RecipientMismatch)));
+
+        assert!(tip(&mut events, &migrated(), 21).is_ok());
+        assert_eq!(
+            *text_message(&events, text_message_index).tips,
+            vec![(ledger, vec![(tipper, 1)])]
+        );
     }
 
     #[test]

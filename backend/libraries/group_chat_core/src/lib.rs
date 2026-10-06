@@ -1034,7 +1034,8 @@ impl GroupChatCore {
     }
 
     // Checks `user_id` could tip the message now, without tipping it, returning the message's sender,
-    // whom the tip is for. Used before making the transfer for a tip.
+    // whom the tip is for, under their latest id, which holds their wallet, in case they have been
+    // migrated since sending it. Used before making the transfer for a tip.
     pub fn check_can_tip_message(
         &self,
         user_id: UserId,
@@ -1056,7 +1057,7 @@ impl GroupChatCore {
         if migrated_user_ids.is_same_user(message.sender, user_id) {
             Err(OCErrorCode::CannotTipSelf.into())
         } else {
-            Ok(message.sender)
+            Ok(migrated_user_ids.latest(message.sender))
         }
     }
 

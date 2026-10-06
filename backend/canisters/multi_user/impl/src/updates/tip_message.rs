@@ -84,11 +84,13 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     }
     let this_canister_id = state.env.canister_id();
     let now = state.env.now();
-    let (my_index, my_principal, tip_args) = state.with_caller_user_mut(|my_index, user| {
+    let (my_index, my_user_id, my_principal) = state.with_caller_user_mut(|my_index, user| {
         let my_user_id = UserId::new_indexed(this_canister_id, my_index);
         user_core::updates::tip_message::verify(user, my_user_id, args, this_canister_id, now)?;
-        let tip_args = user_core::updates::tip_message::direct_tip_args(user, my_user_id, args, now)?;
-        OCResult::Ok((my_index, user.principal, tip_args))
+        OCResult::Ok((my_index, my_user_id, user.principal))
+    })?;
+    let tip_args = state.with_caller_user(|_, user| {
+        user_core::updates::tip_message::direct_tip_args(user, my_user_id, args, &state.data.migrated_user_ids, now)
     })?;
     let their_index = state.index_of_local_user(args.recipient);
     if their_index.is_none() && state.user_index(args.recipient).is_some() {

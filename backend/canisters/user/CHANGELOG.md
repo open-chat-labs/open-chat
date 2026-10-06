@@ -21,6 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the one-off migrations run by the upgrade to 2.0.2090, and the code which read the state and args of 2.0.2015 ([#9743](https://github.com/open-chat-labs/open-chat/pull/9743))
 
+### Fixed
+
+- Accept tips on a migrated user's direct messages sent before their migration ([#9816](https://github.com/open-chat-labs/open-chat/pull/9816))
+
 ## [[2.0.2090](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2090-user)] - 2026-10-02
 
 ### Added
