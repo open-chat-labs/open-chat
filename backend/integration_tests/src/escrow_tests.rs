@@ -1017,6 +1017,72 @@ fn deposit_locked_by_its_refund_is_refunded_once_its_swap_ends() {
     );
 }
 
+// A deposit is unlocked when its balance can't be checked, so it isn't left locked when its ledger can't
+// be called
+#[test]
+fn deposit_is_unlocked_if_its_balance_cannot_be_checked() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let offerer = Principal::from_slice(&[10, 11]);
+    let ledger = install_icrc_ledger(
+        env,
+        *controller,
+        "Test".to_string(),
+        "TEST".to_string(),
+        TEST_TOKEN_FEE as u64,
+        None,
+        Vec::new(),
+    );
+    let swap_id = client::escrow::happy_path::create_swap(
+        env,
+        offerer,
+        canister_ids.escrow,
+        P2PSwapLocation::External,
+        TokenInfo {
+            symbol: "TEST".to_string(),
+            ledger,
+            decimals: 8,
+            fee: TEST_TOKEN_FEE,
+        },
+        1_000_000_000,
+        None,
+        chat_token_info(),
+        1_000_000_000_000,
+        None,
+        now_millis(env) + DAY_IN_MS,
+    );
+    let notify = |env: &mut PocketIc| {
+        await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()))
+    };
+
+    client::stop_canister(env, *controller, ledger);
+    let response = notify(env);
+    assert!(
+        matches!(response, escrow_canister::notify_deposit::Response::InternalError(_)),
+        "{response:?}"
+    );
+
+    // Once the ledger is back, the deposit is checked, rather than being found locked
+    client::start_canister(env, *controller, ledger);
+    let response = notify(env);
+    assert!(
+        matches!(
+            response,
+            escrow_canister::notify_deposit::Response::BalanceTooLow(BalanceTooLowResult { balance: 0, .. })
+        ),
+        "{response:?}"
+    );
+    assert_eq!(
+        swap_logs(env, canister_ids.escrow, swap_id)["locked_deposits"],
+        serde_json::json!([])
+    );
+}
+
 fn create_icp_for_chat_swap(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
