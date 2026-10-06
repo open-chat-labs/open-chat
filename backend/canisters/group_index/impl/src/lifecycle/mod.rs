@@ -6,7 +6,6 @@ mod init;
 mod inspect_message;
 mod post_upgrade;
 mod pre_upgrade;
-mod reclaim_old_local_group_indexes;
 
 fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion) {
     let now = env.now();

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2103](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2103-community)] - 2026-10-06
+
 ### Changed
 
 - Tell a removed user's canister only via the queue of events for users, among the other events ([#9743](https://github.com/open-chat-labs/open-chat/pull/9743))
