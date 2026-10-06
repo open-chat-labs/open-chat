@@ -111,11 +111,10 @@ impl Files {
         self.iter_blob_reference_counts(hash, None).next().map(|(r, _)| r.canister_id)
     }
 
-    // The user's oldest files, as few of them as add up to at least `bytes`, along with their total
-    pub fn oldest_user_files_totalling(&self, user_id: Principal, bytes: u64) -> (Vec<UserFile>, u64) {
+    // The user's oldest files, as few of them as add up to at least `bytes`
+    pub fn oldest_user_files_totalling(&self, user_id: Principal, bytes: u64) -> Vec<UserFile> {
         let mut total_size = 0u64;
-        let files = self
-            .iter_user_files_from_oldest(user_id)
+        self.iter_user_files_from_oldest(user_id)
             .take_while(|f| {
                 if total_size < bytes {
                     let size = self.blob_size(&f.hash).unwrap_or_default();
@@ -125,9 +124,7 @@ impl Files {
                     false
                 }
             })
-            .collect();
-
-        (files, total_size)
+            .collect()
     }
 
     pub fn iter_user_files_from_oldest(&self, user_id: Principal) -> impl Iterator<Item = UserFile> + '_ {

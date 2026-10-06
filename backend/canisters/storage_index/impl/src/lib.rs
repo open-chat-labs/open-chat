@@ -222,7 +222,7 @@ impl Data {
                 let allowance_exceeded_by = bytes_used_after_upload.saturating_sub(user.byte_limit);
                 if allowance_exceeded_by > 0 {
                     if user.delete_oldest_if_limit_exceeded {
-                        let (files_to_delete, _) = self.files.oldest_user_files_totalling(user_id, allowance_exceeded_by);
+                        let files_to_delete = self.files.oldest_user_files_totalling(user_id, allowance_exceeded_by);
 
                         for file_to_delete in files_to_delete {
                             self.bucket_event_sync_queue
