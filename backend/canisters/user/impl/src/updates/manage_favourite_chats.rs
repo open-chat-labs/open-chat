@@ -13,8 +13,13 @@ fn manage_favourite_chats(args: Args) -> Response {
 
 fn manage_favourite_chats_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    if user_core::updates::manage_favourite_chats(&mut state.data.user, args, now) {
-        state.award_achievement_and_notify(Achievement::FavouritedChat, now);
+    match user_core::updates::manage_favourite_chats(&mut state.data.user, args, now) {
+        Ok(adding) => {
+            if adding {
+                state.award_achievement_and_notify(Achievement::FavouritedChat, now);
+            }
+            Response::Success
+        }
+        Err(error) => Response::Error(error),
     }
-    Response::Success
 }

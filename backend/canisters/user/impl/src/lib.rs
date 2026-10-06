@@ -371,7 +371,7 @@ impl RuntimeState {
     }
 
     pub fn delete_direct_chat(&mut self, user_id: UserId, block_user: bool, now: TimestampMillis) -> bool {
-        let Some(chat) = self.data.user.direct_chats.remove(user_id.into(), now) else {
+        let Some(chat) = self.data.user.remove_direct_chat(user_id, now) else {
             return false;
         };
 

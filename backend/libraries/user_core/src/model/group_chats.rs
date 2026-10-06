@@ -1,10 +1,12 @@
 use crate::model::group_chat::GroupChat;
+use constants::MAX_PINNED_CHATS;
 use direct_chat::removed_chats;
+use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::RemovedChatKeyPrefix;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use types::{CanisterId, Chat, ChatId, MessageIndex, TimestampMillis, Timestamped};
+use types::{CanisterId, Chat, ChatId, MessageIndex, OCResult, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupChats {
@@ -72,6 +74,7 @@ impl GroupChats {
 
     pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {
         removed_chats::add(&RemovedChatKeyPrefix::new_for_group_chats(), chat_id.into(), now);
+        self.unpin(&chat_id, now);
         self.group_chats.remove(&chat_id)
     }
 
@@ -95,11 +98,20 @@ impl GroupChats {
         self.group_chats.is_empty()
     }
 
-    pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {
+    // Pins the group, which the user must be in, provided fewer than `MAX_PINNED_CHATS` groups are
+    // pinned
+    pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) -> OCResult {
+        if !self.exists(&chat_id) {
+            return Err(OCErrorCode::ChatNotFound.into());
+        }
         if !self.pinned.value.contains_key(&chat_id) {
+            if self.pinned.value.len() >= MAX_PINNED_CHATS {
+                return Err(OCErrorCode::LimitReached.with_message(MAX_PINNED_CHATS));
+            }
             self.pinned.timestamp = now;
             self.pinned.value.insert(chat_id, now);
         }
+        Ok(())
     }
 
     pub fn unpin(&mut self, chat_id: &ChatId, now: TimestampMillis) {
@@ -136,6 +148,30 @@ mod tests {
         assert_eq!(group_chats.removed_since(30), vec![chat(1)]);
         assert!(group_chats.removed_since(50).is_empty());
         assert!(group_chats.any_updated(49));
+    }
+
+    #[test]
+    fn only_groups_the_user_is_in_are_pinned_up_to_the_limit_and_leaving_unpins() {
+        init_stable_memory_map();
+        let mut group_chats = GroupChats::default();
+        let local_user_index = Principal::from_slice(&[9; 10]);
+        let error = group_chats.pin(chat(1), 10).unwrap_err();
+        assert!(error.matches_code(OCErrorCode::ChatNotFound), "{error:?}");
+
+        for i in 0..=MAX_PINNED_CHATS as u8 {
+            group_chats.join(chat(i + 10), local_user_index, None, 10);
+        }
+        for i in 0..MAX_PINNED_CHATS as u8 {
+            group_chats.pin(chat(i + 10), 20).unwrap();
+        }
+        let extra = chat(MAX_PINNED_CHATS as u8 + 10);
+        let error = group_chats.pin(extra, 30).unwrap_err();
+        assert!(error.matches_code(OCErrorCode::LimitReached), "{error:?}");
+
+        group_chats.remove(chat(10), 40);
+        assert_eq!(group_chats.pinned_chats().len(), MAX_PINNED_CHATS - 1);
+        assert!(group_chats.pinned_chats_if_updated(39).is_some());
+        group_chats.pin(extra, 50).unwrap();
     }
 
     fn chat(i: u8) -> ChatId {

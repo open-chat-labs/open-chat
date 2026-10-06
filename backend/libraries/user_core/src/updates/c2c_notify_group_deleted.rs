@@ -98,8 +98,9 @@ pub fn c2c_notify_group_deleted(
         )
     }
 
+    // This can't take the favourites over the limit, since it replaces the group, which was removed
     if was_favourite {
-        user.favourite_chats.add(Chat::Channel(community_id, channel.channel_id), now);
+        let _ = user.favourite_chats.add(Chat::Channel(community_id, channel.channel_id), now);
     }
 
     GroupDeleted {

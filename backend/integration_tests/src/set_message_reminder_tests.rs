@@ -1,7 +1,8 @@
 use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{TestEnv, client};
-use constants::OPENCHAT_BOT_USER_ID;
+use constants::{DAY_IN_MS, MAX_MESSAGE_REMINDERS, OPENCHAT_BOT_USER_ID};
+use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
@@ -143,4 +144,48 @@ fn cancel_message_reminder_succeeds() {
     } else {
         panic!()
     }
+}
+
+#[test]
+fn pending_message_reminders_are_limited() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+    let args = user_canister::set_message_reminder_v2::Args {
+        chat: Chat::Direct(user2.user_id.into()),
+        thread_root_message_index: None,
+        event_index: 10.into(),
+        notes: None,
+        remind_at: now_millis(env) + DAY_IN_MS,
+    };
+
+    let mut reminder_ids = Vec::new();
+    for _ in 0..MAX_MESSAGE_REMINDERS {
+        match client::user::set_message_reminder_v2(env, user1.principal, user1.canister(), &args) {
+            user_canister::set_message_reminder_v2::Response::Success(reminder_id) => reminder_ids.push(reminder_id),
+            response => panic!("{response:?}"),
+        }
+    }
+    let response = client::user::set_message_reminder_v2(env, user1.principal, user1.canister(), &args);
+    assert!(
+        matches!(response, user_canister::set_message_reminder_v2::Response::Error(ref e) if e.matches_code(OCErrorCode::LimitReached)),
+        "{response:?}"
+    );
+
+    // Cancelling one makes room for another
+    client::user::cancel_message_reminder(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::cancel_message_reminder::Args {
+            reminder_id: reminder_ids[0],
+        },
+    );
+    let response = client::user::set_message_reminder_v2(env, user1.principal, user1.canister(), &args);
+    assert!(
+        matches!(response, user_canister::set_message_reminder_v2::Response::Success(_)),
+        "{response:?}"
+    );
 }

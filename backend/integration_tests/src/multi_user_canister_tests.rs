@@ -6,8 +6,8 @@ use crate::utils::{
 use crate::{CanisterIds, TestEnv, client, wasms};
 use candid::Principal;
 use constants::{
-    HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, MULTI_USER_CANISTER_MIN_CYCLES_BALANCE,
-    OPENCHAT_BOT_USER_ID,
+    DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, MAX_MESSAGE_REMINDERS,
+    MULTI_USER_CANISTER_MIN_CYCLES_BALANCE, OPENCHAT_BOT_USER_ID,
 };
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
@@ -2666,6 +2666,46 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
 
     // The other user's chat with the OpenChat bot still holds only their welcome messages
     assert_eq!(bot_message_texts(env, b_principal, canister_id, b), b_bot_messages);
+}
+
+#[test]
+fn pending_message_reminders_are_limited_per_user() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
+    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
+    let remind_at = now_millis(env) + DAY_IN_MS;
+
+    for _ in 0..MAX_MESSAGE_REMINDERS {
+        set_message_reminder(env, a_principal, canister_id, Chat::Direct(b.into()), None, remind_at);
+    }
+    let response = client::user::set_message_reminder_v2(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::set_message_reminder_v2::Args {
+            chat: Chat::Direct(b.into()),
+            thread_root_message_index: None,
+            event_index: 10.into(),
+            notes: None,
+            remind_at,
+        },
+    );
+    assert!(
+        matches!(response, user_canister::set_message_reminder_v2::Response::Error(ref e) if e.matches_code(OCErrorCode::LimitReached)),
+        "{response:?}"
+    );
+
+    // Another user in the canister can still set reminders
+    set_message_reminder(env, b_principal, canister_id, Chat::Direct(a.into()), None, remind_at);
 }
 
 fn set_message_reminder(

@@ -3096,6 +3096,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "chat_events",
+ "constants",
  "ic-stable-structures",
  "ic_principal",
  "msgpack",
