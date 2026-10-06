@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store each direct chat record in stable memory, keeping only a small entry per chat on the heap ([#9781](https://github.com/open-chat-labs/open-chat/pull/9781))
 - Store each group and community record in stable memory, keeping only a small entry for each on the heap ([#9795](https://github.com/open-chat-labs/open-chat/pull/9795))
 - Instantiate the msgpack (de)serializers of widely shared types once, in `types`, cutting the code by 364KB ([#9804](https://github.com/open-chat-labs/open-chat/pull/9804))
+- Limit how many reminders, saved crypto accounts, favourites, pins and manual wallet tokens a user can have ([#9805](https://github.com/open-chat-labs/open-chat/pull/9805))
 
 ## [[2.0.2091](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2091-multi_user)] - 2026-10-02
 
