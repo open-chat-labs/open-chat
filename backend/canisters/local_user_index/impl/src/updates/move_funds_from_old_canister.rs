@@ -188,10 +188,10 @@ async fn old_canister_status(canister_id: CanisterId) -> Result<(CanisterStatusM
     Ok((status, relay_installed))
 }
 
-pub(crate) struct Transfer {
-    pub ledger: CanisterId,
-    pub balance: u128,
-    pub fee: u128,
+struct Transfer {
+    ledger: CanisterId,
+    balance: u128,
+    fee: u128,
 }
 
 // Looks up the old canister's balance on each ledger, returning the transfers of those with a
@@ -221,7 +221,7 @@ async fn transfers_to_make(
     (outcomes, transfers)
 }
 
-pub(crate) async fn balance_of(ledger: CanisterId, account: Account) -> Result<u128, C2CError> {
+async fn balance_of(ledger: CanisterId, account: Account) -> Result<u128, C2CError> {
     let method = "icrc1_balance_of";
     let reply = canister_client::make_c2c_call_raw(
         ledger,
@@ -257,7 +257,7 @@ fn to_u128(value: Nat) -> u128 {
 // Makes the transfer as the old canister, through the relay, of the balance less the fee. The fee
 // is the Registry's, which may be out of date, in which case the ledger rejects the transfer with
 // the fee it expects, and the transfer is tried once more with that fee.
-pub(crate) async fn make_transfer(
+async fn make_transfer(
     old_canister_id: CanisterId,
     to: Account,
     transfer: &Transfer,
@@ -329,7 +329,6 @@ fn queue_refund(state: &mut RuntimeState, canister_id: CanisterId) {
             canister_id,
             attempt: 0,
             retry_after: 0,
-            delete_canister: false,
             return_to_pool: false,
         });
     }

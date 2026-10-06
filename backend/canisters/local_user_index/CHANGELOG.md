@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Uninstall a deleted group's or community's canister straight away, and keep it rather than deleting it ([#9812](https://github.com/open-chat-labs/open-chat/pull/9812))
+
+### Removed
+
+- Remove the reclaiming of the canisters which only the old LocalGroupIndexes controlled, which has completed in prod ([#9813](https://github.com/open-chat-labs/open-chat/pull/9813))
+
+### Fixed
+
+- Stop sending and retrying events to deleted groups and communities ([#9812](https://github.com/open-chat-labs/open-chat/pull/9812))
+
+## [[2.0.2098](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2098-local_user_index)] - 2026-10-06
+
 ### Added
 
 - Reclaim the canisters which only the old LocalGroupIndex still controls and put them into the pool, then move its ICP to the CyclesDispenser and refund its own cycles ([#9773](https://github.com/open-chat-labs/open-chat/pull/9773))

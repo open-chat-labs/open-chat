@@ -8,7 +8,6 @@ use crate::model::local_group_map::LocalGroupMap;
 use crate::model::local_multi_user_canister_map::LocalMultiUserCanisterMap;
 use crate::model::media_scan_job_log::MediaScanJobLog;
 use crate::model::moderation_queue::ModerationQueue;
-use crate::model::old_local_group_index::{OldLocalGroupIndex, OldLocalGroupIndexMetrics};
 use crate::model::premium_items::PremiumItems;
 use crate::model::recent_joins::RecentJoins;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
@@ -431,7 +430,12 @@ impl RuntimeState {
         }
     }
 
+    // Events for a group this LocalUserIndex doesn't hold, eg. one which has been deleted, are
+    // dropped, since they could never be delivered
     pub fn push_event_to_group(&mut self, canister_id: CanisterId, event: GroupEvent, now: TimestampMillis) {
+        if !self.data.local_groups.contains(&canister_id.into()) {
+            return;
+        }
         self.data.group_event_sync_queue.push(
             canister_id,
             IdempotentEnvelope {
@@ -442,7 +446,12 @@ impl RuntimeState {
         );
     }
 
+    // Events for a community this LocalUserIndex doesn't hold, eg. one which has been deleted, are
+    // dropped, since they could never be delivered
     pub fn push_event_to_community(&mut self, canister_id: CanisterId, event: CommunityEvent, now: TimestampMillis) {
+        if !self.data.local_communities.contains(&canister_id.into()) {
+            return;
+        }
         self.data.community_event_sync_queue.push(
             canister_id,
             IdempotentEnvelope {
@@ -889,6 +898,8 @@ impl RuntimeState {
             recent_multi_user_upgrades: multi_user_upgrades_metrics.recently_competed,
             user_events_queue_length: self.data.user_events_queue.len(),
             user_events_queue_in_progress: self.data.user_events_queue.in_progress(),
+            group_events_queue_length: self.data.group_event_sync_queue.len(),
+            community_events_queue_length: self.data.community_event_sync_queue.len(),
             users_to_delete_queue_length: self.data.users_to_delete_queue.len(),
             users_to_migrate_pending: self.data.users_to_migrate.pending(),
             users_to_migrate_in_progress: self.data.users_to_migrate.in_progress(),
@@ -902,7 +913,6 @@ impl RuntimeState {
             cycles_refunded_from_deleted_users: self.data.cycles_refunded_from_deleted_users,
             cycles_refunded_from_pool_canisters: self.data.cycles_refunded_from_pool_canisters,
             cycles_topped_up_for_refunds: self.data.cycles_topped_up_for_refunds,
-            old_local_group_index: self.data.old_local_group_index.as_ref().map(|old| old.metrics()),
             registry_tokens: self.data.registry_tokens.len(),
             referral_codes: self.data.referral_codes.metrics(now),
             event_store_client_info,
@@ -1071,10 +1081,6 @@ struct Data {
     // The ledgers from which migrated users' funds can be moved, refreshed from the Registry daily
     #[serde(default)]
     pub registry_tokens: RegistryTokens,
-    // The LocalGroupIndex which ran alongside this LocalUserIndex before its work was moved in here,
-    // whose canisters are being reclaimed (see `jobs::reclaim_old_local_group_index`)
-    #[serde(default)]
-    pub old_local_group_index: Option<OldLocalGroupIndex>,
     // Rebuilt every 5 minutes (and on start) from the child canisters' top ups, so not persisted
     #[serde(skip)]
     pub top_up_leaderboards: TopUpLeaderboards,
@@ -1101,10 +1107,6 @@ pub struct CanisterToRefund {
     pub canister_id: CanisterId,
     pub attempt: usize,
     pub retry_after: TimestampMillis,
-    // Set for a deleted group's or community's canister, which is deleted once its cycles have
-    // been refunded
-    #[serde(default)]
-    pub delete_canister: bool,
     // Set for a canister from the canister pool, which goes back into the pool once its cycles have
     // been refunded
     #[serde(default)]
@@ -1214,7 +1216,6 @@ impl Data {
             users_to_close_out: UsersToMigrate::default(),
             recent_joins: RecentJoins::default(),
             registry_tokens: RegistryTokens::default(),
-            old_local_group_index: None,
             top_up_leaderboards: TopUpLeaderboards::default(),
         }
     }
@@ -1270,6 +1271,8 @@ pub struct Metrics {
     // Batches currently mid-flight: len() alone cannot distinguish an idle queue from one
     // whose last batch is still awaiting its reply
     pub user_events_queue_in_progress: usize,
+    pub group_events_queue_length: usize,
+    pub community_events_queue_length: usize,
     pub users_to_delete_queue_length: usize,
     pub users_to_migrate_pending: usize,
     pub users_to_migrate_in_progress: usize,
@@ -1283,7 +1286,6 @@ pub struct Metrics {
     pub cycles_refunded_from_deleted_users: Cycles,
     pub cycles_refunded_from_pool_canisters: Cycles,
     pub cycles_topped_up_for_refunds: Cycles,
-    pub old_local_group_index: Option<OldLocalGroupIndexMetrics>,
     pub registry_tokens: usize,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub event_store_client_info: EventStoreClientInfo,
@@ -1354,4 +1356,53 @@ pub struct BotMetrics {
 
 fn new_user_events_queue() -> GroupedTimerJobQueue<UserEventBatch> {
     GroupedTimerJobQueue::new(10, false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use utils::env::test::TestEnv;
+
+    // Eg. for a group or community which has been deleted. Queueing an event for a local group or
+    // community starts sending it, which can't be done outside of a canister, so isn't tested here.
+    #[test]
+    fn events_for_groups_and_communities_which_are_not_local_are_dropped() {
+        let mut state = setup_runtime_state();
+        let canister_id = Principal::from_slice(&[10]);
+        let bot_id = Principal::from_slice(&[11]).into();
+
+        state.push_event_to_group(canister_id, GroupEvent::BotRemoved(bot_id), 0);
+        state.push_event_to_community(canister_id, CommunityEvent::BotRemoved(bot_id), 0);
+
+        assert_eq!(state.data.group_event_sync_queue.len(), 0);
+        assert_eq!(state.data.community_event_sync_queue.len(), 0);
+    }
+
+    pub(crate) fn setup_runtime_state() -> RuntimeState {
+        let canister_id = Principal::from_slice(&[1]);
+        let data = Data::new(
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            0,
+            Vec::new(),
+            P256KeyPair::new(&mut rand::rng()).secret_key_der().to_vec(),
+            None,
+            None,
+            MediaScanConfig::default(),
+            true,
+            false,
+            true,
+        );
+        RuntimeState::new(Box::new(TestEnv::default()), data)
+    }
 }
