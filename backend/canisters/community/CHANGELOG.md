@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Accept tips on a migrated user's messages from before their migration, paying and notifying them under their new id ([#9816](https://github.com/open-chat-labs/open-chat/pull/9816))
+
 ## [[2.0.2103](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2103-community)] - 2026-10-06
 
 ### Changed
