@@ -51,15 +51,21 @@ impl FavouriteChats {
     // Adds the chat, provided fewer than `MAX_FAVOURITE_CHATS` are favourites, returning whether it
     // wasn't already one
     pub fn add(&mut self, chat: Chat, now: TimestampMillis) -> OCResult<bool> {
-        if self.chats.value.contains(&chat) {
-            return Ok(false);
-        }
-        if self.chats.value.len() >= MAX_FAVOURITE_CHATS {
+        if !self.chats.value.contains(&chat) && self.chats.value.len() >= MAX_FAVOURITE_CHATS {
             return Err(OCErrorCode::LimitReached.with_message(MAX_FAVOURITE_CHATS));
+        }
+        Ok(self.add_without_limit(chat, now))
+    }
+
+    // Adds the chat whatever the limit, for when the caller has already checked it or isn't adding
+    // to the user's favourites, returning whether it wasn't already one
+    pub fn add_without_limit(&mut self, chat: Chat, now: TimestampMillis) -> bool {
+        if self.chats.value.contains(&chat) {
+            return false;
         }
         self.chats.timestamp = now;
         self.chats.value.insert(0, chat);
-        Ok(true)
+        true
     }
 
     pub fn contains(&self, chat: &Chat) -> bool {

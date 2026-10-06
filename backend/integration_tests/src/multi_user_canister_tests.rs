@@ -2684,9 +2684,9 @@ fn pending_message_reminders_are_limited_per_user() {
     let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
     let remind_at = now_millis(env) + DAY_IN_MS;
 
-    for _ in 0..MAX_MESSAGE_REMINDERS {
-        set_message_reminder(env, a_principal, canister_id, Chat::Direct(b.into()), None, remind_at);
-    }
+    let reminder_ids: Vec<_> = (0..MAX_MESSAGE_REMINDERS)
+        .map(|_| set_message_reminder(env, a_principal, canister_id, Chat::Direct(b.into()), None, remind_at))
+        .collect();
     let response = client::user::set_message_reminder_v2(
         env,
         a_principal,
@@ -2706,6 +2706,18 @@ fn pending_message_reminders_are_limited_per_user() {
 
     // Another user in the canister can still set reminders
     set_message_reminder(env, b_principal, canister_id, Chat::Direct(a.into()), None, remind_at);
+
+    // And cancelling one makes room for another
+    let response = client::user::cancel_message_reminder(
+        env,
+        a_principal,
+        canister_id,
+        &user_canister::cancel_message_reminder::Args {
+            reminder_id: reminder_ids[0],
+        },
+    );
+    assert!(matches!(response, user_canister::cancel_message_reminder::Response::Success));
+    set_message_reminder(env, a_principal, canister_id, Chat::Direct(b.into()), None, remind_at);
 }
 
 fn set_message_reminder(

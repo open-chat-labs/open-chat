@@ -245,11 +245,9 @@ impl DirectChats {
         }
     }
 
-    // Pins the chat, which must exist, provided fewer than `MAX_PINNED_CHATS` chats are pinned
+    // Pins the chat, provided fewer than `MAX_PINNED_CHATS` chats are pinned. The chat needn't exist
+    // yet, since the website lets the user pin a chat before its first message has been sent.
     pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) -> OCResult {
-        if !self.exists(&chat_id) {
-            return Err(OCErrorCode::ChatNotFound.into());
-        }
         if !self.pinned.value.contains_key(&chat_id) {
             if self.pinned.value.len() >= MAX_PINNED_CHATS {
                 return Err(OCErrorCode::LimitReached.with_message(MAX_PINNED_CHATS));
@@ -757,12 +755,10 @@ mod tests {
     }
 
     #[test]
-    fn only_existing_chats_are_pinned_up_to_the_limit_and_removing_a_chat_unpins_it() {
+    fn chats_are_pinned_up_to_the_limit_and_removing_a_chat_unpins_it() {
         init_stable_memory_map();
         let me = user(1);
         let mut direct_chats = DirectChats::default();
-        let error = direct_chats.pin(user(2).into(), 10).unwrap_err();
-        assert!(error.matches_code(OCErrorCode::ChatNotFound), "{error:?}");
 
         for i in 0..MAX_PINNED_CHATS as u8 {
             direct_chats.get_or_create(me, user(i + 10), UserType::User, || 1, 10);

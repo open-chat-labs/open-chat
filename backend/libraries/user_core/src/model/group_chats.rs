@@ -98,12 +98,9 @@ impl GroupChats {
         self.group_chats.is_empty()
     }
 
-    // Pins the group, which the user must be in, provided fewer than `MAX_PINNED_CHATS` groups are
-    // pinned
+    // Pins the group, provided fewer than `MAX_PINNED_CHATS` groups are pinned. The user's canister
+    // needn't have heard of the group yet, since it hears of a join after the website does.
     pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) -> OCResult {
-        if !self.exists(&chat_id) {
-            return Err(OCErrorCode::ChatNotFound.into());
-        }
         if !self.pinned.value.contains_key(&chat_id) {
             if self.pinned.value.len() >= MAX_PINNED_CHATS {
                 return Err(OCErrorCode::LimitReached.with_message(MAX_PINNED_CHATS));
@@ -151,12 +148,10 @@ mod tests {
     }
 
     #[test]
-    fn only_groups_the_user_is_in_are_pinned_up_to_the_limit_and_leaving_unpins() {
+    fn groups_are_pinned_up_to_the_limit_and_leaving_unpins() {
         init_stable_memory_map();
         let mut group_chats = GroupChats::default();
         let local_user_index = Principal::from_slice(&[9; 10]);
-        let error = group_chats.pin(chat(1), 10).unwrap_err();
-        assert!(error.matches_code(OCErrorCode::ChatNotFound), "{error:?}");
 
         for i in 0..=MAX_PINNED_CHATS as u8 {
             group_chats.join(chat(i + 10), local_user_index, None, 10);
