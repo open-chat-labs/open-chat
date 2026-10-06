@@ -51,7 +51,7 @@ fn account_migrated_text(wallet: Principal) -> String {
 
 {wallet}
 
-Any tokens in your old wallet will be moved to your new one automatically.
+Any tokens in your old wallet will be transferred to your new one automatically.
 
 To vote on proposals from within OpenChat, you'll need to add this address as a hotkey to each neuron you would like to vote with."
     )
