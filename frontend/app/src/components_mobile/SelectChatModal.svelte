@@ -1,16 +1,5 @@
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <script lang="ts">
-    import { trackedEffect } from "@src/utils/effects.svelte";
-    import {
-        Avatar,
-        Body,
-        BodySmall,
-        ColourVars,
-        Column,
-        Row,
-        Search,
-        Subtitle,
-    } from "component-lib";
     import type {
         ChatIdentifier,
         ChatSummary,
@@ -30,6 +19,17 @@
         serverDirectChatsStore,
         serverGroupChatsStore,
     } from "@client";
+    import { trackedEffect } from "@src/utils/effects.svelte";
+    import {
+        Avatar,
+        Body,
+        BodySmall,
+        ColourVars,
+        Column,
+        Row,
+        Search,
+        Subtitle,
+    } from "component-lib";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
@@ -316,7 +316,7 @@
             title={interpolate($_, i18nKey("noChatsAvailable"))}
             subtitle={"Looks like you aren't a member of any other chats"} />
     {:else if targets !== undefined}
-        <Column>
+        <Column height={"fill"}>
             {#if targets.directChats.length > 0}
                 <CollapsibleCard
                     open={searchTerm !== ""}
