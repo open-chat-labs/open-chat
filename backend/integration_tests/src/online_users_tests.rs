@@ -61,7 +61,7 @@ fn mark_online_pushes_event() {
         since,
         &[("user_online", timestamp)],
     );
-    assert!(counts[0] > 0, "no user_online event at {timestamp}");
+    assert_eq!(counts, vec![1], "user_online events at {timestamp}");
 }
 
 #[test]
