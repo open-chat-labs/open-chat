@@ -4,7 +4,7 @@ use crate::upgrade_from_prod_tests::try_wasm_version;
 use crate::utils::{chat_token_info, icp_token_info, metrics, now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client, wasms};
 use candid::{CandidType, Nat, Principal};
-use constants::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
+use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use ic_stable_structures::memory_manager::MemoryId;
 use local_user_index_canister::move_funds_from_old_canister::{MoveFundsResult, Response as MoveFundsResponse};
 use oc_error_codes::OCErrorCode;
@@ -17,11 +17,11 @@ use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     BotDefinition, BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, Chat, ChatEvent,
-    ChatId, CommunityId, CommunityRole, DiamondMembershipPlanDuration, Document, Empty, EventIndex, FileContent,
-    IdempotentEnvelope, MessageContent, MessageContentInitial, MessageIndex, OptionUpdate, P2PSwapContentInitial,
-    ReferralStatus, UserId,
+    ChatId, CommunityId, CommunityRole, DiamondMembershipPlanDuration, Document, Empty, EventIndex, EventsResponse,
+    FileContent, IdempotentEnvelope, MessageContent, MessageContentInitial, MessageIndex, OptionUpdate, P2PSwapContentInitial,
+    PendingCryptoTransaction, ReferralStatus, UnitResult, UserId, icrc1, icrc2,
 };
-use user_canister::UserCanisterEvent;
+use user_canister::{MessageActivity, UserCanisterEvent};
 use user_index_canister::user_migration::UserMigrationStatus;
 
 const CALL_RELAY_WASM: &[u8] = include_bytes!("../../canisters/call_relay/call_relay.wasm");
@@ -2803,6 +2803,259 @@ fn migrated_user_deletes_the_files_of_a_message_they_sent_before_being_migrated(
     env.advance_time(Duration::from_secs(5 * 60));
     tick_until(env, |env| {
         !client::storage_bucket::happy_path::file_exists(env, user1.principal, file.canister_id, file.blob_id)
+    });
+}
+
+#[derive(Clone, Copy)]
+enum TippedIn {
+    DirectChat,
+    Group,
+    Channel,
+}
+
+// A migrated user's messages from before their migration keep the id they were sent under, while
+// clients know the user only by their new id, so a tip on one is to their new id. It is paid into
+// the wallet they now hold their funds in, recorded on the message, and reaches them in their new
+// canister.
+#[test_case(TippedIn::DirectChat, false; "direct_chat_tipped_from_a_user_canister")]
+#[test_case(TippedIn::DirectChat, true; "direct_chat_tipped_from_a_multi_user_canister")]
+#[test_case(TippedIn::Group, false; "group_tipped_from_a_user_canister")]
+#[test_case(TippedIn::Group, true; "group_tipped_from_a_multi_user_canister")]
+#[test_case(TippedIn::Channel, false; "channel_tipped_from_a_user_canister")]
+#[test_case(TippedIn::Channel, true; "channel_tipped_from_a_multi_user_canister")]
+fn message_sent_before_its_sender_was_migrated_can_be_tipped(tipped_in: TippedIn, tipper_in_multi_user_canister: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    // A Diamond member, so that they can create a public group or community for the others to join
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let sender = client::register_user(env, canister_ids);
+    let tipper = if tipper_in_multi_user_canister {
+        client::register_user_in_multi_user_canister(env, canister_ids)
+    } else {
+        client::register_user(env, canister_ids)
+    };
+    let ledger = canister_ids.icp_ledger;
+    let tip = 1_0000_0000;
+
+    let has_direct_chat_with = |env: &PocketIc, them: UserId| {
+        client::user::happy_path::initial_state(env, &tipper)
+            .direct_chats
+            .summaries
+            .iter()
+            .any(|c| c.them == them)
+    };
+    let message_id = random_from_u128();
+    let chat = match tipped_in {
+        TippedIn::DirectChat => {
+            client::user::happy_path::send_text_message(env, &sender, tipper.user_id, random_string(), Some(message_id));
+            tick_until(env, |env| has_direct_chat_with(env, sender.user_id));
+            Chat::Direct(sender.user_id.into())
+        }
+        TippedIn::Group => {
+            let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+            for user in [&sender, &tipper] {
+                client::group::happy_path::join_group(env, user.principal, group_id);
+            }
+            client::group::happy_path::send_text_message(env, &sender, group_id, None, random_string(), Some(message_id));
+            Chat::Group(group_id)
+        }
+        TippedIn::Channel => {
+            let community_id =
+                client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
+            let channel_id =
+                client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+            for user in [&sender, &tipper] {
+                client::community::happy_path::join_community(env, user.principal, community_id);
+                client::community::happy_path::join_channel(env, user.principal, community_id, channel_id);
+            }
+            client::community::happy_path::send_text_message(
+                env,
+                &sender,
+                community_id,
+                channel_id,
+                None,
+                random_string(),
+                Some(message_id),
+            );
+            Chat::Channel(community_id, channel_id)
+        }
+    };
+
+    let migrated = migrate(env, canister_ids, &operator, &sender, multi_user_canister);
+    let new_user_id = migrated.user_id;
+
+    // Wait until the chat holds the sender under their new id, as the tipper's client knows them
+    let chat = match chat {
+        Chat::Direct(_) => Chat::Direct(new_user_id.into()),
+        chat => chat,
+    };
+    tick_until(env, |env| match chat {
+        Chat::Direct(_) => has_direct_chat_with(env, new_user_id),
+        Chat::Group(group_id) => {
+            let response = client::group::happy_path::selected_initial(env, owner.principal, group_id);
+            response.participants.iter().any(|m| m.user_id == new_user_id) || response.basic_members.contains(&new_user_id)
+        }
+        Chat::Channel(community_id, channel_id) => {
+            let response = client::community::happy_path::selected_channel_initial(env, &owner, community_id, channel_id);
+            response.members.iter().any(|m| m.user_id == new_user_id) || response.basic_members.contains(&new_user_id)
+        }
+    });
+
+    // A User canister tips from its own account. A user in a MultiUser canister tips from their own
+    // wallet, approving the canister which makes the transfer to pull the tip from it: their
+    // MultiUser canister in a direct chat, and otherwise the group or community.
+    if tipper_in_multi_user_canister {
+        client::ledger::happy_path::transfer(env, *controller, ledger, tipper.principal, 10 * tip);
+        let spender = match chat {
+            Chat::Direct(_) => tipper.canister(),
+            chat => chat.canister_id(),
+        };
+        client::ledger::happy_path::approve(
+            env,
+            tipper.principal,
+            ledger,
+            icrc_ledger_types::icrc1::account::Account {
+                owner: spender,
+                subaccount: Some(ledger_utils::spender_subaccount(tipper.principal)),
+            },
+            tip + ICP_TRANSFER_FEE,
+        );
+    } else {
+        client::ledger::happy_path::transfer(env, *controller, ledger, tipper.user_id, 10 * tip);
+    }
+    let senders_balance = client::ledger::happy_path::balance_of(env, ledger, sender.principal);
+
+    if tipper_in_multi_user_canister && !matches!(chat, Chat::Direct(_)) {
+        // The client addresses the transfer to the account of the sender's new id, which the group or
+        // community sends to their wallet instead
+        let transfer = PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
+            ledger,
+            token_symbol: ICP_SYMBOL.to_string(),
+            amount: tip,
+            from: tipper.principal.into(),
+            to: icrc1::Account::legacy_for_user(new_user_id),
+            fee: ICP_TRANSFER_FEE,
+            memo: None,
+            created: now_millis(env) * 1_000_000,
+        });
+        let response = match chat {
+            Chat::Group(group_id) => client::group::tip_message(
+                env,
+                tipper.principal,
+                group_id.into(),
+                &group_canister::tip_message::Args {
+                    thread_root_message_index: None,
+                    message_id,
+                    transfer,
+                    decimals: 8,
+                    username: tipper.username(),
+                    display_name: None,
+                    new_achievement: false,
+                },
+            ),
+            Chat::Channel(community_id, channel_id) => client::community::tip_message(
+                env,
+                tipper.principal,
+                community_id.into(),
+                &community_canister::tip_message::Args {
+                    channel_id,
+                    thread_root_message_index: None,
+                    message_id,
+                    transfer,
+                    decimals: 8,
+                    username: tipper.username(),
+                    display_name: None,
+                    new_achievement: false,
+                },
+            ),
+            Chat::Direct(_) => unreachable!(),
+        };
+        assert!(matches!(response, UnitResult::Success), "{response:?}");
+    } else {
+        let response = client::user::tip_message(
+            env,
+            tipper.principal,
+            tipper.canister(),
+            &user_canister::tip_message::Args {
+                chat,
+                recipient: new_user_id,
+                thread_root_message_index: None,
+                message_id,
+                ledger,
+                token_symbol: ICP_SYMBOL.to_string(),
+                amount: tip,
+                fee: ICP_TRANSFER_FEE,
+                decimals: 8,
+                from_account: None,
+                pin: None,
+            },
+        );
+        assert!(
+            matches!(response, user_canister::tip_message::Response::Success),
+            "{response:?}"
+        );
+    }
+
+    // The tip is paid into the sender's wallet, the account of their principal
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, ledger, sender.principal),
+        senders_balance + tip
+    );
+
+    // It is recorded on the message, in both copies of a direct chat
+    let tips_on = |events: EventsResponse| {
+        events
+            .events
+            .into_iter()
+            .find_map(|e| match e.event {
+                ChatEvent::Message(m) if m.message_id == message_id => Some(m.tips.iter().cloned().collect::<Vec<_>>()),
+                _ => None,
+            })
+            .expect("Message not found")
+    };
+    let tipped = vec![(ledger, vec![(tipper.user_id, tip)])];
+    match chat {
+        Chat::Direct(_) => {
+            let events = client::user::happy_path::events(env, &tipper, new_user_id, 0.into(), true, 10, 10);
+            assert_eq!(tips_on(events), tipped);
+            tick_until(env, |env| {
+                tips_on(client::user::happy_path::events(
+                    env,
+                    &migrated,
+                    tipper.user_id,
+                    0.into(),
+                    true,
+                    10,
+                    10,
+                )) == tipped
+            });
+        }
+        Chat::Group(group_id) => {
+            let events = client::group::happy_path::events(env, &owner, group_id, 0.into(), true, 10, 10);
+            assert_eq!(tips_on(events), tipped);
+        }
+        Chat::Channel(community_id, channel_id) => {
+            let events = client::community::happy_path::events(env, &owner, community_id, channel_id, 0.into(), true, 10, 10);
+            assert_eq!(tips_on(events), tipped);
+        }
+    }
+
+    // And the sender hears of it in their new canister
+    tick_until(env, |env| {
+        client::user::happy_path::message_activity_feed(env, &migrated, 0)
+            .events
+            .iter()
+            .any(|e| e.message_id == message_id && matches!(e.activity, MessageActivity::Tip))
     });
 }
 
