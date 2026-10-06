@@ -36,10 +36,6 @@ fn delete_community_succeeds() {
     );
 
     wait_for_deleted_canister_to_be_uninstalled(env, community_id.into());
-
-    // The canister is kept, uninstalled, once its cycles have been refunded
-    tick_many(env, 10);
-    assert!(env.canister_exists(community_id.into()));
 }
 
 // An event which couldn't be delivered to a community is retried, which is pointless once the

@@ -1369,3 +1369,52 @@ pub struct BotMetrics {
 fn new_user_events_queue() -> GroupedTimerJobQueue<UserEventBatch> {
     GroupedTimerJobQueue::new(10, false)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use utils::env::test::TestEnv;
+
+    // Eg. for a group or community which has been deleted. Queueing an event for a local group or
+    // community starts sending it, which can't be done outside of a canister, so isn't tested here.
+    #[test]
+    fn events_for_groups_and_communities_which_are_not_local_are_dropped() {
+        let mut state = setup_runtime_state();
+        let canister_id = Principal::from_slice(&[10]);
+        let bot_id = Principal::from_slice(&[11]).into();
+
+        state.push_event_to_group(canister_id, GroupEvent::BotRemoved(bot_id), 0);
+        state.push_event_to_community(canister_id, CommunityEvent::BotRemoved(bot_id), 0);
+
+        assert_eq!(state.data.group_event_sync_queue.len(), 0);
+        assert_eq!(state.data.community_event_sync_queue.len(), 0);
+    }
+
+    fn setup_runtime_state() -> RuntimeState {
+        let canister_id = Principal::from_slice(&[1]);
+        let data = Data::new(
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            canister_id,
+            0,
+            Vec::new(),
+            P256KeyPair::new(&mut rand::rng()).secret_key_der().to_vec(),
+            None,
+            None,
+            MediaScanConfig::default(),
+            true,
+            false,
+            true,
+        );
+        RuntimeState::new(Box::new(TestEnv::default()), data)
+    }
+}

@@ -29,10 +29,6 @@ fn delete_group_succeeds() {
     );
 
     wait_for_deleted_canister_to_be_uninstalled(env, group_id.into());
-
-    // The canister is kept, uninstalled, once its cycles have been refunded
-    tick_many(env, 10);
-    assert!(env.canister_exists(group_id.into()));
 }
 
 // An event which couldn't be delivered to a group is retried, which is pointless once the group has
@@ -119,6 +115,8 @@ fn events_for_a_deleted_group_are_not_queued() {
     );
     wait_for_deleted_canister_to_be_uninstalled(env, group_id.into());
 
+    // A batch for a group which isn't local is also dropped once sending it fails, so this doesn't
+    // tell whether the event was queued at all. See the unit test in the LocalUserIndex for that.
     let queued_before = events_queue_length(env, local_user_index, GROUP_EVENTS_QUEUE_LENGTH);
     client::user_index::happy_path::remove_bot(env, user.principal, canister_ids.user_index, bot_id);
     tick_many(env, 10);

@@ -165,7 +165,6 @@ async fn notify_community_uninstalled(community_id: CommunityId) {
                 canister_id,
                 attempt: 0,
                 retry_after: 0,
-                // Kept, since it may hold tokens (see above)
                 uninstall_code: false,
                 return_to_pool: false,
             });

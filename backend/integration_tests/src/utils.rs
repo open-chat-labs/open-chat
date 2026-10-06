@@ -77,11 +77,6 @@ pub fn try_metrics(env: &PocketIc, canister_id: CanisterId) -> Option<serde_json
     serde_json::from_slice(&response.body).ok()
 }
 
-// Waits for the canister of a deleted group or community to be deleted, which its LocalUserIndex
-// does once it has uninstalled the canister and refunded its cycles. The refund can be held up by
-// the IC's install_code rate limit if the canister was installed only moments ago, in which case
-// the LocalUserIndex retries after a delay, so time is advanced if it takes more than a few rounds.
-// A test which gets that far should discard its environment.
 // Ticks until the canister of a deleted group or community has been uninstalled and started again,
 // from which point callers are told it has no code. It's never deleted, so that the cycles which
 // can't be refunded from it may be recovered once the IC allows. Time isn't advanced, so this
