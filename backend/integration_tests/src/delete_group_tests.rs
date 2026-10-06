@@ -1,12 +1,13 @@
+use crate::bot_tests::register_bot;
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::utils::wait_for_canister_to_be_deleted;
+use crate::utils::{metrics, tick_many, wait_for_deleted_canister_to_be_uninstalled};
 use crate::{CanisterIds, TestEnv, User, client};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
-use types::ChatId;
+use types::{BotInstallationLocation, BotPermissions, CanisterId, ChatId};
 
 #[test]
 fn delete_group_succeeds() {
@@ -27,7 +28,103 @@ fn delete_group_succeeds() {
         "{delete_group_response:?}",
     );
 
-    wait_for_canister_to_be_deleted(env, group_id.into());
+    wait_for_deleted_canister_to_be_uninstalled(env, group_id.into());
+}
+
+// An event which couldn't be delivered to a group is retried, which is pointless once the group has
+// been deleted, so it's dropped
+#[test]
+fn events_queued_for_a_deleted_group_are_dropped() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let group_name = random_string();
+    let group_id = client::user::happy_path::create_group(env, &user, &group_name, true, true);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+
+    // An event which reaches a stopped canister is retried after 10 seconds, so with the clock
+    // standing still it stays queued
+    tick_many(env, 5);
+    let queued_before = events_queue_length(env, local_user_index, GROUP_EVENTS_QUEUE_LENGTH);
+    stop_canister(env, local_user_index, group_id.into());
+    // Keeping the group's name, so that just the one event is sent
+    client::group_index::happy_path::set_group_verification(env, *controller, canister_ids.group_index, group_id, group_name);
+    wait_for_events_queue_length(env, local_user_index, GROUP_EVENTS_QUEUE_LENGTH, queued_before + 1);
+    start_canister(env, local_user_index, group_id.into());
+
+    let delete_group_response = client::user::delete_group(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::delete_group::Args { chat_id: group_id },
+    );
+    assert!(
+        matches!(delete_group_response, user_canister::delete_group::Response::Success),
+        "{delete_group_response:?}",
+    );
+    wait_for_deleted_canister_to_be_uninstalled(env, group_id.into());
+
+    assert_eq!(
+        events_queue_length(env, local_user_index, GROUP_EVENTS_QUEUE_LENGTH),
+        queued_before
+    );
+}
+
+// The UserIndex isn't told when a group is deleted, so a bot which was installed in it is still
+// listed there, and removing the bot sends the group an event
+#[test]
+fn events_for_a_deleted_group_are_not_queued() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), true, true);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+    let (bot_id, _) = register_bot(env, &user, canister_ids.user_index, random_string(), random_string());
+    tick_many(env, 3);
+
+    client::local_user_index::happy_path::install_bot(
+        env,
+        user.principal,
+        local_user_index,
+        BotInstallationLocation::Group(group_id),
+        bot_id,
+        BotPermissions::default(),
+        None,
+    );
+    tick_many(env, 3);
+
+    let delete_group_response = client::user::delete_group(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::delete_group::Args { chat_id: group_id },
+    );
+    assert!(
+        matches!(delete_group_response, user_canister::delete_group::Response::Success),
+        "{delete_group_response:?}",
+    );
+    wait_for_deleted_canister_to_be_uninstalled(env, group_id.into());
+
+    // A batch for a group which isn't local is also dropped once sending it fails, so this doesn't
+    // tell whether the event was queued at all. See the unit test in the LocalUserIndex for that.
+    let queued_before = events_queue_length(env, local_user_index, GROUP_EVENTS_QUEUE_LENGTH);
+    client::user_index::happy_path::remove_bot(env, user.principal, canister_ids.user_index, bot_id);
+    tick_many(env, 10);
+
+    assert_eq!(
+        events_queue_length(env, local_user_index, GROUP_EVENTS_QUEUE_LENGTH),
+        queued_before
+    );
 }
 
 #[test]
@@ -130,4 +227,23 @@ struct TestData {
     user2: User,
     user3: User,
     group_id: ChatId,
+}
+
+pub(crate) const GROUP_EVENTS_QUEUE_LENGTH: &str = "group_events_queue_length";
+pub(crate) const COMMUNITY_EVENTS_QUEUE_LENGTH: &str = "community_events_queue_length";
+
+// The number of events queued by the LocalUserIndex for its groups or communities, excluding those
+// being sent
+pub(crate) fn events_queue_length(env: &PocketIc, local_user_index: CanisterId, metric: &str) -> u64 {
+    metrics(env, local_user_index)[metric].as_u64().unwrap()
+}
+
+pub(crate) fn wait_for_events_queue_length(env: &mut PocketIc, local_user_index: CanisterId, metric: &str, length: u64) {
+    for _ in 0..30 {
+        if events_queue_length(env, local_user_index, metric) == length {
+            return;
+        }
+        env.tick();
+    }
+    panic!("The {metric} metric did not reach {length}");
 }

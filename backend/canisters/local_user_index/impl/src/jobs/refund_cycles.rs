@@ -1,4 +1,3 @@
-use crate::updates::c2c_delete_group::spawn_delete_canister;
 use crate::{CanisterToRefund, RuntimeState, call_relay, mutate_state, read_state};
 use constants::{B, CYCLES_REQUIRED_FOR_UPGRADE, MINUTE_IN_MS, min_cycles_balance};
 use ic_cdk_management_canister::{CanisterInstallMode, CanisterStatusType};
@@ -13,10 +12,10 @@ use utils::canister::{
 };
 use utils::cycles::can_spend_cycles;
 
-// Sends the cycles held by uninstalled canisters (those of deleted and migrated users) to the
-// CyclesDispenser, by installing a tiny canister on each which does just that, then uninstalling it
-// again. The canisters of deleted groups and communities are uninstalled here first, then deleted
-// once their cycles have been refunded.
+// Sends the cycles held by uninstalled canisters (those of deleted and migrated users, and of deleted
+// groups and communities) to the CyclesDispenser, by installing a tiny canister on each which does
+// just that, then uninstalling it again. None of these canisters is deleted, since that would
+// destroy the cycles which can't be refunded, which the IC may in future let us recover.
 // See backend/canisters/cycles_refunder, which is where this wasm is built from.
 const CYCLES_REFUNDER_WASM: &[u8] = include_bytes!("../../../../cycles_refunder/cycles_refunder.wasm");
 
@@ -114,7 +113,7 @@ fn get_next(state: &mut RuntimeState) -> Result<CanisterToRefund, Option<Millise
 
 async fn process_canister(canister: CanisterToRefund) {
     let canister_id = canister.canister_id;
-    let result = refund_cycles(canister_id, canister.delete_canister).await;
+    let result = refund_cycles(canister_id).await;
     // Only once its cycles have been refunded, or it held too few to be worth refunding. Not, say,
     // if this canister doesn't control it, or the refunder may still be installed on it.
     let can_return_to_pool = matches!(result, Ok(_) | Err(RefundError::TooFewCycles(_)));
@@ -143,8 +142,8 @@ async fn process_canister(canister: CanisterToRefund) {
             Err(RefundError::NotController) => {
                 error!(%canister_id, "Cycles not refunded, this canister is not a controller");
             }
-            Err(RefundError::CanisterHasCode) => {
-                error!(%canister_id, "Cycles not refunded, the canister has code installed");
+            Err(RefundError::LiveCanister) => {
+                info!(%canister_id, "Cycles not refunded, the canister is a live user's, group's or community's");
             }
             Err(RefundError::InCanisterPool) => {
                 info!(%canister_id, "Cycles not refunded, the canister is in the canister pool");
@@ -158,7 +157,6 @@ async fn process_canister(canister: CanisterToRefund) {
                     canister_id,
                     attempt: canister.attempt,
                     retry_after: state.env.now() + CYCLES_BALANCE_TOO_LOW_RETRY_DELAY,
-                    delete_canister: canister.delete_canister,
                     return_to_pool: canister.return_to_pool,
                 });
                 retrying = true;
@@ -173,7 +171,6 @@ async fn process_canister(canister: CanisterToRefund) {
                         canister_id,
                         attempt,
                         retry_after: state.env.now() + delay,
-                        delete_canister: canister.delete_canister,
                         return_to_pool: canister.return_to_pool,
                     });
                     retrying = true;
@@ -181,12 +178,6 @@ async fn process_canister(canister: CanisterToRefund) {
                     error!(%canister_id, ?error, "Cycles not refunded, giving up");
                 }
             }
-        }
-
-        // A deleted group's or community's canister is deleted once nothing more is to be
-        // refunded from it
-        if canister.delete_canister && !retrying {
-            spawn_delete_canister(canister_id);
         }
 
         // A pool canister goes back into the pool, to be given cycles again when it is used
@@ -211,7 +202,9 @@ fn retry_delay(error: &C2CError) -> Option<Milliseconds> {
 
 enum RefundError {
     NotController,
-    CanisterHasCode,
+    // The canister is one of this canister's live users, groups, communities or MultiUser canisters,
+    // eg. a deleted user's canister which went into the canister pool and was used again
+    LiveCanister,
     InCanisterPool,
     TooFewCycles(Cycles),
     // Topping the canister up to install the refunder would take this canister's own balance below
@@ -226,19 +219,9 @@ impl From<C2CError> for RefundError {
     }
 }
 
-async fn refund_cycles(canister_id: CanisterId, delete_canister: bool) -> Result<Cycles, RefundError> {
-    let (cycles_dispenser_canister_id, in_canister_pool) = read_state(|state| {
-        (
-            state.data.cycles_dispenser_canister_id,
-            state.data.canister_pool.contains(&canister_id),
-        )
-    });
-
-    // A pool canister may yet become a live canister, so it must be left as it is, in particular
-    // without its freezing threshold having been set to 0 (see below)
-    if in_canister_pool {
-        return Err(RefundError::InCanisterPool);
-    }
+async fn refund_cycles(canister_id: CanisterId) -> Result<Cycles, RefundError> {
+    let cycles_dispenser_canister_id =
+        read_state(|state| check_can_refund(canister_id, state).map(|_| state.data.cycles_dispenser_canister_id))?;
     let wasm = CanisterWasmBytes(CYCLES_REFUNDER_WASM.to_vec());
 
     let status = utils::canister::canister_status(canister_id).await?;
@@ -248,53 +231,47 @@ async fn refund_cycles(canister_id: CanisterId, delete_canister: bool) -> Result
         return Err(RefundError::NotController);
     }
 
+    // Whatever is installed is uninstalled, unless it's the refunder. Eg. a deleted group's or
+    // community's code, if uninstalling it failed when it was deleted, or the call relay, left
+    // installed by a move of the canister's funds which failed to uninstall it.
     let mut module_hash = status.module_hash.clone();
-    if module_hash.as_ref().is_some_and(|hash| {
-        // The call relay, left installed by a move of the canister's funds which failed to
-        // uninstall it
-        *hash == call_relay::wasm().hash()
-            // A deleted group's or community's code, which is uninstalled here rather than when
-            // the group or community is deleted so that a failure to uninstall it is retried
-            || (delete_canister && *hash != wasm.hash())
-    }) {
+    if module_hash.as_ref().is_some_and(|hash| *hash != wasm.hash()) {
         utils::canister::uninstall(canister_id).await?;
         module_hash = None;
     }
 
-    match module_hash {
-        None => {
-            let balance = status.cycles();
-            if balance < MIN_CYCLES_TO_REFUND {
-                return Err(RefundError::TooFewCycles(balance));
-            }
-
-            // The refunder can only send the canister's liquid balance, which excludes the cycles
-            // held back by its freezing threshold, so set the threshold to 0 to refund those too
-            if status.settings.freezing_threshold != 0u32 {
-                utils::canister::set_freezing_threshold(canister_id, 0).await?;
-            }
-
-            if balance < CYCLES_REQUIRED_FOR_INSTALL {
-                let top_up = CYCLES_REQUIRED_FOR_INSTALL - balance;
-                if !read_state(|state| can_spend_cycles(top_up, min_cycles_balance(state.data.test_mode))) {
-                    return Err(RefundError::CyclesBalanceTooLow);
-                }
-                utils::canister::deposit_cycles(canister_id, top_up).await?;
-                mutate_state(|state| state.data.cycles_topped_up_for_refunds += top_up);
-            }
-            install_refunder(canister_id, wasm.clone(), cycles_dispenser_canister_id).await?;
-        }
-        // A previous attempt installed the refunder but was interrupted before uninstalling it.
-        // It may already have sent the cycles, leaving too few to be worth a fresh attempt, so
-        // the balance isn't checked here: `refund` simply replies 0 and the uninstall completes.
-        Some(hash) if hash == wasm.hash() => {}
-        Some(_) => return Err(RefundError::CanisterHasCode),
-    }
-
-    // The refunder can only be called while the canister is running, and a deleted group's or
-    // community's canister is stopped before it is uninstalled
+    // The refunder can only be called while the canister is running. An empty canister is left
+    // running anyway, even with too few cycles to be worth refunding, so that callers are told it
+    // has no code rather than that it's stopped. A deleted group's or community's canister is still
+    // stopped if uninstalling or starting it failed when it was deleted.
     if status.status != CanisterStatusType::Running {
         utils::canister::start(canister_id).await?;
+    }
+
+    // If the refunder is installed, a previous attempt was interrupted before uninstalling it. It
+    // may already have sent the cycles, leaving too few to be worth a fresh attempt, so the balance
+    // isn't checked: `refund` simply replies 0 and the uninstall completes.
+    if module_hash.is_none() {
+        let balance = status.cycles();
+        if balance < MIN_CYCLES_TO_REFUND {
+            return Err(RefundError::TooFewCycles(balance));
+        }
+
+        // The refunder can only send the canister's liquid balance, which excludes the cycles held
+        // back by its freezing threshold, so set the threshold to 0 to refund those too
+        if status.settings.freezing_threshold != 0u32 {
+            utils::canister::set_freezing_threshold(canister_id, 0).await?;
+        }
+
+        if balance < CYCLES_REQUIRED_FOR_INSTALL {
+            let top_up = CYCLES_REQUIRED_FOR_INSTALL - balance;
+            if !read_state(|state| can_spend_cycles(top_up, min_cycles_balance(state.data.test_mode))) {
+                return Err(RefundError::CyclesBalanceTooLow);
+            }
+            utils::canister::deposit_cycles(canister_id, top_up).await?;
+            mutate_state(|state| state.data.cycles_topped_up_for_refunds += top_up);
+        }
+        install_refunder(canister_id, wasm.clone(), cycles_dispenser_canister_id).await?;
     }
 
     let cycles: u64 = canister_client::make_c2c_call(
@@ -310,6 +287,20 @@ async fn refund_cycles(canister_id: CanisterId, delete_canister: bool) -> Result
     utils::canister::uninstall(canister_id).await?;
 
     Ok(cycles.into())
+}
+
+// Checked when the canister is processed rather than when it's queued, since it may have become live
+// in between
+fn check_can_refund(canister_id: CanisterId, state: &RuntimeState) -> Result<(), RefundError> {
+    if state.data.canister_pool.contains(&canister_id) {
+        // A pool canister may yet become a live canister, so it must be left as it is, in
+        // particular without its freezing threshold having been set to 0 (see above)
+        Err(RefundError::InCanisterPool)
+    } else if state.child_canister_type(canister_id).is_some() {
+        Err(RefundError::LiveCanister)
+    } else {
+        Ok(())
+    }
 }
 
 // `Install` mode fails if the canister has code, so a live canister can never be overwritten
@@ -331,4 +322,37 @@ async fn install_refunder(
     })
     .await
     .map(|_| ())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tests::setup_runtime_state;
+    use candid::Principal;
+
+    #[test]
+    fn only_canisters_which_are_neither_live_nor_in_the_pool_are_refunded() {
+        let mut state = setup_runtime_state();
+        let group_id = Principal::from_slice(&[10]);
+        let community_id = Principal::from_slice(&[11]);
+        let pool_canister_id = Principal::from_slice(&[12]);
+        state.data.local_groups.add(group_id.into(), BuildVersion::default());
+        state.data.local_communities.add(community_id.into(), BuildVersion::default());
+        state.data.canister_pool.push(pool_canister_id);
+
+        assert!(matches!(check_can_refund(group_id, &state), Err(RefundError::LiveCanister)));
+        assert!(matches!(
+            check_can_refund(community_id, &state),
+            Err(RefundError::LiveCanister)
+        ));
+        assert!(matches!(
+            check_can_refund(pool_canister_id, &state),
+            Err(RefundError::InCanisterPool)
+        ));
+        assert!(check_can_refund(Principal::from_slice(&[13]), &state).is_ok());
+
+        // Once the group has been deleted, its canister's cycles can be refunded
+        state.data.local_groups.delete(&group_id.into());
+        assert!(check_can_refund(group_id, &state).is_ok());
+    }
 }

@@ -1,11 +1,11 @@
 use crate::model::nervous_systems::ProposalsToUpdate;
 use crate::{RuntimeState, mutate_state, read_state};
-use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{CanisterId, ChannelId, ChatId, CommunityId, MultiUserChat, ProposalUpdate};
+use types::{C2CError, CanisterId, ChannelId, ChatId, CommunityId, MultiUserChat, ProposalUpdate};
+use utils::canister::is_target_canister_uninstalled_or_deleted;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -55,7 +55,7 @@ async fn update_group_proposals(governance_canister_id: CanisterId, group_id: Ch
 
     let response = group_canister_c2c_client::c2c_update_proposals(group_id.into(), &update_proposals_args).await;
 
-    mark_proposals_updated(governance_canister_id, proposals, response.err().map(|e| e.reject_code()));
+    mark_proposals_updated(governance_canister_id, proposals, response.err());
 }
 
 async fn update_channel_proposals(
@@ -71,19 +71,20 @@ async fn update_channel_proposals(
 
     let response = community_canister_c2c_client::c2c_update_proposals(community_id.into(), &update_proposals_args).await;
 
-    mark_proposals_updated(governance_canister_id, proposals, response.err().map(|e| e.reject_code()));
+    mark_proposals_updated(governance_canister_id, proposals, response.err());
 }
 
-fn mark_proposals_updated(governance_canister_id: CanisterId, proposals: Vec<ProposalUpdate>, error_code: Option<RejectCode>) {
+fn mark_proposals_updated(governance_canister_id: CanisterId, proposals: Vec<ProposalUpdate>, error: Option<C2CError>) {
     mutate_state(|state| {
         let now = state.env.now();
-        if let Some(code) = error_code {
+        if let Some(error) = error {
             state
                 .data
                 .nervous_systems
                 .mark_proposals_update_failed(&governance_canister_id, proposals, now);
 
-            if code == RejectCode::DestinationInvalid {
+            // The group or community has been deleted, which leaves its canister uninstalled
+            if is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) {
                 state.data.nervous_systems.mark_disabled(&governance_canister_id);
             }
         } else {

@@ -77,24 +77,22 @@ pub fn try_metrics(env: &PocketIc, canister_id: CanisterId) -> Option<serde_json
     serde_json::from_slice(&response.body).ok()
 }
 
-// Waits for the canister of a deleted group or community to be deleted, which its LocalUserIndex
-// does once it has uninstalled the canister and refunded its cycles. The refund can be held up by
-// the IC's install_code rate limit if the canister was installed only moments ago, in which case
-// the LocalUserIndex retries after a delay, so time is advanced if it takes more than a few rounds.
-// A test which gets that far should discard its environment.
-pub fn wait_for_canister_to_be_deleted(env: &mut PocketIc, canister_id: CanisterId) {
-    for i in 0..220 {
-        if !env.canister_exists(canister_id) {
+// Ticks until the canister of a deleted group or community has been uninstalled and started again,
+// from which point callers are told it has no code. It's never deleted, so that the cycles which
+// can't be refunded from it may be recovered once the IC allows. Time isn't advanced, so this
+// doesn't wait on anything which retries after a delay, such as the refund of its cycles.
+pub fn wait_for_deleted_canister_to_be_uninstalled(env: &mut PocketIc, canister_id: CanisterId) {
+    for _ in 0..50 {
+        if env
+            .query_call(canister_id, Principal::anonymous(), "http_request", Vec::new())
+            .is_err_and(|error| error.error_code == pocket_ic::ErrorCode::CanisterWasmModuleNotFound)
+        {
+            assert!(env.canister_exists(canister_id));
             return;
         }
-        if i < 20 {
-            env.tick();
-        } else {
-            env.advance_time(Duration::from_secs(60));
-            tick_many(env, 5);
-        }
+        env.tick();
     }
-    panic!("Canister {canister_id} was not deleted");
+    panic!("Canister {canister_id} was not uninstalled");
 }
 
 pub fn set_freezing_threshold(env: &PocketIc, canister_id: CanisterId, controller: CanisterId, freezing_threshold: Nat) {

@@ -83,6 +83,16 @@ export class CanisterUnavailableError extends HttpError {
     }
 }
 
+// Whether the call failed because the canister is gone for good. A deleted group's or community's
+// canister is left uninstalled rather than deleted, but either means the same here.
+export function isCanisterGoneError(error: unknown): boolean {
+    return (
+        error instanceof DestinationInvalidError ||
+        (error instanceof CanisterUnavailableError &&
+            error.rejectErrorCode === ICErrorCode.CanisterWasmModuleNotFound)
+    );
+}
+
 // The canister has no such method, eg. because it hasn't yet been upgraded to a version which has
 // it. Retrying won't change that within the lifetime of a request.
 export class CanisterMethodNotFoundError extends HttpError {
