@@ -47,12 +47,13 @@ pub(crate) fn send_account_migrated_message(user_index: u16, wallet: Principal, 
 
 fn account_migrated_text(wallet: Principal) -> String {
     format!(
-        "Your account has been migrated to our new system, so your wallet address has changed. Your new wallet address is:
+        "We've moved your account to our new system, which gives you a new wallet address:
 
 {wallet}
 
-To vote on proposals from within OpenChat, add this address as a hotkey to each neuron you would like to vote with.
-Any tokens held by your old wallet will be transferred to your new wallet."
+Any tokens in your old wallet will be transferred to your new one automatically.
+
+To vote on proposals from within OpenChat, you'll need to add this address as a hotkey to each neuron you would like to vote with."
     )
 }
 
