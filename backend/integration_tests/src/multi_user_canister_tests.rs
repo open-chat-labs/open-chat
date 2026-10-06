@@ -1,7 +1,8 @@
 use crate::chit_tests::DAY_ZERO;
 use crate::env::{ENV, VIDEO_CALL_OPERATOR};
 use crate::utils::{
-    liquid_cycle_balance, metrics, now_millis, set_freezing_threshold, tick_many, try_metrics, wait_for_cycle_balance_above,
+    liquid_cycle_balance, metrics, next_event_store_index, now_millis, set_freezing_threshold, tick_many, try_metrics,
+    wait_for_cycle_balance_above, wait_for_event_store_events,
 };
 use crate::{CanisterIds, TestEnv, client, wasms};
 use candid::Principal;
@@ -1500,6 +1501,7 @@ fn message_events_are_pushed_to_the_event_store_as_by_user_canisters() {
 
     // Past when the welcome messages were sent, so that they aren't counted as the message sent below
     env.advance_time(Duration::from_millis(1000));
+    let since = next_event_store_index(env, *controller, canister_ids.event_store);
     let message_id = random_from_u128();
     let sent = now_millis(env);
     send_text_message(env, a_principal, canister_id, b, "hello", message_id);
@@ -1519,53 +1521,17 @@ fn message_events_are_pushed_to_the_event_store_as_by_user_canisters() {
         true,
     );
 
-    // The events are batched by this canister and then by the LocalUserIndex before reaching the
-    // event store
-    for _ in 0..4 {
-        env.advance_time(Duration::from_millis(60_000));
-        tick_many(env, 3);
-    }
-
     // Each is pushed once, by the user who acted, even though both users' copies of the chat are in
     // this canister
-    for (name, timestamp) in [
+    let events = [
         ("message_sent", sent),
         ("message_edited", edited),
         ("reaction_added", reacted),
-    ] {
-        assert_eq!(
-            event_store_count(env, *controller, canister_ids, name, timestamp),
-            1,
-            "{name} at {timestamp}"
-        );
+    ];
+    let counts = wait_for_event_store_events(env, *controller, canister_ids.event_store, since, &events);
+    for ((name, timestamp), count) in events.iter().zip(counts) {
+        assert_eq!(count, 1, "{name} at {timestamp}");
     }
-}
-
-// The number of events with the name and timestamp among the most recent in the event store, which
-// is shared with every other test running against the env, so events from other tests may have
-// landed after them
-fn event_store_count(
-    env: &mut PocketIc,
-    controller: Principal,
-    canister_ids: &CanisterIds,
-    name: &str,
-    timestamp: TimestampMillis,
-) -> usize {
-    let latest_event_index = client::event_store::happy_path::events(env, controller, canister_ids.event_store, 0, 0)
-        .latest_event_index
-        .unwrap_or_default();
-    let window = 100;
-    client::event_store::happy_path::events(
-        env,
-        controller,
-        canister_ids.event_store,
-        latest_event_index.saturating_sub(window),
-        window + 1,
-    )
-    .events
-    .iter()
-    .filter(|e| e.name == name && e.timestamp == timestamp)
-    .count()
 }
 
 fn queued_local_user_index_events(env: &PocketIc, canister_id: CanisterId) -> u32 {
@@ -6183,6 +6149,7 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     // directly, and the tip goes from Alice's wallet to Bob's.
     let message_id = random_from_u128();
     send_text_message(env, bob, canister_id, alice_id, "tip me", message_id);
+    let since = next_event_store_index(env, *controller, canister_ids.event_store);
     let tipped = now_millis(env);
     let response = alice_tips(env, bob_id, message_id);
     assert!(
@@ -6322,11 +6289,14 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     assert_eq!(client::ledger::happy_path::balance_of(env, ledger, alice), alices_balance);
 
     // Alice's first tip was pushed to the event store, as a User canister's is
-    for _ in 0..4 {
-        env.advance_time(Duration::from_millis(60_000));
-        tick_many(env, 3);
-    }
-    assert_eq!(event_store_count(env, *controller, canister_ids, "message_tipped", tipped), 1);
+    let counts = wait_for_event_store_events(
+        env,
+        *controller,
+        canister_ids.event_store,
+        since,
+        &[("message_tipped", tipped)],
+    );
+    assert_eq!(counts, vec![1]);
 }
 
 #[test]

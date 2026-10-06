@@ -149,6 +149,65 @@ pub fn wait_for_direct_chat(env: &mut PocketIc, user: &User, them: UserId) {
     panic!("User {} did not receive the message from user {them}", user.user_id);
 }
 
+// The index the next event to reach the event store will have
+pub fn next_event_store_index(env: &mut PocketIc, controller: Principal, event_store: CanisterId) -> u64 {
+    client::event_store::happy_path::events(env, controller, event_store, 0, 0)
+        .latest_event_index
+        .map_or(0, |index| index + 1)
+}
+
+// Moves time on a minute at a time, since canisters batch the events they push before flushing them
+// to the event store (some via the LocalUserIndex, which batches them again), until each of the
+// events (by name and timestamp) has reached it at or after the index `since`, then returns how many
+// times each has. Time moves on by at least 4 minutes, so that a duplicate has time to arrive too.
+// Every event since `since` is searched, rather than only the latest, since the canisters left by the
+// other tests which have drawn the env push their own events as time moves on.
+pub fn wait_for_event_store_events(
+    env: &mut PocketIc,
+    controller: Principal,
+    event_store: CanisterId,
+    since: u64,
+    events: &[(&str, TimestampMillis)],
+) -> Vec<usize> {
+    let mut counts = Vec::new();
+    for minute in 1..=10 {
+        env.advance_time(Duration::from_millis(60_000));
+        tick_many(env, 3);
+        counts = event_store_counts(env, controller, event_store, since, events);
+        if minute >= 4 && counts.iter().all(|&count| count > 0) {
+            break;
+        }
+    }
+    counts
+}
+
+// How many times each of the events (by name and timestamp) is in the event store at or after the
+// index `since`
+fn event_store_counts(
+    env: &mut PocketIc,
+    controller: Principal,
+    event_store: CanisterId,
+    since: u64,
+    events: &[(&str, TimestampMillis)],
+) -> Vec<usize> {
+    let mut counts = vec![0; events.len()];
+    let mut start = since;
+    loop {
+        let page = client::event_store::happy_path::events(env, controller, event_store, start, 500).events;
+        if page.is_empty() {
+            return counts;
+        }
+        start += page.len() as u64;
+        for event in page.iter() {
+            for (count, (name, timestamp)) in counts.iter_mut().zip(events) {
+                if event.name == *name && event.timestamp == *timestamp {
+                    *count += 1;
+                }
+            }
+        }
+    }
+}
+
 pub fn metrics(env: &PocketIc, canister_id: CanisterId) -> serde_json::Value {
     let response = client::http_request(
         env,

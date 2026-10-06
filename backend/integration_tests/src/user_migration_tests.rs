@@ -2436,15 +2436,14 @@ fn online_users_knows_migrated_user_by_their_new_id() {
 }
 
 // Users reach a MultiUser canister with their direct chats, groups and communities on the heap or
-// already in stable memory, depending on the versions of the canisters involved. Going through the
-// release order (the MultiUser canister first, then the User canisters), this checks each user ends
-// up with all of them in stable memory and still working: one imported by the MultiUser canister in
-// production, whose chats are moved when it's upgraded, one exported by the User canister in
-// production after that, whose chats are moved as they're imported, and one exported by the new
-// User canister.
+// already in stable memory, depending on the version of the User canister which exports them. This
+// checks each user ends up with all of them in stable memory and still working: one exported by the
+// User canister in production, whose chats are moved as they're imported, and one exported by the
+// new User canister.
 #[test]
 fn migrated_users_chats_end_up_in_stable_memory() {
-    // Installing the prod wasms would downgrade the canisters of any other test drawing a pooled env
+    // Installing the prod wasm would downgrade the User canisters of any other test drawing a pooled
+    // env
     let mut wrapper = ENV.deref().create_new();
     let TestEnv {
         env,
@@ -2464,27 +2463,17 @@ fn migrated_users_chats_end_up_in_stable_memory() {
             module: wasms::USER_PROD.module.clone(),
         },
     );
-    client::user_index::happy_path::upgrade_multi_user_canister_wasm(
-        env,
-        *controller,
-        canister_ids.user_index,
-        CanisterWasm {
-            version: prod_version,
-            module: wasms::MULTI_USER_PROD.module.clone(),
-        },
-    );
     tick_many(env, 3);
 
     let operator = platform_operator(env, canister_ids, *controller);
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    assert_eq!(wasm_version(env, multi_user_canister), prod_version);
 
     // Each user to be migrated has a chat with each of two users who stay in User canisters, one of
     // which has disappearing messages
     let partners: Vec<_> = (0..2).map(|_| client::register_user(env, canister_ids)).collect();
-    let users: Vec<_> = (0..3).map(|_| client::register_user(env, canister_ids)).collect();
+    let users: Vec<_> = (0..2).map(|_| client::register_user(env, canister_ids)).collect();
     let mut disappearing_messages = Vec::new();
     for user in users.iter() {
         assert_eq!(wasm_version(env, user.canister()), prod_version);
@@ -2527,28 +2516,11 @@ fn migrated_users_chats_end_up_in_stable_memory() {
         assert_eq!(snapshot.communities.len(), 1);
     }
 
-    // The MultiUser canister in production imports the first user's chats onto the heap
+    // A user exported by the User canister in production has their chats moved as they're imported.
+    // Once a User canister which keeps them in stable memory is in production, this step repeats the
+    // next one, and the MultiUser canister's import of chats from the heap can be removed.
     let migrated_0 = migrate(env, canister_ids, &operator, &users[0], multi_user_canister);
-    for key_type in [KeyType::DirectChat, KeyType::GroupChat, KeyType::Community] {
-        assert_eq!(count_in_stable_memory(env, multi_user_canister, &migrated_0, key_type), 0);
-    }
-
-    // Once upgraded, it moves them into stable memory
-    client::user_index::happy_path::upgrade_multi_user_canister_wasm(
-        env,
-        *controller,
-        canister_ids.user_index,
-        CanisterWasm {
-            version: new_version,
-            module: wasms::MULTI_USER.module.clone(),
-        },
-    );
-    tick_until(env, |env| try_wasm_version(env, multi_user_canister) == Some(new_version));
     assert_chats_in_stable_memory(env, multi_user_canister, &migrated_0, &partners, &snapshots[0]);
-
-    // A user exported by the User canister in production has their chats moved as they're imported
-    let migrated_1 = migrate(env, canister_ids, &operator, &users[1], multi_user_canister);
-    assert_chats_in_stable_memory(env, multi_user_canister, &migrated_1, &partners, &snapshots[1]);
 
     // A user exported by the new User canister brings their chats with them in stable memory, where
     // the upgrade moved them
@@ -2561,12 +2533,12 @@ fn migrated_users_chats_end_up_in_stable_memory() {
             module: wasms::USER.module.clone(),
         },
     );
-    tick_until(env, |env| try_wasm_version(env, users[2].canister()) == Some(new_version));
-    let migrated_2 = migrate(env, canister_ids, &operator, &users[2], multi_user_canister);
-    assert_chats_in_stable_memory(env, multi_user_canister, &migrated_2, &partners, &snapshots[2]);
+    tick_until(env, |env| try_wasm_version(env, users[1].canister()) == Some(new_version));
+    let migrated_1 = migrate(env, canister_ids, &operator, &users[1], multi_user_canister);
+    assert_chats_in_stable_memory(env, multi_user_canister, &migrated_1, &partners, &snapshots[1]);
 
     // Every user's chats still work: messages are sent and received, and disappear when they expire
-    let migrated = [migrated_0, migrated_1, migrated_2];
+    let migrated = [migrated_0, migrated_1];
     let latest_message =
         |env: &PocketIc, user: &User, them: &User| snapshot(env, user, std::slice::from_ref(them)).direct_chats[0].2.clone();
     for user in migrated.iter() {
@@ -2608,7 +2580,7 @@ fn migrated_users_chats_end_up_in_stable_memory() {
         assert!(after.groups.is_empty() && after.communities.is_empty());
     }
 
-    // Releasing the prod wasms would break later tests which draw this env
+    // Releasing the prod wasm would break later tests which draw this env
     wrapper.discard();
 }
 
