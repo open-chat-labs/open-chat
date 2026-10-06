@@ -158,10 +158,18 @@ impl User {
     // The canisters of the groups and communities the user is in
     pub fn group_and_community_canisters(&self) -> Vec<CanisterId> {
         self.group_chats
-            .iter()
-            .map(|g| CanisterId::from(g.chat_id))
-            .chain(self.communities.iter().map(|c| CanisterId::from(c.community_id)))
+            .ids()
+            .map(CanisterId::from)
+            .chain(self.communities.ids().map(CanisterId::from))
             .collect()
+    }
+
+    // Moves every direct chat, group and community still on the heap into stable memory, returning
+    // how many were moved
+    pub fn migrate_to_stable_memory(&mut self) -> usize {
+        self.direct_chats.migrate_to_stable_memory()
+            + self.group_chats.migrate_to_stable_memory()
+            + self.communities.migrate_to_stable_memory()
     }
 
     pub fn new(principal: Principal, username: String, referred_by: Option<UserId>, now: TimestampMillis) -> User {
