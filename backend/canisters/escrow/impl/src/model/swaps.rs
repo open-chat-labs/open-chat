@@ -2,8 +2,7 @@ use crate::SwapMetrics;
 use candid::Principal;
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
-use std::collections::btree_map::Entry;
+use std::collections::{BTreeMap, BTreeSet};
 use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, icrc1::CompletedCryptoTransaction};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -24,10 +23,6 @@ impl Swaps {
 
     pub fn get_mut(&mut self, id: u32) -> Option<&mut Swap> {
         self.map.get_mut(&id)
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Swap> {
-        self.map.values_mut()
     }
 
     pub fn metrics(&self, now: TimestampMillis) -> SwapMetrics {
@@ -74,12 +69,12 @@ pub struct Swap {
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
     pub errors: Vec<String>,
-    // The number of locks held on each depositor's deposit. A deposit is locked while a notification
-    // checks its balance, and while it's refunded for being too low. Nothing else takes funds out of a
-    // deposit which may yet be recorded, so its balance, checked under the lock, is exactly what's been
-    // deposited.
+    // The depositors whose deposit is locked. A deposit is locked while a notification checks its
+    // balance, and if the balance is too low, until the deposit's refund is made. So no two checks of a
+    // deposit overlap, and none overlaps its refund, so a deposit can't be topped up and recorded before
+    // its refund drains it.
     #[serde(default)]
-    pub deposit_locks: BTreeMap<Principal, u32>,
+    pub locked_deposits: BTreeSet<Principal>,
 }
 
 impl Swap {
@@ -109,7 +104,7 @@ impl Swap {
             additional_admins: args.additional_admins,
             canister_to_notify: args.canister_to_notify,
             errors: Vec::new(),
-            deposit_locks: BTreeMap::new(),
+            locked_deposits: BTreeSet::new(),
         }
     }
 
@@ -131,32 +126,6 @@ impl Swap {
             .chain(&self.token1_transfer_out)
             .chain(&self.refunds)
             .any(|transfer| transfer.ledger == ledger && transfer.block_index == block_index)
-    }
-
-    // Locks the depositor's deposit, unless it's locked already. Returns whether it was locked.
-    pub fn try_lock_deposit(&mut self, depositor: Principal) -> bool {
-        match self.deposit_locks.entry(depositor) {
-            Entry::Occupied(_) => false,
-            Entry::Vacant(locks) => {
-                locks.insert(1);
-                true
-            }
-        }
-    }
-
-    // Takes a further lock on the depositor's deposit, whether or not it's locked already
-    pub fn lock_deposit(&mut self, depositor: Principal) {
-        *self.deposit_locks.entry(depositor).or_default() += 1;
-    }
-
-    pub fn unlock_deposit(&mut self, depositor: Principal) {
-        if let Entry::Occupied(mut locks) = self.deposit_locks.entry(depositor) {
-            if *locks.get() > 1 {
-                *locks.get_mut() -= 1;
-            } else {
-                locks.remove();
-            }
-        }
     }
 
     pub fn status(&self, now: TimestampMillis) -> SwapStatus {
@@ -221,8 +190,9 @@ mod tests {
         }
     }
 
-    fn swap() -> Swap {
-        Swap::new(
+    #[test]
+    fn payment_is_recorded_only_for_its_ledger_and_block() {
+        let mut swap = Swap::new(
             0,
             Principal::from_slice(&[9]),
             escrow_canister::create_swap::Args {
@@ -239,12 +209,7 @@ mod tests {
                 is_public: false,
             },
             0,
-        )
-    }
-
-    #[test]
-    fn payment_is_recorded_only_for_its_ledger_and_block() {
-        let mut swap = swap();
+        );
         swap.token0_transfer_out = Some(transfer(1, 5));
         swap.token1_transfer_out = Some(transfer(2, 6));
         swap.refunds.push(transfer(1, 7));
@@ -255,22 +220,5 @@ mod tests {
         // Block indexes are per ledger
         assert!(!swap.is_payment_recorded(CanisterId::from_slice(&[2]), 5));
         assert!(!swap.is_payment_recorded(CanisterId::from_slice(&[1]), 8));
-    }
-
-    #[test]
-    fn deposit_is_locked_until_every_lock_on_it_is_released() {
-        let mut swap = swap();
-        let depositor = Principal::from_slice(&[3]);
-
-        assert!(swap.try_lock_deposit(depositor));
-        assert!(!swap.try_lock_deposit(depositor));
-        // Other deposits are locked separately
-        assert!(swap.try_lock_deposit(Principal::from_slice(&[4])));
-
-        swap.lock_deposit(depositor);
-        swap.unlock_deposit(depositor);
-        assert!(!swap.try_lock_deposit(depositor));
-        swap.unlock_deposit(depositor);
-        assert!(swap.try_lock_deposit(depositor));
     }
 }

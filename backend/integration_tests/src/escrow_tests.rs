@@ -7,7 +7,6 @@ use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, HOUR_IN_MS, ICP_TRANSFER_FEE, MINU
 use escrow_canister::deposit_subaccount;
 use escrow_canister::notify_deposit::{BalanceTooLowResult, SuccessResult};
 use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc1::transfer::TransferArg;
 use pocket_ic::PocketIc;
 use pocket_ic::common::rest::RawMessageId;
 use std::ops::Deref;
@@ -932,16 +931,15 @@ fn deposit_is_locked_until_its_refund_is_made(by_offerer: bool) {
     assert_eq!(client::ledger::happy_path::balance_of(env, ledger, account(depositor)), 0);
     assert_eq!(swap_errors(env, canister_ids.escrow, swap_id), Vec::<String>::new());
     assert_eq!(
-        swap_logs(env, canister_ids.escrow, swap_id)["deposit_locks"],
-        serde_json::json!({})
+        swap_logs(env, canister_ids.escrow, swap_id)["locked_deposits"],
+        serde_json::json!([])
     );
 }
 
-// A deposit too small for its swap is topped up and notified again around when its refund is made,
-// over a range of timings. Whichever way the timing falls, the deposit isn't recorded: either it's
-// locked, as its refund is still to be made, or its balance is checked once the refund is made.
+// A deposit locked while it's refunded for being too low can still be refunded once its swap ends, as
+// it's no longer checked to be recorded
 #[test]
-fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
+fn deposit_locked_by_its_refund_is_refunded_once_its_swap_ends() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -949,86 +947,74 @@ fn deposit_topped_up_as_its_refund_is_made_is_never_recorded() {
         controller,
     } = wrapper.env();
 
+    let offerer = Principal::from_slice(&[10, 9]);
     let icp_amount = 100_000_000_000;
     let required = icp_amount + ICP_TRANSFER_FEE;
-    let mut turned_away = 0;
+    let swap_id = client::escrow::happy_path::create_swap(
+        env,
+        offerer,
+        canister_ids.escrow,
+        P2PSwapLocation::External,
+        icp_token_info(),
+        icp_amount,
+        None,
+        chat_token_info(),
+        1_000_000_000_000,
+        None,
+        now_millis(env) + DAY_IN_MS,
+    );
+    let account = Account {
+        owner: canister_ids.escrow,
+        subaccount: Some(deposit_subaccount(offerer, swap_id)),
+    };
 
-    for rounds_before_top_up in 0..6 {
-        let offerer = Principal::from_slice(&[10, 8, rounds_before_top_up]);
-        let swap_id = client::escrow::happy_path::create_swap(
-            env,
-            offerer,
-            canister_ids.escrow,
-            P2PSwapLocation::External,
-            icp_token_info(),
-            icp_amount,
-            None,
-            chat_token_info(),
-            1_000_000_000_000,
-            None,
-            now_millis(env) + DAY_IN_MS,
-        );
-        let account = Account {
-            owner: canister_ids.escrow,
-            subaccount: Some(deposit_subaccount(offerer, swap_id)),
-        };
-        let notify = |env: &mut PocketIc| {
-            await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()))
-        };
+    // 1 short, so it's refunded once the payments ahead of it are made, and locked until then
+    fill_payments_queue(env, canister_ids, *controller, Principal::from_slice(&[10, 10]), 40);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, account, required - 1);
+    let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()));
+    assert!(
+        matches!(response, escrow_canister::notify_deposit::Response::BalanceTooLow(_)),
+        "{response:?}"
+    );
 
-        // 1 short, so it's refunded, the refund being made over the next few rounds
-        client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, account, required - 1);
-        let response = notify(env);
-        assert!(
-            matches!(response, escrow_canister::notify_deposit::Response::BalanceTooLow(_)),
-            "{response:?}"
-        );
+    // Topped up, but the swap is cancelled before the refund is made
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, account, required);
+    client::escrow::happy_path::cancel_swap(env, offerer, canister_ids.escrow, swap_id);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, offerer),
+        0,
+        "The refund was made too soon for the test"
+    );
 
-        tick_many(env, rounds_before_top_up as usize);
-        let top_up = env
-            .submit_call(
-                canister_ids.icp_ledger,
-                *controller,
-                "icrc1_transfer",
-                candid::encode_one(TransferArg {
-                    from_subaccount: None,
-                    to: account,
-                    fee: None,
-                    created_at_time: None,
-                    memo: None,
-                    amount: 1u32.into(),
-                })
-                .unwrap(),
-            )
-            .unwrap();
-        env.tick();
-        let mut response = notify(env);
-        env.await_call(top_up).unwrap();
-
-        if matches!(response, escrow_canister::notify_deposit::Response::InternalError(_)) {
-            turned_away += 1;
-            tick_many(env, 10);
-            response = notify(env);
+    // Notifying the deposit refunds it, despite the lock, and once the first refund is made, the rest of
+    // the deposit is refunded by notifying it again
+    let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()));
+    assert!(
+        matches!(response, escrow_canister::notify_deposit::Response::SwapCancelled),
+        "{response:?}"
+    );
+    for _ in 0..200 {
+        if client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, offerer) > 0 {
+            break;
         }
-        // All that's left once the refund is made is the top-up
-        assert!(
-            matches!(
-                response,
-                escrow_canister::notify_deposit::Response::BalanceTooLow(BalanceTooLowResult { balance: 1, .. })
-            ),
-            "Top-up after {rounds_before_top_up} rounds: {response:?}"
-        );
-        let swap = swap_logs(env, canister_ids.escrow, swap_id);
-        assert_eq!(swap["token0_received"], false, "Top-up after {rounds_before_top_up} rounds");
-        assert_eq!(
-            swap["deposit_locks"],
-            serde_json::json!({}),
-            "Top-up after {rounds_before_top_up} rounds"
-        );
+        env.tick();
     }
+    tick_many(env, 10);
+    await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()));
+    tick_many(env, 10);
 
-    // At least one notification came while the refund was still to be made
-    assert!(turned_away > 0);
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, account),
+        0
+    );
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, offerer),
+        2 * required - 1 - 2 * ICP_TRANSFER_FEE
+    );
+    assert_eq!(
+        swap_logs(env, canister_ids.escrow, swap_id)["locked_deposits"],
+        serde_json::json!([])
+    );
 }
 
 fn create_icp_for_chat_swap(

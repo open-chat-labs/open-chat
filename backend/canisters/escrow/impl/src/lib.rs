@@ -1,5 +1,5 @@
 use crate::model::notify_status_change_queue::NotifyStatusChangeQueue;
-use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
+use crate::model::pending_payments_queue::PendingPaymentsQueue;
 use crate::model::swaps::Swaps;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
@@ -100,34 +100,6 @@ impl Data {
             test_mode,
         }
     }
-
-    // Has each refund which is queued, parked or awaiting retry hold a lock on its deposit, since those
-    // queued before deposits were locked may include refunds of deposits found too low. The locks are
-    // taken afresh, so this is safe to run more than once.
-    // TODO remove after the release containing this has been deployed, along with `Swaps::iter_mut` and
-    // `PendingPaymentsQueue::iter_mut`
-    pub fn lock_deposits_being_refunded(&mut self) {
-        fn lock(swaps: &mut Swaps, payment: &mut PendingPayment) {
-            if matches!(payment.reason, PendingPaymentReason::Refund)
-                && let Some(swap) = swaps.get_mut(payment.swap_id)
-            {
-                payment.holds_deposit_lock = true;
-                swap.lock_deposit(payment.principal);
-            }
-        }
-
-        for swap in self.swaps.iter_mut() {
-            swap.deposit_locks.clear();
-        }
-        for payment in self.pending_payments_queue.iter_mut() {
-            lock(&mut self.swaps, payment);
-        }
-        for (_, wrapper) in self.timer_jobs.iter() {
-            if let Some(TimerJob::RetryPayment(job)) = wrapper.borrow_mut().as_mut() {
-                lock(&mut self.swaps, &mut job.payment);
-            }
-        }
-    }
 }
 
 #[derive(Serialize, Debug)]
@@ -171,90 +143,4 @@ pub(crate) fn deposit_address(principal: Principal, swap_id: u32, escrow_caniste
     };
 
     account.to_string()
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::collections::VecDeque;
-    use types::{P2PSwapLocation, TokenInfo};
-
-    fn token() -> TokenInfo {
-        TokenInfo {
-            symbol: "TEST".to_string(),
-            ledger: CanisterId::from_slice(&[1]),
-            decimals: 8,
-            fee: 10,
-        }
-    }
-
-    fn refund(swap_id: u32, depositor: Principal) -> PendingPayment {
-        PendingPayment {
-            principal: depositor,
-            timestamp: 0,
-            token_info: token(),
-            amount: 100,
-            swap_id,
-            reason: PendingPaymentReason::Refund,
-            holds_deposit_lock: false,
-        }
-    }
-
-    // Refunds queued before deposits were locked lock their deposits once the canister is upgraded,
-    // however many times it's upgraded
-    #[test]
-    fn refunds_queued_or_parked_lock_their_deposits() {
-        let mut data = Data::new(Principal::anonymous(), Principal::anonymous(), true);
-        let swap_id = data.swaps.push(
-            Principal::from_slice(&[2]),
-            escrow_canister::create_swap::Args {
-                location: P2PSwapLocation::External,
-                token0: token(),
-                token0_amount: 1_000,
-                token0_principal: None,
-                token1: token(),
-                token1_amount: 1_000,
-                token1_principal: None,
-                expires_at: 1,
-                additional_admins: Vec::new(),
-                canister_to_notify: None,
-                is_public: false,
-            },
-            0,
-        );
-        let depositor = Principal::from_slice(&[3]);
-        let other_depositor = Principal::from_slice(&[4]);
-        let unrefunded_depositor = Principal::from_slice(&[5]);
-
-        // As the escrow canister in production stores its queue, with no refund holding a lock
-        #[derive(Serialize)]
-        struct QueueBeforeDepositsWereLocked {
-            pending_payments: VecDeque<PendingPayment>,
-            parked: Vec<PendingPayment>,
-        }
-        let queue = QueueBeforeDepositsWereLocked {
-            pending_payments: VecDeque::from([
-                refund(swap_id, depositor),
-                refund(swap_id, depositor),
-                PendingPayment {
-                    reason: PendingPaymentReason::Swap(other_depositor),
-                    ..refund(swap_id, unrefunded_depositor)
-                },
-            ]),
-            parked: vec![refund(swap_id, other_depositor)],
-        };
-        data.pending_payments_queue = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(queue));
-
-        for _ in 0..2 {
-            data.lock_deposits_being_refunded();
-
-            let swap = data.swaps.get(swap_id).unwrap();
-            assert_eq!(swap.deposit_locks, BTreeMap::from([(depositor, 2), (other_depositor, 1)]));
-            assert!(
-                data.pending_payments_queue
-                    .iter_mut()
-                    .all(|payment| payment.holds_deposit_lock == matches!(payment.reason, PendingPaymentReason::Refund))
-            );
-        }
-    }
 }

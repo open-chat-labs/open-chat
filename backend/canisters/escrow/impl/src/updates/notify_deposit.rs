@@ -1,5 +1,4 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
-use crate::model::swaps::Swap;
 use crate::{RuntimeState, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
@@ -48,10 +47,8 @@ async fn process_swap(
         Ok(balance) => mutate_state(|state| {
             let now = state.env.now();
             let swap = state.data.swaps.get_mut(swap_id).unwrap();
-
-            // The check is over, so the deposit is unlocked, unless it's found too low below, in which case
-            // its refund takes the lock until the refund is made
-            swap.unlock_deposit(principal);
+            // The check is over, so the deposit is unlocked, unless it's refunded for being too low below
+            swap.locked_deposits.remove(&principal);
 
             // Another call for the same deposit may have recorded it while the balance was being
             // checked, in which case it is left as it is: refunding it would take back funds the
@@ -96,7 +93,8 @@ async fn process_swap(
 
             if balance < balance_required {
                 if balance > token_info.fee {
-                    swap.lock_deposit(principal);
+                    // The deposit stays locked until it's refunded
+                    swap.locked_deposits.insert(principal);
                     state.data.pending_payments_queue.push(PendingPayment {
                         principal,
                         timestamp: state.env.now(),
@@ -146,7 +144,9 @@ async fn process_swap(
             }
         }),
         Err(error) => {
-            mutate_state(|state| state.data.swaps.get_mut(swap_id).unwrap().unlock_deposit(principal));
+            mutate_state(|state| {
+                state.data.swaps.get_mut(swap_id).unwrap().locked_deposits.remove(&principal);
+            });
             InternalError(format!("{error:?}"))
         }
     }
@@ -237,15 +237,15 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
                 complete: swap.token1_received,
             })
         } else {
-            return lock_for_check(
-                swap,
-                PrepareSuccess {
-                    principal,
-                    account,
-                    balance_required: swap.amount0 + swap.token0.fee,
-                    token_info,
-                },
-            );
+            if !swap.locked_deposits.insert(principal) {
+                return PrepareResult::Error(deposit_locked());
+            }
+            return PrepareResult::Success(PrepareSuccess {
+                principal,
+                account,
+                balance_required: swap.amount0 + swap.token0.fee,
+                token_info,
+            });
         };
         PrepareResult::ErrorCheckForRefund(PrepareError {
             principal,
@@ -286,15 +286,15 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
                 SwapAlreadyAccepted
             }
         } else if swap.restricted_to.is_none_or(|p| p == principal) {
-            return lock_for_check(
-                swap,
-                PrepareSuccess {
-                    principal,
-                    account,
-                    balance_required: swap.amount1 + token_info.fee,
-                    token_info,
-                },
-            );
+            if !swap.locked_deposits.insert(principal) {
+                return PrepareResult::Error(deposit_locked());
+            }
+            return PrepareResult::Success(PrepareSuccess {
+                principal,
+                account,
+                balance_required: swap.amount1 + token_info.fee,
+                token_info,
+            });
         } else {
             NotAuthorized
         };
@@ -308,14 +308,6 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
     }
 }
 
-// Locks the deposit for its balance to be checked. Only one notification checks a deposit at a time,
-// and not while it's being refunded for being too low, as the balance could then change mid-check.
-fn lock_for_check(swap: &mut Swap, success: PrepareSuccess) -> PrepareResult {
-    if swap.try_lock_deposit(success.principal) {
-        PrepareResult::Success(success)
-    } else {
-        PrepareResult::Error(InternalError(
-            "The deposit is already being checked or refunded. Please try again shortly.".to_string(),
-        ))
-    }
+fn deposit_locked() -> Response {
+    InternalError("The deposit is already being checked or refunded. Please try again shortly.".to_string())
 }

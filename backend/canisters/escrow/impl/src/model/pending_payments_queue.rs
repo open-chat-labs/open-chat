@@ -60,11 +60,6 @@ impl PendingPaymentsQueue {
     pub fn parked_len(&self) -> usize {
         self.parked.len()
     }
-
-    // The payments queued or parked
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut PendingPayment> {
-        self.pending_payments.iter_mut().chain(&mut self.parked)
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -76,8 +71,8 @@ pub struct PendingPayment {
     pub amount: u128,
     pub swap_id: u32,
     pub reason: PendingPaymentReason,
-    // Whether this is the refund of a deposit which was found too low, which holds a lock on the deposit
-    // until it's made or dropped, so the deposit can't be topped up and recorded before then
+    // Whether this is the refund of a deposit which was too low, which keeps the deposit locked until
+    // the refund is made or dropped
     #[serde(default)]
     pub holds_deposit_lock: bool,
 }
