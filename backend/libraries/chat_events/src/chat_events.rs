@@ -927,16 +927,18 @@ impl ChatEvents {
 
         p.change_voter_ids(args.user_id, migrated_user_ids);
         let result = p.register_vote(args.user_id, args.option_index, args.operation);
+        // The creator under their latest id, in case they have been migrated since creating the poll
+        let poll_creator = migrated_user_ids.latest(message.sender);
 
         match result {
             RegisterVoteResult::Success(existing_vote_removed) => Ok(RegisterPollVoteSuccess {
-                poll_creator: message.sender,
+                poll_creator,
                 votes: p.votes(Some(args.user_id)),
                 existing_vote_removed,
                 updated: true,
             }),
             RegisterVoteResult::SuccessNoChange => Ok(RegisterPollVoteSuccess {
-                poll_creator: message.sender,
+                poll_creator,
                 votes: p.votes(Some(args.user_id)),
                 existing_vote_removed: false,
                 updated: false,
@@ -983,7 +985,12 @@ impl ChatEvents {
         }
     }
 
-    pub fn final_payments(&mut self, message_index: MessageIndex, now_nanos: TimestampNanos) -> Vec<PendingCryptoTransaction> {
+    pub fn final_payments(
+        &mut self,
+        message_index: MessageIndex,
+        migrated_user_ids: &MigratedUserIds,
+        now_nanos: TimestampNanos,
+    ) -> Vec<PendingCryptoTransaction> {
         self.update_message(
             None,
             message_index.into(),
@@ -991,7 +998,7 @@ impl ChatEvents {
             now_nanos / 1_000_000,
             false,
             ChatEventType::MessageOther,
-            |message, _| Self::final_payments_inner(message, now_nanos),
+            |message, _| Self::final_payments_inner(message, migrated_user_ids, now_nanos),
         )
         .ok()
         .map(|r| r.value)
@@ -1000,13 +1007,14 @@ impl ChatEvents {
 
     fn final_payments_inner(
         message: &mut MessageInternal,
+        migrated_user_ids: &MigratedUserIds,
         now_nanos: TimestampNanos,
     ) -> Result<Vec<PendingCryptoTransaction>, UpdateEventError> {
         let MessageContentInternal::Prize(p) = &mut message.content else {
             return Err(UpdateEventError::NotFound);
         };
 
-        Ok(p.final_payments(message.sender, now_nanos))
+        Ok(p.final_payments(message.sender, migrated_user_ids, now_nanos))
     }
 
     pub fn record_proposal_vote(
@@ -2412,14 +2420,14 @@ impl ChatEvents {
         self.expiring_events.next_event_expiry()
     }
 
-    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
+    pub fn remove_expired_events(&mut self, migrated_user_ids: &MigratedUserIds, now: TimestampMillis) -> RemoveEventsResult {
         let mut results = RemoveEventsResult::default();
 
         while let Some(event_index) = self
             .expiring_events
             .take_next_expired_event(self.main.stable_memory_prefix(), now)
         {
-            if let Some(result) = self.remove_event(event_index, now) {
+            if let Some(result) = self.remove_event(event_index, migrated_user_ids, now) {
                 results.merge_result(event_index, result);
             }
         }
@@ -2439,6 +2447,7 @@ impl ChatEvents {
         before: TimestampMillis,
         now: TimestampMillis,
         batch_size: u16,
+        migrated_user_ids: &MigratedUserIds,
     ) -> RemoveEventsResult {
         let mut batch_result = RemoveEventsResult::default();
 
@@ -2455,7 +2464,7 @@ impl ChatEvents {
             .collect();
 
         for event in batch_to_remove {
-            if let Some(result) = self.remove_event(event.index, now) {
+            if let Some(result) = self.remove_event(event.index, migrated_user_ids, now) {
                 batch_result.merge_result(event.index, result);
             }
         }
@@ -2463,7 +2472,12 @@ impl ChatEvents {
         batch_result
     }
 
-    pub fn remove_event(&mut self, event_index: EventIndex, now: TimestampMillis) -> Option<RemoveEventResult> {
+    pub fn remove_event(
+        &mut self,
+        event_index: EventIndex,
+        migrated_user_ids: &MigratedUserIds,
+        now: TimestampMillis,
+    ) -> Option<RemoveEventResult> {
         let event = self.main.remove(event_index)?;
 
         let mut result = RemoveEventResult::default();
@@ -2486,7 +2500,7 @@ impl ChatEvents {
             }
             result.files = m.content.blob_references();
             if let MessageContentInternal::Prize(mut p) = m.content {
-                result.final_prize_payments = p.final_payments(m.sender, now * 1_000_000);
+                result.final_prize_payments = p.final_payments(m.sender, migrated_user_ids, now * 1_000_000);
             }
         }
 

@@ -729,6 +729,7 @@ mod tests {
     use stable_memory_map::{ChatEventKeyPrefix, KeyPrefix};
     use std::mem::size_of;
     use types::{ChannelId, Chat, EventContext, Milliseconds, MultiUserChat};
+    use utils::migrated_user_ids::MigratedUserIds;
 
     #[test]
     fn enum_size() {
@@ -740,7 +741,7 @@ mod tests {
     fn delete_partial_history() {
         let mut events = setup_events(None);
 
-        let result = events.remove_old_events_batch(6, 102, 200);
+        let result = events.remove_old_events_batch(6, 102, 200, &MigratedUserIds::default());
 
         assert_eq!(result.events.len(), 4);
 
@@ -757,7 +758,7 @@ mod tests {
     fn delete_all_history_but_one() {
         let mut events = setup_events(None);
 
-        let result = events.remove_old_events_batch(101, 102, 200);
+        let result = events.remove_old_events_batch(101, 102, 200, &MigratedUserIds::default());
 
         assert_eq!(result.events.len(), 99);
 
@@ -1077,7 +1078,7 @@ mod tests {
         let expected = expected_message_id_event_indexes(&events);
         let (removed, remaining) = expected.split_at(10);
         for (_, event_index) in removed {
-            events.remove_event(*event_index, 1000).unwrap();
+            events.remove_event(*event_index, &MigratedUserIds::default(), 1000).unwrap();
         }
 
         let channel = Chat::Channel(Principal::from_slice(&[3]).into(), ChannelId::from(1u32));
@@ -1115,7 +1116,7 @@ mod tests {
         assert_message_index_lookups(&events, &expected);
 
         // The messages pushed at 2..102 expire at 1002..1102
-        let removed = events.remove_expired_events(1051).events;
+        let removed = events.remove_expired_events(&MigratedUserIds::default(), 1051).events;
         assert_eq!(removed.len(), 50);
         assert_eq!(
             events
@@ -1174,9 +1175,12 @@ mod tests {
 
         // The messages were pushed at 2..102, so expire at 1002..1102
         assert_eq!(events.next_event_expiry(), Some(1002));
-        assert_eq!(events.remove_expired_events(1001).events.len(), 0);
+        assert_eq!(
+            events.remove_expired_events(&MigratedUserIds::default(), 1001).events.len(),
+            0
+        );
 
-        let result = events.remove_expired_events(1051);
+        let result = events.remove_expired_events(&MigratedUserIds::default(), 1051);
         assert_eq!(result.events.len(), 50);
         assert_eq!(events.next_event_expiry(), Some(1052));
 
@@ -1186,7 +1190,10 @@ mod tests {
             assert_eq!(event.is_some(), i > 50);
         }
 
-        assert_eq!(events.remove_expired_events(2000).events.len(), 50);
+        assert_eq!(
+            events.remove_expired_events(&MigratedUserIds::default(), 2000).events.len(),
+            50
+        );
         assert_eq!(events.next_event_expiry(), None);
     }
 
@@ -1204,7 +1211,13 @@ mod tests {
         assert_eq!(imported.next_event_expiry(), Some(1002));
 
         // Every message expires, but the `DirectChatCreated` event doesn't
-        assert_eq!(imported.remove_expired_events(u64::MAX).events.len(), 100);
+        assert_eq!(
+            imported
+                .remove_expired_events(&MigratedUserIds::default(), u64::MAX)
+                .events
+                .len(),
+            100
+        );
         assert_eq!(imported.next_event_expiry(), None);
         let events_list = imported.main_events_list();
         for i in 0..=100u32 {
@@ -1324,7 +1337,7 @@ mod tests {
         assert!(!thread_prefixes.is_empty());
         assert!(thread_prefixes.iter().all(|p| all_prefixes.contains(p)));
 
-        let result = events.remove_old_events_batch(1000, 1000, 200);
+        let result = events.remove_old_events_batch(1000, 1000, 200, &MigratedUserIds::default());
         assert!(result.threads.iter().any(|t| t.root_message_index == root_message_index));
         assert!(events.thread_keys().next().is_none());
 

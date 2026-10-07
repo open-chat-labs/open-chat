@@ -2004,8 +2004,8 @@ impl GroupChatCore {
             .set_video_call_presence(user_id, message_id, presence, min_visible_event_index, now)
     }
 
-    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
-        let result = self.events.remove_expired_events(now);
+    pub fn remove_expired_events(&mut self, migrated_user_ids: &MigratedUserIds, now: TimestampMillis) -> RemoveEventsResult {
+        let result = self.events.remove_expired_events(migrated_user_ids, now);
 
         self.unfollow_removed_threads(&result.threads);
 
@@ -2017,8 +2017,11 @@ impl GroupChatCore {
         before: TimestampMillis,
         now: TimestampMillis,
         batch_size: u16,
+        migrated_user_ids: &MigratedUserIds,
     ) -> RemoveEventsResult {
-        let result = self.events.remove_old_events_batch(before, now, batch_size);
+        let result = self
+            .events
+            .remove_old_events_batch(before, now, batch_size, migrated_user_ids);
 
         self.unfollow_removed_threads(&result.threads);
 

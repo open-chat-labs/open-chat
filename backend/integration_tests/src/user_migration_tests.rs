@@ -2787,6 +2787,278 @@ fn count_in_stable_memory(env: &PocketIc, multi_user_canister: CanisterId, user:
         .count()
 }
 
+// A migrated user's messages sent before their migration keep the id they were sent under, while
+// the group or community holds the user as a member under their new id. Reactions, quote replies
+// and poll votes on those messages still reach the user, in their new canister.
+#[test_case(false; "group")]
+#[test_case(true; "channel")]
+fn activity_on_messages_sent_before_their_sender_was_migrated_reaches_them(in_community: bool) {
+    use std::collections::HashMap;
+    use types::{GroupReplyContext, MessageId, PollConfig, PollContent, PollVotes, TextContent, TotalVotes};
+    use user_canister::MessageActivity;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    // A Diamond member, so that they can create a public group or community for the others to join
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let sender = client::register_user(env, canister_ids);
+    let other = client::register_user(env, canister_ids);
+
+    let message_id = random_from_u128();
+    let poll_message_id = random_from_u128();
+    let poll = MessageContentInitial::Poll(PollContent {
+        config: PollConfig {
+            text: None,
+            options: vec!["a".to_string(), "b".to_string()],
+            end_date: None,
+            anonymous: false,
+            show_votes_before_end_date: true,
+            allow_multiple_votes_per_user: false,
+            allow_user_to_change_vote: false,
+        },
+        votes: PollVotes {
+            total: TotalVotes::Visible(HashMap::new()),
+            user: Vec::new(),
+        },
+        ended: false,
+    });
+    let (chat, event_index, poll_message_index) = if in_community {
+        let community_id =
+            client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
+        let channel_id =
+            client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+        for user in [&sender, &other] {
+            client::community::happy_path::join_community(env, user.principal, community_id);
+            client::community::happy_path::join_channel(env, user.principal, community_id, channel_id);
+        }
+        let result = client::community::happy_path::send_text_message(
+            env,
+            &sender,
+            community_id,
+            channel_id,
+            None,
+            random_string(),
+            Some(message_id),
+        );
+        let poll = client::community::happy_path::send_message(
+            env,
+            &sender,
+            community_id,
+            channel_id,
+            None,
+            poll,
+            None,
+            Some(poll_message_id),
+        );
+        (
+            Chat::Channel(community_id, channel_id),
+            result.event_index,
+            poll.message_index,
+        )
+    } else {
+        let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+        for user in [&sender, &other] {
+            client::group::happy_path::join_group(env, user.principal, group_id);
+        }
+        let result =
+            client::group::happy_path::send_text_message(env, &sender, group_id, None, random_string(), Some(message_id));
+        let poll = client::group::happy_path::send_message(env, &sender, group_id, None, poll, None, Some(poll_message_id));
+        (Chat::Group(group_id), result.event_index, poll.message_index)
+    };
+
+    let migrated = migrate(env, canister_ids, &operator, &sender, multi_user_canister);
+    let new_user_id = migrated.user_id;
+    tick_until(env, |env| is_member(env, &owner, chat, new_user_id));
+
+    let reply_message_id = random_from_u128();
+    let reply = MessageContentInitial::Text(TextContent { text: random_string() });
+    let replies_to = Some(GroupReplyContext { event_index });
+    match chat {
+        Chat::Group(group_id) => {
+            client::group::happy_path::add_reaction(env, &other, group_id, "👍", message_id);
+            client::group::happy_path::send_message(env, &other, group_id, None, reply, replies_to, Some(reply_message_id));
+            client::group::happy_path::register_poll_vote(env, &other, group_id, poll_message_index, 0);
+        }
+        Chat::Channel(community_id, channel_id) => {
+            client::community::happy_path::add_reaction(env, &other, community_id, channel_id, "👍", message_id);
+            client::community::happy_path::send_message(
+                env,
+                &other,
+                community_id,
+                channel_id,
+                None,
+                reply,
+                replies_to,
+                Some(reply_message_id),
+            );
+            client::community::happy_path::register_poll_vote(env, &other, community_id, channel_id, poll_message_index, 0);
+        }
+        Chat::Direct(_) => unreachable!(),
+    }
+
+    // The quote reply's activity is on the reply, which quotes the message
+    tick_until(env, |env| {
+        let events = client::user::happy_path::message_activity_feed(env, &migrated, 0).events;
+        let has =
+            |id: MessageId, activity: MessageActivity| events.iter().any(|e| e.message_id == id && e.activity == activity);
+        has(message_id, MessageActivity::Reaction)
+            && has(reply_message_id, MessageActivity::QuoteReply)
+            && has(poll_message_id, MessageActivity::PollVote)
+    });
+}
+
+// A prize sent before its sender was migrated is refunded, whichever way it ends, to the wallet
+// the sender now holds their funds in, their principal's account, rather than to their old
+// canister's account
+#[test_case(1; "prize_expires")]
+#[test_case(2; "message_deleted")]
+#[test_case(3; "message_disappears")]
+fn unclaimed_prize_sent_before_its_sender_was_migrated_is_refunded_to_their_new_wallet(case: u32) {
+    use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE, PRIZE_FEE_PERCENT};
+    use types::{CryptoTransaction, MultiUserChat, PendingCryptoTransaction, PrizeContentInitial, icrc1};
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    // A Diamond member, so that they can create a public group for the claimant to join
+    let sender = client::register_diamond_user(env, canister_ids, *controller);
+    let claimant = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &sender, &random_string(), true, true);
+    if case == 3 {
+        client::group::happy_path::update_group(
+            env,
+            sender.principal,
+            group_id,
+            &group_canister::update_group_v2::Args {
+                events_ttl: OptionUpdate::SetToSome(5 * MINUTE_IN_MS),
+                ..Default::default()
+            },
+        );
+    }
+    client::group::happy_path::join_group(env, claimant.principal, group_id);
+
+    let ledger = canister_ids.icp_ledger;
+    client::ledger::happy_path::transfer(env, *controller, ledger, sender.user_id, 1_000_000_000);
+    let prizes = vec![100000, 200000];
+    let fee = ICP_TRANSFER_FEE;
+    let total = prizes.iter().sum::<u128>();
+    let amount = total + (fee * prizes.len() as u128) + (total * PRIZE_FEE_PERCENT as u128 / 100);
+    let message_id = random_from_u128();
+    let response = client::user::send_message_with_transfer_to_group(
+        env,
+        sender.principal,
+        sender.canister(),
+        &user_canister::send_message_with_transfer_to_group::Args {
+            group_id,
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::Prize(PrizeContentInitial {
+                prizes_v2: prizes,
+                transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+                    ledger,
+                    token_symbol: ICP_SYMBOL.to_string(),
+                    amount,
+                    to: CanisterId::from(group_id).into(),
+                    fee,
+                    memo: None,
+                    created: now_millis(env) * 1_000_000,
+                })),
+                end_date: now_millis(env) + HOUR_IN_MS,
+                caption: None,
+                diamond_only: false,
+                lifetime_diamond_only: false,
+                unique_person_only: false,
+                streak_only: 0,
+                requires_captcha: false,
+                min_chit_earned: 0,
+            }),
+            sender_name: sender.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            pin: None,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(
+            response,
+            user_canister::send_message_with_transfer_to_group::Response::Success(_)
+        ),
+        "{response:?}"
+    );
+    client::local_user_index::happy_path::claim_prize(
+        env,
+        claimant.principal,
+        canister_ids.local_user_index(env, group_id),
+        MultiUserChat::Group(group_id),
+        message_id,
+        None,
+    );
+
+    let migrated = migrate(env, canister_ids, &operator, &sender, multi_user_canister);
+    tick_until(env, |env| is_member(env, &claimant, Chat::Group(group_id), migrated.user_id));
+    let old_wallet_balance = client::ledger::happy_path::balance_of(env, ledger, sender.user_id);
+    let new_wallet_balance = client::ledger::happy_path::balance_of(env, ledger, sender.principal);
+
+    let ends_in = match case {
+        1 => HOUR_IN_MS,
+        2 => {
+            client::group::happy_path::delete_messages(env, migrated.principal, group_id, None, vec![message_id]);
+            5 * MINUTE_IN_MS
+        }
+        3 => 5 * MINUTE_IN_MS,
+        _ => unreachable!(),
+    };
+    env.advance_time(Duration::from_millis(ends_in));
+
+    // The unclaimed prize of 100000, its share of the fee and its transfer fee, less the refund's fee
+    tick_until(env, |env| {
+        client::ledger::happy_path::balance_of(env, ledger, sender.principal) == new_wallet_balance + 105000
+    });
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, ledger, sender.user_id),
+        old_wallet_balance
+    );
+}
+
+// Whether the chat holds the user as a member, as seen by `viewer`
+fn is_member(env: &PocketIc, viewer: &User, chat: Chat, user_id: UserId) -> bool {
+    match chat {
+        Chat::Group(group_id) => {
+            let response = client::group::happy_path::selected_initial(env, viewer.principal, group_id);
+            response.participants.iter().any(|m| m.user_id == user_id) || response.basic_members.contains(&user_id)
+        }
+        Chat::Channel(community_id, channel_id) => {
+            let response = client::community::happy_path::selected_channel_initial(env, viewer, community_id, channel_id);
+            response.members.iter().any(|m| m.user_id == user_id) || response.basic_members.contains(&user_id)
+        }
+        Chat::Direct(_) => unreachable!(),
+    }
+}
+
 #[test]
 fn migrated_user_deletes_the_files_of_a_message_they_sent_before_being_migrated() {
     let mut wrapper = ENV.deref().get();
