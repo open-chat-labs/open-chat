@@ -412,22 +412,28 @@ pub fn tip_message(
 }
 
 // Applies the sender's change to the status of a P2P swap between them, adding the swap's
-// completion to the recipient's message activity feed
+// completion to the recipient's message activity feed, and recording in the recipient's own record
+// of the swap, if they have one, that it has ended
 pub fn p2p_swap_change_status(user: &mut User, sender: UserId, args: P2PSwapStatusChange, now: TimestampMillis) {
     let Some(mut chat) = user.direct_chats.get_mut(&sender.into()) else {
         return;
     };
     let completed = matches!(args.status, P2PSwapStatus::Completed(_));
+    let ended = args.status.has_ended();
+    let swap_id = chat.get_p2p_swap(None, args.message_id).map(|swap| swap.swap_id);
 
-    if chat.set_p2p_swap_status(None, args.message_id, args.status, now).is_ok()
-        && completed
+    if chat.set_p2p_swap_status(None, args.message_id, args.status, now).is_err() {
+        return;
+    }
+
+    let activity = if completed
         && let Some(message_event) = chat
             .events()
             .main_events_reader()
             .message_event_internal(args.message_id.into())
         && let Ok(thread_root_message_index) = chat.thread_root_message_index(args.thread_root_message_id)
     {
-        let activity = MessageActivityEvent {
+        Some(MessageActivityEvent {
             chat: Chat::Direct(sender.into()),
             thread_root_message_index,
             message_index: message_event.event.message_index,
@@ -436,8 +442,16 @@ pub fn p2p_swap_change_status(user: &mut User, sender: UserId, args: P2PSwapStat
             activity: MessageActivity::P2PSwapAccepted,
             timestamp: now,
             user_id: Some(sender),
-        };
-        drop(chat);
+        })
+    } else {
+        None
+    };
+    drop(chat);
+
+    if ended && let Some(swap_id) = swap_id {
+        user.p2p_swaps.mark_ended(swap_id, now);
+    }
+    if let Some(activity) = activity {
         user.push_message_activity(activity, now);
     }
 }

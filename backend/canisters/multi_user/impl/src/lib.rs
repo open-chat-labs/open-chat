@@ -23,8 +23,9 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, NotifyChit, OCResult, ReferralStatus, TimestampMillis,
-    Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification, UserType,
+    DirectChatUserNotificationPayload, IdempotentEnvelope, MessageId, Notification, NotifyChit, OCResult, ReferralStatus,
+    TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    UserNotification, UserType,
 };
 use user_canister::UserCanisterEvent;
 use user_core::User;
@@ -448,6 +449,14 @@ impl RuntimeState {
             Vec::new(),
             false,
             self,
+        );
+    }
+
+    // Cancels the job to mark the P2P swap offered in the user's message as expired, once the swap
+    // has ended
+    pub fn cancel_mark_p2p_swap_expired_job(&mut self, user_index: u16, message_id: MessageId) {
+        self.data.timer_jobs.cancel_job(
+            |job| matches!(job, TimerJob::MarkP2PSwapExpired(j) if j.user_index == user_index && j.message_id == message_id),
         );
     }
 

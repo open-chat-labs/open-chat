@@ -174,9 +174,14 @@ pub(crate) fn apply_event(event: UserCanisterEvent, sender: UserId, recipient_in
         }
         UserCanisterEvent::TipMessage(args) => tip_message(*args, sender, recipient_index, now, state),
         UserCanisterEvent::P2PSwapStatusChange(args) => {
+            let message_id = args.message_id;
+            let ended = args.status.has_ended();
             state.data.users.with_user_mut(recipient_index, |user| {
                 c2c_user_canister::p2p_swap_change_status(user, sender, *args, now)
             });
+            if ended {
+                state.cancel_mark_p2p_swap_expired_job(recipient_index, message_id);
+            }
         }
     }
 }

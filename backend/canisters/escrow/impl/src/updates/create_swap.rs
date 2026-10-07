@@ -1,14 +1,12 @@
+use crate::model::swaps::latest_allowed_expiry;
 use crate::timer_job_types::{ExpireSwapJob, TimerJob};
 use crate::{Data, RuntimeState, deposit_address, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{DAY_IN_MS, MINUTE_IN_MS, P2P_SWAP_MAX_EXPIRY};
+use constants::{DAY_IN_MS, P2P_SWAP_MAX_EXPIRY};
 use escrow_canister::create_swap::{Response::*, *};
-use types::{Milliseconds, TimestampMillis};
-
-// The caller works out the expiry from its own clock, which may be a little ahead of this canister's
-const CLOCK_DIFFERENCE_ALLOWED: Milliseconds = 5 * MINUTE_IN_MS;
+use types::TimestampMillis;
 
 #[update(candid = true, msgpack = true)]
 #[trace]
@@ -53,7 +51,7 @@ fn validate_swap(args: &Args, now: TimestampMillis, caller: Principal, data: &Da
         Err("Output amount cannot be 0".to_string())
     } else if args.expires_at < now {
         Err("Expiry cannot be in the past".to_string())
-    } else if args.expires_at > now + P2P_SWAP_MAX_EXPIRY + CLOCK_DIFFERENCE_ALLOWED {
+    } else if args.expires_at > latest_allowed_expiry(now) {
         Err(format!(
             "Expiry cannot be more than {} days away",
             P2P_SWAP_MAX_EXPIRY / DAY_IN_MS

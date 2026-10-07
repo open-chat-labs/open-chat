@@ -49,6 +49,8 @@ async fn c2c_notify_p2p_swap_status_change_impl(args: Args) {
             .direct_chats
             .latest_user_id(them, &state.data.migrated_user_ids);
         if let Some(change) = apply_status_change(&mut state.data.user, them, args, now, event_pusher) {
+            // The swap has ended, so there is no longer any need to mark it as expired
+            state.cancel_mark_p2p_swap_expired_job(change.message_id);
             state.push_user_canister_event(them, UserCanisterEvent::P2PSwapStatusChange(Box::new(change)));
         }
     })

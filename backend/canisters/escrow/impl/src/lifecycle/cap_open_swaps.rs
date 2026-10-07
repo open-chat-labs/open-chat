@@ -1,9 +1,8 @@
 use crate::Data;
 use crate::model::notify_status_change_queue::NotifyStatusChangeQueue;
 use crate::model::pending_payments_queue::PendingPaymentsQueue;
-use crate::model::swaps::Swaps;
+use crate::model::swaps::{Swaps, latest_allowed_expiry};
 use crate::timer_job_types::TimerJob;
-use constants::P2P_SWAP_MAX_EXPIRY;
 use escrow_canister::SwapStatus;
 use tracing::info;
 use types::TimestampMillis;
@@ -41,7 +40,7 @@ fn cancel_swaps_over_the_cap(
 ) -> Vec<u32> {
     let ids: Vec<u32> = swaps
         .iter()
-        .filter(|swap| matches!(swap.status(now), SwapStatus::Open) && swap.expires_at > swap.created_at + P2P_SWAP_MAX_EXPIRY)
+        .filter(|swap| matches!(swap.status(now), SwapStatus::Open) && swap.expires_at > latest_allowed_expiry(swap.created_at))
         .map(|swap| swap.id)
         .collect();
 
@@ -193,7 +192,8 @@ mod tests {
         let mut state = State::default();
         // Within the maximum
         let short = state.add_swap(NOW - DAY_IN_MS, 7 * DAY_IN_MS);
-        let longest = state.add_swap(NOW - DAY_IN_MS, P2P_SWAP_MAX_EXPIRY);
+        // The longest `create_swap` allows, including what it allows for the caller's clock being ahead
+        let longest = state.add_swap(NOW - DAY_IN_MS, latest_allowed_expiry(0));
         // Already expired
         let expired = state.add_swap(NOW - 600 * DAY_IN_MS, DAY_IN_MS);
         // Accepted, though not yet paid out
