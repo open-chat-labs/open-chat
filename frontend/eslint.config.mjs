@@ -63,6 +63,25 @@ export default defineConfig([
             "local/no-pagejs-direct": "off",
         },
     },
+    // Lint every Svelte component with the same rules as the .ts files.
+    {
+        files: ["**/*.svelte"],
+        languageOptions: {
+            parser: svelteParser,
+            parserOptions: {
+                parser: tsParser,
+                extraFileExtensions: [".svelte"],
+            },
+            globals: {
+                ...globals.browser,
+            },
+        },
+        rules: {
+            // TypeScript already reports undefined names, and no-undef doesn't know the DOM types
+            // (NodeListOf, CanvasImageSource). typescript-eslint turns it off for .ts files for the same reason.
+            "no-undef": "off",
+        },
+    },
     {
         files: [
             "app/src/components/Router.svelte",

@@ -47,7 +47,6 @@
                 r.stop();
             }
         });
-        ringtones = ringtones;
     }
 
     onDestroy(() => {

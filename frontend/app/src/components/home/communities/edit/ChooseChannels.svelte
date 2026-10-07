@@ -67,7 +67,6 @@
 
     function addChannel() {
         channels.push({ name: nextChannelName, createdAt: Date.now() });
-        channels = channels;
         nextChannelName = "";
     }
 </script>

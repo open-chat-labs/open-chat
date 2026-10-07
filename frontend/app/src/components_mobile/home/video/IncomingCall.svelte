@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { IconComponent } from "@src/utils/iconComponent";
     import { Avatar, Body, ColourVars, Column, Row, Sheet, Subtitle } from "component-lib";
     import {
         allUsersStore,
@@ -40,7 +41,7 @@
             const initiator = $allUsersStore.get(call.userId);
             if (chat && initiator) {
                 switch (chat.kind) {
-                    case "direct_chat":
+                    case "direct_chat": {
                         const them = $allUsersStore.get(chat.them.userId);
                         return {
                             chatId: chat.id,
@@ -48,6 +49,7 @@
                             avatarUrl: client.userAvatarUrl(them),
                             initiator: initiator.username,
                         };
+                    }
                     case "group_chat":
                         return {
                             chatId: chat.id,
@@ -128,7 +130,7 @@
     </Sheet>
 {/if}
 
-{#snippet button(Icon: any, colour: string, onClick: () => void)}
+{#snippet button(Icon: IconComponent, colour: string, onClick: () => void)}
     <Column
         mainAxisAlignment={"center"}
         crossAxisAlignment={"center"}

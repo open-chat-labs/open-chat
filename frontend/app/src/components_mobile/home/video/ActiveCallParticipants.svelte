@@ -72,7 +72,6 @@
             .then((res) => {
                 videoParticipants = res;
                 Object.values(videoParticipants.hidden).forEach((h) => demoted.delete(h.userId));
-                demoted = demoted;
             })
             .finally(() => (loading = false));
     }
@@ -89,7 +88,6 @@
 
     function demote(userId: string) {
         demoted.add(userId);
-        demoted = demoted;
         activeVideoCall.demote(userId);
     }
 </script>

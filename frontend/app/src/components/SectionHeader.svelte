@@ -24,7 +24,6 @@
         children,
     }: Props = $props();
 
-    height; //this is a hack to keep the compiler happy
 </script>
 
 <div

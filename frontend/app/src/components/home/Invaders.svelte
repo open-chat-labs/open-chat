@@ -336,7 +336,7 @@
     // We'll use tilt controls on mobile devices
     function setUpTilt() {
         if ("DeviceOrientationEvent" in window) {
-            //@ts-ignore
+            // @ts-expect-error iOS-only DeviceOrientationEvent.requestPermission is not in the DOM types
             return window.DeviceOrientationEvent.requestPermission().then((response) => {
                 if (response === "granted") {
                     window.addEventListener("deviceorientation", handleOrientation, true);

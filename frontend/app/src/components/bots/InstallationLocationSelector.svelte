@@ -35,7 +35,6 @@
     let results: Match[] = $state([]);
     let selected: Match | undefined = $state(undefined);
     let focused = $state(false);
-    location; // usual hack
 
     onMount(() => onPerformSearch(""));
 

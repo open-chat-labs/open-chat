@@ -40,8 +40,6 @@
         showDollarAmount = false,
     }: Props = $props();
 
-    valid;
-
     let inputElement: HTMLInputElement | undefined = $state();
 
     onMount(() => {

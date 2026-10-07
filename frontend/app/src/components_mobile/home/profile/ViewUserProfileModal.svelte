@@ -63,7 +63,7 @@
                     }
                 },
             });
-        } catch (e: any) {
+        } catch (e) {
             client.logError("Failed to load user profile", e);
             onClose();
         }

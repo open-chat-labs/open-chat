@@ -93,7 +93,7 @@
     }
     let supportsGame = $derived(
         !isTouchDevice ||
-            //@ts-ignore
+            // @ts-expect-error iOS-only DeviceOrientationEvent.requestPermission is not in the DOM types
             (window.DeviceOrientationEvent && window.DeviceOrientationEvent.requestPermission),
     );
     let thisMonthText = $derived(buildMonthText(thisMonth));

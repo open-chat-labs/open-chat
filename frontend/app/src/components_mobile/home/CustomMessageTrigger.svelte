@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { IconComponent } from "@src/utils/iconComponent";
     import { getContext } from "svelte";
     import { convertFileSrc } from "@tauri-apps/api/core";
     import {
@@ -66,7 +67,7 @@
 
     $effect(() => {
         if (open && client.isNativeApp()) {
-            loadRecentMedia().then((res: any) => {
+            loadRecentMedia().then((res) => {
                 mediaPermission = res.permission;
                 media = res.media;
             });
@@ -105,7 +106,7 @@
 {/snippet}
 
 <!-- Message attachment options -->
-{#snippet attachOption(key: string, Icon: any, color: string, onclick: () => void)}
+{#snippet attachOption(key: string, Icon: IconComponent, color: string, onclick: () => void)}
     <button class="attach-option" {onclick}>
         <Column gap="sm" crossAxisAlignment="center">
             <Icon size="1.5rem" {color} />

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { IconComponent } from "@src/utils/iconComponent";
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import {
@@ -136,7 +137,7 @@
         }} />
 {/if}
 
-{#snippet metaDatum(title: string, Icon: any, label: string)}
+{#snippet metaDatum(title: string, Icon: IconComponent, label: string)}
     <Container
         crossAxisAlignment={"center"}
         mainAxisAlignment={"center"}
@@ -339,7 +340,7 @@
 
 {#snippet permList(
     name: string,
-    Icon: any,
+    Icon: IconComponent,
     requested: (BotChatPermission | BotCommunityPermission | MessagePermission)[],
     granted: (BotChatPermission | BotCommunityPermission | MessagePermission)[] | undefined,
     labelPrefix: string = "",

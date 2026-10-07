@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { IconComponent } from "@src/utils/iconComponent";
     import { i18nKey } from "@src/i18n/i18n";
     import { disableCryptoPaymentsFeature } from "@src/utils/features";
     import { accessApprovalState } from "@src/utils/preview.svelte";
@@ -67,7 +68,7 @@
     }
 </script>
 
-{#snippet booleanGate(restricted: boolean, Icon: any, title: string, subtitle?: string)}
+{#snippet booleanGate(restricted: boolean, Icon: IconComponent, title: string, subtitle?: string)}
     <AccessGateBox {satisfied} satisfiable onClick={restricted ? undefined : () => onClick(gate)}>
         <Row mainAxisAlignment={"center"} width={{ size: "2.5rem" }}>
             <Icon color={ColourVars.validationWarning} size={"1.5rem"} />

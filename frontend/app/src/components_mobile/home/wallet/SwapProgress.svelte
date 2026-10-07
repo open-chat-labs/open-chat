@@ -36,8 +36,6 @@
     let { swapId, tokenIn, tokenOut, ledgerIn, ledgerOut, amountIn, decimalsOut, dex }: Props =
         $props();
 
-    ledgerOut;
-
     const height: SizeMode = { size: "16rem" };
     const client = getContext<OpenChat>("client");
     const POLL_INTERVAL = 1000;

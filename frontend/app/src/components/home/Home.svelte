@@ -460,7 +460,6 @@
                 return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.level);
             case "leave_community":
                 return leaveCommunity(confirmActionEvent.communityId);
-            case "delete_direct_chat":
             case "delete_direct_chat": {
                 const viewingThisChat = chatIdentifiersEqual(
                     $selectedChatIdStore,

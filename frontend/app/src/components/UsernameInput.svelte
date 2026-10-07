@@ -31,8 +31,6 @@
         children,
     }: Props = $props();
 
-    error;
-
     let timer: number | undefined = undefined;
     let currentPromise: Promise<unknown> | undefined;
 

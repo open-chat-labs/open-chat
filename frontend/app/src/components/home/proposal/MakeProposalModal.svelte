@@ -115,11 +115,8 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let achivementName = $state("");
     let selectedBot: ExternalBot | undefined = $state(undefined);
-    //@ts-ignore
     let transferSnsFunds: TransferSnsFunds | undefined = $state();
-    //@ts-ignore
     let verificationComponent: VerificationProposal | undefined = $state();
-    //@ts-ignore
     let removeBotComponent: RemoveBot | undefined;
     let transferSnsFundsValid: boolean = $state(false);
     let removeBotValid: boolean = $state(false);

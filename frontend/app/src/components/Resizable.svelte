@@ -20,9 +20,6 @@
         resizing = $bindable(false),
     }: Props = $props();
 
-    resizedWidth;
-    resized;
-
     let previous = 0;
 
     $effect(() => {

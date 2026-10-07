@@ -10,7 +10,7 @@
         size?: string;
         show?: "blue" | "gold" | undefined;
         status?: DiamondMembershipStatus["kind"] | undefined;
-        y?: any;
+        y?: number;
     }
 
     let { size = "0.9em", show = undefined, status = undefined, y = -40 }: Props = $props();

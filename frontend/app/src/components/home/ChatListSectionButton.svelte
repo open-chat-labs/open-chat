@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { emptyUnreadCounts, mobileWidth, type ResourceKey } from "@client";
+    import { emptyUnreadCounts, mobileWidth, type ResourceKey, type UnreadCounts } from "@client";
     import Button from "../Button.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import UnreadCount from "./UnreadCount.svelte";
@@ -7,7 +7,7 @@
     interface Props {
         selected?: boolean;
         title: ResourceKey;
-        unread?: any;
+        unread?: UnreadCounts;
         onClick?: (e: MouseEvent) => void;
     }
 

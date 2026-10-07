@@ -26,8 +26,6 @@
         children,
     }: Props = $props();
 
-    hovering;
-
     let containerDiv: HTMLDivElement | undefined = $state();
     let hoverTimer: number | undefined;
     let longPressTimer: number | undefined;

@@ -4,7 +4,7 @@
         medium: string;
         light: string;
         size: string;
-        y?: any;
+        y?: number;
     }
 
     let { dark, medium, light, size, y = -40 }: Props = $props();

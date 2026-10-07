@@ -129,7 +129,7 @@
     setContext<OpenChat>("client", client);
 
     // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being
-    let videoCallElement: any;
+    let videoCallElement: ReturnType<typeof ActiveCall> | undefined;
 
     trackedEffect("rtl", () => {
         // subscribe to the rtl store so that we can set the overall page direction at the right time
@@ -201,13 +201,17 @@
 
             keyboard.visible = data.isKeyboardOpen;
             keyboard.currentHeight = data.keyboardHeightDp;
-            data.isKeyboardOpen
-                ? document.body.classList.add("keyboard-visible")
-                : document.body.classList.remove("keyboard-visible");
+            if (data.isKeyboardOpen) {
+                document.body.classList.add("keyboard-visible");
+            } else {
+                document.body.classList.remove("keyboard-visible");
+            }
 
-            data.isGestureNavigation
-                ? document.body.classList.add("has-gesture-nav")
-                : document.body.classList.remove("has-gesture-nav");
+            if (data.isGestureNavigation) {
+                document.body.classList.add("has-gesture-nav");
+            } else {
+                document.body.classList.remove("has-gesture-nav");
+            }
         }).catch(console.error);
 
         // We need to set the status bar height from the store, in case that

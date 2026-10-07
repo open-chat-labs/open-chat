@@ -99,6 +99,7 @@
                         }
                     })
                     .finally(() => (freezingInProgress = false));
+                break;
 
             case "channel":
                 if ($selectedCommunitySummaryStore) {

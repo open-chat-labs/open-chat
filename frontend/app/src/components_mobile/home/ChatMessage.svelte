@@ -183,7 +183,9 @@
                 if (observer !== undefined && msgElement !== undefined) {
                     try {
                         observer.observe(msgElement);
-                    } catch {}
+                    } catch {
+                        // the element may already be detached; nothing to observe
+                    }
                 }
             });
         }

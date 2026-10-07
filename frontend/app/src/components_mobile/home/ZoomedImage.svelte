@@ -44,9 +44,11 @@
 
         const onPanzoomEnd = () => {
             const currentScale = panzoomInstance.getScale();
-            currentScale <= DEFAULT_SCALE + SCALE_EPSILON && imageHeight <= window.innerHeight
-                ? panzoomInstance.reset({ animate: true })
-                : snapToClosestEdge(currentScale);
+            if (currentScale <= DEFAULT_SCALE + SCALE_EPSILON && imageHeight <= window.innerHeight) {
+                panzoomInstance.reset({ animate: true });
+            } else {
+                snapToClosestEdge(currentScale);
+            }
         };
         container.addEventListener("panzoomend", onPanzoomEnd);
 
@@ -131,9 +133,11 @@
 
     function onDoubleTap() {
         const currentScale = panzoomInstance.getScale();
-        currentScale <= DEFAULT_SCALE + SCALE_EPSILON
-            ? panzoomInstance.zoom(2.5, { animate: true })
-            : panzoomInstance.reset({ animate: true });
+        if (currentScale <= DEFAULT_SCALE + SCALE_EPSILON) {
+            panzoomInstance.zoom(2.5, { animate: true });
+        } else {
+            panzoomInstance.reset({ animate: true });
+        }
     }
 </script>
 

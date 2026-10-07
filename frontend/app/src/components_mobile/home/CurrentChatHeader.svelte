@@ -83,7 +83,7 @@
 
     function normaliseChatSummary(_now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         switch (chatSummary.kind) {
-            case "direct_chat":
+            case "direct_chat": {
                 const them = $allUsersStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
@@ -102,6 +102,7 @@
                     eventsTTL: chatSummary.eventsTTL,
                     uniquePerson: them?.isUniquePerson ?? false,
                 };
+            }
             default:
                 return {
                     name: chatSummary.name,

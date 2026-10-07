@@ -14,7 +14,6 @@
             const lines = Array.from({ length: rand(2, 6) });
             messages.push([rand(50, 100), lines]);
         }
-        messages = messages; // force reaction
     });
 </script>
 

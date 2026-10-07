@@ -121,11 +121,8 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let achivementName = $state("");
     let selectedBot: ExternalBot | undefined = $state(undefined);
-    //@ts-ignore
     let transferSnsFunds: TransferSnsFunds | undefined = $state();
-    //@ts-ignore
     let verificationComponent: VerificationProposal | undefined = $state();
-    //@ts-ignore
     let removeBotComponent: RemoveBot | undefined;
     let transferSnsFundsValid: boolean = $state(false);
     let removeBotValid: boolean = $state(false);
@@ -454,6 +451,8 @@
             { name: "Advance SNS target version", value: "advance_sns_target_version" },
         ];
 
+        // TODO: desktop offers these only for CHAT; `|| true` offers them for every SNS
+        // eslint-disable-next-line no-constant-condition
         if (symbol === "CHAT" || true) {
             options.push(
                 { name: "Register external achievement", value: "register_external_achievement" },

@@ -65,7 +65,7 @@
     let firstUnreadMention = $state<Mention | undefined>();
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
     let buildingMeme = $state(false);
-    //@ts-ignore
+    // @ts-expect-error bind:this sets it after mount
     let memeBuilder: MemeBuilder = $state();
     let showSearchHeader = $state(false);
     let searchTerm = $state("");

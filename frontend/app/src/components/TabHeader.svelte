@@ -4,7 +4,7 @@
 
     interface Props {
         items: ResourceKey[];
-        selected?: any;
+        selected?: string;
         underline?: boolean;
     }
 

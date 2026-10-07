@@ -31,7 +31,6 @@
 
     let refreshing = false;
     let error: string | undefined = undefined;
-    //@ts-ignore
     let balanceWithRefresh: BalanceWithRefresh;
     // The external wallet the swap will be funded from, or undefined for the user's own OpenChat
     // account, which is where it has always been funded from

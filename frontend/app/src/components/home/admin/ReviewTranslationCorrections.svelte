@@ -89,7 +89,6 @@
 
     function approveCorrection({ id }: TranslationCorrection) {
         processing.add(id);
-        processing = processing;
         client
             .approveTranslationCorrection(id)
             .then((success) => {
@@ -103,13 +102,11 @@
             })
             .finally(() => {
                 processing.delete(id);
-                processing = processing;
             });
     }
 
     function rejectCorrection({ id }: TranslationCorrection, reason: RejectReason) {
         processing.add(id);
-        processing = processing;
         client
             .rejectTranslationCorrection(id, reason)
             .then((success) => {
@@ -123,7 +120,6 @@
             })
             .finally(() => {
                 processing.delete(id);
-                processing = processing;
             });
     }
 

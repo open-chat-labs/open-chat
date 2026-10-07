@@ -10,7 +10,7 @@
         placeholder?: ResourceKey | undefined;
         min?: number;
         max?: number;
-        defaultValue?: any;
+        defaultValue?: number;
         value?: number | null;
         align?: "left" | "right" | "center";
         shouldClamp?: boolean;
