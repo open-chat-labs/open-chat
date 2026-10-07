@@ -14,7 +14,7 @@
         "resolveJsonModule": true,
         "sourceMap": false,
         "target": "ESNext",
-        "types": ["jest", "node", "svelte"],
+        "types": ["vitest/globals", "node", "svelte"],
         "useDefineForClassFields": true,
         "verbatimModuleSyntax": true,
         "paths": {
