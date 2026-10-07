@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Cap swaps at 90 days, cancelling the open swaps created longer ago than that ([#9832](https://github.com/open-chat-labs/open-chat/pull/9832))
+
 ## [[2.0.2100](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2100-escrow)] - 2026-10-06
 
 ### Changed

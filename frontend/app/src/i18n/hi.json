@@ -1658,6 +1658,7 @@
         "creatingYourMessage": "कृपया स्वैप ऑफर बनने तक प्रतीक्षा करें",
         "expired": "खत्म हो चुका",
         "expiryTime": "समाप्ति समय",
+        "maxExpiry": "अधिकतम {days} दिन",
         "failedToCreateMessage": "स्वैप ऑफ़र बनाने में विफल",
         "insufficient_funds": "इस स्वैप प्रस्ताव को स्वीकार करने के लिए आपके पास अपर्याप्त धनराशि शेष है",
         "insufficientBalance": "अपर्याप्त शेषराशि",

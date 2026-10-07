@@ -7,6 +7,7 @@
         isDiamondStore,
         localUpdates,
         ONE_DAY,
+        P2P_SWAP_MAX_EXPIRY_DAYS,
         publish,
         walletApprovalFee,
     } from "@client";
@@ -257,7 +258,9 @@
 
         <!-- Duration selection -->
         <Column padding={["zero", "lg"]}>
-            <DurationSelector bind:duration={expiresIn}>
+            <DurationSelector
+                maxMilliseconds={BigInt(P2P_SWAP_MAX_EXPIRY_DAYS * ONE_DAY)}
+                bind:duration={expiresIn}>
                 {#snippet title()}
                     <Subtitle fontWeight={"bold"}>
                         <Translatable resourceKey={i18nKey("Swap expiry time")} />

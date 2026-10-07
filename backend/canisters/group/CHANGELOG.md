@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Cancel the job to mark a P2P swap expired once the swap has ended ([#9832](https://github.com/open-chat-labs/open-chat/pull/9832))
+
 ## [[2.0.2111](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2111-group)] - 2026-10-07
 
 ### Fixed

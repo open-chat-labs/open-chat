@@ -1658,6 +1658,7 @@
         "creatingYourMessage": "Attendi mentre viene creata un'offerta di scambio",
         "expired": "Scaduto",
         "expiryTime": "Tempo di scadenza",
+        "maxExpiry": "max {days} giorni",
         "failedToCreateMessage": "Impossibile creare l'offerta di scambio",
         "insufficient_funds": "Non hai fondi rimanenti sufficienti per accettare questa offerta di scambio",
         "insufficientBalance": "Equilibrio insufficiente",

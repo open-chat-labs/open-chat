@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Instantiate the msgpack (de)serializers of widely shared types once, in `types`, cutting the code by 864KB ([#9804](https://github.com/open-chat-labs/open-chat/pull/9804))
 - Limit how many reminders, saved crypto accounts, favourites, pins and manual wallet tokens a user can have ([#9805](https://github.com/open-chat-labs/open-chat/pull/9805))
 - Bump the rmp-serde fork to one which reads numbers before visiting them, cutting the code by 866KB ([#9808](https://github.com/open-chat-labs/open-chat/pull/9808))
+- Count a P2P swap as expired 90 days after it was created, or once it has ended, when deciding whether a user can be migrated, and cancel the jobs to mark ended swaps expired ([#9832](https://github.com/open-chat-labs/open-chat/pull/9832))
 
 ### Removed
 

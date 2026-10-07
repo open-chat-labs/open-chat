@@ -1,4 +1,5 @@
 use crate::Data;
+use crate::lifecycle::cap_p2p_swap_expiry_jobs::cap_p2p_swap_expiry_jobs;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_stable_memory_map_small_entries_memory, get_upgrades_memory};
 use canister_api_macros::post_upgrade;
@@ -7,6 +8,7 @@ use canister_tracing_macros::trace;
 use stable_memory::get_reader;
 use tracing::info;
 use user_canister::post_upgrade::Args;
+use utils::env::Environment;
 use utils::env::canister::CanisterEnv;
 
 #[post_upgrade(msgpack = true)]
@@ -34,6 +36,16 @@ fn post_upgrade(args: Args) {
     }
 
     let env = Box::new(CanisterEnv::new(data.rng_seed));
+
+    if !data.is_migrating() {
+        let (cancelled, run, brought_forward) = cap_p2p_swap_expiry_jobs(&mut data, env.now());
+        if cancelled + run + brought_forward > 0 {
+            info!(
+                cancelled,
+                run, brought_forward, "Capped the jobs to mark P2P swaps as expired"
+            );
+        }
+    }
     init_state(env, data, args.wasm_version);
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();

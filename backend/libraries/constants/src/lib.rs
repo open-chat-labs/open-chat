@@ -19,6 +19,8 @@ pub const HOUR_IN_MS: Milliseconds = MINUTE_IN_MS * 60;
 pub const DAY_IN_MS: Milliseconds = HOUR_IN_MS * 24;
 pub const WEEK_IN_MS: Milliseconds = DAY_IN_MS * 7;
 pub const NANOS_PER_MILLISECOND: u64 = 1_000_000;
+// The longest a P2P swap may stay open, from when it is created until it expires
+pub const P2P_SWAP_MAX_EXPIRY: Milliseconds = 90 * DAY_IN_MS;
 pub const ONE_MB: u64 = 1024 * 1024;
 pub const ONE_GB: u64 = 1024 * ONE_MB;
 pub const CHUNK_STORE_CHUNK_SIZE: usize = ONE_MB as usize;

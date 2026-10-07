@@ -1658,6 +1658,7 @@
         "creatingYourMessage": "Vui lòng đợi trong khi đề nghị hoán đổi được tạo",
         "expired": "Hết hạn",
         "expiryTime": "Thời gian hết hạn",
+        "maxExpiry": "tối đa {days} ngày",
         "failedToCreateMessage": "Không tạo được ưu đãi hoán đổi",
         "insufficient_funds": "Bạn không còn đủ tiền để chấp nhận đề nghị hoán đổi này",
         "insufficientBalance": "Thiếu cân bằng",

@@ -1,5 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_escrow_canister;
+use crate::timer_job_types::TimerJob;
 use crate::{GroupEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -106,6 +107,11 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
     }
 
     if let Some(success) = result {
+        // The swap has ended, so there is no longer any need to mark it as expired
+        state.data.timer_jobs.cancel_job(|job| {
+            matches!(job, TimerJob::MarkP2PSwapExpired(j)
+                if j.thread_root_message_index == m.thread_root_message_index && j.message_id == m.message_id)
+        });
         state.push_bot_notification(success.bot_notification);
         handle_activity_notification(state);
     }
