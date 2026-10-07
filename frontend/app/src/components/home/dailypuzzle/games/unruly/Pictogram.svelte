@@ -5,7 +5,8 @@
     import type { PictogramProps } from "../types";
 
     // Givens only, for the result card.
-    let { model }: PictogramProps<UnrulyDescription> = $props();
+    let { board }: PictogramProps<UnrulyDescription> = $props();
+    let model = $derived(board.model);
 
     const ORANGE = "#f08c00";
     const PURPLE = "#6b21a8";

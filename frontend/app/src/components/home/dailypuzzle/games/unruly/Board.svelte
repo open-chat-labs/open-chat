@@ -6,8 +6,7 @@
     import type { BoardProps } from "../types";
 
     let {
-        model,
-        marks,
+        board,
         violations,
         focus,
         target,
@@ -15,6 +14,8 @@
         greyed = false,
         disabled = false,
     }: BoardProps<UnrulyDescription, UnrulyCell[]> = $props();
+    let model = $derived(board.model);
+    let marks = $derived(board.marks);
 
     // The two values are flat discs. Orange is much the lighter of the two, so they stay apart
     // in greyscale and for anyone who reads the hues differently, and neither is near the

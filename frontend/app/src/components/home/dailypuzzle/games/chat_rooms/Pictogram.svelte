@@ -6,7 +6,8 @@
     import { roomFill, walls } from "./rooms";
 
     // The rooms only, for the result card.
-    let { model }: PictogramProps<ChatRoomsDescription> = $props();
+    let { board }: PictogramProps<ChatRoomsDescription> = $props();
+    let model = $derived(board.model);
 
     let elements = $derived(chatRooms.elements(model));
     let roomWalls = $derived(walls(model.size, model.rooms));

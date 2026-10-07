@@ -5,7 +5,8 @@
     import type { PictogramProps } from "../types";
 
     // Givens only, for the result card: dots and clues.
-    let { model }: PictogramProps<LoopyDescription> = $props();
+    let { board }: PictogramProps<LoopyDescription> = $props();
+    let model = $derived(board.model);
 
     const MARGIN = 0.4;
 

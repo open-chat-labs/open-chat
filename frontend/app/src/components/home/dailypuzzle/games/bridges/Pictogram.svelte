@@ -5,7 +5,8 @@
     import type { PictogramProps } from "../types";
 
     // Givens only, for the result card.
-    let { model }: PictogramProps<BridgesDescription> = $props();
+    let { board }: PictogramProps<BridgesDescription> = $props();
+    let model = $derived(board.model);
 
     let islands = $derived(bridges.elements(model).filter((el) => el.kind === "cell"));
 </script>

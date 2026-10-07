@@ -14,9 +14,7 @@
     import type { BoardProps } from "../types";
 
     let {
-        model,
-        state,
-        marks,
+        board,
         violations,
         focus,
         target,
@@ -24,6 +22,9 @@
         greyed = false,
         disabled = false,
     }: BoardProps<LoopyDescription, LoopyEdge[]> = $props();
+    let model = $derived(board.model);
+    let state = $derived(board.state);
+    let marks = $derived(board.marks);
 
     // Dots sit on the grid corners and lines are thick, so the border needs a little room.
     const MARGIN = 0.4;

@@ -1,17 +1,34 @@
 import {
+    bridges,
+    chitStateStore,
     dailyPuzzleStore,
+    ErrorCode,
+    lightUp,
+    slant,
     puzzleFingerprint,
     type DailyPuzzleUserState,
     type OpenChat,
     type PublicDailyPuzzle,
     type ServedHint,
 } from "@client";
+import desktopScreen from "../components/home/dailypuzzle/DailyPuzzle.svelte?raw";
+import desktopResult from "../components/home/dailypuzzle/DailyResultContent.svelte?raw";
+import gameDemo from "../components/home/dailypuzzle/GameDemo.svelte?raw";
+import gameTypes from "../components/home/dailypuzzle/games/types.ts?raw";
+import mobileScreen from "../components_mobile/home/dailypuzzle/DailyPuzzle.svelte?raw";
+import mobileResult from "../components_mobile/home/dailypuzzle/DailyResultContent.svelte?raw";
+import sessionSource from "./dailyPuzzle.svelte.ts?raw";
+import registrySource from "./dailyPuzzleGames.ts?raw";
+import boardSource from "./puzzleBoard.svelte.ts?raw";
+import LightUpPictogram from "../components/home/dailypuzzle/games/light_up/Pictogram.svelte";
+import SlantBoard from "../components/home/dailypuzzle/games/slant/Board.svelte";
 import { flushSync } from "svelte";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import en from "../i18n/en.json";
 import { toastStore } from "../stores/toast";
 import { DailyPuzzleGame, type HintButton } from "./dailyPuzzle.svelte";
 import { dailyPuzzleGame } from "./dailyPuzzleGames";
+import { bindBoard } from "./puzzleBoard.svelte";
 
 const NUMBER = 20706;
 const USER = "user1";
@@ -50,7 +67,8 @@ function userState(overrides: Partial<DailyPuzzleUserState> = {}): DailyPuzzleUs
     };
 }
 
-const game = dailyPuzzleGame("light_up")!.game;
+const game = lightUp;
+const lightUpDef = dailyPuzzleGame("light_up")!;
 const model = game.parse(puzzle.description);
 
 type Fake = {
@@ -84,7 +102,7 @@ function build(
     hasDemo = false,
 ): DailyPuzzleGame {
     dailyPuzzleStore.set({ puzzles: [puzzle], states: state === undefined ? [] : [state] });
-    return new DailyPuzzleGame(client, puzzle, state, USER, game, hasDemo);
+    return new DailyPuzzleGame(client, puzzle, USER, lightUpDef, hasDemo);
 }
 
 function saveLocal(
@@ -145,10 +163,10 @@ describe("DailyPuzzleGame", () => {
         const g = build(userState(), client);
         g.tap(0);
         g.tap(4);
-        expect(g.solvedLocally).toBe(false);
+        expect(g.board.solved).toBe(false);
         expect(client.dailyPuzzleSubmit).not.toHaveBeenCalled();
         g.tap(8);
-        expect(g.solvedLocally).toBe(true);
+        expect(g.board.solved).toBe(true);
         await vi.waitFor(() => expect(client.dailyPuzzleSubmit).toHaveBeenCalledTimes(1));
     });
 
@@ -171,18 +189,18 @@ describe("DailyPuzzleGame", () => {
         const server = { grid: serverGrid, gridSavedAt: 1000n };
 
         saveLocal(2000);
-        expect([...build(userState(server)).marks.keys()]).toEqual([0]);
+        expect([...build(userState(server)).board.marks.keys()]).toEqual([0]);
 
         saveLocal(500);
-        expect([...build(userState(server)).marks.keys()]).toEqual([4]);
+        expect([...build(userState(server)).board.marks.keys()]).toEqual([4]);
 
         // A local copy saved against another layout is not this puzzle's, however new
         saveLocal(2000, "light_up:20706:deadbeef");
-        expect([...build(userState(server)).marks.keys()]).toEqual([4]);
+        expect([...build(userState(server)).board.marks.keys()]).toEqual([4]);
 
         // Nothing is resumed before the puzzle is started
         saveLocal(2000);
-        expect(build(userState({ ...server, startedAt: undefined })).marks.size).toBe(0);
+        expect(build(userState({ ...server, startedAt: undefined })).board.marks.size).toBe(0);
     });
 
     // #9404 invariant 4
@@ -195,7 +213,7 @@ describe("DailyPuzzleGame", () => {
             [4, 1],
             [0, 0],
         ]);
-        const marks = build(userState(server)).marks;
+        const marks = build(userState(server)).board.marks;
         expect(marks.get(4)).toBe("bulb");
         expect(marks.get(0)).toBe("dot");
 
@@ -204,7 +222,7 @@ describe("DailyPuzzleGame", () => {
             [8, 1],
             [0, 0],
         ]);
-        expect([...build(userState(server)).marks.keys()]).toEqual([4]);
+        expect([...build(userState(server)).board.marks.keys()]).toEqual([4]);
     });
 
     // #9332 invariant 43
@@ -251,7 +269,7 @@ describe("DailyPuzzleGame", () => {
             const g = build(userState(), hintClient(step));
             g.tap(0);
             g.tap(0); // bulb, then "no"
-            expect(g.marks.get(0)).toBe("dot");
+            expect(g.board.marks.get(0)).toBe("dot");
             await g.hint();
             expect([...g.focus].sort()).toEqual([0, 4]);
             expect([...g.target]).toEqual([0]);
@@ -407,7 +425,7 @@ describe("DailyPuzzleGame", () => {
             number: 20709,
             description: Uint8Array.from(hex.match(/../g)!.map((b) => parseInt(b, 16))),
         };
-        const slant = dailyPuzzleGame("slant")!.game;
+        const slantDef = dailyPuzzleGame("slant")!;
         const step9: ServedHint = {
             hint: { technique: 2, focus: [48, 4, 10, 11, 5], target: [48], conclusions: [] },
             level: 2,
@@ -420,7 +438,7 @@ describe("DailyPuzzleGame", () => {
             const grid = slant.toBytes(model, st);
             const state = userState({ gameId: "slant", number: 20709, grid, gridSavedAt: 5n });
             dailyPuzzleStore.set({ puzzles: [slantPuzzle], states: [state] });
-            return new DailyPuzzleGame(client, slantPuzzle, state, USER, slant);
+            return new DailyPuzzleGame(client, slantPuzzle, USER, slantDef);
         }
         const hintClient = () =>
             fakeClient({
@@ -533,14 +551,14 @@ describe("a game that shows more than the player's marks (chat_rooms)", () => {
         number: 20726,
         description: Uint8Array.from([1, 5, 5, ...rooms]),
     };
-    const chatRooms = dailyPuzzleGame("chat_rooms")!.game;
+    const chatRoomsDef = dailyPuzzleGame("chat_rooms")!;
 
     // Invariants 14 and 15: the request sends `hintFilled`, the local save `filled`
     test("hint requests send the automatic crosses, and the saved marks leave them out", async () => {
         const client = hintClient(served([1]));
         const state = userState({ gameId: "chat_rooms", number: 20726 });
         dailyPuzzleStore.set({ puzzles: [roomsPuzzle], states: [state] });
-        const g = new DailyPuzzleGame(client, roomsPuzzle, state, USER, chatRooms);
+        const g = new DailyPuzzleGame(client, roomsPuzzle, USER, chatRoomsDef);
         g.tap(20);
         g.tap(20);
         await g.hint();
@@ -599,7 +617,7 @@ describe("hint states (#9360)", () => {
         expect(g.mistakes.size).toBe(0);
         g.tap(0);
         g.tap(0);
-        expect(game.filled(model, g.state)).toEqual([[0, 1]]);
+        expect(g.board.filled()).toEqual([[0, 1]]);
         expect(g.mistakes.has(0)).toBe(true);
         expect(g.hintButton).toEqual({ kind: "mistake" });
         await g.hint();
@@ -608,7 +626,7 @@ describe("hint states (#9360)", () => {
         // A reload with the wrong mark still on the board resumes the same answer, so the first
         // press after it does not spend a free check repainting the same cell
         const again = build(userState(), client);
-        expect(game.filled(model, again.state)).toEqual([[0, 1]]);
+        expect(again.board.filled()).toEqual([[0, 1]]);
         expect(again.mistakes.has(0)).toBe(true);
         expect(again.caption).toEqual(expect.objectContaining({ key: "dailyPuzzle.mistake" }));
         expect(again.hintButton).toEqual({ kind: "mistake" });
@@ -686,13 +704,13 @@ describe("hint states (#9360)", () => {
         const roomy = { ...puzzle, maxFreeChecks: 20 };
         const state = userState({ freeChecks: 15 });
         dailyPuzzleStore.set({ puzzles: [roomy], states: [state] });
-        const many = new DailyPuzzleGame(fakeClient(), roomy, state, USER, game);
+        const many = new DailyPuzzleGame(fakeClient(), roomy, USER, lightUpDef);
         expect(many.freeChecksLeft).toBe(5);
         expect(many.hintButton).not.toHaveProperty("checksLeft");
         // one more spent, and the count appears
         const state16 = userState({ freeChecks: 16 });
         dailyPuzzleStore.set({ puzzles: [roomy], states: [state16] });
-        const few = new DailyPuzzleGame(fakeClient(), roomy, state16, USER, game);
+        const few = new DailyPuzzleGame(fakeClient(), roomy, USER, lightUpDef);
         expect(few.hintButton).toMatchObject({ kind: "hint", checksLeft: 4 });
     });
 
@@ -716,10 +734,10 @@ describe("reset (#9361)", () => {
         g.tap(0);
         g.reset();
         expect(g.resetArmed).toBe(true);
-        expect(game.filled(model, g.state)).toEqual([[0, 1]]);
+        expect(g.board.filled()).toEqual([[0, 1]]);
         g.reset();
         expect(g.resetArmed).toBe(false);
-        expect(game.filled(model, g.state)).toEqual([]);
+        expect(g.board.filled()).toEqual([]);
     });
 
     test("an edit between the two taps disarms the reset", () => {
@@ -730,7 +748,7 @@ describe("reset (#9361)", () => {
         expect(g.resetArmed).toBe(false);
         g.reset();
         expect(g.resetArmed).toBe(true);
-        expect(game.filled(model, g.state).length).toBe(2);
+        expect(g.board.filled().length).toBe(2);
     });
 
     // invariants 1 and 2
@@ -768,7 +786,7 @@ describe("reset (#9361)", () => {
         g.reset();
         // device copy
         const again = build(userState(), client);
-        expect(game.filled(model, again.state)).toEqual([]);
+        expect(again.board.filled()).toEqual([]);
         // server copy: what was saved is the empty grid
         const [, saved] = client.dailyPuzzleSaveGrid.mock.calls.at(-1)!;
         expect(game.fromBytes(model, saved)).toEqual(game.empty(model));
@@ -792,7 +810,7 @@ describe("reset (#9361)", () => {
                 gridSavedAt: 5n,
             }),
         );
-        expect(game.filled(model, solved.state).length).toBe(1);
+        expect(solved.board.filled().length).toBe(1);
         expect(solved.canReset).toBe(false);
         solved.reset();
         expect(solved.resetArmed).toBe(false);
@@ -864,7 +882,7 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
         number: 20710,
         description: new Uint8Array([1, 3, 3, 2, 0, 2, 0, 0, 0, 2, 0, 2]),
     };
-    const bridges = dailyPuzzleGame("bridges")!.game;
+    const bridgesDef = dailyPuzzleGame("bridges")!;
     const hint = served([1, 2]);
     function buildBridges(committed: number[]): DailyPuzzleGame {
         const model = bridges.parse(bridgesPuzzle.description);
@@ -881,7 +899,7 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
                 state: userState({ gameId: "bridges", number: 20710, hints: [hint] }),
             })),
         });
-        return new DailyPuzzleGame(client, bridgesPuzzle, state, USER, bridges);
+        return new DailyPuzzleGame(client, bridgesPuzzle, USER, bridgesDef);
     }
 
     // invariant 1
@@ -927,7 +945,7 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
                 state: userState({ gameId: "bridges", number: 20710, hints: [island] }),
             })),
         });
-        const g = new DailyPuzzleGame(client, bridgesPuzzle, state, USER, bridges);
+        const g = new DailyPuzzleGame(client, bridgesPuzzle, USER, bridgesDef);
         await g.hint();
         expect([...g.focus].sort()).toEqual([0, 1, 2, 5, 8]);
         // an edge elsewhere (6 -> 8, over cell 7) changes nothing; island 0 collides with its key
@@ -962,11 +980,11 @@ describe("the tutorial reopened mid-game (#9822)", () => {
         g.tap(0);
         g.toggleTutorial();
         g.tap(4);
-        expect(game.filled(model, g.state)).toEqual([[0, 1]]);
+        expect(g.board.filled()).toEqual([[0, 1]]);
         expect(g.canReset).toBe(false);
         g.reset();
         g.reset();
-        expect(game.filled(model, g.state)).toEqual([[0, 1]]);
+        expect(g.board.filled()).toEqual([[0, 1]]);
         await g.hint();
         expect(client.dailyPuzzleHint).not.toHaveBeenCalled();
     });
@@ -976,12 +994,12 @@ describe("the tutorial reopened mid-game (#9822)", () => {
         const g = build(userState(), fakeClient(), true);
         g.tap(0);
         g.tap(4);
-        const before = g.state;
+        const before = g.board.filled();
         g.toggleTutorial();
         expect(g.showsDemo).toBe(true);
         g.toggleTutorial();
         expect(g.showsDemo).toBe(false);
-        expect(g.state).toBe(before);
+        expect(g.board.filled()).toEqual(before);
     });
 
     // invariant 4
@@ -1023,5 +1041,145 @@ describe("the tutorial reopened mid-game (#9822)", () => {
         const withoutDemo = build(undefined, fakeClient(), false);
         expect(withoutDemo.showsDemo).toBe(false);
         expect(withoutDemo.showsRules).toBe(true);
+    });
+});
+
+describe("DailyPuzzleGame is the one source of truth for a play session (#9824)", () => {
+    const solved = { solvedAt: 2n, solveTimeMs: 61_000n, reward: 250, hintsUsed: 0, streak: 1 };
+
+    function balance(chitBalance: number): void {
+        chitStateStore.update((s) => ({ ...s, chitBalance }));
+    }
+
+    // invariant 1
+    test("neither screen reads the puzzle store or the user state itself", () => {
+        for (const screen of [desktopScreen, mobileScreen]) {
+            expect(screen).not.toMatch(/dailyPuzzleStore|stateFor/);
+        }
+    });
+
+    // invariant 3
+    test("a puzzle the poll replaces leaves no marks from the old one, and says so", () => {
+        const client = fakeClient();
+        const g = build(userState(), client);
+        g.tap(0);
+        expect(g.board.marks.size).toBe(1);
+        expect(g.replaced).toBe(false);
+        // rollover while the screen is open, and the player starts the new day's puzzle
+        const next = { ...puzzle, number: NUMBER + 1 };
+        dailyPuzzleStore.set({ puzzles: [next], states: [userState({ number: NUMBER + 1 })] });
+        flushSync();
+        expect(g.puzzle).toBe(next);
+        expect(g.board.marks.size).toBe(0);
+        expect(g.replaced).toBe(true);
+        g.flushSave();
+        expect(client.dailyPuzzleSaveGrid).not.toHaveBeenCalled();
+    });
+
+    // invariant 4
+    test("the clock is 0 before Start, the time since Start while playing, and the solve time once solved", () => {
+        expect(build(undefined).elapsed(5000)).toBe(0);
+        expect(build(userState({ startedAt: 1000n })).elapsed(5000)).toBe(4000);
+        expect(build(userState({ startedAt: 1000n, solved })).elapsed(5000)).toBe(61_000);
+    });
+
+    // invariant 5
+    test("Start is offered only when not busy and the balance covers the quoted fee", async () => {
+        balance(100);
+        expect(build(undefined).canStart).toBe(true);
+        balance(99);
+        expect(build(undefined).canStart).toBe(false);
+        balance(100);
+        const client = fakeClient({ dailyPuzzleStart: vi.fn(() => new Promise(() => {})) });
+        const g = build(undefined, client);
+        g.start();
+        expect(g.canStart).toBe(false);
+        // a quote of 0 needs no balance
+        balance(0);
+        expect(build(userState({ startedAt: undefined, entryFee: 0 })).canStart).toBe(true);
+    });
+
+    // invariant 6
+    test("the hint button is enabled only when a hint is on offer, input is allowed and the price is covered", () => {
+        balance(25);
+        expect(build(userState()).hintDisabled).toBe(false);
+        // input not allowed: before Start, once solved
+        expect(build(undefined).hintDisabled).toBe(true);
+        expect(build(userState({ solved })).hintDisabled).toBe(true);
+        // no hint on offer
+        const used = [served([1]), served([2]), served([3])];
+        expect(build(userState({ hints: used })).hintDisabled).toBe(true);
+        // price not covered
+        balance(24);
+        expect(build(userState()).hintDisabled).toBe(true);
+    });
+
+    // invariant 7
+    test("a hint answer for a puzzle the poll has since replaced changes nothing", async () => {
+        const answers = [
+            { kind: "success", hint: served([1, 2]), hintsUsed: 1, state: userState() },
+            {
+                kind: "success",
+                hint: { ...served([3, 4]), mistake: true },
+                hintsUsed: 1,
+                state: userState(),
+            },
+            // a quote the button would accept: no retry, so nothing is bought for the new puzzle
+            { kind: "error", code: ErrorCode.PriceMismatch, message: "20" },
+            { kind: "error", code: ErrorCode.Throttled, message: "max_hints" },
+        ];
+        for (const answer of answers) {
+            let reply!: (resp: unknown) => void;
+            const client = fakeClient({
+                dailyPuzzleHint: vi.fn(() => new Promise((resolve) => (reply = resolve))),
+            });
+            const g = build(userState(), client);
+            const asked = g.hint();
+            const next = { ...puzzle, number: NUMBER + 1 };
+            dailyPuzzleStore.set({ puzzles: [next], states: [userState({ number: NUMBER + 1 })] });
+            flushSync();
+            reply(answer);
+            await asked;
+            expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(1);
+            expect(g.hintButton.kind).toBe("hint");
+            expect(g.focus.size).toBe(0);
+            expect(g.target.size).toBe(0);
+            expect(g.caption).toBeUndefined();
+            expect(g.lastHint).toBeUndefined();
+            expect(g.mistakes.size).toBe(0);
+        }
+    });
+
+    // invariant 8: checked by svelte-check, which fails on an @ts-expect-error that no longer
+    // has an error to expect
+    test("a game's model and state stay inside its board, and only meet that game's components", () => {
+        const g = build(userState());
+        // @ts-expect-error the session cannot reach the board's state
+        void g.board.state;
+        // @ts-expect-error nor its model
+        void g.board.model;
+        const pairing = () =>
+            // @ts-expect-error Slant's Board cannot draw a Light Up board
+            bindBoard(lightUp, SlantBoard, LightUpPictogram, puzzle.description);
+        expect(pairing).toBeTypeOf("function");
+    });
+
+    // invariant 8: the type-level test above cannot see a cast, so the casts are counted here
+    test("bindBoard holds the only cast that erases a game's types", () => {
+        const erasing = /as unknown as|[:<,(]\s*unknown\b|<any\b|\bany\s*[>,;)\]]/g;
+        const elsewhere = {
+            sessionSource,
+            registrySource,
+            gameTypes,
+            desktopScreen,
+            mobileScreen,
+            gameDemo,
+            desktopResult,
+            mobileResult,
+        };
+        for (const [name, source] of Object.entries(elsewhere)) {
+            expect(source.match(erasing), name).toBeNull();
+        }
+        expect(boardSource.match(erasing)).toEqual(["as unknown as"]);
     });
 });
