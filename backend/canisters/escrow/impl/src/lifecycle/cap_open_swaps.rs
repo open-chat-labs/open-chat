@@ -2,73 +2,60 @@ use crate::Data;
 use crate::model::notify_status_change_queue::NotifyStatusChangeQueue;
 use crate::model::pending_payments_queue::PendingPaymentsQueue;
 use crate::model::swaps::Swaps;
-use crate::timer_job_types::{ExpireSwapJob, TimerJob};
+use crate::timer_job_types::TimerJob;
 use constants::P2P_SWAP_MAX_EXPIRY;
 use escrow_canister::SwapStatus;
 use tracing::info;
 use types::TimestampMillis;
 
 // One-off, now that a swap can stay open for at most `P2P_SWAP_MAX_EXPIRY`: cancels the open swaps
-// created longer ago than that, refunding their deposits, and brings forward the expiry of any other
-// open swap to that long after it was created. Hundreds were created with expiries decades away,
-// and a user's canister isn't migrated to a MultiUser canister while one of their swaps is unexpired.
+// set to stay open for longer, refunding whatever has been deposited into them. Hundreds were created
+// with expiries decades away, and a user's canister isn't migrated to a MultiUser canister while one
+// of their swaps is unexpired.
 // TODO remove after the release containing this has been deployed
 pub(crate) fn cap_open_swaps(data: &mut Data, now: TimestampMillis) {
-    let capped = cap_swaps(
+    let cancelled = cancel_swaps_over_the_cap(
         &mut data.swaps,
         &mut data.pending_payments_queue,
         &mut data.notify_status_change_queue,
         now,
     );
 
-    for &(id, new_expiry) in capped.iter() {
+    for &id in cancelled.iter() {
         data.timer_jobs
             .cancel_jobs(|job| matches!(job, TimerJob::ExpireSwap(j) if j.swap_id == id));
-        if let Some(expires_at) = new_expiry {
-            data.timer_jobs
-                .enqueue_job(TimerJob::ExpireSwap(Box::new(ExpireSwapJob { swap_id: id })), expires_at, now);
-        }
     }
 
-    let shortened = capped.iter().filter(|(_, new_expiry)| new_expiry.is_some()).count();
-    let cancelled = capped.len() - shortened;
-    info!(cancelled, shortened, "Capped how long the open swaps stay open");
+    info!(
+        cancelled = cancelled.len(),
+        "Cancelled the open swaps set to stay open for too long"
+    );
 }
 
-// Returns each swap capped, with its new expiry if it was shortened, or `None` if it was cancelled
-fn cap_swaps(
+// Returns the ids of the swaps cancelled
+fn cancel_swaps_over_the_cap(
     swaps: &mut Swaps,
     pending_payments_queue: &mut PendingPaymentsQueue,
     notify_status_change_queue: &mut NotifyStatusChangeQueue,
     now: TimestampMillis,
-) -> Vec<(u32, Option<TimestampMillis>)> {
+) -> Vec<u32> {
     let ids: Vec<u32> = swaps
         .iter()
         .filter(|swap| matches!(swap.status(now), SwapStatus::Open) && swap.expires_at > swap.created_at + P2P_SWAP_MAX_EXPIRY)
         .map(|swap| swap.id)
         .collect();
 
-    let mut capped = Vec::new();
-    for id in ids {
-        let Some(swap) = swaps.get_mut(id) else {
-            continue;
-        };
-        let capped_expiry = swap.created_at + P2P_SWAP_MAX_EXPIRY;
-        if capped_expiry <= now {
+    for &id in ids.iter() {
+        if let Some(swap) = swaps.get_mut(id) {
             swap.cancelled_at = Some(now);
-            if swap.token0_received {
-                // Its canister is notified of the cancellation once the refund has been made
-                pending_payments_queue.push_refunds(swap, now);
-            } else {
-                notify_status_change_queue.push(id);
-            }
-            capped.push((id, None));
-        } else {
-            swap.expires_at = capped_expiry;
-            capped.push((id, Some(capped_expiry)));
+            pending_payments_queue.push_refunds(swap, now);
+            // Its canister is notified now, rather than only once a refund has been made, since a
+            // refund from a ledger which has since been uninstalled is parked and never made. It is
+            // notified again once a refund is made, with the refund included.
+            notify_status_change_queue.push(id);
         }
     }
-    capped
+    ids
 }
 
 #[cfg(test)]
@@ -99,7 +86,7 @@ mod tests {
                     token0_amount: 1_000,
                     token0_principal: None,
                     token1: token(2),
-                    token1_amount: 1_000,
+                    token1_amount: 2_000,
                     token1_principal: None,
                     expires_at: created + expires_in,
                     additional_admins: Vec::new(),
@@ -120,13 +107,23 @@ mod tests {
             self.swaps.get_mut(id).unwrap()
         }
 
-        fn cap(&mut self) -> Vec<(u32, Option<TimestampMillis>)> {
-            cap_swaps(
+        fn cancel(&mut self) -> Vec<u32> {
+            cancel_swaps_over_the_cap(
                 &mut self.swaps,
                 &mut self.pending_payments_queue,
                 &mut self.notify_status_change_queue,
                 NOW,
             )
+        }
+
+        fn refunds(&mut self) -> Vec<(u32, Principal, u128)> {
+            std::iter::from_fn(|| self.pending_payments_queue.pop())
+                .map(|p| (p.swap_id, p.principal, p.amount))
+                .collect()
+        }
+
+        fn notifications(&mut self) -> Vec<u32> {
+            std::iter::from_fn(|| self.notify_status_change_queue.pop()).collect()
         }
     }
 
@@ -140,49 +137,55 @@ mod tests {
     }
 
     #[test]
-    fn open_swap_created_over_the_maximum_ago_is_cancelled_and_refunded() {
+    fn open_swap_set_to_stay_open_too_long_is_cancelled_refunded_and_notified() {
         let mut state = State::default();
-        let id = state.add_swap(NOW - 600 * DAY_IN_MS, 10_000 * DAY_IN_MS);
+        let old = state.add_swap(NOW - 600 * DAY_IN_MS, 10_000 * DAY_IN_MS);
+        // Created recently, but with an expiry beyond the maximum
+        let recent = state.add_swap(NOW - DAY_IN_MS, 365 * DAY_IN_MS);
 
-        assert_eq!(state.cap(), vec![(id, None)]);
+        assert_eq!(state.cancel(), vec![old, recent]);
 
-        let swap = state.swap(id);
-        assert_eq!(swap.cancelled_at, Some(NOW));
-        assert!(matches!(swap.status(NOW), SwapStatus::Cancelled(_)));
-        let offered_by = swap.offered_by;
-        let refund = state.pending_payments_queue.pop().unwrap();
-        assert_eq!((refund.swap_id, refund.principal), (id, offered_by));
-        assert!(state.pending_payments_queue.is_empty());
-        // Its canister is notified once the refund has been made
-        assert!(state.notify_status_change_queue.is_empty());
+        for id in [old, recent] {
+            let swap = state.swap(id);
+            assert_eq!(swap.cancelled_at, Some(NOW));
+            assert!(matches!(swap.status(NOW), SwapStatus::Cancelled(_)));
+        }
+        let offered_by = state.swap(old).offered_by;
+        assert_eq!(state.refunds(), vec![(old, offered_by, 1_000), (recent, offered_by, 1_000)]);
+        assert_eq!(state.notifications(), vec![old, recent]);
     }
 
     #[test]
-    fn cancelled_swap_with_nothing_to_refund_notifies_its_canister() {
+    fn cancelled_swap_with_nothing_deposited_is_notified() {
         let mut state = State::default();
         let id = state.add_swap(NOW - 600 * DAY_IN_MS, 10_000 * DAY_IN_MS);
         state.swap_mut(id).token0_received = false;
 
-        assert_eq!(state.cap(), vec![(id, None)]);
+        assert_eq!(state.cancel(), vec![id]);
 
         assert_eq!(state.swap(id).cancelled_at, Some(NOW));
-        assert!(state.pending_payments_queue.is_empty());
-        assert_eq!(state.notify_status_change_queue.pop(), Some(id));
+        assert!(state.refunds().is_empty());
+        assert_eq!(state.notifications(), vec![id]);
     }
 
     #[test]
-    fn newer_open_swap_expires_the_maximum_after_it_was_created() {
+    fn accepters_deposit_is_refunded_though_the_offer_was_never_deposited() {
         let mut state = State::default();
-        let created = NOW - 10 * DAY_IN_MS;
-        let id = state.add_swap(created, 365 * DAY_IN_MS);
+        let id = state.add_swap(NOW - 600 * DAY_IN_MS, 10_000 * DAY_IN_MS);
+        let accepter = Principal::from_slice(&[8]);
+        {
+            let swap = state.swap_mut(id);
+            swap.token0_received = false;
+            swap.token1_received = true;
+            swap.accepted_by = Some((accepter, NOW - 500 * DAY_IN_MS));
+        }
+        // Without the offer, the swap counts as open rather than accepted
+        assert!(matches!(state.swap(id).status(NOW), SwapStatus::Open));
 
-        assert_eq!(state.cap(), vec![(id, Some(created + P2P_SWAP_MAX_EXPIRY))]);
+        assert_eq!(state.cancel(), vec![id]);
 
-        let swap = state.swap(id);
-        assert_eq!(swap.cancelled_at, None);
-        assert_eq!(swap.expires_at, created + P2P_SWAP_MAX_EXPIRY);
-        assert!(matches!(swap.status(NOW), SwapStatus::Open));
-        assert!(state.pending_payments_queue.is_empty());
+        assert_eq!(state.refunds(), vec![(id, accepter, 2_000)]);
+        assert_eq!(state.notifications(), vec![id]);
     }
 
     #[test]
@@ -190,6 +193,7 @@ mod tests {
         let mut state = State::default();
         // Within the maximum
         let short = state.add_swap(NOW - DAY_IN_MS, 7 * DAY_IN_MS);
+        let longest = state.add_swap(NOW - DAY_IN_MS, P2P_SWAP_MAX_EXPIRY);
         // Already expired
         let expired = state.add_swap(NOW - 600 * DAY_IN_MS, DAY_IN_MS);
         // Accepted, though not yet paid out
@@ -199,20 +203,13 @@ mod tests {
         let cancelled = state.add_swap(NOW - 600 * DAY_IN_MS, 10_000 * DAY_IN_MS);
         state.swap_mut(cancelled).cancelled_at = Some(NOW - 500 * DAY_IN_MS);
 
-        assert!(state.cap().is_empty());
+        assert!(state.cancel().is_empty());
 
-        for (id, expires_in) in [
-            (short, 7 * DAY_IN_MS),
-            (expired, DAY_IN_MS),
-            (accepted, 10_000 * DAY_IN_MS),
-            (cancelled, 10_000 * DAY_IN_MS),
-        ] {
-            let swap = state.swap(id);
-            assert_eq!(swap.expires_at, swap.created_at + expires_in, "{id}");
+        for id in [short, longest, expired, accepted] {
+            assert_eq!(state.swap(id).cancelled_at, None, "{id}");
         }
         assert_eq!(state.swap(cancelled).cancelled_at, Some(NOW - 500 * DAY_IN_MS));
-        assert_eq!(state.swap(accepted).cancelled_at, None);
-        assert!(state.pending_payments_queue.is_empty());
-        assert!(state.notify_status_change_queue.is_empty());
+        assert!(state.refunds().is_empty());
+        assert!(state.notifications().is_empty());
     }
 }
