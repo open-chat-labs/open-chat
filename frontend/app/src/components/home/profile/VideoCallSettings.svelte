@@ -7,7 +7,7 @@
     import { Ringtone } from "../../../stores/video";
     import { onDestroy } from "svelte";
 
-    let ringtones: Ringtone[] = [
+    const ringtones: Ringtone[] = [
         new Ringtone("boring", "Boring"),
         new Ringtone("pleasant", "Pleasant"),
         new Ringtone("boomboom", "Boom boom"),
@@ -23,9 +23,6 @@
                 r.stop();
             }
         });
-        // Legacy-mode component (no runes): this self-assignment is what re-renders the play/pause state.
-        // eslint-disable-next-line no-self-assign
-        ringtones = ringtones;
     }
 
     onDestroy(() => {
