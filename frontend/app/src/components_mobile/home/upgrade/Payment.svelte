@@ -222,10 +222,20 @@
     let tokenState = $derived(new TokenState(tokenDetails, "usd"));
     let toPayE8s = $derived(amountInE8s(tokenDetails.symbol, diamondFees, selectedOption));
     let toPay = $derived(amount(toPayE8s));
-    // The price includes the transfer's fee, but a user who holds their own funds also pays for the
-    // approval they make before the price is pulled from their wallet
-    let approvalFee = $derived(walletApprovalFee($currentUserIdStore, tokenDetails.transferFee));
-    let toPayWithFees = $derived(amount(toPayE8s + approvalFee));
+    // The price includes the transfer's fee, but an external wallet, or the wallet of a user who
+    // holds their own funds, also pays for the approval it makes before the price is pulled from it
+    let approvalFee = $derived(
+        walletApprovalFee(
+            $currentUserIdStore,
+            tokenDetails.transferFee,
+            sourceWallet !== undefined,
+        ),
+    );
+    // The checks against the OpenChat balance are for paying from it, whichever wallet is chosen
+    let openChatWalletApprovalFee = $derived(
+        walletApprovalFee($currentUserIdStore, tokenDetails.transferFee, false),
+    );
+    let toPayWithFees = $derived(amount(toPayE8s + openChatWalletApprovalFee));
     let insufficientFundsForSelectedSub = $derived(insufficientFundsForSub(selectedOption.index)); //we need to account for the fact that js cannot do maths
     let insufficientFundsForAnySub = $derived(insufficientFundsForSub(0));
     let insufficientFundsForAllSubs = $derived(insufficientFundsForSub(3));
@@ -237,7 +247,7 @@
 
     function insufficientFundsForSub(index: number): boolean {
         const toPayE8s = amountInE8s(tokenDetails.symbol, diamondFees, options[index]);
-        return toPayE8s + approvalFee - tokenState.remainingBalance > 0.0001;
+        return toPayE8s + openChatWalletApprovalFee - tokenState.remainingBalance > 0.0001;
     }
 
     let expiry = $derived.by(() => {

@@ -43,11 +43,12 @@
     let payFromWallet = $derived(sourceWallet !== undefined);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let tokenState = $derived(new TokenState(tokenDetails, "usd"));
-    // What the transfer costs in fees includes the approval a user who holds their own funds makes
-    // before the transfer is pulled from their wallet
+    // What the transfer costs in fees includes the approval an external wallet, or the wallet of a
+    // user who holds their own funds, makes before the transfer is pulled from it
     $effect(() => {
         tokenState.transferFees =
-            tokenState.transferFee + walletApprovalFee($currentUserIdStore, tokenState.transferFee);
+            tokenState.transferFee +
+            walletApprovalFee($currentUserIdStore, tokenState.transferFee, payFromWallet);
     });
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
     let valid = $derived(error === undefined && validAmount && receiver !== undefined);

@@ -130,9 +130,12 @@
     let transferFee = $derived(tokenDetails.transferFee);
     let transferFees = $derived(transferFee * BigInt(numberOfWinners ?? 0));
     let prizeFees = $derived(transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n);
-    // What the transfer of the prize's fund costs in fees, which includes the approval a user who
-    // holds their own funds makes before the fund is pulled from their wallet
-    let fundFees = $derived(transferFee + walletApprovalFee($currentUserIdStore, transferFee));
+    // What the transfer of the prize's fund costs in fees, which includes the approval an external
+    // wallet, or the wallet of a user who holds their own funds, makes before the fund is pulled
+    // from it
+    let fundFees = $derived(
+        transferFee + walletApprovalFee($currentUserIdStore, transferFee, payFromWallet),
+    );
     let totalFees = $derived(fundFees + prizeFees);
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
     let remainingBalance = $state(0n);

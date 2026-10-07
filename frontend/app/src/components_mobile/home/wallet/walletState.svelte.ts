@@ -128,8 +128,8 @@ export class TokenState {
     #cryptoBalance = $derived(cryptoBalanceStore.value.get(this.#ledger) ?? 0n);
     #transferFee = $derived(this.#token.transferFee);
     // What the draft costs in fees. One transfer's fee unless the flow sets otherwise, eg. to add
-    // the approval a user who holds their own funds makes before a payment is pulled from their
-    // wallet (see `walletApprovalFee`)
+    // the approval an external wallet, or the wallet of a user who holds their own funds, makes
+    // before a payment is pulled from it (see `walletApprovalFee`)
     #fees = $state<bigint | undefined>();
     #transferFees = $derived(this.#fees ?? this.#transferFee);
     #remainingBalance = $derived(

@@ -213,11 +213,12 @@
         s.refreshBalance(client).then(onBalanceRefreshFinished);
         return s;
     });
-    // What the tip costs in fees includes the approval a user who holds their own funds makes
-    // before the tip is pulled from their wallet
+    // What the tip costs in fees includes the approval an external wallet, or the wallet of a user
+    // who holds their own funds, makes before the tip is pulled from it
     $effect(() => {
         tokenState.transferFees =
-            tokenState.transferFee + walletApprovalFee($currentUserIdStore, tokenState.transferFee);
+            tokenState.transferFee +
+            walletApprovalFee($currentUserIdStore, tokenState.transferFee, payFromWallet);
     });
     let exchangeRate = $derived(
         to2SigFigs($exchangeRatesLookup.get(tokenDetails.symbol.toLowerCase())?.toUSD ?? 0),
