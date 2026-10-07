@@ -47,6 +47,9 @@
                 r.stop();
             }
         });
+        // Legacy-mode component (no runes): this self-assignment is what re-renders the play/pause state.
+        // eslint-disable-next-line no-self-assign
+        ringtones = ringtones;
     }
 
     onDestroy(() => {

@@ -80,6 +80,11 @@ export default defineConfig([
             // TypeScript already reports undefined names, and no-undef doesn't know the DOM types
             // (NodeListOf, CanvasImageSource). typescript-eslint turns it off for .ts files for the same reason.
             "no-undef": "off",
+            // typescript-eslint switches these on for .ts files only; components get them too.
+            "no-var": "error",
+            "prefer-rest-params": "error",
+            "prefer-spread": "error",
+            // Not prefer-const: it can't see `bind:` writes in markup, and its fix would break them.
         },
     },
     {

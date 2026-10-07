@@ -14,6 +14,9 @@
             const lines = Array.from({ length: rand(2, 6) });
             messages.push([rand(50, 100), lines]);
         }
+        // Legacy-mode component (no runes): this self-assignment is what re-renders after the pushes.
+        // eslint-disable-next-line no-self-assign
+        messages = messages; // force reaction
     });
 </script>
 
