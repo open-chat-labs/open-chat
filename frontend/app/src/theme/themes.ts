@@ -1,3 +1,4 @@
+import { configKeys } from "@shared";
 import { theme as neon } from "component-lib";
 import { activeThemeV2Id, initThemeV2 } from "./themeV2";
 import { derived, readable, writable } from "svelte/store";
@@ -128,7 +129,7 @@ export function clearStartupBackground(): void {
 }
 
 export const themeOverride = writable<string>(undefined);
-export const themeType = createLocalStorageStore("openchat_theme", "system");
+export const themeType = createLocalStorageStore(configKeys.theme, "system");
 export const preferredDarkThemeName = createLocalStorageStore("openchat_dark_theme", "dark");
 export const preferredLightThemeName = createLocalStorageStore("openchat_light_theme", "white");
 

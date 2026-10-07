@@ -4,9 +4,16 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 // The real theme module drags in component-lib's svelte components (which vitest's
 // svelte plugin can't preprocess) and needs matchMedia. The action only reads
 // `theme.accent`, so a stub is enough.
-vi.mock("../theme/themes", async () => {
-    const { readable } = await import("svelte/store");
-    return { currentTheme: readable({ accent: "#22a7f2" }) };
+vi.mock("../theme/themes", () => {
+    const theme = { accent: "#22a7f2" };
+    return {
+        currentTheme: {
+            subscribe(run: (value: typeof theme) => void) {
+                run(theme);
+                return () => {};
+            },
+        },
+    };
 });
 
 import { editingLabel, editmode, i18nKey } from "../i18n/i18n";

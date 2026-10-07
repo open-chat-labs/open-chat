@@ -1,5 +1,5 @@
-import { AuthClient } from "@icp-sdk/auth/client";
 import { routerReadyStore, xframeOverrides, type XFrameOverrides } from "@client";
+import { AuthClient } from "@icp-sdk/auth/client";
 import { navigate } from "@utils/navigation";
 import { get } from "svelte/store";
 import { setModifiedTheme } from "../theme/themes";
@@ -50,7 +50,7 @@ const FRAME_ANCESTORS = [
     "https://tacodao.com", // TacoDAO Production Website URL
     "https://wxunf-maaaa-aaaab-qbzga-cai.icp0.io", // TacoDAO Staging ID URL
     "https://staging.tacodao.com", // TacoDAO Staging Website URL
-    "https://opentrades-qwt.caffeine.xyz", // OpenTrades
+    "https://opentrades-upg.caffeine.xyz", // OpenTrades
 ];
 
 type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;
