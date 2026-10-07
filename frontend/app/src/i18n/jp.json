@@ -2648,6 +2648,8 @@
         "viewers": "視聴者 ({count})"
     },
     "viewer": "ビューア",
+    "votingHotkey": "提案に投票するためのホットキー",
+    "votingHotkeyCopiedToClipboard": "ホットキーがクリップボードにコピーされました",
     "wallet": "ウォレット",
     "walletSettings": "ウォレット設定",
     "webhook": {

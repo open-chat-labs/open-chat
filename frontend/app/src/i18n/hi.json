@@ -2648,6 +2648,8 @@
         "viewers": "दर्शक ({count})"
     },
     "viewer": "दर्शक",
+    "votingHotkey": "प्रस्तावों पर वोट करने के लिए हॉटकी",
+    "votingHotkeyCopiedToClipboard": "हॉटकी क्लिपबोर्ड पर कॉपी की गई",
     "wallet": "वॉलेट",
     "walletSettings": "वॉलेट सेटिंग",
     "webhook": {

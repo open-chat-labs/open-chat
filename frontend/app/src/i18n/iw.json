@@ -2648,6 +2648,8 @@
         "viewers": "צופים ({count})"
     },
     "viewer": "צוֹפֶה",
+    "votingHotkey": "Hotkey להצבעה על הצעות",
+    "votingHotkeyCopiedToClipboard": "ה-Hotkey הועתק ללוח",
     "wallet": "ארנק",
     "walletSettings": "הגדרות ארנק",
     "webhook": {

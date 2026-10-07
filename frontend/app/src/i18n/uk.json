@@ -2648,6 +2648,8 @@
         "viewers": "Глядачі ({count})"
     },
     "viewer": "глядач",
+    "votingHotkey": "Hotkey для голосування за пропозиції",
+    "votingHotkeyCopiedToClipboard": "Hotkey скопійовано в буфер обміну",
     "wallet": "Гаманець",
     "walletSettings": "Налаштування гаманця",
     "webhook": {

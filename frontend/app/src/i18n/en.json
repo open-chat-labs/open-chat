@@ -2650,6 +2650,8 @@
         "viewers": "Viewers ({count})"
     },
     "viewer": "viewer",
+    "votingHotkey": "Hotkey for voting on proposals",
+    "votingHotkeyCopiedToClipboard": "Hotkey copied to clipboard",
     "wallet": "Wallet",
     "walletSettings": "Wallet settings",
     "webhook": {

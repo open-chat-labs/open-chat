@@ -2648,6 +2648,8 @@
         "viewers": "Espectadores ({count})"
     },
     "viewer": "espectador",
+    "votingHotkey": "Hotkey para votar propuestas",
+    "votingHotkeyCopiedToClipboard": "Hotkey copiada al portapapeles",
     "wallet": "Cartera",
     "walletSettings": "Configuración de billetera",
     "webhook": {

@@ -2648,6 +2648,8 @@
         "viewers": "观看者 ({count})"
     },
     "viewer": "观众",
+    "votingHotkey": "用于对提案投票的热键",
+    "votingHotkeyCopiedToClipboard": "热键已复制到剪贴板",
     "wallet": "钱包",
     "walletSettings": "钱包设置",
     "webhook": {

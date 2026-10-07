@@ -2648,6 +2648,8 @@
         "viewers": "المشاهدون ({count})"
     },
     "viewer": "مشاهد",
+    "votingHotkey": "Hotkey للتصويت على المقترحات",
+    "votingHotkeyCopiedToClipboard": "تم نسخ الـ Hotkey إلى الحافظة",
     "wallet": "محفظة",
     "walletSettings": "إعدادات المحفظة",
     "webhook": {

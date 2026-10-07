@@ -26,6 +26,7 @@
         suspendedUserStore,
         underReviewEnabledStore,
         userMetricsStore,
+        userWalletAccount,
     } from "@client";
     import { ErrorCode, type PublicProfile } from "@shared";
     import { getContext, onMount } from "svelte";
@@ -130,6 +131,12 @@
     );
     let readonly = $derived($suspendedUserStore || $anonUserStore);
     let verified = $derived(user.isUniquePerson);
+    // The principal to add as a hotkey to the neurons the user votes with from OpenChat, which is the
+    // owner of their wallet: the principal they sign in with, or for a user alone in their canister,
+    // that canister, ie. their user id
+    let votingHotkey = $derived(
+        userWalletAccount(user.userId, () => client.OcIdentityPrincipal).owner.toText(),
+    );
 
     //@ts-ignore
     let version = window.OC_WEBSITE_VERSION;
@@ -304,9 +311,9 @@
         }
     }
 
-    function onCopy() {
-        navigator.clipboard.writeText(user.userId).then(() => {
-            toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
+    function copyToClipboard(text: string, successKey: string) {
+        navigator.clipboard.writeText(text).then(() => {
+            toastStore.showSuccessToast(i18nKey(successKey));
         });
     }
 
@@ -649,7 +656,26 @@
                         <Legend label={i18nKey("userId")} rules={i18nKey("alsoCanisterId")} />
                         <div class="userid-txt">
                             <div>{user.userId}</div>
-                            <div role="button" tabindex="0" onclick={onCopy} class="copy">
+                            <div
+                                role="button"
+                                tabindex="0"
+                                onclick={() =>
+                                    copyToClipboard(user.userId, "userIdCopiedToClipboard")}
+                                class="copy">
+                                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="userid">
+                        <Legend label={i18nKey("votingHotkey")} />
+                        <div class="userid-txt">
+                            <div>{votingHotkey}</div>
+                            <div
+                                role="button"
+                                tabindex="0"
+                                onclick={() =>
+                                    copyToClipboard(votingHotkey, "votingHotkeyCopiedToClipboard")}
+                                class="copy">
                                 <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
                             </div>
                         </div>

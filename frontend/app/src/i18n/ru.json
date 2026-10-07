@@ -2648,6 +2648,8 @@
         "viewers": "Зрители ({count})"
     },
     "viewer": "зритель",
+    "votingHotkey": "Hotkey для голосования по предложениям",
+    "votingHotkeyCopiedToClipboard": "Hotkey скопирован в буфер обмена",
     "wallet": "Кошелек",
     "walletSettings": "Настройки кошелька",
     "webhook": {

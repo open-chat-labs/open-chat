@@ -2648,6 +2648,8 @@
         "viewers": "بینندگان ({count})"
     },
     "viewer": "بیننده",
+    "votingHotkey": "Hotkey برای رای دادن به پیشنهادات",
+    "votingHotkeyCopiedToClipboard": "Hotkey در کلیپ بورد کپی شد",
     "wallet": "کیف پول",
     "walletSettings": "تنظیمات کیف پول",
     "webhook": {

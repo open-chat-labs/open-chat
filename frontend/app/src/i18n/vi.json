@@ -2648,6 +2648,8 @@
         "viewers": "Người xem ({count})"
     },
     "viewer": "người xem",
+    "votingHotkey": "Hotkey để bỏ phiếu cho các đề xuất",
+    "votingHotkeyCopiedToClipboard": "Đã sao chép Hotkey vào bảng nhớ tạm",
     "wallet": "Cái ví",
     "walletSettings": "Cài đặt ví",
     "webhook": {
