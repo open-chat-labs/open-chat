@@ -12,6 +12,7 @@
         anonUserStore,
         canExtendDiamondStore,
         communitiesStore,
+        currentUserIdStore,
         hideMessagesFromDirectBlocked,
         iconSize,
         isDiamondStore,
@@ -132,10 +133,11 @@
     let readonly = $derived($suspendedUserStore || $anonUserStore);
     let verified = $derived(user.isUniquePerson);
     // The principal to add as a hotkey to the neurons the user votes with from OpenChat, which is the
-    // owner of their wallet: the principal they sign in with, or for a user alone in their canister,
-    // that canister, ie. their user id
+    // owner of their wallet: their OpenChat principal (not the auth principal), or for a user alone
+    // in their canister, that canister, ie. their user id. Read from the store rather than `user`,
+    // which is a placeholder whose id isn't a principal until the user's summary has loaded.
     let votingHotkey = $derived(
-        userWalletAccount(user.userId, () => client.OcIdentityPrincipal).owner.toText(),
+        userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal).owner.toText(),
     );
 
     //@ts-ignore
