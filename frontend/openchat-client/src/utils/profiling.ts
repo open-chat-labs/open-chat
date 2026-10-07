@@ -1,5 +1,5 @@
 import { profileStore } from "../stores/profiling";
-import { configKeys } from "./config";
+import { configKeys } from "@shared";
 
 export function showTrace() {
     return localStorage.getItem(configKeys.profile) === "true";

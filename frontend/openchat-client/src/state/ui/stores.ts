@@ -1,5 +1,6 @@
 import { dequal } from "dequal";
 import {
+    configKeys,
     publish,
     ScreenWidth,
     type Dimensions,
@@ -95,7 +96,7 @@ export const baseFontSize = derived(mobileWidth, (mobileWidth) => {
 });
 
 export const fontScaleStore = new LocalStorageStore<FontScale>(
-    "openchat_font_size",
+    configKeys.fontSize,
     2,
     (fs) => fs.toString(),
     (fs) => Number(fs) as FontScale,
