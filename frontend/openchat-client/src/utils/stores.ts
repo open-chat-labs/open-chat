@@ -107,8 +107,12 @@ export function readable<T>(
     return {
         subscribe: (subscriber: Subscriber<T>, invalidate?: () => void) =>
             store.subscribe(subscriber, invalidate),
-        value: store.value,
-        dirty: store.dirty,
+        get value() {
+            return store.value;
+        },
+        get dirty() {
+            return store.dirty;
+        },
     };
 }
 
@@ -150,7 +154,10 @@ class _Writable<T> {
 
         if (this.#subscriptions.size === 1) {
             if (this.#start !== undefined) {
-                const stop = this.#start(this.set, this.update);
+                const stop = this.#start(
+                    (value) => this.set(value),
+                    (fn) => this.update(fn),
+                );
                 if (typeof stop === "function") {
                     this.#stop = stop;
                 }

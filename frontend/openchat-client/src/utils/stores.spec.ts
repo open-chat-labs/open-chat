@@ -5,7 +5,15 @@ import {
     writable as svelteWritable,
     type Writable as SvelteWritable,
 } from "svelte/store";
-import { derived, type Readable, withPausedStores, writable, type Writable } from "./stores";
+import {
+    derived,
+    get,
+    readable,
+    type Readable,
+    withPausedStores,
+    writable,
+    type Writable,
+} from "./stores";
 
 describe("store updates propagate as expected", () => {
     test("with nested derived stores", () => {
@@ -333,5 +341,60 @@ describe("subscriber failures do not wedge the store machinery", () => {
         w.set(1);
         expect(seen).toEqual([0, 1]);
         expect(calls).toEqual([0]);
+    });
+});
+
+describe("start notifier", () => {
+    /** Invariant: a store's start notifier can set and update its value, now or later. */
+    test("set and update work when called inside and after start", () => {
+        let push: (value: number) => void = () => {};
+        let bump: (fn: (value: number) => number) => void = () => {};
+        const store = writable(0, (set, update) => {
+            set(1);
+            push = set;
+            bump = update;
+        });
+        const seen: number[] = [];
+        const unsub = store.subscribe((v) => seen.push(v));
+
+        push(5);
+        bump((v) => v + 1);
+
+        expect(store.value).toBe(6);
+        expect(seen).toEqual([1, 5, 6]);
+        unsub();
+    });
+});
+
+describe("readable", () => {
+    /** Invariant: a readable's value and dirty flag follow the store, not a copy taken when it was created. */
+    test("value follows updates pushed by the start notifier", () => {
+        let push: (value: number) => void = () => {};
+        const store = readable(1, (set) => {
+            push = set;
+        });
+        const unsub = store.subscribe(() => {});
+
+        push(2);
+
+        expect(store.value).toBe(2);
+        expect(get(store)).toBe(2);
+        unsub();
+    });
+
+    test("dirty is true while an update waits for paused stores", () => {
+        let push: (value: number) => void = () => {};
+        const store = readable(1, (set) => {
+            push = set;
+        });
+        const unsub = store.subscribe(() => {});
+
+        withPausedStores(() => {
+            push(2);
+            expect(store.dirty).toBe(true);
+        });
+
+        expect(store.dirty).toBe(false);
+        unsub();
     });
 });
