@@ -152,7 +152,6 @@
     "admin": "admin",
     "advanced": "Avanzado",
     "airdropWarning": "Para poder participar del próximo Airdrop, debes ser miembro del canal **{channelName}** en la comunidad **{communityName}**. [Haz clic aquí para unirte.]({url})",
-    "alsoCanisterId": "también la identificación de su contenedor",
     "andNMore": "y {n} más",
     "appearance": "Apariencia",
     "apply": "Aplicar",
@@ -2648,6 +2647,8 @@
         "viewers": "Espectadores ({count})"
     },
     "viewer": "espectador",
+    "votingHotkey": "Hotkey para votar propuestas",
+    "votingHotkeyCopiedToClipboard": "Hotkey copiada al portapapeles",
     "wallet": "Cartera",
     "walletSettings": "Configuración de billetera",
     "webhook": {
