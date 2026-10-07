@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Only increase the `web_push_subscriptions` metric when a subscription is added, and recompute it on upgrade ([#9844](https://github.com/open-chat-labs/open-chat/pull/9844))
+- Replace the keys of a web push subscription pushed again with the same endpoint, rather than storing a duplicate ([#9844](https://github.com/open-chat-labs/open-chat/pull/9844))
+
 ## [[2.0.2108](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2108-local_user_index)] - 2026-10-07
 
 ### Added
