@@ -10,6 +10,7 @@ import globals from "globals";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import noPagejsDirect from "./eslint-rules/no-pagejs-direct.mjs";
+import noRestrictedDynamicImports from "./eslint-rules/no-restricted-dynamic-imports.mjs";
 
 // __dirname equivalent
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -17,6 +18,27 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Load the ESM-only Svelte plugin via dynamic import
 const svelte = await import("eslint-plugin-svelte").then((mod) => mod.default ?? mod);
 const svelteParser = await import("svelte-eslint-parser").then((mod) => mod.default ?? mod);
+
+// What app code may not import. The same patterns cover static imports and re-exports
+// (no-restricted-imports) and dynamic import() (local/no-restricted-dynamic-imports).
+const agentOrWorker = {
+    regex: "^@(agent|worker)($|[/?])|(^|/)openchat-(agent|worker)/",
+    message: "The app talks to the agent and worker only through @client.",
+};
+const insideClient = {
+    regex: "^@client[/?]|(^|/)openchat-client/",
+    message: "Import from @client, not from a path inside it.",
+};
+
+function restrictAppImports(...patterns) {
+    return {
+        "no-restricted-imports": ["error", { patterns }],
+        "local/no-restricted-dynamic-imports": ["error", { patterns }],
+    };
+}
+
+const svelteStoreMessage =
+    "Use runes or the custom stores in openchat-client/src/utils/stores.ts (see frontend/CLAUDE.md).";
 
 const compat = new FlatCompat({
     baseDirectory: __dirname,
@@ -37,7 +59,12 @@ export default defineConfig([
             "@typescript-eslint": typescriptEslint,
             prettier,
             svelte,
-            local: { rules: { "no-pagejs-direct": noPagejsDirect } },
+            local: {
+                rules: {
+                    "no-pagejs-direct": noPagejsDirect,
+                    "no-restricted-dynamic-imports": noRestrictedDynamicImports,
+                },
+            },
         },
         extends: compat.extends(
             "eslint:recommended",
@@ -53,55 +80,24 @@ export default defineConfig([
             "@typescript-eslint/no-restricted-imports": [
                 "error",
                 {
-                    paths: [
-                        {
-                            name: "svelte/store",
-                            allowTypeImports: true,
-                            message:
-                                "Use runes or the custom stores in openchat-client/src/utils/stores.ts (see frontend/CLAUDE.md).",
-                        },
-                    ],
+                    paths: [{ name: "svelte/store", allowTypeImports: true, message: svelteStoreMessage }],
                 },
+            ],
+            "no-restricted-syntax": [
+                "error",
+                { selector: "ImportExpression[source.value='svelte/store']", message: svelteStoreMessage },
             ],
         },
     },
     // The app reaches the worker and agent only through the client, and the client only through its entry point.
     {
-        files: ["app/src/**/*.ts", "app/src/**/*.svelte"],
-        rules: {
-            "no-restricted-imports": [
-                "error",
-                {
-                    patterns: [
-                        {
-                            group: ["@agent", "@agent/*", "@worker", "@worker/*", "**/openchat-agent/**", "**/openchat-worker/**"],
-                            message: "The app talks to the agent and worker only through @client.",
-                        },
-                        {
-                            group: ["@client/*", "**/openchat-client/**"],
-                            message: "Import from @client, not from a path inside it.",
-                        },
-                    ],
-                },
-            ],
-        },
+        files: ["app/src/**/*.ts", "app/src/**/*.js", "app/src/**/*.svelte"],
+        rules: restrictAppImports(agentOrWorker, insideClient),
     },
-    // Specs may reach inside the client to build its internal state; the agent and worker stay off limits.
+    // Tests may reach inside the client to build its internal state; the agent and worker stay off limits.
     {
-        files: ["app/src/**/*.spec.ts"],
-        rules: {
-            "no-restricted-imports": [
-                "error",
-                {
-                    patterns: [
-                        {
-                            group: ["@agent", "@agent/*", "@worker", "@worker/*", "**/openchat-agent/**", "**/openchat-worker/**"],
-                            message: "The app talks to the agent and worker only through @client.",
-                        },
-                    ],
-                },
-            ],
-        },
+        files: ["app/src/**/*.spec.ts", "app/src/**/*.test.ts"],
+        rules: restrictAppImports(agentOrWorker),
     },
     // Files that used svelte/store before the rule. Move each to runes or the custom stores when you touch it,
     // then take it off this list. Never add to it.
@@ -168,6 +164,7 @@ export default defineConfig([
         ],
         rules: {
             "@typescript-eslint/no-restricted-imports": "off",
+            "no-restricted-syntax": "off",
         },
     },
     // Explicit exceptions: files that are permitted to import page.js directly.
