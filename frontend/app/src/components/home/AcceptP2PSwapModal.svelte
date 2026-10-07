@@ -79,7 +79,7 @@
     // An OpenChat balance which cannot cover the swap is no obstacle when an external wallet is
     // paying instead
     let insufficient = $derived(
-        sourceWallet === undefined && cryptoBalance <= amount1 + transferFees,
+        sourceWallet === undefined && cryptoBalance < amount1 + transferFees,
     );
     let feeCount = $derived(approvalFee > 0n ? 3 : 2);
     let valid = $derived(error === undefined && !insufficient);
