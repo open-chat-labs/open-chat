@@ -78,9 +78,13 @@ function fakeClient(overrides: Partial<Fake> = {}): OpenChat & Fake {
     return fake as unknown as OpenChat & Fake;
 }
 
-function build(state: DailyPuzzleUserState | undefined, client = fakeClient()): DailyPuzzleGame {
+function build(
+    state: DailyPuzzleUserState | undefined,
+    client = fakeClient(),
+    hasDemo = false,
+): DailyPuzzleGame {
     dailyPuzzleStore.set({ puzzles: [puzzle], states: state === undefined ? [] : [state] });
-    return new DailyPuzzleGame(client, puzzle, state, USER, game);
+    return new DailyPuzzleGame(client, puzzle, state, USER, game, hasDemo);
 }
 
 function saveLocal(
@@ -945,5 +949,79 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
         expect(g.target.has(1)).toBe(false);
         // the island stays as context
         expect(g.focus.has(2)).toBe(true);
+    });
+});
+
+describe("the tutorial reopened mid-game (#9822)", () => {
+    const solved = { solvedAt: 2n, solveTimeMs: 1n, reward: 250, hintsUsed: 0, streak: 1 };
+
+    // invariant 2
+    test("while the tutorial is open no tap, hint or reset reaches the game", async () => {
+        const client = fakeClient();
+        const g = build(userState(), client, true);
+        g.tap(0);
+        g.toggleTutorial();
+        g.tap(4);
+        expect(game.filled(model, g.state)).toEqual([[0, 1]]);
+        expect(g.canReset).toBe(false);
+        g.reset();
+        g.reset();
+        expect(game.filled(model, g.state)).toEqual([[0, 1]]);
+        await g.hint();
+        expect(client.dailyPuzzleHint).not.toHaveBeenCalled();
+    });
+
+    // invariant 3
+    test("opening and closing the tutorial leaves the board's marks unchanged", () => {
+        const g = build(userState(), fakeClient(), true);
+        g.tap(0);
+        g.tap(4);
+        const before = g.state;
+        g.toggleTutorial();
+        expect(g.showsDemo).toBe(true);
+        g.toggleTutorial();
+        expect(g.showsDemo).toBe(false);
+        expect(g.state).toBe(before);
+    });
+
+    // invariant 4
+    test("once the puzzle is solved the board and result actions show, never the tutorial", () => {
+        const g = build(userState(), fakeClient(), true);
+        g.toggleTutorial();
+        expect(g.tutorialOpen).toBe(true);
+        // a solve that lands while the tutorial is open: an in-flight submit or another device
+        dailyPuzzleStore.set({ puzzles: [puzzle], states: [userState({ solved })] });
+        flushSync();
+        expect(g.showsDemo).toBe(false);
+        expect(g.tutorialOpen).toBe(false);
+    });
+
+    // invariant 5
+    test("a newly built game, as after the puzzle is replaced, has the tutorial closed", () => {
+        const g = build(userState(), fakeClient(), true);
+        expect(g.tutorialOpen).toBe(false);
+        expect(g.showsDemo).toBe(false);
+    });
+
+    // invariant 6
+    test("the tutorial can be reopened only on a started, unsolved game that has a demo", () => {
+        expect(build(userState(), fakeClient(), true).canToggleTutorial).toBe(true);
+        expect(build(undefined, fakeClient(), true).canToggleTutorial).toBe(false);
+        expect(build(userState({ solved }), fakeClient(), true).canToggleTutorial).toBe(false);
+        expect(build(userState(), fakeClient(), false).canToggleTutorial).toBe(false);
+        // and a toggle that is not offered does nothing
+        const g = build(userState({ solved }), fakeClient(), true);
+        g.toggleTutorial();
+        expect(g.tutorialOpen).toBe(false);
+    });
+
+    // invariant 7
+    test("before Start a game with a demo shows the demo, and only a game without one shows the rules text", () => {
+        const withDemo = build(undefined, fakeClient(), true);
+        expect(withDemo.showsDemo).toBe(true);
+        expect(withDemo.showsRules).toBe(false);
+        const withoutDemo = build(undefined, fakeClient(), false);
+        expect(withoutDemo.showsDemo).toBe(false);
+        expect(withoutDemo.showsRules).toBe(true);
     });
 });

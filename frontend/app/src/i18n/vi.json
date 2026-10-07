@@ -718,6 +718,8 @@
         "wrong": "Chưa đúng. Hãy kiểm tra các ô đỏ.",
         "mistake": "Có lỗi ở các ô đỏ. Hãy sửa lại rồi yêu cầu gợi ý lần nữa.",
         "fixMistakeFirst": "Hãy sửa các ô đỏ trước",
+        "howToPlay": "Cách chơi",
+        "backToPuzzle": "Quay lại câu đố",
         "noFreeChecks": "Đã hết lượt kiểm tra miễn phí cho câu đố hôm nay",
         "checksLeft": "Còn {count} lượt kiểm tra",
         "reset": "Đặt lại",

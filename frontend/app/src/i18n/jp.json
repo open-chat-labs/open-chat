@@ -718,6 +718,8 @@
         "wrong": "違います。赤いマスを確認してください。",
         "mistake": "赤いマスに間違いがあります。直してから、もう一度ヒントを求めてください。",
         "fixMistakeFirst": "先に赤いマスを直してください",
+        "howToPlay": "遊び方",
+        "backToPuzzle": "パズルに戻る",
         "noFreeChecks": "今日のパズルの無料チェックは使い切りました",
         "checksLeft": "残りチェック {count} 回",
         "reset": "リセット",
