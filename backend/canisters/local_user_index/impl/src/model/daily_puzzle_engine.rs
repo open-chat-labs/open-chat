@@ -105,12 +105,14 @@ impl UserHistory {
                 }
             }
         }
-        self.ever_started |= other.ever_started;
-        // The free play was spent on whichever came first
-        self.first_started = match (self.first_started, other.first_started) {
-            (Some(mine), Some(theirs)) => Some(mine.min(theirs)),
-            (mine, theirs) => mine.or(theirs),
+        // The free play was spent on whichever came first. A history which started before
+        // `first_started` existed spent it on some earlier day, which None, as the lesser, keeps.
+        self.first_started = match (self.ever_started, other.ever_started) {
+            (true, true) => self.first_started.min(other.first_started),
+            (true, false) => self.first_started,
+            (false, _) => other.first_started,
         };
+        self.ever_started |= other.ever_started;
     }
 }
 
@@ -1718,6 +1720,14 @@ mod tests {
         engine.import_user(new, old_history(&[NUMBER - 3]));
         assert_eq!(state(&engine, new, START).entry_fee, fee);
         assert!(state(&engine, new, START).has_solved_before);
+        // Including when it was spent before `first_started` was recorded and the user has since
+        // started today's game free under their new id: a `regenerate_today` dropping that record
+        // doesn't make the replacement free
+        let mut engine = new_engine();
+        started(&mut engine, new, START);
+        engine.import_user(new, old_history(&[NUMBER - 3]));
+        engine.user_games.remove(&new);
+        assert_eq!(state(&engine, new, START).entry_fee, fee);
     }
 
     #[test]
