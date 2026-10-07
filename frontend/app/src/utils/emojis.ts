@@ -17,8 +17,18 @@ let database: Database | undefined;
 
 // Constructing a Database immediately opens IndexedDB and fires an ETag request
 // at the emoji CDN, so build it lazily and share the single instance.
+// A Database whose first load fails (eg. the CDN errors while IndexedDB is still
+// empty) rejects every later call, so drop it and build a fresh one next time.
 export function getEmojiDatabase(): Database {
-    return (database ??= new Database());
+    if (database === undefined) {
+        const db = (database = new Database());
+        db.ready().catch(() => {
+            if (database === db) {
+                database = undefined;
+            }
+        });
+    }
+    return database;
 }
 
 const customEmojiRegex = /^!emoji\([^)]+\)$/;
