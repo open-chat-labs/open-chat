@@ -1,6 +1,9 @@
 // @vitest-environment node
 import { ESLint } from "eslint";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// Creating the first ESLint instance loads every plugin, which can take longer than the default 5s.
+vi.setConfig({ testTimeout: 30_000 });
 
 const frontendRoot = new URL("..", import.meta.url).pathname;
 const eslint = new ESLint({ cwd: frontendRoot });
@@ -61,15 +64,22 @@ describe("app never imports the agent or worker", () => {
             expect(await importErrors(`export const x = import("${module}");`, file)).toEqual([
                 "local/no-restricted-dynamic-imports",
             ]);
+            expect(await importErrors(`export const x = import(\`${module}\`);`, file)).toEqual([
+                "local/no-restricted-dynamic-imports",
+            ]);
         },
     );
 
     it.each(agentOrWorker.flatMap((m) => appComponents.map((f) => [m, f])))(
         "rejects %s in %s",
         async (module, file) => {
-            expect(
-                await importErrors(component(`    import { x } from "${module}";`), file),
-            ).toEqual(["no-restricted-imports"]);
+            const code = component(
+                `    import { x } from "${module}";\n    const y = import("${module}");`,
+            );
+            expect(await importErrors(code, file)).toEqual([
+                "no-restricted-imports",
+                "local/no-restricted-dynamic-imports",
+            ]);
         },
     );
 
@@ -87,13 +97,12 @@ describe("app imports the client only through @client", () => {
     it.each(insideClient.flatMap((m) => [...appFiles, ...appComponents].map((f) => [m, f])))(
         "rejects %s in %s",
         async (module, file) => {
-            const code = file.endsWith(".svelte")
-                ? component(`    import { x } from "${module}";`)
-                : `import { x } from "${module}";\nexport const y = import("${module}");`;
-            const expected = file.endsWith(".svelte")
-                ? ["no-restricted-imports"]
-                : ["no-restricted-imports", "local/no-restricted-dynamic-imports"];
-            expect(await importErrors(code, file)).toEqual(expected);
+            const script = `import { x } from "${module}";\nexport const y = import("${module}");`;
+            const code = file.endsWith(".svelte") ? component(script) : script;
+            expect(await importErrors(code, file)).toEqual([
+                "no-restricted-imports",
+                "local/no-restricted-dynamic-imports",
+            ]);
         },
     );
 
@@ -121,6 +130,7 @@ describe("svelte/store", () => {
         "app/src/stores/example.ts",
         "app/src/i18n/example.ts",
         "app/src/utils/example.spec.ts",
+        "app/src/actions/example.ts",
         "openchat-client/src/stores/example.ts",
         "openchat-client/src/state/example.ts",
         "openchat-shared/src/utils/example.ts",
@@ -133,10 +143,13 @@ describe("svelte/store", () => {
         ]);
     });
 
-    it("rejects a value import in a component", async () => {
-        const code = component('    import { writable } from "svelte/store";');
-        expect(await importErrors(code, "app/src/components/Example.svelte")).toEqual([
+    it.each(appComponents)("rejects value imports in %s", async (file) => {
+        const code = component(
+            '    import { writable } from "svelte/store";\n    const s = import("svelte/store");',
+        );
+        expect(await importErrors(code, file)).toEqual([
             "@typescript-eslint/no-restricted-imports",
+            "no-restricted-syntax",
         ]);
     });
 
