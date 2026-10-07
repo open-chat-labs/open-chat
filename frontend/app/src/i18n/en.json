@@ -1702,6 +1702,7 @@
         "creatingYourMessage": "Please wait while a swap offer is created",
         "expired": "Expired",
         "expiryTime": "Expiry time",
+        "maxExpiry": "max {days} days",
         "failedToCreateMessage": "Failed to create the swap offer",
         "insufficient_funds": "You have insufficient funds remaining to accept this swap offer",
         "insufficientBalance": "Insufficient balance",

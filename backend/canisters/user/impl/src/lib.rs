@@ -22,9 +22,9 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BotNotification, BuildVersion, CanisterId, ChatId, ChatMetrics, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, FrozenUserInfo, Hash, IdempotentEnvelope, Notification, NotifyChit, OCResult,
-    TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
-    UserNotification,
+    DirectChatUserNotificationPayload, FrozenUserInfo, Hash, IdempotentEnvelope, MessageId, MessageIndex, Notification,
+    NotifyChit, OCResult, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment,
+    UserId, UserNotification,
 };
 use user_canister::UserCanisterEvent;
 use user_core::migration::MigratingUser;
@@ -166,6 +166,25 @@ impl RuntimeState {
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
         }
+    }
+
+    // Cancels the job to mark the P2P swap offered in the message in the direct chat with `them` as
+    // expired, once the swap has ended. The job names the chat by the other user's id when it was
+    // queued, which they may since have been migrated from.
+    pub fn cancel_mark_p2p_swap_expired_job(
+        &mut self,
+        them: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+    ) {
+        let migrated_user_ids = &self.data.migrated_user_ids;
+        let them = migrated_user_ids.latest(them);
+        self.data.timer_jobs.cancel_job(|job| {
+            matches!(job, TimerJob::MarkP2PSwapExpired(j)
+                if j.message_id == message_id
+                    && j.thread_root_message_index == thread_root_message_index
+                    && migrated_user_ids.latest(j.chat_id.into()) == them)
+        });
     }
 
     // Queues an event for `recipient`, batched with the others for the canister holding them

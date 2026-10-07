@@ -25,6 +25,7 @@ async fn c2c_notify_p2p_swap_status_change_impl(args: Args) {
         return;
     };
     let offered_to = UserId::from(chat_id);
+    let thread_root_message_index = m.thread_root_message_index;
 
     // A user in this canister holds their funds under their own principal, by which escrow names
     // them as the offerer
@@ -68,6 +69,8 @@ async fn c2c_notify_p2p_swap_status_change_impl(args: Args) {
             })
             .flatten();
         if let Some((other, change)) = change {
+            // The swap has ended, so there is no longer any need to mark it as expired
+            state.cancel_mark_p2p_swap_expired_job(recipient_index, other, thread_root_message_index, change.message_id);
             state.send_user_canister_event(
                 recipient_index,
                 other,

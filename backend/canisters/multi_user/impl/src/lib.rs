@@ -23,8 +23,9 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, IdempotentEnvelope, Notification, NotifyChit, OCResult, ReferralStatus, TimestampMillis,
-    Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId, UserNotification, UserType,
+    DirectChatUserNotificationPayload, IdempotentEnvelope, MessageId, MessageIndex, Notification, NotifyChit, OCResult,
+    ReferralStatus, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    UserNotification, UserType,
 };
 use user_canister::UserCanisterEvent;
 use user_core::User;
@@ -449,6 +450,27 @@ impl RuntimeState {
             false,
             self,
         );
+    }
+
+    // Cancels the job to mark the P2P swap offered in the message in the user's direct chat with
+    // `them` as expired, once the swap has ended. The job names the chat by the other user's id when
+    // it was queued, which they may since have been migrated from.
+    pub fn cancel_mark_p2p_swap_expired_job(
+        &mut self,
+        user_index: u16,
+        them: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+    ) {
+        let migrated_user_ids = &self.data.migrated_user_ids;
+        let them = migrated_user_ids.latest(them);
+        self.data.timer_jobs.cancel_job(|job| {
+            matches!(job, TimerJob::MarkP2PSwapExpired(j)
+                if j.user_index == user_index
+                    && j.message_id == message_id
+                    && j.thread_root_message_index == thread_root_message_index
+                    && migrated_user_ids.latest(j.chat_id.into()) == them)
+        });
     }
 
     // Queues the job which, when the streak of the user at `user_index` is due to end, uses up a day

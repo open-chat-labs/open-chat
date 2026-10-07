@@ -12,9 +12,11 @@
     interface Props {
         duration?: bigint;
         title?: Snippet;
+        // The longest duration which may be chosen, if there is a limit
+        maxMilliseconds?: bigint;
     }
 
-    let { duration = $bindable(BigInt(ONE_DAY)), title }: Props = $props();
+    let { duration = $bindable(BigInt(ONE_DAY)), title, maxMilliseconds }: Props = $props();
 
     type Unit = "minutes" | "hours" | "days";
 
@@ -26,7 +28,7 @@
 
     const units: Unit[] = ["minutes", "hours", "days"];
     let selectedUnit = $state<Unit>("hours");
-    const values = $derived(options[selectedUnit]);
+    const values = $derived(options[selectedUnit].filter((value) => withinMax(selectedUnit, value)));
     let selectedValue = $state<number>(1);
 
     function fromMilliseconds(milliseconds?: bigint) {
@@ -47,14 +49,18 @@
         }
     }
 
-    function toMilliseconds() {
-        switch (selectedUnit) {
+    function withinMax(unit: Unit, value: number): boolean {
+        return maxMilliseconds === undefined || toMilliseconds(unit, value) <= maxMilliseconds;
+    }
+
+    function toMilliseconds(unit: Unit, value: number) {
+        switch (unit) {
             case "minutes":
-                return BigInt(ONE_MINUTE * selectedValue);
+                return BigInt(ONE_MINUTE * value);
             case "hours":
-                return BigInt(ONE_HOUR * selectedValue);
+                return BigInt(ONE_HOUR * value);
             case "days":
-                return BigInt(ONE_DAY * selectedValue);
+                return BigInt(ONE_DAY * value);
         }
     }
 
@@ -65,7 +71,7 @@
     });
 
     $effect(() => {
-        const e = toMilliseconds();
+        const e = toMilliseconds(selectedUnit, selectedValue);
         if (e !== duration) {
             duration = e;
         }

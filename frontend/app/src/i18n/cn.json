@@ -1658,6 +1658,7 @@
         "creatingYourMessage": "正在创建掉期报价，请稍候",
         "expired": "已到期",
         "expiryTime": "到期时间",
+        "maxExpiry": "最长 {days} 天",
         "failedToCreateMessage": "无法创建掉期报价",
         "insufficient_funds": "您的剩余资金不足以接受此掉期优惠",
         "insufficientBalance": "余额不足",

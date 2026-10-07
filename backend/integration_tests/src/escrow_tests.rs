@@ -3,7 +3,7 @@ use crate::setup::install_icrc_ledger;
 use crate::utils::{chat_token_info, icp_token_info, now_millis, tick_many, try_metrics};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
-use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, HOUR_IN_MS, ICP_TRANSFER_FEE, MINUTE_IN_MS};
+use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, HOUR_IN_MS, ICP_TRANSFER_FEE, MINUTE_IN_MS, P2P_SWAP_MAX_EXPIRY};
 use escrow_canister::deposit_subaccount;
 use escrow_canister::notify_deposit::{BalanceTooLowResult, SuccessResult};
 use icrc_ledger_types::icrc1::account::Account;
@@ -1081,6 +1081,47 @@ fn deposit_is_unlocked_if_its_balance_cannot_be_checked() {
         swap_logs(env, canister_ids.escrow, swap_id)["locked_deposits"],
         serde_json::json!([])
     );
+}
+
+#[test_case(P2P_SWAP_MAX_EXPIRY, true)]
+#[test_case(P2P_SWAP_MAX_EXPIRY + HOUR_IN_MS, false)]
+fn swap_expiring_too_far_ahead_is_rejected(expires_in: u64, allowed: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user1 = client::register_user(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
+
+    let response = client::escrow::create_swap(
+        env,
+        user1.user_id.canister_id(),
+        canister_ids.escrow,
+        &escrow_canister::create_swap::Args {
+            location: P2PSwapLocation::from_message(Chat::Direct(user2.user_id.into()), None, 0u64.into()),
+            token0: icp_token_info(),
+            token0_amount: 100_000_000,
+            token0_principal: None,
+            token1: chat_token_info(),
+            token1_amount: 100_000_000,
+            token1_principal: None,
+            expires_at: now_millis(env) + expires_in,
+            additional_admins: Vec::new(),
+            canister_to_notify: None,
+            is_public: false,
+        },
+    );
+
+    if allowed {
+        assert!(
+            matches!(response, escrow_canister::create_swap::Response::Success(_)),
+            "{response:?}"
+        );
+    } else {
+        assert!(
+            matches!(response, escrow_canister::create_swap::Response::InvalidSwap(_)),
+            "{response:?}"
+        );
+    }
 }
 
 fn create_icp_for_chat_swap(

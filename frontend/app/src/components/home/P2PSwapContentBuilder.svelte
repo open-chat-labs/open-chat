@@ -5,6 +5,8 @@
         currentUserIdStore,
         isDiamondStore,
         mobileWidth,
+        ONE_DAY,
+        P2P_SWAP_MAX_EXPIRY_DAYS,
         publish,
         walletApprovalFee,
     } from "@client";
@@ -274,8 +276,13 @@
                     </div>
                 </div>
                 <div class="duration">
-                    <Legend label={i18nKey("p2pSwap.expiryTime")} />
-                    <DurationPicker bind:valid={durationValid} bind:milliseconds={expiresIn} />
+                    <Legend
+                        label={i18nKey("p2pSwap.expiryTime")}
+                        rules={i18nKey("p2pSwap.maxExpiry", { days: P2P_SWAP_MAX_EXPIRY_DAYS })} />
+                    <DurationPicker
+                        maxMilliseconds={BigInt(P2P_SWAP_MAX_EXPIRY_DAYS * ONE_DAY)}
+                        bind:valid={durationValid}
+                        bind:milliseconds={expiresIn} />
                 </div>
                 <div class="message">
                     <Legend label={i18nKey("tokenTransfer.message")} />

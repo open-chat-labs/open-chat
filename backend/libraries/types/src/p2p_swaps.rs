@@ -16,6 +16,15 @@ pub enum P2PSwapStatus {
 }
 
 impl P2PSwapStatus {
+    // Whether the swap has been cancelled, has expired or has been completed, after which its status
+    // never changes
+    pub fn has_ended(&self) -> bool {
+        matches!(
+            self,
+            P2PSwapStatus::Cancelled(_) | P2PSwapStatus::Expired(_) | P2PSwapStatus::Completed(_)
+        )
+    }
+
     pub fn error_code(&self) -> OCErrorCode {
         match self {
             P2PSwapStatus::Open => OCErrorCode::SwapStatusOpen,

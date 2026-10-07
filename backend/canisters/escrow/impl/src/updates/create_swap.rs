@@ -1,8 +1,10 @@
+use crate::model::swaps::latest_allowed_expiry;
 use crate::timer_job_types::{ExpireSwapJob, TimerJob};
 use crate::{Data, RuntimeState, deposit_address, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::{DAY_IN_MS, P2P_SWAP_MAX_EXPIRY};
 use escrow_canister::create_swap::{Response::*, *};
 use types::TimestampMillis;
 
@@ -49,6 +51,11 @@ fn validate_swap(args: &Args, now: TimestampMillis, caller: Principal, data: &Da
         Err("Output amount cannot be 0".to_string())
     } else if args.expires_at < now {
         Err("Expiry cannot be in the past".to_string())
+    } else if args.expires_at > latest_allowed_expiry(now) {
+        Err(format!(
+            "Expiry cannot be more than {} days away",
+            P2P_SWAP_MAX_EXPIRY / DAY_IN_MS
+        ))
     } else if data.disabled_tokens.contains(&args.token0.ledger) {
         Err("Input token is disabled for swaps".to_string())
     } else if data.disabled_tokens.contains(&args.token1.ledger) {

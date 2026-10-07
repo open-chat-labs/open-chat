@@ -108,6 +108,8 @@ pub fn apply_status_change<P: EventPusher>(
     };
 
     let thread_root_message_id = chat.thread_root_message_id(m.thread_root_message_index).ok()?;
+    drop(chat);
+    user.p2p_swaps.mark_ended(args.swap_id, now);
     Some(P2PSwapStatusChange {
         thread_root_message_id,
         message_id: m.message_id,
