@@ -53,17 +53,25 @@ impl RuntimeState {
     }
 
     pub fn add_subscription(&mut self, user_id: UserId, subscription: SubscriptionInfo, now: TimestampMillis) {
-        let subscriptions_removed = self.data.subscriptions.push(
+        self.push_subscription(
             user_id,
             SubscriptionInfoInternal {
                 added: now,
                 last_active: now,
-                endpoint: subscription.endpoint.clone(),
-                keys: subscription.keys.clone(),
+                endpoint: subscription.endpoint,
+                keys: subscription.keys,
             },
+            now,
         );
+    }
 
-        let event = NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded { user_id, subscription });
+    fn push_subscription(&mut self, user_id: UserId, subscription: SubscriptionInfoInternal, now: TimestampMillis) {
+        let event = NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded {
+            user_id,
+            subscription: subscription.clone().into(),
+        });
+
+        let subscriptions_removed = self.data.subscriptions.push(user_id, subscription);
 
         self.push_event_to_local_indexes(event, now);
 
@@ -119,6 +127,30 @@ impl RuntimeState {
         self.data.fcm_token_store.remove(&user_id, &fcm_token).map(|_| {
             self.push_event_to_local_indexes(NotificationsIndexEvent::FcmTokenRemoved(user_id, fcm_token), self.env.now());
         })
+    }
+
+    // Moves the subscriptions and FCM tokens held under the user's old id onto their new one, so that
+    // they're still notified on each of their devices without having to subscribe again
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) {
+        let subscriptions = self.data.subscriptions.remove_all(old_user_id);
+        if !subscriptions.is_empty() {
+            self.push_event_to_local_indexes(NotificationsIndexEvent::AllSubscriptionsRemoved(old_user_id), now);
+            for subscription in subscriptions {
+                self.push_subscription(new_user_id, subscription, now);
+            }
+        }
+
+        let fcm_tokens: Vec<_> = self
+            .data
+            .fcm_token_store
+            .get_for_user(&old_user_id)
+            .into_iter()
+            .cloned()
+            .collect();
+        for fcm_token in fcm_tokens {
+            // Reassigned from the old id, which the LocalUserIndexes are told to remove it from
+            self.add_fcm_token(new_user_id, fcm_token);
+        }
     }
 
     pub fn metrics(&self) -> Metrics {

@@ -3,6 +3,7 @@ use types::{BuildVersion, Timestamped};
 use utils::env::Environment;
 
 mod init;
+mod move_subscriptions_of_migrated_users;
 mod post_upgrade;
 mod pre_upgrade;
 

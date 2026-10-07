@@ -33,6 +33,8 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
             if state.data.principal_to_user_id_map.contains_key(&ev.user_principal) {
                 state.data.principal_to_user_id_map.insert(ev.user_principal, ev.new_user_id);
             }
+            let now = state.env.now();
+            state.migrate_user_id(ev.old_user_id, ev.new_user_id, now);
         }
     }
 }

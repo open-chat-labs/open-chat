@@ -42,10 +42,11 @@ impl Subscriptions {
         removed
     }
 
-    pub fn remove_all(&mut self, user_id: UserId) {
-        if let Some(removed) = self.subscriptions.remove(&user_id) {
-            self.total = self.total.saturating_sub(removed.len() as u64);
-        }
+    // Returns the subscriptions removed
+    pub fn remove_all(&mut self, user_id: UserId) -> Vec<SubscriptionInfoInternal> {
+        let removed = self.subscriptions.remove(&user_id).unwrap_or_default();
+        self.total = self.total.saturating_sub(removed.len() as u64);
+        removed
     }
 
     pub fn remove(&mut self, user_id: UserId, endpoint: &str) -> Option<SubscriptionInfoInternal> {

@@ -76,6 +76,11 @@ impl FcmTokenStore {
             .collect()
     }
 
+    /// The owner of each token, so a user with several tokens is returned once for each
+    pub fn owners(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.fcm_user_tokens.iter().map(|(user_id, _)| *user_id)
+    }
+
     pub fn len(&self) -> usize {
         self.fcm_user_tokens.len()
     }
