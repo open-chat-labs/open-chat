@@ -91,7 +91,6 @@
             } else {
                 config.tokens.add(ledger);
             }
-            config = config;
         }
     }
 

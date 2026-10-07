@@ -185,7 +185,7 @@
     let minBalance = $derived(amountFromText(minBalanceText, candidateTokenDetails));
     let minChitEarned = $derived.by(() => {
         try {
-            const cleaned = minChitEarnedText.replace(/[_\,]/g, "");
+            const cleaned = minChitEarnedText.replace(/[_,]/g, "");
             return Number(cleaned);
         } catch (_) {
             return undefined;

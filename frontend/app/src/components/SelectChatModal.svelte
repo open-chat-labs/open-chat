@@ -179,7 +179,9 @@
                 favourites: chatMatchesSearch(favourites, searchTerm),
                 communities: communityMatchesSearch(communities, searchTerm),
             };
-        } catch (err) {}
+        } catch {
+            // a search that throws leaves the targets unfiltered
+        }
         return targets;
     }
 
@@ -204,7 +206,7 @@
 
     async function normaliseChatSummary(now: number, chatSummary: ChatSummary): Promise<ShareChat> {
         switch (chatSummary.kind) {
-            case "direct_chat":
+            case "direct_chat": {
                 const description = await buildDirectChatDescription(chatSummary, now);
                 const them = $allUsersStore.get(chatSummary.them.userId);
                 return {
@@ -220,6 +222,7 @@
                     lastUpdated: chatSummary.lastUpdated,
                     uniquePerson: them?.isUniquePerson ?? false,
                 };
+            }
 
             default:
                 return {

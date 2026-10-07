@@ -59,7 +59,7 @@
     let { rootEvent, chat }: Props = $props();
 
     let chatEventList: ChatEventList | undefined = $state();
-    //@ts-ignore
+    // @ts-expect-error bind:this sets it after mount
     let memeBuilder: MemeBuilder = $state();
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);
     let buildingMeme = $state(false);

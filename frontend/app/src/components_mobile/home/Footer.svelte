@@ -79,7 +79,7 @@
     }: Props = $props();
 
     let ephemeralMessageEvent = $state<EphemeralMessageEvent>();
-    //@ts-ignore
+    // @ts-expect-error bind:this sets it after mount
     let messageEntry: MessageEntry;
 
     let inputTrayVisible = $state(false);

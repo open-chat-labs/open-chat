@@ -79,9 +79,11 @@
                 } else {
                     dateIsValid = true;
                 }
-                dateValue instanceof Date
-                    ? onchange?.(BigInt(dateValue.getTime()))
-                    : onchange?.(null);
+                if (dateValue instanceof Date) {
+                    onchange?.(BigInt(dateValue.getTime()));
+                } else {
+                    onchange?.(null);
+                }
             }} />
     {:catch}
         <span>Unable to load date picker</span>

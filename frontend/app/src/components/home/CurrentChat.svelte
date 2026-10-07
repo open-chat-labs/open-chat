@@ -80,11 +80,11 @@
     let creatingP2PSwapMessage = $state(false);
     let selectingGif = $state(false);
     let buildingMeme = $state(false);
-    //@ts-ignore
+    // @ts-expect-error bind:this sets it after mount
     let pollBuilder: PollBuilder = $state();
-    //@ts-ignore
+    // @ts-expect-error bind:this sets it after mount
     let giphySelector: GiphySelector = $state();
-    //@ts-ignore
+    // @ts-expect-error bind:this sets it after mount
     let memeBuilder: MemeBuilder = $state();
     let showSearchHeader = $state(false);
     let searchTerm = $state("");

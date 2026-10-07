@@ -31,8 +31,6 @@
         userAndBotsSearchResults = $bindable(undefined),
     }: Props = $props();
 
-    searchResultsAvailable;
-
     let searching: boolean = $state(false);
 
     $effect(() => {

@@ -1,10 +1,10 @@
 <script lang="ts">
     let leftEye: SVGRectElement;
     let rightEye: SVGRectElement;
-    let lx = 117;
-    let ly = 176;
-    let rx = 227;
-    let ry = 176;
+    let lx = $state(117);
+    let ly = $state(176);
+    let rx = $state(227);
+    let ry = $state(176);
     let enable = true;
 
     let lpos = {
@@ -48,7 +48,7 @@
     }
 </script>
 
-<svelte:window on:mouseenter={mouseMove} on:mousemove={mouseMove} />
+<svelte:window onmouseenter={mouseMove} onmousemove={mouseMove} />
 
 <rect
     class="eye"

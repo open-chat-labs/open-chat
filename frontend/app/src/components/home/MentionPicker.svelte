@@ -93,7 +93,7 @@
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
-            case "Enter":
+            case "Enter": {
                 const userOrGroup = filtered[index];
                 if (userOrGroup) {
                     mention(userOrGroup);
@@ -101,6 +101,7 @@
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
+            }
         }
     }
 

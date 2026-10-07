@@ -51,8 +51,6 @@
         onClose,
     }: Props = $props();
 
-    iiPrincipal;
-
     type IdentityDetail = {
         key: ECDSAKeyIdentity;
         delegation: DelegationChain;

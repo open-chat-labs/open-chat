@@ -55,7 +55,7 @@
                 ev.preventDefault();
                 ev.stopPropagation();
                 break;
-            case "Enter":
+            case "Enter": {
                 const match = matches[index];
                 if (match) {
                     select(match);
@@ -63,6 +63,7 @@
                     ev.stopPropagation();
                 }
                 break;
+            }
         }
     }
 </script>

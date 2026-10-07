@@ -31,7 +31,6 @@
     let placeholder = i18nKey("Search for a community or group");
     let selected = $state<Match>();
     let searchTermLower = $derived(searchTerm.toLocaleLowerCase());
-    location; // usual hack
 
     let options = $derived.by(() => {
         const communities: Match[] = [...$communitiesStore.values()].map((c) => ({

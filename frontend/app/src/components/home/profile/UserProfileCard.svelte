@@ -59,7 +59,7 @@
     onMount(async () => {
         try {
             lastOnline = await client.getLastOnlineDate(user.userId, Date.now());
-        } catch (e: any) {
+        } catch (e) {
             client.logError("Failed to load user profile", e);
             onClose?.();
         }

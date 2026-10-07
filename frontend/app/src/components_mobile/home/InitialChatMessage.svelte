@@ -46,7 +46,7 @@
 
     let state = $derived.by<State>(() => {
         switch (chat.kind) {
-            case "direct_chat":
+            case "direct_chat": {
                 const them = $allUsersStore.get(chat.them.userId);
                 const s: State = {
                     title: i18nKey(client.displayName(them)),
@@ -66,6 +66,7 @@
                               grantedPermissions: perm,
                           },
                       };
+            }
             default:
                 return {
                     title: i18nKey("group.welcome", { groupName: chat.name }),
@@ -96,7 +97,7 @@
             </h4>
         </WithVerifiedBadge>
         <div class="pop">
-            <Avatar url={state.avatarUrl} size={"huge"} name={(chat as any).name} />
+            <Avatar url={state.avatarUrl} size={"huge"} name={"name" in chat ? chat.name : undefined} />
         </div>
         {#if state.description && state.description.length > 0}
             <Markdown inline={false} text={state.description} />

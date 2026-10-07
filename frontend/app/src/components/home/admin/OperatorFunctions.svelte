@@ -259,12 +259,10 @@
 
     function addBusy(n: number) {
         busy.add(n);
-        busy = busy;
     }
 
     function removeBusy(n: number) {
         busy.delete(n);
-        busy = busy;
     }
 
     function setGroupUpgradeConcurrency(): void {

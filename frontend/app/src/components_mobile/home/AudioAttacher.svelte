@@ -31,7 +31,6 @@
             // in particular, there is no access to the permissions api
             if ("permissions" in navigator) {
                 navigator.permissions
-                    //@ts-ignore
                     .query({ name: "microphone" })
                     .then(function (result) {
                         if (result.state === "denied") {

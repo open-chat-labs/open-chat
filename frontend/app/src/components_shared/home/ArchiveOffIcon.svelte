@@ -1,8 +1,8 @@
 <script lang="ts">
     interface Props {
         size?: string;
-        width?: any;
-        height?: any;
+        width?: string;
+        height?: string;
         color?: string;
         viewBox?: string;
     }

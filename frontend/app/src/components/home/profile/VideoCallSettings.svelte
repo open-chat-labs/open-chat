@@ -7,7 +7,7 @@
     import { Ringtone } from "../../../stores/video";
     import { onDestroy } from "svelte";
 
-    let ringtones: Ringtone[] = [
+    const ringtones: Ringtone[] = [
         new Ringtone("boring", "Boring"),
         new Ringtone("pleasant", "Pleasant"),
         new Ringtone("boomboom", "Boom boom"),
@@ -23,7 +23,6 @@
                 r.stop();
             }
         });
-        ringtones = ringtones;
     }
 
     onDestroy(() => {

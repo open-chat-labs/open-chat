@@ -5,7 +5,7 @@
     const client = getContext<OpenChat>("client");
 
     interface Props {
-        rootPath?: any;
+        rootPath?: string;
         text?: string;
         login?: boolean;
     }

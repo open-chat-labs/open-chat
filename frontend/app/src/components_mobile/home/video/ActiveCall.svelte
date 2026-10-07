@@ -72,7 +72,7 @@
             const chat = client.lookupChatSummary(chatId);
             if (chat) {
                 switch (chat.kind) {
-                    case "direct_chat":
+                    case "direct_chat": {
                         const them = $allUsersStore.get(chat.them.userId);
                         return {
                             chatId,
@@ -81,6 +81,7 @@
                             userId: chat.them,
                             videoCallInProgress: chat.videoCallInProgress,
                         };
+                    }
                     case "group_chat":
                         return {
                             chatId,

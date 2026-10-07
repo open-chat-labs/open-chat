@@ -273,7 +273,11 @@
 
         // Only push history state if attachment options are showing, or pop state
         // if the options are not showing.
-        inputTrayMode === "attachments" ? pushExpandedHistoryState() : popExpandedHistoryState();
+        if (inputTrayMode === "attachments") {
+            pushExpandedHistoryState();
+        } else {
+            popExpandedHistoryState();
+        }
     }
 
     function showKeyboard() {

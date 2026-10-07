@@ -47,7 +47,7 @@
 
     let state = $derived.by<State>(() => {
         switch (chat.kind) {
-            case "direct_chat":
+            case "direct_chat": {
                 const them = $allUsersStore.get(chat.them.userId);
                 const s: State = {
                     title: i18nKey(client.displayName(them)),
@@ -67,6 +67,7 @@
                               grantedPermissions: perm,
                           },
                       };
+            }
             default:
                 return {
                     title: i18nKey("group.welcome", { groupName: chat.name }),

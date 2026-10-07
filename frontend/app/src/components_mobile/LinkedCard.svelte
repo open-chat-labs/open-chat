@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { IconComponent } from "@src/utils/iconComponent";
     import { Body, BodySmall, Chip, ColourVars, Container } from "component-lib";
     import type { ResourceKey } from "@client";
     import type { Snippet } from "svelte";
@@ -7,7 +8,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
-        Icon: any;
+        Icon: IconComponent;
         title: ResourceKey;
         info: ResourceKey;
         onClick?: () => void;

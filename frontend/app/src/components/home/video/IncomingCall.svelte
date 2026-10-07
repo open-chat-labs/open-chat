@@ -45,7 +45,7 @@
             const initiator = $allUsersStore.get(call.userId);
             if (chat && initiator) {
                 switch (chat.kind) {
-                    case "direct_chat":
+                    case "direct_chat": {
                         const them = $allUsersStore.get(chat.them.userId);
                         return {
                             chatId: chat.id,
@@ -53,6 +53,7 @@
                             avatarUrl: client.userAvatarUrl(them),
                             initiator: initiator.username,
                         };
+                    }
                     case "group_chat":
                         return {
                             chatId: chat.id,

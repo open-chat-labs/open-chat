@@ -1,10 +1,10 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
-    import { emptyUnreadCounts } from "@client";
+    import { emptyUnreadCounts, type UnreadCounts } from "@client";
 
     interface Props {
-        unread?: any;
+        unread?: UnreadCounts;
         solid?: boolean;
     }
 

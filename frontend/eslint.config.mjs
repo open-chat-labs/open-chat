@@ -63,6 +63,31 @@ export default defineConfig([
             "local/no-pagejs-direct": "off",
         },
     },
+    // Lint every Svelte component with the same rules as the .ts files.
+    {
+        files: ["**/*.svelte"],
+        languageOptions: {
+            parser: svelteParser,
+            parserOptions: {
+                parser: tsParser,
+                extraFileExtensions: [".svelte"],
+            },
+            globals: {
+                ...globals.browser,
+            },
+        },
+        rules: {
+            // TypeScript already reports undefined names, and no-undef doesn't know the DOM types
+            // (NodeListOf, CanvasImageSource). typescript-eslint turns it off for .ts files for the same reason.
+            "no-undef": "off",
+            // typescript-eslint switches these on for .ts files only; components get them too.
+            "no-var": "error",
+            "prefer-rest-params": "error",
+            "prefer-spread": "error",
+            // Not prefer-const: it flags `let { ... } = $props()` and `let x = $derived(...)`, which Svelte writes
+            // with `let` (5,990 hits). svelte/prefer-const from eslint-plugin-svelte understands runes.
+        },
+    },
     {
         files: [
             "app/src/components/Router.svelte",
