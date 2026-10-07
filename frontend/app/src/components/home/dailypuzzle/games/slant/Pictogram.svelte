@@ -5,7 +5,8 @@
     import type { PictogramProps } from "../types";
 
     // Givens only, for the result card.
-    let { model }: PictogramProps<SlantDescription> = $props();
+    let { board }: PictogramProps<SlantDescription> = $props();
+    let model = $derived(board.model);
 
     // border clue circles (r 2.4 + stroke) spill past the grid; same margin as Board
     const MARGIN = 0.5;

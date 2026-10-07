@@ -50,11 +50,10 @@
 
     // undefined = a game this build does not know how to render
     let def = $derived(dailyPuzzleGame(content.gameId));
-    let Pictogram = $derived(def?.Pictogram);
-    let model = $derived.by(() => {
+    let board = $derived.by(() => {
         if (def === undefined) return undefined;
         try {
-            return def.game.parse(descriptionFromHex(content.layout));
+            return def.newBoard(descriptionFromHex(content.layout));
         } catch {
             return undefined;
         }
@@ -121,9 +120,9 @@
         </Caption>
     </Column>
     <Row gap="lg" crossAxisAlignment="center">
-        {#if model !== undefined && Pictogram !== undefined}
+        {#if board !== undefined}
             <Column width={{ size: "160px" }} height={{ size: "160px" }} overflow="visible">
-                <Pictogram {model} />
+                <board.Pictogram {board} />
             </Column>
         {/if}
         <Column gap="xs" width="hug">

@@ -15,9 +15,7 @@
     import type { BoardProps } from "../types";
 
     let {
-        model,
-        state,
-        marks,
+        board,
         violations,
         focus,
         target,
@@ -25,6 +23,9 @@
         greyed = false,
         disabled = false,
     }: BoardProps<BridgesDescription, BridgesState> = $props();
+    let model = $derived(board.model);
+    let state = $derived(board.state);
+    let marks = $derived(board.marks);
 
     const ISLAND_R = 3.6;
     // half the distance between the two lines of a double bridge

@@ -24,17 +24,26 @@ function lookup(obj: unknown, path: string): unknown {
     return path.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], obj);
 }
 
-// Each game ships its strings as games/<game>/i18n.en.json; the copy under
-// dailyPuzzle.games.<game> in en.json is the one the translation tooling sees.
+// A game's English strings, under dailyPuzzle.games.<game>. They set the keys every locale must
+// have (see dailyPuzzleLocales.spec.ts)
+function stringsOf(i18nPrefix: string): Record<string, string> {
+    return flatten(lookup(en, i18nPrefix));
+}
+
 describe("daily puzzle game strings", () => {
     for (const [id, def] of Object.entries(dailyPuzzleGames)) {
-        test(`${id} strings match en.json under ${def.i18nPrefix}`, () => {
-            expect(def.game.id).toBe(id);
-            expect(flatten(lookup(en, def.i18nPrefix))).toEqual(def.strings);
-            expect(def.strings.name).toBeTruthy();
-            expect(def.strings.rules).toBeTruthy();
+        test(`${id} has a name and rules in en.json under ${def.i18nPrefix}`, () => {
+            expect(def.id).toBe(id);
+            expect(stringsOf(def.i18nPrefix).name).toBeTruthy();
+            expect(stringsOf(def.i18nPrefix).rules).toBeTruthy();
         });
     }
+
+    // #9824 invariant 9: the locale files hold the game strings, and no game folder keeps a copy
+    test("no game keeps its own copy of its strings", () => {
+        const copies = import.meta.glob("../components/home/dailypuzzle/games/*/*.json");
+        expect(Object.keys(copies)).toEqual([]);
+    });
 });
 
 // The demos are the only teaching the pre-start screen does, and they are hand-built from raw
@@ -46,33 +55,26 @@ describe("daily puzzle demos", () => {
         const spec = def.demo;
         if (spec === undefined) continue;
 
-        const model = def.game.parse(spec.description);
-        const stateFor = (i: number) =>
-            spec.frames[i].marks.reduce(
-                (s, [k, v]) => def.game.apply(model, s, k, v),
-                def.game.empty(model),
-            );
+        const boardFor = (i: number) => def.newBoard(spec.description, spec.frames[i].marks);
 
         test(`${id} demo has frames and a caption on each`, () => {
             expect(spec.frames.length).toBeGreaterThan(1);
             for (const f of spec.frames) {
-                expect(def.strings[f.caption]).toBeTruthy();
+                expect(stringsOf(def.i18nPrefix)[f.caption]).toBeTruthy();
             }
         });
 
         test(`${id} demo ends on a solved grid`, () => {
-            expect(def.game.solved(model, stateFor(spec.frames.length - 1))).toBe(true);
+            expect(boardFor(spec.frames.length - 1).solved).toBe(true);
         });
 
         test(`${id} demo shows at least one mistake going red`, () => {
-            const withViolations = spec.frames.filter(
-                (_, i) => def.game.check(model, stateFor(i)).length > 0,
-            );
+            const withViolations = spec.frames.filter((_, i) => boardFor(i).violations.length > 0);
             expect(withViolations.length).toBeGreaterThan(0);
         });
 
         test(`${id} demo marks land on keys the game knows`, () => {
-            const keys = new Set(def.game.elements(model).map((e) => e.key));
+            const keys = new Set(def.newBoard(spec.description).elements.map((e) => e.key));
             for (const f of spec.frames) {
                 for (const [k] of f.marks) expect(keys.has(k)).toBe(true);
                 for (const k of f.target ?? []) expect(k).toBeGreaterThanOrEqual(0);
@@ -103,12 +105,12 @@ describe("daily puzzle hint sentences match their strings", () => {
     for (const [id, entries] of Object.entries(fixtures)) {
         test(`${id}: every caption names a string and fills its placeholders`, () => {
             const def = dailyPuzzleGames[id];
-            expect(def.game.hintCaption, id).toBeDefined();
+            const strings = stringsOf(def.i18nPrefix);
             let checked = 0;
             const check = (caption: HintCaption | undefined, where: string) => {
                 if (caption === undefined) return;
                 checked += 1;
-                const text = def.strings[caption.key];
+                const text = strings[caption.key];
                 expect(text, `${where}: ${caption.key}`).toBeDefined();
                 const params = caption.params ?? {};
                 // A placeholder with no value renders as raw text; a value the sentence has no
@@ -118,20 +120,20 @@ describe("daily puzzle hint sentences match their strings", () => {
                 }
                 for (const value of Object.values(params)) {
                     if (typeof value === "object" && !Array.isArray(value)) {
-                        expect(def.strings[value.key], `${where}: ${value.key}`).toBeDefined();
+                        expect(strings[value.key], `${where}: ${value.key}`).toBeDefined();
                     }
                 }
             };
             for (const [p, entry] of entries.entries()) {
-                const model = def.game.parse(bytes(entry.description));
-                let state = def.game.empty(model);
+                const description = bytes(entry.description);
+                const concluded: [number, number][] = [];
                 for (const [i, step] of entry.steps.entries()) {
                     const where = `${id} puzzle ${p} step ${i}`;
+                    const board = def.newBoard(description, concluded);
                     // As served with its target, and with it withheld
-                    check(def.game.hintCaption!(model, state, step), where);
-                    check(def.game.hintCaption!(model, state, { ...step, target: [] }), where);
-                    for (const [k, v] of step.conclusions)
-                        state = def.game.apply(model, state, k, v);
+                    check(board.hintCaption(step), where);
+                    check(board.hintCaption({ ...step, target: [] }), where);
+                    for (const [k, v] of step.conclusions) concluded.push([k, v]);
                 }
             }
             expect(checked).toBeGreaterThan(0);

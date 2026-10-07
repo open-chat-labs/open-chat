@@ -5,7 +5,8 @@
     import type { PictogramProps } from "../types";
 
     // Givens only (trees and counts), for the result card.
-    let { model }: PictogramProps<TentsDescription> = $props();
+    let { board }: PictogramProps<TentsDescription> = $props();
+    let model = $derived(board.model);
 
     let elements = $derived(tents.elements(model));
 </script>

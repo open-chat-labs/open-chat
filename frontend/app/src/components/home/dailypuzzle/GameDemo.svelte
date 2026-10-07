@@ -15,37 +15,20 @@
     let { def }: Props = $props();
 
     const spec = def.demo;
-    // Parsed with the game's own parser, so a malformed demo fails here rather than drawing
-    // something the real board could never show.
-    const model = spec === undefined ? undefined : def.game.parse(spec.description);
-
     const last = spec === undefined ? 0 : spec.frames.length - 1;
 
     // The reader steps through the frames themselves; nothing advances on a timer.
     let index: number = $state(0);
     let frame: DemoFrame | undefined = $derived(spec?.frames[index]);
 
-    let demoState = $derived.by(() => {
-        if (spec === undefined || model === undefined || frame === undefined) return undefined;
-        return frame.marks.reduce(
-            (s, [k, v]) => def.game.apply(model, s, k, v),
-            def.game.empty(model),
-        );
-    });
-
-    let marks = $derived(
-        model !== undefined && demoState !== undefined
-            ? def.game.marks(model, demoState)
-            : new Map<number, string>(),
+    // The frame's marks on the demo puzzle, parsed and checked by the game itself, so a
+    // malformed demo fails here rather than drawing something the real board could never show.
+    let board = $derived(
+        spec === undefined || frame === undefined
+            ? undefined
+            : def.newBoard(spec.description, frame.marks),
     );
-    let violations: Violation[] = $derived(
-        model !== undefined && demoState !== undefined ? def.game.check(model, demoState) : [],
-    );
-    let lit: Set<number> = $derived(
-        model !== undefined && demoState !== undefined
-            ? (def.game.lit?.(model, demoState) ?? new Set<number>())
-            : new Set<number>(),
-    );
+    let violations: Violation[] = $derived(board?.violations ?? []);
     // On a frame that breaks a rule the checker's red IS the message, and the translucent blue
     // "look here" wash sits on top of it and turns the red pink. Let the mistake speak alone.
     let pointed = $derived(
@@ -66,18 +49,14 @@
     }
 </script>
 
-{#if spec !== undefined && model !== undefined && demoState !== undefined && frame !== undefined}
-    {@const Board = def.Board}
+{#if spec !== undefined && board !== undefined && frame !== undefined}
     <div class="demo">
         <!-- Keyboard users step with the arrow buttons below; tapping the board is a shortcut. -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div class="board" onclick={tapBoard}>
-            <Board
-                {model}
-                state={demoState}
-                {marks}
-                {lit}
+            <board.Board
+                {board}
                 {violations}
                 focus={pointed}
                 target={pointed}

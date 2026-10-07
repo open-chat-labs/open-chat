@@ -7,9 +7,7 @@
     import type { BoardProps } from "../types";
 
     let {
-        model,
-        marks,
-        lit,
+        board,
         violations,
         focus,
         target,
@@ -17,6 +15,9 @@
         greyed = false,
         disabled = false,
     }: BoardProps<LightUpDescription, LightUpCell[]> = $props();
+    let model = $derived(board.model);
+    let marks = $derived(board.marks);
+    let lit = $derived(board.lit);
 
     let elements = $derived(lightUp.elements(model));
     // a bulb that sees another or sits on a black cell
