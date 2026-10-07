@@ -718,6 +718,8 @@
         "wrong": "Das stimmt nicht. Prüfen Sie die roten Zellen.",
         "mistake": "In den roten Zellen stimmt etwas nicht. Korrigieren Sie sie und fragen Sie dann erneut nach einem Tipp.",
         "fixMistakeFirst": "Korrigieren Sie zuerst die roten Zellen",
+        "howToPlay": "So wird gespielt",
+        "backToPuzzle": "Zurück zum Rätsel",
         "noFreeChecks": "Keine kostenlosen Prüfungen mehr für das heutige Rätsel",
         "checksLeft": "{count} Prüfungen übrig",
         "reset": "Zurücksetzen",
