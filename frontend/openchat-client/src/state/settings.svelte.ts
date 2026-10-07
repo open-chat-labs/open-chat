@@ -1,3 +1,5 @@
+import { configKeys } from "@shared";
+
 export function booleanFromLocalStorage(key: string, defaultVal: boolean): boolean {
     const val = localStorage.getItem(key);
     switch (val) {
@@ -35,7 +37,7 @@ class LocalStorageSetting {
 }
 
 class LocalStorageSettings {
-    chitPopup = new LocalStorageSetting("openchat_chit_popup", true);
+    chitPopup = new LocalStorageSetting(configKeys.chitPopup, true);
 }
 
 export const settings = new LocalStorageSettings();
