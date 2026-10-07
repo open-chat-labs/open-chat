@@ -718,6 +718,8 @@
         "wrong": "Non è così. Controlla le celle rosse.",
         "mistake": "C'è qualcosa che non va nelle celle rosse. Correggile, poi chiedi di nuovo un suggerimento.",
         "fixMistakeFirst": "Prima correggi le celle rosse",
+        "howToPlay": "Come si gioca",
+        "backToPuzzle": "Torna al puzzle",
         "noFreeChecks": "Nessun controllo gratuito rimasto per il puzzle di oggi",
         "checksLeft": "{count} controlli rimasti",
         "reset": "Azzera",

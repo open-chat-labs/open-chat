@@ -718,6 +718,8 @@
         "wrong": "No es eso. Revisa las casillas rojas.",
         "mistake": "Algo falla en las casillas rojas. Corrígelas y vuelve a pedir una pista.",
         "fixMistakeFirst": "Corrige primero las casillas rojas",
+        "howToPlay": "Cómo se juega",
+        "backToPuzzle": "Volver al puzle",
         "noFreeChecks": "No quedan comprobaciones gratis para el puzle de hoy",
         "checksLeft": "Quedan {count} comprobaciones",
         "reset": "Reiniciar",

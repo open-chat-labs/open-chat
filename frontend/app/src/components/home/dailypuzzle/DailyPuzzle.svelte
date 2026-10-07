@@ -4,12 +4,13 @@
         currentUserIdStore,
         dailyPuzzleStore,
         publish,
+        puzzleReplaced,
         stateFor,
         todaysPuzzle,
-        puzzleReplaced,
-        type PublicDailyPuzzle,
         type OpenChat,
+        type PublicDailyPuzzle,
     } from "@client";
+    import Link from "@src/components/Link.svelte";
     import { getContext, onDestroy, tick, untrack } from "svelte";
     import Fire from "svelte-material-icons/Fire.svelte";
     import LightbulbOutline from "svelte-material-icons/LightbulbOutline.svelte";
@@ -26,11 +27,11 @@
         type HintButton,
     } from "../../../utils/dailyPuzzle.svelte";
     import { dailyPuzzleGame } from "../../../utils/dailyPuzzleGames";
-    import GameDemo from "./GameDemo.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Translatable from "../../Translatable.svelte";
+    import GameDemo from "./GameDemo.svelte";
 
     interface Props {
         gameId?: string;
@@ -52,6 +53,7 @@
                   stateFor($dailyPuzzleStore, p.gameId),
                   $currentUserIdStore,
                   def.game,
+                  def.demo !== undefined,
               )
             : undefined;
     }
@@ -89,7 +91,12 @@
     let hintsUsed = $derived(userState?.hints.filter((h) => !h.mistake).length ?? 0);
     let streak = $derived(userState?.streak ?? 0);
     let disabled = $derived(
-        game === undefined || !started || solved !== undefined || game.submitting || game.busy,
+        game === undefined ||
+            !started ||
+            game.tutorialOpen ||
+            solved !== undefined ||
+            game.submitting ||
+            game.busy,
     );
     let entryFee = $derived(game?.entryFee ?? 0);
     let canAfford = $derived($chitStateStore.chitBalance >= entryFee);
@@ -106,13 +113,25 @@
     }
 </script>
 
+{#snippet howToPlay()}
+    {#if game?.canToggleTutorial}
+        <div class={`how_to ${game.tutorialOpen ? "back" : ""}`}>
+            <Link onClick={() => game?.toggleTutorial()} underline="hover">
+                <Translatable
+                    resourceKey={i18nKey(
+                        game.tutorialOpen ? "dailyPuzzle.backToPuzzle" : "dailyPuzzle.howToPlay",
+                    )} />
+            </Link>
+        </div>
+    {/if}
+{/snippet}
+
 <ModalContent closeIcon {onClose}>
     {#snippet header()}
         {#if puzzle !== undefined}
             <div class="header">
                 <Translatable
-                    resourceKey={i18nKey("dailyPuzzle.number", { number: puzzle.number })}
-                />
+                    resourceKey={i18nKey("dailyPuzzle.number", { number: puzzle.number })} />
                 <span class="tier">
                     · <Translatable resourceKey={i18nKey(gameNameKey(puzzle.gameId))} />
                     · <Translatable resourceKey={i18nKey(tierKey(puzzle.tier))} />
@@ -128,7 +147,7 @@
         {:else}
             <div class="body">
                 <div class="board" class:pending={!started && def?.demo === undefined}>
-                    {#if !started && def?.demo !== undefined}
+                    {#if game.showsDemo && def !== undefined}
                         <!-- Before Start the real board is inert and teaches nothing, so show
                              the game being played instead. Today's puzzle appears on Start. -->
                         <GameDemo {def} />
@@ -148,8 +167,7 @@
                             target={game.target}
                             greyed={!started}
                             {disabled}
-                            onTap={(key: number) => game?.tap(key)}
-                        />
+                            onTap={(key: number) => game?.tap(key)} />
                     {/if}
                 </div>
 
@@ -161,8 +179,7 @@
                     <div class="stat">
                         <LightbulbOutline size={"1.2em"} color={"var(--icon-txt)"} />
                         <Translatable
-                            resourceKey={i18nKey("dailyPuzzle.hintsUsed", { count: hintsUsed })}
-                        />
+                            resourceKey={i18nKey("dailyPuzzle.hintsUsed", { count: hintsUsed })} />
                     </div>
                     <div class="stat">
                         <Fire size={"1.2em"} color={"var(--icon-txt)"} />
@@ -170,9 +187,11 @@
                     </div>
                 </div>
 
-                <p class="caption">
-                    <Translatable resourceKey={game.rulesKey} />
-                </p>
+                {#if game.showsRules}
+                    <p class="caption">
+                        <Translatable resourceKey={game.rulesKey} />
+                    </p>
+                {/if}
 
                 {#if solved !== undefined}
                     <div class="solved">
@@ -183,15 +202,13 @@
                                     time: formatSolveTime(Number(solved.solveTimeMs)),
                                     hints: solved.hintsUsed,
                                     streak: solved.streak,
-                                })}
-                            />
+                                })} />
                         </p>
                         <p class="reward">
                             <Translatable
                                 resourceKey={i18nKey("dailyPuzzle.reward", {
                                     reward: solved.reward,
-                                })}
-                            />
+                                })} />
                         </p>
                     </div>
                 {:else if game.caption !== undefined}
@@ -214,89 +231,83 @@
                 </Button>
             </ButtonGroup>
         {:else if puzzle !== undefined && game !== undefined}
-            <ButtonGroup align={"center"}>
-                {#if solved !== undefined}
-                    {#if game.canShare}
-                        <Button onClick={share}>
+            {#if !game.tutorialOpen}
+                <ButtonGroup align={"center"}>
+                    {#if solved !== undefined}
+                        {#if game.canShare}
+                            <Button onClick={share}>
+                                <span class="btn-inner">
+                                    <ShareVariant size={"1em"} color={"currentColor"} />
+                                    <Translatable resourceKey={i18nKey("dailyPuzzle.share")} />
+                                </span>
+                            </Button>
+                        {/if}
+                        <Button secondary onClick={onClose}>
+                            <Translatable resourceKey={i18nKey("close")} />
+                        </Button>
+                    {:else if !started}
+                        <Button
+                            loading={game.busy}
+                            disabled={game.busy || !canAfford}
+                            onClick={() => game?.start()}>
+                            <Translatable
+                                resourceKey={entryFee === 0
+                                    ? i18nKey("dailyPuzzle.startFree")
+                                    : i18nKey("dailyPuzzle.startFee", { fee: entryFee })} />
+                        </Button>
+                    {:else}
+                        <Button
+                            secondary={!game.resetArmed}
+                            danger={game.resetArmed}
+                            disabled={!game.canReset}
+                            onClick={() => game?.reset()}>
                             <span class="btn-inner">
-                                <ShareVariant size={"1em"} color={"currentColor"} />
-                                <Translatable resourceKey={i18nKey("dailyPuzzle.share")} />
+                                <Refresh size={"1em"} color={"currentColor"} />
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        game.resetArmed
+                                            ? "dailyPuzzle.resetConfirm"
+                                            : "dailyPuzzle.reset",
+                                    )} />
+                            </span>
+                        </Button>
+                        <Button
+                            loading={game.busy}
+                            disabled={hintDisabled}
+                            secondary
+                            onClick={() => game?.hint()}>
+                            <span class="btn-inner">
+                                <LightbulbOutline size={"1em"} color={"currentColor"} />
+                                {#if hintButton.kind === "mistake"}
+                                    <Translatable
+                                        resourceKey={i18nKey("dailyPuzzle.fixMistakeFirst")} />
+                                {:else if hintButton.kind === "noneLeft"}
+                                    <Translatable
+                                        resourceKey={i18nKey("dailyPuzzle.noHintsLeft")} />
+                                {:else}
+                                    <Translatable
+                                        resourceKey={i18nKey("dailyPuzzle.hintCost", {
+                                            price: hintButton.price,
+                                        })} />
+                                    {#if hintButton.hintsLeft > 0}
+                                        · <Translatable
+                                            resourceKey={i18nKey("dailyPuzzle.hintsLeft", {
+                                                count: hintButton.hintsLeft,
+                                            })} />
+                                    {/if}
+                                    {#if hintButton.checksLeft !== undefined}
+                                        · <Translatable
+                                            resourceKey={i18nKey("dailyPuzzle.checksLeft", {
+                                                count: hintButton.checksLeft,
+                                            })} />
+                                    {/if}
+                                {/if}
                             </span>
                         </Button>
                     {/if}
-                    <Button secondary onClick={onClose}>
-                        <Translatable resourceKey={i18nKey("close")} />
-                    </Button>
-                {:else if !started}
-                    <Button
-                        loading={game.busy}
-                        disabled={game.busy || !canAfford}
-                        onClick={() => game?.start()}
-                    >
-                        <Translatable
-                            resourceKey={entryFee === 0
-                                ? i18nKey("dailyPuzzle.startFree")
-                                : i18nKey("dailyPuzzle.startFee", { fee: entryFee })}
-                        />
-                    </Button>
-                {:else}
-                    <Button
-                        tiny
-                        secondary={!game.resetArmed}
-                        danger={game.resetArmed}
-                        disabled={!game.canReset}
-                        onClick={() => game?.reset()}
-                    >
-                        <span class="btn-inner">
-                            <Refresh size={"1em"} color={"currentColor"} />
-                            <Translatable
-                                resourceKey={i18nKey(
-                                    game.resetArmed
-                                        ? "dailyPuzzle.resetConfirm"
-                                        : "dailyPuzzle.reset",
-                                )}
-                            />
-                        </span>
-                    </Button>
-                    <Button
-                        loading={game.busy}
-                        disabled={hintDisabled}
-                        secondary
-                        onClick={() => game?.hint()}
-                    >
-                        <span class="btn-inner">
-                            <LightbulbOutline size={"1em"} color={"currentColor"} />
-                            {#if hintButton.kind === "mistake"}
-                                <Translatable
-                                    resourceKey={i18nKey("dailyPuzzle.fixMistakeFirst")}
-                                />
-                            {:else if hintButton.kind === "noneLeft"}
-                                <Translatable resourceKey={i18nKey("dailyPuzzle.noHintsLeft")} />
-                            {:else}
-                                <Translatable
-                                    resourceKey={i18nKey("dailyPuzzle.hintCost", {
-                                        price: hintButton.price,
-                                    })}
-                                />
-                                {#if hintButton.hintsLeft > 0}
-                                    · <Translatable
-                                        resourceKey={i18nKey("dailyPuzzle.hintsLeft", {
-                                            count: hintButton.hintsLeft,
-                                        })}
-                                    />
-                                {/if}
-                                {#if hintButton.checksLeft !== undefined}
-                                    · <Translatable
-                                        resourceKey={i18nKey("dailyPuzzle.checksLeft", {
-                                            count: hintButton.checksLeft,
-                                        })}
-                                    />
-                                {/if}
-                            {/if}
-                        </span>
-                    </Button>
-                {/if}
-            </ButtonGroup>
+                </ButtonGroup>
+            {/if}
+            {@render howToPlay()}
         {/if}
     {/snippet}
 </ModalContent>
@@ -374,5 +385,14 @@
         display: inline-flex;
         align-items: center;
         gap: $sp2;
+    }
+
+    .how_to {
+        padding: $sp4 0 0 0;
+        text-align: center;
+
+        &.back {
+            padding-top: 0;
+        }
     }
 </style>

@@ -3,11 +3,11 @@
         chitStateStore,
         currentUserIdStore,
         dailyPuzzleStore,
+        puzzleReplaced,
         stateFor,
         todaysPuzzle,
-        puzzleReplaced,
-        type PublicDailyPuzzle,
         type OpenChat,
+        type PublicDailyPuzzle,
     } from "@client";
     import { now500 } from "@src/stores/time";
     import {
@@ -18,7 +18,6 @@
         type HintButton,
     } from "@src/utils/dailyPuzzle.svelte";
     import { dailyPuzzleGame } from "@src/utils/dailyPuzzleGames";
-    import GameDemo from "../../../components/home/dailypuzzle/GameDemo.svelte";
     import {
         Body,
         BodySmall,
@@ -28,14 +27,16 @@
         CommonButton2,
         Container,
         H2,
+        transition,
     } from "component-lib";
     import { getContext, onDestroy, untrack } from "svelte";
+    import { _ } from "svelte-i18n";
     import Fire from "svelte-material-icons/Fire.svelte";
     import LightbulbOutline from "svelte-material-icons/LightbulbOutline.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import ShareVariant from "svelte-material-icons/ShareVariant.svelte";
     import TimerOutline from "svelte-material-icons/TimerOutline.svelte";
-    import { _ } from "svelte-i18n";
+    import GameDemo from "../../../components/home/dailypuzzle/GameDemo.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "../../Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
@@ -60,6 +61,7 @@
                   stateFor($dailyPuzzleStore, p.gameId),
                   $currentUserIdStore,
                   def.game,
+                  def.demo !== undefined,
               )
             : undefined;
     }
@@ -97,7 +99,12 @@
     let hintsUsed = $derived(userState?.hints.filter((h) => !h.mistake).length ?? 0);
     let streak = $derived(userState?.streak ?? 0);
     let disabled = $derived(
-        game === undefined || !started || solved !== undefined || game.submitting || game.busy,
+        game === undefined ||
+            !started ||
+            game.tutorialOpen ||
+            solved !== undefined ||
+            game.submitting ||
+            game.busy,
     );
     let entryFee = $derived(game?.entryFee ?? 0);
     let canAfford = $derived($chitStateStore.chitBalance >= entryFee);
@@ -109,7 +116,26 @@
     function share() {
         game?.share();
     }
+
+    function toggleDemo() {
+        transition(["fade"], () => {
+            game?.toggleTutorial();
+        });
+    }
 </script>
+
+{#snippet howToPlay()}
+    {#if game?.canToggleTutorial}
+        <Container mainAxisAlignment={"center"}>
+            <CommonButton2 variant={"primary"} mode={"text"} onClick={toggleDemo}>
+                <Translatable
+                    resourceKey={i18nKey(
+                        game.tutorialOpen ? "dailyPuzzle.backToPuzzle" : "dailyPuzzle.howToPlay",
+                    )} />
+            </CommonButton2>
+        </Container>
+    {/if}
+{/snippet}
 
 <SlidingPageContent
     title={puzzle !== undefined
@@ -118,8 +144,7 @@
     subtitle={puzzle !== undefined
         ? i18nKey(`${$_(gameNameKey(puzzle.gameId))} · ${$_(tierKey(puzzle.tier))}`)
         : undefined}
-    onBack={onClose}
->
+    onBack={onClose}>
     <Container height={"fill"} padding={["xl", "xl", "huge"]} gap={"xl"} direction={"vertical"}>
         {#if puzzle === undefined}
             <Body><Translatable resourceKey={i18nKey("dailyPuzzle.unavailable")} /></Body>
@@ -127,7 +152,7 @@
             <Body><Translatable resourceKey={i18nKey("dailyPuzzle.needsNewerApp")} /></Body>
         {:else}
             <div class="board" class:pending={!started && def?.demo === undefined}>
-                {#if !started && def?.demo !== undefined}
+                {#if game.showsDemo && def !== undefined}
                     <!-- Before Start the real board is inert and teaches nothing, so show the
                          game being played instead. Today's puzzle appears on Start. -->
                     <GameDemo {def} />
@@ -147,8 +172,7 @@
                         target={game.target}
                         greyed={!started}
                         {disabled}
-                        onTap={(key: number) => game?.tap(key)}
-                    />
+                        onTap={(key: number) => game?.tap(key)} />
                 {/if}
             </div>
 
@@ -156,15 +180,13 @@
                 <div class="stat">
                     <TimerOutline size={"1.2em"} color={ColourVars.textSecondary} />
                     <BodySmall width={"hug"}
-                        ><span class="mono">{formatSolveTime(elapsed)}</span></BodySmall
-                    >
+                        ><span class="mono">{formatSolveTime(elapsed)}</span></BodySmall>
                 </div>
                 <div class="stat">
                     <LightbulbOutline size={"1.2em"} color={ColourVars.textSecondary} />
                     <BodySmall width={"hug"}>
                         <Translatable
-                            resourceKey={i18nKey("dailyPuzzle.hintsUsed", { count: hintsUsed })}
-                        />
+                            resourceKey={i18nKey("dailyPuzzle.hintsUsed", { count: hintsUsed })} />
                     </BodySmall>
                 </div>
                 <div class="stat">
@@ -175,9 +197,11 @@
                 </div>
             </Container>
 
-            <Caption colour={"textSecondary"}>
-                <Translatable resourceKey={game.rulesKey} />
-            </Caption>
+            {#if game.showsRules}
+                <Caption colour={"textSecondary"}>
+                    <Translatable resourceKey={game.rulesKey} />
+                </Caption>
+            {/if}
 
             {#if solved !== undefined}
                 <Container direction={"vertical"} gap={"sm"} crossAxisAlignment={"center"}>
@@ -190,13 +214,13 @@
                                 time: formatSolveTime(Number(solved.solveTimeMs)),
                                 hints: solved.hintsUsed,
                                 streak: solved.streak,
-                            })}
-                        />
+                            })} />
                     </Body>
                     <Body width={"hug"} fontWeight={"bold"} colour={"primary"}>
                         <Translatable
-                            resourceKey={i18nKey("dailyPuzzle.reward", { reward: solved.reward })}
-                        />
+                            resourceKey={i18nKey("dailyPuzzle.reward", {
+                                reward: solved.reward,
+                            })} />
                     </Body>
                 </Container>
                 {#if game.canShare}
@@ -220,30 +244,26 @@
                     <Button
                         loading={game.busy}
                         disabled={game.busy || !canAfford}
-                        onClick={() => game?.start()}
-                    >
+                        onClick={() => game?.start()}>
                         <Translatable
                             resourceKey={entryFee === 0
                                 ? i18nKey("dailyPuzzle.startFree")
-                                : i18nKey("dailyPuzzle.startFee", { fee: entryFee })}
-                        />
+                                : i18nKey("dailyPuzzle.startFee", { fee: entryFee })} />
                     </Button>
-                {:else}
+                {:else if !game.tutorialOpen}
                     <CommonButton2
                         disabled={!game.canReset}
                         variant={"secondary"}
                         mode={"small"}
                         width={"fill"}
-                        onClick={() => game?.reset()}
-                    >
+                        onClick={() => game?.reset()}>
                         {#snippet icon(color, size)}
                             <Refresh {color} {size} />
                         {/snippet}
                         <Translatable
                             resourceKey={i18nKey(
                                 game.resetArmed ? "dailyPuzzle.resetConfirm" : "dailyPuzzle.reset",
-                            )}
-                        />
+                            )} />
                     </CommonButton2>
                     <CommonButton2
                         loading={game.busy}
@@ -251,8 +271,7 @@
                         variant={"secondary"}
                         mode={"regular"}
                         width={"fill"}
-                        onClick={() => game?.hint()}
-                    >
+                        onClick={() => game?.hint()}>
                         {#snippet icon(color, size)}
                             <LightbulbOutline {color} {size} />
                         {/snippet}
@@ -264,25 +283,23 @@
                             <Translatable
                                 resourceKey={i18nKey("dailyPuzzle.hintCost", {
                                     price: hintButton.price,
-                                })}
-                            />
+                                })} />
                             {#if hintButton.hintsLeft > 0}
                                 · <Translatable
                                     resourceKey={i18nKey("dailyPuzzle.hintsLeft", {
                                         count: hintButton.hintsLeft,
-                                    })}
-                                />
+                                    })} />
                             {/if}
                             {#if hintButton.checksLeft !== undefined}
                                 · <Translatable
                                     resourceKey={i18nKey("dailyPuzzle.checksLeft", {
                                         count: hintButton.checksLeft,
-                                    })}
-                                />
+                                    })} />
                             {/if}
                         {/if}
                     </CommonButton2>
                 {/if}
+                {@render howToPlay()}
             {/if}
         {/if}
     </Container>

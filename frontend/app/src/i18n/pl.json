@@ -718,6 +718,8 @@
         "wrong": "To nie to. Sprawdź czerwone pola.",
         "mistake": "W czerwonych polach jest błąd. Popraw je, a potem poproś o podpowiedź ponownie.",
         "fixMistakeFirst": "Najpierw popraw czerwone pola",
+        "howToPlay": "Jak grać",
+        "backToPuzzle": "Wróć do łamigłówki",
         "noFreeChecks": "Brak darmowych sprawdzeń do dzisiejszej łamigłówki",
         "checksLeft": "Pozostałe sprawdzenia: {count}",
         "reset": "Resetuj",

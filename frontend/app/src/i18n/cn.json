@@ -718,6 +718,8 @@
         "wrong": "不对。请检查红色格子。",
         "mistake": "红色格子中有错误。先改正，再重新请求提示。",
         "fixMistakeFirst": "请先改正红色格子",
+        "howToPlay": "玩法说明",
+        "backToPuzzle": "返回谜题",
         "noFreeChecks": "今日谜题的免费检查已用完",
         "checksLeft": "剩余 {count} 次检查",
         "reset": "重置",
