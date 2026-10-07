@@ -199,7 +199,7 @@ fn ledger_uninstalled_after_running_out_of_cycles_is_marked_uninstalled() {
     // A ledger which is frozen but still installed is left alone
     freeze(env, ledger_canister_id, *controller);
     env.advance_time(Duration::from_millis(11 * HOUR_IN_MS));
-    tick_many(env, 10);
+    tick_many(env, 20);
     assert!(!is_marked_uninstalled(env, canister_ids.registry, ledger_canister_id));
 
     // The management canister charges a frozen canister for calls about it too, so it can only be
