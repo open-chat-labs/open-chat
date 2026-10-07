@@ -222,7 +222,9 @@ impl Job for HardDeleteMessageContentJob {
                                 })
                                 .is_some()
                             {
-                                for pending_transaction in prize.final_payments(sender, state.env.now_nanos()) {
+                                for pending_transaction in
+                                    prize.final_payments(sender, &state.data.migrated_user_ids, state.env.now_nanos())
+                                {
                                     follow_on_jobs.push(TimerJob::MakeTransfer(Box::new(MakeTransferJob {
                                         pending_transaction,
                                         attempt: 0,
@@ -294,7 +296,7 @@ impl Job for FinalPrizePaymentsJob {
                 .data
                 .chat
                 .events
-                .final_payments(self.message_index, state.env.now_nanos())
+                .final_payments(self.message_index, &state.data.migrated_user_ids, state.env.now_nanos())
         });
 
         for pending_transaction in pending_transactions {

@@ -611,8 +611,8 @@ impl DirectChat {
         });
     }
 
-    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
-        self.events.remove_expired_events(now)
+    pub fn remove_expired_events(&mut self, migrated_user_ids: &MigratedUserIds, now: TimestampMillis) -> RemoveEventsResult {
+        self.events.remove_expired_events(migrated_user_ids, now)
     }
 
     pub fn subscribe_bot_to_events(
