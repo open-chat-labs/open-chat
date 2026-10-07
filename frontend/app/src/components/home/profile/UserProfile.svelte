@@ -655,7 +655,7 @@
                 headerText={i18nKey("advanced")}>
                 {#if !$anonUserStore}
                     <div class="userid">
-                        <Legend label={i18nKey("userId")} rules={i18nKey("alsoCanisterId")} />
+                        <Legend label={i18nKey("userId")} />
                         <div class="userid-txt">
                             <div>{user.userId}</div>
                             <button
