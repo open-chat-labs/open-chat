@@ -43,8 +43,12 @@ pub(crate) fn cap_p2p_swap_expiry_jobs(data: &mut Data, now: TimestampMillis) ->
         if action == Action::Keep {
             continue;
         }
-        data.timer_jobs
-            .cancel_job(|j| matches!(j, TimerJob::MarkP2PSwapExpired(j) if j.message_id == job.message_id));
+        data.timer_jobs.cancel_job(|j| {
+            matches!(j, TimerJob::MarkP2PSwapExpired(j)
+                if j.chat_id == job.chat_id
+                    && j.thread_root_message_index == job.thread_root_message_index
+                    && j.message_id == job.message_id)
+        });
         match action {
             Action::Keep => {}
             Action::Cancel => cancelled += 1,

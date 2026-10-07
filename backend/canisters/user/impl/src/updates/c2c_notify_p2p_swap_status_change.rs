@@ -20,6 +20,7 @@ async fn c2c_notify_p2p_swap_status_change_impl(args: Args) {
     let Chat::Direct(chat_id) = m.chat else {
         return;
     };
+    let thread_root_message_index = m.thread_root_message_index;
 
     let (my_user_id, local_user_index_canister_id) =
         read_state(|state| (UserId::from(state.env.canister_id()), state.data.local_user_index_canister_id));
@@ -50,7 +51,7 @@ async fn c2c_notify_p2p_swap_status_change_impl(args: Args) {
             .latest_user_id(them, &state.data.migrated_user_ids);
         if let Some(change) = apply_status_change(&mut state.data.user, them, args, now, event_pusher) {
             // The swap has ended, so there is no longer any need to mark it as expired
-            state.cancel_mark_p2p_swap_expired_job(change.message_id);
+            state.cancel_mark_p2p_swap_expired_job(them, thread_root_message_index, change.message_id);
             state.push_user_canister_event(them, UserCanisterEvent::P2PSwapStatusChange(Box::new(change)));
         }
     })
