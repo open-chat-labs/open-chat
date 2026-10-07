@@ -18,31 +18,23 @@ fn c2c_notifications_index_impl(args: Args, state: &mut RuntimeState) -> Respons
             event.created_at,
             event.idempotency_id,
         ) {
-            // Subscriptions are held under each user's latest id, but the NotificationsIndex may name a
-            // user by an id they've since been migrated from, if it hasn't yet been told of the migration
-            let latest = |user_id| state.data.migrated_user_ids.latest(user_id);
             match event.value {
                 NotificationsIndexEvent::SubscriptionAdded(s) => {
-                    let user_id = latest(s.user_id);
-                    state.data.web_push_subscriptions.push(user_id, s.subscription);
+                    state.data.web_push_subscriptions.push(s.user_id, s.subscription);
                 }
                 NotificationsIndexEvent::SubscriptionRemoved(s) => {
-                    let user_id = latest(s.user_id);
-                    state.data.web_push_subscriptions.remove(user_id, &s.endpoint);
+                    state.data.web_push_subscriptions.remove(s.user_id, &s.endpoint);
                 }
                 NotificationsIndexEvent::AllSubscriptionsRemoved(u) => {
-                    let user_id = latest(u);
-                    state.data.web_push_subscriptions.remove_all(user_id);
+                    state.data.web_push_subscriptions.remove_all(u);
                 }
                 NotificationsIndexEvent::SetNotificationPusherPrincipals(principals) => {
                     state.data.notification_pushers = principals;
                 }
                 NotificationsIndexEvent::FcmTokenAdded(user_id, fcm_token) => {
-                    let user_id = latest(user_id);
                     let _ = state.data.fcm_token_store.add(user_id, fcm_token);
                 }
                 NotificationsIndexEvent::FcmTokenRemoved(user_id, fcm_token) => {
-                    let user_id = latest(user_id);
                     let _ = state.data.fcm_token_store.remove(&user_id, &fcm_token);
                 }
                 NotificationsIndexEvent::UserBlocked(..)

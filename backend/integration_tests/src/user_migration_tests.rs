@@ -1079,44 +1079,55 @@ fn notifications_index_knows_migrated_user_by_their_new_id() {
     let user2 = client::register_user(env, canister_ids);
 
     // Subscribing to notifications has the NotificationsIndex cache the user's id
-    subscribe_to_notifications(env, canister_ids, &user1);
-
-    migrate_users(
-        env,
-        operator.principal,
-        canister_ids.user_index,
-        vec![user1.user_id],
-        Some(multi_user_canister),
-    );
-    let new_user_id = wait_for_import(env, operator.principal, canister_ids.user_index, user1.user_id);
-    tick_many(env, 10);
-
-    // A subscription pushed once the NotificationsIndex has been told of the migration is held under
-    // the user's new id, so they are notified on that device of messages sent to them
-    let endpoint = random_string();
+    let endpoint1 = random_string();
     client::notifications_index::happy_path::push_subscription(
         env,
         user1.principal,
         canister_ids.notifications_index,
         "auth",
         "p256dh",
-        &endpoint,
+        &endpoint1,
+    );
+
+    let new_user1 = migrate(env, canister_ids, &operator, &user1, multi_user_canister);
+    wait_until_local_user_index_knows_of_migration(env, local_user_index, &user1, new_user1.user_id);
+    tick_many(env, 5);
+
+    // A subscription pushed once the NotificationsIndex has been told of the migration is held under
+    // the user's new id, so they are notified on that device of messages sent to them
+    let endpoint2 = random_string();
+    client::notifications_index::happy_path::push_subscription(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        "auth",
+        "p256dh",
+        &endpoint2,
     );
     tick_many(env, 3);
     let latest_notification_index =
         client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
-    client::user::happy_path::send_text_message(env, &user2, new_user_id, random_string(), None);
+    client::user::happy_path::send_text_message(env, &user2, new_user1.user_id, random_string(), None);
     tick_many(env, 3);
     let notifications =
         client::local_user_index::happy_path::notifications(env, *controller, local_user_index, latest_notification_index + 1);
     assert_eq!(notifications.notifications.len(), 1);
     assert!(
-        notifications.subscriptions[&new_user_id]
+        notifications.subscriptions[&new_user1.user_id]
             .iter()
-            .any(|s| matches!(s, NotificationSubscription::WebPush(s) if s.endpoint == endpoint)),
+            .any(|s| matches!(s, NotificationSubscription::WebPush(s) if s.endpoint == endpoint2)),
         "{:?}",
         notifications.subscriptions
     );
+
+    // Knowing the user by their new id, the NotificationsIndex also holds the subscription pushed
+    // before they were migrated under it
+    assert!(client::notifications_index::happy_path::subscription_exists(
+        env,
+        user1.principal,
+        canister_ids.notifications_index,
+        &endpoint1
+    ));
 }
 
 // Devices the user subscribed before being migrated go on being notified, under their new id, without
@@ -1163,18 +1174,18 @@ fn user_subscribed_before_being_migrated_is_notified_under_their_new_id() {
     );
     tick_many(env, 3);
 
-    let user1 = migrate(env, canister_ids, &operator, &user1, multi_user_canister);
-    tick_many(env, 10);
+    let new_user1 = migrate(env, canister_ids, &operator, &user1, multi_user_canister);
+    wait_until_local_user_index_knows_of_migration(env, local_user_index, &user1, new_user1.user_id);
 
     let latest_notification_index =
         client::local_user_index::happy_path::latest_notification_index(env, *controller, local_user_index);
-    client::user::happy_path::send_text_message(env, &user2, user1.user_id, random_string(), None);
+    client::user::happy_path::send_text_message(env, &user2, new_user1.user_id, random_string(), None);
     tick_many(env, 3);
     let notifications =
         client::local_user_index::happy_path::notifications(env, *controller, local_user_index, latest_notification_index + 1);
     assert_eq!(notifications.notifications.len(), 1);
     assert_eq!(
-        notifications.subscriptions.get(&user1.user_id),
+        notifications.subscriptions.get(&new_user1.user_id),
         Some(&vec![
             NotificationSubscription::WebPush(subscription),
             NotificationSubscription::FcmPush(fcm_token)
@@ -4120,6 +4131,20 @@ fn migrate_users(
         user_index_canister::migrate_users::Response::Success(result) => result.queued,
         response => panic!("'migrate_users' error: {response:?}"),
     }
+}
+
+// The UserIndex tells each LocalUserIndex of a migration once the user has been imported, which can
+// take some rounds to arrive. The LocalUserIndex moves the user's subscriptions onto their new id when
+// told.
+fn wait_until_local_user_index_knows_of_migration(
+    env: &mut PocketIc,
+    local_user_index: CanisterId,
+    user: &User,
+    new_user_id: UserId,
+) {
+    tick_until(env, |env| {
+        client::local_user_index::happy_path::latest_user_id(env, user.principal, local_user_index, user.user_id) == new_user_id
+    });
 }
 
 fn subscribe_to_notifications(env: &mut PocketIc, canister_ids: &CanisterIds, user: &User) {
