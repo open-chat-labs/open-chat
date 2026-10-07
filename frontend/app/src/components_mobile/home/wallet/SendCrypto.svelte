@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { currentUserIdStore, walletApprovalFee } from "@client";
     import { BigButton, Container } from "component-lib";
     import ChatPlus from "svelte-material-icons/ChatPlusOutline.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
@@ -18,6 +19,18 @@
     let { tokenState, onClose }: Props = $props();
 
     let mode = $state<"user" | "address">("user");
+    // Sending to a user sends them a message, whose transfer is pulled from the wallet of a user
+    // who holds their own funds once they have approved it, so costs the approval's fee as well.
+    // Sending to an address is a withdrawal, which costs a single transfer's fee. The token's page
+    // shares the TokenState, so it goes back to a single transfer's fee once this closes.
+    $effect(() => {
+        tokenState.transferFees =
+            mode === "user"
+                ? tokenState.transferFee +
+                  walletApprovalFee($currentUserIdStore, tokenState.transferFee, false)
+                : undefined;
+        return () => (tokenState.transferFees = undefined);
+    });
     let title = $derived(i18nKey("cryptoAccount.sendToken", { symbol: tokenState.symbol }));
 </script>
 

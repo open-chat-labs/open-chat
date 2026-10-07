@@ -19,6 +19,7 @@
         type SizeMode,
     } from "component-lib";
     import {
+        currentUserIdStore,
         diamondStatusStore,
         E8S_PER_TOKEN,
         enhancedCryptoLookup,
@@ -31,6 +32,7 @@
         type OpenChat,
         type ResourceKey,
         type SignerWallet,
+        walletApprovalFee,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
@@ -220,6 +222,20 @@
     let tokenState = $derived(new TokenState(tokenDetails, "usd"));
     let toPayE8s = $derived(amountInE8s(tokenDetails.symbol, diamondFees, selectedOption));
     let toPay = $derived(amount(toPayE8s));
+    // The price includes the transfer's fee, but an external wallet, or the wallet of a user who
+    // holds their own funds, also pays for the approval it makes before the price is pulled from it
+    let approvalFee = $derived(
+        walletApprovalFee(
+            $currentUserIdStore,
+            tokenDetails.transferFee,
+            sourceWallet !== undefined,
+        ),
+    );
+    // The checks against the OpenChat balance are for paying from it, whichever wallet is chosen
+    let openChatWalletApprovalFee = $derived(
+        walletApprovalFee($currentUserIdStore, tokenDetails.transferFee, false),
+    );
+    let toPayWithFees = $derived(amount(toPayE8s + openChatWalletApprovalFee));
     let insufficientFundsForSelectedSub = $derived(insufficientFundsForSub(selectedOption.index)); //we need to account for the fact that js cannot do maths
     let insufficientFundsForAnySub = $derived(insufficientFundsForSub(0));
     let insufficientFundsForAllSubs = $derived(insufficientFundsForSub(3));
@@ -231,7 +247,7 @@
 
     function insufficientFundsForSub(index: number): boolean {
         const toPayE8s = amountInE8s(tokenDetails.symbol, diamondFees, options[index]);
-        return toPayE8s - tokenState.remainingBalance > 0.0001;
+        return toPayE8s + openChatWalletApprovalFee - tokenState.remainingBalance > 0.0001;
     }
 
     let expiry = $derived.by(() => {
@@ -378,6 +394,17 @@
                         {tokenState.symbol}
                     </Body>
                 </Row>
+                {#if approvalFee > 0n}
+                    <Row mainAxisAlignment={"spaceBetween"}>
+                        <BodySmall colour={"textSecondary"}>
+                            <Translatable resourceKey={i18nKey("Fee")} />
+                        </BodySmall>
+                        <Body width={"hug"} colour={"textPrimary"} fontWeight={"bold"}>
+                            {amount(approvalFee)}
+                            {tokenState.symbol}
+                        </Body>
+                    </Row>
+                {/if}
                 <Row mainAxisAlignment={"spaceBetween"}>
                     <BodySmall colour={"textSecondary"}>
                         <Translatable resourceKey={i18nKey("OC treasury receives (100%)")} />
@@ -503,7 +530,7 @@
                 resourceKey={i18nKey(
                     `Insufficient funds! Top up your ${
                         tokenState.symbol
-                    } account with at least ${`${toPay} ${tokenState.symbol}`} or choose a different token as payment.`,
+                    } account with at least ${`${toPayWithFees} ${tokenState.symbol}`} or choose a different token as payment.`,
                 )} />
         </BodySmall>
     </Row>

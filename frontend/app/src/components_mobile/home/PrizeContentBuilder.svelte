@@ -36,11 +36,13 @@
         chitBands,
         cryptoBalanceStore,
         enhancedCryptoLookup as cryptoLookup,
+        currentUserIdStore,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         LocalStorageStore,
         localUpdates,
         ONE_DAY,
+        walletApprovalFee,
     } from "@client";
     import { onMount } from "svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
@@ -109,7 +111,14 @@
     let transferFee = $derived(tokenDetails.transferFee);
     let transferFees = $derived(transferFee * BigInt(numberOfWinners ?? 0));
     let prizeFees = $derived(transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n);
-    let totalFees = $derived(transferFee + prizeFees);
+    // What the prize costs in fees: the transfer of its fund, which includes the approval an
+    // external wallet, or the wallet of a user who holds their own funds, makes before the fund is
+    // pulled from it, and the prize's fees
+    let totalFees = $derived(
+        transferFee +
+            walletApprovalFee($currentUserIdStore, transferFee, payFromWallet) +
+            prizeFees,
+    );
     let minAmount = $derived(100n * BigInt(numberOfWinners ?? 0) * transferFee);
     // What the user is able to spend, or undefined when that is the external wallet's business
     // rather than ours
@@ -343,7 +352,12 @@
             {@render sectionTitle("Select the prize token")}
             <!-- An external wallet's balance is its own business, so while one is selected the
                  OpenChat balance is hidden -->
-            <CryptoSelector {draftAmount} showRefresh hideBalance={payFromWallet} bind:ledger />
+            <CryptoSelector
+                {draftAmount}
+                fees={totalFees}
+                showRefresh
+                hideBalance={payFromWallet}
+                bind:ledger />
             <SourceWalletSelector bind:wallet={sourceWallet} {ledger} />
         </Column>
 

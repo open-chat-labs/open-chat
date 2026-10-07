@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat, SignerWallet, TokenInfo } from "@client";
-    import { cryptoBalanceStore, mobileWidth } from "@client";
+    import { cryptoBalanceStore, currentUserIdStore, mobileWidth, walletApprovalFee } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
@@ -69,12 +69,21 @@
     // has never heard of.
     let symbol0 = $derived(token0.symbol);
     let symbol1 = $derived(token1.symbol);
-    let transferFees = $derived(BigInt(2) * token1.fee);
+    // Token1 is deposited in the escrow canister along with the fee for paying it out, so the
+    // deposit costs two fees
+    let depositFees = $derived(BigInt(2) * token1.fee);
+    // An external wallet, or the wallet of a user who holds their own funds, also pays for the
+    // approval it makes before the deposit is pulled from it
+    let approvalFee = $derived(
+        walletApprovalFee($currentUserIdStore, token1.fee, sourceWallet !== undefined),
+    );
+    let transferFees = $derived(depositFees + approvalFee);
     // An OpenChat balance which cannot cover the swap is no obstacle when an external wallet is
     // paying instead
     let insufficient = $derived(
-        sourceWallet === undefined && cryptoBalance <= amount1 + transferFees,
+        sourceWallet === undefined && cryptoBalance < amount1 + transferFees,
     );
+    let feeCount = $derived(approvalFee > 0n ? 3 : 2);
     let valid = $derived(error === undefined && !insufficient);
     let amount0Text = $derived(client.formatTokens(amount0, token0.decimals));
     let amount1Text = $derived(client.formatTokens(amount1 + transferFees, token1.decimals));
@@ -112,6 +121,7 @@
                                 resourceKey={i18nKey("p2pSwap.insufficientBalanceMessage", {
                                     amount: amount1Text,
                                     token: symbol1,
+                                    fees: feeCount,
                                 })} />
                         </p>
                         <AccountInfo ledger={ledger1} />
@@ -123,6 +133,7 @@
                                 token: symbol1,
                                 amountOther: amount0Text,
                                 tokenOther: symbol0,
+                                fees: feeCount,
                             })} />
                     {/if}
                     {#if sourceWallet !== undefined}
@@ -131,7 +142,7 @@
                             wallet={sourceWallet}
                             ledger={ledger1}
                             amount={amount1}
-                            fees={transferFees} />
+                            fees={depositFees} />
                     {/if}
                 </div>
             </form>

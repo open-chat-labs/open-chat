@@ -64,7 +64,7 @@
                 token: tokenState.symbol,
                 recipient: selectedUser.userId,
                 amountE8s: tokenState.draftAmount,
-                feeE8s: tokenState.transferFees,
+                feeE8s: tokenState.transferFee,
                 createdAtNanos: nowNanos(),
             },
         };

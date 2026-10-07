@@ -152,7 +152,6 @@
     "admin": "مسؤل",
     "advanced": "متقدم",
     "airdropWarning": "لكي تتأهل لعملية الإنزال الجوي التالية، يجب أن تكون عضوًا في قناة **{channelName}** في مجتمع **{communityName}**. [انقر هنا للانضمام.]({url})",
-    "alsoCanisterId": "أيضا معرف العلبة الخاص بك",
     "andNMore": "و{n} المزيد",
     "appearance": "مظهر",
     "apply": "يتقدم",
@@ -1662,7 +1661,7 @@
         "failedToCreateMessage": "فشل في إنشاء عرض المبادلة",
         "insufficient_funds": "لم يتبق لديك أموال كافية لقبول عرض المبادلة هذا",
         "insufficientBalance": "رصيد غير كاف",
-        "insufficientBalanceMessage": "يجب أن يكون لديك على الأقل {amount} {token} (بما في ذلك رسوم المعاملة 2) لقبول هذا المبادلة.",
+        "insufficientBalanceMessage": "يجب أن يكون لديك على الأقل {amount} {token} (بما في ذلك رسوم المعاملة {fees}) لقبول هذا المبادلة.",
         "notAvailable": "غير متوفر",
         "progress": {
             "accepted": "[نقل {amount1} {token1}]({token1TxnIn}) من {user1} إلى الضمان",
@@ -2648,6 +2647,8 @@
         "viewers": "المشاهدون ({count})"
     },
     "viewer": "مشاهد",
+    "votingHotkey": "Hotkey للتصويت على المقترحات",
+    "votingHotkeyCopiedToClipboard": "تم نسخ الـ Hotkey إلى الحافظة",
     "wallet": "محفظة",
     "walletSettings": "إعدادات المحفظة",
     "webhook": {

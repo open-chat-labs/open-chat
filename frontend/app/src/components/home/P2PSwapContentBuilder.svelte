@@ -2,9 +2,11 @@
     import type { MessageContext, OpenChat, P2PSwapContentInitial, SignerWallet } from "@client";
     import {
         enhancedCryptoLookup as cryptoLookup,
+        currentUserIdStore,
         isDiamondStore,
         mobileWidth,
         publish,
+        walletApprovalFee,
     } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -57,7 +59,15 @@
 
     let fromDetails = $derived($cryptoLookup.get(fromLedger)!);
     let toDetails = $derived($cryptoLookup.get(toLedger)!);
-    let totalFees = $derived(fromDetails.transferFee * BigInt(2));
+    // The offer is deposited in the escrow canister along with the fee for paying it out, so the
+    // deposit costs two fees
+    let depositFees = $derived(fromDetails.transferFee * BigInt(2));
+    // An external wallet, or the wallet of a user who holds their own funds, also pays for the
+    // approval it makes before the deposit is pulled from it
+    let approvalFee = $derived(
+        walletApprovalFee($currentUserIdStore, fromDetails.transferFee, payFromWallet),
+    );
+    let totalFees = $derived(depositFees + approvalFee);
     let remainingBalance = $state(0n);
     $effect(() => {
         remainingBalance =
@@ -195,6 +205,7 @@
         message={i18nKey("p2pSwap.confirmSend", {
             amount: client.formatTokens(fromAmount + totalFees, fromDetails.decimals),
             token: fromDetails.symbol,
+            fees: approvalFee > 0n ? 3 : 2,
         })}
         action={send} />
 {/if}
@@ -288,7 +299,7 @@
                         wallet={sourceWallet}
                         ledger={fromLedger}
                         amount={fromAmount}
-                        fees={totalFees}
+                        fees={depositFees}
                         chatId={messageContext.chatId} />
                 {/if}
             </form>
