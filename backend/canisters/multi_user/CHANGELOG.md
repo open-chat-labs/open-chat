@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2109](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2109-multi_user)] - 2026-10-07
+
 ### Added
 
 - Let a user reset a forgotten PIN by signing in again ([#9815](https://github.com/open-chat-labs/open-chat/pull/9815))
