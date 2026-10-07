@@ -1,58 +1,56 @@
-# OpenChat front-end
+# OpenChat frontend
 
-The OpenChat frontend is composed of six packages.
+One npm package (`package.json` in this folder) holds several source trees. They import each other through path aliases (`@client`, `@shared`, `@agent`, `@worker`, `@src`, `@shared_components`), not as separate packages.
 
 ### app
 
-This is the svelte website itself.
+The Svelte website. `app/src/components/` is the desktop layout, `app/src/components_mobile/` the mobile layout, and `app/src/components_shared/` the components both use.
 
-### openchat-client
+### openchat-client (`@client`)
 
-This is a the top level library which represents the interface that OpenChat exposes to the outside world. This library exposes a set of functions to perform useful tasks and a set of svelte stores to provide access to reactive application state.
+The interface the app uses: functions on the `OpenChat` class plus the reactive state the app reads. It starts the worker and talks to it asynchronously. The app imports it only through `@client`, never a path inside it.
 
-Internally, this library will install the openchat-worker package and provide async access to it.
+### openchat-worker (`@worker`)
 
-### openchat-worker
+A thin layer that gives the client correlated async access to the agent over `postMessage`.
 
-This is a thin layer that provides correlated async access to the openchat-agent via the postMessage api.
+### openchat-agent (`@agent`)
 
-### openchat-agent
+Everything that talks to the OpenChat canisters, plus the IndexedDB caches. It runs inside the web worker to keep that work off the UI thread. The app never imports it directly.
 
-This is a library which encapsulates all interaction with the OpenChat server canisters and all indexeddb caching. This library is designed to work inside a web worker to minimise performance impact on the main UI thread.
+### openchat-shared (`@shared`)
 
-### openchat-shared
+The domain model, used by the client and the agent. The client re-exports it, and the app may import it directly too.
 
-This library contains the OpenChat frontend domain model and is referenced by both the openchat-client and the openchat-agent libraries. The domain types are also re-exported from the openchat-client library so that the website itself can make use of them without directly depending on the shared lib.
+### component-lib
 
-### Turborepo
+Pure UI components with no business logic, used by the mobile layout.
 
-The five packages are managed by `turborepo`. Unfortunately turborepo doesn't handle dev mode very well as it doesn't really have any way to deal with tasks that do not end.
+### Other folders
 
-Therefore to run locally you need to run the `npm run dev` tasks for each front end project separately. This can be made easier using a process manager such as `pm2`.
+- `openchat-service-worker`: the service worker (push notifications, caching).
+- `src-tauri`, `tauri-plugin-oc`: the native Android and iOS shell.
+- `eslint-rules`: the project's own lint rules, with specs for the lint config.
 
-To run locally run `npm i` from the root `frontend` folder then run `npm run dev`. This will serve the front end from a svelte development server and delegate api calls to a local replica.
+## Running locally
 
-Unit testing is done using the `jest` framework. Tests can be run using either `npm run test` to run the test suite once or `npm run test:watch` to run the tests in watch mode.
+Run `npm i` in this folder, then `npm run dev`. That starts Vite on port 5001 (set `OC_DEV_PORT` to change it), reading settings from `frontend/.env`. The app talks to a local replica on port 8080.
 
-Tests are written in typescript and subject to the same tsconfig and linting rules as the rest of the code.
+## Checks
 
-### Linting
+- `npm run test`: the Vitest suite, run from the root `vitest.config.ts`. Specs sit next to the code as `*.spec.ts`.
+- `npm run lint`: ESLint over `.ts`, `.js` and `.svelte` files (it fixes what it can).
+- `npm run typecheck` and `npm run typecheck:agent`: svelte-check for the app and client, tsc for the agent.
+- `npm run check:ci`: all of the above, as CI runs them.
 
-Linting is provided via eslint. Make sure that you have an editor plugin setup to help you. There is already an eslint config within the project.
+## Formatting
 
-You can also run `npm run lint` to lint the frontend project.
-
-### Formatting
-
-Formatting for svelte files is provided by the svelte-vscode plugin (or equivalent) which itself uses prettier. We use prettier explicitly for formatting non-svelte files. To get the best out of this (for vs code) you should have the svelte-vscode, prettier and eslint plugins and have the following settings:
+Prettier formats the code, with `prettier-plugin-svelte` for components. In VS Code, install the Svelte, Prettier and ESLint extensions and add:
 
 ```
     "editor.formatOnSave": true,
-    "editor.formatOnPaste": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "[svelte]": {
         "editor.defaultFormatter": "svelte.svelte-vscode"
     },
 ```
-
-In addition you can run `npm run format` to format all typescript files.
