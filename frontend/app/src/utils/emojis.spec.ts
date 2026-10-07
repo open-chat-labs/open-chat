@@ -199,8 +199,14 @@ describe("the emoji Database", () => {
         failingLoads.remaining = 3;
         const { getEmojiDatabase } = await import("./emojis");
 
-        getEmojiDatabase();
-        await flush();
+        // fake timers so a rebuild scheduled with a delay is caught too
+        vi.useFakeTimers();
+        try {
+            getEmojiDatabase();
+            await vi.runAllTimersAsync();
+        } finally {
+            vi.useRealTimers();
+        }
 
         expect(constructed).toHaveBeenCalledTimes(1);
     });
