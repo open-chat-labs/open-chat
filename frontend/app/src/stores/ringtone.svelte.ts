@@ -32,6 +32,7 @@ export class Ringtone {
     }
 
     stop() {
+        this.playing = false;
         this.audio.pause();
     }
 }

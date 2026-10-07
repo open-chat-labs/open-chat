@@ -84,7 +84,8 @@ export default defineConfig([
             "no-var": "error",
             "prefer-rest-params": "error",
             "prefer-spread": "error",
-            // Not prefer-const: it can't see `bind:` writes in markup, and its fix would break them.
+            // Not prefer-const: it flags `let { ... } = $props()` and `let x = $derived(...)`, which Svelte writes
+            // with `let` (5,990 hits). svelte/prefer-const from eslint-plugin-svelte understands runes.
         },
     },
     {

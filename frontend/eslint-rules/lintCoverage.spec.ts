@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 const frontendRoot = new URL("..", import.meta.url).pathname;
 
-// prefer-const can't see `bind:` writes in markup, so it stays off for every component.
+// prefer-const flags the `let` that Svelte uses for $props and $derived, so it stays off for every component.
 const offForAllComponents = ["prefer-const"];
 
 // Components the config deliberately relaxes, and the rules it relaxes for them.
