@@ -1,5 +1,4 @@
-import { pinNumberFailureStore } from "@client";
-import { formatTimeRemaining } from "@client/utils/time";
+import { formatTimeRemaining, pinNumberFailureStore } from "@client";
 import type { PinNumberFailures, ResourceKey } from "@shared";
 import { derived } from "svelte/store";
 import { now500 } from "./time";

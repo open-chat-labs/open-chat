@@ -1,7 +1,4 @@
-import {
-    LocalStorageBoolStore,
-    LocalStorageStore,
-} from "@client/state/localStorageStore";
+import { LocalStorageBoolStore, LocalStorageStore } from "@client";
 import { configKeys } from "../utils/config";
 import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
 
