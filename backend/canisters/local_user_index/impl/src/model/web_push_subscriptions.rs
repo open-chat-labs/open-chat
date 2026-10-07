@@ -128,6 +128,17 @@ mod tests {
     }
 
     #[test]
+    fn removing_an_endpoint_pushed_again_with_new_keys_removes_it() {
+        let mut subscriptions = WebPushSubscriptions::default();
+        subscriptions.push(user(1), subscription("a", "1"));
+        subscriptions.push(user(1), subscription("a", "2"));
+
+        assert!(subscriptions.remove(user(1), "a"));
+        assert!(subscriptions.get(&user(1)).is_none());
+        assert_eq!(subscriptions.total(), 0);
+    }
+
+    #[test]
     fn remove_duplicate_endpoints_keeps_the_latest_and_recomputes_the_total() {
         let mut subscriptions = WebPushSubscriptions::default();
         subscriptions.subscriptions.insert(
