@@ -231,7 +231,11 @@
             sourceWallet !== undefined,
         ),
     );
-    let toPayWithFees = $derived(amount(toPayE8s + approvalFee));
+    // The checks against the OpenChat balance are for paying from it, whichever wallet is chosen
+    let openChatWalletApprovalFee = $derived(
+        walletApprovalFee($currentUserIdStore, tokenDetails.transferFee, false),
+    );
+    let toPayWithFees = $derived(amount(toPayE8s + openChatWalletApprovalFee));
     let insufficientFundsForSelectedSub = $derived(insufficientFundsForSub(selectedOption.index)); //we need to account for the fact that js cannot do maths
     let insufficientFundsForAnySub = $derived(insufficientFundsForSub(0));
     let insufficientFundsForAllSubs = $derived(insufficientFundsForSub(3));
@@ -243,7 +247,7 @@
 
     function insufficientFundsForSub(index: number): boolean {
         const toPayE8s = amountInE8s(tokenDetails.symbol, diamondFees, options[index]);
-        return toPayE8s + approvalFee - tokenState.remainingBalance > 0.0001;
+        return toPayE8s + openChatWalletApprovalFee - tokenState.remainingBalance > 0.0001;
     }
 
     let expiry = $derived.by(() => {

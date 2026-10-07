@@ -203,16 +203,11 @@
     });
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let toPayE8s = $derived(amountInE8s(tokenDetails.symbol, diamondFees, selectedOption));
-    // What the payment takes from the wallet it is paid from: the price, which includes the
-    // transfer's fee, and the approval an external wallet, or the wallet of a user who holds their
-    // own funds, makes before the price is pulled from it
+    // What the payment takes from the user's OpenChat wallet, which is all that is checked here:
+    // the price, which includes the transfer's fee, and the approval a user who holds their own
+    // funds makes before the price is pulled from it
     let toPayWithFeesE8s = $derived(
-        toPayE8s +
-            walletApprovalFee(
-                $currentUserIdStore,
-                tokenDetails.transferFee,
-                sourceWallet !== undefined,
-            ),
+        toPayE8s + walletApprovalFee($currentUserIdStore, tokenDetails.transferFee, false),
     );
     let toPay = $derived(amount(toPayWithFeesE8s));
     // Compared in e8s, since any tolerance for floating point error would be enough to hide an ICP fee
