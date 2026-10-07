@@ -371,7 +371,7 @@ describe("app state", () => {
                     );
                     const client = get(allChatsStore).get(groupId);
                     if (client?.kind !== "group_chat" || server?.kind !== "group_chat") {
-                        fail("expected group chats");
+                        throw new Error("expected group chats");
                     }
                     expect(client.permissions.changeRoles).toEqual(ROLE_OWNER);
                     expect(server.permissions.changeRoles).toEqual(ROLE_ADMIN);
@@ -870,7 +870,7 @@ function groupChatExpectation(id: GroupChatIdentifier, fn: (g: GroupChatSummary)
     if (g && g.kind === "group_chat") {
         fn(g);
     } else {
-        fail("Could not find expected group chat");
+        throw new Error("Could not find expected group chat");
     }
 }
 

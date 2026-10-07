@@ -5,7 +5,6 @@ export * from "./state";
 export * from "./state/bots.svelte";
 export { debouncedDerived, withEqCheck } from "./state/reactivity.svelte";
 export * from "./stores";
-export { immutableStore } from "./stores/immutable";
 export { createMapStore } from "./stores/mapStore";
 export { createSetStore } from "./stores/setStore";
 export type { TypersByKey } from "./stores/typing";
