@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Translatable from "@src/components/Translatable.svelte";
+    import Translatable from "@src/components_shared/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import { chitBands, findClosestChitBand } from "@client";
     import Tooltip from "../../tooltip/Tooltip.svelte";

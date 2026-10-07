@@ -4,7 +4,7 @@
     import { publish, selectedCommunityUserGroupsStore } from "@client";
     import AccountGroup from "svelte-material-icons/AccountGroupOutline.svelte";
     import { SvelteSet } from "svelte/reactivity";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Separator from "../../Separator.svelte";
     import type { CommunityState } from "./communityState.svelte";
     import UserGroupRow from "./UserGroupRow.svelte";

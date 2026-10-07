@@ -17,7 +17,7 @@
     import EditableAvatar from "@src/components/EditableAvatar.svelte";
     import EditableImageWrapper from "@src/components/EditableImageWrapper.svelte";
     import HoverIcon from "@src/components/HoverIcon.svelte";
-    import ChooseImage from "@src/components/icons/ChooseImage.svelte";
+    import ChooseImage from "@src/components_shared/icons/ChooseImage.svelte";
     import PremiumItemComponent from "@src/components/PremiumItem.svelte";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -26,13 +26,13 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import Avatar from "../../Avatar.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import Badges from "./Badges.svelte";
     import ChitBalance from "./ChitBalance.svelte";
     import CustomBackgroundOverlay from "./CustomBackgroundOverlay.svelte";
     import RoleIcon from "./RoleIcon.svelte";
-    import WithRole from "./WithRole.svelte";
+    import WithRole from "@shared_components/home/profile/WithRole.svelte";
 
     const client = getContext<OpenChat>("client");
 

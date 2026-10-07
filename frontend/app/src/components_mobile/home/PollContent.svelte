@@ -11,7 +11,7 @@
     import { currentUserIdStore, publish, type OpenChat, type PollContent } from "@client";
     import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
     import Poll from "svelte-material-icons/Poll.svelte";
     import ChartBoxOutline from "svelte-material-icons/ChartBoxOutline.svelte";

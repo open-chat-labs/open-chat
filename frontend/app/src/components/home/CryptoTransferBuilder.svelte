@@ -21,7 +21,7 @@
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
     import TextArea from "../TextArea.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
@@ -71,9 +71,11 @@
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
     let transferFee = $derived(tokenDetails.transferFee);
-    // What the transfer costs in fees, which includes the approval a user who holds their own
-    // funds makes before the transfer is pulled from their wallet
-    let transferFees = $derived(transferFee + walletApprovalFee($currentUserIdStore, transferFee));
+    // What the transfer costs in fees, which includes the approval an external wallet, or the
+    // wallet of a user who holds their own funds, makes before the transfer is pulled from it
+    let transferFees = $derived(
+        transferFee + walletApprovalFee($currentUserIdStore, transferFee, payFromWallet),
+    );
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
     let remainingBalance = $state(0n);
     $effect(() => {

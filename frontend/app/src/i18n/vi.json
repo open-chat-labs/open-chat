@@ -152,7 +152,6 @@
     "admin": "Quản trị viên",
     "advanced": "Nâng cao",
     "airdropWarning": "Để đủ điều kiện tham gia Airdrop tiếp theo, bạn phải là thành viên của kênh **{channelName}** trong cộng đồng **{communityName}**. [Nhấp vào đây để tham gia.]({url})",
-    "alsoCanisterId": "cũng là id hộp của bạn",
     "andNMore": "và {n} khác",
     "appearance": "Ngoại quan",
     "apply": "Ứng dụng",
@@ -2649,6 +2648,8 @@
         "viewers": "Người xem ({count})"
     },
     "viewer": "người xem",
+    "votingHotkey": "Hotkey để bỏ phiếu cho các đề xuất",
+    "votingHotkeyCopiedToClipboard": "Đã sao chép Hotkey vào bảng nhớ tạm",
     "wallet": "Cái ví",
     "walletSettings": "Cài đặt ví",
     "webhook": {

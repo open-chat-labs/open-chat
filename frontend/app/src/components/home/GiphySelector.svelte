@@ -12,7 +12,7 @@
     import Link from "../Link.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     type KeyedKlipyObject = KlipyObject & { key: string };
 

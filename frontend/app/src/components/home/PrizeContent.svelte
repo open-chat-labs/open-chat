@@ -26,9 +26,9 @@
     import { toastStore } from "../../stores/toast";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Diamond from "../icons/Diamond.svelte";
-    import SpinningToken from "../icons/SpinningToken.svelte";
+    import SpinningToken from "@shared_components/icons/SpinningToken.svelte";
     import SecureButton from "../SecureButton.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Badges from "./profile/Badges.svelte";
     import ChitEarnedBadge from "./profile/ChitEarnedBadge.svelte";
     import ReAuthenticateModal from "./profile/ReAuthenticateModal.svelte";

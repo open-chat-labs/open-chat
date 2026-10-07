@@ -5,7 +5,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Container, transition, Chip } from "component-lib";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         filter: ChatListFilter;

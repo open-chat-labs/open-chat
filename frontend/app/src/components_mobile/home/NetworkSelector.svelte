@@ -3,7 +3,7 @@
     import { Body, BodySmall, ColourVars, Container, Sheet, Subtitle, Select } from "component-lib";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     type Props = {
         networks: string[];

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Spinner from "@src/components/icons/Spinner.svelte";
+    import Spinner from "@src/components_shared/icons/Spinner.svelte";
     import Tooltip from "@src/components/tooltip/Tooltip.svelte";
     import { toastStore } from "@src/stores/toast";
     import {
@@ -26,7 +26,7 @@
     import Avatar from "../../Avatar.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import LinkButton from "../../LinkButton.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ChatMessage from "../ChatMessage.svelte";
     import IntersectionObserverComponent from "../IntersectionObserver.svelte";
     import Markdown from "@shared_components/Markdown.svelte";

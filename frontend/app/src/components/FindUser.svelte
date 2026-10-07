@@ -11,7 +11,7 @@
     import { trimLeadingAtSymbol } from "../utils/user";
     import Loading from "@shared_components/Loading.svelte";
     import MatchingUser from "./MatchingUser.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         mode: "add" | "edit";

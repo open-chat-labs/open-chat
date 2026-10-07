@@ -6,7 +6,7 @@
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import { now } from "../../stores/time";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import DisappearLabel from "./DisappearLabel.svelte";
     import VisibilityLabel from "./VisibilityLabel.svelte";
 

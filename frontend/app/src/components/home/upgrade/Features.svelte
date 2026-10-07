@@ -4,7 +4,7 @@
     import Minus from "svelte-material-icons/Minus.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Feature from "./Feature.svelte";
     import Footer from "./Footer.svelte";
 

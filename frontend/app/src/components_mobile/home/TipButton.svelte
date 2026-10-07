@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { ResourceKey } from "@client";
     import { spring } from "svelte/motion";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         disabled?: boolean;

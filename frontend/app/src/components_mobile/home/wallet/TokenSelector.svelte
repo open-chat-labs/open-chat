@@ -5,7 +5,7 @@
     import { cryptoTokensSorted } from "@client";
     import type { Snippet } from "svelte";
     import { _ } from "svelte-i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import NothingToSee from "../NothingToSee.svelte";
     import SelectTokenItem from "./SelectTokenItem.svelte";
 

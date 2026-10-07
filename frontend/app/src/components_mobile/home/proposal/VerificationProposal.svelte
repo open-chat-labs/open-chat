@@ -10,7 +10,7 @@
     } from "@client";
     import { _ } from "svelte-i18n";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import CommunityFinder from "./CommunityFinder.svelte";
     import GroupFinder from "./GroupFinder.svelte";
 

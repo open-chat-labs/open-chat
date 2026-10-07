@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Tooltip, ColourVars } from "component-lib";
     import type { ResourceKey } from "@client";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import BadgeContainer, { type BadgeSize } from "../home/profile/BadgeContainer.svelte";
 

@@ -13,7 +13,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import MulticolourText from "../../MulticolourText.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");

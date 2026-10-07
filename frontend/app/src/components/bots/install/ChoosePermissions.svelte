@@ -6,7 +6,7 @@
         type ResourceKey,
     } from "@client";
     import Tabs from "../../Tabs.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Checkbox from "../../Checkbox.svelte";
     import Legend from "../../Legend.svelte";
     import { togglePermission } from "../../../utils/bots";

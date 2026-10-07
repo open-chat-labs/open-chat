@@ -20,7 +20,7 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Pincode from "../../pincode/Pincode.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ForgotPinLabel from "../ForgotPinLabel.svelte";
     import ReAuthenticate from "./ReAuthenticate.svelte";
 

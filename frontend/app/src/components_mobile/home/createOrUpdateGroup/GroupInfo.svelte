@@ -31,7 +31,7 @@
     import EditableAvatar from "../../EditableAvatar.svelte";
     import LinkedCard from "../../LinkedCard.svelte";
     import Setting from "../../Setting.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import DiamondUpgradeBox from "../DiamondUpgradeBox.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import DisappearingMessages from "./DisappearingMessages.svelte";

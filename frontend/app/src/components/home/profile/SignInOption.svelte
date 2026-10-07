@@ -1,7 +1,7 @@
 <script lang="ts">
     import { AuthProvider, type ResourceKey } from "@client";
     import Button from "../../Button.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AuthProviderLogo from "./AuthProviderLogo.svelte";
 
     interface Props {

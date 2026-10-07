@@ -29,7 +29,7 @@
     import Translate from "svelte-material-icons/Translate.svelte";
     import MulticolourText from "../MulticolourText.svelte";
     import SparkleBoxOutline from "../SparkleBoxOutline.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import { updateCommunityState } from "./communities/createOrUpdate/community.svelte";
     import CommunityBanner from "./communities/explore/CommunityBanner.svelte";
     import CommunityMatchComponent from "./communities/explore/CommunityMatch.svelte";

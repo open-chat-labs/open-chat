@@ -20,7 +20,7 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Legend from "../../Legend.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
     import Markdown from "@shared_components/Markdown.svelte";

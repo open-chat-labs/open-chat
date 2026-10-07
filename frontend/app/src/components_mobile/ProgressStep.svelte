@@ -7,7 +7,7 @@
     import { interpolate } from "../i18n/i18n";
     import { currentTheme } from "../theme/themes";
     import Markdown from "@shared_components/Markdown.svelte";
-    import Spinner from "./icons/Spinner.svelte";
+    import Spinner from "@shared_components/icons/Spinner.svelte";
 
     interface Props {
         label: ResourceKey;

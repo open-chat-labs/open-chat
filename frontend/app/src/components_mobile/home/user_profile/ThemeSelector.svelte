@@ -12,7 +12,7 @@
         type ThemeColourArgs,
     } from "component-lib";
     import type { Snippet } from "svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const PREVIEW_KEYS: ThemeColourArgs[] = ["primary", "secondary", "surface0", "surface1"];
 

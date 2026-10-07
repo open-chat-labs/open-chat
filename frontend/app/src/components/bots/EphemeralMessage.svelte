@@ -5,7 +5,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { Tween } from "svelte/motion";
     import HoverIcon from "../HoverIcon.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ChatMessageContent from "../home/ChatMessageContent.svelte";
     import BotAvatar from "./BotAvatar.svelte";
 

@@ -152,7 +152,6 @@
     "admin": "管理员",
     "advanced": "高级",
     "airdropWarning": "为了获得下一次空投的资格，您必须是 **{channelName}** 社区中 **{communityName}** 频道的成员。[单击此处加入。]({url})",
-    "alsoCanisterId": "即用户罐子ID",
     "andNMore": ", 和 {n} 更多",
     "appearance": "外观",
     "apply": "申请",
@@ -2649,6 +2648,8 @@
         "viewers": "观看者 ({count})"
     },
     "viewer": "观众",
+    "votingHotkey": "用于对提案投票的热键",
+    "votingHotkeyCopiedToClipboard": "热键已复制到剪贴板",
     "wallet": "钱包",
     "walletSettings": "钱包设置",
     "webhook": {

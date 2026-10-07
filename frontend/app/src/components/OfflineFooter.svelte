@@ -1,7 +1,7 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import { i18nKey } from "../i18n/i18n";
 </script>
 

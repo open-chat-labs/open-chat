@@ -27,8 +27,8 @@
     import AreYouSure from "../AreYouSure.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import SpinningToken from "../icons/SpinningToken.svelte";
-    import Translatable from "../Translatable.svelte";
+    import SpinningToken from "@shared_components/icons/SpinningToken.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import P2PSwapProgress from "./P2PSwapProgress.svelte";

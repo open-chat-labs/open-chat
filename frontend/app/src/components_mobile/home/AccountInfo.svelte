@@ -18,7 +18,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import QRCode from "../QRCode.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import NetworkSelector from "./NetworkSelector.svelte";
     import TruncatedAccount from "./TruncatedAccount.svelte";
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";

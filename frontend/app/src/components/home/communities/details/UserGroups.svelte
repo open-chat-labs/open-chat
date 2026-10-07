@@ -25,7 +25,7 @@
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import HoverIcon from "../../../HoverIcon.svelte";
     import Search from "../../../Search.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import User from "../../groupdetails/User.svelte";
     import UserGroup from "./UserGroup.svelte";
 

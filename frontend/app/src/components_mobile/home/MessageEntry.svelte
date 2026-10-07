@@ -65,7 +65,7 @@
     import CommandSelector from "../bots/CommandSelector.svelte";
     import Send from "../icons/Send.svelte";
     import Progress from "../Progress.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import CustomMessageTrigger from "./CustomMessageTrigger.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";

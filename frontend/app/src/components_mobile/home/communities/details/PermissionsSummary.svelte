@@ -10,7 +10,7 @@
         type CommunityPermissions,
         type ResourceKey,
     } from "@client";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Separator from "../../Separator.svelte";
 
     interface Props {

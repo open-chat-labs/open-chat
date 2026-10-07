@@ -24,7 +24,7 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import Progress from "../Progress.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SignUp from "./SignUp.svelte";
 
     const ALC_LENGTH = 6;

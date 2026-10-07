@@ -4,7 +4,7 @@
     import { numberOfThreadsStore, type UnreadCounts } from "@client";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import MessageText from "svelte-material-icons/MessageTextOutline.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         unread: UnreadCounts;

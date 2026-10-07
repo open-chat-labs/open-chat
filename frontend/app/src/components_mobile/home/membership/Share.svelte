@@ -14,7 +14,7 @@
     import AreYouSure from "../../AreYouSure.svelte";
     import QRCode from "../../QRCode.svelte";
     import Setting from "../../Setting.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     import { canShare } from "@src/utils/share";
     import { OpenChat, type Level } from "@client";

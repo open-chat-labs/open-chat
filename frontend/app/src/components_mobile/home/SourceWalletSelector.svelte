@@ -3,7 +3,7 @@
     import { Body, ColourVars, Column, Row, Sheet, Subtitle } from "component-lib";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const OPENCHAT_LOGO = "/assets/oc_logo_no_bg.svg";
 

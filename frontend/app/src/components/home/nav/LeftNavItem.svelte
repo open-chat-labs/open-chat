@@ -3,7 +3,7 @@
     import { emptyUnreadCounts, navOpen } from "@client";
     import { _ } from "svelte-i18n";
     import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import UnreadCount from "../UnreadCount.svelte";
     import VideoCallIcon from "../video/VideoCallIcon.svelte";
 

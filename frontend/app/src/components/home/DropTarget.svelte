@@ -7,7 +7,7 @@
     import { _ } from "svelte-i18n";
     import PlusCircle from "svelte-material-icons/PlusCircle.svelte";
     import { fade } from "svelte/transition";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 

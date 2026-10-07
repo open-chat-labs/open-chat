@@ -53,7 +53,7 @@
     import LightningBolt from "svelte-material-icons/LightningBoltCircle.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Setting from "../Setting.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import DurationSelector from "./DurationSelector.svelte";
     import SelectChitEarned from "./SelectChitEarned.svelte";
@@ -111,10 +111,13 @@
     let transferFee = $derived(tokenDetails.transferFee);
     let transferFees = $derived(transferFee * BigInt(numberOfWinners ?? 0));
     let prizeFees = $derived(transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n);
-    // What the prize costs in fees: the transfer of its fund, which includes the approval a user who
-    // holds their own funds makes before the fund is pulled from their wallet, and the prize's fees
+    // What the prize costs in fees: the transfer of its fund, which includes the approval an
+    // external wallet, or the wallet of a user who holds their own funds, makes before the fund is
+    // pulled from it, and the prize's fees
     let totalFees = $derived(
-        transferFee + walletApprovalFee($currentUserIdStore, transferFee) + prizeFees,
+        transferFee +
+            walletApprovalFee($currentUserIdStore, transferFee, payFromWallet) +
+            prizeFees,
     );
     let minAmount = $derived(100n * BigInt(numberOfWinners ?? 0) * transferFee);
     // What the user is able to spend, or undefined when that is the external wallet's business

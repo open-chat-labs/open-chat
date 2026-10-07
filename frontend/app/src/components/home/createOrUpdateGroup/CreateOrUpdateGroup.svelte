@@ -24,7 +24,7 @@
     import AreYouSure from "../../AreYouSure.svelte";
     import Button from "../../Button.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ChooseMembers from "../ChooseMembers.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";

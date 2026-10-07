@@ -29,7 +29,7 @@
     import QrCode from "svelte-material-icons/Qrcode.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import StreakHeadline from "../user_profile/StreakHeadline.svelte";
     import { TokenState } from "../wallet/walletState.svelte";
@@ -57,7 +57,11 @@
         tokenState.draftAmount = client.streakInsurancePrice(currentDaysInsured, additionalDays);
         // The price is burned, which the ledger charges no fee for, but a user who holds their own
         // funds pays for the approval they make before the price is pulled from their wallet
-        tokenState.transferFees = walletApprovalFee($currentUserIdStore, tokenState.transferFee);
+        tokenState.transferFees = walletApprovalFee(
+            $currentUserIdStore,
+            tokenState.transferFee,
+            false,
+        );
     });
 
     function pay() {

@@ -3,7 +3,7 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import UserPill from "../UserPill.svelte";
     import type { UserOrUserGroup, UserSummary } from "@client";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
 
     interface Props {

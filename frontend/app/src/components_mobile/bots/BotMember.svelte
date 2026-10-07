@@ -15,7 +15,7 @@
     import FilteredUsername from "@shared_components/FilteredUsername.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import BotBadge from "../home/profile/BotBadge.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import BotAvatar from "./BotAvatar.svelte";
 
     const client = getContext<OpenChat>("client");

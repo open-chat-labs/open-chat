@@ -4,7 +4,7 @@
     import { Body, Chip, Container } from "component-lib";
     import type { OpenChat } from "@client";
     import { getContext, onMount, untrack, type Snippet } from "svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const ONE_MINUTE = 1000 * 60;
     const ONE_HOUR = ONE_MINUTE * 60;

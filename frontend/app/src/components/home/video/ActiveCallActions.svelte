@@ -17,8 +17,8 @@
     import Menu from "../../Menu.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
     import MenuItem from "../../MenuItem.svelte";
-    import Translatable from "../../Translatable.svelte";
-    import type { VideoCallChat } from "./callChat";
+    import Translatable from "@shared_components/Translatable.svelte";
+    import type { VideoCallChat } from "@shared_components/home/video/callChat";
 
     const client = getContext<OpenChat>("client");
 

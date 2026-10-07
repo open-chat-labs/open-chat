@@ -13,7 +13,7 @@
     import { toastStore } from "../../../stores/toast";
     import Button from "../../Button.svelte";
     import Loading from "@shared_components/Loading.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
     import SelectUsers from "../SelectUsers.svelte";
 

@@ -5,7 +5,7 @@
     import { _ } from "svelte-i18n";
     import AccountAlert from "svelte-material-icons/AccountAlertOutline.svelte";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import VirtualList from "@shared_components/VirtualList.svelte";
     import NothingToSee from "../NothingToSee.svelte";
     import LapsedUser from "./LapsedUser.svelte";

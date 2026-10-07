@@ -4,7 +4,7 @@
     import { type Snippet } from "svelte";
     import Lock from "svelte-material-icons/Lock.svelte";
     import PremiumItemPayment from "./PremiumItemPayment.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Tooltip from "./tooltip/Tooltip.svelte";
 
     type OnClick = () => void;

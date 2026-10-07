@@ -4,7 +4,7 @@
     import ChatPlus from "svelte-material-icons/ChatPlusOutline.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import SendToAddress from "./SendToAddress.svelte";
     import SendToUser from "./SendToUser.svelte";
@@ -27,7 +27,7 @@
         tokenState.transferFees =
             mode === "user"
                 ? tokenState.transferFee +
-                  walletApprovalFee($currentUserIdStore, tokenState.transferFee)
+                  walletApprovalFee($currentUserIdStore, tokenState.transferFee, false)
                 : undefined;
         return () => (tokenState.transferFees = undefined);
     });

@@ -36,7 +36,7 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "@shared_components/FilteredUsername.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import ChatSummary from "./ChatSummary.svelte";

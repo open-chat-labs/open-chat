@@ -16,7 +16,7 @@
     import Plus from "svelte-material-icons/Plus.svelte";
     import Pound from "svelte-material-icons/Pound.svelte";
     import Edit from "svelte-material-icons/TextBoxEditOutline.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../../SlidingPageContent.svelte";
     import { updateCommunityState } from "./community.svelte";
     import EditChannel from "./EditChannel.svelte";

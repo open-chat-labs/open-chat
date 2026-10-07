@@ -3,7 +3,7 @@
     import { currentTheme } from "../theme/themes";
     import { darkenHexColour } from "../theme/utils";
     import type { ButtonProps } from "./Button.svelte";
-    import Spinner from "./icons/Spinner.svelte";
+    import Spinner from "@shared_components/icons/Spinner.svelte";
 
     let {
         cls = "",

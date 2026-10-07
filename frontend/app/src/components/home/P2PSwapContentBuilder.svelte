@@ -22,7 +22,7 @@
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
     import TextArea from "../TextArea.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import DurationPicker from "./DurationPicker.svelte";
@@ -64,9 +64,11 @@
     // The offer is deposited in the escrow canister along with the fee for paying it out, so the
     // deposit costs two fees
     let depositFees = $derived(fromDetails.transferFee * BigInt(2));
-    // A user who holds their own funds also pays for the approval they make before the deposit is
-    // pulled from their wallet
-    let approvalFee = $derived(walletApprovalFee($currentUserIdStore, fromDetails.transferFee));
+    // An external wallet, or the wallet of a user who holds their own funds, also pays for the
+    // approval it makes before the deposit is pulled from it
+    let approvalFee = $derived(
+        walletApprovalFee($currentUserIdStore, fromDetails.transferFee, payFromWallet),
+    );
     let totalFees = $derived(depositFees + approvalFee);
     let remainingBalance = $state(0n);
     $effect(() => {

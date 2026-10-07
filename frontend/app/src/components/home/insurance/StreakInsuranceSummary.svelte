@@ -2,7 +2,7 @@
     import Button from "@src/components/Button.svelte";
     import InfoIcon from "@src/components/InfoIcon.svelte";
     import Legend from "@src/components/Legend.svelte";
-    import Translatable from "@src/components/Translatable.svelte";
+    import Translatable from "@src/components_shared/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import { streakInsuranceStore } from "@client";
     import StreakInsuranceBuy from "./StreakInsuranceBuy.svelte";

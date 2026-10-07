@@ -1,6 +1,6 @@
 <script lang="ts">
     import { type Level } from "@client";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Legend from "../../Legend.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import AlertBox from "@src/components/AlertBox.svelte";

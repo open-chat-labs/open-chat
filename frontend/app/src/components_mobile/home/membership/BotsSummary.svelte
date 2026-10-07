@@ -13,7 +13,7 @@
     import Webhook from "svelte-material-icons/Webhook.svelte";
     import BotMember from "../../bots/BotMember.svelte";
     import WebhookMember from "../../bots/WebhookMember.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Separator from "../Separator.svelte";
     import { MemberManagement } from "./membersState.svelte";
 

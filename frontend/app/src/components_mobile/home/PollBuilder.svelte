@@ -28,7 +28,7 @@
     import UnfoldMoreHorizontal from "svelte-material-icons/UnfoldMoreHorizontal.svelte";
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import Setting from "../Setting.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import DurationSelector from "./DurationSelector.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
     import { keyboard } from "@stores/keyboard.svelte";

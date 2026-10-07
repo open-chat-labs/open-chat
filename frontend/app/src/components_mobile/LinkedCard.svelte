@@ -4,7 +4,7 @@
     import type { Snippet } from "svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import Info from "svelte-material-icons/InformationOutline.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         Icon: any;

@@ -22,11 +22,11 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Diamond from "../../icons/Diamond.svelte";
     import Loading from "@shared_components/Loading.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import ExternalWalletApproval from "../ExternalWalletApproval.svelte";
     import Congratulations from "./Congratulations.svelte";
-    import Expiry from "./Expiry.svelte";
+    import Expiry from "@shared_components/home/upgrade/Expiry.svelte";
     import Footer from "./Footer.svelte";
 
     interface Props {
@@ -203,10 +203,11 @@
     });
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let toPayE8s = $derived(amountInE8s(tokenDetails.symbol, diamondFees, selectedOption));
-    // What the payment takes from the user's wallet: the price, which includes the transfer's fee,
-    // and the approval a user who holds their own funds makes before the price is pulled from it
+    // What the payment takes from the user's OpenChat wallet, which is all that is checked here:
+    // the price, which includes the transfer's fee, and the approval a user who holds their own
+    // funds makes before the price is pulled from it
     let toPayWithFeesE8s = $derived(
-        toPayE8s + walletApprovalFee($currentUserIdStore, tokenDetails.transferFee),
+        toPayE8s + walletApprovalFee($currentUserIdStore, tokenDetails.transferFee, false),
     );
     let toPay = $derived(amount(toPayWithFeesE8s));
     // Compared in e8s, since any tolerance for floating point error would be enough to hide an ICP fee

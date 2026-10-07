@@ -24,7 +24,7 @@
     import MenuItem from "../../MenuItem.svelte";
     import MultiToggle, { type Option } from "../../MultiToggle.svelte";
     import Overlay from "../../Overlay.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import AccountTransactions from "./AccountTransactions.svelte";
     import ReceiveCrypto from "./ReceiveCrypto.svelte";

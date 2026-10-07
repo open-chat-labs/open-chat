@@ -5,8 +5,8 @@
     import { startMemeMaker } from "@src/utils/memeFighter";
     import { i18nKey } from "../../i18n/i18n";
     import { currentTheme } from "../../theme/themes";
-    import Translatable from "../Translatable.svelte";
-    import MemeFighter from "../icons/MemeFighter.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
+    import MemeFighter from "@shared_components/icons/MemeFighter.svelte";
     import { keyboard } from "@src/stores/keyboard.svelte";
 
     interface Props {

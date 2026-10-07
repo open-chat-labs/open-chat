@@ -15,7 +15,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../stores/pinNumber";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import SingleUserSelector from "./SingleUserSelector.svelte";
     import SourceWalletSelector from "./SourceWalletSelector.svelte";
@@ -43,11 +43,12 @@
     let payFromWallet = $derived(sourceWallet !== undefined);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let tokenState = $derived(new TokenState(tokenDetails, "usd"));
-    // What the transfer costs in fees includes the approval a user who holds their own funds makes
-    // before the transfer is pulled from their wallet
+    // What the transfer costs in fees includes the approval an external wallet, or the wallet of a
+    // user who holds their own funds, makes before the transfer is pulled from it
     $effect(() => {
         tokenState.transferFees =
-            tokenState.transferFee + walletApprovalFee($currentUserIdStore, tokenState.transferFee);
+            tokenState.transferFee +
+            walletApprovalFee($currentUserIdStore, tokenState.transferFee, payFromWallet);
     });
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
     let valid = $derived(error === undefined && validAmount && receiver !== undefined);

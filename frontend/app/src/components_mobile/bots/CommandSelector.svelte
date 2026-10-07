@@ -40,7 +40,7 @@
     import { dateAwareSelection } from "@src/utils/commandSelection";
     import ErrorMessage from "../ErrorMessage.svelte";
     import Logo from "@shared_components/Logo.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import BotAvatar from "./BotAvatar.svelte";
 
     interface Props {

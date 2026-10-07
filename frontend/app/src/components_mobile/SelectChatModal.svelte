@@ -42,7 +42,7 @@
     import NothingToSee from "./home/NothingToSee.svelte";
     import Badges from "./home/profile/Badges.svelte";
     import SlidingPageContent from "./home/SlidingPageContent.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 

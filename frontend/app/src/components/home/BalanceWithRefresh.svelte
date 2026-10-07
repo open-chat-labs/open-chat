@@ -5,7 +5,7 @@
     import { _ } from "svelte-i18n";
     import Plus from "svelte-material-icons/Plus.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 

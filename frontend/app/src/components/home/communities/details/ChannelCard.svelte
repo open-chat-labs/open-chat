@@ -3,7 +3,7 @@
     import Menu from "@src/components/Menu.svelte";
     import MenuIcon from "@src/components/MenuIcon.svelte";
     import MenuItem from "@src/components/MenuItem.svelte";
-    import Translatable from "@src/components/Translatable.svelte";
+    import Translatable from "@src/components_shared/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import {
         AvatarSize,

@@ -5,7 +5,7 @@
     import { getContext } from "svelte";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariantOutline.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import InviteList from "./InviteList.svelte";
     import { MemberManagement } from "./membersState.svelte";

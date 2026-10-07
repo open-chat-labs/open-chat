@@ -13,7 +13,7 @@
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
     import MulticolourText from "../../../MulticolourText.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../../SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");

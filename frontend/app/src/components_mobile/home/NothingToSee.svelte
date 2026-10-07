@@ -11,7 +11,7 @@
     } from "component-lib";
     import type { Snippet } from "svelte";
     import Robot from "svelte-material-icons/RobotExcitedOutline.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface ButtonProps {
         onClick: () => void;

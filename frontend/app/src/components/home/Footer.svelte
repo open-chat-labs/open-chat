@@ -28,7 +28,7 @@
     import HoverIcon from "../HoverIcon.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Progress from "../Progress.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import EmojiPicker from "./EmojiPickerWrapper.svelte";
     import MessageEntry from "./MessageEntry.svelte";

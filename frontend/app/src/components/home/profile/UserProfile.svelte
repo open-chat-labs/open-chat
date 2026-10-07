@@ -12,6 +12,7 @@
         anonUserStore,
         canExtendDiamondStore,
         communitiesStore,
+        currentUserIdStore,
         hideMessagesFromDirectBlocked,
         iconSize,
         isDiamondStore,
@@ -26,6 +27,7 @@
         suspendedUserStore,
         underReviewEnabledStore,
         userMetricsStore,
+        userWalletAccount,
     } from "@client";
     import { ErrorCode, type PublicProfile } from "@shared";
     import { getContext, onMount } from "svelte";
@@ -75,10 +77,10 @@
     import StorageUsage from "../../StorageUsage.svelte";
     import TextArea from "../../TextArea.svelte";
     import Toggle from "../../Toggle.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
     import Stats from "../Stats.svelte";
-    import Expiry from "../upgrade/Expiry.svelte";
+    import Expiry from "@shared_components/home/upgrade/Expiry.svelte";
     import AccountLinkingCode from "./AccountLinkingCode.svelte";
     import BotConfigData from "./BotConfigData.svelte";
     import ChitEvents from "./ChitEvents.svelte";
@@ -130,6 +132,13 @@
     );
     let readonly = $derived($suspendedUserStore || $anonUserStore);
     let verified = $derived(user.isUniquePerson);
+    // The principal to add as a hotkey to the neurons the user votes with from OpenChat, which is the
+    // owner of their wallet: their OpenChat principal (not the auth principal), or for a user alone
+    // in their canister, that canister, ie. their user id. Read from the store rather than `user`,
+    // which is a placeholder whose id isn't a principal until the user's summary has loaded.
+    let votingHotkey = $derived(
+        userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal).owner.toText(),
+    );
 
     //@ts-ignore
     let version = window.OC_WEBSITE_VERSION;
@@ -304,9 +313,9 @@
         }
     }
 
-    function onCopy() {
-        navigator.clipboard.writeText(user.userId).then(() => {
-            toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
+    function copyToClipboard(text: string, successKey: string) {
+        navigator.clipboard.writeText(text).then(() => {
+            toastStore.showSuccessToast(i18nKey(successKey));
         });
     }
 
@@ -646,12 +655,31 @@
                 headerText={i18nKey("advanced")}>
                 {#if !$anonUserStore}
                     <div class="userid">
-                        <Legend label={i18nKey("userId")} rules={i18nKey("alsoCanisterId")} />
+                        <Legend label={i18nKey("userId")} />
                         <div class="userid-txt">
                             <div>{user.userId}</div>
-                            <div role="button" tabindex="0" onclick={onCopy} class="copy">
+                            <button
+                                type="button"
+                                aria-label={$_("copyToClipboard")}
+                                onclick={() =>
+                                    copyToClipboard(user.userId, "userIdCopiedToClipboard")}
+                                class="copy">
                                 <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
-                            </div>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="userid">
+                        <Legend label={i18nKey("votingHotkey")} />
+                        <div class="userid-txt">
+                            <div>{votingHotkey}</div>
+                            <button
+                                type="button"
+                                aria-label={$_("copyToClipboard")}
+                                onclick={() =>
+                                    copyToClipboard(votingHotkey, "votingHotkeyCopiedToClipboard")}
+                                class="copy">
+                                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+                            </button>
                         </div>
                     </div>
                 {/if}
@@ -754,6 +782,10 @@
             align-items: center;
 
             .copy {
+                display: flex;
+                padding: 0;
+                border: none;
+                background: none;
                 cursor: pointer;
             }
         }

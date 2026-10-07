@@ -21,7 +21,7 @@
     import { getContext } from "svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");

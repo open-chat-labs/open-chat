@@ -20,7 +20,7 @@
     import MenuItem from "../../MenuItem.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Accounts from "./Accounts.svelte";
     import ManageAccounts from "./ManageAccounts.svelte";
     import SetPinNumberModal from "./SetPinNumberModal.svelte";

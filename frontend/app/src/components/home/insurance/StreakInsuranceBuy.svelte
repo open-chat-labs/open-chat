@@ -18,7 +18,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -44,7 +44,7 @@
     // The price is burned, which the ledger charges no fee for, but a user who holds their own funds
     // pays for the approval they make before the price is pulled from their wallet
     let approvalFee = $derived(
-        walletApprovalFee($currentUserIdStore, tokenDetails.symbol?.transferFee ?? 0n),
+        walletApprovalFee($currentUserIdStore, tokenDetails.symbol?.transferFee ?? 0n, false),
     );
     let remainingBalance = $derived(
         priceE8s > 0n ? tokenDetails.balance - priceE8s - approvalFee : tokenDetails.balance,

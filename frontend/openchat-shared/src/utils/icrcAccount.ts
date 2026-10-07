@@ -198,12 +198,18 @@ export function paymentSpenderAccount(
     return userCanisterSpenderAccount(userId, principal);
 }
 
-// What a payment pulled from the user's wallet costs on top of the transfers it makes. A user who
-// holds their own funds first approves whatever pulls the payment (see `paymentSpenderAccount`),
-// and the ledger charges its transfer fee for the approval. A user alone in their canister pays
-// nothing more, since their canister holds their funds and makes the transfers itself.
-export function walletApprovalFee(userId: string, transferFee: bigint): bigint {
-    return isMultiUserCanisterUser(userId) ? transferFee : 0n;
+// What a payment pulled from a wallet costs on top of the transfers it makes. A payment from an
+// external wallet, or from the wallet of a user who holds their own funds, is pulled once the
+// wallet has approved whatever pulls it (see `paymentSpenderAccount`), and the ledger charges its
+// transfer fee for the approval. A payment from the OpenChat wallet of a user alone in their
+// canister costs nothing more, since their canister holds their funds and makes the transfers
+// itself.
+export function walletApprovalFee(
+    userId: string,
+    transferFee: bigint,
+    fromExternalWallet: boolean,
+): bigint {
+    return fromExternalWallet || isMultiUserCanisterUser(userId) ? transferFee : 0n;
 }
 
 // How long an approval made for a single payment stays spendable. The allowance is the whole of the

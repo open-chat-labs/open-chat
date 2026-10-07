@@ -20,7 +20,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Progress from "../../Progress.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ExternalLink from "../../landingpages/ExternalLink.svelte";
 
     const client = getContext<OpenChat>("client");

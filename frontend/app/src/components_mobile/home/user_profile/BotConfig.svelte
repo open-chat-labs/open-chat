@@ -4,7 +4,7 @@
     import { BodySmall, Container, CopyCard, H2 } from "component-lib";
     import { OpenChat, type BotClientConfigData } from "@client";
     import { getContext, onMount } from "svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 

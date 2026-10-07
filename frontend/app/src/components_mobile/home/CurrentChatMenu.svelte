@@ -19,7 +19,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import { canDeleteDirectChat, publishDeleteDirectChat } from "../../utils/directChat";
     import { toastStore } from "../../stores/toast";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
