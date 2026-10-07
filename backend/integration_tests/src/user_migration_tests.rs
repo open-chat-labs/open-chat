@@ -16,10 +16,11 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    BotDefinition, BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, Chat, ChatEvent,
-    ChatId, CommunityId, CommunityRole, DiamondMembershipPlanDuration, Document, Empty, EventIndex, EventsResponse,
-    FileContent, IdempotentEnvelope, MessageContent, MessageContentInitial, MessageIndex, OptionUpdate, P2PSwapContentInitial,
-    PendingCryptoTransaction, ReferralStatus, UnitResult, UserId, icrc1, icrc2,
+    AutonomousConfig, BotChatContext, BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, BuildVersion,
+    CLAIM_TYPE_START_VIDEO_CALL, CanisterId, CanisterWasm, ChannelId, Chat, ChatEvent, ChatId, CommunityId, CommunityRole,
+    DiamondMembershipPlanDuration, Document, Empty, EventIndex, EventsResponse, FileContent, IdempotentEnvelope,
+    MessageContent, MessageContentInitial, MessageIndex, OptionUpdate, P2PSwapContentInitial, PendingCryptoTransaction,
+    ReferralStatus, StartVideoCallClaims, TextContent, UnitResult, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::{MessageActivity, UserCanisterEvent};
 use user_index_canister::user_migration::UserMigrationStatus;
@@ -2131,6 +2132,181 @@ fn bot_installed_in_a_users_direct_chats_before_they_migrate_is_uninstalled_from
     // Once the bot is removed, it's uninstalled from the user's new canister
     client::user_index::happy_path::remove_bot(env, bot_owner.principal, canister_ids.user_index, bot.bot_id);
     tick_until(env, |env| bots(env).is_empty());
+}
+
+#[test_case(true; "migrated_to_the_same_local_user_index")]
+#[test_case(false; "migrated_to_another_local_user_index")]
+fn bot_acting_autonomously_in_a_migrated_users_direct_chat_by_their_old_id(same_local_user_index: bool) {
+    use local_user_index_canister::chat_events::{EventsPageArgs, EventsSelectionCriteria};
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    // The user's old canister is held by the same LocalUserIndex as the MultiUser canister, or by
+    // another, which the bot keeps calling, since it was installed via it
+    let subnet = canister_ids
+        .subnets
+        .iter()
+        .find(|s| (s.local_user_index == local_user_index) == same_local_user_index)
+        .unwrap()
+        .subnet_id;
+    let user = client::register_user_on_subnet(env, canister_ids, subnet);
+    let other_user = client::register_user(env, canister_ids);
+
+    // The user installs a bot in their direct chats which may send text messages autonomously
+    let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
+        env,
+        user.principal,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        BotDefinition {
+            description: random_string(),
+            commands: Vec::new(),
+            autonomous_config: Some(AutonomousConfig {
+                permissions: BotPermissions::text_only(),
+            }),
+            default_subscriptions: None,
+            data_encoding: None,
+            restricted_locations: None,
+        },
+    );
+    client::local_user_index::happy_path::install_bot(
+        env,
+        user.principal,
+        user.local_user_index,
+        BotInstallationLocation::User(user.user_id.into()),
+        bot_id,
+        BotPermissions::text_only(),
+        Some(BotPermissions::text_only()),
+    );
+    tick_many(env, 3);
+
+    let new_user = migrate(env, canister_ids, &operator, &user, multi_user_canister);
+    crate::delete_user_tests::wait_for_cycles_to_be_refunded(env, &user);
+
+    // The bot still knows the user by their old id, and calls the LocalUserIndex it was installed via
+    let text = random_string();
+    let send_message = |env: &mut PocketIc| {
+        client::local_user_index::bot_send_message(
+            env,
+            bot_principal,
+            user.local_user_index,
+            &local_user_index_canister::bot_send_message::Args {
+                chat_context: BotChatContext::Autonomous(Chat::Direct(user.user_id.into())),
+                thread: None,
+                message_id: None,
+                replies_to: None,
+                content: BotMessageContent::Text(TextContent { text: text.clone() }),
+                block_level_markdown: false,
+                finalised: true,
+                og_previews: None,
+            },
+        )
+    };
+    let chat_events = |env: &mut PocketIc| {
+        client::local_user_index::bot_chat_events(
+            env,
+            bot_principal,
+            user.local_user_index,
+            &local_user_index_canister::bot_chat_events::Args {
+                chat_context: BotChatContext::Autonomous(Chat::Direct(user.user_id.into())),
+                thread: None,
+                events: EventsSelectionCriteria::Page(EventsPageArgs {
+                    start_index: 0.into(),
+                    ascending: true,
+                    max_messages: 10,
+                    max_events: 10,
+                }),
+            },
+        )
+    };
+    // As may another user starting a video call with them, from a client which still knows them by it
+    let video_call_token = |env: &mut PocketIc| {
+        client::local_user_index::access_token_v2(
+            env,
+            other_user.principal,
+            user.local_user_index,
+            &local_user_index_canister::access_token_v2::Args::StartVideoCall(
+                local_user_index_canister::access_token_v2::StartVideoCallArgs {
+                    chat: Chat::Direct(user.user_id.into()),
+                    call_type: VideoCallType::Default,
+                    audio_only: false,
+                },
+            ),
+        )
+    };
+
+    if !same_local_user_index {
+        // The user's new canister is on another subnet, which that LocalUserIndex can't reach, so
+        // each is told the user has moved, and their new id, rather than the call being sent
+        let errors = [
+            match send_message(env) {
+                local_user_index_canister::bot_send_message::Response::Error(error) => error,
+                response => panic!("{response:?}"),
+            },
+            match chat_events(env) {
+                local_user_index_canister::bot_chat_events::Response::Error(error) => error,
+                response => panic!("{response:?}"),
+            },
+            match video_call_token(env) {
+                local_user_index_canister::access_token_v2::Response::Error(error) => error,
+                response => panic!("{response:?}"),
+            },
+        ];
+        for error in errors {
+            assert!(error.matches_code(OCErrorCode::UserMovedToNewSubnet), "{error:?}");
+            assert_eq!(error.message(), Some(new_user.user_id.to_string().as_str()));
+        }
+        return;
+    }
+
+    // Otherwise the LocalUserIndex sends the bot's message on to the user's new canister
+    let response = send_message(env);
+    assert!(
+        matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
+        "{response:?}"
+    );
+    let user_canister::initial_state::Response::Success(state) = client::user::initial_state(
+        env,
+        new_user.principal,
+        multi_user_canister,
+        &user_canister::initial_state::Args {},
+    );
+    let chat = state.direct_chats.summaries.iter().find(|c| c.them == bot_id).unwrap();
+    assert!(matches!(&chat.latest_message.as_ref().unwrap().event.content, MessageContent::Text(t) if t.text == text));
+
+    // And the bot reads the chat back by their old id
+    let response = chat_events(env);
+    let local_user_index_canister::bot_chat_events::Response::Success(result) = &response else {
+        panic!("{response:?}");
+    };
+    assert!(
+        result.events.iter().any(
+            |e| matches!(&e.event, ChatEvent::Message(m) if m.sender == bot_id && m.content.text() == Some(text.as_str()))
+        ),
+        "{result:?}"
+    );
+
+    // A video call to the user by their old id is checked against their new canister too, and the
+    // token names them by their new id, since the video bridge starts the call in that chat
+    let response = video_call_token(env);
+    let local_user_index_canister::access_token_v2::Response::Success(token) = response else {
+        panic!("{response:?}");
+    };
+    let public_key = client::user_index::happy_path::public_key(env, canister_ids.user_index);
+    let claims: jwt::Claims<StartVideoCallClaims> =
+        jwt::verify_and_decode(&token, &public_key, CLAIM_TYPE_START_VIDEO_CALL).unwrap();
+    assert_eq!(claims.custom().chat_id, Chat::Direct(new_user.user_id.into()));
 }
 
 #[test_case(true; "registered_with_the_same_local_user_index")]
