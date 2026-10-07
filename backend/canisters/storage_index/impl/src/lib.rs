@@ -122,7 +122,6 @@ struct Data {
     pub files: Files,
     pub buckets: Buckets,
     pub bucket_event_sync_queue: GroupedTimerJobQueue<BucketEventBatch>,
-    #[serde(default = "default_bucket_user_ids_migrated_queue")]
     pub bucket_user_ids_migrated_queue: GroupedTimerJobQueue<BucketUserIdsMigratedBatch>,
     #[serde(default = "default_vault_event_sync_queue")]
     pub vault_event_sync_queue: GroupedTimerJobQueue<VaultEventBatch>,
@@ -162,10 +161,6 @@ fn default_vault_event_sync_queue() -> GroupedTimerJobQueue<VaultEventBatch> {
     GroupedTimerJobQueue::new(5, false)
 }
 
-fn default_bucket_user_ids_migrated_queue() -> GroupedTimerJobQueue<BucketUserIdsMigratedBatch> {
-    GroupedTimerJobQueue::new(5, false)
-}
-
 fn icp_ledger_canister_id() -> CanisterId {
     ICP_LEDGER_CANISTER_ID
 }
@@ -192,7 +187,7 @@ impl Data {
             files: Files::default(),
             buckets: Buckets::default(),
             bucket_event_sync_queue: GroupedTimerJobQueue::new(5, false),
-            bucket_user_ids_migrated_queue: default_bucket_user_ids_migrated_queue(),
+            bucket_user_ids_migrated_queue: GroupedTimerJobQueue::new(5, false),
             vault_event_sync_queue: default_vault_event_sync_queue(),
             vault_reviewers: Vec::new(),
             authority_reporter: None,

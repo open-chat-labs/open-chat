@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2108](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2108-local_user_index)] - 2026-10-07
+
 ### Added
 
 - Send bots the notifications the UserIndex asks it to, eg. that one is installed in a migrated user's direct chats under their new id ([#9819](https://github.com/open-chat-labs/open-chat/pull/9819))
