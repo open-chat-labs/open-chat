@@ -8,6 +8,7 @@ mod create;
 mod delete;
 mod deposit_cycles;
 mod filtered_upgrades;
+mod info;
 mod install;
 mod pool;
 mod raw_rand;
@@ -24,6 +25,7 @@ pub use create::*;
 pub use delete::*;
 pub use deposit_cycles::*;
 pub use filtered_upgrades::*;
+pub use info::*;
 pub use install::*;
 pub use pool::*;
 pub use raw_rand::*;
@@ -72,6 +74,9 @@ pub fn delay_if_should_retry_failed_c2c_call_to_new_method(error: &C2CError) -> 
 // the callee trapping. The `IC0537` code identifies it, but the IC does not expose the fine grained
 // error codes to canisters, so it is only ever in the reject message at the replica's discretion.
 // The reject text itself is "...contains no Wasm module.", so match on that too.
+// The IC charges for executing a call before it looks for the Wasm module though, so a canister
+// which has been uninstalled because it ran out of cycles fails the call as being out of cycles
+// instead, which this cannot tell apart from one which is merely frozen.
 pub fn is_target_canister_uninstalled_or_deleted(reject_code: RejectCode, message: &str) -> bool {
     match reject_code {
         RejectCode::DestinationInvalid => true,
