@@ -222,9 +222,15 @@
     let tokenState = $derived(new TokenState(tokenDetails, "usd"));
     let toPayE8s = $derived(amountInE8s(tokenDetails.symbol, diamondFees, selectedOption));
     let toPay = $derived(amount(toPayE8s));
-    // The price includes the transfer's fee, but a user who holds their own funds also pays for the
-    // approval they make before the price is pulled from their wallet
-    let approvalFee = $derived(walletApprovalFee($currentUserIdStore, tokenDetails.transferFee));
+    // The price includes the transfer's fee, but an external wallet, or the wallet of a user who
+    // holds their own funds, also pays for the approval it makes before the price is pulled from it
+    let approvalFee = $derived(
+        walletApprovalFee(
+            $currentUserIdStore,
+            tokenDetails.transferFee,
+            sourceWallet !== undefined,
+        ),
+    );
     let toPayWithFees = $derived(amount(toPayE8s + approvalFee));
     let insufficientFundsForSelectedSub = $derived(insufficientFundsForSub(selectedOption.index)); //we need to account for the fact that js cannot do maths
     let insufficientFundsForAnySub = $derived(insufficientFundsForSub(0));

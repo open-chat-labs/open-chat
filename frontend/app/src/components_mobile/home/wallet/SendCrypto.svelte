@@ -27,7 +27,7 @@
         tokenState.transferFees =
             mode === "user"
                 ? tokenState.transferFee +
-                  walletApprovalFee($currentUserIdStore, tokenState.transferFee)
+                  walletApprovalFee($currentUserIdStore, tokenState.transferFee, false)
                 : undefined;
         return () => (tokenState.transferFees = undefined);
     });

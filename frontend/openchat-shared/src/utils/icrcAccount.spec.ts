@@ -98,12 +98,17 @@ describe("paymentSpenderAccount", () => {
 });
 
 describe("walletApprovalFee", () => {
-    test("a user alone in their canister pays no approval fee", () => {
-        expect(walletApprovalFee(canisterId, 10_000n)).toBe(0n);
+    test("a user alone in their canister pays no approval fee from their OpenChat wallet", () => {
+        expect(walletApprovalFee(canisterId, 10_000n, false)).toBe(0n);
     });
 
     test("a user who holds their own funds pays the transfer fee for the approval", () => {
-        expect(walletApprovalFee(indexedUserId, 10_000n)).toBe(10_000n);
+        expect(walletApprovalFee(indexedUserId, 10_000n, false)).toBe(10_000n);
+    });
+
+    test("any user pays the transfer fee for an external wallet's approval", () => {
+        expect(walletApprovalFee(canisterId, 10_000n, true)).toBe(10_000n);
+        expect(walletApprovalFee(indexedUserId, 10_000n, true)).toBe(10_000n);
     });
 });
 
