@@ -17,10 +17,21 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
+
+    // One-off: the total was incremented when a subscription was pushed again, and a subscription
+    // pushed again with new keys was stored as a duplicate
+    let previous_total = data.web_push_subscriptions.total();
+    let duplicates_removed = data.web_push_subscriptions.remove_duplicate_endpoints_and_recompute_total();
+    info!(
+        previous_total,
+        total = data.web_push_subscriptions.total(),
+        duplicates_removed,
+        "Recomputed the web push subscriptions total"
+    );
 
     let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
