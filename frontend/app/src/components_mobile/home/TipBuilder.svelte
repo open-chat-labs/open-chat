@@ -22,6 +22,7 @@
         exchangeRatesLookupStore as exchangeRatesLookup,
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
+        walletApprovalFee,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -212,6 +213,13 @@
         s.refreshBalance(client).then(onBalanceRefreshFinished);
         return s;
     });
+    // What the tip costs in fees includes the approval an external wallet, or the wallet of a user
+    // who holds their own funds, makes before the tip is pulled from it
+    $effect(() => {
+        tokenState.transferFees =
+            tokenState.transferFee +
+            walletApprovalFee($currentUserIdStore, tokenState.transferFee, payFromWallet);
+    });
     let exchangeRate = $derived(
         to2SigFigs($exchangeRatesLookup.get(tokenDetails.symbol.toLowerCase())?.toUSD ?? 0),
     );
@@ -226,7 +234,7 @@
     let displayDraftAmount = $derived(
         client.formatTokens(tokenState.draftAmount, tokenDetails.decimals),
     );
-    let displayFee = $derived(client.formatTokens(tokenDetails.transferFee, tokenDetails.decimals));
+    let displayFee = $derived(client.formatTokens(tokenState.transferFees, tokenDetails.decimals));
     // What the user is able to spend, or undefined when that is the external wallet's business
     // rather than ours
     let spendingLimit = $derived(payFromWallet ? undefined : tokenState.maxAmount);
@@ -238,7 +246,7 @@
     );
     // An empty OpenChat account is only a dead end while the user is paying from it
     let zero = $derived(
-        tokenState.cryptoBalance <= tokenDetails.transferFee && !tokenChanging && !payFromWallet,
+        tokenState.cryptoBalance <= tokenState.transferFees && !tokenChanging && !payFromWallet,
     );
     $effect(() => {
         centAmount = calculateCentAmount(tokenState.draftAmount, exchangeRate);
@@ -261,6 +269,7 @@
             showRefresh
             hideBalance={payFromWallet}
             draftAmount={tokenState.draftAmount}
+            fees={tokenState.transferFees}
             bind:ledger />
         <SourceWalletSelector bind:wallet={sourceWallet} {ledger} />
         {#if zero || toppingUp}
