@@ -18,9 +18,11 @@
     import {
         LEDGER_CANISTER_CHAT,
         OpenChat,
+        currentUserIdStore,
         enhancedCryptoLookup,
         publish,
         streakInsuranceStore,
+        walletApprovalFee,
     } from "@client";
     import { getContext } from "svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
@@ -53,6 +55,13 @@
 
     $effect(() => {
         tokenState.draftAmount = client.streakInsurancePrice(currentDaysInsured, additionalDays);
+        // The price is burned, which the ledger charges no fee for, but a user who holds their own
+        // funds pays for the approval they make before the price is pulled from their wallet
+        tokenState.transferFees = walletApprovalFee(
+            $currentUserIdStore,
+            tokenState.transferFee,
+            false,
+        );
     });
 
     function pay() {
