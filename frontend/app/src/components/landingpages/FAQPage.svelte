@@ -12,7 +12,7 @@
     import { copyToClipboard } from "../../utils/urls";
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Headline from "./Headline.svelte";
 
     let question: Questions | undefined = $state(undefined);

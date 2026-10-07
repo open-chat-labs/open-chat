@@ -47,7 +47,7 @@
         SearchState,
     } from "../../../../stores/search.svelte";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AnonFooter from "../../AnonFooter.svelte";
     import NothingToSee from "../../NothingToSee.svelte";
     import { updateCommunityState } from "../createOrUpdate/community.svelte";

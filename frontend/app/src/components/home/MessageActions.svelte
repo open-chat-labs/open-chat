@@ -16,8 +16,8 @@
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
     import { rtlStore } from "../../stores/rtl";
     import HoverIcon from "../HoverIcon.svelte";
-    import Bitcoin from "../icons/Bitcoin.svelte";
-    import MemeFighter from "../icons/MemeFighter.svelte";
+    import Bitcoin from "@shared_components/icons/Bitcoin.svelte";
+    import MemeFighter from "@shared_components/icons/MemeFighter.svelte";
     import FileAttacher from "./FileAttacher.svelte";
     import Smiley from "./Smiley.svelte";
 

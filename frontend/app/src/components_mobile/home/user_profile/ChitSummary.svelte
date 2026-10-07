@@ -30,7 +30,7 @@
     import Rocket from "svelte-material-icons/RocketLaunchOutline.svelte";
     import ShieldStarOutline from "svelte-material-icons/ShieldStarOutline.svelte";
     import Progress from "../../Progress.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import LearnToEarn from "../profile/LearnToEarn.svelte";
     import Streak from "./Streak.svelte";
 

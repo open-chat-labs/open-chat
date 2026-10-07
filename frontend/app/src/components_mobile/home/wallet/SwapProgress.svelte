@@ -20,7 +20,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import Robot from "svelte-material-icons/RobotOutline.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         swapId: bigint;

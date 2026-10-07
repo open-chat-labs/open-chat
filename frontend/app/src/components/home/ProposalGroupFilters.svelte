@@ -20,7 +20,7 @@
     import HoverIcon from "../HoverIcon.svelte";
     import LinkButton from "../LinkButton.svelte";
     import SectionHeader from "../SectionHeader.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         selectedChat: ChatSummary;

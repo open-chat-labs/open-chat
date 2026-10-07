@@ -15,7 +15,7 @@
     import AccountCancel from "svelte-material-icons/AccountCancelOutline.svelte";
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import AddList from "./AddList.svelte";
     import BlockedList from "./BlockedList.svelte";

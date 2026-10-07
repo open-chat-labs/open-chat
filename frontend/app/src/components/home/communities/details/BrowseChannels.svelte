@@ -11,7 +11,7 @@
     import { browseChannels } from "../../../../stores/settings";
     import Button from "../../../Button.svelte";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ChannelCard from "./ChannelCard.svelte";
 
     const client = getContext<OpenChat>("client");

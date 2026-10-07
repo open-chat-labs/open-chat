@@ -3,7 +3,7 @@
     import type { ResourceKey } from "@client";
     import type { Snippet } from "svelte";
     import { rtlStore } from "../stores/rtl";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         checked?: boolean;

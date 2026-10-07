@@ -16,7 +16,7 @@
     import { activeVideoCall } from "../../stores/video";
     import Avatar from "../Avatar.svelte";
     import Button from "../Button.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 

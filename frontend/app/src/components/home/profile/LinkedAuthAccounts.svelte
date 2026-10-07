@@ -12,7 +12,7 @@
     import Button from "../../Button.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Overlay from "../../Overlay.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import TruncatedAccount from "../TruncatedAccount.svelte";
     import AuthProviderLogo from "./AuthProviderLogo.svelte";
     import LinkAccounts from "./LinkAccounts.svelte";

@@ -8,7 +8,7 @@
     import IntegerInput from "../IntegerInput.svelte";
     import Legend from "../Legend.svelte";
     import NumberInput from "../NumberInput.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         param: CommandParam;

@@ -2,7 +2,7 @@
     import { AuthProvider, i18nKey, OpenChat } from "@client";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import { interpolate } from "../../../i18n/i18n";
     import { _ } from "svelte-i18n";
     import Markdown from "@shared_components/Markdown.svelte";

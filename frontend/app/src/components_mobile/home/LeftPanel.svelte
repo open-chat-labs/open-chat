@@ -14,7 +14,7 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import Enter from "svelte-material-icons/LocationEnter.svelte";
     import { rtlStore } from "../../stores/rtl";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ActivityFeed from "./activity/ActivityFeed.svelte";
     import BottomBar, { type Selection } from "./bottom_bar/BottomBar.svelte";
     import ChatList from "./ChatList.svelte";

@@ -47,7 +47,7 @@
     import BotPublisher from "../../bots/BotPublisher.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Legend from "../../Legend.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import DurationSelector from "../DurationSelector.svelte";

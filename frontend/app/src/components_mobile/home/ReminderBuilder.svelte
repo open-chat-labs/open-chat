@@ -7,7 +7,7 @@
     import { i18nKey, interpolate } from "../../i18n/i18n";
     import { now } from "../../stores/time";
     import { toastStore } from "../../stores/toast";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import DurationSelector from "./DurationSelector.svelte";
 
     interface Props {

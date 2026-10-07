@@ -7,7 +7,7 @@
     import Button from "../../Button.svelte";
     import Input from "../../Input.svelte";
     import Legend from "../../Legend.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const MIN_LENGTH = 1;
     const MAX_LENGTH = 50;

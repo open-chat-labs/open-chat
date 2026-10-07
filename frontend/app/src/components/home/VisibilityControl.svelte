@@ -12,7 +12,7 @@
     import Button from "../Button.svelte";
     import Checkbox from "../Checkbox.svelte";
     import Radio from "../Radio.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import DurationPicker from "./DurationPicker.svelte";
     import AccessGateControl from "./access/AccessGateControl.svelte";
 

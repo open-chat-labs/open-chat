@@ -6,7 +6,7 @@
     import ButtonGroup from "./ButtonGroup.svelte";
     import ModalContent from "./ModalContent.svelte";
     import Overlay from "./Overlay.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const TOLERANCE = 0.1; // tolerance in radians
 

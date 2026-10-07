@@ -5,11 +5,11 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import LinkAccounts from "../profile/LinkAccounts.svelte";
     import AlertBox from "../../AlertBox.svelte";
-    import AccessGateExpiry from "./AccessGateExpiry.svelte";
+    import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
 

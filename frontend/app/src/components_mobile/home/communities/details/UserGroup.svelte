@@ -14,7 +14,7 @@
     import Edit from "svelte-material-icons/SquareEditOutline.svelte";
     import { i18nKey, interpolate } from "../../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../../utils/user";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../../SlidingPageContent.svelte";
     import User from "../../User.svelte";
     import { CommunityState } from "./communityState.svelte";

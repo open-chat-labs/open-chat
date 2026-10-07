@@ -33,7 +33,7 @@
     import EditableImageWrapper from "../../../EditableImageWrapper.svelte";
     import LinkedCard from "../../../LinkedCard.svelte";
     import Setting from "../../../Setting.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AccessGateChip from "../../access_gates/AccessGateChip.svelte";
     import LanguageSelector from "../../LanguageSelector.svelte";
     import SlidingPageContent from "../../SlidingPageContent.svelte";

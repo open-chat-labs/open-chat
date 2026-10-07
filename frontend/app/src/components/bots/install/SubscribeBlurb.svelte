@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "../../../i18n/i18n";
     import Legend from "../../../components/Legend.svelte";
-    import Translatable from "../../../components/Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 </script>
 
 <Legend large label={i18nKey("bots.add.subscribeTitle")}></Legend>

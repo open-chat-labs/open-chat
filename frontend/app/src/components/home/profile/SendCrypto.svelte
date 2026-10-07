@@ -35,7 +35,7 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Input from "../../Input.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import NetworkSelector from "../NetworkSelector.svelte";
     import TokenInput from "../TokenInput.svelte";

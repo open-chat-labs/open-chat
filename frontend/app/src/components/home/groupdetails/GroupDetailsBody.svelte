@@ -22,10 +22,10 @@
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
     import Legend from "../../Legend.svelte";
-    import Translatable from "../../Translatable.svelte";
-    import AccessGateExpiry from "../access/AccessGateExpiry.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
+    import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
     import AccessGateSummary from "../access/AccessGateSummary.svelte";
-    import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
+    import DisappearingMessagesSummary from "@shared_components/home/DisappearingMessagesSummary.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
     import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
     import Markdown from "@shared_components/Markdown.svelte";

@@ -18,11 +18,11 @@
     import { uniquePersonCredentialGate } from "../../../utils/access";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import HumanityConfirmation from "../HumanityConfirmation.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import LinkAccounts from "../profile/LinkAccounts.svelte";
-    import AccessGateExpiry from "./AccessGateExpiry.svelte";
+    import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
 

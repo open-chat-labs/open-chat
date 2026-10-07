@@ -3,10 +3,10 @@
     import ButtonGroup from "@src/components/ButtonGroup.svelte";
     import Checkbox from "@src/components/Checkbox.svelte";
     import HoverIcon from "@src/components/HoverIcon.svelte";
-    import HeartMinus from "@src/components/icons/HeartMinus.svelte";
-    import HeartPlus from "@src/components/icons/HeartPlus.svelte";
+    import HeartMinus from "@src/components_shared/icons/HeartMinus.svelte";
+    import HeartPlus from "@src/components_shared/icons/HeartPlus.svelte";
     import SectionHeader from "@src/components/SectionHeader.svelte";
-    import Translatable from "@src/components/Translatable.svelte";
+    import Translatable from "@src/components_shared/Translatable.svelte";
     import { i18nKey } from "@src/i18n/i18n";
     import { toastStore } from "@src/stores/toast";
     import { activeVideoCall } from "@src/stores/video";

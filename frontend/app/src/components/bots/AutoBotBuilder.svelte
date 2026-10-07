@@ -23,7 +23,7 @@
     import HoverIcon from "../HoverIcon.svelte";
     import Legend from "../Legend.svelte";
     import Tabs, { type Tab } from "../Tabs.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import BotCommands from "./BotCommands.svelte";
     import BotPermissionViewer from "./BotPermissionViewer.svelte";
     import CommandViewer from "./CommandViewer.svelte";

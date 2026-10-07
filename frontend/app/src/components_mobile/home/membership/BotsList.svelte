@@ -23,7 +23,7 @@
     import BotMatch from "../../bots/BotMatch.svelte";
     import BotMember from "../../bots/BotMember.svelte";
     import WebhookMember from "../../bots/WebhookMember.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
     const client = getContext<OpenChat>("client");

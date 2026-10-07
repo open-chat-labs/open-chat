@@ -3,7 +3,7 @@
     import { flattenGateConfig } from "@src/utils/access";
     import { Body, Container, type SizeMode } from "component-lib";
     import { type AccessGateConfig } from "@client";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Separator from "./Separator.svelte";
     import AccessGateText from "./access_gates/AccessGateText.svelte";
 

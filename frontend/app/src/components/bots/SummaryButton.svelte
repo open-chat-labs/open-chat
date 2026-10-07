@@ -1,7 +1,7 @@
 <script lang="ts">
     import { iconSize, type ResourceKey } from "@client";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         resourceKey: ResourceKey;

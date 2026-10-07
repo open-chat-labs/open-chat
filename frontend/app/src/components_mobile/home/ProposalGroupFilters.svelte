@@ -12,7 +12,7 @@
     } from "../../stores/proposalSections";
     import { OC_GOVERNANCE_CANISTER_ID } from "../../utils/sns";
     import CollapsibleCard from "../CollapsibleCard.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";
 
     interface Props {

@@ -4,7 +4,7 @@
     import Phone from "svelte-material-icons/PhoneOutline.svelte";
     import Video from "svelte-material-icons/VideoOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         chatId: ChatIdentifier;

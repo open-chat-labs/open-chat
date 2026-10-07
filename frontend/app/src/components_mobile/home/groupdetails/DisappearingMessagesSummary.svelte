@@ -4,7 +4,7 @@
     import { Body, Container } from "component-lib";
     import { OpenChat } from "@client";
     import { getContext } from "svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Separator from "../Separator.svelte";
 
     const client = getContext<OpenChat>("client");

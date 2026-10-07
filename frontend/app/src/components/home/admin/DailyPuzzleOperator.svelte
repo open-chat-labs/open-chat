@@ -16,7 +16,7 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Select from "../../Select.svelte";
     import Toggle from "../../Toggle.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 

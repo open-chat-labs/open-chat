@@ -26,7 +26,7 @@
     import Link from "../Link.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Progress from "../Progress.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import StreakInsuranceBuy from "./insurance/StreakInsuranceBuy.svelte";
     import ChitBalance from "./profile/ChitBalance.svelte";
     import LearnToEarn from "./profile/LearnToEarn.svelte";

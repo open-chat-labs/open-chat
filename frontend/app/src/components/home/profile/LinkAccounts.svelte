@@ -28,8 +28,8 @@
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import InternetIdentityLogo from "../../landingpages/InternetIdentityLogo.svelte";
-    import Translatable from "../../Translatable.svelte";
-    import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
+    import EmailSigninFeedback from "@shared_components/home/EmailSigninFeedback.svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
     import SignInOption from "./SignInOption.svelte";
 

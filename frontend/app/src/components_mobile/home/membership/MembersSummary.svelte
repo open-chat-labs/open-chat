@@ -12,7 +12,7 @@
     } from "@client";
     import { getContext, onDestroy } from "svelte";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Separator from "../Separator.svelte";
     import MemberList from "./MemberList.svelte";
     import { MemberManagement } from "./membersState.svelte";

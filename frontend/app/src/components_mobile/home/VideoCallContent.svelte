@@ -21,7 +21,7 @@
     import { getContext, type Snippet } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import { activeVideoCall } from "../../stores/video";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Video from "svelte-material-icons/VideoOutline.svelte";
     import PhoneJoin from "svelte-material-icons/PhoneInTalkOutline.svelte";
     import PhoneRemove from "svelte-material-icons/PhoneRemoveOutline.svelte";

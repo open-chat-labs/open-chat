@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { deriveColours, goldDiamondHue } from "./diamond";
+    import { deriveColours, goldDiamondHue } from "@shared_components/icons/diamond";
     import DiamondBase from "./DiamondBase.svelte";
 
     interface Props {

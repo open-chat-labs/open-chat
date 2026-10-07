@@ -48,7 +48,7 @@
     import { expectBackPress } from "../../utils/native/notification_channels";
     import { flushPendingNavigation, hasPendingNavigation } from "../../utils/navigation";
     import type { Share as ShareType } from "../../utils/share";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ForwardMessageModal from "../ForwardMessageModal.svelte";
     import ShareMessageModal from "../ShareMessageModal.svelte";
     import SelectChatModal from "../SelectChatModal.svelte";

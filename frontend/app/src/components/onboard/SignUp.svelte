@@ -20,7 +20,7 @@
     import Legend from "../Legend.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import UsernameInput from "../UsernameInput.svelte";
     import UserPill from "../UserPill.svelte";
 

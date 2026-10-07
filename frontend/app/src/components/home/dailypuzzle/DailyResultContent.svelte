@@ -21,7 +21,7 @@
         type CardVerification,
     } from "../../../utils/dailyResultCard";
     import Button from "../../Button.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ContentCaption from "../ContentCaption.svelte";
 
     interface Props {

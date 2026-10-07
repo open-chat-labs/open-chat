@@ -22,9 +22,9 @@
     import { i18nKey } from "../../../i18n/i18n";
     import BlueDiamond from "../../icons/BlueDiamond.svelte";
     import GoldDiamond from "../../icons/GoldDiamond.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AccessGateBuilder from "./AccessGateBuilder.svelte";
-    import AccessGateExpiry from "./AccessGateExpiry.svelte";
+    import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
     import CredentialGatePopup from "./CredentialGatePopup.svelte";
 
     interface Props {

@@ -16,7 +16,7 @@
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import Eye from "svelte-material-icons/EyeOutline.svelte";
     import Setting from "../Setting.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import { UpdateGroupState } from "./createOrUpdateGroup/group.svelte";
     import GroupCard from "./createOrUpdateGroup/GroupCard.svelte";
     import { MAX_RULES_LENGTH, type UpdateGroupOrCommunityState } from "./groupOrCommunity.svelte";

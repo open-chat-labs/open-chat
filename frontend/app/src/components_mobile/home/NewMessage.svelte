@@ -22,7 +22,7 @@
     import AccountMultiplePlusOutline from "svelte-material-icons/AccountMultiplePlusOutline.svelte";
     import FilteredUsername from "@shared_components/FilteredUsername.svelte";
     import MatchingUser from "../MatchingUser.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ChatListSearch from "./ChatListSearch.svelte";
     import { updateGroupState } from "./createOrUpdateGroup/group.svelte";
     import SlidingPageContent from "./SlidingPageContent.svelte";

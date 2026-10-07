@@ -26,7 +26,7 @@
     import { _ } from "svelte-i18n";
     import Information from "svelte-material-icons/Information.svelte";
     import { i18nKey, interpolate } from "../i18n/i18n";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     let {
         align = "left",

@@ -7,7 +7,7 @@
     } from "@client";
     import { i18nKey } from "../i18n/i18n";
     import Progress from "./Progress.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 </script>
 
 <!-- don't display anything if the user hasn't got any storage -->

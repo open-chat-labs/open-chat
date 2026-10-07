@@ -6,7 +6,7 @@
     import { Confetti } from "svelte-confetti";
     import { _ } from "svelte-i18n";
     import { Spring, Tween } from "svelte/motion";
-    import SpinningToken from "../icons/SpinningToken.svelte";
+    import SpinningToken from "@shared_components/icons/SpinningToken.svelte";
 
     const OFF_SCREEN_OPACITY = 0.0;
     const SHOW_DURATION = 3000;

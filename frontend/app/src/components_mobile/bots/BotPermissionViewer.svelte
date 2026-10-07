@@ -11,7 +11,7 @@
     import Minus from "svelte-material-icons/Minus.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Tabs from "../Tabs.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         permissions: ExternalBotPermissions;

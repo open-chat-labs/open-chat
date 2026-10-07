@@ -33,7 +33,7 @@
     import Markdown from "@shared_components/Markdown.svelte";
     import SlidingPageContent from "../../home/SlidingPageContent.svelte";
     import MulticolourText from "../../MulticolourText.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import BotAvatar from "../BotAvatar.svelte";
     import BotCommands from "../BotCommands.svelte";
     import BotsPermissionInfo from "../BotsPermissionInfo.svelte";

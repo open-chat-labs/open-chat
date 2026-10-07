@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Confetti } from "svelte-confetti";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     let { para = i18nKey("upgrade.congratulations") } = $props();
 </script>

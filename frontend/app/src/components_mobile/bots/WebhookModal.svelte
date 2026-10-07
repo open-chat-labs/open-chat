@@ -26,7 +26,7 @@
     import EditableAvatar from "../EditableAvatar.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import SlidingPageContent from "../home/SlidingPageContent.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import WebhookMember from "./WebhookMember.svelte";
 
     type Mode = "register" | "update" | "regenerate";

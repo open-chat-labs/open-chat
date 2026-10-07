@@ -3,7 +3,7 @@
     import { type CommandDefinition, type CommandParam } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import SlidingPageContent from "../home/SlidingPageContent.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import BotPermissionViewer from "./BotPermissionViewer.svelte";
     import CommandParameterViewer from "./CommandParameterViewer.svelte";
 

@@ -28,7 +28,7 @@
     import { _ } from "svelte-i18n";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ChatMessage from "../ChatMessage.svelte";
     import IntersectionObserverComponent from "../IntersectionObserver.svelte";
     import Markdown from "@shared_components/Markdown.svelte";

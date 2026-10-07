@@ -7,7 +7,7 @@
     import Plus from "svelte-material-icons/Plus.svelte";
     import { SvelteSet } from "svelte/reactivity";
     import { i18nKey, interpolate } from "../../../../i18n/i18n";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../../SlidingPageContent.svelte";
     import UserGroupRow from "./UserGroupRow.svelte";
     import { CommunityState } from "./communityState.svelte";

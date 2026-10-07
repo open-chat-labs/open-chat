@@ -11,7 +11,7 @@
     import RobotOutline from "svelte-material-icons/RobotOutline.svelte";
     import Sync from "svelte-material-icons/Sync.svelte";
     import LinkedCard from "../../LinkedCard.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 
     function help() {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import EditableImageWrapper from "./EditableImageWrapper.svelte";
-    import ChooseImage from "./icons/ChooseImage.svelte";
+    import ChooseImage from "@shared_components/icons/ChooseImage.svelte";
 
     interface Props {
         image: string | null | undefined;

@@ -18,9 +18,9 @@
     import Chart from "svelte-material-icons/ChartBoxOutline.svelte";
     import QrCode from "svelte-material-icons/Qrcode.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import { TokenState } from "../wallet/walletState.svelte";
-    import AccessGateExpiry from "./AccessGateExpiry.svelte";
+    import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
 
     interface Props {
         gate: TokenBalanceGate & { expiry: bigint | undefined };

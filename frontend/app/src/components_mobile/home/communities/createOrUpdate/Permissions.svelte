@@ -9,7 +9,7 @@
     } from "@client";
     import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import PermissionsRoleSlider from "../../PermissionsRoleSlider.svelte";
     import SlidingPageContent from "../../SlidingPageContent.svelte";
     import { updateCommunityState } from "./community.svelte";

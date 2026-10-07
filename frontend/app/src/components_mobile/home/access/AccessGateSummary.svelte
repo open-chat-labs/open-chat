@@ -25,7 +25,7 @@
     import AccountCheck from "svelte-material-icons/AccountCheckOutline.svelte";
     import Diamond from "svelte-material-icons/DiamondOutline.svelte";
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AccessGateText from "../access_gates/AccessGateText.svelte";
     import { TokenState } from "../wallet/walletState.svelte";
     import AccessGateBox from "./AccessGateBox.svelte";

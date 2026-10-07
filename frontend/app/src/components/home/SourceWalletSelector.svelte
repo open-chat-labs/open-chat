@@ -11,7 +11,7 @@
     import Menu from "../Menu.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const OPENCHAT_LOGO = "/assets/oc_logo_no_bg.svg";
 

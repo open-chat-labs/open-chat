@@ -13,9 +13,9 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import EmailSigninFeedback from "../home/EmailSigninFeedback.svelte";
+    import EmailSigninFeedback from "@shared_components/home/EmailSigninFeedback.svelte";
     import ChooseSignInOption from "../home/profile/ChooseSignInOption.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 

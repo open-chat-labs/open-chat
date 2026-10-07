@@ -77,10 +77,10 @@
     import StorageUsage from "../../StorageUsage.svelte";
     import TextArea from "../../TextArea.svelte";
     import Toggle from "../../Toggle.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
     import Stats from "../Stats.svelte";
-    import Expiry from "../upgrade/Expiry.svelte";
+    import Expiry from "@shared_components/home/upgrade/Expiry.svelte";
     import AccountLinkingCode from "./AccountLinkingCode.svelte";
     import BotConfigData from "./BotConfigData.svelte";
     import ChitEvents from "./ChitEvents.svelte";

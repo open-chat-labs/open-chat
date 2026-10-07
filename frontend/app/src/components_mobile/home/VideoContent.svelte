@@ -13,7 +13,7 @@
         reservedMediaStyle,
         setPlayingMedia,
     } from "../../utils/media";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
 
     const MIN_VIDEO_WIDTH = 180;

@@ -13,7 +13,7 @@
     import ModalContent from "../ModalContent.svelte";
     import SignUp from "../onboard/SignUp.svelte";
     import Select from "../Select.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const ALC_LENGTH = 6;
 

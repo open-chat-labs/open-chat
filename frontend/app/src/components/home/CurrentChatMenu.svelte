@@ -57,12 +57,12 @@
     import { activeVideoCall } from "../../stores/video";
     import HoverIcon from "../HoverIcon.svelte";
     import ConvertToCommunity from "../icons/ConvertToCommunity.svelte";
-    import HeartMinus from "../icons/HeartMinus.svelte";
-    import HeartPlus from "../icons/HeartPlus.svelte";
+    import HeartMinus from "@shared_components/icons/HeartMinus.svelte";
+    import HeartPlus from "@shared_components/icons/HeartPlus.svelte";
     import Menu from "../Menu.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 

@@ -12,7 +12,7 @@
     import Overlay from "../Overlay.svelte";
     import Select from "../Select.svelte";
     import TextArea from "../TextArea.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         chatId: ChatIdentifier;

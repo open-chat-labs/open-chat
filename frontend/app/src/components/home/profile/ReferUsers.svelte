@@ -7,7 +7,7 @@
     import { canShare, shareLink } from "../../../utils/share";
     import Link from "../../Link.svelte";
     import QRCode from "../../QRCode.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     let link = $derived(`${window.location.origin}/?ref=${$currentUserIdStore}`);
 

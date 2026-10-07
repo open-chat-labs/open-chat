@@ -14,7 +14,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { activeVideoCall } from "../../../stores/video";
     import FancyLoader from "../../icons/FancyLoader.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import VirtualList from "@shared_components/VirtualList.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import ActiveCallParticipant from "./ActiveCallParticipant.svelte";

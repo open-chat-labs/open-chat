@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey, interpolate } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import { _ } from "svelte-i18n";
     import Checkbox from "../Checkbox.svelte";

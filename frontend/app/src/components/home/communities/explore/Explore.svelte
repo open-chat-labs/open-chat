@@ -26,7 +26,7 @@
     import Fab from "../../../Fab.svelte";
     import HoverIcon from "../../../HoverIcon.svelte";
     import FancyLoader from "../../../icons/FancyLoader.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import CommunityCard from "./CommunityCard.svelte";
     import CommunityCardLink from "./CommunityCardLink.svelte";
 

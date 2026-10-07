@@ -34,7 +34,7 @@
     import Link from "../Link.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Overlay from "../Overlay.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
     import EmojiPicker from "./EmojiPickerWrapper.svelte";
@@ -44,7 +44,7 @@
     import Badges from "./profile/Badges.svelte";
     import BotBadge from "./profile/BotBadge.svelte";
     import RoleIcon from "./profile/RoleIcon.svelte";
-    import WithRole from "./profile/WithRole.svelte";
+    import WithRole from "@shared_components/home/profile/WithRole.svelte";
     import ReminderBuilder from "./ReminderBuilder.svelte";
     import RepliesTo from "./RepliesTo.svelte";
     import ReportMessage from "./ReportMessage.svelte";

@@ -17,7 +17,7 @@
     import { buildDisplayName } from "../../../utils/user";
     import Avatar from "../../Avatar.svelte";
     import Link from "../../Link.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import MessageReaction from "../MessageReaction.svelte";
     import TipThumbnail from "../TipThumbnail.svelte";

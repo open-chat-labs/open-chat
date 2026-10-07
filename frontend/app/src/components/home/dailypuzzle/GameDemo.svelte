@@ -6,7 +6,7 @@
     import type { Violation } from "@client";
     import type { DailyPuzzleGameDef } from "../../../utils/dailyPuzzleGames";
     import type { DemoFrame } from "./games/types";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         def: DailyPuzzleGameDef;

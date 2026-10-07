@@ -16,7 +16,7 @@
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import QRCode from "../QRCode.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import TruncatedAccount from "./TruncatedAccount.svelte";
     import NetworkSelector from "./NetworkSelector.svelte";
     import { rtlStore } from "../../stores/rtl";

@@ -10,7 +10,7 @@
         setAutoTranslate,
     } from "../../utils/onDeviceTranslation.svelte";
     import Link from "../Link.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         chatId: ChatIdentifier;

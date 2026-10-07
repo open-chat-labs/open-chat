@@ -33,7 +33,7 @@
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { calculateDollarAmount } from "../../../utils/exchange";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import TokenInput from "../TokenInput.svelte";
     import SwapProgress from "./SwapProgress.svelte";

@@ -30,9 +30,9 @@
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Select from "../../Select.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import DurationPicker from "../DurationPicker.svelte";
-    import AccessGateExpiry from "./AccessGateExpiry.svelte";
+    import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import LeafGateBuilder from "./LeafGateBuilder.svelte";
 

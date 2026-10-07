@@ -18,7 +18,7 @@
     import { uniquePersonCredentialGate } from "../../../utils/access";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import LinkAccounts from "./LinkAccounts.svelte";
     import LinkAccountsModal from "./LinkAccountsModal.svelte";

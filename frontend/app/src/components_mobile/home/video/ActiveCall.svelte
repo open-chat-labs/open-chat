@@ -40,7 +40,7 @@
     import type { Theme } from "../../../theme/types";
     import { removeQueryStringParam } from "../../../utils/urls";
     import AreYouSure from "../../AreYouSure.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ActiveCallHeader from "./ActiveCallHeader.svelte";
 
     interface Props {

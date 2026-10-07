@@ -5,7 +5,7 @@
     import Input from "../../Input.svelte";
     import Legend from "../../Legend.svelte";
     import TextArea from "../../TextArea.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 40;

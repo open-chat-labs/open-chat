@@ -42,7 +42,7 @@
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { CkbtcWithdrawalInfoRequests } from "../../../utils/ckbtcWithdrawalInfo";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import NetworkSelector from "../NetworkSelector.svelte";
     import TokenInput from "../TokenInput.svelte";
     import TransferFeesMessage from "../TransferFeesMessage.svelte";
