@@ -17,7 +17,7 @@ use types::{
 async fn bot_send_message(args: Args) -> Response {
     let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
         Ok(context) => context,
-        Err(_) => return Response::Error(OCErrorCode::BotNotAuthenticated.into()),
+        Err(error) => return Response::Error(error),
     };
 
     bot_send_message_impl(

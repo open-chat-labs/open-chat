@@ -538,7 +538,10 @@ mod tests {
             with_map_mut(|m| m.insert(DirectChatKeyPrefix::new().create_key(&key_id), bytes));
         }
 
-        direct_chats.get_mut(&user(4).into()).unwrap().remove_expired_events(60);
+        direct_chats
+            .get_mut(&user(4).into())
+            .unwrap()
+            .remove_expired_events(&MigratedUserIds::default(), 60);
         assert_eq!(direct_chats.next_event_expiry(), Some(110));
         assert!(direct_chats.chats_with_events_expiring_by(109).is_empty());
     }

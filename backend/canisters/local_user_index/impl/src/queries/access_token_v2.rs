@@ -11,9 +11,10 @@ use types::c2c_can_issue_access_token::{
     AccessTypeArgs, BotActionByCommandArgs, JoinVideoCallArgs, MarkVideoCallAsEndedArgs, StartVideoCallArgs,
 };
 use types::{
-    AutonomousBotScope, BotActionByCommandClaims, BotCommand, CLAIM_TYPE_BOT_ACTION_BY_COMMAND, CLAIM_TYPE_JOIN_VIDEO_CALL,
-    CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL, CLAIM_TYPE_VIDEO_CALL_PARTICIPANT, CallKind, Chat,
-    JoinOrEndVideoCallClaims, Milliseconds, StartVideoCallClaims, TranslateClaims, UserId,
+    AutonomousBotScope, BotActionByCommandClaims, BotActionScope, BotCommand, CLAIM_TYPE_BOT_ACTION_BY_COMMAND,
+    CLAIM_TYPE_JOIN_VIDEO_CALL, CLAIM_TYPE_MARK_VIDEO_CALL_AS_ENDED, CLAIM_TYPE_START_VIDEO_CALL,
+    CLAIM_TYPE_VIDEO_CALL_PARTICIPANT, CallKind, Chat, JoinOrEndVideoCallClaims, Milliseconds, StartVideoCallClaims,
+    TranslateClaims, UserId,
 };
 
 const DEFAULT_TOKEN_VALIDITY: Milliseconds = 5 * 60 * 1000;
@@ -22,9 +23,16 @@ const TRANSLATE_TOKEN_VALIDITY: Milliseconds = 30 * 60 * 1000;
 #[query(composite = true, msgpack = true)]
 #[trace]
 async fn access_token_v2(args_wrapper: Args) -> Response {
-    let Ok(args_wrapper) = ArgsInternal::from(args_wrapper) else {
+    let Ok(mut args_wrapper) = ArgsInternal::from(args_wrapper) else {
         return InternalError("Failed to parse arguments".to_string());
     };
+
+    if let Some(chat) = args_wrapper.chat_mut() {
+        match read_state(|state| state.latest_chat(*chat)) {
+            Ok(latest) => *chat = latest,
+            Err(error) => return Error(error),
+        }
+    }
 
     if let ArgsInternal::Translate = &args_wrapper {
         return mutate_state(translate_token);
@@ -262,6 +270,20 @@ impl ArgsInternal {
             Self::MarkVideoCallAsEnded(args) => Some(args.chat),
             Self::VideoCallParticipant(args) => Some(args.chat),
             Self::BotActionByCommand(args) => args.scope.chat(None),
+            Self::Translate => None,
+        }
+    }
+
+    fn chat_mut(&mut self) -> Option<&mut Chat> {
+        match self {
+            Self::StartVideoCall(args) => Some(&mut args.chat),
+            Self::JoinVideoCall(args) => Some(&mut args.chat),
+            Self::MarkVideoCallAsEnded(args) => Some(&mut args.chat),
+            Self::VideoCallParticipant(args) => Some(&mut args.chat),
+            Self::BotActionByCommand(args) => match &mut args.scope {
+                BotActionScope::Chat(details) => Some(&mut details.chat),
+                BotActionScope::Community(_) => None,
+            },
             Self::Translate => None,
         }
     }
