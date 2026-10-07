@@ -104,13 +104,7 @@ pub(crate) async fn verify_caller() -> CanisterKind {
 fn known_caller_kind(caller: CanisterId, state: &RuntimeState) -> Option<CanisterKind> {
     if state.data.known_multi_user_canisters.contains(&caller) {
         Some(CanisterKind::MultiUserCanister)
-    } else if state
-        .data
-        .user
-        .direct_chats
-        .get(&UserId::from(caller).into())
-        .is_some_and(|chat| chat.user_type == UserType::User)
-    {
+    } else if state.data.user.direct_chats.user_type(&UserId::from(caller).into()) == Some(UserType::User) {
         Some(CanisterKind::UserCanister)
     } else {
         None

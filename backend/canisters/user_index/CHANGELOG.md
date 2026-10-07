@@ -6,13 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Send each migrated user's old and new ids to the StorageIndex, including, once, those migrated so far ([#9790](https://github.com/open-chat-labs/open-chat/pull/9790))
+
 ### Changed
 
 - Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
+- Instantiate the msgpack (de)serializers of widely shared types once, in `types`, cutting the code by 129KB ([#9804](https://github.com/open-chat-labs/open-chat/pull/9804))
+- Bump the rmp-serde fork to one which reads numbers before visiting them, cutting the code by 620KB ([#9808](https://github.com/open-chat-labs/open-chat/pull/9808))
 
 ### Removed
 
 - Remove the one-off which set the DailyPuzzle canister id, now that it has run ([#9775](https://github.com/open-chat-labs/open-chat/pull/9775))
+
+### Fixed
+
+- Retry payments whose ledger can't be called after a growing delay rather than every round, and park those to uninstalled or deleted ledgers ([#9792](https://github.com/open-chat-labs/open-chat/pull/9792))
+- Move bots installed in a migrated user's direct chats onto their new id and LocalUserIndex, and tell each bot, including for users migrated so far ([#9819](https://github.com/open-chat-labs/open-chat/pull/9819))
 
 ## [[2.0.2097](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2097-user_index)] - 2026-10-05
 

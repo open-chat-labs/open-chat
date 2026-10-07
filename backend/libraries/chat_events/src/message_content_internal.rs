@@ -1665,7 +1665,12 @@ impl PrizeContentInternal {
         }
     }
 
-    pub fn final_payments(&mut self, sender: UserId, now_nanos: TimestampNanos) -> Vec<PendingCryptoTransaction> {
+    pub fn final_payments(
+        &mut self,
+        sender: UserId,
+        migrated_user_ids: &MigratedUserIds,
+        now_nanos: TimestampNanos,
+    ) -> Vec<PendingCryptoTransaction> {
         if self.final_payments_started {
             return Vec::new();
         }
@@ -1700,12 +1705,16 @@ impl PrizeContentInternal {
         }
 
         if refund > transaction_fee {
+            // The refund goes to the sender's wallet under their latest id, in case they have been
+            // migrated since sending the prize. A prize sent before the sender's principal was
+            // recorded is refunded at the id it was sent under, which alone gives its wallet.
+            let refund_to = if self.principal == Principal::anonymous() { sender } else { migrated_user_ids.latest(sender) };
             payments.push(create_pending_transaction(
                 token_symbol,
                 ledger,
                 refund - transaction_fee,
                 transaction_fee,
-                UserIdAndPrincipal::new(sender, self.principal).into(),
+                UserIdAndPrincipal::new(refund_to, self.principal).into(),
                 Some(&MEMO_PRIZE_REFUND),
                 now_nanos,
             ));
@@ -2449,5 +2458,85 @@ mod poll_tests {
         poll.change_voter_ids(new_user_id, &migrated(old_user_id, new_user_id));
 
         assert_eq!(poll.votes.get(&0), Some(&vec![new_user_id, user_id(3)]));
+    }
+}
+
+#[cfg(test)]
+mod prize_tests {
+    use super::*;
+
+    // A user alone in their canister, whose user id is that canister's id
+    fn old_user_id() -> UserId {
+        Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap().into()
+    }
+
+    // The same user once migrated to a MultiUser canister
+    fn new_user_id() -> UserId {
+        UserId::new_indexed(Principal::from_text("yaxqu-oqaaa-aaaaf-br7ya-cai").unwrap(), 1)
+    }
+
+    fn principal() -> Principal {
+        Principal::from_slice(&[7])
+    }
+
+    fn prize(principal: Principal) -> PrizeContentInternal {
+        PrizeContentInternal {
+            prizes_remaining: vec![100],
+            reservations: BTreeSet::new(),
+            winners: BTreeSet::new(),
+            transaction: CompletedCryptoTransactionInternal::ICRC1(icrc1::CompletedCryptoTransactionInternal {
+                ledger: Principal::from_slice(&[5]),
+                token_symbol: "ICP".to_string(),
+                amount: 110,
+                from: icrc1::CryptoAccountInternal::Mint,
+                to: icrc1::CryptoAccountInternal::Mint,
+                fee: 10,
+                memo: None,
+                created: 0,
+                block_index: 0,
+            }),
+            end_date: 1_000,
+            caption: None,
+            diamond_only: false,
+            lifetime_diamond_only: false,
+            unique_person_only: false,
+            streak_only: 0,
+            final_payments_started: false,
+            ledger_error: false,
+            prizes_paid: 0,
+            fee_percent: 0,
+            requires_captcha: false,
+            min_chit_earned: 0,
+            principal,
+        }
+    }
+
+    // The owner of the account the prize's unclaimed remainder is refunded to
+    fn refunded_to(principal: Principal, migrated_user_ids: &MigratedUserIds) -> Principal {
+        let payments = prize(principal).final_payments(old_user_id(), migrated_user_ids, 0);
+        let [PendingCryptoTransaction::ICRC1(refund)] = payments.as_slice() else {
+            panic!("Expected a single refund: {payments:?}");
+        };
+        refund.to.owner
+    }
+
+    #[test]
+    fn prize_sent_before_its_sender_was_migrated_is_refunded_to_their_new_wallet() {
+        let mut migrated_user_ids = MigratedUserIds::default();
+        migrated_user_ids.insert(old_user_id(), new_user_id());
+
+        // The new id's wallet is the account of the user's principal
+        assert_eq!(refunded_to(principal(), &migrated_user_ids), principal());
+        // A user who hasn't been migrated is refunded to their canister's account, as before
+        assert_eq!(
+            refunded_to(principal(), &MigratedUserIds::default()),
+            old_user_id().as_principal()
+        );
+        // A prize which predates the sender's principal being recorded is refunded to the account of
+        // the id it was sent under, never to the anonymous principal's account
+        assert_eq!(
+            refunded_to(Principal::anonymous(), &migrated_user_ids),
+            old_user_id().as_principal()
+        );
     }
 }

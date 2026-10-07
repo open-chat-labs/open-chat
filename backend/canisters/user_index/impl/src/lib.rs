@@ -5,6 +5,7 @@ use crate::model::online_users_event_batch::OnlineUsersEventBatch;
 use crate::model::premium_items::{PremiumItemMetrics, PremiumItems};
 use crate::model::protected_actions::{ProtectedActionMetrics, ProtectedActions};
 use crate::model::storage_index_user_config_batch::StorageIndexUserConfigBatch;
+use crate::model::storage_index_user_ids_migrated_batch::StorageIndexUserIdsMigratedBatch;
 use crate::model::storage_index_users_to_remove_batch::StorageIndexUsersToRemoveBatch;
 use crate::model::streak_insurance_logs::StreakInsuranceLogs;
 use crate::model::user_map::UserMap;
@@ -320,7 +321,34 @@ impl RuntimeState {
             users_to_notify,
             migrated_earlier.into_iter().collect(),
         );
+        self.migrate_bot_installations(old_user_id, new_user_id);
         true
+    }
+
+    // Moves the bots installed in a migrated user's direct chats under an old id onto their latest id,
+    // with the LocalUserIndex holding them as each bot's gateway, since a MultiUser canister only takes
+    // calls from its own LocalUserIndex. That LocalUserIndex tells each bot, as it would of an install.
+    pub fn migrate_bot_installations(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        let Some(local_user_index) = self.local_user_index_of_user(new_user_id) else {
+            return;
+        };
+        let now = self.env.now();
+        let bot_events = self
+            .data
+            .users
+            .migrate_bot_installations(old_user_id, new_user_id, local_user_index, now);
+        if bot_events.is_empty() {
+            return;
+        }
+        for (bot_id, events) in bot_events {
+            for event in events {
+                self.data.user_index_event_sync_queue.push(
+                    local_user_index,
+                    LocalUserIndexEvent::NotifyBot(Box::new(event.to_notification(bot_id))),
+                );
+            }
+        }
+        jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
     // Records that a user migrated to a MultiUser canister has been given a new id, and tells every
@@ -340,6 +368,12 @@ impl RuntimeState {
         if self.data.migrated_user_ids.insert(old_user_id, new_user_id) {
             self.data.multi_user_canisters.on_user_removed(&old_user_id);
             self.data.multi_user_canisters.on_user_added(&new_user_id);
+            // The StorageIndex passes it on to the storage buckets, which replace the user's old id
+            // with their new one among the accessors of their files, so that the canister now
+            // holding them can delete those files
+            self.data
+                .storage_index_user_ids_migrated_queue
+                .push((old_user_id, new_user_id));
 
             // Each LocalUserIndex is only sent the users it holds, by their latest ids
             let mut users_by_local_user_index: HashMap<CanisterId, HashSet<UserId>> = HashMap::new();
@@ -499,7 +533,16 @@ impl RuntimeState {
             nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             event_store_client_info,
             pending_payments: self.data.pending_payments_queue.len(),
+            payments_awaiting_retry: self
+                .data
+                .timer_jobs
+                .iter()
+                // A job which has already run leaves an empty entry behind
+                .filter(|(_, wrapper)| matches!(wrapper.borrow().as_ref(), Some(TimerJob::RetryPayment(_))))
+                .count() as u32,
+            parked_payments: self.data.pending_payments_queue.parked_len() as u32,
             pending_users_to_sync_to_storage_index: self.data.storage_index_user_sync_queue.len(),
+            pending_user_ids_migrated_to_sync_to_storage_index: self.data.storage_index_user_ids_migrated_queue.len(),
             reporting_metrics: self.data.reported_messages.metrics(),
             authority_report_metrics: self.data.authority_reports.metrics(),
             protected_action_metrics: self.data.protected_actions.metrics(),
@@ -608,6 +651,9 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
+    // TODO remove the default after the release containing it, whose post_upgrade sets its state
+    #[serde(default = "storage_index_user_ids_migrated_queue")]
+    pub storage_index_user_ids_migrated_queue: BatchedTimerJobQueue<StorageIndexUserIdsMigratedBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
     pub notifications_index_event_sync_queue: BatchedTimerJobQueue<NotificationsIndexEventBatch>,
@@ -696,6 +742,11 @@ struct Data {
     pub user_migrations: UserMigrations,
 }
 
+// Its target is set to the StorageIndex in post_upgrade
+fn storage_index_user_ids_migrated_queue() -> BatchedTimerJobQueue<StorageIndexUserIdsMigratedBatch> {
+    BatchedTimerJobQueue::new(Principal::anonymous(), false)
+}
+
 impl Data {
     // Role membership masked by suspension: every surface which reports or syncs a user's
     // moderator/operator status must go through these so a suspended account never shows (or
@@ -751,6 +802,7 @@ impl Data {
                 .build(),
             storage_index_user_sync_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
+            storage_index_user_ids_migrated_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(group_index_canister_id, false),
             notifications_index_event_sync_queue: BatchedTimerJobQueue::new(notifications_index_canister_id, false),
@@ -868,6 +920,7 @@ impl Default for Data {
             event_store_client: EventStoreClientBuilder::new(Principal::anonymous(), CdkRuntime::default()).build(),
             storage_index_user_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             storage_index_users_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
+            storage_index_user_ids_migrated_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             group_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
             notifications_index_event_sync_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
@@ -959,7 +1012,10 @@ pub struct Metrics {
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub event_store_client_info: EventStoreClientInfo,
     pub pending_payments: usize,
+    pub payments_awaiting_retry: u32,
+    pub parked_payments: u32,
     pub pending_users_to_sync_to_storage_index: usize,
+    pub pending_user_ids_migrated_to_sync_to_storage_index: usize,
     pub reporting_metrics: ReportingMetrics,
     pub authority_report_metrics: AuthorityReportMetrics,
     pub vault_reviewers: u32,

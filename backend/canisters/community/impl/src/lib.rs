@@ -383,7 +383,7 @@ impl RuntimeState {
         let mut files_to_delete = Vec::new();
         let mut final_prize_payments = Vec::new();
         for channel in self.data.channels.iter_mut() {
-            let result = channel.chat.remove_expired_events(now);
+            let result = channel.chat.remove_expired_events(&self.data.migrated_user_ids, now);
             if let Some(expiry) = channel.chat.events.next_event_expiry()
                 && next_event_expiry.is_none_or(|current| expiry < current)
             {
@@ -419,7 +419,9 @@ impl RuntimeState {
         let mut finished = false;
 
         loop {
-            let result = channel.chat.remove_old_events_batch(before, now, BATCH_SIZE as u16);
+            let result = channel
+                .chat
+                .remove_old_events_batch(before, now, BATCH_SIZE as u16, &self.data.migrated_user_ids);
 
             files_to_delete.extend(result.files);
             final_prize_payments.extend(result.final_prize_payments);
@@ -530,6 +532,14 @@ impl RuntimeState {
             groups_being_imported: self.data.groups_being_imported.summaries(),
             instruction_counts: self.data.instruction_counts_log.iter().collect(),
             timer_jobs: self.data.timer_jobs.len() as u32,
+            payments_awaiting_retry: self
+                .data
+                .timer_jobs
+                .iter()
+                // A job which has already run leaves an empty entry behind
+                .filter(|(_, wrapper)| matches!(wrapper.deref().borrow().as_ref(), Some(TimerJob::RetryPayment(_))))
+                .count() as u32,
+            parked_payments: self.data.pending_payments_queue.parked_len() as u32,
             queued_user_events: self.data.user_events_queue.len() as u32,
             queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
@@ -1454,6 +1464,8 @@ pub struct Metrics {
     pub groups_being_imported: Vec<GroupBeingImportedSummary>,
     pub instruction_counts: Vec<InstructionCountEntry>,
     pub timer_jobs: u32,
+    pub payments_awaiting_retry: u32,
+    pub parked_payments: u32,
     pub queued_user_events: u32,
     pub queued_local_index_events: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,

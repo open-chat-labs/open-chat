@@ -2373,6 +2373,7 @@ type PayForDiamondMembership = {
     recurring: boolean;
     expectedPriceE8s: bigint;
     fromAccount: string | undefined;
+    pin: string | undefined;
     kind: "payForDiamondMembership";
 };
 

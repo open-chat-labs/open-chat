@@ -2,6 +2,13 @@ use candid::Principal;
 use types::{CanisterId, Cycles, Milliseconds, TimestampMillis, UserId};
 
 pub const USER_LIMIT: usize = 300_000;
+// Limits on what each user can accumulate in their state, so that no one user's state can grow
+// without bound. Each is well above what a user would reach in practice.
+pub const MAX_PINNED_CHATS: usize = 100; // In each of the lists of direct chats, groups and a community's channels
+pub const MAX_FAVOURITE_CHATS: usize = 100;
+pub const MAX_SAVED_CRYPTO_ACCOUNTS: usize = 100;
+pub const MAX_MESSAGE_REMINDERS: usize = 100; // Pending at once
+pub const MAX_WALLET_TOKENS: usize = 500;
 // Largest CHIT a single game event may move in either direction. Enforced by the user canister on
 // every `c2c_game_chit` call, and by whatever configures a game, so a proposal cannot set a price
 // or a reward the user canister will refuse.

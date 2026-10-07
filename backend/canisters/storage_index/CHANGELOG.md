@@ -6,10 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the one-off files backfill, which has completed in prod ([#9813](https://github.com/open-chat-labs/open-chat/pull/9813))
+
+## [[2.0.2105](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2105-storage_index)] - 2026-10-06
+
+### Added
+
+- Add `c2c_user_ids_migrated` for the UserIndex to pass migrated users' old and new ids on to every bucket ([#9790](https://github.com/open-chat-labs/open-chat/pull/9790))
+
+### Changed
+
+- Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
+
+### Removed
+
+- Remove the one-off files reconciliation and `total_blob_bytes` recompute, which have run in prod ([#9788](https://github.com/open-chat-labs/open-chat/pull/9788))
+
+### Fixed
+
+- Report each bucket's stable memory, not its heap memory, as `stable_memory_used` in the metrics ([#9776](https://github.com/open-chat-labs/open-chat/pull/9776))
+- Charge forwarders for the forwarded copies whose references were removed, once, removing the oldest files of those it takes over their limit ([#9780](https://github.com/open-chat-labs/open-chat/pull/9780))
+
+## [[2.0.2096](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2096-storage_index)] - 2026-10-05
+
 ### Changed
 
 - Decode only the `canister_status` fields needed when checking whether buckets are full ([#9618](https://github.com/open-chat-labs/open-chat/pull/9618))
-- Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
 
 ### Fixed
 

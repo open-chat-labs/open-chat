@@ -77,24 +77,22 @@ pub fn try_metrics(env: &PocketIc, canister_id: CanisterId) -> Option<serde_json
     serde_json::from_slice(&response.body).ok()
 }
 
-// Waits for the canister of a deleted group or community to be deleted, which its LocalUserIndex
-// does once it has uninstalled the canister and refunded its cycles. The refund can be held up by
-// the IC's install_code rate limit if the canister was installed only moments ago, in which case
-// the LocalUserIndex retries after a delay, so time is advanced if it takes more than a few rounds.
-// A test which gets that far should discard its environment.
-pub fn wait_for_canister_to_be_deleted(env: &mut PocketIc, canister_id: CanisterId) {
-    for i in 0..220 {
-        if !env.canister_exists(canister_id) {
+// Ticks until the canister of a deleted group or community has been uninstalled and started again,
+// from which point callers are told it has no code. It's never deleted, so that the cycles which
+// can't be refunded from it may be recovered once the IC allows. Time isn't advanced, so this
+// doesn't wait on anything which retries after a delay, such as the refund of its cycles.
+pub fn wait_for_deleted_canister_to_be_uninstalled(env: &mut PocketIc, canister_id: CanisterId) {
+    for _ in 0..50 {
+        if env
+            .query_call(canister_id, Principal::anonymous(), "http_request", Vec::new())
+            .is_err_and(|error| error.error_code == pocket_ic::ErrorCode::CanisterWasmModuleNotFound)
+        {
+            assert!(env.canister_exists(canister_id));
             return;
         }
-        if i < 20 {
-            env.tick();
-        } else {
-            env.advance_time(Duration::from_secs(60));
-            tick_many(env, 5);
-        }
+        env.tick();
     }
-    panic!("Canister {canister_id} was not deleted");
+    panic!("Canister {canister_id} was not uninstalled");
 }
 
 pub fn set_freezing_threshold(env: &PocketIc, canister_id: CanisterId, controller: CanisterId, freezing_threshold: Nat) {
@@ -147,6 +145,65 @@ pub fn wait_for_direct_chat(env: &mut PocketIc, user: &User, them: UserId) {
         env.tick();
     }
     panic!("User {} did not receive the message from user {them}", user.user_id);
+}
+
+// The index the next event to reach the event store will have
+pub fn next_event_store_index(env: &mut PocketIc, controller: Principal, event_store: CanisterId) -> u64 {
+    client::event_store::happy_path::events(env, controller, event_store, 0, 0)
+        .latest_event_index
+        .map_or(0, |index| index + 1)
+}
+
+// Moves time on a minute at a time, since canisters batch the events they push before flushing them
+// to the event store (some via the LocalUserIndex, which batches them again), until each of the
+// events (by name and timestamp) has reached it at or after the index `since`, then returns how many
+// times each has. Time moves on by at least 4 minutes, so that a duplicate has time to arrive too.
+// Every event since `since` is searched, rather than only the latest, since the canisters left by the
+// other tests which have drawn the env push their own events as time moves on.
+pub fn wait_for_event_store_events(
+    env: &mut PocketIc,
+    controller: Principal,
+    event_store: CanisterId,
+    since: u64,
+    events: &[(&str, TimestampMillis)],
+) -> Vec<usize> {
+    let mut counts = Vec::new();
+    for minute in 1..=10 {
+        env.advance_time(Duration::from_millis(60_000));
+        tick_many(env, 3);
+        counts = event_store_counts(env, controller, event_store, since, events);
+        if minute >= 4 && counts.iter().all(|&count| count > 0) {
+            break;
+        }
+    }
+    counts
+}
+
+// How many times each of the events (by name and timestamp) is in the event store at or after the
+// index `since`
+fn event_store_counts(
+    env: &mut PocketIc,
+    controller: Principal,
+    event_store: CanisterId,
+    since: u64,
+    events: &[(&str, TimestampMillis)],
+) -> Vec<usize> {
+    let mut counts = vec![0; events.len()];
+    let mut start = since;
+    loop {
+        let page = client::event_store::happy_path::events(env, controller, event_store, start, 500).events;
+        if page.is_empty() {
+            return counts;
+        }
+        start += page.len() as u64;
+        for event in page.iter() {
+            for (count, (name, timestamp)) in counts.iter_mut().zip(events) {
+                if event.name == *name && event.timestamp == *timestamp {
+                    *count += 1;
+                }
+            }
+        }
+    }
 }
 
 pub fn metrics(env: &PocketIc, canister_id: CanisterId) -> serde_json::Value {

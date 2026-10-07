@@ -21,7 +21,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     state.data.user.verify_not_suspended()?;
 
-    let chat = state.data.user.direct_chats.get_mut_or_err(&args.user_id.into())?;
+    let mut chat = state.data.user.direct_chats.get_mut_or_err(&args.user_id.into())?;
     let my_user_id = state.env.canister_id().into();
     let now = state.env.now();
 
@@ -43,6 +43,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     )?;
 
     let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;
+    drop(chat);
 
     state.push_user_canister_event(
         args.user_id,

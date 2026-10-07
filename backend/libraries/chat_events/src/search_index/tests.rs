@@ -244,7 +244,9 @@ fn chat_events_keep_search_index_up_to_date() {
         .main_events_list()
         .event_index(EventKey::MessageIndex(konnichiwa))
         .unwrap();
-    events.remove_event(event_index, 50).unwrap();
+    events
+        .remove_event(event_index, &utils::migrated_user_ids::MigratedUserIds::default(), 50)
+        .unwrap();
     assert!(search(&events, "世界", &[]).is_empty());
     assert!(search(&events, "", &[bob]).iter().all(|m| *m != konnichiwa));
 }

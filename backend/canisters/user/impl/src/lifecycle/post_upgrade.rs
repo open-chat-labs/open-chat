@@ -20,7 +20,7 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
@@ -28,6 +28,10 @@ fn post_upgrade(args: Args) {
     // Any one-off migration added here must skip a canister whose user is being migrated
     // (`data.is_migrating()`), since the MultiUser canister pulls the user's stable memory entries
     // as they are. If that migration is then cancelled, the one-off only runs on the next upgrade.
+    if !data.is_migrating() {
+        let moved = data.user.migrate_to_stable_memory();
+        info!(moved, "Moved the direct chats, groups and communities into stable memory");
+    }
 
     let env = Box::new(CanisterEnv::new(data.rng_seed));
     init_state(env, data, args.wasm_version);

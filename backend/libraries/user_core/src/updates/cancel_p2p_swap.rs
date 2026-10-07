@@ -13,7 +13,7 @@ pub fn cancel_p2p_swap(
     now: TimestampMillis,
     migrated_user_ids: &MigratedUserIds,
 ) -> OCResult<u32> {
-    let chat = user
+    let mut chat = user
         .direct_chats
         .get_mut(&args.user_id.into())
         .ok_or(OCErrorCode::ChatNotFound)?;

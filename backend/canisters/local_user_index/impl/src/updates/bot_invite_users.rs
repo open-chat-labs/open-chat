@@ -13,7 +13,7 @@ use types::{CanisterId, ChannelId, Chat, UserId};
 async fn bot_invite_users(args: Args) -> Response {
     let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
         Ok(context) => context,
-        Err(_) => return OCErrorCode::BotNotAuthenticated.into(),
+        Err(error) => return error.into(),
     };
 
     call_chat_canister(context, args.channel_id, args.user_ids).await

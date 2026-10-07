@@ -42,8 +42,8 @@ impl ThreadsRead {
     }
 
     // Moves the entries for `from` in stable memory so that they are stored against `to`, which is
-    // needed when a group is imported into a community
-    pub fn move_entries(&mut self, from: MultiUserChat, to: MultiUserChat) {
+    // needed when a group is imported into a community. Only stable memory is changed.
+    pub fn move_entries(from: MultiUserChat, to: MultiUserChat) {
         let to_prefix = ThreadReadKeyPrefix::new_from_chat(to);
         with_map_mut(|m| {
             // The entries are in root message index order, so their new keys are in key order
@@ -149,7 +149,7 @@ mod tests {
         for i in 1..=10u32 {
             threads.insert(group, i.into(), (i * 10).into(), i as u64);
         }
-        threads.move_entries(group, channel);
+        ThreadsRead::move_entries(group, channel);
 
         assert!(threads.all(group).is_empty());
         let all = threads.all(channel);

@@ -53,7 +53,7 @@ pub fn apply_status_change<P: EventPusher>(
     let P2PSwapLocation::Message(m) = args.location else {
         return None;
     };
-    let chat = user.direct_chats.get_mut(&them.into())?;
+    let mut chat = user.direct_chats.get_mut(&them.into())?;
     // Anyone can create a swap in the escrow canister naming any message as its location, so the
     // notification is ignored unless it is for the swap on that message
     let content = chat

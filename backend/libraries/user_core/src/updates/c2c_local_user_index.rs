@@ -100,7 +100,7 @@ pub fn apply(user: &mut User, event: LocalUserIndexEvent, now: TimestampMillis) 
                 .removed_since(ev.community_canister_timestamp)
                 .contains(&ev.community_id)
             {
-                let (community, _) = user.communities.join(ev.community_id, ev.local_user_index_canister_id, now);
+                let (mut community, _) = user.communities.join(ev.community_id, ev.local_user_index_canister_id, now);
                 community.mark_read(
                     ev.channels
                         .into_iter()
@@ -113,6 +113,7 @@ pub fn apply(user: &mut User, event: LocalUserIndexEvent, now: TimestampMillis) 
                         .collect(),
                     now,
                 );
+                drop(community);
                 effects.chit_changed |= user.award_achievement(Achievement::JoinedCommunity, now);
             }
         }

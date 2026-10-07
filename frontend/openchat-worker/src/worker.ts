@@ -21,6 +21,7 @@ import {
     IdentityStorage,
     inititaliseLogger,
     MessagesReadFromServer,
+    redactSecrets,
     setMinLogLevel,
     shouldReportWorkerError,
     StorageUpdated,
@@ -167,7 +168,7 @@ const sendError = (kind: string, correlationId: number, payload?: unknown) => {
             // The error must be the logger's second argument: that is the slot the logger's own
             // filtering inspects and the value Rollbar fingerprints on. Passing `kind` there
             // (as previously) named every item after the request kind and bypassed filtering.
-            logger.error(`WORKER: request failed: ${kind}`, error, payload);
+            logger.error(`WORKER: request failed: ${kind}`, error, redactSecrets(payload));
         } else {
             logger.debug("WORKER: expected request failure (not reported): ", kind, error);
         }
@@ -351,7 +352,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
         if (!agent) {
             // Reject rather than drop the request, otherwise the caller's promise would never settle.
             // Not routed via sendError since this is expected around login/logout and should not be reported.
-            logger.debug("WORKER: agent does not exist: ", msg.data);
+            logger.debug("WORKER: agent does not exist: ", redactSecrets(msg.data));
             const error = new Error(`Worker has no agent to handle request: ${kind}`);
             postMessage({
                 kind: "worker_error",
@@ -945,6 +946,7 @@ function getAction(
                 payload.recurring,
                 payload.expectedPriceE8s,
                 payload.fromAccount,
+                payload.pin,
             );
 
         case "updateMarketMakerConfig":

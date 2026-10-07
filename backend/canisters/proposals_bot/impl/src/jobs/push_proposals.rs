@@ -10,7 +10,7 @@ use std::collections::BTreeMap;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{C2CError, CanisterId, ChannelId, ChatId, CommunityId, MessageId, MessageIndex, MultiUserChat, Proposal};
-use utils::canister::delay_if_should_retry_failed_c2c_call;
+use utils::canister::{delay_if_should_retry_failed_c2c_call, is_target_canister_uninstalled_or_deleted};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -173,7 +173,11 @@ fn mark_proposal_pushed(
                     .nervous_systems
                     .mark_proposal_push_failed(&governance_canister_id, proposal, state.env.now());
 
-                if delay_if_should_retry_failed_c2c_call(&error).is_none() {
+                // Including if the group or community has been deleted, which leaves its canister
+                // uninstalled
+                if delay_if_should_retry_failed_c2c_call(&error).is_none()
+                    || is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message())
+                {
                     state.data.nervous_systems.mark_disabled(&governance_canister_id);
                 }
             }

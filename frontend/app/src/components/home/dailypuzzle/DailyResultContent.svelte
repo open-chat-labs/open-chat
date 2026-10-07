@@ -5,6 +5,7 @@
         publish,
         stateFor,
         todaysPuzzle,
+        mobileWidth,
         type DailyResultContent,
         type OpenChat,
     } from "@client";
@@ -90,41 +91,35 @@
         <div class="stats" class:unverified={verification.kind === "unverified"}>
             <div class="stat">
                 <span class="value mono"
-                    >{numbers ? formatSolveTime(numbers.solveTimeMs) : "–"}</span
-                >
+                    >{numbers ? formatSolveTime(numbers.solveTimeMs) : "–"}</span>
                 <span class="label"
-                    ><Translatable resourceKey={i18nKey("dailyPuzzle.card.time")} /></span
-                >
+                    ><Translatable resourceKey={i18nKey("dailyPuzzle.card.time")} /></span>
             </div>
             <div class="stat">
                 <span class="value">{numbers?.hintsUsed ?? "–"}</span>
                 <span class="label"
-                    ><Translatable resourceKey={i18nKey("dailyPuzzle.card.hints")} /></span
-                >
+                    ><Translatable resourceKey={i18nKey("dailyPuzzle.card.hints")} /></span>
             </div>
             <div class="stat">
                 <span class="value">{numbers?.streak ?? "–"}</span>
                 <span class="label"
-                    ><Translatable resourceKey={i18nKey("dailyPuzzle.card.dayStreak")} /></span
-                >
+                    ><Translatable resourceKey={i18nKey("dailyPuzzle.card.dayStreak")} /></span>
             </div>
-            <div class="stat verification" class:verified={verification.kind === "verified"}>
-                {#if verification.kind === "verified"}
-                    <span class="icon"
-                        ><CheckCircleOutline size={"1.2em"} color={"currentColor"} /></span
-                    >
-                    <span class="label"
-                        ><Translatable resourceKey={i18nKey("dailyPuzzle.verified")} /></span
-                    >
-                {:else if verification.kind === "unverified"}
-                    <span class="icon"
-                        ><AlertCircleOutline size={"1.2em"} color={"currentColor"} /></span
-                    >
-                    <span class="label"
-                        ><Translatable resourceKey={i18nKey("dailyPuzzle.unverified")} /></span
-                    >
-                {/if}
-            </div>
+            {#if !$mobileWidth}
+                <div class="stat verification" class:verified={verification.kind === "verified"}>
+                    {#if verification.kind === "verified"}
+                        <span class="icon"
+                            ><CheckCircleOutline size={"1.2em"} color={"currentColor"} /></span>
+                        <span class="label"
+                            ><Translatable resourceKey={i18nKey("dailyPuzzle.verified")} /></span>
+                    {:else if verification.kind === "unverified"}
+                        <span class="icon"
+                            ><AlertCircleOutline size={"1.2em"} color={"currentColor"} /></span>
+                        <span class="label"
+                            ><Translatable resourceKey={i18nKey("dailyPuzzle.unverified")} /></span>
+                    {/if}
+                </div>
+            {/if}
         </div>
     </div>
     {#if content.caption}
@@ -184,6 +179,14 @@
         height: 160px;
     }
 
+    @include mobile() {
+        .pictogram {
+            flex: 0 0 100%;
+            width: 100%;
+            height: 100%;
+        }
+    }
+
     .stats {
         display: flex;
         flex-direction: column;
@@ -192,6 +195,12 @@
         &.unverified .stat:not(.verification) {
             opacity: 0.5;
         }
+
+        @include mobile() {
+            flex-direction: row;
+            justify-content: space-around;
+            width: 100%;
+        }
     }
 
     .stat {
@@ -199,6 +208,10 @@
         flex-direction: column;
         gap: $sp1;
         align-items: flex-start;
+
+        @include mobile() {
+            align-items: center;
+        }
     }
 
     .value {

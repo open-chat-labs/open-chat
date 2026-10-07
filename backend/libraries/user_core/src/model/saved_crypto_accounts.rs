@@ -1,3 +1,4 @@
+use constants::MAX_SAVED_CRYPTO_ACCOUNTS;
 use ic_ledger_types::AccountIdentifier;
 use icrc_ledger_types::icrc1::account::Account;
 use oc_error_codes::OCErrorCode;
@@ -36,6 +37,9 @@ impl SavedCryptoAccounts {
                 return Err(OCErrorCode::NameTaken.into());
             }
         }
+        if self.0.len() >= MAX_SAVED_CRYPTO_ACCOUNTS {
+            return Err(OCErrorCode::LimitReached.with_message(MAX_SAVED_CRYPTO_ACCOUNTS));
+        }
         self.0.push(account);
         Ok(())
     }
@@ -60,6 +64,29 @@ fn is_valid_account(text: &str) -> bool {
 mod tests {
     use super::*;
     use candid::Principal;
+
+    #[test]
+    fn saved_accounts_are_limited() {
+        let mut accounts = SavedCryptoAccounts::default();
+        let account = |i: usize| NamedAccount {
+            name: format!("account{i}"),
+            account: Principal::from_slice(&(i as u32).to_be_bytes()).to_string(),
+        };
+        for i in 0..MAX_SAVED_CRYPTO_ACCOUNTS {
+            accounts.save(account(i)).unwrap();
+        }
+        let error = accounts.save(account(MAX_SAVED_CRYPTO_ACCOUNTS)).unwrap_err();
+        assert!(error.matches_code(OCErrorCode::LimitReached), "{error:?}");
+        // Renaming an account which is already saved is still allowed
+        accounts
+            .save(NamedAccount {
+                name: "renamed".to_string(),
+                ..account(0)
+            })
+            .unwrap();
+        accounts.delete("renamed");
+        accounts.save(account(MAX_SAVED_CRYPTO_ACCOUNTS)).unwrap();
+    }
 
     #[test]
     fn principal_is_valid() {

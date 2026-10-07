@@ -6,6 +6,7 @@ import {
     CanisterUnavailableError,
     DestinationInvalidError,
     InstructionLimitExceededError,
+    redactSecrets,
     ResponseTooLargeError,
     SessionExpiryError,
     TypeboxValidationError,
@@ -47,7 +48,7 @@ export abstract class CanisterAgent {
                 const debugInfo = `error: ${JSON.stringify(
                     responseErr,
                     Object.getOwnPropertyNames(responseErr),
-                )}, args: ${JSON.stringify(args)}`;
+                )}, args: ${JSON.stringify(redactSecrets(args))}`;
                 if (
                     !(responseErr instanceof ResponseTooLargeError) &&
                     !(responseErr instanceof SessionExpiryError) &&

@@ -7,6 +7,10 @@ use types::{TimestampMillis, TokenInfo};
 #[derive(Serialize, Deserialize, Default)]
 pub struct PendingPaymentsQueue {
     pending_payments: VecDeque<PendingPayment>,
+    // Payments which can't be made because their ledger has been uninstalled or deleted. They are
+    // kept rather than dropped, in case they need to be made by hand.
+    #[serde(default)]
+    parked: Vec<PendingPayment>,
 }
 
 impl PendingPaymentsQueue {
@@ -23,6 +27,7 @@ impl PendingPaymentsQueue {
                 amount: swap.amount0,
                 swap_id: swap.id,
                 reason: PendingPaymentReason::Refund,
+                holds_deposit_lock: false,
             });
         }
         if swap.token1_received
@@ -35,6 +40,7 @@ impl PendingPaymentsQueue {
                 amount: swap.amount1,
                 swap_id: swap.id,
                 reason: PendingPaymentReason::Refund,
+                holds_deposit_lock: false,
             });
         }
     }
@@ -46,9 +52,17 @@ impl PendingPaymentsQueue {
     pub fn is_empty(&self) -> bool {
         self.pending_payments.is_empty()
     }
+
+    pub fn park(&mut self, pending_payment: PendingPayment) {
+        self.parked.push(pending_payment);
+    }
+
+    pub fn parked_len(&self) -> usize {
+        self.parked.len()
+    }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct PendingPayment {
     #[serde(alias = "user_id")]
     pub principal: Principal,
@@ -57,6 +71,10 @@ pub struct PendingPayment {
     pub amount: u128,
     pub swap_id: u32,
     pub reason: PendingPaymentReason,
+    // Whether this is the refund of a deposit which was too low, which keeps the deposit locked until
+    // the refund is made or dropped
+    #[serde(default)]
+    pub holds_deposit_lock: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy)]
@@ -109,5 +127,23 @@ mod tests {
         assert_eq!(payment.principal, user);
         assert_eq!(payment.amount, 100);
         assert!(matches!(payment.reason, PendingPaymentReason::Swap(p) if p == other_user));
+    }
+
+    // The escrow canister in production stores its queue without any parked payments, which must
+    // still deserialize
+    #[test]
+    fn queue_without_parked_payments_deserializes() {
+        #[derive(Serialize)]
+        struct PendingPaymentsQueueWithoutParked {
+            pending_payments: VecDeque<PendingPayment>,
+        }
+
+        let bytes = msgpack::serialize_then_unwrap(PendingPaymentsQueueWithoutParked {
+            pending_payments: VecDeque::new(),
+        });
+
+        let queue: PendingPaymentsQueue = msgpack::deserialize_then_unwrap(&bytes);
+        assert!(queue.is_empty());
+        assert_eq!(queue.parked_len(), 0);
     }
 }

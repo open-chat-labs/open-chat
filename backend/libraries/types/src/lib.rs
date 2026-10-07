@@ -67,6 +67,7 @@ mod message_id;
 mod message_index;
 mod message_match;
 mod moderation_categories;
+pub mod msgpack_instances;
 mod nca;
 mod notifications;
 mod option;

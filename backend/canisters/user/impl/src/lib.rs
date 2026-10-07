@@ -1,6 +1,8 @@
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
-use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{
+    ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, JobOnMigration, RemoveExpiredEventsJob, TimerJob,
+};
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::EventPusher;
@@ -25,6 +27,7 @@ use types::{
     UserNotification,
 };
 use user_canister::UserCanisterEvent;
+use user_core::migration::MigratingUser;
 use user_core::{Community, GroupChat, User};
 use utils::async_work::{AsyncWorkGuard, async_work_in_progress};
 use utils::canister::trap_if_frozen;
@@ -135,15 +138,12 @@ impl RuntimeState {
 
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
-        let mut next_event_expiry = None;
         let mut files_to_delete = Vec::new();
-        for chat in self.data.user.direct_chats.iter_mut() {
-            let result = chat.remove_expired_events(now);
-            if let Some(expiry) = chat.events().next_event_expiry()
-                && next_event_expiry.is_none_or(|current| expiry < current)
-            {
-                next_event_expiry = Some(expiry);
-            }
+        for chat_id in self.data.user.direct_chats.chats_with_events_expiring_by(now) {
+            let Some(mut chat) = self.data.user.direct_chats.get_mut(&chat_id) else {
+                continue;
+            };
+            let result = chat.remove_expired_events(&self.data.migrated_user_ids, now);
             files_to_delete.extend(result.files);
             // Threads aren't currently enabled for direct chats, but if a thread's root message
             // expires then its entries in stable memory must be garbage collected
@@ -160,7 +160,7 @@ impl RuntimeState {
             let delete_files_job = DeleteFileReferencesJob { files: files_to_delete };
             delete_files_job.execute();
         }
-        self.data.user.next_event_expiry = next_event_expiry;
+        self.data.user.next_event_expiry = self.data.user.direct_chats.next_event_expiry();
         if let Some(expiry) = self.data.user.next_event_expiry {
             self.data
                 .timer_jobs
@@ -371,7 +371,7 @@ impl RuntimeState {
     }
 
     pub fn delete_direct_chat(&mut self, user_id: UserId, block_user: bool, now: TimestampMillis) -> bool {
-        let Some(chat) = self.data.user.direct_chats.remove(user_id.into(), now) else {
+        let Some(chat) = self.data.user.remove_direct_chat(user_id, now) else {
             return false;
         };
 
@@ -435,8 +435,8 @@ struct Data {
 pub struct Migration {
     pub multi_user_canister_id: CanisterId,
     pub started: TimestampMillis,
-    // The user as they were when the migration started, serialized with msgpack, for the MultiUser
-    // canister to pull
+    // The user as they were when the migration started, along with the timer jobs handed over with
+    // them, serialized with msgpack as a `MigratingUser`, for the MultiUser canister to pull
     #[serde(with = "serde_bytes")]
     pub user: Vec<u8>,
     // The hash of `user` and `started`, which identifies the migration, and which the MultiUser
@@ -444,6 +444,10 @@ pub struct Migration {
     pub user_hash: Hash,
     // The version of the wasm which serialized the user, which may since have been upgraded
     pub wasm_version: BuildVersion,
+    // The timer jobs handed over along with the user, each with when it is due, which are scheduled
+    // again here if the migration is cancelled
+    #[serde(default)]
+    pub timer_jobs: Vec<(TimerJob, TimestampMillis)>,
 }
 
 impl Data {
@@ -457,9 +461,9 @@ impl Data {
 
     // Starts migrating the user to the given MultiUser canister, if the canister is ready, storing
     // the user serialized for the MultiUser canister to pull. From then on the canister is frozen,
-    // and its remaining timer jobs are cancelled, since the MultiUser canister schedules them again
-    // from the user's state. A repeated call for the same MultiUser canister returns the same
-    // migration again.
+    // and its timer jobs are cancelled. The MultiUser canister schedules them again, either from the
+    // user's state or from those handed over along with the user. A repeated call for the same
+    // MultiUser canister returns the same migration again.
     pub fn try_start_migration(&mut self, multi_user_canister_id: CanisterId, now: TimestampMillis) -> OCResult<&Migration> {
         match &self.migration {
             Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => {}
@@ -469,14 +473,33 @@ impl Data {
                     return Err(OCErrorCode::NotReadyForMigration.with_message(reason));
                 }
 
+                let timer_jobs: Vec<(TimerJob, TimestampMillis)> = (&self.timer_jobs).into();
                 self.timer_jobs.cancel_jobs(|_| true);
-                let user = msgpack::serialize_then_unwrap(&self.user);
+                let (timer_jobs, handed_over): (Vec<_>, Vec<_>) = timer_jobs
+                    .into_iter()
+                    .filter_map(|(job, due)| match job.on_migration() {
+                        JobOnMigration::HandedOver(mut migrated) => {
+                            // Other users the job names may have been migrated since it was scheduled,
+                            // which this canister knows of but the MultiUser canister may not
+                            migrated.map_user_ids(|user_id| {
+                                self.user.direct_chats.latest_user_id(user_id, &self.migrated_user_ids)
+                            });
+                            Some(((job, due), (migrated, due)))
+                        }
+                        JobOnMigration::RebuiltFromState | JobOnMigration::BlocksMigration => None,
+                    })
+                    .unzip();
+                let user = msgpack::serialize_then_unwrap(MigratingUser {
+                    user: &self.user,
+                    timer_jobs: handed_over,
+                });
                 self.migration = Some(Migration {
                     multi_user_canister_id,
                     started: now,
                     user_hash: user_canister::migration_hash(&user, now),
                     user,
                     wasm_version: WASM_VERSION.with_borrow(|v| **v),
+                    timer_jobs,
                 });
             }
         }
@@ -487,12 +510,19 @@ impl Data {
     // canister and scheduling again the timer jobs which were cancelled when the migration started.
     // Returns whether there was one. A migration to another MultiUser canister is left in place.
     pub fn cancel_migration(&mut self, multi_user_canister_id: CanisterId, now: TimestampMillis) -> OCResult<bool> {
-        match &self.migration {
-            Some(migration) if migration.multi_user_canister_id == multi_user_canister_id => self.migration = None,
-            Some(_) => return Err(OCErrorCode::AlreadyInProgress.with_message("Migrating to another canister")),
-            None => return Ok(false),
-        }
+        let Some(migration) = self
+            .migration
+            .take_if(|migration| migration.multi_user_canister_id == multi_user_canister_id)
+        else {
+            return match self.migration {
+                Some(_) => Err(OCErrorCode::AlreadyInProgress.with_message("Migrating to another canister")),
+                None => Ok(false),
+            };
+        };
 
+        for (job, due) in migration.timer_jobs {
+            self.timer_jobs.enqueue_job(job, due, now);
+        }
         if let Some(expiry) = self.user.next_event_expiry {
             self.timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
@@ -509,8 +539,7 @@ impl Data {
 
     // The user is migrated along with their entries in the stable memory map, so the canister must
     // have no work outstanding which would change or read them, nor anything else which isn't
-    // carried over. Only the timer jobs which the MultiUser canister schedules again from the user's
-    // state may remain.
+    // carried over. Only the timer jobs which the MultiUser canister schedules again may remain.
     fn reason_not_ready_for_migration(&self, now: TimestampMillis) -> Option<&'static str> {
         if self.user.p2p_swaps.any_expiring_after(now.saturating_sub(HOUR_IN_MS)) {
             // The Escrow canister pays out and refunds swaps to this canister's account, so the user
@@ -520,12 +549,11 @@ impl Data {
             Some("Async work is in progress")
         } else if self.timer_jobs.iter().any(|(_, wrapper)| {
             // A job which has already run leaves an empty entry behind
-            wrapper.deref().borrow().as_ref().is_some_and(|job| {
-                !matches!(
-                    job,
-                    TimerJob::RemoveExpiredEvents(_) | TimerJob::ClaimOrResetStreakInsurance(_)
-                )
-            })
+            wrapper
+                .deref()
+                .borrow()
+                .as_ref()
+                .is_some_and(|job| matches!(job.on_migration(), JobOnMigration::BlocksMigration))
         }) {
             Some("Timer jobs are pending")
         } else if !self.user_canister_events_by_canister.is_idle() {

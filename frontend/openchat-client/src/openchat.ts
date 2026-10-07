@@ -74,6 +74,7 @@ import {
     isCredentialGate,
     isDeletedUser,
     isEditableContent,
+    isMultiUserCanisterUser,
     isNeuronGate,
     isPaymentGate,
     isProposalsChat,
@@ -6961,7 +6962,8 @@ export class OpenChat {
 
     refreshAccountBalance(ledger: string, allowCached: boolean = false): Promise<bigint> {
         const user = currentUserStore.value;
-        if (user === undefined) {
+        // The anonymous user has no wallet, and its id isn't a principal
+        if (user === undefined || user.userId === ANON_USER_ID) {
             return Promise.resolve(0n);
         }
 
@@ -8745,13 +8747,25 @@ export class OpenChat {
         );
     }
 
-    payForDiamondMembership(
+    async payForDiamondMembership(
         ledger: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint,
         fromAccount?: string,
     ): Promise<PayForDiamondMembershipResponse> {
+        // A user who holds their own funds approves the payment from their wallet, which is only
+        // approved once their PIN is checked. A user alone in their canister approves nothing, and
+        // neither does a payment from another account.
+        let pin: string | undefined = undefined;
+        if (
+            pinNumberRequiredStore.value &&
+            fromAccount === undefined &&
+            isMultiUserCanisterUser(currentUserIdStore.value)
+        ) {
+            pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
+        }
+
         return this.#worker
             .send({
                 kind: "payForDiamondMembership",
@@ -8761,6 +8775,7 @@ export class OpenChat {
                 recurring,
                 expectedPriceE8s,
                 fromAccount,
+                pin,
             })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -8769,6 +8784,11 @@ export class OpenChat {
                         diamondStatus: resp.status,
                     });
                     this.#setDiamondStatus(resp.status);
+                } else if (resp.kind === "error") {
+                    const pinNumberFailure = pinNumberFailureFromError(resp);
+                    if (pinNumberFailure !== undefined) {
+                        pinNumberFailureStore.set(pinNumberFailure);
+                    }
                 }
                 return resp;
             })

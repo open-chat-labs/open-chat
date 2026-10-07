@@ -1,5 +1,5 @@
-use crate::CommunityEvent;
 use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
+use crate::{CommunityEvent, read_state};
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{CanisterId, IdempotentEnvelope, Milliseconds};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
@@ -18,8 +18,13 @@ impl TimerJobItem for CommunityEventBatch {
         match response {
             Ok(community_canister::c2c_local_index::Response::Success) => Ok(()),
             Err(error) => {
-                let delay_if_should_retry = delay_if_should_retry_failed_c2c_call(&error);
-                Err(delay_if_should_retry)
+                // Once the community has been deleted its canister is left uninstalled, so the
+                // events could never be delivered
+                if read_state(|state| state.data.local_communities.contains(&self.key.into())) {
+                    Err(delay_if_should_retry_failed_c2c_call(&error))
+                } else {
+                    Err(None)
+                }
             }
         }
     }

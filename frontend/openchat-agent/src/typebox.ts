@@ -5105,6 +5105,11 @@ export const UserDeleteDirectChatArgs = /* @__PURE__ */ Type.Object({
     block_user: Type.Boolean(),
 });
 
+export type UserCheckPinNumberArgs = Static<typeof UserCheckPinNumberArgs>;
+export const UserCheckPinNumberArgs = /* @__PURE__ */ Type.Object({
+    pin: PinNumberWrapper,
+});
+
 export type UserDeleteMessagesArgs = Static<typeof UserDeleteMessagesArgs>;
 export const UserDeleteMessagesArgs = /* @__PURE__ */ Type.Object({
     user_id: UserId,

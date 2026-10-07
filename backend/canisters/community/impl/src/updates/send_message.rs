@@ -370,14 +370,20 @@ fn process_send_message_result(
                     thread_root_message_index,
                     replying_to_event_index.into(),
                 )
-                && caller.initiator().map(|i| i != message.sender).unwrap_or_default()
+                // The sender is a member under their latest id, in case they have been migrated
+                // since sending the message
+                && let sender_id = state.data.migrated_user_ids.latest(message.sender)
+                && caller
+                    .initiator()
+                    .map(|i| !state.data.migrated_user_ids.is_same_user(i, sender_id))
+                    .unwrap_or_default()
                 && channel
                     .chat
                     .members
-                    .get(&message.sender)
+                    .get(&sender_id)
                     .is_some_and(|m| !m.user_type().is_bot())
             {
-                activity_events.push((message.sender, MessageActivity::QuoteReply));
+                activity_events.push((sender_id, MessageActivity::QuoteReply));
             }
         }
 

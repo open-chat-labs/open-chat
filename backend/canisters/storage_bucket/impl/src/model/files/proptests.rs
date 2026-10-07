@@ -5,7 +5,7 @@ use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use proptest::collection::vec as pvec;
 use proptest::prelude::*;
 use proptest::prop_oneof;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use test_strategy::proptest;
 use types::{AccessorId, CanisterId, FileId, TimestampMillis};
 use utils::hasher::hash_bytes;
@@ -29,6 +29,10 @@ enum Operation {
     RemoveAccessor {
         accessor: AccessorId,
     },
+    ReplaceAccessor {
+        old: AccessorId,
+        new: AccessorId,
+    },
 }
 
 fn operation_strategy() -> impl Strategy<Value = Operation> {
@@ -39,6 +43,7 @@ fn operation_strategy() -> impl Strategy<Value = Operation> {
             .prop_map(|file_index| Operation::Remove { file_index }),
         10 => (any::<usize>(), accessors_strategy(), any::<usize>(), any::<u128>()).prop_map(|(user_index, accessors, file_index, file_id_seed)| Operation::Forward { owner: principal(user_index), accessors, file_index, file_id_seed } ),
         3 => any::<usize>().prop_map(|user_index| Operation::RemoveAccessor { accessor: principal(user_index) }),
+        3 => (any::<usize>(), any::<usize>()).prop_map(|(old, new)| Operation::ReplaceAccessor { old: principal(old), new: principal(new) }),
     ]
 }
 
@@ -128,6 +133,34 @@ fn execute_operation(files: &mut Files, op: Operation, timestamp: TimestampMilli
                 assert!(file.accessors.iter().all(|a| *a == accessor));
             }
             assert!(files.files.get_all().iter().all(|(_, f)| !f.accessors.contains(&accessor)));
+        }
+        Operation::ReplaceAccessor { old, new } => {
+            let files_before: BTreeMap<FileId, File> = files.files.get_all().into_iter().collect();
+            let owner_links_before: Vec<(Principal, FileId)> = files
+                .accessors_map
+                .get_all()
+                .into_iter()
+                .flat_map(|(accessor, file_ids)| file_ids.into_iter().map(move |file_id| (accessor, file_id)))
+                .filter(|(accessor, file_id)| files_before[file_id].owner == *accessor)
+                .collect();
+
+            files.queue_accessor_replacements([(old, new)]);
+            while files.make_next_accessor_replacement(2).is_some() {}
+
+            // Each file naming the old accessor names the new one in its place, and nothing else changes
+            for (file_id, file) in files.files.get_all() {
+                let expected: BTreeSet<AccessorId> = files_before[&file_id]
+                    .accessors
+                    .iter()
+                    .map(|a| if *a == old { new } else { *a })
+                    .collect();
+                assert_eq!(file.accessors, expected);
+            }
+            // Owners stay linked to their files
+            let links_after = files.accessors_map.get_all();
+            for (owner, file_id) in owner_links_before {
+                assert!(links_after.get(&owner).is_some_and(|file_ids| file_ids.contains(&file_id)));
+            }
         }
     };
 }

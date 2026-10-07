@@ -38,7 +38,7 @@ pub fn delete_reported_message(
     now: TimestampMillis,
     migrated_user_ids: &MigratedUserIds,
 ) {
-    if let Some(chat) = user.direct_chats.get_mut(&args.them.into()) {
+    if let Some(mut chat) = user.direct_chats.get_mut(&args.them.into()) {
         chat.delete_messages(
             DeleteUndeleteMessagesArgs {
                 caller: my_user_id,

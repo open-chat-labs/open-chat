@@ -82,7 +82,7 @@ pub async fn pay(payer: Payer, amount: u128) -> OCResult<u64> {
         .await
         {
             Ok(Ok(transaction_index)) => Ok(transaction_index),
-            Ok(Err(error)) => Err(OCErrorCode::TransferFailed.with_message(error)),
+            Ok(Err(error)) => Err(OCErrorCode::TransferFailed.with_message(format!("Transfer failed. {error:?}"))),
             Err(error) => Err(error.into()),
         },
     }

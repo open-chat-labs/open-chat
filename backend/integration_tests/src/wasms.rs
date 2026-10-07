@@ -18,6 +18,8 @@ lazy_static! {
     pub static ref IDENTITY: CanisterWasm = get_canister_wasm("identity");
     pub static ref LOCAL_USER_INDEX: CanisterWasm = get_canister_wasm("local_user_index");
     pub static ref MULTI_USER: CanisterWasm = get_canister_wasm("multi_user");
+    // The MultiUser canister wasm currently in production, downloaded by `run-integration-tests.sh`
+    pub static ref MULTI_USER_PROD: CanisterWasm = get_canister_wasm("multi_user_prod");
     pub static ref NOTIFICATIONS_INDEX: CanisterWasm = get_canister_wasm("notifications_index");
     pub static ref ONLINE_USERS: CanisterWasm = get_canister_wasm("online_users");
     pub static ref OPENCHAT_INSTALLER: CanisterWasm = get_canister_wasm("openchat_installer");

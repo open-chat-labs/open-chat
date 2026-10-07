@@ -8,8 +8,8 @@ use std::collections::HashMap;
 use types::nns::CryptoAmount;
 use types::{
     AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate, BotInstallationLocation,
-    BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId,
-    ClassifyMessageRequest, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload,
+    BotNotification, BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload,
+    ChatId, ClassifyMessageRequest, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload,
     MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration,
     TimestampMillis, UniquePersonProof, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
     UserNotificationPayload, UserType, is_default,
@@ -68,6 +68,10 @@ pub enum UserIndexEvent {
     StartUserMigration(StartUserMigration),
     ImportUser(ImportUser),
     EventForMigratedUser(Box<EventForMigratedUser>),
+    // A notification which this LocalUserIndex sends the bot as its gateway, eg. that a bot installed
+    // in the direct chats of a user since migrated to a MultiUser canister held here is now installed
+    // in those under their new id
+    NotifyBot(Box<BotNotification>),
 }
 
 // An event which another LocalUserIndex had queued for a user's old canister, for a user who has since

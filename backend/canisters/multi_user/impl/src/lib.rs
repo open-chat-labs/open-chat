@@ -197,7 +197,7 @@ impl RuntimeState {
     pub fn with_direct_chat<R>(&self, user_index: u16, chat_id: ChatId, f: impl FnOnce(&DirectChat) -> R) -> OCResult<R> {
         self.data
             .users
-            .with_user(user_index, |user| user.direct_chats.get(&chat_id).map(f))
+            .with_user(user_index, |user| user.direct_chats.get(&chat_id).map(|chat| f(&chat)))
             .ok_or(OCErrorCode::TargetUserNotFound)?
             .ok_or_else(|| OCErrorCode::ChatNotFound.into())
     }
@@ -210,7 +210,9 @@ impl RuntimeState {
     ) -> OCResult<R> {
         self.data
             .users
-            .with_user_mut(user_index, |user| user.direct_chats.get_mut(&chat_id).map(f))
+            .with_user_mut(user_index, |user| {
+                user.direct_chats.get_mut(&chat_id).map(|mut chat| f(&mut chat))
+            })
             .ok_or(OCErrorCode::TargetUserNotFound)?
             .ok_or_else(|| OCErrorCode::ChatNotFound.into())
     }
@@ -256,8 +258,8 @@ impl RuntimeState {
                 .users
                 .with_user(sender_index, |user| {
                     user.direct_chats
-                        .get(&recipient.into())
-                        .is_some_and(|chat| chat.user_type.is_bot())
+                        .user_type(&recipient.into())
+                        .is_some_and(|user_type| user_type.is_bot())
                 })
                 .unwrap_or_default();
         if recipient == sender || recipient_is_bot {
@@ -557,16 +559,13 @@ impl RuntimeState {
     pub fn run_event_expiry_job(&mut self, user_index: u16) {
         let now = self.env.now();
         let Some((next_event_expiry, thread_prefixes, files_to_delete)) = self.data.users.with_user_mut(user_index, |user| {
-            let mut next_event_expiry = None;
             let mut thread_prefixes = Vec::new();
             let mut files_to_delete = Vec::new();
-            for chat in user.direct_chats.iter_mut() {
-                let result = chat.remove_expired_events(now);
-                if let Some(expiry) = chat.events().next_event_expiry()
-                    && next_event_expiry.is_none_or(|current| expiry < current)
-                {
-                    next_event_expiry = Some(expiry);
-                }
+            for chat_id in user.direct_chats.chats_with_events_expiring_by(now) {
+                let Some(mut chat) = user.direct_chats.get_mut(&chat_id) else {
+                    continue;
+                };
+                let result = chat.remove_expired_events(&self.data.migrated_user_ids, now);
                 files_to_delete.extend(result.files);
                 // Threads aren't currently enabled for direct chats, but if a thread's root message
                 // expires then its entries in stable memory must be garbage collected
@@ -574,6 +573,7 @@ impl RuntimeState {
                     thread_prefixes.extend(chat.events().thread_stable_memory_key_prefixes(thread.root_message_index));
                 }
             }
+            let next_event_expiry = user.direct_chats.next_event_expiry();
             user.next_event_expiry = next_event_expiry;
             (next_event_expiry, thread_prefixes, files_to_delete)
         }) else {

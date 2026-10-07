@@ -4,6 +4,7 @@ use crate::{RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, MessageReminderCreatedContentInternal};
+use constants::MAX_MESSAGE_REMINDERS;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{Achievement, FieldTooLongResult, OCResult};
@@ -36,6 +37,18 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> OCResult<u
             length_provided: notes_len as u32,
             max_length: MAX_NOTES_LENGTH as u32,
         }));
+    }
+
+    let pending_reminders = state
+        .data
+        .timer_jobs
+        .iter()
+        .filter(|(_, wrapper)| {
+            matches!(wrapper.borrow().as_ref(), Some(TimerJob::MessageReminder(job)) if job.user_index == my_index)
+        })
+        .count();
+    if pending_reminders >= MAX_MESSAGE_REMINDERS {
+        return Err(OCErrorCode::LimitReached.with_message(MAX_MESSAGE_REMINDERS));
     }
 
     let reminder_id = state.env.rng().next_u64();

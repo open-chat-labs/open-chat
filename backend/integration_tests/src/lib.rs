@@ -74,6 +74,7 @@ mod suspend_user_tests;
 mod swap_tokens_tests;
 mod threads_read_tests;
 mod tip_message_tests;
+mod translations_tests;
 mod update_group_tests;
 mod update_profile_tests;
 mod upgrade_from_prod_tests;

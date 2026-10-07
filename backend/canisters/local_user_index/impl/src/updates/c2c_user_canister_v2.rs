@@ -36,7 +36,11 @@ fn c2c_user_canister_v2_impl(args: ArgsInternal, state: &mut RuntimeState) -> Re
     Response::Success
 }
 
-fn is_valid_user_for_caller(user_id: UserId, caller: candid::Principal, caller_is_multi_user_canister: bool) -> bool {
+pub(crate) fn is_valid_user_for_caller(
+    user_id: UserId,
+    caller: candid::Principal,
+    caller_is_multi_user_canister: bool,
+) -> bool {
     if caller_is_multi_user_canister {
         // A user hosted by the caller carries a non-zero index, which rules out the canister's own
         // id (index 0)

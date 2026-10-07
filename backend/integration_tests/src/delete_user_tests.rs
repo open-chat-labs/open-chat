@@ -272,8 +272,10 @@ fn cycles_refund_resumes_after_the_local_user_index_is_upgraded_mid_way() {
     wrapper.discard();
 }
 
+// Whatever code a queued canister has is uninstalled before its cycles are refunded, unless it's a
+// live canister (see the unit test in the refund job)
 #[test]
-fn cycles_refund_leaves_a_canister_with_other_code_untouched() {
+fn cycles_refund_uninstalls_any_other_code_first() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -293,9 +295,7 @@ fn cycles_refund_leaves_a_canister_with_other_code_untouched() {
     env.add_cycles(user.canister(), T);
     let other_wasm = wat::parse_str("(module)").unwrap();
     env.install_canister(user.canister(), other_wasm, vec![], Some(user.local_user_index));
-    let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
-    let module_hash = canister_status.module_hash.unwrap();
-    let balance_before = env.cycle_balance(user.canister());
+    let refunded_before = cycles_refunded_metric(env, user.local_user_index);
 
     client::user_index::refund_deleted_user_cycles(
         env,
@@ -303,12 +303,11 @@ fn cycles_refund_leaves_a_canister_with_other_code_untouched() {
         canister_ids.user_index,
         &user_index_canister::refund_deleted_user_cycles::Args {},
     );
-    wait_for_refund_queue_to_empty(env, user.local_user_index);
 
-    // It is left exactly as it was
-    let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
-    assert_eq!(canister_status.module_hash.unwrap(), module_hash);
-    assert!(balance_before - env.cycle_balance(user.canister()) < 1_000_000_000);
+    // The other code is uninstalled, then the cycles refunded
+    wait_for_cycles_to_be_refunded(env, &user);
+    let refunded = cycles_refunded_metric(env, user.local_user_index) - refunded_before;
+    assert!(refunded > T - MAX_RESIDUAL_CYCLES, "{refunded}");
 
     wrapper.discard();
 }

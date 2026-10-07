@@ -13,10 +13,15 @@ fn manage_favourite_chats(args: Args) -> Response {
 
 fn manage_favourite_chats_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    let (my_index, adding) =
+    let (my_index, result) =
         state.with_caller_user_mut(|my_index, user| (my_index, user_core::updates::manage_favourite_chats(user, args, now)));
-    if adding {
-        state.award_achievement_and_notify(my_index, Achievement::FavouritedChat, now);
+    match result {
+        Ok(adding) => {
+            if adding {
+                state.award_achievement_and_notify(my_index, Achievement::FavouritedChat, now);
+            }
+            Response::Success
+        }
+        Err(error) => Response::Error(error),
     }
-    Response::Success
 }

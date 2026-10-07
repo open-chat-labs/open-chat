@@ -195,6 +195,8 @@ pub enum OCErrorCode {
     NotReadyForMigration = 351,
     UserImportFailed = 352,
     UserMigrationStalled = 353,
+    LimitReached = 354,
+    UserMovedToNewSubnet = 355,
 
     // InternalError
     C2CError = 500,

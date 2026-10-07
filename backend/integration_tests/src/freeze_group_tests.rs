@@ -1,12 +1,13 @@
 use crate::delete_user_tests::{MAX_RESIDUAL_CYCLES, cycles_refunded_metric, wait_for_refund_queue_to_empty};
 use crate::env::ENV;
-use crate::utils::{tick_many, wait_for_canister_to_be_deleted};
+use crate::utils::{tick_many, wait_for_deleted_canister_to_be_uninstalled};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use group_index_canister::freeze_group::SuspensionDetails;
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
 use types::{CanisterId, ChatId, MessageContentInitial, TextContent};
 
@@ -336,14 +337,28 @@ fn delete_frozen_group() {
         "{delete_group_response:?}"
     );
 
-    wait_for_canister_to_be_deleted(env, canister_id);
+    wait_for_deleted_canister_to_be_uninstalled(env, canister_id);
 
     // A frozen group can't refund its own cycles as a group deleting itself does, so they were all
-    // still in its canister, which the LocalUserIndex refunded them from before deleting it
-    let refunded = cycles_refunded_metric(env, local_user_index) - refunded_before;
+    // still in its canister, which the LocalUserIndex then refunds them from. That waits out the
+    // IC's install_code rate limit on the group's canister, so time is advanced.
+    let mut refunded = 0;
+    for _ in 0..50 {
+        refunded = cycles_refunded_metric(env, local_user_index) - refunded_before;
+        if refunded > balance_before - MAX_RESIDUAL_CYCLES {
+            break;
+        }
+        env.advance_time(Duration::from_secs(60));
+        tick_many(env, 5);
+    }
     assert!(refunded > balance_before - MAX_RESIDUAL_CYCLES, "{refunded}");
 
-    // Waiting out the IC's install_code rate limit on the group's canister advanced time
+    // The canister is kept, uninstalled, rather than deleted along with what couldn't be refunded
+    tick_many(env, 5);
+    assert!(env.canister_exists(canister_id));
+    let canister_status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
+    assert!(canister_status.module_hash.is_none());
+
     wrapper.discard();
 }
 

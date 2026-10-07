@@ -25,7 +25,7 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
     {
         // A group is marked read in the user's own state, as in the User canister
         let is_group = state.with_caller_user_mut(|_, user| match user.group_chats.get_mut(&chat_id) {
-            Some(group) => {
+            Some(mut group) => {
                 group.mark_read(read_up_to, threads, date_read_pinned, now);
                 true
             }
@@ -72,7 +72,7 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     state.with_caller_user_mut(|_, user| {
         for community_messages_read in args.community_messages_read {
-            if let Some(community) = user.communities.get_mut(&community_messages_read.community_id) {
+            if let Some(mut community) = user.communities.get_mut(&community_messages_read.community_id) {
                 community.mark_read(community_messages_read.channels_read, now);
             }
         }

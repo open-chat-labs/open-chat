@@ -4,8 +4,8 @@ use crate::{
     SavedCryptoAccounts, Streak, ThreadsRead, TokenSwaps,
 };
 use candid::Principal;
-use constants::OPENCHAT_BOT_USER_ID;
-use direct_chat::DirectChats;
+use constants::{MAX_WALLET_TOKENS, OPENCHAT_BOT_USER_ID};
+use direct_chat::{DirectChat, DirectChats};
 use installed_bots::InstalledBots;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
@@ -158,10 +158,18 @@ impl User {
     // The canisters of the groups and communities the user is in
     pub fn group_and_community_canisters(&self) -> Vec<CanisterId> {
         self.group_chats
-            .iter()
-            .map(|g| CanisterId::from(g.chat_id))
-            .chain(self.communities.iter().map(|c| CanisterId::from(c.community_id)))
+            .ids()
+            .map(CanisterId::from)
+            .chain(self.communities.ids().map(CanisterId::from))
             .collect()
+    }
+
+    // Moves every direct chat, group and community still on the heap into stable memory, returning
+    // how many were moved
+    pub fn migrate_to_stable_memory(&mut self) -> usize {
+        self.direct_chats.migrate_to_stable_memory()
+            + self.group_chats.migrate_to_stable_memory()
+            + self.communities.migrate_to_stable_memory()
     }
 
     pub fn new(principal: Principal, username: String, referred_by: Option<UserId>, now: TimestampMillis) -> User {
@@ -273,15 +281,31 @@ impl User {
     // the caller to garbage collect
     pub fn uninstall_bot(&mut self, bot_id: UserId, now: TimestampMillis) -> Vec<BaseKeyPrefix> {
         self.bots.remove(bot_id, now);
-        self.direct_chats
-            .remove(bot_id.into(), now)
+        self.remove_direct_chat(bot_id, now)
             .map(|chat| chat.stable_memory_key_prefixes())
             .unwrap_or_default()
     }
 
+    // Removes the user's chat with `them`, along with its pin and their favourite of it
+    pub fn remove_direct_chat(&mut self, them: UserId, now: TimestampMillis) -> Option<DirectChat> {
+        self.favourite_chats.remove(&Chat::Direct(them.into()), now);
+        self.direct_chats.remove(them.into(), now)
+    }
+
+    // Sets the wallet config, keeping at most `MAX_WALLET_TOKENS` distinct tokens in a manual wallet.
+    // Any more are dropped rather than the config being rejected, since there are far fewer tokens.
+    pub fn set_wallet_config(&mut self, mut config: WalletConfig, now: TimestampMillis) {
+        if let WalletConfig::Manual(manual) = &mut config {
+            let mut seen = HashSet::new();
+            manual.tokens.retain(|token| seen.insert(*token));
+            manual.tokens.truncate(MAX_WALLET_TOKENS);
+        }
+        self.wallet_config = Timestamped::new(config, now);
+    }
+
     fn apply_bot_update(&mut self, bot_id: UserId, updated_by: Option<UserId>, now: TimestampMillis) {
         // The user may have deleted their chat with the bot while keeping it installed
-        let Some(chat) = self.direct_chats.get_mut(&bot_id.into()) else {
+        let Some(mut chat) = self.direct_chats.get_mut(&bot_id.into()) else {
             return;
         };
 
@@ -425,5 +449,50 @@ impl User {
         if event.user_id.is_none_or(|user_id| !self.blocked_users.contains(&user_id)) {
             self.message_activity_events.push(event, now);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ic_stable_structures::DefaultMemoryImpl;
+    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use types::UserType;
+    use user_canister::ManualWallet;
+
+    #[test]
+    fn manual_wallet_tokens_are_deduplicated_and_limited() {
+        let mut user = User::new(Principal::from_slice(&[1]), "user".to_string(), None, 0);
+        let token = |i: u32| CanisterId::from_slice(&i.to_be_bytes());
+        let tokens: Vec<_> = (0..MAX_WALLET_TOKENS as u32 + 10)
+            .flat_map(|i| [token(i), token(i)])
+            .collect();
+
+        user.set_wallet_config(WalletConfig::Manual(ManualWallet { tokens }), 10);
+
+        let WalletConfig::Manual(manual) = &user.wallet_config.value else {
+            panic!("Not a manual wallet");
+        };
+        assert_eq!(manual.tokens, (0..MAX_WALLET_TOKENS as u32).map(token).collect::<Vec<_>>());
+        assert_eq!(user.wallet_config.timestamp, 10);
+    }
+
+    #[test]
+    fn removing_a_direct_chat_removes_its_pin_and_favourite() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
+        let me: UserId = Principal::from_slice(&[1; 10]).into();
+        let them: UserId = Principal::from_slice(&[2; 10]).into();
+        let mut user = User::new(Principal::from_slice(&[1]), "user".to_string(), None, 0);
+        user.direct_chats.get_or_create(me, them, UserType::User, || 1, 10);
+        user.direct_chats.pin(them.into(), 20).unwrap();
+        user.favourite_chats.pin(Chat::Direct(them.into()), 20).unwrap();
+
+        assert!(user.remove_direct_chat(them, 30).is_some());
+
+        assert!(user.direct_chats.pinned_chats().is_empty());
+        assert!(user.favourite_chats.is_empty());
+        assert!(user.favourite_chats.pinned().is_empty());
+        assert!(user.remove_direct_chat(them, 40).is_none());
     }
 }

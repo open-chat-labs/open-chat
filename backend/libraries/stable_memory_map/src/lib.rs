@@ -11,9 +11,11 @@ use std::cell::{Cell, OnceCell, RefCell};
 use std::marker::PhantomData;
 use std::ops::{Bound, RangeBounds};
 
+mod heap_stable_split_map;
 mod key_scope;
 mod keys;
 
+pub use heap_stable_split_map::{HeapStableSplitMap, HeapStableSplitMapMut, HeapStableSplitMapRef, HeapStableSplitMapValue};
 pub use ic_stable_structures::btreemap::entry::{OccupiedEntry, VacantEntry};
 pub use key_scope::{KeyScope, with_key_scope};
 pub use keys::*;
@@ -1003,6 +1005,9 @@ mod tests {
             KeyType::DirectChatThreadEvent,
             KeyType::Contact,
             KeyType::ProfileDocument,
+            KeyType::DirectChat,
+            KeyType::GroupChat,
+            KeyType::Community,
         ];
         for key_type in added_to_main_map {
             assert_eq!(key_type.map_class(), MapClass::Default, "{key_type:?}");

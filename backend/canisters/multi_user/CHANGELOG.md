@@ -8,7 +8,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Let a user reset a forgotten PIN by signing in again ([#9815](https://github.com/open-chat-labs/open-chat/pull/9815))
+
+### Changed
+
+- Update the OpenChat bot message sent to users after their account is migrated ([#9814](https://github.com/open-chat-labs/open-chat/pull/9814))
+
+### Removed
+
+- Remove the one-off which moved every user's direct chats, groups and communities into stable memory, which has run in prod ([#9813](https://github.com/open-chat-labs/open-chat/pull/9813))
+
+### Fixed
+
+- Accept tips on a migrated user's direct messages sent before their migration ([#9816](https://github.com/open-chat-labs/open-chat/pull/9816))
+
+## [[2.0.2101](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2101-multi_user)] - 2026-10-06
+
+### Added
+
 - Send each migrated user an OpenChat bot message detailing their new wallet address ([#9763](https://github.com/open-chat-labs/open-chat/pull/9763))
+- Add `check_pin_number`, so a payment's PIN can be checked before the user approves it ([#9777](https://github.com/open-chat-labs/open-chat/pull/9777))
+- Schedule the timer jobs a migrated user's canister handed over during migration ([#9779](https://github.com/open-chat-labs/open-chat/pull/9779))
 
 ### Changed
 
@@ -16,6 +36,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Take a User canister missing a method as a sign its user may have been migrated, as the other canisters do ([#9743](https://github.com/open-chat-labs/open-chat/pull/9743))
 - Check the cycles balance as background jobs run, not only as updates are handled ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
 - Ask for a top up once the cycles above the freezing threshold fall below 10T, or below twice the threshold ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748))
+- Store each direct chat record in stable memory, keeping only a small entry per chat on the heap ([#9781](https://github.com/open-chat-labs/open-chat/pull/9781))
+- Store each group and community record in stable memory, keeping only a small entry for each on the heap ([#9795](https://github.com/open-chat-labs/open-chat/pull/9795))
+- Instantiate the msgpack (de)serializers of widely shared types once, in `types`, cutting the code by 364KB ([#9804](https://github.com/open-chat-labs/open-chat/pull/9804))
+- Limit how many reminders, saved crypto accounts, favourites, pins and manual wallet tokens a user can have ([#9805](https://github.com/open-chat-labs/open-chat/pull/9805))
+- Bump the rmp-serde fork to one which reads numbers before visiting them, cutting the code by 849KB ([#9808](https://github.com/open-chat-labs/open-chat/pull/9808))
 
 ## [[2.0.2091](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2091-multi_user)] - 2026-10-02
 

@@ -103,6 +103,47 @@ cargo build --locked --target wasm32-unknown-unknown --release "${PACKAGES[@]}" 
 echo Optimising and compressing wasms
 mkdir -p wasms
 
+# The IC refuses to install a wasm whose code section is larger than this
+MAX_CODE_SECTION_SIZE=12582912
+# The build fails once a canister's code is this close to that limit, so that it's caught while
+# there's still room to ship. Seemingly unrelated changes can add hundreds of KBs, eg. a new
+# dependency between two crates can change which crate's copy of a generic instance each links
+# to (see backend/libraries/types/src/msgpack_instances.rs)
+CODE_SECTION_SIZE_MARGIN=1048576
+
+# Prints the size of the code section (id 10) of the wasm given, reading each section's header (its
+# id, then its size as a LEB128 encoded u32) to skip to the next. In bash, since the docker image
+# the release builds run in has no python
+code_section_size() {
+  local WASM=$1 OFFSET=8 FILE_SIZE ID SIZE SHIFT BYTE I
+  local -a BYTES
+  FILE_SIZE=$(($(wc -c < "${WASM}")))
+  while [ "${OFFSET}" -lt "${FILE_SIZE}" ]
+  do
+    BYTES=($(od -An -tu1 -j "${OFFSET}" -N 6 "${WASM}"))
+    [ "${#BYTES[@]}" -ge 2 ] || break
+    ID=${BYTES[0]}
+    SIZE=0
+    SHIFT=0
+    I=1
+    while true
+    do
+      BYTE=${BYTES[$I]}
+      I=$((I + 1))
+      SIZE=$((SIZE | ((BYTE & 127) << SHIFT)))
+      SHIFT=$((SHIFT + 7))
+      [ $((BYTE & 128)) -eq 0 ] && break
+    done
+    if [ "${ID}" -eq 10 ]
+    then
+      echo "${SIZE}"
+      return
+    fi
+    OFFSET=$((OFFSET + I + SIZE))
+  done
+  echo 0
+}
+
 optimise_and_compress() {
   CANISTER=$1
   PACKAGE="${CANISTER}_canister_impl"
@@ -111,11 +152,25 @@ optimise_and_compress() {
   # then silently reuse the `-opt.wasm` left behind by an earlier build
   ${CARGO_HOME}/bin/ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink || exit 1
   ${CARGO_HOME}/bin/ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm optimize Oz || exit 1
+  CODE_SIZE=$(code_section_size ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm)
+  if ! [ "${CODE_SIZE:-0}" -gt 0 ] 2>/dev/null
+  then
+    echo "Failed to read the size of the code section of the $CANISTER wasm"
+    exit 1
+  elif [ "${CODE_SIZE}" -gt "${MAX_CODE_SECTION_SIZE}" ]
+  then
+    echo "The code section of the $CANISTER wasm is $CODE_SIZE bytes, over the IC's limit of $MAX_CODE_SECTION_SIZE bytes"
+    exit 1
+  elif [ "${CODE_SIZE}" -gt $((MAX_CODE_SECTION_SIZE - CODE_SECTION_SIZE_MARGIN)) ]
+  then
+    echo "The code section of the $CANISTER wasm is $CODE_SIZE bytes, within $CODE_SECTION_SIZE_MARGIN bytes of the IC's limit of $MAX_CODE_SECTION_SIZE bytes"
+    exit 1
+  fi
   gzip -fckn9 target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm > ./wasms/$CANISTER.wasm.gz || exit 1
-  echo "Optimised $CANISTER"
+  echo "Optimised $CANISTER (code section $CODE_SIZE bytes)"
 }
-export -f optimise_and_compress
-export CARGO_HOME
+export -f code_section_size optimise_and_compress
+export CARGO_HOME MAX_CODE_SECTION_SIZE CODE_SECTION_SIZE_MARGIN
 
 # Each canister is independent, so optimise them in parallel (one at a time this step takes
 # several minutes). `xargs` exits non-zero if any invocation fails.

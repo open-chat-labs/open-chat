@@ -2,6 +2,7 @@ import { AssertError, Value } from "@sinclair/typebox/value";
 import { Kind, type Static, type TSchema } from "@sinclair/typebox";
 import { deepRemoveNullishFields } from "./nullish";
 import { TypeboxValidationError } from "@shared/domain/error";
+import { redactSecrets } from "@shared/utils/redact";
 
 // Whether a schema or anything beneath it carries a `default` annotation. Value.Default is
 // deep-identity on a subtree with no defaults, so such subtrees can be skipped entirely.
@@ -122,7 +123,12 @@ function applyDefaults(schema: TSchema, value: unknown): unknown {
 // Equivalent to Value.Parse(["Default", "Convert", "Assert"], schema, value), with the
 // Default step replaced by applyDefaults above. Convert is kept as-is (it is what turns
 // msgpack numbers/strings into bigints) and Value.Assert is the Parse "Assert" step.
-export function typeboxValidate<T extends TSchema>(value: unknown, validator: T): Static<T> {
+// `methodName` is the canister method a request is for, so a failure can be logged without its PIN.
+export function typeboxValidate<T extends TSchema>(
+    value: unknown,
+    validator: T,
+    methodName?: string,
+): Static<T> {
     try {
         const converted = Value.Convert(
             validator,
@@ -131,8 +137,10 @@ export function typeboxValidate<T extends TSchema>(value: unknown, validator: T)
         Value.Assert(validator, converted);
         return converted as Static<T>;
     } catch (err) {
-        console.error("Typebox validation failed: ", value, err);
-        throw new TypeboxValidationError(withPath(err));
+        // Not `err` itself: an AssertError holds the value which failed, PIN and all
+        const error = withPath(err);
+        console.error("Typebox validation failed: ", redactSecrets(value, methodName), error);
+        throw new TypeboxValidationError(error);
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::updates::c2c_local_user_index::BotMessage;
-use crate::{User, openchat_bot};
+use crate::{ThreadsRead, User, openchat_bot};
 use chat_events::ChatInternal;
 use stable_memory_map::BaseKeyPrefix;
 use types::{ChannelId, Chat, CommunityId, CommunityImportedInto, DeletedGroupInfoInternal, MultiUserChat, TimestampMillis};
@@ -28,9 +28,9 @@ pub fn c2c_notify_group_deleted(
     // Removing the group deletes how far the user has read each of its threads from stable memory,
     // so if the group has been imported into a community, move those entries to the channel first
     if let Some(imported_into) = &deleted_group.community_imported_into
-        && let Some(group) = user.group_chats.get_mut(&chat_id)
+        && user.group_chats.exists(&chat_id)
     {
-        group.messages_read.threads_read.move_entries(
+        ThreadsRead::move_entries(
             MultiUserChat::Group(chat_id),
             MultiUserChat::Channel(imported_into.community_id, imported_into.channel.channel_id),
         );
@@ -67,7 +67,7 @@ pub fn c2c_notify_group_deleted(
         now,
     );
 
-    let (community, newly_joined) = user.communities.join(community_id, local_user_index_canister_id, now);
+    let (mut community, newly_joined) = user.communities.join(community_id, local_user_index_canister_id, now);
 
     if let Some(group) = group_removed {
         community.import_group(channel.channel_id, group, now);
@@ -98,8 +98,10 @@ pub fn c2c_notify_group_deleted(
         )
     }
 
+    // The channel replaces the group in the favourites, so the limit doesn't apply
     if was_favourite {
-        user.favourite_chats.add(Chat::Channel(community_id, channel.channel_id), now);
+        user.favourite_chats
+            .add_without_limit(Chat::Channel(community_id, channel.channel_id), now);
     }
 
     GroupDeleted {

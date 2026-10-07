@@ -162,6 +162,13 @@ impl ChatEventKeyPrefix {
         )
     }
 
+    // The `key_id` of the direct chat this prefix belongs to (see `new_from_direct_chat_key_id`), or
+    // `None` if it doesn't belong to a direct chat keyed by its `key_id`
+    pub fn direct_chat_key_id(&self) -> Option<u32> {
+        matches!(self.key_type(), KeyType::DirectChatEvent | KeyType::DirectChatThreadEvent)
+            .then(|| u32::from_be_bytes(self.0[1..5].try_into().unwrap()))
+    }
+
     fn key_type(&self) -> KeyType {
         extract_key_type(&self.0).unwrap()
     }
@@ -266,6 +273,7 @@ mod tests {
                 assert!(prefix.is_direct_chat());
                 assert!(prefix.is_legacy_direct_chat());
                 assert_eq!(prefix.is_thread(), thread);
+                assert_eq!(prefix.direct_chat_key_id(), None);
 
                 let serialized = msgpack::serialize_then_unwrap(&event_key);
                 assert_eq!(serialized.len(), event_key.0.len() + 2);
@@ -304,6 +312,7 @@ mod tests {
                 assert!(prefix.is_direct_chat());
                 assert!(!prefix.is_legacy_direct_chat());
                 assert_eq!(prefix.is_thread(), thread);
+                assert_eq!(prefix.direct_chat_key_id(), Some(key_id));
 
                 let serialized = msgpack::serialize_then_unwrap(&event_key);
                 assert_eq!(serialized.len(), event_key.0.len() + 2);
@@ -401,6 +410,9 @@ mod tests {
                 )));
                 assert!(!event_key.is_in_chat(&ChatEventKeyPrefix::new_from_group_chat(None)));
                 assert_eq!(event_key.event_index(), event_index);
+                // Channel prefixes have the same layout as direct chat ones, with the channel id in
+                // place of the `key_id`
+                assert_eq!(prefix.direct_chat_key_id(), None);
 
                 let serialized = msgpack::serialize_then_unwrap(&event_key);
                 assert_eq!(serialized.len(), event_key.0.len() + 2);

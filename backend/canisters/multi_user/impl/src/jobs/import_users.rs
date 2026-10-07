@@ -11,6 +11,7 @@ use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{Hash, Milliseconds, UserId};
 use user_core::User;
+use user_core::migration::MigratingUser;
 
 // Few users are imported at once, since each page pulled is up to ~2MB
 const MAX_IN_PROGRESS: usize = 2;
@@ -228,8 +229,9 @@ async fn pull_next_page_inner(user_id: UserId) -> PullResult {
 }
 
 // Adds the user, now that everything has been pulled, moving what they hold under their old id onto
-// their new one, then scheduling their timer jobs, tells them of their new wallet address via the
-// OpenChat bot, and tells the LocalUserIndex they were imported
+// their new one, then scheduling their timer jobs, both those rebuilt from their state and those their
+// canister handed over, tells them of their new wallet address via the OpenChat bot, and tells the
+// LocalUserIndex they were imported
 fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
     let Some(import) = state.data.user_imports.get(&old_user_id) else {
         return;
@@ -237,16 +239,19 @@ fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
     let index = import.index;
     let new_user_id = state.user_id(index);
 
-    let mut user: User = match msgpack::deserialize(import.user.as_slice()) {
-        Ok(user) => user,
+    let MigratingUser { mut user, timer_jobs } = match deserialize_migrating_user(&import.user) {
+        Ok(migrating_user) => migrating_user,
         Err(error) => {
-            let message = format!("Failed to deserialize the user: {error:?}");
+            let message = format!("Failed to deserialize the user: {error}");
             fail_import(old_user_id, OCErrorCode::UserImportFailed.with_message(message), state);
             return;
         }
     };
     let users_to_notify = with_key_scope(KeyScope::User(index), || {
         user.migrate_own_user_id(old_user_id, new_user_id);
+        // A user exported by a User canister from before their direct chats, groups and communities
+        // were stored in stable memory holds them on the heap
+        user.migrate_to_stable_memory();
         user.direct_chat_user_ids(new_user_id)
     });
     let next_event_expiry = user.next_event_expiry;
@@ -270,6 +275,13 @@ fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
         );
     }
     state.set_up_streak_insurance_timer_job(index);
+    // Any which fell due while the user was being migrated run straight away
+    for (mut job, due) in timer_jobs {
+        // As the user's chat with themselves now is, so that eg. undeleting a message in it cancels
+        // its job
+        job.map_user_ids(|user_id| if user_id == old_user_id { new_user_id } else { user_id });
+        state.data.timer_jobs.enqueue_job(TimerJob::migrated(index, job), due, now);
+    }
     openchat_bot::send_account_migrated_message(index, principal, state);
 
     state.push_local_user_index_canister_event(
@@ -282,6 +294,19 @@ fn complete_import(old_user_id: UserId, state: &mut RuntimeState) {
         now,
     );
     info!(%old_user_id, %new_user_id, "User imported");
+}
+
+// A migration started by a User canister which didn't yet hand over timer jobs serialized the bare
+// user, who had none to hand over, since they weren't migrated while any were pending
+fn deserialize_migrating_user(bytes: &[u8]) -> Result<MigratingUser, String> {
+    msgpack::deserialize(bytes).or_else(|error| {
+        msgpack::deserialize::<User, _>(bytes)
+            .map(|user| MigratingUser {
+                user,
+                timer_jobs: Vec::new(),
+            })
+            .map_err(|bare_user_error| format!("{error:?}, or as a bare user: {bare_user_error:?}"))
+    })
 }
 
 // Abandons the import, garbage collecting whatever was inserted into the stable memory map under the
@@ -305,4 +330,54 @@ fn fail_import(old_user_id: UserId, error: OCError, state: &mut RuntimeState) {
         }),
         now,
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+    use user_core::migration::MigratedTimerJob;
+
+    fn user() -> User {
+        User::new(Principal::from_slice(&[1]), "username".to_string(), None, 1)
+    }
+
+    #[test]
+    fn migrating_user_is_deserialized_with_their_timer_jobs() {
+        let bytes = msgpack::serialize_then_unwrap(MigratingUser {
+            user: &user(),
+            timer_jobs: vec![(
+                MigratedTimerJob::MarkVideoCallEnded {
+                    them: Principal::from_slice(&[2]).into(),
+                    message_id: 3u64.into(),
+                },
+                4,
+            )],
+        });
+
+        let migrating_user = deserialize_migrating_user(&bytes).unwrap();
+
+        assert_eq!(migrating_user.user.principal, Principal::from_slice(&[1]));
+        assert!(matches!(
+            migrating_user.timer_jobs.as_slice(),
+            [(MigratedTimerJob::MarkVideoCallEnded { them, .. }, 4)] if *them == Principal::from_slice(&[2]).into()
+        ));
+    }
+
+    #[test]
+    fn bare_user_is_deserialized_with_no_timer_jobs() {
+        let bytes = msgpack::serialize_then_unwrap(user());
+
+        let migrating_user = deserialize_migrating_user(&bytes).unwrap();
+
+        assert_eq!(migrating_user.user.principal, Principal::from_slice(&[1]));
+        assert!(migrating_user.timer_jobs.is_empty());
+    }
+
+    #[test]
+    fn neither_shape_fails() {
+        let bytes = msgpack::serialize_then_unwrap(vec![1u8, 2, 3]);
+
+        assert!(deserialize_migrating_user(&bytes).is_err());
+    }
 }

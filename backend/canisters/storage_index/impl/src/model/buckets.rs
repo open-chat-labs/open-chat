@@ -110,7 +110,7 @@ impl From<&BucketRecord> for BucketMetrics {
             canister_id: bucket.canister_id,
             wasm_version: bucket.wasm_version,
             heap_memory_used: bucket.heap_memory_used,
-            stable_memory_used: bucket.heap_memory_used,
+            stable_memory_used: bucket.stable_memory_used,
             total_file_bytes: bucket.total_file_bytes,
             cycle_top_ups: bucket.cycle_top_ups.iter().map(|t| t.amount).sum(),
         }

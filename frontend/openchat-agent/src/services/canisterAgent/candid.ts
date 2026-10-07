@@ -1,6 +1,7 @@
 import { Actor, type ActorSubclass, HttpAgent, type Identity } from "@icp-sdk/core/agent";
 import type { IDL } from "@icp-sdk/core/candid";
 import { Principal } from "@icp-sdk/core/principal";
+import { redactSecrets } from "@shared";
 import { toCanisterResponseError } from "../error";
 import { CanisterAgent } from "./base";
 
@@ -36,7 +37,7 @@ export abstract class CandidCanisterAgent<T> extends CanisterAgent {
         args?: unknown,
     ): Promise<To> {
         return service.then(mapper).catch((err) => {
-            console.log(err, args);
+            console.log(err, redactSecrets(args));
             throw toCanisterResponseError(err as Error, this.identity);
         });
     }

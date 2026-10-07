@@ -32,7 +32,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
             user.verify_not_suspended()?;
 
             let me = UserIdAndPrincipal::new(my_user_id, user.principal);
-            let chat = user.direct_chats.get_mut_or_err(&args.user_id.into())?;
+            let mut chat = user.direct_chats.get_mut_or_err(&args.user_id.into())?;
 
             let undeleted: Vec<_> = chat
                 .undelete_messages(

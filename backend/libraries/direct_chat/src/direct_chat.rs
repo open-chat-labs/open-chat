@@ -120,6 +120,14 @@ impl DirectChat {
         self.them_migrated_at = Some(now);
     }
 
+    // The id unique to the chat which its stable memory keys are built from
+    pub fn key_id(&self) -> u32 {
+        self.events
+            .stable_memory_prefix()
+            .direct_chat_key_id()
+            .expect("Every direct chat is keyed by its key_id")
+    }
+
     pub fn events(&self) -> &ChatEvents {
         &self.events
     }
@@ -603,8 +611,8 @@ impl DirectChat {
         });
     }
 
-    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
-        self.events.remove_expired_events(now)
+    pub fn remove_expired_events(&mut self, migrated_user_ids: &MigratedUserIds, now: TimestampMillis) -> RemoveEventsResult {
+        self.events.remove_expired_events(migrated_user_ids, now)
     }
 
     pub fn subscribe_bot_to_events(

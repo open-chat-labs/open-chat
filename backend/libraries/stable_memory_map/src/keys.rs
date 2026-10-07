@@ -6,10 +6,13 @@ use std::borrow::Cow;
 mod blocked_user;
 mod chat_event;
 mod chit_event;
+mod community;
 mod community_event;
 mod contact;
+mod direct_chat;
 mod direct_chat_unread_message_index;
 mod expiring_event;
+mod group_chat;
 mod last_updated;
 mod macros;
 mod message_activity_event;
@@ -32,10 +35,13 @@ mod user_metrics;
 pub use blocked_user::*;
 pub use chat_event::*;
 pub use chit_event::*;
+pub use community::*;
 pub use community_event::*;
 pub use contact::*;
+pub use direct_chat::*;
 pub use direct_chat_unread_message_index::*;
 pub use expiring_event::*;
+pub use group_chat::*;
 pub use last_updated::*;
 pub use message_activity_event::*;
 pub use message_event_indexes::*;
@@ -207,6 +213,9 @@ pub enum KeyType {
     CommunityRemoved = 64,
     ProfileDocument = 65,
     PrivateReplyToGroup = 66,
+    DirectChat = 67,
+    GroupChat = 68,
+    Community = 69,
     #[cfg(test)]
     TestSmallEntries = 255,
 }
@@ -261,7 +270,13 @@ impl KeyType {
             // Contacts are expected to gain more fields, so they use the main map to leave room to grow
             | KeyType::Contact
             // Each entry is an avatar or profile background, which can be up to 1MB
-            | KeyType::ProfileDocument => MapClass::Default,
+            | KeyType::ProfileDocument
+            // Each entry is a whole direct chat, which is too large for the small entries map
+            | KeyType::DirectChat
+            // Each entry is the user's record of a whole group or community (with each of its
+            // channels), which is too large for the small entries map
+            | KeyType::GroupChat
+            | KeyType::Community => MapClass::Default,
             KeyType::DirectChatMessageId
             | KeyType::GroupChatMessageId
             | KeyType::ChannelMessageId
@@ -391,6 +406,9 @@ impl TryFrom<u8> for KeyType {
             64 => Ok(KeyType::CommunityRemoved),
             65 => Ok(KeyType::ProfileDocument),
             66 => Ok(KeyType::PrivateReplyToGroup),
+            67 => Ok(KeyType::DirectChat),
+            68 => Ok(KeyType::GroupChat),
+            69 => Ok(KeyType::Community),
             #[cfg(test)]
             255 => Ok(KeyType::TestSmallEntries),
             _ => Err(()),

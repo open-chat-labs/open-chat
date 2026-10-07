@@ -1,5 +1,5 @@
-mod c2c_missing_files;
 mod c2c_sync_index;
+mod c2c_user_ids_migrated;
 mod c2c_vault_sync;
 mod delete_file;
 mod delete_files;

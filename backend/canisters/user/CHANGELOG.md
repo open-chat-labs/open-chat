@@ -10,10 +10,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Check the cycles balance as background jobs run, not only as updates are handled ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
 - Ask for a top up once the cycles above the freezing threshold fall below 0.3T, or below twice the threshold, keeping about the old minimum while User canisters are migrated ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748), [#9751](https://github.com/open-chat-labs/open-chat/pull/9751))
+- Hand a migrating user's message reminders and other timer jobs over to their MultiUser canister, rather than waiting for them to run ([#9779](https://github.com/open-chat-labs/open-chat/pull/9779))
+- Store each direct chat record in stable memory, keeping only a small entry per chat on the heap ([#9781](https://github.com/open-chat-labs/open-chat/pull/9781))
+- Store each group and community record in stable memory, keeping only a small entry for each on the heap ([#9795](https://github.com/open-chat-labs/open-chat/pull/9795))
+- Instantiate the msgpack (de)serializers of widely shared types once, in `types`, cutting the code by 864KB ([#9804](https://github.com/open-chat-labs/open-chat/pull/9804))
+- Limit how many reminders, saved crypto accounts, favourites, pins and manual wallet tokens a user can have ([#9805](https://github.com/open-chat-labs/open-chat/pull/9805))
+- Bump the rmp-serde fork to one which reads numbers before visiting them, cutting the code by 866KB ([#9808](https://github.com/open-chat-labs/open-chat/pull/9808))
 
 ### Removed
 
 - Remove the one-off migrations run by the upgrade to 2.0.2090, and the code which read the state and args of 2.0.2015 ([#9743](https://github.com/open-chat-labs/open-chat/pull/9743))
+
+### Fixed
+
+- Accept tips on a migrated user's direct messages sent before their migration ([#9816](https://github.com/open-chat-labs/open-chat/pull/9816))
 
 ## [[2.0.2090](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2090-user)] - 2026-10-02
 

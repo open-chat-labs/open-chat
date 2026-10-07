@@ -1,10 +1,12 @@
 use candid::Principal;
 use canister_state_macros::canister_state;
+use canister_timer_jobs::TimerJobs;
 use fire_and_forget_handler::FireAndForgetHandler;
 use model::{pending_payments_queue::PendingPaymentsQueue, translations::Translations};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use timer_job_types::TimerJob;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -14,6 +16,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod timer_job_types;
 mod updates;
 
 thread_local! {
@@ -47,6 +50,14 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: git_commit_id::git_commit_id().to_string(),
             stable_memory_sizes: memory::memory_sizes(),
+            payments_awaiting_retry: self
+                .data
+                .timer_jobs
+                .iter()
+                // A job which has already run leaves an empty entry behind
+                .filter(|(_, wrapper)| matches!(wrapper.borrow().as_ref(), Some(TimerJob::RetryPayment(_))))
+                .count() as u32,
+            parked_payments: self.data.pending_payments_queue.parked_len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -63,6 +74,8 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub translations: Translations,
     pub pending_payments_queue: PendingPaymentsQueue,
+    #[serde(default)]
+    pub timer_jobs: TimerJobs<TimerJob>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub user_notifications_last_sent: TimestampMillis,
     pub test_mode: bool,
@@ -82,6 +95,7 @@ impl Data {
             rng_seed: [0; 32],
             translations: Translations::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
+            timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             user_notifications_last_sent: 0,
             test_mode,
@@ -99,6 +113,8 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub payments_awaiting_retry: u32,
+    pub parked_payments: u32,
     pub canister_ids: CanisterIds,
 }
 

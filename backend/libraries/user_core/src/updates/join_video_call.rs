@@ -15,7 +15,7 @@ pub fn join_video_call(user: &mut User, args: &Args, my_user_id: UserId, now: Ti
         return Err(OCErrorCode::TargetUserBlocked.into());
     }
 
-    let chat = user
+    let mut chat = user
         .direct_chats
         .get_mut(&args.user_id.into())
         .ok_or(OCErrorCode::ChatNotFound)?;

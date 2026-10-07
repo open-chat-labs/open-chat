@@ -9,6 +9,7 @@ use chat_events::{ChatEvents, EndPollResult, MessageContentInternal};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
 use event_store_types::TimestampMillis;
 use group_chat_core::AddResult;
+use group_community_common::PendingPayment;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
@@ -32,6 +33,7 @@ pub enum TimerJob {
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
     JoinMembersToPublicChannel(JoinMembersToPublicChannelJob),
+    RetryPayment(Box<RetryPaymentJob>),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -192,6 +194,14 @@ pub struct JoinMembersToPublicChannelJob {
     pub members: Vec<UserId>,
 }
 
+// Retries a payment, after a failed attempt to call into its ledger
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RetryPaymentJob {
+    pub payment: PendingPayment,
+    // The number of attempts at the payment which have failed to call into its ledger so far
+    pub failures: u32,
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         let can_borrow_state = can_borrow_state();
@@ -216,6 +226,7 @@ impl Job for TimerJob {
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
             TimerJob::JoinMembersToPublicChannel(job) => job.execute(),
+            TimerJob::RetryPayment(job) => job.execute(),
         }
 
         if can_borrow_state {
@@ -261,7 +272,9 @@ impl Job for HardDeleteMessageContentJob {
                                 })
                                 .is_some()
                             {
-                                for pending_transaction in prize.final_payments(sender, state.env.now_nanos()) {
+                                for pending_transaction in
+                                    prize.final_payments(sender, &state.data.migrated_user_ids, state.env.now_nanos())
+                                {
                                     follow_on_jobs.push(TimerJob::MakeTransfer(Box::new(MakeTransferJob {
                                         pending_transaction,
                                         attempt: 0,
@@ -363,7 +376,12 @@ impl Job for FinalPrizePaymentsJob {
                 .data
                 .channels
                 .get_mut(&self.channel_id)
-                .map(|channel| channel.chat.events.final_payments(self.message_index, state.env.now_nanos()))
+                .map(|channel| {
+                    channel
+                        .chat
+                        .events
+                        .final_payments(self.message_index, &state.data.migrated_user_ids, state.env.now_nanos())
+                })
                 .unwrap_or_default()
         });
 
@@ -628,5 +646,11 @@ impl JoinMembersToPublicChannelJob {
                     .enqueue_job(TimerJob::JoinMembersToPublicChannel(self), now, now);
             }
         }
+    }
+}
+
+impl Job for RetryPaymentJob {
+    fn execute(self) {
+        crate::jobs::make_pending_payments::retry(self.payment, self.failures);
     }
 }

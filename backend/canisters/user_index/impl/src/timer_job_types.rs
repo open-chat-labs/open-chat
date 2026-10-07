@@ -1,4 +1,5 @@
 use crate::model::moderation;
+use crate::model::pending_payments_queue::PendingPayment;
 use crate::model::reported_messages::build_restoration_message_to_sender;
 use crate::updates::c2c_report_message::process_report;
 use crate::updates::pay_for_diamond_membership::pay_for_diamond_membership_impl;
@@ -25,6 +26,7 @@ pub enum TimerJob {
     SetUserSuspendedInCommunity(SetUserSuspendedInCommunity),
     UnsuspendUser(UnsuspendUser),
     ProcessReportClassification(ProcessReportClassification),
+    RetryPayment(Box<RetryPaymentJob>),
 }
 
 impl TimerJob {
@@ -36,7 +38,7 @@ impl TimerJob {
             TimerJob::SetUserSuspendedInGroup(job) => &mut job.user_id,
             TimerJob::SetUserSuspendedInCommunity(job) => &mut job.user_id,
             TimerJob::UnsuspendUser(job) => &mut job.user_id,
-            TimerJob::ProcessReportClassification(_) => return,
+            TimerJob::ProcessReportClassification(_) | TimerJob::RetryPayment(_) => return,
         };
         if *user_id == old_user_id {
             *user_id = new_user_id;
@@ -110,6 +112,14 @@ pub struct ProcessReportClassification {
     pub report_index: u64,
 }
 
+// Retries a payment, after a failed attempt to call into its ledger
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RetryPaymentJob {
+    pub payment: PendingPayment,
+    // The number of attempts at the payment which have failed to call into its ledger so far
+    pub failures: u32,
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -119,6 +129,7 @@ impl Job for TimerJob {
             TimerJob::SetUserSuspendedInCommunity(job) => job.execute(),
             TimerJob::UnsuspendUser(job) => job.execute(),
             TimerJob::ProcessReportClassification(job) => job.execute(),
+            TimerJob::RetryPayment(job) => job.execute(),
         }
     }
 }
@@ -415,6 +426,12 @@ impl Job for UnsuspendUser {
                 }
             });
         }
+    }
+}
+
+impl Job for RetryPaymentJob {
+    fn execute(self) {
+        crate::jobs::make_pending_payments::retry(self.payment, self.failures);
     }
 }
 

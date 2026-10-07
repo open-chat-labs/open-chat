@@ -1,7 +1,8 @@
 use crate::client::{start_canister, stop_canister};
 use crate::communities::join_community_tests::wait_for_community_membership;
+use crate::delete_group_tests::{COMMUNITY_EVENTS_QUEUE_LENGTH, events_queue_length, wait_for_events_queue_length};
 use crate::env::ENV;
-use crate::utils::{tick_many, wait_for_canister_to_be_deleted};
+use crate::utils::{tick_many, wait_for_deleted_canister_to_be_uninstalled};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use pocket_ic::PocketIc;
@@ -34,7 +35,57 @@ fn delete_community_succeeds() {
         "{delete_community_response:?}",
     );
 
-    wait_for_canister_to_be_deleted(env, community_id.into());
+    wait_for_deleted_canister_to_be_uninstalled(env, community_id.into());
+}
+
+// An event which couldn't be delivered to a community is retried, which is pointless once the
+// community has been deleted, so it's dropped
+#[test]
+fn events_queued_for_a_deleted_community_are_dropped() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let community_name = random_string();
+    let community_id = client::user::happy_path::create_community(env, &user, &community_name, true, vec![random_string()]);
+    let local_user_index = canister_ids.local_user_index(env, community_id);
+
+    // An event which reaches a stopped canister is retried after 10 seconds, so with the clock
+    // standing still it stays queued
+    tick_many(env, 5);
+    let queued_before = events_queue_length(env, local_user_index, COMMUNITY_EVENTS_QUEUE_LENGTH);
+    stop_canister(env, local_user_index, community_id.into());
+    // Keeping the community's name, so that just the one event is sent
+    client::group_index::happy_path::set_community_verification(
+        env,
+        *controller,
+        canister_ids.group_index,
+        community_id,
+        community_name,
+    );
+    wait_for_events_queue_length(env, local_user_index, COMMUNITY_EVENTS_QUEUE_LENGTH, queued_before + 1);
+    start_canister(env, local_user_index, community_id.into());
+
+    let delete_community_response = client::user::delete_community(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::delete_community::Args { community_id },
+    );
+    assert!(
+        matches!(delete_community_response, user_canister::delete_community::Response::Success),
+        "{delete_community_response:?}",
+    );
+    wait_for_deleted_canister_to_be_uninstalled(env, community_id.into());
+
+    assert_eq!(
+        events_queue_length(env, local_user_index, COMMUNITY_EVENTS_QUEUE_LENGTH),
+        queued_before
+    );
 }
 
 #[test]

@@ -23,3 +23,6 @@ tracing = { workspace = true }
 types = { path = "../types" }
 user_canister = { path = "../../canisters/user/api" }
 utils = { path = "../utils" }
+
+[dev-dependencies]
+msgpack = { path = "../msgpack" }

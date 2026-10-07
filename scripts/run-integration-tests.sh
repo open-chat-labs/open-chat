@@ -52,19 +52,22 @@ cd ../..
 ./scripts/download-nns-canister-wasm.sh icrc_ledger ic-icrc1-ledger
 ./scripts/download-canister-wasm-dfx.sh event_store || exit 1
 
-# The User canister wasm currently in production, for testing upgrades from it. The release tags are
-# needed to find it, but aren't included in shallow checkouts.
+# The User and MultiUser canister wasms currently in production, for testing upgrades from them. The
+# release tags are needed to find them, but aren't included in shallow checkouts.
 # Worktrees share the repository, so this can fail on its lock while another worktree is fetching,
 # in which case the tags fetched before are used
-if ! git fetch --quiet --depth=1 origin "refs/tags/*-user:refs/tags/*-user"
-then
-  if [ -z "$(git tag -l '*-user')" ]
+for CANISTER in user multi_user
+do
+  if ! git fetch --quiet --depth=1 origin "refs/tags/*-$CANISTER:refs/tags/*-$CANISTER"
   then
-    exit 1
+    if [ -z "$(git tag -l "*-$CANISTER")" ]
+    then
+      exit 1
+    fi
+    echo "Failed to fetch the $CANISTER canister's release tags, so using the latest already fetched: $(git tag -l --sort=-version:refname "*-$CANISTER" | head -n 1)"
   fi
-  echo "Failed to fetch the User canister's release tags, so using the latest already fetched: $(git tag -l --sort=-version:refname '*-user' | head -n 1)"
-fi
-./scripts/download-canister-wasm.sh user prod user_prod || exit 1
+  ./scripts/download-canister-wasm.sh $CANISTER prod ${CANISTER}_prod || exit 1
+done
 
 function cleanup() {
   rm -rf ./backend/integration_tests/pocket_ic_state

@@ -245,9 +245,9 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::RefundDeletedUserCycles(canister_ids) => {
             let mut queued: HashSet<CanisterId> = state.data.cycles_refund_queue.iter().map(|c| c.canister_id).collect();
             for canister_id in canister_ids {
-                // Belt and braces, the job also refuses to touch any canister with code installed.
                 // Deleted users' canisters used to be added to the canister pool, from which they
-                // may yet become live canisters, so any still in it are left alone.
+                // may yet become live canisters, so any still in it are left alone. Any which have
+                // since become live are left alone by the job, which checks when it gets to them.
                 if !state.data.local_users.contains(&canister_id.into())
                     && !state.data.canister_pool.contains(&canister_id)
                     && queued.insert(canister_id)
@@ -256,7 +256,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                         canister_id,
                         attempt: 0,
                         retry_after: 0,
-                        delete_canister: false,
                         return_to_pool: false,
                     });
                 }
@@ -442,6 +441,10 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             // Only if the LocalUserIndex which queued it is on a later version, with a new type of event
             Err(error) => error!(user_id = %ev.user_id, ?error, "Failed to deserialize event for migrated user"),
         },
+        UserIndexEvent::NotifyBot(notification) => {
+            let this_canister_id = state.env.canister_id();
+            state.push_bot_notification(*notification, this_canister_id, **now);
+        }
     }
 }
 

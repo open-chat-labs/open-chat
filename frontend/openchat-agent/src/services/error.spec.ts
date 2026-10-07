@@ -14,6 +14,7 @@ import {
     HttpError,
     InstructionLimitExceededError,
     InvalidDelegationError,
+    isCanisterGoneError,
     SessionExpiryError,
 } from "@shared";
 import { Principal } from "@icp-sdk/core/principal";
@@ -188,5 +189,33 @@ describe("toCanisterResponseError", () => {
             expect(error).toBeInstanceOf(HttpError);
             expect(error).not.toBeInstanceOf(InvalidDelegationError);
         });
+    });
+});
+
+// A deleted group's or community's canister is left uninstalled, but may once have been deleted
+describe("isCanisterGoneError", () => {
+    test("a canister which has been deleted or uninstalled is gone", () => {
+        const deleted = reject(
+            ReplicaRejectCode.DestinationInvalid,
+            "Canister x not found",
+            "IC0301",
+        );
+        const noWasm = reject(
+            ReplicaRejectCode.CanisterError,
+            "...contains no Wasm module.",
+            "IC0537",
+        );
+
+        expect(isCanisterGoneError(toCanisterResponseError(deleted, identity))).toBe(true);
+        expect(isCanisterGoneError(toCanisterResponseError(noWasm, identity))).toBe(true);
+    });
+
+    // A frozen canister comes back once it is topped up, and a stopped one once it is started
+    test("a canister which is frozen or stopped is not gone", () => {
+        const frozen = reject(ReplicaRejectCode.SysTransient, "Canister x is frozen.", "IC0207");
+        const stopped = reject(ReplicaRejectCode.CanisterError, "Canister x is stopped", "IC0508");
+
+        expect(isCanisterGoneError(toCanisterResponseError(frozen, identity))).toBe(false);
+        expect(isCanisterGoneError(toCanisterResponseError(stopped, identity))).toBe(false);
     });
 });

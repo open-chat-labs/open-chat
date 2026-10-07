@@ -6,17 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Accept tips on a migrated user's messages sent before their migration, paying and notifying them under their new id ([#9816](https://github.com/open-chat-labs/open-chat/pull/9816))
+- Notify a migrated user of activity on their messages sent before their migration, and refund their prizes sent before their migration to their new wallet ([#9817](https://github.com/open-chat-labs/open-chat/pull/9817))
+
+## [[2.0.2102](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2102-group)] - 2026-10-06
+
 ### Changed
 
 - Tell a removed user's canister only via the queue of events for users, among the other events ([#9743](https://github.com/open-chat-labs/open-chat/pull/9743))
 - Check the cycles balance as background jobs run, not only as updates are handled ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
 - Ask for a top up once the cycles above the freezing threshold fall below 1T, or below twice the threshold ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748))
 - Return the details in full when there are more member updates than `max_members` ([#9767](https://github.com/open-chat-labs/open-chat/pull/9767))
+- Instantiate the msgpack (de)serializers of widely shared types once, in `types`, cutting the code by 198KB ([#9804](https://github.com/open-chat-labs/open-chat/pull/9804))
+- Bump the rmp-serde fork to one which reads numbers before visiting them, cutting the code by 754KB ([#9808](https://github.com/open-chat-labs/open-chat/pull/9808))
 
 ### Removed
 
 - Remove the one-off `post_upgrade` jobs and the legacy user event queue now that they have run on prod ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))
 - Remove the fallback to an approval of the group's default account when taking an access gate's payment ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))
+
+### Fixed
+
+- Retry payments whose ledger can't be called after a growing delay rather than every round, and park those to uninstalled or deleted ledgers ([#9792](https://github.com/open-chat-labs/open-chat/pull/9792))
 
 ## [[2.0.2088](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2088-group)] - 2026-10-02
 

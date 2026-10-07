@@ -7,6 +7,7 @@ use candid::Principal;
 use canister_timer_jobs::Job;
 use chat_events::{ChatEvents, EndPollResult, MessageContentInternal};
 use constants::{DAY_IN_MS, MINUTE_IN_MS, NANOS_PER_MILLISECOND, SECOND_IN_MS};
+use group_community_common::PendingPayment;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
@@ -26,6 +27,7 @@ pub enum TimerJob {
     NotifyEscrowCanisterOfSwapFunded(NotifyEscrowCanisterOfSwapFundedJob),
     MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
     MarkVideoCallEnded(MarkVideoCallEndedJob),
+    RetryPayment(Box<RetryPaymentJob>),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -147,6 +149,14 @@ pub struct MarkP2PSwapExpiredJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MarkVideoCallEndedJob(pub group_canister::end_video_call_v2::Args);
 
+// Retries a payment, after a failed attempt to call into its ledger
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RetryPaymentJob {
+    pub payment: PendingPayment,
+    // The number of attempts at the payment which have failed to call into its ledger so far
+    pub failures: u32,
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         let can_borrow_state = can_borrow_state();
@@ -167,6 +177,7 @@ impl Job for TimerJob {
             TimerJob::NotifyEscrowCanisterOfSwapFunded(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::MarkVideoCallEnded(job) => job.execute(),
+            TimerJob::RetryPayment(job) => job.execute(),
         }
 
         if can_borrow_state {
@@ -211,7 +222,9 @@ impl Job for HardDeleteMessageContentJob {
                                 })
                                 .is_some()
                             {
-                                for pending_transaction in prize.final_payments(sender, state.env.now_nanos()) {
+                                for pending_transaction in
+                                    prize.final_payments(sender, &state.data.migrated_user_ids, state.env.now_nanos())
+                                {
                                     follow_on_jobs.push(TimerJob::MakeTransfer(Box::new(MakeTransferJob {
                                         pending_transaction,
                                         attempt: 0,
@@ -283,7 +296,7 @@ impl Job for FinalPrizePaymentsJob {
                 .data
                 .chat
                 .events
-                .final_payments(self.message_index, state.env.now_nanos())
+                .final_payments(self.message_index, &state.data.migrated_user_ids, state.env.now_nanos())
         });
 
         for pending_transaction in pending_transactions {
@@ -487,6 +500,12 @@ impl Job for MarkVideoCallEndedJob {
         if let Err(error) = mutate_state(|state| end_video_call_impl(self.0.clone(), state)) {
             error!(?error, args = ?self.0, "Failed to mark video call ended");
         }
+    }
+}
+
+impl Job for RetryPaymentJob {
+    fn execute(self) {
+        crate::jobs::make_pending_payments::retry(self.payment, self.failures);
     }
 }
 

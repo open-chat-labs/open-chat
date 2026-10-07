@@ -32,6 +32,7 @@ pub mod registry;
 pub mod sign_in_with_email;
 pub mod storage_bucket;
 pub mod storage_index;
+pub mod translations;
 pub mod user;
 pub mod user_index;
 

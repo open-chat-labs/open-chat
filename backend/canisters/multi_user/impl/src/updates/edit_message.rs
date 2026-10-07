@@ -38,7 +38,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 return Err(OCErrorCode::TargetUserBlocked.into());
             }
 
-            let chat = user.direct_chats.get_mut_or_err(&args.user_id.into())?;
+            let mut chat = user.direct_chats.get_mut_or_err(&args.user_id.into())?;
 
             chat.edit_message(
                 EditMessageArgs {

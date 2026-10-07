@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
 
+### Fixed
+
+- Retry payments whose ledger can't be called after a growing delay rather than every round, and park those to uninstalled or deleted ledgers ([#9794](https://github.com/open-chat-labs/open-chat/pull/9794))
+
 ## [[2.0.2072](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2072-translations)] - 2026-09-29
 
 ### Changed

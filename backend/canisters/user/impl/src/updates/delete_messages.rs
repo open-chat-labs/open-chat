@@ -18,7 +18,7 @@ fn delete_messages(args: Args) -> Response {
 fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     state.data.user.verify_not_suspended()?;
 
-    let chat = state.data.user.direct_chats.get_mut_or_err(&args.user_id.into())?;
+    let mut chat = state.data.user.direct_chats.get_mut_or_err(&args.user_id.into())?;
     let my_user_id = state.env.canister_id().into();
     let now = state.env.now();
 
@@ -33,6 +33,8 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         },
         &state.data.migrated_user_ids,
     );
+    let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index);
+    drop(chat);
 
     let deleted: Vec<_> = delete_message_results
         .into_iter()
@@ -66,7 +68,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
                 .collect();
 
             if !my_messages.is_empty() {
-                let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;
+                let thread_root_message_id = thread_root_message_id?;
 
                 state.push_user_canister_event(
                     args.user_id,

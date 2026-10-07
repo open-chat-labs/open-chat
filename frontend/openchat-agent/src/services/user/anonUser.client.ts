@@ -6,6 +6,7 @@ import type {
     BlobReference,
     BlockUserResponse,
     CancelP2PSwapResponse,
+    CheckPinNumberResponse,
     CandidateGroupChat,
     ChannelIdentifier,
     ChatEvent,
@@ -484,6 +485,10 @@ export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {
         _verification: Verification,
         _newPin: string | undefined,
     ): Promise<SetPinNumberResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    checkPinNumber(_pin: string): Promise<CheckPinNumberResponse> {
         throw new AnonymousOperationError();
     }
 

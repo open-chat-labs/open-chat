@@ -107,9 +107,7 @@ fn known_caller_kind(caller: CanisterId, args: &Args, state: &RuntimeState) -> O
     let has_chat_with_caller = args.events.iter().any(|e| {
         state
             .with_user(e.value.recipient, |user| {
-                user.direct_chats
-                    .get(&caller_user_id.into())
-                    .is_some_and(|chat| chat.user_type == UserType::User)
+                user.direct_chats.user_type(&caller_user_id.into()) == Some(UserType::User)
             })
             .unwrap_or_default()
     });
@@ -206,7 +204,7 @@ fn with_chat_mut<R>(
         .with_user_mut(recipient_index, |user| {
             user.direct_chats
                 .get_mut(&sender.into())
-                .map(|chat| f(chat, migrated_user_ids))
+                .map(|mut chat| f(&mut chat, migrated_user_ids))
         })
         .flatten()
 }

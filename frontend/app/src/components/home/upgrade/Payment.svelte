@@ -8,9 +8,11 @@
         cryptoLookup,
         E8S_PER_TOKEN,
         mobileWidth,
+        pinNumberFailureFromError,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { toastStore } from "../../../stores/toast";
     import type { RemoteData } from "../../../utils/remoteData";
     import Button from "../../Button.svelte";
@@ -162,13 +164,25 @@
                 if (resp.kind === "success") {
                     confirmed = true;
                     onSuccess?.(resp.proof);
+                } else if (resp.kind === "error" && pinNumberFailureFromError(resp) !== undefined) {
+                    toastStore.showFailureToast(pinNumberErrorMessageStore);
                 } else {
-                    const errorKey = "upgrade.paymentFailed";
-                    error = errorKey;
-                    toastStore.showFailureToast(i18nKey(errorKey));
+                    paymentFailed();
+                }
+            })
+            // Dismissing the PIN prompt cancels the payment, which isn't a failure
+            .catch((err) => {
+                if (err !== "cancelled") {
+                    paymentFailed(err);
                 }
             })
             .finally(() => (confirming = false));
+    }
+
+    function paymentFailed(err?: unknown) {
+        const errorKey = "upgrade.paymentFailed";
+        error = errorKey;
+        toastStore.showFailureToast(i18nKey(errorKey), err);
     }
 
     onMount(() => {

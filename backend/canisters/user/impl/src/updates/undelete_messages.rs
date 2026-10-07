@@ -24,7 +24,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
 
     let my_user_id = state.env.canister_id().into();
     let me = UserIdAndPrincipal::new(my_user_id, state.data.user.principal);
-    let chat = state.data.user.direct_chats.get_mut_or_err(&args.user_id.into())?;
+    let mut chat = state.data.user.direct_chats.get_mut_or_err(&args.user_id.into())?;
     let now = state.env.now();
 
     let delete_message_results = chat.undelete_messages(
@@ -52,6 +52,8 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
         .iter()
         .filter_map(|&message_id| events_reader.message(message_id.into(), Some(me)))
         .collect();
+    let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index);
+    drop(chat);
 
     HardDeleteMessageContentJob::cancel(
         &mut state.data.timer_jobs,
@@ -61,7 +63,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
     );
 
     if !deleted.is_empty() && args.user_id != OPENCHAT_BOT_USER_ID {
-        let thread_root_message_id = chat.thread_root_message_id(args.thread_root_message_index)?;
+        let thread_root_message_id = thread_root_message_id?;
 
         state.push_user_canister_event(
             args.user_id,

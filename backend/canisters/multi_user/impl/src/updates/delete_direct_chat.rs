@@ -22,7 +22,7 @@ fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
         .data
         .users
         .with_user_mut(my_index, |user| {
-            let chat = user.direct_chats.remove(args.user_id.into(), now)?;
+            let chat = user.remove_direct_chat(args.user_id, now)?;
             let blocked = args.block_user && user.block_user(args.user_id, now);
             Some((chat.stable_memory_key_prefixes(), blocked))
         })

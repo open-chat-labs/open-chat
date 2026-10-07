@@ -41,7 +41,7 @@ fn check_chat_exists(them: UserId, state: &RuntimeState) -> Result<(), CanisterI
             state
                 .data
                 .users
-                .with_user(my_index, |user| user.direct_chats.get(&them.into()).is_some())
+                .with_user(my_index, |user| user.direct_chats.exists(&them.into()))
         })
         .unwrap_or_default();
     if has_chat { Ok(()) } else { Err(state.data.local_user_index_canister_id) }
@@ -71,7 +71,7 @@ fn commit(args: Args, their_user_type: UserType, state: &mut RuntimeState) -> OC
         .data
         .users
         .with_user_mut(my_index, |user| {
-            let chat = user
+            let mut chat = user
                 .direct_chats
                 .get_or_create(my_user_id, them, their_user_type, || anonymized_id, now);
 

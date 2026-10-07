@@ -9,6 +9,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
+use std::ops::Deref;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -54,6 +55,14 @@ impl RuntimeState {
             git_commit_id: git_commit_id::git_commit_id().to_string(),
             swaps: self.data.swaps.metrics(now),
             notify_status_change_queue_len: self.data.notify_status_change_queue.len() as u32,
+            payments_awaiting_retry: self
+                .data
+                .timer_jobs
+                .iter()
+                // A job which has already run leaves an empty entry behind
+                .filter(|(_, wrapper)| matches!(wrapper.deref().borrow().as_ref(), Some(TimerJob::RetryPayment(_))))
+                .count() as u32,
+            parked_payments: self.data.pending_payments_queue.parked_len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
             disabled_tokens: self.data.disabled_tokens.iter().copied().collect(),
             canister_ids: CanisterIds {
@@ -104,6 +113,8 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub swaps: SwapMetrics,
     pub notify_status_change_queue_len: u32,
+    pub payments_awaiting_retry: u32,
+    pub parked_payments: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub disabled_tokens: Vec<CanisterId>,
     pub canister_ids: CanisterIds,

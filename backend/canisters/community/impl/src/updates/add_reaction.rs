@@ -73,8 +73,11 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
     )?;
 
     let message = result.value;
-    if let Some(sender) = channel.chat.members.get(&message.sender)
-        && !state.data.migrated_user_ids.is_same_user(message.sender, agent)
+    // The sender is a member under their latest id, in case they have been migrated since sending
+    // the message
+    let sender_id = state.data.migrated_user_ids.latest(message.sender);
+    if let Some(sender) = channel.chat.members.get(&sender_id)
+        && !state.data.migrated_user_ids.is_same_user(sender_id, agent)
         && !sender.user_type().is_bot()
     {
         let community_id: CommunityId = state.env.canister_id().into();
@@ -82,7 +85,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
         let notifications_muted = channel
             .chat
             .members
-            .get(&message.sender)
+            .get(&sender_id)
             .is_none_or(|m| m.notifications_muted().value || m.suspended().value);
 
         if !notifications_muted {
@@ -110,11 +113,11 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                 channel_avatar_id,
             });
 
-            state.push_notification(Some(agent), vec![message.sender], notification);
+            state.push_notification(Some(agent), vec![sender_id], notification);
         }
 
         state.push_event_to_user(
-            message.sender,
+            sender_id,
             CommunityCanisterEvent::MessageActivity(MessageActivityEvent {
                 chat: Chat::Channel(community_id, args.channel_id),
                 thread_root_message_index: args.thread_root_message_index,
@@ -128,7 +131,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
             now,
         );
 
-        state.notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo, now);
+        state.notify_user_of_achievement(sender_id, Achievement::HadMessageReactedTo, now);
 
         if new_achievement {
             state.notify_user_of_achievement(agent, Achievement::ReactedToMessage, now);

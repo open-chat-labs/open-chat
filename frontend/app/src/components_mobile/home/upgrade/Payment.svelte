@@ -24,6 +24,7 @@
         enhancedCryptoLookup,
         LEDGER_CANISTER_CHAT,
         LEDGER_CANISTER_ICP,
+        pinNumberFailureFromError,
         type DiamondMembershipDuration,
         type DiamondMembershipFees,
         type Level,
@@ -40,6 +41,7 @@
     import QrCode from "svelte-material-icons/Qrcode.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
+    import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import { toastStore } from "../../../stores/toast";
     import type { RemoteData } from "../../../utils/remoteData";
     import Setting from "../../Setting.svelte";
@@ -185,9 +187,16 @@
                 if (resp.kind === "success") {
                     tokenState.refreshBalance(client);
                     onSuccess?.(resp.proof);
+                } else if (resp.kind === "error" && pinNumberFailureFromError(resp) !== undefined) {
+                    toastStore.showFailureToast(pinNumberErrorMessageStore);
                 } else {
-                    const errorKey = "upgrade.paymentFailed";
-                    toastStore.showFailureToast(i18nKey(errorKey));
+                    toastStore.showFailureToast(i18nKey("upgrade.paymentFailed"));
+                }
+            })
+            // Dismissing the PIN prompt cancels the payment, which isn't a failure
+            .catch((err) => {
+                if (err !== "cancelled") {
+                    toastStore.showFailureToast(i18nKey("upgrade.paymentFailed"), err);
                 }
             })
             .finally(() => (confirming = false));

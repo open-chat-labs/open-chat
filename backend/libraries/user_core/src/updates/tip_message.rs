@@ -28,8 +28,15 @@ pub fn verify(
 }
 
 // The tip of a message in the user's direct chat. Checked before any funds move, as a group does:
-// the tip must be to the other user in the chat, on a message they sent.
-pub fn direct_tip_args(user: &User, my_user_id: UserId, args: &Args, now: TimestampMillis) -> OCResult<TipMessageArgs> {
+// the tip must be to the other user in the chat, on a message they sent, possibly under an id they
+// have since been migrated from.
+pub fn direct_tip_args(
+    user: &User,
+    my_user_id: UserId,
+    args: &Args,
+    migrated_user_ids: &MigratedUserIds,
+    now: TimestampMillis,
+) -> OCResult<TipMessageArgs> {
     let Chat::Direct(chat_id) = args.chat else {
         return Err(OCErrorCode::ChatNotFound.into());
     };
@@ -41,7 +48,7 @@ pub fn direct_tip_args(user: &User, my_user_id: UserId, args: &Args, now: Timest
         .events()
         .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
         .ok_or(OCErrorCode::MessageNotFound)?;
-    if message.sender != args.recipient {
+    if !migrated_user_ids.is_same_user(message.sender, args.recipient) {
         return Err(OCErrorCode::RecipientMismatch.into());
     }
     Ok(TipMessageArgs {
@@ -65,7 +72,7 @@ pub fn tip_direct_chat_message<P: EventPusher>(
     migrated_user_ids: &MigratedUserIds,
     event_pusher: Option<P>,
 ) -> OCResult<user_canister::TipMessageArgs> {
-    let chat = user
+    let mut chat = user
         .direct_chats
         .get_mut(&args.recipient.into())
         .ok_or(OCErrorCode::ChatNotFound)?;
