@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Mark a token uninstalled when its ledger was uninstalled for running out of cycles, since calls to it fail as out of cycles rather than as having no Wasm module ([#9827](https://github.com/open-chat-labs/open-chat/pull/9827))
+- Detect a ledger which was uninstalled after running out of cycles ([#9827](https://github.com/open-chat-labs/open-chat/pull/9827))
 
 ## [[2.0.2082](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2082-registry)] - 2026-10-02
 
