@@ -11,7 +11,7 @@
     import Avatar from "../../Avatar.svelte";
     import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import VisibilityLabel from "../VisibilityLabel.svelte";
     import CommunityMenu from "./CommunityMenu.svelte";
 

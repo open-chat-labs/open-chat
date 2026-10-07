@@ -18,8 +18,8 @@
         EmailSigninHandler,
     } from "../../../utils/signin";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import Translatable from "../../Translatable.svelte";
-    import EmailSigninFeedback from "../EmailSigninFeedback.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
+    import EmailSigninFeedback from "@shared_components/home/EmailSigninFeedback.svelte";
     import ChooseSignInOption from "./ChooseSignInOption.svelte";
 
     const client = getContext<OpenChat>("client");

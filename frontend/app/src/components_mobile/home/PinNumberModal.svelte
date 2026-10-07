@@ -2,7 +2,7 @@
     import { Column, Sheet, Subtitle } from "component-lib";
     import { i18nKey } from "../../i18n/i18n";
     import Pincode from "../pincode/Pincode.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ForgotPinLabel from "./ForgotPinLabel.svelte";
 
     interface Props {

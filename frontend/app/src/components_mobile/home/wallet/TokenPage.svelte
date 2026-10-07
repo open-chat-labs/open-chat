@@ -13,7 +13,7 @@
     import SwapVertical from "svelte-material-icons/SwapVertical.svelte";
     import TrayArrowDown from "svelte-material-icons/TrayArrowDown.svelte";
     import TrayArrowUp from "svelte-material-icons/TrayArrowUp.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import TokenCard from "./TokenCard.svelte";
     import Transactions from "./Transactions.svelte";

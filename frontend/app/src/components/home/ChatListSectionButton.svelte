@@ -1,7 +1,7 @@
 <script lang="ts">
     import { emptyUnreadCounts, mobileWidth, type ResourceKey } from "@client";
     import Button from "../Button.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import UnreadCount from "./UnreadCount.svelte";
 
     interface Props {

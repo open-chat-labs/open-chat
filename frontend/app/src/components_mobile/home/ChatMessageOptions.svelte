@@ -51,8 +51,8 @@
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
     import { copyToClipboard } from "../../utils/urls";
-    import Bitcoin from "../icons/Bitcoin.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Bitcoin from "@shared_components/icons/Bitcoin.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import { saveMediaToDevice } from "tauri-plugin-oc-api";
     import { getProxyAdjustedBlobUrl } from "../../utils/media";
 

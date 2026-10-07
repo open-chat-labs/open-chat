@@ -31,7 +31,7 @@
     import Badges from "../profile/Badges.svelte";
     import BotBadge from "../profile/BotBadge.svelte";
     import RoleIcon from "../profile/RoleIcon.svelte";
-    import WithRole from "../profile/WithRole.svelte";
+    import WithRole from "@shared_components/home/profile/WithRole.svelte";
     import UnresolvedReply from "../UnresolvedReply.svelte";
     import MessageMetadata from "./MessageMetadata.svelte";
 

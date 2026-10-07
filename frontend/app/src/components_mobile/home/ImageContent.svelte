@@ -15,7 +15,7 @@
     import { rtlStore } from "../../stores/rtl";
     import { lowBandwidth } from "../../stores/settings";
     import { getProxyAdjustedBlobUrl, reservedMediaStyle } from "../../utils/media";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import MessageRenderer from "./MessageRenderer.svelte";
 
     interface Props {

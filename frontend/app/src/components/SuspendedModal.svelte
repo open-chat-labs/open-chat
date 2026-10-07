@@ -6,7 +6,7 @@
     import Markdown from "@shared_components/Markdown.svelte";
     import Button from "./Button.svelte";
     import ModalContent from "./ModalContent.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 

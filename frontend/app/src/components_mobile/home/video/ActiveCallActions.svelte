@@ -16,8 +16,8 @@
     import { setCallSpeaker } from "@utils/native/call_bridge";
     import { isAndroidTauriApp } from "@shared";
     import { removeQueryStringParam } from "../../../utils/urls";
-    import Translatable from "../../Translatable.svelte";
-    import type { VideoCallChat } from "./callChat";
+    import Translatable from "@shared_components/Translatable.svelte";
+    import type { VideoCallChat } from "@shared_components/home/video/callChat";
 
     const client = getContext<OpenChat>("client");
 

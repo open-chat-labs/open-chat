@@ -12,7 +12,7 @@
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
 

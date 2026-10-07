@@ -7,7 +7,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import { i18nKey, interpolate } from "../i18n/i18n";
     import Markdown from "@shared_components/Markdown.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         message?: ResourceKey | undefined;

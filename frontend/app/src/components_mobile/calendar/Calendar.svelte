@@ -5,9 +5,9 @@
     import PrevIcon from "svelte-material-icons/ChevronLeft.svelte";
     import NextIcon from "svelte-material-icons/ChevronRight.svelte";
     import { translationCodes } from "../../i18n/i18n";
-    import { calendarState, type DateRange } from "./calendarState.svelte";
-    import { getMonthCalendar, getTitleText, isSameDay } from "./utils";
-    import { weekDays } from "./weekdays";
+    import { calendarState, type DateRange } from "@shared_components/calendar/calendarState.svelte";
+    import { getMonthCalendar, getTitleText, isSameDay } from "@shared_components/calendar/utils";
+    import { weekDays } from "@shared_components/calendar/weekdays";
 
     interface Props {
         monthTitleTemplate?: Snippet;

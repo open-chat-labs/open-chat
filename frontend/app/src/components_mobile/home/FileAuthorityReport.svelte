@@ -14,7 +14,7 @@
     } from "../../utils/ncaFiling";
     import Checkbox from "../../components/Checkbox.svelte";
     import Radio from "../../components/Radio.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 

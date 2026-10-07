@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { DelegationChain, ECDSAKeyIdentity } from "@icp-sdk/core/identity";
-    import Translatable from "@src/components/Translatable.svelte";
+    import Translatable from "@src/components_shared/Translatable.svelte";
     import { Column, Sheet, Subtitle } from "component-lib";
     import type { AuthProvider, ResourceKey } from "@client";
     import ReAuthenticate from "./ReAuthenticate.svelte";

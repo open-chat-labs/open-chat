@@ -4,7 +4,7 @@
     import { Body, type SizeMode } from "component-lib";
     import type { LeafGate, OpenChat } from "@client";
     import { getContext } from "svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 

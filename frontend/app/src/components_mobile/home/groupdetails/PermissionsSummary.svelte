@@ -13,7 +13,7 @@
         type PermissionsByRole,
     } from "@client";
     import { _ } from "svelte-i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import GroupPermissionsPartitionViewer from "../GroupPermissionsPartitionViewer.svelte";
     import Separator from "../Separator.svelte";
 

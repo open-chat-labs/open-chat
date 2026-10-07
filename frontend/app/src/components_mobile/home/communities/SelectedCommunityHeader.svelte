@@ -10,7 +10,7 @@
     import { getContext } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import WithVerifiedBadge from "../../icons/WithVerifiedBadge.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import VisibilityLabel from "../VisibilityLabel.svelte";
     import CommunityMenu from "./CommunityMenu.svelte";
     import OtherChannels from "./OtherChannels.svelte";

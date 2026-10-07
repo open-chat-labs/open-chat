@@ -45,9 +45,9 @@
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import ThumbUp from "svelte-material-icons/ThumbUpOutline.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
-    import Bitcoin from "../icons/Bitcoin.svelte";
+    import Bitcoin from "@shared_components/icons/Bitcoin.svelte";
     import MulticolourText from "../MulticolourText.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import BotCommands from "./BotCommands.svelte";
     import BotsPermissionInfo from "./BotsPermissionInfo.svelte";
     import OwnedLocationSelector from "./OwnedLocationSelector.svelte";

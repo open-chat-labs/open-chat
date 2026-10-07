@@ -1,7 +1,7 @@
 <script lang="ts">
     import { ColourVars, Container } from "component-lib";
     import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
 
     interface Props {

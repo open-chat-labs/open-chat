@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, BodySmall, Button, Container, H2 } from "component-lib";
     import Delete from "svelte-material-icons/DeleteForeverOutline.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ConfirmDeleteAccount from "../profile/ConfirmDeleteAccount.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 

@@ -33,9 +33,9 @@
     } from "component-lib";
     import { untrack } from "svelte";
     import ShieldStar from "svelte-material-icons/ShieldStarOutline.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
-    import AccessGateExpiry from "./AccessGateExpiry.svelte";
+    import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
     import AccessGateSummary from "./AccessGateSummary.svelte";
     import BalanceGateEvaluator from "./BalanceGateEvaluator.svelte";
     import DiamondGateEvaluator from "./DiamondGateEvaluator.svelte";

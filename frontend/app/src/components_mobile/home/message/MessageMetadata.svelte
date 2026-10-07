@@ -14,7 +14,7 @@
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
     import DeletedIcon from "svelte-material-icons/DeleteOutline.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import DisappearsAt from "../DisappearsAt.svelte";
 
     const client = getContext<OpenChat>("client");

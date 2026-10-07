@@ -2,12 +2,12 @@
     import type { MessageContent, MessageContext, OgPreview, RehydratedMessagePreview } from "@client";
     import { i18nKey } from "../../i18n/i18n";
     import AudioContent from "./AudioContent.svelte";
-    import BlockedContent from "./BlockedContent.svelte";
-    import BotPlaceholderContent from "./BotPlaceholderContent.svelte";
+    import BlockedContent from "@shared_components/home/BlockedContent.svelte";
+    import BotPlaceholderContent from "@shared_components/home/BotPlaceholderContent.svelte";
     import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
     import ModerationReportContent from "./ModerationReportContent.svelte";
-    import RestrictedMessageContent from "./RestrictedMessageContent.svelte";
+    import RestrictedMessageContent from "@shared_components/home/RestrictedMessageContent.svelte";
     import FileContent from "./FileContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
     import ImageContent from "./ImageContent.svelte";
@@ -15,10 +15,10 @@
     import MessageReminderContent from "./MessageReminderContent.svelte";
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
     import P2PSwapContent from "./P2PSwapContent.svelte";
-    import PlaceholderContent from "./PlaceholderContent.svelte";
+    import PlaceholderContent from "@shared_components/home/PlaceholderContent.svelte";
     import PollContent from "./PollContent.svelte";
     import PrizeContent from "./PrizeContent.svelte";
-    import PrizeWinnerContent from "./PrizeWinnerContent.svelte";
+    import PrizeWinnerContent from "@shared_components/home/PrizeWinnerContent.svelte";
     import ProposalContent from "./proposals/ProposalContent.svelte";
     import ReportedMessageContent from "./ReportedMessageContent.svelte";
     import TextContent from "./TextContent.svelte";

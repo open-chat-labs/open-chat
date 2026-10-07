@@ -3,7 +3,7 @@
     import { CommonButton } from "component-lib";
     import type { UserSummary } from "@shared";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import User from "../User.svelte";
 
     interface Props {

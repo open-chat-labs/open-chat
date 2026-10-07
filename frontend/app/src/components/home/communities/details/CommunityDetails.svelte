@@ -15,11 +15,11 @@
         communityVisibilityOpen,
     } from "../../../../stores/settings";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import InviteUsersWithLink from "../../InviteUsersWithLink.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import Stats from "../../Stats.svelte";
-    import AccessGateExpiry from "../../access/AccessGateExpiry.svelte";
+    import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
     import AccessGateSummary from "../../access/AccessGateSummary.svelte";
     import ReferredUsersList from "../../profile/ReferredUsersList.svelte";
     import PermissionsViewer from "../PermissionsViewer.svelte";

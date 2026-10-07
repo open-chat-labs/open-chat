@@ -27,10 +27,10 @@
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import { TokenState } from "../wallet/walletState.svelte";
-    import AccessGateExpiry from "./AccessGateExpiry.svelte";
+    import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
 

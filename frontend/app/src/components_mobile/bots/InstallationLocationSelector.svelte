@@ -11,7 +11,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import NothingToSee from "../home/NothingToSee.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 

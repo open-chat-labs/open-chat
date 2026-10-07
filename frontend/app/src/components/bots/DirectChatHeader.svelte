@@ -30,7 +30,7 @@
     import MenuIcon from "../MenuIcon.svelte";
     import MenuItem from "../MenuItem.svelte";
     import SectionHeader from "../SectionHeader.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import WithBotManagement from "./WithBotManagement.svelte";
 
     const client = getContext<OpenChat>("client");

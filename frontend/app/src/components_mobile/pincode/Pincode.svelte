@@ -11,7 +11,7 @@
 
     import { i18nKey } from "@src/i18n/i18n";
     import type { ResourceKey } from "@client";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import PincodeInput from "./PincodeInput.svelte";
 
     interface Props {

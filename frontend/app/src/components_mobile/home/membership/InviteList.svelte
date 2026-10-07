@@ -13,7 +13,7 @@
     import Account from "svelte-material-icons/AccountGroupOutline.svelte";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
     import ShareIcon from "svelte-material-icons/ShareOutline.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import NothingToSee from "../NothingToSee.svelte";
     import SelectUsers from "../SelectUsers.svelte";
     import InvitedUser from "./InvitedUser.svelte";

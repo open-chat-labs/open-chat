@@ -15,7 +15,7 @@
     import { onMount } from "svelte";
     import { getShellVersion, openUrl } from "tauri-plugin-oc-api";
     import { i18nKey } from "../i18n/i18n";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const DOWNLOAD_URL = "https://github.com/open-chat-labs/open-chat/releases/latest";
     const DISMISSED_KEY = "oc_legacy_install_dismissed_at";

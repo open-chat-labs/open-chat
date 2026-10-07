@@ -36,7 +36,7 @@
     import Pound from "svelte-material-icons/Pound.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
     import Edit from "svelte-material-icons/SquareEditOutline.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AccessGateSummary from "../../AccessGateSummary.svelte";
     import { updateGroupState } from "../../createOrUpdateGroup/group.svelte";
     import Markdown from "@shared_components/Markdown.svelte";

@@ -29,7 +29,7 @@
     import HoverIcon from "../HoverIcon.svelte";
     import WithVerifiedBadge from "../icons/WithVerifiedBadge.svelte";
     import SectionHeader from "../SectionHeader.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Typing from "@shared_components/Typing.svelte";
     import type { ProfileLinkClickedEvent } from "@webcomponents/profileLink";
     import ChatSubtext from "./ChatSubtext.svelte";

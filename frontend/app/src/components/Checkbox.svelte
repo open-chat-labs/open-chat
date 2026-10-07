@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { ResourceKey } from "@client";
     import { rtlStore } from "../stores/rtl";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import type { Snippet } from "svelte";
 
     interface Props {

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Button } from "component-lib";
     import { type ResourceKey } from "@client";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         name: ResourceKey;

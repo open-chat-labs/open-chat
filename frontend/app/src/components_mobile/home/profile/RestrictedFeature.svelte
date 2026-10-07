@@ -2,7 +2,7 @@
     import { Column, Sheet, Title } from "component-lib";
     import type { Feature } from "@client";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         feature: Feature;

@@ -6,7 +6,7 @@
     import FancyLoader from "../icons/FancyLoader.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Select from "../Select.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ModeSelection from "./ModeSelection.svelte";
     import SignIn from "./SignIn.svelte";
     import SignUp from "./SignUp.svelte";

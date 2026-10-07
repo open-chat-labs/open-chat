@@ -31,7 +31,7 @@
     import Close from "svelte-material-icons/Close.svelte";
     import Lock from "svelte-material-icons/Lock.svelte";
     import Setting from "../../Setting.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import SetPinNumberModal from "./SetPinNumberModal.svelte";
     import TokenSelector from "./TokenSelector.svelte";

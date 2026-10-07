@@ -20,7 +20,7 @@
     import Translate from "svelte-material-icons/Translate.svelte";
     import Video from "svelte-material-icons/VideoOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Feature from "./Feature.svelte";
 
     let iconSize = "1rem";

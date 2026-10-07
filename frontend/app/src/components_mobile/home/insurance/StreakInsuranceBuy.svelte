@@ -27,7 +27,7 @@
     import QrCode from "svelte-material-icons/Qrcode.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import StreakHeadline from "../user_profile/StreakHeadline.svelte";
     import { TokenState } from "../wallet/walletState.svelte";

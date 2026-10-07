@@ -12,7 +12,7 @@
         isExternalContentReady,
         type ExternalContentHostMessage,
     } from "../../utils/externalContent";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import PrivatePreview from "./PrivatePreview.svelte";
 
     interface Props {

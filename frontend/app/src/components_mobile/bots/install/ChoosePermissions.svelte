@@ -5,7 +5,7 @@
     import ChatOutline from "svelte-material-icons/ChatOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import { togglePermission } from "../../../utils/bots";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         level: Level;

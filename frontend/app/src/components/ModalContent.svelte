@@ -11,7 +11,7 @@
     import { currentTheme } from "../theme/themes";
     import Button from "./Button.svelte";
     import HoverIcon from "./HoverIcon.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     type OnClose = (() => void) | undefined;
 

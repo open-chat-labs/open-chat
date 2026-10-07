@@ -2,7 +2,7 @@
     import { Tooltip } from "component-lib";
     import type { DiamondMembershipStatus, ResourceKey } from "@client";
     import { i18nKey } from "../../i18n/i18n";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Diamond from "svelte-material-icons/Diamond.svelte";
     import DiamondOutline from "svelte-material-icons/DiamondOutline.svelte";
     import BadgeContainer, { type BadgeSize } from "../home/profile/BadgeContainer.svelte";

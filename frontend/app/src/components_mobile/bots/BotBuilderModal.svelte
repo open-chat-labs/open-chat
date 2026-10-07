@@ -11,7 +11,7 @@
     import { toastStore } from "../../stores/toast";
     import SlidingPageContent from "../home/SlidingPageContent.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import BotBuilder from "./AutoBotBuilder.svelte";
     import ChooseBot from "./ChooseBot.svelte";
 

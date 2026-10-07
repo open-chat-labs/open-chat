@@ -6,7 +6,7 @@
     import { type Snippet } from "svelte";
     import Arrow from "@shared_components/Arrow.svelte";
     import type { ResourceKey } from "@client";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         headerText?: ResourceKey | undefined;

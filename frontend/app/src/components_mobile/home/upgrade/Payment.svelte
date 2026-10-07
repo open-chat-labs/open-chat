@@ -45,7 +45,7 @@
     import { toastStore } from "../../../stores/toast";
     import type { RemoteData } from "../../../utils/remoteData";
     import Setting from "../../Setting.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
     import ExternalWalletApproval from "../ExternalWalletApproval.svelte";

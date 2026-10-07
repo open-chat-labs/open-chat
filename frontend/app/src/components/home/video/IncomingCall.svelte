@@ -25,7 +25,7 @@
     import Avatar from "../../Avatar.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         onJoinVideoCall: (chatId: ChatIdentifier, callType: VideoCallType) => void;

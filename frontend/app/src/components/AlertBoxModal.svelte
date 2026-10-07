@@ -8,7 +8,7 @@
     import Markdown from "@shared_components/Markdown.svelte";
     import ModalContent from "./ModalContent.svelte";
     import Overlay from "./Overlay.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         title: ResourceKey;

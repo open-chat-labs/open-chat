@@ -3,7 +3,7 @@
     import { Body, ColourVars, Column, H2, Row, Sheet } from "component-lib";
     import Right from "svelte-material-icons/ChevronRight.svelte";
     import LightningBolt from "svelte-material-icons/LightningBoltCircle.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         streaks: number[];

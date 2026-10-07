@@ -21,7 +21,7 @@
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../ErrorMessage.svelte";
     import FindUser from "../FindUser.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import UsernameInput from "../UsernameInput.svelte";
     import UserPill from "../UserPill.svelte";
 

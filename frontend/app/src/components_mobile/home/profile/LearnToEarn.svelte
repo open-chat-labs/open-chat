@@ -30,7 +30,7 @@
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { now } from "../../../stores/time";
     import Progress from "../../Progress.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import NothingToSee from "../NothingToSee.svelte";
 
     const client = getContext<OpenChat>("client");

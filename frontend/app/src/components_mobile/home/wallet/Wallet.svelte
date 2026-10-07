@@ -3,7 +3,7 @@
     import { namedAccountsStore, OpenChat, publish } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Accounts from "./Accounts.svelte";
     import OverallBalance from "./OverallBalance.svelte";
     import TokenToggle from "./TokenToggle.svelte";

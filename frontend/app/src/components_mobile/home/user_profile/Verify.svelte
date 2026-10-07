@@ -3,7 +3,7 @@
     import { BodySmall, CommonButton, Container, H2 } from "component-lib";
     import { publish } from "@client";
     import AccountStar from "svelte-material-icons/AccountStarOutline.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import HumanityConfirmation from "../HumanityConfirmation.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
 

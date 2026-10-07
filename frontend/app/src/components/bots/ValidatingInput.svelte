@@ -2,7 +2,7 @@
     import Input from "../Input.svelte";
     import { type InputProps } from "../Input.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import type { ResourceKey } from "@client";
 
     type Props = InputProps & { error: ResourceKey[] };

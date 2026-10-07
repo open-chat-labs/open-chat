@@ -25,7 +25,7 @@
     import Input from "../../Input.svelte";
     import Legend from "../../Legend.svelte";
     import Select from "../../Select.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import CredentialSelector from "./CredentialSelector.svelte";
 

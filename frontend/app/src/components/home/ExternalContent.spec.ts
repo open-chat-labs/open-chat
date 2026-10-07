@@ -23,10 +23,10 @@ vi.mock("@client", () => ({
 vi.mock("../../theme/themes", () => ({
     currentTheme: readable({ name: "test" }),
 }));
-vi.mock("../Translatable.svelte", async () => ({
+vi.mock("@shared_components/Translatable.svelte", async () => ({
     default: (await import("./ExternalContent.spec.stub.svelte")).default,
 }));
-vi.mock("../../components_mobile/Translatable.svelte", async () => ({
+vi.mock("@shared_components/Translatable.svelte", async () => ({
     default: (await import("./ExternalContent.spec.stub.svelte")).default,
 }));
 

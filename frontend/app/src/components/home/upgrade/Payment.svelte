@@ -20,11 +20,11 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Diamond from "../../icons/Diamond.svelte";
     import Loading from "@shared_components/Loading.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import ExternalWalletApproval from "../ExternalWalletApproval.svelte";
     import Congratulations from "./Congratulations.svelte";
-    import Expiry from "./Expiry.svelte";
+    import Expiry from "@shared_components/home/upgrade/Expiry.svelte";
     import Footer from "./Footer.svelte";
 
     interface Props {

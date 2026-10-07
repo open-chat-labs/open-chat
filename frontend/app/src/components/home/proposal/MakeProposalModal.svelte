@@ -39,7 +39,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import Select from "../../Select.svelte";
     import TextArea from "../../TextArea.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AccountInfo from "../AccountInfo.svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import DurationPicker from "../DurationPicker.svelte";

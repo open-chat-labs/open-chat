@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { BodySmall, CommonButton, Container, Form, Input, Sheet, Title } from "component-lib";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import { updateCommunityState } from "./community.svelte";
 
     const MAX_LENGTH = 40;

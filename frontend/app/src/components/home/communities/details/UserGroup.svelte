@@ -20,7 +20,7 @@
     import Input from "../../../Input.svelte";
     import Legend from "../../../Legend.svelte";
     import Search from "../../../Search.svelte";
-    import Translatable from "../../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import VirtualList from "@shared_components/VirtualList.svelte";
     import User from "../../groupdetails/User.svelte";
     import Markdown from "@shared_components/Markdown.svelte";

@@ -38,7 +38,7 @@
     import HoverIcon from "./HoverIcon.svelte";
     import Search from "./Search.svelte";
     import SectionHeader from "./SectionHeader.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Badges from "./home/profile/Badges.svelte";
 
     const client = getContext<OpenChat>("client");

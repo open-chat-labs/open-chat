@@ -55,7 +55,7 @@
     import CommandSelector from "../bots/CommandSelector.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Progress from "../Progress.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import AudioAttacher from "./AudioAttacher.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
     import MentionPicker from "./MentionPicker.svelte";

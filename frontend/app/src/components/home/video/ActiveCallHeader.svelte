@@ -10,7 +10,7 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import Typing from "@shared_components/Typing.svelte";
     import ActiveCallActions from "./ActiveCallActions.svelte";
-    import type { VideoCallChat } from "./callChat";
+    import type { VideoCallChat } from "@shared_components/home/video/callChat";
 
     interface Props {
         askedToSpeak: boolean;

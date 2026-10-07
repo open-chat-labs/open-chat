@@ -18,7 +18,7 @@
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
     import Checkbox from "../Checkbox.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import FileAuthorityReport from "./FileAuthorityReport.svelte";
     import { ncaReporterUrl } from "../../utils/ncaFiling";
     import VaultAccessLog from "./VaultAccessLog.svelte";

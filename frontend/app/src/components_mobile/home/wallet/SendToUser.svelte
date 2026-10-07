@@ -25,7 +25,7 @@
     import SendOutline from "svelte-material-icons/SendOutline.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
     import SelectUser from "../../SelectDirectUser.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import TokenInput from "../TokenInput.svelte";
     import TransferFeesMessage from "../TransferFeesMessage.svelte";
     import SuccessIcon from "./SuccessIcon.svelte";

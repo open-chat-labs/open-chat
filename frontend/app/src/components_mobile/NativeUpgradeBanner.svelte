@@ -6,7 +6,7 @@
     import { openUrl } from "tauri-plugin-oc-api";
     import { i18nKey } from "../i18n/i18n";
     import Progress from "./Progress.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.oclabs.openchat";
     const DIRECT_DOWNLOAD_URL = "https://github.com/open-chat-labs/open-chat/releases/latest";

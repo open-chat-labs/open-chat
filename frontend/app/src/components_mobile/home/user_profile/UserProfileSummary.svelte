@@ -12,7 +12,7 @@
     import { getContext, onMount } from "svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Share from "svelte-material-icons/ShareVariantOutline.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Stats from "../Stats.svelte";
     import UserProfileSummaryCard from "./UserProfileSummaryCard.svelte";
 

@@ -19,8 +19,8 @@
     import { _ } from "svelte-i18n";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
-    import AccessGateExpiry from "./AccessGateExpiry.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
+    import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
 
     const client = getContext<OpenChat>("client");
 

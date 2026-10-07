@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import type { ResourceKey } from "@client";
 
     interface Props {

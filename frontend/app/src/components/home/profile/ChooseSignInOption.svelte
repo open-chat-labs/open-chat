@@ -6,7 +6,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import Button from "../../Button.svelte";
     import Input from "../../Input.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import SignInOption from "./SignInOption.svelte";
 
     const client = getContext<OpenChat>("client");

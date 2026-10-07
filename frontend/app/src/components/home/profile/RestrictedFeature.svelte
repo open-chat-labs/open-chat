@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Feature } from "@client";
     import ModalContent from "../../ModalContent.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";

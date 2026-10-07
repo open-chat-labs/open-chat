@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { ResourceKey } from "@client";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     import MoreInfo from "../../InfoIcon.svelte";
     import type { Snippet } from "svelte";

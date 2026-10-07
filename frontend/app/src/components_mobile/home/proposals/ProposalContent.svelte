@@ -35,7 +35,7 @@
     import { now } from "../../../stores/time";
     import { toastStore } from "../../../stores/toast";
     import { round2 } from "../../../utils/math";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";

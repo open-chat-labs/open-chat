@@ -1,7 +1,7 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import { Body, CommonButton, Container } from "component-lib";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 </script>
 
 <Container padding={["zero", "md"]} direction={"vertical"} gap={"sm"}>

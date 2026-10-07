@@ -4,7 +4,7 @@
     import { chitBands } from "@client";
     import Right from "svelte-material-icons/ChevronRight.svelte";
     import Lightning from "svelte-material-icons/FlashOutline.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         min: number;

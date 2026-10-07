@@ -51,7 +51,7 @@
     import LightningBolt from "svelte-material-icons/LightningBoltCircle.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Setting from "../Setting.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import DurationSelector from "./DurationSelector.svelte";
     import SelectChitEarned from "./SelectChitEarned.svelte";

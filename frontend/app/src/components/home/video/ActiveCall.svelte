@@ -44,7 +44,7 @@
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ActiveCallHeader from "./ActiveCallHeader.svelte";
 
     interface Props {

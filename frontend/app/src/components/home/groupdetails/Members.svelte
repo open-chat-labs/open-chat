@@ -34,7 +34,7 @@
     import { i18nKey } from "../../../i18n/i18n";
     import { trimLeadingAtSymbol } from "../../../utils/user";
     import Search from "../../Search.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import VirtualList from "@shared_components/VirtualList.svelte";
     import UserGroups from "../communities/details/UserGroups.svelte";
     import BlockedUser from "./BlockedUser.svelte";

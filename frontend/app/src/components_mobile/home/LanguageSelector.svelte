@@ -3,7 +3,7 @@
     import { Container, Option, Search, Select, Subtitle } from "component-lib";
     import type { Snippet } from "svelte";
     import { _ } from "svelte-i18n";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         selected?: { name: string; code: string };

@@ -14,7 +14,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import VirtualList from "@shared_components/VirtualList.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import NothingToSee from "../NothingToSee.svelte";

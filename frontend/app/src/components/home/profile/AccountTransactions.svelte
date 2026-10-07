@@ -22,7 +22,7 @@
     import ButtonGroup from "../../ButtonGroup.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
     import TransactionEndpoint from "./TransactionEndpoint.svelte";
 

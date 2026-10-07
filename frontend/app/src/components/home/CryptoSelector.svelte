@@ -7,7 +7,7 @@
     import MenuIcon from "../MenuIcon.svelte";
     import MenuItem from "../MenuItem.svelte";
     import Search from "../Search.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         ledger: string | undefined;

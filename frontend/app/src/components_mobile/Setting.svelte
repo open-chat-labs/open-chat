@@ -2,7 +2,7 @@
     import { Body, Container } from "component-lib";
     import { i18nKey } from "@client";
     import type { Snippet } from "svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
         info: string | string[];

@@ -2,7 +2,7 @@
     import { i18nKey } from "@src/i18n/i18n";
     import { Container, H1 } from "component-lib";
     import { chitStateStore } from "@client";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 </script>
 
 <Container supplementalClass={"streak_title"} gap={"xl"} direction={"vertical"}>

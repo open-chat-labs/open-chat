@@ -12,7 +12,7 @@
     import NumberInput from "../NumberInput.svelte";
     import Overlay from "../Overlay.svelte";
     import Select from "../Select.svelte";
-    import Translatable from "../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import ValidatingInput from "./ValidatingInput.svelte";
 
     interface Props {

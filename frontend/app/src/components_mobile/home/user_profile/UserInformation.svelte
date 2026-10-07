@@ -14,7 +14,7 @@
     import { getContext } from "svelte";
     import Save from "svelte-material-icons/ContentSaveOutline.svelte";
     import DisplayNameInput from "../../DisplayNameInput.svelte";
-    import Translatable from "../../Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
     import UsernameInput from "../../UsernameInput.svelte";
     import DiamondUpgradeBox from "../DiamondUpgradeBox.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";

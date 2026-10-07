@@ -27,7 +27,7 @@
     import Information from "svelte-material-icons/Information.svelte";
     import { i18nKey, interpolate } from "../i18n/i18n";
     import Tooltip from "./tooltip/Tooltip.svelte";
-    import Translatable from "./Translatable.svelte";
+    import Translatable from "@shared_components/Translatable.svelte";
 
     let {
         align = "left",
