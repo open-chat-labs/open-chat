@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove the one-off files backfill, which has completed in prod ([#9813](https://github.com/open-chat-labs/open-chat/pull/9813))
+- Remove the retrying of `c2c_user_ids_migrated` until each bucket has it, now that every bucket has ([#9823](https://github.com/open-chat-labs/open-chat/pull/9823))
 
 ## [[2.0.2105](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2105-storage_index)] - 2026-10-06
 

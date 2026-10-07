@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove the one-offs which queued the users migrated so far for the StorageIndex and moved their bots, now that they have run ([#9823](https://github.com/open-chat-labs/open-chat/pull/9823))
+- Remove the retrying of `c2c_user_ids_migrated` until the StorageIndex has it, now that it has ([#9823](https://github.com/open-chat-labs/open-chat/pull/9823))
 
 ## [[2.0.2112](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2112-user_index)] - 2026-10-07
 
