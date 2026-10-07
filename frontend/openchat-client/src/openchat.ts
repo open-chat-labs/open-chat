@@ -212,7 +212,6 @@ import {
     type FaqRoute,
     type FullWebhookDetails,
     type GenerateMagicLinkResponse,
-    type GetOpenChatIdentitySuccess,
     type GlobalSelectedChatRoute,
     type GrantedBotPermissions,
     type GroupChatDetailsResponse,
@@ -636,6 +635,7 @@ import {
     movePreviousWalletFunds,
     PREVIOUS_WALLETS_RETRY_INTERVAL,
 } from "./utils/previousWalletFunds";
+import { openChatIdentityOrSignOut } from "./utils/openChatIdentity";
 import { SyncPuller } from "./utils/syncPuller";
 import { passkeyProviderName } from "./utils/passkeyProvider";
 import { showTrace } from "./utils/profiling";
@@ -1009,26 +1009,25 @@ export class OpenChat {
 
         let createdUser: CreatedUser | undefined;
         if (!anon) {
-            let ocIdentity: GetOpenChatIdentitySuccess | undefined;
-            if (setAuthIdentityResponse.kind === "success") {
-                ocIdentity = setAuthIdentityResponse;
-            } else if (setAuthIdentityResponse.kind === "oc_identity_not_found") {
-                const createOpenChatIdentityResponse = await this.#worker.send({
-                    kind: "createOpenChatIdentity",
-                    webAuthnCredentialId: this.#webAuthnKey?.credentialId,
-                });
-                if (
-                    typeof createOpenChatIdentityResponse === "object" &&
-                    createOpenChatIdentityResponse.kind === "success"
-                ) {
-                    ocIdentity = createOpenChatIdentityResponse;
-                }
-            }
+            const ocIdentity = await openChatIdentityOrSignOut(
+                setAuthIdentityResponse,
+                () =>
+                    this.#worker.send({
+                        kind: "createOpenChatIdentity",
+                        webAuthnCredentialId: this.#webAuthnKey?.credentialId,
+                    }),
+                (reason) => {
+                    this.#logger.error(
+                        "No OpenChat identity for the signed-in principal, signing out",
+                        new Error(reason),
+                    );
+                    this.logout();
+                },
+            );
+            if (ocIdentity === undefined) return;
 
-            if (ocIdentity !== undefined) {
-                this.#ocIdentityPrincipal = ocIdentity.ocIdentityPrincipal;
-                this.#startSession(ocIdentity.ocIdentityPrincipal, ocIdentity.ocIdentityExpiry);
-            }
+            this.#ocIdentityPrincipal = ocIdentity.ocIdentityPrincipal;
+            this.#startSession(ocIdentity.ocIdentityPrincipal, ocIdentity.ocIdentityExpiry);
 
             createdUser = await this.getCurrentUser()
                 .then((user) => {
@@ -6472,6 +6471,12 @@ export class OpenChat {
     }
 
     registerUser(username: string, email: string | undefined): Promise<RegisterUserResponse> {
+        // Without an OpenChat identity the worker's agent is anonymous and can't sign the request.
+        // The sign-in that got here is already signing out (see openChatIdentityOrSignOut), but a
+        // sign-up flow can call this before the navigation lands (#9635).
+        if (this.#ocIdentityPrincipal === undefined) {
+            return Promise.resolve({ kind: "internal_error" });
+        }
         return this.#worker
             .send({
                 kind: "registerUser",
