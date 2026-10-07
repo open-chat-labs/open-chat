@@ -109,10 +109,7 @@ function communityFilterToString(filter: Set<string>): string {
 type LedgerCanister = string;
 type GovernanceCanister = string;
 
-export const hideMessagesFromDirectBlocked = new LocalStorageBoolStore(
-    "openchat_hideblocked",
-    false,
-);
+export const hideMessagesFromDirectBlocked = new LocalStorageBoolStore(configKeys.hideBlocked, false);
 
 export const lastSelectedChatByScopeStore = writable<ChatListScopeMap<ChatIdentifier>>(
     new ChatListScopeMap(),
