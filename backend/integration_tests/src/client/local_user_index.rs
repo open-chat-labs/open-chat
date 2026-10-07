@@ -11,6 +11,7 @@ generate_msgpack_query_call!(group_and_community_summary_updates_v2);
 generate_msgpack_query_call!(is_user_or_multi_user_canister);
 generate_query_call!(latest_notification_index);
 generate_query_call!(media_scan_jobs);
+generate_msgpack_query_call!(migrated_user_ids);
 generate_query_call!(notifications);
 
 // Updates
@@ -401,5 +402,18 @@ pub mod happy_path {
         let response = super::latest_notification_index(env, sender, local_user_index, &Empty {});
         let local_user_index_canister::latest_notification_index::Response::Success(index) = response;
         index
+    }
+
+    // The latest id the LocalUserIndex knows the user by, which is their own if it hasn't learned of
+    // them being migrated
+    pub fn latest_user_id(env: &PocketIc, sender: Principal, local_user_index: CanisterId, user_id: UserId) -> UserId {
+        let response = super::migrated_user_ids(
+            env,
+            sender,
+            local_user_index,
+            &local_user_index_canister::migrated_user_ids::Args { user_ids: vec![user_id] },
+        );
+        let local_user_index_canister::migrated_user_ids::Response::Success(migrated) = response;
+        migrated.get(&user_id).copied().unwrap_or(user_id)
     }
 }

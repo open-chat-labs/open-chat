@@ -1,14 +1,18 @@
 import type { Violation } from "@client";
 
-// Props every game's Board.svelte accepts. The shell passes its model/state through opaquely;
-// each Board narrows M and S to its own game's types.
-export type BoardProps<M, S> = {
-    model: M;
-    state: S;
+// What a game's Board draws from: its own model and state, and what its game derives from them.
+// A BoundBoard is one; the Board is only ever given the board it belongs to (see PuzzleBoard).
+export type BoardView<M, S> = {
+    readonly model: M;
+    readonly state: S;
     /** key -> mark name, from DailyGame.marks(). */
-    marks: Map<number, string>;
+    readonly marks: Map<number, string>;
     /** Derived highlight, from DailyGame.lit() (empty for games without one). */
-    lit: Set<number>;
+    readonly lit: Set<number>;
+};
+
+// Everything else a Board takes, from the screen around it.
+export type BoardChromeProps = {
     /** DailyGame.check() plus a `{ kind: "mistake" }` entry for keys the server flagged. */
     violations: Violation[];
     /** Every key the current hint step looked at (context, painted faintly). Superset of target. */
@@ -21,7 +25,14 @@ export type BoardProps<M, S> = {
     disabled?: boolean;
 };
 
-export type PictogramProps<M> = { model: M };
+export type BoardPropsFor<B> = BoardChromeProps & { board: B };
+
+// Props every game's Board.svelte accepts, typed with its own game's model and state.
+export type BoardProps<M, S> = BoardPropsFor<BoardView<M, S>>;
+
+export type PictogramPropsFor<B> = { board: B };
+
+export type PictogramProps<M> = PictogramPropsFor<{ readonly model: M }>;
 
 /**
  * One still of a game's "how to play" demo. The frame's marks are applied to an empty grid with

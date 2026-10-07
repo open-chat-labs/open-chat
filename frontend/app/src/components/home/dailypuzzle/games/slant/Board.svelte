@@ -6,9 +6,7 @@
     import type { BoardProps } from "../types";
 
     let {
-        model,
-        state,
-        marks,
+        board,
         violations,
         focus,
         target,
@@ -16,6 +14,9 @@
         greyed = false,
         disabled = false,
     }: BoardProps<SlantDescription, SlantCell[]> = $props();
+    let model = $derived(board.model);
+    let state = $derived(board.state);
+    let marks = $derived(board.marks);
 
     // Clue circles sit on the grid corners, so the outer ones need a little room past the frame.
     const CLUE_R = 2.4;

@@ -5,7 +5,8 @@
     import type { PictogramProps } from "../types";
 
     // Givens only, for the result card.
-    let { model }: PictogramProps<LightUpDescription> = $props();
+    let { board }: PictogramProps<LightUpDescription> = $props();
+    let model = $derived(board.model);
 
     let elements = $derived(lightUp.elements(model));
 </script>
