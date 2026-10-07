@@ -2,6 +2,7 @@ import {
     bridges,
     chitStateStore,
     dailyPuzzleStore,
+    ErrorCode,
     lightUp,
     slant,
     puzzleFingerprint,
@@ -11,7 +12,14 @@ import {
     type ServedHint,
 } from "@client";
 import desktopScreen from "../components/home/dailypuzzle/DailyPuzzle.svelte?raw";
+import desktopResult from "../components/home/dailypuzzle/DailyResultContent.svelte?raw";
+import gameDemo from "../components/home/dailypuzzle/GameDemo.svelte?raw";
+import gameTypes from "../components/home/dailypuzzle/games/types.ts?raw";
 import mobileScreen from "../components_mobile/home/dailypuzzle/DailyPuzzle.svelte?raw";
+import mobileResult from "../components_mobile/home/dailypuzzle/DailyResultContent.svelte?raw";
+import sessionSource from "./dailyPuzzle.svelte.ts?raw";
+import registrySource from "./dailyPuzzleGames.ts?raw";
+import boardSource from "./puzzleBoard.svelte.ts?raw";
 import LightUpPictogram from "../components/home/dailypuzzle/games/light_up/Pictogram.svelte";
 import SlantBoard from "../components/home/dailypuzzle/games/slant/Board.svelte";
 import { flushSync } from "svelte";
@@ -1108,7 +1116,19 @@ describe("DailyPuzzleGame is the one source of truth for a play session (#9824)"
 
     // invariant 7
     test("a hint answer for a puzzle the poll has since replaced changes nothing", async () => {
-        for (const answer of [served([1, 2]), { ...served([3, 4]), mistake: true }]) {
+        const answers = [
+            { kind: "success", hint: served([1, 2]), hintsUsed: 1, state: userState() },
+            {
+                kind: "success",
+                hint: { ...served([3, 4]), mistake: true },
+                hintsUsed: 1,
+                state: userState(),
+            },
+            // a quote the button would accept: no retry, so nothing is bought for the new puzzle
+            { kind: "error", code: ErrorCode.PriceMismatch, message: "20" },
+            { kind: "error", code: ErrorCode.Throttled, message: "max_hints" },
+        ];
+        for (const answer of answers) {
             let reply!: (resp: unknown) => void;
             const client = fakeClient({
                 dailyPuzzleHint: vi.fn(() => new Promise((resolve) => (reply = resolve))),
@@ -1118,8 +1138,10 @@ describe("DailyPuzzleGame is the one source of truth for a play session (#9824)"
             const next = { ...puzzle, number: NUMBER + 1 };
             dailyPuzzleStore.set({ puzzles: [next], states: [userState({ number: NUMBER + 1 })] });
             flushSync();
-            reply({ kind: "success", hint: answer, hintsUsed: 1, state: userState() });
+            reply(answer);
             await asked;
+            expect(client.dailyPuzzleHint).toHaveBeenCalledTimes(1);
+            expect(g.hintButton.kind).toBe("hint");
             expect(g.focus.size).toBe(0);
             expect(g.target.size).toBe(0);
             expect(g.caption).toBeUndefined();
@@ -1140,5 +1162,24 @@ describe("DailyPuzzleGame is the one source of truth for a play session (#9824)"
             // @ts-expect-error Slant's Board cannot draw a Light Up board
             bindBoard(lightUp, SlantBoard, LightUpPictogram, puzzle.description);
         expect(pairing).toBeTypeOf("function");
+    });
+
+    // invariant 8: the type-level test above cannot see a cast, so the casts are counted here
+    test("bindBoard holds the only cast that erases a game's types", () => {
+        const erasing = /as unknown as|[:<,(]\s*unknown\b|<any\b|\bany\s*[>,;)\]]/g;
+        const elsewhere = {
+            sessionSource,
+            registrySource,
+            gameTypes,
+            desktopScreen,
+            mobileScreen,
+            gameDemo,
+            desktopResult,
+            mobileResult,
+        };
+        for (const [name, source] of Object.entries(elsewhere)) {
+            expect(source.match(erasing), name).toBeNull();
+        }
+        expect(boardSource.match(erasing)).toEqual(["as unknown as"]);
     });
 });
