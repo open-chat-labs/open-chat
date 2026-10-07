@@ -2,6 +2,7 @@ use crate::{Data, RuntimeState, WASM_VERSION, regular_jobs};
 use types::{BuildVersion, Timestamped};
 use utils::env::Environment;
 
+mod cap_p2p_swap_expiry_jobs;
 mod init;
 mod inspect_message;
 mod post_upgrade;

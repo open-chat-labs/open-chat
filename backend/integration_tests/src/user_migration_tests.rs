@@ -141,6 +141,86 @@ fn users_with_a_p2p_swap_are_not_migrated_until_an_hour_after_it_expires() {
 }
 
 #[test]
+fn users_with_a_cancelled_p2p_swap_in_a_direct_chat_are_migrated_an_hour_after_it_is_cancelled() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
+    let user2 = client::register_user(env, canister_ids);
+
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user1.user_id, 11_000_000_000);
+
+    let message_id = random_from_u128();
+    let response = client::user::send_message_v2(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::send_message_v2::Args {
+            recipient: user2.user_id,
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
+                token0: chat_token_info(),
+                token0_amount: 10_000_000_000,
+                token1: icp_token_info(),
+                token1_amount: 1_000_000_000,
+                expires_in: DAY_IN_MS,
+                caption: None,
+                from_account: None,
+            }),
+            replies_to: None,
+            forwarding: false,
+            block_level_markdown: false,
+            message_filter_failed: None,
+            pin: None,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        "{response:?}"
+    );
+    crate::utils::wait_for_direct_chat(env, &user2, user1.user_id);
+
+    let response = client::user::cancel_p2p_swap(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::cancel_p2p_swap::Args {
+            user_id: user2.user_id,
+            message_id,
+        },
+    );
+    assert!(
+        matches!(response, user_canister::cancel_p2p_swap::Response::Success),
+        "{response:?}"
+    );
+    tick_many(env, 10);
+
+    // Once the swap has ended, neither the job to mark it expired nor the offerer's record of it holds
+    // up migrating either user until the day it was set to expire
+    env.advance_time(Duration::from_millis(2 * HOUR_IN_MS));
+    let operator = platform_operator(env, canister_ids, *controller);
+    migrate_users(
+        env,
+        operator.principal,
+        canister_ids.user_index,
+        vec![user1.user_id, user2.user_id],
+        Some(multi_user_canister(1)),
+    );
+    tick_many(env, 10);
+
+    for user in [&user1, &user2] {
+        started_migration(env, operator.principal, canister_ids.user_index, user.user_id);
+    }
+}
+
+#[test]
 fn migrating_user_is_exported() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

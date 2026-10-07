@@ -282,7 +282,12 @@ fn toggle_reaction(args: ToggleReactionArgs, caller_user_id: UserId, state: &mut
 
 fn p2p_swap_change_status(args: P2PSwapStatusChange, caller_user_id: UserId, state: &mut RuntimeState) {
     let now = state.env.now();
-    user_core::updates::c2c_user_canister::p2p_swap_change_status(&mut state.data.user, caller_user_id, args, now);
+    let message_id = args.message_id;
+    let ended = args.status.has_ended();
+    // The change is applied to the swap in the chat's main timeline
+    if user_core::updates::c2c_user_canister::p2p_swap_change_status(&mut state.data.user, caller_user_id, args, now) && ended {
+        state.cancel_mark_p2p_swap_expired_job(caller_user_id, None, message_id);
+    }
 }
 
 fn tip_message(args: user_canister::TipMessageArgs, caller_user_id: UserId, state: &mut RuntimeState) {

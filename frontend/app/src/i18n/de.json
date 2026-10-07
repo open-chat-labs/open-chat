@@ -1658,6 +1658,7 @@
         "creatingYourMessage": "Bitte warten Sie, während ein Tauschangebot erstellt wird",
         "expired": "Abgelaufen",
         "expiryTime": "Ablaufdatum",
+        "maxExpiry": "max. {days} Tage",
         "failedToCreateMessage": "Das Tauschangebot konnte nicht erstellt werden",
         "insufficient_funds": "Ihr Guthaben reicht nicht aus, um dieses Tauschangebot anzunehmen",
         "insufficientBalance": "Mangelhaftes Gleichgewicht",

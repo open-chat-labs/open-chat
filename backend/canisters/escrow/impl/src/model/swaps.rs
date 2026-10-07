@@ -1,9 +1,19 @@
 use crate::SwapMetrics;
 use candid::Principal;
+use constants::{MINUTE_IN_MS, P2P_SWAP_MAX_EXPIRY};
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
-use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, icrc1::CompletedCryptoTransaction};
+use types::{CanisterId, Milliseconds, P2PSwapLocation, TimestampMillis, TokenInfo, icrc1::CompletedCryptoTransaction};
+
+// The caller works out a swap's expiry from its own clock, which may be a little ahead of this
+// canister's
+const CLOCK_DIFFERENCE_ALLOWED: Milliseconds = 5 * MINUTE_IN_MS;
+
+// The latest a swap created at `created_at` may expire
+pub fn latest_allowed_expiry(created_at: TimestampMillis) -> TimestampMillis {
+    created_at + P2P_SWAP_MAX_EXPIRY + CLOCK_DIFFERENCE_ALLOWED
+}
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Swaps {
@@ -23,6 +33,10 @@ impl Swaps {
 
     pub fn get_mut(&mut self, id: u32) -> Option<&mut Swap> {
         self.map.get_mut(&id)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Swap> {
+        self.map.values()
     }
 
     pub fn metrics(&self, now: TimestampMillis) -> SwapMetrics {
