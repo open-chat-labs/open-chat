@@ -24,7 +24,8 @@ function lookup(obj: unknown, path: string): unknown {
     return path.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], obj);
 }
 
-// A game's strings, from en.json under dailyPuzzle.games.<game>: the only copy there is
+// A game's English strings, under dailyPuzzle.games.<game>. They set the keys every locale must
+// have (see dailyPuzzleLocales.spec.ts)
 function stringsOf(i18nPrefix: string): Record<string, string> {
     return flatten(lookup(en, i18nPrefix));
 }
@@ -38,7 +39,7 @@ describe("daily puzzle game strings", () => {
         });
     }
 
-    // #9824 invariant 9: en.json holds the game strings, and no game folder keeps a second copy
+    // #9824 invariant 9: the locale files hold the game strings, and no game folder keeps a copy
     test("no game keeps its own copy of its strings", () => {
         const copies = import.meta.glob("../components/home/dailypuzzle/games/*/*.json");
         expect(Object.keys(copies)).toEqual([]);

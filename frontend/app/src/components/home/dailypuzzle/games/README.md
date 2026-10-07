@@ -21,10 +21,11 @@ particular game. Each game plugs in through `DailyGame<M, S>`
    GridSvg's `margin`).
 3. `games/<game>/Pictogram.svelte`: props `PictogramProps<M>` (the model on `board`), givens
    only, for result cards.
-4. Strings in `i18n/en.json` under `dailyPuzzle.games.<game>`: `name`, `rules`, a
-   `technique.<id>` for every technique id the backend can serve, and the demo captions
-   (nested: `"technique": { "1": ... }`). en.json is the only copy; the translation editor and
-   the locale files key off it.
+4. Strings in every locale file (`i18n/*.json`) under `dailyPuzzle.games.<game>`: `name`,
+   `rules`, a `technique.<id>` for every technique id the backend can serve, and the demo
+   captions (nested: `"technique": { "1": ... }`). en.json sets the keys;
+   `utils/dailyPuzzleLocales.spec.ts` fails if a locale is missing one, drops a placeholder, or
+   leaves a rules, technique or demo sentence in English. Nothing goes in the game's folder.
 5. A `defineGame({...})` entry in `utils/dailyPuzzleGames.ts`.
 
 Puzzle colours are fixed (not theme tokens) so a board reads the same in every theme.
