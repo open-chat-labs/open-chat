@@ -42,7 +42,6 @@
     // undefined `def` = a game this build does not know how to render
     const opened = openDailyPuzzle(client, gameId, $currentUserIdStore);
     const { def, game } = opened;
-    const Board = def?.Board;
     // the session's puzzle, which the poll may have replaced since this opened
     let puzzle = $derived(game?.puzzle ?? opened.puzzle);
 
@@ -84,7 +83,7 @@
     <Container height={"fill"} padding={["xl", "xl", "huge"]} gap={"xl"} direction={"vertical"}>
         {#if puzzle === undefined}
             <Body><Translatable resourceKey={i18nKey("dailyPuzzle.unavailable")} /></Body>
-        {:else if game === undefined || Board === undefined}
+        {:else if game === undefined}
             <Body><Translatable resourceKey={i18nKey("dailyPuzzle.needsNewerApp")} /></Body>
         {:else}
             <div class="board" class:pending={!game.started && def?.demo === undefined}>
@@ -98,11 +97,8 @@
                             <Translatable resourceKey={i18nKey("dailyPuzzle.replaced")} />
                         </Caption>
                     {/if}
-                    <Board
-                        model={game.model}
-                        state={game.state}
-                        marks={game.marks}
-                        lit={game.lit}
+                    <game.board.Board
+                        board={game.board}
                         violations={game.violations}
                         focus={game.focus}
                         target={game.target}

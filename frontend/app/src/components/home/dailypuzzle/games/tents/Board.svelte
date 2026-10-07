@@ -13,8 +13,7 @@
     import type { BoardProps } from "../types";
 
     let {
-        model,
-        marks,
+        board,
         violations,
         focus,
         target,
@@ -22,6 +21,8 @@
         greyed = false,
         disabled = false,
     }: BoardProps<TentsDescription, TentsCell[]> = $props();
+    let model = $derived(board.model);
+    let marks = $derived(board.marks);
 
     let elements = $derived(tents.elements(model));
     // a tent that touches another or sits on a tree

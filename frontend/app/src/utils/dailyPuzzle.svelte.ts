@@ -1,6 +1,14 @@
 import {
+    ANON_USER_ID,
+    ErrorCode,
+    chitStateStore,
+    dailyPuzzleStore,
     descriptionToHex,
-    type DailyGame,
+    publish,
+    puzzleFingerprint,
+    puzzleReplaced,
+    stateFor,
+    todaysPuzzle,
     type DailyPuzzleSolved,
     type DailyPuzzleUserState,
     type DailyResultContent,
@@ -11,21 +19,13 @@ import {
     type ResourceKey,
     type ServedHint,
     type Violation,
-    ANON_USER_ID,
-    ErrorCode,
-    chitStateStore,
-    dailyPuzzleStore,
-    publish,
-    puzzleFingerprint,
-    puzzleReplaced,
-    stateFor,
-    todaysPuzzle,
 } from "@client";
 import { _, locale } from "svelte-i18n";
 import { get } from "svelte/store";
 import { i18nKey } from "../i18n/i18n";
 import { toastStore } from "../stores/toast";
 import { dailyPuzzleGame, gameI18nPrefix, type DailyPuzzleGameDef } from "./dailyPuzzleGames";
+import type { PuzzleBoard } from "./puzzleBoard.svelte";
 
 // A game's own sentence for a step, with its values made readable: a string of the game's
 // translated first (a room's colour, "the orange room"), a list joined as the player's language
@@ -148,25 +148,22 @@ export function openDailyPuzzle(
     return {
         puzzle,
         def,
-        game: new DailyPuzzleGame(client, puzzle, userId, def.game, def.demo !== undefined),
+        game: new DailyPuzzleGame(client, puzzle, userId, def, def.demo !== undefined),
     };
 }
 
 // Everything the puzzle screen needs that is not layout: the marks, rule state, hint flow,
 // saving and the submit path. Both the desktop modal and the mobile page render this, and read
 // nothing about the session from anywhere else (#9824). The shell knows nothing about the game
-// itself: it holds an opaque `model` and `state` and goes through the DailyGame interface for
-// every read and write.
+// itself: it holds a PuzzleBoard, which keeps the game's model and state to itself.
 export class DailyPuzzleGame {
-    readonly game: DailyGame<unknown, unknown>;
     // The poll can bring a different puzzle while the screen is open: a regenerate, or rollover.
     // The board is rebuilt from the new one so no marks from the old puzzle remain, and
     // `replaced` tells the player (#9334 invariant 58)
     puzzle: PublicDailyPuzzle;
-    model = $state.raw<unknown>(undefined);
+    board: PuzzleBoard;
     #fingerprint = "";
     replaced = $state(false);
-    state = $state.raw<unknown>(undefined);
     focus = $state<Set<number>>(new Set());
     target = $state<Set<number>>(new Set());
     // the caption a hint step set; a standing mistake overrides it (see `caption`)
@@ -197,16 +194,13 @@ export class DailyPuzzleGame {
     // once it says none are left, none are offered
     #outOfHints = $state(false);
 
-    marks = $derived.by(() => this.game.marks(this.model, this.state));
-    lit = $derived.by(() => this.game.lit?.(this.model, this.state) ?? new Set<number>());
     // rule violations plus the keys the server flagged in a mistake hint, for the board
     violations = $derived.by((): Violation[] => {
-        const out = this.game.check(this.model, this.state);
+        const out = this.board.violations;
         return this.mistakes.size > 0
             ? [...out, { keys: [...this.mistakes], kind: "mistake" }]
             : out;
     });
-    solvedLocally = $derived.by(() => this.game.solved(this.model, this.state));
 
     // The store's `.value` is not tracked by Svelte, so a $derived reading it straight would keep
     // a stale hint count after a hint is bought (#9675 invariant 28): mirror it into state
@@ -225,13 +219,14 @@ export class DailyPuzzleGame {
         private client: OpenChat,
         puzzle: PublicDailyPuzzle,
         private userId: string,
-        game: DailyGame<unknown, unknown>,
+        private def: DailyPuzzleGameDef,
         // whether this game has a step-through demo to teach its rules
         readonly hasDemo = false,
     ) {
-        this.game = game;
         this.puzzle = $state.raw(puzzle);
-        this.#load(puzzle);
+        this.#fingerprint = puzzleFingerprint(puzzle);
+        this.board = $state.raw(this.#resume());
+        this.lastHint = this.#lastHintServed();
         document.addEventListener("visibilitychange", this.#onVisibility);
         this.#unsubscribe = dailyPuzzleStore.subscribe((v) => {
             this.#store = v;
@@ -253,7 +248,6 @@ export class DailyPuzzleGame {
         this.#saveTimer = undefined;
         this.#dirty = false;
         this.puzzle = puzzle;
-        this.model = this.game.parse(puzzle.description);
         this.#fingerprint = puzzleFingerprint(puzzle);
         this.focus = new Set();
         this.target = new Set();
@@ -262,9 +256,12 @@ export class DailyPuzzleGame {
         this.resetArmed = false;
         this.#tutorialRequested = false;
         this.#outOfHints = false;
-        const userState = this.userState;
-        this.state = this.#resume(userState);
-        this.lastHint = [...(userState?.hints ?? [])].reverse().find((h) => !h.mistake);
+        this.board = this.#resume();
+        this.lastHint = this.#lastHintServed();
+    }
+
+    #lastHintServed(): ServedHint | undefined {
+        return [...(this.userState?.hints ?? [])].reverse().find((h) => !h.mistake);
     }
 
     dispose(): void {
@@ -313,34 +310,30 @@ export class DailyPuzzleGame {
     // the puzzle is started, so nothing is resumed before it either. Either copy is ignored
     // unless it was saved against this exact puzzle: the local copy carries a fingerprint, the
     // server copy only its game id and number (the LUI drops records on rollover).
-    #resume(userState: DailyPuzzleUserState | undefined): unknown {
-        const empty = this.game.empty(this.model);
-        if (userState?.startedAt === undefined) return empty;
+    #resume(): PuzzleBoard {
+        const description = this.puzzle.description;
+        const userState = this.userState;
+        if (userState?.startedAt === undefined) return this.def.newBoard(description);
         const local = readLocal(this.userId, this.puzzle.number);
         const serverAt = userState.gridSavedAt !== undefined ? Number(userState.gridSavedAt) : 0;
         const localAt = local?.savedAt ?? 0;
         const serverIsThis =
             userState.gameId === this.puzzle.gameId && userState.number === this.puzzle.number;
         if (local !== undefined && local.fingerprint === this.#fingerprint) {
-            const replayed = local.filled.reduce(
-                (s, [k, v]) => this.game.apply(this.model, s, k, v),
-                empty,
-            );
+            const replayed = this.def.newBoard(description, local.filled);
             // The local copy is written on every edit and the server copy a few seconds after,
             // stamped by the canister, so by timestamp the server always looks newer. Only the
             // local copy keeps the "no" marks, so when the two hold the same board it is the
             // same save seen from both ends, and the local copy is the fuller one.
-            const same =
-                serverIsThis && sameBytes(userState.grid, this.game.toBytes(this.model, replayed));
+            const same = serverIsThis && sameBytes(userState.grid, replayed.toBytes());
             if (localAt >= serverAt || same) {
                 this.#lastMistake = local.mistake;
                 return replayed;
             }
         }
-        if (serverIsThis) {
-            return this.game.fromBytes(this.model, userState.grid) ?? empty;
-        }
-        return empty;
+        const board = this.def.newBoard(description);
+        if (serverIsThis) board.load(userState.grid);
+        return board;
     }
 
     /** Start is offered unless a call is in flight or the balance is short of the quoted fee. */
@@ -439,16 +432,14 @@ export class DailyPuzzleGame {
 
     tap(key: number): void {
         if (this.inputDisabled) return;
-        const next = this.game.tap(this.model, this.state, key);
-        if (next === this.state) return;
-        this.state = next;
+        if (!this.board.tap(key)) return;
         this.#afterChange();
         this.#trimHint();
     }
 
     /** A board to clear: started, not solved, and holding at least one mark (#9361 invariant 4). */
     get canReset(): boolean {
-        return !this.inputDisabled && this.#filled().length > 0;
+        return !this.inputDisabled && this.board.filled().length > 0;
     }
 
     // First call arms, second call clears (#9361 invariant 5). Clears the marks and every
@@ -465,7 +456,7 @@ export class DailyPuzzleGame {
             return;
         }
         this.resetArmed = false;
-        this.state = this.game.empty(this.model);
+        this.board.clear();
         this.focus = new Set();
         this.target = new Set();
         this.#caption = undefined;
@@ -479,9 +470,9 @@ export class DailyPuzzleGame {
     // mark and has none, done when it has one, and context when it takes none (a vertex, a
     // clue, a tree).
     #keyStatus(key: number, filled: Set<number>): HintKeyStatus {
-        const own = this.game.hintKeyStatus?.(this.model, this.state, key);
+        const own = this.board.hintKeyStatus(key);
         if (own !== undefined) return own;
-        if (!this.#markable(key)) return "context";
+        if (!this.board.takesMark(key)) return "context";
         return filled.has(key) ? "done" : "todo";
     }
 
@@ -494,7 +485,7 @@ export class DailyPuzzleGame {
     // invariant 61). Only a player edit trims.
     #trimHint(): void {
         if (this.focus.size === 0) return;
-        const filled = new Set(this.#filled().map(([k]) => k));
+        const filled = new Set(this.board.filled().map(([k]) => k));
         const last = this.lastHint;
         const status = (k: number) => this.#keyStatus(k, filled);
         // What the player was asked to mark: the cells the deduction looked at, less the subject
@@ -512,10 +503,6 @@ export class DailyPuzzleGame {
         this.target = new Set([...this.target].filter((k) => this.focus.has(k)));
     }
 
-    #markable(key: number): boolean {
-        return this.game.tap(this.model, this.state, key) !== this.state;
-    }
-
     #afterChange(): void {
         // Any change to the board, a tap or a reveal, disarms a pending reset: the confirming tap
         // must clear the board the player armed it on, not one that has changed since
@@ -525,7 +512,7 @@ export class DailyPuzzleGame {
             this.userId,
             this.puzzle.number,
             this.#fingerprint,
-            this.#filled(),
+            this.board.filled(),
             this.#lastMistake,
         );
         if (this.#saveTimer === undefined) {
@@ -534,20 +521,16 @@ export class DailyPuzzleGame {
                 this.flushSave();
             }, SERVER_SAVE_INTERVAL);
         }
-        if (this.solvedLocally) {
+        if (this.board.solved) {
             this.submit();
         }
-    }
-
-    #bytes(): Uint8Array {
-        return this.game.toBytes(this.model, this.state);
     }
 
     flushSave(): void {
         if (!this.#dirty) return;
         if (!this.started || this.solved !== undefined) return;
         this.#dirty = false;
-        this.client.dailyPuzzleSaveGrid(this.puzzle.gameId, this.#bytes());
+        this.client.dailyPuzzleSaveGrid(this.puzzle.gameId, this.board.toBytes());
     }
 
     submit(): Promise<void> {
@@ -556,7 +539,7 @@ export class DailyPuzzleGame {
         this.submitting = true;
         this.#dirty = false;
         return this.client
-            .dailyPuzzleSubmit(this.puzzle.gameId, this.#bytes())
+            .dailyPuzzleSubmit(this.puzzle.gameId, this.board.toBytes())
             .then((resp) => {
                 if (resp.kind === "error") {
                     toastStore.showFailureToast(
@@ -582,16 +565,8 @@ export class DailyPuzzleGame {
         return this.puzzle.hintPrices[0] ?? 0;
     }
 
-    #filled(): [number, number][] {
-        return this.game.filled(this.model, this.state);
-    }
-
-    #hintFilled(): [number, number][] {
-        return this.game.hintFilled?.(this.model, this.state) ?? this.#filled();
-    }
-
     #filledKey(): string {
-        return JSON.stringify(this.#filled());
+        return JSON.stringify(this.board.filled());
     }
 
     hint(): Promise<void> {
@@ -611,10 +586,13 @@ export class DailyPuzzleGame {
     // the player agreed to what the button said, not to whatever the server asks (#9517
     // invariant 2).
     #requestHint(price: number, retried: boolean): Promise<void> {
+        const board = this.board;
         // The level argument is what the server once sold hints in; it now ignores it (#9675)
         return this.client
-            .dailyPuzzleHint(this.puzzle.gameId, 1, this.#hintFilled(), price)
+            .dailyPuzzleHint(this.puzzle.gameId, 1, board.hintFilled(), price)
             .then((resp) => {
+                // An answer about a puzzle the poll has since replaced says nothing about this one
+                if (this.board !== board) return;
                 if (resp.kind === "error") {
                     const quoted = Number(resp.message);
                     if (
@@ -652,7 +630,7 @@ export class DailyPuzzleGame {
                         this.userId,
                         this.puzzle.number,
                         this.#fingerprint,
-                        this.#filled(),
+                        this.board.filled(),
                         this.#lastMistake,
                     );
                     return;
@@ -675,7 +653,7 @@ export class DailyPuzzleGame {
         // only when it names no concluded key, so it is never the move asked for: it stays in the
         // highlight whether marked or not, or the sentence would sit on the answer cell instead of
         // the cell it describes.
-        const filled = new Set(this.#filled().map(([k]) => k));
+        const filled = new Set(this.board.filled().map(([k]) => k));
         const subject = new Set(hint.hint.target);
         const show = (keys: number[]) =>
             keys.filter((k) => subject.has(k) || this.#keyStatus(k, filled) !== "done");
@@ -684,8 +662,7 @@ export class DailyPuzzleGame {
         this.target = subject.size > 0 ? subject : new Set(this.focus);
         const prefix = gameI18nPrefix(this.puzzle.gameId);
         const technique = hint.hint.technique;
-        const own =
-            technique === 0 ? undefined : this.game.hintCaption?.(this.model, this.state, hint.hint);
+        const own = technique === 0 ? undefined : this.board.hintCaption(hint.hint);
         this.#caption =
             own !== undefined
                 ? captionKey(prefix, own)

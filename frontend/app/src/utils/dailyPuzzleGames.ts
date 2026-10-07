@@ -33,24 +33,26 @@ import UnrulyBoard from "../components/home/dailypuzzle/games/unruly/Board.svelt
 import unrulyDemo from "../components/home/dailypuzzle/games/unruly/demo";
 import unrulyStrings from "../components/home/dailypuzzle/games/unruly/i18n.en.json";
 import UnrulyPictogram from "../components/home/dailypuzzle/games/unruly/Pictogram.svelte";
+import { bindBoard, type PuzzleBoard } from "./puzzleBoard.svelte";
 
 // Everything the app needs to render one kind of daily puzzle. The weekday rota can name any
 // game the backend generates; a game_id missing from this registry is one this build predates.
 // See components/home/dailypuzzle/games/README.md for what a new game must provide.
 export type DailyPuzzleGameDef = {
-    game: DailyGame<unknown, unknown>;
-    Board: Component<BoardProps<unknown, unknown>>;
-    Pictogram: Component<PictogramProps<unknown>>;
+    /** GameId as the backend names it, e.g. "light_up". */
+    id: string;
     /** en.json prefix for the game's strings: `${i18nPrefix}.name`, `.rules`, `.technique.<id>`. */
     i18nPrefix: string;
     /** The game's shipped strings; a spec checks they match en.json under `i18nPrefix`. */
     strings: Record<string, string>;
     /** "How to play", shown in place of the inert board before the player starts. */
     demo?: DemoSpec;
+    /** A board on `description`, with `filled` already marked. Throws on bad bytes. */
+    newBoard(description: Uint8Array, filled?: [number, number][]): PuzzleBoard;
 };
 
-// Erases M and S once, at registration, so the screens can render any game through the same
-// props. Board and Pictogram are only ever given the model/state of their own game.
+// The game's model and state types are in scope here and nowhere else: every board it makes
+// keeps them, so the registry and everything that reads it never needs to name them.
 function defineGame<M, S>(def: {
     game: DailyGame<M, S>;
     Board: Component<BoardProps<M, S>>;
@@ -59,12 +61,12 @@ function defineGame<M, S>(def: {
     demo?: DemoSpec;
 }): DailyPuzzleGameDef {
     return {
-        game: def.game as DailyGame<unknown, unknown>,
-        Board: def.Board as unknown as Component<BoardProps<unknown, unknown>>,
-        Pictogram: def.Pictogram as unknown as Component<PictogramProps<unknown>>,
+        id: def.game.id,
         i18nPrefix: gameI18nPrefix(def.game.id),
         strings: def.strings,
         demo: def.demo,
+        newBoard: (description, filled) =>
+            bindBoard(def.game, def.Board, def.Pictogram, description, filled),
     };
 }
 

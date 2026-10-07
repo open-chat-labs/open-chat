@@ -8,9 +8,7 @@
     import { roomFill, walls } from "./rooms";
 
     let {
-        model,
-        marks,
-        lit,
+        board,
         violations,
         focus,
         target,
@@ -18,6 +16,9 @@
         greyed = false,
         disabled = false,
     }: BoardProps<ChatRoomsDescription, ChatRoomsCell[]> = $props();
+    let model = $derived(board.model);
+    let marks = $derived(board.marks);
+    let lit = $derived(board.lit);
 
     const LOGO = "/assets/oc_logo_no_bg.svg";
     const LOGO_SIZE = 5.5;

@@ -37,11 +37,10 @@
 
     // undefined = a game this build does not know how to render
     let def = $derived(dailyPuzzleGame(content.gameId));
-    let Pictogram = $derived(def?.Pictogram);
-    let model = $derived.by(() => {
+    let board = $derived.by(() => {
         if (def === undefined) return undefined;
         try {
-            return def.game.parse(descriptionFromHex(content.layout));
+            return def.newBoard(descriptionFromHex(content.layout));
         } catch {
             return undefined;
         }
@@ -83,9 +82,9 @@
         </div>
     </div>
     <div class="row">
-        {#if model !== undefined && Pictogram !== undefined}
+        {#if board !== undefined}
             <div class="pictogram">
-                <Pictogram {model} />
+                <board.Pictogram {board} />
             </div>
         {/if}
         <div class="stats" class:unverified={verification.kind === "unverified"}>
