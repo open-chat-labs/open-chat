@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Move a migrated user's web push subscriptions and FCM tokens onto their new id, including, once, those of the users migrated so far ([#PR_NUMBER](https://github.com/open-chat-labs/open-chat/pull/PR_NUMBER))
+- Move a migrated user's web push subscriptions and FCM tokens onto their new id, including, once, those of the users migrated so far ([#9842](https://github.com/open-chat-labs/open-chat/pull/9842))
 
 ## [[2.0.2079](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2079-notifications_index)] - 2026-09-30
 
