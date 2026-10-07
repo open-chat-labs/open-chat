@@ -1,4 +1,5 @@
 use crate::Data;
+use crate::lifecycle::move_subscriptions_of_migrated_users::move_subscriptions_of_migrated_users;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
 use canister_logger::LogEntry;
@@ -17,10 +18,12 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
+
+    move_subscriptions_of_migrated_users(&mut data);
 
     let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);

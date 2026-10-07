@@ -42,11 +42,28 @@ impl Subscriptions {
         removed
     }
 
-    // Returns the subscriptions removed
-    pub fn remove_all(&mut self, user_id: UserId) -> Vec<SubscriptionInfoInternal> {
-        let removed = self.subscriptions.remove(&user_id).unwrap_or_default();
-        self.total = self.total.saturating_sub(removed.len() as u64);
-        removed
+    pub fn remove_all(&mut self, user_id: UserId) {
+        if let Some(removed) = self.subscriptions.remove(&user_id) {
+            self.total = self.total.saturating_sub(removed.len() as u64);
+        }
+    }
+
+    // Moves the user's subscriptions from their old id onto their new one, dropping any for an endpoint
+    // already subscribed under the new id. The limit of 10 per user isn't applied, so that the
+    // LocalUserIndexes, which move their copies alike, go on holding the same subscriptions until
+    // the next one pushed applies it, telling them which to remove.
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        let Some(old_subscriptions) = self.subscriptions.remove(&old_user_id) else {
+            return;
+        };
+        let subscriptions = self.subscriptions.entry(new_user_id).or_default();
+        for subscription in old_subscriptions {
+            if subscriptions.iter().any(|s| s.endpoint == subscription.endpoint) {
+                self.total = self.total.saturating_sub(1);
+            } else {
+                subscriptions.push(subscription);
+            }
+        }
     }
 
     pub fn remove(&mut self, user_id: UserId, endpoint: &str) -> Option<SubscriptionInfoInternal> {

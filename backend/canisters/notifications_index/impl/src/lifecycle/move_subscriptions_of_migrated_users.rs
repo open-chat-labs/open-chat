@@ -8,7 +8,8 @@ use user_index_canister::migrated_user_ids;
 const BATCH_SIZE: usize = 10_000;
 
 // One-off: moves the subscriptions and FCM tokens still held under the old ids of users migrated to a
-// MultiUser canister before the NotificationsIndex moved them on being told of each migration
+// MultiUser canister before the NotificationsIndex moved them on being told of each migration. The
+// LocalUserIndexes move their own copies.
 // TODO remove after the release containing this has been deployed
 pub(crate) async fn move_subscriptions_of_migrated_users() {
     let (user_ids, user_index_canister_id) = read_state(|state| {
@@ -32,9 +33,8 @@ pub(crate) async fn move_subscriptions_of_migrated_users() {
             Ok(migrated_user_ids::Response::Success(migrated)) => {
                 moved += migrated.len();
                 mutate_state(|state| {
-                    let now = state.env.now();
                     for (old_user_id, new_user_id) in migrated {
-                        state.migrate_user_id(old_user_id, new_user_id, now);
+                        state.data.migrate_user_id(old_user_id, new_user_id);
                     }
                 });
             }
