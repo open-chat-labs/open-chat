@@ -10,6 +10,7 @@ import {
 } from "@icp-sdk/core/identity";
 import DRange from "drange";
 import {
+    configKeys,
     type ModerationConfig,
     type VaultLogResponse,
     type BlobReference,
@@ -595,7 +596,6 @@ import {
     canUnblockUsers as canUnblockCommunityUsers,
     isCommunityLapsed,
 } from "./utils/community";
-import { configKeys } from "./utils/config";
 import { verifyCredential } from "./utils/credentials";
 import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
 import {

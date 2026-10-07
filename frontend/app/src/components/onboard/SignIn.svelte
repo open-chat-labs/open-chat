@@ -1,6 +1,6 @@
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
-    import { configKeys } from "@src/utils/config";
+    import { configKeys } from "@shared";
     import { EmailSigninHandler } from "@src/utils/signin";
     import {
         AuthProvider,

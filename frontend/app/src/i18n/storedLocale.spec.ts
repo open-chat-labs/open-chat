@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { configKeys } from "../utils/config";
+import { configKeys } from "@shared";
 import { supportedLanguages } from "./i18n";
 
 const codes = supportedLanguages.map((l) => l.code);

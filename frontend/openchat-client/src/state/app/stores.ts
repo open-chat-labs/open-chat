@@ -1,6 +1,7 @@
 import { dequal } from "dequal";
 import DRange from "drange";
 import {
+    configKeys,
     ANON_USER_ID,
     anonymousUser,
     applyOptionUpdate,
@@ -73,7 +74,6 @@ import {
     mergePermissions,
     mergeUnconfirmedIntoSummary,
 } from "../../utils/chat";
-import { configKeys } from "../../utils/config";
 import { enumFromStringValue } from "../../utils/enums";
 import { derived, writable, type Subscriber } from "../../utils/stores";
 import { nullProfile } from "../../utils/user";

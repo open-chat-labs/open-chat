@@ -1,9 +1,11 @@
+// Keys for values the app keeps in localStorage. One definition, shared by the app and the client,
+// so the same setting can't end up under two different keys.
 export const configKeys = {
     locale: "openchat_locale",
     profile: "openchat_profile",
     primeCacheLimit: "openchat_prime_cache_limit",
     primeCacheBatchSize: "openchat_prime_cache_batch_size",
-    lastCryptoSent: "openchat_lastcryptosent",
+    lastCryptoSent: "openchat_lastcryptosent_v2",
     fontSize: "openchat_font_size",
     enterSend: "openchat_entersend",
     chitPopup: "openchat_chit_popup",
@@ -56,4 +58,7 @@ export const configKeys = {
     hideTokenBalances: "openchat_hide_token_balances",
     linkDeviceSection: "link_account_with_native_app",
     chatListFilter: "openchat_chat_list_filter",
+    softDisabled: "openchat_softdisabled",
+    hideBlocked: "openchat_hideblocked",
+    minLogLevel: "openchat_min_log_level",
 };
