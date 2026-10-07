@@ -16,10 +16,11 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
-    BotDefinition, BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, CanisterWasm, ChannelId, Chat, ChatEvent,
-    ChatId, CommunityId, CommunityRole, DiamondMembershipPlanDuration, Document, Empty, EventIndex, EventsResponse,
-    FileContent, IdempotentEnvelope, MessageContent, MessageContentInitial, MessageIndex, OptionUpdate, P2PSwapContentInitial,
-    PendingCryptoTransaction, ReferralStatus, UnitResult, UserId, icrc1, icrc2,
+    AutonomousConfig, BotChatContext, BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, BuildVersion,
+    CLAIM_TYPE_START_VIDEO_CALL, CanisterId, CanisterWasm, ChannelId, Chat, ChatEvent, ChatId, CommunityId, CommunityRole,
+    DiamondMembershipPlanDuration, Document, Empty, EventIndex, EventsResponse, FileContent, IdempotentEnvelope,
+    MessageContent, MessageContentInitial, MessageIndex, OptionUpdate, P2PSwapContentInitial, PendingCryptoTransaction,
+    ReferralStatus, StartVideoCallClaims, TextContent, UnitResult, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::{MessageActivity, UserCanisterEvent};
 use user_index_canister::user_migration::UserMigrationStatus;
@@ -2050,6 +2051,233 @@ fn events_for_a_user_being_migrated_reach_them_in_their_new_canister_in_order(sa
 }
 
 #[test]
+fn bot_installed_in_a_users_direct_chats_before_they_migrate_reaches_them_via_the_gateway_it_is_told_of() {
+    use types::{
+        AutonomousConfig, BotChatContext, BotDataEncoding, BotEvent, BotEventWrapper, BotLifecycleEvent, BotMessageContent,
+        NotificationEnvelope, TextContent,
+    };
+    use user_index_canister::bot_installation_events::BotInstallationEvent;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    // The user's old canister is held by another LocalUserIndex than the MultiUser canister, which only
+    // takes calls from its own LocalUserIndex
+    let subnet = canister_ids
+        .subnets
+        .iter()
+        .find(|s| s.local_user_index != local_user_index)
+        .unwrap()
+        .subnet_id;
+    let user = client::register_user_on_subnet(env, canister_ids, subnet);
+    let bot_owner = client::register_user(env, canister_ids);
+
+    // The user installs a bot in their direct chats, which may send text messages autonomously, and
+    // which only its owner may install anywhere else
+    let bot_principal = random_principal();
+    let response = client::user_index::register_bot(
+        env,
+        bot_owner.principal,
+        canister_ids.user_index,
+        &user_index_canister::register_bot::Args {
+            principal: bot_principal,
+            name: random_string(),
+            avatar: None,
+            endpoint: "https://my.bot.xyz/".to_string(),
+            definition: BotDefinition {
+                description: random_string(),
+                commands: Vec::new(),
+                autonomous_config: Some(AutonomousConfig {
+                    permissions: BotPermissions::text_only(),
+                }),
+                default_subscriptions: None,
+                data_encoding: None,
+                restricted_locations: None,
+            },
+            permitted_install_location: Some(BotInstallationLocation::User(user.user_id.into())),
+        },
+    );
+    let user_index_canister::register_bot::Response::Success(bot) = response else {
+        panic!("'register_bot' error: {response:?}");
+    };
+    tick_many(env, 3);
+    client::local_user_index::happy_path::install_bot(
+        env,
+        user.principal,
+        user.local_user_index,
+        BotInstallationLocation::User(user.user_id.into()),
+        bot.bot_id,
+        BotPermissions::text_only(),
+        Some(BotPermissions::text_only()),
+    );
+    tick_many(env, 3);
+
+    let installation_events = |env: &PocketIc| {
+        let response = client::user_index::bot_installation_events(
+            env,
+            bot_principal,
+            canister_ids.user_index,
+            &user_index_canister::bot_installation_events::Args { from: 0, size: 100 },
+        );
+        let user_index_canister::bot_installation_events::Response::Success(result) = response else {
+            panic!("'bot_installation_events' error: {response:?}");
+        };
+        result.events
+    };
+    assert_eq!(installation_events(env).len(), 1);
+    let controller = *controller;
+    let notification_index = client::local_user_index::happy_path::latest_notification_index(env, controller, local_user_index);
+    // The lifecycle events the MultiUser canister's LocalUserIndex has sent the bot since the user was
+    // migrated, with the gateway each names
+    let lifecycle_events = |env: &PocketIc| {
+        client::local_user_index::happy_path::notifications(env, controller, local_user_index, notification_index + 1)
+            .notifications
+            .into_iter()
+            .filter_map(|n| match n.value {
+                NotificationEnvelope::Bot(n) if n.recipients.contains_key(&bot.bot_id) => Some(n),
+                _ => None,
+            })
+            .filter_map(|n| {
+                let wrapper: BotEventWrapper = msgpack::deserialize_then_unwrap(&n.event_map[&BotDataEncoding::MsgPack].data);
+                match wrapper.event {
+                    BotEvent::Lifecycle(event) => Some((wrapper.api_gateway, event)),
+                    _ => None,
+                }
+            })
+            .collect::<Vec<_>>()
+    };
+
+    let new_user = migrate(env, canister_ids, &operator, &user, multi_user_canister);
+    let old_location = BotInstallationLocation::User(user.user_id.into());
+    let new_location = BotInstallationLocation::User(new_user.user_id.into());
+
+    // The UserIndex records that the bot is installed in the user's direct chats under their new id
+    // instead, with the MultiUser canister's LocalUserIndex as its gateway
+    tick_until(env, |env| installation_events(env).len() == 3);
+    let events = installation_events(env);
+    assert!(
+        matches!(&events[1], BotInstallationEvent::Uninstalled(e) if e.location == old_location),
+        "{events:?}"
+    );
+    let BotInstallationEvent::Installed(installed) = &events[2] else {
+        panic!("{events:?}");
+    };
+    assert_eq!(installed.location, new_location);
+    assert_eq!(installed.api_gateway, local_user_index);
+    assert_eq!(installed.granted_autonomous_permissions, BotPermissions::text_only());
+
+    // And that LocalUserIndex tells the bot, as it would of an install
+    tick_until(env, |env| {
+        let events = lifecycle_events(env);
+        events
+            .iter()
+            .any(|(_, e)| matches!(e, BotLifecycleEvent::Uninstalled(u) if u.location == old_location))
+            && events.iter().any(|(gateway, e)| {
+                *gateway == local_user_index && matches!(e, BotLifecycleEvent::Installed(i) if i.location == new_location)
+            })
+    });
+
+    // So the bot reaches the user in their new canister via that gateway
+    let BotInstallationLocation::User(chat_id) = installed.location else {
+        panic!("{installed:?}");
+    };
+    let text = random_string();
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        installed.api_gateway,
+        &local_user_index_canister::bot_send_message::Args {
+            chat_context: BotChatContext::Autonomous(Chat::Direct(chat_id)),
+            thread: None,
+            message_id: None,
+            replies_to: None,
+            content: BotMessageContent::Text(TextContent { text: text.clone() }),
+            block_level_markdown: false,
+            finalised: true,
+            og_previews: None,
+        },
+    );
+    assert!(
+        matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
+        "{response:?}"
+    );
+    let user_canister::initial_state::Response::Success(state) = client::user::initial_state(
+        env,
+        new_user.principal,
+        multi_user_canister,
+        &user_canister::initial_state::Args {},
+    );
+    let chat = state.direct_chats.summaries.iter().find(|c| c.them == bot.bot_id).unwrap();
+    assert!(matches!(&chat.latest_message.as_ref().unwrap().event.content, MessageContent::Text(t) if t.text == text));
+
+    // And the user may still uninstall and reinstall it, being permitted to by their new id
+    client::local_user_index::happy_path::uninstall_bot(env, user.principal, local_user_index, new_location, bot.bot_id);
+    client::local_user_index::happy_path::install_bot(
+        env,
+        user.principal,
+        local_user_index,
+        new_location,
+        bot.bot_id,
+        BotPermissions::text_only(),
+        Some(BotPermissions::text_only()),
+    );
+}
+
+#[test]
+fn bot_registered_privately_by_a_user_before_they_migrate_can_be_installed_by_them() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let owner = client::register_user(env, canister_ids);
+    let (bot_id, _) = client::user_index::happy_path::register_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        BotDefinition {
+            description: random_string(),
+            commands: Vec::new(),
+            autonomous_config: None,
+            default_subscriptions: None,
+            data_encoding: None,
+            restricted_locations: None,
+        },
+    );
+
+    // Each LocalUserIndex knows the bot's owner by the id they had when registering it
+    let new_owner = migrate(env, canister_ids, &operator, &owner, multi_user_canister);
+
+    client::local_user_index::happy_path::install_bot(
+        env,
+        new_owner.principal,
+        local_user_index,
+        BotInstallationLocation::User(new_owner.user_id.into()),
+        bot_id,
+        BotPermissions::text_only(),
+        None,
+    );
+}
+
+#[test]
 fn bot_installed_in_a_users_direct_chats_before_they_migrate_is_uninstalled_from_their_new_canister() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -2131,6 +2359,181 @@ fn bot_installed_in_a_users_direct_chats_before_they_migrate_is_uninstalled_from
     // Once the bot is removed, it's uninstalled from the user's new canister
     client::user_index::happy_path::remove_bot(env, bot_owner.principal, canister_ids.user_index, bot.bot_id);
     tick_until(env, |env| bots(env).is_empty());
+}
+
+#[test_case(true; "migrated_to_the_same_local_user_index")]
+#[test_case(false; "migrated_to_another_local_user_index")]
+fn bot_acting_autonomously_in_a_migrated_users_direct_chat_by_their_old_id(same_local_user_index: bool) {
+    use local_user_index_canister::chat_events::{EventsPageArgs, EventsSelectionCriteria};
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    // The user's old canister is held by the same LocalUserIndex as the MultiUser canister, or by
+    // another, which the bot keeps calling, since it was installed via it
+    let subnet = canister_ids
+        .subnets
+        .iter()
+        .find(|s| (s.local_user_index == local_user_index) == same_local_user_index)
+        .unwrap()
+        .subnet_id;
+    let user = client::register_user_on_subnet(env, canister_ids, subnet);
+    let other_user = client::register_user(env, canister_ids);
+
+    // The user installs a bot in their direct chats which may send text messages autonomously
+    let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
+        env,
+        user.principal,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        BotDefinition {
+            description: random_string(),
+            commands: Vec::new(),
+            autonomous_config: Some(AutonomousConfig {
+                permissions: BotPermissions::text_only(),
+            }),
+            default_subscriptions: None,
+            data_encoding: None,
+            restricted_locations: None,
+        },
+    );
+    client::local_user_index::happy_path::install_bot(
+        env,
+        user.principal,
+        user.local_user_index,
+        BotInstallationLocation::User(user.user_id.into()),
+        bot_id,
+        BotPermissions::text_only(),
+        Some(BotPermissions::text_only()),
+    );
+    tick_many(env, 3);
+
+    let new_user = migrate(env, canister_ids, &operator, &user, multi_user_canister);
+    crate::delete_user_tests::wait_for_cycles_to_be_refunded(env, &user);
+
+    // The bot still knows the user by their old id, and calls the LocalUserIndex it was installed via
+    let text = random_string();
+    let send_message = |env: &mut PocketIc| {
+        client::local_user_index::bot_send_message(
+            env,
+            bot_principal,
+            user.local_user_index,
+            &local_user_index_canister::bot_send_message::Args {
+                chat_context: BotChatContext::Autonomous(Chat::Direct(user.user_id.into())),
+                thread: None,
+                message_id: None,
+                replies_to: None,
+                content: BotMessageContent::Text(TextContent { text: text.clone() }),
+                block_level_markdown: false,
+                finalised: true,
+                og_previews: None,
+            },
+        )
+    };
+    let chat_events = |env: &mut PocketIc| {
+        client::local_user_index::bot_chat_events(
+            env,
+            bot_principal,
+            user.local_user_index,
+            &local_user_index_canister::bot_chat_events::Args {
+                chat_context: BotChatContext::Autonomous(Chat::Direct(user.user_id.into())),
+                thread: None,
+                events: EventsSelectionCriteria::Page(EventsPageArgs {
+                    start_index: 0.into(),
+                    ascending: true,
+                    max_messages: 10,
+                    max_events: 10,
+                }),
+            },
+        )
+    };
+    // As may another user starting a video call with them, from a client which still knows them by it
+    let video_call_token = |env: &mut PocketIc| {
+        client::local_user_index::access_token_v2(
+            env,
+            other_user.principal,
+            user.local_user_index,
+            &local_user_index_canister::access_token_v2::Args::StartVideoCall(
+                local_user_index_canister::access_token_v2::StartVideoCallArgs {
+                    chat: Chat::Direct(user.user_id.into()),
+                    call_type: VideoCallType::Default,
+                    audio_only: false,
+                },
+            ),
+        )
+    };
+
+    if !same_local_user_index {
+        // The user's new canister is on another subnet, which that LocalUserIndex can't reach, so
+        // each is told the user has moved, and their new id, rather than the call being sent
+        let errors = [
+            match send_message(env) {
+                local_user_index_canister::bot_send_message::Response::Error(error) => error,
+                response => panic!("{response:?}"),
+            },
+            match chat_events(env) {
+                local_user_index_canister::bot_chat_events::Response::Error(error) => error,
+                response => panic!("{response:?}"),
+            },
+            match video_call_token(env) {
+                local_user_index_canister::access_token_v2::Response::Error(error) => error,
+                response => panic!("{response:?}"),
+            },
+        ];
+        for error in errors {
+            assert!(error.matches_code(OCErrorCode::UserMovedToNewSubnet), "{error:?}");
+            assert_eq!(error.message(), Some(new_user.user_id.to_string().as_str()));
+        }
+        return;
+    }
+
+    // Otherwise the LocalUserIndex sends the bot's message on to the user's new canister
+    let response = send_message(env);
+    assert!(
+        matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
+        "{response:?}"
+    );
+    let user_canister::initial_state::Response::Success(state) = client::user::initial_state(
+        env,
+        new_user.principal,
+        multi_user_canister,
+        &user_canister::initial_state::Args {},
+    );
+    let chat = state.direct_chats.summaries.iter().find(|c| c.them == bot_id).unwrap();
+    assert!(matches!(&chat.latest_message.as_ref().unwrap().event.content, MessageContent::Text(t) if t.text == text));
+
+    // And the bot reads the chat back by their old id
+    let response = chat_events(env);
+    let local_user_index_canister::bot_chat_events::Response::Success(result) = &response else {
+        panic!("{response:?}");
+    };
+    assert!(
+        result.events.iter().any(
+            |e| matches!(&e.event, ChatEvent::Message(m) if m.sender == bot_id && m.content.text() == Some(text.as_str()))
+        ),
+        "{result:?}"
+    );
+
+    // A video call to the user by their old id is checked against their new canister too, and the
+    // token names them by their new id, since the video bridge starts the call in that chat
+    let response = video_call_token(env);
+    let local_user_index_canister::access_token_v2::Response::Success(token) = response else {
+        panic!("{response:?}");
+    };
+    let public_key = client::user_index::happy_path::public_key(env, canister_ids.user_index);
+    let claims: jwt::Claims<StartVideoCallClaims> =
+        jwt::verify_and_decode(&token, &public_key, CLAIM_TYPE_START_VIDEO_CALL).unwrap();
+    assert_eq!(claims.custom().chat_id, Chat::Direct(new_user.user_id.into()));
 }
 
 #[test_case(true; "registered_with_the_same_local_user_index")]
@@ -2785,6 +3188,278 @@ fn count_in_stable_memory(env: &PocketIc, multi_user_canister: CanisterId, user:
         .keys()
         .filter(|key| key.len() > 2 && key[..2] == scope && key[2] == key_type as u8)
         .count()
+}
+
+// A migrated user's messages sent before their migration keep the id they were sent under, while
+// the group or community holds the user as a member under their new id. Reactions, quote replies
+// and poll votes on those messages still reach the user, in their new canister.
+#[test_case(false; "group")]
+#[test_case(true; "channel")]
+fn activity_on_messages_sent_before_their_sender_was_migrated_reaches_them(in_community: bool) {
+    use std::collections::HashMap;
+    use types::{GroupReplyContext, MessageId, PollConfig, PollContent, PollVotes, TextContent, TotalVotes};
+    use user_canister::MessageActivity;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    // A Diamond member, so that they can create a public group or community for the others to join
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let sender = client::register_user(env, canister_ids);
+    let other = client::register_user(env, canister_ids);
+
+    let message_id = random_from_u128();
+    let poll_message_id = random_from_u128();
+    let poll = MessageContentInitial::Poll(PollContent {
+        config: PollConfig {
+            text: None,
+            options: vec!["a".to_string(), "b".to_string()],
+            end_date: None,
+            anonymous: false,
+            show_votes_before_end_date: true,
+            allow_multiple_votes_per_user: false,
+            allow_user_to_change_vote: false,
+        },
+        votes: PollVotes {
+            total: TotalVotes::Visible(HashMap::new()),
+            user: Vec::new(),
+        },
+        ended: false,
+    });
+    let (chat, event_index, poll_message_index) = if in_community {
+        let community_id =
+            client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
+        let channel_id =
+            client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
+        for user in [&sender, &other] {
+            client::community::happy_path::join_community(env, user.principal, community_id);
+            client::community::happy_path::join_channel(env, user.principal, community_id, channel_id);
+        }
+        let result = client::community::happy_path::send_text_message(
+            env,
+            &sender,
+            community_id,
+            channel_id,
+            None,
+            random_string(),
+            Some(message_id),
+        );
+        let poll = client::community::happy_path::send_message(
+            env,
+            &sender,
+            community_id,
+            channel_id,
+            None,
+            poll,
+            None,
+            Some(poll_message_id),
+        );
+        (
+            Chat::Channel(community_id, channel_id),
+            result.event_index,
+            poll.message_index,
+        )
+    } else {
+        let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
+        for user in [&sender, &other] {
+            client::group::happy_path::join_group(env, user.principal, group_id);
+        }
+        let result =
+            client::group::happy_path::send_text_message(env, &sender, group_id, None, random_string(), Some(message_id));
+        let poll = client::group::happy_path::send_message(env, &sender, group_id, None, poll, None, Some(poll_message_id));
+        (Chat::Group(group_id), result.event_index, poll.message_index)
+    };
+
+    let migrated = migrate(env, canister_ids, &operator, &sender, multi_user_canister);
+    let new_user_id = migrated.user_id;
+    tick_until(env, |env| is_member(env, &owner, chat, new_user_id));
+
+    let reply_message_id = random_from_u128();
+    let reply = MessageContentInitial::Text(TextContent { text: random_string() });
+    let replies_to = Some(GroupReplyContext { event_index });
+    match chat {
+        Chat::Group(group_id) => {
+            client::group::happy_path::add_reaction(env, &other, group_id, "👍", message_id);
+            client::group::happy_path::send_message(env, &other, group_id, None, reply, replies_to, Some(reply_message_id));
+            client::group::happy_path::register_poll_vote(env, &other, group_id, poll_message_index, 0);
+        }
+        Chat::Channel(community_id, channel_id) => {
+            client::community::happy_path::add_reaction(env, &other, community_id, channel_id, "👍", message_id);
+            client::community::happy_path::send_message(
+                env,
+                &other,
+                community_id,
+                channel_id,
+                None,
+                reply,
+                replies_to,
+                Some(reply_message_id),
+            );
+            client::community::happy_path::register_poll_vote(env, &other, community_id, channel_id, poll_message_index, 0);
+        }
+        Chat::Direct(_) => unreachable!(),
+    }
+
+    // The quote reply's activity is on the reply, which quotes the message
+    tick_until(env, |env| {
+        let events = client::user::happy_path::message_activity_feed(env, &migrated, 0).events;
+        let has =
+            |id: MessageId, activity: MessageActivity| events.iter().any(|e| e.message_id == id && e.activity == activity);
+        has(message_id, MessageActivity::Reaction)
+            && has(reply_message_id, MessageActivity::QuoteReply)
+            && has(poll_message_id, MessageActivity::PollVote)
+    });
+}
+
+// A prize sent before its sender was migrated is refunded, whichever way it ends, to the wallet
+// the sender now holds their funds in, their principal's account, rather than to their old
+// canister's account
+#[test_case(1; "prize_expires")]
+#[test_case(2; "message_deleted")]
+#[test_case(3; "message_disappears")]
+fn unclaimed_prize_sent_before_its_sender_was_migrated_is_refunded_to_their_new_wallet(case: u32) {
+    use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE, PRIZE_FEE_PERCENT};
+    use types::{CryptoTransaction, MultiUserChat, PendingCryptoTransaction, PrizeContentInitial, icrc1};
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    // A Diamond member, so that they can create a public group for the claimant to join
+    let sender = client::register_diamond_user(env, canister_ids, *controller);
+    let claimant = client::register_user(env, canister_ids);
+    let group_id = client::user::happy_path::create_group(env, &sender, &random_string(), true, true);
+    if case == 3 {
+        client::group::happy_path::update_group(
+            env,
+            sender.principal,
+            group_id,
+            &group_canister::update_group_v2::Args {
+                events_ttl: OptionUpdate::SetToSome(5 * MINUTE_IN_MS),
+                ..Default::default()
+            },
+        );
+    }
+    client::group::happy_path::join_group(env, claimant.principal, group_id);
+
+    let ledger = canister_ids.icp_ledger;
+    client::ledger::happy_path::transfer(env, *controller, ledger, sender.user_id, 1_000_000_000);
+    let prizes = vec![100000, 200000];
+    let fee = ICP_TRANSFER_FEE;
+    let total = prizes.iter().sum::<u128>();
+    let amount = total + (fee * prizes.len() as u128) + (total * PRIZE_FEE_PERCENT as u128 / 100);
+    let message_id = random_from_u128();
+    let response = client::user::send_message_with_transfer_to_group(
+        env,
+        sender.principal,
+        sender.canister(),
+        &user_canister::send_message_with_transfer_to_group::Args {
+            group_id,
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::Prize(PrizeContentInitial {
+                prizes_v2: prizes,
+                transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+                    ledger,
+                    token_symbol: ICP_SYMBOL.to_string(),
+                    amount,
+                    to: CanisterId::from(group_id).into(),
+                    fee,
+                    memo: None,
+                    created: now_millis(env) * 1_000_000,
+                })),
+                end_date: now_millis(env) + HOUR_IN_MS,
+                caption: None,
+                diamond_only: false,
+                lifetime_diamond_only: false,
+                unique_person_only: false,
+                streak_only: 0,
+                requires_captcha: false,
+                min_chit_earned: 0,
+            }),
+            sender_name: sender.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            block_level_markdown: false,
+            rules_accepted: None,
+            message_filter_failed: None,
+            pin: None,
+            og_previews: Vec::new(),
+        },
+    );
+    assert!(
+        matches!(
+            response,
+            user_canister::send_message_with_transfer_to_group::Response::Success(_)
+        ),
+        "{response:?}"
+    );
+    client::local_user_index::happy_path::claim_prize(
+        env,
+        claimant.principal,
+        canister_ids.local_user_index(env, group_id),
+        MultiUserChat::Group(group_id),
+        message_id,
+        None,
+    );
+
+    let migrated = migrate(env, canister_ids, &operator, &sender, multi_user_canister);
+    tick_until(env, |env| is_member(env, &claimant, Chat::Group(group_id), migrated.user_id));
+    let old_wallet_balance = client::ledger::happy_path::balance_of(env, ledger, sender.user_id);
+    let new_wallet_balance = client::ledger::happy_path::balance_of(env, ledger, sender.principal);
+
+    let ends_in = match case {
+        1 => HOUR_IN_MS,
+        2 => {
+            client::group::happy_path::delete_messages(env, migrated.principal, group_id, None, vec![message_id]);
+            5 * MINUTE_IN_MS
+        }
+        3 => 5 * MINUTE_IN_MS,
+        _ => unreachable!(),
+    };
+    env.advance_time(Duration::from_millis(ends_in));
+
+    // The unclaimed prize of 100000, its share of the fee and its transfer fee, less the refund's fee
+    tick_until(env, |env| {
+        client::ledger::happy_path::balance_of(env, ledger, sender.principal) == new_wallet_balance + 105000
+    });
+    assert_eq!(
+        client::ledger::happy_path::balance_of(env, ledger, sender.user_id),
+        old_wallet_balance
+    );
+}
+
+// Whether the chat holds the user as a member, as seen by `viewer`
+fn is_member(env: &PocketIc, viewer: &User, chat: Chat, user_id: UserId) -> bool {
+    match chat {
+        Chat::Group(group_id) => {
+            let response = client::group::happy_path::selected_initial(env, viewer.principal, group_id);
+            response.participants.iter().any(|m| m.user_id == user_id) || response.basic_members.contains(&user_id)
+        }
+        Chat::Channel(community_id, channel_id) => {
+            let response = client::community::happy_path::selected_channel_initial(env, viewer, community_id, channel_id);
+            response.members.iter().any(|m| m.user_id == user_id) || response.basic_members.contains(&user_id)
+        }
+        Chat::Direct(_) => unreachable!(),
+    }
 }
 
 #[test]

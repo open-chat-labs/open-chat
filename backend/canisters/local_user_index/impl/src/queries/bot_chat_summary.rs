@@ -3,7 +3,6 @@ use crate::mutate_state;
 use canister_api_macros::{query, update};
 use canister_tracing_macros::trace;
 use local_user_index_canister::bot_chat_summary::*;
-use oc_error_codes::OCErrorCode;
 use types::{Chat, UserId};
 
 #[update(candid = true, msgpack = true)]
@@ -17,7 +16,7 @@ async fn bot_chat_summary_c2c(args: Args) -> Response {
 async fn bot_chat_summary(args: Args) -> Response {
     let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
         Ok(context) => context,
-        Err(_) => return Response::Error(OCErrorCode::BotNotAuthenticated.into()),
+        Err(error) => return Response::Error(error),
     };
 
     let chat = context.scope.chat(None).unwrap();

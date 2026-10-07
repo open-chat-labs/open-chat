@@ -157,6 +157,7 @@ export enum ErrorCode {
     InitiatorNotInCommunity = 104,
     InitiatorLapsed = 105,
     InitiatorBlocked = 106,
+    BotNotAuthenticated = 107,
 
     // Invalid
     ChatNotFound = 200,
@@ -254,7 +255,6 @@ export enum ErrorCode {
     TextTooLong = 292,
     MessageHardDeleted = 293,
     InvalidMessageType = 294,
-    ApiKeyNotFound = 295,
     TooManyUsers = 296,
     VideoCallNotFound = 297,
     PrizeNotFound = 298,
@@ -296,6 +296,11 @@ export enum ErrorCode {
     NoEligibleNeurons = 334,
     ProposalNotFound = 335,
     ProposalNotAcceptingVotes = 336,
+    IdentityLinkRequestNotFound = 337,
+    InvalidBotActionScope = 338,
+    WebhookNotFound = 339,
+    InvalidWebhook = 340,
+    InvalidOriginatingCanister = 341,
     LinkingCodeNotFound = 342,
     MaxLinkedIdentitiesLimitReached = 343,
     ItemNotFound = 344,
@@ -303,7 +308,13 @@ export enum ErrorCode {
     ProfileBackgroundTooBig = 346,
     LedgerNotFound = 347,
     PrizeUserNotElligible = 348,
+    NoEventsToDelete = 349,
     InsufficientAllowance = 350,
+    NotReadyForMigration = 351,
+    UserImportFailed = 352,
+    UserMigrationStalled = 353,
+    LimitReached = 354,
+    UserMovedToNewSubnet = 355,
 
     // InternalError
     C2CError = 500,

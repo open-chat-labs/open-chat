@@ -472,7 +472,7 @@ impl RuntimeState {
 
     pub fn run_event_expiry_job(&mut self) {
         let now = self.env.now();
-        let result = self.data.chat.remove_expired_events(now);
+        let result = self.data.chat.remove_expired_events(&self.data.migrated_user_ids, now);
 
         self.data.next_event_expiry = self.data.chat.events.next_event_expiry();
         if let Some(expiry) = self.data.next_event_expiry {
@@ -492,7 +492,10 @@ impl RuntimeState {
         let mut finished = false;
 
         loop {
-            let batch_result = self.data.chat.remove_old_events_batch(before, now, BATCH_SIZE as u16);
+            let batch_result =
+                self.data
+                    .chat
+                    .remove_old_events_batch(before, now, BATCH_SIZE as u16, &self.data.migrated_user_ids);
 
             if batch_result.events.len() < BATCH_SIZE {
                 finished = true;

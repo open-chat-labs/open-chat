@@ -383,7 +383,7 @@ impl RuntimeState {
         let mut files_to_delete = Vec::new();
         let mut final_prize_payments = Vec::new();
         for channel in self.data.channels.iter_mut() {
-            let result = channel.chat.remove_expired_events(now);
+            let result = channel.chat.remove_expired_events(&self.data.migrated_user_ids, now);
             if let Some(expiry) = channel.chat.events.next_event_expiry()
                 && next_event_expiry.is_none_or(|current| expiry < current)
             {
@@ -419,7 +419,9 @@ impl RuntimeState {
         let mut finished = false;
 
         loop {
-            let result = channel.chat.remove_old_events_batch(before, now, BATCH_SIZE as u16);
+            let result = channel
+                .chat
+                .remove_old_events_batch(before, now, BATCH_SIZE as u16, &self.data.migrated_user_ids);
 
             files_to_delete.extend(result.files);
             final_prize_payments.extend(result.final_prize_payments);

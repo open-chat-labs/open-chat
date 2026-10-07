@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Accept tips on a migrated user's direct messages from before their migration ([#9816](https://github.com/open-chat-labs/open-chat/pull/9816))
+- Accept tips on a migrated user's direct messages sent before their migration ([#9816](https://github.com/open-chat-labs/open-chat/pull/9816))
 
 ## [[2.0.2090](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2090-user)] - 2026-10-02
 

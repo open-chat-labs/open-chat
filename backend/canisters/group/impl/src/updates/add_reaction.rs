@@ -70,8 +70,11 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
     )?;
 
     let message = result.value;
-    if let Some(sender) = state.data.chat.members.get(&message.sender)
-        && !state.data.migrated_user_ids.is_same_user(message.sender, agent)
+    // The sender is a member under their latest id, in case they have been migrated since sending
+    // the message
+    let sender_id = state.data.migrated_user_ids.latest(message.sender);
+    if let Some(sender) = state.data.chat.members.get(&sender_id)
+        && !state.data.migrated_user_ids.is_same_user(sender_id, agent)
         && !sender.user_type().is_bot()
     {
         let chat_id: ChatId = state.env.canister_id().into();
@@ -80,7 +83,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
             .data
             .chat
             .members
-            .get(&message.sender)
+            .get(&sender_id)
             .is_none_or(|p| p.notifications_muted().value || p.suspended().value);
 
         if !notifications_muted {
@@ -98,11 +101,11 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
                     group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
                 });
 
-            state.push_notification(Some(agent), vec![message.sender], user_notification_payload);
+            state.push_notification(Some(agent), vec![sender_id], user_notification_payload);
         }
 
         state.push_event_to_user(
-            message.sender,
+            sender_id,
             GroupCanisterEvent::MessageActivity(MessageActivityEvent {
                 chat: Chat::Group(chat_id),
                 thread_root_message_index,
@@ -116,7 +119,7 @@ fn add_reaction_impl(args: Args, ext_caller: Option<Caller>, state: &mut Runtime
             now,
         );
 
-        state.notify_user_of_achievement(message.sender, Achievement::HadMessageReactedTo, now);
+        state.notify_user_of_achievement(sender_id, Achievement::HadMessageReactedTo, now);
     }
 
     if args.new_achievement {
