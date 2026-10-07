@@ -708,8 +708,7 @@ fn daily_puzzle_survives_a_missing_wrong_or_stopped_daily_canister() {
     wrapper.discard();
 }
 
-// Ticks until the LUI serves an enabled puzzle for today other than the one it held
-// A user's streak, and the game they're part way through, go with them when they're migrated to a
+// A user's streak, and their record of today's game, go with them when they're migrated to a
 // MultiUser canister, which gives them a new id, held by the same LocalUserIndex as their old
 // canister or by another
 #[test_case(true; "held_by_the_same_local_user_index")]
@@ -781,6 +780,7 @@ fn daily_puzzle_streak_follows_a_migrated_user(same_local_user_index: bool) {
     wrapper.discard();
 }
 
+// Ticks until the LUI serves an enabled puzzle for today other than the one it held
 fn wait_for_replacement(env: &mut PocketIc, user: &User, local_user_index: CanisterId, previous: &[u8]) -> PublicDailyPuzzle {
     for _ in 0..MAX_WAIT_TICKS {
         let fetched = fetch(env, user, local_user_index);

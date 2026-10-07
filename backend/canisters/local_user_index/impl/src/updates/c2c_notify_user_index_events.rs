@@ -443,7 +443,11 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             Err(error) => error!(user_id = %ev.user_id, ?error, "Failed to deserialize event for migrated user"),
         },
         UserIndexEvent::DailyPuzzleDataForMigratedUser(ev) => match msgpack::deserialize(ev.data.as_slice()) {
-            Ok(data) => state.data.daily_puzzle_engine.import_user(ev.user_id, data),
+            Ok(data) => {
+                state.data.daily_puzzle_engine.import_user(ev.user_id, data);
+                // On again if the user has been migrated since the UserIndex sent it here
+                state.move_daily_puzzle_data_for_migrated_user(ev.user_id);
+            }
             Err(error) => error!(user_id = %ev.user_id, ?error, "Failed to deserialize daily puzzle data for migrated user"),
         },
         UserIndexEvent::NotifyBot(notification) => {
