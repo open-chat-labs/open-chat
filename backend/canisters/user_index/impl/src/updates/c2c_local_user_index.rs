@@ -361,6 +361,15 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 })),
             );
         }
+        LocalUserIndexEvent::DailyPuzzleDataForMigratedUser(ev) => {
+            let user_id = state.data.migrated_user_ids.latest(ev.user_id);
+            state.push_event_to_local_user_index(
+                user_id,
+                UserIndexEvent::DailyPuzzleDataForMigratedUser(Box::new(
+                    local_user_index_canister::DailyPuzzleDataForMigratedUser { user_id, data: ev.data },
+                )),
+            );
+        }
     }
 }
 

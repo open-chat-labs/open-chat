@@ -413,6 +413,7 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 // Any events still queued for the user's old canister, eg. those which failed while it
                 // was frozen, are sent on to their new id
                 state.move_events_queued_for_migrated_user(ev.old_user_id);
+                state.move_daily_puzzle_data_for_migrated_user(ev.old_user_id);
                 state
                     .data
                     .blocked_users
@@ -440,6 +441,10 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             }
             // Only if the LocalUserIndex which queued it is on a later version, with a new type of event
             Err(error) => error!(user_id = %ev.user_id, ?error, "Failed to deserialize event for migrated user"),
+        },
+        UserIndexEvent::DailyPuzzleDataForMigratedUser(ev) => match msgpack::deserialize(ev.data.as_slice()) {
+            Ok(data) => state.data.daily_puzzle_engine.import_user(ev.user_id, data),
+            Err(error) => error!(user_id = %ev.user_id, ?error, "Failed to deserialize daily puzzle data for migrated user"),
         },
         UserIndexEvent::NotifyBot(notification) => {
             let this_canister_id = state.env.canister_id();

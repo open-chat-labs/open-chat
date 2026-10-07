@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Pass a migrated user's daily puzzle data on to the LocalUserIndex holding their new id ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+
 ### Removed
 
 - Remove the one-offs which queued the users migrated so far for the StorageIndex and moved their bots, now that they have run ([#9823](https://github.com/open-chat-labs/open-chat/pull/9823))
