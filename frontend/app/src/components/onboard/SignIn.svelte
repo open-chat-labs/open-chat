@@ -88,11 +88,11 @@
                 }
             });
         } else if (provider === AuthProvider.PASSKEY) {
-            if (client.isNativeApp()) {
-                client.signInWithAndroidWebAuthn();
-            } else {
-                client.signInWithWebAuthn();
-            }
+            // A cancelled prompt or a passkey we don't recognise rejects; go back to the options
+            (client.isNativeApp()
+                ? client.signInWithAndroidWebAuthn()
+                : client.signInWithWebAuthn()
+            ).catch(() => (loginState = "options"));
         } else if (provider === AuthProvider.ETH) {
             console.log("Logging in with ETH");
         } else if (provider === AuthProvider.SOL) {
