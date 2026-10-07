@@ -1,6 +1,6 @@
 # OpenChat frontend
 
-One npm package (`package.json` in this folder) holds several source trees. They import each other through path aliases (`@client`, `@shared`, `@agent`, `@worker`, `@src`, `@shared_components`), not as separate packages.
+The `package.json` in this folder covers the app, client, worker, agent and shared trees. They import each other through path aliases (`@client`, `@shared`, `@agent`, `@worker`, `@src`, `@shared_components`), not as separate packages. `component-lib`, `component-test` and `tauri-plugin-oc` have their own `package.json`.
 
 ### app
 
@@ -8,7 +8,7 @@ The Svelte website. `app/src/components/` is the desktop layout, `app/src/compon
 
 ### openchat-client (`@client`)
 
-The interface the app uses: functions on the `OpenChat` class plus the reactive state the app reads. It starts the worker and talks to it asynchronously. The app imports it only through `@client`, never a path inside it.
+The interface the app uses: functions on the `OpenChat` class plus the reactive state the app reads. It starts the worker and talks to it asynchronously. The app imports it only through `@client`, never a path inside it (specs excepted).
 
 ### openchat-worker (`@worker`)
 
@@ -24,7 +24,7 @@ The domain model, used by the client and the agent. The client re-exports it, an
 
 ### component-lib
 
-Pure UI components with no business logic, used by the mobile layout.
+Pure UI components with no business logic. The mobile layout is built from them; the desktop layout uses only a few until its theme system moves over.
 
 ### Other folders
 
