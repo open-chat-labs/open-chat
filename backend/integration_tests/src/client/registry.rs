@@ -25,6 +25,7 @@ pub mod happy_path {
         sender: Principal,
         registry_canister_id: CanisterId,
         subnet_id: Principal,
+        local_user_index: Option<CanisterId>,
     ) -> Subnet {
         let response = super::expand_onto_subnet(
             env,
@@ -32,7 +33,7 @@ pub mod happy_path {
             registry_canister_id,
             &expand_onto_subnet::Args {
                 subnet_id,
-                local_user_index: None,
+                local_user_index,
             },
         );
 

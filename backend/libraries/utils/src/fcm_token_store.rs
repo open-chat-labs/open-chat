@@ -76,6 +76,10 @@ impl FcmTokenStore {
             .collect()
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &(UserId, FcmToken)> {
+        self.fcm_user_tokens.iter()
+    }
+
     pub fn len(&self) -> usize {
         self.fcm_user_tokens.len()
     }
