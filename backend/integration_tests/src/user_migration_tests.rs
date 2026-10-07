@@ -2265,6 +2265,12 @@ fn bot_registered_privately_by_a_user_before_they_migrate_can_be_installed_by_th
 
     // Each LocalUserIndex knows the bot's owner by the id they had when registering it
     let new_owner = migrate(env, canister_ids, &operator, &owner, multi_user_canister);
+    // The UserIndex tells the LocalUserIndex of the owner's new id once they've been imported, which
+    // can take some rounds to arrive
+    tick_until(env, |env| {
+        client::local_user_index::happy_path::latest_user_id(env, owner.principal, local_user_index, owner.user_id)
+            == new_owner.user_id
+    });
 
     client::local_user_index::happy_path::install_bot(
         env,
