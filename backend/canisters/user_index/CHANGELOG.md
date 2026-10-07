@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- One-off in `post_upgrade` which records the prod DailyPuzzle canister id and pushes it to every LocalUserIndex, in place of a governance proposal. Release only once the DailyPuzzle canister has its wasm ([#9768](https://github.com/open-chat-labs/open-chat/pull/9768))
 - Send each migrated user's old and new ids to the StorageIndex, including, once, those migrated so far ([#9790](https://github.com/open-chat-labs/open-chat/pull/9790))
 
 ### Changed
@@ -19,12 +18,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove the Registry id from the LocalUserIndexes' upgrade args ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))
+- Remove the one-off which set the DailyPuzzle canister id, now that it has run ([#9775](https://github.com/open-chat-labs/open-chat/pull/9775))
 
 ### Fixed
 
 - Retry payments whose ledger can't be called after a growing delay rather than every round, and park those to uninstalled or deleted ledgers ([#9792](https://github.com/open-chat-labs/open-chat/pull/9792))
 - Move bots installed in a migrated user's direct chats onto their new id and LocalUserIndex, and tell each bot, including for users migrated so far ([#9819](https://github.com/open-chat-labs/open-chat/pull/9819))
+
+## [[2.0.2097](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2097-user_index)] - 2026-10-05
+
+### Added
+
+- One-off in `post_upgrade` which records the prod DailyPuzzle canister id and pushes it to every LocalUserIndex, in place of a governance proposal. Release only once the DailyPuzzle canister has its wasm ([#9768](https://github.com/open-chat-labs/open-chat/pull/9768))
+
+### Removed
+
+- Remove the Registry id from the LocalUserIndexes' upgrade args ([#9738](https://github.com/open-chat-labs/open-chat/pull/9738))
 
 ## [[2.0.2085](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2085-user_index)] - 2026-10-02
 
