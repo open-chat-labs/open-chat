@@ -48,6 +48,126 @@ export default defineConfig([
             "@typescript-eslint/no-explicit-any": ["error"],
             "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
             "local/no-pagejs-direct": "error",
+            // New state uses runes or the custom stores in openchat-client/src/utils/stores.ts.
+            // Type-only imports stay allowed: the custom stores implement svelte/store's contract.
+            "@typescript-eslint/no-restricted-imports": [
+                "error",
+                {
+                    paths: [
+                        {
+                            name: "svelte/store",
+                            allowTypeImports: true,
+                            message:
+                                "Use runes or the custom stores in openchat-client/src/utils/stores.ts (see frontend/CLAUDE.md).",
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    // The app reaches the worker and agent only through the client, and the client only through its entry point.
+    {
+        files: ["app/src/**/*.ts", "app/src/**/*.svelte"],
+        rules: {
+            "no-restricted-imports": [
+                "error",
+                {
+                    patterns: [
+                        {
+                            group: ["@agent", "@agent/*", "@worker", "@worker/*", "**/openchat-agent/**", "**/openchat-worker/**"],
+                            message: "The app talks to the agent and worker only through @client.",
+                        },
+                        {
+                            group: ["@client/*", "**/openchat-client/**"],
+                            message: "Import from @client, not from a path inside it.",
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    // Specs may reach inside the client to build its internal state; the agent and worker stay off limits.
+    {
+        files: ["app/src/**/*.spec.ts"],
+        rules: {
+            "no-restricted-imports": [
+                "error",
+                {
+                    patterns: [
+                        {
+                            group: ["@agent", "@agent/*", "@worker", "@worker/*", "**/openchat-agent/**", "**/openchat-worker/**"],
+                            message: "The app talks to the agent and worker only through @client.",
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    // Files that used svelte/store before the rule. Move each to runes or the custom stores when you touch it,
+    // then take it off this list. Never add to it.
+    {
+        files: [
+            "app/src/actions/longpress.ts",
+            "app/src/actions/translatable.ts",
+            "app/src/components/home/ExternalContent.spec.ts",
+            "app/src/components/home/MemeBuilder.spec.ts",
+            "app/src/components_shared/calendar/weekdays.ts",
+            "app/src/i18n/i18n.ts",
+            "app/src/i18n/localeFallback.spec.ts",
+            "app/src/i18n/storedLocale.spec.ts",
+            "app/src/stores/androidInterfaceSizes.ts",
+            "app/src/stores/automation.ts",
+            "app/src/stores/chatListView.ts",
+            "app/src/stores/chatShortcuts.ts",
+            "app/src/stores/messageToForward.ts",
+            "app/src/stores/pendingShare.ts",
+            "app/src/stores/pinNumber.ts",
+            "app/src/stores/proposalSections.ts",
+            "app/src/stores/proposalVotes.ts",
+            "app/src/stores/quickReactions.ts",
+            "app/src/stores/rtl.ts",
+            "app/src/stores/search.svelte.ts",
+            "app/src/stores/snow.ts",
+            "app/src/stores/solana/walletStore.ts",
+            "app/src/stores/time.ts",
+            "app/src/stores/toast.ts",
+            "app/src/stores/video.call.spec.ts",
+            "app/src/stores/video.spec.ts",
+            "app/src/stores/video.ts",
+            "app/src/stores/xframe.ts",
+            "app/src/theme/themeV2.ts",
+            "app/src/theme/themes.ts",
+            "app/src/utils/access.ts",
+            "app/src/utils/dailyPuzzle.svelte.ts",
+            "app/src/utils/native/call_bridge.spec.ts",
+            "app/src/utils/native/share_target.ts",
+            "app/src/utils/navigation.ts",
+            "app/src/utils/share.ts",
+            "app/src/utils/store.ts",
+            "app/src/utils/user.ts",
+            "openchat-client/src/openchat.ts",
+            "openchat-client/src/state/app/appStores.spec.ts",
+            "openchat-client/src/stores/background.ts",
+            "openchat-client/src/stores/dummyStore.ts",
+            "openchat-client/src/stores/i18n.spec.ts",
+            "openchat-client/src/stores/immutable.ts",
+            "openchat-client/src/stores/lastOnlineDates.ts",
+            "openchat-client/src/stores/mapStore.spec.ts",
+            "openchat-client/src/stores/minutesOnline.ts",
+            "openchat-client/src/stores/network.ts",
+            "openchat-client/src/stores/profiling.ts",
+            "openchat-client/src/stores/rules.ts",
+            "openchat-client/src/stores/safeWritable.ts",
+            "openchat-client/src/stores/throttling.ts",
+            "openchat-client/src/stores/typing.ts",
+            "openchat-client/src/utils/cryptoFormatter.ts",
+            "openchat-client/src/utils/poller.ts",
+            "openchat-client/src/utils/rtc.ts",
+            "openchat-client/src/utils/stores.spec.ts",
+            "openchat-client/src/utils/user.spec.ts",
+        ],
+        rules: {
+            "@typescript-eslint/no-restricted-imports": "off",
         },
     },
     // Explicit exceptions: files that are permitted to import page.js directly.
