@@ -2232,6 +2232,51 @@ fn bot_installed_in_a_users_direct_chats_before_they_migrate_reaches_them_via_th
 }
 
 #[test]
+fn bot_registered_privately_by_a_user_before_they_migrate_can_be_installed_by_them() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let owner = client::register_user(env, canister_ids);
+    let (bot_id, _) = client::user_index::happy_path::register_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        BotDefinition {
+            description: random_string(),
+            commands: Vec::new(),
+            autonomous_config: None,
+            default_subscriptions: None,
+            data_encoding: None,
+            restricted_locations: None,
+        },
+    );
+
+    // Each LocalUserIndex knows the bot's owner by the id they had when registering it
+    let new_owner = migrate(env, canister_ids, &operator, &owner, multi_user_canister);
+
+    client::local_user_index::happy_path::install_bot(
+        env,
+        new_owner.principal,
+        local_user_index,
+        BotInstallationLocation::User(new_owner.user_id.into()),
+        bot_id,
+        BotPermissions::text_only(),
+        None,
+    );
+}
+
+#[test]
 fn bot_installed_in_a_users_direct_chats_before_they_migrate_is_uninstalled_from_their_new_canister() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

@@ -84,15 +84,16 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, OCError> 
     match bot.registration_status {
         BotRegistrationStatus::Public => (),
         BotRegistrationStatus::Private(location) => {
-            // The direct chats of a user the bot may be installed in may be named by an id they had
-            // before being migrated to a MultiUser canister
+            // The bot's owner, and the user in whose direct chats it may be installed, may be named by
+            // ids they had before being migrated to a MultiUser canister
             let location = location.map(|loc| match loc {
                 BotInstallationLocation::User(chat_id) => {
                     BotInstallationLocation::User(state.data.migrated_user_ids.latest(chat_id.into()).into())
                 }
                 loc => loc,
             });
-            if location.is_none_or(|loc| loc != args.location) && bot.owner_id != user.user_id {
+            let owner_id = state.data.migrated_user_ids.latest(bot.owner_id);
+            if location.is_none_or(|loc| loc != args.location) && owner_id != user.user_id {
                 return Err(OCErrorCode::InitiatorNotAuthorized.into());
             }
         }
