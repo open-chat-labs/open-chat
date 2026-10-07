@@ -6,7 +6,7 @@ import {
 } from "@client";
 import { _, getLocaleFromNavigator, init, locale, register } from "svelte-i18n";
 import { get, writable } from "svelte/store";
-import { configKeys } from "../utils/config";
+import { configKeys } from "@shared";
 import { withEnglishFallback } from "./localeFallback";
 
 export const translationCodes: Record<string, string> = {

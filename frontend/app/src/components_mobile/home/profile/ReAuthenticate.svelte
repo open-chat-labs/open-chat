@@ -11,7 +11,7 @@
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { configKeys } from "../../../utils/config";
+    import { configKeys } from "@shared";
     import {
         EmailPollerError,
         EmailPollerSuccess,

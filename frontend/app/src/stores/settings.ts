@@ -1,5 +1,5 @@
 import { LocalStorageBoolStore, LocalStorageStore } from "@client";
-import { configKeys } from "../utils/config";
+import { configKeys } from "@shared";
 import { isTouchDevice, mobileOperatingSystem } from "../utils/devices";
 
 export const showHomeScreenPrompt = new LocalStorageBoolStore(

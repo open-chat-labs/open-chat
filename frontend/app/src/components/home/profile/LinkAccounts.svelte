@@ -12,12 +12,11 @@
         type ResourceKey,
         type WebAuthnKey,
     } from "@client";
-    import { ErrorCode } from "@shared";
+    import { configKeys, ErrorCode } from "@shared";
     import { getContext, onMount } from "svelte";
     import ArrowRightBoldOutline from "svelte-material-icons/ArrowRightBoldOutline.svelte";
     import LinkVariantPlus from "svelte-material-icons/LinkVariantPlus.svelte";
     import { i18nKey } from "../../../i18n/i18n";
-    import { configKeys } from "../../../utils/config";
     import {
         EmailPollerError,
         EmailPollerSuccess,
