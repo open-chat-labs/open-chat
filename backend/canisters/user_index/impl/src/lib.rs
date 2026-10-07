@@ -321,7 +321,34 @@ impl RuntimeState {
             users_to_notify,
             migrated_earlier.into_iter().collect(),
         );
+        self.migrate_bot_installations(old_user_id, new_user_id);
         true
+    }
+
+    // Moves the bots installed in a migrated user's direct chats under an old id onto their latest id,
+    // with the LocalUserIndex holding them as each bot's gateway, since a MultiUser canister only takes
+    // calls from its own LocalUserIndex. That LocalUserIndex tells each bot, as it would of an install.
+    pub fn migrate_bot_installations(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        let Some(local_user_index) = self.local_user_index_of_user(new_user_id) else {
+            return;
+        };
+        let now = self.env.now();
+        let bot_events = self
+            .data
+            .users
+            .migrate_bot_installations(old_user_id, new_user_id, local_user_index, now);
+        if bot_events.is_empty() {
+            return;
+        }
+        for (bot_id, events) in bot_events {
+            for event in events {
+                self.data.user_index_event_sync_queue.push(
+                    local_user_index,
+                    LocalUserIndexEvent::NotifyBot(Box::new(event.to_notification(bot_id))),
+                );
+            }
+        }
+        jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
     // Records that a user migrated to a MultiUser canister has been given a new id, and tells every

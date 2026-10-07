@@ -9,8 +9,9 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::RangeFrom;
 use tracing::info;
 use types::{
-    BotDefinition, BotInstallationLocation, BotMatch, BotPermissions, BotRegistrationStatus, CanisterId, CyclesTopUp, Document,
-    Milliseconds, OptionUpdate, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
+    BotDefinition, BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotMatch, BotNotification,
+    BotPermissions, BotRegistrationStatus, BotUninstalledEvent, CanisterId, CyclesTopUp, Document, Milliseconds, OptionUpdate,
+    SuspensionDuration, TimestampMillis, UniquePersonProof, UserId, UserType,
 };
 use user_index_canister::bot_updates::BotDetails;
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
@@ -126,6 +127,43 @@ impl Bot {
         Some(removed)
     }
 
+    // Moves the installation at `from` to `to`, eg. from a user's direct chats under their old id to
+    // those under their new one, once they've been migrated to a MultiUser canister, with the
+    // LocalUserIndex holding them as the bot's gateway to it. An installation already at `to` is kept.
+    // Returns the installation events recorded.
+    pub fn move_installation(
+        &mut self,
+        from: BotInstallationLocation,
+        to: BotInstallationLocation,
+        local_user_index: CanisterId,
+        moved_by: UserId,
+        now: TimestampMillis,
+    ) -> Vec<BotInstallationEvent> {
+        let events_start = self.installation_events.len();
+        if let Some(installation) = self.remove_installation(from, moved_by, now)
+            && !self.installations.contains_key(&to)
+        {
+            self.installation_events.push(BotInstallationEvent::Installed(BotInstalled {
+                location: to,
+                api_gateway: local_user_index,
+                granted_permissions: installation.granted_permissions.clone(),
+                granted_autonomous_permissions: installation.granted_autonomous_permissions.clone(),
+                installed_by: moved_by,
+                timestamp: now,
+            }));
+            self.installations.insert(
+                to,
+                InstalledBotDetails {
+                    local_user_index,
+                    installed_by: moved_by,
+                    updated_at: now,
+                    ..installation
+                },
+            );
+        }
+        self.installation_events[events_start..].to_vec()
+    }
+
     pub fn to_schema(&self, id: UserId) -> BotDetails {
         BotDetails {
             id,
@@ -185,6 +223,36 @@ pub struct BotUninstalled {
     pub uninstalled_by: UserId,
     #[serde(rename = "t")]
     pub timestamp: TimestampMillis,
+}
+
+impl BotInstallationEvent {
+    // The lifecycle notification telling the bot of the event, as the LocalUserIndex it was
+    // installed or uninstalled via sends it
+    pub fn to_notification(&self, bot_id: UserId) -> BotNotification {
+        let (event, timestamp) = match self {
+            BotInstallationEvent::Installed(e) => (
+                BotLifecycleEvent::Installed(BotInstalledEvent {
+                    installed_by: e.installed_by,
+                    location: e.location,
+                    granted_command_permissions: e.granted_permissions.clone(),
+                    granted_autonomous_permissions: e.granted_autonomous_permissions.clone(),
+                }),
+                e.timestamp,
+            ),
+            BotInstallationEvent::Uninstalled(e) => (
+                BotLifecycleEvent::Uninstalled(BotUninstalledEvent {
+                    uninstalled_by: e.uninstalled_by,
+                    location: e.location,
+                }),
+                e.timestamp,
+            ),
+        };
+        BotNotification {
+            event: BotEvent::Lifecycle(event),
+            recipients: vec![bot_id],
+            timestamp,
+        }
+    }
 }
 
 impl From<BotInstallationEvent> for user_index_canister::bot_installation_events::BotInstallationEvent {
@@ -536,6 +604,33 @@ impl UserMap {
 
         self.users.insert(new_user_id, user);
         Some(principal)
+    }
+
+    // Moves the bots installed in a migrated user's direct chats under their old id onto their new one,
+    // with the LocalUserIndex now holding them as each bot's gateway, as are any bots only permitted
+    // to be installed there. Returns the installation events recorded for each bot, which it's told of.
+    pub fn migrate_bot_installations(
+        &mut self,
+        old_user_id: UserId,
+        new_user_id: UserId,
+        local_user_index: CanisterId,
+        now: TimestampMillis,
+    ) -> Vec<(UserId, Vec<BotInstallationEvent>)> {
+        let from = BotInstallationLocation::User(old_user_id.into());
+        let to = BotInstallationLocation::User(new_user_id.into());
+        let mut events = Vec::new();
+        for (bot_id, bot) in self.bots.iter_mut() {
+            if matches!(bot.registration_status, BotRegistrationStatus::Private(Some(location)) if location == from) {
+                bot.registration_status = BotRegistrationStatus::Private(Some(to));
+                bot.last_updated = now;
+                self.bot_updates.insert((now, BotUpdate::Updated(*bot_id)));
+            }
+            let bot_events = bot.move_installation(from, to, local_user_index, new_user_id, now);
+            if !bot_events.is_empty() {
+                events.push((*bot_id, bot_events));
+            }
+        }
+        events
     }
 
     #[expect(clippy::too_many_arguments)]
@@ -1351,6 +1446,137 @@ mod tests {
 
         // Migrating the old id again finds nothing to move
         assert_eq!(user_map.migrate_user_id(old_user_id, new_user_id, 7), None);
+    }
+
+    #[test]
+    fn bots_installed_in_a_migrated_users_direct_chats_move_onto_their_new_id() {
+        let mut user_map = UserMap::default();
+        let old_user_id: UserId = Principal::from_slice(&[3, 1]).into();
+        let new_user_id: UserId = Principal::from_slice(&[3, 2]).into();
+        let other_user_id: UserId = Principal::from_slice(&[3, 3]).into();
+        let old_local_user_index = Principal::from_slice(&[5]);
+        let new_local_user_index = Principal::from_slice(&[6]);
+        let old_location = BotInstallationLocation::User(old_user_id.into());
+        let new_location = BotInstallationLocation::User(new_user_id.into());
+        let other_location = BotInstallationLocation::User(other_user_id.into());
+
+        // One bot is installed in the user's direct chats and another user's, and another is only
+        // permitted to be installed in the user's
+        let installed_bot_id: UserId = Principal::from_slice(&[3, 4]).into();
+        let mut installed_bot = test_bot();
+        for (location, user_id) in [(old_location, old_user_id), (other_location, other_user_id)] {
+            installed_bot.add_installation(
+                location,
+                old_local_user_index,
+                BotPermissions::text_only(),
+                BotPermissions::text_only(),
+                user_id,
+                1,
+            );
+        }
+        let permitted_bot_id: UserId = Principal::from_slice(&[3, 5]).into();
+        let mut permitted_bot = test_bot();
+        permitted_bot.name = "bot2".to_string();
+        permitted_bot.registration_status = BotRegistrationStatus::Private(Some(old_location));
+        for (i, (bot_id, bot)) in [(installed_bot_id, installed_bot), (permitted_bot_id, permitted_bot)]
+            .into_iter()
+            .enumerate()
+        {
+            let name = bot.name.clone();
+            user_map.register(
+                Principal::from_slice(&[7, i as u8]),
+                bot_id,
+                name,
+                None,
+                1,
+                None,
+                UserType::BotV2,
+                Some(bot),
+            );
+        }
+
+        let events = user_map.migrate_bot_installations(old_user_id, new_user_id, new_local_user_index, 2);
+
+        // The installation is moved, with the user's new LocalUserIndex as the bot's gateway
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].0, installed_bot_id);
+        assert!(matches!(
+            events[0].1.as_slice(),
+            [BotInstallationEvent::Uninstalled(u), BotInstallationEvent::Installed(i)]
+                if u.location == old_location
+                    && i.location == new_location
+                    && i.api_gateway == new_local_user_index
+                    && i.installed_by == new_user_id
+                    && i.timestamp == 2
+        ));
+        let installed_bot = user_map.get_bot(&installed_bot_id).unwrap();
+        assert!(!installed_bot.installations.contains_key(&old_location));
+        let installation = &installed_bot.installations[&new_location];
+        assert_eq!(installation.local_user_index, new_local_user_index);
+        assert_eq!(installation.installed_by, new_user_id);
+        assert_eq!(installation.installed_at, 1);
+        assert_eq!(installation.granted_autonomous_permissions, BotPermissions::text_only());
+        assert_eq!(
+            installed_bot.installations[&other_location].local_user_index,
+            old_local_user_index
+        );
+        assert_eq!(installed_bot.installation_events.len(), 4);
+
+        // The other bot may now be installed in the user's direct chats under their new id
+        let permitted_bot = user_map.get_bot(&permitted_bot_id).unwrap();
+        assert!(matches!(
+            permitted_bot.registration_status,
+            BotRegistrationStatus::Private(Some(location)) if location == new_location
+        ));
+        assert!(
+            user_map
+                .iter_bot_updates(1)
+                .any(|(_, u)| u == BotUpdate::Updated(permitted_bot_id))
+        );
+
+        // Migrating the old id again finds nothing to move
+        assert!(
+            user_map
+                .migrate_bot_installations(old_user_id, new_user_id, new_local_user_index, 3)
+                .is_empty()
+        );
+    }
+
+    #[test]
+    fn bot_installed_in_a_migrated_users_direct_chats_under_both_ids_keeps_the_newer() {
+        let old_user_id: UserId = Principal::from_slice(&[3, 1]).into();
+        let new_user_id: UserId = Principal::from_slice(&[3, 2]).into();
+        let old_location = BotInstallationLocation::User(old_user_id.into());
+        let new_location = BotInstallationLocation::User(new_user_id.into());
+        let new_local_user_index = Principal::from_slice(&[6]);
+
+        let mut bot = test_bot();
+        bot.add_installation(
+            old_location,
+            Principal::from_slice(&[5]),
+            BotPermissions::text_only(),
+            BotPermissions::default(),
+            old_user_id,
+            1,
+        );
+        bot.add_installation(
+            new_location,
+            new_local_user_index,
+            BotPermissions::default(),
+            BotPermissions::text_only(),
+            new_user_id,
+            2,
+        );
+
+        let events = bot.move_installation(old_location, new_location, new_local_user_index, new_user_id, 3);
+
+        assert!(matches!(events.as_slice(), [BotInstallationEvent::Uninstalled(u)] if u.location == old_location));
+        assert_eq!(bot.installations.len(), 1);
+        assert_eq!(bot.installations[&new_location].installed_at, 2);
+        assert_eq!(
+            bot.installations[&new_location].granted_autonomous_permissions,
+            BotPermissions::text_only()
+        );
     }
 
     #[test]

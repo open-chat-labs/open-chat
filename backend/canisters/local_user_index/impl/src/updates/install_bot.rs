@@ -7,8 +7,8 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::install_bot::*;
 use oc_error_codes::{OCError, OCErrorCode};
 use types::{
-    BotEvent, BotInstalledEvent, BotLifecycleEvent, BotNotification, BotRegistrationStatus, BotSubscriptions, OCResult, UserId,
-    c2c_install_bot,
+    BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, BotRegistrationStatus,
+    BotSubscriptions, OCResult, UserId, c2c_install_bot,
 };
 
 #[update(guard = "caller_is_openchat_user", msgpack = true)]
@@ -84,6 +84,14 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, OCError> 
     match bot.registration_status {
         BotRegistrationStatus::Public => (),
         BotRegistrationStatus::Private(location) => {
+            // The direct chats of a user the bot may be installed in may be named by an id they had
+            // before being migrated to a MultiUser canister
+            let location = location.map(|loc| match loc {
+                BotInstallationLocation::User(chat_id) => {
+                    BotInstallationLocation::User(state.data.migrated_user_ids.latest(chat_id.into()).into())
+                }
+                loc => loc,
+            });
             if location.is_none_or(|loc| loc != args.location) && bot.owner_id != user.user_id {
                 return Err(OCErrorCode::InitiatorNotAuthorized.into());
             }
