@@ -1,20 +1,29 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const constructed = vi.fn();
+// how many of the next Databases fail their first load, like the real one does
+// when IndexedDB is empty and the emoji CDN errors
+const failingLoads = { remaining: 0 };
 
 vi.mock("emoji-picker-element", () => {
     class Database {
+        private readonly _ready: Promise<void>;
         constructor() {
             constructed();
+            this._ready =
+                failingLoads.remaining-- > 0
+                    ? Promise.reject(new Error("Failed to fetch: emoji data: 500"))
+                    : Promise.resolve();
+            this._ready.catch(() => undefined);
         }
         ready() {
-            return Promise.resolve();
+            return this._ready;
         }
         getPreferredSkinTone() {
-            return Promise.resolve(0);
+            return this._ready.then(() => 0);
         }
         getEmojiBySearchQuery() {
-            return Promise.resolve([]);
+            return this._ready.then(() => [{ unicode: "😀", version: 1, shortcodes: ["grin"] }]);
         }
         getEmojiByUnicodeOrName() {
             return Promise.resolve(undefined);
@@ -166,5 +175,20 @@ describe("the emoji Database", () => {
         expect(constructed).toHaveBeenCalledTimes(1);
         expect(getEmojiDatabase()).toBe(getEmojiDatabase());
         expect(constructed).toHaveBeenCalledTimes(1);
+    });
+
+    // Invariant: a Database whose first load failed is not reused, so emoji search
+    // works again once the emoji data can be fetched, without restarting the app.
+    test("is rebuilt after its first load fails, so search recovers", async () => {
+        stubIndexedDb("loads");
+        failingLoads.remaining = 1;
+        const { searchAllEmojis } = await import("./emojis");
+
+        expect(await searchAllEmojis("grin")).toEqual([]);
+        await flush();
+        expect(await searchAllEmojis("grin")).toEqual([
+            { kind: "native", unicode: "😀", code: "grin" },
+        ]);
+        expect(constructed).toHaveBeenCalledTimes(2);
     });
 });
