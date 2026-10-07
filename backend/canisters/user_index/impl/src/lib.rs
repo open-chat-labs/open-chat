@@ -651,8 +651,6 @@ struct Data {
     pub event_store_client: EventStoreClient<CdkRuntime>,
     pub storage_index_user_sync_queue: BatchedTimerJobQueue<StorageIndexUserConfigBatch>,
     pub storage_index_users_to_remove_queue: BatchedTimerJobQueue<StorageIndexUsersToRemoveBatch>,
-    // TODO remove the default after the release containing it, whose post_upgrade sets its state
-    #[serde(default = "storage_index_user_ids_migrated_queue")]
     pub storage_index_user_ids_migrated_queue: BatchedTimerJobQueue<StorageIndexUserIdsMigratedBatch>,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub group_index_event_sync_queue: BatchedTimerJobQueue<GroupIndexEventBatch>,
@@ -740,11 +738,6 @@ struct Data {
     // The users being migrated from canisters of their own to MultiUser canisters
     #[serde(default)]
     pub user_migrations: UserMigrations,
-}
-
-// Its target is set to the StorageIndex in post_upgrade
-fn storage_index_user_ids_migrated_queue() -> BatchedTimerJobQueue<StorageIndexUserIdsMigratedBatch> {
-    BatchedTimerJobQueue::new(Principal::anonymous(), false)
 }
 
 impl Data {
