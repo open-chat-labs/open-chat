@@ -1,23 +1,13 @@
 <script lang="ts">
-    import {
-        chitStateStore,
-        currentUserIdStore,
-        dailyPuzzleStore,
-        puzzleReplaced,
-        stateFor,
-        todaysPuzzle,
-        type OpenChat,
-        type PublicDailyPuzzle,
-    } from "@client";
+    import { currentUserIdStore, type OpenChat } from "@client";
     import { now500 } from "@src/stores/time";
     import {
-        DailyPuzzleGame,
         formatSolveTime,
         gameNameKey,
+        openDailyPuzzle,
         tierKey,
         type HintButton,
     } from "@src/utils/dailyPuzzle.svelte";
-    import { dailyPuzzleGame } from "@src/utils/dailyPuzzleGames";
     import {
         Body,
         BodySmall,
@@ -29,7 +19,7 @@
         H2,
         transition,
     } from "component-lib";
-    import { getContext, onDestroy, untrack } from "svelte";
+    import { getContext, onDestroy } from "svelte";
     import { _ } from "svelte-i18n";
     import Fire from "svelte-material-icons/Fire.svelte";
     import LightbulbOutline from "svelte-material-icons/LightbulbOutline.svelte";
@@ -49,69 +39,15 @@
     let { gameId, onClose }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    let puzzle = $state.raw(todaysPuzzle($dailyPuzzleStore, gameId));
-    // undefined = a game this build does not know how to render
-    const def = puzzle !== undefined ? dailyPuzzleGame(puzzle.gameId) : undefined;
+    // undefined `def` = a game this build does not know how to render
+    const opened = openDailyPuzzle(client, gameId, $currentUserIdStore);
+    const { def, game } = opened;
     const Board = def?.Board;
-    function build(p: PublicDailyPuzzle | undefined): DailyPuzzleGame | undefined {
-        return p !== undefined && def !== undefined
-            ? new DailyPuzzleGame(
-                  client,
-                  p,
-                  stateFor($dailyPuzzleStore, p.gameId),
-                  $currentUserIdStore,
-                  def.game,
-                  def.demo !== undefined,
-              )
-            : undefined;
-    }
-    let game = $state.raw(build(puzzle));
-    // The poll can bring a different puzzle while this is open: a regenerate, or rollover. The
-    // board is rebuilt from the new one so no marks from the old puzzle remain, and the player is
-    // told (#9334 invariant 58).
-    let replaced = $state(false);
-    $effect(() => {
-        const next = todaysPuzzle($dailyPuzzleStore, gameId);
-        if (puzzle !== undefined && next !== undefined && puzzleReplaced(puzzle, next)) {
-            untrack(() => {
-                game?.dispose();
-                puzzle = next;
-                game = build(next);
-                replaced = true;
-            });
-        }
-    });
+    // the session's puzzle, which the poll may have replaced since this opened
+    let puzzle = $derived(game?.puzzle ?? opened.puzzle);
 
     onDestroy(() => game?.dispose());
-
-    let userState = $derived(
-        puzzle !== undefined ? stateFor($dailyPuzzleStore, puzzle.gameId) : undefined,
-    );
-    let started = $derived(userState?.startedAt !== undefined);
-    let solved = $derived(userState?.solved);
-    let elapsed = $derived(
-        solved !== undefined
-            ? Number(solved.solveTimeMs)
-            : userState?.startedAt !== undefined
-              ? $now500 - Number(userState.startedAt)
-              : 0,
-    );
-    let hintsUsed = $derived(userState?.hints.filter((h) => !h.mistake).length ?? 0);
-    let streak = $derived(userState?.streak ?? 0);
-    let disabled = $derived(
-        game === undefined ||
-            !started ||
-            game.tutorialOpen ||
-            solved !== undefined ||
-            game.submitting ||
-            game.busy,
-    );
-    let entryFee = $derived(game?.entryFee ?? 0);
-    let canAfford = $derived($chitStateStore.chitBalance >= entryFee);
     let hintButton: HintButton = $derived(game?.hintButton ?? { kind: "noneLeft" });
-    let hintDisabled = $derived(
-        disabled || hintButton.kind !== "hint" || $chitStateStore.chitBalance < hintButton.price,
-    );
 
     function share() {
         game?.share();
@@ -151,13 +87,13 @@
         {:else if game === undefined || Board === undefined}
             <Body><Translatable resourceKey={i18nKey("dailyPuzzle.needsNewerApp")} /></Body>
         {:else}
-            <div class="board" class:pending={!started && def?.demo === undefined}>
+            <div class="board" class:pending={!game.started && def?.demo === undefined}>
                 {#if game.showsDemo && def !== undefined}
                     <!-- Before Start the real board is inert and teaches nothing, so show the
                          game being played instead. Today's puzzle appears on Start. -->
                     <GameDemo {def} />
                 {:else}
-                    {#if replaced}
+                    {#if game.replaced}
                         <Caption colour={"textSecondary"}>
                             <Translatable resourceKey={i18nKey("dailyPuzzle.replaced")} />
                         </Caption>
@@ -170,8 +106,8 @@
                         violations={game.violations}
                         focus={game.focus}
                         target={game.target}
-                        greyed={!started}
-                        {disabled}
+                        greyed={!game.started}
+                        disabled={game.inputDisabled}
                         onTap={(key: number) => game?.tap(key)} />
                 {/if}
             </div>
@@ -180,19 +116,19 @@
                 <div class="stat">
                     <TimerOutline size={"1.2em"} color={ColourVars.textSecondary} />
                     <BodySmall width={"hug"}
-                        ><span class="mono">{formatSolveTime(elapsed)}</span></BodySmall>
+                        ><span class="mono">{formatSolveTime(game.elapsed($now500))}</span></BodySmall>
                 </div>
                 <div class="stat">
                     <LightbulbOutline size={"1.2em"} color={ColourVars.textSecondary} />
                     <BodySmall width={"hug"}>
                         <Translatable
-                            resourceKey={i18nKey("dailyPuzzle.hintsUsed", { count: hintsUsed })} />
+                            resourceKey={i18nKey("dailyPuzzle.hintsUsed", { count: game.hintsUsed })} />
                     </BodySmall>
                 </div>
                 <div class="stat">
                     <Fire size={"1.2em"} color={ColourVars.textSecondary} />
                     <BodySmall width={"hug"}>
-                        <Translatable resourceKey={i18nKey("dailyPuzzle.streakDays", { streak })} />
+                        <Translatable resourceKey={i18nKey("dailyPuzzle.streakDays", { streak: game.streak })} />
                     </BodySmall>
                 </div>
             </Container>
@@ -203,7 +139,7 @@
                 </Caption>
             {/if}
 
-            {#if solved !== undefined}
+            {#if game.solved !== undefined}
                 <Container direction={"vertical"} gap={"sm"} crossAxisAlignment={"center"}>
                     <H2 width={"hug"} fontWeight={"bold"}>
                         <Translatable resourceKey={i18nKey("dailyPuzzle.solvedTitle")} />
@@ -211,15 +147,15 @@
                     <Body width={"hug"} colour={"textSecondary"}>
                         <Translatable
                             resourceKey={i18nKey("dailyPuzzle.solvedSummary", {
-                                time: formatSolveTime(Number(solved.solveTimeMs)),
-                                hints: solved.hintsUsed,
-                                streak: solved.streak,
+                                time: formatSolveTime(Number(game.solved.solveTimeMs)),
+                                hints: game.solved.hintsUsed,
+                                streak: game.solved.streak,
                             })} />
                     </Body>
                     <Body width={"hug"} fontWeight={"bold"} colour={"primary"}>
                         <Translatable
                             resourceKey={i18nKey("dailyPuzzle.reward", {
-                                reward: solved.reward,
+                                reward: game.solved.reward,
                             })} />
                     </Body>
                 </Container>
@@ -240,15 +176,15 @@
                     {/if}
                 </Caption>
 
-                {#if !started}
+                {#if !game.started}
                     <Button
                         loading={game.busy}
-                        disabled={game.busy || !canAfford}
+                        disabled={!game.canStart}
                         onClick={() => game?.start()}>
                         <Translatable
-                            resourceKey={entryFee === 0
+                            resourceKey={game.entryFee === 0
                                 ? i18nKey("dailyPuzzle.startFree")
-                                : i18nKey("dailyPuzzle.startFee", { fee: entryFee })} />
+                                : i18nKey("dailyPuzzle.startFee", { fee: game.entryFee })} />
                     </Button>
                 {:else if !game.tutorialOpen}
                     <CommonButton2
@@ -267,7 +203,7 @@
                     </CommonButton2>
                     <CommonButton2
                         loading={game.busy}
-                        disabled={hintDisabled}
+                        disabled={game.hintDisabled}
                         variant={"secondary"}
                         mode={"regular"}
                         width={"fill"}

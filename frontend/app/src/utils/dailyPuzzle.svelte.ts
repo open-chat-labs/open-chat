@@ -1,6 +1,7 @@
 import {
     descriptionToHex,
     type DailyGame,
+    type DailyPuzzleSolved,
     type DailyPuzzleUserState,
     type DailyResultContent,
     type HintCaption,
@@ -12,16 +13,19 @@ import {
     type Violation,
     ANON_USER_ID,
     ErrorCode,
+    chitStateStore,
     dailyPuzzleStore,
     publish,
     puzzleFingerprint,
+    puzzleReplaced,
     stateFor,
+    todaysPuzzle,
 } from "@client";
 import { _, locale } from "svelte-i18n";
 import { get } from "svelte/store";
 import { i18nKey } from "../i18n/i18n";
 import { toastStore } from "../stores/toast";
-import { gameI18nPrefix } from "./dailyPuzzleGames";
+import { dailyPuzzleGame, gameI18nPrefix, type DailyPuzzleGameDef } from "./dailyPuzzleGames";
 
 // A game's own sentence for a step, with its values made readable: a string of the game's
 // translated first (a room's colour, "the orange room"), a list joined as the player's language
@@ -129,14 +133,39 @@ export function gameNameKey(gameId: string): string {
     return `${gameI18nPrefix(gameId)}.name`;
 }
 
+/**
+ * Today's puzzle for `gameId` (with no id, the first enabled one) and a play session on it. No
+ * session when there is no puzzle, or when this build cannot render its game (`def` undefined).
+ */
+export function openDailyPuzzle(
+    client: OpenChat,
+    gameId: string | undefined,
+    userId: string,
+): { puzzle?: PublicDailyPuzzle; def?: DailyPuzzleGameDef; game?: DailyPuzzleGame } {
+    const puzzle = todaysPuzzle(dailyPuzzleStore.value, gameId);
+    const def = puzzle !== undefined ? dailyPuzzleGame(puzzle.gameId) : undefined;
+    if (puzzle === undefined || def === undefined) return { puzzle, def };
+    return {
+        puzzle,
+        def,
+        game: new DailyPuzzleGame(client, puzzle, userId, def.game, def.demo !== undefined),
+    };
+}
+
 // Everything the puzzle screen needs that is not layout: the marks, rule state, hint flow,
-// saving and the submit path. Both the desktop modal and the mobile page render this. The
-// shell knows nothing about the game itself: it holds an opaque `model` and `state` and goes
-// through the DailyGame interface for every read and write.
+// saving and the submit path. Both the desktop modal and the mobile page render this, and read
+// nothing about the session from anywhere else (#9824). The shell knows nothing about the game
+// itself: it holds an opaque `model` and `state` and goes through the DailyGame interface for
+// every read and write.
 export class DailyPuzzleGame {
     readonly game: DailyGame<unknown, unknown>;
-    readonly model: unknown;
-    readonly #fingerprint: string;
+    // The poll can bring a different puzzle while the screen is open: a regenerate, or rollover.
+    // The board is rebuilt from the new one so no marks from the old puzzle remain, and
+    // `replaced` tells the player (#9334 invariant 58)
+    puzzle: PublicDailyPuzzle;
+    model = $state.raw<unknown>(undefined);
+    #fingerprint = "";
+    replaced = $state(false);
     state = $state.raw<unknown>(undefined);
     focus = $state<Set<number>>(new Set());
     target = $state<Set<number>>(new Set());
@@ -182,7 +211,9 @@ export class DailyPuzzleGame {
     // The store's `.value` is not tracked by Svelte, so a $derived reading it straight would keep
     // a stale hint count after a hint is bought (#9675 invariant 28): mirror it into state
     #store = $state.raw(dailyPuzzleStore.value);
+    #chitBalance = $state(chitStateStore.value.chitBalance);
     #unsubscribe: () => void;
+    #unsubscribeChit: () => void;
     #dirty = false;
     #saveTimer: number | undefined;
     #disposed = false;
@@ -192,26 +223,55 @@ export class DailyPuzzleGame {
 
     constructor(
         private client: OpenChat,
-        readonly puzzle: PublicDailyPuzzle,
-        userState: DailyPuzzleUserState | undefined,
+        puzzle: PublicDailyPuzzle,
         private userId: string,
         game: DailyGame<unknown, unknown>,
         // whether this game has a step-through demo to teach its rules
         readonly hasDemo = false,
     ) {
         this.game = game;
-        this.model = game.parse(puzzle.description);
+        this.puzzle = $state.raw(puzzle);
+        this.#load(puzzle);
+        document.addEventListener("visibilitychange", this.#onVisibility);
+        this.#unsubscribe = dailyPuzzleStore.subscribe((v) => {
+            this.#store = v;
+            const next = todaysPuzzle(v, this.puzzle.gameId);
+            if (next !== undefined && puzzleReplaced(this.puzzle, next)) {
+                this.#load(next);
+                this.replaced = true;
+            }
+        });
+        this.#unsubscribeChit = chitStateStore.subscribe(
+            (v) => (this.#chitBalance = v.chitBalance),
+        );
+    }
+
+    // Starts the session on `puzzle` from its saved marks. A replacement starts clean: the old
+    // puzzle's highlights, mistake, pending reset and unsaved marks all belonged to another board.
+    #load(puzzle: PublicDailyPuzzle): void {
+        window.clearTimeout(this.#saveTimer);
+        this.#saveTimer = undefined;
+        this.#dirty = false;
+        this.puzzle = puzzle;
+        this.model = this.game.parse(puzzle.description);
         this.#fingerprint = puzzleFingerprint(puzzle);
+        this.focus = new Set();
+        this.target = new Set();
+        this.#caption = undefined;
+        this.#lastMistake = undefined;
+        this.resetArmed = false;
+        this.#tutorialRequested = false;
+        this.#outOfHints = false;
+        const userState = this.userState;
         this.state = this.#resume(userState);
         this.lastHint = [...(userState?.hints ?? [])].reverse().find((h) => !h.mistake);
-        document.addEventListener("visibilitychange", this.#onVisibility);
-        this.#unsubscribe = dailyPuzzleStore.subscribe((v) => (this.#store = v));
     }
 
     dispose(): void {
         this.#disposed = true;
         document.removeEventListener("visibilitychange", this.#onVisibility);
         this.#unsubscribe();
+        this.#unsubscribeChit();
         this.flushSave();
     }
 
@@ -221,6 +281,22 @@ export class DailyPuzzleGame {
 
     get started(): boolean {
         return this.userState?.startedAt !== undefined;
+    }
+
+    get solved(): DailyPuzzleSolved | undefined {
+        return this.userState?.solved;
+    }
+
+    get streak(): number {
+        return this.userState?.streak ?? 0;
+    }
+
+    /** The clock: the solve time once solved, time since Start while playing, 0 before Start. */
+    elapsed(now: number): number {
+        const solved = this.solved;
+        if (solved !== undefined) return Number(solved.solveTimeMs);
+        const startedAt = this.userState?.startedAt;
+        return startedAt !== undefined ? now - Number(startedAt) : 0;
     }
 
     /** The server's quote for this user, re-checked on the start call; never computed here. */
@@ -265,6 +341,11 @@ export class DailyPuzzleGame {
             return this.game.fromBytes(this.model, userState.grid) ?? empty;
         }
         return empty;
+    }
+
+    /** Start is offered unless a call is in flight or the balance is short of the quoted fee. */
+    get canStart(): boolean {
+        return !this.busy && this.#chitBalance >= this.entryFee;
     }
 
     start(): Promise<void> {
@@ -321,14 +402,20 @@ export class DailyPuzzleGame {
             !this.started ||
             this.submitting ||
             this.busy ||
-            this.userState?.solved !== undefined ||
+            this.solved !== undefined ||
             this.tutorialOpen
         );
     }
 
+    /** A hint can be asked for only when one is on offer, input is allowed and the price is covered. */
+    get hintDisabled(): boolean {
+        const button = this.hintButton;
+        return this.inputDisabled || button.kind !== "hint" || this.#chitBalance < button.price;
+    }
+
     /** The tutorial is offered once a game with a demo is under way, until it is solved. */
     get canToggleTutorial(): boolean {
-        return this.hasDemo && this.started && this.userState?.solved === undefined;
+        return this.hasDemo && this.started && this.solved === undefined;
     }
 
     get tutorialOpen(): boolean {
@@ -458,14 +545,14 @@ export class DailyPuzzleGame {
 
     flushSave(): void {
         if (!this.#dirty) return;
-        if (!this.started || this.userState?.solved !== undefined) return;
+        if (!this.started || this.solved !== undefined) return;
         this.#dirty = false;
         this.client.dailyPuzzleSaveGrid(this.puzzle.gameId, this.#bytes());
     }
 
     submit(): Promise<void> {
         if (this.submitting || !this.started) return Promise.resolve();
-        if (this.userState?.solved !== undefined) return Promise.resolve();
+        if (this.solved !== undefined) return Promise.resolve();
         this.submitting = true;
         this.#dirty = false;
         return this.client
@@ -608,7 +695,7 @@ export class DailyPuzzleGame {
     }
 
     resultCard(): DailyResultContent | undefined {
-        const solved = this.userState?.solved;
+        const solved = this.solved;
         if (solved === undefined) return undefined;
         return {
             kind: "daily_result",
@@ -624,7 +711,7 @@ export class DailyPuzzleGame {
     }
 
     get canShare(): boolean {
-        const solved = this.userState?.solved;
+        const solved = this.solved;
         return solved !== undefined && solved.solveTimeMs >= this.puzzle.minCardedSolveMs;
     }
 

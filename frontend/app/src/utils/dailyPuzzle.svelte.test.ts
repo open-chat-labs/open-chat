@@ -1,4 +1,5 @@
 import {
+    chitStateStore,
     dailyPuzzleStore,
     puzzleFingerprint,
     type DailyPuzzleUserState,
@@ -6,6 +7,8 @@ import {
     type PublicDailyPuzzle,
     type ServedHint,
 } from "@client";
+import desktopScreen from "../components/home/dailypuzzle/DailyPuzzle.svelte?raw";
+import mobileScreen from "../components_mobile/home/dailypuzzle/DailyPuzzle.svelte?raw";
 import { flushSync } from "svelte";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import en from "../i18n/en.json";
@@ -84,7 +87,7 @@ function build(
     hasDemo = false,
 ): DailyPuzzleGame {
     dailyPuzzleStore.set({ puzzles: [puzzle], states: state === undefined ? [] : [state] });
-    return new DailyPuzzleGame(client, puzzle, state, USER, game, hasDemo);
+    return new DailyPuzzleGame(client, puzzle, USER, game, hasDemo);
 }
 
 function saveLocal(
@@ -420,7 +423,7 @@ describe("DailyPuzzleGame", () => {
             const grid = slant.toBytes(model, st);
             const state = userState({ gameId: "slant", number: 20709, grid, gridSavedAt: 5n });
             dailyPuzzleStore.set({ puzzles: [slantPuzzle], states: [state] });
-            return new DailyPuzzleGame(client, slantPuzzle, state, USER, slant);
+            return new DailyPuzzleGame(client, slantPuzzle, USER, slant);
         }
         const hintClient = () =>
             fakeClient({
@@ -540,7 +543,7 @@ describe("a game that shows more than the player's marks (chat_rooms)", () => {
         const client = hintClient(served([1]));
         const state = userState({ gameId: "chat_rooms", number: 20726 });
         dailyPuzzleStore.set({ puzzles: [roomsPuzzle], states: [state] });
-        const g = new DailyPuzzleGame(client, roomsPuzzle, state, USER, chatRooms);
+        const g = new DailyPuzzleGame(client, roomsPuzzle, USER, chatRooms);
         g.tap(20);
         g.tap(20);
         await g.hint();
@@ -686,13 +689,13 @@ describe("hint states (#9360)", () => {
         const roomy = { ...puzzle, maxFreeChecks: 20 };
         const state = userState({ freeChecks: 15 });
         dailyPuzzleStore.set({ puzzles: [roomy], states: [state] });
-        const many = new DailyPuzzleGame(fakeClient(), roomy, state, USER, game);
+        const many = new DailyPuzzleGame(fakeClient(), roomy, USER, game);
         expect(many.freeChecksLeft).toBe(5);
         expect(many.hintButton).not.toHaveProperty("checksLeft");
         // one more spent, and the count appears
         const state16 = userState({ freeChecks: 16 });
         dailyPuzzleStore.set({ puzzles: [roomy], states: [state16] });
-        const few = new DailyPuzzleGame(fakeClient(), roomy, state16, USER, game);
+        const few = new DailyPuzzleGame(fakeClient(), roomy, USER, game);
         expect(few.hintButton).toMatchObject({ kind: "hint", checksLeft: 4 });
     });
 
@@ -881,7 +884,7 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
                 state: userState({ gameId: "bridges", number: 20710, hints: [hint] }),
             })),
         });
-        return new DailyPuzzleGame(client, bridgesPuzzle, state, USER, bridges);
+        return new DailyPuzzleGame(client, bridgesPuzzle, USER, bridges);
     }
 
     // invariant 1
@@ -927,7 +930,7 @@ describe("a Bridges hint clears in its own key space (#9370)", () => {
                 state: userState({ gameId: "bridges", number: 20710, hints: [island] }),
             })),
         });
-        const g = new DailyPuzzleGame(client, bridgesPuzzle, state, USER, bridges);
+        const g = new DailyPuzzleGame(client, bridgesPuzzle, USER, bridges);
         await g.hint();
         expect([...g.focus].sort()).toEqual([0, 1, 2, 5, 8]);
         // an edge elsewhere (6 -> 8, over cell 7) changes nothing; island 0 collides with its key
@@ -1023,5 +1026,76 @@ describe("the tutorial reopened mid-game (#9822)", () => {
         const withoutDemo = build(undefined, fakeClient(), false);
         expect(withoutDemo.showsDemo).toBe(false);
         expect(withoutDemo.showsRules).toBe(true);
+    });
+});
+
+describe("DailyPuzzleGame is the one source of truth for a play session (#9824)", () => {
+    const solved = { solvedAt: 2n, solveTimeMs: 61_000n, reward: 250, hintsUsed: 0, streak: 1 };
+
+    function balance(chitBalance: number): void {
+        chitStateStore.update((s) => ({ ...s, chitBalance }));
+    }
+
+    // invariant 1
+    test("neither screen reads the puzzle store or the user state itself", () => {
+        for (const screen of [desktopScreen, mobileScreen]) {
+            expect(screen).not.toMatch(/dailyPuzzleStore|stateFor/);
+        }
+    });
+
+    // invariant 3
+    test("a puzzle the poll replaces leaves no marks from the old one, and says so", () => {
+        const client = fakeClient();
+        const g = build(userState(), client);
+        g.tap(0);
+        expect(g.marks.size).toBe(1);
+        expect(g.replaced).toBe(false);
+        // rollover while the screen is open, and the player starts the new day's puzzle
+        const next = { ...puzzle, number: NUMBER + 1 };
+        dailyPuzzleStore.set({ puzzles: [next], states: [userState({ number: NUMBER + 1 })] });
+        flushSync();
+        expect(g.puzzle).toBe(next);
+        expect(g.marks.size).toBe(0);
+        expect(g.replaced).toBe(true);
+        g.flushSave();
+        expect(client.dailyPuzzleSaveGrid).not.toHaveBeenCalled();
+    });
+
+    // invariant 4
+    test("the clock is 0 before Start, the time since Start while playing, and the solve time once solved", () => {
+        expect(build(undefined).elapsed(5000)).toBe(0);
+        expect(build(userState({ startedAt: 1000n })).elapsed(5000)).toBe(4000);
+        expect(build(userState({ startedAt: 1000n, solved })).elapsed(5000)).toBe(61_000);
+    });
+
+    // invariant 5
+    test("Start is offered only when not busy and the balance covers the quoted fee", async () => {
+        balance(100);
+        expect(build(undefined).canStart).toBe(true);
+        balance(99);
+        expect(build(undefined).canStart).toBe(false);
+        balance(100);
+        const client = fakeClient({ dailyPuzzleStart: vi.fn(() => new Promise(() => {})) });
+        const g = build(undefined, client);
+        g.start();
+        expect(g.canStart).toBe(false);
+        // a quote of 0 needs no balance
+        balance(0);
+        expect(build(userState({ startedAt: undefined, entryFee: 0 })).canStart).toBe(true);
+    });
+
+    // invariant 6
+    test("the hint button is enabled only when a hint is on offer, input is allowed and the price is covered", () => {
+        balance(25);
+        expect(build(userState()).hintDisabled).toBe(false);
+        // input not allowed: before Start, once solved
+        expect(build(undefined).hintDisabled).toBe(true);
+        expect(build(userState({ solved })).hintDisabled).toBe(true);
+        // no hint on offer
+        const used = [served([1]), served([2]), served([3])];
+        expect(build(userState({ hints: used })).hintDisabled).toBe(true);
+        // price not covered
+        balance(24);
+        expect(build(userState()).hintDisabled).toBe(true);
     });
 });
