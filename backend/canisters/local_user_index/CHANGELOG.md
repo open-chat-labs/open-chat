@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Send bots the notifications the UserIndex asks it to, eg. that one is installed in a migrated user's direct chats under their new id ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Send bots the notifications the UserIndex asks it to, eg. that one is installed in a migrated user's direct chats under their new id ([#9819](https://github.com/open-chat-labs/open-chat/pull/9819))
 
 ### Changed
 
@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Stop sending and retrying events to deleted groups and communities ([#9812](https://github.com/open-chat-labs/open-chat/pull/9812))
-- Let a private bot permitted in a migrated user's direct chats by their old id be installed there by their new one ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Let a private bot permitted in a migrated user's direct chats by their old id be installed there by their new one ([#9819](https://github.com/open-chat-labs/open-chat/pull/9819))
 
 ## [[2.0.2098](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2098-local_user_index)] - 2026-10-06
 
