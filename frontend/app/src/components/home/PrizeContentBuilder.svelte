@@ -130,11 +130,10 @@
     let transferFee = $derived(tokenDetails.transferFee);
     let transferFees = $derived(transferFee * BigInt(numberOfWinners ?? 0));
     let prizeFees = $derived(transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n);
-    // What the prize costs in fees: the transfer of its fund, which includes the approval a user who
-    // holds their own funds makes before the fund is pulled from their wallet, and the prize's fees
-    let totalFees = $derived(
-        transferFee + walletApprovalFee($currentUserIdStore, transferFee) + prizeFees,
-    );
+    // What the transfer of the prize's fund costs in fees, which includes the approval a user who
+    // holds their own funds makes before the fund is pulled from their wallet
+    let fundFees = $derived(transferFee + walletApprovalFee($currentUserIdStore, transferFee));
+    let totalFees = $derived(fundFees + prizeFees);
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
     let remainingBalance = $state(0n);
     $effect(() => {
@@ -151,7 +150,7 @@
     );
     let valid = $derived(error === undefined && tokenInputState === "ok" && !tokenChanging);
     // An empty OpenChat account is only a dead end while the user is paying from it
-    let zero = $derived(cryptoBalance <= transferFee && !tokenChanging && !payFromWallet);
+    let zero = $derived(cryptoBalance <= fundFees && !tokenChanging && !payFromWallet);
     let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
 
     $effect(() => {
@@ -291,7 +290,7 @@
         tokenChanging = false;
         if (remainingBalance < 0 && !payFromWallet) {
             remainingBalance = BigInt(0);
-            draftAmount = cryptoBalance - transferFee;
+            draftAmount = cryptoBalance - fundFees;
             if (draftAmount < 0) {
                 draftAmount = BigInt(0);
             }

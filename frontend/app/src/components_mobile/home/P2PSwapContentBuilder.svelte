@@ -218,6 +218,7 @@
                     balance={fromState.cryptoBalance}
                     ledger={fromLedger}
                     {minAmount}
+                    maxAmount={payFromWallet ? undefined : fromState.cryptoBalance - totalFees}
                     converted={fromState.formatConvertedTokens(fromAmount)}
                     bind:status={tokenInputState}
                     bind:valid={fromAmountValid}
