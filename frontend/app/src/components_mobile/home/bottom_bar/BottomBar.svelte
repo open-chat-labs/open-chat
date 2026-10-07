@@ -88,12 +88,13 @@
             case "chats":
                 navigate("/chats");
                 break;
-            case "communities":
+            case "communities": {
                 const selected = client.selectDefaultCommunity();
                 if (!selected) {
                     navigate("/welcome");
                 }
                 break;
+            }
             case "favourites":
                 navigate("/favourite");
                 break;

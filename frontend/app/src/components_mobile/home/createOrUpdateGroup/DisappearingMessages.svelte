@@ -5,11 +5,9 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import DisappearingDuration from "../DisappearingDuration.svelte";
     import { updateGroupState } from "./group.svelte";
-
-    let ugs = updateGroupState;
 </script>
 
-<DisappearingDuration bind:eventsTTL={ugs.candidateGroup.eventsTTL}>
+<DisappearingDuration bind:eventsTTL={updateGroupState.candidateGroup.eventsTTL}>
     {#snippet toggle(onToggle, enabled)}
         <Setting
             toggle={onToggle}

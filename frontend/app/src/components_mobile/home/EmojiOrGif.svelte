@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { IconComponent } from "@src/utils/iconComponent";
     import { quickReactions } from "@src/stores/quickReactions";
     import { ColourVars, Column, IconButton, Row, transition } from "component-lib";
     import {
@@ -41,7 +42,7 @@
     }
 </script>
 
-{#snippet toggle(t: Tab, Icon: any)}
+{#snippet toggle(t: Tab, Icon: IconComponent)}
     {@const color = selected === t ? ColourVars.primary : ColourVars.textSecondary}
     <IconButton onclick={() => setTab(t)} size={"lg"} padding={"xxs"}>
         {#snippet icon()}

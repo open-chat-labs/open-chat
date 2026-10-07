@@ -25,14 +25,11 @@
         tokenIn,
         tokenOut,
         ledgerIn,
-        ledgerOut,
         amountIn,
         decimalsOut,
         dex,
         onFinished,
     }: Props = $props();
-
-    ledgerOut;
 
     const client = getContext<OpenChat>("client");
     const POLL_INTERVAL = 1000;

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { IconComponent } from "@src/utils/iconComponent";
     import type { ResourceKey } from "@client";
     import { i18nKey } from "../../../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -14,7 +15,7 @@
         title?: Snippet;
         free?: Snippet<[string]>;
         diamond?: Snippet<[string]>;
-        Icon?: any;
+        Icon?: IconComponent;
         last?: boolean;
     }
 

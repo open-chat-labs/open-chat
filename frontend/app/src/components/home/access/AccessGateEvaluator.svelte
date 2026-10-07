@@ -153,7 +153,6 @@
             optionalGatesByIndex.delete(i);
             compositeGateIndex = i;
         }
-        optionalGatesByIndex = optionalGatesByIndex;
     }
 </script>
 

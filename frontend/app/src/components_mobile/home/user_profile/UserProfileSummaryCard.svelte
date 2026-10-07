@@ -1,4 +1,5 @@
 <script lang="ts">
+    import type { IconComponent } from "@src/utils/iconComponent";
     import { disableChit } from "@src/stores/settings";
     import {
         Avatar,
@@ -56,7 +57,9 @@
     onMount(async () => {
         try {
             lastOnline = await client.getLastOnlineDate(user.userId, Date.now());
-        } catch (_) {}
+        } catch {
+            // last-online is optional; leave it unset
+        }
     });
 
     // TODO last seen
@@ -91,7 +94,7 @@
     }
 </script>
 
-{#snippet accountPill(Icon: any, text: string, colour: string, onClick?: () => void)}
+{#snippet accountPill(Icon: IconComponent, text: string, colour: string, onClick?: () => void)}
     <Container
         {onClick}
         width={"hug"}

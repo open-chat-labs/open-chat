@@ -10,7 +10,7 @@
     import Roadmap from "./RoadmapOverview.svelte";
     import SellingPoints from "./SellingPoints.svelte";
 
-    let showSignInWithMagicLinkModal = false;
+    let showSignInWithMagicLinkModal = $state(false);
 
     onMount(() => {
         if ($querystringStore.has("auth")) {

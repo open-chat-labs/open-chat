@@ -94,7 +94,6 @@
                 operator: "and",
             };
         }
-        gateConfig = gateConfig;
         if (isCompositeGate(gateConfig.gate)) {
             selectedGateIndex = gateConfig.gate.gates.length - 1;
         }
@@ -107,8 +106,6 @@
             if (gateConfig.gate.gates.length === 1) {
                 gateConfig.gate = gateConfig.gate.gates[0];
             }
-            gateConfig = gateConfig;
-            gateValidity = gateValidity;
         }
     }
 

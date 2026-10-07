@@ -147,7 +147,7 @@
             ? { muted: muted ? 1 : 0, unmuted: muted ? 0 : 1 }
             : { muted: 0, unmuted: 0 };
         switch (chatSummary.kind) {
-            case "direct_chat":
+            case "direct_chat": {
                 const them = $allUsersStore.get(chatSummary.them.userId);
                 return {
                     name: client.displayName(them),
@@ -170,6 +170,7 @@
                     uniquePerson: them?.isUniquePerson ?? false,
                     bot: them?.kind === "bot",
                 };
+            }
             default:
                 return {
                     name: chatSummary.name,

@@ -41,9 +41,6 @@
         onchange,
     }: Props = $props();
 
-    outerHeight;
-    innerHeight;
-
     onMount(() => {
         if (autofocus) {
             inp.focus();

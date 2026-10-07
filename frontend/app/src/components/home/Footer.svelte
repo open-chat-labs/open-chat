@@ -98,7 +98,6 @@
 
     let ephemeralMessageEvent = $state<EphemeralMessageEvent>();
     let messageAction: MessageAction = $state(undefined);
-    //@ts-ignore
     let messageEntry: MessageEntry;
 
     onMount(() => {

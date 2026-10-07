@@ -37,7 +37,6 @@
         console.error("WalletError: ", error);
     }
 
-    // @ts-ignore
     async function connectWallet(name: WalletName) {
         try {
             connecting = name;

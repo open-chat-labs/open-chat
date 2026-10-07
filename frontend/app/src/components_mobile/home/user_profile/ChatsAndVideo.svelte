@@ -31,7 +31,7 @@
         client.setModerationFlags($moderationFlagsEnabledStore ^ flag);
     }
 
-    let ringtones: Ringtone[] = [
+    const ringtones: Ringtone[] = [
         new Ringtone("boring", "Boring"),
         new Ringtone("pleasant", "Pleasant"),
         new Ringtone("boomboom", "Boom boom"),
@@ -47,7 +47,6 @@
                 r.stop();
             }
         });
-        ringtones = ringtones;
     }
 
     onDestroy(() => {

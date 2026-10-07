@@ -129,7 +129,7 @@
 
     let profileTrace = client.showTrace();
     // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being
-    let videoCallElement: any;
+    let videoCallElement: ReturnType<typeof ActiveCall> | undefined;
     let landingPageRoute = $derived(isLandingPageRoute($routeStore));
     let homeRoute = $derived($routeStore.kind === "home_route");
     let showLandingPage = $derived(
@@ -184,7 +184,7 @@
 
         redirectLandingPageLinksIfNecessary();
 
-        //@ts-ignore
+        // @ts-expect-error debug hooks attached to window for the console
         window.platformModerator = {
             addHotGroupExclusion,
             deleteFrozenGroup,
@@ -201,7 +201,7 @@
             unsuspendUser,
         };
 
-        //@ts-ignore
+        // @ts-expect-error debug hooks attached to window for the console
         window.platformOperator = {
             addRemoveSwapProvider,
             setGroupUpgradeConcurrency,

@@ -83,11 +83,15 @@
     }
 
     function newChannel() {
-        canCreateChannel && publish("newChannel", false);
+        if (canCreateChannel) {
+            publish("newChannel", false);
+        }
     }
 
     function embedContent() {
-        canCreateChannel && publish("newChannel", true);
+        if (canCreateChannel) {
+            publish("newChannel", true);
+        }
     }
 
     function copyUrl() {
@@ -105,7 +109,9 @@
     }
 
     function editCommunity() {
-        canEdit && publish("editCommunity", community);
+        if (canEdit) {
+            publish("editCommunity", community);
+        }
     }
 
     function muteAllChannels(muteAtEveryone: boolean) {

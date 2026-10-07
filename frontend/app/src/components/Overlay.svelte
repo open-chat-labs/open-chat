@@ -14,7 +14,7 @@
     let { children, onClose, ...rest }: Props = $props();
 
     const context = getAllContexts();
-    let mounted: Record<string, any> | undefined;
+    let mounted: ReturnType<typeof mount> | undefined;
 
     function internalClose() {
         if (mounted) {

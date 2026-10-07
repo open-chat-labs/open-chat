@@ -73,8 +73,6 @@
         rendering,
     }: Props = $props();
 
-    actualWidth;
-
     let divElement: HTMLElement;
 
     let useAlignTo = $derived(alignTo !== undefined && !$mobileWidth);
@@ -96,7 +94,7 @@
             }
             tick().then(() => (actualWidth = divElement?.clientWidth));
             divElement.addEventListener("click", closeMenus);
-        } catch (e: any) {
+        } catch (e) {
             console.error("Failed to open modal", e);
             onClose?.();
         }

@@ -64,11 +64,11 @@
     let { rootEvent, chat, onCloseThread }: Props = $props();
 
     let chatEventList: ChatEventList | undefined = $state();
-    //@ts-ignore
+    // @ts-expect-error bind:this sets it after mount
     let pollBuilder: PollBuilder = $state();
-    //@ts-ignore
+    // @ts-expect-error bind:this sets it after mount
     let giphySelector: GiphySelector = $state();
-    //@ts-ignore
+    // @ts-expect-error bind:this sets it after mount
     let memeBuilder: MemeBuilder = $state();
     let creatingPoll = $state(false);
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = $state(undefined);

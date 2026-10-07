@@ -37,6 +37,7 @@
     import EyeIcon from "svelte-material-icons/EyeOutline.svelte";
     import PencilIcon from "svelte-material-icons/PencilOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
+    import { proposalTypesFor, type ProposalType } from "../../../utils/proposalTypes";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
     import {
         createAddTokenPayload,
@@ -89,20 +90,6 @@
 
     let { selectedMultiUserChat, nervousSystem, onClose }: Props = $props();
 
-    type ProposalType =
-        | "motion"
-        | "publish_bot"
-        | "remove_bot"
-        | "transfer_sns_funds"
-        | "register_external_achievement"
-        | "advance_sns_target_version"
-        | "add_token"
-        | "update_token"
-        | "set_community_verification"
-        | "set_group_verification"
-        | "revoke_community_verification"
-        | "revoke_group_verification";
-
     let title = $state("");
     let url = $state("");
     let summary = $state("");
@@ -121,11 +108,8 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let achivementName = $state("");
     let selectedBot: ExternalBot | undefined = $state(undefined);
-    //@ts-ignore
     let transferSnsFunds: TransferSnsFunds | undefined = $state();
-    //@ts-ignore
     let verificationComponent: VerificationProposal | undefined = $state();
-    //@ts-ignore
     let removeBotComponent: RemoveBot | undefined;
     let transferSnsFundsValid: boolean = $state(false);
     let removeBotValid: boolean = $state(false);
@@ -447,41 +431,30 @@
     });
     let [summaryLabel, summaryPlaceholder] = $derived(summaryDescription(selectedProposalType));
 
-    let proposalOptions = $derived.by<{ name: string; value: ProposalType }[]>(() => {
-        const options: { name: string; value: ProposalType }[] = [
-            { name: "Motion", value: "motion" },
-            { name: "Transfer SNS funds", value: "transfer_sns_funds" },
-            { name: "Advance SNS target version", value: "advance_sns_target_version" },
-        ];
-
-        if (symbol === "CHAT" || true) {
-            options.push(
-                { name: "Register external achievement", value: "register_external_achievement" },
-                { name: "Add token", value: "add_token" },
-                { name: "Update token", value: "update_token" },
-                { name: "Publish a bot", value: "publish_bot" },
-                { name: interpolate($_, i18nKey("bots.manage.remove")), value: "remove_bot" },
-                {
-                    name: interpolate($_, i18nKey("verified.verify", undefined, "community", true)),
-                    value: "set_community_verification",
-                },
-                {
-                    name: interpolate($_, i18nKey("verified.verify", undefined, "group", true)),
-                    value: "set_group_verification",
-                },
-                {
-                    name: interpolate($_, i18nKey("verified.revoke", undefined, "community", true)),
-                    value: "revoke_community_verification",
-                },
-                {
-                    name: interpolate($_, i18nKey("verified.revoke", undefined, "group", true)),
-                    value: "revoke_group_verification",
-                },
-            );
-        }
-
-        return options;
+    let proposalTypeNames = $derived<Record<ProposalType, string>>({
+        motion: "Motion",
+        transfer_sns_funds: "Transfer SNS funds",
+        advance_sns_target_version: "Advance SNS target version",
+        register_external_achievement: "Register external achievement",
+        add_token: "Add token",
+        update_token: "Update token",
+        publish_bot: "Publish a bot",
+        remove_bot: interpolate($_, i18nKey("bots.manage.remove")),
+        set_community_verification: interpolate(
+            $_,
+            i18nKey("verified.verify", undefined, "community", true),
+        ),
+        set_group_verification: interpolate($_, i18nKey("verified.verify", undefined, "group", true)),
+        revoke_community_verification: interpolate(
+            $_,
+            i18nKey("verified.revoke", undefined, "community", true),
+        ),
+        revoke_group_verification: interpolate($_, i18nKey("verified.revoke", undefined, "group", true)),
     });
+
+    let proposalOptions = $derived(
+        proposalTypesFor(symbol).map((value) => ({ name: proposalTypeNames[value], value })),
+    );
 </script>
 
 <Sheet onDismiss={onClose}>

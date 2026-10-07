@@ -30,7 +30,7 @@
 
     type State = "not_started" | "playing" | "game_over";
 
-    let containerWidth: number;
+    let containerWidth = $state(0);
     let ctx: CanvasRenderingContext2D | null;
     let player: Player;
     let bullets: Bullet[];
@@ -40,7 +40,7 @@
     let newHighScore = false;
     let invaderSize = 30;
     let invaderSpeed = 1;
-    let state: State = "not_started";
+    let gameState: State = $state("not_started");
     let invaderDirection: "right" | "left" | "down" = "right";
     let nextDirection: "right" | "left" = "left";
     let destroyed = false;
@@ -78,7 +78,7 @@
         };
         bullets = [];
         invaders = [];
-        state = "not_started";
+        gameState = "not_started";
         createInvaders();
         tick().then(draw);
     }
@@ -134,7 +134,7 @@
                 invader.status &&
                 (collides(invader, player) || invader.y + player.height > player.y)
             ) {
-                state = "game_over";
+                gameState = "game_over";
                 invaderSpeed = 1;
                 newHighScore = currentScore > highScore;
                 if (newHighScore) {
@@ -145,7 +145,7 @@
             }
         });
 
-        if (state === "playing") {
+        if (gameState === "playing") {
             invaderSpeed += 0.01;
         }
     }
@@ -242,7 +242,7 @@
 
         drawHighScore();
 
-        if (state === "game_over") {
+        if (gameState === "game_over") {
             drawGameOver();
         }
 
@@ -250,7 +250,7 @@
     }
 
     function fireBullet() {
-        if (state !== "playing") return;
+        if (gameState !== "playing") return;
         bullets.push({
             x: player.x + player.width / 2,
             y: player.y,
@@ -326,7 +326,7 @@
 
     function gameLoop() {
         if (destroyed) return;
-        if (state !== "playing") return;
+        if (gameState !== "playing") return;
 
         update();
         draw();
@@ -336,7 +336,7 @@
     // We'll use tilt controls on mobile devices
     function setUpTilt() {
         if ("DeviceOrientationEvent" in window) {
-            //@ts-ignore
+            // @ts-expect-error iOS-only DeviceOrientationEvent.requestPermission is not in the DOM types
             return window.DeviceOrientationEvent.requestPermission().then((response) => {
                 if (response === "granted") {
                     window.addEventListener("deviceorientation", handleOrientation, true);
@@ -352,21 +352,21 @@
         if (isTouchDevice) {
             await setUpTilt();
         }
-        state = "playing";
+        gameState = "playing";
         gameLoop();
     }
 </script>
 
 <div
-    on:click={() => {
+    onclick={() => {
         if (isTouchDevice) {
             fireBullet();
         }
     }}
     bind:clientWidth={containerWidth}
     class="invaders">
-    <canvas height="500" width={containerWidth} bind:this={canvas} />
-    {#if state === "not_started"}
+    <canvas height="500" width={containerWidth} bind:this={canvas}></canvas>
+    {#if gameState === "not_started"}
         <div class="start"><Button onClick={start}>{$_("halloffame.start")}</Button></div>
     {/if}
 </div>

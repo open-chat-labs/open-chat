@@ -105,7 +105,8 @@
                         gotoMatch();
                     }
                 }
-            } catch (_err) {
+            } catch {
+                // a failed search shows no matches
             } finally {
                 searching = false;
             }

@@ -41,7 +41,6 @@
         return true;
     });
 
-    // @ts-ignore
     async function connectWith(connector: Connector) {
         try {
             connecting = connector;
