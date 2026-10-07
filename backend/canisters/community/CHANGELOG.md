@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Accept tips on a migrated user's messages sent before their migration, paying and notifying them under their new id ([#9816](https://github.com/open-chat-labs/open-chat/pull/9816))
+- Notify a migrated user of activity on their messages sent before their migration, and refund their prizes sent before their migration to their new wallet ([#9817](https://github.com/open-chat-labs/open-chat/pull/9817))
+
 ## [[2.0.2103](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2103-community)] - 2026-10-06
 
 ### Changed

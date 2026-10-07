@@ -12,7 +12,7 @@ use types::{CanisterId, ChannelId, Chat, MessageId, MessageIndex};
 async fn bot_delete_messages(args: Args) -> Response {
     let context = match mutate_state(|state| extract_access_context_from_chat_context(args.chat_context, state)) {
         Ok(context) => context,
-        Err(_) => return OCErrorCode::BotNotAuthenticated.into(),
+        Err(error) => return error.into(),
     };
 
     call_chat_canister(context, None, args.thread, args.message_ids).await

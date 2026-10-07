@@ -441,6 +441,10 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             // Only if the LocalUserIndex which queued it is on a later version, with a new type of event
             Err(error) => error!(user_id = %ev.user_id, ?error, "Failed to deserialize event for migrated user"),
         },
+        UserIndexEvent::NotifyBot(notification) => {
+            let this_canister_id = state.env.canister_id();
+            state.push_bot_notification(*notification, this_canister_id, **now);
+        }
     }
 }
 

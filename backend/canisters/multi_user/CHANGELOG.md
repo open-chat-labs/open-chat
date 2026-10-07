@@ -6,9 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Let a user reset a forgotten PIN by signing in again ([#9815](https://github.com/open-chat-labs/open-chat/pull/9815))
+
+### Changed
+
+- Update the OpenChat bot message sent to users after their account is migrated ([#9814](https://github.com/open-chat-labs/open-chat/pull/9814))
+
 ### Removed
 
 - Remove the one-off which moved every user's direct chats, groups and communities into stable memory, which has run in prod ([#9813](https://github.com/open-chat-labs/open-chat/pull/9813))
+
+### Fixed
+
+- Accept tips on a migrated user's direct messages sent before their migration ([#9816](https://github.com/open-chat-labs/open-chat/pull/9816))
 
 ## [[2.0.2101](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2101-multi_user)] - 2026-10-06
 

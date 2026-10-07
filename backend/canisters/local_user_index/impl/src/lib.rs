@@ -32,6 +32,7 @@ use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
+use oc_error_codes::OCErrorCode;
 use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
 use rand::Rng;
@@ -49,7 +50,7 @@ use types::{
     Chat, ChatId, ChildCanisterWasms, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, CommunityId, Cycles,
     CyclesTopUp, DailyPuzzleResult, DeclineVideoCallClaims, DiamondMembershipDetails, DirectCallDismissedNotification, FcmData,
     GroupCallDismissedNotification, IdempotentEnvelope, MediaScanConfig, MessageContentInitial, MessageId, Milliseconds,
-    ModerationReferralConfig, Notification, NotificationEnvelope, ReferralType, TimestampMillis, Timestamped, UserId,
+    ModerationReferralConfig, Notification, NotificationEnvelope, OCResult, ReferralType, TimestampMillis, Timestamped, UserId,
     UserNotificationEnvelope, UserNotificationPayload, VerifiedCredentialGateArgs,
 };
 use user_canister::LocalUserIndexEvent as UserEvent;
@@ -330,6 +331,26 @@ impl RuntimeState {
     // their old canister
     pub fn holds_latest_id_of(&self, user_id: UserId) -> bool {
         self.data.local_users.contains(&self.data.migrated_user_ids.latest(user_id))
+    }
+
+    // A direct chat may name the user by an id they had before being migrated to a MultiUser canister,
+    // eg. a bot installed in their direct chats before then, which still knows them by it. Their old
+    // canister is uninstalled once they've been migrated, so the chat is named by their latest id.
+    // If another LocalUserIndex holds them by it, their new canister is on another subnet, where it
+    // can't be reached from here, so the caller is told they've moved, and their new id.
+    pub fn latest_chat(&self, chat: Chat) -> OCResult<Chat> {
+        if let Chat::Direct(chat_id) = chat {
+            let user_id = UserId::from(chat_id);
+            let latest_user_id = self.data.migrated_user_ids.latest(user_id);
+            if latest_user_id != user_id {
+                return if self.data.local_users.contains(&latest_user_id) {
+                    Ok(Chat::Direct(latest_user_id.into()))
+                } else {
+                    Err(OCErrorCode::UserMovedToNewSubnet.with_message(latest_user_id))
+                };
+            }
+        }
+        Ok(chat)
     }
 
     // Queues an event for the user, by their latest id if they've been migrated to a MultiUser canister.

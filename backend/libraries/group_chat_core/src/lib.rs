@@ -1034,7 +1034,8 @@ impl GroupChatCore {
     }
 
     // Checks `user_id` could tip the message now, without tipping it, returning the message's sender,
-    // whom the tip is for. Used before making the transfer for a tip.
+    // whom the tip is for, under their latest id, which holds their wallet, in case they have been
+    // migrated since sending it. Used before making the transfer for a tip.
     pub fn check_can_tip_message(
         &self,
         user_id: UserId,
@@ -1056,7 +1057,7 @@ impl GroupChatCore {
         if migrated_user_ids.is_same_user(message.sender, user_id) {
             Err(OCErrorCode::CannotTipSelf.into())
         } else {
-            Ok(message.sender)
+            Ok(migrated_user_ids.latest(message.sender))
         }
     }
 
@@ -2003,8 +2004,8 @@ impl GroupChatCore {
             .set_video_call_presence(user_id, message_id, presence, min_visible_event_index, now)
     }
 
-    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveEventsResult {
-        let result = self.events.remove_expired_events(now);
+    pub fn remove_expired_events(&mut self, migrated_user_ids: &MigratedUserIds, now: TimestampMillis) -> RemoveEventsResult {
+        let result = self.events.remove_expired_events(migrated_user_ids, now);
 
         self.unfollow_removed_threads(&result.threads);
 
@@ -2016,8 +2017,11 @@ impl GroupChatCore {
         before: TimestampMillis,
         now: TimestampMillis,
         batch_size: u16,
+        migrated_user_ids: &MigratedUserIds,
     ) -> RemoveEventsResult {
-        let result = self.events.remove_old_events_batch(before, now, batch_size);
+        let result = self
+            .events
+            .remove_old_events_batch(before, now, batch_size, migrated_user_ids);
 
         self.unfollow_removed_threads(&result.threads);
 

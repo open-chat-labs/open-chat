@@ -565,7 +565,7 @@ impl RuntimeState {
                 let Some(mut chat) = user.direct_chats.get_mut(&chat_id) else {
                     continue;
                 };
-                let result = chat.remove_expired_events(now);
+                let result = chat.remove_expired_events(&self.data.migrated_user_ids, now);
                 files_to_delete.extend(result.files);
                 // Threads aren't currently enabled for direct chats, but if a thread's root message
                 // expires then its entries in stable memory must be garbage collected

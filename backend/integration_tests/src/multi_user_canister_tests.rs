@@ -4,7 +4,7 @@ use crate::utils::{
     liquid_cycle_balance, metrics, next_event_store_index, now_millis, set_freezing_threshold, tick_many, try_metrics,
     wait_for_cycle_balance_above, wait_for_event_store_events,
 };
-use crate::{CanisterIds, TestEnv, client, wasms};
+use crate::{CanisterIds, TestEnv, UserAuth, client, wasms};
 use candid::Principal;
 use constants::{
     DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, MAX_MESSAGE_REMINDERS,
@@ -2346,6 +2346,85 @@ fn check_pin_number_counts_failed_attempts_towards_the_lock() {
             .attempts_blocked_until
             .is_none()
     );
+}
+
+#[test]
+fn pin_number_can_be_reset_by_signing_in_again() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let (user, user_auth) = client::register_user_in_multi_user_canister_and_include_auth(env, canister_ids);
+    let (_, other_auth) = client::register_user_in_multi_user_canister_and_include_auth(env, canister_ids);
+
+    let response = set_pin_number(
+        env,
+        user.principal,
+        user.canister(),
+        Some("1234"),
+        PinNumberVerification::None,
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+
+    // Another user's sign in doesn't verify this user
+    let other_proof = sign_in_proof(env, canister_ids, &other_auth);
+    let response = set_pin_number(
+        env,
+        user.principal,
+        user.canister(),
+        Some("56789"),
+        PinNumberVerification::Reauthenticated(other_proof),
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidSignature)),
+        "{response:?}"
+    );
+
+    // Nor does the user's own sign in once its proof has expired
+    let expired_proof = sign_in_proof(env, canister_ids, &user_auth);
+    env.advance_time(Duration::from_secs(301));
+    let response = set_pin_number(
+        env,
+        user.principal,
+        user.canister(),
+        Some("56789"),
+        PinNumberVerification::Reauthenticated(expired_proof),
+    );
+    assert!(
+        matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidSignature)),
+        "{response:?}"
+    );
+    assert_eq!(
+        initial_state(env, user.principal, user.canister())
+            .pin_number_settings
+            .unwrap()
+            .length,
+        4
+    );
+
+    // A fresh sign in replaces the PIN without the current one
+    let proof = sign_in_proof(env, canister_ids, &user_auth);
+    let response = set_pin_number(
+        env,
+        user.principal,
+        user.canister(),
+        Some("56789"),
+        PinNumberVerification::Reauthenticated(proof),
+    );
+    assert!(matches!(response, UnitResult::Success), "{response:?}");
+    assert_eq!(
+        initial_state(env, user.principal, user.canister())
+            .pin_number_settings
+            .unwrap()
+            .length,
+        5
+    );
+}
+
+// Proof that the user has just signed in, as the website gets when they sign in again
+fn sign_in_proof(env: &mut PocketIc, canister_ids: &CanisterIds, user_auth: &UserAuth) -> String {
+    let session_key = rand::random::<[u8; 32]>().to_vec();
+    client::identity::happy_path::prepare_delegation(env, user_auth.auth_principal(), canister_ids.identity, session_key)
+        .proof_jwt
 }
 
 fn check_pin_number(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, pin: &str) -> UnitResult {
