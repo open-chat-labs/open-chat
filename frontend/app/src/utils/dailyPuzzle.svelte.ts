@@ -159,6 +159,9 @@ export class DailyPuzzleGame {
     submitting = $state(false);
     // A reset needs a confirming second tap; any edit in between disarms it (#9361 invariant 5)
     resetArmed = $state(false);
+    // The player asked for the tutorial over a started game. It only takes effect while the game
+    // is unsolved (see `tutorialOpen`), so a solve that lands meanwhile shows the board (#9822).
+    #tutorialRequested = $state(false);
     // the most recent hint step served for this puzzle (a mistake hint is not a step)
     lastHint = $state<ServedHint | undefined>(undefined);
     // The server refused a hint for `max_hints`: it has the last word on which step is next, so
@@ -193,6 +196,8 @@ export class DailyPuzzleGame {
         userState: DailyPuzzleUserState | undefined,
         private userId: string,
         game: DailyGame<unknown, unknown>,
+        // whether this game has a step-through demo to teach its rules
+        readonly hasDemo = false,
     ) {
         this.game = game;
         this.model = game.parse(puzzle.description);
@@ -313,8 +318,36 @@ export class DailyPuzzleGame {
 
     get inputDisabled(): boolean {
         return (
-            !this.started || this.submitting || this.busy || this.userState?.solved !== undefined
+            !this.started ||
+            this.submitting ||
+            this.busy ||
+            this.userState?.solved !== undefined ||
+            this.tutorialOpen
         );
+    }
+
+    /** The tutorial is offered once a game with a demo is under way, until it is solved. */
+    get canToggleTutorial(): boolean {
+        return this.hasDemo && this.started && this.userState?.solved === undefined;
+    }
+
+    get tutorialOpen(): boolean {
+        return this.#tutorialRequested && this.canToggleTutorial;
+    }
+
+    /** The board area shows the demo: before Start, or while the tutorial is open (#9822). */
+    get showsDemo(): boolean {
+        return this.hasDemo && (!this.started || this.tutorialOpen);
+    }
+
+    /** The demo teaches the rules, so the paragraph is only for a game without one. */
+    get showsRules(): boolean {
+        return !this.hasDemo;
+    }
+
+    toggleTutorial(): void {
+        if (!this.canToggleTutorial) return;
+        this.#tutorialRequested = !this.#tutorialRequested;
     }
 
     tap(key: number): void {

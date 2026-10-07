@@ -17,6 +17,7 @@ generate_msgpack_query_call!(user_registration_canister);
 generate_msgpack_query_call!(users);
 generate_msgpack_query_call!(users_chit);
 generate_msgpack_query_call!(bot_updates);
+generate_msgpack_query_call!(bot_installation_events);
 generate_msgpack_query_call!(explore_bots);
 
 // Updates

@@ -698,6 +698,8 @@
         "wrong": "That's not it. Check the red cells.",
         "mistake": "Something is wrong in the red cells. Fix them, then ask for a hint again.",
         "fixMistakeFirst": "Fix the red cells first",
+        "howToPlay": "How to play",
+        "backToPuzzle": "Back to puzzle",
         "noFreeChecks": "No free checks left for today's puzzle",
         "checksLeft": "{count} checks left",
         "reset": "Reset",

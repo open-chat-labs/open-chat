@@ -718,6 +718,8 @@
         "wrong": "Ce n'est pas ça. Vérifiez les cases rouges.",
         "mistake": "Quelque chose cloche dans les cases rouges. Corrigez-les, puis redemandez un indice.",
         "fixMistakeFirst": "Corrigez d'abord les cases rouges",
+        "howToPlay": "Comment jouer",
+        "backToPuzzle": "Retour au puzzle",
         "noFreeChecks": "Plus de vérifications gratuites pour le puzzle du jour",
         "checksLeft": "{count} vérifications restantes",
         "reset": "Réinitialiser",
