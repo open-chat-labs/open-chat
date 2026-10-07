@@ -19,6 +19,8 @@
         milliseconds?: bigint;
         disabled?: boolean;
         unitFilter?: (unit: DurationUnit) => void;
+        // The longest duration which may be entered, if there is a limit
+        maxMilliseconds?: bigint;
     }
 
     let {
@@ -26,6 +28,7 @@
         milliseconds = $bindable(BigInt(ONE_HOUR)),
         disabled = false,
         unitFilter = (_: DurationUnit) => true,
+        maxMilliseconds = undefined,
     }: Props = $props();
 
     let data = $state<Data>(fromMilliseconds(milliseconds));
@@ -56,7 +59,6 @@
             valid = false;
             return;
         }
-        valid = true;
         switch (data.unit) {
             case "minutes":
                 milliseconds = BigInt(ONE_MINUTE * ttlNum);
@@ -68,6 +70,7 @@
                 milliseconds = BigInt(ONE_DAY * ttlNum);
                 break;
         }
+        valid = maxMilliseconds === undefined || milliseconds <= maxMilliseconds;
     }
 
     $effect(() => {

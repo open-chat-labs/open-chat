@@ -1659,6 +1659,7 @@
         "creatingYourMessage": "スワップオファーが作成されるまでお待ちください",
         "expired": "期限切れ",
         "expiryTime": "有効期限",
+        "maxExpiry": "最大 {days} 日",
         "failedToCreateMessage": "スワップオファーの作成に失敗しました",
         "insufficient_funds": "このスワップオファーを受け入れるには資金が不足しています",
         "insufficientBalance": "残高不足",

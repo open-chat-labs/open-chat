@@ -1659,6 +1659,7 @@
         "creatingYourMessage": "אנא המתן בזמן יצירת הצעת החלפה",
         "expired": "לא בתוקף",
         "expiryTime": "זמן תפוגה",
+        "maxExpiry": "עד {days} ימים",
         "failedToCreateMessage": "יצירת הצעת ההחלפה נכשלה",
         "insufficient_funds": "אין לך מספיק כסף כדי לקבל את הצעת ההחלפה הזו",
         "insufficientBalance": "איזון לא מספיק",

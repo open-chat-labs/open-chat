@@ -1659,6 +1659,7 @@
         "creatingYourMessage": "يرجى الانتظار أثناء إنشاء عرض المبادلة",
         "expired": "منتهي الصلاحية",
         "expiryTime": "وقت انتهاء الصلاحية",
+        "maxExpiry": "{days} يومًا كحد أقصى",
         "failedToCreateMessage": "فشل في إنشاء عرض المبادلة",
         "insufficient_funds": "لم يتبق لديك أموال كافية لقبول عرض المبادلة هذا",
         "insufficientBalance": "رصيد غير كاف",

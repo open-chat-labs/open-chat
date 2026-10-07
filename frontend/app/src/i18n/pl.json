@@ -1659,6 +1659,7 @@
         "creatingYourMessage": "Poczekaj, aż zostanie utworzona oferta wymiany",
         "expired": "Wygasło",
         "expiryTime": "Czas wygaśnięcia",
+        "maxExpiry": "maks. {days} dni",
         "failedToCreateMessage": "Nie udało się utworzyć oferty wymiany",
         "insufficient_funds": "Nie masz wystarczających środków, aby zaakceptować tę ofertę wymiany",
         "insufficientBalance": "Niewystarczająca ilość środków",

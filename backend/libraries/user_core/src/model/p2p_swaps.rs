@@ -1,3 +1,4 @@
+use constants::P2P_SWAP_MAX_EXPIRY;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{KeyPrefix, P2PSwapKey, P2PSwapKeyPrefix, with_map, with_map_mut};
 use types::{P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
@@ -42,14 +43,15 @@ impl P2PSwaps {
     // Whether any of the user's swaps, created or accepted, expires after `time`. Until then the
     // Escrow canister may still pay out or refund to the user's account, since it pays out an
     // accepted swap only once told of the acceptance, which can lag, and refunds one which wasn't
-    // accepted once it expires.
+    // accepted once it expires. No swap stays open for longer than `P2P_SWAP_MAX_EXPIRY`, whatever
+    // expiry it was created with, since the Escrow canister cancelled those which were open for longer.
     pub fn any_expiring_after(&self, time: TimestampMillis) -> bool {
         let prefix = P2PSwapKeyPrefix::new();
         with_map(|m| {
             m.range::<P2PSwapKey, _>(prefix.create_key(&0)..=prefix.create_key(&u32::MAX))
                 .any(|(_, bytes)| {
                     let swap: P2PSwap = msgpack::deserialize_then_unwrap(&bytes);
-                    swap.expires_at > time
+                    swap.expires_at.min(swap.created + P2P_SWAP_MAX_EXPIRY) > time
                 })
         })
     }
@@ -134,6 +136,20 @@ mod tests {
 
         assert!(swaps.any_expiring_after(1001));
         assert!(!swaps.any_expiring_after(1002));
+    }
+
+    #[test]
+    fn swap_counts_as_expired_once_open_for_the_longest_a_swap_may_be() {
+        init_stable_memory_map();
+        let mut swaps = P2PSwaps::default();
+
+        // Created at 1, with an expiry decades away
+        let mut long_swap = swap(1);
+        long_swap.expires_at = 10_000 * constants::DAY_IN_MS;
+        swaps.add(long_swap);
+
+        assert!(swaps.any_expiring_after(P2P_SWAP_MAX_EXPIRY));
+        assert!(!swaps.any_expiring_after(1 + P2P_SWAP_MAX_EXPIRY));
     }
 
     #[test]

@@ -6,6 +6,7 @@ use utils::canister::get_random_seed;
 use utils::env::Environment;
 use utils::env::canister::CanisterEnv;
 
+mod cap_open_swaps;
 mod init;
 mod post_upgrade;
 mod pre_upgrade;

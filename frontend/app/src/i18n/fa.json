@@ -1659,6 +1659,7 @@
         "creatingYourMessage": "لطفاً صبر کنید تا پیشنهاد مبادله ایجاد شود",
         "expired": "منقضی شده",
         "expiryTime": "زمان انقضا",
+        "maxExpiry": "حداکثر {days} روز",
         "failedToCreateMessage": "پیشنهاد مبادله ایجاد نشد",
         "insufficient_funds": "شما بودجه کافی برای پذیرش این پیشنهاد مبادله ندارید",
         "insufficientBalance": "تعادل ناکافی",
