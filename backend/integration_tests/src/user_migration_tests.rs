@@ -2051,6 +2051,233 @@ fn events_for_a_user_being_migrated_reach_them_in_their_new_canister_in_order(sa
 }
 
 #[test]
+fn bot_installed_in_a_users_direct_chats_before_they_migrate_reaches_them_via_the_gateway_it_is_told_of() {
+    use types::{
+        AutonomousConfig, BotChatContext, BotDataEncoding, BotEvent, BotEventWrapper, BotLifecycleEvent, BotMessageContent,
+        NotificationEnvelope, TextContent,
+    };
+    use user_index_canister::bot_installation_events::BotInstallationEvent;
+
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    // The user's old canister is held by another LocalUserIndex than the MultiUser canister, which only
+    // takes calls from its own LocalUserIndex
+    let subnet = canister_ids
+        .subnets
+        .iter()
+        .find(|s| s.local_user_index != local_user_index)
+        .unwrap()
+        .subnet_id;
+    let user = client::register_user_on_subnet(env, canister_ids, subnet);
+    let bot_owner = client::register_user(env, canister_ids);
+
+    // The user installs a bot in their direct chats, which may send text messages autonomously, and
+    // which only its owner may install anywhere else
+    let bot_principal = random_principal();
+    let response = client::user_index::register_bot(
+        env,
+        bot_owner.principal,
+        canister_ids.user_index,
+        &user_index_canister::register_bot::Args {
+            principal: bot_principal,
+            name: random_string(),
+            avatar: None,
+            endpoint: "https://my.bot.xyz/".to_string(),
+            definition: BotDefinition {
+                description: random_string(),
+                commands: Vec::new(),
+                autonomous_config: Some(AutonomousConfig {
+                    permissions: BotPermissions::text_only(),
+                }),
+                default_subscriptions: None,
+                data_encoding: None,
+                restricted_locations: None,
+            },
+            permitted_install_location: Some(BotInstallationLocation::User(user.user_id.into())),
+        },
+    );
+    let user_index_canister::register_bot::Response::Success(bot) = response else {
+        panic!("'register_bot' error: {response:?}");
+    };
+    tick_many(env, 3);
+    client::local_user_index::happy_path::install_bot(
+        env,
+        user.principal,
+        user.local_user_index,
+        BotInstallationLocation::User(user.user_id.into()),
+        bot.bot_id,
+        BotPermissions::text_only(),
+        Some(BotPermissions::text_only()),
+    );
+    tick_many(env, 3);
+
+    let installation_events = |env: &PocketIc| {
+        let response = client::user_index::bot_installation_events(
+            env,
+            bot_principal,
+            canister_ids.user_index,
+            &user_index_canister::bot_installation_events::Args { from: 0, size: 100 },
+        );
+        let user_index_canister::bot_installation_events::Response::Success(result) = response else {
+            panic!("'bot_installation_events' error: {response:?}");
+        };
+        result.events
+    };
+    assert_eq!(installation_events(env).len(), 1);
+    let controller = *controller;
+    let notification_index = client::local_user_index::happy_path::latest_notification_index(env, controller, local_user_index);
+    // The lifecycle events the MultiUser canister's LocalUserIndex has sent the bot since the user was
+    // migrated, with the gateway each names
+    let lifecycle_events = |env: &PocketIc| {
+        client::local_user_index::happy_path::notifications(env, controller, local_user_index, notification_index + 1)
+            .notifications
+            .into_iter()
+            .filter_map(|n| match n.value {
+                NotificationEnvelope::Bot(n) if n.recipients.contains_key(&bot.bot_id) => Some(n),
+                _ => None,
+            })
+            .filter_map(|n| {
+                let wrapper: BotEventWrapper = msgpack::deserialize_then_unwrap(&n.event_map[&BotDataEncoding::MsgPack].data);
+                match wrapper.event {
+                    BotEvent::Lifecycle(event) => Some((wrapper.api_gateway, event)),
+                    _ => None,
+                }
+            })
+            .collect::<Vec<_>>()
+    };
+
+    let new_user = migrate(env, canister_ids, &operator, &user, multi_user_canister);
+    let old_location = BotInstallationLocation::User(user.user_id.into());
+    let new_location = BotInstallationLocation::User(new_user.user_id.into());
+
+    // The UserIndex records that the bot is installed in the user's direct chats under their new id
+    // instead, with the MultiUser canister's LocalUserIndex as its gateway
+    tick_until(env, |env| installation_events(env).len() == 3);
+    let events = installation_events(env);
+    assert!(
+        matches!(&events[1], BotInstallationEvent::Uninstalled(e) if e.location == old_location),
+        "{events:?}"
+    );
+    let BotInstallationEvent::Installed(installed) = &events[2] else {
+        panic!("{events:?}");
+    };
+    assert_eq!(installed.location, new_location);
+    assert_eq!(installed.api_gateway, local_user_index);
+    assert_eq!(installed.granted_autonomous_permissions, BotPermissions::text_only());
+
+    // And that LocalUserIndex tells the bot, as it would of an install
+    tick_until(env, |env| {
+        let events = lifecycle_events(env);
+        events
+            .iter()
+            .any(|(_, e)| matches!(e, BotLifecycleEvent::Uninstalled(u) if u.location == old_location))
+            && events.iter().any(|(gateway, e)| {
+                *gateway == local_user_index && matches!(e, BotLifecycleEvent::Installed(i) if i.location == new_location)
+            })
+    });
+
+    // So the bot reaches the user in their new canister via that gateway
+    let BotInstallationLocation::User(chat_id) = installed.location else {
+        panic!("{installed:?}");
+    };
+    let text = random_string();
+    let response = client::local_user_index::bot_send_message(
+        env,
+        bot_principal,
+        installed.api_gateway,
+        &local_user_index_canister::bot_send_message::Args {
+            chat_context: BotChatContext::Autonomous(Chat::Direct(chat_id)),
+            thread: None,
+            message_id: None,
+            replies_to: None,
+            content: BotMessageContent::Text(TextContent { text: text.clone() }),
+            block_level_markdown: false,
+            finalised: true,
+            og_previews: None,
+        },
+    );
+    assert!(
+        matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
+        "{response:?}"
+    );
+    let user_canister::initial_state::Response::Success(state) = client::user::initial_state(
+        env,
+        new_user.principal,
+        multi_user_canister,
+        &user_canister::initial_state::Args {},
+    );
+    let chat = state.direct_chats.summaries.iter().find(|c| c.them == bot.bot_id).unwrap();
+    assert!(matches!(&chat.latest_message.as_ref().unwrap().event.content, MessageContent::Text(t) if t.text == text));
+
+    // And the user may still uninstall and reinstall it, being permitted to by their new id
+    client::local_user_index::happy_path::uninstall_bot(env, user.principal, local_user_index, new_location, bot.bot_id);
+    client::local_user_index::happy_path::install_bot(
+        env,
+        user.principal,
+        local_user_index,
+        new_location,
+        bot.bot_id,
+        BotPermissions::text_only(),
+        Some(BotPermissions::text_only()),
+    );
+}
+
+#[test]
+fn bot_registered_privately_by_a_user_before_they_migrate_can_be_installed_by_them() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let owner = client::register_user(env, canister_ids);
+    let (bot_id, _) = client::user_index::happy_path::register_bot(
+        env,
+        owner.principal,
+        canister_ids.user_index,
+        random_string(),
+        "https://my.bot.xyz/".to_string(),
+        BotDefinition {
+            description: random_string(),
+            commands: Vec::new(),
+            autonomous_config: None,
+            default_subscriptions: None,
+            data_encoding: None,
+            restricted_locations: None,
+        },
+    );
+
+    // Each LocalUserIndex knows the bot's owner by the id they had when registering it
+    let new_owner = migrate(env, canister_ids, &operator, &owner, multi_user_canister);
+
+    client::local_user_index::happy_path::install_bot(
+        env,
+        new_owner.principal,
+        local_user_index,
+        BotInstallationLocation::User(new_owner.user_id.into()),
+        bot_id,
+        BotPermissions::text_only(),
+        None,
+    );
+}
+
+#[test]
 fn bot_installed_in_a_users_direct_chats_before_they_migrate_is_uninstalled_from_their_new_canister() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
