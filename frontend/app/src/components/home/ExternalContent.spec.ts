@@ -26,9 +26,6 @@ vi.mock("../../theme/themes", () => ({
 vi.mock("@shared_components/Translatable.svelte", async () => ({
     default: (await import("./ExternalContent.spec.stub.svelte")).default,
 }));
-vi.mock("@shared_components/Translatable.svelte", async () => ({
-    default: (await import("./ExternalContent.spec.stub.svelte")).default,
-}));
 
 import DesktopExternalContent from "./ExternalContent.svelte";
 import MobileExternalContent from "../../components_mobile/home/ExternalContent.svelte";
