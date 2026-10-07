@@ -191,4 +191,17 @@ describe("the emoji Database", () => {
         ]);
         expect(constructed).toHaveBeenCalledTimes(2);
     });
+
+    // Invariant: a Database whose first load failed is replaced only when a caller next
+    // asks for one, never by itself, so a CDN outage can't start a loop of reloads.
+    test("is not rebuilt after a failed load until a caller asks for it", async () => {
+        stubIndexedDb("loads");
+        failingLoads.remaining = 3;
+        const { getEmojiDatabase } = await import("./emojis");
+
+        getEmojiDatabase();
+        await flush();
+
+        expect(constructed).toHaveBeenCalledTimes(1);
+    });
 });
