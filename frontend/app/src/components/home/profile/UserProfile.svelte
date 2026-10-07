@@ -658,28 +658,28 @@
                         <Legend label={i18nKey("userId")} rules={i18nKey("alsoCanisterId")} />
                         <div class="userid-txt">
                             <div>{user.userId}</div>
-                            <div
-                                role="button"
-                                tabindex="0"
+                            <button
+                                type="button"
+                                aria-label={$_("copyToClipboard")}
                                 onclick={() =>
                                     copyToClipboard(user.userId, "userIdCopiedToClipboard")}
                                 class="copy">
                                 <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
-                            </div>
+                            </button>
                         </div>
                     </div>
                     <div class="userid">
                         <Legend label={i18nKey("votingHotkey")} />
                         <div class="userid-txt">
                             <div>{votingHotkey}</div>
-                            <div
-                                role="button"
-                                tabindex="0"
+                            <button
+                                type="button"
+                                aria-label={$_("copyToClipboard")}
                                 onclick={() =>
                                     copyToClipboard(votingHotkey, "votingHotkeyCopiedToClipboard")}
                                 class="copy">
                                 <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
-                            </div>
+                            </button>
                         </div>
                     </div>
                 {/if}
@@ -782,6 +782,10 @@
             align-items: center;
 
             .copy {
+                display: flex;
+                padding: 0;
+                border: none;
+                background: none;
                 cursor: pointer;
             }
         }
