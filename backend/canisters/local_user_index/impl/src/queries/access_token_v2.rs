@@ -28,7 +28,10 @@ async fn access_token_v2(args_wrapper: Args) -> Response {
     };
 
     if let Some(chat) = args_wrapper.chat_mut() {
-        *chat = read_state(|state| state.latest_chat(*chat));
+        match read_state(|state| state.latest_chat(*chat)) {
+            Ok(latest) => *chat = latest,
+            Err(error) => return Error(error),
+        }
     }
 
     if let ArgsInternal::Translate = &args_wrapper {

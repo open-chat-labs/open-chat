@@ -1,5 +1,5 @@
 use crate::RuntimeState;
-use oc_error_codes::OCErrorCode;
+use oc_error_codes::{OCError, OCErrorCode};
 use rand::RngExt;
 use types::{
     BotActionByCommandClaims, BotActionChatDetails, BotActionCommunityDetails, BotActionScope, BotChatContext,
@@ -34,11 +34,11 @@ pub struct BotAccessContext {
 pub fn extract_access_context_from_chat_context(
     chat_context: BotChatContext,
     state: &mut RuntimeState,
-) -> Result<BotAccessContext, String> {
+) -> OCResult<BotAccessContext> {
     let caller = state.env.caller();
 
     let Some(bot) = state.data.bots.get_by_caller(&caller) else {
-        return Err("Caller is not a registered bot".to_string());
+        return Err(OCErrorCode::BotNotAuthenticated.into());
     };
 
     let user = User {
@@ -47,7 +47,9 @@ pub fn extract_access_context_from_chat_context(
     };
 
     let mut context = match chat_context {
-        BotChatContext::Command(jwt) => extract_access_context_from_jwt(&jwt, &user, state)?,
+        BotChatContext::Command(jwt) => {
+            extract_access_context_from_jwt(&jwt, &user, state).map_err(|_| OCError::from(OCErrorCode::BotNotAuthenticated))?
+        }
         BotChatContext::Autonomous(chat) => BotAccessContext {
             bot_id: user.user_id,
             bot_name: user.username,
@@ -61,7 +63,7 @@ pub fn extract_access_context_from_chat_context(
         },
     };
     if let BotActionScope::Chat(details) = &mut context.scope {
-        details.chat = state.latest_chat(details.chat);
+        details.chat = state.latest_chat(details.chat)?;
     }
     Ok(context)
 }
