@@ -7,7 +7,9 @@
         OpenChat,
         cryptoBalanceStore,
         cryptoLookup,
+        currentUserIdStore,
         streakInsuranceStore,
+        walletApprovalFee,
     } from "@client";
     import { getContext } from "svelte";
     import Equal from "svelte-material-icons/Equal.svelte";
@@ -39,7 +41,14 @@
     let refreshingBalance = $state(false);
     let priceE8s = $derived(client.streakInsurancePrice(currentDaysInsured, additionalDays));
     let price = $derived(priceE8s / 100_000_000n);
-    let remainingBalance = $derived(tokenDetails.balance - priceE8s);
+    // The price is burned, which the ledger charges no fee for, but a user who holds their own funds
+    // pays for the approval they make before the price is pulled from their wallet
+    let approvalFee = $derived(
+        walletApprovalFee($currentUserIdStore, tokenDetails.symbol?.transferFee ?? 0n),
+    );
+    let remainingBalance = $derived(
+        priceE8s > 0n ? tokenDetails.balance - priceE8s - approvalFee : tokenDetails.balance,
+    );
     let insufficientBalance = $derived(remainingBalance < 0);
     let paying = $state(false);
     let remaining = $derived(currentDaysInsured + additionalDays - currentDaysMissed);

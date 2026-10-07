@@ -14,6 +14,7 @@
         lastCryptoSent,
         LEDGER_CANISTER_ICP,
         mobileWidth,
+        walletApprovalFee,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
@@ -133,7 +134,7 @@
         tokenChanging = false;
         if (remainingBalance < 0 && !payFromWallet) {
             remainingBalance = 0n;
-            draftAmount = cryptoBalance - tokenDetails.transferFee;
+            draftAmount = cryptoBalance - transferFees;
             if (draftAmount < 0) {
                 draftAmount = 0n;
             }
@@ -230,6 +231,11 @@
         }
     });
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
+    // What the tip costs in fees, which includes the approval a user who holds their own funds
+    // makes before the tip is pulled from their wallet
+    let transferFees = $derived(
+        tokenDetails.transferFee + walletApprovalFee($currentUserIdStore, tokenDetails.transferFee),
+    );
     let exchangeRate = $derived(
         to2SigFigs($exchangeRatesLookup.get(tokenDetails.symbol.toLowerCase())?.toUSD ?? 0),
     );
@@ -242,12 +248,12 @@
         }
     });
     let displayDraftAmount = $derived(client.formatTokens(draftAmount, tokenDetails.decimals));
-    let displayFee = $derived(client.formatTokens(tokenDetails.transferFee, tokenDetails.decimals));
+    let displayFee = $derived(client.formatTokens(transferFees, tokenDetails.decimals));
     let remainingBalance = $state(0n);
     $effect(() => {
         remainingBalance =
             draftAmount > 0n && !payFromWallet
-                ? cryptoBalance - draftAmount - tokenDetails.transferFee
+                ? cryptoBalance - draftAmount - transferFees
                 : cryptoBalance;
     });
     // What the user is able to spend, or undefined when that is the external wallet's business
@@ -260,10 +266,7 @@
             !tokenChanging,
     );
     // An empty OpenChat account is only a dead end while the user is paying from it
-    let zero = $derived(
-        cryptoBalance <= tokenDetails.transferFee && !tokenChanging && !payFromWallet,
-    );
-    let transferFees = $derived(tokenDetails.transferFee);
+    let zero = $derived(cryptoBalance <= transferFees && !tokenChanging && !payFromWallet);
     $effect(() => {
         centAmount = calculateCentAmount(draftAmount, exchangeRate);
     });

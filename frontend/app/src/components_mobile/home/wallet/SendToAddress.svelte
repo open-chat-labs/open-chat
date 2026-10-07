@@ -220,7 +220,7 @@
                     token: tokenState.symbol,
                     to: targetAccount,
                     amountE8s: tokenState.draftAmount,
-                    feeE8s: tokenState.transferFees,
+                    feeE8s: tokenState.transferFee,
                     createdAtNanos: BigInt(Date.now()) * 1_000_000n,
                 });
 
