@@ -12,8 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Send a new LocalUserIndex the existing FCM tokens, not just the web push subscriptions ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
-- Reduce the `subscriptions` metric when inactive subscriptions are removed, and recompute it on upgrade ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Send a new LocalUserIndex the existing FCM tokens, not just the web push subscriptions ([#9843](https://github.com/open-chat-labs/open-chat/pull/9843))
+- Reduce the `subscriptions` metric when inactive subscriptions are removed, and recompute it on upgrade ([#9843](https://github.com/open-chat-labs/open-chat/pull/9843))
 
 ## [[2.0.2079](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2079-notifications_index)] - 2026-09-30
 
