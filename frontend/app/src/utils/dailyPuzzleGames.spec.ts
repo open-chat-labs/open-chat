@@ -24,17 +24,25 @@ function lookup(obj: unknown, path: string): unknown {
     return path.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], obj);
 }
 
-// Each game ships its strings as games/<game>/i18n.en.json; the copy under
-// dailyPuzzle.games.<game> in en.json is the one the translation tooling sees.
+// A game's strings, from en.json under dailyPuzzle.games.<game>: the only copy there is
+function stringsOf(i18nPrefix: string): Record<string, string> {
+    return flatten(lookup(en, i18nPrefix));
+}
+
 describe("daily puzzle game strings", () => {
     for (const [id, def] of Object.entries(dailyPuzzleGames)) {
-        test(`${id} strings match en.json under ${def.i18nPrefix}`, () => {
+        test(`${id} has a name and rules in en.json under ${def.i18nPrefix}`, () => {
             expect(def.id).toBe(id);
-            expect(flatten(lookup(en, def.i18nPrefix))).toEqual(def.strings);
-            expect(def.strings.name).toBeTruthy();
-            expect(def.strings.rules).toBeTruthy();
+            expect(stringsOf(def.i18nPrefix).name).toBeTruthy();
+            expect(stringsOf(def.i18nPrefix).rules).toBeTruthy();
         });
     }
+
+    // #9824 invariant 9: en.json holds the game strings, and no game folder keeps a second copy
+    test("no game keeps its own copy of its strings", () => {
+        const copies = import.meta.glob("../components/home/dailypuzzle/games/*/*.json");
+        expect(Object.keys(copies)).toEqual([]);
+    });
 });
 
 // The demos are the only teaching the pre-start screen does, and they are hand-built from raw
@@ -51,7 +59,7 @@ describe("daily puzzle demos", () => {
         test(`${id} demo has frames and a caption on each`, () => {
             expect(spec.frames.length).toBeGreaterThan(1);
             for (const f of spec.frames) {
-                expect(def.strings[f.caption]).toBeTruthy();
+                expect(stringsOf(def.i18nPrefix)[f.caption]).toBeTruthy();
             }
         });
 
@@ -96,11 +104,12 @@ describe("daily puzzle hint sentences match their strings", () => {
     for (const [id, entries] of Object.entries(fixtures)) {
         test(`${id}: every caption names a string and fills its placeholders`, () => {
             const def = dailyPuzzleGames[id];
+            const strings = stringsOf(def.i18nPrefix);
             let checked = 0;
             const check = (caption: HintCaption | undefined, where: string) => {
                 if (caption === undefined) return;
                 checked += 1;
-                const text = def.strings[caption.key];
+                const text = strings[caption.key];
                 expect(text, `${where}: ${caption.key}`).toBeDefined();
                 const params = caption.params ?? {};
                 // A placeholder with no value renders as raw text; a value the sentence has no
@@ -110,7 +119,7 @@ describe("daily puzzle hint sentences match their strings", () => {
                 }
                 for (const value of Object.values(params)) {
                     if (typeof value === "object" && !Array.isArray(value)) {
-                        expect(def.strings[value.key], `${where}: ${value.key}`).toBeDefined();
+                        expect(strings[value.key], `${where}: ${value.key}`).toBeDefined();
                     }
                 }
             };
