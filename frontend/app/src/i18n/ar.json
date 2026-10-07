@@ -152,7 +152,6 @@
     "admin": "مسؤل",
     "advanced": "متقدم",
     "airdropWarning": "لكي تتأهل لعملية الإنزال الجوي التالية، يجب أن تكون عضوًا في قناة **{channelName}** في مجتمع **{communityName}**. [انقر هنا للانضمام.]({url})",
-    "alsoCanisterId": "أيضا معرف العلبة الخاص بك",
     "andNMore": "و{n} المزيد",
     "appearance": "مظهر",
     "apply": "يتقدم",
@@ -2648,6 +2647,8 @@
         "viewers": "المشاهدون ({count})"
     },
     "viewer": "مشاهد",
+    "votingHotkey": "Hotkey للتصويت على المقترحات",
+    "votingHotkeyCopiedToClipboard": "تم نسخ الـ Hotkey إلى الحافظة",
     "wallet": "محفظة",
     "walletSettings": "إعدادات المحفظة",
     "webhook": {

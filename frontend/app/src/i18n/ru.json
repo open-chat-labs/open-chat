@@ -152,7 +152,6 @@
     "admin": "Администратор",
     "advanced": "Передовой",
     "airdropWarning": "Чтобы претендовать на следующий Airdrop, вы должны быть участником канала **{channelName}** в сообществе **{communityName}**. [Нажмите здесь, чтобы присоединиться.]({url})",
-    "alsoCanisterId": "также ваш идентификатор канистры",
     "andNMore": "и еще {n}",
     "appearance": "Внешний вид",
     "apply": "Подать заявление",
@@ -2648,6 +2647,8 @@
         "viewers": "Зрители ({count})"
     },
     "viewer": "зритель",
+    "votingHotkey": "Hotkey для голосования по предложениям",
+    "votingHotkeyCopiedToClipboard": "Hotkey скопирован в буфер обмена",
     "wallet": "Кошелек",
     "walletSettings": "Настройки кошелька",
     "webhook": {
