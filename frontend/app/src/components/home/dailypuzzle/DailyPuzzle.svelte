@@ -53,6 +53,7 @@
                   stateFor($dailyPuzzleStore, p.gameId),
                   $currentUserIdStore,
                   def.game,
+                  def.demo !== undefined,
               )
             : undefined;
     }
@@ -61,9 +62,6 @@
     // board is rebuilt from the new one so no marks from the old puzzle remain, and the player is
     // told (#9334 invariant 58).
     let replaced = $state(false);
-    // The tutorial, reopened over a started game. Only the view changes: the board's marks stay in
-    // `game`, and nothing can be played while it shows.
-    let showDemo = $state(false);
     $effect(() => {
         const next = todaysPuzzle($dailyPuzzleStore, gameId);
         if (puzzle !== undefined && next !== undefined && puzzleReplaced(puzzle, next)) {
@@ -72,7 +70,6 @@
                 puzzle = next;
                 game = build(next);
                 replaced = true;
-                showDemo = false;
             });
         }
     });
@@ -96,7 +93,7 @@
     let disabled = $derived(
         game === undefined ||
             !started ||
-            showDemo ||
+            game.tutorialOpen ||
             solved !== undefined ||
             game.submitting ||
             game.busy,
@@ -117,12 +114,12 @@
 </script>
 
 {#snippet howToPlay()}
-    {#if def?.demo !== undefined && solved === undefined && started}
-        <div class={`how_to ${showDemo ? "back" : ""}`}>
-            <Link onClick={() => (showDemo = !showDemo)} underline="hover">
+    {#if game?.canToggleTutorial}
+        <div class={`how_to ${game.tutorialOpen ? "back" : ""}`}>
+            <Link onClick={() => game?.toggleTutorial()} underline="hover">
                 <Translatable
                     resourceKey={i18nKey(
-                        showDemo ? "dailyPuzzle.backToPuzzle" : "dailyPuzzle.howToPlay",
+                        game.tutorialOpen ? "dailyPuzzle.backToPuzzle" : "dailyPuzzle.howToPlay",
                     )} />
             </Link>
         </div>
@@ -150,7 +147,7 @@
         {:else}
             <div class="body">
                 <div class="board" class:pending={!started && def?.demo === undefined}>
-                    {#if (!started || showDemo) && def?.demo !== undefined}
+                    {#if game.showsDemo && def !== undefined}
                         <!-- Before Start the real board is inert and teaches nothing, so show
                              the game being played instead. Today's puzzle appears on Start. -->
                         <GameDemo {def} />
@@ -190,8 +187,7 @@
                     </div>
                 </div>
 
-                <!-- The demo teaches the rules, so the paragraph is only for a game without one -->
-                {#if def?.demo === undefined}
+                {#if game.showsRules}
                     <p class="caption">
                         <Translatable resourceKey={game.rulesKey} />
                     </p>
@@ -235,7 +231,7 @@
                 </Button>
             </ButtonGroup>
         {:else if puzzle !== undefined && game !== undefined}
-            {#if !showDemo}
+            {#if !game.tutorialOpen}
                 <ButtonGroup align={"center"}>
                     {#if solved !== undefined}
                         {#if game.canShare}

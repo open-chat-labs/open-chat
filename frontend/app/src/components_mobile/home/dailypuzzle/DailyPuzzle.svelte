@@ -61,6 +61,7 @@
                   stateFor($dailyPuzzleStore, p.gameId),
                   $currentUserIdStore,
                   def.game,
+                  def.demo !== undefined,
               )
             : undefined;
     }
@@ -69,9 +70,6 @@
     // board is rebuilt from the new one so no marks from the old puzzle remain, and the player is
     // told (#9334 invariant 58).
     let replaced = $state(false);
-    // The tutorial, reopened over a started game. Only the view changes: the board's marks stay in
-    // `game`, and nothing can be played while it shows.
-    let showDemo = $state(false);
     $effect(() => {
         const next = todaysPuzzle($dailyPuzzleStore, gameId);
         if (puzzle !== undefined && next !== undefined && puzzleReplaced(puzzle, next)) {
@@ -80,7 +78,6 @@
                 puzzle = next;
                 game = build(next);
                 replaced = true;
-                showDemo = false;
             });
         }
     });
@@ -104,7 +101,7 @@
     let disabled = $derived(
         game === undefined ||
             !started ||
-            showDemo ||
+            game.tutorialOpen ||
             solved !== undefined ||
             game.submitting ||
             game.busy,
@@ -122,18 +119,18 @@
 
     function toggleDemo() {
         transition(["fade"], () => {
-            showDemo = !showDemo;
+            game?.toggleTutorial();
         });
     }
 </script>
 
 {#snippet howToPlay()}
-    {#if def?.demo !== undefined && solved === undefined && started}
+    {#if game?.canToggleTutorial}
         <Container mainAxisAlignment={"center"}>
             <CommonButton2 variant={"primary"} mode={"text"} onClick={toggleDemo}>
                 <Translatable
                     resourceKey={i18nKey(
-                        showDemo ? "dailyPuzzle.backToPuzzle" : "dailyPuzzle.howToPlay",
+                        game.tutorialOpen ? "dailyPuzzle.backToPuzzle" : "dailyPuzzle.howToPlay",
                     )} />
             </CommonButton2>
         </Container>
@@ -155,7 +152,7 @@
             <Body><Translatable resourceKey={i18nKey("dailyPuzzle.needsNewerApp")} /></Body>
         {:else}
             <div class="board" class:pending={!started && def?.demo === undefined}>
-                {#if (!started || showDemo) && def?.demo !== undefined}
+                {#if game.showsDemo && def !== undefined}
                     <!-- Before Start the real board is inert and teaches nothing, so show the
                          game being played instead. Today's puzzle appears on Start. -->
                     <GameDemo {def} />
@@ -200,8 +197,7 @@
                 </div>
             </Container>
 
-            <!-- The demo teaches the rules, so the paragraph is only for a game without one -->
-            {#if def?.demo === undefined}
+            {#if game.showsRules}
                 <Caption colour={"textSecondary"}>
                     <Translatable resourceKey={game.rulesKey} />
                 </Caption>
@@ -254,7 +250,7 @@
                                 ? i18nKey("dailyPuzzle.startFree")
                                 : i18nKey("dailyPuzzle.startFee", { fee: entryFee })} />
                     </Button>
-                {:else if !showDemo}
+                {:else if !game.tutorialOpen}
                     <CommonButton2
                         disabled={!game.canReset}
                         variant={"secondary"}
