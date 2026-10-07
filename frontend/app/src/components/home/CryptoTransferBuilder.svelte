@@ -7,6 +7,7 @@
         currentUserIdStore,
         iconSize,
         mobileWidth,
+        walletApprovalFee,
     } from "@client";
     import { type CryptocurrencyContent, type MessageContext, nowNanos } from "@shared";
     import { getContext, onMount } from "svelte";
@@ -69,7 +70,10 @@
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let symbol = $derived(tokenDetails.symbol);
-    let transferFees = $derived(tokenDetails.transferFee);
+    let transferFee = $derived(tokenDetails.transferFee);
+    // What the transfer costs in fees, which includes the approval a user who holds their own
+    // funds makes before the transfer is pulled from their wallet
+    let transferFees = $derived(transferFee + walletApprovalFee($currentUserIdStore, transferFee));
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
     let remainingBalance = $state(0n);
     $effect(() => {
@@ -146,7 +150,7 @@
                 token: symbol,
                 recipient: to.userId,
                 amountE8s: draftAmount,
-                feeE8s: transferFees,
+                feeE8s: transferFee,
                 createdAtNanos: nowNanos(),
                 fromAccount,
             },

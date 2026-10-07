@@ -198,6 +198,14 @@ export function paymentSpenderAccount(
     return userCanisterSpenderAccount(userId, principal);
 }
 
+// What a payment pulled from the user's wallet costs on top of the transfers it makes. A user who
+// holds their own funds first approves whatever pulls the payment (see `paymentSpenderAccount`),
+// and the ledger charges its transfer fee for the approval. A user alone in their canister pays
+// nothing more, since their canister holds their funds and makes the transfers itself.
+export function walletApprovalFee(userId: string, transferFee: bigint): bigint {
+    return isMultiUserCanisterUser(userId) ? transferFee : 0n;
+}
+
 // How long an approval made for a single payment stays spendable. The allowance is the whole of the
 // access the spender is granted, so it should outlive the payment it is for and nothing more: an
 // approval left standing is one which could be spent at any point later.

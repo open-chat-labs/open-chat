@@ -126,7 +126,12 @@ export class TokenState {
     #draftAmount = $state(this.#minAmount);
     #symbol = $derived(this.#token.symbol);
     #cryptoBalance = $derived(cryptoBalanceStore.value.get(this.#ledger) ?? 0n);
-    #transferFees = $derived(this.#token.transferFee);
+    #transferFee = $derived(this.#token.transferFee);
+    // What the draft costs in fees. One transfer's fee unless the flow sets otherwise, eg. to add
+    // the approval a user who holds their own funds makes before a payment is pulled from their
+    // wallet (see `walletApprovalFee`)
+    #fees = $state<bigint | undefined>();
+    #transferFees = $derived(this.#fees ?? this.#transferFee);
     #remainingBalance = $derived(
         this.#draftAmount > BigInt(0)
             ? this.#cryptoBalance - this.#draftAmount - this.#transferFees
@@ -241,8 +246,18 @@ export class TokenState {
         return this.#symbol;
     }
 
-    get transferFees() {
+    // The fee the ledger charges for a single transfer
+    get transferFee() {
+        return this.#transferFee;
+    }
+
+    get transferFees(): bigint {
         return this.#transferFees;
+    }
+
+    // Undefined goes back to a single transfer's fee
+    set transferFees(val: bigint | undefined) {
+        this.#fees = val;
     }
 
     get maxAmount() {

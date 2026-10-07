@@ -9,6 +9,7 @@ import {
     spenderSubaccount,
     userCanisterSpenderAccount,
     userWalletAccount,
+    walletApprovalFee,
 } from "./icrcAccount";
 
 const canisterId = "dfdal-2uaaa-aaaaa-qaama-cai";
@@ -93,6 +94,16 @@ describe("paymentSpenderAccount", () => {
             expect(account.owner.toText()).toBe(canisterId);
             expect(account.subaccount).toEqual(spenderSubaccount(Principal.fromText(principal)));
         }
+    });
+});
+
+describe("walletApprovalFee", () => {
+    test("a user alone in their canister pays no approval fee", () => {
+        expect(walletApprovalFee(canisterId, 10_000n)).toBe(0n);
+    });
+
+    test("a user who holds their own funds pays the transfer fee for the approval", () => {
+        expect(walletApprovalFee(indexedUserId, 10_000n)).toBe(10_000n);
     });
 });
 

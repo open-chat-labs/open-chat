@@ -6,6 +6,7 @@
         enhancedCryptoLookup as cryptoLookup,
         currentUserIdStore,
         localUpdates,
+        walletApprovalFee,
     } from "@client";
     import { type CryptocurrencyContent, type MessageContext, nowNanos } from "@shared";
     import { onMount } from "svelte";
@@ -42,6 +43,12 @@
     let payFromWallet = $derived(sourceWallet !== undefined);
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let tokenState = $derived(new TokenState(tokenDetails, "usd"));
+    // What the transfer costs in fees includes the approval a user who holds their own funds makes
+    // before the transfer is pulled from their wallet
+    $effect(() => {
+        tokenState.transferFees =
+            tokenState.transferFee + walletApprovalFee($currentUserIdStore, tokenState.transferFee);
+    });
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
     let valid = $derived(error === undefined && validAmount && receiver !== undefined);
     let errorMessage = $derived(error !== undefined ? i18nKey(error) : $pinNumberErrorMessageStore);
@@ -74,7 +81,7 @@
                 token: tokenState.symbol,
                 recipient: to.userId,
                 amountE8s: tokenState.draftAmount,
-                feeE8s: tokenState.transferFees,
+                feeE8s: tokenState.transferFee,
                 createdAtNanos: nowNanos(),
                 fromWallet: sourceWallet?.id,
             },
@@ -107,6 +114,7 @@
             showRefresh
             hideBalance={payFromWallet}
             draftAmount={tokenState.draftAmount}
+            fees={tokenState.transferFees}
             filter={payFromWallet ? undefined : (t) => t.balance > 0}
             bind:ledger />
 

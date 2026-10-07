@@ -33,8 +33,10 @@
         chitBands,
         cryptoBalanceStore,
         cryptoLookup,
+        currentUserIdStore,
         LocalStorageStore,
         mobileWidth,
+        walletApprovalFee,
     } from "@client";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
@@ -128,7 +130,11 @@
     let transferFee = $derived(tokenDetails.transferFee);
     let transferFees = $derived(transferFee * BigInt(numberOfWinners ?? 0));
     let prizeFees = $derived(transferFees + (draftAmount * OC_FEE_PERCENTAGE) / 100n);
-    let totalFees = $derived(transferFee + prizeFees);
+    // What the prize costs in fees: the transfer of its fund, which includes the approval a user who
+    // holds their own funds makes before the fund is pulled from their wallet, and the prize's fees
+    let totalFees = $derived(
+        transferFee + walletApprovalFee($currentUserIdStore, transferFee) + prizeFees,
+    );
     let multiUserChat = $derived(chat.kind === "group_chat" || chat.kind === "channel");
     let remainingBalance = $state(0n);
     $effect(() => {

@@ -6,9 +6,11 @@
         type ResourceKey,
         type SignerWallet,
         cryptoLookup,
+        currentUserIdStore,
         E8S_PER_TOKEN,
         mobileWidth,
         pinNumberFailureFromError,
+        walletApprovalFee,
     } from "@client";
     import { getContext, onMount } from "svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -202,7 +204,11 @@
     let icpBalance = $derived(accountBalance / E8S_PER_TOKEN); //balance in the user's account expressed as ICP
     let tokenDetails = $derived($cryptoLookup.get(ledger)!);
     let toPayE8s = $derived(amountInE8s(tokenDetails.symbol, diamondFees, selectedOption));
-    let toPay = $derived(amount(toPayE8s));
+    // What the payment takes from the user's wallet: the price, which includes the transfer's fee,
+    // and the approval a user who holds their own funds makes before the price is pulled from it
+    let toPay = $derived(
+        amount(toPayE8s + walletApprovalFee($currentUserIdStore, tokenDetails.transferFee)),
+    );
     let insufficientFunds = $derived(toPay - icpBalance > 0.0001); //we need to account for the fact that js cannot do maths
     let selectedDuration = $derived(indexToDuration[selectedOption?.index ?? 0] ?? "one_month");
 </script>
