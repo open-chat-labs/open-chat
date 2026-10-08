@@ -40,10 +40,10 @@
     let { gates, onSuccess, onClose }: Props = $props();
 
     let result: IteratorResult<EnhancedAccessGate>;
-    let iterator = preprocessGates(gates, needsPreprocessing);
+    const iterator = preprocessGates(gates, needsPreprocessing);
     let currentGate: EnhancedAccessGate | undefined = $state();
-    let credentials: string[] = [];
-    let paymentApprovals: PaymentGateApprovals = new Map();
+    const credentials: string[] = [];
+    const paymentApprovals: PaymentGateApprovals = new Map();
     let compositeGateIndex: number | undefined = undefined;
     let optionalGatesByIndex: Map<number, LeafGate> = $state(new Map());
     let optionalInvalid = $derived(

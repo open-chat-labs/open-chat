@@ -8,9 +8,9 @@
 
     const client = getContext<OpenChat>("client");
 
-    let observer: IntersectionObserver = new IntersectionObserver(() => {});
+    const observer: IntersectionObserver = new IntersectionObserver(() => {});
     let loading = $state(false);
-    let initialised = $state(false);
+    const initialised = $state(false);
 
     let threads = $derived.by(
         debouncedDerived(() => [$threadsByChatStore], loadThreadPreviews, 300, []),

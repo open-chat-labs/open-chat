@@ -19,7 +19,7 @@
     }
 
     let { collection, view = $bindable("invite") }: Props = $props();
-    let membersState = new MemberManagement(getContext<OpenChat>("client"), collection);
+    const membersState = new MemberManagement(getContext<OpenChat>("client"), collection);
     let canInvite = $derived(membersState.canInvite());
 
     function setView(v: View) {

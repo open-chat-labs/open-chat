@@ -52,7 +52,7 @@
 
     let selectedTab = $state(0);
     let showingBotInstaller: SelectedBot | undefined = $state(undefined);
-    let installingBot: ExternalBot | undefined = undefined;
+    const installingBot: ExternalBot | undefined = undefined;
     let botContainer = $derived(
         collection.kind === "channel"
             ? ({ kind: "community", communityId: collection.id.communityId } as CommunityIdentifier)

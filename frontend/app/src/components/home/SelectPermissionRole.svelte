@@ -35,7 +35,7 @@
             : defaultText + ` (${defaultRoleText})`,
     );
 
-    let selecting = false;
+    const selecting = false;
     let menu: MenuIcon | undefined = $state();
 
     function select(r: ChatPermissionRole | undefined) {

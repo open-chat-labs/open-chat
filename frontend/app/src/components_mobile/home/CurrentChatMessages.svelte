@@ -126,7 +126,7 @@
     });
 
     // Allows child nodes, like IntersectionObserver to access the root scrollable node to allow rootMargin to be used.
-    let scrollState = $state<{ node: HTMLElement | undefined }>({ node: undefined });
+    const scrollState = $state<{ node: HTMLElement | undefined }>({ node: undefined });
     setContext("scrollable-messages-div", scrollState);
     $effect(() => {
         if (messagesDiv) {

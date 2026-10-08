@@ -39,7 +39,7 @@
     let linkingInProgress = $state(false);
     let error: string | undefined = $state(undefined);
     let signUpError: string | undefined = $state(undefined);
-    let checker = new VersionChecker();
+    const checker = new VersionChecker();
 
     let outdated = $derived(checker.versionState.kind !== "up_to_date");
 

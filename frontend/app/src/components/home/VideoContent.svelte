@@ -25,8 +25,8 @@
     }: Props = $props();
 
     let videoPlayer: HTMLVideoElement | undefined = $state();
-    let withCaption = content.caption !== undefined && content.caption !== "";
-    let landscape = content.height < content.width;
+    const withCaption = content.caption !== undefined && content.caption !== "";
+    const landscape = content.height < content.width;
 
     function onPlay() {
         if (videoPlayer) {

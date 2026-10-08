@@ -60,13 +60,13 @@
         easing: quadOut,
     };
 
-    let error: string | undefined = $state(undefined);
+    const error: string | undefined = $state(undefined);
     let toppingUp = $state(false);
     let tokenChanging = $state(true);
     let dollar = $state<HTMLElement | undefined>();
-    let dollarTop = new Tween(-1000, tweenOptions);
-    let dollarOpacity = new Tween(0, tweenOptions);
-    let dollarScale = new Tween(0, tweenOptions);
+    const dollarTop = new Tween(-1000, tweenOptions);
+    const dollarOpacity = new Tween(0, tweenOptions);
+    const dollarScale = new Tween(0, tweenOptions);
     let centAmount = $state(0);
     let showCustomTip = $state(false);
     let validAmount: boolean = $state(false);

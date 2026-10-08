@@ -48,7 +48,7 @@
     // valid approval, so the payment must not be offered at all.
     let token = $derived($enhancedCryptoLookup.get(gate.ledgerCanister));
     let tokenState = $derived(new TokenState(token));
-    let refreshingBalance = $state(false);
+    const refreshingBalance = $state(false);
     let totalAmount = $derived(tokenState.formatTokens(gate.amount));
     // Integer arithmetic: BigInt(Number(amount) * 0.98) throws a RangeError for any amount that
     // is not a multiple of 50, because the product is not an integer (12345678n throws;

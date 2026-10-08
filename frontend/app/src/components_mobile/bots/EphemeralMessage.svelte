@@ -16,7 +16,7 @@
         onClose: () => void;
     }
 
-    let perc = new Tween(100, { duration });
+    const perc = new Tween(100, { duration });
     let { event, onClose }: Props = $props();
     let bot = $derived(botState.externalBots.get(event.botId));
     let timer = $state<number>();

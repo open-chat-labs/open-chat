@@ -10,8 +10,8 @@
 
     const options = { duration: 1000 };
 
-    let y1 = new Tween(-45, options);
-    let y2 = new Tween(55, options);
+    const y1 = new Tween(-45, options);
+    const y2 = new Tween(55, options);
 
     let destroyed = false;
     let animating = $state(false);

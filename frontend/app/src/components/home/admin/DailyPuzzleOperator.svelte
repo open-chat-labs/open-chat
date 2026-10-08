@@ -23,7 +23,7 @@
     // Two levers, deliberately (2026-09-13, #9357): the kill switch, and regenerating a bad
     // puzzle. Prices, rewards, caps and the rota are code, so changing them gets a review.
     let error: ResourceKey | undefined = $state(undefined);
-    let busy = $state(new SvelteSet<number>());
+    const busy = $state(new SvelteSet<number>());
     let config: DailyPuzzleConfig | undefined = $state(undefined);
     let enabled = $state(false);
     let regenerateGameId = $state("");

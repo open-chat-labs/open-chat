@@ -77,7 +77,7 @@
             (content.myVote !== undefined ? (content.myVote ? "adopted" : "rejected") : undefined),
     );
     let proposal = $derived(content.proposal);
-    let statusColour: Record<ProposalDecisionStatus, string> = {
+    const statusColour: Record<ProposalDecisionStatus, string> = {
         0: ColourVars.surfaceDisabled, // unspecified
         1: ColourVars.validationError, // failed
         2: ColourVars.validationWarning, // open

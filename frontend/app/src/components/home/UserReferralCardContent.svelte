@@ -6,7 +6,7 @@
     import QRCode from "../QRCode.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
 
-    let link = `${window.location.origin}/?ref=${$currentUserIdStore}`;
+    const link = `${window.location.origin}/?ref=${$currentUserIdStore}`;
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(

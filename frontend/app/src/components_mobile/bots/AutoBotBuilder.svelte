@@ -47,7 +47,7 @@
         nameDirty,
         mode,
     }: Props = $props();
-    let debug = $state(false);
+    const debug = $state(false);
     let schemaLoading = $state(false);
 
     let errors = $derived.by(

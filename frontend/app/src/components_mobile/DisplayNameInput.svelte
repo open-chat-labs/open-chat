@@ -37,7 +37,7 @@
     $effect(() => {
         if (typeof displayName !== "string") return;
 
-        let d = displayName;
+        const d = displayName;
 
         untrack(() => {
             if (d.length === 0) {

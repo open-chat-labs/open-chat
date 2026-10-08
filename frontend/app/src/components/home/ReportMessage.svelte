@@ -28,9 +28,9 @@
     const client = getContext<OpenChat>("client");
 
     let deleteMessage = $state(false);
-    let busy = false;
+    const busy = false;
     let selectedReasonIndex = $state(-1);
-    let reasons = [
+    const reasons = [
         "report.pleaseSelect",
         "report.threat",
         "report.child",

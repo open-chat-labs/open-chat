@@ -32,7 +32,7 @@
         mode === "update" || mode === "remove" ? "choose" : "edit",
     );
 
-    let botState = $state({
+    const botState = $state({
         original: emptyBotInstance($currentUserIdStore),
         current: emptyBotInstance($currentUserIdStore),
     });

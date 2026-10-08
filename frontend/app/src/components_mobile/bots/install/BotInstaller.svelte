@@ -53,10 +53,10 @@
 
     let { bot, collection, installedWithPermissions }: Props = $props();
     let requestedPermissions = $derived(definitionToPermissions(bot.definition));
-    let grantedPermissions = $state(
+    const grantedPermissions = $state(
         installedWithPermissions ?? filterByLocation(definitionToPermissions(bot.definition)),
     );
-    let installing = $state(installedWithPermissions === undefined);
+    const installing = $state(installedWithPermissions === undefined);
     let location = $derived(installationLocationFrom(collection));
     let level = $derived(collection.kind === "direct_chat" ? "group" : collection.level); // TODO suspect
     let container = $derived(botContainerFrom(collection));

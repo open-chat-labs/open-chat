@@ -10,7 +10,7 @@
 
     const client = getContext<OpenChat>("client");
 
-    let ucs = updateCommunityState;
+    const ucs = updateCommunityState;
 
     function searchUsers(term: string): Promise<[UserSummary[], UserSummary[]]> {
         return client.searchUsersForInvite(term, 20, ucs.candidateCommunity.level, true, true);

@@ -24,7 +24,7 @@
         subtext,
     }: Props = $props();
 
-    let searching = $state(false);
+    const searching = $state(false);
     let searchTerm = $state<string>();
 
     function selectReceiver(userOrGroup: UserOrUserGroup) {

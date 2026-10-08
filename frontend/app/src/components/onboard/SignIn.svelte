@@ -32,7 +32,7 @@
     let emailInvalid = $state(false);
     let email = $state(localStorage.getItem(configKeys.selectedAuthEmail) ?? "");
     let verificationCode: string | undefined = $state(undefined);
-    let emailSigninHandler = new EmailSigninHandler(client, "registration", true);
+    const emailSigninHandler = new EmailSigninHandler(client, "registration", true);
     let restrictTo = $derived(new Set($querystringStore.getAll("auth")));
     let loggingInWithEmail = $derived(
         loginState === "logging-in" && $selectedAuthProviderStore === AuthProvider.EMAIL,

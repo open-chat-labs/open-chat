@@ -53,7 +53,7 @@
         children,
     }: Props = $props();
 
-    let index = $state(0);
+    const index = $state(0);
 
     // Rebuilt when the members change, which they do when those which weren't held are found
     let usersAndGroups = $derived.by(() => {

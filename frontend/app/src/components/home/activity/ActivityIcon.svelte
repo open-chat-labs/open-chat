@@ -13,7 +13,7 @@
 
     let { activity }: Props = $props();
 
-    let color = "var(--button-txt)";
+    const color = "var(--button-txt)";
 </script>
 
 <div class="icon">

@@ -5,7 +5,7 @@
 
     let { size = "medium" }: Props = $props();
 
-    let cls = `loading ${size}`;
+    const cls = `loading ${size}`;
 </script>
 
 <div class={cls}></div>

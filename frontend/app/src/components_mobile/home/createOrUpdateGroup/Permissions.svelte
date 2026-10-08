@@ -27,7 +27,7 @@
 
     const data = updateGroupState;
     let defaultText = $derived($_("role.default"));
-    let roles = [...chatRoles];
+    const roles = [...chatRoles];
     let isCommunityPublic = $derived($selectedCommunitySummaryStore?.public ?? true);
     let isChannel = $derived(data.candidate.id.kind === "channel");
     let selectedTab = $state("permissions.general");

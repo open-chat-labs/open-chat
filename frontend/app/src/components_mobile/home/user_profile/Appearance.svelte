@@ -18,7 +18,7 @@
         light: "Light",
     };
 
-    let selectedLocale = $state(($locale as string).substring(0, 2));
+    const selectedLocale = $state(($locale as string).substring(0, 2));
     let selectedLanguage = $state(supportedLanguages.find((l) => l.code === selectedLocale));
 
     $effect(() => {

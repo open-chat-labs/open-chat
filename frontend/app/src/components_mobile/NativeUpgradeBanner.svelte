@@ -11,7 +11,7 @@
     const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.oclabs.openchat";
     const DIRECT_DOWNLOAD_URL = "https://github.com/open-chat-labs/open-chat/releases/latest";
 
-    let checker = new VersionChecker();
+    const checker = new VersionChecker();
 
     // Persisted, and keyed by version rather than a boolean.
     //

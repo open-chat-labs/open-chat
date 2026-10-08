@@ -7,7 +7,7 @@
 
     const MAX_LENGTH = 40;
     const MIN_LENGTH = 3;
-    let ucs = updateCommunityState;
+    const ucs = updateCommunityState;
 
     interface Props {
         channelName: string;

@@ -30,7 +30,7 @@
 
     // Automated filing is offered whenever the reporting service is configured; recording a
     // manual portal filing stays available to platform operators (the original path)
-    let autoAvailable = ncaReporterUrl !== "";
+    const autoAvailable = ncaReporterUrl !== "";
     let mode = $state<"auto" | "manual">(ncaReporterUrl !== "" ? "auto" : "manual");
 
     // --- manual mode ---
@@ -45,7 +45,7 @@
     let phone = $state("");
     let email = $state("");
     let oohAcknowledged = $state(false);
-    let outOfHours = outsideNcaBusinessHours();
+    const outOfHours = outsideNcaBusinessHours();
     let needsOohAck = $derived(outOfHours && (priority === "P1" || priority === "P2"));
 
     let busy = $state(false);

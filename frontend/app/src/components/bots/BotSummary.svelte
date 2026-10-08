@@ -55,7 +55,7 @@
                 return i18nKey("bots.view.close");
         }
     });
-    let grantedPermissions = $state(mode.granted);
+    const grantedPermissions = $state(mode.granted);
 
     function firstStep(): Step {
         if (mode.kind === "editing_bot") {

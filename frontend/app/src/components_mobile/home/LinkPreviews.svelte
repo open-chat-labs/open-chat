@@ -16,7 +16,7 @@
 
     let { messagePreviews, intersecting, me, onRemove, ogPreviews = [] }: Props = $props();
 
-    let rtl = $rtlStore;
+    const rtl = $rtlStore;
 
     function removePreview(url: string) {
         onRemove?.(url);

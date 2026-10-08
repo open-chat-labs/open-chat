@@ -63,7 +63,7 @@
 
         const CHAR_WIDTH = mobile ? 6 : 7;
 
-        let numChars = textLength + 13;
+        const numChars = textLength + 13;
         return (
             Math.max(
                 longestWord * CHAR_WIDTH,

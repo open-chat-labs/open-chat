@@ -8,7 +8,7 @@
     import Overlay from "../Overlay.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
 
-    let installed = window.matchMedia("(display-mode: standalone)").matches;
+    const installed = window.matchMedia("(display-mode: standalone)").matches;
     let dismissed = $state(false);
     let show = $state(false);
 

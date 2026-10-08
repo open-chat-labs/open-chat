@@ -13,7 +13,7 @@
     }
 
     let { selected, onSelect, placeholder, subtext }: Props = $props();
-    let searching = $state(false);
+    const searching = $state(false);
     let searchTerm = $state<string>();
     let filteredLanguages = $derived(
         supportedLanguages

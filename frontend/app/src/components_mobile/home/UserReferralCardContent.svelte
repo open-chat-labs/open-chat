@@ -8,7 +8,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
-    let link = `${client.canonicalOrigin()}/?ref=${$currentUserIdStore}`;
+    const link = `${client.canonicalOrigin()}/?ref=${$currentUserIdStore}`;
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(

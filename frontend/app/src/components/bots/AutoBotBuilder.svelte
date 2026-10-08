@@ -51,7 +51,7 @@
     }: Props = $props();
     let selectedCommand = $state<CommandDefinition | undefined>(undefined);
     let selectedCommandIndex = $state<number | undefined>(undefined);
-    let debug = $state(false);
+    const debug = $state(false);
     let schemaLoading = $state(false);
     let showNext = $derived(
         selectedCommandIndex !== undefined &&

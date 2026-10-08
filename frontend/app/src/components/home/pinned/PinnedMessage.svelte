@@ -35,7 +35,7 @@
 
     let { chatId, user, senderId, msg, timestamp }: Props = $props();
 
-    let crypto = msg.content.kind === "crypto_content";
+    const crypto = msg.content.kind === "crypto_content";
 
     let sender = $derived(findUser(msg.sender, $allUsersStore, $selectedChatWebhooksStore));
     let username = $derived(

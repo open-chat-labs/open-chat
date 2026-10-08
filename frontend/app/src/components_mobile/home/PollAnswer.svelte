@@ -24,7 +24,7 @@
     let { percent, answer, voted, txtColor, voters, numVotes, showVotes, onClick }: Props =
         $props();
 
-    let longPressed: boolean = $state(false);
+    const longPressed: boolean = $state(false);
 
     function buildPollUsernames(
         userStore: UserLookup,

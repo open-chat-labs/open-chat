@@ -38,7 +38,7 @@
     let currentScore = 0;
     let highScore = Number(localStorage.getItem("openchat_invaders") || "0");
     let newHighScore = false;
-    let invaderSize = 30;
+    const invaderSize = 30;
     let invaderSpeed = 1;
     let gameState: State = $state("not_started");
     let invaderDirection: "right" | "left" | "down" = "right";
@@ -315,7 +315,7 @@
         keys[event.key] = false;
     }
 
-    let keys: { [key: string]: boolean } = {};
+    const keys: { [key: string]: boolean } = {};
     document.addEventListener("keydown", keydown);
 
     document.addEventListener("keyup", keyup);

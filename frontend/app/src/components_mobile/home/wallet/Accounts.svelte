@@ -21,9 +21,9 @@
 
     let { selectedConversion = $bindable("usd") }: Props = $props();
 
-    let balanceError: string | undefined = $state();
+    const balanceError: string | undefined = $state();
     let actionMode: "none" | "swap" | "restricted" = $state("none");
-    let selectedLedger: string | undefined = $state(undefined);
+    const selectedLedger: string | undefined = $state(undefined);
 
     onMount(() => client.refreshSwappableTokens());
 

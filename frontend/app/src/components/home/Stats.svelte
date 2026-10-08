@@ -25,14 +25,14 @@
     let rendered = $state(false);
     let previousStats: Metrics | undefined = $state(undefined);
     let totalMessages = $state(0);
-    let textPerc = new Tween(12.5, tweenOptions);
-    let imagePerc = new Tween(12.5, tweenOptions);
-    let videoPerc = new Tween(12.5, tweenOptions);
-    let audioPerc = new Tween(12.5, tweenOptions);
-    let filePerc = new Tween(12.5, tweenOptions);
-    let pollPerc = new Tween(12.5, tweenOptions);
-    let cryptoPerc = new Tween(12.5, tweenOptions);
-    let giphyPerc = new Tween(12.5, tweenOptions);
+    const textPerc = new Tween(12.5, tweenOptions);
+    const imagePerc = new Tween(12.5, tweenOptions);
+    const videoPerc = new Tween(12.5, tweenOptions);
+    const audioPerc = new Tween(12.5, tweenOptions);
+    const filePerc = new Tween(12.5, tweenOptions);
+    const pollPerc = new Tween(12.5, tweenOptions);
+    const cryptoPerc = new Tween(12.5, tweenOptions);
+    const giphyPerc = new Tween(12.5, tweenOptions);
 
     function percToDegree(perc: number): number {
         return (perc / 100) * 360;

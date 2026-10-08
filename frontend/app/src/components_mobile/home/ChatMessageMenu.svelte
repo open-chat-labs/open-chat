@@ -15,7 +15,7 @@
     }
 
     let props: Props = $props();
-    let { deleted, failed, me, canReact, selectQuickReaction, showEmojiPicker, onOpenSheetMenu } =
+    const { deleted, failed, me, canReact, selectQuickReaction, showEmojiPicker, onOpenSheetMenu } =
         props;
 
     const padding: Padding = ["sm", "sm"];

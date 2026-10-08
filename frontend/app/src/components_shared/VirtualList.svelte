@@ -23,7 +23,7 @@
     } = $props();
 
     // local state
-    let height_map: number[] = [];
+    const height_map: number[] = [];
     let rows: HTMLCollectionOf<Element>;
     let viewport: HTMLElement | undefined = $state();
     let contents: HTMLElement | undefined = $state();

@@ -36,7 +36,7 @@
     let busyUpdate = $state(false);
     let step = $state(mode.kind as string);
 
-    let webhook = $state({
+    const webhook = $state({
         original: mode.kind === "update" ? mode.webhook : emptyWebhookInstance(),
         current: mode.kind === "update" ? { ...mode.webhook } : emptyWebhookInstance(),
     });

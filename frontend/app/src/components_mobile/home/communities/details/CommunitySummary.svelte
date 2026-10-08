@@ -57,8 +57,8 @@
 
     let { community }: Props = $props();
 
-    let communityState = new CommunityState(client, community);
-    let busy = $state(false);
+    const communityState = new CommunityState(client, community);
+    const busy = $state(false);
     let ownerMember = $derived(
         [...$selectedCommunityMembersStore.values()].find((m) => m.role === ROLE_OWNER),
     );

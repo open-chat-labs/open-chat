@@ -6,9 +6,9 @@
     import { availableHeight, mobileWidth, toPixel } from "@client";
 
     let scrollTop = $state(0);
-    let phoneBorder = 5;
+    const phoneBorder = 5;
     let windowHeight = $state(window.innerHeight);
-    let menuHeight = toPixel(5);
+    const menuHeight = toPixel(5);
 
     // all the crazy calculations
     let sectionHeight = $derived($availableHeight);

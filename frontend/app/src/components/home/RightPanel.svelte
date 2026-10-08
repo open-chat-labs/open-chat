@@ -72,7 +72,7 @@
             $selectedChatIdStore !== undefined &&
             ($selectedChatIdStore.kind === "group_chat" || $selectedChatIdStore.kind === "channel")
         ) {
-            let { userId, newRole, oldRole } = args;
+            const { userId, newRole, oldRole } = args;
             changeGroupRole($selectedChatIdStore, userId, newRole, oldRole);
         }
     }

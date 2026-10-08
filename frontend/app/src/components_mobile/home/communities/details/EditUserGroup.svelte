@@ -80,7 +80,7 @@
         );
     }
 
-    let userGroup = $state<UserGroupDetails>({
+    const userGroup = $state<UserGroupDetails>({
         kind: original.kind,
         id: original.id,
         name: original.name,
@@ -92,7 +92,7 @@
     let nameDirty = $derived(original.name !== userGroup.name);
     let dirty = $derived(nameDirty || added.size > 0 || removed.size > 0);
     let saving = $state(false);
-    let communityState = new CommunityState(client, community);
+    const communityState = new CommunityState(client, community);
     let searchTermEntered = $state("");
     let trimmedName = $derived(userGroup.name.trim());
     let nameValid = $derived(

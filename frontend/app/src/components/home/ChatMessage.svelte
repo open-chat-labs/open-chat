@@ -148,10 +148,10 @@
     let msgElement: HTMLElement | undefined;
     let messageMenu: ChatMessageMenu | undefined;
 
-    let multiUserChat = chatType === "group_chat" || chatType === "channel";
+    const multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = $state(false);
-    let debug = false;
-    let crypto =
+    const debug = false;
+    const crypto =
         msg.content.kind === "crypto_content" ||
         msg.content.kind === "prize_content" ||
         msg.content.kind === "p2p_swap_content";

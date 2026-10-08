@@ -147,7 +147,7 @@
     }: Props = $props();
 
     let menuIconEl: MenuIcon | undefined;
-    let quickReactionIconSize = "1.2rem";
+    const quickReactionIconSize = "1.2rem";
     let showConfirmDelete = $state(false);
 
     let canRemind = $derived(

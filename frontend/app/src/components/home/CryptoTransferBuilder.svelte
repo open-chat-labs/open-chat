@@ -50,7 +50,7 @@
         onClose,
     }: Props = $props();
 
-    let refreshing = false;
+    const refreshing = false;
     let error: string | undefined = $state(undefined);
     let message = $state("");
     let confirming = $state(false);

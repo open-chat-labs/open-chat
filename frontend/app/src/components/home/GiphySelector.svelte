@@ -33,7 +33,7 @@
     > = $state({});
     let timer: number | undefined;
     let modalWidth = $state(0);
-    let pageSize = 25;
+    const pageSize = 25;
     let selectedGif: KeyedKlipyObject | undefined = $state();
     let containerElement: HTMLDivElement;
     const gutter = 5;
@@ -203,9 +203,9 @@
               : { ...selectedGif.media_formats.mediumgif },
     );
     $effect(() => {
-        let containerWidth = containerElement?.clientWidth ?? 0;
-        let numCols = $mobileWidth ? 2 : 4;
-        let availWidth = containerWidth - (numCols - 1) * gutter;
+        const containerWidth = containerElement?.clientWidth ?? 0;
+        const numCols = $mobileWidth ? 2 : 4;
+        const availWidth = containerWidth - (numCols - 1) * gutter;
         imgWidth = availWidth / numCols;
         gifCache = gifs.reduce((cache, gif, i) => reduceGifs(numCols, cache, gif, i), {});
     });

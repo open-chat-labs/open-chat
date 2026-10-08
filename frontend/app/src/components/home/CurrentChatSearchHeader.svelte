@@ -96,7 +96,7 @@
             searching = true;
             const lowercase = term.toLowerCase();
             try {
-                let response = await client.searchChat(chat.id, lowercase, mentions, 200);
+                const response = await client.searchChat(chat.id, lowercase, mentions, 200);
                 if (response.kind === "success") {
                     matches = filterAndSortMatches(response.matches);
                     if (matches.length > 0) {
@@ -117,8 +117,8 @@
             return [text, []];
         }
 
-        let mentionedSet = new Set<string>();
-        let expandedText = text.replace(/@(\w*)/g, (match, p1) => {
+        const mentionedSet = new Set<string>();
+        const expandedText = text.replace(/@(\w*)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, true);
             if (userOrGroup !== undefined) {
                 mentionedSet.add(client.userOrUserGroupId(userOrGroup) ?? "");

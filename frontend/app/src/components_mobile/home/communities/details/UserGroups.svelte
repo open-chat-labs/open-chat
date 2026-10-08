@@ -19,7 +19,7 @@
     }
 
     let { community }: Props = $props();
-    let communityState = new CommunityState(client, community);
+    const communityState = new CommunityState(client, community);
 
     let searchTerm = $state("");
 

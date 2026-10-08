@@ -66,7 +66,7 @@
         );
     });
 
-    let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
+    const iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
     let scrollingSection: HTMLElement;
 
     // we don't want drag n drop to monkey around with the key

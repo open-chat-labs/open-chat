@@ -24,7 +24,7 @@
         blockLevelMarkdown = false,
     }: Props = $props();
 
-    let color = me ? "#ffffff" : "var(--txt)";
+    const color = me ? "#ffffff" : "var(--txt)";
 </script>
 
 {#if content.blobUrl}

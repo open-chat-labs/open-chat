@@ -1,6 +1,6 @@
 <script module lang="ts">
     let current: WaveSurfer | undefined = undefined;
-    let registry: WaveSurfer[] = [];
+    const registry: WaveSurfer[] = [];
     function register(w: WaveSurfer) {
         registry.push(w);
     }

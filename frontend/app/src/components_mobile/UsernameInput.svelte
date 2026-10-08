@@ -72,7 +72,7 @@
     $effect(() => {
         if (typeof username !== "string") return;
 
-        let u = username;
+        const u = username;
 
         untrack(() => {
             usernameValid = client.isUsernameValid(u);

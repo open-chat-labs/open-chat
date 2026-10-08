@@ -46,7 +46,7 @@
     // The status of `userMigrationUserId`'s migration, as of the last check
     let userMigration: { userId: string; status: UserMigrationResponse } | undefined =
         $state(undefined);
-    let busy = $state(new SvelteSet<number>());
+    const busy = $state(new SvelteSet<number>());
     let governanceCanisterId = $state("");
     let stake = $state("0");
 

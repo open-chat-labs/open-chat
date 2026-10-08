@@ -31,7 +31,7 @@
     let { chatId, repliesTo, readonly, intersecting, onGoToMessageIndex, onRemovePreview }: Props =
         $props();
 
-    let debug = false;
+    const debug = false;
 
     let me = $derived(repliesTo.senderId === $currentUserIdStore);
     let isTextContent = $derived(repliesTo.content?.kind === "text_content");

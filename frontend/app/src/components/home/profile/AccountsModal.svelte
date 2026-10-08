@@ -32,7 +32,7 @@
     let pinAction: PinOperation | undefined = $state(undefined);
     let managing = $state(false);
     let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = $state("none");
-    let conversionOptions = [
+    const conversionOptions = [
         { id: "none", label: $_("cryptoAccount.tokens") },
         { id: "usd", label: "USD" },
         { id: "icp", label: "ICP" },

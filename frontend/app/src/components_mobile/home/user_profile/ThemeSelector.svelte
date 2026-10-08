@@ -22,7 +22,7 @@
     }
 
     let { selected, subtext }: Props = $props();
-    let familyNames = getThemeV2Families();
+    const familyNames = getThemeV2Families();
 </script>
 
 <Select

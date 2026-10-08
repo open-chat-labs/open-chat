@@ -652,7 +652,7 @@
         // it's possible that we got here via a postLogin capture in which case it's possible
         // that we are actually already a member of this group, so we should double check here
         // that we actually *need* to join the group
-        let chat = $chatSummariesStore.get(group.id);
+        const chat = $chatSummariesStore.get(group.id);
         if (chat === undefined || chat.membership.role === ROLE_NONE || client.isLapsed(chat.id)) {
             doJoinGroup(group, select, undefined);
         }
@@ -799,8 +799,8 @@
 
     function editGroup(detail: { chat: MultiUserChat; rules: UpdatedRules | undefined }) {
         const chat = detail.chat;
-        let level: Level = chat.id.kind === "group_chat" ? "group" : "channel";
-        let rules = detail.rules ?? { ...defaultChatRules(level), newVersion: false };
+        const level: Level = chat.id.kind === "group_chat" ? "group" : "channel";
+        const rules = detail.rules ?? { ...defaultChatRules(level), newVersion: false };
         modal = {
             kind: "new_group",
             embeddedContent: chat.kind === "channel" && chat.externalUrl !== undefined,

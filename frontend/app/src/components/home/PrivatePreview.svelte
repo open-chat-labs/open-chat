@@ -2,7 +2,7 @@
     import { mobileWidth } from "@client";
     import { onMount } from "svelte";
 
-    let number = $mobileWidth ? 5 : 7;
+    const number = $mobileWidth ? 5 : 7;
     const messages: [number, unknown[]][] = $state([]);
 
     function rand(min: number, max: number): number {

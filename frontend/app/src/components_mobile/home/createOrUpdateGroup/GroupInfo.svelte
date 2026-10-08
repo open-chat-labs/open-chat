@@ -46,7 +46,7 @@
     const MAX_URL_LENGTH = 500;
     const client = getContext<OpenChat>("client");
 
-    let ugs = updateGroupState;
+    const ugs = updateGroupState;
     let canEditDisappearingMessages = $derived(
         !ugs.editMode ? true : client.hasOwnerRights(ugs.candidate.membership.role),
     );

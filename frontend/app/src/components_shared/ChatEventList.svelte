@@ -927,11 +927,11 @@
             return true;
 
         if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
-            let messageIndex =
+            const messageIndex =
                 evt.event.kind === "message"
                     ? evt.event.messageIndex
                     : Math.max(...evt.event.messagesDeleted);
-            let messageId = evt.event.kind === "message" ? evt.event.messageId : undefined;
+            const messageId = evt.event.kind === "message" ? evt.event.messageId : undefined;
             return client.isMessageRead(messageContext, messageIndex, messageId);
         }
         return true;
@@ -1042,7 +1042,7 @@
             anchorMessageIndex = index;
         }
 
-        let flatIndex = messageIndexToFlat().get(index);
+        const flatIndex = messageIndexToFlat().get(index);
         vclDebug.log("scroll-to-msg", {
             index,
             flatIndex,

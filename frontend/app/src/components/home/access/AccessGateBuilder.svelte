@@ -54,9 +54,9 @@
         onClose,
     }: Props = $props();
 
-    let gateValidity: boolean[] = $state([]);
+    const gateValidity: boolean[] = $state([]);
     let selectedGateIndex: number | undefined = $state(undefined);
-    let gateBindings: GateBinding[] = getGateBindings(level);
+    const gateBindings: GateBinding[] = getGateBindings(level);
     let evaluationIntervalValid = $state(true);
     let nsLedgers = $derived(
         new Set([...$nervousSystemLookup.values()].map((d) => d.ledgerCanisterId)),

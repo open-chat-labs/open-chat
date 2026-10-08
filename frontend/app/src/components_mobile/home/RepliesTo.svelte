@@ -24,7 +24,7 @@
 
     let { repliesTo, readonly, intersecting, contentWidth }: Props = $props();
 
-    let debug = false;
+    const debug = false;
 
     let me = $derived(repliesTo.senderId === $currentUserIdStore);
     let displayName = $derived(

@@ -148,7 +148,7 @@
     let editorEmpty = $state(true);
 
     // let inp: HTMLDivElement | undefined = $state();
-    let audioMimeType = client.audioRecordingMimeType();
+    const audioMimeType = client.audioRecordingMimeType();
     let recording: boolean = $state(false);
     let percentRecorded: number = $state(0);
     let previousEditingEvent: EventWrapper<Message> | undefined = $state();
@@ -314,8 +314,8 @@
     // xyz is the userId or abc is the user group id
     // if we can't find the user or user group just leave it as is
     function expandMentions(text: string): [string | undefined, User[], boolean] {
-        let mentionedMap = new Map<string, User>();
-        let expandedText = text.replace(/@(\w+)/g, (match, p1) => {
+        const mentionedMap = new Map<string, User>();
+        const expandedText = text.replace(/@(\w+)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, false);
             if (userOrGroup !== undefined) {
                 switch (userOrGroup.kind) {
@@ -332,7 +332,7 @@
             }
         });
 
-        let mentioned = Array.from(mentionedMap, ([_, user]) => user);
+        const mentioned = Array.from(mentionedMap, ([_, user]) => user);
 
         return [expandedText, mentioned, containsMarkdown];
     }

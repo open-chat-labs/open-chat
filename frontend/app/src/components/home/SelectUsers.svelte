@@ -24,7 +24,7 @@
         onSelectUser,
     }: Props = $props();
 
-    let error: string | undefined = undefined;
+    const error: string | undefined = undefined;
 </script>
 
 {#if selectedUsers.length > 0}

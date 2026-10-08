@@ -108,7 +108,7 @@
     let minChitEarned = $state<number>($prizeConfig.minChitEarned);
     let streakOnly = $derived(minStreak > 0);
     let chitOnly = $derived(minChitEarned > 0);
-    let refreshing = false;
+    const refreshing = false;
     let error: string | undefined = $state(undefined);
     let message = $state("");
     let toppingUp = $state(false);
