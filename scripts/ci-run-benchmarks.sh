@@ -13,10 +13,6 @@ CANBENCH_JOB_NAME=$2
 # Must match the file specified in the github action.
 COMMENT_MESSAGE_PATH=/tmp/canbench_result_${CANBENCH_JOB_NAME}
 
-# The results file with this run's numbers, which the github action uploads for
-# fetch-canbench-results.sh. Must match the path specified there.
-PERSISTED_RESULTS_PATH=/tmp/persisted_canbench_results/canbench_results.yml
-
 # Github CI is expected to have the main branch checked out in this folder.
 MAIN_BRANCH_DIR=_canbench_main_branch
 
@@ -34,13 +30,12 @@ if [ ! -f "$CANBENCH_RESULTS_FILE" ]; then
     exit 1
 fi
 
-# Detect if canbench results file is up to date. `--persist` still reports each change against the
-# committed results before overwriting them with this run's, which are then kept for the upload.
+# Detect if canbench results file is up to date.
 pushd "$CANISTER_PATH"
-canbench --persist --less-verbose | grep -v "^Successfully persisted results" > $CANBENCH_OUTPUT
+canbench --less-verbose > $CANBENCH_OUTPUT
 if grep -q "(regress\|(improved by \|(new)" "$CANBENCH_OUTPUT"; then
   UPDATED_MSG="**\`$CANBENCH_RESULTS_FILE\` is not up to date ❌**
-  If the performance change is expected, run \`./scripts/fetch-canbench-results.sh\` to copy this run's results into \`canbench_results.yml\`, then commit it. (\`canbench --persist\` only gives CI's numbers on Linux x86_64.)";
+  If the performance change is expected, run \`canbench --persist\` to save the updated benchmark results.";
 
   # canbench results file not up to date. Fail the job.
   echo "EXIT_STATUS=1" >> "$GITHUB_ENV"
@@ -52,8 +47,6 @@ else
 fi
 popd
 
-mkdir -p "$(dirname "$PERSISTED_RESULTS_PATH")"
-cp "$CANBENCH_RESULTS_FILE" "$PERSISTED_RESULTS_PATH"
 
 echo "# \`canbench\` 🏋 (dir: $CANISTER_PATH)" > "$COMMENT_MESSAGE_PATH"
 
