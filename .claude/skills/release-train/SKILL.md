@@ -46,20 +46,25 @@ description: OpenChat release train runbook — tagging components, prod-test (i
    `git tag --list "v2.0.*-android" | sort -t. -k3 -n | tail -3`
 
 4. Release order is dependency-driven, decided per train. Rule of thumb: a canister must accept a new candid field before anything starts sending it (e.g. video transcode train: storage_bucket → storage_index → website). Website last.
-5. Pushing a tag triggers CI to build and upload wasms to S3 keyed by COMMIT id (`https://openchat-canister-wasms.s3.amazonaws.com/<commit>/<canister>.wasm.gz`). The prod proposal route downloads from there — confirm the CI run finished before prod release.
+5. Every push to master runs the "Push canister wasms" workflow, which builds the wasms and uploads them to S3 keyed by COMMIT id (`https://openchat-canister-wasms.s3.amazonaws.com/<commit>/<canister>.wasm.gz`). The pre-release tests a tag triggers wait for it. Both the prod-test deploys and the prod proposals download from there, so confirm the run finished at the tag commit before prod test.
 
 ## Phase 1 — prod test (ic_test)
 
-Work through components in release order. For each canister, the **double-deploy protocol**: deploy the new wasm twice, first labelled version tag−1, then labelled tag. This exercises the upgrade path twice (catches non-idempotent migrations). "tag−1" = the new tag number minus 1 (NOT the component's previous released tag).
+Work through components in release order. For each canister, the **double-deploy protocol**: deploy the new wasm twice, first labelled version tag−1, then labelled tag. "tag−1" = the new tag number minus 1 (NOT the component's previous released tag).
+
+The point of the second deploy is to give the new `pre_upgrade` code a run through. The first upgrade runs the previous release's `pre_upgrade`, which prod already runs, so only the second exercises the new one. Prod first runs it at the canister's next upgrade, by which time it is too late to fix. The second deploy also runs `post_upgrade` again, which catches one-offs that aren't idempotent.
+
+Always pass the tag commit as the 4th arg (wasm_src), so the wasm is downloaded from S3 at the tagged commit. That is the exact wasm, byte for byte, that the prod proposal will download and install. Without the 4th arg the script builds the wasm locally from the current checkout, which may not match the CI build.
 
 ```bash
-sh ./scripts/upgrade-canister-prod-test.sh openchat <canister> 2.0.<tag-1>
+COMMIT=$(git rev-list -n 1 v2.0.<tag>-<canister>)
+sh ./scripts/upgrade-canister-prod-test.sh openchat <canister> 2.0.<tag-1> $COMMIT
 # check metrics (below), then:
-sh ./scripts/upgrade-canister-prod-test.sh openchat <canister> 2.0.<tag>
+sh ./scripts/upgrade-canister-prod-test.sh openchat <canister> 2.0.<tag> $COMMIT
 # check metrics again
 ```
 
-No 4th arg (wasm_src) → the wasm is BUILT LOCALLY from the current checkout, so the working tree must be at the tag commit (master head, clean). Both deploys therefore carry the new code's git_commit_id — expected.
+Both deploys carry the tag commit's git_commit_id, which is expected.
 
 Website prod test is a single deploy, no double protocol (asset canister, no upgrade path):
 
