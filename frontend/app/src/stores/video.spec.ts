@@ -1,6 +1,10 @@
 import { get } from "svelte/store";
 import { describe, expect, test, vi } from "vitest";
 
+// These tests import the module under test inside each test, so the first import's transform time
+// counts against the timeout. Under a loaded CI runner that can pass the 5s default.
+vi.setConfig({ testTimeout: 20_000 });
+
 vi.mock("@daily-co/daily-js", () => {
     throw new Error("@daily-co/daily-js must not be loaded when stores/video is imported");
 });
