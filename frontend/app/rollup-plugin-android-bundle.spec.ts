@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, test } from "vitest";
-import { withCsp } from "./rollup-plugin-android-bundle.mjs";
+import { withCsp, withOcConfig } from "./rollup-plugin-android-bundle.mjs";
 import { generateCspForScripts } from "./rollup.extras.mjs";
 
 // The OTA zips are cut from the website build's index.html, so they used to carry the
@@ -30,8 +30,7 @@ function directives(html: string): Map<string, string[]> {
     );
 }
 
-const scriptHashes = (html: string) =>
-    (directives(html).get("script-src") ?? []).filter((s) => s.startsWith("'sha256-"));
+const scriptSrc = (html: string) => directives(html).get("script-src") ?? [];
 
 describe("OTA bundle CSP", () => {
     test("invariant 1: the OTA index.html lets fetch reach the asset and ipc protocols", () => {
@@ -40,11 +39,11 @@ describe("OTA bundle CSP", () => {
         expect(connect).toContain("http://ipc.localhost");
     });
 
-    test("invariant 2: the OTA index.html keeps the website's inline-script hashes", () => {
+    test("invariant 2: the OTA index.html keeps the website's script-src, hashes included", () => {
         const website = indexHtml(websiteCsp());
-        const hashes = scriptHashes(website);
+        const hashes = scriptSrc(website).filter((s) => s.startsWith("'sha256-"));
         expect(hashes).toHaveLength(SCRIPTS.length);
-        expect(scriptHashes(withCsp(website, otaCsp()))).toEqual(hashes);
+        expect(scriptSrc(withCsp(website, otaCsp()))).toEqual(scriptSrc(website));
     });
 
     test("invariant 3: the website CSP stays free of the native-only sources", () => {
@@ -57,5 +56,21 @@ describe("OTA bundle CSP", () => {
         expect(() => withCsp("<html><head></head></html>", otaCsp())).toThrow();
         const twice = indexHtml(websiteCsp()).replace("</head>", `${indexHtml("x")}</head>`);
         expect(() => withCsp(twice, otaCsp())).toThrow();
+    });
+
+    test("invariant 5: the build fails rather than zip an index.html with an empty CSP", () => {
+        const website = indexHtml(websiteCsp());
+        expect(() => withCsp(website, undefined)).toThrow();
+        expect(() => withCsp(website, "")).toThrow();
+        expect(() => withCsp(website, "  \n  ")).toThrow();
+    });
+
+    test("invariant 6: the OTA index.html sets window.OC_CONFIG ahead of the CSP, so it runs", () => {
+        for (const store of [true, false]) {
+            const html = withOcConfig(withCsp(indexHtml(websiteCsp()), otaCsp()), store);
+            const config = html.indexOf("<script>window.OC_CONFIG=");
+            expect(config).toBeGreaterThan(-1);
+            expect(config).toBeLessThan(html.indexOf('http-equiv="Content-Security-Policy"'));
+        }
     });
 });

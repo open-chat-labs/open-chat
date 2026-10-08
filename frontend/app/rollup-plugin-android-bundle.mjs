@@ -15,8 +15,11 @@ const execPromise = promisify(exec);
 const CSP_META = /<meta http-equiv="Content-Security-Policy" content="[^"]*"/g;
 
 // Swaps the website's CSP for the one the native shell needs. Throws rather than
-// ship a zip whose CSP blocks asset.localhost.
+// ship a zip whose CSP blocks asset.localhost, or one with no CSP at all.
 export function withCsp(indexHtml, csp) {
+    if (typeof csp !== "string" || csp.trim() === "") {
+        throw new Error("No CSP to put in the OTA index.html");
+    }
     const found = indexHtml.match(CSP_META)?.length ?? 0;
     if (found !== 1) {
         throw new Error(`Expected one CSP meta tag in index.html, found ${found}`);
@@ -25,6 +28,23 @@ export function withCsp(indexHtml, csp) {
         CSP_META,
         () => `<meta http-equiv="Content-Security-Policy" content="${csp}"`,
     );
+}
+
+// The script has no CSP hash, so it only runs because it sits ahead of the CSP meta tag.
+export function withOcConfig(indexHtml, store) {
+    // This is the authoritative OTA strategy for anything delivered over the air.
+    // The value compiled into a shell is only a default: `override` in
+    // rollup.config.mjs emits `(window.OC_CONFIG?.KEY ?? <compiled>)`, and this
+    // injection sets window.OC_CONFIG, so the zip wins from the first update
+    // onwards. Changing OC_OTA_UPDATES in the Android workflow alone has no
+    // effect past a client's first OTA.
+    //
+    // "minor" for the sideloaded channel, not "major": major marks a bundle an
+    // installed shell cannot run, and taking one over the air is exactly the
+    // failure this gate exists to prevent. See tauri-plugin-oc/OTA_UPDATES.md.
+    const ota = store ? "patch" : "minor";
+    const injection = `<script>window.OC_CONFIG={OC_MOBILE_LAYOUT:"v2", OC_APP_STORE: "${store}", OC_OTA_UPDATES: "${ota}"}</script>`;
+    return indexHtml.replace("<head>", `<head>${injection}`);
 }
 
 export function androidBundlePlugin({ version, csp }) {
@@ -112,22 +132,9 @@ async function writeBundleZip(
     version,
     store,
 ) {
-    // This is the authoritative OTA strategy for anything delivered over the air.
-    // The value compiled into a shell is only a default: `override` in
-    // rollup.config.mjs emits `(window.OC_CONFIG?.KEY ?? <compiled>)`, and this
-    // injection sets window.OC_CONFIG, so the zip wins from the first update
-    // onwards. Changing OC_OTA_UPDATES in the Android workflow alone has no
-    // effect past a client's first OTA.
-    //
-    // "minor" for the sideloaded channel, not "major": major marks a bundle an
-    // installed shell cannot run, and taking one over the air is exactly the
-    // failure this gate exists to prevent. See tauri-plugin-oc/OTA_UPDATES.md.
-    const ota = store ? "patch" : "minor";
     const zipFile = store
         ? path.join(downloadDir, `store-${version}.zip`)
         : path.join(downloadDir, `full-${version}.zip`);
-    const injection = `<script>window.OC_CONFIG={OC_MOBILE_LAYOUT:"v2", OC_APP_STORE: "${store}", OC_OTA_UPDATES: "${ota}"}</script>`;
-    const updatedIndexHtml = indexHtml.replace("<head>", `<head>${injection}`);
-    await fs.writeFile(indexHtmlPath, updatedIndexHtml);
+    await fs.writeFile(indexHtmlPath, withOcConfig(indexHtml, store));
     await execPromise(`cd ${distBundleDir} && zip -r ../${zipFile} .`);
 }
