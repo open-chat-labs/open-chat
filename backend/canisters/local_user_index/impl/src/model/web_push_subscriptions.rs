@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{HashMap, HashSet};
 use types::{SubscriptionInfo, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -18,8 +18,7 @@ impl WebPushSubscriptions {
         match self.subscriptions.entry(user_id) {
             Occupied(e) => {
                 let subscriptions = e.into_mut();
-                if let Some(existing) = subscriptions.iter_mut().find(|s| s.endpoint == subscription.endpoint) {
-                    existing.keys = subscription.keys;
+                if subscriptions.iter().any(|s| s.endpoint == subscription.endpoint) {
                     return;
                 }
                 subscriptions.push(subscription);
@@ -66,20 +65,8 @@ impl WebPushSubscriptions {
         self.total
     }
 
-    // Keeps the latest subscription for each endpoint, since it has the latest keys, then
-    // recomputes the total. Returns the number of duplicates removed.
-    pub fn remove_duplicate_endpoints_and_recompute_total(&mut self) -> usize {
-        let mut duplicates_removed = 0;
-        for subscriptions in self.subscriptions.values_mut() {
-            let count_before = subscriptions.len();
-            let mut endpoints = HashSet::new();
-            subscriptions.reverse();
-            subscriptions.retain(|s| endpoints.insert(s.endpoint.clone()));
-            subscriptions.reverse();
-            duplicates_removed += count_before - subscriptions.len();
-        }
+    pub fn recompute_total(&mut self) {
         self.total = self.subscriptions.values().map(|s| s.len() as u64).sum();
-        duplicates_removed
     }
 }
 
@@ -114,46 +101,14 @@ mod tests {
     }
 
     #[test]
-    fn pushing_the_same_endpoint_with_new_keys_replaces_the_keys() {
+    fn recompute_total_counts_the_subscriptions() {
         let mut subscriptions = WebPushSubscriptions::default();
         subscriptions.push(user(1), subscription("a", "1"));
         subscriptions.push(user(1), subscription("b", "2"));
-        subscriptions.push(user(1), subscription("a", "3"));
-
-        assert_eq!(
-            subscriptions.get(&user(1)).unwrap(),
-            vec![subscription("a", "3"), subscription("b", "2")]
-        );
-        assert_eq!(subscriptions.total(), 2);
-    }
-
-    #[test]
-    fn removing_an_endpoint_pushed_again_with_new_keys_removes_it() {
-        let mut subscriptions = WebPushSubscriptions::default();
-        subscriptions.push(user(1), subscription("a", "1"));
-        subscriptions.push(user(1), subscription("a", "2"));
-
-        assert!(subscriptions.remove(user(1), "a"));
-        assert!(subscriptions.get(&user(1)).is_none());
-        assert_eq!(subscriptions.total(), 0);
-    }
-
-    #[test]
-    fn remove_duplicate_endpoints_keeps_the_latest_and_recomputes_the_total() {
-        let mut subscriptions = WebPushSubscriptions::default();
-        subscriptions.subscriptions.insert(
-            user(1),
-            vec![subscription("a", "1"), subscription("b", "2"), subscription("a", "3")],
-        );
-        subscriptions.subscriptions.insert(user(2), vec![subscription("c", "4")]);
+        subscriptions.push(user(2), subscription("c", "3"));
         subscriptions.total = 10;
 
-        assert_eq!(subscriptions.remove_duplicate_endpoints_and_recompute_total(), 1);
-        assert_eq!(
-            subscriptions.get(&user(1)).unwrap(),
-            vec![subscription("b", "2"), subscription("a", "3")]
-        );
-        assert_eq!(subscriptions.get(&user(2)).unwrap(), vec![subscription("c", "4")]);
+        subscriptions.recompute_total();
         assert_eq!(subscriptions.total(), 3);
     }
 }

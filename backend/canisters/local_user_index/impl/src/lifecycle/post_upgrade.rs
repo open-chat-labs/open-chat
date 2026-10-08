@@ -22,14 +22,12 @@ fn post_upgrade(args: Args) {
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
-    // One-off: the total was incremented when a subscription was pushed again, and a subscription
-    // pushed again with new keys was stored as a duplicate
+    // One-off: the total was incremented when a subscription was pushed again
     let previous_total = data.web_push_subscriptions.total();
-    let duplicates_removed = data.web_push_subscriptions.remove_duplicate_endpoints_and_recompute_total();
+    data.web_push_subscriptions.recompute_total();
     info!(
         previous_total,
         total = data.web_push_subscriptions.total(),
-        duplicates_removed,
         "Recomputed the web push subscriptions total"
     );
 
