@@ -2,8 +2,7 @@
 // lived in per-package src/types.d.ts files, each loaded only by that package's
 // own `tsc` run. With the packages collapsed into a single project there is one
 // global scope, so the declarations are consolidated here (and loaded via the
-// tsconfig `include`). `gtag` is intentionally omitted — it is declared in
-// app/src/types.d.ts.
+// tsconfig `include`).
 
 // The experimental Network Information API (navigator.connection) is not part of
 // the standard DOM lib.
@@ -24,3 +23,6 @@ interface Navigator {
 
 // borc ships no type declarations.
 declare module "borc";
+
+// Google Analytics, loaded by a script tag in index.html. Used by the app's router and the client.
+declare function gtag(command: "event", name: string, options?: Record<string, unknown>): void;
