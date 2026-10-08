@@ -2065,7 +2065,6 @@ dependencies = [
  "candid",
  "chat_events",
  "ic_principal",
- "msgpack",
  "oc_error_codes",
  "serde",
  "serde_bytes",

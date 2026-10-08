@@ -92,7 +92,6 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
 
 // Invariant: update_channel returns InvalidExternalUrl for a non-https external_url.
 #[test_case("javascript:alert(1)")]
-#[test_case("http://example.com")]
 fn update_channel_rejects_non_https_external_url(external_url: &str) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

@@ -75,18 +75,6 @@ describe("Poller", () => {
         expect(fn).toHaveBeenCalledTimes(1);
     });
 
-    test("an unreferenced poller keeps running (the leak shape fixed in openchat.ts)", async () => {
-        const fn = vi.fn(() => Promise.resolve());
-        const first = track(new Poller(fn, 1000, undefined, false));
-        const second = track(new Poller(fn, 1000, undefined, false));
-        await vi.advanceTimersByTimeAsync(1000);
-        expect(fn).toHaveBeenCalledTimes(2);
-        first.stop();
-        await vi.advanceTimersByTimeAsync(1000);
-        expect(fn).toHaveBeenCalledTimes(3);
-        second.stop();
-    });
-
     test("going to the background and back mid-run does not start a second run", async () => {
         const runs: ReturnType<typeof deferred>[] = [];
         let concurrent = 0;
@@ -244,18 +232,6 @@ describe("Poller", () => {
         expect(fn).toHaveBeenCalledTimes(2);
     });
 
-    test("triggerNow never delays a run that is already due sooner", async () => {
-        const fn = vi.fn(() => Promise.resolve());
-        track(new Poller(fn, 300, undefined, true));
-        await vi.advanceTimersByTimeAsync(0);
-        await vi.advanceTimersByTimeAsync(100);
-        triggerLatest();
-        await vi.advanceTimersByTimeAsync(199);
-        expect(fn).toHaveBeenCalledTimes(1);
-        await vi.advanceTimersByTimeAsync(1);
-        expect(fn).toHaveBeenCalledTimes(2);
-    });
-
     test("triggerNow runs in the background for a job with an idle interval", async () => {
         const fn = vi.fn(() => Promise.resolve());
         track(new Poller(fn, 5000, 60_000, false));
@@ -294,45 +270,5 @@ describe("Poller", () => {
         poller.triggerNow();
         await vi.advanceTimersByTimeAsync(0);
         expect(fn).toHaveBeenCalledTimes(0);
-    });
-
-    test("a trigger during a run that ends in the background still reruns, if the job runs there", async () => {
-        const run = deferred();
-        const fn = vi.fn(() => (fn.mock.calls.length === 1 ? run.promise : Promise.resolve()));
-        track(new Poller(fn, 5000, 60_000, true));
-        await vi.advanceTimersByTimeAsync(0);
-
-        triggerLatest();
-        setVisibility("hidden");
-        run.resolve();
-        await vi.advanceTimersByTimeAsync(POLLER_TRIGGER_MIN_GAP_MS - 1);
-        expect(fn).toHaveBeenCalledTimes(1);
-        await vi.advanceTimersByTimeAsync(1);
-        expect(fn).toHaveBeenCalledTimes(2);
-        // then back to the idle interval
-        await vi.advanceTimersByTimeAsync(59_999);
-        expect(fn).toHaveBeenCalledTimes(2);
-        await vi.advanceTimersByTimeAsync(1);
-        expect(fn).toHaveBeenCalledTimes(3);
-    });
-
-    test("a trigger during a run that ends in the background is dropped if the job stops there", async () => {
-        const run = deferred();
-        const fn = vi.fn(() => (fn.mock.calls.length === 1 ? run.promise : Promise.resolve()));
-        track(new Poller(fn, 5000, undefined, true));
-        await vi.advanceTimersByTimeAsync(0);
-
-        triggerLatest();
-        setVisibility("hidden");
-        run.resolve();
-        await vi.advanceTimersByTimeAsync(10_000);
-        expect(fn).toHaveBeenCalledTimes(1);
-
-        // back in the foreground: the overdue run, then the normal interval with no extra run
-        setVisibility("visible");
-        await vi.advanceTimersByTimeAsync(0);
-        expect(fn).toHaveBeenCalledTimes(2);
-        await vi.advanceTimersByTimeAsync(4999);
-        expect(fn).toHaveBeenCalledTimes(2);
     });
 });

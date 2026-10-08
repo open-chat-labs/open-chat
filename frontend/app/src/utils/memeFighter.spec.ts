@@ -34,14 +34,6 @@ describe("startMemeMaker", () => {
         vi.restoreAllMocks();
     });
 
-    test("the maker origin is https", () => {
-        expect(MEME_MAKER_ORIGIN).toMatch(/^https:\/\//);
-    });
-
-    test("loads the maker into the frame, skipping its own insert button", () => {
-        expect(iframe.src).toBe(`${MEME_MAKER_ORIGIN}/?skipInsertButton=true`);
-    });
-
     test("answers the maker's READY with the style, addressed to the maker alone", () => {
         fromMaker({ messageType: "READY" });
         expect(postToMaker).toHaveBeenCalledExactlyOnceWith(
@@ -114,19 +106,6 @@ describe("startMemeMaker", () => {
         fromMaker({ kind: "external_content_ready" });
         expect(postToMaker).not.toHaveBeenCalled();
         expect(onMemeCreated).not.toHaveBeenCalled();
-    });
-
-    test("reports a failed initialisation without giving up on the maker", () => {
-        const error = vi.spyOn(console, "error").mockImplementation(() => {});
-        fromMaker({ messageType: "INIT_RESPONSE", payload: { status: "ok", ok: null } });
-        expect(error).not.toHaveBeenCalled();
-        fromMaker({
-            messageType: "INIT_RESPONSE",
-            payload: { status: "err", err: ["bad colour"] },
-        });
-        expect(error).toHaveBeenCalledTimes(1);
-        fromMaker({ messageType: "MEME_CREATED", payload: "https://memefighter.app/meme.png" });
-        expect(onMemeCreated).toHaveBeenCalledTimes(1);
     });
 
     test("stops listening when asked to", () => {

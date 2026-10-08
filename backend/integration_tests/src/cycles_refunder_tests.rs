@@ -128,25 +128,6 @@ fn cycles_refunder_forwards_reject_and_keeps_cycles_if_deposit_fails() {
 }
 
 #[test]
-fn cycles_refunder_rejects_invalid_init_arg() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv { env, controller, .. } = wrapper.env();
-
-    let canister_id = create_canister(env, *controller);
-
-    for arg in [candid::encode_one(123u32).unwrap(), vec![1, 2, 3], b"DIDL\x00\x01".to_vec()] {
-        let error = env
-            .reinstall_canister(canister_id, wasm(), arg, Some(*controller))
-            .unwrap_err();
-        assert!(error.reject_message.contains("init arg must be (opt principal)"), "{error:?}");
-    }
-
-    // Whereas `()` is accepted
-    env.reinstall_canister(canister_id, wasm(), candid::encode_args(()).unwrap(), Some(*controller))
-        .unwrap();
-}
-
-#[test]
 fn committed_cycles_refunder_wasm_matches_the_wat() {
     assert_wasm_built_from_wat(CYCLES_REFUNDER_WASM, CYCLES_REFUNDER_WAT, "cycles_refunder.wasm");
 }

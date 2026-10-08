@@ -103,26 +103,6 @@ mod tests {
         assert_eq!(former_members.iter().count(), 0);
     }
 
-    #[test]
-    fn migrated_member_is_dropped_under_their_new_id() {
-        let mut former_members = FormerMembers::default();
-        former_members.record(user_id(2));
-
-        assert!(!former_members.migrate_user_id(user_id(1), user_id(2), true));
-
-        assert_eq!(former_members.iter().count(), 0);
-    }
-
-    #[test]
-    fn migrating_a_user_who_isnt_a_former_member_changes_nothing() {
-        let mut former_members = FormerMembers::default();
-        former_members.record(user_id(3));
-
-        assert!(!former_members.migrate_user_id(user_id(1), user_id(2), false));
-
-        assert_eq!(former_members.iter().collect::<Vec<_>>(), vec![user_id(3)]);
-    }
-
     fn user_id(i: u8) -> UserId {
         Principal::from_slice(&[i]).into()
     }

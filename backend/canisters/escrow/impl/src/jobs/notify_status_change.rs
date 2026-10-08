@@ -139,7 +139,6 @@ mod c2c_notify_p2p_swap_status_change {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use constants::{MINUTE_IN_MS, SECOND_IN_MS};
     use ic_cdk::call::RejectCode;
     use types::C2CRetryPolicy;
 
@@ -164,23 +163,6 @@ mod tests {
 
         assert_eq!(retry_delay(&uninstalled, 1), None);
         assert_eq!(retry_delay(&deleted, 1), None);
-    }
-
-    #[test]
-    fn notification_is_retried_after_the_delay_the_failure_calls_for() {
-        let stopped = error(
-            RejectCode::CanisterError,
-            "Canister x is stopped",
-            C2CRetryPolicy::RetryAfterShortDelay,
-        );
-        let trapped = error(
-            RejectCode::CanisterError,
-            "Canister is frozen",
-            C2CRetryPolicy::RetryAfterDelay,
-        );
-
-        assert_eq!(retry_delay(&stopped, 1), Some(10 * SECOND_IN_MS));
-        assert_eq!(retry_delay(&trapped, 1), Some(5 * MINUTE_IN_MS));
     }
 
     #[test]

@@ -42,6 +42,9 @@ jobs:
               - "scripts/**"
               - ".github/workflows/**"
 
+  # On Linux x86_64, the platform the release wasms are built on. From Rust 1.99 the benchmark wasm,
+  # and so the instruction counts, differ by the platform it's built on, so a results file persisted
+  # anywhere else won't match; scripts/fetch-canbench-results.sh copies this job's into a branch.
   benchmarks:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
@@ -55,6 +58,13 @@ jobs:
       - name: Benchmark
         run: |
           bash ./scripts/ci-run-benchmarks.sh . ${{ github.job }}
+
+      # The results file with this run's numbers, for scripts/fetch-canbench-results.sh. The name must
+      # not match `canbench_result_*`, which the comment workflow posts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: persisted_canbench_results
+          path: /tmp/persisted_canbench_results/canbench_results.yml
 
       - uses: actions/upload-artifact@v4
         with:

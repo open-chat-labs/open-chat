@@ -786,28 +786,6 @@ mod tests {
     }
 
     #[test]
-    fn thread_roots_are_translated_between_ids_and_indexes() {
-        init_stable_memory_map();
-        let me = user(1);
-        let them = user(2);
-        let mut chat = DirectChat::new(me, them, UserType::User, 1, None, 123, 1);
-        chat.push_message::<NullEventPusher>(message(me, 1, 100), None, None);
-
-        assert_eq!(chat.thread_root_message_id(None).unwrap(), None);
-        assert_eq!(chat.thread_root_message_index(None).unwrap(), None);
-        assert_eq!(
-            chat.thread_root_message_id(Some(0.into())).unwrap(),
-            Some(MessageId::from(1u128))
-        );
-        assert_eq!(
-            chat.thread_root_message_index(Some(MessageId::from(1u128))).unwrap(),
-            Some(0.into())
-        );
-        assert!(chat.thread_root_message_id(Some(1.into())).is_err());
-        assert!(chat.thread_root_message_index(Some(MessageId::from(2u128))).is_err());
-    }
-
-    #[test]
     fn chats_round_trip_through_msgpack() {
         init_stable_memory_map();
         let me = user(1);

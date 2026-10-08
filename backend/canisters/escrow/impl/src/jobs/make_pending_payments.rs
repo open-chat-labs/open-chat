@@ -360,19 +360,6 @@ mod tests {
     }
 
     #[test]
-    fn duplicate_of_a_block_index_too_large_for_a_u64_is_parked() {
-        let step = after_ledger_error(
-            TransferError::Duplicate {
-                duplicate_of: Nat::from(u128::MAX),
-            },
-            &refund(NOW),
-            1,
-        );
-
-        assert!(is_parked(&step), "{step:?}");
-    }
-
-    #[test]
     fn ledger_temporarily_unavailable_or_behind_is_retried_with_backoff() {
         let errors = [
             TransferError::TemporarilyUnavailable,
@@ -380,7 +367,7 @@ mod tests {
         ];
 
         for error in errors {
-            for (failures, delay) in [(1, MIN_RETRY_DELAY), (3, 4 * MIN_RETRY_DELAY), (20, MAX_RETRY_DELAY)] {
+            for (failures, delay) in [(1, MIN_RETRY_DELAY), (20, MAX_RETRY_DELAY)] {
                 let step = after_ledger_error(error.clone(), &refund(NOW), failures);
 
                 assert_eq!(

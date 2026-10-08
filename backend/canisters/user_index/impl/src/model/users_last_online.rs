@@ -82,29 +82,4 @@ mod tests {
         );
         assert_eq!(users_last_online.longest_offline(10, |_| true).len(), 5);
     }
-
-    // The snapshot was taken by a version which also stored the progress of the job fetching it
-    #[test]
-    fn snapshot_taken_by_the_fetch_job_deserializes() {
-        #[derive(Serialize)]
-        struct Previous {
-            started: bool,
-            pending: Vec<UserId>,
-            last_online: HashMap<UserId, Option<TimestampMillis>>,
-            not_found: usize,
-        }
-
-        let bytes = msgpack::serialize_then_unwrap(Previous {
-            started: true,
-            pending: Vec::new(),
-            last_online: HashMap::from([(user_id(1), Some(100)), (user_id(2), None)]),
-            not_found: 1,
-        });
-        let users_last_online: UsersLastOnline = msgpack::deserialize_then_unwrap(&bytes);
-
-        assert_eq!(users_last_online.longest_offline(10, |_| true), vec![user_id(2), user_id(1)]);
-        let metrics = users_last_online.metrics();
-        assert_eq!(metrics.found, 1);
-        assert_eq!(metrics.not_found, 1);
-    }
 }

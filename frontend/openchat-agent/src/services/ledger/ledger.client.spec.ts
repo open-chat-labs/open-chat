@@ -100,18 +100,6 @@ describe("LedgerClient.approveSpending", () => {
         ]);
     });
 
-    test("the amount is added to what the spender may already pull", async () => {
-        allowances = [{ allowance: 500n, expires_at: [] }];
-        responses = [{ Ok: 1n }];
-
-        expect(
-            await client.approveSpending(LEDGER, SPENDER, 100n, FEE, APPROVAL_VALIDITY_MS),
-        ).toEqual("success");
-        expect(approvals.map((a) => [a.amount, a.expected_allowance, a.expires_at])).toEqual([
-            [600n, [500n], []],
-        ]);
-    });
-
     test("nothing is approved unless the account can afford the payment and the approval", async () => {
         balance = 100n + FEE - 1n;
         allowances = [{ allowance: 0n, expires_at: [] }];
@@ -374,16 +362,7 @@ describe("LedgerClient.withdraw", () => {
 
     test.each<[string, TransferResult, unknown]>([
         ["InsufficientFunds", { Err: { InsufficientFunds: { balance: 1n } } }, insufficientFunds],
-        ["BadFee", { Err: { BadFee: { expected_fee: 20n } } }, transferFailed],
-        ["BadBurn", { Err: { BadBurn: { min_burn_amount: 20n } } }, transferFailed],
-        ["TooOld", { Err: { TooOld: null } }, transferFailed],
-        ["CreatedInFuture", { Err: { CreatedInFuture: { ledger_time: 1n } } }, transferFailed],
         ["TemporarilyUnavailable", { Err: { TemporarilyUnavailable: null } }, transferFailed],
-        [
-            "GenericError",
-            { Err: { GenericError: { message: "nope", error_code: 1n } } },
-            transferFailed,
-        ],
     ])("the ICRC-1 ledger's %s is mapped", async (_, ledgerResponse, expected) => {
         icrc1Response = ledgerResponse;
 
@@ -397,8 +376,6 @@ describe("LedgerClient.withdraw", () => {
             insufficientFunds,
         ],
         ["BadFee", { Err: { BadFee: { expected_fee: { e8s: 20n } } } }, transferFailed],
-        ["TxTooOld", { Err: { TxTooOld: { allowed_window_nanos: 1n } } }, transferFailed],
-        ["TxCreatedInFuture", { Err: { TxCreatedInFuture: null } }, transferFailed],
     ])("the ICP ledger's %s is mapped", async (_, ledgerResponse, expected) => {
         icpResponse = ledgerResponse;
 

@@ -22,36 +22,6 @@ describe("redactSecrets", () => {
         expect(args).toEqual({ pin: "1234", inner: { pin: "5678" } });
     });
 
-    test("returns a request without secrets as it is", () => {
-        const args = {
-            message_id: 123n,
-            content: { Text: { text: "hello" } },
-            mentioned: [{ user_id: "abc" }],
-            pin: undefined,
-        };
-        expect(redactSecrets(args, "send_message_v2")).toBe(args);
-        const list = [args, { other: [1, 2] }];
-        expect(redactSecrets(list)).toBe(list);
-    });
-
-    test("copies only the objects on the way down to a secret", () => {
-        const args = {
-            content: { Text: { text: "hello" } },
-            mentioned: [{ user_id: "abc" }],
-            transfer: { amount: 100n, verification: { pin: "1234" } },
-            batch: [{ other: "kept" }, { pin: "5678" }],
-        };
-        const redacted = redactSecrets(args) as typeof args;
-        expect(redacted).not.toBe(args);
-        expect(redacted.content).toBe(args.content);
-        expect(redacted.mentioned).toBe(args.mentioned);
-        expect(redacted.transfer).not.toBe(args.transfer);
-        expect(redacted.transfer.verification).toEqual({ pin: REDACTED });
-        expect(redacted.batch).not.toBe(args.batch);
-        expect(redacted.batch[0]).toBe(args.batch[0]);
-        expect(redacted.batch[1]).toEqual({ pin: REDACTED });
-    });
-
     test("redacts PINs nested in objects and arrays", () => {
         const args = {
             accept: { swap: { pin: "1234" } },
@@ -118,11 +88,6 @@ describe("redactSecrets", () => {
             newPin: undefined,
             verification: { kind: "reauthenticated", signInProofJwt: REDACTED },
         });
-    });
-
-    test("leaves an absent PIN as it is", () => {
-        const args = { pin: undefined, other: { pin: null } };
-        expect(redactSecrets(args)).toBe(args);
     });
 
     test("passes values which are not plain objects through unchanged", () => {

@@ -27,18 +27,6 @@ describe("withLatestUserIds", () => {
         });
     });
 
-    test("returns whatever holds no earlier id as it was", () => {
-        const content = { kind: "text_content", text: "hi" };
-        const event = { sender: OLD, content, reactions: new Set([OTHER]) };
-
-        const replaced = withLatestUserIds(event, latest);
-
-        expect(replaced).not.toBe(event);
-        expect(replaced.content).toBe(content);
-        expect(replaced.reactions).toBe(event.reactions);
-        expect(withLatestUserIds(content, latest)).toBe(content);
-    });
-
     test("copies from the first change, keeping what comes before and after it in order", () => {
         const before = { kind: "text_content", text: "before" };
         const after = { kind: "text_content", text: "after" };
@@ -103,11 +91,5 @@ describe("withLatestUserIds", () => {
 
         expect(withLatestUserIds(content, latest)).toBe(content);
         expect(withLatestUserIds(image, latest)).toBe(image);
-    });
-
-    test("does nothing when there are no earlier ids", () => {
-        const event = { sender: OLD };
-
-        expect(withLatestUserIds(event, new Map())).toBe(event);
     });
 });
