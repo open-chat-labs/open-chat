@@ -35,7 +35,7 @@
 
     let { location, bot, onClose, level, installedBots }: Props = $props();
     let requestedPermissions = $derived(definitionToPermissions(bot.definition));
-    let grantedPermissions = $state(filterByLocation(definitionToPermissions(bot.definition)));
+    const grantedPermissions = $state(filterByLocation(definitionToPermissions(bot.definition)));
 
     let busy = $state(false);
     let step = $state<Step>(firstStep());

@@ -17,7 +17,7 @@
 
     let { monthTitleTemplate, dayTemplate, dateSelected }: Props = $props();
 
-    let today = $state(new Date());
+    const today = $state(new Date());
     let showDate = $state(new Date());
     let dates = $state<Date[][]>([]);
     let translatedLocale = $derived(translationCodes[$locale || "en"] || "en");

@@ -35,7 +35,7 @@
         dmFilter,
     }: Props = $props();
 
-    let error: string | undefined = undefined;
+    const error: string | undefined = undefined;
 </script>
 
 {#if error !== undefined}

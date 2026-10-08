@@ -23,7 +23,7 @@
 
     const MAX_CHANNELS = 15;
 
-    let ucs = updateCommunityState;
+    const ucs = updateCommunityState;
 
     let editingChannelName = $state<string>();
     let originalChannelName = $state<string>();

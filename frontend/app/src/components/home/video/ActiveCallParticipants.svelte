@@ -34,7 +34,7 @@
 
     let { chatId, messageId, isOwner, onClose }: Props = $props();
 
-    let demoted = $state(new Set<string>());
+    const demoted = $state(new Set<string>());
     let loading = $state(false);
 
     let selectedTab: "presenters" | "viewers" = $state("presenters");

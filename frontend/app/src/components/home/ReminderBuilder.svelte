@@ -28,7 +28,7 @@
     let busy = $state(false);
     let note: string = $state("");
     let selectedIntervalIndex = $state(0);
-    let intervals = [
+    const intervals = [
         {
             label: i18nKey("reminders.twentyMinutes"),
             index: 0,

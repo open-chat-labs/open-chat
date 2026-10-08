@@ -9,7 +9,7 @@
     }
 
     let { href, iconColor = "var(--landing-txt)", children }: Props = $props();
-    let viewBox = "0 -3 26 26";
+    const viewBox = "0 -3 26 26";
 </script>
 
 <a {href} target="_blank" rel="noreferrer">

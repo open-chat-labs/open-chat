@@ -10,7 +10,7 @@
 
     let { logo, mirror = true, size = "large", spin = true }: Props = $props();
 
-    let middle = new Array(9);
+    const middle = new Array(9);
 
     function coinSize(size: Size): string {
         switch (size) {

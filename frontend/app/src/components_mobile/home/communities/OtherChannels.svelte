@@ -30,7 +30,7 @@
     let selectedCommunityId = $derived(community.id);
     let searching = $state(false);
     let pageIndex = 0;
-    let pageSize = 100;
+    const pageSize = 100;
     let searchResults: ChannelMatch[] = $state([]);
     let total = $state(0);
     let matchedCommunityId: CommunityIdentifier | undefined = undefined;

@@ -190,7 +190,7 @@
     let classSum = new Map<string, number>();
     let classCount = new Map<string, number>();
     let classSnapshot = new Map<string, number>();
-    let estimateMap: number[] = [];
+    const estimateMap: number[] = [];
     // a class with too few samples estimates from the global average
     const MIN_CLASS_SAMPLES = 4;
 
@@ -324,7 +324,7 @@
     // actual DOM height differs, we compensate viewport.scrollTop (not the spacer)
     // in measureRow to prevent visible shifts. This map tracks which items entered
     // at which estimate, so we know the delta when measuring.
-    let pendingBottomCorrections = new Map<number, number>();
+    const pendingBottomCorrections = new Map<number, number>();
 
     // Use the frozen estimate space for ALL unmeasured item estimates.
     // This keeps computeWindow and spacer calculations consistent — prevents

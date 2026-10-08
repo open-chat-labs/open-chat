@@ -178,8 +178,8 @@
             selectedProposalType === "add_token"
         ) {
             const addToken = selectedProposalType === "add_token";
-            let spender = addToken ? REGISTRY_CANISTER : USER_INDEX_CANISTER;
-            let amount = addToken ? TOKEN_LISTING_FEE : achievementChatCost;
+            const spender = addToken ? REGISTRY_CANISTER : USER_INDEX_CANISTER;
+            const amount = addToken ? TOKEN_LISTING_FEE : achievementChatCost;
 
             if (!(await approvePayment(spender, amount, PROPOSAL_EXECUTION_WINDOW, pin))) {
                 busy = false;

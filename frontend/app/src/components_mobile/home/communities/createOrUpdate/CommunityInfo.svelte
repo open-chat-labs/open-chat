@@ -48,7 +48,7 @@
     const gradient =
         "linear-gradient(90deg, var(--validation-warning) 0%, var(--primary) 30%, var(--primary) 70%, var(--tertiary) 100%)";
 
-    let ucs = updateCommunityState;
+    const ucs = updateCommunityState;
 
     let selectedLanguage = $derived(
         supportedLanguages.find((l) => l.code === ucs.candidate.primaryLanguage),

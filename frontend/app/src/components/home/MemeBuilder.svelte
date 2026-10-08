@@ -27,7 +27,7 @@
     let memeUrl = $state(undefined as string | undefined);
     let iframe: HTMLIFrameElement;
     let img: HTMLImageElement | undefined = $state();
-    let placeholder = "/assets/memefighter.svg";
+    const placeholder = "/assets/memefighter.svg";
 
     let stopListening: (() => void) | undefined;
 

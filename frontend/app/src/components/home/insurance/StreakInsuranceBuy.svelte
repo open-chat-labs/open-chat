@@ -36,8 +36,8 @@
         balance: $cryptoBalanceStore.get(ledger) ?? 0n,
     });
     let additionalDays = $state(0);
-    let confirming = $state(false);
-    let confirmed = $state(false);
+    const confirming = $state(false);
+    const confirmed = $state(false);
     let refreshingBalance = $state(false);
     let priceE8s = $derived(client.streakInsurancePrice(currentDaysInsured, additionalDays));
     let price = $derived(priceE8s / 100_000_000n);

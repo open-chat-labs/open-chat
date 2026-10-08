@@ -24,7 +24,7 @@
     let { collection }: Props = $props();
 
     let title = $derived(collection.kind === "community" ? "Bots" : "Bots & Webhooks");
-    let membersState = new MemberManagement(getContext<OpenChat>("client"), collection);
+    const membersState = new MemberManagement(getContext<OpenChat>("client"), collection);
     let canManageBots = $derived(membersState.canManageBots());
     let canRegisterWebhook = $derived(membersState.canRegisterWebhook());
     let botCount = $derived(membersState.bots.size + membersState.webhooks.size);

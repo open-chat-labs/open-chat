@@ -54,7 +54,7 @@
         verified,
     }: Props = $props();
 
-    let gates = flattenGateConfig(gateConfig);
+    const gates = flattenGateConfig(gateConfig);
 
     let flagsArray = $derived(serialiseFlags(flags));
     function serialiseFlags(flags: number) {

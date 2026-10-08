@@ -64,8 +64,8 @@
         }
     }
 
-    let titleKey = account !== undefined ? "Edit recipient" : "Add a recipient";
-    let descriptionKey =
+    const titleKey = account !== undefined ? "Edit recipient" : "Add a recipient";
+    const descriptionKey =
         account !== undefined
             ? "You are currently editing an existing recipient. Any changes you make cannot be reverted after you save them."
             : "Add a new recipient by entering their crypto address, name, and token tag. We'll automatically try to detect the correct network for the address. You can save and edit it later.";

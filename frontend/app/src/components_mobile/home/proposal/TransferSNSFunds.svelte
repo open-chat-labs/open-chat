@@ -20,7 +20,7 @@
     let { nervousSystem, valid = $bindable() }: Props = $props();
 
     let treasury: Treasury = $state("SNS");
-    let busy = $state(false);
+    const busy = $state(false);
     let recipientOwner = $state("");
     let recipientSubaccount = $state("");
     let amountText = $state("");

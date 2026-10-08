@@ -81,14 +81,14 @@
         | "signing_in_with_email";
 
     let error: string | undefined = $state();
-    let emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
+    const emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
     let step: "explain" | "linking" = $state("explain");
     let substep = $state<LinkStage>({ kind: "initiator" });
     let emailInvalid = $state(false);
     let email = $state("");
     let providerStep: ProviderStep = $state("choose_provider");
     let linking = $state(false);
-    let loggingInInitiator = false;
+    const loggingInInitiator = false;
     let verificationCode: string | undefined = $state(undefined);
     let accounts: LinkedAuthenticationPrincipal[] = $state([]);
 

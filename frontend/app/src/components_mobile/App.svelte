@@ -125,7 +125,7 @@
         return client;
     }
 
-    let client: OpenChat = createOpenChatClient();
+    const client: OpenChat = createOpenChatClient();
     setContext<OpenChat>("client", client);
 
     // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being

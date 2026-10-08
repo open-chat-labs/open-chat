@@ -9,8 +9,8 @@
 
     let { value = $bindable(), min, max, fat = false, onChange }: Props = $props();
 
-    let trackHeight = fat ? 9 : 6;
-    let thumbSize = fat ? 26 : 16;
+    const trackHeight = fat ? 9 : 6;
+    const thumbSize = fat ? 26 : 16;
 </script>
 
 <input

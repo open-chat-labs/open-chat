@@ -27,7 +27,7 @@
 
     let { permissions, isPublic, isCommunityPublic, isChannel, embeddedContent }: Props = $props();
 
-    let items = embeddedContent
+    const items = embeddedContent
         ? [i18nKey("permissions.general")]
         : [
               i18nKey("permissions.general"),

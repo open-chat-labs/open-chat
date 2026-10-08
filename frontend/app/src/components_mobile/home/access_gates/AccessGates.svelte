@@ -31,7 +31,7 @@
 
     let diamond = $derived($currentUserStore.diamondStatus.kind !== "inactive");
     let hasAccessGates = $derived(stripSuspendedGate(data.gateConfig.gate).kind !== "no_gate");
-    let gateBindings: GateBinding[] = getGateBindings(data.candidate.level).filter(
+    const gateBindings: GateBinding[] = getGateBindings(data.candidate.level).filter(
         (b) => b.enabled && b.gate.kind !== "no_gate" && b.gate.kind !== "credential_gate",
     );
     // svelte-ignore state_referenced_locally

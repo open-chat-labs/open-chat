@@ -33,7 +33,7 @@
 
     let fileinput: HTMLInputElement;
     let selectedImage: string | undefined = $state();
-    let originalImage = new Image();
+    const originalImage = new Image();
     let showModal = $state(false);
     let cropData: OnCropCompleteEvent | undefined = undefined;
 
@@ -59,7 +59,7 @@
             const target = e.currentTarget as HTMLInputElement;
             if (target.files) {
                 const image = target.files[0];
-                let reader = new FileReader();
+                const reader = new FileReader();
                 reader.readAsDataURL(image);
                 reader.onload = (e) => {
                     selectedImage = e?.target?.result as string;

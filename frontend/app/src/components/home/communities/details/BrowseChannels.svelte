@@ -25,7 +25,7 @@
     let selectedCommunityId = $derived($selectedCommunitySummaryStore?.id.communityId);
     let searching = $state(false);
     let pageIndex = 0;
-    let pageSize = 100;
+    const pageSize = 100;
     let searchResults: ChannelMatch[] = $state([]);
     let total = $state(0);
     let autoOpen = $state(false);

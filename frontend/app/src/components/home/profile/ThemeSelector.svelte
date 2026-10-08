@@ -19,7 +19,7 @@
         dark: Theme[];
     };
 
-    let partitionedThemes = $state<PartitionedThemes>(partition());
+    const partitionedThemes = $state<PartitionedThemes>(partition());
 
     function partition() {
         const partitionedThemes = Object.values(themes).reduce(

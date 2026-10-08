@@ -26,10 +26,10 @@
 
     let corrections: TranslationCorrection[] = $state([]);
     let verifying: TranslationCorrection | undefined = $state(undefined);
-    let verifications: Record<number, string> = {};
+    const verifications: Record<number, string> = {};
     let chatBalance = $state(0n);
     let refreshing = $state(false);
-    let processing = $state(new Set<bigint>());
+    const processing = $state(new Set<bigint>());
 
     let formattedBalance = $derived(client.formatTokens(chatBalance, 8));
 

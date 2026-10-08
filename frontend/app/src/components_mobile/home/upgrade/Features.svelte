@@ -23,7 +23,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import Feature from "./Feature.svelte";
 
-    let iconSize = "1rem";
+    const iconSize = "1rem";
 </script>
 
 <Container padding={["xl", "md", "zero", "md"]}>

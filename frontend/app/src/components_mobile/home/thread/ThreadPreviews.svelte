@@ -22,7 +22,7 @@
     const client = getContext<OpenChat>("client");
 
     let loading = $state(true);
-    let initialised = $state(false);
+    const initialised = $state(false);
     let spinner = $derived(loading && !initialised);
 
     let threads = $derived.by(

@@ -39,7 +39,7 @@
     const client = getContext<OpenChat>("client");
 
     let actualWidth = $state(0);
-    let editing = original.id.communityId !== "";
+    const editing = original.id.communityId !== "";
     let step = $state("details");
     let busy = $state(false);
     let confirming = $state(false);
@@ -62,7 +62,7 @@
         channelsValid: boolean,
         rulesValid: boolean,
     ) {
-        let steps = [
+        const steps = [
             { key: "details", labelKey: "communities.details", valid: detailsValid },
             { key: "visibility", labelKey: "communities.visibility", valid: visibilityValid },
             { key: "rules", labelKey: "communities.rules", valid: rulesValid },

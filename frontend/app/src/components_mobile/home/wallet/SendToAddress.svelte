@@ -65,8 +65,8 @@
     let error: ResourceKey | undefined = $state();
     let ckbtcMinterWithdrawalInfo = $state<CkbtcMinterWithdrawalInfo>();
     let valid = $state(false);
-    let validAccountName = $state(false);
-    let capturingAccount = $state(false);
+    const validAccountName = $state(false);
+    const capturingAccount = $state(false);
     let validAmount = $state(false);
     let targetAccount: string = $state("");
     let showAddressBook = $state(false);

@@ -17,7 +17,7 @@
 
     let { tokenState }: Props = $props();
 
-    let error: string | undefined = $state(undefined);
+    const error: string | undefined = $state(undefined);
 
     let title = $derived(i18nKey(`cryptoAccount.receiveToken`, { symbol: tokenState.symbol }));
 

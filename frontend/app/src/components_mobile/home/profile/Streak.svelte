@@ -59,7 +59,7 @@
     let show = $derived(streak !== "none");
     let num = $derived(streakNumber(streak));
 
-    let [svgw, svgh] = size === "large" ? [22, 23] : [17, 18];
+    const [svgw, svgh] = size === "large" ? [22, 23] : [17, 18];
 </script>
 
 {#snippet renderStreak()}

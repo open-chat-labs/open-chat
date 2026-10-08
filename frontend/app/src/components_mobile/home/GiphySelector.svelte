@@ -20,7 +20,7 @@
         string,
         KeyedKlipyObject & { top: number; left: number; calculatedHeight: number }
     > = $state({});
-    let pageSize = 25;
+    const pageSize = 25;
     let containerElement: HTMLDivElement;
     const gutter = 5;
     let imgWidth = $state(0);
@@ -142,9 +142,9 @@
     }
 
     $effect(() => {
-        let containerWidth = containerElement?.clientWidth ?? 0;
-        let numCols = 3;
-        let availWidth = containerWidth - (numCols - 1) * gutter;
+        const containerWidth = containerElement?.clientWidth ?? 0;
+        const numCols = 3;
+        const availWidth = containerWidth - (numCols - 1) * gutter;
         imgWidth = availWidth / numCols;
         gifCache = gifs.reduce((cache, gif, i) => reduceGifs(numCols, cache, gif, i), {});
     });

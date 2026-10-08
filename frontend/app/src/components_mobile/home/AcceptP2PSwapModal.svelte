@@ -26,8 +26,8 @@
     let { token0, token1, amount0, amount1, onClose, onAccept }: Props = $props();
     let ledger1 = $derived(token1.ledger);
 
-    let refreshing = false;
-    let error: string | undefined = undefined;
+    const refreshing = false;
+    const error: string | undefined = undefined;
     let balanceWithRefresh: BalanceWithRefresh;
     // The external wallet the swap will be funded from, or undefined for the user's own OpenChat
     // account, which is where it has always been funded from

@@ -14,7 +14,7 @@
 
     let { max, min, channel = $bindable(), onDeleteChannel }: Props = $props();
 
-    let editingChannel = $state({ ...channel });
+    const editingChannel = $state({ ...channel });
 
     function stopEditing() {
         channel.name = editingChannel.name;

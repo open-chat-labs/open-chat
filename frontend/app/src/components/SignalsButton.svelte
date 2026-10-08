@@ -21,7 +21,7 @@
         onClick,
     }: ButtonProps = $props();
 
-    let colors = ["rgb(248, 255, 131)", "rgb(56, 183, 240)", "rgb(227, 26, 62)"];
+    const colors = ["rgb(248, 255, 131)", "rgb(56, 183, 240)", "rgb(227, 26, 62)"];
     let color = $state("");
 
     onMount(() => {

@@ -18,7 +18,7 @@
     let index = $state(0);
 
     let report = $derived(content.reports[index]);
-    let reasons = [
+    const reasons = [
         $_("report.threat"),
         $_("report.child"),
         $_("report.nonConsensual"),

@@ -31,7 +31,7 @@
         }
     }
     let statusName = $derived(getStatusName(status));
-    let iconSize = size == "large" ? "1rem" : "0.625rem";
+    const iconSize = size == "large" ? "1rem" : "0.625rem";
 </script>
 
 {#if status !== "inactive" || show}

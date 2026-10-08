@@ -33,7 +33,7 @@
 
     let { ledger = $bindable(), chat, defaultReceiver, messageContext, onClose }: Props = $props();
 
-    let error: string | undefined = $state(undefined);
+    const error: string | undefined = $state(undefined);
     let receiver: UserSummary | undefined = $state(undefined);
     let validAmount: boolean = $state(false);
     // The external wallet the transfer will come from, or undefined for the user's own OpenChat

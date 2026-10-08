@@ -7,11 +7,11 @@
     let ry = $state(176);
     let enable = true;
 
-    let lpos = {
+    const lpos = {
         x: lx,
         y: ly,
     };
-    let rpos = { x: rx, y: ry };
+    const rpos = { x: rx, y: ry };
 
     type Point = { x: number; y: number };
 

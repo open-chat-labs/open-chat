@@ -28,7 +28,7 @@
 
     let { location = $bindable() }: Props = $props();
     let searchTerm: string = $state("");
-    let placeholder = i18nKey("Search for a community or group");
+    const placeholder = i18nKey("Search for a community or group");
     let selected = $state<Match>();
     let searchTermLower = $derived(searchTerm.toLocaleLowerCase());
 

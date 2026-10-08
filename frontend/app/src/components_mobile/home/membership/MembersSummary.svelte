@@ -25,7 +25,7 @@
 
     let { collection }: Props = $props();
 
-    let membersState = new MemberManagement(getContext<OpenChat>("client"), collection);
+    const membersState = new MemberManagement(getContext<OpenChat>("client"), collection);
     // The collection is as it was when the page was opened, so the count is read from its summary
     // as it is now
     let memberCount = $derived.by(() => {

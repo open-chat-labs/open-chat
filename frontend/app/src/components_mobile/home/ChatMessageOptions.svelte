@@ -242,7 +242,7 @@
         // Fallback... extract from URL if available
         try {
             const urlObj = new URL(url);
-            let filename = urlObj.pathname.split("/").pop()?.split("?")[0] || "";
+            const filename = urlObj.pathname.split("/").pop()?.split("?")[0] || "";
             if (filename) return filename;
         } catch {
             // not a valid URL: use the default name below

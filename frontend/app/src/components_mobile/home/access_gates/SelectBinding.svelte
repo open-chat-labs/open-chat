@@ -15,7 +15,7 @@
 
     let { bindings, onSelect, placeholder, title, selectedBinding = $bindable() }: Props = $props();
 
-    let searching = $state(false);
+    const searching = $state(false);
     let searchTerm = $state<string>();
     let filteredBindings = $derived(
         bindings

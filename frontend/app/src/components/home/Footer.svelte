@@ -125,7 +125,7 @@
             client
                 .messageContentFromFile(file, context)
                 .then((content) => {
-                    let permission = client.contentTypeToPermission(content.kind);
+                    const permission = client.contentTypeToPermission(content.kind);
                     if (client.canSendMessage(context.chatId, mode, permission)) {
                         onFileSelected(content, context);
                     } else {

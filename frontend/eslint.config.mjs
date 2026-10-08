@@ -198,8 +198,10 @@ export default defineConfig([
             "no-var": "error",
             "prefer-rest-params": "error",
             "prefer-spread": "error",
-            // Not prefer-const: it flags `let { ... } = $props()` and `let x = $derived(...)`, which Svelte writes
-            // with `let` (5,990 hits). svelte/prefer-const from eslint-plugin-svelte understands runes.
+            // The core prefer-const flags `let { ... } = $props()` and `let x = $derived(...)`, which Svelte writes
+            // with `let`. eslint-plugin-svelte's version understands runes.
+            // `destructuring: "all"`: a destructuring that mixes reassigned and fixed names stays `let`.
+            "svelte/prefer-const": ["error", { destructuring: "all" }],
         },
     },
     {

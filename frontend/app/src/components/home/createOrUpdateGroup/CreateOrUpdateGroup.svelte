@@ -61,7 +61,7 @@
         hideInviteUsers: boolean,
         embeddedContent: boolean,
     ) {
-        let steps = [
+        const steps = [
             { key: "details", labelKey: "group.details", valid: detailsValid },
             { key: "visibility", labelKey: "access.visibility", valid: visibilityValid },
         ];

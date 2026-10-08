@@ -21,7 +21,7 @@
     }
 
     let { subtext, onSelect, placeholder, selected, disabled = false }: Props = $props();
-    let searching = $state(false);
+    const searching = $state(false);
     let searchTerm = $state<string>();
 
     let dms = $derived(

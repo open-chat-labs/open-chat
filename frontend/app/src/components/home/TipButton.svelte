@@ -11,7 +11,7 @@
 
     let { disabled = false, label, onClick }: Props = $props();
 
-    let buttonScale = spring(1);
+    const buttonScale = spring(1);
 
     function mouseDown() {
         buttonScale.set(1.1);

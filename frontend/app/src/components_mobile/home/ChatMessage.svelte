@@ -159,9 +159,9 @@
     let msgElement: HTMLElement | undefined;
     let msgBubbleElement: HTMLElement | undefined;
 
-    let multiUserChat = chatType === "group_chat" || chatType === "channel";
+    const multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = $state(false);
-    let debug = false;
+    const debug = false;
     let showRemindMe = $state(false);
     let showReport = $state(false);
     let tipping: string | undefined = $state(undefined);

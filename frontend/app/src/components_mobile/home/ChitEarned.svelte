@@ -17,9 +17,9 @@
     const client = getContext<OpenChat>("client");
     let confetti = $state(false);
     let dimensions = getDimension();
-    let ypos = new Spring(dimensions.height + 100, { damping: 0.4, stiffness: 0.2 });
-    let opacity = new Tween(OFF_SCREEN_OPACITY, { duration: TWEEN_DURATION });
-    let msg = new Tween({ scale: 0, opacity: 1 }, { duration: TWEEN_DURATION });
+    const ypos = new Spring(dimensions.height + 100, { damping: 0.4, stiffness: 0.2 });
+    const opacity = new Tween(OFF_SCREEN_OPACITY, { duration: TWEEN_DURATION });
+    const msg = new Tween({ scale: 0, opacity: 1 }, { duration: TWEEN_DURATION });
     let left = $state(dimensions.width / 2);
     let amount = $state(0);
     let labels: string[] = $state([]);

@@ -22,15 +22,15 @@
     let bodyElement: HTMLDivElement;
     let showGame = $state(false);
     let mode: "all-time" | "last-month" | "this-month" = $state("this-month");
-    let blankLeader = {
+    const blankLeader = {
         username: "________",
         userId: "",
         balance: 0,
     };
     let leaders: ChitUserBalance[] = $state(dummyData());
-    let date = new Date();
-    let thisMonth = date.getUTCMonth() + 1;
-    let lastMonth = thisMonth == 1 ? 12 : thisMonth - 1;
+    const date = new Date();
+    const thisMonth = date.getUTCMonth() + 1;
+    const lastMonth = thisMonth == 1 ? 12 : thisMonth - 1;
 
     onMount(() => {
         if (bodyElement) {

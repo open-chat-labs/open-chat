@@ -33,7 +33,7 @@
         size = "normal",
         alignTooltip = "middle",
     }: Props = $props();
-    let customEmoji = $state(getCustomEmoji(reaction.reaction));
+    const customEmoji = $state(getCustomEmoji(reaction.reaction));
     let selected = $derived(reaction.userIds.has($currentUserIdStore));
     let usernames = $derived(
         buildReactionUsernames($allUsersStore, reaction.userIds, $currentUserIdStore),
@@ -54,7 +54,7 @@
             | NativeEmoji
             | undefined;
         if (!emoji) return reaction;
-        let code =
+        const code =
             emoji?.shortcodes !== undefined
                 ? `:${emoji.shortcodes[emoji.shortcodes.length - 1]}:`
                 : `"${emoji?.annotation}"`;

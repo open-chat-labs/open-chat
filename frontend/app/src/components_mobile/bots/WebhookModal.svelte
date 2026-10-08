@@ -42,7 +42,7 @@
     let { mode = "register", chat, webhook = $bindable(emptyWebhookInstance()) }: Props = $props();
 
     let busy = $state(false);
-    let original = { ...webhook };
+    const original = { ...webhook };
     let nameDirty = $derived(original.name !== webhook.name);
     let avatarDirty = $derived(original.avatarUrl !== webhook.avatarUrl);
     let dirty = $derived(nameDirty || avatarDirty);

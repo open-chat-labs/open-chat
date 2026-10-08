@@ -22,7 +22,7 @@
         borderColor = ColourVars.surface0,
     }: Props = $props();
 
-    let remSize = size === "large" ? "2rem" : "1.375rem";
+    const remSize = size === "large" ? "2rem" : "1.375rem";
 </script>
 
 <div class="badge" class:large={size === "large"}>

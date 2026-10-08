@@ -12,7 +12,7 @@
     const client = getContext<OpenChat>("client");
 
     let selectedConversion: ConversionToken = $state("usd");
-    let conversionOptions = [
+    const conversionOptions = [
         { id: "usd", label: "USD" },
         { id: "icp", label: "ICP" },
         { id: "btc", label: "BTC" },

@@ -15,12 +15,12 @@
         onClose: () => void;
     }
 
-    let properties: (keyof BotClientConfigData)[] = [
+    const properties: (keyof BotClientConfigData)[] = [
         "ocPublicKey",
         "openStorageIndexCanister",
         "icHost",
     ];
-    let labels: Record<keyof BotClientConfigData, string> = {
+    const labels: Record<keyof BotClientConfigData, string> = {
         ocPublicKey: "OpenChat public key",
         openStorageIndexCanister: "OpenStorage index canister",
         icHost: "IC host url",

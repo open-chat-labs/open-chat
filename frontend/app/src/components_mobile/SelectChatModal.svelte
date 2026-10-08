@@ -149,7 +149,7 @@
         selectedChatId: ChatIdentifier | undefined,
         searchTerm: string,
     ): Promise<ShareTo> {
-        let targets: ShareTo = {
+        const targets: ShareTo = {
             directChats: [],
             groupChats: [],
             favourites: [],

@@ -30,7 +30,7 @@
         | { kind: "event"; formattedTime: string; event: MessageActivityEvent }
         | { kind: "header"; formattedTime: string; timestamp: bigint };
 
-    let formatHeaderTime = (timestamp: bigint): string =>
+    const formatHeaderTime = (timestamp: bigint): string =>
         client.getSmartDateHeader(timestamp, $_("today"), $_("yesterday"));
 
     let activityItems: ActivityItem[] = $derived(

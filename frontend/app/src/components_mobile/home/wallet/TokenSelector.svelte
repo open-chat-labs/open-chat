@@ -29,7 +29,7 @@
         selected = new Set(),
     }: Props = $props();
 
-    let searching = $state(false);
+    const searching = $state(false);
     let searchTerm = $state<string>("");
     let searchTermLower = $derived(searchTerm?.toLowerCase());
     let filteredTokens = $derived(

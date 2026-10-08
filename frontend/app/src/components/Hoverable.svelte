@@ -54,7 +54,7 @@
     }
 
     function handleTouchStart(e: TouchEvent) {
-        let t = e.changedTouches[0];
+        const t = e.changedTouches[0];
         startX = coords.x = t.clientX;
         startY = coords.x = t.clientY;
 
@@ -72,9 +72,9 @@
 
     function handleTouchMove(e: TouchEvent) {
         // calculate total number of pixels the pointer has moved
-        let t = e.changedTouches[0];
-        let diffX = Math.abs(startX - t.clientX);
-        let diffY = Math.abs(startY - t.clientY);
+        const t = e.changedTouches[0];
+        const diffX = Math.abs(startX - t.clientX);
+        const diffY = Math.abs(startY - t.clientY);
 
         // if pointer has moved more than allowed, cancel the long-press timer and therefore the event
         if (diffX >= maxDiffX || diffY >= maxDiffY) {

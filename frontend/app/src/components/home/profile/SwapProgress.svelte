@@ -83,7 +83,7 @@
     }
 
     async function querySwapProgress() {
-        let response = await client.tokenSwapStatus(swapId);
+        const response = await client.tokenSwapStatus(swapId);
 
         if (response.kind === "success") {
             if (

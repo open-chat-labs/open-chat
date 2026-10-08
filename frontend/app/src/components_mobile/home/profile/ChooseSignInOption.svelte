@@ -68,7 +68,7 @@
         }
 
         if (selected !== undefined) {
-            let i = options.findIndex((p) => p === selected);
+            const i = options.findIndex((p) => p === selected);
 
             if (i >= 0) {
                 options.splice(i, 1);

@@ -35,7 +35,7 @@
         }
     });
 
-    let communityState = new CommunityState(client, community);
+    const communityState = new CommunityState(client, community);
     let searchTermEntered = $state("");
 
     // So that the users of the group's members are known, including when it changes

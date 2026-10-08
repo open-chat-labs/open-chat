@@ -211,7 +211,7 @@
         | { kind: "remove_bot" }
         | { kind: "user_information"; profile: PublicProfile };
 
-    let modalStack = $state<SlidingModalType[]>([]);
+    const modalStack = $state<SlidingModalType[]>([]);
     let top = $derived(modalStack[modalStack.length - 1]);
     let historyDepth = $state(0);
     let recursivePop = false;

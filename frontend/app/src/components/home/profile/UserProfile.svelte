@@ -141,7 +141,7 @@
     );
 
     // @ts-expect-error OC_WEBSITE_VERSION is injected at build time and not declared on Window
-    let version = window.OC_WEBSITE_VERSION;
+    const version = window.OC_WEBSITE_VERSION;
 
     // Hidden diagnostics: tapping the version number 5 times reveals the crash
     // log recorded by errorPostmortem, so mobile users can copy & share it

@@ -19,7 +19,7 @@
 
     let { rules = $bindable(), level, valid = $bindable(false), editing }: Props = $props();
 
-    let originalRules: UpdatedRules = { ...rules };
+    const originalRules: UpdatedRules = { ...rules };
 
     let isValid = $derived(
         !rules.enabled || (rules.text.length > 0 && rules.text.length <= MAX_RULES_LENGTH),

@@ -50,8 +50,8 @@
         prize,
     }: Props = $props();
 
-    let iconColor = me ? $currentTheme.time.me.icon : $currentTheme.time.icon;
-    let pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
+    const iconColor = me ? $currentTheme.time.me.icon : $currentTheme.time.icon;
+    const pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
 </script>
 
 <div class="time-and-ticks" class:prize class:me class:fill class:rtl={$rtlStore}>

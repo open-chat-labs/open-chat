@@ -4,7 +4,7 @@
     import Section from "./Section.svelte";
     import { currentTheme } from "../../theme/themes";
 
-    let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
+    const isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     let bgPath = $derived(
         $currentTheme.mode === "light" ? "/assets/brag_light" : "/assets/brag_dark",
     );

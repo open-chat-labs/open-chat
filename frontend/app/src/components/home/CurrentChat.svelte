@@ -252,7 +252,7 @@
 
     function onSendMessage(detail: [string | undefined, User[], boolean]) {
         if (!canSendAny) return;
-        let [text, mentioned, blockLevelMarkdown] = detail;
+        const [text, mentioned, blockLevelMarkdown] = detail;
         if ($selectedChatDraftMessageStore?.editingEvent !== undefined) {
             client
                 .editMessageWithAttachment(

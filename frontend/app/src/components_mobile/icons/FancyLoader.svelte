@@ -13,8 +13,8 @@
     let style = $derived(size === undefined ? "" : `width: ${size}; height: ${size};`);
     let canvas: HTMLCanvasElement | undefined = $state();
     let ctx: CanvasRenderingContext2D | null | undefined;
-    let speed = 800;
-    let purpleTarget = 270;
+    const speed = 800;
+    const purpleTarget = 270;
     let orangeTarget = $state(45);
 
     let phase: 1 | 2 | 3 | 4 | 5 = $state(1);

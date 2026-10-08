@@ -26,7 +26,7 @@
 
     let state: "idle" | "converting" | "error" = $state("idle");
 
-    let steps: string[] = [
+    const steps: string[] = [
         "freeze the existing group",
         "create a new community with the same name as the group",
         "add a public channel to the community with the same name as the group",

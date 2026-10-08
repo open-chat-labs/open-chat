@@ -36,7 +36,7 @@
     let searchTermLower = $derived(searchTerm.toLowerCase());
     const MAX_SEARCH_RESULTS = 255;
     const client = getContext<OpenChat>("client");
-    let membersState = new MemberManagement(client, collection);
+    const membersState = new MemberManagement(client, collection);
     // The collection is as it was when the page was opened, so the count is read from its summary
     // as it is now
     let memberCount = $derived.by(() => {

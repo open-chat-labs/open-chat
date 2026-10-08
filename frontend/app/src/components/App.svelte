@@ -124,10 +124,10 @@
         return client;
     }
 
-    let client: OpenChat = createOpenChatClient();
+    const client: OpenChat = createOpenChatClient();
     setContext<OpenChat>("client", client);
 
-    let profileTrace = client.showTrace();
+    const profileTrace = client.showTrace();
     // I can't (yet) find a way to avoid using "any" here. Will try to improve but need to commit this crime for the time being
     let videoCallElement: ReturnType<typeof ActiveCall> | undefined;
     let landingPageRoute = $derived(isLandingPageRoute($routeStore));
@@ -135,7 +135,7 @@
     let showLandingPage = $derived(
         landingPageRoute || (homeRoute && $identityStateStore.kind === "anon" && $anonUserStore),
     );
-    let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
+    const isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     let burstPath = $derived(
         $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light",
     );

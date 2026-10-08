@@ -160,7 +160,7 @@
         const ledgerOutLocal = ledgerOut!;
         const bestQuoteLocal = bestQuote;
 
-        let minAmountOut = (bestQuoteLocal[1] * BigInt(98)) / BigInt(100);
+        const minAmountOut = (bestQuoteLocal[1] * BigInt(98)) / BigInt(100);
 
         client
             .refreshAccountBalance(ledgerIn)

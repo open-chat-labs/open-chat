@@ -38,7 +38,7 @@
     let { message, onSuccess, autoSelect = false }: Props = $props();
 
     let error: string | undefined = $state();
-    let emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
+    const emailSigninHandler = new EmailSigninHandler(client, "account_linking", false);
     let emailInvalid = $state(false);
     let email = $state("");
     let authStep:
