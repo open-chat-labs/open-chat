@@ -8,6 +8,7 @@
     } from "@client";
     import { allUsersStore, iconSize } from "@client";
     import { getContext, onDestroy, onMount } from "svelte";
+    import { SvelteSet } from "svelte/reactivity";
     import { _, locale } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -29,7 +30,7 @@
     const verifications: Record<number, string> = {};
     let chatBalance = $state(0n);
     let refreshing = $state(false);
-    const processing = $state(new Set<bigint>());
+    const processing = new SvelteSet<bigint>();
 
     let formattedBalance = $derived(client.formatTokens(chatBalance, 8));
 
