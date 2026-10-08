@@ -199,6 +199,13 @@ impl Data {
             fcm_token_store: FcmTokenStore::default(),
         }
     }
+
+    // Moves the subscriptions and FCM tokens held under the user's old id onto their new one. Each
+    // LocalUserIndex, told of the migration by the UserIndex, moves its own copies of them alike.
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        self.subscriptions.migrate_user_id(old_user_id, new_user_id);
+        self.fcm_token_store.migrate_user_id(old_user_id, new_user_id);
+    }
 }
 
 #[derive(Serialize, Debug)]

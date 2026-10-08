@@ -1,3 +1,4 @@
+use crate::lifecycle::move_subscriptions_of_migrated_users::move_subscriptions_of_migrated_users;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
 use crate::{Data, mutate_state};
@@ -21,6 +22,8 @@ fn post_upgrade(args: Args) {
         msgpack::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
+
+    move_subscriptions_of_migrated_users(&mut data);
 
     // One-off: the total was incremented when a subscription was pushed again
     let previous_total = data.web_push_subscriptions.total();

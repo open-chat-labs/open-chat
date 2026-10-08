@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Move a migrated user's web push subscriptions and FCM tokens onto their new id, including, once, those of the users migrated so far ([#9842](https://github.com/open-chat-labs/open-chat/pull/9842))
 - Send a new LocalUserIndex the existing FCM tokens, not just the web push subscriptions ([#9843](https://github.com/open-chat-labs/open-chat/pull/9843))
 - Reduce the `subscriptions` metric when inactive subscriptions are removed, and recompute it on upgrade ([#9843](https://github.com/open-chat-labs/open-chat/pull/9843))
 

@@ -418,6 +418,12 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                     .data
                     .blocked_users
                     .migrate_user_id(ev.old_user_id, ev.new_user_id, &ev.blocked_users);
+                // The NotificationsIndex moves its own copies, without telling the LocalUserIndexes
+                state
+                    .data
+                    .web_push_subscriptions
+                    .migrate_user_id(ev.old_user_id, ev.new_user_id);
+                state.data.fcm_token_store.migrate_user_id(ev.old_user_id, ev.new_user_id);
                 for user_id in ev.users_to_notify {
                     state.notify_user_of_migrated_user_id(user_id, ev.old_user_id, ev.new_user_id, **now);
                 }

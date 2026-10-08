@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Move a migrated user's daily puzzle streak and games onto their new id ([#9841](https://github.com/open-chat-labs/open-chat/pull/9841))
+- Move a migrated user's web push subscriptions and FCM tokens onto their new id, including, once, those of the users migrated so far ([#9842](https://github.com/open-chat-labs/open-chat/pull/9842))
 - Only increase the `web_push_subscriptions` metric when a subscription is added, and recompute it on upgrade ([#9844](https://github.com/open-chat-labs/open-chat/pull/9844))
 
 ## [[2.0.2108](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2108-local_user_index)] - 2026-10-07
