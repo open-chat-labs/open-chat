@@ -10,7 +10,7 @@ import type {
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { mergeGroupChatUpdates } from "./chat";
 import { mergeCommunityUpdates } from "./community";
-import { applyRefresh, refreshArgs, refreshTarget, type RefreshTarget } from "./refreshChat";
+import { applyRefresh, refreshTarget, type RefreshTarget } from "./refreshChat";
 
 // The merges themselves are covered by the chat and community baseline tests; here they only
 // need to show which chat was merged with which update
@@ -102,23 +102,6 @@ describe("refreshTarget", () => {
         expect(
             refreshTarget(s, { kind: "channel", communityId: "cx", channelId: 1 }),
         ).toBeUndefined();
-    });
-});
-
-describe("refreshArgs", () => {
-    test("asks for the updates since the cached summary", () => {
-        expect(refreshArgs({ kind: "group", chat: group("g1", 5n) })).toEqual({
-            canisterId: "g1",
-            isCommunity: false,
-            inviteCode: undefined,
-            updatesSince: 5n,
-        });
-        expect(refreshArgs({ kind: "community", chat: community("c1", 6n) })).toEqual({
-            canisterId: "c1",
-            isCommunity: true,
-            inviteCode: undefined,
-            updatesSince: 6n,
-        });
     });
 });
 

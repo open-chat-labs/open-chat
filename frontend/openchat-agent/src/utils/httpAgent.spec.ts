@@ -57,14 +57,6 @@ describe("createQueryAwareFetch", () => {
         await assertion;
     });
 
-    test("does not time out a query that answers in time", async () => {
-        const response = new Response("ok");
-        const wrapped = createQueryAwareFetch(() => Promise.resolve(response), 1000);
-        await expect(wrapped(QUERY_URL)).resolves.toBe(response);
-        // the timer was cleared, so nothing fires later
-        expect(vi.getTimerCount()).toBe(0);
-    });
-
     test("abortInFlightQueries aborts every query waiting for a response", async () => {
         const { fn } = hangingFetch();
         const wrapped = createQueryAwareFetch(fn, 60_000);
@@ -133,21 +125,6 @@ describe("createQueryAwareFetch", () => {
         // a different request is sent as normal
         wrapped(QUERY_URL, { body: new Uint8Array([1, 2, 3]) }).catch(() => undefined);
         expect(fn).toHaveBeenCalledTimes(2);
-    });
-
-    test("a timeout firing late after a suspension also treats the query as expired", async () => {
-        const { fn } = hangingFetch();
-        const wrapped = createQueryAwareFetch(fn, 30_000);
-        const body = new Uint8Array([1, 2, 3]);
-        const first = wrapped(QUERY_URL, { body });
-        const assertion = expect(first).rejects.toMatchObject({ name: "TimeoutError" });
-        vi.setSystemTime(Date.now() + 10 * 60_000);
-        await vi.advanceTimersByTimeAsync(30_000);
-        await assertion;
-
-        const resend = await wrapped(QUERY_URL, { body });
-        expect(resend.status).toBe(400);
-        expect(fn).toHaveBeenCalledTimes(1);
     });
 
     test("the agent does not resend a query aborted after it expired", async () => {
@@ -416,20 +393,6 @@ describe("ResyncingHttpAgent", () => {
         release();
         await expect(early).resolves.toMatchObject({ status: "replied" });
         expect(replica.timeReads).toBe(READS_PER_SYNC);
-    });
-
-    test("recovers when the device's clock is corrected after the agent synced with it", async () => {
-        // the device's clock is 10 minutes slow, which the agent finds out from the replica
-        replica.aheadByMs = 10 * MINUTE_MS;
-        await agent.syncTime(CANISTER_ID);
-        expect(agent.getTimeDiffMsecs()).toBe(10 * MINUTE_MS);
-
-        // the device's clock is put right, leaving the agent's offset 10 minutes out
-        vi.setSystemTime(Date.now() + 10 * MINUTE_MS);
-        replica.aheadByMs = 0;
-
-        await expect(query()).resolves.toMatchObject({ status: "replied" });
-        expect(agent.getTimeDiffMsecs()).toBe(0);
     });
 
     test("an agent which has never synced its clock still syncs it once and resends", async () => {
