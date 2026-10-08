@@ -6,12 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the one-offs which moved the subscriptions and daily puzzle data of the users migrated so far and recomputed the `web_push_subscriptions` metric, now that they have run ([#9871](https://github.com/open-chat-labs/open-chat/pull/9871))
+
+### Fixed
+
+- Save the solved grid on a daily puzzle solve, so other devices show the finished board ([#9865](https://github.com/open-chat-labs/open-chat/pull/9865))
+
+## [[2.0.2116](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2116-local_user_index)] - 2026-10-08
+
 ### Fixed
 
 - Move a migrated user's daily puzzle streak and games onto their new id ([#9841](https://github.com/open-chat-labs/open-chat/pull/9841))
 - Move a migrated user's web push subscriptions and FCM tokens onto their new id, including, once, those of the users migrated so far ([#9842](https://github.com/open-chat-labs/open-chat/pull/9842))
 - Only increase the `web_push_subscriptions` metric when a subscription is added, and recompute it on upgrade ([#9844](https://github.com/open-chat-labs/open-chat/pull/9844))
-- Save the solved grid on a daily puzzle solve, so other devices show the finished board ([#9865](https://github.com/open-chat-labs/open-chat/pull/9865))
 
 ## [[2.0.2108](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2108-local_user_index)] - 2026-10-07
 
