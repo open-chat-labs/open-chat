@@ -587,6 +587,11 @@ impl DailyPuzzleEngine {
             return Err(OCErrorCode::InvalidRequest.with_message("wrong"));
         }
 
+        // The client saves the grid every few seconds and stops once solved, so without this the
+        // saved grid misses the last moves and another device resumes the board short of solved
+        record.grid = grid.to_vec();
+        record.grid_saved_at = Some(now);
+
         let solve_time_ms = now.saturating_sub(record.started_at);
         let hints_used = hints_paid;
         let streak = prev_streak + 1;
@@ -2697,6 +2702,22 @@ mod tests {
             OCErrorCode::AlreadyAwarded,
         );
         assert_err(engine.save_grid(u, GAME, NUMBER + 1, vec![0; 9], START), OCErrorCode::Expired);
+    }
+
+    #[test]
+    fn a_solve_saves_the_solved_grid() {
+        let mut engine = new_engine();
+        let u = user(1);
+        started(&mut engine, u, START);
+        engine
+            .save_grid(u, GAME, NUMBER, vec![1, 0, 0, 0, 0, 0, 0, 0, 0], START + 10)
+            .unwrap();
+
+        let solution = engine.puzzle(GAME).unwrap().solution.clone();
+        engine.submit(u, GAME, NUMBER, &solution, START + 20).unwrap();
+        let state = state(&engine, u, START);
+        assert_eq!(state.grid, solution);
+        assert_eq!(state.grid_saved_at, Some(START + 20));
     }
 
     #[test]
