@@ -52,7 +52,7 @@ jobs:
   # The benchmarks run on macOS (see benchmarks.yaml), so their cache is built there too
   build_benchmarks:
     name: Build benchmarks
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-rust
