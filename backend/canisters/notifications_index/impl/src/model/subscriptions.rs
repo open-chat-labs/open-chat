@@ -147,10 +147,6 @@ impl Subscriptions {
 
         removed
     }
-
-    pub fn recompute_total(&mut self) {
-        self.total = self.subscriptions.values().map(|s| s.len() as u64).sum();
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]

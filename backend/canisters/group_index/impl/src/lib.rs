@@ -319,7 +319,6 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     pub event_relay_canister_id: CanisterId,
     pub registry_canister_id: CanisterId,
-    #[serde(default = "CanisterId::anonymous")]
     pub storage_index_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
@@ -340,12 +339,7 @@ struct Data {
     pub migrated_user_ids: MigratedUserIds,
     // The ids of deleted groups and communities, which the files sent in them name as their only
     // accessor, to be removed from those files by the StorageIndex, which removes the files
-    #[serde(default = "storage_index_accessors_to_remove_queue")]
     pub storage_index_accessors_to_remove_queue: BatchedTimerJobQueue<StorageIndexAccessorsToRemoveBatch>,
-}
-
-fn storage_index_accessors_to_remove_queue() -> BatchedTimerJobQueue<StorageIndexAccessorsToRemoveBatch> {
-    BatchedTimerJobQueue::new(CanisterId::anonymous(), false)
 }
 
 impl Data {
@@ -505,7 +499,7 @@ impl Default for Data {
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             migrated_user_ids: MigratedUserIds::default(),
-            storage_index_accessors_to_remove_queue: storage_index_accessors_to_remove_queue(),
+            storage_index_accessors_to_remove_queue: BatchedTimerJobQueue::new(Principal::anonymous(), false),
         }
     }
 }

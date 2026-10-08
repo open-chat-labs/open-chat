@@ -16,10 +16,6 @@ impl DeletedGroups {
         self.groups.get(chat_id)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &DeletedGroupInfoInternal> {
-        self.groups.values()
-    }
-
     // The groups which were imported into the community, each now one of its channels
     pub fn imported_into(&self, community_id: CommunityId) -> impl Iterator<Item = ChatId> + '_ {
         self.groups

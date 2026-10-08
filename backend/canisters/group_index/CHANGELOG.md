@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the one-off which queued the chats deleted so far to have their files removed, now that it has run ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+
+## [[2.0.2120](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2120-group_index)] - 2026-10-08
+
 ### Added
 
 - Remove the files sent in deleted groups and communities, including those deleted before now ([#9849](https://github.com/open-chat-labs/open-chat/pull/9849))

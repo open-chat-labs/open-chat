@@ -534,10 +534,6 @@ impl DailyPuzzleEngine {
         }
     }
 
-    pub fn user_ids(&self) -> BTreeSet<UserId> {
-        self.history.keys().chain(self.user_games.keys()).copied().collect()
-    }
-
     // Increments `submits` on every call. On a match the solve is recorded here, before any await.
     pub fn submit(
         &mut self,
