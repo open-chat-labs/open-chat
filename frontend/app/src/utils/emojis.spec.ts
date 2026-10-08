@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+// These tests import the module under test inside each test, so the first import's transform time
+// counts against the timeout. Under a loaded CI runner that can pass the 5s default.
+vi.setConfig({ testTimeout: 20_000 });
+
 const constructed = vi.fn();
 // how many of the next Databases fail their first load, like the real one does
 // when IndexedDB is empty and the emoji CDN errors
