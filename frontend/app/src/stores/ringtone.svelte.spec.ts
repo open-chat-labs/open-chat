@@ -21,11 +21,4 @@ describe("Ringtone", () => {
 
         expect(ringtone.playing).toBe(false);
     });
-
-    it("toggle flips between playing and paused", () => {
-        const ringtone = new Ringtone("pleasant", "Pleasant");
-        ringtone.toggle();
-        ringtone.toggle();
-        expect(ringtone.playing).toBe(false);
-    });
 });

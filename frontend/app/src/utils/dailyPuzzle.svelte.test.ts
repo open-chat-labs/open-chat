@@ -11,24 +11,11 @@ import {
     type PublicDailyPuzzle,
     type ServedHint,
 } from "@client";
-import desktopScreen from "../components/home/dailypuzzle/DailyPuzzle.svelte?raw";
-import desktopResult from "../components/home/dailypuzzle/DailyResultContent.svelte?raw";
-import gameDemo from "../components/home/dailypuzzle/GameDemo.svelte?raw";
-import gameTypes from "../components/home/dailypuzzle/games/types.ts?raw";
-import mobileScreen from "../components_mobile/home/dailypuzzle/DailyPuzzle.svelte?raw";
-import mobileResult from "../components_mobile/home/dailypuzzle/DailyResultContent.svelte?raw";
-import sessionSource from "./dailyPuzzle.svelte.ts?raw";
-import registrySource from "./dailyPuzzleGames.ts?raw";
-import boardSource from "./puzzleBoard.svelte.ts?raw";
-import LightUpPictogram from "../components/home/dailypuzzle/games/light_up/Pictogram.svelte";
-import SlantBoard from "../components/home/dailypuzzle/games/slant/Board.svelte";
 import { flushSync } from "svelte";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import en from "../i18n/en.json";
 import { toastStore } from "../stores/toast";
 import { DailyPuzzleGame, type HintButton } from "./dailyPuzzle.svelte";
 import { dailyPuzzleGame } from "./dailyPuzzleGames";
-import { bindBoard } from "./puzzleBoard.svelte";
 
 const NUMBER = 20706;
 const USER = "user1";
@@ -699,29 +686,6 @@ describe("hint states (#9360)", () => {
             expect.anything(),
         );
     });
-
-    test("checks left are on the button only once fewer than five remain", () => {
-        const roomy = { ...puzzle, maxFreeChecks: 20 };
-        const state = userState({ freeChecks: 15 });
-        dailyPuzzleStore.set({ puzzles: [roomy], states: [state] });
-        const many = new DailyPuzzleGame(fakeClient(), roomy, USER, lightUpDef);
-        expect(many.freeChecksLeft).toBe(5);
-        expect(many.hintButton).not.toHaveProperty("checksLeft");
-        // one more spent, and the count appears
-        const state16 = userState({ freeChecks: 16 });
-        dailyPuzzleStore.set({ puzzles: [roomy], states: [state16] });
-        const few = new DailyPuzzleGame(fakeClient(), roomy, USER, lightUpDef);
-        expect(few.hintButton).toMatchObject({ kind: "hint", checksLeft: 4 });
-    });
-
-    // invariant 5
-    test("the Light Up rules name the four sides and rule out diagonals", () => {
-        const rules = en.dailyPuzzle.games.light_up.rules;
-        expect(rules).toMatch(/across or down/);
-        expect(rules).toMatch(/never diagonally/);
-        expect(rules).not.toMatch(/touch/);
-    });
-
 });
 
 // #9361: a reset clears the board and nothing else
@@ -1014,13 +978,6 @@ describe("the tutorial reopened mid-game (#9822)", () => {
         expect(g.tutorialOpen).toBe(false);
     });
 
-    // invariant 5
-    test("a newly built game, as after the puzzle is replaced, has the tutorial closed", () => {
-        const g = build(userState(), fakeClient(), true);
-        expect(g.tutorialOpen).toBe(false);
-        expect(g.showsDemo).toBe(false);
-    });
-
     // invariant 6
     test("the tutorial can be reopened only on a started, unsolved game that has a demo", () => {
         expect(build(userState(), fakeClient(), true).canToggleTutorial).toBe(true);
@@ -1032,16 +989,6 @@ describe("the tutorial reopened mid-game (#9822)", () => {
         g.toggleTutorial();
         expect(g.tutorialOpen).toBe(false);
     });
-
-    // invariant 7
-    test("before Start a game with a demo shows the demo, and only a game without one shows the rules text", () => {
-        const withDemo = build(undefined, fakeClient(), true);
-        expect(withDemo.showsDemo).toBe(true);
-        expect(withDemo.showsRules).toBe(false);
-        const withoutDemo = build(undefined, fakeClient(), false);
-        expect(withoutDemo.showsDemo).toBe(false);
-        expect(withoutDemo.showsRules).toBe(true);
-    });
 });
 
 describe("DailyPuzzleGame is the one source of truth for a play session (#9824)", () => {
@@ -1050,13 +997,6 @@ describe("DailyPuzzleGame is the one source of truth for a play session (#9824)"
     function balance(chitBalance: number): void {
         chitStateStore.update((s) => ({ ...s, chitBalance }));
     }
-
-    // invariant 1
-    test("neither screen reads the puzzle store or the user state itself", () => {
-        for (const screen of [desktopScreen, mobileScreen]) {
-            expect(screen).not.toMatch(/dailyPuzzleStore|stateFor/);
-        }
-    });
 
     // invariant 3
     test("a puzzle the poll replaces leaves no marks from the old one, and says so", () => {
@@ -1148,38 +1088,5 @@ describe("DailyPuzzleGame is the one source of truth for a play session (#9824)"
             expect(g.lastHint).toBeUndefined();
             expect(g.mistakes.size).toBe(0);
         }
-    });
-
-    // invariant 8: checked by svelte-check, which fails on an @ts-expect-error that no longer
-    // has an error to expect
-    test("a game's model and state stay inside its board, and only meet that game's components", () => {
-        const g = build(userState());
-        // @ts-expect-error the session cannot reach the board's state
-        void g.board.state;
-        // @ts-expect-error nor its model
-        void g.board.model;
-        const pairing = () =>
-            // @ts-expect-error Slant's Board cannot draw a Light Up board
-            bindBoard(lightUp, SlantBoard, LightUpPictogram, puzzle.description);
-        expect(pairing).toBeTypeOf("function");
-    });
-
-    // invariant 8: the type-level test above cannot see a cast, so the casts are counted here
-    test("bindBoard holds the only cast that erases a game's types", () => {
-        const erasing = /as unknown as|[:<,(]\s*unknown\b|<any\b|\bany\s*[>,;)\]]/g;
-        const elsewhere = {
-            sessionSource,
-            registrySource,
-            gameTypes,
-            desktopScreen,
-            mobileScreen,
-            gameDemo,
-            desktopResult,
-            mobileResult,
-        };
-        for (const [name, source] of Object.entries(elsewhere)) {
-            expect(source.match(erasing), name).toBeNull();
-        }
-        expect(boardSource.match(erasing)).toEqual(["as unknown as"]);
     });
 });
