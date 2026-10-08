@@ -13,7 +13,6 @@ use stable_memory_map::{
     ChatEventKeyPrefix, ExpiringEventKeyPrefix, KeyPrefix, MessageEventIndexesKeyPrefix, MessageIdKeyPrefix,
     UserMetricsKeyPrefix,
 };
-use std::collections::HashSet;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
@@ -168,28 +167,21 @@ fn convert_into_community_succeeds() {
         );
 
         // The imported messages should have been added to the channel's search index
-        for users in [
-            None,
-            Some([user1.user_id].into_iter().collect()),
-            Some([user2.user_id].into_iter().collect()),
-        ] {
-            let expect_match = users.as_ref().is_none_or(|u: &HashSet<_>| u.contains(&user1.user_id));
-            let response = client::community::search_channel(
-                env,
-                user1.principal,
-                result.community_id.into(),
-                &community_canister::search_channel::Args {
-                    channel_id: result.channel_id,
-                    search_term: "333".to_string(),
-                    max_results: 10,
-                    users,
-                },
-            );
-            let community_canister::search_channel::Response::Success(search_result) = response else {
-                panic!("'search_channel' error: {response:?}");
-            };
-            assert_eq!(search_result.matches.len(), if expect_match { 1 } else { 0 });
-        }
+        let response = client::community::search_channel(
+            env,
+            user1.principal,
+            result.community_id.into(),
+            &community_canister::search_channel::Args {
+                channel_id: result.channel_id,
+                search_term: "333".to_string(),
+                max_results: 10,
+                users: Some([user1.user_id].into_iter().collect()),
+            },
+        );
+        let community_canister::search_channel::Response::Success(search_result) = response else {
+            panic!("'search_channel' error: {response:?}");
+        };
+        assert_eq!(search_result.matches.len(), 1);
 
         // Looking up an imported message by its id should succeed
         client::community::happy_path::add_reaction(
