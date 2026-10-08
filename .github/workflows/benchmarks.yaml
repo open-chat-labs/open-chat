@@ -42,21 +42,15 @@ jobs:
               - "scripts/**"
               - ".github/workflows/**"
 
-  # On macOS arm64, like the machines we develop on, so that `canbench --persist` run locally gives
-  # the numbers this job checks. Since Rust 1.99 the benchmark wasm differs by host platform (macOS
-  # arm64, Linux arm64 and Linux x86_64 each build a different one), and the instruction counts
-  # with it, by up to 3%. The image is pinned, rather than `macos-latest`, so that the numbers only
-  # change when we choose to move it (the same as build_benchmarks in build_caches.yaml).
   benchmarks:
     needs: changes
     if: needs.changes.outputs.backend == 'true'
-    runs-on: macos-26
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/workflows/setup-rust
         with:
           cache: read
-          shared-key: benchmarks
 
       - name: Benchmark
         run: |

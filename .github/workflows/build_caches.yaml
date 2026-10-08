@@ -18,7 +18,7 @@ on:
 name: Build caches
 
 jobs:
-  # Warms the cache the PR checks restore (backend.yaml, candid.yaml). Each step
+  # Warms the cache the PR checks restore (backend.yaml, candid.yaml, benchmarks.yaml). Each step
   # below matches the command a PR job runs, because cargo only reuses an artifact when the
   # command that produced it had the same profile, target and flags. The cache keeps the
   # dependencies only: workspace crates are always rebuilt by the PR jobs.
@@ -49,19 +49,8 @@ jobs:
       - name: Build candid generators
         run: ./scripts/build-candid-generators.sh
 
-  # The benchmarks run on macOS (see benchmarks.yaml), so their cache is built there too
-  build_benchmarks:
-    name: Build benchmarks
-    runs-on: macos-26
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/setup-rust
-        with:
-          cache: write
-          shared-key: benchmarks
-
-      # `canbench` itself (built from source, so a couple of minutes if it is not already in the
-      # cached ~/.cargo/bin) and the wasm dependencies it builds
+      # The benchmarks: `canbench` itself (built from source, so a couple of minutes if it is not
+      # already in the cached ~/.cargo/bin) and the wasm dependencies it builds
       - name: Install canbench
         run: cargo install canbench --version 0.6.0
       - name: Build benchmarks wasm
