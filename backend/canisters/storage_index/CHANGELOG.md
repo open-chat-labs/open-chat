@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Let the GroupIndex remove the files sent in deleted groups and communities ([#9849](https://github.com/open-chat-labs/open-chat/pull/9849))
+
 ### Removed
 
 - Remove the one-off files backfill, which has completed in prod ([#9813](https://github.com/open-chat-labs/open-chat/pull/9813))

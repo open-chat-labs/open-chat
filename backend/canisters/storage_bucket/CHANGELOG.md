@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Remove a removed accessor's files in the background, a file at a time ([#9849](https://github.com/open-chat-labs/open-chat/pull/9849))
+
 ### Removed
 
 - Remove `c2c_files`, only needed for the StorageIndex's one-off files backfill ([#9813](https://github.com/open-chat-labs/open-chat/pull/9813))
