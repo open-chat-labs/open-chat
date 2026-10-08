@@ -86,12 +86,9 @@ function redact(text) {
 
 // Rollbar's API now and then times out (a 504 from its nginx) or drops the connection. Uploading
 // a map again just replaces it, so those failures are retried after a growing delay rather than
-// stopping the deploy, which would mean building the whole site again to rerun it.
+// stopping the deploy, which would mean building the whole site again to rerun it. A connection
+// which stalls is given up on by fetch itself after 5 minutes, and retried the same way.
 const RETRY_DELAYS_MS = [2_000, 5_000, 15_000];
-
-// Without a limit, an upload which never gets a response would hold up the deploy for minutes
-// before failing. A map uploads in a second or two, so one taking this long is retried.
-const ATTEMPT_TIMEOUT_MS = 60_000;
 
 // Returns undefined once the map is uploaded, or else why not and whether that's worth retrying
 async function attemptUpload(mapPath, minifiedUrl) {
@@ -103,18 +100,18 @@ async function attemptUpload(mapPath, minifiedUrl) {
 
     let response;
     try {
-        response = await fetch(ENDPOINT, {
-            method: "POST",
-            body: form,
-            signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
-        });
+        response = await fetch(ENDPOINT, { method: "POST", body: form });
     } catch (err) {
-        return { reason: redact(String(err)), retryable: true };
+        // A network failure is just "fetch failed", with what went wrong (eg. ECONNRESET) in its cause
+        const cause = err.cause ? ` (${err.cause.code ?? err.cause.message})` : "";
+        return { reason: redact(`${err}${cause}`), retryable: true };
     }
 
     if (response.ok) return undefined;
 
-    const body = redact((await response.text()).replace(/\s+/g, " ").trim());
+    // The connection can drop after the headers, while the body is still coming
+    const text = await response.text().catch((err) => `(body not received: ${err})`);
+    const body = redact(text.replace(/\s+/g, " ").trim());
     if (response.status === 401 || response.status === 403) {
         throw new FatalUploadError(
             `Rollbar rejected the token (${response.status}): ${body}\n` +
@@ -151,8 +148,10 @@ const queue = [...maps];
 try {
     await Promise.all(
         Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
-            for (let next = queue.pop(); next !== undefined; next = queue.pop()) {
-                if (!(await upload(next))) failed++;
+            // Once a map has failed even after its retries, the deploy will stop and a rerun
+            // uploads every map again, so there's no point waiting for the rest
+            while (failed === 0 && queue.length > 0) {
+                if (!(await upload(queue.pop()))) failed++;
             }
         }),
     );
@@ -163,7 +162,8 @@ try {
 }
 
 if (failed > 0) {
-    console.error(`upload-source-maps: ${failed} of ${maps.length} uploads failed`);
+    const skipped = queue.length > 0 ? `, and ${queue.length} were not tried` : "";
+    console.error(`upload-source-maps: ${failed} of ${maps.length} uploads failed${skipped}`);
     process.exit(1);
 }
 console.log(`upload-source-maps: all ${maps.length} maps uploaded for ${version}`);
