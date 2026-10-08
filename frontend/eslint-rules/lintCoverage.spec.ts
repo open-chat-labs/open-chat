@@ -1,6 +1,9 @@
 // @vitest-environment node
 import { ESLint } from "eslint";
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
+
+// Creating the first ESLint instance loads every plugin, which can take longer than the default 5s.
+vi.setConfig({ testTimeout: 30_000 });
 
 const frontendRoot = new URL("..", import.meta.url).pathname;
 
