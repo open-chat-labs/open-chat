@@ -412,6 +412,32 @@ impl RuntimeState {
         }
     }
 
+    // Moves what the daily puzzle engine holds for a migrated user under their old id, their streak
+    // among it, onto their latest id. If this LocalUserIndex doesn't hold them by that id, it goes via
+    // the UserIndex to the one which does, which is the one they play through from then on.
+    pub fn move_daily_puzzle_data_for_migrated_user(&mut self, old_user_id: UserId) {
+        let new_user_id = self.data.migrated_user_ids.latest(old_user_id);
+        if new_user_id == old_user_id {
+            return;
+        }
+        let Some(data) = self.data.daily_puzzle_engine.take_user(old_user_id) else {
+            return;
+        };
+        if self.data.local_users.contains(&new_user_id) {
+            self.data.daily_puzzle_engine.import_user(new_user_id, data);
+        } else {
+            let now = self.env.now();
+            self.push_event_to_user_index(
+                UserIndexEvent::DailyPuzzleDataForMigratedUser(Box::new(user_index_canister::DailyPuzzleDataForMigratedUser {
+                    user_id: new_user_id,
+                    data: ByteBuf::from(msgpack::serialize_then_unwrap(&data)),
+                })),
+                now,
+            );
+        }
+        info!(%old_user_id, %new_user_id, "Daily puzzle data moved to migrated user's new id");
+    }
+
     // Sends events which were queued for a migrated user's old canister on to their latest id, in
     // order. If this LocalUserIndex doesn't hold them by that id, the events go via the UserIndex to
     // the one which does.
