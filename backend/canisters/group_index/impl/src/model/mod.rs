@@ -9,3 +9,4 @@ pub mod private_groups;
 pub mod public_communities;
 pub mod public_group_and_community_names;
 pub mod public_groups;
+pub mod storage_index_accessors_to_remove_batch;

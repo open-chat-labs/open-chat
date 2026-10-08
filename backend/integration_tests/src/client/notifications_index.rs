@@ -14,7 +14,7 @@ generate_msgpack_update_call!(push_subscription);
 pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use types::{CanisterId, SubscriptionInfo, SubscriptionKeys};
+    use types::{CanisterId, FcmToken, SubscriptionInfo, SubscriptionKeys, UnitResult};
 
     pub fn push_subscription(
         env: &mut PocketIc,
@@ -43,6 +43,22 @@ pub mod happy_path {
             response,
             notifications_index_canister::push_subscription::Response::Success
         ));
+    }
+
+    pub fn add_fcm_token(
+        env: &mut PocketIc,
+        sender: Principal,
+        notifications_index_canister_id: CanisterId,
+        fcm_token: FcmToken,
+    ) {
+        let response = super::add_fcm_token(
+            env,
+            sender,
+            notifications_index_canister_id,
+            &notifications_index_canister::add_fcm_token::Args { fcm_token },
+        );
+
+        assert!(matches!(response, UnitResult::Success), "{response:?}");
     }
 
     pub fn subscription_exists(

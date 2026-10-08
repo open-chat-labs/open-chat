@@ -70,7 +70,10 @@ async fn delete_community(
     .await?;
 
     if matches!(response, local_user_index_canister::c2c_delete_community::Response::Success) {
-        mutate_state(|state| commit(community_id, deleted_by, community_name, members, state));
+        mutate_state(|state| {
+            commit(community_id, deleted_by, community_name, members, state);
+            remove_files(community_id, state);
+        });
     }
 
     Ok(response)
@@ -108,4 +111,14 @@ pub(crate) fn commit(
         members,
     );
     crate::jobs::push_community_deleted_notifications::start_job_if_required(state);
+}
+
+// The files sent in the community name it as their only accessor, as do those sent in each group
+// imported into it, so removing them removes those files. Kept apart from `commit` because queueing
+// them starts sending them, which can only be done inside a canister.
+pub(crate) fn remove_files(community_id: CommunityId, state: &mut RuntimeState) {
+    let accessor_ids: Vec<_> = std::iter::once(community_id.into())
+        .chain(state.data.deleted_groups.imported_into(community_id).map(CanisterId::from))
+        .collect();
+    state.data.storage_index_accessors_to_remove_queue.push_many(accessor_ids);
 }

@@ -15,6 +15,10 @@ impl DeletedCommunities {
         self.communities.get(community_id)
     }
 
+    pub fn ids(&self) -> impl Iterator<Item = CommunityId> + '_ {
+        self.communities.keys().copied()
+    }
+
     pub fn insert(&mut self, deleted_community: DeletedCommunityInfo, members: Vec<UserId>) -> bool {
         let community_id = deleted_community.id;
 

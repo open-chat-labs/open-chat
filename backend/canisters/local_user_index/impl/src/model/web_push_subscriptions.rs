@@ -61,6 +61,26 @@ impl WebPushSubscriptions {
         false
     }
 
+    // Moves the user's subscriptions from their old id onto their new one, dropping any for an endpoint
+    // already subscribed under the new id, as the NotificationsIndex does
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        let Some(old_subscriptions) = self.subscriptions.remove(&old_user_id) else {
+            return;
+        };
+        let subscriptions = self.subscriptions.entry(new_user_id).or_default();
+        for subscription in old_subscriptions {
+            if subscriptions.iter().any(|s| s.endpoint == subscription.endpoint) {
+                self.total = self.total.saturating_sub(1);
+            } else {
+                subscriptions.push(subscription);
+            }
+        }
+    }
+
+    pub fn user_ids(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.subscriptions.keys().copied()
+    }
+
     pub fn total(&self) -> u64 {
         self.total
     }

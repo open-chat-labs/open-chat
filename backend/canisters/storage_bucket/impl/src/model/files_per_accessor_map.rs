@@ -9,6 +9,11 @@ pub struct FilesPerAccessorStableMap {
 
 impl FilesPerAccessorStableMap {
     pub fn get(&self, accessor_id: AccessorId) -> Vec<FileId> {
+        self.get_first(accessor_id, usize::MAX)
+    }
+
+    // Returns at most `max_count` of the accessor's files
+    fn get_first(&self, accessor_id: AccessorId, max_count: usize) -> Vec<FileId> {
         // Keys aren't length prefixed, so other accessors' keys can sit among this accessor's: those
         // of an accessor which this one is a byte-prefix of, and those of one which is a byte-prefix
         // of this one where the file id carries on with this one's bytes. So the keys are filtered
@@ -19,12 +24,14 @@ impl FilesPerAccessorStableMap {
             m.range(start..=end)
                 .filter(|(k, _)| k.accessor_id() == accessor_id)
                 .map(|(k, _)| k.file_id())
+                .take(max_count)
                 .collect()
         })
     }
 
-    pub fn remove(&mut self, accessor_id: AccessorId) -> Vec<FileId> {
-        let files = self.get(accessor_id);
+    // Unlinks at most `max_count` of the accessor's files, returning them
+    pub fn remove(&mut self, accessor_id: AccessorId, max_count: usize) -> Vec<FileId> {
+        let files = self.get_first(accessor_id, max_count);
         with_map_mut(|m| {
             for file in files.iter() {
                 m.remove(self.prefix.create_key(&(accessor_id, *file)));
@@ -86,7 +93,9 @@ mod tests {
         assert_eq!(map.get(b), b_files);
         assert_eq!(map.get(c), c_files);
 
-        assert_eq!(map.remove(a), a_files);
+        assert_eq!(map.remove(a, 2), a_files[..2]);
+        assert_eq!(map.get(a), a_files[2..]);
+        assert_eq!(map.remove(a, 2), a_files[2..]);
         assert!(map.get(a).is_empty());
         assert_eq!(map.get(b), b_files);
         assert_eq!(map.get(c), c_files);

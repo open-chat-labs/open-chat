@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Run the repeating jobs on `PerRoundTimer` rather than `set_timer_interval` ([#9772](https://github.com/open-chat-labs/open-chat/pull/9772))
+- Pass the StorageIndex canister id to the GroupIndex ([#9849](https://github.com/open-chat-labs/open-chat/pull/9849))
 
 ## [[2.0.2076](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2076-openchat_installer)] - 2026-09-29
 

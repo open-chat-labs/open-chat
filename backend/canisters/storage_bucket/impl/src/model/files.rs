@@ -49,6 +49,13 @@ pub struct Files {
     // The number of files whose accessors have had one replaced
     #[serde(default)]
     accessors_replaced: u64,
+    // Accessors to be removed from the files naming them, oldest first. Each is a deleted group or
+    // community, which the files sent in it name as their only accessor, so those files are removed.
+    #[serde(default)]
+    accessor_removals: VecDeque<AccessorId>,
+    // The number of files removed through their last accessor being removed
+    #[serde(default)]
+    accessor_removal_files_removed: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -310,10 +317,35 @@ impl Files {
         self.pending_files.remove(file_id).is_some()
     }
 
-    pub fn remove_accessor(&mut self, accessor_id: &AccessorId) -> Vec<FileRemoved> {
+    pub fn queue_accessor_removals(&mut self, accessor_ids: impl IntoIterator<Item = AccessorId>) {
+        self.accessor_removals.extend(accessor_ids);
+    }
+
+    pub fn accessor_removals_queued(&self) -> bool {
+        !self.accessor_removals.is_empty()
+    }
+
+    // Removes the oldest queued accessor from at most `max_files` of the files linked to it, and
+    // removes it from the queue once no more files are. Returns the files removed, or None if no
+    // removals are queued.
+    pub fn remove_next_queued_accessor(&mut self, max_files: usize) -> Option<Vec<FileRemoved>> {
+        let accessor_id = *self.accessor_removals.front()?;
+        let (files_removed, complete) = self.remove_accessor(&accessor_id, max_files);
+        if complete {
+            self.accessor_removals.pop_front();
+        }
+        self.accessor_removal_files_removed += files_removed.len() as u64;
+        Some(files_removed)
+    }
+
+    // Removes the accessor from at most `max_files` of the files linked to it, removing each file
+    // it was the last accessor of. Returns the files removed, and whether no more files are linked
+    // to it.
+    fn remove_accessor(&mut self, accessor_id: &AccessorId, max_files: usize) -> (Vec<FileRemoved>, bool) {
         let mut files_removed = Vec::new();
 
-        let file_ids = self.accessors_map.remove(*accessor_id);
+        let file_ids = self.accessors_map.remove(*accessor_id, max_files);
+        let complete = file_ids.len() < max_files;
         for file_id in file_ids {
             // Only write the file back if it still has other accessors, otherwise it is removed
             let has_other_accessors = self.files.update(&file_id, |file| {
@@ -330,7 +362,7 @@ impl Files {
             }
         }
 
-        files_removed
+        (files_removed, complete)
     }
 
     pub fn remove_expired_files(&mut self, now: TimestampMillis, max_count: usize) -> Vec<FileRemoved> {
@@ -387,6 +419,8 @@ impl Files {
             source_hashes: self.source_hashes.len() as u64,
             accessor_replacements_queued: self.accessor_replacements.len() as u64,
             accessors_replaced: self.accessors_replaced,
+            accessor_removals_queued: self.accessor_removals.len() as u64,
+            accessor_removal_files_removed: self.accessor_removal_files_removed,
         }
     }
 
@@ -753,6 +787,8 @@ pub struct Metrics {
     pub source_hashes: u64,
     pub accessor_replacements_queued: u64,
     pub accessors_replaced: u64,
+    pub accessor_removals_queued: u64,
+    pub accessor_removal_files_removed: u64,
 }
 
 #[cfg(test)]
@@ -847,7 +883,8 @@ mod tests {
         assert_eq!(files.vault_pin(&1).map(|(h, _)| h), Some(hash));
 
         // File reference released, the pin's reference must survive it
-        let removed = files.remove_accessor(&Principal::from_slice(&[1]));
+        files.queue_accessor_removals([Principal::from_slice(&[1])]);
+        let removed = files.remove_next_queued_accessor(10).unwrap();
         assert_eq!(removed.len(), 1);
         assert!(files.get(&1).is_none());
         assert!(files.blobs.exists(&hash));
@@ -868,12 +905,45 @@ mod tests {
         put_as(&mut files, owner, Vec::new(), 2, b"private".to_vec(), None);
         put_as(&mut files, other_owner, Vec::new(), 3, b"other".to_vec(), None);
 
-        let removed = files.remove_accessor(&accessor);
+        files.queue_accessor_removals([accessor]);
+        let removed = files.remove_next_queued_accessor(10).unwrap();
         assert_eq!(removed.iter().map(|f| f.file_id).collect::<Vec<_>>(), vec![1]);
         assert!(files.get(&2).is_some());
         assert!(files.get(&3).is_some());
         assert_eq!(files.accessors_map.get(owner), vec![2]);
         assert_eq!(files.accessors_map.get(other_owner), vec![3]);
+    }
+
+    #[test]
+    fn a_queued_accessor_is_removed_a_few_files_at_a_time() {
+        let mut files = files();
+        let owner = Principal::from_slice(&[1]);
+        let group = canister(2);
+        let other_group = canister(3);
+        let user = canister(4);
+
+        put_as(&mut files, owner, vec![group], 1, b"one".to_vec(), None);
+        put_as(&mut files, owner, vec![group], 2, b"two".to_vec(), None);
+        // Named by another accessor too, so it lives on through that one
+        put_as(&mut files, owner, vec![group, user], 3, b"three".to_vec(), None);
+        put_as(&mut files, owner, vec![other_group], 4, b"four".to_vec(), None);
+
+        // Two files at a time, so the removal stays queued until no more files are linked to it
+        files.queue_accessor_removals([group]);
+        let mut removed = Vec::new();
+        while let Some(files_removed) = files.remove_next_queued_accessor(2) {
+            removed.extend(files_removed.into_iter().map(|f| f.file_id));
+        }
+        files.check_invariants();
+
+        assert_eq!(removed, vec![1, 2]);
+        assert!(!files.accessor_removals_queued());
+        assert_eq!(files.metrics().accessor_removal_files_removed, 2);
+        assert!(files.get(&1).is_none());
+        assert!(files.get(&2).is_none());
+        assert_eq!(files.get(&3).unwrap().accessors, BTreeSet::from([user]));
+        assert!(files.get(&4).is_some());
+        assert!(files.accessors_map.get(group).is_empty());
     }
 
     #[test]

@@ -76,6 +76,16 @@ impl FcmTokenStore {
             .collect()
     }
 
+    /// Moves the user's tokens from their old id onto their new one, which a user is given when
+    /// migrated to a MultiUser canister.
+    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
+        let tokens: Vec<FcmToken> = self.get_for_user(&old_user_id).into_iter().cloned().collect();
+        for token in tokens {
+            self.fcm_user_tokens.remove(&(old_user_id, token.clone()));
+            self.fcm_user_tokens.insert((new_user_id, token));
+        }
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &(UserId, FcmToken)> {
         self.fcm_user_tokens.iter()
     }
@@ -153,5 +163,29 @@ mod test {
             store.remove(&user_id1, &token1),
             Err("Token is not associated with current user".to_string())
         );
+    }
+
+    #[test]
+    fn migrate_user_id_moves_the_users_tokens() {
+        let mut store = FcmTokenStore::default();
+
+        let old_user_id = UserId::new(CanisterId::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").expect("Invalid principal"));
+        let new_user_id = UserId::new(CanisterId::from_text("hnv5y-siaaa-aaaaf-aacza-cai").expect("Invalid principal"));
+        let other_user_id = UserId::new(CanisterId::from_text("2yfsq-kaaaa-aaaaf-aaa4q-cai").expect("Invalid principal"));
+
+        let token1 = FcmToken::from("token1".to_string());
+        let token2 = FcmToken::from("token2".to_string());
+        let token3 = FcmToken::from("token3".to_string());
+
+        store.add(old_user_id, token1.clone());
+        store.add(old_user_id, token2.clone());
+        store.add(other_user_id, token3.clone());
+
+        store.migrate_user_id(old_user_id, new_user_id);
+
+        assert!(store.get_for_user(&old_user_id).is_empty());
+        assert_eq!(store.get_for_user(&new_user_id), vec![&token1, &token2]);
+        assert_eq!(store.get_for_user(&other_user_id), vec![&token3]);
+        assert_eq!(store.len(), 3);
     }
 }
