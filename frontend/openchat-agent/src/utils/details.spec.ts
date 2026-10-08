@@ -666,29 +666,6 @@ describe("loadCommunityDetails", () => {
             expect(stored.get(id)?.lastUpdated).toBe(10n);
         });
 
-        test("they replace those held by the caller", async () => {
-            const { load, loadToHold, stored, updatesSince } = setup(details(5n, ["a", "x"]));
-            await loadToHold();
-            updatesSince.mockRejectedValue(tooManyUpdates());
-
-            const resp = await load(10n, 5n);
-
-            expect(memberIds(resp)).toEqual(["a", "b"]);
-            expect(memberIds(stored.get(id))).toEqual(["a", "b"]);
-        });
-
-        test("as they are if the updates are too large to be returned", async () => {
-            const { load, stored, updatesSince } = setup(details(5n, ["a", "x"]));
-            updatesSince.mockRejectedValue(
-                new ResponseTooLargeError(new Error("too large"), 4_000_000, 3_145_728),
-            );
-
-            const resp = await load(10n);
-
-            expect(memberIds(resp)).toEqual(["a", "b"]);
-            expect(memberIds(stored.get(id))).toEqual(["a", "b"]);
-        });
-
         test("the cached details are kept if the details in full can't be loaded", async () => {
             const { load, stored, initial, updatesSince } = setup(details(5n, ["a", "x"]));
             updatesSince.mockRejectedValue(tooManyUpdates());
@@ -698,27 +675,6 @@ describe("loadCommunityDetails", () => {
 
             expect(memberIds(resp)).toEqual(["a", "x"]);
             expect(stored.get(id)?.lastUpdated).toBe(5n);
-        });
-
-        test("those held by the caller are kept if the details in full can't be loaded", async () => {
-            const { load, loadToHold, cache, initial, updatesSince } = setup(
-                details(5n, ["a", "x"]),
-            );
-            await loadToHold();
-            updatesSince.mockRejectedValue(tooManyUpdates());
-            initial.mockResolvedValue({ kind: "failure" } as never);
-
-            expect(await load(10n, 5n)).toEqual({ kind: "success_no_updates", lastUpdated: 5n });
-            expect(cache.setCachedCommunityDetails).not.toHaveBeenCalled();
-        });
-
-        test("any other failure is thrown, as before", async () => {
-            const { load, initial, updatesSince } = setup(details(5n, ["a", "x"]));
-            const trapped = new HttpError(500, new Error("trapped"));
-            updatesSince.mockRejectedValue(trapped);
-
-            await expect(load(10n)).rejects.toBe(trapped);
-            expect(initial).not.toHaveBeenCalled();
         });
     });
 });

@@ -38,80 +38,44 @@ const solved: TDailyPuzzleSolved = {
 };
 
 describe("daily puzzle mappers", () => {
-    describe("balances carried on the responses", () => {
-        test("start response without a debit carries no balance", () => {
+    test("the start, hint and solved responses carry the balances when present, and none otherwise", () => {
+        const balances = (r: { chitBalance?: number; totalChitEarned?: number }) => [
+            r.chitBalance,
+            r.totalChitEarned,
+        ];
+        const start = (chit_balance?: number, total_chit_earned?: number) => {
             const resp = dailyPuzzleStartResponse({
-                Success: {
-                    started_at: BigInt(1),
-                    state,
-                    chit_balance: undefined,
-                    total_chit_earned: undefined,
-                },
-            } as LocalUserIndexDailyPuzzleStartResponse);
-            expect(resp.kind).toBe("success");
-            if (resp.kind !== "success") return;
-            expect(resp.chitBalance).toBeUndefined();
-            expect(resp.totalChitEarned).toBeUndefined();
-        });
-
-        test("start response with a debit maps both balances", () => {
-            const resp = dailyPuzzleStartResponse({
-                Success: {
-                    started_at: BigInt(1),
-                    state,
-                    chit_balance: 3000,
-                    total_chit_earned: 4100,
-                },
+                Success: { started_at: BigInt(1), state, chit_balance, total_chit_earned },
             } as LocalUserIndexDailyPuzzleStartResponse);
             if (resp.kind !== "success") throw new Error("expected success");
-            expect(resp.chitBalance).toBe(3000);
-            expect(resp.totalChitEarned).toBe(4100);
-        });
-
-        test("hint response maps balances when present", () => {
-            const hint = {
-                hint: { technique: 1, focus: [0, 1], target: [0], conclusions: [[0, 1]] },
-                level: 2,
-                mistake: false,
-            };
-            const withBalance = dailyPuzzleHintResponse({
+            return resp;
+        };
+        const hint = (chit_balance?: number, total_chit_earned?: number) => {
+            const resp = dailyPuzzleHintResponse({
                 Success: {
-                    hint,
+                    hint: {
+                        hint: { technique: 1, focus: [0, 1], target: [0], conclusions: [[0, 1]] },
+                        level: 2,
+                        mistake: false,
+                    },
                     hints_used: 1,
                     state,
-                    chit_balance: 2900,
-                    total_chit_earned: 4100,
+                    chit_balance,
+                    total_chit_earned,
                 },
             } as LocalUserIndexDailyPuzzleHintResponse);
-            if (withBalance.kind !== "success") throw new Error("expected success");
-            expect(withBalance.chitBalance).toBe(2900);
-            expect(withBalance.totalChitEarned).toBe(4100);
+            if (resp.kind !== "success") throw new Error("expected success");
+            return resp;
+        };
 
-            const without = dailyPuzzleHintResponse({
-                Success: {
-                    hint,
-                    hints_used: 1,
-                    state,
-                    chit_balance: undefined,
-                    total_chit_earned: undefined,
-                },
-            } as LocalUserIndexDailyPuzzleHintResponse);
-            if (without.kind !== "success") throw new Error("expected success");
-            expect(without.chitBalance).toBeUndefined();
-        });
-
-        test("solved maps balances only when present", () => {
-            expect(dailyPuzzleSolved(solved).chitBalance).toBeUndefined();
-            expect(dailyPuzzleSolved(solved).totalChitEarned).toBeUndefined();
-            const paid = dailyPuzzleSolved({
-                ...solved,
-                chit_balance: 3150,
-                total_chit_earned: 4350,
-            });
-            expect(paid.chitBalance).toBe(3150);
-            expect(paid.totalChitEarned).toBe(4350);
-            expect(paid.reward).toBe(250);
-        });
+        expect(balances(start())).toEqual([undefined, undefined]);
+        expect(balances(start(3000, 4100))).toEqual([3000, 4100]);
+        expect(balances(hint())).toEqual([undefined, undefined]);
+        expect(balances(hint(2900, 4100))).toEqual([2900, 4100]);
+        expect(balances(dailyPuzzleSolved(solved))).toEqual([undefined, undefined]);
+        const paid = dailyPuzzleSolved({ ...solved, chit_balance: 3150, total_chit_earned: 4350 });
+        expect(balances(paid)).toEqual([3150, 4350]);
+        expect(paid.reward).toBe(250);
     });
 });
 

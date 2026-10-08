@@ -217,15 +217,20 @@ function key(index: number): string {
 }
 
 describe("setCachedChats", () => {
-    test("takes the next version from the head, and writes globals, rows, stamps and head together", async () => {
+    test("takes the next version from the head, writes globals, rows, stamps and head together, and stamps the touched fields at that version", async () => {
         const { chatsDb, stores, log } = chatsDbWith();
 
         const first = await chatsDb.setCachedChats(state(), emptyTouched());
-        const second = await chatsDb.setCachedChats(state(), emptyTouched());
+        const firstOps = [...log];
+        const second = await chatsDb.setCachedChats(state(), {
+            ...emptyTouched(),
+            fields: new Set(["blockedUsers"]),
+        });
 
         expect(first).toBe(1);
         expect(second).toBe(2);
         expect(stores.sync.get("head")).toBe(2);
+        expect((stores.sync.get("stamps") as SyncStamps).fields.blockedUsers).toBe(2);
         expect(stores.chats.get("principal")).toEqual(
             globals({
                 latestUserCanisterUpdates: stores.chats.get("principal").latestUserCanisterUpdates,
@@ -233,28 +238,9 @@ describe("setCachedChats", () => {
         );
         expect("groupChats" in stores.chats.get("principal")).toBe(false);
         // everything is read before anything is written
-        expect(log.slice(0, 7)).toEqual([
-            "get sync head",
-            "get sync stamps",
-            "get chats principal",
-            "getAllKeys chat_rows",
-            "put chats principal",
-            "put sync stamps",
-            "put sync head",
-        ]);
-    });
-
-    test("stamps the touched fields at the version taken", async () => {
-        const { chatsDb, stores } = chatsDbWith({ sync: { head: 9 } });
-
-        const version = await chatsDb.setCachedChats(state(), {
-            ...emptyTouched(),
-            fields: new Set(["blockedUsers"]),
-        });
-
-        expect(version).toBe(10);
-        const stamps = stores.sync.get("stamps") as SyncStamps;
-        expect(stamps.fields.blockedUsers).toBe(10);
+        const firstPut = firstOps.findIndex((op) => op.startsWith("put "));
+        expect(firstPut).toBeGreaterThan(0);
+        expect(firstOps.slice(firstPut).some((op) => op.startsWith("get"))).toBe(false);
     });
 
     test("rewrites only the touched and new chats, and tombstones the ones that are gone", async () => {

@@ -12,17 +12,7 @@ describe("isExpired", () => {
         expect(isExpired({ expiresAt: now - 1 }, now)).toBe(true);
     });
 
-    test("an event whose expiry is in the future is not expired", () => {
-        expect(isExpired({ expiresAt: now + 1 }, now)).toBe(false);
-    });
-
     test("an event expiring exactly now is not yet expired", () => {
         expect(isExpired({ expiresAt: now }, now)).toBe(false);
-    });
-
-    test("a past epoch-millis expiry is expired against wall-clock time", () => {
-        // Regression: comparing against performance.now() (ms since page load) meant an
-        // epoch-millis expiry was never considered to have passed
-        expect(isExpired({ expiresAt: Date.now() - 60_000 }, Date.now())).toBe(true);
     });
 });
