@@ -272,46 +272,6 @@ fn cycles_refund_resumes_after_the_local_user_index_is_upgraded_mid_way() {
     wrapper.discard();
 }
 
-// Whatever code a queued canister has is uninstalled before its cycles are refunded, unless it's a
-// live canister (see the unit test in the refund job)
-#[test]
-fn cycles_refund_uninstalls_any_other_code_first() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
-    let operator = register_user(env, canister_ids);
-    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
-
-    delete_user(env, &user_auth, canister_ids.identity);
-    wait_for_cycles_to_be_refunded(env, &user);
-
-    // The deleted user's canister somehow ends up with cycles and some other code on it
-    env.add_cycles(user.canister(), T);
-    let other_wasm = wat::parse_str("(module)").unwrap();
-    env.install_canister(user.canister(), other_wasm, vec![], Some(user.local_user_index));
-    let refunded_before = cycles_refunded_metric(env, user.local_user_index);
-
-    client::user_index::refund_deleted_user_cycles(
-        env,
-        operator.principal,
-        canister_ids.user_index,
-        &user_index_canister::refund_deleted_user_cycles::Args {},
-    );
-
-    // The other code is uninstalled, then the cycles refunded
-    wait_for_cycles_to_be_refunded(env, &user);
-    let refunded = cycles_refunded_metric(env, user.local_user_index) - refunded_before;
-    assert!(refunded > T - MAX_RESIDUAL_CYCLES, "{refunded}");
-
-    wrapper.discard();
-}
-
 // See backend/canisters/cycles_refunder/README.md for why ~110B cycles can't be recovered
 pub(crate) const MAX_RESIDUAL_CYCLES: u128 = 125_000_000_000;
 

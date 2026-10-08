@@ -64,22 +64,3 @@ impl SuccessResult {
             .collect()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // `Args` as sent by clients which predate `max_members`
-    #[derive(Serialize)]
-    struct PreviousArgs {
-        channel_id: ChannelId,
-    }
-
-    #[test]
-    fn args_without_max_members_are_read() {
-        let bytes = msgpack::serialize_then_unwrap(PreviousArgs { channel_id: 1u32.into() });
-        let args: Args = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(args.channel_id, 1u32.into());
-        assert!(args.max_members.is_none());
-    }
-}

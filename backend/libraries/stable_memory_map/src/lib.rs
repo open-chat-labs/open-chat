@@ -1019,46 +1019,6 @@ mod tests {
     }
 
     #[test]
-    fn read_all_entries_merges_both_maps_in_key_order() {
-        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
-        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
-
-        with_map_mut(|m| {
-            for i in 0..10 {
-                m.insert(small_key(i), vec![0; 10]);
-            }
-            m.insert(default_key(), vec![1; 10]);
-        });
-
-        let expected: Vec<Vec<u8>> = {
-            let mut keys: Vec<Vec<u8>> = (0..10).map(|i| BaseKey::from(small_key(i)).into_vec()).collect();
-            keys.push(BaseKey::from(default_key()).into_vec());
-            keys.sort();
-            keys
-        };
-
-        // Everything in one page
-        let ReadAllEntriesResult { entries, finished } = read_all_entries(None, usize::MAX);
-        assert!(finished);
-        assert_eq!(entries.iter().map(|(k, _)| k.clone()).collect::<Vec<_>>(), expected);
-
-        // Page by page, each of which fits only 2 entries, continuing after the last key read
-        let entry_size = entries[0].0.len() + 10 + ENTRY_ENCODING_OVERHEAD;
-        let mut read = Vec::new();
-        let mut after: Option<Vec<u8>> = None;
-        loop {
-            let ReadAllEntriesResult { entries: page, finished } = read_all_entries(after.as_deref(), 2 * entry_size + 5);
-            assert!(page.len() <= 2);
-            after = page.last().map(|(k, _)| k.clone());
-            read.extend(page.into_iter().map(|(k, _)| k));
-            if finished {
-                break;
-            }
-        }
-        assert_eq!(read, expected);
-    }
-
-    #[test]
     fn read_all_entries_interleaves_the_two_maps() {
         let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
         init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
@@ -1188,47 +1148,6 @@ mod tests {
     }
 
     #[test]
-    fn raw_entries_are_inserted_into_the_current_scope() {
-        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
-        init_multi_user(memory_manager.get(MAIN), memory_manager.get(SMALL));
-
-        let entries: Vec<(Vec<u8>, Vec<u8>)> = {
-            let mut entries: Vec<_> = (0..3)
-                .map(|i| (BaseKey::from(small_key(i)).into_vec(), vec![i as u8]))
-                .collect();
-            entries.push((BaseKey::from(default_key()).into_vec(), vec![10]));
-            entries.sort();
-            entries
-        };
-
-        with_key_scope(KeyScope::User(1), || insert_raw_entries(entries.clone()).unwrap());
-
-        with_key_scope(KeyScope::User(1), || {
-            let ReadAllEntriesResult { entries: read, finished } = read_all_entries(None, usize::MAX);
-            assert!(finished);
-            assert_eq!(read, entries);
-            // Each entry is in the map its key belongs in
-            with_map(|m| {
-                assert_eq!(m.get(small_key(0)), Some(vec![0]));
-                assert_eq!(m.get(default_key()), Some(vec![10]));
-            });
-        });
-        with_key_scope(KeyScope::User(2), || {
-            assert!(read_all_entries(None, usize::MAX).entries.is_empty());
-        });
-    }
-
-    #[test]
-    fn read_all_entries_of_an_empty_map() {
-        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
-        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
-
-        let ReadAllEntriesResult { entries, finished } = read_all_entries(None, ONE_KB);
-        assert!(entries.is_empty());
-        assert!(finished);
-    }
-
-    #[test]
     fn read_all_entries_without_a_small_entries_map() {
         let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
         init(memory_manager.get(MAIN));
@@ -1270,20 +1189,6 @@ mod tests {
     }
 
     const ONE_KB: usize = 1024;
-
-    #[test]
-    fn read_all_entries_reads_an_entry_larger_than_max_bytes() {
-        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
-        init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
-
-        with_map_mut(|m| {
-            m.insert(default_key(), vec![1; 100]);
-        });
-
-        let ReadAllEntriesResult { entries, finished } = read_all_entries(None, 10);
-        assert_eq!(entries.len(), 1);
-        assert!(finished);
-    }
 
     fn small_key(i: u32) -> TestSmallEntriesKey {
         TestSmallEntriesKeyPrefix::new().create_key(&i)

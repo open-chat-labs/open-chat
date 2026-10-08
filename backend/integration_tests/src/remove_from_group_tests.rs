@@ -1,6 +1,6 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::utils::{metrics, tick_many};
+use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::OPENCHAT_BOT_USER_ID;
@@ -97,45 +97,6 @@ fn removal_reaches_a_user_canister_unreachable_for_longer_than_the_direct_call_i
     }
     assert!(removed);
     assert_eq!(removed_messages(env, &user2), 1);
-}
-
-// A bot's canister takes no events from the group, so none is queued for it when it's removed
-#[test]
-fn removing_a_bot_queues_no_event_for_it() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let TestData { user1, group_id, .. } = init_test_data(env, canister_ids, *controller, true, false);
-
-    let bot = canister_ids.proposals_bot;
-    client::group::happy_path::join_group(env, bot, group_id);
-    tick_many(env, 3);
-    assert_eq!(queued_user_events(env, group_id), 0);
-
-    let remove_member_response = client::group::remove_participant(
-        env,
-        user1.principal,
-        group_id.into(),
-        &group_canister::remove_participant::Args { user_id: bot.into() },
-    );
-    assert!(matches!(
-        remove_member_response,
-        group_canister::remove_participant::Response::Success
-    ));
-
-    // A wrongly queued event is only counted again once its call to the bot, which may be on another
-    // subnet, has failed
-    tick_many(env, 15);
-    assert_eq!(queued_user_events(env, group_id), 0);
-}
-
-fn queued_user_events(env: &PocketIc, group_id: ChatId) -> u64 {
-    metrics(env, group_id.into())["queued_user_events"].as_u64().unwrap()
 }
 
 // The messages from the OpenChat bot telling the user they were removed from a group

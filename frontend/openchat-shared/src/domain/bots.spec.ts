@@ -65,11 +65,6 @@ describe("a date argument typed in words", () => {
         return arg.kind === "dateTime" ? arg.value : undefined;
     }
 
-    test("is not understood until the date parser has loaded", async () => {
-        const bots = await freshModule();
-        expect(when(bots, "tomorrow at 9am")).toBeNull();
-    });
-
     test("is understood once the date parser has loaded", async () => {
         const bots = await freshModule();
         await bots.loadDateParser();

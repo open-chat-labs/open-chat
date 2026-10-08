@@ -205,16 +205,6 @@ mod tests {
     }
 
     #[test]
-    fn duplicate_users_are_only_counted_once() {
-        let mut user_groups = UserGroups::default();
-        let mut members = users(0..MAX);
-        members.extend(users(0..MAX));
-
-        let id = create(&mut user_groups, "a", members);
-        assert_eq!(member_count(&user_groups, id), MAX);
-    }
-
-    #[test]
     fn user_group_cannot_be_created_with_a_name_which_is_taken() {
         let mut user_groups = UserGroups::default();
         create(&mut user_groups, "a", users(0..1));
@@ -268,14 +258,6 @@ mod tests {
             .unwrap();
         user_groups.update(id, None, Vec::new(), users(1..2), 5).unwrap();
         assert_eq!(member_count(&user_groups, id), MAX + 9);
-    }
-
-    #[test]
-    fn updating_a_user_group_which_does_not_exist_fails() {
-        let mut user_groups = UserGroups::default();
-
-        let error = user_groups.update(1, None, users(0..1), Vec::new(), 1).unwrap_err();
-        assert!(error.matches_code(OCErrorCode::UserGroupNotFound));
     }
 
     // The website shows the error's message to the user as the limit

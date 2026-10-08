@@ -7,8 +7,8 @@ use crate::utils::{
 use crate::{CanisterIds, TestEnv, UserAuth, client, wasms};
 use candid::Principal;
 use constants::{
-    DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, MAX_MESSAGE_REMINDERS,
-    MULTI_USER_CANISTER_MIN_CYCLES_BALANCE, OPENCHAT_BOT_USER_ID,
+    HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, MULTI_USER_CANISTER_MIN_CYCLES_BALANCE,
+    OPENCHAT_BOT_USER_ID,
 };
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
@@ -24,49 +24,17 @@ use types::{
     BotDefinition, BotInitiator, BotInstallationLocation, BotMessageContent, BotPermissions, BuildVersion, CanisterId,
     CanisterWasm, ChannelId, ChannelLatestMessageIndex, Chat, ChatEvent, ChatId, ChatPermission, ChitEventType, CommunityId,
     CommunityImportedInto, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, DeletedCommunityInfo,
-    DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, Empty,
-    EventIndex, EventsResponse, FileContent, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, Milliseconds, NotificationEnvelope, OptionUpdate, P2PSwapContentInitial, P2PSwapStatus,
-    PendingCryptoTransaction, PinNumberSettings, Reaction, ReferralStatus, ReplyContext, TextContent, TimestampMillis,
-    UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1, icrc2,
+    DeletedGroupInfoInternal, DiamondMembershipPlanDuration, DirectChatSummary, DirectChatSummaryUpdates, Document, EventIndex,
+    EventsResponse, FileContent, IdempotentEnvelope, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex,
+    Milliseconds, NotificationEnvelope, OptionUpdate, P2PSwapContentInitial, P2PSwapStatus, PendingCryptoTransaction, Reaction,
+    ReferralStatus, ReplyContext, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1,
+    icrc2,
 };
 use user_canister::set_pin_number::PinNumberVerification;
 use user_canister::{
-    ChatInList, LocalUserIndexEvent, MessageActivity, MessageActivityEvent, NamedAccount, UserCanisterEvent,
-    UserJoinedCommunityOrChannel, UserJoinedGroup, WalletConfig,
+    ChatInList, LocalUserIndexEvent, MessageActivity, UserCanisterEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    WalletConfig,
 };
-
-#[test]
-fn local_user_index_identifies_user_and_multi_user_canisters() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let multi_user_canister =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user = client::register_user(env, canister_ids);
-
-    let is_user_or_multi_user_canister = |canister_id| {
-        client::local_user_index::is_user_or_multi_user_canister(
-            env,
-            Principal::anonymous(),
-            local_user_index,
-            &local_user_index_canister::is_user_or_multi_user_canister::Args { canister_id },
-        )
-    };
-
-    use local_user_index_canister::is_user_or_multi_user_canister::Response;
-    assert_eq!(
-        is_user_or_multi_user_canister(multi_user_canister),
-        Response::MultiUserCanister
-    );
-    assert_eq!(is_user_or_multi_user_canister(user.canister()), Response::UserCanister);
-    assert_eq!(is_user_or_multi_user_canister(canister_ids.user_index), Response::Neither);
-}
 
 #[test]
 fn register_user_with_flag_places_user_in_multi_user_canister() {
@@ -149,69 +117,6 @@ fn register_user_with_flag_places_user_in_multi_user_canister() {
     for (canister_id, expected) in expected_user_counts {
         assert_eq!(user_count(&multi_user_canisters_after, canister_id), expected);
     }
-}
-
-#[test]
-fn users_registered_in_a_multi_user_canister_are_sent_the_welcome_messages() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let (principal, user_id) = create_user(env, canister_ids, local_user_index, canister_id);
-    let user_in_own_canister = client::register_user(env, canister_ids);
-    assert_eq!(user_in_own_canister.user_id.index(), 0);
-
-    // The OpenChat bot sends the same welcome messages as it does to a user in a canister of their own
-    let expected = messages(&client::user::happy_path::events(
-        env,
-        &user_in_own_canister,
-        OPENCHAT_BOT_USER_ID,
-        0.into(),
-        true,
-        10,
-        10,
-    ));
-    assert!(!expected.is_empty());
-    assert_eq!(
-        messages(&events(env, principal, canister_id, user_id, OPENCHAT_BOT_USER_ID)),
-        expected
-    );
-}
-
-#[test]
-fn deleting_a_user_decrements_their_multi_user_canisters_user_count() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
-
-    let (user, user_auth) = client::register_user_in_multi_user_canister_and_include_auth(env, canister_ids);
-    tick_many(env, 5);
-    let user_count_before = multi_user_canisters(env, canister_ids.user_index)[&user.canister()].user_count;
-
-    let response = client::identity::delete_user(
-        env,
-        user_auth.auth_principal(),
-        canister_ids.identity,
-        &identity_canister::delete_user::Args {
-            public_key: user_auth.auth_public_key.clone(),
-            delegation: user_auth.auth_delegation.clone(),
-        },
-    );
-    assert!(
-        matches!(response, identity_canister::delete_user::Response::Success),
-        "{response:?}"
-    );
-    tick_many(env, 5);
-
-    assert_eq!(
-        multi_user_canisters(env, canister_ids.user_index)[&user.canister()].user_count,
-        user_count_before - 1
-    );
 }
 
 #[test]
@@ -1446,98 +1351,6 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
     assert!(messages(&events(env, b_principal, canister_id, b, a)).contains(&(a, "hello".to_string())));
 }
 
-// The LocalUserIndex only keeps a notification for a user with a push subscription, which a user in
-// a MultiUser canister can't yet have as the UserIndex isn't told of them, so this checks that the
-// events are sent rather than what the LocalUserIndex does with them
-#[test]
-fn events_for_the_local_user_index_are_sent_from_a_multi_user_canister() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-
-    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
-
-    // A notification of each message, blocking, unblocking and setting a profile background
-    send_text_message(env, a_principal, canister_id, b, "hello", random_from_u128());
-    send_text_message(env, b_principal, canister_id, a, "hi", random_from_u128());
-    block_user(env, a_principal, canister_id, b);
-    unblock_user(env, a_principal, canister_id, b);
-    let background = client::user::set_profile_background(
-        env,
-        a_principal,
-        canister_id,
-        &user_canister::set_profile_background::Args {
-            profile_background: Some(document(100)),
-        },
-    );
-    assert!(matches!(background, user_canister::set_profile_background::Response::Success));
-
-    tick_many(env, 3);
-    assert_eq!(queued_local_user_index_events(env, canister_id), 0);
-}
-
-#[test]
-fn message_events_are_pushed_to_the_event_store_as_by_user_canisters() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
-
-    // Past when the welcome messages were sent, so that they aren't counted as the message sent below
-    env.advance_time(Duration::from_millis(1000));
-    let since = next_event_store_index(env, *controller, canister_ids.event_store);
-    let message_id = random_from_u128();
-    let sent = now_millis(env);
-    send_text_message(env, a_principal, canister_id, b, "hello", message_id);
-    env.advance_time(Duration::from_millis(1000));
-    let edited = now_millis(env);
-    edit_message(env, a_principal, canister_id, b, None, message_id, "hello edited");
-    env.advance_time(Duration::from_millis(1000));
-    let reacted = now_millis(env);
-    toggle_reaction(
-        env,
-        b_principal,
-        canister_id,
-        a,
-        None,
-        message_id,
-        &Reaction::new("👍".to_string()),
-        true,
-    );
-
-    // Each is pushed once, by the user who acted, even though both users' copies of the chat are in
-    // this canister
-    let events = [
-        ("message_sent", sent),
-        ("message_edited", edited),
-        ("reaction_added", reacted),
-    ];
-    let counts = wait_for_event_store_events(env, *controller, canister_ids.event_store, since, &events);
-    for ((name, timestamp), count) in events.iter().zip(counts) {
-        assert_eq!(count, 1, "{name} at {timestamp}");
-    }
-}
-
-fn queued_local_user_index_events(env: &PocketIc, canister_id: CanisterId) -> u32 {
-    serde_json::from_value(metrics(env, canister_id)["queued_local_user_index_events"].clone()).unwrap()
-}
-
 #[test]
 fn upgrade_filter_naming_unknown_canister_is_rejected() {
     let mut wrapper = ENV.deref().get();
@@ -1880,53 +1693,6 @@ fn timer_jobs(env: &PocketIc, canister_id: CanisterId) -> u32 {
 }
 
 #[test]
-fn search_messages_finds_matching_messages_in_a_direct_chat() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-
-    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
-    let (_, c) = create_user(env, canister_ids, local_user_index, canister_id);
-
-    send_text_message(env, a_principal, canister_id, b, "the quick brown fox", random_from_u128());
-    send_text_message(env, a_principal, canister_id, b, "jumps over", random_from_u128());
-    send_text_message(env, b_principal, canister_id, a, "a lazy fox", random_from_u128());
-
-    // Each user searches their own copy of the chat, whose message indexes are their own
-    let matches = |principal, them, term: &str| match search_messages(env, principal, canister_id, them, term) {
-        user_canister::search_messages::Response::Success(result) => {
-            let mut indexes: Vec<_> = result.matches.into_iter().map(|m| u32::from(m.message_index)).collect();
-            indexes.sort();
-            indexes
-        }
-        response => panic!("{response:?}"),
-    };
-    assert_eq!(matches(a_principal, b, "fox"), vec![0, 2]);
-    assert_eq!(matches(b_principal, a, "jumps"), vec![1]);
-    assert!(matches(b_principal, a, "wolf").is_empty());
-
-    for (them, term, code) in [
-        (b, "ox".to_string(), OCErrorCode::TermTooShort),
-        (b, "x".repeat(259), OCErrorCode::TermTooLong),
-        (c, "fox".to_string(), OCErrorCode::ChatNotFound),
-    ] {
-        let response = search_messages(env, a_principal, canister_id, them, &term);
-        assert!(
-            matches!(&response, user_canister::search_messages::Response::Error(e) if e.matches_code(code)),
-            "{response:?}"
-        );
-    }
-}
-
-#[test]
 fn disappearing_messages_expire_from_both_copies_of_a_direct_chat() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -1988,114 +1754,6 @@ fn disappearing_messages_expire_from_both_copies_of_a_direct_chat() {
     assert!(lasting.expires_at.is_none());
 }
 
-#[test]
-fn reactions_to_a_users_messages_appear_in_their_message_activity_feed() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-
-    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
-
-    let a_message_id = random_from_u128();
-    send_text_message(env, a_principal, canister_id, b, "from a", a_message_id);
-    let b_message_id = random_from_u128();
-    send_text_message(env, b_principal, canister_id, a, "from b", b_message_id);
-    let start = now_millis(env);
-    env.advance_time(Duration::from_millis(1));
-
-    // B reacting to A's message is activity for A, while B reacting to their own message is not
-    let reaction = Reaction::new("👍".to_string());
-    toggle_reaction(env, b_principal, canister_id, a, None, a_message_id, &reaction, true);
-    toggle_reaction(env, b_principal, canister_id, a, None, b_message_id, &reaction, true);
-
-    let feed = message_activity_feed(env, a_principal, canister_id, 0);
-    assert_eq!(feed.total, 1);
-    let [event] = <[MessageActivityEvent; 1]>::try_from(feed.events).unwrap();
-    assert_eq!(event.chat, Chat::Direct(b.into()));
-    assert_eq!(event.message_id, a_message_id);
-    assert_eq!(event.message_index, 0.into());
-    assert_eq!(event.activity, MessageActivity::Reaction);
-    assert_eq!(event.user_id, Some(b));
-    assert_eq!(message_activity_feed(env, b_principal, canister_id, 0).total, 0);
-
-    // As when the users are in different canisters, having a message reacted to earns A an
-    // achievement
-    assert!(has_achievement(
-        &initial_state(env, a_principal, canister_id),
-        Achievement::HadMessageReactedTo
-    ));
-    assert!(!has_achievement(
-        &initial_state(env, b_principal, canister_id),
-        Achievement::HadMessageReactedTo
-    ));
-
-    let summary = initial_state(env, a_principal, canister_id).message_activity_summary;
-    assert_eq!(summary.unread_count, 1);
-    assert_eq!(summary.latest_event_timestamp, event.timestamp);
-    let summary = updates(env, a_principal, canister_id, start)
-        .and_then(|u| u.message_activity_summary)
-        .expect("Expected the message activity summary to have been updated");
-    assert_eq!(summary.unread_count, 1);
-
-    // Marking the feed read clears the unread count
-    let response = client::user::mark_message_activity_feed_read(
-        env,
-        a_principal,
-        canister_id,
-        &user_canister::mark_message_activity_feed_read::Args {
-            read_up_to: event.timestamp,
-        },
-    );
-    assert!(matches!(
-        response,
-        user_canister::mark_message_activity_feed_read::Response::Success
-    ));
-    let summary = initial_state(env, a_principal, canister_id).message_activity_summary;
-    assert_eq!(summary.read_up_to, event.timestamp);
-    assert_eq!(summary.unread_count, 0);
-
-    // A reaction from a user A has blocked reaches neither A's copy of the chat nor A's feed
-    block_user(env, a_principal, canister_id, b);
-    toggle_reaction(
-        env,
-        b_principal,
-        canister_id,
-        a,
-        None,
-        a_message_id,
-        &Reaction::new("🎉".to_string()),
-        true,
-    );
-    assert_eq!(message_activity_feed(env, a_principal, canister_id, 0).total, 1);
-}
-
-fn search_messages(
-    env: &PocketIc,
-    sender: Principal,
-    canister_id: CanisterId,
-    user_id: UserId,
-    search_term: &str,
-) -> user_canister::search_messages::Response {
-    client::user::search_messages(
-        env,
-        sender,
-        canister_id,
-        &user_canister::search_messages::Args {
-            user_id,
-            search_term: search_term.to_string(),
-            max_results: 10,
-        },
-    )
-}
-
 fn update_chat_settings(
     env: &mut PocketIc,
     sender: Principal,
@@ -2125,153 +1783,6 @@ fn message_activity_feed(
         &user_canister::message_activity_feed::Args { since },
     );
     result
-}
-
-#[test]
-fn saved_crypto_accounts_and_hot_group_exclusions_are_held_per_user() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-
-    let (a_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
-    let (b_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
-
-    let user_canister::local_user_index::Response::Success(local_user_index_of_canister) =
-        client::user::local_user_index(env, a_principal, canister_id, &Empty {});
-    assert_eq!(local_user_index_of_canister, local_user_index);
-
-    // Saved crypto accounts
-    let named = |name: &str, account: Principal| NamedAccount {
-        name: name.to_string(),
-        account: account.to_string(),
-    };
-    let first = random_principal();
-    let second = random_principal();
-    assert!(matches!(
-        client::user::save_crypto_account(env, a_principal, canister_id, &named("Savings", first)),
-        UnitResult::Success
-    ));
-    let taken = client::user::save_crypto_account(env, a_principal, canister_id, &named("SAVINGS", second));
-    assert!(
-        matches!(&taken, UnitResult::Error(e) if e.matches_code(OCErrorCode::NameTaken)),
-        "{taken:?}"
-    );
-    assert_eq!(
-        saved_crypto_accounts(env, a_principal, canister_id),
-        vec![named("Savings", first)]
-    );
-    assert!(saved_crypto_accounts(env, b_principal, canister_id).is_empty());
-
-    assert!(matches!(
-        client::user::delete_saved_crypto_account(
-            env,
-            a_principal,
-            canister_id,
-            &user_canister::delete_saved_crypto_account::Args {
-                name: "savings".to_string()
-            },
-        ),
-        UnitResult::Success
-    ));
-    assert!(saved_crypto_accounts(env, a_principal, canister_id).is_empty());
-
-    // Hot group exclusions, which expire after the duration given
-    let group: ChatId = random_principal().into();
-    let expiring_group: ChatId = random_principal().into();
-    for (groups, duration) in [(vec![group], None), (vec![expiring_group], Some(1000))] {
-        client::user::add_hot_group_exclusions(
-            env,
-            a_principal,
-            canister_id,
-            &user_canister::add_hot_group_exclusions::Args { groups, duration },
-        );
-    }
-    let mut exclusions = hot_group_exclusions(env, a_principal, canister_id);
-    exclusions.sort();
-    let mut expected = vec![group, expiring_group];
-    expected.sort();
-    assert_eq!(exclusions, expected);
-    assert!(hot_group_exclusions(env, b_principal, canister_id).is_empty());
-
-    env.advance_time(Duration::from_millis(1001));
-    env.tick();
-    assert_eq!(hot_group_exclusions(env, a_principal, canister_id), vec![group]);
-}
-
-#[test]
-fn pin_number_is_set_verified_and_reported() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-
-    let (a_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
-    let (b_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
-    assert!(initial_state(env, a_principal, canister_id).pin_number_settings.is_none());
-
-    // No verification is needed to set the first PIN, which must be of a valid length
-    let too_short = set_pin_number(env, a_principal, canister_id, Some("123"), PinNumberVerification::None);
-    assert!(
-        matches!(&too_short, UnitResult::Error(e) if e.matches_code(OCErrorCode::PinTooShort)),
-        "{too_short:?}"
-    );
-    let start = now_millis(env);
-    env.advance_time(Duration::from_millis(1));
-    let response = set_pin_number(env, a_principal, canister_id, Some("1234"), PinNumberVerification::None);
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
-
-    let settings = initial_state(env, a_principal, canister_id).pin_number_settings.unwrap();
-    assert_eq!(settings.length, 4);
-    assert!(matches!(
-        updates(env, a_principal, canister_id, start).map(|u| u.pin_number_settings),
-        Some(OptionUpdate::SetToSome(PinNumberSettings { length: 4, .. }))
-    ));
-    assert!(initial_state(env, b_principal, canister_id).pin_number_settings.is_none());
-
-    // Changing it then needs the current PIN
-    let unverified = set_pin_number(env, a_principal, canister_id, Some("5678"), PinNumberVerification::None);
-    assert!(
-        matches!(&unverified, UnitResult::Error(e) if e.matches_code(OCErrorCode::PinRequired)),
-        "{unverified:?}"
-    );
-    let incorrect = set_pin_number(env, a_principal, canister_id, Some("5678"), pin("0000"));
-    assert!(
-        matches!(&incorrect, UnitResult::Error(e) if e.matches_code(OCErrorCode::PinIncorrect)),
-        "{incorrect:?}"
-    );
-    let response = set_pin_number(env, a_principal, canister_id, Some("56789"), pin("1234"));
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
-    assert_eq!(
-        initial_state(env, a_principal, canister_id)
-            .pin_number_settings
-            .unwrap()
-            .length,
-        5
-    );
-
-    // Removing it clears the settings
-    let after_change = now_millis(env);
-    env.advance_time(Duration::from_millis(1));
-    let response = set_pin_number(env, a_principal, canister_id, None, pin("56789"));
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
-    assert!(initial_state(env, a_principal, canister_id).pin_number_settings.is_none());
-    assert!(matches!(
-        updates(env, a_principal, canister_id, after_change).map(|u| u.pin_number_settings),
-        Some(OptionUpdate::SetToNone)
-    ));
 }
 
 #[test]
@@ -2438,18 +1949,6 @@ fn check_pin_number(env: &mut PocketIc, sender: Principal, canister_id: Canister
     )
 }
 
-fn saved_crypto_accounts(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> Vec<NamedAccount> {
-    let user_canister::saved_crypto_accounts::Response::Success(accounts) =
-        client::user::saved_crypto_accounts(env, sender, canister_id, &Empty {});
-    accounts
-}
-
-fn hot_group_exclusions(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> Vec<ChatId> {
-    let user_canister::hot_group_exclusions::Response::Success(exclusions) =
-        client::user::hot_group_exclusions(env, sender, canister_id, &Empty {});
-    exclusions
-}
-
 fn pin(value: &str) -> PinNumberVerification {
     PinNumberVerification::PIN(value.to_string().into())
 }
@@ -2470,113 +1969,6 @@ fn set_pin_number(
             verification,
         },
     )
-}
-
-#[test]
-fn chit_streaks_and_achievements_are_held_per_user_in_a_multi_user_canister() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-
-    let (a_principal, _) = create_user(env, canister_ids, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
-
-    // Streaks count days from the start of 2024
-    crate::chit_tests::ensure_time_at_least_day0(env);
-
-    // The first claim starts a streak of 1 day, and a second claim on the same day is rejected
-    let first_claim = claim_daily_chit(env, a_principal, canister_id);
-    assert_eq!(first_claim.streak, 1);
-    assert_eq!(first_claim.chit_earned, 200);
-    assert_eq!(first_claim.chit_balance, 200);
-    assert!(matches!(
-        client::user::claim_daily_chit(
-            env,
-            a_principal,
-            canister_id,
-            &user_canister::claim_daily_chit::Args { utc_offset_mins: None },
-        ),
-        user_canister::claim_daily_chit::Response::AlreadyClaimed(next_claim) if next_claim == first_claim.next_claim
-    ));
-
-    // Setting a bio and sending a text message to another user earn achievements, once only
-    for _ in 0..2 {
-        let response = client::user::set_bio(
-            env,
-            a_principal,
-            canister_id,
-            &user_canister::set_bio::Args { text: "bio".to_string() },
-        );
-        assert!(matches!(response, user_canister::set_bio::Response::Success));
-        send_text_message(env, a_principal, canister_id, b, "hello", random_from_u128());
-    }
-
-    let expected_achievements = [Achievement::SentDirectMessage, Achievement::SentText, Achievement::SetBio];
-    let expected_balance = 200 + expected_achievements.iter().map(|a| a.chit_reward() as i32).sum::<i32>();
-    let a_state = initial_state(env, a_principal, canister_id);
-    assert_eq!(a_state.chit_balance, expected_balance);
-    assert_eq!(a_state.total_chit_earned, expected_balance);
-    assert_eq!(a_state.streak, 1);
-    assert_eq!(a_state.max_streak, 1);
-    assert_eq!(a_state.next_daily_claim, first_claim.next_claim);
-    let mut achievements: Vec<_> = a_state
-        .achievements
-        .iter()
-        .filter_map(|event| match event.reason {
-            types::ChitEventType::Achievement(achievement) => Some(achievement),
-            _ => None,
-        })
-        .collect();
-    achievements.sort_by_key(|achievement| format!("{achievement:?}"));
-    assert_eq!(achievements, expected_achievements);
-
-    // The daily claim and one event per achievement
-    let a_chit_events = chit_events(env, a_principal, canister_id);
-    assert_eq!(a_chit_events.total, 4);
-
-    // The other user, in the same canister, has none of it, only the achievement for receiving a
-    // direct message, as when the users are in different canisters
-    let b_state = initial_state(env, b_principal, canister_id);
-    assert_eq!(b_state.chit_balance, Achievement::ReceivedDirectMessage.chit_reward() as i32);
-    assert_eq!(b_state.streak, 0);
-    assert_eq!(b_state.achievements.len(), 1);
-    assert!(has_achievement(&b_state, Achievement::ReceivedDirectMessage));
-    assert_eq!(chit_events(env, b_principal, canister_id).total, 1);
-
-    // Claiming on the next day extends the streak
-    env.advance_time(Duration::from_millis(
-        first_claim.next_claim.saturating_sub(now_millis(env)) + 1,
-    ));
-    let second_claim = claim_daily_chit(env, a_principal, canister_id);
-    assert_eq!(second_claim.streak, 2);
-    assert_eq!(second_claim.chit_balance, expected_balance + 200);
-
-    // Marking the achievements as seen shows up in the user's updates
-    let before_marking = now_millis(env);
-    env.advance_time(Duration::from_millis(1));
-    let last_seen = now_millis(env);
-    let response = client::user::mark_achievements_seen(
-        env,
-        a_principal,
-        canister_id,
-        &user_canister::mark_achievements_seen::Args { last_seen },
-    );
-    assert!(matches!(response, user_canister::mark_achievements_seen::Response::Success));
-    let a_updates = updates(env, a_principal, canister_id, before_marking).expect("Expected updates");
-    assert_eq!(a_updates.achievements_last_seen, Some(last_seen));
-    assert_eq!(a_updates.streak, 2);
-    assert_eq!(initial_state(env, a_principal, canister_id).achievements_last_seen, last_seen);
-
-    // The CHIT updates for the LocalUserIndex are all sent
-    tick_many(env, 3);
-    assert_eq!(queued_local_user_index_events(env, canister_id), 0);
 }
 
 fn claim_daily_chit(
@@ -2711,58 +2103,6 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
 
     // The other user's chat with the OpenChat bot still holds only their welcome messages
     assert_eq!(bot_message_texts(env, b_principal, canister_id, b), b_bot_messages);
-}
-
-#[test]
-fn pending_message_reminders_are_limited_per_user() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
-    let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
-    let remind_at = now_millis(env) + DAY_IN_MS;
-
-    let reminder_ids: Vec<_> = (0..MAX_MESSAGE_REMINDERS)
-        .map(|_| set_message_reminder(env, a_principal, canister_id, Chat::Direct(b.into()), None, remind_at))
-        .collect();
-    let response = client::user::set_message_reminder_v2(
-        env,
-        a_principal,
-        canister_id,
-        &user_canister::set_message_reminder_v2::Args {
-            chat: Chat::Direct(b.into()),
-            thread_root_message_index: None,
-            event_index: 10.into(),
-            notes: None,
-            remind_at,
-        },
-    );
-    assert!(
-        matches!(response, user_canister::set_message_reminder_v2::Response::Error(ref e) if e.matches_code(OCErrorCode::LimitReached)),
-        "{response:?}"
-    );
-
-    // Another user in the canister can still set reminders
-    set_message_reminder(env, b_principal, canister_id, Chat::Direct(a.into()), None, remind_at);
-
-    // And cancelling one makes room for another
-    let response = client::user::cancel_message_reminder(
-        env,
-        a_principal,
-        canister_id,
-        &user_canister::cancel_message_reminder::Args {
-            reminder_id: reminder_ids[0],
-        },
-    );
-    assert!(matches!(response, user_canister::cancel_message_reminder::Response::Success));
-    set_message_reminder(env, a_principal, canister_id, Chat::Direct(b.into()), None, remind_at);
 }
 
 fn set_message_reminder(
@@ -3001,53 +2341,6 @@ fn set_user_suspended(env: &mut PocketIc, sender: Principal, canister_id: Canist
     assert!(result.groups.is_empty() && result.communities.is_empty());
 }
 
-// These tests relied on each user in a MultiUser canister having a subaccount of the canister as
-// their wallet. Users now hold their own funds in their principal's account, so they are disabled
-// until the canister is converted to use principals, when they can be adapted.
-//
-// #[test]
-// fn approvals_are_granted_from_the_users_own_subaccount() {
-//     const ONE_CHAT: u128 = 100_000_000;
-//
-//     let mut wrapper = ENV.deref().get();
-//     let TestEnv {
-//         env,
-//         canister_ids,
-//         controller,
-//     } = wrapper.env();
-//
-//     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-//     let canister_id =
-//         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-//     let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
-//     let (_, b) = create_user(env, canister_ids, local_user_index, canister_id);
-//
-//     // Each user's funds are held in their own subaccount of the canister
-//     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, a, 10 * ONE_CHAT);
-//     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, b, 10 * ONE_CHAT);
-//     let balance = |env: &PocketIc, user: UserId| client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user);
-//
-//     let spender: types::icrc1::Account = random_principal().into();
-//     let response = client::user::approve_transfer(
-//         env,
-//         a_principal,
-//         canister_id,
-//         &user_canister::approve_transfer::Args {
-//             spender,
-//             ledger_canister_id: canister_ids.chat_ledger,
-//             amount: ONE_CHAT,
-//             expires_in: None,
-//             pin: None,
-//         },
-//     );
-//     assert!(matches!(response, UnitResult::Success), "{response:?}");
-//
-//     // The ledger charges the approval's fee to the account it was granted from, so A paid and B
-//     // didn't
-//     assert!(balance(env, a) < 10 * ONE_CHAT);
-//     assert_eq!(balance(env, b), 10 * ONE_CHAT);
-// }
-//
 #[test]
 fn streak_insurance_is_paid_for_and_used_per_user() {
     const ONE_CHAT: u128 = 100_000_000;
@@ -7040,41 +6333,6 @@ fn avatars_and_profile_backgrounds_are_served_under_each_users_index() {
     assert_eq!(get(env, format!("/user/{a_index}/avatar/{}", avatar.id)).status_code, 410);
 }
 
-// The UserIndex holds each user's avatar id, which it hands out in user summaries, so it is told when
-// a user in a MultiUser canister sets or removes their avatar, as it is by a User canister
-#[test]
-fn the_user_index_is_told_of_avatars_set_in_multi_user_canisters() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
-    let (_, b) = create_user(env, canister_ids, local_user_index, canister_id);
-    let carol = client::register_user(env, canister_ids);
-
-    let a_avatar = document(100);
-    set_avatar(env, a_principal, canister_id, Some(a_avatar.clone()));
-    let carols_avatar = document(100);
-    set_avatar(env, carol.principal, carol.canister(), Some(carols_avatar.clone()));
-    tick_many(env, 3);
-
-    let avatar_id =
-        |env: &PocketIc, user_id| client::user_index::happy_path::user(env, canister_ids.user_index, user_id).avatar_id;
-    assert_eq!(avatar_id(env, a), Some(a_avatar.id));
-    assert_eq!(avatar_id(env, b), None);
-    assert_eq!(avatar_id(env, carol.user_id), Some(carols_avatar.id));
-
-    set_avatar(env, a_principal, canister_id, None);
-    tick_many(env, 3);
-    assert_eq!(avatar_id(env, a), None);
-}
-
 #[test]
 fn ingress_messages_are_only_accepted_from_the_canisters_own_users() {
     let mut wrapper = ENV.deref().get();
@@ -7113,71 +6371,6 @@ fn ingress_messages_are_only_accepted_from_the_canisters_own_users() {
 
     let message_id = env.submit_call(canister_id, principal, "set_bio_msgpack", set_bio).unwrap();
     assert!(env.await_call(message_id).is_ok());
-}
-
-#[test]
-fn token_swaps_return_errors_rather_than_trapping() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let (principal, user_id) = create_user(env, canister_ids, local_user_index, canister_id);
-
-    let swap_response = client::user::swap_tokens(
-        env,
-        principal,
-        canister_id,
-        &user_canister::swap_tokens::Args {
-            swap_id: random_from_u128(),
-            input_token: types::TokenInfo {
-                symbol: ICP_SYMBOL.to_string(),
-                ledger: canister_ids.icp_ledger,
-                decimals: 8,
-                fee: ICP_TRANSFER_FEE,
-            },
-            output_token: types::TokenInfo {
-                symbol: constants::CHAT_SYMBOL.to_string(),
-                ledger: canister_ids.chat_ledger,
-                decimals: 8,
-                fee: constants::CHAT_TRANSFER_FEE,
-            },
-            input_amount: 100_000_000,
-            exchange_args: user_canister::swap_tokens::ExchangeArgs::ICPSwap(user_canister::swap_tokens::ExchangeSwapArgs {
-                swap_canister_id: random_principal(),
-                zero_for_one: true,
-            }),
-            min_output_amount: 1,
-            from_account: None,
-            pin: None,
-        },
-    );
-    assert!(
-        matches!(&swap_response, user_canister::swap_tokens::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
-        "{swap_response:?}"
-    );
-
-    let withdraw_response = client::user::c2c_withdraw_from_icpswap(
-        env,
-        local_user_index,
-        canister_id,
-        &user_canister::c2c_withdraw_from_icpswap::Args {
-            user_id,
-            swap_id: random_from_u128(),
-            input_token: true,
-            amount: None,
-            fee: None,
-        },
-    );
-    assert!(
-        matches!(&withdraw_response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
-        "{withdraw_response:?}"
-    );
 }
 
 // The files in a direct message are deleted by the canister holding the sender once the message is

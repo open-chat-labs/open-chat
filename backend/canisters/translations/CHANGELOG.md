@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Retry payments whose ledger can't be called after a growing delay rather than every round, and park those to uninstalled or deleted ledgers ([#9794](https://github.com/open-chat-labs/open-chat/pull/9794))
+- Read the log buffers in the order `pre_upgrade` writes them, so upgrades no longer rotate errors, logs and traces ([#9856](https://github.com/open-chat-labs/open-chat/pull/9856))
 
 ## [[2.0.2072](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2072-translations)] - 2026-09-29
 

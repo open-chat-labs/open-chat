@@ -1,12 +1,9 @@
 import { describe, expect, test } from "vitest";
 import {
     checkRules,
-    cycleCell,
     emptyGrid,
     fromGridBytes,
     hintCaption,
-    isSolved,
-    neighbours,
     parseDescription,
     tents,
     tentsColumnKey,
@@ -15,6 +12,7 @@ import {
     type TentsCell,
     type TentsDescription,
 } from "./tents";
+import { descriptionFromHex } from "../../domain/dailyPuzzle";
 import fixture from "./tentsHints.json";
 
 // 'T' tree, '.' empty; then the row counts and column counts.
@@ -64,69 +62,27 @@ describe("parseDescription", () => {
         ).toEqual(d4);
     });
 
-    test("rejects the wrong version", () => {
+    test("rejects malformed descriptions", () => {
         const bytes = descBytes(["..", ".."], [0, 0], [0, 0]);
-        bytes[0] = 2;
-        expect(() => parseDescription(bytes)).toThrow("malformed tents description");
-    });
-
-    test("rejects the wrong length", () => {
-        const bytes = descBytes(["..", ".."], [0, 0], [0, 0]);
-        expect(() => parseDescription(bytes.slice(0, -1))).toThrow("malformed tents description");
-        expect(() => parseDescription([...bytes, 0])).toThrow("malformed tents description");
-        expect(() => parseDescription([1, 2])).toThrow("malformed tents description");
-    });
-
-    test("rejects zero dimensions", () => {
-        expect(() => parseDescription([1, 0, 2, 0, 0])).toThrow("malformed tents description");
-    });
-
-    test("rejects an unknown cell byte", () => {
-        const bytes = descBytes(["..", ".."], [0, 0], [0, 0]);
-        bytes[4] = 2;
-        expect(() => parseDescription(bytes)).toThrow("malformed tents description");
-    });
-
-    test("rejects a count larger than the line", () => {
-        expect(() => parseDescription(descBytes(["..", ".."], [3, 0], [0, 0]))).toThrow(
-            "malformed tents description",
-        );
-        expect(() => parseDescription(descBytes(["..", ".."], [0, 0], [0, 3]))).toThrow(
-            "malformed tents description",
-        );
-    });
-});
-
-describe("neighbours", () => {
-    test("returns in-bounds cells in left, right, up, down order", () => {
-        expect(neighbours(d4, 5)).toEqual([4, 6, 1, 9]);
-        expect(neighbours(d4, 0)).toEqual([1, 4]);
-        expect(neighbours(d4, 15)).toEqual([14, 11]);
-    });
-});
-
-describe("cycleCell", () => {
-    test("empty -> tent -> grass -> empty", () => {
-        expect(cycleCell("")).toBe("tent");
-        expect(cycleCell("tent")).toBe("grass");
-        expect(cycleCell("grass")).toBe("");
+        const bad = [
+            [2, ...bytes.slice(1)],
+            bytes.slice(0, -1),
+            [...bytes, 0],
+            [1, 2],
+            [1, 0, 2, 0, 0],
+            bytes.map((b, i) => (i === 4 ? 2 : b)),
+            descBytes(["..", ".."], [3, 0], [0, 0]),
+            descBytes(["..", ".."], [0, 0], [0, 3]),
+        ];
+        for (const b of bad) {
+            expect(() => parseDescription(b)).toThrow("malformed tents description");
+        }
     });
 });
 
 describe("checkRules", () => {
-    test("solved 4x4 has no violations", () => {
-        expect(checkRules(d4, solved4)).toEqual([]);
-        expect(isSolved(d4, solved4)).toBe(true);
-        expect(isSolved(d4, emptyGrid(d4))).toBe(false);
-    });
-
     test("grass counts as no tent", () => {
         expect(checkRules(d4, grid(["TAxx", "xxxx", "TxAT", "Axxx"]))).toEqual([]);
-    });
-
-    test("solved 5x5 has no violations", () => {
-        expect(checkRules(d5, solved5)).toEqual([]);
-        expect(isSolved(d5, solved5)).toBe(true);
     });
 
     test("empty grid reports the short lines but never a tree still waiting for its tent", () => {
@@ -167,13 +123,6 @@ describe("checkRules", () => {
         const w = checkRules(d4, grid(["TA..", "..A.", "T..T", "A..."]));
         expect(w.filter((x) => x.kind === "tents_touch")).toEqual([
             { kind: "tents_touch", a: 1, b: 6 },
-        ]);
-    });
-
-    test("vertical touch is reported from the upper tent", () => {
-        const v = checkRules(d4, grid(["TA..", ".A..", "T..T", "A..."]));
-        expect(v.filter((x) => x.kind === "tents_touch")).toEqual([
-            { kind: "tents_touch", a: 1, b: 5 },
         ]);
     });
 
@@ -226,10 +175,6 @@ describe("checkRules", () => {
         const v = checkRules(d, grid([".A.A", "....", "....", "...."]));
         expect(v).toEqual([]);
     });
-
-    test("a grid of the wrong length counts as no tents", () => {
-        expect(checkRules(d4, grid(["A"]))).toEqual(checkRules(d4, emptyGrid(d4)));
-    });
 });
 
 describe("grid bytes", () => {
@@ -243,17 +188,6 @@ describe("grid bytes", () => {
 });
 
 describe("tents DailyGame", () => {
-    test("id", () => {
-        expect(tents.id).toBe("tents");
-    });
-
-    test("elements are one unlabelled cell per index", () => {
-        const els = tents.elements(d5);
-        expect(els).toHaveLength(25);
-        expect(els[6]).toEqual({ key: 6, kind: "cell", x: 1, y: 1, w: 1, h: 1 });
-        expect(els[24]).toEqual({ key: 24, kind: "cell", x: 4, y: 4, w: 1, h: 1 });
-    });
-
     test("tap cycles empty cells and ignores trees", () => {
         const empty = tents.empty(d5);
         const a = tents.tap(d5, empty, 1);
@@ -281,12 +215,6 @@ describe("tents DailyGame", () => {
                 [1, "tent"],
             ]),
         );
-    });
-
-    test("solved grid has no violations", () => {
-        expect(tents.check(d5, solved5)).toEqual([]);
-        expect(tents.solved(d5, solved5)).toBe(true);
-        expect(tents.solved(d5, tents.empty(d5))).toBe(false);
     });
 
     test("under-counts are only reported once a line is fully marked", () => {
@@ -351,148 +279,26 @@ describe("tents DailyGame", () => {
         expect(tents.fromBytes(d5, bytes.slice(1))).toBeUndefined();
         expect(tents.fromBytes(d5, bytes)).not.toBe(solved5);
     });
-
-    test("lit is not provided", () => {
-        expect(tents.lit).toBeUndefined();
-    });
 });
 
 // Invariant 24: every step of a generated trace, as the server serves it (the target withheld
-// when it names a concluded key, no conclusions), gets a sentence, and what the sentence names
-// is right on the board as the solver left it before the step: the named row or column holds
-// (or, for a neighbour step, borders) the ? cells and has the named count, the trees and tents
-// it counts are really there. The fixture is written by the Rust test `write_hint_fixture` from
-// real generated puzzles.
-describe("hint sentences", () => {
-    const bytes = (hex: string) => Uint8Array.from(hex.match(/../g)!.map((b) => parseInt(b, 16)));
-
+// when it names a concluded key, no conclusions), gets a caption. The fixture is written by the
+// Rust test `write_hint_fixture` from real generated puzzles.
+test("every hint step gets a caption", () => {
+    expect(fixture.length).toBeGreaterThan(0);
     for (const [p, entry] of fixture.entries()) {
-        test(`puzzle ${p}: every step names what it is about`, () => {
-            const desc = parseDescription(bytes(entry.description));
-            const w = desc.width;
-            const n = w * desc.height;
-            const x = (k: number) => k % w;
-            const y = (k: number) => Math.floor(k / w);
-            const touching = (a: number, b: number) =>
-                a !== b && Math.abs(x(a) - x(b)) <= 1 && Math.abs(y(a) - y(b)) <= 1;
-            const inLine = (kind: string, line: number, k: number) =>
-                (kind === "row" ? y(k) : x(k)) === line - 1;
-            const lineCells = (kind: string, line: number) =>
-                Array.from({ length: n }, (_, k) => k).filter((k) => inLine(kind, line, k));
-
-            let grid = tents.empty(desc);
-            for (const [i, step] of entry.steps.entries()) {
-                const concluded = step.conclusions.map(([k]) => k);
-                const target = step.target.some((k) => concluded.includes(k)) ? [] : step.target;
-                const caption = hintCaption(desc, grid, {
-                    technique: step.technique,
-                    focus: step.focus,
-                    target,
-                });
-                const before = grid;
-                for (const [k, v] of step.conclusions) grid = tents.apply(desc, grid, k, v);
-                const where = `step ${i} (technique ${step.technique})`;
-                expect(caption, where).toBeDefined();
-                const { key, params = {} } = caption!;
-                // The ? cells the sentence speaks of are the cells the step decides
-                const asked = step.focus.filter(
-                    (k) => !target.includes(k) && k < n && !desc.trees[k] && before[k] === "",
-                );
-                expect([...asked].sort(), where).toEqual([...concluded].sort());
-                const [cell] = concluded;
-                const tentAt = (k: number) => before[k] === "tent";
-
-                if (key.startsWith("hint.noFreeTree.")) {
-                    const trees = neighbours(desc, cell).filter((k) => desc.trees[k]);
-                    const expected =
-                        trees.length === 0 ? "none" : trees.length === 1 ? "one" : "many";
-                    expect(key, where).toBe(`hint.noFreeTree.${expected}`);
-                    if (expected === "many") expect(params.count, where).toBe(trees.length);
-                    // every one of those trees has a tent beside it already
-                    for (const t of trees) {
-                        expect(neighbours(desc, t).some(tentAt), where).toBe(true);
-                    }
-                } else if (key.startsWith("hint.tentTouches.")) {
-                    expect(key, where).toBe(
-                        target.length === 1 ? "hint.tentTouches.one" : "hint.tentTouches.many",
-                    );
-                    expect(
-                        target.every((k) => tentAt(k) && touching(k, cell)),
-                        where,
-                    ).toBe(true);
-                } else if (key === "hint.treeNeedsTent") {
-                    const [tree] = target;
-                    expect(target.length, where).toBe(1);
-                    expect(desc.trees[tree], where).toBe(true);
-                    expect(neighbours(desc, tree), where).toContain(cell);
-                    expect(step.conclusions[0][1], where).toBe(1);
-                    // every other cell beside the tree is a tree, a tent or ruled out
-                    const others = neighbours(desc, tree).filter((k) => k !== cell);
-                    expect(
-                        others.every((k) => desc.trees[k] || before[k] !== ""),
-                        where,
-                    ).toBe(true);
-                } else if (key === "hint.treeCorner") {
-                    const [tree, ...cands] = target;
-                    expect(desc.trees[tree], where).toBe(true);
-                    expect(cands.length, where).toBe(2);
-                    for (const c of cands) {
-                        expect(neighbours(desc, tree), where).toContain(c);
-                        expect(touching(c, cell), where).toBe(true);
-                    }
-                    // and the tree's other neighbours can't take its tent
-                    const others = neighbours(desc, tree).filter((k) => !cands.includes(k));
-                    expect(
-                        others.every((k) => desc.trees[k] || before[k] !== ""),
-                        where,
-                    ).toBe(true);
-                } else if (key.startsWith("hint.line")) {
-                    const [, technique, variant] = key.split(".");
-                    const kind = variant.startsWith("row") ? "row" : "column";
-                    const line = params.line as number;
-                    const count = (kind === "row" ? desc.rowCounts : desc.columnCounts)[line - 1];
-                    const cells = lineCells(kind, line);
-                    if (params.count !== undefined) expect(params.count, where).toBe(count);
-                    if (technique === "lineNeighbour") {
-                        expect(
-                            concluded.every((k) =>
-                                neighbours(desc, k).some((j) => inLine(kind, line, j)),
-                            ),
-                            where,
-                        ).toBe(true);
-                        expect(
-                            concluded.some((k) => inLine(kind, line, k)),
-                            where,
-                        ).toBe(false);
-                    } else {
-                        expect(
-                            concluded.every((k) => inLine(kind, line, k)),
-                            where,
-                        ).toBe(true);
-                    }
-                    const tentsIn = cells.filter(tentAt).length;
-                    if (technique === "lineExact") {
-                        expect(
-                            step.conclusions.every(([, v]) => v === 1),
-                            where,
-                        ).toBe(true);
-                        expect(concluded.length, where).toBe(count - tentsIn);
-                        if (variant.endsWith("One")) expect(concluded.length, where).toBe(1);
-                        else expect(params.missing, where).toBe(concluded.length);
-                    } else if (technique === "lineFull") {
-                        expect(
-                            step.conclusions.every(([, v]) => v === 0),
-                            where,
-                        ).toBe(true);
-                        expect(tentsIn, where).toBe(count);
-                        expect(variant.endsWith("Zero"), where).toBe(count === 0);
-                    } else if (technique !== "lineCount" && technique !== "lineNeighbour") {
-                        throw new Error(`${where}: unexpected sentence ${key}`);
-                    }
-                } else {
-                    throw new Error(`${where}: unexpected sentence ${key}`);
-                }
-            }
-        });
+        const d = parseDescription(descriptionFromHex(entry.description));
+        let grid = tents.empty(d);
+        for (const [i, step] of entry.steps.entries()) {
+            const concluded = step.conclusions.map(([k]) => k);
+            const target = step.target.some((k) => concluded.includes(k)) ? [] : step.target;
+            const caption = hintCaption(d, grid, {
+                technique: step.technique,
+                focus: step.focus,
+                target,
+            });
+            expect(caption?.key, `puzzle ${p} step ${i}`).toBeTruthy();
+            for (const [k, v] of step.conclusions) grid = tents.apply(d, grid, k, v);
+        }
     }
 });

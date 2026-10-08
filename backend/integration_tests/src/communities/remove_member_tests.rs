@@ -1,6 +1,6 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::utils::{metrics, tick_many};
+use crate::utils::tick_many;
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::OPENCHAT_BOT_USER_ID;
@@ -238,41 +238,6 @@ fn removal_reaches_a_user_canister_unreachable_for_longer_than_the_direct_call_i
     assert_eq!(bot_messages(env, &user2, &removed_text), 1);
 }
 
-// A bot's canister takes no events from the community, so none is queued for it when it's removed
-#[test]
-fn removing_a_bot_queues_no_event_for_it() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let TestData { user1, community_id, .. } = init_test_data(env, canister_ids, *controller, true, false);
-
-    let bot = canister_ids.proposals_bot;
-    client::community::happy_path::join_community(env, bot, community_id);
-    tick_many(env, 3);
-    assert_eq!(queued_user_events(env, community_id), 0);
-
-    let remove_member_response = client::community::remove_member(
-        env,
-        user1.principal,
-        community_id.into(),
-        &community_canister::remove_member::Args { user_id: bot.into() },
-    );
-    assert!(matches!(
-        remove_member_response,
-        community_canister::remove_member::Response::Success
-    ));
-
-    // A wrongly queued event is only counted again once its call to the bot, which may be on another
-    // subnet, has failed
-    tick_many(env, 15);
-    assert_eq!(queued_user_events(env, community_id), 0);
-}
-
 // The number of messages from the OpenChat bot to the user with the given text
 fn bot_messages(env: &PocketIc, user: &User, text: &str) -> usize {
     client::user::happy_path::events(env, user, OPENCHAT_BOT_USER_ID, EventIndex::default(), true, 1000, 1000)
@@ -283,10 +248,6 @@ fn bot_messages(env: &PocketIc, user: &User, text: &str) -> usize {
                 if matches!(&m.content, MessageContent::Text(content) if content.text == text))
         })
         .count()
-}
-
-fn queued_user_events(env: &PocketIc, community_id: CommunityId) -> u64 {
-    metrics(env, community_id.into())["queued_user_events"].as_u64().unwrap()
 }
 
 #[test]

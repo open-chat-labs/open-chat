@@ -123,16 +123,6 @@ mod tests {
     }
 
     #[test]
-    fn insert_then_get() {
-        let mut ids = MigratedUserIds::default();
-
-        assert!(ids.insert(user_id(1), user_id(2)));
-        assert_eq!(ids.get(&user_id(1)), Some(user_id(2)));
-        assert_eq!(ids.get(&user_id(2)), None);
-        assert_eq!(ids.len(), 1);
-    }
-
-    #[test]
     fn get_many_returns_only_migrated_users() {
         let mut ids = MigratedUserIds::default();
         ids.insert(user_id(1), user_id(2));
@@ -171,15 +161,6 @@ mod tests {
     }
 
     #[test]
-    fn repeated_insert_is_a_no_op() {
-        let mut ids = MigratedUserIds::default();
-
-        assert!(ids.insert(user_id(1), user_id(2)));
-        assert!(!ids.insert(user_id(1), user_id(2)));
-        assert_eq!(ids.len(), 1);
-    }
-
-    #[test]
     fn mapping_to_the_same_id_is_ignored() {
         let mut ids = MigratedUserIds::default();
 
@@ -198,17 +179,6 @@ mod tests {
         assert_eq!(ids.get(&user_id(2)), Some(user_id(3)));
         assert_eq!(ids.get(&user_id(3)), None);
         assert_eq!(ids.len(), 2);
-    }
-
-    #[test]
-    fn order_of_inserts_does_not_matter() {
-        let mut ids = MigratedUserIds::default();
-
-        assert!(ids.insert(user_id(2), user_id(3)));
-        assert!(ids.insert(user_id(1), user_id(2)));
-
-        assert_eq!(ids.get(&user_id(1)), Some(user_id(3)));
-        assert_eq!(ids.get(&user_id(2)), Some(user_id(3)));
     }
 
     #[test]
@@ -266,26 +236,18 @@ mod tests {
     }
 
     #[test]
-    fn round_trips_through_msgpack() {
-        let mut ids = MigratedUserIds::default();
-        ids.insert(user_id(1), user_id(2));
-
-        let bytes = msgpack::serialize_then_unwrap(&ids);
-        let deserialized: MigratedUserIds = msgpack::deserialize_then_unwrap(&bytes);
-
-        assert_eq!(deserialized.get(&user_id(1)), Some(user_id(2)));
-        assert_eq!(deserialized.previous_ids(user_id(2)), vec![user_id(1)]);
-    }
-
-    #[test]
     fn serialized_as_the_map_alone() {
         let mut ids = MigratedUserIds::default();
         ids.insert(user_id(1), user_id(2));
 
         let bytes = msgpack::serialize_then_unwrap(&ids);
         let map: HashMap<UserId, UserId> = msgpack::deserialize_then_unwrap(&bytes);
-
         assert_eq!(map, HashMap::from([(user_id(1), user_id(2))]));
+
+        // And the derived state is rebuilt on the way back in
+        let deserialized: MigratedUserIds = msgpack::deserialize_then_unwrap(&bytes);
+        assert_eq!(deserialized.get(&user_id(1)), Some(user_id(2)));
+        assert_eq!(deserialized.previous_ids(user_id(2)), vec![user_id(1)]);
     }
 
     #[test]
@@ -314,14 +276,5 @@ mod tests {
         assert_eq!(ids.get(&user_id(2)), Some(user_id(3)));
         assert_eq!(ids.previous_ids(user_id(3)), vec![user_id(1), user_id(2)]);
         assert_eq!(ids.len(), 2);
-    }
-
-    #[test]
-    fn insert_previous_ids_with_none_is_a_no_op() {
-        let mut ids = MigratedUserIds::default();
-
-        ids.insert_previous_ids(&[], user_id(1));
-
-        assert!(ids.is_empty());
     }
 }

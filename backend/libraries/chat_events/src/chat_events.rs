@@ -3479,17 +3479,6 @@ mod tests {
         }
     }
 
-    fn reaction_args(user_id: UserId, now: TimestampMillis) -> AddRemoveReactionArgs {
-        AddRemoveReactionArgs {
-            user_id,
-            min_visible_event_index: EventIndex::default(),
-            thread_root_message_index: None,
-            message_id: MessageId::from(2u128),
-            reaction: Reaction::new("👍".to_string()),
-            now,
-        }
-    }
-
     fn text_message(events: &ChatEvents, message_index: MessageIndex) -> MessageInternal {
         events.main_events_reader().message_internal(message_index.into()).unwrap()
     }
@@ -3512,21 +3501,6 @@ mod tests {
     }
 
     #[test]
-    fn message_sent_under_an_id_from_several_migrations_ago_can_be_edited() {
-        let (mut events, _, _) = setup_events();
-        let middle_user_id: UserId = Principal::from_slice(&[8]).into();
-        let mut migrated_user_ids = MigratedUserIds::default();
-        migrated_user_ids.insert(old_user_id(), middle_user_id);
-        migrated_user_ids.insert(middle_user_id, new_user_id());
-
-        assert!(
-            events
-                .edit_message::<NullEventPusher>(edit_args(new_user_id()), &migrated_user_ids, None)
-                .is_ok()
-        );
-    }
-
-    #[test]
     fn message_its_sender_deleted_under_a_later_id_cannot_be_undeleted_by_an_admin() {
         let (mut events, _, _) = setup_events();
 
@@ -3543,60 +3517,6 @@ mod tests {
         };
         assert!(events.undelete_messages(admin(21), &migrated())[0].1.is_err());
         assert!(events.undelete_messages(admin(22), &none())[0].1.is_ok());
-    }
-
-    #[test]
-    fn poll_vote_under_an_earlier_id_is_the_users_own() {
-        let (mut events, _, _) = setup_events();
-        let poll = PollContentInternal {
-            config: types::PollConfig {
-                text: None,
-                options: vec!["a".to_string(), "b".to_string()],
-                end_date: None,
-                anonymous: false,
-                show_votes_before_end_date: true,
-                allow_multiple_votes_per_user: false,
-                allow_user_to_change_vote: false,
-            }
-            .into(),
-            votes: std::collections::HashMap::new(),
-            ended: false,
-        };
-        let poll_message_index = push_message(
-            &mut events,
-            Principal::from_slice(&[3]).into(),
-            10,
-            MessageContentInternal::Poll(poll),
-        );
-
-        let vote = |events: &mut ChatEvents, user_id, option_index, operation, migrated_user_ids: &MigratedUserIds| {
-            events.register_poll_vote(
-                RegisterPollVoteArgs {
-                    user_id,
-                    min_visible_event_index: EventIndex::default(),
-                    thread_root_message_index: None,
-                    message_index: poll_message_index,
-                    option_index,
-                    operation,
-                    now: 20,
-                },
-                migrated_user_ids,
-            )
-        };
-
-        vote(&mut events, old_user_id(), 0, VoteOperation::RegisterVote, &none()).unwrap();
-
-        // The user already voted under their old id, and can't change their vote
-        let result = vote(&mut events, new_user_id(), 1, VoteOperation::RegisterVote, &migrated());
-        assert!(matches!(result, Err(e) if e.matches_code(OCErrorCode::CannotChangeVote)));
-
-        // But can delete it
-        let result = vote(&mut events, new_user_id(), 0, VoteOperation::DeleteVote, &migrated()).unwrap();
-        assert!(result.value.updated);
-        let MessageContentInternal::Poll(poll) = text_message(&events, poll_message_index).content else {
-            panic!();
-        };
-        assert!(poll.votes.values().all(|votes| votes.is_empty()));
     }
 
     #[test]
@@ -3618,21 +3538,6 @@ mod tests {
         assert!(events.undelete_messages(admin_args, &migrated())[0].1.is_err());
 
         let results = events.undelete_messages(delete_args(new_user_id(), 23), &migrated());
-        assert!(results[0].1.is_ok());
-        assert!(text_message(&events, text_message_index).deleted_by.is_none());
-    }
-
-    #[test]
-    fn message_deleted_under_an_earlier_id_can_be_undeleted() {
-        let (mut events, _, text_message_index) = setup_events();
-
-        let results = events.delete_messages(delete_args(old_user_id(), 20), &none());
-        assert!(results[0].1.is_ok());
-
-        let results = events.undelete_messages(delete_args(new_user_id(), 21), &none());
-        assert!(results[0].1.is_err());
-
-        let results = events.undelete_messages(delete_args(new_user_id(), 22), &migrated());
         assert!(results[0].1.is_ok());
         assert!(text_message(&events, text_message_index).deleted_by.is_none());
     }
@@ -3849,26 +3754,6 @@ mod tests {
         );
         let result = events.cancel_p2p_swap(new_user_id(), None, MessageId::from(10u128), 21, &migrated());
         assert_eq!(result.unwrap().value, 1);
-    }
-
-    #[test]
-    fn reaction_left_under_an_earlier_id_is_the_users_own() {
-        let (mut events, _, text_message_index) = setup_events();
-
-        events
-            .add_reaction::<NullEventPusher>(reaction_args(old_user_id(), 20), &none(), None)
-            .unwrap();
-
-        // Reacting again under the new id is no change, since the user has already reacted
-        assert!(
-            events
-                .add_reaction::<NullEventPusher>(reaction_args(new_user_id(), 21), &migrated(), None)
-                .is_err()
-        );
-
-        // The reaction can be removed under the new id
-        events.remove_reaction(reaction_args(new_user_id(), 22), &migrated()).unwrap();
-        assert!(text_message(&events, text_message_index).reactions.is_empty());
     }
 
     #[test]

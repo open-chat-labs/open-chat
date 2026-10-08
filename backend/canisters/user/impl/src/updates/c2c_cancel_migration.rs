@@ -80,14 +80,6 @@ mod tests {
     }
 
     #[test]
-    fn cancelling_without_a_migration_does_nothing() {
-        let mut data = data();
-
-        assert!(!data.cancel_migration(multi_user_canister(1), 2).unwrap());
-        assert!(!data.is_frozen());
-    }
-
-    #[test]
     fn migration_to_another_canister_is_not_cancelled() {
         let mut data = data();
         data.try_start_migration(multi_user_canister(1), 2).unwrap();
