@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2114](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2114-user_index)] - 2026-10-08
+
 ### Added
 
 - Pass a migrated user's daily puzzle data on to the LocalUserIndex holding their new id ([#9841](https://github.com/open-chat-labs/open-chat/pull/9841))

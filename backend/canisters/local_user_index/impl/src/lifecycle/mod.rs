@@ -5,7 +5,6 @@ use utils::env::canister::CanisterEnv;
 
 mod init;
 mod inspect_message;
-mod move_subscriptions_of_migrated_users;
 mod post_upgrade;
 mod pre_upgrade;
 
