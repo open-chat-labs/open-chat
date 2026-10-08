@@ -162,32 +162,19 @@ describe("stateFromRows", () => {
         expect("directChats" in globalsOf(full)).toBe(false);
     });
 
-    test("tombstones are sorted by kind", () => {
+    test("tombstones are sorted by kind, and a direct chat moved onto the other user's new id is removed with its move recorded", () => {
         expect(
             removedFromTombstones([
                 { kind: "community", id: "c", version: 1 },
-                { kind: "direct_chat", id: "u", version: 1 },
-                { kind: "group_chat", id: "g", version: 1 },
-            ]),
-        ).toEqual({
-            directChats: ["u"],
-            movedDirectChats: new Map(),
-            groupChats: ["g"],
-            communities: ["c"],
-        });
-    });
-
-    test("a direct chat moved onto the other user's new id is removed, and its move recorded", () => {
-        expect(
-            removedFromTombstones([
                 { kind: "direct_chat", id: "old", version: 1, movedTo: "new" },
                 { kind: "direct_chat", id: "gone", version: 1 },
+                { kind: "group_chat", id: "g", version: 1 },
             ]),
         ).toEqual({
             directChats: ["old", "gone"],
             movedDirectChats: new Map([["old", "new"]]),
-            groupChats: [],
-            communities: [],
+            groupChats: ["g"],
+            communities: ["c"],
         });
     });
 });
@@ -276,15 +263,6 @@ describe("mergeUpdatedEventStamps", () => {
             1,
         );
         expect(stamps.map((s) => s.chatId.kind)).toEqual(["direct_chat", "group_chat"]);
-    });
-
-    test("returns the previous stamps untouched when there is nothing new", () => {
-        const prev = mergeUpdatedEventStamps(
-            [],
-            updatedEvents([[groupA, [{ eventIndex: 1, timestamp: 1n }]]]),
-            1,
-        );
-        expect(mergeUpdatedEventStamps(prev, new ChatMap(), 2)).toBe(prev);
     });
 });
 

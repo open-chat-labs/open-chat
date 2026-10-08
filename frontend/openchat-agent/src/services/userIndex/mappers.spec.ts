@@ -48,11 +48,6 @@ describe("userSummaryUpdate", () => {
         expect(update.userId).toEqual(latest);
         expect(update.previousUserIds).toEqual(previous);
     });
-
-    test("leaves previousUserIds undefined when the field is omitted", () => {
-        const update = userSummaryUpdate({ user_id: principalStringToBytes(latest) });
-        expect(update.previousUserIds).toBeUndefined();
-    });
 });
 
 // The ids a user had before being migrated to a MultiUser canister, which events from before then

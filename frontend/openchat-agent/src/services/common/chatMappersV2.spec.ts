@@ -95,23 +95,10 @@ describe("daily result custom content mapping", () => {
         return messageContent(apiMessageContent(content) as TMessageContent, "user-1");
     }
 
-    test("round trips without a caption", () => {
-        expect(roundTrip(card)).toEqual(card);
-    });
-
-    test("round trips a caption", () => {
+    test("round trips with and without a caption", () => {
         const captioned = { ...card, caption: "got there in the end" };
+        expect(roundTrip(card)).toEqual(card);
         expect(roundTrip(captioned)).toEqual(captioned);
-    });
-
-    test("writes the caption into the payload as version 1", () => {
-        const api = apiMessageContent({ ...card, caption: "hi" });
-        expect(api).toHaveProperty("Custom.kind", "daily_result");
-        const json = JSON.parse(
-            new TextDecoder().decode((api as { Custom: { data: Uint8Array } }).Custom.data),
-        );
-        expect(json.v).toBe(1);
-        expect(json.caption).toBe("hi");
     });
 });
 

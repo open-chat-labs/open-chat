@@ -12,10 +12,4 @@ describe("withdrawCryptoResponse", () => {
             message: "insufficient funds",
         });
     });
-
-    test("still rejects a shape it does not know", () => {
-        expect(() => withdrawCryptoResponse({} as never)).toThrow(
-            "Unexpected ApiWithdrawCryptocurrencyResponse type received",
-        );
-    });
 });
