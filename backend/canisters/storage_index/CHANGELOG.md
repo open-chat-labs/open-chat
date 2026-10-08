@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the one-off which let the GroupIndex remove files, now that it has run ([#9871](https://github.com/open-chat-labs/open-chat/pull/9871))
+
+## [[2.0.2118](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2118-storage_index)] - 2026-10-08
+
 ### Added
 
 - Let the GroupIndex remove the files sent in deleted groups and communities ([#9849](https://github.com/open-chat-labs/open-chat/pull/9849))

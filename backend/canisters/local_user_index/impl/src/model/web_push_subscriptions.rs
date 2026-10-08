@@ -77,16 +77,8 @@ impl WebPushSubscriptions {
         }
     }
 
-    pub fn user_ids(&self) -> impl Iterator<Item = UserId> + '_ {
-        self.subscriptions.keys().copied()
-    }
-
     pub fn total(&self) -> u64 {
         self.total
-    }
-
-    pub fn recompute_total(&mut self) {
-        self.total = self.subscriptions.values().map(|s| s.len() as u64).sum();
     }
 }
 
