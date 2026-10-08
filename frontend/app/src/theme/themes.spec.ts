@@ -81,22 +81,42 @@ describe("a stored theme name we don't have", () => {
         localStorage.setItem(configKeys.theme, type);
         vi.resetModules();
         const fresh = await import("./themes");
-        return { theme: get(fresh.currentTheme), themes: fresh.themes };
+        return {
+            theme: get(fresh.currentTheme),
+            preferredDark: get(fresh.preferredDarkTheme),
+            preferredLight: get(fresh.preferredLightTheme),
+            themes: fresh.themes,
+        };
     }
 
     test("falls back to the default dark theme", async () => {
-        const { theme, themes } = await themeWhenStored("openchat_dark_theme", "gone", "dark");
+        const { theme, preferredDark, themes } = await themeWhenStored(
+            "openchat_dark_theme",
+            "gone",
+            "dark",
+        );
         expect(theme).toBe(themes.dark);
+        expect(preferredDark).toBe(themes.dark);
     });
 
     test("falls back to the default light theme", async () => {
-        const { theme, themes } = await themeWhenStored("openchat_light_theme", "gone", "light");
+        const { theme, preferredLight, themes } = await themeWhenStored(
+            "openchat_light_theme",
+            "gone",
+            "light",
+        );
         expect(theme).toBe(themes.white);
+        expect(preferredLight).toBe(themes.white);
     });
 
     test("still maps the old light theme's name to its new one", async () => {
-        const { theme, themes } = await themeWhenStored("openchat_light_theme", "light", "light");
+        const { theme, preferredLight, themes } = await themeWhenStored(
+            "openchat_light_theme",
+            "light",
+            "light",
+        );
         expect(theme).toBe(themes.blue);
+        expect(preferredLight).toBe(themes.blue);
     });
 });
 
