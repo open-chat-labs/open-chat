@@ -2491,14 +2491,24 @@ impl ChatEvents {
                     &Document::from(&m.content),
                 );
             }
+            result.files = m.content.blob_references();
             if let Some(thread) = m.thread_summary {
-                self.threads.remove(&m.message_index);
+                // The thread's events are garbage collected without being read, so the files sent
+                // in its replies are collected here
+                if let Some(thread_events) = self.threads.remove(&m.message_index) {
+                    result.files.extend(
+                        thread_events
+                            .iter(None, true, EventIndex::default(), None)
+                            .filter_map(|e| e.into_event())
+                            .filter_map(|e| if let ChatEventInternal::Message(r) = e.event { Some(r) } else { None })
+                            .flat_map(|r| r.content.blob_references()),
+                    );
+                }
                 result.thread = Some(ExpiredThread {
                     root_message_index: m.message_index,
                     followers: thread.followers,
                 });
             }
-            result.files = m.content.blob_references();
             if let MessageContentInternal::Prize(mut p) = m.content {
                 result.final_prize_payments = p.final_payments(m.sender, migrated_user_ids, now * 1_000_000);
             }
@@ -3966,16 +3976,65 @@ mod tests {
         (events, proposal_message_index, text_message_index)
     }
 
+    #[test]
+    fn removing_a_thread_root_returns_the_files_sent_in_it_and_in_its_replies() {
+        let (mut events, _, _) = setup_events();
+        let sender: UserId = Principal::from_slice(&[2]).into();
+
+        let root_message_index = push_message(&mut events, sender, 10, file_content(1));
+        for (message_id, content) in [
+            (11, file_content(2)),
+            (
+                12,
+                MessageContentInternal::Text(TextContentInternal {
+                    text: "reply".to_string(),
+                }),
+            ),
+            (13, file_content(3)),
+        ] {
+            push_message_in_thread(&mut events, sender, Some(root_message_index), message_id, content);
+        }
+        let root_event_index = events.main.event_index(root_message_index.into()).unwrap();
+
+        let result = events.remove_event(root_event_index, &none(), 20).unwrap();
+
+        assert_eq!(result.files.iter().map(|f| f.blob_id).collect::<Vec<_>>(), vec![1, 2, 3]);
+        assert_eq!(result.thread.map(|t| t.root_message_index), Some(root_message_index));
+    }
+
+    fn file_content(blob_id: u128) -> MessageContentInternal {
+        MessageContentInternal::File(FileContentInternal {
+            name: "file".to_string(),
+            caption: None,
+            mime_type: "text/plain".to_string(),
+            file_size: 1,
+            blob_reference: Some(BlobReferenceInternal {
+                canister_id: Principal::from_slice(&[4]),
+                blob_id,
+            }),
+        })
+    }
+
     fn push_message(
         events: &mut ChatEvents,
         sender: UserId,
         message_id: u128,
         content: MessageContentInternal,
     ) -> MessageIndex {
+        push_message_in_thread(events, sender, None, message_id, content)
+    }
+
+    fn push_message_in_thread(
+        events: &mut ChatEvents,
+        sender: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: u128,
+        content: MessageContentInternal,
+    ) -> MessageIndex {
         let (message, _) = events.push_message::<NullEventPusher>(
             PushMessageArgs {
                 sender,
-                thread_root_message_index: None,
+                thread_root_message_index,
                 message_id: MessageId::from(message_id),
                 content,
                 sender_context: None,

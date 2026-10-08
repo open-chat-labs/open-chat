@@ -6,7 +6,7 @@ use crate::{TestEnv, client};
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
-use types::EventIndex;
+use types::{EventIndex, FileContent, MessageContentInitial};
 
 #[test]
 fn delete_group_history() {
@@ -41,6 +41,60 @@ fn delete_group_history() {
 
     // There should be 3 events left: created, message and "history deleted"
     assert_eq!(events_response.events.len(), 3);
+}
+
+#[test]
+fn files_sent_in_thread_replies_are_deleted_with_their_root_message() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let group_id = client::user::happy_path::create_group(env, &user, &random_string(), false, true);
+
+    let root = client::group::happy_path::send_text_message(env, &user, group_id, None, "root", None);
+    let blob_reference = client::storage_index::happy_path::upload_file(
+        env,
+        user.principal,
+        canister_ids.storage_index,
+        100,
+        vec![group_id.into()],
+    );
+    client::group::happy_path::send_message(
+        env,
+        &user,
+        group_id,
+        Some(root.message_index),
+        MessageContentInitial::File(FileContent {
+            name: random_string(),
+            caption: None,
+            mime_type: "abc".to_string(),
+            file_size: 100,
+            blob_reference: Some(blob_reference.clone()),
+        }),
+        None,
+        None,
+    );
+
+    env.advance_time(Duration::from_secs(1));
+    client::group::happy_path::delete_history(env, &user, group_id, now_millis(env));
+
+    for _ in 0..20 {
+        if !client::storage_bucket::happy_path::file_exists(
+            env,
+            user.principal,
+            blob_reference.canister_id,
+            blob_reference.blob_id,
+        ) {
+            return;
+        }
+        env.tick();
+    }
+    panic!("The file sent in the thread reply was not deleted");
 }
 
 #[test]
