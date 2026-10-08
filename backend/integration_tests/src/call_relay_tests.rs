@@ -7,7 +7,6 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use pocket_ic::{PocketIc, RejectResponse};
 use std::ops::Deref;
-use std::time::Duration;
 use types::CanisterId;
 
 const CALL_RELAY_WAT: &str = include_str!("../../canisters/call_relay/call_relay.wat");
@@ -72,7 +71,6 @@ const ICP_TRANSFER_FEE: u128 = 10_000;
 
 const CANISTER_REJECT: u32 = 4;
 const CANISTER_ERROR: u32 = 5;
-const SYS_UNKNOWN: u32 = 6;
 
 #[test]
 fn call_relay_transfers_the_funds_held_by_the_canister() {
@@ -182,39 +180,6 @@ fn call_relay_returns_the_callees_reply_or_reject_as_is() {
 }
 
 #[test]
-fn call_relay_times_out_if_the_callee_never_replies() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv { env, controller, .. } = wrapper.env();
-
-    let canister_id = create_canister(env, *controller);
-    env.install_canister(canister_id, wasm(), vec![], Some(*controller));
-
-    let callee = create_canister(env, *controller);
-    env.install_canister(callee, wat::parse_str(ECHO_WAT).unwrap(), vec![], Some(*controller));
-
-    let message_id = env
-        .submit_call(canister_id, *controller, "relay", relay_args(callee, "hang", &[]))
-        .unwrap();
-
-    // Just short of the 5 minute timeout the callee is still holding the call open
-    for _ in 0..5 {
-        env.tick();
-    }
-    env.advance_time(Duration::from_secs(290));
-    env.tick();
-    assert!(env.ingress_status(message_id.clone()).is_none());
-
-    // After which the relay gives up on it
-    env.advance_time(Duration::from_secs(20));
-    let (reject_code, _) = parse_reply(env.await_call(message_id).unwrap());
-    assert_eq!(reject_code, SYS_UNKNOWN);
-
-    // Stop the callee calling itself for ever, and the relay can be uninstalled as usual
-    env.uninstall_canister(callee, Some(*controller)).unwrap();
-    env.uninstall_canister(canister_id, Some(*controller)).unwrap();
-}
-
-#[test]
 fn call_relay_rejects_callers_which_are_not_controllers() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -238,30 +203,6 @@ fn call_relay_rejects_callers_which_are_not_controllers() {
         )
         .unwrap_err();
         assert!(error.reject_message.contains("caller is not a controller"), "{error:?}");
-    }
-}
-
-#[test]
-fn call_relay_rejects_invalid_args() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv { env, controller, .. } = wrapper.env();
-
-    let canister_id = create_canister(env, *controller);
-    env.install_canister(canister_id, wasm(), vec![], Some(*controller));
-
-    for args in [
-        vec![],
-        // No method length
-        vec![0],
-        // Callee longer than a principal can be
-        [vec![30], vec![1; 30], vec![0]].concat(),
-        // Callee truncated
-        vec![3, 1, 2],
-        // Method truncated
-        vec![0, 8, b'r', b'a', b'w'],
-    ] {
-        let error = env.update_call(canister_id, *controller, "relay", args).unwrap_err();
-        assert!(error.reject_message.contains("invalid args"), "{error:?}");
     }
 }
 

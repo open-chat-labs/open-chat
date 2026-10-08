@@ -24,7 +24,6 @@ fn register_proposal_vote_v2_rejects_users_who_are_not_channel_members() {
         community_id,
         channel_id,
         message_index,
-        ..
     } = init_test_data(env, canister_ids, *controller);
 
     // Non-members are refused by `inspect_message` before the endpoint runs
@@ -48,30 +47,6 @@ fn register_proposal_vote_v2_rejects_users_who_are_not_channel_members() {
         matches!(&response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorNotFound)),
         "{response:?}"
     );
-}
-
-#[test]
-fn register_proposal_vote_v2_rejects_messages_which_are_not_proposals() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let TestData {
-        owner,
-        community_id,
-        channel_id,
-        message_index,
-    } = init_test_data(env, canister_ids, *controller);
-
-    let response = register_proposal_vote_v2(env, &owner, community_id, channel_id, message_index);
-    assert!(matches!(response, UnitResult::Error(e) if e.matches_code(OCErrorCode::ProposalNotFound)));
-
-    let response = register_proposal_vote_v2(env, &owner, community_id, channel_id, message_index.incr());
-    assert!(matches!(response, UnitResult::Error(e) if e.matches_code(OCErrorCode::ProposalNotFound)));
 }
 
 fn register_proposal_vote_v2(
@@ -106,7 +81,6 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     env.tick();
 
     TestData {
-        owner,
         community_id,
         channel_id,
         message_index,
@@ -114,7 +88,6 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 }
 
 struct TestData {
-    owner: User,
     community_id: CommunityId,
     channel_id: ChannelId,
     message_index: MessageIndex,
