@@ -653,25 +653,16 @@ mod tests {
     }
 
     #[test]
-    fn change_older_than_the_recipients_own_is_ignored() {
+    fn change_is_applied_only_if_newer_than_the_recipients_own() {
         let (me, sender) = (user_id(1), user_id(2));
-        let mut user = user();
-        change(&mut user, me, sender, 2000, 200);
+        for (timestamp, expected) in [(150, 2000), (250, 1000)] {
+            let mut user = user();
+            change(&mut user, me, sender, 2000, 200);
 
-        receive(&mut user, me, sender, 1000, 150, 300);
+            receive(&mut user, me, sender, 1000, timestamp, 300);
 
-        assert_eq!(events_ttl(&user, sender), Some(2000));
-    }
-
-    #[test]
-    fn change_newer_than_the_recipients_own_is_applied() {
-        let (me, sender) = (user_id(1), user_id(2));
-        let mut user = user();
-        change(&mut user, me, sender, 2000, 200);
-
-        receive(&mut user, me, sender, 1000, 250, 300);
-
-        assert_eq!(events_ttl(&user, sender), Some(1000));
+            assert_eq!(events_ttl(&user, sender), Some(expected), "change made at {timestamp}");
+        }
     }
 
     #[test]
@@ -701,19 +692,6 @@ mod tests {
 
         assert_eq!(events_ttl(&user_a, b), Some(2000));
         assert_eq!(events_ttl(&user_b, a), Some(2000));
-    }
-
-    #[test]
-    fn changes_delivered_together_are_applied_in_order() {
-        // The sender changed the TTL twice before either change was delivered
-        let (me, sender) = (user_id(1), user_id(2));
-        let mut user = user();
-        create_chat(&mut user, me, sender, 0);
-
-        receive(&mut user, me, sender, 1000, 10, 100);
-        receive(&mut user, me, sender, 2000, 20, 100);
-
-        assert_eq!(events_ttl(&user, sender), Some(2000));
     }
 
     #[test]

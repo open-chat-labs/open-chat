@@ -89,32 +89,25 @@ mod tests {
     }
 
     #[test]
-    fn principal_is_valid() {
-        assert!(is_valid_account("2vxsx-fae"));
-    }
-
-    #[test]
-    fn icrc1_account_with_subaccount_is_valid() {
+    fn account_validity() {
         let mut subaccount = [0; 32];
         subaccount[31] = 7;
-        let account = Account {
+        let icrc1_with_subaccount = Account {
             owner: Principal::from_slice(&[1, 2, 3, 4, 5, 6, 7, 8, 1, 1]),
             subaccount: Some(subaccount),
-        };
-        assert!(account.subaccount.is_some());
-        assert!(is_valid_account(&account.to_string()));
-    }
+        }
+        .to_string();
+        let account_identifier = AccountIdentifier::new(&Principal::anonymous(), &ic_ledger_types::DEFAULT_SUBACCOUNT).to_hex();
 
-    #[test]
-    fn account_identifier_is_valid() {
-        let account_identifier = AccountIdentifier::new(&Principal::anonymous(), &ic_ledger_types::DEFAULT_SUBACCOUNT);
-        assert!(is_valid_account(&account_identifier.to_hex()));
-    }
-
-    #[test]
-    fn garbage_is_invalid() {
-        assert!(!is_valid_account("not an account"));
-        assert!(!is_valid_account("2vxsx-fae.zz"));
+        for (text, valid) in [
+            ("2vxsx-fae", true),
+            (icrc1_with_subaccount.as_str(), true),
+            (account_identifier.as_str(), true),
+            ("not an account", false),
+            ("2vxsx-fae.zz", false),
+        ] {
+            assert_eq!(is_valid_account(text), valid, "{text}");
+        }
     }
 
     #[test]

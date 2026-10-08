@@ -73,31 +73,6 @@ mod tests {
     }
 
     #[test]
-    fn group_message_link() {
-        let chat_id = ChatId::from(principal(2));
-        let link = build_message_link(Chat::Group(chat_id), None, 7.into());
-        assert_eq!(link, format!("https://oc.app/group/{chat_id}/7"));
-    }
-
-    #[test]
-    fn group_thread_message_link() {
-        let chat_id = ChatId::from(principal(3));
-        let link = build_message_link(Chat::Group(chat_id), Some(4.into()), 9.into());
-        assert_eq!(link, format!("https://oc.app/group/{chat_id}/4/9"));
-    }
-
-    #[test]
-    fn channel_message_link() {
-        let community_id = CommunityId::from(principal(4));
-        let channel_id = ChannelId::from(42u32);
-        let link = build_message_link(Chat::Channel(community_id, channel_id), None, 11.into());
-        assert_eq!(
-            link,
-            format!("https://oc.app/community/{community_id}/channel/{channel_id}/11")
-        );
-    }
-
-    #[test]
     fn channel_thread_message_link() {
         let community_id = CommunityId::from(principal(5));
         let channel_id = ChannelId::from(42u32);

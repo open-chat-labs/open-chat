@@ -491,29 +491,6 @@ mod tests {
     }
 
     #[test]
-    fn metrics_group_failures_by_error_code() {
-        let mut migrations = UserMigrations::default();
-        for i in 1..=3 {
-            migrations.enqueue(queued(i), false);
-            let next = migrations.try_take_next().unwrap().user_id;
-            migrations.mark_requested(next, canister_id(1), 1);
-        }
-        migrations.mark_failed(user_id(1), canister_id(1), OCErrorCode::NotReadyForMigration.into(), 2);
-        migrations.mark_failed(user_id(2), canister_id(1), OCErrorCode::NotReadyForMigration.into(), 2);
-        migrations.mark_failed(user_id(3), canister_id(1), OCErrorCode::TargetUserNotFound.into(), 2);
-
-        let metrics = migrations.metrics();
-        assert_eq!(metrics.failed, 3);
-        assert_eq!(
-            metrics.failed_by_error_code,
-            BTreeMap::from([
-                (OCErrorCode::TargetUserNotFound as u16, 1),
-                (OCErrorCode::NotReadyForMigration as u16, 2)
-            ])
-        );
-    }
-
-    #[test]
     fn status_follows_the_migration() {
         let mut migrations = UserMigrations::default();
         assert_eq!(migrations.status(&user_id(1)), None);

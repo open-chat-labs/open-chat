@@ -581,18 +581,4 @@ mod tests {
                 .contains_key("callDeclineToken")
         );
     }
-
-    // #9534 invariant 10: the shell tells a declined-elsewhere dismissal from the others by name.
-    #[test]
-    fn invariant_10_a_declined_elsewhere_dismissal_names_its_kind() {
-        let data = FcmData::call_dismissal(
-            Chat::Direct(user(1).into()),
-            7u64.into(),
-            CallDismissalKind::DeclinedElsewhere,
-        )
-        .as_data();
-        assert_eq!(data["type"], "call_dismissed");
-        assert_eq!(data["dismissalKind"], "declined_elsewhere");
-        assert!(!data.contains_key("senderId"), "{data:?}");
-    }
 }

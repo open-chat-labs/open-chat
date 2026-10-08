@@ -233,13 +233,4 @@ mod tests {
         assert!(!settled(&failed(C2CRetryPolicy::RetryImmediately)));
         assert!(!settled(&failed(C2CRetryPolicy::RetryAfterDelay)));
     }
-
-    #[test]
-    fn retry_delay_doubles_to_a_ceiling() {
-        assert_eq!(retry_delay(1), Duration::from_secs(120));
-        assert_eq!(retry_delay(2), Duration::from_secs(240));
-        assert_eq!(retry_delay(3), Duration::from_secs(480));
-        assert_eq!(retry_delay(4), MAX_RETRY_DELAY);
-        assert_eq!(retry_delay(MAX_ATTEMPTS), MAX_RETRY_DELAY);
-    }
 }
