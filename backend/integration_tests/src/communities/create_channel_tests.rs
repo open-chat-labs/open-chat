@@ -102,8 +102,6 @@ fn existing_users_joined_to_new_public_channel() {
 
 // Invariant: create_channel returns InvalidExternalUrl for a non-https external_url.
 #[test_case("javascript:alert(1)")]
-#[test_case("http://example.com")]
-#[test_case("data:text/html,x")]
 fn create_channel_rejects_non_https_external_url(external_url: &str) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

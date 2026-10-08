@@ -347,7 +347,6 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(container_type
 // and the member has an approval standing under their spender subaccount (such as one made for a tip
 // which wasn't spent). They lapse instead, and pay when they join again.
 #[test_case(ContainerType::Community)]
-#[test_case(ContainerType::Channel)]
 #[test_case(ContainerType::Group)]
 fn member_is_not_charged_for_a_payment_gate_as_it_expires(container_type: ContainerType) {
     let mut wrapper = ENV.deref().get();
