@@ -425,7 +425,10 @@ impl RuntimeState {
 
             files_to_delete.extend(result.files);
             final_prize_payments.extend(result.final_prize_payments);
-            threads_to_delete.insert(channel.id, result.threads);
+            threads_to_delete
+                .entry(channel.id)
+                .or_insert_with(Vec::new)
+                .extend(result.threads);
 
             if result.events.len() < BATCH_SIZE {
                 finished = true;

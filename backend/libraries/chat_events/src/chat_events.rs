@@ -2499,8 +2499,7 @@ impl ChatEvents {
                     result.files.extend(
                         thread_events
                             .iter(None, true, EventIndex::default(), None)
-                            .filter_map(|e| e.into_event())
-                            .filter_map(|e| if let ChatEventInternal::Message(r) = e.event { Some(r) } else { None })
+                            .filter_map(|e| e.into_event()?.event.into_message())
                             .flat_map(|r| r.content.blob_references()),
                     );
                 }
@@ -3994,12 +3993,17 @@ mod tests {
         ] {
             push_message_in_thread(&mut events, sender, Some(root_message_index), message_id, content);
         }
+        // Another thread, which is left alone
+        let other_root_message_index = push_message(&mut events, sender, 20, file_content(4));
+        push_message_in_thread(&mut events, sender, Some(other_root_message_index), 21, file_content(5));
         let root_event_index = events.main.event_index(root_message_index.into()).unwrap();
 
-        let result = events.remove_event(root_event_index, &none(), 20).unwrap();
+        let result = events.remove_event(root_event_index, &none(), 30).unwrap();
 
         assert_eq!(result.files.iter().map(|f| f.blob_id).collect::<Vec<_>>(), vec![1, 2, 3]);
         assert_eq!(result.thread.map(|t| t.root_message_index), Some(root_message_index));
+        assert!(!events.threads.contains_key(&root_message_index));
+        assert!(events.threads.contains_key(&other_root_message_index));
     }
 
     fn file_content(blob_id: u128) -> MessageContentInternal {
