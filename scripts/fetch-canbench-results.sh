@@ -19,7 +19,7 @@ COMMIT=$(git rev-parse HEAD)
 RUN_ID=$(gh run list --workflow benchmarks.yaml --commit "$COMMIT" --limit 1 --json databaseId --jq '.[0].databaseId // empty')
 if [ -z "$RUN_ID" ]
 then
-  echo "No Benchmarks run found for $COMMIT. Push it to a PR and try again once the run has started."
+  echo "No Benchmarks run found for $COMMIT. Push it to a PR into master (GitHub doesn't run the checks while a PR has conflicts) and try again once the run has started."
   exit 1
 fi
 
@@ -34,7 +34,9 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 if ! gh run download "$RUN_ID" --name persisted_canbench_results --dir "$TMP_DIR"
 then
-  echo "Benchmarks run $RUN_ID has no results file: its benchmarks job was skipped (no backend changes) or failed before measuring"
+  # eg. the benchmarks job was skipped (no backend changes), failed before measuring, or the run was
+  # cancelled by a newer push
+  echo "Benchmarks run $RUN_ID has no results file to download ($(gh run view "$RUN_ID" --json conclusion,url --jq '"\(.conclusion): \(.url)"'))"
   exit 1
 fi
 
