@@ -51,6 +51,13 @@ pub(crate) fn delete_group(
         false
     };
 
+    // The files sent in the group name it as their only accessor, so removing it removes them. A group
+    // imported into a community lives on as one of its channels, so its files are kept until the
+    // community is deleted.
+    if community_imported_into.is_none() {
+        state.data.storage_index_accessors_to_remove_queue.push(group_id.into());
+    }
+
     state.data.local_index_map.mark_group_deleted(&group_id);
     state.data.deleted_groups.insert(
         DeletedGroupInfoInternal {

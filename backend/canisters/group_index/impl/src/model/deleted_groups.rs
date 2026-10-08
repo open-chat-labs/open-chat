@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, VecDeque};
-use types::{ChatId, DeletedGroupInfoInternal, UserId};
+use types::{ChatId, CommunityId, DeletedGroupInfoInternal, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct DeletedGroups {
@@ -14,6 +14,22 @@ pub struct DeletedGroups {
 impl DeletedGroups {
     pub fn get(&self, chat_id: &ChatId) -> Option<&DeletedGroupInfoInternal> {
         self.groups.get(chat_id)
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &DeletedGroupInfoInternal> {
+        self.groups.values()
+    }
+
+    // The groups which were imported into the community, each now one of its channels
+    pub fn imported_into(&self, community_id: CommunityId) -> impl Iterator<Item = ChatId> + '_ {
+        self.groups
+            .values()
+            .filter(move |g| {
+                g.community_imported_into
+                    .as_ref()
+                    .is_some_and(|c| c.community_id == community_id)
+            })
+            .map(|g| g.id)
     }
 
     pub fn insert(&mut self, deleted_group: DeletedGroupInfoInternal, members: Vec<UserId>) -> bool {

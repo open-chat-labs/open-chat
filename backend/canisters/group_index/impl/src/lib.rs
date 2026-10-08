@@ -16,11 +16,12 @@ use group_index_canister::ChildCanisterType;
 use local_user_index_canister::{GroupIndexEvent as LocalIndexEvent, ModerationFlagsChanged, NameChanged, VerifiedChanged};
 use model::local_index_event_batch::LocalIndexEventBatch;
 use model::local_index_map::LocalIndexMap;
+use model::storage_index_accessors_to_remove_batch::StorageIndexAccessorsToRemoveBatch;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashSet};
-use timer_job_queues::GroupedTimerJobQueue;
+use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGate, BuildVersion, CanisterId, ChatId, ChildCanisterWasms, CommunityId, Cycles, FrozenGroupInfo, IdempotentEnvelope,
     Milliseconds, TimestampMillis, Timestamped, UserId,
@@ -295,6 +296,7 @@ impl RuntimeState {
                 escrow: self.data.escrow_canister_id,
                 event_relay: self.data.event_relay_canister_id,
                 registry: self.data.registry_canister_id,
+                storage_index: self.data.storage_index_canister_id,
             },
         }
     }
@@ -317,6 +319,8 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     pub event_relay_canister_id: CanisterId,
     pub registry_canister_id: CanisterId,
+    #[serde(default = "CanisterId::anonymous")]
+    pub storage_index_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
@@ -334,6 +338,14 @@ struct Data {
     // have changed
     #[serde(default)]
     pub migrated_user_ids: MigratedUserIds,
+    // The ids of deleted groups and communities, which the files sent in them name as their only
+    // accessor, to be removed from those files by the StorageIndex, which removes the files
+    #[serde(default = "storage_index_accessors_to_remove_queue")]
+    pub storage_index_accessors_to_remove_queue: BatchedTimerJobQueue<StorageIndexAccessorsToRemoveBatch>,
+}
+
+fn storage_index_accessors_to_remove_queue() -> BatchedTimerJobQueue<StorageIndexAccessorsToRemoveBatch> {
+    BatchedTimerJobQueue::new(CanisterId::anonymous(), false)
 }
 
 impl Data {
@@ -346,6 +358,7 @@ impl Data {
         escrow_canister_id: CanisterId,
         event_relay_canister_id: CanisterId,
         registry_canister_id: CanisterId,
+        storage_index_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         video_call_operators: Vec<Principal>,
         test_mode: bool,
@@ -366,6 +379,7 @@ impl Data {
             escrow_canister_id,
             event_relay_canister_id,
             registry_canister_id,
+            storage_index_canister_id,
             internet_identity_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode,
@@ -380,6 +394,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             migrated_user_ids: MigratedUserIds::default(),
+            storage_index_accessors_to_remove_queue: BatchedTimerJobQueue::new(storage_index_canister_id, false),
         }
     }
 
@@ -475,6 +490,7 @@ impl Default for Data {
             escrow_canister_id: Principal::anonymous(),
             event_relay_canister_id: Principal::anonymous(),
             registry_canister_id: Principal::anonymous(),
+            storage_index_canister_id: Principal::anonymous(),
             internet_identity_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode: true,
@@ -489,6 +505,7 @@ impl Default for Data {
             idempotency_checker: IdempotencyChecker::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(10, false),
             migrated_user_ids: MigratedUserIds::default(),
+            storage_index_accessors_to_remove_queue: storage_index_accessors_to_remove_queue(),
         }
     }
 }
@@ -561,6 +578,7 @@ pub struct CanisterIds {
     pub escrow: CanisterId,
     pub event_relay: CanisterId,
     pub registry: CanisterId,
+    pub storage_index: CanisterId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]

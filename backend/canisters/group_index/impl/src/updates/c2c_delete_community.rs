@@ -96,6 +96,13 @@ pub(crate) fn commit(
         false
     };
 
+    // The files sent in the community name it as their only accessor, as do those sent in each group
+    // imported into it, so removing them removes those files
+    let accessor_ids: Vec<_> = std::iter::once(community_id.into())
+        .chain(state.data.deleted_groups.imported_into(community_id).map(CanisterId::from))
+        .collect();
+    state.data.storage_index_accessors_to_remove_queue.push_many(accessor_ids);
+
     state.data.local_index_map.mark_community_deleted(&community_id);
     state.data.deleted_communities.insert(
         DeletedCommunityInfo {
