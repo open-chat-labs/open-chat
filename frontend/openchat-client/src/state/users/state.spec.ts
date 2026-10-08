@@ -16,6 +16,7 @@ function user(userId: string, suspended = false): UserSummary {
         streak: 0,
         maxStreak: 0,
         isUniquePerson: false,
+        hideOnlineStatus: false,
     };
 }
 
