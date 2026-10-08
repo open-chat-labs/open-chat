@@ -9,6 +9,7 @@
         subscribe,
     } from "@client";
     import { getContext, onMount } from "svelte";
+    import { SvelteSet } from "svelte/reactivity";
     import { i18nKey } from "../../../i18n/i18n";
     import { activeVideoCall } from "../../../stores/video";
     import FancyLoader from "../../icons/FancyLoader.svelte";
@@ -34,7 +35,7 @@
 
     let { chatId, messageId, isOwner, onClose }: Props = $props();
 
-    const demoted = $state(new Set<string>());
+    const demoted = new SvelteSet<string>();
     let loading = $state(false);
 
     let selectedTab: "presenters" | "viewers" = $state("presenters");
