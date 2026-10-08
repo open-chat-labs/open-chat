@@ -69,25 +69,24 @@
         // card was closed while getUser was in flight
         const id = userId;
         try {
-            // TODO: a getUser failure rejects nothing here, so the catch below never sees it and the card stays open
-            // eslint-disable-next-line no-async-promise-executor
-            rendering = new Promise(async (resolve) => {
-                user = await client.getUser(id);
-                client.getPublicProfile(id).subscribe({
-                    onResult: (result) => {
-                        profile = result;
-                        if (profile === undefined) {
-                            onClose();
-                        } else {
-                            resolve();
-                        }
-                    },
-                });
-            });
+            user = await client.getUser(id);
         } catch (e) {
             client.logError("Failed to load user profile", e);
             onClose();
+            return;
         }
+        rendering = new Promise((resolve) => {
+            client.getPublicProfile(id).subscribe({
+                onResult: (result) => {
+                    profile = result;
+                    if (profile === undefined) {
+                        onClose();
+                    } else {
+                        resolve();
+                    }
+                },
+            });
+        });
     });
 
     function afterBlock(result: boolean, success: ResourceKey, failure: ResourceKey) {
