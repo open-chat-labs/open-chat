@@ -138,6 +138,8 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     // the site's storage from under an open connection
     /internal error was encountered in the indexed database server/i,
     /database deleted by request of the user/i,
+    // Chrome's form of the same: the user cleared the site's data while it was open (#29538)
+    /force close delete origin/i,
     // Safari's in-app browser bridge complaining about its own injected script
     /wkwebview api client did not respond to this postmessage/i,
     // The client's clock is wrong, so the replica certificate looks like it is from the future;
