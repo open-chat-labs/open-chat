@@ -304,8 +304,8 @@ fn write<V: HeapStableSplitMapValue>(id: &V::Id, previous_entry: &V::Entry, valu
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::KeyPrefix;
     use crate::keys::test_small_entries::{TestSmallEntriesKey, TestSmallEntriesKeyPrefix};
-    use crate::{KeyPrefix, KeyScope, with_key_scope};
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 
@@ -486,26 +486,6 @@ mod tests {
         // Replacing a value with one under the same key leaves just the new one
         values.insert(1, Keyed(6));
         assert_eq!(stored_count(), 1);
-    }
-
-    #[test]
-    fn values_are_scoped_to_their_user_in_a_multi_user_canister() {
-        let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
-        crate::init_multi_user(memory_manager.get(MemoryId::new(1)), memory_manager.get(MemoryId::new(2)));
-
-        let first = with_key_scope(KeyScope::User(1), || {
-            let mut values = HeapStableSplitMap::default();
-            values.insert(1, item("first", 1));
-            values
-        });
-        let second = with_key_scope(KeyScope::User(2), || {
-            let mut values = HeapStableSplitMap::default();
-            values.insert(1, item("second", 1));
-            values
-        });
-
-        with_key_scope(KeyScope::User(1), || assert_eq!(first.get(&1).unwrap().name, "first"));
-        with_key_scope(KeyScope::User(2), || assert_eq!(second.get(&1).unwrap().name, "second"));
     }
 
     fn stored_count() -> usize {

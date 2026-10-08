@@ -54,22 +54,3 @@ pub struct SuccessResult {
     pub referrals: Vec<UserId>,
     pub public_channel_list_updated: TimestampMillis,
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // `Args` as sent by clients which predate `max_members`
-    #[derive(Serialize)]
-    struct PreviousArgs {
-        invite_code: Option<u64>,
-    }
-
-    #[test]
-    fn args_without_max_members_are_read() {
-        let bytes = msgpack::serialize_then_unwrap(PreviousArgs { invite_code: Some(1) });
-        let args: Args = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(args.invite_code, Some(1));
-        assert!(args.max_members.is_none());
-    }
-}

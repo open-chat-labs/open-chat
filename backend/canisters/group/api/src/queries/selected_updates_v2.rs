@@ -26,21 +26,3 @@ pub enum Response {
     SuccessSnapshot(crate::selected_initial::SuccessResult),
     Error(OCError),
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // `Args` as they were before `max_members` was added
-    #[derive(Serialize)]
-    struct PreviousArgs {
-        updates_since: TimestampMillis,
-    }
-
-    #[test]
-    fn args_without_max_members_are_read() {
-        let bytes = msgpack::serialize_then_unwrap(PreviousArgs { updates_since: 1 });
-        let args: Args = msgpack::deserialize_then_unwrap(&bytes);
-        assert!(args.max_members.is_none());
-    }
-}

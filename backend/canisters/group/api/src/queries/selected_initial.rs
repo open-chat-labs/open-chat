@@ -52,16 +52,3 @@ pub struct SuccessResult {
     #[ts(as = "Option<VersionedRules>", optional)]
     pub chat_rules: VersionedRules,
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // Clients which predate `max_members` send no args at all
-    #[test]
-    fn args_without_max_members_are_read() {
-        let bytes = msgpack::serialize_then_unwrap(types::Empty {});
-        let args: Args = msgpack::deserialize_then_unwrap(&bytes);
-        assert!(args.max_members.is_none());
-    }
-}

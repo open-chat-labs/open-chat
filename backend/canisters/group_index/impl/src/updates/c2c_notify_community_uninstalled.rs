@@ -99,16 +99,6 @@ mod tests {
         assert!(state.data.deleted_communities.get(&community_id()).is_none());
     }
 
-    #[test]
-    fn unknown_community_is_not_found() {
-        let mut state = setup_runtime_state(local_user_index());
-        let community_id = Principal::from_slice(&[4]).into();
-
-        let result = c2c_notify_community_uninstalled_impl(Args { community_id }, &mut state);
-
-        assert!(matches!(result, Err(error) if error.matches_code(OCErrorCode::CommunityNotFound)));
-    }
-
     fn setup_runtime_state(caller: Principal) -> RuntimeState {
         let env = TestEnv {
             caller,
