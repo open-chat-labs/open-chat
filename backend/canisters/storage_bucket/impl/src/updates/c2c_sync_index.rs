@@ -32,9 +32,9 @@ fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
     }
 
-    for accessor_id in args.accessors_removed {
-        files_removed.extend(state.data.files.remove_accessor(&accessor_id));
-    }
+    // Deleted groups and communities can have many files, so they are removed in the background
+    state.data.files.queue_accessor_removals(args.accessors_removed);
+    crate::jobs::remove_accessors::start_job_if_required(state);
 
     for file_id in args.files_to_remove {
         if let RemoveFileResult::Success(file_removed) = state.data.files.remove_unchecked(file_id) {
