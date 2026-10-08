@@ -332,6 +332,14 @@ describe("UserIndexClient.getUsers with migrated users", () => {
         );
     });
 
+    test("populateUserCache drops ids that are not principals", async () => {
+        setup();
+
+        await client.populateUserCache(["n", LATEST]);
+
+        expect(requests).toEqual([[LATEST]]);
+    });
+
     test("populateUserCache caches a user under their latest id", async () => {
         setup();
         respond = () => ({ users: [fullUpdate(LATEST, "fresh", [OLD])] });

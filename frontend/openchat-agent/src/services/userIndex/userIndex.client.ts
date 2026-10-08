@@ -39,6 +39,7 @@ import type {
 } from "@shared";
 import {
     ErrorCode,
+    isPrincipalValid,
     mergeUserSummaryWithUpdates,
     offline,
     Stream,
@@ -738,6 +739,9 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
     }
 
     async populateUserCache(userIds: string[]): Promise<void> {
+        // Mentions are parsed out of message text, so `@UserId(n)` typed into a message gives "n",
+        // which would take the whole batch down in Principal.fromText, as in getUsers
+        userIds = userIds.filter(isPrincipalValid);
         const knownMigrations = await this.userDb.getLatestUserIds(userIds);
         const latestUserIds = [...new Set(userIds.map((u) => knownMigrations.get(u) ?? u))];
 
