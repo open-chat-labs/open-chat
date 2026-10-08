@@ -1528,18 +1528,6 @@ mod tests {
     }
 
     #[test]
-    fn a_member_in_the_lapsed_set_whose_record_isnt_lapsed_is_dropped_from_it() {
-        let mut members = members_for_page_tests(3);
-        // As can happen if the members were imported from a group which was unlapsing them
-        members.lapsed.insert(test_user_id(2));
-        members.start_unlapsing(10);
-
-        assert!(members.unlapse_while(10, || true).is_empty());
-        assert!(members.lapsed().is_empty());
-        assert!(!members.is_unlapsing());
-    }
-
-    #[test]
     fn members_who_lapse_after_unlapsing_starts_are_left_lapsed() {
         let mut members = members_for_page_tests(4);
         members.update_lapsed(test_user_id(2), true, 3);

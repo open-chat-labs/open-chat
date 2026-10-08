@@ -366,7 +366,11 @@ describe("app state", () => {
                         groupId,
                         undefined,
                         undefined,
-                        { changeRoles: ROLE_OWNER },
+                        {
+                            changeRoles: ROLE_OWNER,
+                            messagePermissions: undefined,
+                            threadPermissions: undefined,
+                        },
                         { gate: { kind: "diamond_gate" }, expiry: undefined },
                     );
                     const client = get(allChatsStore).get(groupId);

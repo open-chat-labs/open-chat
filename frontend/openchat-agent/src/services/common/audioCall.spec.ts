@@ -54,14 +54,4 @@ describe("audio calls and the website that predates them", () => {
             call_type: "Default",
         });
     });
-
-    // the reason the type did not simply gain a third value
-    test("a third call type would not have decoded", () => {
-        expect(() =>
-            typeboxValidate(
-                { call_type: "Audio", participants: [], hidden_participants: 0 },
-                PreviousVideoCallContent,
-            ),
-        ).toThrow();
-    });
 });

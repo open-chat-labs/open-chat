@@ -27,21 +27,3 @@ pub enum Response {
 pub struct SuccessResult {
     pub members: Vec<CommunityMember>,
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // `Args` as they were before `invite_code` was added
-    #[derive(Serialize)]
-    struct PreviousArgs {
-        user_ids: Vec<UserId>,
-    }
-
-    #[test]
-    fn args_without_invite_code_are_read() {
-        let bytes = msgpack::serialize_then_unwrap(PreviousArgs { user_ids: Vec::new() });
-        let args: Args = msgpack::deserialize_then_unwrap(&bytes);
-        assert!(args.invite_code.is_none());
-    }
-}

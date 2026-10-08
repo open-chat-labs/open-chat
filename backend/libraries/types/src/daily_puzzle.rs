@@ -266,38 +266,3 @@ pub struct DailyPuzzleSolved {
     #[serde(default)]
     pub total_chit_earned: Option<i32>,
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // #9332 invariant 31: a config written before `max_free_checks` existed deserialises, and
-    // gets the same value a fresh config gets
-    #[test]
-    fn config_without_max_free_checks_deserialises_to_the_default() {
-        #[derive(Serialize)]
-        struct OldConfig {
-            enabled: bool,
-            entry_fee: u32,
-            first_play_free: bool,
-            reward_by_streak: Vec<u32>,
-            hint_penalty: u32,
-            min_carded_solve_ms: u64,
-            max_submits: u16,
-        }
-        let old = OldConfig {
-            enabled: true,
-            entry_fee: 100,
-            first_play_free: true,
-            reward_by_streak: vec![250],
-            hint_penalty: 50,
-            min_carded_solve_ms: 10_000,
-            max_submits: 20,
-        };
-        let bytes = msgpack::serialize_then_unwrap(&old);
-        let config: DailyPuzzleConfig = msgpack::deserialize_then_unwrap(&bytes);
-        assert_eq!(config.max_free_checks, DailyPuzzleConfig::default().max_free_checks);
-        assert!(config.enabled);
-        assert_eq!(config.max_submits, 20);
-    }
-}

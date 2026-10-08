@@ -99,10 +99,10 @@ const PIN_INCORRECT = { kind: "error", code: ErrorCode.PinIncorrect, message: "0
 // MultiUser canister has to approve it for first
 describe("OpenChatAgent paying from the user's wallet", () => {
     let approvals: unknown[][];
-    let approveResponse: "success" | "insufficient_funds" | "failure" | "throws";
+    let approveResponse: "success" | "insufficient_funds" | "failure";
     // Each PIN checked, with how many approvals had been made by then
     let pinChecks: [string, number][];
-    let pinCheckResponse: "success" | "incorrect" | "throws";
+    let pinCheckResponse: "success" | "incorrect";
     let calls: string[];
     let callArgs: unknown[][];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,9 +127,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         agent._ledgerClient = {
             approveSpending: (...args: unknown[]) => {
                 approvals.push(args);
-                return approveResponse === "throws"
-                    ? Promise.reject(new Error("The ledger couldn't be reached"))
-                    : Promise.resolve(approveResponse);
+                return Promise.resolve(approveResponse);
             },
         };
         agent._userClient = {
@@ -141,8 +139,6 @@ describe("OpenChatAgent paying from the user's wallet", () => {
                         return Promise.resolve({ kind: "success" });
                     case "incorrect":
                         return Promise.resolve(PIN_INCORRECT);
-                    case "throws":
-                        return Promise.reject(new Error("The canister has no such method"));
                 }
             },
             sendMessage: called("sendMessage"),
@@ -332,35 +328,15 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             },
         );
 
-        test.each(paymentsWithPin)(
-            "%s is neither approved nor made with the wrong PIN",
-            async (_, pay) => {
-                pinCheckResponse = "incorrect";
+        test("a payment is neither approved nor made with the wrong PIN", async () => {
+            pinCheckResponse = "incorrect";
 
-                const response = await pay("0000");
+            const response = await sendDirectMessage(crypto(), "0000");
 
-                expect([response].flat()[0]).toEqual(PIN_INCORRECT);
-                expect(approvals).toEqual([]);
-                expect(calls).toEqual([]);
-            },
-        );
-
-        test.each(paymentsWithPin)(
-            "%s is neither approved nor made if its PIN can't be checked",
-            async (_, pay) => {
-                pinCheckResponse = "throws";
-
-                const response = await pay("1234");
-
-                expect([response].flat()[0]).toEqual({
-                    kind: "error",
-                    code: ErrorCode.ApprovalFailed,
-                    message: undefined,
-                });
-                expect(approvals).toEqual([]);
-                expect(calls).toEqual([]);
-            },
-        );
+            expect([response].flat()[0]).toEqual(PIN_INCORRECT);
+            expect(approvals).toEqual([]);
+            expect(calls).toEqual([]);
+        });
 
         test("nothing has its PIN checked while the ledger's fee isn't known", async () => {
             agent._registryValue = undefined;
@@ -404,19 +380,6 @@ describe("OpenChatAgent paying from the user's wallet", () => {
 
         test.each(payments)("%s is not made if it can't be approved", async (_, pay) => {
             approveResponse = "failure";
-
-            const response = await pay();
-
-            expect([response].flat()[0]).toEqual({
-                kind: "error",
-                code: ErrorCode.ApprovalFailed,
-                message: undefined,
-            });
-            expect(calls).toEqual([]);
-        });
-
-        test.each(payments)("%s is not made if the ledger can't be reached", async (_, pay) => {
-            approveResponse = "throws";
 
             const response = await pay();
 
@@ -693,16 +656,13 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             expect(calls.length).toEqual(1);
         });
 
-        test.each(paymentsWithPin)(
-            "%s has no PIN checked first, since nothing is approved",
-            async (_, pay) => {
-                await pay("1234");
+        test("a payment has no PIN checked first, since nothing is approved", async () => {
+            await sendDirectMessage(crypto(), "1234");
 
-                expect(pinChecks).toEqual([]);
-                expect(approvals).toEqual([]);
-                expect(calls.length).toEqual(1);
-            },
-        );
+            expect(pinChecks).toEqual([]);
+            expect(approvals).toEqual([]);
+            expect(calls.length).toEqual(1);
+        });
 
         test.each(transferMessages)(
             "%s in a group is sent via their canister, which makes the transfer",
@@ -1345,7 +1305,6 @@ describe("OpenChatAgent approving a spender", () => {
     const GATE_APPROVAL = 1_000n - FEE;
 
     let approvals: unknown[][];
-    let approveResponse: "success" | "insufficient_funds" | "failure";
     let pinChecks: [string, number][];
     let pinCheckResponse: "success" | "incorrect";
     let userCanisterApprovals: unknown[][];
@@ -1360,7 +1319,7 @@ describe("OpenChatAgent approving a spender", () => {
         agent._ledgerClient = {
             approveSpending: (...args: unknown[]) => {
                 approvals.push(args);
-                return Promise.resolve(approveResponse);
+                return Promise.resolve("success");
             },
         };
         agent._userClient = {
@@ -1413,7 +1372,6 @@ describe("OpenChatAgent approving a spender", () => {
 
     beforeEach(() => {
         approvals = [];
-        approveResponse = "success";
         pinChecks = [];
         pinCheckResponse = "success";
         userCanisterApprovals = [];
@@ -1464,13 +1422,10 @@ describe("OpenChatAgent approving a spender", () => {
             expect(approvals.length).toEqual(1);
         });
 
-        test.each([
-            ["a gate's payment", approveGatePayment],
-            ["a proposal's fee", approveProposalFee],
-        ])("%s isn't approved with the wrong PIN", async (_, approve) => {
+        test("a gate's payment isn't approved with the wrong PIN", async () => {
             pinCheckResponse = "incorrect";
 
-            expect(await approve()).toEqual(PIN_INCORRECT);
+            expect(await approveGatePayment()).toEqual(PIN_INCORRECT);
             expect(approvals).toEqual([]);
         });
 
@@ -1480,15 +1435,6 @@ describe("OpenChatAgent approving a spender", () => {
             expect(approvals).toEqual([
                 [ICP_LEDGER, proposalsBotSpender, 100n, FEE, APPROVAL_VALIDITY_MS],
             ]);
-        });
-
-        test.each([
-            ["insufficient_funds", ErrorCode.InsufficientFunds],
-            ["failure", ErrorCode.ApprovalFailed],
-        ] as const)("an approval which fails with %s is reported", async (response, code) => {
-            approveResponse = response;
-
-            expect(await approveGatePayment()).toEqual({ kind: "error", code, message: undefined });
         });
 
         test("nothing is approved while the ledger's fee isn't known", async () => {

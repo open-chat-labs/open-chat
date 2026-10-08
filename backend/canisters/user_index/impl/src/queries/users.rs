@@ -144,41 +144,17 @@ mod tests {
     use utils::env::test::TestEnv;
 
     #[test]
-    fn migrated_user_returned_in_full_under_latest_id() {
+    fn migrated_user_returned_once_in_full_under_latest_id_whatever_the_ids_asked_for() {
         let state = setup_runtime_state();
 
-        let result = users(&state, vec![user_id(1)], state.env.now());
-
-        assert_eq!(result.users.len(), 1);
-        let user = &result.users[0];
-        assert_eq!(user.user_id, user_id(2));
-        assert_eq!(user.previous_user_ids, vec![user_id(1)]);
-        assert!(user.stable.is_some());
-        assert!(user.volatile.is_some());
-    }
-
-    #[test]
-    fn user_looked_up_by_latest_id_has_no_previous_ids() {
-        let state = setup_runtime_state();
-
-        let result = users(&state, vec![user_id(2)], 0);
-
-        assert_eq!(result.users.len(), 1);
-        assert_eq!(result.users[0].user_id, user_id(2));
-        assert!(result.users[0].previous_user_ids.is_empty());
-    }
-
-    #[test]
-    fn migrated_user_returned_once_whatever_the_order_of_ids() {
-        let state = setup_runtime_state();
-
-        for user_ids in [vec![user_id(1), user_id(2)], vec![user_id(2), user_id(1)]] {
+        for user_ids in [vec![user_id(1)], vec![user_id(1), user_id(2)], vec![user_id(2), user_id(1)]] {
             let result = users(&state, user_ids, state.env.now());
 
             assert_eq!(result.users.len(), 1);
             assert_eq!(result.users[0].user_id, user_id(2));
             assert_eq!(result.users[0].previous_user_ids, vec![user_id(1)]);
             assert!(result.users[0].stable.is_some());
+            assert!(result.users[0].volatile.is_some());
         }
     }
 

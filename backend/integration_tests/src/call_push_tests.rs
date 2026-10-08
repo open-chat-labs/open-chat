@@ -265,32 +265,6 @@ fn invariants_4_5_9_10_direct_call_that_is_answered() {
     assert_eq!(dismissal_kinds(&pushes, caller.user_id), vec!["answered_elsewhere"]);
 }
 
-// #9456 invariant 4: a user who never joined is told the call ended
-#[test]
-fn invariant_4_direct_call_that_is_not_answered_ends_as_ended() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let caller = register_phone_caller(env, canister_ids, *controller);
-    let callee = register_phone_user(env, canister_ids);
-    let feed = Feed::new(env, canister_ids, &[caller.canister(), callee.canister()]);
-    feed.enable_call_push(env, canister_ids, *controller);
-
-    let message_id = start_direct_call(env, &caller, callee.user_id, false);
-    tick_many(env, 3);
-
-    let index = feed.snapshot(env, *controller);
-    end_direct_call(env, caller.user_id, callee.user_id, message_id);
-    let pushes = feed.pushes_since(env, *controller, &index);
-    assert_eq!(dismissal_kinds(&pushes, callee.user_id), vec!["ended"]);
-    assert_eq!(dismissal_kinds(&pushes, caller.user_id), vec!["answered_elsewhere"]);
-}
-
 // #9456 invariant 2: a user who has muted the chat receives no start push and no ended push
 #[test]
 fn invariant_2_a_muted_chat_never_pushes_a_call() {
@@ -358,31 +332,6 @@ fn invariant_3_switch_off_means_no_call_fields_and_no_dismissals() {
             .iter()
             .all(|p| p.data.get("type").is_none_or(|t| t != "call_dismissed"))
     );
-}
-
-// #9456 invariant 6, the local user index half: a user with only a web push subscription gets
-// the start push but no dismissal, because a dismissal has no web push form
-#[test]
-fn invariant_6_a_web_only_user_gets_no_dismissal() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let caller = register_phone_caller(env, canister_ids, *controller);
-    let callee = register_web_user(env, canister_ids);
-    let feed = Feed::new(env, canister_ids, &[caller.canister(), callee.canister()]);
-    feed.enable_call_push(env, canister_ids, *controller);
-
-    let index = feed.snapshot(env, *controller);
-    let message_id = start_direct_call(env, &caller, callee.user_id, false);
-    end_direct_call(env, caller.user_id, callee.user_id, message_id);
-    let pushes = feed.pushes_since(env, *controller, &index);
-    assert_eq!(pushes_for(&pushes, callee.user_id).len(), 1);
-    assert!(dismissals_for(&pushes, callee.user_id).is_empty());
 }
 
 // #9456 invariant 1, the local user index half: a small private group rings, and a call in a

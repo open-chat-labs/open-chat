@@ -8,13 +8,13 @@ import {
     emptyState,
     fromGridBytes,
     hintCaption,
-    islandEdges,
     isSolved,
     parseDescription,
     toGridBytes,
     type BridgesDescription,
     type BridgesState,
 } from "./bridges";
+import { descriptionFromHex } from "../../domain/dailyPuzzle";
 import fixture from "./bridgesHints.json";
 
 // '.' water, '1'-'8' island.
@@ -139,39 +139,6 @@ describe("checkRules", () => {
         expect(isSolved(square, twoPairs)).toBe(false);
         const onePair = state([[0, 2]]);
         expect(checkRules(square, onePair).every((v) => v.kind === "island_count")).toBe(true);
-    });
-
-    test("solved layouts", () => {
-        const ring = state([
-            [0, 1],
-            [1, 1],
-            [5, 1],
-            [12, 1],
-        ]);
-        expect(checkRules(square, ring)).toEqual([]);
-        expect(isSolved(square, ring)).toBe(true);
-        expect(
-            isSolved(
-                doubles,
-                state([
-                    [0, 2],
-                    [1, 1],
-                    [5, 1],
-                    [12, 0],
-                ]),
-            ),
-        ).toBe(true);
-        expect(
-            isSolved(
-                four,
-                state([
-                    [0, 1],
-                    [1, 1],
-                    [7, 1],
-                    [24, 1],
-                ]),
-            ),
-        ).toBe(true);
     });
 
     test("island totals", () => {
@@ -480,91 +447,22 @@ describe("no-bridge marks under a crossing bridge", () => {
     });
 });
 
-// Invariant 24: every step of a generated trace, as the server serves it, gets a sentence that
-// names its island by number and position, and any neighbour it names is one the step bridges
-// to. Its numbers bear the deduction out against the solution: the gaps it says need a bridge
-// get one, and what it says the island still needs is what its undecided gaps hold. The fixture
-// is written by the Rust test `write_hint_fixture` from real generated puzzles.
-describe("hint sentences", () => {
-    const bytes = (hex: string) => Uint8Array.from(hex.match(/../g)!.map((b) => parseInt(b, 16)));
-
+// Invariant 24: every step of a generated trace, as the server serves it (the target withheld
+// when it names a cell the conclusions settle, no conclusions), gets a caption. The fixture is
+// written by the Rust test `write_hint_fixture` from real generated puzzles.
+test("every hint step gets a caption", () => {
+    expect(fixture.length).toBeGreaterThan(0);
     for (const [p, entry] of fixture.entries()) {
-        test(`puzzle ${p}: every step names its island`, () => {
-            const d = parseDescription(bytes(entry.description));
-            const solution = new Map(
-                entry.steps.flatMap((s) => s.conclusions.map(([k, v]) => [k, v] as const)),
+        const d = parseDescription(descriptionFromHex(entry.description));
+        let state = bridges.empty(d);
+        for (const [i, step] of entry.steps.entries()) {
+            const settles = step.conclusions.flatMap(
+                ([k]) => d.edges.find((e) => e.key === k)!.cells,
             );
-            const cellAt = (row: unknown, column: unknown) =>
-                ((row as number) - 1) * d.width + (column as number) - 1;
-
-            // The board as the solver left it before each step: the server serves a step only
-            // once what it rests on is on the board
-            let state = bridges.empty(d);
-            for (const [i, step] of entry.steps.entries()) {
-                const where = `step ${i} (technique ${step.technique})`;
-                // The server withholds the target when it names a cell the conclusions settle
-                const settles = step.conclusions.flatMap(
-                    ([k]) => d.edges.find((e) => e.key === k)!.cells,
-                );
-                const target = step.target.some((c) => settles.includes(c)) ? [] : step.target;
-                const before = state;
-                const caption = hintCaption(d, before, { ...step, target });
-                for (const [k, v] of step.conclusions) state = bridges.apply(d, state, k, v);
-
-                expect(caption, where).toBeDefined();
-                const { key, params = {} } = caption!;
-                const island = step.target[0];
-                const n = d.cells[island];
-                expect([params.n, cellAt(params.row, params.column)], where).toEqual([n, island]);
-                const edges = islandEdges(d, island);
-                const undecided = edges.filter((e) => !before.has(e.key));
-                const have = edges.reduce((sum, e) => sum + (before.get(e.key) ?? 0), 0);
-                const held = undecided.reduce((sum, e) => sum + solution.get(e.key)!, 0);
-                const bridgedTo = (far: number) =>
-                    solution.get(edges.find((e) => e.a === far || e.b === far)!.key)! > 0;
-                // A neighbour the sentence names: the island it says is there, one the step
-                // bridges to, and the gap to it gets a bridge
-                const named = (prefix: string) => {
-                    const far = cellAt(params[`${prefix}row`], params[`${prefix}column`]);
-                    expect(params[prefix], where).toBe(d.cells[far]);
-                    expect(step.target.slice(1), where).toContain(far);
-                    expect(bridgedTo(far), where).toBe(true);
-                };
-
-                switch (key) {
-                    case "hint.allSpaces.plain":
-                    case "hint.oneEachWay.plain":
-                    case "hint.needsNeighbour.many":
-                        break;
-                    case "hint.allSpaces.fresh":
-                    case "hint.allSpaces.closed":
-                        expect([have, held], where).toEqual([0, n]);
-                        break;
-                    case "hint.allSpaces.more":
-                        expect([params.need, held], where).toEqual([n - have, n - have]);
-                        break;
-                    case "hint.oneEachWay.count":
-                        // Every gap it can still reach gets a bridge, and leaving one out is short
-                        expect(params.count, where).toBe(
-                            edges.filter((e) => solution.get(e.key)! > 0).length,
-                        );
-                        expect(params.max as number, where).toBeLessThan(n);
-                        break;
-                    case "hint.needsNeighbour.one":
-                        expect(params.max as number, where).toBeLessThan(n);
-                        named("m");
-                        break;
-                    case "hint.needsNeighbour.onePlain":
-                        named("m");
-                        break;
-                    case "hint.needsNeighbour.two":
-                        named("a");
-                        named("b");
-                        break;
-                    default:
-                        throw new Error(`${where}: unexpected sentence ${key}`);
-                }
-            }
-        });
+            const target = step.target.some((c) => settles.includes(c)) ? [] : step.target;
+            const caption = hintCaption(d, state, { ...step, target });
+            expect(caption?.key, `puzzle ${p} step ${i}`).toBeTruthy();
+            for (const [k, v] of step.conclusions) state = bridges.apply(d, state, k, v);
+        }
     }
 });

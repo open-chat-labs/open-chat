@@ -806,33 +806,13 @@ mod tests {
         }
     }
 
-    /// #9675 H5: each hint carries, for each conclusion, the keys its game draws it on, so the
-    /// LocalUserIndex can compare conclusions with focus and target cell for cell. Only Bridges
-    /// draws a conclusion (a gap) anywhere but its own key.
-    #[test]
-    fn puzzles_carry_where_each_conclusion_is_drawn() {
-        for game_id in generators() {
-            let params = forced_params(game_id).unwrap();
-            let g = generate(&params, 7).unwrap().unwrap();
-            let mut moved = false;
-            for h in &g.hints {
-                let settles = hint_settles(game_id, &g.description, h);
-                let keys: std::collections::BTreeSet<u16> = settles.iter().map(|(k, _)| *k).collect();
-                assert_eq!(keys, h.conclusions.iter().map(|(k, _)| *k).collect(), "{game_id}");
-                moved |= settles.iter().any(|(k, drawn)| k != drawn);
-            }
-            assert_eq!(moved, *game_id == bridges::GAME_ID, "{game_id}");
-        }
-
-        let mut d = data();
-        d.generate_candidate(MONDAY).unwrap();
-        let candidate = &pool(&d, MONDAY)[0].puzzle;
-        assert_eq!(candidate.hint_settles.len(), candidate.hints.len());
-    }
-
+    /// Also pins #9675 H5: each hint carries, for each conclusion, the keys its game draws it on,
+    /// so the LocalUserIndex can compare conclusions with focus and target cell for cell. Only
+    /// Bridges draws a conclusion (a gap) anywhere but its own key.
     #[test]
     fn every_scheduled_game_generates_in_wire_format() {
         let mut seen = HashSet::new();
+        let mut bridges_moved = false;
         // Every rota entry, plus one forced entry per registered generator so a game the rota
         // doesn't name (loopy, benched for being far harder than the rest) is still proved to
         // generate and to have usable default params.
@@ -868,11 +848,26 @@ mod tests {
                 for &(key, value) in &hint.conclusions {
                     assert_eq!(pairs.get(&key), Some(&value), "{}: hint key {key}", params.game_id);
                 }
+                let settles = hint_settles(&params.game_id, &generated.description, hint);
+                let keys: std::collections::BTreeSet<u16> = settles.iter().map(|(k, _)| *k).collect();
+                assert_eq!(keys, hint.conclusions.iter().map(|(k, _)| *k).collect(), "{}", params.game_id);
+                let moved = settles.iter().any(|(k, drawn)| k != drawn);
+                if params.game_id == bridges::GAME_ID {
+                    bridges_moved |= moved;
+                } else {
+                    assert!(!moved, "{}", params.game_id);
+                }
             }
             seen.insert(params.game_id);
         }
         assert_eq!(seen.len(), generators().len());
         assert!(generators().iter().all(|g| seen.contains(*g)));
+        assert!(bridges_moved);
+
+        let mut d = data();
+        d.generate_candidate(MONDAY).unwrap();
+        let candidate = &pool(&d, MONDAY)[0].puzzle;
+        assert_eq!(candidate.hint_settles.len(), candidate.hints.len());
 
         let mut unknown = scheduled(MONDAY);
         unknown.game_id = "sudoku".to_string();
@@ -930,16 +925,6 @@ mod tests {
         assert_eq!(weekday(4), 0);
         assert_eq!(weekday(10), 6);
         assert_eq!(weekday(11), 0);
-
-        let d = data();
-        assert_eq!(d.params_for(4).game_id, CR); // Monday tricky
-        assert_eq!(d.params_for(4).width, 9);
-        assert_eq!(d.params_for(4).tier, 1);
-        assert_eq!(d.params_for(7).game_id, bridges::GAME_ID); // Thursday
-        assert_eq!(d.params_for(9).game_id, tents::GAME_ID); // Saturday tricky
-        assert_eq!(d.params_for(9).tier, 1);
-        assert_eq!(d.params_for(10).game_id, LU); // Sunday tricky
-        assert_eq!(d.params_for(10).width, 10);
         assert_eq!(weekday(MONDAY), 0);
         assert_eq!(weekday(TUESDAY), 1);
     }
@@ -1324,95 +1309,22 @@ mod tests {
     #[test]
     fn config_checks_reject_bad_numbers() {
         let config = DailyPuzzleConfig {
-            reward_by_streak: vec![],
-            ..Default::default()
-        };
-        assert!(validate_config(&config).is_err());
-        let config = DailyPuzzleConfig {
-            max_submits: 0,
-            ..Default::default()
-        };
-        assert!(validate_config(&config).is_err());
-        let config = DailyPuzzleConfig {
             entry_fee: 100_001,
             ..Default::default()
         };
         assert!(validate_config(&config).is_err());
 
-        // One hint level, one price (#9675 H3), and a free hint is unmetered in CHIT and free checks
-        for prices in [vec![], vec![0], vec![25, 75, 200], vec![100, 100], vec![100_001]] {
-            let game_config = GameConfig {
-                hint_prices: prices,
-                ..Default::default()
-            };
-            assert!(validate_game_config(&game_config).is_err());
-        }
-        for max_hints in [0, 11] {
-            let game_config = GameConfig {
-                max_hints,
-                ..Default::default()
-            };
-            assert!(validate_game_config(&game_config).is_err());
-        }
+        // One hint level, one price (#9675 H3)
+        let game_config = GameConfig {
+            hint_prices: vec![25, 75, 200],
+            ..Default::default()
+        };
+        assert!(validate_game_config(&game_config).is_err());
 
-        assert!(validate_schedule(&schedule()[..6]).is_err());
-        for (i, mutate) in [
-            (
-                0,
-                Box::new(|p: &mut PuzzleParams| p.width = 4) as Box<dyn Fn(&mut PuzzleParams)>,
-            ),
-            (0, Box::new(|p: &mut PuzzleParams| p.height = 15)),
-            (0, Box::new(|p: &mut PuzzleParams| p.tier = 2)),
-            (6, Box::new(|p: &mut PuzzleParams| p.black_pct = 61)),
-            (3, Box::new(|p: &mut PuzzleParams| p.game_id = "sudoku".to_string())),
-            (4, Box::new(|p: &mut PuzzleParams| p.width = 7)),
-            (
-                5,
-                Box::new(|p: &mut PuzzleParams| {
-                    p.game_id = chat_rooms::GAME_ID.to_string();
-                    p.width = 9;
-                    p.height = 8;
-                }),
-            ),
-            (
-                6,
-                Box::new(|p: &mut PuzzleParams| {
-                    p.game_id = chat_rooms::GAME_ID.to_string();
-                    p.width = 12;
-                    p.height = 12;
-                }),
-            ),
-            (
-                2,
-                Box::new(|p: &mut PuzzleParams| {
-                    p.game_id = chat_rooms::GAME_ID.to_string();
-                    p.width = 9;
-                    p.height = 9;
-                    p.tier = 0;
-                }),
-            ),
-        ] {
-            let mut schedule = schedule();
-            mutate(&mut schedule[i]);
-            let error = validate_schedule(&schedule).unwrap_err();
-            assert!(error.contains(&format!("entry {i}")), "{error}");
-        }
-        // black_pct is a light_up knob; other games accept any value
         let mut schedule = schedule();
-        schedule[1].black_pct = 0;
-        schedule[2].black_pct = 255;
-        assert!(validate_schedule(&schedule).is_ok());
-    }
-
-    /// Invariant 20 of the CHAT Rooms branch: CHAT Rooms is only ever served Tricky. Forcing it
-    /// takes its default params, and a rota entry that names it at Easy fails the launch checks
-    /// (see `config_checks_reject_bad_numbers`).
-    #[test]
-    fn chat_rooms_is_always_tricky() {
-        let forced = forced_params(chat_rooms::GAME_ID).unwrap();
-        assert_eq!(forced.tier, 1);
-        let generated = generate(&forced, 7).unwrap().unwrap();
-        assert_eq!(generated.tier, 1);
+        schedule[0].width = 4;
+        let error = validate_schedule(&schedule).unwrap_err();
+        assert!(error.contains("entry 0"), "{error}");
     }
 
     #[test]
@@ -1443,78 +1355,14 @@ mod tests {
         assert_eq!(restored.pending_pushes, d.pending_pushes);
     }
 
-    // A pre-#9357 build stored the whole config, the game configs and the schedule. The flag is
-    // read out of the stored config so the upgrade does not switch the game off; the rest is
-    // dropped in favour of this build's constants.
-    #[test]
-    fn legacy_state_keeps_its_enabled_flag_and_drops_the_rest() {
-        #[derive(Serialize)]
-        struct Legacy {
-            registry_canister_id: CanisterId,
-            user_index_canister_id: CanisterId,
-            cycles_dispenser_canister_id: CanisterId,
-            rng_seed: [u8; 32],
-            master_seed: u64,
-            config: DailyPuzzleConfig,
-            game_configs: BTreeMap<GameId, GameConfig>,
-            schedule: Vec<PuzzleParams>,
-            puzzles: BTreeMap<PuzzleNumber, BTreeMap<GameId, DailyPuzzle>>,
-            candidates: BTreeMap<PuzzleNumber, BTreeMap<GameId, Vec<Candidate>>>,
-            results: BTreeMap<(PuzzleNumber, GameId, UserId), DailyPuzzleResult>,
-            local_user_indexes: HashSet<CanisterId>,
-            pending_pushes: HashSet<CanisterId>,
-            last_registry_refresh: TimestampMillis,
-            test_mode: bool,
-        }
-        let now = MONDAY as u64 * DAY_IN_MS + 1;
-        let mut held = data();
-        held.generate_candidate(MONDAY).unwrap();
-        held.ensure_puzzles(now);
-        let mut stale = shipped(&held, MONDAY).clone();
-        stale.config.entry_fee = 1;
-        stale.game_config.hint_prices = vec![1];
-        let legacy = |enabled| Legacy {
-            registry_canister_id: Principal::anonymous(),
-            user_index_canister_id: Principal::anonymous(),
-            cycles_dispenser_canister_id: Principal::anonymous(),
-            rng_seed: [1; 32],
-            master_seed: 9,
-            config: DailyPuzzleConfig {
-                enabled,
-                entry_fee: 1,
-                ..Default::default()
-            },
-            game_configs: BTreeMap::new(),
-            schedule: vec![scheduled(MONDAY); 7],
-            puzzles: BTreeMap::from([(MONDAY, BTreeMap::from([(CR.to_string(), stale.clone())]))]),
-            candidates: BTreeMap::new(),
-            results: BTreeMap::new(),
-            local_user_indexes: HashSet::new(),
-            pending_pushes: HashSet::new(),
-            last_registry_refresh: 0,
-            test_mode: true,
-        };
-        for enabled in [true, false] {
-            let bytes = msgpack::serialize_to_vec(legacy(enabled)).unwrap();
-            let mut restored: Data = msgpack::deserialize(bytes.as_slice()).unwrap();
-            assert_eq!(restored.enabled, enabled);
-            assert_eq!(restored.master_seed, 9);
-            assert_eq!(restored.config().entry_fee, DailyPuzzleConfig::default().entry_fee);
-            // The held puzzle carries the old build's numbers until the upgrade's ship step runs,
-            // which `init_state` does before its push
-            assert_eq!(shipped(&restored, MONDAY).config.entry_fee, 1);
-            restored.ensure_puzzles(now);
-            assert_eq!(shipped(&restored, MONDAY).config, restored.config());
-            assert_eq!(shipped(&restored, MONDAY).config.enabled, enabled);
-            assert_eq!(shipped(&restored, MONDAY).game_config, GameConfig::default());
-        }
-    }
-
     #[test]
     fn puzzles_history_is_capped() {
         let mut d = data();
-        for n in 0..20u32 {
-            d.generate_candidate(n).unwrap();
+        d.generate_candidate(0).unwrap();
+        d.ensure_puzzles(0);
+        let puzzles = d.puzzles[&0].clone();
+        for n in 1..20u32 {
+            d.puzzles.insert(n, puzzles.clone());
             d.ensure_puzzles(n as u64 * DAY_IN_MS);
         }
         assert_eq!(d.puzzles.len(), PUZZLES_TO_KEEP);

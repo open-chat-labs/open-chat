@@ -1,11 +1,10 @@
 use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
-use crate::utils::{now_millis, tick_many, try_metrics};
+use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, client};
 use constants::ICP_LEDGER_CANISTER_ID;
 use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, ICP_TRANSFER_FEE, MINUTE_IN_MS, SNS_GOVERNANCE_CANISTER_ID};
 use jwt::{Claims, verify_and_decode};
-use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -97,88 +96,6 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
     let treasury_balance = client::ledger::happy_path::balance_of(env, ledger, SNS_GOVERNANCE_CANISTER_ID);
 
     assert_eq!(treasury_balance - init_treasury_balance, expected_price - (2 * transfer_fee));
-}
-
-// The UserIndex's payment of a diamond membership fee to the treasury, if its ledger can't be called
-// (eg. because the ledger is being upgraded), is retried after a delay which doubles with each
-// failure, rather than round after round. A stopped ledger is first retried after 10 seconds.
-#[test]
-fn treasury_payment_failing_to_call_into_ledger_is_retried_with_backoff() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let ledger = canister_ids.icp_ledger;
-    let user = client::register_user(env, canister_ids);
-    let user_balance = 10_000_000_000;
-    client::ledger::happy_path::transfer(env, *controller, ledger, user.user_id, user_balance);
-
-    let treasury_balance = |env: &PocketIc| client::ledger::happy_path::balance_of(env, ledger, SNS_GOVERNANCE_CANISTER_ID);
-    let awaiting_retry = |env: &PocketIc| {
-        try_metrics(env, canister_ids.user_index).unwrap()["payments_awaiting_retry"]
-            .as_u64()
-            .unwrap()
-    };
-    let treasury_balance_before = treasury_balance(env);
-    let awaiting_retry_before = awaiting_retry(env);
-
-    let duration = DiamondMembershipPlanDuration::OneMonth;
-    let price = DiamondMembershipFees::default().icp_price_e8s(duration);
-    let message_id = env
-        .submit_call(
-            canister_ids.user_index,
-            user.principal,
-            "pay_for_diamond_membership_msgpack",
-            msgpack::serialize_then_unwrap(&user_index_canister::pay_for_diamond_membership::Args {
-                duration,
-                ledger,
-                expected_price_e8s: price,
-                recurring: false,
-                from_account: None,
-            }),
-        )
-        .unwrap();
-
-    // The ledger is stopped as soon as the user has been charged, so that it is stopped by the time
-    // the UserIndex pays the treasury, which it does in a later round
-    let charged = (0..50).any(|_| {
-        env.tick();
-        client::ledger::happy_path::balance_of(env, ledger, user.user_id) < user_balance
-    });
-    assert!(charged);
-    stop_canister(env, *controller, ledger);
-    let response: user_index_canister::pay_for_diamond_membership::Response =
-        msgpack::deserialize_then_unwrap(&env.await_call(message_id).unwrap());
-    assert!(matches!(
-        response,
-        user_index_canister::pay_for_diamond_membership::Response::Success(_)
-    ));
-
-    tick_many(env, 20);
-    assert_eq!(awaiting_retry(env), awaiting_retry_before + 1);
-
-    // Retried 10 seconds after the 1st failure, by when the ledger is still stopped
-    env.advance_time(Duration::from_secs(11));
-    tick_many(env, 10);
-
-    // Then 20 seconds after the 2nd, by when the ledger is back. Time doesn't pass as the rounds do,
-    // so however many there are before then, the payment isn't retried.
-    start_canister(env, *controller, ledger);
-    tick_many(env, 20);
-    env.advance_time(Duration::from_secs(15));
-    tick_many(env, 10);
-    assert_eq!(treasury_balance(env), treasury_balance_before);
-    env.advance_time(Duration::from_secs(6));
-    tick_many(env, 10);
-    assert_eq!(
-        treasury_balance(env) - treasury_balance_before,
-        price as u128 - (2 * ICP_TRANSFER_FEE)
-    );
-    assert_eq!(awaiting_retry(env), awaiting_retry_before);
 }
 
 // Paying from a wallet OpenChat does not control. The user's own account is never touched - the

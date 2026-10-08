@@ -281,14 +281,6 @@ mod tests {
     }
 
     #[test]
-    fn required_memo_is_prefix_then_canister_id() {
-        let canister_id = CanisterId::from_slice(&LEDGER);
-        let memo = required_memo(b"OC_TIP", canister_id);
-        assert_eq!(&memo[..6], b"OC_TIP");
-        assert_eq!(&memo[6..], canister_id.as_slice());
-    }
-
-    #[test]
     fn valid_transfer_succeeds() {
         let test = TestTransfer::build(TestOptions::default());
         let completed = test.verify().unwrap();

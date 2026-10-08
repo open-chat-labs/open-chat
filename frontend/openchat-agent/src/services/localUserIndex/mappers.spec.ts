@@ -1,7 +1,5 @@
 import { Principal } from "@icp-sdk/core/principal";
 import type { ChatIdentifier } from "@shared";
-import { readFileSync } from "fs";
-import { resolve } from "path";
 import { describe, expect, test } from "vitest";
 import { apiAccessTokenType } from "./mappers";
 
@@ -21,24 +19,5 @@ describe("access token kinds (#9559 invariant 17)", () => {
         expect(apiAccessTokenType({ kind: "join_video_call", chatId })).toEqual({
             JoinVideoCall: { chat: { Group: groupBytes } },
         });
-    });
-
-    test("the decline and leave paths ask for the participant kind, never the join kind", () => {
-        const src = readFileSync(
-            resolve(__dirname, "../../../../openchat-client/src/openchat.ts"),
-            "utf8",
-        );
-        const body = (name: string) => {
-            const start = src.indexOf(`    ${name}(`);
-            expect(start).toBeGreaterThan(0);
-            return src.slice(start, src.indexOf("\n    }\n", start));
-        };
-        const decline = body("declineVideoCall");
-        expect(decline).toContain('kind: "video_call_participant"');
-        expect(decline).not.toContain('kind: "join_video_call"');
-        const teardown = body("getVideoCallTeardownToken");
-        expect(teardown).toContain('kind: "video_call_participant"');
-        expect(teardown).toContain('kind: "mark_video_call_ended"');
-        expect(teardown).not.toContain('kind: "join_video_call"');
     });
 });

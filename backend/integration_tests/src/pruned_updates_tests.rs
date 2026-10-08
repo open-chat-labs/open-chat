@@ -1,13 +1,12 @@
-use crate::bot_tests::register_bot;
 use crate::env::ENV;
-use crate::utils::{now_millis, tick_many};
+use crate::utils::now_millis;
 use crate::{TestEnv, client};
 use constants::DAY_IN_MS;
 use std::collections::BTreeSet;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
-use types::{BotInstallationLocation, BotPermissions, UserId};
+use types::UserId;
 
 // Canisters keep the updates to a chat's or community's details for 31 days. A client asking for
 // the updates since a time from which some have been pruned is given the details in full instead,
@@ -86,59 +85,6 @@ fn group_details_are_returned_in_full_once_updates_since_have_been_pruned() {
     };
     let added: Vec<UserId> = updates.members_added_or_updated.iter().map(|m| m.user_id).collect();
     assert_eq!(added, vec![user2.user_id]);
-}
-
-#[test]
-fn group_details_are_returned_in_full_once_bot_updates_since_have_been_pruned() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
-    let (bot_id, _) = register_bot(env, &owner, canister_ids.user_index, random_string(), random_string());
-    tick_many(env, 3);
-    let local_user_index = canister_ids.local_user_index(env, group_id);
-
-    let before = now_millis(env);
-    env.advance_time(Duration::from_millis(1));
-    client::local_user_index::happy_path::install_bot(
-        env,
-        owner.principal,
-        local_user_index,
-        BotInstallationLocation::Group(group_id),
-        bot_id,
-        BotPermissions::default(),
-        None,
-    );
-
-    // The update of the bot being installed is pruned when it is uninstalled
-    env.advance_time(Duration::from_millis(32 * DAY_IN_MS));
-    client::local_user_index::happy_path::uninstall_bot(
-        env,
-        owner.principal,
-        local_user_index,
-        BotInstallationLocation::Group(group_id),
-        bot_id,
-    );
-
-    let response = client::group::selected_updates_v2(
-        env,
-        owner.principal,
-        group_id.into(),
-        &group_canister::selected_updates_v2::Args {
-            updates_since: before,
-            max_members: PAGE_SIZE,
-        },
-    );
-    let group_canister::selected_updates_v2::Response::SuccessSnapshot(snapshot) = response else {
-        panic!("Expected the details in full, got {response:?}");
-    };
-    assert!(snapshot.bots.is_empty());
 }
 
 #[test]

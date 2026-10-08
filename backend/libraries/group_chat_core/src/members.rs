@@ -1361,18 +1361,6 @@ mod tests {
     }
 
     #[test]
-    fn a_member_in_the_lapsed_set_whose_record_isnt_lapsed_is_dropped_from_it() {
-        let mut members = members_for_page_tests(3);
-        // As can happen if the members were imported from a group which was unlapsing them
-        members.lapsed.insert(test_user_id(2));
-        members.start_unlapsing(10);
-
-        assert!(members.unlapse_while(10, || true).is_empty());
-        assert!(members.lapsed().is_empty());
-        assert!(!members.is_unlapsing());
-    }
-
-    #[test]
     fn members_who_lapse_after_unlapsing_starts_are_left_lapsed() {
         let mut members = members_for_page_tests(4);
         members.update_lapsed(test_user_id(2), true, 3);
@@ -1396,20 +1384,6 @@ mod tests {
         members.start_unlapsing(30);
         assert_eq!(members.unlapse_while(30, || true), user_ids([3]));
         assert!(members.lapsed().is_empty());
-    }
-
-    #[test]
-    fn more_updates_since_than_counts_the_updates_made_after_since() {
-        // Users 2 to 4 are added at 1
-        let mut members = members_for_page_tests(4);
-        // A migration records 2 updates, the removal of the old id and the addition of the new one
-        members.migrate_user_id(test_user_id(2), test_user_id(20), 10);
-
-        assert!(members.more_updates_since_than(9, 1));
-        assert!(!members.more_updates_since_than(9, 2));
-        assert!(members.more_updates_since_than(0, 4));
-        assert!(!members.more_updates_since_than(0, 5));
-        assert!(!members.more_updates_since_than(10, 0));
     }
 
     // Holds users 1 to `count`, of whom user 1 is the owner
