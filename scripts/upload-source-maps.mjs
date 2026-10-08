@@ -84,11 +84,17 @@ function redact(text) {
     return text.split(token).join("<OC_ROLLBAR_SERVER_TOKEN>");
 }
 
-async function upload(mapPath) {
-    // "build/main-D_Idsc5v.js.map" -> "http://dynamichost/main-D_Idsc5v.js"
-    const relative = path.relative(buildDir, mapPath).split(path.sep).join("/");
-    const minifiedUrl = `${DYNAMIC_HOST}/${relative.replace(/\.map$/, "")}`;
+// Rollbar's API now and then times out (a 504 from its nginx) or drops the connection. Uploading
+// a map again just replaces it, so those failures are retried after a growing delay rather than
+// stopping the deploy, which would mean building the whole site again to rerun it.
+const RETRY_DELAYS_MS = [2_000, 5_000, 15_000];
 
+// Without a limit, an upload which never gets a response would hold up the deploy for minutes
+// before failing. A map uploads in a second or two, so one taking this long is retried.
+const ATTEMPT_TIMEOUT_MS = 60_000;
+
+// Returns undefined once the map is uploaded, or else why not and whether that's worth retrying
+async function attemptUpload(mapPath, minifiedUrl) {
     const form = new FormData();
     form.append("access_token", token);
     form.append("version", version);
@@ -97,13 +103,16 @@ async function upload(mapPath) {
 
     let response;
     try {
-        response = await fetch(ENDPOINT, { method: "POST", body: form });
+        response = await fetch(ENDPOINT, {
+            method: "POST",
+            body: form,
+            signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+        });
     } catch (err) {
-        console.error(`  FAIL  ${minifiedUrl} - ${redact(String(err))}`);
-        return false;
+        return { reason: redact(String(err)), retryable: true };
     }
 
-    if (response.ok) return true;
+    if (response.ok) return undefined;
 
     const body = redact((await response.text()).replace(/\s+/g, " ").trim());
     if (response.status === 401 || response.status === 403) {
@@ -113,8 +122,28 @@ async function upload(mapPath) {
                 "  Settings -> Project Access Tokens, not the post_client_item one the app uses.",
         );
     }
-    console.error(`  FAIL  ${minifiedUrl} - ${response.status} ${body}`);
-    return false;
+    const retryable = response.status === 408 || response.status === 429 || response.status >= 500;
+    return { reason: `${response.status} ${body}`, retryable };
+}
+
+async function upload(mapPath) {
+    // "build/main-D_Idsc5v.js.map" -> "http://dynamichost/main-D_Idsc5v.js"
+    const relative = path.relative(buildDir, mapPath).split(path.sep).join("/");
+    const minifiedUrl = `${DYNAMIC_HOST}/${relative.replace(/\.map$/, "")}`;
+
+    for (let attempt = 0; ; attempt++) {
+        const failure = await attemptUpload(mapPath, minifiedUrl);
+        if (failure === undefined) return true;
+
+        const delay = failure.retryable ? RETRY_DELAYS_MS[attempt] : undefined;
+        if (delay === undefined) {
+            console.error(`  FAIL  ${minifiedUrl} - ${failure.reason}`);
+            return false;
+        }
+        // Only the start of the reason, as a gateway error's body is a page of HTML
+        console.error(`  RETRY ${minifiedUrl} in ${delay / 1000}s - ${failure.reason.slice(0, 80)}`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+    }
 }
 
 let failed = 0;
