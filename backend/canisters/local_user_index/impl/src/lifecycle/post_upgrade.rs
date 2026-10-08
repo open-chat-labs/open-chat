@@ -1,6 +1,6 @@
-use crate::Data;
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
+use crate::{Data, mutate_state};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
@@ -34,6 +34,14 @@ fn post_upgrade(args: Args) {
     let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
+
+    // One-off: what the daily puzzle engine holds under the old ids of the users migrated so far
+    // goes to their new ids
+    mutate_state(|state| {
+        for user_id in state.data.daily_puzzle_engine.user_ids() {
+            state.move_daily_puzzle_data_for_migrated_user(user_id);
+        }
+    });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");

@@ -77,6 +77,56 @@ pub struct UserHistory {
     pub first_started: Option<PuzzleNumber>,
 }
 
+impl UserHistory {
+    // Folds in a history kept for the same user under another id. Each ends in a run of solved
+    // days; the later run is the one that counts, and it reaches back over the earlier one if the
+    // two meet.
+    fn merge(&mut self, other: UserHistory) {
+        if let Some(theirs) = other.last_solved {
+            match self.last_solved {
+                None => {
+                    self.last_solved = Some(theirs);
+                    self.streak = other.streak;
+                }
+                Some(mine) => {
+                    let (later, earlier) = if mine >= theirs {
+                        ((mine, self.streak), (theirs, other.streak))
+                    } else {
+                        ((theirs, other.streak), (mine, self.streak))
+                    };
+                    let run_start = |(last, streak): (PuzzleNumber, u32)| (last + 1).saturating_sub(streak);
+                    let start = if earlier.0 + 1 >= run_start(later) {
+                        run_start(later).min(run_start(earlier))
+                    } else {
+                        run_start(later)
+                    };
+                    self.last_solved = Some(later.0);
+                    self.streak = later.0 + 1 - start;
+                }
+            }
+        }
+        // The free play was spent on whichever came first. A history which started before
+        // `first_started` existed spent it on some earlier day, which None, as the lesser, keeps.
+        self.first_started = match (self.ever_started, other.ever_started) {
+            (true, true) => self.first_started.min(other.first_started),
+            (true, false) => self.first_started,
+            (false, _) => other.first_started,
+        };
+        self.ever_started |= other.ever_started;
+    }
+}
+
+// Everything the engine holds for one user, taken from under a migrated user's old id to be
+// folded in under their new one, by whichever LocalUserIndex holds it. Sent between them msgpack
+// serialized.
+#[derive(Serialize, Deserialize)]
+pub struct DailyPuzzleUser {
+    #[serde(default)]
+    history: Option<UserHistory>,
+    #[serde(default)]
+    games: BTreeMap<GameId, UserGame>,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct UserGame {
     pub number: PuzzleNumber,
@@ -460,6 +510,32 @@ impl DailyPuzzleEngine {
     pub fn remove_user(&mut self, user_id: UserId) {
         self.user_games.remove(&user_id);
         self.history.remove(&user_id);
+    }
+
+    // The user has been migrated to a new id, and what they did goes with them
+    pub fn take_user(&mut self, user_id: UserId) -> Option<DailyPuzzleUser> {
+        let history = self.history.remove(&user_id);
+        let games = self.user_games.remove(&user_id).unwrap_or_default();
+        (history.is_some() || !games.is_empty()).then_some(DailyPuzzleUser { history, games })
+    }
+
+    // Folds in what was held for a migrated user under their old id. They may have played under
+    // their new id before it arrived, so the histories are merged, and a game they have a record
+    // of under both keeps the one made under the new id.
+    pub fn import_user(&mut self, user_id: UserId, user: DailyPuzzleUser) {
+        if let Some(history) = user.history {
+            self.history.entry(user_id).or_default().merge(history);
+        }
+        // Records for another day are dropped, as `set_puzzles` drops them
+        for (game_id, game) in user.games {
+            if Some(game.number) == self.number {
+                self.user_games.entry(user_id).or_default().entry(game_id).or_insert(game);
+            }
+        }
+    }
+
+    pub fn user_ids(&self) -> BTreeSet<UserId> {
+        self.history.keys().chain(self.user_games.keys()).copied().collect()
     }
 
     // Increments `submits` on every call. On a match the solve is recorded here, before any await.
@@ -1569,6 +1645,102 @@ mod tests {
             conclusions: vec![(8, 1)],
         }];
         assert_eq!(served_hint(&p, 0).focus, vec![1, 5, 8]);
+    }
+
+    #[test]
+    fn a_migrated_users_history_and_records_move_to_their_new_id() {
+        let mut engine = new_engine();
+        let (old, new) = (user(1), user(2));
+        seed_solved(&mut engine, old, &[NUMBER - 2, NUMBER - 1]);
+        started(&mut engine, old, START);
+        let solution = engine.puzzle(GAME).unwrap().solution.clone();
+        engine.submit(old, GAME, NUMBER, &solution, START + 42_000).unwrap();
+
+        let taken = engine.take_user(old).unwrap();
+        assert!(engine.take_user(old).is_none());
+        assert_eq!(state(&engine, old, START).streak, 0);
+
+        // As sent on to another LocalUserIndex
+        let taken: DailyPuzzleUser = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&taken));
+        engine.import_user(new, taken);
+        let state = state(&engine, new, START);
+        assert_eq!(state.streak, 3);
+        assert!(state.has_solved_before);
+        assert_eq!(state.started_at, Some(START));
+        assert_eq!(state.solved.unwrap().streak, 3);
+    }
+
+    #[test]
+    fn a_migrated_users_history_is_merged_with_what_they_did_under_their_new_id() {
+        let fee = new_engine().puzzle(GAME).unwrap().config.entry_fee;
+        let old_history = |numbers: &[PuzzleNumber]| {
+            let mut engine = new_engine();
+            seed_solved(&mut engine, user(1), numbers);
+            engine.take_user(user(1)).unwrap()
+        };
+
+        // Solved today under the new id, which joins the run that ended yesterday under the old
+        let mut engine = new_engine();
+        let new = user(2);
+        started(&mut engine, new, START);
+        let solution = engine.puzzle(GAME).unwrap().solution.clone();
+        engine.submit(new, GAME, NUMBER, &solution, START + 42_000).unwrap();
+        assert_eq!(state(&engine, new, START).streak, 1);
+        engine.import_user(new, old_history(&[NUMBER - 2, NUMBER - 1]));
+        assert_eq!(state(&engine, new, START).streak, 3);
+        // Joined either way round
+        let mut engine = new_engine();
+        seed_solved(&mut engine, new, &[NUMBER - 1, NUMBER]);
+        engine.import_user(new, old_history(&[NUMBER - 3, NUMBER - 2, NUMBER - 1]));
+        assert_eq!(state(&engine, new, START).streak, 4);
+
+        // A day missed between them breaks the run
+        let mut engine = new_engine();
+        seed_solved(&mut engine, new, &[NUMBER]);
+        engine.import_user(new, old_history(&[NUMBER - 3, NUMBER - 2]));
+        assert_eq!(state(&engine, new, START).streak, 1);
+        // And a run that ended earlier doesn't replace a later one
+        let mut engine = new_engine();
+        seed_solved(&mut engine, new, &[NUMBER - 1]);
+        engine.import_user(new, old_history(&[NUMBER - 5, NUMBER - 4, NUMBER - 3]));
+        assert_eq!(state(&engine, new, START).streak, 1);
+
+        // A record held under both ids keeps the one made under the new id
+        let mut engine = new_engine();
+        let old = user(1);
+        started(&mut engine, old, START);
+        let taken = engine.take_user(old).unwrap();
+        started(&mut engine, new, START + 1);
+        engine.import_user(new, taken);
+        assert_eq!(state(&engine, new, START).started_at, Some(START + 1));
+
+        // The free play spent under the old id stays spent
+        let mut engine = new_engine();
+        assert_eq!(state(&engine, new, START).entry_fee, 0);
+        engine.import_user(new, old_history(&[NUMBER - 3]));
+        assert_eq!(state(&engine, new, START).entry_fee, fee);
+        assert!(state(&engine, new, START).has_solved_before);
+        // Including when it was spent before `first_started` was recorded and the user has since
+        // started today's game free under their new id: a `regenerate_today` dropping that record
+        // doesn't make the replacement free
+        let mut engine = new_engine();
+        started(&mut engine, new, START);
+        engine.import_user(new, old_history(&[NUMBER - 3]));
+        engine.user_games.remove(&new);
+        assert_eq!(state(&engine, new, START).entry_fee, fee);
+    }
+
+    #[test]
+    fn a_migrated_users_record_for_another_day_is_dropped() {
+        let mut engine = new_engine();
+        let (old, new) = (user(1), user(2));
+        started(&mut engine, old, START);
+        let taken = engine.take_user(old).unwrap();
+
+        engine.set_puzzles(vec![puzzle(NUMBER + 1, true)]);
+        engine.import_user(new, taken);
+        assert_eq!(engine.metrics().users_with_records, 0);
+        assert_eq!(state(&engine, new, START + DAY_IN_MS).entry_fee, 100);
     }
 
     #[test]
