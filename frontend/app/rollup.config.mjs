@@ -70,6 +70,10 @@ const { version, production } = initEnv();
 
 const override = (key, val) => `(window.OC_CONFIG?.${key} ?? ${val})`;
 
+// The OTA zips are cut from this build's index.html but run inside the native shell,
+// so they need the native CSP (asset: and ipc: sources) with the same script hashes.
+let otaCsp;
+
 export default {
     input: `./src/main.ts`,
     output: {
@@ -345,6 +349,7 @@ export default {
                     analyticsBody,
                 ];
                 const csp = generateCspForScripts([startupScript, ...inlineScripts]);
+                otaCsp = generateCspForScripts([startupScript, ...inlineScripts], false, true);
 
                 const analyticsNoscript =
                     production && gaEnabled
@@ -438,7 +443,7 @@ export default {
             ],
             hook: "buildStart",
         }),
-        androidBundlePlugin({ version }),
+        androidBundlePlugin({ version, csp: () => otaCsp }),
     ],
     watch: {
         clearScreen: false,

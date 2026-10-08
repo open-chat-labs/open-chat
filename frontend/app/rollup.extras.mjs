@@ -25,10 +25,14 @@ function generateCspHashValue(text) {
 // www.youtube.com and docs.google.com (blog/whitepaper embeds), www.googletagmanager.com
 // (noscript GTM). `https:` still blocks javascript:, data:, blob: and http frames.
 // img-src, media-src and the native-only connect-src `asset: *` are out of scope of #9338.
-export function generateCspForScripts(inlineScripts, development) {
+// `isNative` is passed explicitly for the OTA bundles, which are built by the website build.
+export function generateCspForScripts(
+    inlineScripts,
+    development,
+    isNative = process.env.OC_APP_TYPE === "android" || process.env.OC_APP_TYPE === "ios",
+) {
     const cspHashValues = inlineScripts.map(generateCspHashValue);
     const production = !development;
-    const isNative = process.env.OC_APP_TYPE === "android" || process.env.OC_APP_TYPE === "ios";
     const csp = `
         default-src 'self';
         img-src * 'self' data: blob:${isNative && development ? ` ${process.env.OC_IC_URL}` : ""}${isNative ? " asset: http://asset.localhost content: *" : ""};
