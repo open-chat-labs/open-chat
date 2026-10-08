@@ -1,5 +1,6 @@
+use crate::client::INIT_CYCLES_BALANCE;
 use crate::env::ENV;
-use crate::utils::{now_millis, tick_many};
+use crate::utils::{metrics, now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{DAY_IN_MS, NANOS_PER_MILLISECOND};
@@ -11,7 +12,7 @@ use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use testing::rng::{random_from_u128, random_string};
-use types::{Empty, MessageContentInitial, NotificationSubscription, TextContent};
+use types::{Empty, FcmToken, MessageContentInitial, NotificationSubscription, TextContent, UnitResult};
 
 #[test]
 fn direct_message_notification_succeeds() {
@@ -375,9 +376,18 @@ fn inactive_subscriptions_removed() {
         rand2.clone(),
     );
 
+    let subscriptions_total = |env: &PocketIc| {
+        metrics(env, canister_ids.notifications_index)["subscriptions"]
+            .as_u64()
+            .unwrap()
+    };
+    let total_before = subscriptions_total(env);
+
     env.advance_time(Duration::from_millis(89 * DAY_IN_MS + 1));
     env.tick();
     env.tick();
+
+    assert!(subscriptions_total(env) < total_before);
 
     assert!(!client::notifications_index::happy_path::subscription_exists(
         env,
@@ -475,6 +485,59 @@ fn notifications_blocked_from_blocked_users() {
 
     assert_eq!(notifications_response.notifications.len(), 1);
     assert!(notifications_response.subscriptions.contains_key(&user2.user_id));
+}
+
+#[test]
+fn new_local_user_index_receives_existing_fcm_tokens() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user = client::register_user(env, canister_ids);
+    let response = client::notifications_index::add_fcm_token(
+        env,
+        user.principal,
+        canister_ids.notifications_index,
+        &notifications_index_canister::add_fcm_token::Args {
+            fcm_token: FcmToken(random_string()),
+        },
+    );
+    assert!(matches!(response, UnitResult::Success));
+
+    // Long enough for the token to reach every existing LocalUserIndex
+    tick_many(env, 10);
+
+    // Expand onto a subnet the Registry hasn't expanded onto yet. In test mode the Registry takes
+    // a LocalUserIndex created up front, then installs it and tells the other canisters of it
+    let subnet_id = env.topology().get_sns().unwrap();
+    let local_user_index = env.create_canister_on_subnet(Some(canister_ids.registry), None, subnet_id);
+    env.add_cycles(local_user_index, INIT_CYCLES_BALANCE);
+    client::registry::happy_path::expand_onto_subnet(
+        env,
+        *controller,
+        canister_ids.registry,
+        subnet_id,
+        Some(local_user_index),
+    );
+
+    let fcm_token_count = |env: &PocketIc, canister_id| metrics(env, canister_id)["fcm_token_count"].as_u64().unwrap();
+    let expected = fcm_token_count(env, canister_ids.local_user_index(env, user.canister()));
+    assert!(expected > 0);
+
+    for _ in 0..30 {
+        if fcm_token_count(env, local_user_index) == expected {
+            break;
+        }
+        env.tick();
+    }
+    assert_eq!(fcm_token_count(env, local_user_index), expected);
+
+    // The env now has a LocalUserIndex on a subnet its `canister_ids` don't know of
+    wrapper.discard();
 }
 
 #[test]

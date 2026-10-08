@@ -517,7 +517,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let application_subnets = env.topology().get_app_subnets();
     let subnets: Vec<_> = application_subnets
         .into_iter()
-        .map(|s| client::registry::happy_path::expand_onto_subnet(env, controller, registry_canister_id, s))
+        .map(|s| client::registry::happy_path::expand_onto_subnet(env, controller, registry_canister_id, s, None))
         .collect();
 
     let sns_wasm_canister_init_args = SnsWasmCanisterInitPayload::default();
