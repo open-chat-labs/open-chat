@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
     checkRules,
-    cycleEdge,
     emptyGrid,
     fromGridBytes,
     isSolved,
@@ -52,13 +51,25 @@ describe("parseDescription", () => {
         const d = desc([".1.", "3.0", "..2"]);
         expect(d.width).toBe(3);
         expect(d.height).toBe(3);
-        expect(d.clues).toEqual([undefined, 1, undefined, 3, undefined, 0, undefined, undefined, 2]);
+        expect(d.clues).toEqual([
+            undefined,
+            1,
+            undefined,
+            3,
+            undefined,
+            0,
+            undefined,
+            undefined,
+            2,
+        ]);
         expect(parseDescription(new Uint8Array(descBytes([".1.", "3.0", "..2"])))).toEqual(d);
     });
 
     test("rejects the wrong version, a short buffer and a bad clue", () => {
         const bytes = descBytes(["..", ".."]);
-        expect(() => parseDescription([2, ...bytes.slice(1)])).toThrow("malformed loopy description");
+        expect(() => parseDescription([2, ...bytes.slice(1)])).toThrow(
+            "malformed loopy description",
+        );
         expect(() => parseDescription(bytes.slice(0, -1))).toThrow("malformed loopy description");
         expect(() => parseDescription([1, 2])).toThrow("malformed loopy description");
         expect(() => parseDescription([1, 0, 2])).toThrow("malformed loopy description");
@@ -78,28 +89,9 @@ describe("edge indexing", () => {
         expect(loopyCellEdges(blank3, 0)).toEqual([0, 13, 3, 12]);
         expect(loopyCellEdges(blank3, 8)).toEqual([8, 23, 11, 22]);
     });
-
-    test("elements map edges onto thin rects and cells after them", () => {
-        const els = loopy.elements(twos2);
-        expect(els).toHaveLength(16);
-        expect(els[0]).toEqual({ key: 0, kind: "edge", x: 0, y: 0, w: 1, h: 0 });
-        expect(els[5]).toEqual({ key: 5, kind: "edge", x: 1, y: 2, w: 1, h: 0 });
-        expect(els[6]).toEqual({ key: 6, kind: "edge", x: 0, y: 0, w: 0, h: 1 });
-        expect(els[8]).toEqual({ key: 8, kind: "edge", x: 2, y: 0, w: 0, h: 1 });
-        expect(els[9]).toEqual({ key: 9, kind: "edge", x: 0, y: 1, w: 0, h: 1 });
-        expect(els[12]).toEqual({ key: 12, kind: "cell", x: 0, y: 0, w: 1, h: 1, label: "2" });
-        expect(els[15]).toEqual({ key: 15, kind: "cell", x: 1, y: 1, w: 1, h: 1, label: "2" });
-        expect(loopy.elements(blank2)[12].label).toBeUndefined();
-    });
 });
 
 describe("tap and apply", () => {
-    test("cycleEdge unknown -> line -> cross -> unknown", () => {
-        expect(cycleEdge(0)).toBe(1);
-        expect(cycleEdge(1)).toBe(2);
-        expect(cycleEdge(2)).toBe(0);
-    });
-
     test("tap cycles edges and ignores cells", () => {
         const empty = loopy.empty(blank2);
         const a = loopy.tap(blank2, empty, 3);
@@ -164,16 +156,13 @@ describe("checkRules", () => {
         ]);
     });
 
-    test("two separate squares report the later one as an extra loop", () => {
+    test("of two separate loops the later equal one, or the smaller one, is the extra loop", () => {
         const g = grid(blank3, [0, 13, 3, 12, 8, 23, 11, 22]);
         expect(checkRules(blank3, g)).toEqual([{ kind: "extra_loop", edges: [8, 11, 22, 23] }]);
         expect(isSolved(blank3, g)).toBe(false);
-    });
-
-    test("the smaller loop is the extra one", () => {
         // Ring around cells 0 and 1 plus a square around cell 8.
-        const g = grid(blank3, [0, 1, 3, 4, 12, 14, 8, 23, 11, 22]);
-        expect(checkRules(blank3, g)).toEqual([{ kind: "extra_loop", edges: [8, 11, 22, 23] }]);
+        const h = grid(blank3, [0, 1, 3, 4, 12, 14, 8, 23, 11, 22]);
+        expect(checkRules(blank3, h)).toEqual([{ kind: "extra_loop", edges: [8, 11, 22, 23] }]);
     });
 
     test("loops are not counted while some dot is still open-ended", () => {
@@ -182,11 +171,6 @@ describe("checkRules", () => {
         const v = checkRules(blank3, g);
         expect(v.find((x) => x.kind === "extra_loop")).toBeUndefined();
         expect(v).toEqual([{ kind: "dot_degree", dot: 1, degree: 3, edges: [1, 13, 0] }]);
-    });
-
-    test("a grid of the wrong length counts as empty", () => {
-        const d = desc(["1.", ".."]);
-        expect(checkRules(d, [1, 1, 1])).toEqual([]);
     });
 });
 

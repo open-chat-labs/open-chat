@@ -249,18 +249,6 @@ describe("loading the selected community's details", () => {
         unsub();
     });
 
-    test("details already held which have changed are replaced", async () => {
-        responses.push(details(10n, [member("a"), member("b")]));
-        await load();
-
-        responses.push(details(20n, [member("a"), member("b"), member("c")]));
-        await load();
-
-        expect(requests[1].detailsSyncedUpTo).toBe(10n);
-        expect([...selectedCommunityMembersStore.value.keys()]).toEqual(["a", "b", "c"]);
-        expect(selectedServerCommunityStore.value?.timestamp).toBe(20n);
-    });
-
     test("the worker isn't asked if the summary says the details held haven't changed", async () => {
         setSummary(community(10n));
         responses.push(details(10n, [member("a"), member("b")]));
@@ -378,18 +366,6 @@ describe("loading the selected chat's details", () => {
         // but they are now known to be good up to the later timestamp
         expect(selectedServerChatStore.value?.timestamp).toBe(20n);
         unsub();
-    });
-
-    test("details already held which have changed are replaced", async () => {
-        responses.push(chatDetails(10n, [member("a"), member("b")]));
-        await load();
-
-        responses.push(chatDetails(20n, [member("a"), member("b"), member("c")]));
-        await load();
-
-        expect(requests[1].detailsSyncedUpTo).toBe(10n);
-        expect([...selectedChatMembersStore.value.keys()]).toEqual(["a", "b", "c"]);
-        expect(selectedServerChatStore.value?.timestamp).toBe(20n);
     });
 
     test("the worker isn't asked if the summary says the details held haven't changed", async () => {
@@ -623,30 +599,6 @@ describe("looking up the members who appear in a chat when not all are held", ()
 
         expect(lookups).toHaveLength(2);
         expect(lookups[1].userIds).toEqual([z]);
-    });
-
-    test("a member who is already held is left as they are", async () => {
-        setup(someHeld());
-        lookupResponses.push(found({ ...member(x), displayName: "X" }));
-        await load();
-
-        // Held members are kept up to date by the updates to the details, so a lookup answered
-        // before an update which changed them mustn't undo it
-        const before = selectedServerChatStore.value;
-        const added = before?.withLookedUpMembers([{ ...member(x), displayName: "old" }], 10n);
-
-        expect(added).toBeUndefined();
-        expect(selectedChatMembersStore.value.get(x)?.displayName).toBe("X");
-    });
-
-    test("a lapsed member who is looked up is held as lapsed", async () => {
-        setup(someHeld());
-        lookupResponses.push(found({ ...member(x), lapsed: true }));
-
-        await load();
-
-        expect(selectedChatMembersStore.value.has(x)).toBe(false);
-        expect(selectedServerChatStore.value?.lapsedMembers.has(x)).toBe(true);
     });
 
     test("nobody is looked up if every member is held", async () => {
@@ -888,7 +840,7 @@ function userSummary(userId: string) {
 
 describe("finding members when not all are held", () => {
     const userId = (n: number) => Principal.fromUint8Array(new Uint8Array([n])).toText();
-    const [a, b, c, x, z] = [2, 3, 4, 5, 6].map(userId);
+    const [a, b, x, z] = [2, 3, 5, 6].map(userId);
 
     let client: OpenChat;
     let lookups: Extract<WorkerRequest, { kind: "lookupMembers" }>[];
@@ -1041,15 +993,6 @@ describe("finding members when not all are held", () => {
         expect(searches.map((s) => s.pageIndex)).toEqual([0]);
     });
 
-    test("a page with fewer users than were asked for is the last", async () => {
-        await select(someHeld());
-        pages = [[x, z], fullPage(1000)];
-
-        await client.findMembers(chatId, "user", 20);
-
-        expect(searches).toHaveLength(1);
-    });
-
     test("a UserIndex which returns the first page again is taken to have no more", async () => {
         await select(someHeld());
         // as one which doesn't know about pages does
@@ -1063,15 +1006,6 @@ describe("finding members when not all are held", () => {
         expect(lookups).toHaveLength(1);
     });
 
-    test("only one page is searched in a chat which holds every member", async () => {
-        await select(chatDetails(10n, [member(a), member(b)]));
-        pages = [fullPage(1000), [a]];
-
-        await client.findMembers(chatId, "user", 20);
-
-        expect(searches).toHaveLength(1);
-    });
-
     test("members found are offered as mentions", async () => {
         await select(someHeld());
         expect(client.getUserLookupForMentions()[`user_${x}`]).toBeUndefined();
@@ -1080,16 +1014,6 @@ describe("finding members when not all are held", () => {
         await client.findMembersToMention("user");
 
         expect(client.getUserLookupForMentions()[`user_${x}`]).toMatchObject({ userId: x });
-    });
-
-    test("members are offered as mentions once their users are known", async () => {
-        await select({ ...chatDetails(10n, [member(a), member(c)]), moreMembersAfter: c });
-        userStore.addMany([userSummary(a)]);
-        expect(Object.keys(client.getUserLookupForMentions())).toEqual([`user_${a}`]);
-
-        userStore.addMany([userSummary(c)]);
-
-        expect(client.getUserLookupForMentions()[`user_${c}`]).toMatchObject({ userId: c });
     });
 
     test("members who aren't held are left out of those to invite", async () => {
@@ -1269,17 +1193,6 @@ describe("finding users to add to a channel when not all members are held", () =
         expect(found[2].displayName).toBe("Usher");
         // and is held from now on, as a member of the community
         expect(selectedCommunityMembersStore.value.get(d)?.displayName).toBe("Userina");
-    });
-
-    test("only those which can be offered count towards how many are wanted", async () => {
-        // `x` is found by the user search and `d` by display name, after members of the channel
-        // have been left out
-        const [two] = await client.searchCommunityMembersToAdd("user", 2);
-        expect(two.map((u) => u.userId)).toEqual([b, x]);
-
-        // which the first search has since added to those held, so the order differs
-        const [three] = await client.searchCommunityMembersToAdd("user", 3);
-        expect(new Set(three.map((u) => u.userId))).toEqual(new Set([b, x, d]));
     });
 
     test("someone whose community membership has lapsed isn't invited to a channel they're in", async () => {

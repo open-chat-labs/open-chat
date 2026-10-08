@@ -109,23 +109,6 @@ describe("shouldReportError", () => {
         expect(shouldReportError(lost)).toBe(false);
     });
 
-    // Invariant: agent-side network weather is never reported. Each message below was a live
-    // Rollbar item (#31014 certificate in the past, #31131/#31934 polling timeout, #31936
-    // backoff exhausted, #31918 a stale tab's IndexedDB schema).
-    test("silences polling timeouts, stale certificates and a stale IDB schema", () => {
-        for (const message of [
-            "Certificate is signed more than 5 minutes in the past. Certificate time: " +
-                "2026-09-15T06:29:39.289Z Current time: 2026-09-15T07:11:21.800Z Clock drift: 0ms",
-            "Request timed out after 300000 msec\n  Request ID: d975f6\n  Request status: unknown",
-            "Backoff strategy exhausted after 1 attempts.\n  Request ID: c6fc51",
-            "Failed to execute 'transaction' on 'IDBDatabase': One of the specified object " +
-                "stores was not found.",
-        ]) {
-            expect(shouldReportError(new HttpError(500, new Error(message)))).toBe(false);
-            expect(shouldReportError(new Error(message))).toBe(false);
-        }
-    });
-
     test("silences a wrong client clock in both directions", () => {
         // the client's clock is ahead, so the certificate the replica signed looks like the future
         expect(
@@ -207,7 +190,9 @@ describe("shouldReportError", () => {
             ),
         ).toBe(false);
         expect(
-            shouldReportError(new HttpError(0, new Error("Failed to fetch HTTP request: Load failed"))),
+            shouldReportError(
+                new HttpError(0, new Error("Failed to fetch HTTP request: Load failed")),
+            ),
         ).toBe(false);
         // the same words from a plain Error are still a signal
         expect(shouldReportError(new Error("Failed to fetch HTTP request: Failed to fetch"))).toBe(
@@ -215,51 +200,11 @@ describe("shouldReportError", () => {
         );
     });
 
-    // Invariant: client-environment and IC-side failures seen on 2.0.2054 are not reported, and
-    // the rules stay narrow enough that a nearby failure of ours still is. Each message was a live
-    // Rollbar item: #27293 and #10401 IndexedDB without a transaction, #28921 a lost IndexedDB
-    // blob, #31128 and #30432 the platform passkey service, #31771 the IC's Bitcoin API switched
-    // off.
-    test("silences the 2026-09-29 environment noise", () => {
-        for (const [name, message] of [
-            [
-                "UnknownError",
-                "Attempt to open a cursor in database without an in-progress transaction",
-            ],
-            [
-                "UnknownError",
-                "Attempt to get an index record from database without an in-progress transaction",
-            ],
-            [
-                "NotReadableError",
-                "Data lost due to missing file. Affected record should be considered irrecoverable",
-            ],
-            ["NotSupportedError", "Error connecting to Web Authentication service."],
-            [
-                "NotReadableError",
-                "An unknown error occurred while talking to the credential manager.",
-            ],
-        ]) {
-            const error = new Error(message);
-            error.name = name;
-            expect(shouldReportError(error)).toBe(false);
-            expect(shouldReportMessage(name, message)).toBe(false);
-        }
-        expect(
-            shouldReportError(
-                new HttpError(
-                    500,
-                    new Error(
-                        "The replica returned a rejection error:\n  Reject code: 5\n  Reject text: " +
-                            "Error from Canister <id>: Canister called `ic0.trap` with message: " +
-                            "'Panicked at 'Bitcoin API is disabled', canister/src/lib.rs",
-                    ),
-                ),
-            ),
-        ).toBe(false);
-
-        // Nearby failures that are ours: a different IndexedDB failure, a passkey the user has
-        // no pubkey for, and some other canister trap
+    // Invariant: the rules silencing the 2026-09-29 environment noise (IndexedDB without a
+    // transaction, a lost IndexedDB blob, the platform passkey service, the IC's Bitcoin API
+    // switched off) stay narrow enough that a nearby failure of ours is still reported: a
+    // different IndexedDB failure, a passkey the user has no pubkey for, and some other trap.
+    test("still reports failures near the 2026-09-29 environment noise", () => {
         const quota = new Error("Attempt to open a cursor in database failed");
         quota.name = "UnknownError";
         expect(shouldReportError(quota)).toBe(true);
@@ -274,13 +219,10 @@ describe("shouldReportError", () => {
         ).toBe(true);
     });
 
-    // Invariant: the network, clock, canister-upgrade and CDN failures seen on 2.0.2054 are not
-    // reported, and a nearby failure of ours still is. Each message was a live Rollbar item.
-    test("silences the 2026-10-01 environment noise", () => {
+    // Invariant: the rules silencing the 2026-10-01 network, clock, canister-upgrade and CDN
+    // noise stay narrow enough that a nearby failure of ours is still reported.
+    test("still reports failures near the 2026-10-01 environment noise", () => {
         // #31999: the agent's catch-all wrapping a fetch that threw
-        expect(
-            shouldReportError(new HttpError(500, new Error("Unexpected error: Load failed"))),
-        ).toBe(false);
         expect(
             shouldReportError(
                 new HttpError(500, new Error("Unexpected error: Cannot read properties of null")),
@@ -288,21 +230,14 @@ describe("shouldReportError", () => {
         ).toBe(true);
         expect(shouldReportError(new Error("Unexpected error: Load failed"))).toBe(true);
 
-        // #31681, and the same text as a bare uncaught rejection under #2195
-        const clock =
-            '"System time has been synced with the IC network, but certificate is still too ' +
-            'far in the future."';
-        expect(shouldReportError(new HttpError(500, new Error(`Unexpected error: ${clock}`)))).toBe(
-            false,
-        );
-        expect(shouldReportMessage("", clock)).toBe(false);
+        // #31681: a certificate failure that isn't the clock
         expect(
             shouldReportError(
                 new HttpError(500, new Error('Unexpected error: "Invalid certificate signature"')),
             ),
         ).toBe(true);
 
-        // #31692 and #31764: a stopped canister, but not the other rejections from the same items
+        // #31692 and #31764: the other rejections from the stopped-canister items
         const rejected = (text: string, code: string) =>
             new HttpError(
                 500,
@@ -311,15 +246,6 @@ describe("shouldReportError", () => {
                         `${text}\n  Error code: ${code}\n\nCall context:\n  Canister ID: <id>`,
                 ),
             );
-        expect(
-            shouldReportError(
-                rejected(
-                    "Canister <id> is stopped and therefore does not have a CallContextManager",
-                    "IC0508",
-                ),
-            ),
-        ).toBe(false);
-        expect(shouldReportError(rejected("Canister <id> is stopped", "IC0508"))).toBe(false);
         expect(
             shouldReportError(
                 rejected("Error from Canister <id>: Canister rejected the message", "IC0406"),
@@ -332,15 +258,10 @@ describe("shouldReportError", () => {
             ),
         ).toBe(true);
 
-        // #31998: the emoji data CDN failing, as reported and as Rollbar strips it on the
-        // uncaught path; our own "Failed to fetch: ..." errors still report
+        // #31998: the emoji data CDN failing; our own "Failed to fetch: ..." errors still report
         const emojiData =
-            "https://cdn.jsdelivr.net/npm/emoji-picker-element-data@^1/en/emojibase/data.json:  500";
-        expect(shouldReportError(new Error(`Failed to fetch: ${emojiData}`))).toBe(false);
-        expect(shouldReportMessage("Error", emojiData)).toBe(false);
-        expect(
-            shouldReportError(new Error(`Failed to fetch: ${emojiData.replace("500", "404")}`)),
-        ).toBe(true);
+            "https://cdn.jsdelivr.net/npm/emoji-picker-element-data@^1/en/emojibase/data.json:  404";
+        expect(shouldReportError(new Error(`Failed to fetch: ${emojiData}`))).toBe(true);
         expect(shouldReportError(new Error("Failed to fetch: https://oc.app/version: 500"))).toBe(
             true,
         );

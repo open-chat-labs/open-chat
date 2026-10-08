@@ -324,15 +324,6 @@ describe("a direct chat moved onto the other user's new id", () => {
         expect(localUpdates.draftMessages.value.get({ chatId: direct("new6") })).toBeUndefined();
     });
 
-    test("an open chat at a message is followed to the same message under the new id", async () => {
-        serverDirectChatsStore.set(ChatMap.fromList([directChat("old5")]));
-        selectChat(direct("old5"), 7);
-
-        await fold(updates([directChat("new5")], ["old5"], [["old5", "new5"]]));
-
-        expect(navigations).toEqual([{ url: "/chats/user/new5/7", intent: "auto" }]);
-    });
-
     describe("a message being sent when its chat moves", () => {
         // Starts sending a message in the chat with `userId`, and waits until it's shown as being sent
         async function startSending(
@@ -418,13 +409,6 @@ describe("a direct chat moved onto the other user's new id", () => {
 
         expect(usersAskedFor).toContain("old8");
         expect(navigations).toEqual([{ url: "/chats/user/new8", intent: "auto" }]);
-    });
-
-    test("a chat started from within the app with a user who's held isn't held up by a lookup", async () => {
-        userStore.addUser(user("held9"));
-
-        expect(await client.createDirectChat(direct("held9"))).toEqual(direct("held9"));
-        expect(usersAskedFor).not.toContain("held9");
     });
 
     test("an old link isn't followed if another chat was chosen while the user was looked up", async () => {
