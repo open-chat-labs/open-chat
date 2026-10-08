@@ -77,3 +77,79 @@ fn deleted_chat_accessor_ids(data: &Data) -> Vec<AccessorId> {
 
     groups.chain(communities).collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+    use types::{
+        ChannelLatestMessageIndex, ChatId, CommunityId, CommunityImportedInto, DeletedCommunityInfo, DeletedGroupInfoInternal,
+    };
+
+    #[test]
+    fn an_imported_group_is_only_included_once_its_community_is_deleted() {
+        let mut data = Data::default();
+        let deleted_community = community(1);
+        let live_community = community(2);
+        let not_imported = group(3);
+        let imported_into_deleted_community = group(4);
+        let imported_into_live_community = group(5);
+
+        data.deleted_communities.insert(
+            DeletedCommunityInfo {
+                id: deleted_community,
+                timestamp: 0,
+                deleted_by: Principal::anonymous().into(),
+                name: String::new(),
+                public: true,
+            },
+            Vec::new(),
+        );
+        for (group_id, imported_into) in [
+            (not_imported, None),
+            (imported_into_deleted_community, Some(deleted_community)),
+            (imported_into_live_community, Some(live_community)),
+        ] {
+            data.deleted_groups.insert(deleted_group(group_id, imported_into), Vec::new());
+        }
+
+        let mut accessor_ids = deleted_chat_accessor_ids(&data);
+        accessor_ids.sort();
+        let mut expected: Vec<AccessorId> = vec![
+            not_imported.into(),
+            imported_into_deleted_community.into(),
+            deleted_community.into(),
+        ];
+        expected.sort();
+        assert_eq!(accessor_ids, expected);
+    }
+
+    fn deleted_group(id: ChatId, imported_into: Option<CommunityId>) -> DeletedGroupInfoInternal {
+        DeletedGroupInfoInternal {
+            id,
+            timestamp: 0,
+            deleted_by: Principal::anonymous().into(),
+            group_name: String::new(),
+            name: String::new(),
+            public: true,
+            community_imported_into: imported_into.map(|community_id| CommunityImportedInto {
+                community_name: String::new(),
+                community_id,
+                local_user_index_canister_id: Principal::anonymous(),
+                channel: ChannelLatestMessageIndex {
+                    channel_id: 1u32.into(),
+                    latest_message_index: None,
+                },
+                other_default_channels: Vec::new(),
+            }),
+        }
+    }
+
+    fn community(i: u8) -> CommunityId {
+        Principal::from_slice(&[i]).into()
+    }
+
+    fn group(i: u8) -> ChatId {
+        Principal::from_slice(&[i]).into()
+    }
+}
