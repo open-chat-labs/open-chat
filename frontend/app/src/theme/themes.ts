@@ -133,19 +133,34 @@ export const themeType = createLocalStorageStore(configKeys.theme, "system");
 export const preferredDarkThemeName = createLocalStorageStore("openchat_dark_theme", "dark");
 export const preferredLightThemeName = createLocalStorageStore("openchat_light_theme", "white");
 
-export const preferredDarkTheme = derived(preferredDarkThemeName, (darkName) => themes[darkName]);
-export const preferredLightTheme = derived(preferredLightThemeName, (lightName) => {
-    if (lightName === "light") {
-        // we have renamed "light" to "blue"
-        lightName = "blue";
-    }
-    return themes[lightName];
-});
+// A stored name can outlive its theme, so one we don't have falls back to the default of its mode
+// rather than leaving the app with no theme at all, which crashes it on every load (Rollbar #32044)
+function darkThemeName(name: string): string {
+    return themes[name] !== undefined ? name : "dark";
+}
+
+function lightThemeName(name: string): string {
+    // we have renamed "light" to "blue"
+    if (name === "light") name = "blue";
+    return themes[name] !== undefined ? name : "white";
+}
+
+export const preferredDarkTheme = derived(
+    preferredDarkThemeName,
+    (darkName) => themes[darkThemeName(darkName)],
+);
+export const preferredLightTheme = derived(
+    preferredLightThemeName,
+    (lightName) => themes[lightThemeName(lightName)],
+);
 
 export const currentThemeName = derived(
     [themeType, preferredDarkThemeName, preferredLightThemeName, osDarkStore, themeOverride],
-    ([$themeType, preferredDark, preferredLight, prefersDark, override]) => {
+    ([$themeType, storedDark, storedLight, prefersDark, override]) => {
         if (override !== undefined) return override;
+
+        const preferredDark = darkThemeName(storedDark);
+        const preferredLight = lightThemeName(storedLight);
 
         let themeName = "white";
         if ($themeType === "system") {

@@ -18,6 +18,8 @@ vi.hoisted(() => {
         }) as unknown as MediaQueryList) as typeof window.matchMedia;
 });
 
+import { configKeys } from "@shared";
+import { get } from "svelte/store";
 import { STARTUP_DARK_BACKGROUND } from "../../rollup.extras.mjs";
 import { clearStartupBackground, currentTheme, themes, themeType } from "./themes";
 
@@ -64,6 +66,37 @@ describe("the theme mode remembered for the next page load", () => {
         const unsubscribe = currentTheme.subscribe((theme) => (mode = theme.mode));
         expect(mode).toBe("light");
         unsubscribe();
+    });
+});
+
+// Rollbar #32044 / #32045: a stored theme name with no theme behind it left `currentTheme`
+// undefined, and App.svelte crashed reading it on every load
+describe("a stored theme name we don't have", () => {
+    afterEach(() => {
+        localStorage.clear();
+    });
+
+    async function themeWhenStored(key: string, name: string, type: string) {
+        localStorage.setItem(key, name);
+        localStorage.setItem(configKeys.theme, type);
+        vi.resetModules();
+        const fresh = await import("./themes");
+        return { theme: get(fresh.currentTheme), themes: fresh.themes };
+    }
+
+    test("falls back to the default dark theme", async () => {
+        const { theme, themes } = await themeWhenStored("openchat_dark_theme", "gone", "dark");
+        expect(theme).toBe(themes.dark);
+    });
+
+    test("falls back to the default light theme", async () => {
+        const { theme, themes } = await themeWhenStored("openchat_light_theme", "gone", "light");
+        expect(theme).toBe(themes.white);
+    });
+
+    test("still maps the old light theme's name to its new one", async () => {
+        const { theme, themes } = await themeWhenStored("openchat_light_theme", "light", "light");
+        expect(theme).toBe(themes.blue);
     });
 });
 
