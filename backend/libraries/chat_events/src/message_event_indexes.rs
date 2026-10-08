@@ -150,7 +150,7 @@ impl MessageEventIndexes {
 
         let prefix = MessageEventIndexesKeyPrefix::from(events_prefix);
         let mut entries = Vec::with_capacity(count);
-        for chunk in self.on_heap.chunks_exact(CHUNK_SIZE).take(count) {
+        for chunk in self.on_heap.as_chunks::<CHUNK_SIZE>().0.iter().take(count) {
             let chunk_index = self.chunk_first_event_indexes.len() as u32;
             entries.push((prefix.create_key(&chunk_index), encode_chunk(chunk)));
             self.chunk_first_event_indexes.push(chunk[0]);

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Builds the wasm of the canister given into wasms/. Every canister is compiled so that the wasm
-# matches the one released (see generate-all-canister-wasms.sh).
+# matches the one released when built on the same platform (see generate-all-canister-wasms.sh).
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")

@@ -57,7 +57,7 @@ fn e2e_group_and_community_verification_test() {
     assert!(!group_match.verified);
 
     let new_group_name = group_match.name.clone();
-    println!("new group name: {}", &new_group_name);
+    println!("new group name: {new_group_name}");
 
     assert_ne!(&new_group_name, &group_name);
     assert!(group_match.name.starts_with(&group_name));
@@ -141,7 +141,7 @@ fn e2e_group_and_community_verification_test() {
     assert!(!community_match.verified);
 
     let new_community_name = community_match.name.clone();
-    println!("new community name: {}", &new_community_name);
+    println!("new community name: {new_community_name}");
 
     assert_ne!(&new_community_name, &group_name);
     assert!(community_match.name.starts_with(&group_name));

@@ -93,7 +93,8 @@ done
 # some canisters can give them different features, and so different wasms, from building them all
 # (eg. the LocalUserIndex built alone is over the size limit). So every canister is always
 # compiled, and only those asked for are optimised, so that a canister's wasm is the same however
-# it was built, and matches the released wasm (see docker-build-all-wasms.sh).
+# it was built. It only matches the released wasm when built on linux/amd64, as the releases are
+# (see docker-build-all-wasms.sh): since Rust 1.99 the wasms differ by the platform they're built on.
 PACKAGES=()
 for CANISTER in "${ALL_CANISTERS[@]}"; do
   PACKAGES+=(--package "${CANISTER}_canister_impl")

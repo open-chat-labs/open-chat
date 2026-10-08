@@ -81,14 +81,11 @@ struct ContextAndInput {
 }
 
 fn calculate_context_and_input(caller_user_id: UserId, key_type: KeyType) -> ContextAndInput {
-    let context;
-    let input;
     let caller_user_id_bytes = caller_user_id.as_slice();
     match key_type {
-        KeyType::User => {
-            context = b"oc-user".to_vec();
-            input = caller_user_id_bytes.to_vec();
-        }
+        KeyType::User => ContextAndInput {
+            context: b"oc-user".to_vec(),
+            input: caller_user_id_bytes.to_vec(),
+        },
     }
-    ContextAndInput { context, input }
 }
