@@ -373,6 +373,20 @@ describe("shouldReportError", () => {
             expect(shouldReportMessage("Error", message)).toBe(false);
         }
     });
+
+    // Rollbar files it under the message after "because of: ", so both forms
+    test("silences Chrome's IndexedDB closing as site data is cleared (#29538)", () => {
+        const message = "Connection is closing because of: Force close delete origin";
+        expect(shouldReportError({ name: "UnknownError", message })).toBe(false);
+        expect(shouldReportMessage("UnknownError", message)).toBe(false);
+        expect(shouldReportMessage("UnknownError", "Force close delete origin")).toBe(false);
+        expect(
+            shouldReportError({
+                name: "UnknownError",
+                message: "Connection is closing because of: Internal error",
+            }),
+        ).toBe(true);
+    });
 });
 
 describe("requiresLogout", () => {

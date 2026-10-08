@@ -3,6 +3,7 @@
 //! the one test that pins a board and says so.
 
 use crate::env::ENV;
+use crate::user_migration_tests::{migrate, platform_operator};
 use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use constants::DAY_IN_MS;
@@ -14,6 +15,7 @@ use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::{Duration, SystemTime};
+use test_case::test_case;
 use types::{
     CanisterId, ChitEventType, DAILY_PUZZLE_CHIT_GAME_ID, DailyPuzzle, DailyPuzzleConfig, DailyPuzzleUserState, GameConfig,
     LIGHT_UP_GAME_ID, PublicDailyPuzzle, PuzzleHint, PuzzleNumber, UnitResult,
@@ -703,6 +705,78 @@ fn daily_puzzle_survives_a_missing_wrong_or_stopped_daily_canister() {
     assert_eq!(results[0].hints_used, 1);
 
     // The flag was flipped, the clock moved, and a canister was stopped and started
+    wrapper.discard();
+}
+
+// A user's streak, and their record of today's game, go with them when they're migrated to a
+// MultiUser canister, which gives them a new id, held by the same LocalUserIndex as their old
+// canister or by another
+#[test_case(true; "held_by_the_same_local_user_index")]
+#[test_case(false; "held_by_another_local_user_index")]
+fn daily_puzzle_streak_follows_a_migrated_user(same_local_user_index: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    ensure_time_at_least_day0(env);
+    keep_clear_of_midnight(env);
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let subnet = canister_ids
+        .subnets
+        .iter()
+        .find(|s| (s.local_user_index == local_user_index) == same_local_user_index)
+        .unwrap()
+        .subnet_id;
+    let user = client::register_user_on_subnet(env, canister_ids, subnet);
+    let old_local_user_index = canister_ids.local_user_index(env, user.canister());
+    tick_many(env, 3);
+
+    client::daily_puzzle::happy_path::set_enabled(env, operator.principal, canister_ids.daily_puzzle, true);
+    client::daily_puzzle::happy_path::push_now(env, operator.principal, canister_ids.daily_puzzle);
+    for subnet in canister_ids.subnets.iter() {
+        set_canister_id(env, &operator, subnet.local_user_index, canister_ids.daily_puzzle);
+    }
+
+    // Today's puzzle is solved under the user's old id
+    let (puzzle, state) = wait_for_puzzle(env, &user, old_local_user_index);
+    let game_id = puzzle.game_id.as_str();
+    let (_, solution) = solve(game_id, &puzzle.description, puzzle.tier);
+    start(env, &user, old_local_user_index, game_id, puzzle.number, state.entry_fee);
+    env.advance_time(Duration::from_secs(30));
+    let daily_puzzle_submit::Response::Success(solved) =
+        submit(env, &user, old_local_user_index, game_id, puzzle.number, solution)
+    else {
+        panic!("the solution should be accepted");
+    };
+    assert_eq!(solved.streak, 1);
+
+    let migrated = migrate(env, canister_ids, &operator, &user, multi_user_canister);
+    assert_ne!(migrated.user_id, user.user_id);
+
+    // The LocalUserIndex holding their new id, which is the one they play through from now on,
+    // holds both under it
+    let mut state = None;
+    for _ in 0..MAX_WAIT_TICKS {
+        state = state_of(fetch(env, &migrated, local_user_index), game_id);
+        if state.as_ref().is_some_and(|s| s.solved.is_some()) {
+            break;
+        }
+        env.advance_time(Duration::from_secs(1));
+        env.tick();
+    }
+    let state = state.expect("today's puzzle should be served");
+    assert_eq!(state.started_at, Some(solved.solved_at - solved.solve_time_ms));
+    assert_eq!(state.solved.map(|s| s.streak), Some(1));
+    assert_eq!(state.streak, 1);
+    assert!(state.has_solved_before);
+
     wrapper.discard();
 }
 

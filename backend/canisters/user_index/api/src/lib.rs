@@ -41,6 +41,7 @@ pub enum LocalUserIndexEvent {
     UserImported(Box<UserImported>),
     UserImportFailed(Box<UserImportFailed>),
     EventForMigratedUser(Box<EventForMigratedUser>),
+    DailyPuzzleDataForMigratedUser(Box<DailyPuzzleDataForMigratedUser>),
 }
 
 // An event which a LocalUserIndex had queued for a user's old canister, for a user who has since been
@@ -52,6 +53,16 @@ pub struct EventForMigratedUser {
     // A msgpack serialized `user_canister::LocalUserIndexEvent`, which the UserIndex passes on as it
     // is, so that it needn't be upgraded to pass on events of a new type
     pub event: serde_bytes::ByteBuf,
+}
+
+// What a LocalUserIndex's daily puzzle engine held for a user under their old id, their streak among
+// it, for a user who has since been migrated to a MultiUser canister held by another LocalUserIndex.
+// The UserIndex passes it on to that LocalUserIndex, naming the user by their latest id.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DailyPuzzleDataForMigratedUser {
+    pub user_id: UserId,
+    // Msgpack serialized by the LocalUserIndex, which the UserIndex passes on as it is
+    pub data: serde_bytes::ByteBuf,
 }
 
 // The MultiUser canister the user is being migrated to has imported them, giving them a new id

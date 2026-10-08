@@ -18,9 +18,10 @@ impl WebPushSubscriptions {
         match self.subscriptions.entry(user_id) {
             Occupied(e) => {
                 let subscriptions = e.into_mut();
-                if !subscriptions.contains(&subscription) {
-                    subscriptions.push(subscription);
+                if subscriptions.iter().any(|s| s.endpoint == subscription.endpoint) {
+                    return;
                 }
+                subscriptions.push(subscription);
             }
             Vacant(e) => {
                 e.insert(vec![subscription]);
@@ -62,5 +63,52 @@ impl WebPushSubscriptions {
 
     pub fn total(&self) -> u64 {
         self.total
+    }
+
+    pub fn recompute_total(&mut self) {
+        self.total = self.subscriptions.values().map(|s| s.len() as u64).sum();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+    use types::SubscriptionKeys;
+
+    fn user(i: u8) -> UserId {
+        Principal::from_slice(&[i]).into()
+    }
+
+    fn subscription(endpoint: &str, p256dh: &str) -> SubscriptionInfo {
+        SubscriptionInfo {
+            endpoint: endpoint.to_string(),
+            keys: SubscriptionKeys {
+                p256dh: p256dh.to_string(),
+                auth: "auth".to_string(),
+            },
+        }
+    }
+
+    #[test]
+    fn pushing_the_same_subscription_again_does_not_change_the_total() {
+        let mut subscriptions = WebPushSubscriptions::default();
+        subscriptions.push(user(1), subscription("a", "1"));
+        subscriptions.push(user(1), subscription("a", "1"));
+
+        assert_eq!(subscriptions.get(&user(1)).unwrap(), vec![subscription("a", "1")]);
+        assert_eq!(subscriptions.total(), 1);
+    }
+
+    #[test]
+    fn recompute_total_counts_the_subscriptions() {
+        let mut subscriptions = WebPushSubscriptions::default();
+        subscriptions.push(user(1), subscription("a", "1"));
+        subscriptions.push(user(1), subscription("b", "2"));
+        subscriptions.push(user(2), subscription("c", "3"));
+        subscriptions.total = 10;
+
+        subscriptions.recompute_total();
+        assert_eq!(subscriptions.total(), 3);
     }
 }
