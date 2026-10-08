@@ -68,6 +68,7 @@ pub enum UserIndexEvent {
     StartUserMigration(StartUserMigration),
     ImportUser(ImportUser),
     EventForMigratedUser(Box<EventForMigratedUser>),
+    DailyPuzzleDataForMigratedUser(Box<DailyPuzzleDataForMigratedUser>),
     // A notification which this LocalUserIndex sends the bot as its gateway, eg. that a bot installed
     // in the direct chats of a user since migrated to a MultiUser canister held here is now installed
     // in those under their new id
@@ -81,6 +82,15 @@ pub struct EventForMigratedUser {
     pub user_id: UserId,
     // A msgpack serialized `user_canister::LocalUserIndexEvent`
     pub event: serde_bytes::ByteBuf,
+}
+
+// What another LocalUserIndex's daily puzzle engine held for a user under their old id, for a user
+// who has since been migrated to a MultiUser canister held by this one, passed on by the UserIndex
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DailyPuzzleDataForMigratedUser {
+    pub user_id: UserId,
+    // As msgpack serialized by the LocalUserIndex which sent it
+    pub data: serde_bytes::ByteBuf,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

@@ -3196,7 +3196,13 @@ fn migrated_users_chats_end_up_in_stable_memory() {
 }
 
 // Migrates the user to the MultiUser canister, returning them under their new id
-fn migrate(env: &mut PocketIc, canister_ids: &CanisterIds, operator: &User, user: &User, target: CanisterId) -> User {
+pub(crate) fn migrate(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    operator: &User,
+    user: &User,
+    target: CanisterId,
+) -> User {
     migrate_users(
         env,
         operator.principal,
@@ -4097,7 +4103,7 @@ fn wait_for_migration_attempts_to_run_out(env: &mut PocketIc) {
 
 // Registers a platform operator, and raises the migration concurrency so that migrations left
 // running by earlier tests in the env don't hold up those started here
-fn platform_operator(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
+pub(crate) fn platform_operator(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
     let operator = client::register_user(env, canister_ids);
     client::user_index::happy_path::add_platform_operator(env, controller, canister_ids.user_index, operator.user_id);
 
