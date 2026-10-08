@@ -141,9 +141,15 @@ impl Subscriptions {
             true
         });
 
+        self.total = self.total.saturating_sub(count_removed as u64);
+
         info!(count_removed, "Removed inactive subscriptions");
 
         removed
+    }
+
+    pub fn recompute_total(&mut self) {
+        self.total = self.subscriptions.values().map(|s| s.len() as u64).sum();
     }
 }
 

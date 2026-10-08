@@ -25,6 +25,15 @@ fn post_upgrade(args: Args) {
 
     move_subscriptions_of_migrated_users(&mut data);
 
+    // One-off: the total was incremented when a subscription was pushed again
+    let previous_total = data.web_push_subscriptions.total();
+    data.web_push_subscriptions.recompute_total();
+    info!(
+        previous_total,
+        total = data.web_push_subscriptions.total(),
+        "Recomputed the web push subscriptions total"
+    );
+
     let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);

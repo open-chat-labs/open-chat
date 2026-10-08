@@ -36,6 +36,10 @@ fn notify_local_index_added_impl(args: Args, state: &mut RuntimeState) -> Respon
         }));
     }
 
+    for (user_id, fcm_token) in state.data.fcm_token_store.iter() {
+        events.push(NotificationsIndexEvent::FcmTokenAdded(*user_id, fcm_token.clone()));
+    }
+
     state.data.local_index_event_sync_queue.push_many(
         args.canister_id,
         events

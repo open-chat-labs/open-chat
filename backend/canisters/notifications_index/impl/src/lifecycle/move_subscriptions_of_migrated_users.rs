@@ -18,7 +18,7 @@ pub(crate) async fn move_subscriptions_of_migrated_users() {
             .subscriptions
             .iter()
             .map(|(user_id, _)| *user_id)
-            .chain(state.data.fcm_token_store.owners())
+            .chain(state.data.fcm_token_store.iter().map(|(user_id, _)| *user_id))
             .collect();
         (Vec::from_iter(user_ids), state.data.user_index_canister_id)
     });

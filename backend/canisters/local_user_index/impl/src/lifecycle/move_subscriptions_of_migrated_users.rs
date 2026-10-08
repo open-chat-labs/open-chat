@@ -10,7 +10,7 @@ pub(crate) fn move_subscriptions_of_migrated_users(data: &mut Data) {
     let user_ids: BTreeSet<UserId> = data
         .web_push_subscriptions
         .user_ids()
-        .chain(data.fcm_token_store.owners())
+        .chain(data.fcm_token_store.iter().map(|(user_id, _)| *user_id))
         .collect();
 
     let mut moved = 0;
