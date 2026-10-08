@@ -53,6 +53,11 @@ describe("markdown roundtrip", () => {
         expect(doc.content[0].content[1].attrs.userId).toBe("2lcnt-ryaaa-aaaaf-aaula-cai");
     });
 
+    it("mention of something that isn't a principal stays as text", () => {
+        const doc = markdownToDoc("Hey @UserId(n)");
+        expect(doc.content[0].content).toEqual([{ type: "text", text: "Hey @UserId(n)" }]);
+    });
+
     it("group mention", () => {
         const doc = markdownToDoc("Hey @UserGroup(42)");
         expect(doc.content[0].content[1].type).toBe("group_mention");

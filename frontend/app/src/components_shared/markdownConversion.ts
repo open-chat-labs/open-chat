@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { userGroupMentionRegex, userIdMentionRegex } from "@shared";
+import { isPrincipalValid, userGroupMentionRegex, userIdMentionRegex } from "@shared";
 
 const anchoredUserMention = new RegExp(`^${userIdMentionRegex.source}`);
 const anchoredGroupMention = new RegExp(`^${userGroupMentionRegex.source}`);
@@ -111,8 +111,9 @@ export function parseInline(text: string): any[] {
     while (pos < text.length) {
         // mention: @UserId(2lcnt-ryaaa-aaaaf-aaula-cai)
         if (text[pos] === "@") {
+            // `@UserId(n)` typed as text isn't a mention, and sending "n" as one fails the send
             const m = anchoredUserMention.exec(text.slice(pos));
-            if (m) {
+            if (m && isPrincipalValid(m[1])) {
                 flush(pos);
                 nodes.push({
                     type: "user_mention",
