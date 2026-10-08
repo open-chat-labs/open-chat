@@ -43,15 +43,9 @@ describe("parseDailyPuzzleChitKey", () => {
     // #9332 invariant 49. These are the shapes the local user index mints, as its test
     // `chit_keys_do_not_identify_the_puzzle` asserts them: entry and solve name the day only,
     // hints name the game, step and level.
-    test("parses an entry key", () => {
+    test("parses entry, solve and hint keys", () => {
         expect(parseDailyPuzzleChitKey("20706:entry")).toEqual({ number: 20706, kind: "entry" });
-    });
-
-    test("parses a solve key", () => {
         expect(parseDailyPuzzleChitKey("20706:solve")).toEqual({ number: 20706, kind: "solve" });
-    });
-
-    test("parses a hint key", () => {
         expect(parseDailyPuzzleChitKey("light_up:20706:hint:12:3")).toEqual({
             gameId: "light_up",
             number: 20706,

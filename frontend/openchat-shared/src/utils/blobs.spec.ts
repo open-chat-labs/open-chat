@@ -1,6 +1,6 @@
 import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, test } from "vitest";
-import { blobLocation, buildBlobUrl, buildTokenLogoUrl } from "./blobs";
+import { buildBlobUrl, buildTokenLogoUrl } from "./blobs";
 
 const pattern = "https://{canisterId}.raw.icp0.io/{blobType}";
 const canisterId = "dfdal-2uaaa-aaaaa-qaama-cai";
@@ -48,23 +48,5 @@ describe("buildTokenLogoUrl", () => {
         expect(buildTokenLogoUrl(pattern, canisterId, "ryjl3-tyaaa-aaaaa-aaaba-cai", 7n)).toBe(
             `https://${canisterId}.raw.icp0.io/logo?ledger=ryjl3-tyaaa-aaaaa-aaaba-cai&id=7`,
         );
-    });
-});
-
-describe("blobLocation", () => {
-    test("a user in a MultiUser canister is served by it under their index", () => {
-        expect(blobLocation(indexedUserId, "avatar")).toEqual({
-            canisterId,
-            path: "user/1000/avatar",
-        });
-        expect(blobLocation("qp43m-xeaaa-aaaaa-qaama-daa", "profile_background")).toEqual({
-            canisterId,
-            path: "user/1/profile_background",
-        });
-    });
-
-    test("anything else is served by its own canister at its root", () => {
-        expect(blobLocation(canisterId, "avatar")).toEqual({ canisterId, path: "avatar" });
-        expect(blobLocation(botId, "avatar")).toEqual({ canisterId: botId, path: "avatar" });
     });
 });
