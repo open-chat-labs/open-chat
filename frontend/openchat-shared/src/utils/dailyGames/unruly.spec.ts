@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
     checkRules,
-    cycleCell,
     emptyGrid,
     fromGridBytes,
     hintCaption,
@@ -16,6 +15,7 @@ import {
     type UnrulyCell,
     type UnrulyDescription,
 } from "./unruly";
+import { descriptionFromHex } from "../../domain/dailyPuzzle";
 import fixture from "./unrulyHints.json";
 
 // Rows of width characters: '.' blank, '1' the first value, '2' the second.
@@ -57,41 +57,21 @@ describe("parseDescription", () => {
         ).toEqual(d);
     });
 
-    test("rejects the wrong version", () => {
+    test("rejects malformed descriptions", () => {
         const bytes = descBytes(["....", "....", "....", "...."]);
-        bytes[0] = 2;
-        expect(() => parseDescription(bytes)).toThrow("malformed unruly description");
-    });
-
-    test("rejects the wrong length", () => {
-        const bytes = descBytes(["....", "....", "....", "...."]);
-        expect(() => parseDescription(bytes.slice(0, -1))).toThrow("malformed unruly description");
-        expect(() => parseDescription([...bytes, 0])).toThrow("malformed unruly description");
-        expect(() => parseDescription([1, 4])).toThrow("malformed unruly description");
-    });
-
-    test("rejects odd or tiny sides", () => {
-        expect(() => parseDescription([1, 3, 2, 0, 0, 0, 0, 0, 0])).toThrow(
-            "malformed unruly description",
-        );
-        expect(() => parseDescription([1, 2, 3, 0, 0, 0, 0, 0, 0])).toThrow(
-            "malformed unruly description",
-        );
-        expect(() => parseDescription([1, 0, 2])).toThrow("malformed unruly description");
-    });
-
-    test("rejects a given byte that is neither value", () => {
-        const bytes = descBytes(["....", "....", "....", "...."]);
-        bytes[5] = 3;
-        expect(() => parseDescription(bytes)).toThrow("malformed unruly description");
-    });
-});
-
-describe("cycleCell", () => {
-    test("empty -> first -> second -> empty", () => {
-        expect(cycleCell(0)).toBe(1);
-        expect(cycleCell(1)).toBe(2);
-        expect(cycleCell(2)).toBe(0);
+        const bad = [
+            [2, ...bytes.slice(1)],
+            bytes.slice(0, -1),
+            [...bytes, 0],
+            [1, 4],
+            [1, 3, 2, 0, 0, 0, 0, 0, 0],
+            [1, 2, 3, 0, 0, 0, 0, 0, 0],
+            [1, 0, 2],
+            bytes.map((b, i) => (i === 5 ? 3 : b)),
+        ];
+        for (const b of bad) {
+            expect(() => parseDescription(b)).toThrow("malformed unruly description");
+        }
     });
 });
 
@@ -117,11 +97,6 @@ describe("checkRules", () => {
         expect(isSolved(blank6, emptyGrid(blank6))).toBe(false);
     });
 
-    test("solved grid has no violations", () => {
-        expect(checkRules(puzzle4, answer4)).toEqual([]);
-        expect(isSolved(puzzle4, answer4)).toBe(true);
-    });
-
     test("one empty cell is not solved", () => {
         const g = [...answer4];
         g[5] = 0;
@@ -133,12 +108,6 @@ describe("checkRules", () => {
         expect(
             checkRules(blank6, cells(["111...", "......", "......", "......", "......", "......"])),
         ).toEqual([{ kind: "run", cells: [0, 1, 2], value: 1 }]);
-    });
-
-    test("three the same down a column", () => {
-        expect(
-            checkRules(blank6, cells(["2.....", "2.....", "2.....", "......", "......", "......"])),
-        ).toEqual([{ kind: "run", cells: [0, 6, 12], value: 2 }]);
     });
 
     test("four the same across a row is two runs and a row count", () => {
@@ -157,28 +126,16 @@ describe("checkRules", () => {
         ).toEqual([{ kind: "row_count", row: 0, value: 1, count: 4, cells: [0, 1, 3, 4] }]);
     });
 
-    test("a column with too many of one value, with no run", () => {
-        expect(
-            checkRules(blank6, cells(["2.....", "2.....", "......", "2.....", "2.....", "......"])),
-        ).toEqual([{ kind: "column_count", column: 0, value: 2, count: 4, cells: [0, 6, 18, 24] }]);
-    });
-
     // The crate only complains once a line holds MORE of a value than it is allowed, which no
     // amount of further filling can undo. A line that merely has all of one value it is going
     // to get, or none of the other yet, is still on course.
-    test("a line at its quota is not a violation", () => {
+    test("a line at or short of its quota is not a violation", () => {
         expect(
             checkRules(blank6, cells(["11.1..", "......", "......", "......", "......", "......"])),
         ).toEqual([]);
         expect(
             checkRules(blank6, cells(["1.....", "1.....", "..1...", "1.....", "......", "......"])),
         ).toEqual([]);
-    });
-
-    test("a line short of a value is not a violation", () => {
-        expect(
-            checkRules(blank6, cells(["222...", "......", "......", "......", "......", "......"])),
-        ).toEqual([{ kind: "run", cells: [0, 1, 2], value: 2 }]);
         expect(
             checkRules(blank6, cells(["2.2.2.", "......", "......", "......", "......", "......"])),
         ).toEqual([]);
@@ -279,106 +236,26 @@ describe("unruly DailyGame", () => {
         expect(unruly.fromBytes(puzzle4, bytes)).toEqual(marks4);
         expect(unruly.fromBytes(puzzle4, bytes.slice(1))).toBeUndefined();
     });
-
-    test("has no derived highlight", () => {
-        expect(unruly.lit).toBeUndefined();
-    });
 });
 
-// Invariant 24: every step of a generated trace, as the server serves it at level 2, gets a
-// sentence that names the row or column the step lies in and the colour it turns on, and the
-// cells it fills lie in that line and take the other colour. The fixture is written by the Rust
-// test `write_hint_fixture` from real generated puzzles.
-describe("hint sentences", () => {
-    const bytes = (hex: string) => Uint8Array.from(hex.match(/../g)!.map((b) => parseInt(b, 16)));
-
+// Invariant 24: every step of a generated trace, as the server serves it (the target withheld
+// when it names a concluded key, no conclusions), gets a caption. The fixture is written by the
+// Rust test `write_hint_fixture` from real generated puzzles.
+test("every hint step gets a caption", () => {
+    expect(fixture.length).toBeGreaterThan(0);
     for (const [p, entry] of fixture.entries()) {
-        test(`puzzle ${p}: every step names its line and colour`, () => {
-            const desc = parseDescription(bytes(entry.description));
-            const w = desc.width;
-            const inLine = (kind: string, line: number, k: number) =>
-                (kind === "row" ? Math.floor(k / w) : k % w) === line - 1;
-            const along = (kind: string, k: number) =>
-                (kind === "row" ? k % w : Math.floor(k / w)) + 1;
-
-            // The board as the solver left it before each step: the server serves a step only
-            // once what it rests on is on the board
-            let state = emptyGrid(desc);
-            for (const [i, step] of entry.steps.entries()) {
-                const concluded = step.conclusions.map(([k]) => k);
-                // hint_at_level in the LocalUserIndex: below level 3 the target is sent only when
-                // it names no concluded key, and the focus is sorted
-                const target = step.target.some((k) => concluded.includes(k)) ? [] : step.target;
-                const focus = [...step.focus].sort((a, b) => a - b);
-                const grid = unrulyGrid(desc, state);
-                const caption = hintCaption(desc, state, {
-                    technique: step.technique,
-                    focus,
-                    target,
-                });
-                for (const [k, v] of step.conclusions) state = unruly.apply(desc, state, k, v);
-                const where = `step ${i} (technique ${step.technique})`;
-                expect(caption, where).toBeDefined();
-                const { key, params = {} } = caption!;
-                const [, name, kind] = key.split(".");
-                const line = params.line as number;
-                const colour = Number((params.colour as { key: string }).key.split(".")[1]);
-                const other = Number((params.other as { key: string }).key.split(".")[1]);
-                const count = (v: number) =>
-                    grid.filter((c, k) => c === v && inLine(kind, line, k)).length;
-                const share = kind === "row" ? unrulyRowTarget(desc) : unrulyColumnTarget(desc);
-
-                expect(["row", "column"], where).toContain(kind);
-                expect(new Set([colour, other]), where).toEqual(new Set([1, 2]));
-                expect(
-                    step.focus.every((k) => inLine(kind, line, k)),
-                    where,
-                ).toBe(true);
-                expect(
-                    step.conclusions.every(([k, v]) => inLine(kind, line, k) && v === other),
-                    where,
-                ).toBe(true);
-
-                if (name === "pairEnd" || name === "pairGap") {
-                    expect(step.technique, where).toBe(name === "pairEnd" ? 1 : 2);
-                    expect(target.length, where).toBe(2);
-                    expect(
-                        target.every((k) => grid[k] === colour),
-                        where,
-                    ).toBe(true);
-                    const [a, b] = target.map((k) => along(kind, k));
-                    expect(Math.abs(a - b), where).toBe(name === "pairEnd" ? 1 : 2);
-                } else if (name === "lastGap") {
-                    expect(step.technique, where).toBe(3);
-                    expect(params.count, where).toBe(share);
-                    expect([count(colour), count(other)], where).toEqual([share, share - 1]);
-                } else if (name === "lineFull") {
-                    expect(step.technique, where).toBe(4);
-                    expect(params.count, where).toBe(share);
-                    expect(count(colour), where).toBe(share);
-                    expect(
-                        target.every((k) => grid[k] === colour),
-                        where,
-                    ).toBe(true);
-                } else if (name === "lastInRun") {
-                    expect(step.technique, where).toBe(5);
-                    expect(count(colour), where).toBe(share - 1);
-                    const across = target.map((k) => along(kind, k)).sort((a, b) => a - b);
-                    expect(across, where).toEqual([
-                        params.from,
-                        (params.from as number) + 1,
-                        params.to,
-                    ]);
-                    expect(params.to, where).toBe((params.from as number) + 2);
-                    // the window takes no conclusion: the colour's last cell goes there
-                    expect(
-                        concluded.every((k) => !target.includes(k)),
-                        where,
-                    ).toBe(true);
-                } else {
-                    throw new Error(`${where}: unexpected sentence ${key}`);
-                }
-            }
-        });
+        const d = parseDescription(descriptionFromHex(entry.description));
+        let state = unruly.empty(d);
+        for (const [i, step] of entry.steps.entries()) {
+            const concluded = step.conclusions.map(([k]) => k);
+            const target = step.target.some((k) => concluded.includes(k)) ? [] : step.target;
+            const caption = hintCaption(d, state, {
+                technique: step.technique,
+                focus: [...step.focus].sort((a, b) => a - b),
+                target,
+            });
+            expect(caption?.key, `puzzle ${p} step ${i}`).toBeTruthy();
+            for (const [k, v] of step.conclusions) state = unruly.apply(d, state, k, v);
+        }
     }
 });

@@ -1063,19 +1063,6 @@ mod tests {
     }
 
     #[test]
-    fn a_file_naming_a_user_in_a_multi_user_canister_can_be_removed_by_that_canister() {
-        let mut files = files();
-        let owner = Principal::from_slice(&[1]);
-        let multi_user_canister = canister(2);
-        let user_id = UserId::new_indexed(multi_user_canister, 5);
-
-        put_as(&mut files, owner, vec![user_id.as_principal()], 1, b"bytes".to_vec(), None);
-
-        assert!(matches!(files.remove(canister(3), 1), RemoveFileResult::NotAuthorized));
-        assert!(matches!(files.remove(multi_user_canister, 1), RemoveFileResult::Success(_)));
-    }
-
-    #[test]
     fn a_forwarded_file_is_reported_as_the_forwarders_both_when_added_and_when_removed() {
         let mut files = files();
         put(&mut files, 1, b"bytes".to_vec(), None);

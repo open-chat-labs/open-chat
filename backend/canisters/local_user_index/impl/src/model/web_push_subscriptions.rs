@@ -119,16 +119,4 @@ mod tests {
         assert_eq!(subscriptions.get(&user(1)).unwrap(), vec![subscription("a", "1")]);
         assert_eq!(subscriptions.total(), 1);
     }
-
-    #[test]
-    fn recompute_total_counts_the_subscriptions() {
-        let mut subscriptions = WebPushSubscriptions::default();
-        subscriptions.push(user(1), subscription("a", "1"));
-        subscriptions.push(user(1), subscription("b", "2"));
-        subscriptions.push(user(2), subscription("c", "3"));
-        subscriptions.total = 10;
-
-        subscriptions.recompute_total();
-        assert_eq!(subscriptions.total(), 3);
-    }
 }

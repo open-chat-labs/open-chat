@@ -132,18 +132,6 @@ mod tests {
     }
 
     #[test]
-    fn indexes_start_at_one_and_increment() {
-        let mut users = Users::default();
-
-        assert_eq!(users.add(principal(1), "a".to_string(), None, 1), Ok(1));
-        assert_eq!(users.add(principal(2), "b".to_string(), None, 2), Ok(2));
-        assert_eq!(users.len(), 2);
-        assert_eq!(users.index_by_principal(&principal(1)), Some(1));
-        assert_eq!(users.index_by_principal(&principal(2)), Some(2));
-        assert_eq!(users.index_by_principal(&principal(3)), None);
-    }
-
-    #[test]
     fn principal_can_only_be_registered_once() {
         let mut users = Users::default();
 

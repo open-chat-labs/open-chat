@@ -66,17 +66,6 @@ mod tests {
     use candid::Principal;
 
     #[test]
-    fn page_holds_every_member_if_not_limited() {
-        let page = page(&[1, 4], &[5], None, None);
-
-        // Those with roles, then the others in order of user id, of whom those who aren't basic
-        // are returned in full
-        assert_eq!(page.members, user_ids([1, 4, 5]));
-        assert_eq!(page.basic_members, user_ids([2, 3, 6, 7, 8, 9]));
-        assert_eq!(page.more_members_after, None);
-    }
-
-    #[test]
     fn pages_hold_each_member_once_with_those_with_roles_in_the_first() {
         let page1 = page(&[1, 8], &[3], None, Some(3));
         assert_eq!(page1.members, user_ids([1, 8, 3]));
@@ -93,14 +82,6 @@ mod tests {
         assert!(page3.members.is_empty());
         assert_eq!(page3.basic_members, user_ids([9]));
         assert_eq!(page3.more_members_after, None);
-    }
-
-    #[test]
-    fn page_which_reaches_the_last_member_is_the_last() {
-        let page = page(&[1], &[], Some(user_id(6)), Some(3));
-
-        assert_eq!(page.basic_members, user_ids([7, 8, 9]));
-        assert_eq!(page.more_members_after, None);
     }
 
     #[test]

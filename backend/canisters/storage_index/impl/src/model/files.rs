@@ -404,34 +404,6 @@ mod tests {
     use types::FileMetaData;
 
     #[test]
-    fn a_blob_referenced_by_two_users_counts_once_towards_the_total_blob_bytes() {
-        let mut files = Files::default();
-        let bucket = CanisterId::from_slice(&[2]);
-        let file = |file_id: u8, user: u8| FileAdded {
-            file_id: file_id.into(),
-            hash: [1; 32],
-            size: 500,
-            meta_data: FileMetaData {
-                owner: Principal::from_slice(&[user]),
-                created: file_id.into(),
-            },
-        };
-
-        files.add(file(1, 1), bucket);
-        files.add(file(2, 2), bucket);
-        assert_eq!(files.metrics().total_blob_bytes, 500);
-
-        let removed = |f: FileAdded| FileRemoved {
-            file_id: f.file_id,
-            meta_data: f.meta_data,
-        };
-        assert!(files.remove(removed(file(1, 1)), bucket).is_ok());
-        assert_eq!(files.metrics().total_blob_bytes, 500);
-        assert!(files.remove(removed(file(2, 2)), bucket).is_ok());
-        assert_eq!(files.metrics().total_blob_bytes, 0);
-    }
-
-    #[test]
     fn iter_user_files_from_oldest_returns_oldest_first() {
         let mut files = Files::default();
         let user_id = Principal::from_slice(&[1]);

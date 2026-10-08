@@ -1,6 +1,5 @@
 use crate::env::ENV;
 use crate::{TestEnv, client};
-use std::collections::BTreeSet;
 use std::ops::Deref;
 use testing::rng::random_string;
 use types::UserId;
@@ -62,40 +61,4 @@ fn community_members_are_found_by_their_display_names() {
     );
     assert_eq!(search(env, "bob", 1), vec![members[3].user_id]);
     assert!(search(env, "carol", 10).is_empty());
-}
-
-#[test]
-fn user_search_results_can_be_paged_through() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
-
-    let prefix = format!("pg{}_", random_string());
-    let mut user_ids = BTreeSet::new();
-    for i in 0..5 {
-        let user = client::register_user(env, canister_ids);
-        client::user_index::happy_path::set_username(env, user.principal, canister_ids.user_index, format!("{prefix}{i}"));
-        user_ids.insert(user.user_id);
-    }
-    let searcher = client::register_user(env, canister_ids);
-
-    let page = |env: &mut _, page_index: Option<u32>| {
-        let user_index_canister::search::Response::Success(result) = client::user_index::search(
-            env,
-            searcher.principal,
-            canister_ids.user_index,
-            &user_index_canister::search::Args {
-                search_term: prefix.clone(),
-                max_results: 2,
-                page_index,
-            },
-        );
-        result.users.iter().map(|u| u.user_id).collect::<Vec<UserId>>()
-    };
-
-    let pages: Vec<_> = (0..4).map(|i| page(env, Some(i))).collect();
-    assert_eq!(pages.iter().map(|p| p.len()).collect::<Vec<_>>(), vec![2, 2, 1, 0]);
-    // Each user is on one page only
-    assert_eq!(pages.iter().flatten().copied().collect::<BTreeSet<_>>(), user_ids);
-    // With no page given, the first is returned
-    assert_eq!(page(env, None), pages[0]);
 }

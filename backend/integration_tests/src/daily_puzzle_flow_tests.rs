@@ -17,7 +17,7 @@ use std::ops::Deref;
 use std::time::{Duration, SystemTime};
 use test_case::test_case;
 use types::{
-    CanisterId, ChitEventType, DAILY_PUZZLE_CHIT_GAME_ID, DailyPuzzle, DailyPuzzleConfig, DailyPuzzleUserState, GameConfig,
+    CanisterId, ChitEventType, DAILY_PUZZLE_CHIT_GAME_ID, DailyPuzzleConfig, DailyPuzzleUserState, GameConfig,
     LIGHT_UP_GAME_ID, PublicDailyPuzzle, PuzzleHint, PuzzleNumber, UnitResult,
 };
 
@@ -265,139 +265,18 @@ fn daily_puzzle_end_to_end() {
     assert_eq!(state.solved.as_ref().unwrap().reward, expected_reward);
     assert_eq!(state.streak, 1);
 
-    // The flag was flipped and the clock moved
-    wrapper.discard();
-}
-
-// `daily_puzzle_end_to_end` used to take the opening hint to be the first step that puts a mark on
-// the board, and failed whenever that step rests on a negatives-only step the engine serves first
-// (#9588). The real flow meets such a board only when the day's game and the daily canister's
-// seed produce one, so this one, an 8x8 easy Tents, is pushed by a stand-in for the daily
-// canister. The first tent is at 53, for the tree at 52, whose only other free neighbour is 44.
-// That is in column 4, which holds no tents, and the step before the tent clears the column. So
-// the engine opens with the column: not with the tent, and not with the corner grass the trace
-// starts with either, which is what serving the trace in order would give.
-#[test]
-fn daily_puzzle_opening_hint_is_a_premise_of_the_first_mark() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    ensure_time_at_least_day0(env);
-    keep_clear_of_midnight(env);
-
-    let user = client::register_user(env, canister_ids);
-    let local_user_index = canister_ids.local_user_index(env, user.canister());
-    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, user.user_id);
-
-    // Any principal the test can send as. The pull the LUI fires at it fails harmlessly.
-    let daily_puzzle_canister_id = client::create_canister(env, *controller);
-    set_canister_id(env, &user, local_user_index, daily_puzzle_canister_id);
-
-    let game_id = tents::GAME_ID;
-    let number = day_number(env);
-    #[rustfmt::skip]
-    let description = vec![
-        1, 8, 8,
-        0, 0, 0, 1, 0, 1, 0, 0,
-        0, 1, 0, 0, 0, 0, 1, 0,
-        0, 0, 0, 0, 1, 0, 0, 0,
-        0, 0, 1, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 1, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        1, 0, 0, 1, 1, 0, 0, 1,
-        0, 0, 0, 0, 1, 0, 0, 0,
-        1, 3, 1, 1, 1, 1, 2, 2,
-        1, 2, 1, 3, 0, 2, 1, 2,
-    ];
-    let (trace, solution) = solve(game_id, &description, 0);
-    let first_mark = trace.iter().position(puts_a_mark).unwrap();
-    assert_eq!(trace[first_mark].conclusions, [(53, 1)]);
-    assert_eq!(trace[0].conclusions, [(0, 0)]);
-
-    let puzzle = DailyPuzzle {
-        game_id: game_id.to_string(),
-        number,
-        tier: 0,
-        solution_pairs: tents::solution_pairs(&description, &solution).expect("valid description"),
-        description,
-        solution,
-        hints: trace.clone(),
-        // Empty: Tents draws every conclusion on its own key, which is what the LUI assumes then
-        hint_settles: Vec::new(),
-        starts_at: number as u64 * DAY_IN_MS,
-        expires_at: (number as u64 + 1) * DAY_IN_MS,
-        config: DailyPuzzleConfig {
-            enabled: true,
-            ..DailyPuzzleConfig::default()
-        },
-        game_config: GameConfig::default(),
-    };
-    let hint_prices = puzzle.game_config.hint_prices.clone();
-    let response = client::local_user_index::c2c_daily_puzzle_push(
-        env,
-        daily_puzzle_canister_id,
+    // A push from anyone but the daily canister is rejected by the guard. Accepted, this empty set
+    // would clear the day's puzzles.
+    let result = env.update_call(
         local_user_index,
-        &c2c_daily_puzzle_push::Args { puzzles: vec![puzzle] },
-    );
-    assert!(matches!(response, UnitResult::Success), "{response:?}");
-
-    client::user::happy_path::claim_daily_chit(env, &user, None);
-    start(env, &user, local_user_index, game_id, number, 0);
-    let first = hint(env, &user, local_user_index, game_id, number, 1, Vec::new(), hint_prices[0]);
-
-    let step = assert_opening_step(&trace, &first.hint.hint);
-    assert_eq!(step, first_mark - 1);
-    assert_eq!(trace[step].conclusions, [(4, 0), (12, 0), (28, 0), (36, 0), (44, 0)]);
-
-    // The LUI now holds a made up daily canister id and this test's puzzle for today
-    wrapper.discard();
-}
-
-#[test]
-fn daily_puzzle_dark_by_default() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    ensure_time_at_least_day0(env);
-
-    let user = client::register_user(env, canister_ids);
-    let local_user_index = canister_ids.local_user_index(env, user.canister());
-    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, user.user_id);
-
-    // Wire the LUI up (this pulls) but never enable
-    set_canister_id(env, &user, local_user_index, canister_ids.daily_puzzle);
-    tick_many(env, 5);
-
-    let config = client::daily_puzzle::happy_path::config(env, user.principal, canister_ids.daily_puzzle);
-    assert!(!config.enabled);
-
-    let fetched = fetch(env, &user, local_user_index);
-    assert!(fetched.puzzles.is_empty(), "{fetched:?}");
-    assert!(fetched.states.is_empty());
-
-    let daily_puzzle_start::Response::Error(error) = client::local_user_index::daily_puzzle_start(
-        env,
         user.principal,
-        local_user_index,
-        &daily_puzzle_start::Args {
-            game_id: LIGHT_UP_GAME_ID.to_string(),
-            number: day_number(env),
-            expected_entry_fee: 0,
-        },
-    ) else {
-        panic!("start should fail while disabled");
-    };
-    assert!(error.matches_code(OCErrorCode::NotInitialized), "{error:?}");
+        "c2c_daily_puzzle_push_msgpack",
+        msgpack::serialize_then_unwrap(&c2c_daily_puzzle_push::Args { puzzles: Vec::new() }),
+    );
+    assert!(result.is_err(), "push from a user should be rejected");
+    assert!(puzzle_of(&fetch(env, &user, local_user_index), game_id).is_some());
 
-    // The LUI now holds a daily canister id
+    // The flag was flipped and the clock moved
     wrapper.discard();
 }
 

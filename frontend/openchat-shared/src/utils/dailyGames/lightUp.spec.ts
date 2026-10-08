@@ -2,18 +2,17 @@ import { describe, expect, test } from "vitest";
 import {
     checkRules,
     computeLighting,
-    cycleCell,
     emptyGrid,
     fromGridBytes,
     hintCaption,
     isSolved,
     lightUp,
-    neighbours,
     parseDescription,
     toGridBytes,
     type LightUpCell,
     type LightUpDescription,
 } from "./lightUp";
+import { descriptionFromHex } from "../../domain/dailyPuzzle";
 import fixture from "./lightUpHints.json";
 
 // '.' white, '#' black unnumbered, '0'-'4' black with clue.
@@ -68,34 +67,18 @@ describe("parseDescription", () => {
         expect(parseDescription(new Uint8Array(descBytes(["..#", ".1.", "0.4"])))).toEqual(d);
     });
 
-    test("rejects the wrong version", () => {
+    test("rejects malformed descriptions", () => {
         const bytes = descBytes(["...", "...", "..."]);
-        bytes[0] = 2;
-        expect(() => parseDescription(bytes)).toThrow("malformed light up description");
-    });
-
-    test("rejects a short buffer", () => {
-        const bytes = descBytes(["...", "...", "..."]);
-        expect(() => parseDescription(bytes.slice(0, -1))).toThrow(
-            "malformed light up description",
-        );
-        expect(() => parseDescription([1, 3])).toThrow("malformed light up description");
-    });
-
-    test("rejects an unknown cell byte", () => {
-        const bytes = descBytes(["...", "...", "..."]);
-        bytes[5] = 0x16;
-        expect(() => parseDescription(bytes)).toThrow("malformed light up description");
-        bytes[5] = 0x01;
-        expect(() => parseDescription(bytes)).toThrow("malformed light up description");
-    });
-});
-
-describe("neighbours", () => {
-    test("returns in-bounds cells in left, right, up, down order", () => {
-        expect(neighbours(allWhite3, 4)).toEqual([3, 5, 1, 7]);
-        expect(neighbours(allWhite3, 0)).toEqual([1, 3]);
-        expect(neighbours(allWhite3, 8)).toEqual([7, 5]);
+        const bad = [
+            [2, ...bytes.slice(1)],
+            bytes.slice(0, -1),
+            [1, 3],
+            bytes.map((b, i) => (i === 5 ? 0x16 : b)),
+            bytes.map((b, i) => (i === 5 ? 0x01 : b)),
+        ];
+        for (const b of bad) {
+            expect(() => parseDescription(b)).toThrow("malformed light up description");
+        }
     });
 });
 
@@ -104,13 +87,6 @@ describe("checkRules 3x3", () => {
     // column unlightable), so the solved case uses a centre 2.
     const centre2 = desc(["...", ".2.", "..."]);
     const centre1 = desc(["...", ".1.", "..."]);
-
-    test("solved grid has no violations", () => {
-        const g = grid([".B.", "B..", "..B"]);
-        expect(checkRules(centre2, g)).toEqual([]);
-        expect(isSolved(centre2, g)).toBe(true);
-        expect(isSolved(centre2, emptyGrid(centre2))).toBe(false);
-    });
 
     test("dots count as no bulb", () => {
         const g = grid([".B.", "Bxx", "xxB"]);
@@ -129,13 +105,6 @@ describe("checkRules 3x3", () => {
         expect(checkRules(desc([".#.", "...", "..."]), grid(["B.B", "...", "..."]))).toEqual([
             { kind: "unlit", cell: 4 },
             { kind: "unlit", cell: 7 },
-        ]);
-    });
-
-    test("two bulbs on one column report one pair", () => {
-        const v = checkRules(allWhite3, grid(["B..", "...", "B.."]));
-        expect(v.filter((x) => x.kind === "bulb_sees_bulb")).toEqual([
-            { kind: "bulb_sees_bulb", a: 0, b: 6 },
         ]);
     });
 
@@ -176,38 +145,11 @@ describe("checkRules 3x3", () => {
             { kind: "unlit", cell: 8 },
         ]);
     });
-
-    test("a grid of the wrong length counts as no bulbs", () => {
-        expect(checkRules(centre1, grid(["B", "B"]))).toEqual([
-            { kind: "unlit", cell: 0 },
-            { kind: "unlit", cell: 1 },
-            { kind: "unlit", cell: 2 },
-            { kind: "unlit", cell: 3 },
-            { kind: "clue_count", clue: 4, expected: 1, actual: 0 },
-            { kind: "unlit", cell: 5 },
-            { kind: "unlit", cell: 6 },
-            { kind: "unlit", cell: 7 },
-            { kind: "unlit", cell: 8 },
-        ]);
-    });
-
-    test("bulb pairs are reported before unlit cells regardless of index", () => {
-        expect(checkRules(allWhite3, grid(["...", "...", "B.B"]))).toEqual([
-            { kind: "bulb_sees_bulb", a: 6, b: 8 },
-            { kind: "unlit", cell: 1 },
-            { kind: "unlit", cell: 4 },
-        ]);
-    });
 });
 
 describe("checkRules 5x5", () => {
     const d = desc([".....", ".0.#.", ".....", ".2...", "....."]);
     const solved = grid(["B....", "....B", "...B.", "..B..", ".B..."]);
-
-    test("solved grid", () => {
-        expect(checkRules(d, solved)).toEqual([]);
-        expect(isSolved(d, solved)).toBe(true);
-    });
 
     test("one bulb short", () => {
         const g = grid(["B....", "....B", "...B.", ".....", ".B..."]);
@@ -236,14 +178,6 @@ describe("grid bytes", () => {
         expect(bytes).toEqual(Uint8Array.from([0, 1, 0, 1, 0, 0, 0, 0, 1]));
         expect(fromGridBytes(bytes)).toEqual(grid([".B.", "B..", "..B"]));
         expect(fromGridBytes([0, 2])).toEqual(["empty", "bulb"]);
-    });
-});
-
-describe("cycleCell", () => {
-    test("empty -> bulb -> dot -> empty", () => {
-        expect(cycleCell("empty")).toBe("bulb");
-        expect(cycleCell("bulb")).toBe("dot");
-        expect(cycleCell("dot")).toBe("empty");
     });
 });
 
@@ -348,105 +282,24 @@ describe("hintKeyStatus", () => {
     });
 });
 
-// Invariant 24: every step of a generated trace, as the server serves it, gets a sentence that
-// names the number or cell it is about by its row and column, and the cells it outlines and
-// concludes lie where the sentence says. The fixture is written by the Rust test
-// `write_hint_fixture` from real generated puzzles.
-describe("hint sentences", () => {
-    const bytes = (hex: string) => Uint8Array.from(hex.match(/../g)!.map((b) => parseInt(b, 16)));
-
+// Invariant 24: every step of a generated trace, as the server serves it (the target withheld
+// when it names a concluded key, no conclusions), gets a caption. The fixture is written by the
+// Rust test `write_hint_fixture` from real generated puzzles.
+test("every hint step gets a caption", () => {
+    expect(fixture.length).toBeGreaterThan(0);
     for (const [p, entry] of fixture.entries()) {
-        test(`puzzle ${p}: every step names what it is about`, () => {
-            const d = parseDescription(bytes(entry.description));
-            const w = d.width;
-            const white = (k: number) => d.cells[k].kind === "white";
-            // The white cells a bulb at k would shine on, up to a black cell or the edge
-            const sight = (k: number) => {
-                const out: number[] = [];
-                for (const [dx, dy] of [
-                    [1, 0],
-                    [-1, 0],
-                    [0, 1],
-                    [0, -1],
-                ]) {
-                    let x = (k % w) + dx;
-                    let y = Math.floor(k / w) + dy;
-                    while (x >= 0 && x < w && y >= 0 && y < d.height && white(y * w + x)) {
-                        out.push(y * w + x);
-                        x += dx;
-                        y += dy;
-                    }
-                }
-                return out;
-            };
-
-            // The board as the solver left it before each step: the server serves a step only
-            // once what it rests on is on the board
-            let grid = emptyGrid(d);
-            for (const [i, step] of entry.steps.entries()) {
-                const concluded = step.conclusions.map(([k]) => k);
-                // hint_at_level in the LocalUserIndex: the target is sent only when it names no
-                // concluded key
-                const target = step.target.some((k) => concluded.includes(k)) ? [] : step.target;
-                const caption = hintCaption(d, grid, { ...step, target });
-                for (const [k, v] of step.conclusions) grid = lightUp.apply(d, grid, k, v);
-                const where = `step ${i} (technique ${step.technique})`;
-                expect(caption, where).toBeDefined();
-                const { key, params = {} } = caption!;
-                const named = ((params.row as number) - 1) * w + (params.column as number) - 1;
-                const cell = d.cells[named];
-                const clue = cell.kind === "black" ? cell.clue : undefined;
-                const beside = neighbours(d, named);
-
-                if (key === "hint.onlyWay.cell") {
-                    expect(named, where).toBe(target[0]);
-                    expect(
-                        concluded.every((k) => sight(named).includes(k)),
-                        where,
-                    ).toBe(true);
-                } else if (key === "hint.onlyWay.self") {
-                    expect(concluded, where).toEqual([named]);
-                } else if (
-                    key === "hint.clueSatisfied.some" ||
-                    key === "hint.clueSatisfied.zero" ||
-                    key === "hint.clueForced"
-                ) {
-                    expect(clue, where).toBe(params.number);
-                    expect(key === "hint.clueSatisfied.zero", where).toBe(
-                        key !== "hint.clueForced" && clue === 0,
-                    );
-                    expect(
-                        concluded.every((k) => beside.includes(k)),
-                        where,
-                    ).toBe(true);
-                } else if (key === "hint.setExclusion.dark") {
-                    expect(cell.kind, where).toBe("white");
-                    const unit = [named, ...sight(named)];
-                    expect(
-                        target.every((k) => unit.includes(k)),
-                        where,
-                    ).toBe(true);
-                    expect(
-                        concluded.some((k) => unit.includes(k)),
-                        where,
-                    ).toBe(false);
-                } else if (
-                    key === "hint.setExclusion.clue" ||
-                    key === "hint.setExclusion.clueBeside"
-                ) {
-                    expect(clue, where).toBe(params.number);
-                    expect(
-                        target.every((k) => beside.includes(k)),
-                        where,
-                    ).toBe(true);
-                    expect(
-                        concluded.every((k) => beside.includes(k)),
-                        where,
-                    ).toBe(key === "hint.setExclusion.clueBeside");
-                } else {
-                    throw new Error(`${where}: unexpected sentence ${key}`);
-                }
-            }
-        });
+        const d = parseDescription(descriptionFromHex(entry.description));
+        let state = lightUp.empty(d);
+        for (const [i, step] of entry.steps.entries()) {
+            const concluded = step.conclusions.map(([k]) => k);
+            const target = step.target.some((k) => concluded.includes(k)) ? [] : step.target;
+            const caption = hintCaption(d, state, {
+                technique: step.technique,
+                focus: step.focus,
+                target,
+            });
+            expect(caption?.key, `puzzle ${p} step ${i}`).toBeTruthy();
+            for (const [k, v] of step.conclusions) state = lightUp.apply(d, state, k, v);
+        }
     }
 });

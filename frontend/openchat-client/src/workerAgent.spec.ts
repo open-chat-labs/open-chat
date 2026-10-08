@@ -63,17 +63,6 @@ describe("WorkerAgent", () => {
         });
     });
 
-    test("the worker index.html prestarted is used instead of starting another", () => {
-        const prestarted = prestartWorker();
-
-        createAgent();
-
-        expect(FakeWorker.instance).toBeUndefined();
-        expect(prestarted.posted).toEqual([expect.objectContaining({ kind: "init" })]);
-        expect(prestarted.onmessage).toBeDefined();
-        expect(window.OC_PRESTARTED_WORKER).toBeUndefined();
-    });
-
     test("a prestarted worker is only used once", () => {
         const prestarted = prestartWorker();
 

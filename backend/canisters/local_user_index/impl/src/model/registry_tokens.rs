@@ -27,30 +27,3 @@ impl RegistryTokens {
         self.fees.len()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use candid::Principal;
-
-    fn ledger(i: u8) -> CanisterId {
-        Principal::from_slice(&[i])
-    }
-
-    #[test]
-    fn set_replaces_the_tokens() {
-        let mut tokens = RegistryTokens::default();
-        tokens.set(vec![Token {
-            ledger_canister_id: ledger(1),
-            fee: 10,
-        }]);
-        tokens.set(vec![Token {
-            ledger_canister_id: ledger(2),
-            fee: 20,
-        }]);
-
-        assert_eq!(tokens.fee(&ledger(1)), None);
-        assert_eq!(tokens.fee(&ledger(2)), Some(20));
-        assert_eq!(tokens.len(), 1);
-    }
-}

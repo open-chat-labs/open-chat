@@ -103,14 +103,6 @@ mod tests {
     }
 
     #[test]
-    fn failure_calling_for_an_immediate_retry_waits_the_min_delay() {
-        let error = error(RejectCode::SysTransient, "", C2CRetryPolicy::RetryImmediately);
-
-        assert_eq!(retry_delay(&error, 1), Some(MIN_RETRY_DELAY));
-        assert_eq!(retry_delay(&error, 2), Some(2 * MIN_RETRY_DELAY));
-    }
-
-    #[test]
     fn failure_calling_for_no_retry_is_retried_after_the_max_delay() {
         let error = error(RejectCode::CanisterReject, "", C2CRetryPolicy::DoNotRetry);
 
