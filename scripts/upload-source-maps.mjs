@@ -84,11 +84,14 @@ function redact(text) {
     return text.split(token).join("<OC_ROLLBAR_SERVER_TOKEN>");
 }
 
-async function upload(mapPath) {
-    // "build/main-D_Idsc5v.js.map" -> "http://dynamichost/main-D_Idsc5v.js"
-    const relative = path.relative(buildDir, mapPath).split(path.sep).join("/");
-    const minifiedUrl = `${DYNAMIC_HOST}/${relative.replace(/\.map$/, "")}`;
+// Rollbar's API now and then times out (a 504 from its nginx) or drops the connection. Uploading
+// a map again just replaces it, so those failures are retried after a growing delay rather than
+// stopping the deploy, which would mean building the whole site again to rerun it. A connection
+// which stalls is given up on by fetch itself after 5 minutes, and retried the same way.
+const RETRY_DELAYS_MS = [2_000, 5_000, 15_000];
 
+// Returns undefined once the map is uploaded, or else why not and whether that's worth retrying
+async function attemptUpload(mapPath, minifiedUrl) {
     const form = new FormData();
     form.append("access_token", token);
     form.append("version", version);
@@ -99,13 +102,16 @@ async function upload(mapPath) {
     try {
         response = await fetch(ENDPOINT, { method: "POST", body: form });
     } catch (err) {
-        console.error(`  FAIL  ${minifiedUrl} - ${redact(String(err))}`);
-        return false;
+        // A network failure is just "fetch failed", with what went wrong (eg. ECONNRESET) in its cause
+        const cause = err.cause ? ` (${err.cause.code ?? err.cause.message})` : "";
+        return { reason: redact(`${err}${cause}`), retryable: true };
     }
 
-    if (response.ok) return true;
+    if (response.ok) return undefined;
 
-    const body = redact((await response.text()).replace(/\s+/g, " ").trim());
+    // The connection can drop after the headers, while the body is still coming
+    const text = await response.text().catch((err) => `(body not received: ${err})`);
+    const body = redact(text.replace(/\s+/g, " ").trim());
     if (response.status === 401 || response.status === 403) {
         throw new FatalUploadError(
             `Rollbar rejected the token (${response.status}): ${body}\n` +
@@ -113,8 +119,28 @@ async function upload(mapPath) {
                 "  Settings -> Project Access Tokens, not the post_client_item one the app uses.",
         );
     }
-    console.error(`  FAIL  ${minifiedUrl} - ${response.status} ${body}`);
-    return false;
+    const retryable = response.status === 408 || response.status === 429 || response.status >= 500;
+    return { reason: `${response.status} ${body}`, retryable };
+}
+
+async function upload(mapPath) {
+    // "build/main-D_Idsc5v.js.map" -> "http://dynamichost/main-D_Idsc5v.js"
+    const relative = path.relative(buildDir, mapPath).split(path.sep).join("/");
+    const minifiedUrl = `${DYNAMIC_HOST}/${relative.replace(/\.map$/, "")}`;
+
+    for (let attempt = 0; ; attempt++) {
+        const failure = await attemptUpload(mapPath, minifiedUrl);
+        if (failure === undefined) return true;
+
+        const delay = failure.retryable ? RETRY_DELAYS_MS[attempt] : undefined;
+        if (delay === undefined) {
+            console.error(`  FAIL  ${minifiedUrl} - ${failure.reason}`);
+            return false;
+        }
+        // Only the start of the reason, as a gateway error's body is a page of HTML
+        console.error(`  RETRY ${minifiedUrl} in ${delay / 1000}s - ${failure.reason.slice(0, 80)}`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+    }
 }
 
 let failed = 0;
@@ -122,8 +148,10 @@ const queue = [...maps];
 try {
     await Promise.all(
         Array.from({ length: Math.min(CONCURRENCY, queue.length) }, async () => {
-            for (let next = queue.pop(); next !== undefined; next = queue.pop()) {
-                if (!(await upload(next))) failed++;
+            // Once a map has failed even after its retries, the deploy will stop and a rerun
+            // uploads every map again, so there's no point waiting for the rest
+            while (failed === 0 && queue.length > 0) {
+                if (!(await upload(queue.pop()))) failed++;
             }
         }),
     );
@@ -134,7 +162,8 @@ try {
 }
 
 if (failed > 0) {
-    console.error(`upload-source-maps: ${failed} of ${maps.length} uploads failed`);
+    const skipped = queue.length > 0 ? `, and ${queue.length} were not tried` : "";
+    console.error(`upload-source-maps: ${failed} of ${maps.length} uploads failed${skipped}`);
     process.exit(1);
 }
 console.log(`upload-source-maps: all ${maps.length} maps uploaded for ${version}`);
