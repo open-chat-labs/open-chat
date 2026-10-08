@@ -19,9 +19,16 @@ vi.hoisted(() => {
 });
 
 import { configKeys } from "@shared";
-import { get } from "svelte/store";
+import type { Readable } from "svelte/store";
 import { STARTUP_DARK_BACKGROUND } from "../../rollup.extras.mjs";
 import { clearStartupBackground, currentTheme, themes, themeType } from "./themes";
+
+// themes.ts holds svelte/store stores, which the custom stores' `get` can't read
+function get<T>(store: Readable<T>): T {
+    let value!: T;
+    store.subscribe((v) => (value = v))();
+    return value;
+}
 
 // What index.html's startup script reads to decide whether to paint the page dark
 const STARTUP_THEME_MODE_KEY = "openchat_startup_theme_mode";
