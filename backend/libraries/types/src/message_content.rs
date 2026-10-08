@@ -692,14 +692,13 @@ pub struct PollContent {
 
 impl PollContent {
     pub fn initialize_votes(&mut self) {
-        let total_votes: TotalVotes;
-        if self.config.end_date.is_some() && !self.config.show_votes_before_end_date {
-            total_votes = TotalVotes::Hidden(0);
+        let total_votes = if self.config.end_date.is_some() && !self.config.show_votes_before_end_date {
+            TotalVotes::Hidden(0)
         } else if self.config.anonymous {
-            total_votes = TotalVotes::Anonymous(HashMap::new());
+            TotalVotes::Anonymous(HashMap::new())
         } else {
-            total_votes = TotalVotes::Visible(HashMap::new());
-        }
+            TotalVotes::Visible(HashMap::new())
+        };
 
         self.votes = PollVotes {
             total: total_votes,

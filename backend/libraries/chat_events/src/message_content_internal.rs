@@ -864,15 +864,14 @@ impl PollContentInternal {
             Vec::new()
         };
 
-        let total_votes: TotalVotes;
         let hide_votes = self.config.end_date.is_some() && !self.ended && !self.config.show_votes_before_end_date;
-        if hide_votes {
-            total_votes = TotalVotes::Hidden(self.votes.values().map(|v| v.len() as u32).sum());
+        let total_votes = if hide_votes {
+            TotalVotes::Hidden(self.votes.values().map(|v| v.len() as u32).sum())
         } else if self.config.anonymous {
-            total_votes = TotalVotes::Anonymous(self.votes.iter().map(|(k, v)| (*k, v.len() as u32)).collect());
+            TotalVotes::Anonymous(self.votes.iter().map(|(k, v)| (*k, v.len() as u32)).collect())
         } else {
-            total_votes = TotalVotes::Visible(self.votes.clone());
-        }
+            TotalVotes::Visible(self.votes.clone())
+        };
 
         PollVotes {
             user: user_votes,
