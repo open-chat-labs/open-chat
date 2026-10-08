@@ -51,6 +51,7 @@ export default defineConfig({
         environment: "jsdom",
         include: [
             "app/src/**/*.{test,spec}.ts",
+            "app/*.{test,spec}.ts",
             "component-lib/src/**/*.{test,spec}.ts",
             "openchat-shared/src/**/*.{test,spec}.ts",
             "openchat-client/src/**/*.{test,spec}.ts",

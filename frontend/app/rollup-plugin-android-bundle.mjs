@@ -12,7 +12,22 @@ const execPromise = promisify(exec);
  * The difference is just in the OC_APP_STORE env var
  */
 
-export function androidBundlePlugin({ version }) {
+const CSP_META = /<meta http-equiv="Content-Security-Policy" content="[^"]*"/g;
+
+// Swaps the website's CSP for the one the native shell needs. Throws rather than
+// ship a zip whose CSP blocks asset.localhost.
+export function withCsp(indexHtml, csp) {
+    const found = indexHtml.match(CSP_META)?.length ?? 0;
+    if (found !== 1) {
+        throw new Error(`Expected one CSP meta tag in index.html, found ${found}`);
+    }
+    return indexHtml.replace(
+        CSP_META,
+        () => `<meta http-equiv="Content-Security-Policy" content="${csp}"`,
+    );
+}
+
+export function androidBundlePlugin({ version, csp }) {
     return {
         name: "android-bundle",
         async writeBundle() {
@@ -59,7 +74,7 @@ export function androidBundlePlugin({ version }) {
 
                 // Inject Android Config
                 const indexHtmlPath = path.join(distBundleDir, "index.html");
-                let indexHtml = await fs.readFile(indexHtmlPath, "utf-8");
+                const indexHtml = withCsp(await fs.readFile(indexHtmlPath, "utf-8"), csp());
 
                 await writeBundleZip(
                     indexHtmlPath,
