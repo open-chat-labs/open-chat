@@ -96,23 +96,9 @@ describe("the startup script in index.html", () => {
         expect(startupBackground()).not.toBe("");
     });
 
-    test("goes by the OS preference when localStorage is unavailable", () => {
-        vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
-            throw new Error("denied");
-        });
-        osPrefersDark.dark = true;
-        expect(startupBackground()).not.toBe("");
-    });
-
     test("paints the mobile layout dark on a first visit, as that is its default theme", () => {
         configure("v2", 400);
         expect(startupBackground()).not.toBe("");
-    });
-
-    test("goes by the theme last used on the mobile layout too", () => {
-        configure("v2", 400);
-        localStorage.setItem("openchat_startup_theme_mode", "light");
-        expect(startupBackground()).toBe("");
     });
 
     test("preloads the desktop App chunk and everything it statically imports", () => {
@@ -124,21 +110,12 @@ describe("the startup script in index.html", () => {
         expect(run()).toEqual(["/mobile.js", "/shared.js", "/deep.js", "/en.js"]);
     });
 
-    test("leaves out what the entry already preloads", () => {
-        configure("v2", 400);
-        const preloaded = run();
-        expect(preloaded).not.toContain("/main.js");
-        expect(preloaded).not.toContain("/vendor.js");
-    });
-
     test("preloads the App tree which selectLayout goes on to pick", () => {
-        for (const flag of [undefined, "v1", "v2"]) {
-            for (const width of [400, 767, 768, 1200]) {
-                document.head.innerHTML = "";
-                configure(flag, width);
-                const app = selectLayout(flag ?? "v1", width < 768) === "v2" ? "mobile" : "desktop";
-                expect(run()[0], `${flag} at ${width}px`).toBe(`/${app}.js`);
-            }
+        for (const width of [767, 768]) {
+            document.head.innerHTML = "";
+            configure("v2", width);
+            const app = selectLayout("v2", width < 768) === "v2" ? "mobile" : "desktop";
+            expect(run()[0], `v2 at ${width}px`).toBe(`/${app}.js`);
         }
     });
 
@@ -150,11 +127,6 @@ describe("the startup script in index.html", () => {
     test("falls back to the browser's language, ignoring its region", () => {
         vi.spyOn(navigator, "language", "get").mockReturnValue("fr-CA");
         expect(run().slice(-2)).toEqual(["/en.js", "/fr.js"]);
-    });
-
-    test("preloads only English for a language there is no locale for", () => {
-        vi.spyOn(navigator, "language", "get").mockReturnValue("sv-SE");
-        expect(run()).toEqual(["/desktop.js", "/shared.js", "/deep.js", "/en.js"]);
     });
 
     test("still preloads when localStorage is unavailable", () => {

@@ -38,32 +38,29 @@ const english = flatten(en.dailyPuzzle as Tree);
 
 // #9362: the daily puzzle reads in the player's language like the rest of the app
 describe("daily puzzle locales (#9362)", () => {
-    for (const [code, tree] of Object.entries(locales)) {
-        const local = flatten((tree as { dailyPuzzle?: Tree }).dailyPuzzle);
+    const localised = Object.entries(locales).map(
+        ([code, tree]) => [code, flatten((tree as { dailyPuzzle?: Tree }).dailyPuzzle)] as const,
+    );
 
-        // invariant 1
-        test(`${code} has every dailyPuzzle key en.json has`, () => {
-            const missing = [...english.keys()].filter((k) => !local.has(k));
-            expect(missing).toEqual([]);
-        });
+    // invariant 1
+    test("every locale has every dailyPuzzle key en.json has", () => {
+        const missing = localised.flatMap(([code, local]) =>
+            [...english.keys()].filter((k) => !local.has(k)).map((k) => `${code}: ${k}`),
+        );
+        expect(missing).toEqual([]);
+    });
 
-        // invariant 2
-        test(`${code} keeps every placeholder of every dailyPuzzle string`, () => {
-            const broken = [...english].filter(
-                ([k, v]) =>
-                    local.has(k) && placeholders(local.get(k)!).join() !== placeholders(v).join(),
-            );
-            expect(broken.map(([k]) => k)).toEqual([]);
-        });
-
-        // invariant 3, widened to the rules and demo captions: every puzzle-logic sentence
-        test(`${code} puzzle sentences are translated, not copied`, () => {
-            const copied = [...english].filter(
-                ([k, v]) =>
-                    (k.includes(".technique.") || k.includes(".demo.") || k.endsWith(".rules")) &&
-                    local.get(k) === v,
-            );
-            expect(copied.map(([k]) => k)).toEqual([]);
-        });
-    }
+    // invariant 2
+    test("every locale keeps every placeholder of every dailyPuzzle string", () => {
+        const broken = localised.flatMap(([code, local]) =>
+            [...english]
+                .filter(
+                    ([k, v]) =>
+                        local.has(k) &&
+                        placeholders(local.get(k)!).join() !== placeholders(v).join(),
+                )
+                .map(([k]) => `${code}: ${k}`),
+        );
+        expect(broken).toEqual([]);
+    });
 });

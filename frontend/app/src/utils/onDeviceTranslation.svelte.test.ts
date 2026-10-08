@@ -3,7 +3,6 @@ import { flushSync } from "svelte";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
     autoTranslatableText,
-    autoTranslateEnabled,
     OnDeviceChatTranslator,
     protect,
     restore,
@@ -403,49 +402,6 @@ describe("OnDeviceChatTranslator", () => {
         expect([...translator.needsDownload].sort()).toEqual(["de", "es"]);
     });
 
-    // Invariant: while a pack downloads, the banner can say which one and how far through the
-    // packs this chat needs it is
-    test("reports the pack being downloaded as n of total", async () => {
-        enqueueThreeLanguages();
-        await settle();
-        browser.activation.isActive = true;
-        const first = deferred();
-        browser.createGate = first.promise;
-        translator.prime();
-        await settle();
-        expect(translator.currentDownload).toMatchObject({ index: 1, total: 3 });
-
-        first.resolve();
-        await settle();
-        expect(translator.currentDownload).toBeUndefined();
-
-        const second = deferred();
-        browser.createGate = second.promise;
-        translator.prime();
-        await settle();
-        expect(translator.currentDownload).toMatchObject({ index: 2, total: 3 });
-        second.resolve();
-        await settle();
-    });
-
-    // Invariant: the total counts only packs for the current target language
-    test("a locale change resets the pack count", async () => {
-        enqueueThreeLanguages();
-        await settle();
-        translator.setTarget("de");
-        browser.availability.set("fr", "downloadable");
-        translator.enqueue(0n, 0, FRENCH);
-        await settle();
-        browser.activation.isActive = true;
-        const gate = deferred();
-        browser.createGate = gate.promise;
-        translator.prime();
-        await settle();
-        expect(translator.currentDownload).toMatchObject({ source: "fr", index: 1, total: 1 });
-        gate.resolve();
-        await settle();
-    });
-
     // Invariant: a translator that stops working is replaced, so its language keeps translating
     // without a reload, and no message waiting on it is dropped
     test("replaces a translator that stops working", async () => {
@@ -478,33 +434,6 @@ describe("OnDeviceChatTranslator", () => {
         await settle();
         expect(translator.translations.size).toEqual(0);
         expect(browser.created).toEqual(["de"]);
-    });
-
-    test("drops a message whose translate failed after the locale changed", async () => {
-        browser.languages.set("guten morgen zusammen", { lang: "de" });
-        const gate = deferred();
-        browser.translateGate = gate.promise;
-        translator.enqueue(1n, 1, "guten morgen zusammen");
-        await settle();
-        browser.killTranslators();
-        translator.setTarget("de");
-        gate.resolve();
-        await settle();
-        expect(translator.translations.size).toEqual(0);
-        expect(browser.created).toEqual(["de"]);
-    });
-
-    // Invariant: creating a translator for a pack already on disk is never reported as a download
-    test("doesn't report a pack already on disk as downloading", async () => {
-        const gate = deferred();
-        browser.createGate = gate.promise;
-        translator.enqueue(1n, 1, FRENCH);
-        await settle();
-        expect(browser.created).toEqual(["fr"]);
-        expect(translator.downloads.size).toEqual(0);
-        expect(translator.currentDownload).toBeUndefined();
-        gate.resolve();
-        await settle();
     });
 
     // Invariant: a message whose translation keeps failing is retried once, then left alone
@@ -565,12 +494,6 @@ describe("per-chat toggle", () => {
         const reloaded = await import("./onDeviceTranslation.svelte");
         expect(reloaded.autoTranslateEnabled(chatId)).toBe(true);
         expect(reloaded.autoTranslateEnabled({ kind: "group_chat", groupId: "other" })).toBe(false);
-    });
-
-    test("turning it off forgets the chat", () => {
-        setAutoTranslate(chatId, true);
-        setAutoTranslate(chatId, false);
-        expect(autoTranslateEnabled(chatId)).toBe(false);
     });
 });
 

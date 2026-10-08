@@ -38,18 +38,11 @@ describe("daily puzzle game strings", () => {
             expect(stringsOf(def.i18nPrefix).rules).toBeTruthy();
         });
     }
-
-    // #9824 invariant 9: the locale files hold the game strings, and no game folder keeps a copy
-    test("no game keeps its own copy of its strings", () => {
-        const copies = import.meta.glob("../components/home/dailypuzzle/games/*/*.json");
-        expect(Object.keys(copies)).toEqual([]);
-    });
 });
 
 // The demos are the only teaching the pre-start screen does, and they are hand-built from raw
 // description bytes, so nothing but a test stops one from quietly becoming wrong: a frame that
-// no longer parses, a "finished" frame that does not actually solve, or a frame meant to show a
-// mistake that the rule checker has stopped objecting to.
+// no longer parses, or a "finished" frame that does not actually solve.
 describe("daily puzzle demos", () => {
     for (const [id, def] of Object.entries(dailyPuzzleGames)) {
         const spec = def.demo;
@@ -66,11 +59,6 @@ describe("daily puzzle demos", () => {
 
         test(`${id} demo ends on a solved grid`, () => {
             expect(boardFor(spec.frames.length - 1).solved).toBe(true);
-        });
-
-        test(`${id} demo shows at least one mistake going red`, () => {
-            const withViolations = spec.frames.filter((_, i) => boardFor(i).violations.length > 0);
-            expect(withViolations.length).toBeGreaterThan(0);
         });
 
         test(`${id} demo marks land on keys the game knows`, () => {

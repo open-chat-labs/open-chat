@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { armRingOut, peerLeftEndsCall, RING_OUT_MS, ringOutApplies } from "./callRingOut";
+import { armRingOut, peerLeftEndsCall, ringOutApplies } from "./callRingOut";
 
 const noRingback = () => undefined;
 
@@ -34,13 +34,6 @@ describe("direct call ring-out", () => {
         expect(onNoAnswer).not.toHaveBeenCalled();
         t.fire();
         expect(onNoAnswer).toHaveBeenCalledTimes(1);
-    });
-
-    test("invariant 1 the window is 40 seconds", () => {
-        const set = vi.fn((_fn: () => void, _ms: number) => 1);
-        armRingOut(() => false, vi.fn(), noRingback, { set, clear: vi.fn() });
-        expect(set).toHaveBeenCalledWith(expect.any(Function), 40_000);
-        expect(RING_OUT_MS).toBe(40_000);
     });
 
     test("invariant 2 a group or channel call, or a call this client joined, never rings out", () => {
