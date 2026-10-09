@@ -10,6 +10,7 @@ pub const MAX_SAVED_CRYPTO_ACCOUNTS: usize = 100;
 pub const MAX_MESSAGE_REMINDERS: usize = 100; // Pending at once
 pub const MAX_WALLET_TOKENS: usize = 500;
 pub const MAX_TOKEN_SWAPS: usize = 10_000; // Recorded by a user who swaps straight from their wallet
+pub const MAX_TOKEN_SYMBOL_LENGTH: usize = 50; // Of each token in a swap a user records
 // Largest CHIT a single game event may move in either direction. Enforced by the user canister on
 // every `c2c_game_chit` call, and by whatever configures a game, so a proposal cannot set a price
 // or a reward the user canister will refuse.

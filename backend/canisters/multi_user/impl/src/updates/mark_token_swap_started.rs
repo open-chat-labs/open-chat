@@ -2,7 +2,7 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::MAX_TOKEN_SWAPS;
+use constants::{MAX_TOKEN_SWAPS, MAX_TOKEN_SYMBOL_LENGTH};
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 use user_canister::mark_token_swap_started::*;
@@ -22,6 +22,12 @@ fn mark_token_swap_started(args: Args) -> Response {
 fn mark_token_swap_started_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     if !matches!(args.exchange_args, ExchangeArgs::ICPSwap(_) | ExchangeArgs::Taco(_)) {
         return Err(OCErrorCode::InvalidRequest.with_message("Unsupported exchange"));
+    }
+    if [&args.input_token, &args.output_token]
+        .iter()
+        .any(|t| t.symbol.len() > MAX_TOKEN_SYMBOL_LENGTH)
+    {
+        return Err(OCErrorCode::InvalidRequest.with_message("Token symbol too long"));
     }
     let now = state.env.now();
     state.with_caller_user_mut(|_, user| {
