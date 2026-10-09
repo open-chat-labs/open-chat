@@ -1,5 +1,5 @@
 use crate::env::{ENV, VIDEO_CALL_OPERATOR};
-use crate::utils::{now_millis, tick_many};
+use crate::utils::{now_millis, tick_many, verify_at_env_time};
 use crate::{TestEnv, User, client};
 use constants::HOUR_IN_MS;
 use pocket_ic::PocketIc;
@@ -427,16 +427,13 @@ fn invariant_17_participant_token_names_the_caller_and_chat_under_its_own_claim_
         local_user_index: Option<CanisterId>,
     }
 
-    // A fresh env, since the clock is set to the current time below so that the tokens verify, and a
-    // pooled env's clock may have been moved past it
-    let mut wrapper = ENV.deref().create_new();
+    let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
         canister_ids,
         controller,
         ..
     } = wrapper.env();
-    env.set_time(std::time::SystemTime::now().into());
 
     let member = client::register_diamond_user(env, canister_ids, *controller);
     let outsider = client::register_user(env, canister_ids);
@@ -453,7 +450,7 @@ fn invariant_17_participant_token_names_the_caller_and_chat_under_its_own_claim_
     let token = client::local_user_index::happy_path::access_token(env, &member, local_user_index, &args);
     let public_key =
         ES256PublicKey::from_pem(&client::user_index::happy_path::public_key(env, canister_ids.user_index)).unwrap();
-    let claims: ParticipantTokenClaims = public_key.verify_token(&token, None).unwrap().custom;
+    let claims: ParticipantTokenClaims = public_key.verify_token(&token, Some(verify_at_env_time(env))).unwrap().custom;
     assert_eq!(claims.claim_type, CLAIM_TYPE_VIDEO_CALL_PARTICIPANT);
     assert_eq!(claims.user_id, member.user_id);
     assert_eq!(claims.chat_id, Chat::Group(group));
