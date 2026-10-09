@@ -1,6 +1,7 @@
 use types::CanisterId;
 
 mod chat_events;
+mod upgrade;
 
 fn main() {}
 

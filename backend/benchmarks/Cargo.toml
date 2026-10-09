@@ -10,6 +10,9 @@ chat_events = { path = "../libraries/chat_events" }
 event_store_types = { workspace = true }
 ic-cdk = { workspace = true }
 ic-stable-structures = { workspace = true }
+msgpack = { path = "../libraries/msgpack" }
+serde = { workspace = true }
+stable_memory = { path = "../libraries/stable_memory" }
 stable_memory_map = { path = "../libraries/stable_memory_map" }
 types = { path = "../libraries/types" }
 utils = { path = "../libraries/utils" }
