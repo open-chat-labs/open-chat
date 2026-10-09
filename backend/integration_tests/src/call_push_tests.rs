@@ -1,7 +1,7 @@
 //! Native call push contract, open-chat #9456. Each test names the invariant it pins.
 use crate::client::{local_user_index, notifications_index, user_index};
 use crate::env::{ENV, VIDEO_CALL_OPERATOR};
-use crate::utils::tick_many;
+use crate::utils::{tick_many, wait_for_direct_chat};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use jwt_simple::algorithms::{ECDSAP256PublicKeyLike, ES256PublicKey};
@@ -23,23 +23,18 @@ struct Push {
     data: HashMap<String, String>,
 }
 
-// Notifications are read from the local user index of the canister that sent them, and a
-// test's user, group and community canisters can sit on different subnets. A feed reads from
-// every local user index involved.
+// Notifications are read from the local user index of the canister that sent them. A test's
+// users can sit on different subnets, and a group or community goes on the subnet with the fewest
+// groups or communities, wherever its members are, so a feed reads from every local user index.
 struct Feed {
     luis: Vec<CanisterId>,
 }
 
 impl Feed {
-    fn new(env: &PocketIc, canister_ids: &CanisterIds, canisters: &[CanisterId]) -> Feed {
-        let mut luis = Vec::new();
-        for c in canisters {
-            let lui = canister_ids.local_user_index(env, *c);
-            if !luis.contains(&lui) {
-                luis.push(lui);
-            }
+    fn new(canister_ids: &CanisterIds) -> Feed {
+        Feed {
+            luis: canister_ids.subnets.iter().map(|s| s.local_user_index).collect(),
         }
-        Feed { luis }
     }
 
     fn enable_call_push(&self, env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) {
@@ -256,7 +251,7 @@ fn invariants_4_5_9_10_direct_call_that_is_answered() {
 
     let caller = register_phone_caller(env, canister_ids, *controller);
     let callee = register_phone_user(env, canister_ids);
-    let feed = Feed::new(env, canister_ids, &[caller.canister(), callee.canister()]);
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
     // the message's push is waited for, so that it can't arrive among the call's
     let index = feed.snapshot(env, *controller);
@@ -317,7 +312,7 @@ fn invariant_2_a_muted_chat_never_pushes_a_call() {
 
     let caller = register_phone_caller(env, canister_ids, *controller);
     let callee = register_phone_user(env, canister_ids);
-    let feed = Feed::new(env, canister_ids, &[caller.canister(), callee.canister()]);
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
     // the message's push is waited for, so that the callee has the chat to mute
     let index = feed.snapshot(env, *controller);
@@ -353,7 +348,7 @@ fn invariant_3_switch_off_means_no_call_fields_and_no_dismissals() {
 
     let caller = register_phone_caller(env, canister_ids, *controller);
     let callee = register_phone_user(env, canister_ids);
-    let feed = Feed::new(env, canister_ids, &[caller.canister(), callee.canister()]);
+    let feed = Feed::new(canister_ids);
     feed.set_call_push(env, canister_ids, *controller, false);
     tick_many(env, 3);
 
@@ -389,7 +384,7 @@ fn invariant_1_only_small_private_groups_ring() {
 
     let caller = register_phone_caller(env, canister_ids, *controller);
     let member = register_phone_user(env, canister_ids);
-    let feed = Feed::new(env, canister_ids, &[caller.canister(), member.canister()]);
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
 
     let private_group = client::user::happy_path::create_group(env, &caller, &random_string(), false, true);
@@ -499,11 +494,7 @@ fn invariants_4_5_group_call_dismissals_follow_who_joined() {
     let caller = register_phone_caller(env, canister_ids, *controller);
     let joiner = register_phone_user(env, canister_ids);
     let bystander = register_phone_user(env, canister_ids);
-    let feed = Feed::new(
-        env,
-        canister_ids,
-        &[caller.canister(), joiner.canister(), bystander.canister()],
-    );
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
 
     let group = client::user::happy_path::create_group(env, &caller, &random_string(), false, true);
@@ -552,12 +543,14 @@ fn invariant_15_a_call_that_times_out_dismisses_the_same_as_one_that_is_ended() 
 
     let caller = register_phone_caller(env, canister_ids, *controller);
     let callee = register_phone_user(env, canister_ids);
-    let feed = Feed::new(env, canister_ids, &[caller.canister(), callee.canister()]);
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
 
     let max_duration: Milliseconds = 60_000;
     start_direct_call_lasting(env, &caller, callee.user_id, false, Some(max_duration));
-    tick_many(env, 3);
+    // the caller's canister hears of the call from the callee's, and times it from then, so it
+    // must have heard before time moves on. Hearing of it creates their direct chat.
+    wait_for_direct_chat(env, &caller, callee.user_id);
 
     let index = feed.snapshot(env, *controller);
     env.advance_time(Duration::from_millis(max_duration));
@@ -588,7 +581,7 @@ fn invariant_16_only_a_platform_operator_can_flip_the_switch() {
         assert!(response.is_err(), "{canister} accepted the call");
     }
 
-    let feed = Feed::new(env, canister_ids, &[user.canister()]);
+    let feed = Feed::new(canister_ids);
     for enabled in [true, false] {
         feed.set_call_push(env, canister_ids, *controller, enabled);
         let user_index_canister::call_push_enabled::Response::Success(reported) =
@@ -637,11 +630,7 @@ fn invariants_1_9_a_decline_token_reaches_only_the_phone_it_names() {
     let caller = register_phone_caller(env, canister_ids, *controller);
     let callee = register_phone_user(env, canister_ids);
     let web_member = register_web_user(env, canister_ids);
-    let feed = Feed::new(
-        env,
-        canister_ids,
-        &[caller.canister(), callee.canister(), web_member.canister()],
-    );
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
     let public_key = user_index::happy_path::public_key(env, canister_ids.user_index);
 
@@ -732,11 +721,7 @@ fn invariants_4_5_8_a_reported_decline_dismisses_only_the_decliner() {
     let caller = register_phone_caller(env, canister_ids, *controller);
     let callee = register_phone_user(env, canister_ids);
     let web_user = register_web_user(env, canister_ids);
-    let feed = Feed::new(
-        env,
-        canister_ids,
-        &[caller.canister(), callee.canister(), web_user.canister()],
-    );
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
     let lui = canister_ids.local_user_index(env, callee.canister());
 
