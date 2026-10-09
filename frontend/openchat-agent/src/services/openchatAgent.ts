@@ -2437,6 +2437,7 @@ export class OpenChatAgent extends EventTarget {
                 (localUserIndex, proposalChatIds) =>
                     this.#updateCachedProposalTallies(localUserIndex, proposalChatIds),
                 (userIds) => this._userIndexClient.populateUserCache(userIds),
+                (indexes) => this._chatsDb.setCachePrimerEventIndexes(indexes),
             ));
         });
     }

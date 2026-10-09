@@ -1174,19 +1174,21 @@ export class ChatsDb {
         return readAll(this.getDb(), "cachePrimer");
     }
 
-    async setCachePrimerEventIndex(
-        chatId: ChatIdentifier,
-        eventIndexLoadedUpTo: number,
-    ): Promise<void> {
-        const key = chatIdentifierToString(chatId);
+    // chatId string -> event index loaded up to, in one transaction per batch the primer completes
+    async setCachePrimerEventIndexes(eventIndexesLoadedUpTo: Map<string, number>): Promise<void> {
         const tx = (await this.getDb()).transaction(["cachePrimer"], "readwrite", {
             durability: "relaxed",
         });
         const store = tx.objectStore("cachePrimer");
-        const existing = await store.get(key);
-        if (existing === undefined || existing < eventIndexLoadedUpTo) {
-            await store.put(eventIndexLoadedUpTo, key);
-        }
+        // Another tab's primer may have got further
+        await Promise.all(
+            [...eventIndexesLoadedUpTo].map(async ([key, eventIndexLoadedUpTo]) => {
+                const existing = await store.get(key);
+                if (existing === undefined || existing < eventIndexLoadedUpTo) {
+                    await store.put(eventIndexLoadedUpTo, key);
+                }
+            }),
+        );
         await tx.done;
     }
 
