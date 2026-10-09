@@ -16,7 +16,7 @@ import {
     type PrizeContentInitial,
     type TokenInfo,
 } from "@shared";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 import { OpenChatAgent } from "./openchatAgent";
 
@@ -105,6 +105,9 @@ describe("OpenChatAgent paying from the user's wallet", () => {
     let pinCheckResponse: "success" | "incorrect";
     let calls: string[];
     let callArgs: unknown[][];
+    // How far the IC's clock is ahead of the device's, and each ledger whose subnet it was read from
+    let timeDiffMsecs: number;
+    let syncedWith: string[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let agent: any;
 
@@ -118,6 +121,13 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             };
         agent = Object.create(OpenChatAgent.prototype);
         agent.identity = { getPrincipal: () => ME };
+        agent._agent = {
+            syncTime: (canisterId: Principal) => {
+                syncedWith.push(canisterId.toText());
+                return Promise.resolve();
+            },
+            getTimeDiffMsecs: () => timeDiffMsecs,
+        };
         agent._registryValue = {
             tokenDetails: [
                 { ledger: ICP_LEDGER, transferFee: FEE },
@@ -163,7 +173,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
 
     // Sends a message to a group or channel, giving the response once it is final
     const send = (
-        chatId: typeof GROUP | typeof CHANNEL,
+        chatId: typeof DIRECT | typeof GROUP | typeof CHANNEL,
         content: MessageContent,
         threadRootMessageIndex?: number,
         acceptedRules?: { chat: number; community: number },
@@ -298,6 +308,8 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         pinCheckResponse = "success";
         calls = [];
         callArgs = [];
+        timeDiffMsecs = 0;
+        syncedWith = [];
         vi.spyOn(console, "warn").mockImplementation(() => {});
     });
 
@@ -713,6 +725,106 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             expect(calls).toEqual(["payForStreakInsurance"]);
         });
     });
+
+    // A ledger rejects a transfer created more than a minute in its future, which each transfer
+    // stamped by a device whose clock is fast would be
+    describe("from a device whose clock is ahead of the IC's", () => {
+        const DEVICE_NOW_MS = 1_791_565_000_000;
+        const AHEAD_MS = 160_000;
+        const deviceNow = BigInt(DEVICE_NOW_MS) * 1_000_000n;
+        const icNow = BigInt(DEVICE_NOW_MS - AHEAD_MS) * 1_000_000n;
+
+        // The content, stamped by the device as the user sends it
+        const stampedByDevice = (content: CryptocurrencyContent | PrizeContentInitial) =>
+            ({
+                ...content,
+                transfer: { ...content.transfer, createdAtNanos: deviceNow },
+            }) as MessageContent;
+
+        // The stamp on the transfer in the message sent
+        const stampSent = () => {
+            const event = callArgs[0].find(
+                (arg) => (arg as EventWrapper<Message> | undefined)?.event?.content !== undefined,
+            ) as EventWrapper<Message>;
+            return (event.event.content as { transfer: PendingCryptocurrencyTransfer }).transfer
+                .createdAtNanos;
+        };
+
+        beforeEach(() => {
+            vi.spyOn(Date, "now").mockReturnValue(DEVICE_NOW_MS);
+            timeDiffMsecs = -AHEAD_MS;
+        });
+
+        afterEach(() => vi.restoreAllMocks());
+
+        test.each([
+            ["crypto in a direct chat", MULTI_USER_CANISTER_USER, DIRECT, crypto],
+            ["crypto in a group", MULTI_USER_CANISTER_USER, GROUP, crypto],
+            ["a prize in a channel", MULTI_USER_CANISTER_USER, CHANNEL, prize],
+            [
+                "crypto in a group, by a user alone in their canister",
+                USER_CANISTER_USER,
+                GROUP,
+                crypto,
+            ],
+        ] as const)(
+            "%s is stamped with the time on the ledger's subnet",
+            async (_, userId, chatId, content) => {
+                setup(userId);
+
+                await send(chatId, stampedByDevice(content()));
+
+                expect(stampSent()).toEqual(icNow);
+                expect(syncedWith).toEqual([ICP_LEDGER]);
+            },
+        );
+
+        // So that a message retried with the stamp it was first sent with is deduplicated by the
+        // ledger rather than paid twice
+        test("a message stamped before the time on the IC keeps its stamp", async () => {
+            setup(MULTI_USER_CANISTER_USER);
+            const stamp = icNow - 1_000_000_000n;
+
+            await send(DIRECT, { ...crypto(), transfer: { ...transfer(), createdAtNanos: stamp } });
+
+            expect(stampSent()).toEqual(stamp);
+        });
+
+        test.each([
+            ["group", GROUP, "groupTipMessage"],
+            ["channel", CHANNEL, "communityTipMessage"],
+        ] as const)(
+            "a tip in a %s, pulled from the wallet by it, is stamped with the time on the IC",
+            async (_, chatId, call) => {
+                setup(MULTI_USER_CANISTER_USER);
+
+                await agent.tipMessage(
+                    { chatId },
+                    1n,
+                    { ...transfer(), createdAtNanos: deviceNow },
+                    8,
+                    undefined,
+                    "me",
+                    undefined,
+                    true,
+                );
+
+                expect(calls).toEqual([call]);
+                expect((callArgs[0][3] as PendingCryptocurrencyTransfer).createdAtNanos).toEqual(
+                    icNow,
+                );
+            },
+        );
+
+        test("a swap offer has nothing to stamp, so the IC isn't asked the time", async () => {
+            setup(MULTI_USER_CANISTER_USER);
+
+            await send(GROUP, swapOffer());
+
+            expect(calls).toEqual(["groupSendMessage"]);
+            expect(syncedWith).toEqual([]);
+        });
+    });
 });
 
 // The wallet's "Send"
@@ -736,14 +848,21 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
 
     let ledgerWithdrawals: unknown[][];
     let canisterWithdrawals: unknown[][];
+    // How far the IC's clock is ahead of the device's
+    let timeDiffMsecs: number;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let agent: any;
 
     function setup(userId: string) {
         ledgerWithdrawals = [];
         canisterWithdrawals = [];
+        timeDiffMsecs = 0;
         agent = Object.create(OpenChatAgent.prototype);
         agent.identity = { getPrincipal: () => ME };
+        agent._agent = {
+            syncTime: () => Promise.resolve(),
+            getTimeDiffMsecs: () => timeDiffMsecs,
+        };
         agent._ledgerClient = {
             withdraw: (...args: unknown[]) => {
                 ledgerWithdrawals.push(args);
@@ -774,6 +893,32 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         expect(canisterWithdrawals).toEqual([[WITHDRAWAL, PIN]]);
         expect(ledgerWithdrawals).toEqual([]);
     });
+
+    afterEach(() => vi.restoreAllMocks());
+
+    // Whether the ledger is called by the website or by their canister, it rejects a withdrawal
+    // created more than a minute in its future
+    test.each([
+        ["a user in a MultiUser canister", MULTI_USER_CANISTER_USER, () => ledgerWithdrawals],
+        ["a user alone in their canister", USER_CANISTER_USER, () => canisterWithdrawals],
+    ])(
+        "a withdrawal by %s from a device whose clock is fast is stamped with the time on the IC",
+        async (_, userId, withdrawals) => {
+            setup(userId);
+            vi.spyOn(Date, "now").mockReturnValue(1_791_565_000_000);
+            timeDiffMsecs = -160_000;
+
+            await agent.withdrawCryptocurrency(
+                { ...WITHDRAWAL, createdAtNanos: 1_791_565_000_000_000_000n },
+                PIN,
+            );
+
+            expect(withdrawals()[0][0]).toEqual({
+                ...WITHDRAWAL,
+                createdAtNanos: 1_791_564_840_000_000_000n,
+            });
+        },
+    );
 });
 
 // A user migrated to a MultiUser canister may have left funds in the wallet of their previous
