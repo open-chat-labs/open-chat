@@ -1,35 +1,36 @@
 import {
+    type ChatEvent,
     type ChatEventsArgs,
     type ChatEventsArgsInner,
     type ChatEventsResponse,
     type ChatIdentifier,
-    chatIdentifiersEqual,
     chatIdentifierToString,
     type ChatMap,
     type ChatSummary,
     type CommunitySummary,
     type DirectChatSummary,
+    type EventWrapper,
     type GroupChatSummary,
     MAX_MESSAGES,
     type MultiUserChatIdentifier,
     ONE_MINUTE_MILLIS,
     ResponseTooLargeError,
-    retain,
     type UpdatedEvent,
     userIdsFromEvents,
 } from "@shared";
 import { chunk } from "./list";
-import { mapOptional } from "./mapping";
 
 const BATCH_SIZE = 20;
 const FAILURE = { kind: "failure" };
 
 export class CachePrimer {
-    #pending: QueuedChat[] = [];
+    // chatId string -> chat waiting to be primed. A chat is queued once, holding its latest summary,
+    // and the events to fetch are worked out when it is taken off the queue, so an update which
+    // arrives while the chat is being fetched is queued for the next batch rather than lost
+    #pending: Map<string, QueuedChat> = new Map();
     #usersLoaded: Set<string> = new Set();
     #jobActive: boolean = false;
     #proposalTalliesJobStarted: boolean = false;
-    #inProgress: Set<string> = new Set();
     #blockedChats: Set<string> = new Set();
     // localUserIndex -> (chatId string -> chatId), keyed by string so each chat is tracked once
     #proposalChats: Map<string, Map<string, MultiUserChatIdentifier>> = new Map();
@@ -48,7 +49,8 @@ export class CachePrimer {
             localUserIndex: string,
             chatIds: MultiUserChatIdentifier[],
         ) => Promise<void>,
-        private loadUsers: (userIds: string[]) => void,
+        private loadUsers: (userIds: string[]) => Promise<void>,
+        private saveEventIndexesLoadedUpTo: (indexes: Map<string, number>) => Promise<void>,
     ) {
         debug("initialized");
     }
@@ -62,7 +64,7 @@ export class CachePrimer {
         this.#stopped = true;
         clearTimeout(this.#proposalTalliesTimer);
         this.#proposalTalliesTimer = undefined;
-        this.#pending = [];
+        this.#pending.clear();
         this.#proposalChats.clear();
         debug("stopped");
     }
@@ -78,15 +80,21 @@ export class CachePrimer {
     ) {
         if (this.#stopped) return;
 
-        directChatsRemoved?.forEach((userId) =>
-            this.removeFromPending((c) => c.kind === "direct_chat" && c.userId === userId),
-        );
-        groupsRemoved?.forEach((groupId) =>
-            this.removeFromPending((c) => c.kind === "group_chat" && c.groupId === groupId),
-        );
-        communitiesRemoved?.forEach((communityId) =>
-            this.removeFromPending((c) => c.kind === "channel" && c.communityId === communityId),
-        );
+        if (directChatsRemoved?.length || groupsRemoved?.length || communitiesRemoved?.length) {
+            const directRemoved = new Set(directChatsRemoved);
+            const groupRemoved = new Set(groupsRemoved);
+            const communityRemoved = new Set(communitiesRemoved);
+            this.removeChats((c) => {
+                switch (c.kind) {
+                    case "direct_chat":
+                        return directRemoved.has(c.userId);
+                    case "group_chat":
+                        return groupRemoved.has(c.groupId);
+                    case "channel":
+                        return communityRemoved.has(c.communityId);
+                }
+            });
+        }
 
         directChats.forEach((c) =>
             this.processChat(c, this.userCanisterLocalUserIndex, updatedEvents?.get(c.id)),
@@ -98,12 +106,9 @@ export class CachePrimer {
             );
         }
 
-        debug("processed updated chats, queue length: " + this.#pending.length);
+        debug("processed updated chats, queue length: " + this.#pending.size);
 
-        // Sort by `lastUpdated` ascending
-        this.#pending.sort((a, b) => (a.lastUpdated > b.lastUpdated ? 1 : -1));
-
-        if (!this.#jobActive && this.#pending.length > 0) {
+        if (!this.#jobActive && this.#pending.size > 0) {
             this.#jobActive = true;
             setTimeout(() => this.processNextBatch(), 0);
         }
@@ -123,7 +128,6 @@ export class CachePrimer {
     ) {
         const chatIdString = chatIdentifierToString(chat.id);
         if (
-            this.#inProgress.has(chatIdString) ||
             this.#blockedChats.has(chatIdString) ||
             (chat.kind === "channel" && chat.externalUrl !== undefined)
         ) {
@@ -131,57 +135,41 @@ export class CachePrimer {
         }
 
         if (chat.kind !== "direct_chat" && chat.subtype?.kind === "governance_proposals") {
-            let proposalChatIds = this.#proposalChats.get(localUserIndex);
-            if (proposalChatIds === undefined) {
-                proposalChatIds = new Map();
-                this.#proposalChats.set(localUserIndex, proposalChatIds);
-            }
-            proposalChatIds.set(chatIdString, chat.id);
-        }
-
-        const eventIndexLoadedUpTo = this.eventIndexesLoadedUpTo[chatIdString];
-        const eventsArgs = this.getEventsArgs(chat, eventIndexLoadedUpTo);
-        const dirtyEventIndexes =
-            (updatedEvents?.length ?? 0) > 0
-                ? updatedEvents
-                      ?.filter((e) => e.threadRootMessageIndex === undefined)
-                      .map((e) => e.eventIndex)
-                : undefined;
-
-        if (eventsArgs === undefined && dirtyEventIndexes === undefined) {
-            return;
-        }
-
-        if (!this.#isFirstIteration) {
-            const existing = this.#pending.find((c) => chatIdentifiersEqual(c.chatId, chat.id));
-            if (existing !== undefined) {
-                existing.eventsArgs = eventsArgs;
-
-                const combinedDirtyEventIndexes = new Set<number>();
-                existing.dirtyEventIndexes?.forEach((i) => combinedDirtyEventIndexes.add(i));
-                dirtyEventIndexes?.forEach((i) => combinedDirtyEventIndexes.add(i));
-
-                existing.dirtyEventIndexes = this.filterDirtyEvents(
-                    existing.eventsArgs,
-                    mapOptional(combinedDirtyEventIndexes, (i) => [...i]),
-                );
-                return;
+            // Archived proposal chats aren't polled, an open proposals chat polls its own tallies
+            if (chat.membership.archived) {
+                this.#proposalChats.get(localUserIndex)?.delete(chatIdString);
+            } else {
+                let proposalChatIds = this.#proposalChats.get(localUserIndex);
+                if (proposalChatIds === undefined) {
+                    proposalChatIds = new Map();
+                    this.#proposalChats.set(localUserIndex, proposalChatIds);
+                }
+                proposalChatIds.set(chatIdString, chat.id);
             }
         }
-        this.#pending.push({
-            chatId: chat.id,
-            localUserIndex,
-            lastUpdated: chat.lastUpdated,
-            eventsArgs,
-            dirtyEventIndexes: this.filterDirtyEvents(eventsArgs, dirtyEventIndexes),
+
+        // Thread events aren't primed
+        const dirtyEventIndexes = new Set<number>();
+        updatedEvents?.forEach((e) => {
+            if (e.threadRootMessageIndex === undefined) dirtyEventIndexes.add(e.eventIndex);
         });
+
+        const existing = this.#pending.get(chatIdString);
+        existing?.dirtyEventIndexes.forEach((i) => dirtyEventIndexes.add(i));
+
+        if (
+            existing !== undefined ||
+            dirtyEventIndexes.size > 0 ||
+            this.getEventsArgs(chat, this.eventIndexesLoadedUpTo[chatIdString]) !== undefined
+        ) {
+            this.#pending.set(chatIdString, { chat, localUserIndex, dirtyEventIndexes });
+        }
     }
 
     async processNextBatch(): Promise<void> {
         try {
             const next = this.getNextBatch();
             if (next === undefined) {
-                this.#pending = [];
                 debug("queue empty");
                 return;
             }
@@ -189,79 +177,91 @@ export class CachePrimer {
             const [localUserIndex, batch] = next;
 
             const responses = await this.fetchEvents(localUserIndex, batch);
+            if (this.#stopped) return;
 
             const missingUserIds = new Set<string>();
+            const loadedUpTo = new Map<string, number>();
             const loadRepliesBatch: ChatEventsArgs[] = [];
 
             for (let i = 0; i < responses.length; i++) {
                 const request = batch[i];
                 const response = responses[i];
+                if (response.kind !== "success") continue;
 
-                if (response.kind === "success") {
-                    const { userIds } = userIdsFromEvents(response.result.events);
-                    for (const userId of userIds) {
-                        if (!this.#usersLoaded.has(userId)) {
-                            this.#usersLoaded.add(userId);
-                            missingUserIds.add(userId);
-                        }
-                    }
+                const { events } = response.result;
+                this.collectMissingUsers(events, missingUserIds);
 
-                    const repliesToLoad = new Set<number>();
-                    let maxEventIndex = 0;
-                    for (const event of response.result.events) {
-                        if (event.event.kind === "message") {
-                            const repliesTo = event.event.repliesTo;
-                            if (repliesTo !== undefined && repliesTo.sourceContext === undefined) {
-                                repliesToLoad.add(repliesTo.eventIndex);
-                            }
-                        }
-                        if (event.index > maxEventIndex) {
-                            maxEventIndex = event.index;
-                        }
-                    }
-                    const chatIdString = chatIdentifierToString(request.context.chatId);
-                    if (maxEventIndex > (this.eventIndexesLoadedUpTo[chatIdString] ?? 0)) {
-                        this.eventIndexesLoadedUpTo[chatIdString] = maxEventIndex;
-                    }
-
-                    if (repliesToLoad.size > 0) {
-                        loadRepliesBatch.push({
-                            context: request.context,
-                            args: {
-                                kind: "by_index",
-                                events: [...repliesToLoad],
-                            },
-                            latestKnownUpdate: request.latestKnownUpdate,
-                        });
+                const eventIndexes = new Set<number>();
+                const repliesTo = new Set<number>();
+                for (const event of events) {
+                    eventIndexes.add(event.index);
+                    if (
+                        event.event.kind === "message" &&
+                        event.event.repliesTo !== undefined &&
+                        event.event.repliesTo.sourceContext === undefined
+                    ) {
+                        repliesTo.add(event.event.repliesTo.eventIndex);
                     }
                 }
+
+                // Only the page or window request moves the mark on. The events fetched by index
+                // may lie beyond events which have not been loaded yet.
+                if (request.args.kind !== "by_index") {
+                    const chatIdString = chatIdentifierToString(request.context.chatId);
+                    const maxEventIndex = Math.max(0, ...eventIndexes);
+                    if (maxEventIndex > (this.eventIndexesLoadedUpTo[chatIdString] ?? 0)) {
+                        this.eventIndexesLoadedUpTo[chatIdString] = maxEventIndex;
+                        loadedUpTo.set(chatIdString, maxEventIndex);
+                    }
+                }
+
+                // Most replies are to messages in the same page, which have just been loaded
+                const repliesToLoad = [...repliesTo].filter((i) => !eventIndexes.has(i));
+                if (repliesToLoad.length > 0) {
+                    loadRepliesBatch.push({
+                        context: request.context,
+                        args: {
+                            kind: "by_index",
+                            events: repliesToLoad,
+                        },
+                        latestKnownUpdate: request.latestKnownUpdate,
+                    });
+                }
+            }
+
+            if (loadedUpTo.size > 0) {
+                this.saveEventIndexesLoadedUpTo(loadedUpTo).catch((err) =>
+                    debug(`failed to save the event indexes loaded up to: ${err}`),
+                );
             }
 
             if (loadRepliesBatch.length > 0) {
                 const repliesResponse = await this.fetchEvents(localUserIndex, loadRepliesBatch);
+                if (this.#stopped) return;
 
                 for (const response of repliesResponse) {
                     if (response.kind === "success") {
-                        const { userIds } = userIdsFromEvents(response.result.events);
-                        for (const userId of userIds) {
-                            if (!this.#usersLoaded.has(userId)) {
-                                this.#usersLoaded.add(userId);
-                                missingUserIds.add(userId);
-                            }
-                        }
+                        this.collectMissingUsers(response.result.events, missingUserIds);
                     }
                 }
             }
 
             if (missingUserIds.size > 0) {
                 debug(`loading ${missingUserIds.size} users`);
-                this.loadUsers([...missingUserIds]);
+                const userIds = [...missingUserIds];
+                this.loadUsers(userIds).catch((err) => {
+                    // Leave them for a later batch to try again
+                    userIds.forEach((u) => this.#usersLoaded.delete(u));
+                    debug(`failed to load users: ${err}`);
+                });
             }
 
             debug(`batch of size ${batch.length} completed`);
+        } catch (err) {
+            // Run from a timer, so an error would otherwise surface as an unhandled rejection
+            debug(`batch failed: ${err}`);
         } finally {
-            this.#inProgress.clear();
-            if (this.#stopped || this.#pending.length === 0) {
+            if (this.#stopped || this.#pending.size === 0) {
                 debug("runner stopped");
                 this.#jobActive = false;
             } else {
@@ -270,43 +270,35 @@ export class CachePrimer {
         }
     }
 
+    // Takes the most recently updated chat off the queue, along with the next most recently updated
+    // chats which share its LocalUserIndex, up to the batch size
     private getNextBatch(): [string, ChatEventsArgs[]] | undefined {
+        const queued = [...this.#pending.values()].sort((a, b) =>
+            a.chat.lastUpdated < b.chat.lastUpdated
+                ? 1
+                : a.chat.lastUpdated > b.chat.lastUpdated
+                  ? -1
+                  : 0,
+        );
+
         const batch: ChatEventsArgs[] = [];
         let localUserIndexForBatch: string | undefined = undefined;
 
-        // Iterate backwards to reduce the number of items having to be moved each time we `splice` the array
-        for (let i = this.#pending.length - 1; i >= 0; i--) {
-            const next = this.#pending[i];
-
-            if (localUserIndexForBatch === undefined) {
-                localUserIndexForBatch = next.localUserIndex;
-            } else if (next.localUserIndex !== localUserIndexForBatch) {
+        for (const next of queued) {
+            if (
+                localUserIndexForBatch !== undefined &&
+                next.localUserIndex !== localUserIndexForBatch
+            ) {
                 continue;
             }
 
-            this.#pending.splice(i, 1);
-            this.#inProgress.add(chatIdentifierToString(next.chatId));
+            this.#pending.delete(chatIdentifierToString(next.chat.id));
 
-            const context = { chatId: next.chatId };
-            const latestKnownUpdate = next.lastUpdated;
+            const requests = this.getRequests(next);
+            if (requests.length === 0) continue;
 
-            if (next.eventsArgs !== undefined) {
-                batch.push({
-                    context,
-                    args: next.eventsArgs,
-                    latestKnownUpdate,
-                });
-            }
-            if (next.dirtyEventIndexes !== undefined) {
-                batch.push({
-                    context,
-                    args: {
-                        kind: "by_index",
-                        events: next.dirtyEventIndexes,
-                    },
-                    latestKnownUpdate,
-                });
-            }
+            localUserIndexForBatch = next.localUserIndex;
+            batch.push(...requests);
 
             if (batch.length >= BATCH_SIZE) {
                 break;
@@ -314,6 +306,33 @@ export class CachePrimer {
         }
 
         return localUserIndexForBatch !== undefined ? [localUserIndexForBatch, batch] : undefined;
+    }
+
+    // Worked out against what has been loaded so far, which may have moved on since the chat was queued
+    private getRequests({ chat, dirtyEventIndexes }: QueuedChat): ChatEventsArgs[] {
+        const context = { chatId: chat.id };
+        const latestKnownUpdate = chat.lastUpdated;
+        const eventsArgs = this.getEventsArgs(
+            chat,
+            this.eventIndexesLoadedUpTo[chatIdentifierToString(chat.id)],
+        );
+
+        const requests: ChatEventsArgs[] = [];
+        if (eventsArgs !== undefined) {
+            requests.push({ context, args: eventsArgs, latestKnownUpdate });
+        }
+
+        const dirty = [...dirtyEventIndexes].filter(
+            (i) => eventsArgs === undefined || !fetchesEvent(eventsArgs, i),
+        );
+        if (dirty.length > 0) {
+            requests.push({
+                context,
+                args: { kind: "by_index", events: dirty },
+                latestKnownUpdate,
+            });
+        }
+        return requests;
     }
 
     private getEventsArgs(
@@ -371,7 +390,9 @@ export class CachePrimer {
             if (error instanceof ResponseTooLargeError) {
                 if (batch.length === 1) {
                     // Block this chat to avoid retrying it indefinitely
-                    this.#blockedChats.add(chatIdentifierToString(batch[0].context.chatId));
+                    const chatIdString = chatIdentifierToString(batch[0].context.chatId);
+                    this.#blockedChats.add(chatIdString);
+                    this.#pending.delete(chatIdString);
                 } else {
                     // Split the batch into individual requests and try again
                     return (
@@ -382,6 +403,15 @@ export class CachePrimer {
                 }
             }
             return Array(batch.length).fill(FAILURE);
+        }
+    }
+
+    private collectMissingUsers(events: EventWrapper<ChatEvent>[], into: Set<string>) {
+        for (const userId of userIdsFromEvents(events).userIds) {
+            if (!this.#usersLoaded.has(userId)) {
+                this.#usersLoaded.add(userId);
+                into.add(userId);
+            }
         }
     }
 
@@ -407,49 +437,31 @@ export class CachePrimer {
         }
     }
 
-    private removeFromPending(excludeFn: (value: ChatIdentifier) => boolean) {
-        retain(this.#pending, (c) => !excludeFn(c.chatId));
+    private removeChats(isRemoved: (chatId: ChatIdentifier) => boolean) {
+        for (const [key, { chat }] of this.#pending) {
+            if (isRemoved(chat.id)) this.#pending.delete(key);
+        }
         for (const chatIds of this.#proposalChats.values()) {
             for (const [key, chatId] of chatIds) {
-                if (excludeFn(chatId)) chatIds.delete(key);
+                if (isRemoved(chatId)) chatIds.delete(key);
             }
         }
     }
+}
 
-    private filterDirtyEvents(
-        eventArgs: ChatEventsArgsInner | undefined,
-        dirtyEventIndexes: number[] | undefined,
-    ): number[] | undefined {
-        if (eventArgs === undefined || dirtyEventIndexes === undefined) return dirtyEventIndexes;
-
-        const filter = this.getDirtyEventsFilter(eventArgs);
-        retain(dirtyEventIndexes, filter);
-        return dirtyEventIndexes.length > 0 ? dirtyEventIndexes : undefined;
-    }
-
-    private getDirtyEventsFilter(eventArgs: ChatEventsArgsInner): (index: number) => boolean {
-        switch (eventArgs.kind) {
-            case "page": {
-                if (eventArgs.ascending) {
-                    return (i) =>
-                        i < eventArgs.startIndex || i > eventArgs.startIndex + MAX_MESSAGES;
-                } else {
-                    return (i) =>
-                        i < eventArgs.startIndex - MAX_MESSAGES || i > eventArgs.startIndex;
-                }
-            }
-            case "window": {
-                return (_) => true;
-            }
-            case "by_index": {
-                const set = new Set(eventArgs.events);
-                return (i) => {
-                    const alreadyExists = set.has(i);
-                    if (!alreadyExists) set.add(i);
-                    return !alreadyExists;
-                };
-            }
+// Whether the page request is sure to return the event, so it needn't be fetched again by index
+function fetchesEvent(eventsArgs: ChatEventsArgsInner, eventIndex: number): boolean {
+    switch (eventsArgs.kind) {
+        case "page": {
+            const { startIndex } = eventsArgs;
+            return eventsArgs.ascending
+                ? eventIndex >= startIndex && eventIndex < startIndex + MAX_MESSAGES
+                : eventIndex <= startIndex && eventIndex > startIndex - MAX_MESSAGES;
         }
+        case "window":
+            return false;
+        case "by_index":
+            return eventsArgs.events.includes(eventIndex);
     }
 }
 
@@ -458,9 +470,7 @@ function debug(message: string) {
 }
 
 type QueuedChat = {
-    chatId: ChatIdentifier;
+    chat: ChatSummary;
     localUserIndex: string;
-    lastUpdated: bigint;
-    eventsArgs?: ChatEventsArgsInner;
-    dirtyEventIndexes?: number[];
+    dirtyEventIndexes: Set<number>;
 };
