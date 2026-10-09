@@ -343,5 +343,5 @@ ic-certification = { git = "https://github.com/dfinity/response-verification", r
 ic-http-certification = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }
 ic-representation-independent-hash = { git = "https://github.com/dfinity/response-verification", rev = "85dd37f54b882dc5c490a02f467023470ac6faf4" }
 ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "b88706bd6dd4f7463e75886ec10c58fddb810c37" }
-rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "26dbc79edd8797ea06a3dfe5c56429e2ad0f36b7" }
+rmp-serde = { git = "https://github.com/hpeebles/msgpack-rust", rev = "78afe2ea9fa2bc2068e836d3e85d8512a1bf7288" }
 ts-rs = { git = "https://github.com/hpeebles/ts-rs", rev = "96e2b23ee8fb6131fefb504a0795af38fb2d01fb" }
