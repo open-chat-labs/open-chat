@@ -166,6 +166,9 @@ const ENVIRONMENT_NOISE_PATTERNS: RegExp[] = [
     // The IC's Bitcoin canister trapping while the Bitcoin API is switched off: an IC-side
     // incident that every background BTC balance refresh hits until it is switched back on (#31771)
     /bitcoin api is disabled/i,
+    // The same canister trapping while it catches up with the Bitcoin network. None of our
+    // canisters use this text (#31771)
+    /canister state is not fully synced/i,
     // A canister stopped for an upgrade rejects every call until it restarts (#31692, #31764).
     // The upgrader restarts it whether or not the install succeeded, and logs a failed start.
     /error code: IC0508\b/i,

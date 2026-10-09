@@ -10,7 +10,6 @@ use icrc_ledger_types::icrc1::account::Account;
 use identity_canister::WEBAUTHN_ORIGINATING_CANISTER;
 use pocket_ic::common::rest::{IcpConfig, IcpConfigFlag, IcpFeatures, IcpFeaturesConfig};
 use pocket_ic::{PocketIc, PocketIcBuilder, PocketIcState, StartServerParams, start_server};
-use rand::{RngExt, SeedableRng, rngs::StdRng};
 use reqwest::Url;
 use sha256::sha256;
 use std::collections::{HashMap, HashSet};
@@ -21,7 +20,7 @@ use std::sync::OnceLock;
 use std::time::{Duration, Instant, SystemTime};
 use storage_index_canister::init::CyclesDispenserConfig;
 use testing::NNS_INTERNET_IDENTITY_CANISTER_ID;
-use types::{BuildVersion, CanisterId, CanisterWasm, Hash};
+use types::{BuildVersion, CanisterId, CanisterWasm};
 
 pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
@@ -38,12 +37,12 @@ static POCKET_IC_SERVER_URL: OnceLock<Url> = OnceLock::new();
 // create their own PocketIC instance which is initialized with this state.
 static BASE_STATE: OnceLock<(PocketIcState, CanisterIds)> = OnceLock::new();
 
-pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
+pub fn setup_new_env() -> TestEnv {
     verify_pocket_ic_exists();
 
     let controller = Principal::from_text("xuxyr-xopen-chatx-xxxbu-cai").unwrap();
 
-    let (state, canister_ids) = BASE_STATE.get_or_init(|| initialize_base_state_or_exit(controller, seed));
+    let (state, canister_ids) = BASE_STATE.get_or_init(|| initialize_base_state_or_exit(controller));
 
     let env = PocketIcBuilder::new()
         .with_server_url(pocket_ic_server_url())
@@ -60,8 +59,8 @@ pub fn setup_new_env(seed: Option<Hash>) -> TestEnv {
 
 // If initializing the base state fails, every other test would fail the same way trying it again,
 // so end the test run
-fn initialize_base_state_or_exit(controller: Principal, seed: Option<Hash>) -> (PocketIcState, CanisterIds) {
-    std::panic::catch_unwind(|| initialize_base_state(controller, seed)).unwrap_or_else(|payload| {
+fn initialize_base_state_or_exit(controller: Principal) -> (PocketIcState, CanisterIds) {
+    std::panic::catch_unwind(|| initialize_base_state(controller)).unwrap_or_else(|payload| {
         let message = payload
             .downcast_ref::<String>()
             .map(String::as_str)
@@ -76,7 +75,7 @@ fn initialize_base_state_or_exit(controller: Principal, seed: Option<Hash>) -> (
     })
 }
 
-fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIcState, CanisterIds) {
+fn initialize_base_state(controller: Principal) -> (PocketIcState, CanisterIds) {
     let started = Instant::now();
 
     // This thread is first, so it is the only one which will run the full initialization
@@ -102,9 +101,6 @@ fn initialize_base_state(controller: Principal, seed: Option<Hash>) -> (PocketIc
         .build();
 
     println!("PocketIC instance ready. Installing canisters...");
-
-    let ticks: u8 = seed.map_or(0, |s| StdRng::from_seed(s).random());
-    tick_many(&mut env, ticks as usize);
 
     let canister_ids = install_canisters(&mut env, controller);
     let duration = Instant::now().duration_since(started);
