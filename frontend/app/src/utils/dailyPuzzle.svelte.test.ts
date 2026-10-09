@@ -171,6 +171,37 @@ describe("DailyPuzzleGame", () => {
     });
 
     // #9332 invariant 42
+    // A game already open on one device (desktop) while the puzzle is solved on another (phone)
+    test("a puzzle solved on another device shows the board that was submitted", () => {
+        // The phone's last timed save, a move short of solved
+        const lastSave = game.apply(model, game.empty(model), 4, 1);
+        const g = build(userState({ grid: game.toBytes(model, lastSave), gridSavedAt: 1000n }));
+        expect([...g.board.marks.keys()]).toEqual([4]);
+
+        // The phone's final move, then its submit: the server stores the submitted grid with the solve
+        const submitted = game.toBytes(model, game.apply(model, lastSave, 0, 1));
+        dailyPuzzleStore.set({
+            puzzles: [puzzle],
+            states: [
+                userState({
+                    grid: submitted,
+                    gridSavedAt: 2000n,
+                    solved: {
+                        solvedAt: 2000n,
+                        solveTimeMs: 1n,
+                        reward: 250,
+                        hintsUsed: 0,
+                        streak: 1,
+                    },
+                }),
+            ],
+        });
+        flushSync();
+
+        expect(g.solved).toBeDefined();
+        expect([...g.board.marks.keys()].sort()).toEqual([0, 4]);
+    });
+
     test("resume takes the newer of the local and server grids by timestamp", () => {
         const serverGrid = game.toBytes(model, game.apply(model, game.empty(model), 4, 1));
         const server = { grid: serverGrid, gridSavedAt: 1000n };
