@@ -253,7 +253,7 @@ fn invariants_4_5_9_10_direct_call_that_is_answered() {
     let callee = register_phone_user(env, canister_ids);
     let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
-    // the message's push is waited for, so that it can't arrive among the call's
+    // the message's push is waited for, so that it can't arrive among the call's pushes
     let index = feed.snapshot(env, *controller);
     client::user::happy_path::send_text_message(env, &caller, callee.user_id, random_string(), None);
     feed.wait_for_pushes(env, *controller, &index, pushed(&[callee.user_id], 1));
