@@ -31,13 +31,7 @@ import type {
     Tally,
     VerifiedCredentialArgs,
 } from "@shared";
-import {
-    max,
-    MAX_MISSING,
-    premiumPrices,
-    toBigInt32,
-    UnsupportedValueError,
-} from "@shared";
+import { MAX_MISSING, premiumPrices, toBigInt32, UnsupportedValueError } from "@shared";
 import {
     BotInstallationLocation as ApiBotInstallationLocation,
     Empty,
@@ -198,12 +192,6 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                     kind: "success",
                     result: cached,
                 };
-                if (cachePrimer && request.latestKnownUpdate !== undefined) {
-                    this.chatsDb.setCachePrimerEventIndex(
-                        request.context.chatId,
-                        max(cached.events, (e) => e.index),
-                    );
-                }
             }
         }
 
@@ -228,12 +216,6 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
                             request.context.threadRootMessageIndex,
                         ),
                     );
-                    if (cachePrimer) {
-                        this.chatsDb.setCachePrimerEventIndex(
-                            request.context.chatId,
-                            max(response.result.events, (e) => e.index),
-                        );
-                    }
                 }
 
                 // Insert the response into the first empty index, this will match the index of the request
