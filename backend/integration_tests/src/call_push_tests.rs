@@ -1,7 +1,7 @@
 //! Native call push contract, open-chat #9456. Each test names the invariant it pins.
 use crate::client::{local_user_index, notifications_index, user_index};
 use crate::env::{ENV, VIDEO_CALL_OPERATOR};
-use crate::utils::tick_many;
+use crate::utils::{tick_many, wait_for_direct_chat};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use jwt_simple::algorithms::{ECDSAP256PublicKeyLike, ES256PublicKey};
@@ -23,23 +23,18 @@ struct Push {
     data: HashMap<String, String>,
 }
 
-// Notifications are read from the local user index of the canister that sent them, and a
-// test's user, group and community canisters can sit on different subnets. A feed reads from
-// every local user index involved.
+// Notifications are read from the local user index of the canister that sent them. A test's
+// users can sit on different subnets, and a group or community goes on the subnet with the fewest
+// groups or communities, wherever its members are, so a feed reads from every local user index.
 struct Feed {
     luis: Vec<CanisterId>,
 }
 
 impl Feed {
-    fn new(env: &PocketIc, canister_ids: &CanisterIds, canisters: &[CanisterId]) -> Feed {
-        let mut luis = Vec::new();
-        for c in canisters {
-            let lui = canister_ids.local_user_index(env, *c);
-            if !luis.contains(&lui) {
-                luis.push(lui);
-            }
+    fn new(canister_ids: &CanisterIds) -> Feed {
+        Feed {
+            luis: canister_ids.subnets.iter().map(|s| s.local_user_index).collect(),
         }
-        Feed { luis }
     }
 
     fn enable_call_push(&self, env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) {
@@ -70,8 +65,35 @@ impl Feed {
             .collect()
     }
 
+    // For a check that nothing is pushed: there's nothing to wait for, so a few rounds are ticked
     fn pushes_since(&self, env: &mut PocketIc, controller: Principal, snapshot: &[u64]) -> Vec<Push> {
+        self.wait_for_pushes(env, controller, snapshot, |_| true)
+    }
+
+    // Ticks until `arrived` holds for the pushes since `snapshot`, then returns them. A push can
+    // take many rounds to arrive, since a newly created canister periodically takes 10 or more
+    // rounds to handle its first message, more under load. A few rounds are always ticked, so
+    // that a push which shouldn't be there has the chance to show. After a generous number of
+    // rounds, what has arrived is returned for the test's assertions to report on.
+    fn wait_for_pushes(
+        &self,
+        env: &mut PocketIc,
+        controller: Principal,
+        snapshot: &[u64],
+        arrived: impl Fn(&[Push]) -> bool,
+    ) -> Vec<Push> {
         tick_many(env, 3);
+        for _ in 0..50 {
+            let pushes = self.read_pushes(env, controller, snapshot);
+            if arrived(&pushes) {
+                return pushes;
+            }
+            env.tick();
+        }
+        self.read_pushes(env, controller, snapshot)
+    }
+
+    fn read_pushes(&self, env: &PocketIc, controller: Principal, snapshot: &[u64]) -> Vec<Push> {
         self.luis
             .iter()
             .zip(snapshot)
@@ -100,6 +122,16 @@ fn dismissals_for(pushes: &[Push], user: UserId) -> Vec<&Push> {
         .into_iter()
         .filter(|p| p.data.get("type").is_some_and(|t| t == "call_dismissed"))
         .collect()
+}
+
+// For `Feed::wait_for_pushes`: whether each of the users has been pushed at least `count` times
+fn pushed(users: &[UserId], count: usize) -> impl Fn(&[Push]) -> bool + '_ {
+    move |pushes| users.iter().all(|u| pushes_for(pushes, *u).len() >= count)
+}
+
+// For `Feed::wait_for_pushes`: whether each of the users has been sent a dismissal
+fn dismissed(users: &[UserId]) -> impl Fn(&[Push]) -> bool + '_ {
+    move |pushes| users.iter().all(|u| !dismissals_for(pushes, *u).is_empty())
 }
 
 fn dismissal_kinds(pushes: &[Push], user: UserId) -> Vec<String> {
@@ -219,14 +251,16 @@ fn invariants_4_5_9_10_direct_call_that_is_answered() {
 
     let caller = register_phone_caller(env, canister_ids, *controller);
     let callee = register_phone_user(env, canister_ids);
-    let feed = Feed::new(env, canister_ids, &[caller.canister(), callee.canister()]);
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
+    // the message's push is waited for, so that it can't arrive among the call's pushes
+    let index = feed.snapshot(env, *controller);
     client::user::happy_path::send_text_message(env, &caller, callee.user_id, random_string(), None);
-    tick_many(env, 3);
+    feed.wait_for_pushes(env, *controller, &index, pushed(&[callee.user_id], 1));
 
     let index = feed.snapshot(env, *controller);
     let message_id = start_direct_call(env, &caller, callee.user_id, true);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, pushed(&[callee.user_id], 1));
     let ring = pushes_for(&pushes, callee.user_id);
     assert_eq!(ring.len(), 1);
     assert_eq!(ring[0].data["type"], "direct");
@@ -240,7 +274,7 @@ fn invariants_4_5_9_10_direct_call_that_is_answered() {
     // an ordinary message carries no call fields, switch on or not
     let index = feed.snapshot(env, *controller);
     client::user::happy_path::send_text_message(env, &caller, callee.user_id, random_string(), None);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, pushed(&[callee.user_id], 1));
     let text = pushes_for(&pushes, callee.user_id);
     assert_eq!(text.len(), 1);
     assert!(!text[0].data.contains_key("callMessageId"));
@@ -248,7 +282,7 @@ fn invariants_4_5_9_10_direct_call_that_is_answered() {
     // the callee answers: their devices, and only theirs, are told
     let index = feed.snapshot(env, *controller);
     client::user::happy_path::join_video_call(env, &callee, caller.user_id, message_id);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, dismissed(&[callee.user_id]));
     assert_eq!(dismissal_kinds(&pushes, callee.user_id), vec!["answered_elsewhere"]);
     assert!(dismissals_for(&pushes, caller.user_id).is_empty());
     assert_eq!(dismissals_for(&pushes, callee.user_id)[0].recipients, vec![callee.user_id]);
@@ -260,7 +294,7 @@ fn invariants_4_5_9_10_direct_call_that_is_answered() {
     // the call ends: both were in it, so both are told they answered and nobody is told it ended
     let index = feed.snapshot(env, *controller);
     end_direct_call(env, caller.user_id, callee.user_id, message_id);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, dismissed(&[callee.user_id, caller.user_id]));
     assert_eq!(dismissal_kinds(&pushes, callee.user_id), vec!["answered_elsewhere"]);
     assert_eq!(dismissal_kinds(&pushes, caller.user_id), vec!["answered_elsewhere"]);
 }
@@ -278,10 +312,12 @@ fn invariant_2_a_muted_chat_never_pushes_a_call() {
 
     let caller = register_phone_caller(env, canister_ids, *controller);
     let callee = register_phone_user(env, canister_ids);
-    let feed = Feed::new(env, canister_ids, &[caller.canister(), callee.canister()]);
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
+    // the message's push is waited for, so that the callee has the chat to mute
+    let index = feed.snapshot(env, *controller);
     client::user::happy_path::send_text_message(env, &caller, callee.user_id, random_string(), None);
-    tick_many(env, 3);
+    feed.wait_for_pushes(env, *controller, &index, pushed(&[callee.user_id], 1));
     client::user::mute_notifications(
         env,
         callee.principal,
@@ -312,7 +348,7 @@ fn invariant_3_switch_off_means_no_call_fields_and_no_dismissals() {
 
     let caller = register_phone_caller(env, canister_ids, *controller);
     let callee = register_phone_user(env, canister_ids);
-    let feed = Feed::new(env, canister_ids, &[caller.canister(), callee.canister()]);
+    let feed = Feed::new(canister_ids);
     feed.set_call_push(env, canister_ids, *controller, false);
     tick_many(env, 3);
 
@@ -320,7 +356,7 @@ fn invariant_3_switch_off_means_no_call_fields_and_no_dismissals() {
     let message_id = start_direct_call(env, &caller, callee.user_id, true);
     client::user::happy_path::join_video_call(env, &callee, caller.user_id, message_id);
     end_direct_call(env, caller.user_id, callee.user_id, message_id);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, pushed(&[callee.user_id], 1));
 
     let ring = pushes_for(&pushes, callee.user_id);
     assert_eq!(ring.len(), 1);
@@ -348,7 +384,7 @@ fn invariant_1_only_small_private_groups_ring() {
 
     let caller = register_phone_caller(env, canister_ids, *controller);
     let member = register_phone_user(env, canister_ids);
-    let feed = Feed::new(env, canister_ids, &[caller.canister(), member.canister()]);
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
 
     let private_group = client::user::happy_path::create_group(env, &caller, &random_string(), false, true);
@@ -390,7 +426,7 @@ fn invariant_1_only_small_private_groups_ring() {
 
     let index = feed.snapshot(env, *controller);
     let small = start_group_call(env, &caller, private_group, VideoCallType::Default);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, pushed(&[member.user_id], 1));
     let ring = pushes_for(&pushes, member.user_id);
     assert_eq!(ring.len(), 1);
     assert_eq!(ring[0].data["callMessageId"], small.to_string());
@@ -413,8 +449,7 @@ fn invariant_1_only_small_private_groups_ring() {
         },
     );
     assert!(matches!(response, UnitResult::Success));
-    tick_many(env, 10);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, pushed(&[member.user_id], 2));
     let others = pushes_for(&pushes, member.user_id);
     assert_eq!(others.len(), 2);
     assert!(others.iter().all(|p| !p.data.contains_key("callMessageId")));
@@ -438,7 +473,7 @@ fn invariant_1_only_small_private_groups_ring() {
 
     let index = feed.snapshot(env, *controller);
     start_group_call(env, &caller, private_group, VideoCallType::Default);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, pushed(&[member.user_id], 1));
     let ring = pushes_for(&pushes, member.user_id);
     assert_eq!(ring.len(), 1);
     assert!(!ring[0].data.contains_key("callMessageId"));
@@ -459,11 +494,7 @@ fn invariants_4_5_group_call_dismissals_follow_who_joined() {
     let caller = register_phone_caller(env, canister_ids, *controller);
     let joiner = register_phone_user(env, canister_ids);
     let bystander = register_phone_user(env, canister_ids);
-    let feed = Feed::new(
-        env,
-        canister_ids,
-        &[caller.canister(), joiner.canister(), bystander.canister()],
-    );
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
 
     let group = client::user::happy_path::create_group(env, &caller, &random_string(), false, true);
@@ -481,13 +512,18 @@ fn invariants_4_5_group_call_dismissals_follow_who_joined() {
 
     let index = feed.snapshot(env, *controller);
     client::group::happy_path::join_video_call(env, joiner.principal, group, message_id);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, dismissed(&[joiner.user_id]));
     assert_eq!(dismissal_kinds(&pushes, joiner.user_id), vec!["answered_elsewhere"]);
     assert!(dismissals_for(&pushes, bystander.user_id).is_empty());
 
     let index = feed.snapshot(env, *controller);
     client::group::happy_path::end_video_call(env, group, message_id);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(
+        env,
+        *controller,
+        &index,
+        dismissed(&[joiner.user_id, caller.user_id, bystander.user_id]),
+    );
     assert_eq!(dismissal_kinds(&pushes, joiner.user_id), vec!["answered_elsewhere"]);
     assert_eq!(dismissal_kinds(&pushes, caller.user_id), vec!["answered_elsewhere"]);
     assert_eq!(dismissal_kinds(&pushes, bystander.user_id), vec!["ended"]);
@@ -507,16 +543,18 @@ fn invariant_15_a_call_that_times_out_dismisses_the_same_as_one_that_is_ended() 
 
     let caller = register_phone_caller(env, canister_ids, *controller);
     let callee = register_phone_user(env, canister_ids);
-    let feed = Feed::new(env, canister_ids, &[caller.canister(), callee.canister()]);
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
 
     let max_duration: Milliseconds = 60_000;
     start_direct_call_lasting(env, &caller, callee.user_id, false, Some(max_duration));
-    tick_many(env, 3);
+    // the caller's canister hears of the call from the callee's, and times it from then, so it
+    // must have heard before time moves on. Hearing of it creates their direct chat.
+    wait_for_direct_chat(env, &caller, callee.user_id);
 
     let index = feed.snapshot(env, *controller);
     env.advance_time(Duration::from_millis(max_duration));
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, dismissed(&[callee.user_id, caller.user_id]));
     assert_eq!(dismissal_kinds(&pushes, callee.user_id), vec!["ended"]);
     assert_eq!(dismissal_kinds(&pushes, caller.user_id), vec!["answered_elsewhere"]);
 }
@@ -543,7 +581,7 @@ fn invariant_16_only_a_platform_operator_can_flip_the_switch() {
         assert!(response.is_err(), "{canister} accepted the call");
     }
 
-    let feed = Feed::new(env, canister_ids, &[user.canister()]);
+    let feed = Feed::new(canister_ids);
     for enabled in [true, false] {
         feed.set_call_push(env, canister_ids, *controller, enabled);
         let user_index_canister::call_push_enabled::Response::Success(reported) =
@@ -592,18 +630,14 @@ fn invariants_1_9_a_decline_token_reaches_only_the_phone_it_names() {
     let caller = register_phone_caller(env, canister_ids, *controller);
     let callee = register_phone_user(env, canister_ids);
     let web_member = register_web_user(env, canister_ids);
-    let feed = Feed::new(
-        env,
-        canister_ids,
-        &[caller.canister(), callee.canister(), web_member.canister()],
-    );
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
     let public_key = user_index::happy_path::public_key(env, canister_ids.user_index);
 
     // direct call: the callee's ring push carries a token for the callee and this call
     let index = feed.snapshot(env, *controller);
     let message_id = start_direct_call(env, &caller, callee.user_id, true);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, pushed(&[callee.user_id], 1));
     let ring = pushes_for(&pushes, callee.user_id);
     assert_eq!(ring.len(), 1);
     assert_eq!(ring[0].recipients, vec![callee.user_id]);
@@ -623,7 +657,7 @@ fn invariants_1_9_a_decline_token_reaches_only_the_phone_it_names() {
     // the token is the only addition: every other key matches a ring push for a web-only user
     let index = feed.snapshot(env, *controller);
     let web_message_id = start_direct_call(env, &caller, web_member.user_id, true);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, pushed(&[web_member.user_id], 1));
     let web_ring = pushes_for(&pushes, web_member.user_id);
     assert_eq!(web_ring.len(), 1);
     assert!(!web_ring[0].data.contains_key("callDeclineToken"));
@@ -638,7 +672,7 @@ fn invariants_1_9_a_decline_token_reaches_only_the_phone_it_names() {
     let index = feed.snapshot(env, *controller);
     end_direct_call(env, caller.user_id, callee.user_id, message_id);
     client::user::happy_path::send_text_message(env, &caller, callee.user_id, random_string(), None);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, pushed(&[callee.user_id], 2));
     let after = pushes_for(&pushes, callee.user_id);
     assert_eq!(after.len(), 2);
     assert!(after.iter().all(|p| !p.data.contains_key("callDeclineToken")));
@@ -656,7 +690,7 @@ fn invariants_1_9_a_decline_token_reaches_only_the_phone_it_names() {
     tick_many(env, 3);
     let index = feed.snapshot(env, *controller);
     let group_message_id = start_group_call(env, &caller, group, VideoCallType::Default);
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, pushed(&[callee.user_id, web_member.user_id], 1));
     let phone_ring = pushes_for(&pushes, callee.user_id);
     let web_ring = pushes_for(&pushes, web_member.user_id);
     assert_eq!(phone_ring.len(), 1);
@@ -687,16 +721,14 @@ fn invariants_4_5_8_a_reported_decline_dismisses_only_the_decliner() {
     let caller = register_phone_caller(env, canister_ids, *controller);
     let callee = register_phone_user(env, canister_ids);
     let web_user = register_web_user(env, canister_ids);
-    let feed = Feed::new(
-        env,
-        canister_ids,
-        &[caller.canister(), callee.canister(), web_user.canister()],
-    );
+    let feed = Feed::new(canister_ids);
     feed.enable_call_push(env, canister_ids, *controller);
     let lui = canister_ids.local_user_index(env, callee.canister());
 
+    // the ring push is waited for, so that it can't arrive among the pushes expected to be none
+    let index = feed.snapshot(env, *controller);
     let message_id = start_direct_call(env, &caller, callee.user_id, false);
-    tick_many(env, 3);
+    feed.wait_for_pushes(env, *controller, &index, pushed(&[callee.user_id], 1));
     let args = local_user_index_canister::video_call_declined::Args {
         user_id: callee.user_id,
         chat_id: Chat::Direct(caller.user_id.into()),
@@ -721,7 +753,7 @@ fn invariants_4_5_8_a_reported_decline_dismisses_only_the_decliner() {
     let chat_before = client::user::happy_path::events(env, &caller, callee.user_id, 0.into(), true, 50, 50);
     let response = local_user_index::video_call_declined(env, VIDEO_CALL_OPERATOR, lui, &args);
     assert!(matches!(response, UnitResult::Success));
-    let pushes = feed.pushes_since(env, *controller, &index);
+    let pushes = feed.wait_for_pushes(env, *controller, &index, dismissed(&[callee.user_id]));
     assert_eq!(dismissal_kinds(&pushes, callee.user_id), vec!["declined_elsewhere"]);
     let dismissal = &dismissals_for(&pushes, callee.user_id)[0];
     assert_eq!(dismissal.recipients, vec![callee.user_id]);
