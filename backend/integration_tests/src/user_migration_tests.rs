@@ -142,6 +142,43 @@ fn users_with_a_p2p_swap_are_not_migrated_until_an_hour_after_it_expires() {
 }
 
 #[test]
+fn events_for_a_deleted_user_are_dropped_rather_than_holding_up_migrating_their_sender() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let (user2, user2_auth) = client::register_user_and_include_auth(env, canister_ids);
+
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+    tick_many(env, 3);
+
+    client::identity::happy_path::delete_user(env, &user2_auth, canister_ids.identity);
+    tick_many(env, 20);
+
+    // An event for the deleted user can never be delivered, so it is dropped rather than retried
+    // forever, which would hold up migrating the user who sent it
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+    tick_many(env, 10);
+    assert_eq!(metrics(env, user1.canister())["queued_user_events"], 0);
+
+    let new_user1 = migrate(env, canister_ids, &operator, &user1, multi_user_canister);
+
+    // The MultiUser canister drops them too
+    client::user::happy_path::send_text_message(env, &new_user1, user2.user_id, random_string(), None);
+    tick_many(env, 10);
+    assert_eq!(metrics(env, multi_user_canister)["queued_user_canister_events"], 0);
+}
+
+#[test]
 fn migrating_user_is_exported() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {

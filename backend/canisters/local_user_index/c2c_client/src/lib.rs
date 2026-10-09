@@ -66,6 +66,42 @@ pub async fn lookup_migrated_user_id(
     Ok(user_ids.remove(&user_id))
 }
 
+// What has become of a user whose canister couldn't be called as a User canister when sending them
+// events
+pub enum EventRecipient {
+    // They have been migrated to a MultiUser canister, and have this new id
+    Migrated(UserId),
+    // They are no longer a user, having deleted their account, or never had a User canister, being
+    // a bot, so the events can never be delivered
+    Gone,
+    // They are still a user under this id, eg. one whose migration the LocalUserIndex hasn't yet
+    // heard of
+    User,
+}
+
+pub async fn lookup_event_recipient(
+    user_id: UserId,
+    local_user_index_canister_id: CanisterId,
+) -> Result<EventRecipient, C2CError> {
+    let c2c_lookup_users::Response::Success(users) = crate::c2c_lookup_users(
+        local_user_index_canister_id,
+        &c2c_lookup_users::Args { user_ids: vec![user_id] },
+    )
+    .await?;
+
+    // Looked up after the user, since the LocalUserIndex drops a migrated user's old id at the same
+    // time as it records their migration, so a user missing above who had just been migrated is
+    // found here
+    if let Some(new_user_id) = lookup_migrated_user_id(user_id, local_user_index_canister_id).await? {
+        return Ok(EventRecipient::Migrated(new_user_id));
+    }
+
+    Ok(match users.get(&user_id) {
+        Some(user) if !user.user_type.is_bot() => EventRecipient::User,
+        _ => EventRecipient::Gone,
+    })
+}
+
 pub async fn push_wasm_in_chunks(
     canister_id: CanisterId,
     canister_type: ChildCanisterType,
