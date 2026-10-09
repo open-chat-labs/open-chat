@@ -60,6 +60,7 @@ import type {
     DeletedDirectMessageResponse,
     DeletedGroupMessageResponse,
     DexId,
+    DexSwapResult,
     DiamondMembershipDuration,
     DiamondMembershipFees,
     DirectChatIdentifier,
@@ -190,6 +191,7 @@ import type {
     TopUpNeuronResponse,
     UnblockUserResponse,
     UndeleteMessageResponse,
+    UnfinishedTokenSwap,
     UnfreezeCommunityResponse,
     UnfreezeGroupResponse,
     UnpinChatResponse,
@@ -319,6 +321,7 @@ import { CommunityClient } from "./community/community.client";
 import { DataClient } from "./data/data.client";
 import { DexesAgent } from "./dexes";
 import { TACO_TREASURY_CANISTER_ID } from "./dexes/taco/index/mappers";
+import { IcpSwapPoolClient } from "./dexes/icpSwap/pool/icpSwap.pool.client";
 import { callBotCommandEndpoint } from "./externalBot/externalBot";
 import { GroupClient } from "./group/group.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
@@ -364,6 +367,9 @@ const MAX_CONCURRENT_PREVIOUS_WALLET_BALANCE_CHECKS = 10;
 const MAX_LEDGERS_PER_FUNDS_MOVE = 20;
 const MAX_FUNDS_MOVE_RETRIES = 3;
 const FUNDS_MOVE_RETRY_INTERVAL_MS = 10_000;
+// How long after a swap made straight from the wallet starts that it is taken to have been abandoned
+// if it hasn't been marked as completed, rather than still being in progress elsewhere
+const UNFINISHED_TOKEN_SWAP_GRACE_PERIOD_MS = BigInt(10 * 60 * 1000);
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -4862,24 +4868,11 @@ export class OpenChatAgent extends EventTarget {
                 new Set([outputTokenDetails.ledger]),
                 this.swapProviders(),
             )
-            .then(async (pools) => {
+            .then((pools) => {
                 const pool = pools.find((p) => p.dex === dex);
 
                 if (pool === undefined) {
                     return Promise.reject("Cannot find a matching pool");
-                }
-
-                // The user's canister pulls the input, which includes the fee for sending it to
-                // the DEX, from the wallet of a user who holds their own funds
-                const error = await this.approveUserCanisterToPull(
-                    inputTokenDetails.ledger,
-                    amountIn,
-                    inputTokenDetails.transferFee,
-                    undefined,
-                    pin,
-                );
-                if (error !== undefined) {
-                    return error;
                 }
 
                 const exchangeArgs: ExchangeTokenSwapArgs =
@@ -4895,6 +4888,21 @@ export class OpenChatAgent extends EventTarget {
                               zeroForOne: pool.token0 === inputTokenDetails.ledger,
                           };
 
+                // A user who holds their own funds swaps straight from their wallet, since their
+                // canister can't spend from it
+                if (this.holdsOwnFunds()) {
+                    return this.swapTokensFromWallet(
+                        swapId,
+                        inputTokenDetails,
+                        outputTokenDetails,
+                        amountIn,
+                        minAmountOut,
+                        pool,
+                        exchangeArgs,
+                        pin,
+                    );
+                }
+
                 return this.userClient.swapTokens(
                     swapId,
                     inputTokenDetails,
@@ -4907,14 +4915,156 @@ export class OpenChatAgent extends EventTarget {
             });
     }
 
+    // Swaps straight from the wallet of a user who holds their own funds, via ICPSwap, which pulls the
+    // input from the wallet and pays the output back to it. The input swapped is `amountIn` less the
+    // fees for approving the pool and for its pull, so the swap takes `amountIn` from the wallet in
+    // all, as a swap made by the user's canister does. The swap is recorded in the user's canister
+    // as it starts and as it ends, so that one which doesn't finish, eg. because the user leaves part
+    // way through, is found again (see `recoverUnfinishedTokenSwaps`), and they get the achievement
+    // for swapping once it has.
+    private async swapTokensFromWallet(
+        swapId: bigint,
+        inputTokenDetails: CryptocurrencyDetails,
+        outputTokenDetails: CryptocurrencyDetails,
+        amountIn: bigint,
+        minAmountOut: bigint,
+        pool: TokenSwapPool,
+        exchangeArgs: ExchangeTokenSwapArgs,
+        pin: string | undefined,
+    ): Promise<SwapTokensResponse> {
+        if (exchangeArgs.dex !== "icpswap") {
+            return { kind: "error", code: ErrorCode.InvalidRequest, message: "Unsupported DEX" };
+        }
+
+        const fee = inputTokenDetails.transferFee;
+        const amountToSwap = amountIn - 2n * fee;
+        if (amountToSwap <= fee) {
+            return { kind: "error", code: ErrorCode.InsufficientFunds, message: undefined };
+        }
+        // The pool pulls as its own default account
+        const approvalError = await this.approveToPull(
+            { owner: Principal.fromText(pool.canisterId) },
+            inputTokenDetails.ledger,
+            amountToSwap + fee,
+            fee,
+            pin,
+        );
+        if (approvalError !== undefined) {
+            return approvalError;
+        }
+
+        const started = await this.userClient.markTokenSwapStarted(
+            swapId,
+            inputTokenDetails,
+            outputTokenDetails,
+            amountIn,
+            minAmountOut,
+            exchangeArgs,
+        );
+        if (started.kind !== "success") {
+            return started;
+        }
+
+        const poolClient = this.icpSwapPoolClient(pool.canisterId, pool.token0, pool.token1);
+        let result: DexSwapResult;
+        try {
+            result = await poolClient.swapFromWallet(
+                inputTokenDetails.ledger,
+                outputTokenDetails.ledger,
+                amountToSwap,
+                minAmountOut,
+                fee,
+                outputTokenDetails.transferFee,
+            );
+        } catch (err) {
+            // The swap may or may not have gone ahead, so it is left unfinished, to be finished off
+            // once it can no longer be in progress
+            console.warn("Failed to swap tokens from the wallet", err);
+            return { kind: "error", code: ErrorCode.Unknown, message: String(err) };
+        }
+
+        // The swap is over either way, so failing to record how it ended only leaves it to be
+        // finished off later
+        await this.userClient
+            .markTokenSwapCompleted(
+                swapId,
+                result.kind === "success"
+                    ? { kind: "swapped", amountOut: result.amountOut }
+                    : { kind: "failed", reason: result.error },
+            )
+            .catch((err) => console.warn("Failed to mark a token swap as completed", err));
+
+        return result.kind === "success"
+            ? { kind: "success", amountOut: result.amountOut }
+            : { kind: "error", code: ErrorCode.SwapFailed, message: result.error };
+    }
+
+    // Finishes off each swap the user started straight from their wallet which was never marked as
+    // completed, eg. because they left part way through, withdrawing to their wallet anything
+    // ICPSwap still holds for them, then marking the swap as completed. Swaps started in the last
+    // ten minutes are left alone, since they may still be in progress elsewhere. A swap whose pool
+    // can't be checked, or whose funds can't be withdrawn, is left to be tried again next time.
+    async recoverUnfinishedTokenSwaps(): Promise<void> {
+        if (!this.holdsOwnFunds() || offline()) return;
+
+        const now = BigInt(Date.now());
+        const swaps = (await this.userClient.unfinishedTokenSwaps()).filter(
+            (s) => now - s.started > UNFINISHED_TOKEN_SWAP_GRACE_PERIOD_MS,
+        );
+
+        for (const swap of swaps) {
+            const recovered = await this.withdrawFromPool(swap).catch((err) => {
+                console.warn("Failed to withdraw an unfinished token swap's funds", err);
+                return false;
+            });
+            if (recovered) {
+                await this.userClient
+                    .markTokenSwapCompleted(swap.swapId, {
+                        kind: "failed",
+                        reason: "Never marked as completed",
+                    })
+                    .catch((err) => console.warn("Failed to mark a token swap as completed", err));
+            }
+        }
+    }
+
+    // Withdraws to the user's wallet whatever the pool an unfinished swap was made in holds for them,
+    // returning whether there is nothing left there
+    private async withdrawFromPool(swap: UnfinishedTokenSwap): Promise<boolean> {
+        const { exchangeArgs } = swap;
+        // A TACO swap pays out or refunds itself, so leaves nothing to withdraw
+        if (exchangeArgs.dex !== "icpswap") return true;
+
+        const [token0, token1] = exchangeArgs.zeroForOne
+            ? [swap.inputLedger, swap.outputLedger]
+            : [swap.outputLedger, swap.inputLedger];
+        const poolClient = this.icpSwapPoolClient(exchangeArgs.swapCanisterId, token0, token1);
+
+        let withdrawnAll = true;
+        for (const { ledger, balance } of await poolClient.unusedBalances(this.principal)) {
+            const fee = this.ledgerFee(ledger);
+            if (fee === undefined) {
+                withdrawnAll = false;
+            } else if (balance > fee) {
+                withdrawnAll = (await poolClient.withdraw(ledger, balance, fee)) && withdrawnAll;
+            }
+        }
+        return withdrawnAll;
+    }
+
+    // An ICPSwap pool, which the user calls as themselves, so as the owner of their wallet
+    private icpSwapPoolClient(canisterId: string, token0: string, token1: string): IcpSwapPoolClient {
+        return new IcpSwapPoolClient(this.identity, this._agent, canisterId, token0, token1);
+    }
+
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
         return this.userClient.tokenSwapStatus(swapId);
     }
 
     private swapProviders(): DexId[] {
         const swapProviders = this._registryValue?.swapProviders ?? [];
-        // A MultiUser canister can only swap via ICPSwap so far, since TACO pays out to the
-        // default account of whoever swapped rather than to the user the swap was for
+        // A user who holds their own funds swaps straight from their wallet (see
+        // `swapTokensFromWallet`), which is only supported via ICPSwap so far
         return this.holdsOwnFunds() ? swapProviders.filter((p) => p === "icpswap") : swapProviders;
     }
 

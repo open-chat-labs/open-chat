@@ -58,6 +58,14 @@ impl TokenSwaps {
         self.page(0, usize::MAX)
     }
 
+    // The swaps the user made themselves which haven't been marked as completed
+    pub fn unfinished_made_by_user(&self) -> Vec<TokenSwap> {
+        self.all()
+            .into_iter()
+            .filter(|s| s.made_by_user && s.success.is_none())
+            .collect()
+    }
+
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -95,12 +103,11 @@ pub struct TokenSwap {
     pub notified_dex_at: SwapSubtask,
     pub swap_result: SwapSubtask<Result<SwapSuccess, String>>,
     pub withdrawn_from_dex_at: SwapSubtask<u128>,
-    // Only set in a MultiUser canister, whose users hold their own funds, so the output (or a
-    // refund) is withdrawn from the DEX into an account of the canister's and then sent on from
-    // there to the user's wallet
-    #[serde(default)]
-    pub sent_to_wallet: SwapSubtask<u64>, // Block Index
     pub success: Option<Timestamped<bool>>,
+    // Set for a swap the user made themselves, straight from their own wallet, of which the canister
+    // only records the start and the end (in a MultiUser canister, whose users hold their own funds)
+    #[serde(default)]
+    pub made_by_user: bool,
 }
 
 type SwapSubtask<T = ()> = Option<Timestamped<Result<T, String>>>;
@@ -118,8 +125,23 @@ impl TokenSwap {
             notified_dex_at: None,
             swap_result: None,
             withdrawn_from_dex_at: None,
-            sent_to_wallet: None,
             success: None,
+            made_by_user: false,
+        }
+    }
+}
+
+impl From<TokenSwap> for user_canister::token_swaps::TokenSwap {
+    fn from(s: TokenSwap) -> Self {
+        user_canister::token_swaps::TokenSwap {
+            args: s.args,
+            started: s.started,
+            icrc2: s.icrc2,
+            transfer_or_approval: s.transfer_or_approval.map(|t| t.value),
+            notified_dex: s.notified_dex_at.map(|t| t.value),
+            amount_swapped: s.swap_result.map(|t| t.value.map(|r| r.map(|i| i.amount_out))),
+            withdrawn_from_dex: s.withdrawn_from_dex_at.map(|t| t.value),
+            success: s.success.map(|v| v.value),
         }
     }
 }

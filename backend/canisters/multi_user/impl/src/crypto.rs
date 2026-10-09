@@ -1,4 +1,3 @@
-use candid::Principal;
 use oc_error_codes::{OCError, OCErrorCode};
 use types::{CanisterId, OCResult, UserId, icrc1};
 
@@ -22,11 +21,4 @@ pub async fn user_wallet(user_id: UserId, local_user_index_canister_id: Canister
         Some(user) if user.user_id == user_id => Ok(user.principal.into()),
         _ => Err(OCErrorCode::TargetUserNotFound.into()),
     }
-}
-
-// The subaccount of this canister which holds the output (or a refund) of a user's token swap between
-// it being withdrawn from the DEX and sent on to their wallet. It is derived from the principal the
-// user signs in with, as their spender subaccount is, so each user's swaps are kept apart from others'.
-pub fn swap_subaccount(principal: Principal) -> [u8; 32] {
-    ledger_utils::spender_subaccount(principal)
 }

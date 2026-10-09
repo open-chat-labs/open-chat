@@ -249,6 +249,19 @@ export const GroupSelectedUpdatesArgs = /* @__PURE__ */ Type.Object({
 export type GroupSummaryArgs = Static<typeof GroupSummaryArgs>;
 export const GroupSummaryArgs = /* @__PURE__ */ Type.Object({});
 
+export type UserMarkTokenSwapCompletedArgs = Static<typeof UserMarkTokenSwapCompletedArgs>;
+export const UserMarkTokenSwapCompletedArgs = /* @__PURE__ */ Type.Object({
+    swap_id: Type.BigInt(),
+    result: Type.Union([
+        Type.Object({
+            Ok: Type.BigInt(),
+        }),
+        Type.Object({
+            Err: Type.String(),
+        }),
+    ]),
+});
+
 export type UserMessageActivitySummary = Static<typeof UserMessageActivitySummary>;
 export const UserMessageActivitySummary = /* @__PURE__ */ Type.Object({
     read_up_to: Type.BigInt(),
@@ -7894,6 +7907,16 @@ export const UserChatInList = /* @__PURE__ */ Type.Union([
     }),
 ]);
 
+export type UserMarkTokenSwapStartedArgs = Static<typeof UserMarkTokenSwapStartedArgs>;
+export const UserMarkTokenSwapStartedArgs = /* @__PURE__ */ Type.Object({
+    swap_id: Type.BigInt(),
+    input_token: TokenInfo,
+    output_token: TokenInfo,
+    input_amount: Type.BigInt(),
+    exchange_args: UserSwapTokensExchangeArgs,
+    min_output_amount: Type.BigInt(),
+});
+
 export type UserPinChatArgs = Static<typeof UserPinChatArgs>;
 export const UserPinChatArgs = /* @__PURE__ */ Type.Object({
     chat: UserChatInList,
@@ -9015,6 +9038,11 @@ export const UserCreateGroupResponse = /* @__PURE__ */ Type.Union([
         Error: OCError,
     }),
 ]);
+
+export type UserUnfinishedTokenSwapsResponse = Static<typeof UserUnfinishedTokenSwapsResponse>;
+export const UserUnfinishedTokenSwapsResponse = /* @__PURE__ */ Type.Object({
+    Success: Type.Array(UserTokenSwapsTokenSwap),
+});
 
 export type UserSendMessageWithTransferToGroupSuccessResult = Static<
     typeof UserSendMessageWithTransferToGroupSuccessResult

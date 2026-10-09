@@ -1,11 +1,8 @@
-<script lang="ts" module>
-    export type SwapOutcome = "success" | "rateChanged" | "insufficientFunds" | "error";
-</script>
-
 <script lang="ts">
-    import type { OpenChat } from "@client";
+    import type { OpenChat, SwapTokensResponse } from "@client";
     import { Poller } from "@client";
     import { getContext, onMount } from "svelte";
+    import { swapFromWalletOutcome, type SwapOutcome } from "../../../utils/tokenSwap";
     import ProgressSteps, { type Result, type Step } from "../../ProgressSteps.svelte";
 
     interface Props {
@@ -17,9 +14,11 @@
         amountIn: string;
         decimalsOut: number;
         dex: string;
-        // Whether swapping returned an error, which, if the swap was never recorded, means it was
-        // refused before it started
-        refused: boolean;
+        // What swapping returned, once it has
+        swapResponse: SwapTokensResponse | undefined;
+        // Whether the user is swapping straight from their wallet, as a user who holds their own
+        // funds does, in which case there is no progress to follow, only the swap's outcome
+        fromWallet: boolean;
         onFinished: (outcome: SwapOutcome, ledgerIn: string, ledgerOut: string) => void;
     }
 
@@ -28,10 +27,12 @@
         tokenIn,
         tokenOut,
         ledgerIn,
+        ledgerOut,
         amountIn,
         decimalsOut,
         dex,
-        refused,
+        swapResponse,
+        fromWallet,
         onFinished,
     }: Props = $props();
 
@@ -41,7 +42,9 @@
 
     let percent: number | undefined = $state(0);
     let amountOut = $state("");
-    let steps = $state<Step[]>([{ label: "get", status: "doing" }]);
+    // A swap is made from the wallet or not for as long as this shows it
+    // svelte-ignore state_referenced_locally
+    let steps = $state<Step[]>([{ label: fromWallet ? "swap" : "get", status: "doing" }]);
     let result = $state<Result>(undefined);
     let poller: Poller | undefined = undefined;
 
@@ -64,14 +67,37 @@
     });
 
     onMount(() => {
+        if (fromWallet) return;
+
         poller = new Poller(querySwapProgress, POLL_INTERVAL, POLL_INTERVAL, true);
 
         return () => poller?.stop();
     });
 
-    function notifyFinished(outcome: "success" | "rateChanged" | "insufficientFunds" | "error") {
-        onFinished(outcome, ledgerIn, ledgerIn);
+    $effect(() => {
+        if (fromWallet && swapResponse !== undefined && result === undefined) {
+            showSwapFromWalletOutcome(swapResponse);
+        }
+    });
+
+    function notifyFinished(outcome: SwapOutcome) {
+        onFinished(outcome, ledgerIn, ledgerOut);
         poller?.stop();
+    }
+
+    function showSwapFromWalletOutcome(response: SwapTokensResponse) {
+        const outcome = swapFromWalletOutcome(response);
+        if (response.kind === "success") {
+            amountOut = client.formatTokens(response.amountOut, decimalsOut);
+        }
+        steps = [{ label: "swap", status: outcome === "success" ? "done" : "failed" }];
+        if (outcome === "success" || outcome === "rateChanged") {
+            result = { label: outcome === "success" ? "done" : "failed", status: "done" };
+        } else {
+            result = { label: outcome, status: "failed" };
+        }
+        percent = outcome === "success" ? 100 : undefined;
+        notifyFinished(outcome);
     }
 
     function updateSteps(newSteps: Step[]) {
@@ -87,6 +113,9 @@
     }
 
     async function querySwapProgress() {
+        // Read before asking, since a swap which isn't found by a query made before swapping
+        // returned may yet be recorded
+        const refused = swapResponse !== undefined && swapResponse.kind !== "success";
         const response = await client.tokenSwapStatus(swapId);
 
         if (response.kind === "success") {
@@ -165,8 +194,8 @@
                 notifyFinished("error");
             }
         } else if (refused) {
-            // The swap was refused before it started (eg. the PIN was wrong), so it was never
-            // recorded and there is no progress to wait for
+            // Swapping returned an error and the swap was never recorded, so it was refused before
+            // it started (eg. the PIN was wrong) and there is no progress to wait for
             updateSteps([{ label: "get", status: "failed" }]);
             result = { label: "error", status: "failed" };
             notifyFinished("error");

@@ -6,10 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Changed
-
-- Move the swap clients into `user_core` so that the MultiUser canister can share them ([#9887](https://github.com/open-chat-labs/open-chat/pull/9887))
-
 ### Removed
 
 - Remove the one-offs which moved the chats into stable memory and capped the jobs to mark P2P swaps as expired, now that they have run ([#9885](https://github.com/open-chat-labs/open-chat/pull/9885))

@@ -1,7 +1,3 @@
-<script lang="ts" module>
-    export type SwapOutcome = "success" | "rateChanged" | "insufficientFunds" | "error";
-</script>
-
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import {
@@ -13,8 +9,9 @@
         Subtitle,
         type SizeMode,
     } from "component-lib";
-    import type { OpenChat } from "@client";
+    import type { OpenChat, SwapTokensResponse } from "@client";
     import { Poller, publish } from "@client";
+    import { swapFromWalletOutcome, type SwapOutcome } from "../../../utils/tokenSwap";
     import { getContext, onMount } from "svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -31,9 +28,11 @@
         amountIn: string;
         decimalsOut: number;
         dex: string;
-        // Whether swapping returned an error, which, if the swap was never recorded, means it was
-        // refused before it started
-        refused: boolean;
+        // What swapping returned, once it has
+        swapResponse: SwapTokensResponse | undefined;
+        // Whether the user is swapping straight from their wallet, as a user who holds their own
+        // funds does, in which case there is no progress to follow, only the swap's outcome
+        fromWallet: boolean;
     }
 
     let {
@@ -45,7 +44,8 @@
         amountIn,
         decimalsOut,
         dex,
-        refused,
+        swapResponse,
+        fromWallet,
     }: Props = $props();
 
     const height: SizeMode = { size: "16rem" };
@@ -65,7 +65,11 @@
         dex,
     });
 
-    let stages = $state<Stage["kind"][]>(["get", "deposit", "notify", "swap", "withdraw", "done"]);
+    // A swap is made from the wallet or not for as long as this shows it
+    // svelte-ignore state_referenced_locally
+    let stages = $state<Stage["kind"][]>(
+        fromWallet ? ["swap", "done"] : ["get", "deposit", "notify", "swap", "withdraw", "done"],
+    );
 
     type Stage =
         | { kind: "get" }
@@ -76,21 +80,44 @@
         | { kind: "refund" }
         | { kind: "done" };
 
-    let currentStage = $state<Stage["kind"]>("get");
+    // svelte-ignore state_referenced_locally
+    let currentStage = $state<Stage["kind"]>(fromWallet ? "swap" : "get");
     let currentStageIndex = $derived(stages.findIndex((s) => s === currentStage));
     let error = $state(false);
 
     onMount(() => {
+        if (fromWallet) return;
+
         poller = new Poller(querySwapProgress, POLL_INTERVAL, POLL_INTERVAL, true);
         return () => poller?.stop();
     });
 
-    function notifyFinished(o: "success" | "rateChanged" | "insufficientFunds" | "error") {
+    $effect(() => {
+        if (fromWallet && swapResponse !== undefined && outcome === undefined) {
+            showSwapFromWalletOutcome(swapResponse);
+        }
+    });
+
+    function notifyFinished(o: SwapOutcome) {
         outcome = o;
         poller?.stop();
     }
 
+    function showSwapFromWalletOutcome(response: SwapTokensResponse) {
+        const o = swapFromWalletOutcome(response);
+        if (response.kind === "success") {
+            amountOut = client.formatTokens(response.amountOut, decimalsOut);
+            currentStage = "done";
+        } else {
+            error = true;
+        }
+        notifyFinished(o);
+    }
+
     async function querySwapProgress() {
+        // Read before asking, since a swap which isn't found by a query made before swapping
+        // returned may yet be recorded
+        const refused = swapResponse !== undefined && swapResponse.kind !== "success";
         const response = await client.tokenSwapStatus(swapId);
 
         if (response.kind === "success") {
@@ -129,8 +156,8 @@
                 notifyFinished("error");
             }
         } else if (refused) {
-            // The swap was refused before it started (eg. the PIN was wrong), so it was never
-            // recorded and there is no progress to wait for
+            // Swapping returned an error and the swap was never recorded, so it was refused before
+            // it started (eg. the PIN was wrong) and there is no progress to wait for
             error = true;
             notifyFinished("error");
         }

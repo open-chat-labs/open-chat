@@ -4,12 +4,12 @@ use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
 use user_canister::c2c_withdraw_from_icpswap::*;
 
-// Not yet supported. A swap's output is withdrawn into this canister's subaccount for the user, and
-// would then have to be sent on to their wallet, as `swap_tokens` does.
+// There's nothing to withdraw, since users swap straight from their own wallets, so anything left
+// with ICPSwap is held under the user's principal, which only they can withdraw
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_withdraw_from_icpswap(_args: Args) -> Response {
     Response::Error(
-        OCErrorCode::InvalidRequest.with_message("Withdrawing from ICPSwap is not yet supported by the MultiUser canister"),
+        OCErrorCode::InvalidRequest.with_message("Users of the MultiUser canister swap straight from their own wallets"),
     )
 }

@@ -5,7 +5,7 @@ use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use testing::rng::{random_from_u128, random_principal};
 use types::{TokenInfo, icrc1};
-use user_canister::swap_tokens::{ExchangeArgs, ExchangeSwapArgs, TacoArgs};
+use user_canister::swap_tokens::{ExchangeArgs, ExchangeSwapArgs};
 
 const ONE_ICP: u128 = 100_000_000;
 
@@ -114,143 +114,150 @@ fn swap_from_own_account_is_rejected() {
     );
 }
 
-// A user in a MultiUser canister holds their own funds in their own wallet, so the input is pulled
-// from it via ICRC-2, against an approval made under the user's own spender subaccount, straight
-// into the DEX's deposit account. There is no DEX in the test environment, so the swap stalls once it
-// tries to notify the DEX.
+// A user in a MultiUser canister holds their own funds, so swaps straight from their own wallet, which
+// the canister only records, so that a swap which doesn't finish can be found again later
 #[test]
-fn swap_in_multi_user_canister_pulls_input_from_wallet_into_dex_deposit_account() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let user = client::register_user_in_multi_user_canister(env, canister_ids);
-
-    let input_amount = ONE_ICP;
-    let wallet_balance = 10 * ONE_ICP;
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.principal, wallet_balance);
-    // The input includes the fee for pulling it, which is charged to the wallet
-    client::ledger::happy_path::approve(
-        env,
-        user.principal,
-        canister_ids.icp_ledger,
-        multi_user_spender(&user),
-        input_amount,
-    );
-
-    let args = swap_args(canister_ids, input_amount, None);
-    let swap_id = args.swap_id;
-    let pool = args.exchange_args.swap_canister_id();
-    let response = client::user::swap_tokens(env, user.principal, user.canister(), &args);
-    assert!(
-        matches!(response, user_canister::swap_tokens::Response::Error(_)),
-        "{response:?}"
-    );
-
-    let status = swap_status(env, &user, swap_id);
-    assert!(status.funded_from_wallet.is_none(), "{status:?}");
-    assert!(matches!(status.transfer_or_approval, Some(Ok(_))), "{status:?}");
-    assert!(matches!(status.notify_dex, Some(Err(_))), "{status:?}");
-    assert!(status.withdraw_from_dex.is_none(), "{status:?}");
-
-    // The wallet paid for the approval and the input, which includes the fee for pulling it, and
-    // the rest of the input went straight to the DEX's deposit account for the MultiUser canister
-    assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.principal),
-        wallet_balance - input_amount - ICP_TRANSFER_FEE
-    );
-    let deposit_account = icrc1::Account {
-        owner: pool,
-        subaccount: Some(ledger_utils::convert_to_subaccount(&user.canister()).0),
-    };
-    assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, deposit_account),
-        input_amount - ICP_TRANSFER_FEE
-    );
-}
-
-#[test]
-fn swap_in_multi_user_canister_without_approval_fails() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let user = client::register_user_in_multi_user_canister(env, canister_ids);
-    let wallet_balance = 10 * ONE_ICP;
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.principal, wallet_balance);
-
-    let args = swap_args(canister_ids, ONE_ICP, None);
-    let swap_id = args.swap_id;
-    let response = client::user::swap_tokens(env, user.principal, user.canister(), &args);
-    assert!(
-        matches!(
-            &response,
-            user_canister::swap_tokens::Response::Error(e) if e.matches_code(OCErrorCode::InsufficientAllowance)
-        ),
-        "{response:?}"
-    );
-
-    // The swap stopped before anything was sent to the DEX
-    let status = swap_status(env, &user, swap_id);
-    assert!(matches!(status.transfer_or_approval, Some(Err(_))), "{status:?}");
-    assert!(status.notify_dex.is_none(), "{status:?}");
-    assert_eq!(status.success, Some(false));
-    assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.principal),
-        wallet_balance
-    );
-}
-
-// TACO pays its output to the default account of whoever swapped, so a MultiUser canister couldn't
-// tell which of its users it was for. The swap is refused before it starts, so is never recorded.
-#[test]
-fn swap_via_taco_in_multi_user_canister_is_rejected() {
+fn swap_made_by_user_in_multi_user_canister_is_unfinished_until_marked_completed() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let user = client::register_user_in_multi_user_canister(env, canister_ids);
+    let swap_id = random_from_u128();
+    mark_started(env, &user, canister_ids, swap_id);
 
-    let mut args = swap_args(canister_ids, ONE_ICP, None);
-    args.exchange_args = ExchangeArgs::Taco(TacoArgs {
-        swap_canister_id: random_principal(),
-        treasury_canister_id: random_principal(),
-    });
-    let response = client::user::swap_tokens(env, user.principal, user.canister(), &args);
-    assert!(
-        matches!(
-            &response,
-            user_canister::swap_tokens::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)
-        ),
-        "{response:?}"
-    );
-
-    let response = client::user::token_swap_status(
+    // The same swap can't be started twice
+    let response = client::user::mark_token_swap_started(
         env,
         user.principal,
         user.canister(),
-        &user_canister::token_swap_status::Args { swap_id: args.swap_id },
+        &mark_started_args(canister_ids, swap_id),
     );
     assert!(
-        matches!(
-            &response,
-            user_canister::token_swap_status::Response::Error(e) if e.matches_code(OCErrorCode::SwapNotFound)
-        ),
+        matches!(&response, types::UnitResult::Error(e) if e.matches_code(OCErrorCode::AlreadyAdded)),
+        "{response:?}"
+    );
+
+    assert_eq!(unfinished_swap_ids(env, &user), vec![swap_id]);
+    let status = swap_status(env, &user, swap_id);
+    assert!(status.success.is_none(), "{status:?}");
+    assert!(!has_swapped_from_wallet(env, &user));
+
+    let amount_out = 3 * ONE_ICP;
+    mark_completed(env, &user, swap_id, Ok(amount_out));
+
+    assert!(unfinished_swap_ids(env, &user).is_empty());
+    let status = swap_status(env, &user, swap_id);
+    assert_eq!(status.success, Some(true));
+    assert!(
+        matches!(status.amount_swapped, Some(Ok(Ok(a))) if a == amount_out),
+        "{status:?}"
+    );
+    assert!(
+        matches!(status.withdraw_from_dex, Some(Ok(a)) if a == amount_out),
+        "{status:?}"
+    );
+    assert!(has_swapped_from_wallet(env, &user));
+
+    // Marking it completed again leaves it as it was
+    mark_completed(env, &user, swap_id, Err("too late".to_string()));
+    let status = swap_status(env, &user, swap_id);
+    assert_eq!(status.success, Some(true));
+    assert!(
+        matches!(status.amount_swapped, Some(Ok(Ok(a))) if a == amount_out),
+        "{status:?}"
+    );
+}
+
+#[test]
+fn failed_swap_made_by_user_in_multi_user_canister_earns_no_achievement() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user_in_multi_user_canister(env, canister_ids);
+    let swap_id = random_from_u128();
+    mark_started(env, &user, canister_ids, swap_id);
+    mark_completed(env, &user, swap_id, Err("slippage".to_string()));
+
+    assert!(unfinished_swap_ids(env, &user).is_empty());
+    let status = swap_status(env, &user, swap_id);
+    assert_eq!(status.success, Some(false));
+    assert!(
+        matches!(&status.amount_swapped, Some(Ok(Err(e))) if e == "slippage"),
+        "{status:?}"
+    );
+    assert!(status.withdraw_from_dex.is_none(), "{status:?}");
+    assert!(!has_swapped_from_wallet(env, &user));
+}
+
+#[test]
+fn completing_swap_which_was_never_started_fails() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user_in_multi_user_canister(env, canister_ids);
+    let response = client::user::mark_token_swap_completed(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::mark_token_swap_completed::Args {
+            swap_id: random_from_u128(),
+            result: Ok(ONE_ICP),
+        },
+    );
+    assert!(
+        matches!(&response, types::UnitResult::Error(e) if e.matches_code(OCErrorCode::SwapNotFound)),
         "{response:?}"
     );
 }
 
-// The account a user in a MultiUser canister approves for their canister to pull from their wallet
-fn multi_user_spender(user: &crate::User) -> icrc1::Account {
-    icrc1::Account {
-        owner: user.canister(),
-        subaccount: Some(ledger_utils::spender_subaccount(user.principal)),
+fn mark_started_args(canister_ids: &CanisterIds, swap_id: u128) -> user_canister::mark_token_swap_started::Args {
+    let args = swap_args(canister_ids, ONE_ICP, None);
+    user_canister::mark_token_swap_started::Args {
+        swap_id,
+        input_token: args.input_token,
+        output_token: args.output_token,
+        input_amount: args.input_amount,
+        exchange_args: args.exchange_args,
+        min_output_amount: args.min_output_amount,
     }
+}
+
+fn mark_started(env: &mut pocket_ic::PocketIc, user: &crate::User, canister_ids: &CanisterIds, swap_id: u128) {
+    let response = client::user::mark_token_swap_started(
+        env,
+        user.principal,
+        user.canister(),
+        &mark_started_args(canister_ids, swap_id),
+    );
+    assert!(matches!(response, types::UnitResult::Success), "{response:?}");
+}
+
+fn mark_completed(env: &mut pocket_ic::PocketIc, user: &crate::User, swap_id: u128, result: Result<u128, String>) {
+    let response = client::user::mark_token_swap_completed(
+        env,
+        user.principal,
+        user.canister(),
+        &user_canister::mark_token_swap_completed::Args { swap_id, result },
+    );
+    assert!(matches!(response, types::UnitResult::Success), "{response:?}");
+}
+
+fn unfinished_swap_ids(env: &pocket_ic::PocketIc, user: &crate::User) -> Vec<u128> {
+    let user_canister::unfinished_token_swaps::Response::Success(swaps) =
+        client::user::unfinished_token_swaps(env, user.principal, user.canister(), &types::Empty {});
+    swaps.into_iter().map(|s| s.args.swap_id).collect()
+}
+
+fn has_swapped_from_wallet(env: &pocket_ic::PocketIc, user: &crate::User) -> bool {
+    client::user::happy_path::initial_state(env, user)
+        .achievements
+        .iter()
+        .any(|e| {
+            matches!(
+                &e.reason,
+                types::ChitEventType::Achievement(types::Achievement::SwappedFromWallet)
+            )
+        })
 }
 
 fn swap_args(

@@ -1,13 +1,20 @@
 <script lang="ts">
-    import type { DexId, InterpolationValues, OpenChat, ResourceKey } from "@client";
+    import type {
+        DexId,
+        InterpolationValues,
+        OpenChat,
+        ResourceKey,
+        SwapTokensResponse,
+    } from "@client";
     import {
         cryptoBalanceStore,
+        currentUserIdStore,
         enhancedCryptoLookup as cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
         mobileWidth,
         swappableTokensStore,
     } from "@client";
-    import { random128 } from "@shared";
+    import { isMultiUserCanisterUser, random128 } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
@@ -25,7 +32,8 @@
     import CryptoSelector from "../CryptoSelector.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import TokenInput from "../TokenInput.svelte";
-    import SwapProgress, { type SwapOutcome } from "./SwapProgress.svelte";
+    import SwapProgress from "./SwapProgress.svelte";
+    import type { SwapOutcome } from "../../../utils/tokenSwap";
 
     interface Props {
         ledgerIn: string;
@@ -51,7 +59,7 @@
     let swapMessageValues: InterpolationValues | undefined = $state(undefined);
     let bestQuote: [DexId, bigint] | undefined = $state(undefined);
     let swapId: bigint | undefined = $state();
-    let swapRefused = $state(false);
+    let swapResponse = $state<SwapTokensResponse>();
     let userAcceptedWarning = $state(false);
     let warnValueUnknown = $state(false);
     let warnValueDropped = $state(false);
@@ -165,7 +173,7 @@
             .then((balanceCheckSuccess) => {
                 if (balanceCheckSuccess) {
                     swapId = random128();
-                    swapRefused = false;
+                    swapResponse = undefined;
                     return client.swapTokens(
                         swapId,
                         ledgerInLocal,
@@ -177,9 +185,7 @@
                 }
             })
             .then((response) => {
-                if (response?.kind === "error") {
-                    swapRefused = true;
-                }
+                swapResponse = response;
             })
             .catch(() => {
                 swapId = undefined;
@@ -329,7 +335,8 @@
                             amountIn={amountInText}
                             decimalsOut={detailsOut.decimals}
                             dex={dexName(bestQuote[0])}
-                            refused={swapRefused}
+                            {swapResponse}
+                            fromWallet={isMultiUserCanisterUser($currentUserIdStore)}
                             onFinished={onSwapFinished} />
                     </div>
                 {/if}

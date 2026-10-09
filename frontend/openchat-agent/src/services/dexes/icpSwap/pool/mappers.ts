@@ -1,5 +1,5 @@
 import type { DexSwapResult } from "@shared";
-import type { ApiNatResult } from "./candid/idl";
+import type { ApiNatResult, ApiUnusedBalanceResult } from "./candid/idl";
 import type { Error as ApiQuoteError } from "./candid/types";
 
 // A decoded `err` variant is ICPSwap declining to quote - "amount of input token is too small"
@@ -45,4 +45,26 @@ export function swapResponse(candid: ApiNatResult, outputTokenFee: bigint): DexS
         };
     }
     return { kind: "error", error: JSON.stringify(candid.err) };
+}
+
+export function unusedBalancesResponse(
+    candid: ApiUnusedBalanceResult,
+    token0: string,
+    token1: string,
+): { ledger: string; balance: bigint }[] {
+    if ("ok" in candid) {
+        return [
+            { ledger: token0, balance: candid.ok.balance0 },
+            { ledger: token1, balance: candid.ok.balance1 },
+        ];
+    }
+    throw new Error("Unable to get unused balances from ICPSwap: " + JSON.stringify(candid.err));
+}
+
+export function withdrawResponse(candid: ApiNatResult): boolean {
+    if ("ok" in candid) {
+        return true;
+    }
+    console.warn("Failed to withdraw from ICPSwap", candid.err);
+    return false;
 }

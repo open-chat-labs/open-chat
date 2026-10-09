@@ -1,6 +1,9 @@
 use crate::crypto::{icrc2_transfer_from, validate_from_account};
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
+use crate::token_swaps::icpswap::ICPSwapClient;
+use crate::token_swaps::swap_client::SwapClient;
+use crate::token_swaps::taco::TacoExchangeClient;
 use crate::{Data, RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -14,9 +17,6 @@ use types::icrc1::Account;
 use types::{Achievement, OCResult, TimestampMillis, Timestamped, UserId};
 use user_canister::swap_tokens::{Response::*, *};
 use user_core::TokenSwap;
-use user_core::token_swaps::icpswap::ICPSwapClient;
-use user_core::token_swaps::swap_client::SwapClient;
-use user_core::token_swaps::taco::TacoExchangeClient;
 
 #[update(guard = "caller_is_owner", msgpack = true)]
 #[trace]

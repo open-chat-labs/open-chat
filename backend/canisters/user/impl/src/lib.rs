@@ -46,6 +46,7 @@ mod openchat_bot;
 mod queries;
 mod regular_jobs;
 mod timer_job_types;
+mod token_swaps;
 mod updates;
 
 // The most exported in a single page when the user is being migrated to a MultiUser canister,
