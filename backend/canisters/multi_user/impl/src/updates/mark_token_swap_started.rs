@@ -2,6 +2,7 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use constants::MAX_TOKEN_SWAPS;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
 use user_canister::mark_token_swap_started::*;
@@ -27,6 +28,9 @@ fn mark_token_swap_started_impl(args: Args, state: &mut RuntimeState) -> OCResul
         user.verify_not_suspended()?;
         if user.token_swaps.get(args.swap_id).is_some() {
             return Err(OCErrorCode::AlreadyAdded.into());
+        }
+        if user.token_swaps.len() >= MAX_TOKEN_SWAPS {
+            return Err(OCErrorCode::LimitReached.with_message(MAX_TOKEN_SWAPS));
         }
         let mut token_swap = TokenSwap::new(
             user_canister::swap_tokens::Args {
