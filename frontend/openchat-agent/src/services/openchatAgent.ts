@@ -293,7 +293,7 @@ import {
     mergeCommunityUpdates,
 } from "../utils/community";
 import { createHttpAgentSync } from "../utils/httpAgent";
-import { transferCreatedAt } from "../utils/icTime";
+import { icNowNanos } from "../utils/icTime";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { withLatestUserIds } from "../utils/latestUserIds";
@@ -674,9 +674,9 @@ export class OpenChatAgent extends EventTarget {
         return undefined;
     }
 
-    // The message with the crypto it sends or the prize it offers stamped no later than the time
-    // on the IC (see `transferCreatedAt`). A swap offer carries no stamp, its deposit being stamped
-    // by the canister which makes it.
+    // The message with the crypto it sends or the prize it offers stamped with the time on the IC
+    // (see `icNowNanos`). A swap offer carries no stamp, its deposit being stamped by the canister
+    // which makes it.
     private async stampTransferWithIcTime(
         event: EventWrapper<Message>,
     ): Promise<EventWrapper<Message>> {
@@ -687,10 +687,7 @@ export class OpenChatAgent extends EventTarget {
         ) {
             return event;
         }
-        const createdAtNanos = await transferCreatedAt(this._agent, content.transfer);
-        if (createdAtNanos === content.transfer.createdAtNanos) {
-            return event;
-        }
+        const createdAtNanos = await icNowNanos(this._agent, content.transfer.ledger);
         const stamped = {
             ...content,
             transfer: { ...content.transfer, createdAtNanos },
@@ -3978,7 +3975,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<WithdrawCryptocurrencyResponse> {
         if (offline()) return CommonResponses.offline();
 
-        const stamped = { ...domain, createdAtNanos: await transferCreatedAt(this._agent, domain) };
+        const stamped = { ...domain, createdAtNanos: await icNowNanos(this._agent, domain.ledger) };
         if (this.holdsOwnFunds()) {
             return this._ledgerClient.withdraw(stamped);
         }
@@ -4758,7 +4755,7 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    submitProposal(
+    async submitProposal(
         currentUserId: string,
         governanceCanisterId: string,
         proposal: CandidateProposal,
@@ -4767,7 +4764,7 @@ export class OpenChatAgent extends EventTarget {
         proposalRejectionFee: bigint,
         transactionFee: bigint,
     ): Promise<SubmitProposalResponse> {
-        if (offline()) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return CommonResponses.offline();
 
         // The ProposalsBot pulls the fee from the user's wallet, which they have approved it to
         return this._proposalsBotClient
@@ -4780,6 +4777,7 @@ export class OpenChatAgent extends EventTarget {
                 token,
                 proposalRejectionFee,
                 transactionFee,
+                await icNowNanos(this._agent, ledger),
             );
     }
 
@@ -5143,7 +5141,7 @@ export class OpenChatAgent extends EventTarget {
             const paid = {
                 ...transfer,
                 fromAccount: transfer.fromAccount ?? wallet,
-                createdAtNanos: await transferCreatedAt(this._agent, transfer),
+                createdAtNanos: await icNowNanos(this._agent, transfer.ledger),
             };
             return chatId.kind === "channel"
                 ? this._communityClient.tipMessage(

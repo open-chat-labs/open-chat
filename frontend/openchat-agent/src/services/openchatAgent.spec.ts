@@ -21,6 +21,10 @@ import { AsyncMessageContextMap } from "../utils/messageContext";
 import { OpenChatAgent } from "./openchatAgent";
 
 const ICP_LEDGER = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+// The device's clock while a payment is made, which is also the time on the IC unless a test says
+// otherwise, so a payment is stamped with it
+const NOW_MS = 1_791_565_000_000;
+const NOW_NANOS = BigInt(NOW_MS) * 1_000_000n;
 const FEE = 10n;
 const CHAT_FEE = 1_000n;
 const ICP: TokenInfo = { ledger: ICP_LEDGER, symbol: "ICP", decimals: 8, fee: FEE };
@@ -47,7 +51,7 @@ function transfer(fromAccount?: string): PendingCryptocurrencyTransfer {
         recipient: THEM,
         amountE8s: 100n,
         feeE8s: FEE,
-        createdAtNanos: 0n,
+        createdAtNanos: NOW_NANOS,
         fromAccount,
     };
 }
@@ -169,6 +173,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             tipMessage: called("communityTipMessage"),
         };
         agent._userIndexClient = { payForDiamondMembership: called("payForDiamondMembership") };
+        agent._proposalsBotClient = { get: () => ({ submitProposal: called("submitProposal") }) };
     }
 
     // Sends a message to a group or channel, giving the response once it is final
@@ -310,8 +315,11 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         callArgs = [];
         timeDiffMsecs = 0;
         syncedWith = [];
+        vi.spyOn(Date, "now").mockReturnValue(NOW_MS);
         vi.spyOn(console, "warn").mockImplementation(() => {});
     });
+
+    afterEach(() => vi.restoreAllMocks());
 
     describe("by a user in a MultiUser canister", () => {
         beforeEach(() => setup(MULTI_USER_CANISTER_USER));
@@ -729,17 +737,8 @@ describe("OpenChatAgent paying from the user's wallet", () => {
     // A ledger rejects a transfer created more than a minute in its future, which each transfer
     // stamped by a device whose clock is fast would be
     describe("from a device whose clock is ahead of the IC's", () => {
-        const DEVICE_NOW_MS = 1_791_565_000_000;
         const AHEAD_MS = 160_000;
-        const deviceNow = BigInt(DEVICE_NOW_MS) * 1_000_000n;
-        const icNow = BigInt(DEVICE_NOW_MS - AHEAD_MS) * 1_000_000n;
-
-        // The content, stamped by the device as the user sends it
-        const stampedByDevice = (content: CryptocurrencyContent | PrizeContentInitial) =>
-            ({
-                ...content,
-                transfer: { ...content.transfer, createdAtNanos: deviceNow },
-            }) as MessageContent;
+        const icNow = BigInt(NOW_MS - AHEAD_MS) * 1_000_000n;
 
         // The stamp on the transfer in the message sent
         const stampSent = () => {
@@ -751,11 +750,8 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         };
 
         beforeEach(() => {
-            vi.spyOn(Date, "now").mockReturnValue(DEVICE_NOW_MS);
             timeDiffMsecs = -AHEAD_MS;
         });
-
-        afterEach(() => vi.restoreAllMocks());
 
         test.each([
             ["crypto in a direct chat", MULTI_USER_CANISTER_USER, DIRECT, crypto],
@@ -772,36 +768,25 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             async (_, userId, chatId, content) => {
                 setup(userId);
 
-                await send(chatId, stampedByDevice(content()));
+                await send(chatId, content());
 
                 expect(stampSent()).toEqual(icNow);
                 expect(syncedWith).toEqual([ICP_LEDGER]);
             },
         );
 
-        // So that a message retried with the stamp it was first sent with is deduplicated by the
-        // ledger rather than paid twice
-        test("a message stamped before the time on the IC keeps its stamp", async () => {
-            setup(MULTI_USER_CANISTER_USER);
-            const stamp = icNow - 1_000_000_000n;
-
-            await send(DIRECT, { ...crypto(), transfer: { ...transfer(), createdAtNanos: stamp } });
-
-            expect(stampSent()).toEqual(stamp);
-        });
-
         test.each([
             ["group", GROUP, "groupTipMessage"],
             ["channel", CHANNEL, "communityTipMessage"],
         ] as const)(
-            "a tip in a %s, pulled from the wallet by it, is stamped with the time on the IC",
+            "a tip in a %s, pulled from the wallet by it, is stamped with the time on the ledger's subnet",
             async (_, chatId, call) => {
                 setup(MULTI_USER_CANISTER_USER);
 
                 await agent.tipMessage(
                     { chatId },
                     1n,
-                    { ...transfer(), createdAtNanos: deviceNow },
+                    transfer(),
                     8,
                     undefined,
                     "me",
@@ -813,6 +798,23 @@ describe("OpenChatAgent paying from the user's wallet", () => {
                 expect((callArgs[0][3] as PendingCryptocurrencyTransfer).createdAtNanos).toEqual(
                     icNow,
                 );
+                expect(syncedWith).toEqual([ICP_LEDGER]);
+            },
+        );
+
+        test.each([
+            ["a user in a MultiUser canister", MULTI_USER_CANISTER_USER],
+            ["a user alone in their canister", USER_CANISTER_USER],
+        ])(
+            "the fee for a proposal by %s is stamped with the time on the ledger's subnet",
+            async (_, userId) => {
+                setup(userId);
+
+                await agent.submitProposal(userId, "", {}, ICP_LEDGER, "ICP", 100n, FEE);
+
+                expect(calls).toEqual(["submitProposal"]);
+                expect(callArgs[0].at(-1)).toEqual(icNow);
+                expect(syncedWith).toEqual([ICP_LEDGER]);
             },
         );
 
@@ -836,7 +838,7 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         to: EXTERNAL_ACCOUNT,
         amountE8s: 100n,
         feeE8s: FEE,
-        createdAtNanos: 0n,
+        createdAtNanos: NOW_NANOS,
     };
     const PIN = "1234";
     const LEDGER_RESPONSE = {
@@ -848,8 +850,9 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
 
     let ledgerWithdrawals: unknown[][];
     let canisterWithdrawals: unknown[][];
-    // How far the IC's clock is ahead of the device's
+    // How far the IC's clock is ahead of the device's, and each ledger whose subnet it was read from
     let timeDiffMsecs: number;
+    let syncedWith: string[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let agent: any;
 
@@ -857,10 +860,15 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         ledgerWithdrawals = [];
         canisterWithdrawals = [];
         timeDiffMsecs = 0;
+        syncedWith = [];
+        vi.spyOn(Date, "now").mockReturnValue(NOW_MS);
         agent = Object.create(OpenChatAgent.prototype);
         agent.identity = { getPrincipal: () => ME };
         agent._agent = {
-            syncTime: () => Promise.resolve(),
+            syncTime: (canisterId: Principal) => {
+                syncedWith.push(canisterId.toText());
+                return Promise.resolve();
+            },
             getTimeDiffMsecs: () => timeDiffMsecs,
         };
         agent._ledgerClient = {
@@ -878,6 +886,8 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         };
     }
 
+    afterEach(() => vi.restoreAllMocks());
+
     test("a user in a MultiUser canister sends from their wallet on the ledger, with no PIN", async () => {
         setup(MULTI_USER_CANISTER_USER);
 
@@ -894,29 +904,24 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         expect(ledgerWithdrawals).toEqual([]);
     });
 
-    afterEach(() => vi.restoreAllMocks());
-
     // Whether the ledger is called by the website or by their canister, it rejects a withdrawal
     // created more than a minute in its future
     test.each([
         ["a user in a MultiUser canister", MULTI_USER_CANISTER_USER, () => ledgerWithdrawals],
         ["a user alone in their canister", USER_CANISTER_USER, () => canisterWithdrawals],
     ])(
-        "a withdrawal by %s from a device whose clock is fast is stamped with the time on the IC",
+        "a withdrawal by %s from a device whose clock is fast is stamped with the time on the ledger's subnet",
         async (_, userId, withdrawals) => {
             setup(userId);
-            vi.spyOn(Date, "now").mockReturnValue(1_791_565_000_000);
             timeDiffMsecs = -160_000;
 
-            await agent.withdrawCryptocurrency(
-                { ...WITHDRAWAL, createdAtNanos: 1_791_565_000_000_000_000n },
-                PIN,
-            );
+            await agent.withdrawCryptocurrency(WITHDRAWAL, PIN);
 
             expect(withdrawals()[0][0]).toEqual({
                 ...WITHDRAWAL,
-                createdAtNanos: 1_791_564_840_000_000_000n,
+                createdAtNanos: BigInt(NOW_MS - 160_000) * 1_000_000n,
             });
+            expect(syncedWith).toEqual([ICP_LEDGER]);
         },
     );
 });
@@ -1461,6 +1466,7 @@ describe("OpenChatAgent approving a spender", () => {
         agent = Object.create(OpenChatAgent.prototype);
         agent.identity = { getPrincipal: () => ME };
         agent._registryValue = { tokenDetails: [{ ledger: ICP_LEDGER, transferFee: FEE }] };
+        agent._agent = { syncTime: () => Promise.resolve(), getTimeDiffMsecs: () => 0 };
         agent._ledgerClient = {
             approveSpending: (...args: unknown[]) => {
                 approvals.push(args);
