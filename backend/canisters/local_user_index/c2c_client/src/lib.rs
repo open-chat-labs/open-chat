@@ -83,11 +83,7 @@ pub async fn lookup_event_recipient(
     user_id: UserId,
     local_user_index_canister_id: CanisterId,
 ) -> Result<EventRecipient, C2CError> {
-    let c2c_lookup_users::Response::Success(users) = crate::c2c_lookup_users(
-        local_user_index_canister_id,
-        &c2c_lookup_users::Args { user_ids: vec![user_id] },
-    )
-    .await?;
+    let user = lookup_user(user_id.as_principal(), local_user_index_canister_id).await?;
 
     // Looked up after the user, since the LocalUserIndex drops a migrated user's old id at the same
     // time as it records their migration, so a user missing above who had just been migrated is
@@ -96,7 +92,7 @@ pub async fn lookup_event_recipient(
         return Ok(EventRecipient::Migrated(new_user_id));
     }
 
-    Ok(match users.get(&user_id) {
+    Ok(match user {
         Some(user) if !user.user_type.is_bot() => EventRecipient::User,
         _ => EventRecipient::Gone,
     })

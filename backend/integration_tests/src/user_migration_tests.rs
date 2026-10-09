@@ -18,10 +18,10 @@ use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     AutonomousConfig, BotChatContext, BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, BuildVersion,
     CLAIM_TYPE_START_VIDEO_CALL, CanisterId, CanisterWasm, ChannelId, Chat, ChatEvent, ChatId, CommunityId, CommunityRole,
-    DiamondMembershipPlanDuration, Document, Empty, EventIndex, EventsResponse, FcmToken, FileContent, IdempotentEnvelope,
-    MessageContent, MessageContentInitial, MessageIndex, NotificationSubscription, OptionUpdate, P2PSwapContentInitial,
-    PendingCryptoTransaction, ReferralStatus, StartVideoCallClaims, SubscriptionInfo, SubscriptionKeys, TextContent,
-    UnitResult, UserId, VideoCallType, icrc1, icrc2,
+    DiamondMembershipPlanDuration, Document, Empty, EventIndex, EventsResponse, FcmToken, FileContent, HttpRequest,
+    IdempotentEnvelope, MessageContent, MessageContentInitial, MessageIndex, NotificationSubscription, OptionUpdate,
+    P2PSwapContentInitial, PendingCryptoTransaction, ReferralStatus, StartVideoCallClaims, SubscriptionInfo, SubscriptionKeys,
+    TextContent, UnitResult, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::{MessageActivity, UserCanisterEvent};
 use user_index_canister::user_migration::UserMigrationStatus;
@@ -161,21 +161,47 @@ fn events_for_a_deleted_user_are_dropped_rather_than_holding_up_migrating_their_
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     tick_many(env, 3);
 
+    // Wait until user2's canister no longer has the User wasm, being either uninstalled or briefly
+    // running the cycles refunder, so that events sent to it fail
     client::identity::happy_path::delete_user(env, &user2_auth, canister_ids.identity);
-    tick_many(env, 20);
+    let module_hash = |env: &PocketIc, user: &User| {
+        env.canister_status(user.canister(), Some(user.local_user_index))
+            .unwrap()
+            .module_hash
+    };
+    let user_wasm_hash = module_hash(env, &user1);
+    tick_until(env, |env| module_hash(env, &user2) != user_wasm_hash);
 
     // An event for the deleted user can never be delivered, so it is dropped rather than retried
     // forever, which would hold up migrating the user who sent it
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
-    tick_many(env, 10);
+    tick_until(env, |env| logged(env, user1.canister(), DROPPED_EVENTS));
     assert_eq!(metrics(env, user1.canister())["queued_user_events"], 0);
 
     let new_user1 = migrate(env, canister_ids, &operator, &user1, multi_user_canister);
 
     // The MultiUser canister drops them too
     client::user::happy_path::send_text_message(env, &new_user1, user2.user_id, random_string(), None);
-    tick_many(env, 10);
+    tick_until(env, |env| logged(env, multi_user_canister, DROPPED_EVENTS));
     assert_eq!(metrics(env, multi_user_canister)["queued_user_canister_events"], 0);
+}
+
+const DROPPED_EVENTS: &str = "Dropped events for a user who is gone";
+
+// Whether the canister has logged `message`
+fn logged(env: &PocketIc, canister_id: CanisterId, message: &str) -> bool {
+    let response = client::http_request(
+        env,
+        Principal::anonymous(),
+        canister_id,
+        &HttpRequest {
+            method: "GET".to_string(),
+            url: "/logs".to_string(),
+            headers: Vec::new(),
+            body: Vec::new(),
+        },
+    );
+    String::from_utf8_lossy(&response.body).contains(message)
 }
 
 #[test]

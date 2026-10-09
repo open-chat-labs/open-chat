@@ -113,7 +113,10 @@ impl TimerJobItem for UserCanisterEventBatch {
                         // The events can never be delivered, eg. to a user who has deleted their account,
                         // and would otherwise be retried forever, holding up migrating this user
                         Ok(EventRecipient::Gone) => {
-                            info!(%canister_id, count = self.items.len(), "Dropped events for a user who is gone");
+                            // As are any events queued for them since this batch was taken
+                            let dropped = mutate_state(|state| state.data.user_canister_events_by_canister.take(&canister_id));
+                            let count = self.items.len() + dropped.len();
+                            info!(%canister_id, count, "Dropped events for a user who is gone");
                             return Ok(());
                         }
                         // The LocalUserIndex may not have heard of the migration yet, so the events are
