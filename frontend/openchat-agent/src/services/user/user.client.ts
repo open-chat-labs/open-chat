@@ -57,6 +57,7 @@ import {
     type MessageActivityFeedResponse,
     type MessageContext,
     type NamedAccount,
+    type OCError,
     type OptionUpdate,
     type PayForStreakInsuranceResponse,
     type PendingCryptocurrencyTransfer,
@@ -70,6 +71,7 @@ import {
     type SetBioResponse,
     type SetMessageReminderResponse,
     type SetPinNumberResponse,
+    type Success,
     type SwapTokensResponse,
     type ThreadRead,
     type TipMessageResponse,
@@ -77,6 +79,7 @@ import {
     type TokenSwapStatusResponse,
     type UnblockUserResponse,
     type UndeleteMessageResponse,
+    type UnfinishedTokenSwap,
     type UnpinChatResponse,
     type UpdatesResponse,
     type Verification,
@@ -89,6 +92,7 @@ import type { AgentConfig } from "../../config";
 import {
     SuccessOnly,
     Empty as TEmpty,
+    TokenInfo,
     UnitResult,
     UserAcceptP2pSwapArgs,
     UserAcceptP2pSwapResponse,
@@ -104,6 +108,8 @@ import {
     UserCancelP2pSwapArgs,
     UserChatInList,
     UserCheckPinNumberArgs,
+    UserMarkTokenSwapCompletedArgs,
+    UserMarkTokenSwapStartedArgs,
     UserChitEventsArgs,
     UserChitEventsResponse,
     UserClaimDailyChitArgs,
@@ -170,6 +176,7 @@ import {
     UserTipMessageArgs,
     UserTipMessageResponse,
     UserTokenSwapStatusArgs,
+    UserUnfinishedTokenSwapsResponse,
     UserTokenSwapStatusResponse,
     UserUnblockUserArgs,
     UserUndeleteMessagesArgs,
@@ -243,6 +250,7 @@ import {
     swapTokensSuccess,
     tipMessageResponse,
     tokenSwapStatusResponse,
+    unfinishedTokenSwapsResponse,
     withdrawCryptoResponse,
 } from "./mappersV2";
 
@@ -1332,18 +1340,8 @@ export class UserClient
             "swap_tokens",
             {
                 swap_id: swapId,
-                input_token: {
-                    symbol: inputToken.symbol,
-                    ledger: principalStringToBytes(inputToken.ledger),
-                    decimals: inputToken.decimals,
-                    fee: inputToken.transferFee,
-                },
-                output_token: {
-                    symbol: outputToken.symbol,
-                    ledger: principalStringToBytes(outputToken.ledger),
-                    decimals: outputToken.decimals,
-                    fee: outputToken.transferFee,
-                },
+                input_token: apiTokenInfo(inputToken),
+                output_token: apiTokenInfo(outputToken),
                 input_amount: amountIn,
                 exchange_args: apiExchangeArgs(exchangeArgs),
                 min_output_amount: minAmountOut,
@@ -1365,6 +1363,61 @@ export class UserClient
             tokenSwapStatusResponse,
             UserTokenSwapStatusArgs,
             UserTokenSwapStatusResponse,
+        );
+    }
+
+    // Records a swap the user is about to make straight from their own wallet, so that it can be found
+    // again if it doesn't finish (see `unfinishedTokenSwaps`)
+    markTokenSwapStarted(
+        swapId: bigint,
+        inputToken: CryptocurrencyDetails,
+        outputToken: CryptocurrencyDetails,
+        amountIn: bigint,
+        minAmountOut: bigint,
+        exchangeArgs: ExchangeTokenSwapArgs,
+    ): Promise<Success | OCError> {
+        return this.update(
+            "mark_token_swap_started",
+            {
+                swap_id: swapId,
+                input_token: apiTokenInfo(inputToken),
+                output_token: apiTokenInfo(outputToken),
+                input_amount: amountIn,
+                exchange_args: apiExchangeArgs(exchangeArgs),
+                min_output_amount: minAmountOut,
+            },
+            unitResult,
+            UserMarkTokenSwapStartedArgs,
+            UnitResult,
+        );
+    }
+
+    // Records how a swap recorded by `markTokenSwapStarted` ended: the amount received if it went
+    // ahead, else why it didn't
+    markTokenSwapCompleted(
+        swapId: bigint,
+        result: { kind: "swapped"; amountOut: bigint } | { kind: "failed"; reason: string },
+    ): Promise<Success | OCError> {
+        return this.update(
+            "mark_token_swap_completed",
+            {
+                swap_id: swapId,
+                result:
+                    result.kind === "swapped" ? { Ok: result.amountOut } : { Err: result.reason },
+            },
+            unitResult,
+            UserMarkTokenSwapCompletedArgs,
+            UnitResult,
+        );
+    }
+
+    unfinishedTokenSwaps(): Promise<UnfinishedTokenSwap[]> {
+        return this.query(
+            "unfinished_token_swaps",
+            {},
+            unfinishedTokenSwapsResponse,
+            TEmpty,
+            UserUnfinishedTokenSwapsResponse,
         );
     }
 
@@ -1707,4 +1760,13 @@ export class UserClient
 // is deleted or expires.
 function accessorCanisterIds(...userIds: string[]): string[] {
     return userIds.map((userId) => userCanisterId(userId).toText());
+}
+
+function apiTokenInfo(token: CryptocurrencyDetails): TokenInfo {
+    return {
+        symbol: token.symbol,
+        ledger: principalStringToBytes(token.ledger),
+        decimals: token.decimals,
+        fee: token.transferFee,
+    };
 }

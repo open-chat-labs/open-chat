@@ -463,6 +463,7 @@ export type WorkerRequest =
     | GetTokenSwapQuotes
     | SwapTokens
     | TokenSwapStatus
+    | RecoverUnfinishedTokenSwaps
     | ApproveTransfer
     | ApproveAccessGatePayment
     | DeleteDirectChat
@@ -954,6 +955,10 @@ type SwapTokens = {
 type TokenSwapStatus = {
     kind: "tokenSwapStatus";
     swapId: bigint;
+};
+
+type RecoverUnfinishedTokenSwaps = {
+    kind: "recoverUnfinishedTokenSwaps";
 };
 
 type SetCommunityIndexes = {
@@ -2986,6 +2991,8 @@ export type WorkerResult<T> = T extends Init
     ? SwapTokensResponse
     : T extends TokenSwapStatus
     ? TokenSwapStatusResponse
+    : T extends RecoverUnfinishedTokenSwaps
+    ? void
     : T extends DeleteDirectChat
     ? boolean
     : T extends GetDiamondMembershipFees

@@ -41,6 +41,7 @@ import type {
     SwapTokensResponse,
     TipMessageResponse,
     TokenSwapStatusResponse,
+    UnfinishedTokenSwap,
     UpdatedEvent,
     UpdatesResponse,
     UserCanisterChannelSummary,
@@ -104,6 +105,7 @@ import type {
     UserSwapTokensSuccessResult,
     UserTipMessageResponse,
     UserTokenSwapStatusResponse,
+    UserUnfinishedTokenSwapsResponse,
     UserUpdatesCommunitiesUpdates,
     UserUpdatesDirectChatsUpdates,
     UserUpdatesFavouriteChatsUpdates,
@@ -1036,6 +1038,36 @@ export function apiExchangeArgs(args: ExchangeTokenSwapArgs): UserSwapTokensExch
         };
     }
     throw new UnsupportedValueError("Unexpected dex", (args as { dex: string }).dex as never);
+}
+
+export function unfinishedTokenSwapsResponse(
+    value: UserUnfinishedTokenSwapsResponse,
+): UnfinishedTokenSwap[] {
+    return value.Success.map((s) => ({
+        swapId: s.args.swap_id,
+        started: s.started,
+        inputLedger: principalBytesToString(s.args.input_token.ledger),
+        outputLedger: principalBytesToString(s.args.output_token.ledger),
+        exchangeArgs: exchangeArgs(s.args.exchange_args),
+    }));
+}
+
+function exchangeArgs(value: UserSwapTokensExchangeArgs): ExchangeTokenSwapArgs {
+    if ("ICPSwap" in value) {
+        return {
+            dex: "icpswap",
+            swapCanisterId: principalBytesToString(value.ICPSwap.swap_canister_id),
+            zeroForOne: value.ICPSwap.zero_for_one,
+        };
+    }
+    if ("Taco" in value) {
+        return {
+            dex: "taco",
+            swapCanisterId: principalBytesToString(value.Taco.swap_canister_id),
+            treasuryCanisterId: principalBytesToString(value.Taco.treasury_canister_id),
+        };
+    }
+    throw new UnsupportedValueError("Unexpected exchange", value as never);
 }
 
 export function claimDailyChitResponse(value: UserClaimDailyChitResponse): ClaimDailyChitResponse {

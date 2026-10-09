@@ -13,14 +13,29 @@ export const idlFactory = ({ IDL }) => {
     'InsufficientFunds' : IDL.Null,
   });
   const NatResult = IDL.Variant({ 'ok' : IDL.Nat, 'err' : Error });
+  const UnusedBalanceResult = IDL.Variant({
+    'ok' : IDL.Record({ 'balance0' : IDL.Nat, 'balance1' : IDL.Nat }),
+    'err' : Error,
+  });
   const SwapArgs = IDL.Record({
     'amountIn' : IDL.Text,
     'zeroForOne' : IDL.Bool,
     'amountOutMinimum' : IDL.Text,
   });
+  const WithdrawArgs = IDL.Record({
+    'fee' : IDL.Nat,
+    'token' : IDL.Text,
+    'amount' : IDL.Nat,
+  });
   return IDL.Service({
     'depositFromAndSwap' : IDL.Func([DepositAndSwapArgs], [NatResult], []),
+    'getUserUnusedBalance' : IDL.Func(
+        [IDL.Principal],
+        [UnusedBalanceResult],
+        ['query'],
+      ),
     'quoteForAll' : IDL.Func([SwapArgs], [NatResult], ['query']),
+    'withdraw' : IDL.Func([WithdrawArgs], [NatResult], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

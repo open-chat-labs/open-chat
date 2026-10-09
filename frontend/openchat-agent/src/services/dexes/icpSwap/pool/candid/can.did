@@ -16,6 +16,18 @@ type Error = variant {
   InternalError: text;
   UnsupportedToken: text;
 };
+type WithdrawArgs = record {
+  amount: nat;
+  fee: nat;
+  token: text;
+};
+type UnusedBalanceResult = variant {
+  err: Error;
+  ok: record {
+    balance0: nat;
+    balance1: nat;
+  };
+};
 type DepositAndSwapArgs = record {
   amountIn: text;
   amountOutMinimum: text;
@@ -25,5 +37,7 @@ type DepositAndSwapArgs = record {
 };
 service : {
   depositFromAndSwap: (DepositAndSwapArgs) -> (NatResult);
+  getUserUnusedBalance: (principal) -> (UnusedBalanceResult) query;
   quoteForAll: (SwapArgs) -> (NatResult) query;
+  withdraw: (WithdrawArgs) -> (NatResult);
 }

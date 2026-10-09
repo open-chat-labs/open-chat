@@ -2410,6 +2410,7 @@
             "notify": "Notify {dex} of deposit",
             "refund": "Refund {amountIn} {tokenIn} from {dex}",
             "swap": "Instruct {dex} to perform the swap",
+            "unknown": "Couldn't confirm whether the swap went through - check your balance before trying again",
             "withdraw": "Withdraw {amountOut} {tokenOut} from {dex}"
         },
         "quote": "Quote",

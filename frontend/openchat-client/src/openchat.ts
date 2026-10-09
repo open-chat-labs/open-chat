@@ -7105,6 +7105,19 @@ export class OpenChat {
         }
     }
 
+    // Finishes off any swap the user made straight from their wallet which they left part way
+    // through, withdrawing to their wallet anything the DEX still holds for them. Only a user who
+    // holds their own funds makes such swaps.
+    async #recoverUnfinishedTokenSwaps(): Promise<void> {
+        if (!isMultiUserCanisterUser(currentUserIdStore.value)) return;
+
+        try {
+            await this.#worker.send({ kind: "recoverUnfinishedTokenSwaps" });
+        } catch (err) {
+            this.#logger.error("Failed to recover unfinished token swaps", err);
+        }
+    }
+
     refreshTranslationsBalance(): Promise<bigint> {
         return this.#worker
             .send({
@@ -8123,9 +8136,10 @@ export class OpenChat {
                 // them queries every token too
                 window.setTimeout(
                     () =>
-                        this.refreshBalancesInSeries().finally(() =>
-                            this.#movePreviousWalletFunds(),
-                        ),
+                        this.refreshBalancesInSeries().finally(() => {
+                            this.#movePreviousWalletFunds();
+                            this.#recoverUnfinishedTokenSwaps();
+                        }),
                     1000,
                 );
             }
