@@ -1,6 +1,6 @@
 use crate::client::{local_user_index, user_index};
 use crate::env::ENV;
-use crate::utils::{generate_seed, tick_many};
+use crate::utils::{catch_up_with_wall_clock, generate_seed, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use jwt_simple::algorithms::{ECDSAP256PublicKeyLike, ES256PublicKey};
@@ -8,7 +8,6 @@ use local_user_index_canister::access_token_v2::StartVideoCallArgs;
 use pocket_ic::PocketIc;
 use std::error::Error;
 use std::ops::Deref;
-use std::time::SystemTime;
 use testing::rng::random_string;
 use types::{ChannelId, Chat, CommunityId, StartVideoCallClaims, VideoCallType};
 
@@ -26,7 +25,7 @@ fn access_token_valid() {
         ..
     } = wrapper.env();
 
-    env.set_time(SystemTime::now().into());
+    catch_up_with_wall_clock(env);
 
     let TestData {
         user1,
@@ -37,26 +36,27 @@ fn access_token_valid() {
     tick_many(env, 10);
 
     let public_key = user_index::happy_path::public_key(env, canister_ids.user_index);
-
-    println!("{public_key}");
-
-    let token = local_user_index::happy_path::access_token(
-        env,
-        &user1,
-        canister_ids.local_user_index(env, community_id),
-        &local_user_index_canister::access_token_v2::Args::StartVideoCall(StartVideoCallArgs {
+    let local_user_index = canister_ids.local_user_index(env, community_id);
+    let args = |call_type, audio_only| {
+        local_user_index_canister::access_token_v2::Args::StartVideoCall(StartVideoCallArgs {
             chat: Chat::Channel(community_id, channel_id),
-            call_type: VideoCallType::Broadcast,
-            audio_only: true,
-        }),
-    );
+            call_type,
+            audio_only,
+        })
+    };
 
-    println!("{token}");
+    for (call_type, audio_only) in [
+        (VideoCallType::Broadcast, false),
+        (VideoCallType::Default, false),
+        (VideoCallType::Default, true),
+    ] {
+        let token = local_user_index::happy_path::access_token(env, &user1, local_user_index, &args(call_type, audio_only));
 
-    let claims = decode_and_verify_token(token, public_key).expect("Expected to decode the token");
+        let claims = decode_and_verify_token(token, public_key.clone()).expect("Expected to decode the token");
 
-    assert_eq!(user1.user_id, claims.user_id);
-    assert_eq!((claims.call_type, claims.audio_only), (VideoCallType::Broadcast, true));
+        assert_eq!(user1.user_id, claims.user_id);
+        assert_eq!((claims.call_type, claims.audio_only), (call_type, audio_only));
+    }
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {

@@ -27,6 +27,15 @@ pub fn now_nanos(env: &PocketIc) -> TimestampNanos {
     env.get_time().as_nanos_since_unix_epoch()
 }
 
+// For tests whose tokens are verified against the wall clock. A new env starts at the current
+// time, but setup can leave its clock a little ahead, and PocketIC refuses to move it back.
+pub fn catch_up_with_wall_clock(env: &mut PocketIc) {
+    let now = SystemTime::now().into();
+    if env.get_time() < now {
+        env.set_time(now);
+    }
+}
+
 pub fn local_bin() -> PathBuf {
     let mut file_path =
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to read CARGO_MANIFEST_DIR env variable"));

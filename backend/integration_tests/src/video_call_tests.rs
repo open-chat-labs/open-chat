@@ -1,5 +1,5 @@
 use crate::env::{ENV, VIDEO_CALL_OPERATOR};
-use crate::utils::{now_millis, tick_many};
+use crate::utils::{catch_up_with_wall_clock, now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use constants::HOUR_IN_MS;
 use pocket_ic::PocketIc;
@@ -436,7 +436,7 @@ fn invariant_17_participant_token_names_the_caller_and_chat_under_its_own_claim_
         controller,
         ..
     } = wrapper.env();
-    env.set_time(std::time::SystemTime::now().into());
+    catch_up_with_wall_clock(env);
 
     let member = client::register_diamond_user(env, canister_ids, *controller);
     let outsider = client::register_user(env, canister_ids);
