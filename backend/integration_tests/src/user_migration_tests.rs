@@ -2596,8 +2596,7 @@ fn migrated_users_chats_end_up_in_stable_memory() {
     let migrated_0 = migrate(env, canister_ids, &operator, &users[0], multi_user_canister);
     assert_chats_in_stable_memory(env, multi_user_canister, &migrated_0, &partners, &snapshots[0]);
 
-    // A user exported by the new User canister brings their chats with them in stable memory, where
-    // the upgrade moved them
+    // A user exported by the new User canister brings their chats with them in stable memory
     client::user_index::happy_path::upgrade_user_canister_wasm(
         env,
         *controller,
