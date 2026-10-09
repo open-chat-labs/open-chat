@@ -308,6 +308,20 @@ describe("shouldReportError", () => {
             }),
         ).toBe(true);
     });
+
+    test("silences the IC's Bitcoin canister trapping while it syncs (#31771)", () => {
+        const trap = (text: string) =>
+            new HttpError(
+                500,
+                new Error(
+                    "The replica returned a rejection error:\n  Reject code: 5\n  Reject text: " +
+                        "Error from Canister <id>: Canister called `ic0.trap` with message: " +
+                        `'Panicked at '${text}', canister/src/lib.rs`,
+                ),
+            );
+        expect(shouldReportError(trap("Canister state is not fully synced."))).toBe(false);
+        expect(shouldReportError(trap("Canister state is not initialized."))).toBe(true);
+    });
 });
 
 describe("requiresLogout", () => {
