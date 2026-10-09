@@ -17,6 +17,9 @@
         amountIn: string;
         decimalsOut: number;
         dex: string;
+        // Whether swapping returned an error, which, if the swap was never recorded, means it was
+        // refused before it started
+        refused: boolean;
         onFinished: (outcome: SwapOutcome, ledgerIn: string, ledgerOut: string) => void;
     }
 
@@ -28,6 +31,7 @@
         amountIn,
         decimalsOut,
         dex,
+        refused,
         onFinished,
     }: Props = $props();
 
@@ -160,6 +164,12 @@
                 result = { label: "error", status: "failed" };
                 notifyFinished("error");
             }
+        } else if (refused) {
+            // The swap was refused before it started (eg. the PIN was wrong), so it was never
+            // recorded and there is no progress to wait for
+            updateSteps([{ label: "get", status: "failed" }]);
+            result = { label: "error", status: "failed" };
+            notifyFinished("error");
         }
     }
 </script>

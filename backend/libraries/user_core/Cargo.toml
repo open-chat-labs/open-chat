@@ -6,6 +6,7 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-trait = { workspace = true }
 candid = { workspace = true }
 ckbtc_minter_canister = { path = "../../external_canisters/ckbtc_minter/api" }
 ckbtc_minter_canister_c2c_client = { path = "../../external_canisters/ckbtc_minter/c2c_client" }
@@ -16,6 +17,8 @@ escrow_canister = { path = "../../canisters/escrow/api" }
 escrow_canister_c2c_client = { path = "../../canisters/escrow/c2c_client" }
 group_index_canister = { path = "../../canisters/group_index/api" }
 ic-cdk = { workspace = true }
+icpswap_swap_pool_canister = { path = "../../external_canisters/icpswap_swap_pool/api" }
+icpswap_swap_pool_canister_c2c_client = { path = "../../external_canisters/icpswap_swap_pool/c2c_client" }
 icrc_ledger_canister_c2c_client = { path = "../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../ledger_utils" }
@@ -31,6 +34,8 @@ one_sec_minter_canister = { path = "../../external_canisters/one_sec_minter/api"
 one_sec_minter_canister_c2c_client = { path = "../../external_canisters/one_sec_minter/c2c_client" }
 serde = { workspace = true }
 stable_memory_map = { path = "../stable_memory_map" }
+taco_exchange_canister = { path = "../../external_canisters/taco_exchange/api" }
+taco_exchange_canister_c2c_client = { path = "../../external_canisters/taco_exchange/c2c_client" }
 tracing = { workspace = true }
 types = { path = "../types" }
 user_canister = { path = "../../canisters/user/api" }

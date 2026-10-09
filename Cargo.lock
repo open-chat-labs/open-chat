@@ -12878,7 +12878,6 @@ dependencies = [
 name = "user_canister_impl"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "candid",
  "canister_api_macros",
  "canister_logger",
@@ -12909,8 +12908,6 @@ dependencies = [
  "ic-ledger-types",
  "ic-stable-structures",
  "ic_principal",
- "icpswap_swap_pool_canister",
- "icpswap_swap_pool_canister_c2c_client",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
@@ -12932,8 +12929,6 @@ dependencies = [
  "stable_memory",
  "stable_memory_map",
  "storage_bucket_client",
- "taco_exchange_canister",
- "taco_exchange_canister_c2c_client",
  "test-case",
  "timer_job_queues",
  "tracing",
@@ -12950,6 +12945,7 @@ dependencies = [
 name = "user_core"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "candid",
  "chat_events",
  "ckbtc_minter_canister",
@@ -12962,6 +12958,8 @@ dependencies = [
  "ic-cdk 0.20.3",
  "ic-ledger-types",
  "ic-stable-structures",
+ "icpswap_swap_pool_canister",
+ "icpswap_swap_pool_canister_c2c_client",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
  "installed_bots",
@@ -12976,6 +12974,8 @@ dependencies = [
  "rand 0.10.2",
  "serde",
  "stable_memory_map",
+ "taco_exchange_canister",
+ "taco_exchange_canister_c2c_client",
  "tracing",
  "types",
  "user_canister",

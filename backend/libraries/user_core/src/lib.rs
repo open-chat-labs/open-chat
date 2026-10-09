@@ -18,6 +18,7 @@ pub mod migration;
 pub mod model;
 pub mod openchat_bot;
 pub mod queries;
+pub mod token_swaps;
 pub mod updates;
 
 pub use model::*;

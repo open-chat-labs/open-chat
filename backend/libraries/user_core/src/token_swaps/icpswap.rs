@@ -14,6 +14,10 @@ pub struct ICPSwapClient {
     token0: TokenInfo,
     token1: TokenInfo,
     zero_for_one: bool,
+    // The subaccount of this canister the output (or a refund) is withdrawn to, if not its default
+    // account
+    #[serde(default)]
+    withdrawal_subaccount: Option<[u8; 32]>,
 }
 
 impl ICPSwapClient {
@@ -30,7 +34,15 @@ impl ICPSwapClient {
             token0,
             token1,
             zero_for_one,
+            withdrawal_subaccount: None,
         }
+    }
+
+    // Has the output (or a refund) withdrawn to `subaccount` of this canister rather than to its
+    // default account
+    pub fn with_withdrawal_subaccount(mut self, subaccount: [u8; 32]) -> Self {
+        self.withdrawal_subaccount = Some(subaccount);
+        self
     }
 
     fn input_token(&self) -> &TokenInfo {
@@ -91,7 +103,11 @@ impl SwapClient for ICPSwapClient {
 
     async fn withdraw(&self, successful_swap: bool, amount: u128) -> Result<u128, C2CError> {
         let token = if successful_swap { self.output_token() } else { self.input_token() };
-        withdraw(self.swap_canister_id, token.ledger, amount, token.fee).await
+        if let Some(subaccount) = self.withdrawal_subaccount {
+            withdraw_to_subaccount(self.swap_canister_id, token.ledger, amount, token.fee, subaccount).await
+        } else {
+            withdraw(self.swap_canister_id, token.ledger, amount, token.fee).await
+        }
     }
 }
 
@@ -109,5 +125,25 @@ pub async fn withdraw(
     match icpswap_swap_pool_canister_c2c_client::withdraw(swap_canister_id, &args).await? {
         ICPSwapResult::Ok(amount_out) => Ok(nat_to_u128(amount_out)),
         ICPSwapResult::Err(error) => Err(convert_error(swap_canister_id, "withdraw", error)),
+    }
+}
+
+// As `withdraw`, but to `subaccount` of the caller rather than to its default account
+pub async fn withdraw_to_subaccount(
+    swap_canister_id: CanisterId,
+    ledger_canister_id: CanisterId,
+    amount: u128,
+    fee: u128,
+    subaccount: [u8; 32],
+) -> Result<u128, C2CError> {
+    let args = icpswap_swap_pool_canister::withdraw_to_subaccount::Args {
+        token: ledger_canister_id.to_string(),
+        amount: amount.into(),
+        fee: fee.into(),
+        subaccount: subaccount.to_vec(),
+    };
+    match icpswap_swap_pool_canister_c2c_client::withdraw_to_subaccount(swap_canister_id, &args).await? {
+        ICPSwapResult::Ok(amount_out) => Ok(nat_to_u128(amount_out)),
+        ICPSwapResult::Err(error) => Err(convert_error(swap_canister_id, "withdrawToSubaccount", error)),
     }
 }

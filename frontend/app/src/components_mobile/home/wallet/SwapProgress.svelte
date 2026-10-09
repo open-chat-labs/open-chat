@@ -31,10 +31,22 @@
         amountIn: string;
         decimalsOut: number;
         dex: string;
+        // Whether swapping returned an error, which, if the swap was never recorded, means it was
+        // refused before it started
+        refused: boolean;
     }
 
-    let { swapId, tokenIn, tokenOut, ledgerIn, ledgerOut, amountIn, decimalsOut, dex }: Props =
-        $props();
+    let {
+        swapId,
+        tokenIn,
+        tokenOut,
+        ledgerIn,
+        ledgerOut,
+        amountIn,
+        decimalsOut,
+        dex,
+        refused,
+    }: Props = $props();
 
     const height: SizeMode = { size: "16rem" };
     const client = getContext<OpenChat>("client");
@@ -116,6 +128,11 @@
                 error = true;
                 notifyFinished("error");
             }
+        } else if (refused) {
+            // The swap was refused before it started (eg. the PIN was wrong), so it was never
+            // recorded and there is no progress to wait for
+            error = true;
+            notifyFinished("error");
         }
     }
 

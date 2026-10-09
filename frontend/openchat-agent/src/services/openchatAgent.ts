@@ -4862,11 +4862,24 @@ export class OpenChatAgent extends EventTarget {
                 new Set([outputTokenDetails.ledger]),
                 this.swapProviders(),
             )
-            .then((pools) => {
+            .then(async (pools) => {
                 const pool = pools.find((p) => p.dex === dex);
 
                 if (pool === undefined) {
                     return Promise.reject("Cannot find a matching pool");
+                }
+
+                // The user's canister pulls the input, which includes the fee for sending it to
+                // the DEX, from the wallet of a user who holds their own funds
+                const error = await this.approveUserCanisterToPull(
+                    inputTokenDetails.ledger,
+                    amountIn,
+                    inputTokenDetails.transferFee,
+                    undefined,
+                    pin,
+                );
+                if (error !== undefined) {
+                    return error;
                 }
 
                 const exchangeArgs: ExchangeTokenSwapArgs =
@@ -4899,7 +4912,10 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private swapProviders(): DexId[] {
-        return this._registryValue?.swapProviders ?? [];
+        const swapProviders = this._registryValue?.swapProviders ?? [];
+        // A MultiUser canister can only swap via ICPSwap so far, since TACO pays out to the
+        // default account of whoever swapped rather than to the user the swap was for
+        return this.holdsOwnFunds() ? swapProviders.filter((p) => p === "icpswap") : swapProviders;
     }
 
     // Approves `spender`, a canister such as the ProposalsBot which spends as its own default

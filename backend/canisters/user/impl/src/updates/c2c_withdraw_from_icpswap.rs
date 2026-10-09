@@ -1,6 +1,6 @@
 use crate::guards::caller_is_local_user_index;
 use crate::updates::swap_tokens::mark_withdrawal_success;
-use crate::{RuntimeState, execute_update_async, mutate_state, read_state, token_swaps};
+use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use oc_error_codes::OCErrorCode;
@@ -23,7 +23,8 @@ async fn c2c_withdraw_from_icpswap_impl(args: Args) -> OCResult {
         fee,
     } = read_state(|state| prepare(&args, state))?;
 
-    let amount_out = token_swaps::icpswap::withdraw(swap.args.exchange_args.swap_canister_id(), ledger, amount, fee).await?;
+    let amount_out =
+        user_core::token_swaps::icpswap::withdraw(swap.args.exchange_args.swap_canister_id(), ledger, amount, fee).await?;
 
     mutate_state(|state| mark_withdrawal_success(swap, !args.input_token, amount_out, true, state));
     Ok(())

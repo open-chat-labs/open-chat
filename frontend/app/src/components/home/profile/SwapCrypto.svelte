@@ -51,6 +51,7 @@
     let swapMessageValues: InterpolationValues | undefined = $state(undefined);
     let bestQuote: [DexId, bigint] | undefined = $state(undefined);
     let swapId: bigint | undefined = $state();
+    let swapRefused = $state(false);
     let userAcceptedWarning = $state(false);
     let warnValueUnknown = $state(false);
     let warnValueDropped = $state(false);
@@ -164,6 +165,7 @@
             .then((balanceCheckSuccess) => {
                 if (balanceCheckSuccess) {
                     swapId = random128();
+                    swapRefused = false;
                     return client.swapTokens(
                         swapId,
                         ledgerInLocal,
@@ -172,6 +174,11 @@
                         minAmountOut,
                         bestQuoteLocal[0],
                     );
+                }
+            })
+            .then((response) => {
+                if (response?.kind === "error") {
+                    swapRefused = true;
                 }
             })
             .catch(() => {
@@ -322,6 +329,7 @@
                             amountIn={amountInText}
                             decimalsOut={detailsOut.decimals}
                             dex={dexName(bestQuote[0])}
+                            refused={swapRefused}
                             onFinished={onSwapFinished} />
                     </div>
                 {/if}

@@ -66,7 +66,7 @@ mod set_message_reminder;
 mod set_pin_number;
 mod set_profile_background;
 mod start_video_call;
-mod swap_tokens;
+pub(crate) mod swap_tokens;
 mod tip_message;
 mod unblock_user;
 mod undelete_messages;

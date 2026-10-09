@@ -95,6 +95,11 @@ pub struct TokenSwap {
     pub notified_dex_at: SwapSubtask,
     pub swap_result: SwapSubtask<Result<SwapSuccess, String>>,
     pub withdrawn_from_dex_at: SwapSubtask<u128>,
+    // Only set in a MultiUser canister, whose users hold their own funds, so the output (or a
+    // refund) is withdrawn from the DEX into an account of the canister's and then sent on from
+    // there to the user's wallet
+    #[serde(default)]
+    pub sent_to_wallet: SwapSubtask<u64>, // Block Index
     pub success: Option<Timestamped<bool>>,
 }
 
@@ -113,6 +118,7 @@ impl TokenSwap {
             notified_dex_at: None,
             swap_result: None,
             withdrawn_from_dex_at: None,
+            sent_to_wallet: None,
             success: None,
         }
     }

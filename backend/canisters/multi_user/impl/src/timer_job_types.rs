@@ -1,4 +1,5 @@
 use crate::updates::end_video_call::end_video_call_impl;
+use crate::updates::swap_tokens::process_token_swap;
 use crate::{can_borrow_state, mutate_state, openchat_bot, read_state, run_regular_jobs};
 use candid::Principal;
 use canister_timer_jobs::{Job, TimerJobs};
@@ -21,6 +22,7 @@ pub enum TimerJob {
     NotifyEscrowCanisterOfDeposit(Box<NotifyEscrowCanisterOfDepositJob>),
     CancelP2PSwapInEscrowCanister(Box<CancelP2PSwapInEscrowCanisterJob>),
     MarkP2PSwapExpired(Box<MarkP2PSwapExpiredJob>),
+    ProcessTokenSwap(Box<ProcessTokenSwapJob>),
 }
 
 // Removes the content of a deleted message from one user's copy of a direct chat, once the time in
@@ -104,6 +106,15 @@ pub struct MarkP2PSwapExpiredJob {
     pub message_id: MessageId,
 }
 
+// Carries on with one of a user's token swaps, after a step which failed or once the DEX has had time
+// to pay out the output, which is then sent on to the user's wallet
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ProcessTokenSwapJob {
+    pub user_index: u16,
+    pub swap_id: u128,
+    pub attempt: u32,
+}
+
 impl TimerJob {
     // A job handed over by the canister of a user being migrated here, for the user at `user_index`
     pub fn migrated(user_index: u16, job: MigratedTimerJob) -> TimerJob {
@@ -155,6 +166,7 @@ impl TimerJob {
             TimerJob::ClaimOrResetStreakInsurance(job) => Some(job.user_index),
             TimerJob::MarkVideoCallEnded(job) => Some(job.user_index),
             TimerJob::MarkP2PSwapExpired(job) => Some(job.user_index),
+            TimerJob::ProcessTokenSwap(job) => Some(job.user_index),
             TimerJob::NotifyEscrowCanisterOfDeposit(_)
             | TimerJob::CancelP2PSwapInEscrowCanister(_)
             | TimerJob::DeleteFileReferences(_) => None,
@@ -207,6 +219,7 @@ impl Job for TimerJob {
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
+            TimerJob::ProcessTokenSwap(job) => job.execute(),
         }
 
         if can_borrow_state {
@@ -352,6 +365,25 @@ impl Job for MarkVideoCallEndedJob {
                 "Failed to mark video call ended"
             );
         }
+    }
+}
+
+impl Job for ProcessTokenSwapJob {
+    fn execute(self) {
+        // Does nothing if the user no longer exists
+        let Some(token_swap) = read_state(|state| {
+            state
+                .data
+                .users
+                .with_user(self.user_index, |user| user.token_swaps.get(self.swap_id))
+                .flatten()
+        }) else {
+            return;
+        };
+
+        utils::async_work::spawn_tracked(async move {
+            process_token_swap(self.user_index, token_swap, self.attempt).await;
+        });
     }
 }
 
