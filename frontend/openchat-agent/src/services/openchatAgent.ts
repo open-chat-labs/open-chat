@@ -293,6 +293,7 @@ import {
     mergeCommunityUpdates,
 } from "../utils/community";
 import { createHttpAgentSync } from "../utils/httpAgent";
+import { icNowNanos } from "../utils/icTime";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { withLatestUserIds } from "../utils/latestUserIds";
@@ -673,6 +674,27 @@ export class OpenChatAgent extends EventTarget {
         return undefined;
     }
 
+    // The message with the crypto it sends or the prize it offers stamped with the time on the IC
+    // (see `icNowNanos`). A swap offer carries no stamp, its deposit being stamped by the canister
+    // which makes it.
+    private async stampTransferWithIcTime(
+        event: EventWrapper<Message>,
+    ): Promise<EventWrapper<Message>> {
+        const content = event.event.content;
+        if (
+            (content.kind !== "crypto_content" && content.kind !== "prize_content_initial") ||
+            content.transfer.kind !== "pending"
+        ) {
+            return event;
+        }
+        const createdAtNanos = await icNowNanos(this._agent, content.transfer.ledger);
+        const stamped = {
+            ...content,
+            transfer: { ...content.transfer, createdAtNanos },
+        } as MessageContent;
+        return { ...event, event: { ...event.event, content: stamped } };
+    }
+
     // The fee the ledger charges for a transfer or an approval, if the token is a registered one
     private ledgerFee(ledger: string): bigint | undefined {
         return this._registryValue?.tokenDetails.find((t) => t.ledger === ledger)?.transferFee;
@@ -817,6 +839,8 @@ export class OpenChatAgent extends EventTarget {
                 this._chatsDb.recordFailedMessage(chatId, event, threadRootMessageIndex);
                 return resolve([CommonResponses.offline(), event.event], true);
             }
+
+            event = await this.stampTransferWithIcTime(event);
 
             // A user who holds their own funds can't have their canister make a transfer for them
             if (
@@ -3945,16 +3969,17 @@ export class OpenChatAgent extends EventTarget {
     // A user who holds their own funds sends them from their wallet on the ledger, as themselves,
     // since their canister can't send them. Only their canister could check their PIN, so it isn't
     // checked when they do.
-    withdrawCryptocurrency(
+    async withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
         pin: string | undefined,
     ): Promise<WithdrawCryptocurrencyResponse> {
-        if (offline()) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return CommonResponses.offline();
 
+        const stamped = { ...domain, createdAtNanos: await icNowNanos(this._agent, domain.ledger) };
         if (this.holdsOwnFunds()) {
-            return this._ledgerClient.withdraw(domain);
+            return this._ledgerClient.withdraw(stamped);
         }
-        return this.userClient.withdrawCryptocurrency(domain, pin);
+        return this.userClient.withdrawCryptocurrency(stamped, pin);
     }
 
     getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
@@ -4730,7 +4755,7 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    submitProposal(
+    async submitProposal(
         currentUserId: string,
         governanceCanisterId: string,
         proposal: CandidateProposal,
@@ -4739,7 +4764,7 @@ export class OpenChatAgent extends EventTarget {
         proposalRejectionFee: bigint,
         transactionFee: bigint,
     ): Promise<SubmitProposalResponse> {
-        if (offline()) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return CommonResponses.offline();
 
         // The ProposalsBot pulls the fee from the user's wallet, which they have approved it to
         return this._proposalsBotClient
@@ -4752,6 +4777,7 @@ export class OpenChatAgent extends EventTarget {
                 token,
                 proposalRejectionFee,
                 transactionFee,
+                await icNowNanos(this._agent, ledger),
             );
     }
 
@@ -5109,8 +5135,14 @@ export class OpenChatAgent extends EventTarget {
                     return error;
                 }
             }
+            // Only a tip pulled by a group or community carries a stamp, a user's canister stamping
+            // the tips it pulls or makes itself
             const wallet = encodeIcrcAccount(this.walletAccount(this._userClient.userId));
-            const paid = { ...transfer, fromAccount: transfer.fromAccount ?? wallet };
+            const paid = {
+                ...transfer,
+                fromAccount: transfer.fromAccount ?? wallet,
+                createdAtNanos: await icNowNanos(this._agent, transfer.ledger),
+            };
             return chatId.kind === "channel"
                 ? this._communityClient.tipMessage(
                       chatId,
