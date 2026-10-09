@@ -19,11 +19,15 @@ import {
     type TokenInfo,
     type UnfinishedTokenSwap,
 } from "@shared";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 import { OpenChatAgent } from "./openchatAgent";
 
 const ICP_LEDGER = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+// The device's clock while a payment is made, which is also the time on the IC unless a test says
+// otherwise, so a payment is stamped with it
+const NOW_MS = 1_791_565_000_000;
+const NOW_NANOS = BigInt(NOW_MS) * 1_000_000n;
 const FEE = 10n;
 const CHAT_FEE = 1_000n;
 const ICP: TokenInfo = { ledger: ICP_LEDGER, symbol: "ICP", decimals: 8, fee: FEE };
@@ -50,7 +54,7 @@ function transfer(fromAccount?: string): PendingCryptocurrencyTransfer {
         recipient: THEM,
         amountE8s: 100n,
         feeE8s: FEE,
-        createdAtNanos: 0n,
+        createdAtNanos: NOW_NANOS,
         fromAccount,
     };
 }
@@ -108,6 +112,9 @@ describe("OpenChatAgent paying from the user's wallet", () => {
     let pinCheckResponse: "success" | "incorrect";
     let calls: string[];
     let callArgs: unknown[][];
+    // How far the IC's clock is ahead of the device's, and each ledger whose subnet it was read from
+    let timeDiffMsecs: number;
+    let syncedWith: string[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let agent: any;
 
@@ -121,6 +128,13 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             };
         agent = Object.create(OpenChatAgent.prototype);
         agent.identity = { getPrincipal: () => ME };
+        agent._agent = {
+            syncTime: (canisterId: Principal) => {
+                syncedWith.push(canisterId.toText());
+                return Promise.resolve();
+            },
+            getTimeDiffMsecs: () => timeDiffMsecs,
+        };
         agent._registryValue = {
             tokenDetails: [
                 { ledger: ICP_LEDGER, transferFee: FEE },
@@ -162,11 +176,12 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             tipMessage: called("communityTipMessage"),
         };
         agent._userIndexClient = { payForDiamondMembership: called("payForDiamondMembership") };
+        agent._proposalsBotClient = { get: () => ({ submitProposal: called("submitProposal") }) };
     }
 
     // Sends a message to a group or channel, giving the response once it is final
     const send = (
-        chatId: typeof GROUP | typeof CHANNEL,
+        chatId: typeof DIRECT | typeof GROUP | typeof CHANNEL,
         content: MessageContent,
         threadRootMessageIndex?: number,
         acceptedRules?: { chat: number; community: number },
@@ -301,8 +316,13 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         pinCheckResponse = "success";
         calls = [];
         callArgs = [];
+        timeDiffMsecs = 0;
+        syncedWith = [];
+        vi.spyOn(Date, "now").mockReturnValue(NOW_MS);
         vi.spyOn(console, "warn").mockImplementation(() => {});
     });
+
+    afterEach(() => vi.restoreAllMocks());
 
     describe("by a user in a MultiUser canister", () => {
         beforeEach(() => setup(MULTI_USER_CANISTER_USER));
@@ -716,6 +736,100 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             expect(calls).toEqual(["payForStreakInsurance"]);
         });
     });
+
+    // A ledger rejects a transfer created more than a minute in its future, which each transfer
+    // stamped by a device whose clock is fast would be
+    describe("from a device whose clock is ahead of the IC's", () => {
+        const AHEAD_MS = 160_000;
+        const icNow = BigInt(NOW_MS - AHEAD_MS) * 1_000_000n;
+
+        // The stamp on the transfer in the message sent
+        const stampSent = () => {
+            const event = callArgs[0].find(
+                (arg) => (arg as EventWrapper<Message> | undefined)?.event?.content !== undefined,
+            ) as EventWrapper<Message>;
+            return (event.event.content as { transfer: PendingCryptocurrencyTransfer }).transfer
+                .createdAtNanos;
+        };
+
+        beforeEach(() => {
+            timeDiffMsecs = -AHEAD_MS;
+        });
+
+        test.each([
+            ["crypto in a direct chat", MULTI_USER_CANISTER_USER, DIRECT, crypto],
+            ["crypto in a group", MULTI_USER_CANISTER_USER, GROUP, crypto],
+            ["a prize in a channel", MULTI_USER_CANISTER_USER, CHANNEL, prize],
+            [
+                "crypto in a group, by a user alone in their canister",
+                USER_CANISTER_USER,
+                GROUP,
+                crypto,
+            ],
+        ] as const)(
+            "%s is stamped with the time on the ledger's subnet",
+            async (_, userId, chatId, content) => {
+                setup(userId);
+
+                await send(chatId, content());
+
+                expect(stampSent()).toEqual(icNow);
+                expect(syncedWith).toEqual([ICP_LEDGER]);
+            },
+        );
+
+        test.each([
+            ["group", GROUP, "groupTipMessage"],
+            ["channel", CHANNEL, "communityTipMessage"],
+        ] as const)(
+            "a tip in a %s, pulled from the wallet by it, is stamped with the time on the ledger's subnet",
+            async (_, chatId, call) => {
+                setup(MULTI_USER_CANISTER_USER);
+
+                await agent.tipMessage(
+                    { chatId },
+                    1n,
+                    transfer(),
+                    8,
+                    undefined,
+                    "me",
+                    undefined,
+                    true,
+                );
+
+                expect(calls).toEqual([call]);
+                expect((callArgs[0][3] as PendingCryptocurrencyTransfer).createdAtNanos).toEqual(
+                    icNow,
+                );
+                expect(syncedWith).toEqual([ICP_LEDGER]);
+            },
+        );
+
+        test.each([
+            ["a user in a MultiUser canister", MULTI_USER_CANISTER_USER],
+            ["a user alone in their canister", USER_CANISTER_USER],
+        ])(
+            "the fee for a proposal by %s is stamped with the time on the ledger's subnet",
+            async (_, userId) => {
+                setup(userId);
+
+                await agent.submitProposal(userId, "", {}, ICP_LEDGER, "ICP", 100n, FEE);
+
+                expect(calls).toEqual(["submitProposal"]);
+                expect(callArgs[0].at(-1)).toEqual(icNow);
+                expect(syncedWith).toEqual([ICP_LEDGER]);
+            },
+        );
+
+        test("a swap offer has nothing to stamp, so the IC isn't asked the time", async () => {
+            setup(MULTI_USER_CANISTER_USER);
+
+            await send(GROUP, swapOffer());
+
+            expect(calls).toEqual(["groupSendMessage"]);
+            expect(syncedWith).toEqual([]);
+        });
+    });
 });
 
 // The wallet's "Send"
@@ -727,7 +841,7 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         to: EXTERNAL_ACCOUNT,
         amountE8s: 100n,
         feeE8s: FEE,
-        createdAtNanos: 0n,
+        createdAtNanos: NOW_NANOS,
     };
     const PIN = "1234";
     const LEDGER_RESPONSE = {
@@ -739,14 +853,27 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
 
     let ledgerWithdrawals: unknown[][];
     let canisterWithdrawals: unknown[][];
+    // How far the IC's clock is ahead of the device's, and each ledger whose subnet it was read from
+    let timeDiffMsecs: number;
+    let syncedWith: string[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let agent: any;
 
     function setup(userId: string) {
         ledgerWithdrawals = [];
         canisterWithdrawals = [];
+        timeDiffMsecs = 0;
+        syncedWith = [];
+        vi.spyOn(Date, "now").mockReturnValue(NOW_MS);
         agent = Object.create(OpenChatAgent.prototype);
         agent.identity = { getPrincipal: () => ME };
+        agent._agent = {
+            syncTime: (canisterId: Principal) => {
+                syncedWith.push(canisterId.toText());
+                return Promise.resolve();
+            },
+            getTimeDiffMsecs: () => timeDiffMsecs,
+        };
         agent._ledgerClient = {
             withdraw: (...args: unknown[]) => {
                 ledgerWithdrawals.push(args);
@@ -761,6 +888,8 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
             },
         };
     }
+
+    afterEach(() => vi.restoreAllMocks());
 
     test("a user in a MultiUser canister sends from their wallet on the ledger, with no PIN", async () => {
         setup(MULTI_USER_CANISTER_USER);
@@ -777,6 +906,27 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         expect(canisterWithdrawals).toEqual([[WITHDRAWAL, PIN]]);
         expect(ledgerWithdrawals).toEqual([]);
     });
+
+    // Whether the ledger is called by the website or by their canister, it rejects a withdrawal
+    // created more than a minute in its future
+    test.each([
+        ["a user in a MultiUser canister", MULTI_USER_CANISTER_USER, () => ledgerWithdrawals],
+        ["a user alone in their canister", USER_CANISTER_USER, () => canisterWithdrawals],
+    ])(
+        "a withdrawal by %s from a device whose clock is fast is stamped with the time on the ledger's subnet",
+        async (_, userId, withdrawals) => {
+            setup(userId);
+            timeDiffMsecs = -160_000;
+
+            await agent.withdrawCryptocurrency(WITHDRAWAL, PIN);
+
+            expect(withdrawals()[0][0]).toEqual({
+                ...WITHDRAWAL,
+                createdAtNanos: BigInt(NOW_MS - 160_000) * 1_000_000n,
+            });
+            expect(syncedWith).toEqual([ICP_LEDGER]);
+        },
+    );
 });
 
 // A user migrated to a MultiUser canister may have left funds in the wallet of their previous
@@ -1319,6 +1469,7 @@ describe("OpenChatAgent approving a spender", () => {
         agent = Object.create(OpenChatAgent.prototype);
         agent.identity = { getPrincipal: () => ME };
         agent._registryValue = { tokenDetails: [{ ledger: ICP_LEDGER, transferFee: FEE }] };
+        agent._agent = { syncTime: () => Promise.resolve(), getTimeDiffMsecs: () => 0 };
         agent._ledgerClient = {
             approveSpending: (...args: unknown[]) => {
                 approvals.push(args);
