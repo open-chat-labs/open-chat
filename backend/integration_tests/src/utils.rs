@@ -3,11 +3,12 @@ use candid::{Nat, Principal};
 use constants::{
     CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE,
 };
+use jwt_simple::common::VerificationOptions;
+use jwt_simple::prelude::UnixTimeStamp;
 use pocket_ic::PocketIc;
-use rand::{RngExt, SeedableRng, rngs::StdRng};
-use std::time::{Duration, SystemTime};
-use std::{path::PathBuf, time::UNIX_EPOCH};
-use types::{CanisterId, Hash, HttpRequest, HttpResponse, TimestampMillis, TimestampNanos, TokenInfo, UserId};
+use std::path::PathBuf;
+use std::time::Duration;
+use types::{CanisterId, HttpRequest, HttpResponse, TimestampMillis, TimestampNanos, TokenInfo, UserId};
 
 pub fn principal_to_username(principal: Principal) -> String {
     principal.to_string()[0..5].to_string()
@@ -27,12 +28,11 @@ pub fn now_nanos(env: &PocketIc) -> TimestampNanos {
     env.get_time().as_nanos_since_unix_epoch()
 }
 
-// For tests whose tokens are verified against the wall clock. A new env starts at the current
-// time, but setup can leave its clock a little ahead, and PocketIC refuses to move it back.
-pub fn catch_up_with_wall_clock(env: &mut PocketIc) {
-    let now = SystemTime::now().into();
-    if env.get_time() < now {
-        env.set_time(now);
+// Verifies a token at the env's own clock: its expiry is in PocketIC time, not wall time
+pub fn verify_at_env_time(env: &PocketIc) -> VerificationOptions {
+    VerificationOptions {
+        artificial_time: Some(UnixTimeStamp::from_millis(now_millis(env))),
+        ..Default::default()
     }
 }
 
@@ -41,11 +41,6 @@ pub fn local_bin() -> PathBuf {
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to read CARGO_MANIFEST_DIR env variable"));
     file_path.push("wasms");
     file_path
-}
-
-pub fn generate_seed() -> Hash {
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
-    StdRng::seed_from_u64(now).random()
 }
 
 pub fn chat_token_info() -> TokenInfo {
