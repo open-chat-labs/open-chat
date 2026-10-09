@@ -1,10 +1,10 @@
 use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
-use local_user_index_canister_c2c_client::EventRecipient;
 use std::collections::HashSet;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use tracing::info;
 use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
 use user_canister::c2c_user_canister_v2::Event;
+use user_core::event_recipient::{EventRecipient, lookup_event_recipient};
 use utils::canister::{
     delay_if_should_retry_failed_c2c_call, delay_if_should_retry_failed_c2c_call_to_new_method,
     is_user_canister_possibly_migrated,
@@ -114,18 +114,19 @@ impl TimerJobItem for UserCanisterEventBatch {
 }
 
 // What has become of the user, whose latest id is taken from the cache if they are known to have been
-// migrated, and who is otherwise looked up from the LocalUserIndex. A migration the LocalUserIndex
-// hasn't yet heard of isn't found, so the events are retried as usual until it has.
+// migrated, and who is otherwise looked up from the LocalUserIndex and if need be the UserIndex. A
+// migration which hasn't yet been heard of isn't found, so the events are retried as usual until it has.
 async fn lookup_recipient(user_id: UserId) -> Result<EventRecipient, C2CError> {
-    let (cached, local_user_index_canister_id) = read_state(|state| {
+    let (cached, local_user_index_canister_id, user_index_canister_id) = read_state(|state| {
         (
             state.data.migrated_user_ids.get(&user_id),
             state.data.local_user_index_canister_id,
+            state.data.user_index_canister_id,
         )
     });
     if let Some(new_user_id) = cached {
         return Ok(EventRecipient::Migrated(new_user_id));
     }
 
-    local_user_index_canister_c2c_client::lookup_event_recipient(user_id, local_user_index_canister_id).await
+    lookup_event_recipient(user_id, local_user_index_canister_id, user_index_canister_id).await
 }
