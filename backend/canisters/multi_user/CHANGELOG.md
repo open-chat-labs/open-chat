@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Let users swap tokens via ICPSwap, pulling the input from their wallet and sending the output on to it ([#9887](https://github.com/open-chat-labs/open-chat/pull/9887))
+
 ## [[2.0.2121](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2121-multi_user)] - 2026-10-08
 
 ### Changed
