@@ -8,7 +8,7 @@ import type {
     MultiUserChatIdentifier,
     UpdatedEvent,
 } from "@shared";
-import { ChatMap as ChatMapImpl } from "@shared";
+import { ChatMap as ChatMapImpl, ResponseTooLargeError } from "@shared";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { CachePrimer } from "./cachePrimer";
 
@@ -74,7 +74,7 @@ function updated(groupId: string, events: UpdatedEvent[]): ChatMap<UpdatedEvent[
     return map;
 }
 
-function proposalChat(groupId: string, latestEventIndex = 5): GroupChatSummary {
+function proposalChat(groupId: string, latestEventIndex = 5, archived = false): GroupChatSummary {
     return {
         kind: "group_chat",
         id: { kind: "group_chat", groupId },
@@ -84,13 +84,14 @@ function proposalChat(groupId: string, latestEventIndex = 5): GroupChatSummary {
         latestEventIndex,
         latestMessageIndex: latestEventIndex,
         minVisibleEventIndex: 0,
-        membership: { archived: false, readByMeUpTo: latestEventIndex },
+        membership: { archived, readByMeUpTo: latestEventIndex },
     } as unknown as GroupChatSummary;
 }
 
 describe("CachePrimer", () => {
     let getEventsBatch: ReturnType<typeof vi.fn>;
     let updateProposalTallies: ReturnType<typeof vi.fn>;
+    let loadUsers: ReturnType<typeof vi.fn>;
     let saveEventIndexesLoadedUpTo: ReturnType<typeof vi.fn>;
     let eventIndexesLoadedUpTo: Record<string, number>;
     let primer: CachePrimer;
@@ -101,7 +102,7 @@ describe("CachePrimer", () => {
             eventIndexesLoadedUpTo,
             getEventsBatch as never,
             updateProposalTallies as never,
-            () => Promise.resolve(),
+            loadUsers as never,
             saveEventIndexesLoadedUpTo as never,
         );
     }
@@ -113,6 +114,7 @@ describe("CachePrimer", () => {
             Promise.resolve(reqs.map(() => ({ kind: "failure" }))),
         );
         updateProposalTallies = vi.fn(() => Promise.resolve());
+        loadUsers = vi.fn(() => Promise.resolve());
         saveEventIndexesLoadedUpTo = vi.fn(() => Promise.resolve());
         eventIndexesLoadedUpTo = {};
         createPrimer();
@@ -300,5 +302,68 @@ describe("CachePrimer", () => {
         expect(getEventsBatch).toHaveBeenCalledTimes(2);
         const [repliesRequest] = getEventsBatch.mock.calls[1][1] as ChatEventsArgs[];
         expect(repliesRequest.args).toEqual({ kind: "by_index", events: [0] });
+    });
+
+    test("archived proposal chats aren't polled, and are once unarchived", async () => {
+        primer.processUpdates([], [proposalChat("g1", 5, true), proposalChat("g2")], []);
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(updateProposalTallies).toHaveBeenCalledTimes(1);
+        expect(updateProposalTallies.mock.calls[0][1]).toEqual([
+            { kind: "group_chat", groupId: "g2" },
+        ]);
+
+        primer.processUpdates([], [proposalChat("g1"), proposalChat("g2", 5, true)], []);
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(updateProposalTallies).toHaveBeenCalledTimes(2);
+        expect(updateProposalTallies.mock.calls[1][1]).toEqual([
+            { kind: "group_chat", groupId: "g1" },
+        ]);
+    });
+
+    test("the tally poll starts when the only proposal chat is unarchived", async () => {
+        primer.processUpdates([], [proposalChat("g1", 5, true)], []);
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(updateProposalTallies).not.toHaveBeenCalled();
+
+        primer.processUpdates([], [proposalChat("g1")], []);
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(updateProposalTallies).toHaveBeenCalledTimes(1);
+        expect(updateProposalTallies.mock.calls[0][1]).toEqual([
+            { kind: "group_chat", groupId: "g1" },
+        ]);
+    });
+
+    test("users whose load fails are loaded again by a later batch", async () => {
+        getEventsBatch.mockImplementation((_lui: string, reqs: ChatEventsArgs[]) =>
+            Promise.resolve(reqs.map(() => success([memberJoined(5)]))),
+        );
+        loadUsers.mockImplementationOnce(() => Promise.reject(new Error("offline")));
+
+        primer.processUpdates([], [groupChat("g1", 5)], []);
+        await vi.advanceTimersByTimeAsync(0);
+        primer.processUpdates([], [groupChat("g2", 5)], []);
+        await vi.advanceTimersByTimeAsync(1000);
+
+        expect(loadUsers).toHaveBeenCalledTimes(2);
+        expect(loadUsers.mock.calls[1][0]).toEqual(["u1"]);
+    });
+
+    test("a chat which is too large is dropped, even if it was queued again meanwhile", async () => {
+        let rejectFirst: (error: Error) => void = () => {};
+        getEventsBatch.mockImplementationOnce(
+            () => new Promise<ChatEventsResponse[]>((_, reject) => (rejectFirst = reject)),
+        );
+
+        primer.processUpdates([], [groupChat("g1", 5, 1)], []);
+        await vi.advanceTimersByTimeAsync(0);
+        primer.processUpdates([], [groupChat("g1", 8, 2)], []);
+        rejectFirst(new ResponseTooLargeError(new Error("too large"), 3_000_000, 2_000_000));
+        await vi.advanceTimersByTimeAsync(1000);
+
+        expect(getEventsBatch).toHaveBeenCalledTimes(1);
+
+        primer.processUpdates([], [groupChat("g1", 9, 3)], []);
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(getEventsBatch).toHaveBeenCalledTimes(1);
     });
 });

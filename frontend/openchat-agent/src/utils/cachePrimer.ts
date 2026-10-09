@@ -189,7 +189,7 @@ export class CachePrimer {
                 if (response.kind !== "success") continue;
 
                 const { events } = response.result;
-                this.collectUnloadedUsers(events, missingUserIds);
+                this.collectMissingUsers(events, missingUserIds);
 
                 const eventIndexes = new Set<number>();
                 const repliesTo = new Set<number>();
@@ -241,7 +241,7 @@ export class CachePrimer {
 
                 for (const response of repliesResponse) {
                     if (response.kind === "success") {
-                        this.collectUnloadedUsers(response.result.events, missingUserIds);
+                        this.collectMissingUsers(response.result.events, missingUserIds);
                     }
                 }
             }
@@ -406,7 +406,7 @@ export class CachePrimer {
         }
     }
 
-    private collectUnloadedUsers(events: EventWrapper<ChatEvent>[], into: Set<string>) {
+    private collectMissingUsers(events: EventWrapper<ChatEvent>[], into: Set<string>) {
         for (const userId of userIdsFromEvents(events).userIds) {
             if (!this.#usersLoaded.has(userId)) {
                 this.#usersLoaded.add(userId);

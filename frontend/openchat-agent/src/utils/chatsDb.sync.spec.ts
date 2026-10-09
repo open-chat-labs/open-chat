@@ -787,6 +787,22 @@ describe("updateCachedProposalTallies", () => {
     });
 });
 
+describe("setCachePrimerEventIndexes", () => {
+    test("keeps whichever index is further on, since another tab's primer may have got further", async () => {
+        const { chatsDb, stores } = chatsDbWith({ cachePrimer: { a: 10, b: 5 } });
+
+        await chatsDb.setCachePrimerEventIndexes(
+            new Map([
+                ["a", 7],
+                ["b", 9],
+                ["c", 3],
+            ]),
+        );
+
+        expect(Object.fromEntries(stores.cachePrimer)).toEqual({ a: 10, b: 9, c: 3 });
+    });
+});
+
 describe("across a 30 day wipe", () => {
     test("a chat removed meanwhile still reaches a UI that kept running", async () => {
         const { chatsDb } = chatsDbWith({
