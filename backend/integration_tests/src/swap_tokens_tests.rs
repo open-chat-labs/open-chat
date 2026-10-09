@@ -3,6 +3,7 @@ use crate::{CanisterIds, TestEnv, client};
 use constants::{CHAT_SYMBOL, CHAT_TRANSFER_FEE, ICP_SYMBOL, ICP_TRANSFER_FEE};
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
+use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal};
 use types::{TokenInfo, icrc1};
 use user_canister::swap_tokens::{ExchangeArgs, ExchangeSwapArgs};
@@ -137,6 +138,10 @@ fn swap_made_by_user_in_multi_user_canister_is_unfinished_until_marked_completed
         "{response:?}"
     );
 
+    // It isn't taken to be unfinished until it can no longer be in progress
+    assert!(unfinished_swap_ids(env, &user).is_empty());
+    env.advance_time(Duration::from_secs(10 * 60 + 1));
+    env.tick();
     assert_eq!(unfinished_swap_ids(env, &user), vec![swap_id]);
     let status = swap_status(env, &user, swap_id);
     assert!(status.success.is_none(), "{status:?}");
@@ -178,6 +183,8 @@ fn failed_swap_made_by_user_in_multi_user_canister_earns_no_achievement() {
     mark_started(env, &user, canister_ids, swap_id);
     mark_completed(env, &user, swap_id, Err("slippage".to_string()));
 
+    env.advance_time(Duration::from_secs(10 * 60 + 1));
+    env.tick();
     assert!(unfinished_swap_ids(env, &user).is_empty());
     let status = swap_status(env, &user, swap_id);
     assert_eq!(status.success, Some(false));

@@ -45,7 +45,7 @@
     const client = getContext<OpenChat>("client");
 
     type SwapState = "quote" | "swap" | "finished";
-    type Result = "success" | "rateChanged" | "insufficientFunds" | "error" | undefined;
+    type Result = SwapOutcome | undefined;
 
     let error: string | undefined = $state(undefined);
     let amountIn: bigint = $state(BigInt(0));
@@ -393,7 +393,7 @@
                     <Button secondary tiny={$mobileWidth} onClick={onClose}
                         ><Translatable resourceKey={i18nKey("close")} /></Button>
                 {/if}
-                {#if result !== "success" && result !== "error"}
+                {#if result !== "success" && result !== "error" && result !== "unknown"}
                     <Button
                         disabled={busy || !valid}
                         loading={busy}

@@ -250,7 +250,9 @@
         {#if outcome && outcome !== "success"}
             <ErrorMessage>
                 {#if outcome === "error"}
-                    <Translatable resourceKey={i18nKey("Failed to get deposit account")} />
+                    <Translatable resourceKey={i18nKey("tokenSwap.progress.error")} />
+                {:else if outcome === "unknown"}
+                    <Translatable resourceKey={i18nKey("tokenSwap.progress.unknown")} />
                 {:else if outcome === "insufficientFunds"}
                     <Translatable resourceKey={i18nKey("Insufficient funds")} />
                 {:else if outcome === "rateChanged"}

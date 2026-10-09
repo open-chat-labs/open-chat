@@ -367,9 +367,7 @@ const MAX_CONCURRENT_PREVIOUS_WALLET_BALANCE_CHECKS = 10;
 const MAX_LEDGERS_PER_FUNDS_MOVE = 20;
 const MAX_FUNDS_MOVE_RETRIES = 3;
 const FUNDS_MOVE_RETRY_INTERVAL_MS = 10_000;
-// How long after a swap made straight from the wallet starts that it is taken to have been abandoned
-// if it hasn't been marked as completed, rather than still being in progress elsewhere
-const UNFINISHED_TOKEN_SWAP_GRACE_PERIOD_MS = BigInt(10 * 60 * 1000);
+const MARK_TOKEN_SWAP_COMPLETED_ATTEMPTS = 3;
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -4983,47 +4981,62 @@ export class OpenChatAgent extends EventTarget {
             return { kind: "error", code: ErrorCode.Unknown, message: String(err) };
         }
 
-        // The swap is over either way, so failing to record how it ended only leaves it to be
-        // finished off later
-        await this.userClient
-            .markTokenSwapCompleted(
-                swapId,
-                result.kind === "success"
-                    ? { kind: "swapped", amountOut: result.amountOut }
-                    : { kind: "failed", reason: result.error },
-            )
-            .catch((err) => console.warn("Failed to mark a token swap as completed", err));
+        await this.markTokenSwapCompleted(
+            swapId,
+            result.kind === "success"
+                ? { kind: "swapped", amountOut: result.amountOut }
+                : { kind: "failed", reason: result.error },
+        );
 
-        return result.kind === "success"
-            ? { kind: "success", amountOut: result.amountOut }
-            : { kind: "error", code: ErrorCode.SwapFailed, message: result.error };
+        if (result.kind === "success") {
+            return { kind: "success", amountOut: result.amountOut };
+        }
+        // ICPSwap refuses a swap whose output would fall short of the minimum with a slippage
+        // error, which is down to the rate having moved since the quote. Any other error (eg. the
+        // pool's cached fees being out of date) is no better for quoting again.
+        return result.error.includes("Slippage check failed")
+            ? { kind: "error", code: ErrorCode.SwapFailed, message: result.error }
+            : { kind: "internal_error", error: result.error };
+    }
+
+    // Records how a swap made straight from the wallet ended, trying a few times, since the swap is
+    // over either way, and failing to record that leaves it to be finished off later as one whose
+    // outcome isn't known
+    private async markTokenSwapCompleted(
+        swapId: bigint,
+        result: { kind: "swapped"; amountOut: bigint } | { kind: "failed"; reason: string },
+    ): Promise<void> {
+        for (let attempt = 1; attempt <= MARK_TOKEN_SWAP_COMPLETED_ATTEMPTS; attempt++) {
+            try {
+                const response = await this.userClient.markTokenSwapCompleted(swapId, result);
+                if (response.kind !== "success") {
+                    console.warn("Failed to mark a token swap as completed", response);
+                }
+                return;
+            } catch (err) {
+                console.warn("Failed to mark a token swap as completed", attempt, err);
+            }
+        }
     }
 
     // Finishes off each swap the user started straight from their wallet which was never marked as
     // completed, eg. because they left part way through, withdrawing to their wallet anything
-    // ICPSwap still holds for them, then marking the swap as completed. Swaps started in the last
-    // ten minutes are left alone, since they may still be in progress elsewhere. A swap whose pool
-    // can't be checked, or whose funds can't be withdrawn, is left to be tried again next time.
+    // ICPSwap still holds for them, then marking the swap as completed. The user's canister only
+    // lists swaps which can't still be in progress. A swap whose pool can't be checked, or whose
+    // funds can't be withdrawn, is left to be tried again next time.
     async recoverUnfinishedTokenSwaps(): Promise<void> {
         if (!this.holdsOwnFunds() || offline()) return;
 
-        const now = BigInt(Date.now());
-        const swaps = (await this.userClient.unfinishedTokenSwaps()).filter(
-            (s) => now - s.started > UNFINISHED_TOKEN_SWAP_GRACE_PERIOD_MS,
-        );
-
-        for (const swap of swaps) {
+        for (const swap of await this.userClient.unfinishedTokenSwaps()) {
             const recovered = await this.withdrawFromPool(swap).catch((err) => {
                 console.warn("Failed to withdraw an unfinished token swap's funds", err);
                 return false;
             });
             if (recovered) {
-                await this.userClient
-                    .markTokenSwapCompleted(swap.swapId, {
-                        kind: "failed",
-                        reason: "Never marked as completed",
-                    })
-                    .catch((err) => console.warn("Failed to mark a token swap as completed", err));
+                await this.markTokenSwapCompleted(swap.swapId, {
+                    kind: "failed",
+                    reason: "Never marked as completed, so how it ended isn't known",
+                });
             }
         }
     }
@@ -5042,6 +5055,7 @@ export class OpenChatAgent extends EventTarget {
 
         let withdrawnAll = true;
         for (const { ledger, balance } of await poolClient.unusedBalances(this.principal)) {
+            if (balance === 0n) continue;
             const fee = this.ledgerFee(ledger);
             if (fee === undefined) {
                 withdrawnAll = false;
@@ -5053,7 +5067,11 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // An ICPSwap pool, which the user calls as themselves, so as the owner of their wallet
-    private icpSwapPoolClient(canisterId: string, token0: string, token1: string): IcpSwapPoolClient {
+    private icpSwapPoolClient(
+        canisterId: string,
+        token0: string,
+        token1: string,
+    ): IcpSwapPoolClient {
         return new IcpSwapPoolClient(this.identity, this._agent, canisterId, token0, token1);
     }
 

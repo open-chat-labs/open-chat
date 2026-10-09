@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { quoteResponse, swapResponse } from "./mappers";
+import { quoteResponse, swapResponse, unusedBalancesResponse, withdrawResponse } from "./mappers";
 
 // A decline (undefined) is dropped by quoteSwap and costs nothing; a throw is retried by
 // executeQuery seven times with backoff and, if every pool throws, reaches the error tracker.
@@ -52,5 +52,32 @@ describe("ICPSwap swapResponse", () => {
             kind: "error",
             error: '{"InternalError":"Slippage check failed"}',
         });
+    });
+});
+
+describe("ICPSwap unusedBalancesResponse", () => {
+    test("each balance is given with the ledger of the pool's token it is of", () => {
+        expect(
+            unusedBalancesResponse({ ok: { balance0: 5n, balance1: 7n } }, "token0", "token1"),
+        ).toEqual([
+            { ledger: "token0", balance: 5n },
+            { ledger: "token1", balance: 7n },
+        ]);
+    });
+
+    test("an error is thrown, so that the swap is left to be recovered next time", () => {
+        expect(() =>
+            unusedBalancesResponse({ err: { InternalError: "busy" } }, "token0", "token1"),
+        ).toThrow();
+    });
+});
+
+describe("ICPSwap withdrawResponse", () => {
+    test("a withdrawal the pool accepts succeeds", () => {
+        expect(withdrawResponse({ ok: 5n })).toBe(true);
+    });
+
+    test("a withdrawal the pool refuses fails", () => {
+        expect(withdrawResponse({ err: { InsufficientFunds: null } })).toBe(false);
     });
 });

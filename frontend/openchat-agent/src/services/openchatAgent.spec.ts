@@ -1601,7 +1601,6 @@ describe("OpenChatAgent swapping tokens", () => {
         decimals: 8,
         transferFee: CHAT_FEE,
     } as CryptocurrencyDetails;
-    const MINUTE = 60 * 1000;
 
     let calls: unknown[][];
     let approveResponse: "success" | "insufficient_funds" | "failure";
@@ -1705,15 +1704,34 @@ describe("OpenChatAgent swapping tokens", () => {
         ]);
     });
 
-    test("a swap the DEX refuses is recorded as failed", async () => {
-        swapResult = () => Promise.resolve({ kind: "error", error: "slippage" });
+    test("a swap the DEX refuses as the rate has moved is recorded as failed", async () => {
+        const error =
+            '{"InternalError":"Slippage check failed: minimum amount requirement not met"}';
+        swapResult = () => Promise.resolve({ kind: "error", error });
 
-        expect(await swap()).toEqual({
-            kind: "error",
-            code: ErrorCode.SwapFailed,
-            message: "slippage",
-        });
-        expect(calls.at(-1)).toEqual(["completed", 123n, { kind: "failed", reason: "slippage" }]);
+        expect(await swap()).toEqual({ kind: "error", code: ErrorCode.SwapFailed, message: error });
+        expect(calls.at(-1)).toEqual(["completed", 123n, { kind: "failed", reason: error }]);
+    });
+
+    test("a swap the DEX refuses for any other reason is recorded as failed", async () => {
+        const error = '{"InternalError":"Wrong fee cache (expected: 20, received: 10)"}';
+        swapResult = () => Promise.resolve({ kind: "error", error });
+
+        expect(await swap()).toEqual({ kind: "internal_error", error });
+        expect(calls.at(-1)).toEqual(["completed", 123n, { kind: "failed", reason: error }]);
+    });
+
+    test("recording how a swap ended is retried", async () => {
+        let attempts = 0;
+        agent._userClient.markTokenSwapCompleted = (...args: unknown[]) => {
+            calls.push(["completed", ...args]);
+            return ++attempts < 3
+                ? Promise.reject(new Error("offline"))
+                : Promise.resolve({ kind: "success" });
+        };
+
+        expect(await swap()).toEqual({ kind: "success", amountOut: 400n });
+        expect(calls.filter((c) => c[0] === "completed")).toHaveLength(3);
     });
 
     test("a swap whose outcome is unknown is left unfinished", async () => {
@@ -1761,16 +1779,16 @@ describe("OpenChatAgent swapping tokens", () => {
     });
 
     describe("recovering unfinished swaps", () => {
-        const unfinished = (swapId: bigint, startedMinutesAgo: number): UnfinishedTokenSwap => ({
+        const unfinished = (swapId: bigint): UnfinishedTokenSwap => ({
             swapId,
-            started: BigInt(Date.now() - startedMinutesAgo * MINUTE),
+            started: 0n,
             inputLedger: LEDGER_CANISTER_CHAT,
             outputLedger: ICP_LEDGER,
             exchangeArgs: { dex: "icpswap", swapCanisterId: POOL, zeroForOne: false },
         });
 
         test("withdraws what the pool holds for the user, then marks the swap completed", async () => {
-            unfinishedSwaps = [unfinished(1n, 11)];
+            unfinishedSwaps = [unfinished(1n)];
             unusedBalances = [
                 { ledger: ICP_LEDGER, balance: 500n },
                 { ledger: LEDGER_CANISTER_CHAT, balance: CHAT_FEE },
@@ -1783,20 +1801,28 @@ describe("OpenChatAgent swapping tokens", () => {
             expect(calls).toEqual([
                 ["unusedBalances", POOL, ICP_LEDGER, LEDGER_CANISTER_CHAT, ME],
                 ["withdraw", POOL, ICP_LEDGER, 500n, FEE],
-                ["completed", 1n, { kind: "failed", reason: "Never marked as completed" }],
+                [
+                    "completed",
+                    1n,
+                    {
+                        kind: "failed",
+                        reason: "Never marked as completed, so how it ended isn't known",
+                    },
+                ],
             ]);
         });
 
-        test("leaves alone a swap which may still be in progress", async () => {
-            unfinishedSwaps = [unfinished(1n, 1)];
+        test("skips a zero balance, even of a token it doesn't know the fee of", async () => {
+            unfinishedSwaps = [unfinished(1n)];
+            unusedBalances = [{ ledger: THEM, balance: 0n }];
 
             await agent.recoverUnfinishedTokenSwaps();
 
-            expect(calls).toEqual([]);
+            expect(calls.map((c) => c[0])).toEqual(["unusedBalances", "completed"]);
         });
 
         test("leaves a swap unfinished if its funds can't be withdrawn", async () => {
-            unfinishedSwaps = [unfinished(1n, 11)];
+            unfinishedSwaps = [unfinished(1n)];
             unusedBalances = [{ ledger: ICP_LEDGER, balance: 500n }];
             withdrawSucceeds = false;
 
@@ -1807,7 +1833,7 @@ describe("OpenChatAgent swapping tokens", () => {
 
         test("does nothing for a user alone in their canister", async () => {
             setup(USER_CANISTER_USER);
-            unfinishedSwaps = [unfinished(1n, 11)];
+            unfinishedSwaps = [unfinished(1n)];
 
             await agent.recoverUnfinishedTokenSwaps();
 

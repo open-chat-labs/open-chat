@@ -27,10 +27,16 @@ describe("swapFromWalletOutcome", () => {
         ).toBe("rateChanged");
     });
 
-    test("anything else is an error", () => {
+    test("a swap which may or may not have gone ahead has an unknown outcome", () => {
         expect(
             swapFromWalletOutcome({ kind: "error", code: ErrorCode.Unknown, message: "timed out" }),
-        ).toBe("error");
+        ).toBe("unknown");
+    });
+
+    test("anything else is an error", () => {
+        expect(swapFromWalletOutcome({ kind: "internal_error", error: "Wrong fee cache" })).toBe(
+            "error",
+        );
         expect(
             swapFromWalletOutcome({
                 kind: "error",

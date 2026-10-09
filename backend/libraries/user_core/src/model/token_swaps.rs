@@ -58,11 +58,12 @@ impl TokenSwaps {
         self.page(0, usize::MAX)
     }
 
-    // The swaps the user made themselves which haven't been marked as completed
-    pub fn unfinished_made_by_user(&self) -> Vec<TokenSwap> {
+    // The swaps the user made themselves which were started before `started_before` and haven't been
+    // marked as completed
+    pub fn unfinished_made_by_user(&self, started_before: TimestampMillis) -> Vec<TokenSwap> {
         self.all()
             .into_iter()
-            .filter(|s| s.made_by_user && s.success.is_none())
+            .filter(|s| s.made_by_user && s.success.is_none() && s.started < started_before)
             .collect()
     }
 
