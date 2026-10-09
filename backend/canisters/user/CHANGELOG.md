@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Drop events for users who have deleted their account or are bots, rather than retrying them forever, which held up migrating the sender ([#9886](https://github.com/open-chat-labs/open-chat/pull/9886))
+
 ### Removed
 
 - Remove the one-offs which moved the chats into stable memory and capped the jobs to mark P2P swaps as expired, now that they have run ([#9885](https://github.com/open-chat-labs/open-chat/pull/9885))
