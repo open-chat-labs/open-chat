@@ -234,6 +234,8 @@ export class DailyPuzzleGame {
             if (next !== undefined && puzzleReplaced(this.puzzle, next)) {
                 this.#load(next);
                 this.replaced = true;
+            } else {
+                this.#showSolvedGrid();
             }
         });
         this.#unsubscribeChit = chitStateStore.subscribe(
@@ -258,6 +260,19 @@ export class DailyPuzzleGame {
         this.#outOfHints = false;
         this.board = this.#resume();
         this.lastHint = this.#lastHintServed();
+    }
+
+    // Once solved, the server holds the grid that was submitted. A board still showing an earlier
+    // save, because the solve happened on another device while this one had the game open, would
+    // read as solved with marks missing, so it is replaced by the solved grid.
+    #showSolvedGrid(): void {
+        const state = this.userState;
+        if (state?.solved === undefined || state.grid.length === 0) return;
+        if (state.gameId !== this.puzzle.gameId || state.number !== this.puzzle.number) return;
+        if (sameBytes(state.grid, this.board.toBytes())) return;
+        const board = this.def.newBoard(this.puzzle.description);
+        board.load(state.grid);
+        this.board = board;
     }
 
     #lastHintServed(): ServedHint | undefined {
