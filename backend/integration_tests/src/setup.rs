@@ -763,8 +763,7 @@ pub fn install_sns_governance(
         })
         .collect();
 
-    // The default parameters, which the canister checks are all set. Maturity modulation is turned
-    // off so that the canister doesn't keep fetching it from the CMC.
+    // The default parameters, which the canister checks are all set
     let parameters = NervousSystemParameters {
         reject_cost_e8s: Some(100_000_000),
         neuron_minimum_stake_e8s: Some(100_000_000),
@@ -792,7 +791,7 @@ pub fn install_sns_governance(
         }),
         max_dissolve_delay_bonus_percentage: Some(100),
         max_age_bonus_percentage: Some(25),
-        maturity_modulation_disabled: Some(true),
+        maturity_modulation_disabled: Some(false),
     };
 
     // The SNS's root and swap canisters must be set, but aren't called while it is in normal mode

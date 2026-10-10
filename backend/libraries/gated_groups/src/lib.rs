@@ -1,6 +1,7 @@
 use candid::Principal;
 use std::cmp::min;
 use std::collections::HashSet;
+use std::iter::once;
 // use ic_verifiable_credentials::issuer_api::{ArgumentValue, CredentialSpec};
 // use ic_verifiable_credentials::VcFlowSigners;
 use constants::{CHAT_LEDGER_CANISTER_ID, DAY_IN_MS, ICP_LEDGER_CANISTER_ID, MEMO_JOINING_FEE, NANOS_PER_MILLISECOND};
@@ -343,21 +344,24 @@ fn check_composite_gate_synchronously_inner(gate: CompositeGate, args: CheckGate
 }
 
 // The user's neurons are those listing the owner of their wallet, which is the principal a user in a
-// MultiUser canister is told to add as a hotkey, along with those listing any id they had before
-// being migrated there, since a neuron may still list their old User canister
+// MultiUser canister is told to add as a hotkey. For a user migrated there, they also include those
+// listing their principal, which `check_if_passes_gate_under_any_id` doesn't pass as the wallet's
+// owner when it checks under an old id, or listing any id they had before, since a neuron may still
+// list their old User canister.
 async fn check_sns_neuron_gate(
     gate: &SnsNeuronGate,
     user: &UserIdAndPrincipal,
     previous_user_ids: &[UserId],
 ) -> CheckIfPassesGateResult {
+    let migrated_principal = (!previous_user_ids.is_empty()).then_some(user.principal);
     let mut principals = Vec::new();
-    // The principal is anonymous when it isn't known, and anyone could add that to their neuron
-    if user.wallet_owner() != Principal::anonymous() {
-        principals.push(user.wallet_owner());
-    }
-    for user_id in previous_user_ids.iter().rev() {
-        if !principals.contains(&user_id.as_principal()) {
-            principals.push(user_id.as_principal());
+    for principal in once(user.wallet_owner())
+        .chain(migrated_principal)
+        .chain(previous_user_ids.iter().rev().map(|u| u.as_principal()))
+    {
+        // The principal is anonymous when it isn't known, and anyone could add that to their neuron
+        if principal != Principal::anonymous() && !principals.contains(&principal) {
+            principals.push(principal);
         }
     }
 
