@@ -249,6 +249,7 @@ import type {
     SubmitProposalResponse,
     SuspendUserResponse,
     SwapTokensResponse,
+    SwapTokensStep,
     TokenSwapStatusResponse,
     UnpinChatResponse,
     UnsuspendUserResponse,
@@ -2261,6 +2262,7 @@ export type WorkerResponseInner =
     | Set<string>
     | [DexId, bigint][]
     | SwapTokensResponse
+    | SwapTokensStep
     | TokenSwapStatusResponse
     | DiamondMembershipFees[]
     | TranslationCorrections
@@ -2988,7 +2990,7 @@ export type WorkerResult<T> = T extends Init
     : T extends GetTokenSwapQuotes
     ? [DexId, bigint][]
     : T extends SwapTokens
-    ? SwapTokensResponse
+    ? SwapTokensResponse | SwapTokensStep
     : T extends TokenSwapStatus
     ? TokenSwapStatusResponse
     : T extends RecoverUnfinishedTokenSwaps

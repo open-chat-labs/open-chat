@@ -12,14 +12,14 @@ use user_core::TokenSwap;
 // The users of this canister hold their own funds, so make their swaps themselves, straight from
 // their wallets, rather than through `swap_tokens`. This records each swap as it starts, so that one
 // which doesn't finish can be found again (see `unfinished_token_swaps`) and any funds left with the
-// DEX withdrawn.
+// DEX withdrawn. It checks the user's PIN, as `swap_tokens` does, before anything is approved.
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn mark_token_swap_started(args: Args) -> Response {
     execute_update(|state| mark_token_swap_started_impl(args, state)).into()
 }
 
-fn mark_token_swap_started_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+fn mark_token_swap_started_impl(mut args: Args, state: &mut RuntimeState) -> OCResult {
     if !matches!(args.exchange_args, ExchangeArgs::ICPSwap(_) | ExchangeArgs::Taco(_)) {
         return Err(OCErrorCode::InvalidRequest.with_message("Unsupported exchange"));
     }
@@ -32,6 +32,7 @@ fn mark_token_swap_started_impl(args: Args, state: &mut RuntimeState) -> OCResul
     let now = state.env.now();
     state.with_caller_user_mut(|_, user| {
         user.verify_not_suspended()?;
+        user.pin_number.verify(args.pin.as_mut(), now)?;
         if user.token_swaps.get(args.swap_id).is_some() {
             return Err(OCErrorCode::AlreadyAdded.into());
         }

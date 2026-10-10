@@ -1367,7 +1367,7 @@ export class UserClient
     }
 
     // Records a swap the user is about to make straight from their own wallet, so that it can be found
-    // again if it doesn't finish (see `unfinishedTokenSwaps`)
+    // again if it doesn't finish (see `unfinishedTokenSwaps`), checking their PIN first
     markTokenSwapStarted(
         swapId: bigint,
         inputToken: CryptocurrencyDetails,
@@ -1375,6 +1375,7 @@ export class UserClient
         amountIn: bigint,
         minAmountOut: bigint,
         exchangeArgs: ExchangeTokenSwapArgs,
+        pin: string | undefined,
     ): Promise<Success | OCError> {
         return this.update(
             "mark_token_swap_started",
@@ -1385,6 +1386,7 @@ export class UserClient
                 input_amount: amountIn,
                 exchange_args: apiExchangeArgs(exchangeArgs),
                 min_output_amount: minAmountOut,
+                pin,
             },
             unitResult,
             UserMarkTokenSwapStartedArgs,
