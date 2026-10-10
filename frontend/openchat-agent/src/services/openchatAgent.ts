@@ -178,7 +178,9 @@ import type {
     SubmitProofOfUniquePersonhoodResponse,
     SubmitProposalResponse,
     SuspendUserResponse,
+    SwapFromWalletStep,
     SwapTokensResponse,
+    SwapTokensStep,
     ThreadPreview,
     ThreadPreviewsResponse,
     ThreadSyncDetails,
@@ -370,6 +372,14 @@ const MAX_LEDGERS_PER_FUNDS_MOVE = 20;
 const MAX_FUNDS_MOVE_RETRIES = 3;
 const FUNDS_MOVE_RETRY_INTERVAL_MS = 10_000;
 const MARK_TOKEN_SWAP_COMPLETED_ATTEMPTS = 3;
+// How often, and for how long, the pool a swap was made in is checked for having paid out its output
+// before whatever it still holds is withdrawn directly
+const POOL_PAYOUT_CHECKS = 10;
+const POOL_PAYOUT_CHECK_INTERVAL_MS = 1000;
+
+function delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -4879,6 +4889,8 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
+    // Swaps tokens, reporting each step of a swap the user makes straight from their wallet as the
+    // step starts, then how the swap ended
     swapTokens(
         swapId: bigint,
         inputTokenDetails: CryptocurrencyDetails,
@@ -4887,19 +4899,21 @@ export class OpenChatAgent extends EventTarget {
         minAmountOut: bigint,
         dex: DexId,
         pin: string | undefined,
-    ): Promise<SwapTokensResponse> {
-        return this._dexesAgent
-            .get()
-            .getSwapPools(
-                inputTokenDetails.ledger,
-                new Set([outputTokenDetails.ledger]),
-                this.swapProviders(),
-            )
-            .then((pools) => {
+    ): Stream<SwapTokensResponse | SwapTokensStep> {
+        return new Stream(async (resolve, reject) => {
+            try {
+                const pools = await this._dexesAgent
+                    .get()
+                    .getSwapPools(
+                        inputTokenDetails.ledger,
+                        new Set([outputTokenDetails.ledger]),
+                        this.swapProviders(),
+                    );
                 const pool = pools.find((p) => p.dex === dex);
 
                 if (pool === undefined) {
-                    return Promise.reject("Cannot find a matching pool");
+                    reject("Cannot find a matching pool");
+                    return;
                 }
 
                 const exchangeArgs: ExchangeTokenSwapArgs =
@@ -4917,38 +4931,42 @@ export class OpenChatAgent extends EventTarget {
 
                 // A user who holds their own funds swaps straight from their wallet, since their
                 // canister can't spend from it
-                if (this.holdsOwnFunds()) {
-                    return this.swapTokensFromWallet(
-                        swapId,
-                        inputTokenDetails,
-                        outputTokenDetails,
-                        amountIn,
-                        minAmountOut,
-                        pool,
-                        exchangeArgs,
-                        pin,
-                    );
-                }
-
-                return this.userClient.swapTokens(
-                    swapId,
-                    inputTokenDetails,
-                    outputTokenDetails,
-                    amountIn,
-                    minAmountOut,
-                    exchangeArgs,
-                    pin,
-                );
-            });
+                const response = this.holdsOwnFunds()
+                    ? await this.swapTokensFromWallet(
+                          swapId,
+                          inputTokenDetails,
+                          outputTokenDetails,
+                          amountIn,
+                          minAmountOut,
+                          pool,
+                          exchangeArgs,
+                          pin,
+                          (step) => resolve({ kind: "swap_step", step }, false),
+                      )
+                    : await this.userClient.swapTokens(
+                          swapId,
+                          inputTokenDetails,
+                          outputTokenDetails,
+                          amountIn,
+                          minAmountOut,
+                          exchangeArgs,
+                          pin,
+                      );
+                resolve(response, true);
+            } catch (err) {
+                reject(err);
+            }
+        });
     }
 
     // Swaps straight from the wallet of a user who holds their own funds, via ICPSwap, which pulls the
     // input from the wallet and pays the output back to it. The input swapped is `amountIn` less the
     // fees for approving the pool and for its pull, so the swap takes `amountIn` from the wallet in
     // all, as a swap made by the user's canister does. The swap is recorded in the user's canister
-    // as it starts and as it ends, so that one which doesn't finish, eg. because the user leaves part
-    // way through, is found again (see `recoverUnfinishedTokenSwaps`), and they get the achievement
-    // for swapping once it has.
+    // as it starts, which checks the user's PIN before anything is approved, and as it ends, so that
+    // one which doesn't finish, eg. because the user leaves part way through, is found again (see
+    // `recoverUnfinishedTokenSwaps`), and they get the achievement for swapping once it has. Each
+    // step after the swap is recorded is reported to `onStep` as it starts.
     private async swapTokensFromWallet(
         swapId: bigint,
         inputTokenDetails: CryptocurrencyDetails,
@@ -4958,6 +4976,7 @@ export class OpenChatAgent extends EventTarget {
         pool: TokenSwapPool,
         exchangeArgs: ExchangeTokenSwapArgs,
         pin: string | undefined,
+        onStep: (step: SwapFromWalletStep) => void,
     ): Promise<SwapTokensResponse> {
         if (exchangeArgs.dex !== "icpswap") {
             return { kind: "error", code: ErrorCode.InvalidRequest, message: "Unsupported DEX" };
@@ -4968,17 +4987,6 @@ export class OpenChatAgent extends EventTarget {
         if (amountToSwap <= fee) {
             return { kind: "error", code: ErrorCode.InsufficientFunds, message: undefined };
         }
-        // The pool pulls as its own default account
-        const approvalError = await this.approveToPull(
-            { owner: Principal.fromText(pool.canisterId) },
-            inputTokenDetails.ledger,
-            amountToSwap + fee,
-            fee,
-            pin,
-        );
-        if (approvalError !== undefined) {
-            return approvalError;
-        }
 
         const started = await this.userClient.markTokenSwapStarted(
             swapId,
@@ -4987,11 +4995,30 @@ export class OpenChatAgent extends EventTarget {
             amountIn,
             minAmountOut,
             exchangeArgs,
+            pin,
         );
         if (started.kind !== "success") {
             return started;
         }
 
+        onStep("approve");
+        // The pool pulls as its own default account. The PIN was checked as the swap started.
+        const approvalError = await this.approveToPull(
+            { owner: Principal.fromText(pool.canisterId) },
+            inputTokenDetails.ledger,
+            amountToSwap + fee,
+            fee,
+            undefined,
+        );
+        if (approvalError !== undefined) {
+            await this.markTokenSwapCompleted(swapId, {
+                kind: "failed",
+                reason: `Failed to approve the pool: ${approvalError.message ?? approvalError.code}`,
+            });
+            return approvalError;
+        }
+
+        onStep("swap");
         const poolClient = this.icpSwapPoolClient(pool.canisterId, pool.token0, pool.token1);
         let result: DexSwapResult;
         try {
@@ -5018,14 +5045,40 @@ export class OpenChatAgent extends EventTarget {
         );
 
         if (result.kind === "success") {
+            await this.withdrawWhatThePoolStillHolds(poolClient, () => onStep("withdraw"));
             return { kind: "success", amountOut: result.amountOut };
         }
         // ICPSwap refuses a swap whose output would fall short of the minimum with a slippage
         // error, which is down to the rate having moved since the quote. Any other error (eg. the
-        // pool's cached fees being out of date) is no better for quoting again.
+        // pool's cached fees being out of date) is no better for quoting again. A refused swap's
+        // input is refunded to the wallet straight away.
         return result.error.includes("Slippage check failed")
             ? { kind: "error", code: ErrorCode.SwapFailed, message: result.error }
             : { kind: "internal_error", error: result.error };
+    }
+
+    // ICPSwap pays out the output of a swap made from the wallet from a queue, normally within a few
+    // seconds, and until then still holds it for the user. Anything it still holds for them once it
+    // has had time to pay out is withdrawn to the wallet directly, which `onWithdraw` is told of
+    // first. A balance which can't be read is left to the pool's queue.
+    private async withdrawWhatThePoolStillHolds(
+        poolClient: IcpSwapPoolClient,
+        onWithdraw: () => void,
+    ): Promise<void> {
+        for (let check = 1; ; check++) {
+            const held = await this.heldByPool(poolClient).catch((err) => {
+                console.warn("Failed to check what ICPSwap holds after a swap", err);
+                return [];
+            });
+            if (held.length === 0) return;
+            if (check === POOL_PAYOUT_CHECKS) break;
+            await delay(POOL_PAYOUT_CHECK_INTERVAL_MS);
+        }
+
+        onWithdraw();
+        await this.withdrawAllHeldByPool(poolClient).catch((err) =>
+            console.warn("Failed to withdraw what ICPSwap holds after a swap", err),
+        );
     }
 
     // Records how a swap made straight from the wallet ended, trying a few times, since the swap is
@@ -5072,25 +5125,39 @@ export class OpenChatAgent extends EventTarget {
 
     // Withdraws to the user's wallet whatever the pool an unfinished swap was made in holds for them,
     // returning whether there is nothing left there
-    private async withdrawFromPool(swap: UnfinishedTokenSwap): Promise<boolean> {
+    private withdrawFromPool(swap: UnfinishedTokenSwap): Promise<boolean> {
         const { exchangeArgs } = swap;
         // A TACO swap pays out or refunds itself, so leaves nothing to withdraw
-        if (exchangeArgs.dex !== "icpswap") return true;
+        if (exchangeArgs.dex !== "icpswap") return Promise.resolve(true);
 
         const [token0, token1] = exchangeArgs.zeroForOne
             ? [swap.inputLedger, swap.outputLedger]
             : [swap.outputLedger, swap.inputLedger];
-        const poolClient = this.icpSwapPoolClient(exchangeArgs.swapCanisterId, token0, token1);
+        return this.withdrawAllHeldByPool(
+            this.icpSwapPoolClient(exchangeArgs.swapCanisterId, token0, token1),
+        );
+    }
 
+    // What a pool holds for the user which is worth withdrawing, ie. more than the fee for doing so,
+    // with that fee, which is undefined for a token the Registry doesn't know
+    private async heldByPool(
+        poolClient: IcpSwapPoolClient,
+    ): Promise<{ ledger: string; balance: bigint; fee: bigint | undefined }[]> {
+        const balances = await poolClient.unusedBalances(this.principal);
+        return balances
+            .filter(({ balance }) => balance > 0n)
+            .map((b) => ({ ...b, fee: this.ledgerFee(b.ledger) }))
+            .filter(({ balance, fee }) => fee === undefined || balance > fee);
+    }
+
+    // Withdraws to the user's wallet everything a pool holds for them which is worth withdrawing,
+    // returning whether there is nothing left there
+    private async withdrawAllHeldByPool(poolClient: IcpSwapPoolClient): Promise<boolean> {
         let withdrawnAll = true;
-        for (const { ledger, balance } of await poolClient.unusedBalances(this.principal)) {
-            if (balance === 0n) continue;
-            const fee = this.ledgerFee(ledger);
-            if (fee === undefined) {
-                withdrawnAll = false;
-            } else if (balance > fee) {
-                withdrawnAll = (await poolClient.withdraw(ledger, balance, fee)) && withdrawnAll;
-            }
+        for (const { ledger, balance, fee } of await this.heldByPool(poolClient)) {
+            const withdrawn =
+                fee !== undefined && (await poolClient.withdraw(ledger, balance, fee));
+            withdrawnAll = withdrawn && withdrawnAll;
         }
         return withdrawnAll;
     }

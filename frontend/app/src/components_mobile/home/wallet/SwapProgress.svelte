@@ -9,7 +9,7 @@
         Subtitle,
         type SizeMode,
     } from "component-lib";
-    import type { OpenChat, SwapTokensResponse } from "@client";
+    import type { OpenChat, SwapFromWalletStep, SwapTokensResponse } from "@client";
     import { Poller, publish } from "@client";
     import { swapFromWalletOutcome, type SwapOutcome } from "../../../utils/tokenSwap";
     import { getContext, onMount } from "svelte";
@@ -31,8 +31,10 @@
         // What swapping returned, once it has
         swapResponse: SwapTokensResponse | undefined;
         // Whether the user is swapping straight from their wallet, as a user who holds their own
-        // funds does, in which case there is no progress to follow, only the swap's outcome
+        // funds does, in which case its steps are reported as they start rather than polled for
         fromWallet: boolean;
+        // The step a swap made from the wallet has reached, once it is past initialising
+        swapStep: SwapFromWalletStep | undefined;
     }
 
     let {
@@ -46,6 +48,7 @@
         dex,
         swapResponse,
         fromWallet,
+        swapStep,
     }: Props = $props();
 
     const height: SizeMode = { size: "16rem" };
@@ -68,10 +71,14 @@
     // A swap is made from the wallet or not for as long as this shows it
     // svelte-ignore state_referenced_locally
     let stages = $state<Stage["kind"][]>(
-        fromWallet ? ["swap", "done"] : ["get", "deposit", "notify", "swap", "withdraw", "done"],
+        fromWallet
+            ? ["init", "approve", "swap", "done"]
+            : ["get", "deposit", "notify", "swap", "withdraw", "done"],
     );
 
     type Stage =
+        | { kind: "init" }
+        | { kind: "approve" }
         | { kind: "get" }
         | { kind: "deposit" }
         | { kind: "notify" }
@@ -81,7 +88,7 @@
         | { kind: "done" };
 
     // svelte-ignore state_referenced_locally
-    let currentStage = $state<Stage["kind"]>(fromWallet ? "swap" : "get");
+    let currentStage = $state<Stage["kind"]>(fromWallet ? "init" : "get");
     let currentStageIndex = $derived(stages.findIndex((s) => s === currentStage));
     let error = $state(false);
 
@@ -90,6 +97,16 @@
 
         poller = new Poller(querySwapProgress, POLL_INTERVAL, POLL_INTERVAL, true);
         return () => poller?.stop();
+    });
+
+    $effect(() => {
+        if (fromWallet && swapStep !== undefined && outcome === undefined) {
+            // A withdrawal is only shown if the DEX doesn't pay out the output itself in good time
+            if (swapStep === "withdraw") {
+                stages = ["init", "approve", "swap", "withdraw", "done"];
+            }
+            currentStage = swapStep;
+        }
     });
 
     $effect(() => {

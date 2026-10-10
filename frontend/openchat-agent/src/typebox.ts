@@ -7915,6 +7915,7 @@ export const UserMarkTokenSwapStartedArgs = /* @__PURE__ */ Type.Object({
     input_amount: Type.BigInt(),
     exchange_args: UserSwapTokensExchangeArgs,
     min_output_amount: Type.BigInt(),
+    pin: Type.Optional(PinNumberWrapper),
 });
 
 export type UserPinChatArgs = Static<typeof UserPinChatArgs>;

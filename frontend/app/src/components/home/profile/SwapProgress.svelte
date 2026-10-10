@@ -1,8 +1,13 @@
 <script lang="ts">
-    import type { OpenChat, SwapTokensResponse } from "@client";
+    import type { OpenChat, SwapFromWalletStep, SwapTokensResponse } from "@client";
     import { Poller } from "@client";
     import { getContext, onMount } from "svelte";
-    import { swapFromWalletOutcome, type SwapOutcome } from "../../../utils/tokenSwap";
+    import {
+        swapFromWalletOutcome,
+        walletSwapStepsUpTo,
+        type SwapOutcome,
+        type WalletSwapStep,
+    } from "../../../utils/tokenSwap";
     import ProgressSteps, { type Result, type Step } from "../../ProgressSteps.svelte";
 
     interface Props {
@@ -17,8 +22,10 @@
         // What swapping returned, once it has
         swapResponse: SwapTokensResponse | undefined;
         // Whether the user is swapping straight from their wallet, as a user who holds their own
-        // funds does, in which case there is no progress to follow, only the swap's outcome
+        // funds does, in which case its steps are reported as they start rather than polled for
         fromWallet: boolean;
+        // The step a swap made from the wallet has reached, once it is past initialising
+        swapStep: SwapFromWalletStep | undefined;
         onFinished: (outcome: SwapOutcome, ledgerIn: string, ledgerOut: string) => void;
     }
 
@@ -33,18 +40,27 @@
         dex,
         swapResponse,
         fromWallet,
+        swapStep,
         onFinished,
     }: Props = $props();
 
     const client = getContext<OpenChat>("client");
     const POLL_INTERVAL = 1000;
     const labelPrefix = "tokenSwap.progress.";
+    const WALLET_SWAP_PERCENT: Record<WalletSwapStep, number> = {
+        init: 10,
+        approve: 30,
+        swap: 60,
+        withdraw: 85,
+    };
 
     let percent: number | undefined = $state(0);
     let amountOut = $state("");
     // A swap is made from the wallet or not for as long as this shows it
     // svelte-ignore state_referenced_locally
-    let steps = $state<Step[]>([{ label: fromWallet ? "swap" : "get", status: "doing" }]);
+    let steps = $state<Step[]>(
+        fromWallet ? walletSwapSteps("init", "doing") : [{ label: "get", status: "doing" }],
+    );
     let result = $state<Result>(undefined);
     let poller: Poller | undefined = undefined;
 
@@ -75,10 +91,26 @@
     });
 
     $effect(() => {
+        if (fromWallet && swapStep !== undefined && result === undefined) {
+            steps = walletSwapSteps(swapStep, "doing");
+            percent = WALLET_SWAP_PERCENT[swapStep];
+        }
+    });
+
+    $effect(() => {
         if (fromWallet && swapResponse !== undefined && result === undefined) {
             showSwapFromWalletOutcome(swapResponse);
         }
     });
+
+    // The steps of a swap made from the wallet so far, the last of which has `status`
+    function walletSwapSteps(current: WalletSwapStep, status: Step["status"]): Step[] {
+        const labels = walletSwapStepsUpTo(current);
+        return labels.map((label, i) => ({
+            label,
+            status: i < labels.length - 1 ? "done" : status,
+        }));
+    }
 
     function notifyFinished(outcome: SwapOutcome) {
         onFinished(outcome, ledgerIn, ledgerOut);
@@ -90,7 +122,7 @@
         if (response.kind === "success") {
             amountOut = client.formatTokens(response.amountOut, decimalsOut);
         }
-        steps = [{ label: "swap", status: outcome === "success" ? "done" : "failed" }];
+        steps = walletSwapSteps(swapStep ?? "init", outcome === "success" ? "done" : "failed");
         if (outcome === "success" || outcome === "rateChanged") {
             result = { label: outcome === "success" ? "done" : "failed", status: "done" };
         } else {

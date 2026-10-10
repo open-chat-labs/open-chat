@@ -217,6 +217,39 @@ fn completing_swap_which_was_never_started_fails() {
     );
 }
 
+// The user's PIN is checked as the swap starts, before they approve anything for it
+#[test]
+fn swap_made_by_user_in_multi_user_canister_needs_their_pin() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::register_user_in_multi_user_canister(env, canister_ids);
+    client::user::happy_path::set_pin_number(env, &user, None, Some("1234".to_string()));
+    let swap_id = random_from_u128();
+
+    let mut start = |pin: Option<&str>| {
+        client::user::mark_token_swap_started(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::mark_token_swap_started::Args {
+                pin: pin.map(|p| p.to_string().into()),
+                ..mark_started_args(canister_ids, swap_id)
+            },
+        )
+    };
+
+    for (pin, code) in [(None, OCErrorCode::PinRequired), (Some("4321"), OCErrorCode::PinIncorrect)] {
+        let response = start(pin);
+        assert!(
+            matches!(&response, types::UnitResult::Error(e) if e.matches_code(code)),
+            "{response:?}"
+        );
+    }
+    let response = start(Some("1234"));
+    assert!(matches!(response, types::UnitResult::Success), "{response:?}");
+}
+
 fn mark_started_args(canister_ids: &CanisterIds, swap_id: u128) -> user_canister::mark_token_swap_started::Args {
     let args = swap_args(canister_ids, ONE_ICP, None);
     user_canister::mark_token_swap_started::Args {
@@ -226,6 +259,7 @@ fn mark_started_args(canister_ids: &CanisterIds, swap_id: u128) -> user_canister
         input_amount: args.input_amount,
         exchange_args: args.exchange_args,
         min_output_amount: args.min_output_amount,
+        pin: None,
     }
 }
 

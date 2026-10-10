@@ -565,6 +565,15 @@ export type InsufficientPayment = {
     kind: "insufficient_payment";
 };
 
+// A step of a swap the user makes straight from their wallet (as a user who holds their own funds
+// does), reported as the step starts, ahead of how the swap ended
+export type SwapFromWalletStep = "approve" | "swap" | "withdraw";
+
+export type SwapTokensStep = {
+    kind: "swap_step";
+    step: SwapFromWalletStep;
+};
+
 export type SwapTokensResponse =
     | {
           kind: "success";

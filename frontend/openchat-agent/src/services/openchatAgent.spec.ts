@@ -1756,7 +1756,9 @@ describe("OpenChatAgent swapping tokens", () => {
     let calls: unknown[][];
     let approveResponse: "success" | "insufficient_funds" | "failure";
     let swapResult: () => Promise<DexSwapResult>;
-    let unusedBalances: { ledger: string; balance: bigint }[];
+    let unusedBalances:
+        | { ledger: string; balance: bigint }[]
+        | (() => { ledger: string; balance: bigint }[]);
     let withdrawSucceeds: boolean;
     let unfinishedSwaps: UnfinishedTokenSwap[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1811,7 +1813,9 @@ describe("OpenChatAgent swapping tokens", () => {
             },
             unusedBalances: (principal: Principal) => {
                 calls.push(["unusedBalances", canisterId, token0, token1, principal]);
-                return Promise.resolve(unusedBalances);
+                return Promise.resolve(
+                    typeof unusedBalances === "function" ? unusedBalances() : unusedBalances,
+                );
             },
             withdraw: (...args: unknown[]) => {
                 calls.push(["withdraw", canisterId, ...args]);
@@ -1830,17 +1834,35 @@ describe("OpenChatAgent swapping tokens", () => {
         setup(MULTI_USER_CANISTER_USER);
     });
 
-    const swap = () =>
-        agent.swapTokens(123n, ICP_DETAILS, CHAT_DETAILS, 1_000n, 500n, "icpswap", undefined);
+    // Swaps, giving how the swap ended along with the steps it reported along the way
+    const swapWith = (amountIn: bigint, pin?: string) =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        new Promise<{ response: any; steps: string[] }>((resolve, reject) => {
+            const steps: string[] = [];
+            agent
+                .swapTokens(123n, ICP_DETAILS, CHAT_DETAILS, amountIn, 500n, "icpswap", pin)
+                .subscribe({
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    onResult: (value: any, final: boolean) =>
+                        final ? resolve({ response: value, steps }) : steps.push(value.step),
+                    onError: reject,
+                });
+        });
+    const swap = (pin?: string) => swapWith(1_000n, pin);
 
     const exchangeArgs = { dex: "icpswap", swapCanisterId: POOL, zeroForOne: true };
 
-    test("approves the pool, records the swap as it starts, swaps, then records how it ended", async () => {
-        expect(await swap()).toEqual({ kind: "success", amountOut: 400n });
+    test("records the swap, approves the pool, swaps, then records how it ended", async () => {
+        const { response, steps } = await swap("1234");
 
-        // The approval's fee and the pool's pull are taken out of the amount swapped, so the swap
-        // takes 1_000 from the wallet in all
+        expect(response).toEqual({ kind: "success", amountOut: 400n });
+        expect(steps).toEqual(["approve", "swap"]);
+        // The PIN is checked as the swap is recorded, so not again for the approval. The
+        // approval's fee and the pool's pull are taken out of the amount swapped, so the swap
+        // takes 1_000 from the wallet in all. Once swapped, the pool is checked for having paid
+        // out the output.
         expect(calls).toEqual([
+            ["started", 123n, ICP_DETAILS, CHAT_DETAILS, 1_000n, 500n, exchangeArgs, "1234"],
             [
                 "approve",
                 ICP_LEDGER,
@@ -1849,10 +1871,20 @@ describe("OpenChatAgent swapping tokens", () => {
                 FEE,
                 APPROVAL_VALIDITY_MS,
             ],
-            ["started", 123n, ICP_DETAILS, CHAT_DETAILS, 1_000n, 500n, exchangeArgs],
             ["swap", POOL, ICP_LEDGER, LEDGER_CANISTER_CHAT, 980n, 500n, FEE, CHAT_FEE],
             ["completed", 123n, { kind: "swapped", amountOut: 400n }],
+            ["unusedBalances", POOL, ICP_LEDGER, LEDGER_CANISTER_CHAT, ME],
         ]);
+    });
+
+    test("a swap the user's canister won't record, eg. for the wrong PIN, goes no further", async () => {
+        agent._userClient.markTokenSwapStarted = (...args: unknown[]) => {
+            calls.push(["started", ...args]);
+            return Promise.resolve(PIN_INCORRECT);
+        };
+
+        expect(await swap("4321")).toEqual({ response: PIN_INCORRECT, steps: [] });
+        expect(calls.map((c) => c[0])).toEqual(["started"]);
     });
 
     test("a swap the DEX refuses as the rate has moved is recorded as failed", async () => {
@@ -1860,7 +1892,8 @@ describe("OpenChatAgent swapping tokens", () => {
             '{"InternalError":"Slippage check failed: minimum amount requirement not met"}';
         swapResult = () => Promise.resolve({ kind: "error", error });
 
-        expect(await swap()).toEqual({ kind: "error", code: ErrorCode.SwapFailed, message: error });
+        const { response } = await swap();
+        expect(response).toEqual({ kind: "error", code: ErrorCode.SwapFailed, message: error });
         expect(calls.at(-1)).toEqual(["completed", 123n, { kind: "failed", reason: error }]);
     });
 
@@ -1868,7 +1901,7 @@ describe("OpenChatAgent swapping tokens", () => {
         const error = '{"InternalError":"Wrong fee cache (expected: 20, received: 10)"}';
         swapResult = () => Promise.resolve({ kind: "error", error });
 
-        expect(await swap()).toEqual({ kind: "internal_error", error });
+        expect((await swap()).response).toEqual({ kind: "internal_error", error });
         expect(calls.at(-1)).toEqual(["completed", 123n, { kind: "failed", reason: error }]);
     });
 
@@ -1881,45 +1914,83 @@ describe("OpenChatAgent swapping tokens", () => {
                 : Promise.resolve({ kind: "success" });
         };
 
-        expect(await swap()).toEqual({ kind: "success", amountOut: 400n });
+        expect((await swap()).response).toEqual({ kind: "success", amountOut: 400n });
         expect(calls.filter((c) => c[0] === "completed")).toHaveLength(3);
     });
 
     test("a swap whose outcome is unknown is left unfinished", async () => {
         swapResult = () => Promise.reject(new Error("timed out"));
 
-        const response = await swap();
+        const { response, steps } = await swap();
         expect(response.kind).toBe("error");
         expect(response.code).toBe(ErrorCode.Unknown);
-        expect(calls.map((c) => c[0])).toEqual(["approve", "started", "swap"]);
+        expect(steps).toEqual(["approve", "swap"]);
+        expect(calls.map((c) => c[0])).toEqual(["started", "approve", "swap"]);
     });
 
-    test("nothing is recorded or swapped if the pool can't be approved", async () => {
+    test("a swap whose pool can't be approved is recorded as failed", async () => {
         approveResponse = "insufficient_funds";
 
-        expect((await swap()).code).toBe(ErrorCode.InsufficientFunds);
-        expect(calls.map((c) => c[0])).toEqual(["approve"]);
+        const { response, steps } = await swap();
+        expect(response.code).toBe(ErrorCode.InsufficientFunds);
+        expect(steps).toEqual(["approve"]);
+        expect(calls.map((c) => c[0])).toEqual(["started", "approve", "completed"]);
+        expect(calls.at(-1)?.[2]).toMatchObject({ kind: "failed" });
     });
 
-    test("too little to cover the fees is refused before anything is approved", async () => {
-        const response = await agent.swapTokens(
-            123n,
-            ICP_DETAILS,
-            CHAT_DETAILS,
-            3n * FEE,
-            1n,
-            "icpswap",
-            undefined,
-        );
+    test("too little to cover the fees is refused before anything is recorded", async () => {
+        const { response } = await swapWith(3n * FEE);
 
         expect(response.code).toBe(ErrorCode.InsufficientFunds);
         expect(calls).toEqual([]);
     });
 
+    test("doesn't withdraw what the pool pays out itself", async () => {
+        let checks = 0;
+        unusedBalances = () =>
+            ++checks === 1 ? [{ ledger: LEDGER_CANISTER_CHAT, balance: 5_000n }] : [];
+
+        vi.useFakeTimers();
+        try {
+            const swapped = swap();
+            await vi.runAllTimersAsync();
+            const { steps } = await swapped;
+
+            expect(steps).toEqual(["approve", "swap"]);
+            expect(calls.filter((c) => c[0] === "unusedBalances")).toHaveLength(2);
+            expect(calls.some((c) => c[0] === "withdraw")).toBe(false);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("withdraws what the pool still holds once it has had time to pay out", async () => {
+        unusedBalances = [{ ledger: LEDGER_CANISTER_CHAT, balance: 5_000n }];
+
+        vi.useFakeTimers();
+        try {
+            const swapped = swap();
+            await vi.runAllTimersAsync();
+            const { response, steps } = await swapped;
+
+            expect(response).toEqual({ kind: "success", amountOut: 400n });
+            expect(steps).toEqual(["approve", "swap", "withdraw"]);
+            expect(calls.at(-1)).toEqual([
+                "withdraw",
+                POOL,
+                LEDGER_CANISTER_CHAT,
+                5_000n,
+                CHAT_FEE,
+            ]);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     test("a user alone in their canister has their canister make the swap", async () => {
         setup(USER_CANISTER_USER);
 
-        expect(await swap()).toEqual({ kind: "success", amountOut: 1n });
+        expect(await swap()).toEqual({ response: { kind: "success", amountOut: 1n }, steps: [] });
         expect(calls.map((c) => c[0])).toEqual(["canisterSwap"]);
     });
 

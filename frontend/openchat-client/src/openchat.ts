@@ -312,6 +312,7 @@ import {
     type StreakInsurance,
     type SubmitProofOfUniquePersonhoodResponse,
     type Success,
+    type SwapFromWalletStep,
     type SwapTokensResponse,
     type TermsRoute,
     type PrivacyRoute,
@@ -9395,6 +9396,10 @@ export class OpenChat {
         });
     }
 
+    // Swaps tokens, asking for the user's PIN first if they have set one. `onStep` is told of each
+    // step of a swap the user makes straight from their wallet as it starts (see
+    // `SwapFromWalletStep`), whereas a swap made by the user's canister is followed through
+    // `tokenSwapStatus`.
     async swapTokens(
         swapId: bigint,
         inputTokenLedger: string,
@@ -9402,6 +9407,7 @@ export class OpenChat {
         amountIn: bigint,
         minAmountOut: bigint,
         dex: DexId,
+        onStep?: (step: SwapFromWalletStep) => void,
     ): Promise<SwapTokensResponse> {
         let pin: string | undefined = undefined;
 
@@ -9411,27 +9417,38 @@ export class OpenChat {
 
         const lookup = cryptoLookup.value;
 
-        return this.#worker
-            .send({
-                kind: "swapTokens",
-                swapId,
-                inputTokenDetails: lookup.get(inputTokenLedger)!,
-                outputTokenDetails: lookup.get(outputTokenLedger)!,
-                amountIn,
-                minAmountOut,
-                dex,
-                pin,
-            })
-            .then((resp) => {
-                if (resp.kind === "error") {
-                    const pinNumberFailure = pinNumberFailureFromError(resp);
-                    if (pinNumberFailure !== undefined) {
-                        pinNumberFailureStore.set(pinNumberFailure);
-                    }
-                }
+        const resp = await new Promise<SwapTokensResponse>((resolve, reject) => {
+            this.#worker
+                .stream({
+                    kind: "swapTokens",
+                    swapId,
+                    inputTokenDetails: lookup.get(inputTokenLedger)!,
+                    outputTokenDetails: lookup.get(outputTokenLedger)!,
+                    amountIn,
+                    minAmountOut,
+                    dex,
+                    pin,
+                })
+                .subscribe({
+                    onResult: (value) => {
+                        if (value.kind === "swap_step") {
+                            onStep?.(value.step);
+                        } else {
+                            resolve(value);
+                        }
+                    },
+                    onError: reject,
+                });
+        });
 
-                return resp;
-            });
+        if (resp.kind === "error") {
+            const pinNumberFailure = pinNumberFailureFromError(resp);
+            if (pinNumberFailure !== undefined) {
+                pinNumberFailureStore.set(pinNumberFailure);
+            }
+        }
+
+        return resp;
     }
 
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {

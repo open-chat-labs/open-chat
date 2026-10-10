@@ -2401,11 +2401,13 @@
         "noQuotes": "No DEXes provided a quote to swap {tokenIn}",
         "proceedWithSwap": "The swap will only go ahead if the amount of {tokenOut} to be received is at least 98% of the amount quoted. Would you like to go ahead and attempt the swap?",
         "progress": {
+            "approve": "Approve {dex} to transfer {tokenIn} from your wallet",
             "deposit": "Transfer {amountIn} {tokenIn} to {dex}",
             "done": "Swap complete",
             "error": "Swap error - no funds have been lost",
             "failed": "Swap failed - the exchange rate has changed",
             "get": "Get deposit account",
+            "init": "Initialising swap",
             "insufficientFunds": "Swap failed - insufficient funds",
             "notify": "Notify {dex} of deposit",
             "refund": "Refund {amountIn} {tokenIn} from {dex}",
