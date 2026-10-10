@@ -619,13 +619,12 @@ pub fn install_icrc_ledger(
     canister_id
 }
 
-// Installs an SNS governance canister with a neuron for each of `hotkeys`, which lists that principal
-// as a hotkey, each with `stake_e8s` staked and a dissolve delay of `dissolve_delay_seconds`
+// Installs an SNS governance canister with a neuron for each of `neurons`, given as the principals
+// it lists as hotkeys and its stake, each with a dissolve delay of `dissolve_delay_seconds`
 pub fn install_sns_governance(
     env: &mut PocketIc,
     controller: Principal,
-    hotkeys: Vec<Principal>,
-    stake_e8s: u64,
+    neurons: Vec<(Vec<Principal>, u64)>,
     dissolve_delay_seconds: u64,
 ) -> CanisterId {
     // Only the fields which aren't optional, plus those set below. Those left empty are typed with
@@ -734,20 +733,23 @@ pub fn install_sns_governance(
     const DAY_IN_SECONDS: u64 = 24 * 60 * 60;
     const YEAR_IN_SECONDS: u64 = 365 * DAY_IN_SECONDS;
 
-    let neurons = hotkeys
+    let neurons = neurons
         .into_iter()
         .enumerate()
-        .map(|(index, hotkey)| {
+        .map(|(index, (hotkeys, stake_e8s))| {
             // A neuron's id is its subaccount, and it is keyed by the id in hex
             let id = vec![index as u8 + 1; 32];
             let key = id.iter().map(|b| format!("{b:02x}")).collect();
             let neuron = Neuron {
                 id: Some(NeuronId { id }),
                 // The permissions a hotkey has
-                permissions: vec![NeuronPermission {
-                    principal: Some(hotkey),
-                    permission_type: vec![PERMISSION_SUBMIT_PROPOSAL, PERMISSION_VOTE],
-                }],
+                permissions: hotkeys
+                    .into_iter()
+                    .map(|hotkey| NeuronPermission {
+                        principal: Some(hotkey),
+                        permission_type: vec![PERMISSION_SUBMIT_PROPOSAL, PERMISSION_VOTE],
+                    })
+                    .collect(),
                 maturity_e8s_equivalent: 0,
                 cached_neuron_stake_e8s: stake_e8s,
                 // Set to the genesis time when the canister is initialized
