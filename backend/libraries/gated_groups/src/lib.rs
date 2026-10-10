@@ -91,6 +91,21 @@ pub async fn check_if_passes_gate_under_any_id(gate: AccessGate, args: CheckGate
     result
 }
 
+// Whether the gate checks the user's token balance or SNS neurons, which a migrated user may still
+// hold under a previous id (see `check_if_passes_gate_under_any_id`)
+pub fn checks_tokens_or_neurons(gate: &AccessGate) -> bool {
+    match gate {
+        AccessGate::TokenBalance(_) | AccessGate::SnsNeuron(_) => true,
+        AccessGate::Composite(gate) => gate.inner.iter().any(|g| {
+            matches!(
+                g,
+                AccessGateNonComposite::TokenBalance(_) | AccessGateNonComposite::SnsNeuron(_)
+            )
+        }),
+        _ => false,
+    }
+}
+
 pub fn check_if_passes_gate_synchronously(gate: AccessGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
     match AccessGateScope::from(gate) {
         AccessGateScope::Composite(gate) => check_composite_gate_synchronously(gate, args),
