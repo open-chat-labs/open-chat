@@ -1,6 +1,6 @@
 use super::expire_members;
 use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, read_state, run_regular_jobs};
-use gated_groups::{CheckGateArgs, CheckIfPassesGateResult, check_if_passes_gate};
+use gated_groups::{CheckGateArgs, CheckIfPassesGateResult, check_if_passes_gate_under_any_id};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails};
 use ic_cdk_timers::TimerId;
 use local_user_index_canister_c2c_client::lookup_users;
@@ -68,7 +68,7 @@ async fn process_gate_check(details: ExpiringMemberActionDetails) {
         return;
     };
 
-    let result = check_if_passes_gate(prep.gate_config.gate, prep.check_gate_args).await;
+    let result = check_if_passes_gate_under_any_id(prep.gate_config.gate, prep.check_gate_args, prep.previous_user_ids).await;
 
     mutate_state(|state| {
         handle_gate_check_result(prep.details, result, state);
@@ -81,6 +81,9 @@ struct PrepareResult {
     details: ExpiringMemberActionDetails,
     gate_config: AccessGateConfigInternal,
     check_gate_args: CheckGateArgs,
+    // The member's ids before they were migrated to a MultiUser canister, whose wallets may still
+    // hold their tokens
+    previous_user_ids: Vec<UserId>,
 }
 
 fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState) -> Option<PrepareResult> {
@@ -105,6 +108,7 @@ fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState
     };
 
     Some(PrepareResult {
+        previous_user_ids: state.data.migrated_user_ids.previous_ids(details.user_id),
         details,
         gate_config,
         check_gate_args,
