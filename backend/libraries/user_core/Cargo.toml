@@ -22,6 +22,7 @@ ledger_utils = { path = "../ledger_utils" }
 local_user_index_canister = { path = "../../canisters/local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../canisters/local_user_index/c2c_client" }
 user_index_canister = { path = "../../canisters/user_index/api" }
+user_index_canister_c2c_client = { path = "../../canisters/user_index/c2c_client" }
 ic-ledger-types = { workspace = true }
 installed_bots = { path = "../installed_bots" }
 itertools = { workspace = true }
