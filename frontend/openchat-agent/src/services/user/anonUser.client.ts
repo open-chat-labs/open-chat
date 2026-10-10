@@ -449,6 +449,7 @@ export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {
         _amountIn: bigint,
         _minAmountOut: bigint,
         _exchangeArgs: ExchangeTokenSwapArgs,
+        _pin: string | undefined,
     ): Promise<Success | OCError> {
         throw new AnonymousOperationError();
     }

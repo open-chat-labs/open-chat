@@ -4,6 +4,7 @@
         InterpolationValues,
         OpenChat,
         ResourceKey,
+        SwapFromWalletStep,
         SwapTokensResponse,
     } from "@client";
     import {
@@ -60,6 +61,7 @@
     let bestQuote: [DexId, bigint] | undefined = $state(undefined);
     let swapId: bigint | undefined = $state();
     let swapResponse = $state<SwapTokensResponse>();
+    let swapStep = $state<SwapFromWalletStep>();
     let userAcceptedWarning = $state(false);
     let warnValueUnknown = $state(false);
     let warnValueDropped = $state(false);
@@ -174,6 +176,7 @@
                 if (balanceCheckSuccess) {
                     swapId = random128();
                     swapResponse = undefined;
+                    swapStep = undefined;
                     return client.swapTokens(
                         swapId,
                         ledgerInLocal,
@@ -181,6 +184,7 @@
                         amountIn,
                         minAmountOut,
                         bestQuoteLocal[0],
+                        (step) => (swapStep = step),
                     );
                 }
             })
@@ -337,6 +341,7 @@
                             dex={dexName(bestQuote[0])}
                             {swapResponse}
                             fromWallet={isMultiUserCanisterUser($currentUserIdStore)}
+                            {swapStep}
                             onFinished={onSwapFinished} />
                     </div>
                 {/if}

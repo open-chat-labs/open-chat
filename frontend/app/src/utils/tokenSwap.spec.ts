@@ -1,6 +1,6 @@
 import { ErrorCode } from "@client";
 import { describe, expect, test } from "vitest";
-import { swapFromWalletOutcome } from "./tokenSwap";
+import { swapFromWalletOutcome, walletSwapStepsUpTo } from "./tokenSwap";
 
 describe("swapFromWalletOutcome", () => {
     test("a swap which went ahead succeeded", () => {
@@ -44,5 +44,13 @@ describe("swapFromWalletOutcome", () => {
                 message: undefined,
             }),
         ).toBe("error");
+    });
+});
+
+describe("walletSwapStepsUpTo", () => {
+    test("the steps so far end with the current one", () => {
+        expect(walletSwapStepsUpTo("init")).toEqual(["init"]);
+        expect(walletSwapStepsUpTo("swap")).toEqual(["init", "approve", "swap"]);
+        expect(walletSwapStepsUpTo("withdraw")).toEqual(["init", "approve", "swap", "withdraw"]);
     });
 });
