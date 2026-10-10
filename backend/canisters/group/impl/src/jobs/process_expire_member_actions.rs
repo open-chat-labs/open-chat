@@ -126,12 +126,20 @@ fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckI
         return;
     };
 
-    // If the member can no longer lapse then do nothing
-    if !state.data.chat.members.can_member_lapse(&details.user_id) {
+    let now = state.env.now();
+
+    if details.unlapse_only {
+        // A check of a lapsed member's gate only ever unlapses them, if they're still lapsed and now
+        // pass it, after which their gate is checked as it expires like any other member's. Anyone
+        // else, such as a member who has rejoined since, is left as they are.
+        if !(result.success() && state.data.chat.members.update_lapsed(details.user_id, false, now)) {
+            return;
+        }
+        handle_activity_notification(state);
+    } else if !state.data.chat.members.can_member_lapse(&details.user_id) {
+        // If the member can no longer lapse then do nothing
         return;
     }
-
-    let now = state.env.now();
 
     // Determine if the gate expiry has increased since the action was added to the queue
     let expiry_increase = curr_gate_expiry.saturating_sub(details.original_gate_expiry);
