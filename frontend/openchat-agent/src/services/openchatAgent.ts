@@ -263,6 +263,7 @@ import {
     messageContextToString,
     messageContextsEqual,
     offline,
+    OPENCHAT_BOT_USER_ID,
     textToCode,
     userCanisterSpenderAccount,
     userWalletAccount,
@@ -3612,8 +3613,10 @@ export class OpenChatAgent extends EventTarget {
         if (userId) {
             return new Stream(async (resolve, reject) => {
                 const deleted = await this._userDb.isUserIdDeleted(userId);
-                if (deleted) {
+                // The OpenChat Bot has no canister, so it has no profile to load
+                if (deleted || userId === OPENCHAT_BOT_USER_ID) {
                     resolve(undefined, true);
+                    return;
                 }
                 let userClient: UserClient;
                 try {
