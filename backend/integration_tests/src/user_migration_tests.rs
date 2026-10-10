@@ -3597,7 +3597,7 @@ fn migrate_users(
 // The UserIndex tells each LocalUserIndex of a migration once the user has been imported, which can
 // take some rounds to arrive. The LocalUserIndex moves the user's subscriptions onto their new id when
 // told.
-fn wait_until_local_user_index_knows_of_migration(
+pub(crate) fn wait_until_local_user_index_knows_of_migration(
     env: &mut PocketIc,
     local_user_index: CanisterId,
     user: &User,

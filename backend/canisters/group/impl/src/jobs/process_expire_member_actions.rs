@@ -68,7 +68,7 @@ async fn process_gate_check_async(details: ExpiringMemberActionDetails) {
         return;
     };
 
-    let result = check_if_passes_gate_under_any_id(prep.gate_config.gate, prep.check_gate_args, prep.previous_user_ids).await;
+    let result = check_if_passes_gate_under_any_id(prep.gate_config.gate, prep.check_gate_args).await;
 
     mutate_state(|state| {
         handle_gate_check_result(prep.details, result, state);
@@ -81,9 +81,6 @@ struct PrepareResult {
     details: ExpiringMemberActionDetails,
     gate_config: AccessGateConfigInternal,
     check_gate_args: CheckGateArgs,
-    // The member's ids before they were migrated to a MultiUser canister, whose wallets may still
-    // hold their tokens
-    previous_user_ids: Vec<UserId>,
 }
 
 fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState) -> Option<PrepareResult> {
@@ -96,6 +93,7 @@ fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState
 
     let check_gate_args = CheckGateArgs {
         user: state.member_user(details.user_id),
+        previous_user_ids: state.data.migrated_user_ids.previous_ids(details.user_id),
         diamond_membership_expires_at,
         this_canister: state.env.canister_id(),
         is_unique_person,
@@ -108,7 +106,6 @@ fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState
     };
 
     Some(PrepareResult {
-        previous_user_ids: state.data.migrated_user_ids.previous_ids(details.user_id),
         details,
         gate_config,
         check_gate_args,

@@ -890,8 +890,9 @@ impl Data {
     // latest id, stepping through each migration in turn, so that from then on they only need to be
     // looked up by their latest id. `previous_user_ids` must be ordered oldest first. `principal` is
     // the user's principal, if known, which is needed to update the lookup of an invited user who
-    // isn't a member. If anything was held under a previous id, the migrations are also cached, since
-    // events may refer to the user by their previous ids. Returns whether anything was moved.
+    // isn't a member. The migrations are also cached, since events may refer to the user by their
+    // previous ids, and a gate is checked under them as it expires, even for a user who had nothing
+    // here under them. Returns whether anything was moved.
     pub fn migrate_user_ids(
         &mut self,
         previous_user_ids: &[UserId],
@@ -904,9 +905,7 @@ impl Data {
         for (&old_user_id, &new_user_id) in previous_user_ids.iter().zip(next_ids) {
             migrated |= self.migrate_user_id(old_user_id, new_user_id, principal, now);
         }
-        if migrated {
-            self.migrated_user_ids.insert_previous_ids(previous_user_ids, user_id);
-        }
+        self.migrated_user_ids.insert_previous_ids(previous_user_ids, user_id);
         migrated
     }
 

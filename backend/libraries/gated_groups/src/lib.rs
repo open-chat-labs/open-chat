@@ -1,5 +1,7 @@
 use candid::Principal;
 use std::cmp::min;
+use std::collections::HashSet;
+use std::iter::once;
 // use ic_verifiable_credentials::issuer_api::{ArgumentValue, CredentialSpec};
 // use ic_verifiable_credentials::VcFlowSigners;
 use constants::{CHAT_LEDGER_CANISTER_ID, DAY_IN_MS, ICP_LEDGER_CANISTER_ID, MEMO_JOINING_FEE, NANOS_PER_MILLISECOND};
@@ -37,6 +39,8 @@ impl CheckIfPassesGateResult {
 #[derive(Clone)]
 pub struct CheckGateArgs {
     pub user: UserIdAndPrincipal,
+    // The ids the user had before being migrated to a MultiUser canister, ordered oldest first
+    pub previous_user_ids: Vec<UserId>,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub this_canister: CanisterId,
     pub is_unique_person: bool,
@@ -72,19 +76,14 @@ pub async fn check_if_passes_gate(gate: AccessGate, args: CheckGateArgs) -> Chec
 // each id they had before being migrated to a MultiUser canister, most recent first. A migrated
 // user's tokens stay in their old canister's wallet until they next come online, so without this, a
 // member who hasn't been online since would lapse from a token balance gate they still meet.
-pub async fn check_if_passes_gate_under_any_id(
-    gate: AccessGate,
-    args: CheckGateArgs,
-    previous_user_ids: Vec<UserId>,
-) -> CheckIfPassesGateResult {
-    let principal = args.user.principal;
+pub async fn check_if_passes_gate_under_any_id(gate: AccessGate, args: CheckGateArgs) -> CheckIfPassesGateResult {
     let mut result = check_if_passes_gate(gate.clone(), args.clone()).await;
-    for user_id in previous_user_ids.into_iter().rev() {
+    for &user_id in args.previous_user_ids.iter().rev() {
         if !matches!(result, CheckIfPassesGateResult::Failed(_)) {
             break;
         }
         let args = CheckGateArgs {
-            user: UserIdAndPrincipal::new(user_id, principal),
+            user: UserIdAndPrincipal::new(user_id, args.user.principal),
             ..args.clone()
         };
         result = check_if_passes_gate(gate.clone(), args).await;
@@ -124,7 +123,7 @@ async fn check_non_composite_gate(gate: AccessGateNonComposite, args: CheckGateA
         AccessGateNonComposite::VerifiedCredential(g) => {
             check_verified_credential_gate(&g, args.verified_credential_args, args.now)
         }
-        AccessGateNonComposite::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user.user_id).await,
+        AccessGateNonComposite::SnsNeuron(g) => check_sns_neuron_gate(&g, &args.user, &args.previous_user_ids).await,
         AccessGateNonComposite::Payment(g) => {
             if args.take_payment {
                 try_transfer_from(&g, args.user, args.this_canister, args.now).await
@@ -359,43 +358,68 @@ fn check_composite_gate_synchronously_inner(gate: CompositeGate, args: CheckGate
     Some(CheckIfPassesGateResult::Error(OCErrorCode::Impossible.into()))
 }
 
-async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {
-    let args = sns_governance_canister::list_neurons::Args {
-        limit: 10,
-        start_page_at: None,
-        of_principal: Some(user_id.as_principal()),
-    };
-
-    match sns_governance_canister_c2c_client::list_neurons(gate.governance_canister_id, &args).await {
-        Ok(response) if response.neurons.is_empty() => {
-            CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoSnsNeuronsFound)
+// The user's neurons are those listing the owner of their wallet, which is the principal a user in a
+// MultiUser canister is told to add as a hotkey. For a user migrated there, they also include those
+// listing their principal, which `check_if_passes_gate_under_any_id` doesn't pass as the wallet's
+// owner when it checks under an old id, or listing any id they had before, since a neuron may still
+// list their old User canister.
+async fn check_sns_neuron_gate(
+    gate: &SnsNeuronGate,
+    user: &UserIdAndPrincipal,
+    previous_user_ids: &[UserId],
+) -> CheckIfPassesGateResult {
+    let migrated_principal = (!previous_user_ids.is_empty()).then_some(user.principal);
+    let mut principals = Vec::new();
+    for principal in once(user.wallet_owner())
+        .chain(migrated_principal)
+        .chain(previous_user_ids.iter().rev().map(|u| u.as_principal()))
+    {
+        // The principal is anonymous when it isn't known, and anyone could add that to their neuron
+        if principal != Principal::anonymous() && !principals.contains(&principal) {
+            principals.push(principal);
         }
-        Ok(response) => {
-            let mut valid_neurons = response.neurons;
-            if let Some(dd) = gate.min_dissolve_delay {
-                let now = canister_time::now_millis();
-                valid_neurons.retain(|n| dissolve_delay_seconds(n, now / 1000) >= (dd / 1000));
-            }
-
-            if valid_neurons.is_empty() {
-                return CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoSnsNeuronsWithRequiredDissolveDelayFound);
-            }
-
-            if let Some(stake_required) = gate.min_stake_e8s {
-                let total_stake: u64 = valid_neurons
-                    .iter()
-                    .map(|n| n.cached_neuron_stake_e8s + n.staked_maturity_e8s_equivalent.unwrap_or_default())
-                    .sum();
-
-                if total_stake < stake_required {
-                    return CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoSnsNeuronsWithRequiredStakeFound);
-                }
-            }
-
-            CheckIfPassesGateResult::Success(Vec::new())
-        }
-        Err(error) => CheckIfPassesGateResult::Error(error.into()),
     }
+
+    // A neuron listing more than one of the user's principals is only counted once
+    let mut neuron_ids = HashSet::new();
+    let mut neurons = Vec::new();
+    for principal in principals {
+        let args = sns_governance_canister::list_neurons::Args {
+            limit: 10,
+            start_page_at: None,
+            of_principal: Some(principal),
+        };
+        match sns_governance_canister_c2c_client::list_neurons(gate.governance_canister_id, &args).await {
+            Ok(response) => neurons.extend(response.neurons.into_iter().filter(|n| neuron_ids.insert(n.id.clone()))),
+            Err(error) => return CheckIfPassesGateResult::Error(error.into()),
+        }
+    }
+
+    if neurons.is_empty() {
+        return CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoSnsNeuronsFound);
+    }
+
+    if let Some(dd) = gate.min_dissolve_delay {
+        let now = canister_time::now_millis();
+        neurons.retain(|n| dissolve_delay_seconds(n, now / 1000) >= (dd / 1000));
+    }
+
+    if neurons.is_empty() {
+        return CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoSnsNeuronsWithRequiredDissolveDelayFound);
+    }
+
+    if let Some(stake_required) = gate.min_stake_e8s {
+        let total_stake: u64 = neurons
+            .iter()
+            .map(|n| n.cached_neuron_stake_e8s + n.staked_maturity_e8s_equivalent.unwrap_or_default())
+            .sum();
+
+        if total_stake < stake_required {
+            return CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoSnsNeuronsWithRequiredStakeFound);
+        }
+    }
+
+    CheckIfPassesGateResult::Success(Vec::new())
 }
 
 // Pulls the gate's payment from the user's wallet, spending the approval they made under their own

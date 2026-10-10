@@ -67,7 +67,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
-        AccessGate, BotPermissions, CanisterId, ChannelId, ChatId, CommunityCanisterChannelSummary,
+        AccessGateConfig, BotPermissions, CanisterId, ChannelId, ChatId, CommunityCanisterChannelSummary,
         CommunityCanisterCommunitySummary, CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, Empty,
         EventIndex, EventsResponse, GroupReplyContext, GroupRole, MessageContentInitial, MessageId, MessageIndex, PollVotes,
         Reaction, Rules, TextContent, TimestampMillis, UserId, VoteOperation,
@@ -112,7 +112,7 @@ pub mod happy_path {
         community_id: CommunityId,
         is_public: bool,
         name: String,
-        gate: AccessGate,
+        gate: impl Into<AccessGateConfig>,
     ) -> ChannelId {
         let response = super::create_channel(
             env,

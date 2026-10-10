@@ -1,17 +1,20 @@
 use crate::env::ENV;
+use crate::setup::install_sns_governance;
+use crate::user_migration_tests::{migrate, platform_operator, wait_until_local_user_index_knows_of_migration};
 use crate::utils::{tick_many, try_metrics};
 use crate::{TestEnv, User, client};
 use candid::Principal;
+use constants::DAY_IN_MS;
 use icrc_ledger_types::icrc1::account::Account;
 use pocket_ic::PocketIc;
 use pocket_ic::common::rest::RawMessageId;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::random_string;
+use testing::rng::{random_principal, random_string};
 use types::{
-    AccessGate, AccessGateNonComposite, CanisterId, ChannelId, CompositeGate, GateCheckFailedReason, PaymentGate, Rules,
-    TokenBalanceGate,
+    AccessGate, AccessGateConfig, AccessGateNonComposite, CanisterId, ChannelId, CompositeGate, GateCheckFailedReason,
+    PaymentGate, Rules, SnsNeuronGate, TokenBalanceGate,
 };
 
 #[test_case(true, false; "diamond_member")]
@@ -339,6 +342,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
 
 enum Gated {
     Group,
+    Community,
     Channel,
 }
 
@@ -368,7 +372,7 @@ fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canist
 
     let amount = 1_0000_0000;
     let fee = 10_000;
-    let (spender, channel_id) = create_gated(env, &owner, &gated, canister_ids.icp_ledger, amount, fee);
+    let (spender, channel_id) = create_gated(env, &owner, &gated, payment_gate(canister_ids.icp_ledger, amount, fee));
     let spender_account = member_spender_account(spender, &user);
 
     let owner_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id);
@@ -393,6 +397,9 @@ fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canist
 
     match gated {
         Gated::Group => client::group::happy_path::join_group(env, user.principal, spender.into()),
+        Gated::Community => {
+            client::community::happy_path::join_community(env, user.principal, spender.into());
+        }
         Gated::Channel => {
             client::community::happy_path::join_community(env, user.principal, spender.into());
             client::community::happy_path::join_channel(env, user.principal, spender.into(), channel_id.unwrap());
@@ -432,7 +439,7 @@ fn payment_gate_is_only_paid_with_an_approval_under_the_members_spender_subaccou
 
     let amount = 1_0000_0000;
     let fee = 10_000;
-    let (group, _) = create_gated(env, &owner, &Gated::Group, canister_ids.icp_ledger, amount, fee);
+    let (group, _) = create_gated(env, &owner, &Gated::Group, payment_gate(canister_ids.icp_ledger, amount, fee));
 
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, alice.principal, amount);
     client::ledger::happy_path::approve(
@@ -476,28 +483,235 @@ fn payment_gate_is_only_paid_with_an_approval_under_the_members_spender_subaccou
     );
 }
 
-// Creates a group or channel with a payment gate, returning the group or community, which pulls the
-// payment, and the channel if it is a channel's gate
+// The neurons a user has, as the hotkeys they list
+#[derive(Clone, Copy)]
+enum Neurons {
+    // One listing their User canister, which they are still in
+    UserCanister,
+    // The rest are after they have been migrated to a MultiUser canister. One listing their principal.
+    Principal,
+    // One listing their old User canister
+    OldUserCanister,
+    // One listing someone else
+    Neither,
+    // Two, each with half the stake the gate requires, one listing their principal and the other their
+    // old User canister
+    SplitAcrossIds,
+    // One with half the stake the gate requires, listing both their principal and their old User
+    // canister, so counted only once
+    SharedAcrossIds,
+}
+
+// A user in a MultiUser canister is told to add their principal as a hotkey on their neurons, since no
+// one can add their user id. A migrated user's neurons may still list their old User canister, so
+// neurons listing either count, both when they join and when the gate is checked again as it expires.
+#[test_case(Gated::Group, Neurons::UserCanister; "group_user_canister")]
+#[test_case(Gated::Group, Neurons::Principal; "group_principal")]
+#[test_case(Gated::Group, Neurons::OldUserCanister; "group_old_user_canister")]
+#[test_case(Gated::Group, Neurons::Neither; "group_neither")]
+#[test_case(Gated::Group, Neurons::SplitAcrossIds; "group_split_across_ids")]
+#[test_case(Gated::Group, Neurons::SharedAcrossIds; "group_shared_across_ids")]
+#[test_case(Gated::Community, Neurons::Principal; "community_principal")]
+#[test_case(Gated::Community, Neurons::OldUserCanister; "community_old_user_canister")]
+#[test_case(Gated::Channel, Neurons::Principal; "channel_principal")]
+#[test_case(Gated::Channel, Neurons::OldUserCanister; "channel_old_user_canister")]
+fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+    let migrated_user = (!matches!(neurons, Neurons::UserCanister)).then(|| {
+        let operator = platform_operator(env, canister_ids, *controller);
+        let multi_user_canister =
+            client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, user.local_user_index);
+        migrate(env, canister_ids, &operator, &user, multi_user_canister)
+    });
+    let member = migrated_user.as_ref().unwrap_or(&user);
+
+    let stake_e8s = 1_0000_0000;
+    let half_stake_e8s = stake_e8s / 2;
+    let neurons_hotkeys_and_stakes = match neurons {
+        Neurons::UserCanister | Neurons::OldUserCanister => vec![(vec![user.canister()], stake_e8s)],
+        Neurons::Principal => vec![(vec![user.principal], stake_e8s)],
+        Neurons::Neither => vec![(vec![random_principal()], stake_e8s)],
+        Neurons::SplitAcrossIds => vec![
+            (vec![user.principal], half_stake_e8s),
+            (vec![user.canister()], half_stake_e8s),
+        ],
+        Neurons::SharedAcrossIds => vec![(vec![user.principal, user.canister()], half_stake_e8s)],
+    };
+    let dissolve_delay = 30 * DAY_IN_MS;
+    let governance_canister_id = install_sns_governance(env, *controller, neurons_hotkeys_and_stakes, dissolve_delay / 1000);
+
+    let gate = AccessGate::SnsNeuron(SnsNeuronGate {
+        governance_canister_id,
+        min_stake_e8s: Some(stake_e8s),
+        min_dissolve_delay: Some(dissolve_delay),
+    });
+    let gate_config = AccessGateConfig {
+        gate,
+        expiry: Some(DAY_IN_MS),
+    };
+    let (canister_id, channel_id) = create_gated(env, &owner, &gated, gate_config);
+
+    // The group or community is told the user's old ids by its LocalUserIndex, once that knows of the
+    // migration
+    let local_user_index = canister_ids.local_user_index(env, canister_id);
+    if let Some(migrated_user) = &migrated_user {
+        wait_until_local_user_index_knows_of_migration(env, local_user_index, &user, migrated_user.user_id);
+    }
+
+    let result = match gated {
+        Gated::Group => {
+            match client::local_user_index::join_group(
+                env,
+                member.principal,
+                local_user_index,
+                &local_user_index_canister::join_group::Args {
+                    chat_id: canister_id.into(),
+                    invite_code: None,
+                    verified_credential_args: None,
+                    composite_gate_index: None,
+                },
+            ) {
+                local_user_index_canister::join_group::Response::Success(_) => Ok(()),
+                local_user_index_canister::join_group::Response::GateCheckFailed(reason) => Err(reason),
+                response => panic!("'join_group' error: {response:?}"),
+            }
+        }
+        Gated::Community => {
+            match client::local_user_index::join_community(
+                env,
+                member.principal,
+                local_user_index,
+                &local_user_index_canister::join_community::Args {
+                    community_id: canister_id.into(),
+                    invite_code: None,
+                    referred_by: None,
+                    verified_credential_args: None,
+                    composite_gate_index: None,
+                },
+            ) {
+                local_user_index_canister::join_community::Response::Success(_) => Ok(()),
+                local_user_index_canister::join_community::Response::GateCheckFailed(reason) => Err(reason),
+                response => panic!("'join_community' error: {response:?}"),
+            }
+        }
+        // The user isn't yet in the community, so joins it along with the channel
+        Gated::Channel => {
+            match client::local_user_index::join_channel(
+                env,
+                member.principal,
+                local_user_index,
+                &local_user_index_canister::join_channel::Args {
+                    community_id: canister_id.into(),
+                    channel_id: channel_id.unwrap(),
+                    invite_code: None,
+                    referred_by: None,
+                    verified_credential_args: None,
+                    composite_gate_index: None,
+                },
+            ) {
+                local_user_index_canister::join_channel::Response::SuccessJoinedCommunity(_) => Ok(()),
+                local_user_index_canister::join_channel::Response::GateCheckFailed(reason) => Err(reason),
+                response => panic!("'join_channel' error: {response:?}"),
+            }
+        }
+    };
+
+    match neurons {
+        Neurons::Neither => assert!(matches!(result, Err(GateCheckFailedReason::NoSnsNeuronsFound)), "{result:?}"),
+        Neurons::SharedAcrossIds => assert!(
+            matches!(result, Err(GateCheckFailedReason::NoSnsNeuronsWithRequiredStakeFound)),
+            "{result:?}"
+        ),
+        _ => {
+            assert!(result.is_ok(), "{result:?}");
+
+            // Move the time forward so that the gate expires and is checked again, which takes a few
+            // rounds, since the neurons are looked up in the SNS governance canister
+            env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
+            tick_many(env, 20);
+
+            let lapsed = match gated {
+                Gated::Group => client::group::happy_path::summary(env, member.principal, canister_id.into())
+                    .membership
+                    .map(|m| m.lapsed),
+                Gated::Community => client::community::happy_path::summary(env, member.principal, canister_id.into())
+                    .membership
+                    .map(|m| m.lapsed),
+                Gated::Channel => {
+                    client::community::happy_path::channel_summary(env, member, canister_id.into(), channel_id.unwrap())
+                        .membership
+                        .map(|m| m.lapsed)
+                }
+            };
+            assert_eq!(lapsed, Some(false));
+        }
+    }
+
+    // The canister runs a heartbeat, which later tests drawing this env needn't pay for
+    client::stop_canister(env, *controller, governance_canister_id);
+}
+
+fn payment_gate(ledger_canister_id: CanisterId, amount: u128, fee: u128) -> AccessGate {
+    AccessGate::Payment(PaymentGate {
+        ledger_canister_id,
+        amount,
+        fee,
+    })
+}
+
+// Creates a group, community or channel with the gate, returning the group or community, which pulls
+// any payment, and the channel if it is a channel's gate
 fn create_gated(
     env: &mut PocketIc,
     owner: &User,
     gated: &Gated,
-    ledger_canister_id: CanisterId,
-    amount: u128,
-    fee: u128,
+    gate_config: impl Into<AccessGateConfig>,
 ) -> (Principal, Option<ChannelId>) {
-    let gate = AccessGate::Payment(PaymentGate {
-        ledger_canister_id,
-        amount,
-        fee,
-    });
+    let gate_config = gate_config.into();
     let name = random_string();
 
     match gated {
+        Gated::Community => match client::user::create_community(
+            env,
+            owner.principal,
+            owner.canister(),
+            &user_canister::create_community::Args {
+                is_public: true,
+                name: name.clone(),
+                description: format!("{name}_description"),
+                avatar: None,
+                banner: None,
+                history_visible_to_new_joiners: true,
+                permissions: None,
+                rules: Rules::default(),
+                gate_config: Some(gate_config),
+                default_channels: vec![random_string()],
+                default_channel_rules: None,
+                primary_language: "en".to_string(),
+            },
+        ) {
+            user_canister::create_community::Response::Success(result) => (Principal::from(result.community_id), None),
+            response => panic!("'create_community' error: {response:?}"),
+        },
         Gated::Channel => {
             let community_id = client::user::happy_path::create_community(env, owner, &name, true, vec![random_string()]);
-            let channel_id =
-                client::community::happy_path::create_gated_channel(env, owner.principal, community_id, true, name, gate);
+            let channel_id = client::community::happy_path::create_gated_channel(
+                env,
+                owner.principal,
+                community_id,
+                true,
+                name,
+                gate_config,
+            );
             (Principal::from(community_id), Some(channel_id))
         }
         Gated::Group => match client::user::create_group(
@@ -513,7 +727,7 @@ fn create_gated(
                 permissions_v2: None,
                 rules: Rules::default(),
                 events_ttl: None,
-                gate_config: Some(gate.into()),
+                gate_config: Some(gate_config),
                 messages_visible_to_non_members: None,
             },
         ) {
@@ -640,7 +854,7 @@ fn equal_gate_payments_retried_in_the_same_round_are_both_made() {
     let owner = client::register_diamond_user(env, canister_ids, *controller);
     let amount = 1_000_000;
     let fee = 10_000;
-    let (canister_id, _) = create_gated(env, &owner, &Gated::Group, ledger, amount, fee);
+    let (canister_id, _) = create_gated(env, &owner, &Gated::Group, payment_gate(ledger, amount, fee));
     let owner_balance = client::ledger::happy_path::balance_of(env, ledger, owner.user_id);
 
     // Each member's payment is taken while the ledger is running, but the ledger is stopped before

@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Check a recurring gate under a migrated member's old ids before they lapse ([#9892](https://github.com/open-chat-labs/open-chat/pull/9892))
 - Check recurring gates again for lapsed migrated members, unlapsing those who pass ([#9893](https://github.com/open-chat-labs/open-chat/pull/9893))
+- Check an SNS neuron gate under a MultiUser user's principal and old ids ([#9894](https://github.com/open-chat-labs/open-chat/pull/9894))
 
 ## [[2.0.2122](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2122-group)] - 2026-10-08
 
