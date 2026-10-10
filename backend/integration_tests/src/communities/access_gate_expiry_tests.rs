@@ -709,6 +709,24 @@ fn lapsed_migrated_member_who_passes_under_their_old_id_is_unlapsed_on_upgrade(c
     wait_for_user_to_unlapse(env, &users[0], &container);
     tick_many(env, 5);
     assert!(has_user_lapsed(env, &users[1], &container));
+
+    // From then on user1's gate is checked as it expires like any other member's, so once it asks for
+    // more than they hold, they lapse again
+    update_container_gate(
+        env,
+        owner.principal,
+        &container,
+        Some(AccessGateConfig {
+            gate: AccessGate::TokenBalance(TokenBalanceGate {
+                ledger_canister_id: canister_ids.icp_ledger,
+                min_balance: 10 * min_balance,
+            }),
+            expiry: Some(DAY_IN_MS),
+        }),
+    );
+    env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
+    tick_many(env, 5);
+    wait_for_user_to_lapse(env, &users[0], &container);
 }
 
 // Members lapse in a timer job in the group or community canister, which may first check the gate
