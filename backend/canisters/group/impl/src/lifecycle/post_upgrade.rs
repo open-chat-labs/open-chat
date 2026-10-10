@@ -83,6 +83,7 @@ fn check_gate_again_for_lapsed_migrated_members(state: &mut RuntimeState) -> usi
                 channel_id: None,
                 member_expires: now,
                 original_gate_expiry: gate_expiry,
+                unlapse_only: true,
             }));
     }
     process_expire_member_actions::start_job_if_required(state);
