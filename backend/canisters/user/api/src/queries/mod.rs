@@ -18,4 +18,5 @@ pub mod saved_crypto_accounts;
 pub mod search_messages;
 pub mod token_swap_status;
 pub mod token_swaps;
+pub mod unfinished_token_swaps;
 pub mod updates;

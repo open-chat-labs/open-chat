@@ -64,6 +64,7 @@ import type {
     TipMessageResponse,
     ToggleMuteNotificationResponse,
     TokenSwapStatusResponse,
+    UnfinishedTokenSwap,
     UnblockUserResponse,
     UndeleteMessageResponse,
     UnpinChatResponse,
@@ -74,6 +75,8 @@ import type {
     WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
     WithdrawViaOneSecResponse,
+    OCError,
+    Success,
 } from "@shared";
 import { ANON_USER_ID, AnonymousOperationError, CommonResponses } from "@shared";
 import type { IChatEventsReader } from "../common/chatEvents";
@@ -437,6 +440,28 @@ export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {
 
     tokenSwapStatus(_swapId: bigint): Promise<TokenSwapStatusResponse> {
         throw new AnonymousOperationError();
+    }
+
+    markTokenSwapStarted(
+        _swapId: bigint,
+        _inputToken: CryptocurrencyDetails,
+        _outputToken: CryptocurrencyDetails,
+        _amountIn: bigint,
+        _minAmountOut: bigint,
+        _exchangeArgs: ExchangeTokenSwapArgs,
+    ): Promise<Success | OCError> {
+        throw new AnonymousOperationError();
+    }
+
+    markTokenSwapCompleted(
+        _swapId: bigint,
+        _result: { kind: "swapped"; amountOut: bigint } | { kind: "failed"; reason: string },
+    ): Promise<Success | OCError> {
+        throw new AnonymousOperationError();
+    }
+
+    unfinishedTokenSwaps(): Promise<UnfinishedTokenSwap[]> {
+        return Promise.resolve([]);
     }
 
     approveTransfer(

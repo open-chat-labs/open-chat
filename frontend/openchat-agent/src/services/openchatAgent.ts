@@ -60,6 +60,7 @@ import type {
     DeletedDirectMessageResponse,
     DeletedGroupMessageResponse,
     DexId,
+    DexSwapResult,
     DiamondMembershipDuration,
     DiamondMembershipFees,
     DirectChatIdentifier,
@@ -190,6 +191,7 @@ import type {
     TopUpNeuronResponse,
     UnblockUserResponse,
     UndeleteMessageResponse,
+    UnfinishedTokenSwap,
     UnfreezeCommunityResponse,
     UnfreezeGroupResponse,
     UnpinChatResponse,
@@ -261,6 +263,7 @@ import {
     messageContextToString,
     messageContextsEqual,
     offline,
+    OPENCHAT_BOT_USER_ID,
     textToCode,
     userCanisterSpenderAccount,
     userWalletAccount,
@@ -293,6 +296,7 @@ import {
     mergeCommunityUpdates,
 } from "../utils/community";
 import { createHttpAgentSync } from "../utils/httpAgent";
+import { icNowNanos } from "../utils/icTime";
 import { chunk, distinctBy, toRecord, toRecord2 } from "../utils/list";
 import { bytesToHexString, mapOptional } from "../utils/mapping";
 import { withLatestUserIds } from "../utils/latestUserIds";
@@ -319,6 +323,7 @@ import { CommunityClient } from "./community/community.client";
 import { DataClient } from "./data/data.client";
 import { DexesAgent } from "./dexes";
 import { TACO_TREASURY_CANISTER_ID } from "./dexes/taco/index/mappers";
+import { IcpSwapPoolClient } from "./dexes/icpSwap/pool/icpSwap.pool.client";
 import { callBotCommandEndpoint } from "./externalBot/externalBot";
 import { GroupClient } from "./group/group.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
@@ -364,6 +369,7 @@ const MAX_CONCURRENT_PREVIOUS_WALLET_BALANCE_CHECKS = 10;
 const MAX_LEDGERS_PER_FUNDS_MOVE = 20;
 const MAX_FUNDS_MOVE_RETRIES = 3;
 const FUNDS_MOVE_RETRY_INTERVAL_MS = 10_000;
+const MARK_TOKEN_SWAP_COMPLETED_ATTEMPTS = 3;
 
 export class OpenChatAgent extends EventTarget {
     private _agent: HttpAgent;
@@ -673,6 +679,27 @@ export class OpenChatAgent extends EventTarget {
         return undefined;
     }
 
+    // The message with the crypto it sends or the prize it offers stamped with the time on the IC
+    // (see `icNowNanos`). A swap offer carries no stamp, its deposit being stamped by the canister
+    // which makes it.
+    private async stampTransferWithIcTime(
+        event: EventWrapper<Message>,
+    ): Promise<EventWrapper<Message>> {
+        const content = event.event.content;
+        if (
+            (content.kind !== "crypto_content" && content.kind !== "prize_content_initial") ||
+            content.transfer.kind !== "pending"
+        ) {
+            return event;
+        }
+        const createdAtNanos = await icNowNanos(this._agent, content.transfer.ledger);
+        const stamped = {
+            ...content,
+            transfer: { ...content.transfer, createdAtNanos },
+        } as MessageContent;
+        return { ...event, event: { ...event.event, content: stamped } };
+    }
+
     // The fee the ledger charges for a transfer or an approval, if the token is a registered one
     private ledgerFee(ledger: string): bigint | undefined {
         return this._registryValue?.tokenDetails.find((t) => t.ledger === ledger)?.transferFee;
@@ -817,6 +844,8 @@ export class OpenChatAgent extends EventTarget {
                 this._chatsDb.recordFailedMessage(chatId, event, threadRootMessageIndex);
                 return resolve([CommonResponses.offline(), event.event], true);
             }
+
+            event = await this.stampTransferWithIcTime(event);
 
             // A user who holds their own funds can't have their canister make a transfer for them
             if (
@@ -3584,8 +3613,10 @@ export class OpenChatAgent extends EventTarget {
         if (userId) {
             return new Stream(async (resolve, reject) => {
                 const deleted = await this._userDb.isUserIdDeleted(userId);
-                if (deleted) {
+                // The OpenChat Bot has no canister, so it has no profile to load
+                if (deleted || userId === OPENCHAT_BOT_USER_ID) {
                     resolve(undefined, true);
+                    return;
                 }
                 let userClient: UserClient;
                 try {
@@ -3945,16 +3976,17 @@ export class OpenChatAgent extends EventTarget {
     // A user who holds their own funds sends them from their wallet on the ledger, as themselves,
     // since their canister can't send them. Only their canister could check their PIN, so it isn't
     // checked when they do.
-    withdrawCryptocurrency(
+    async withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
         pin: string | undefined,
     ): Promise<WithdrawCryptocurrencyResponse> {
-        if (offline()) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return CommonResponses.offline();
 
+        const stamped = { ...domain, createdAtNanos: await icNowNanos(this._agent, domain.ledger) };
         if (this.holdsOwnFunds()) {
-            return this._ledgerClient.withdraw(domain);
+            return this._ledgerClient.withdraw(stamped);
         }
-        return this.userClient.withdrawCryptocurrency(domain, pin);
+        return this.userClient.withdrawCryptocurrency(stamped, pin);
     }
 
     getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
@@ -4730,7 +4762,7 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    submitProposal(
+    async submitProposal(
         currentUserId: string,
         governanceCanisterId: string,
         proposal: CandidateProposal,
@@ -4739,7 +4771,7 @@ export class OpenChatAgent extends EventTarget {
         proposalRejectionFee: bigint,
         transactionFee: bigint,
     ): Promise<SubmitProposalResponse> {
-        if (offline()) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return CommonResponses.offline();
 
         // The ProposalsBot pulls the fee from the user's wallet, which they have approved it to
         return this._proposalsBotClient
@@ -4752,6 +4784,7 @@ export class OpenChatAgent extends EventTarget {
                 token,
                 proposalRejectionFee,
                 transactionFee,
+                await icNowNanos(this._agent, ledger),
             );
     }
 
@@ -4882,6 +4915,21 @@ export class OpenChatAgent extends EventTarget {
                               zeroForOne: pool.token0 === inputTokenDetails.ledger,
                           };
 
+                // A user who holds their own funds swaps straight from their wallet, since their
+                // canister can't spend from it
+                if (this.holdsOwnFunds()) {
+                    return this.swapTokensFromWallet(
+                        swapId,
+                        inputTokenDetails,
+                        outputTokenDetails,
+                        amountIn,
+                        minAmountOut,
+                        pool,
+                        exchangeArgs,
+                        pin,
+                    );
+                }
+
                 return this.userClient.swapTokens(
                     swapId,
                     inputTokenDetails,
@@ -4894,12 +4942,177 @@ export class OpenChatAgent extends EventTarget {
             });
     }
 
+    // Swaps straight from the wallet of a user who holds their own funds, via ICPSwap, which pulls the
+    // input from the wallet and pays the output back to it. The input swapped is `amountIn` less the
+    // fees for approving the pool and for its pull, so the swap takes `amountIn` from the wallet in
+    // all, as a swap made by the user's canister does. The swap is recorded in the user's canister
+    // as it starts and as it ends, so that one which doesn't finish, eg. because the user leaves part
+    // way through, is found again (see `recoverUnfinishedTokenSwaps`), and they get the achievement
+    // for swapping once it has.
+    private async swapTokensFromWallet(
+        swapId: bigint,
+        inputTokenDetails: CryptocurrencyDetails,
+        outputTokenDetails: CryptocurrencyDetails,
+        amountIn: bigint,
+        minAmountOut: bigint,
+        pool: TokenSwapPool,
+        exchangeArgs: ExchangeTokenSwapArgs,
+        pin: string | undefined,
+    ): Promise<SwapTokensResponse> {
+        if (exchangeArgs.dex !== "icpswap") {
+            return { kind: "error", code: ErrorCode.InvalidRequest, message: "Unsupported DEX" };
+        }
+
+        const fee = inputTokenDetails.transferFee;
+        const amountToSwap = amountIn - 2n * fee;
+        if (amountToSwap <= fee) {
+            return { kind: "error", code: ErrorCode.InsufficientFunds, message: undefined };
+        }
+        // The pool pulls as its own default account
+        const approvalError = await this.approveToPull(
+            { owner: Principal.fromText(pool.canisterId) },
+            inputTokenDetails.ledger,
+            amountToSwap + fee,
+            fee,
+            pin,
+        );
+        if (approvalError !== undefined) {
+            return approvalError;
+        }
+
+        const started = await this.userClient.markTokenSwapStarted(
+            swapId,
+            inputTokenDetails,
+            outputTokenDetails,
+            amountIn,
+            minAmountOut,
+            exchangeArgs,
+        );
+        if (started.kind !== "success") {
+            return started;
+        }
+
+        const poolClient = this.icpSwapPoolClient(pool.canisterId, pool.token0, pool.token1);
+        let result: DexSwapResult;
+        try {
+            result = await poolClient.swapFromWallet(
+                inputTokenDetails.ledger,
+                outputTokenDetails.ledger,
+                amountToSwap,
+                minAmountOut,
+                fee,
+                outputTokenDetails.transferFee,
+            );
+        } catch (err) {
+            // The swap may or may not have gone ahead, so it is left unfinished, to be finished off
+            // once it can no longer be in progress
+            console.warn("Failed to swap tokens from the wallet", err);
+            return { kind: "error", code: ErrorCode.Unknown, message: String(err) };
+        }
+
+        await this.markTokenSwapCompleted(
+            swapId,
+            result.kind === "success"
+                ? { kind: "swapped", amountOut: result.amountOut }
+                : { kind: "failed", reason: result.error },
+        );
+
+        if (result.kind === "success") {
+            return { kind: "success", amountOut: result.amountOut };
+        }
+        // ICPSwap refuses a swap whose output would fall short of the minimum with a slippage
+        // error, which is down to the rate having moved since the quote. Any other error (eg. the
+        // pool's cached fees being out of date) is no better for quoting again.
+        return result.error.includes("Slippage check failed")
+            ? { kind: "error", code: ErrorCode.SwapFailed, message: result.error }
+            : { kind: "internal_error", error: result.error };
+    }
+
+    // Records how a swap made straight from the wallet ended, trying a few times, since the swap is
+    // over either way, and failing to record that leaves it to be finished off later as one whose
+    // outcome isn't known
+    private async markTokenSwapCompleted(
+        swapId: bigint,
+        result: { kind: "swapped"; amountOut: bigint } | { kind: "failed"; reason: string },
+    ): Promise<void> {
+        for (let attempt = 1; attempt <= MARK_TOKEN_SWAP_COMPLETED_ATTEMPTS; attempt++) {
+            try {
+                const response = await this.userClient.markTokenSwapCompleted(swapId, result);
+                if (response.kind !== "success") {
+                    console.warn("Failed to mark a token swap as completed", response);
+                }
+                return;
+            } catch (err) {
+                console.warn("Failed to mark a token swap as completed", attempt, err);
+            }
+        }
+    }
+
+    // Finishes off each swap the user started straight from their wallet which was never marked as
+    // completed, eg. because they left part way through, withdrawing to their wallet anything
+    // ICPSwap still holds for them, then marking the swap as completed. The user's canister only
+    // lists swaps which can't still be in progress. A swap whose pool can't be checked, or whose
+    // funds can't be withdrawn, is left to be tried again next time.
+    async recoverUnfinishedTokenSwaps(): Promise<void> {
+        if (!this.holdsOwnFunds() || offline()) return;
+
+        for (const swap of await this.userClient.unfinishedTokenSwaps()) {
+            const recovered = await this.withdrawFromPool(swap).catch((err) => {
+                console.warn("Failed to withdraw an unfinished token swap's funds", err);
+                return false;
+            });
+            if (recovered) {
+                await this.markTokenSwapCompleted(swap.swapId, {
+                    kind: "failed",
+                    reason: "Never marked as completed, so how it ended isn't known",
+                });
+            }
+        }
+    }
+
+    // Withdraws to the user's wallet whatever the pool an unfinished swap was made in holds for them,
+    // returning whether there is nothing left there
+    private async withdrawFromPool(swap: UnfinishedTokenSwap): Promise<boolean> {
+        const { exchangeArgs } = swap;
+        // A TACO swap pays out or refunds itself, so leaves nothing to withdraw
+        if (exchangeArgs.dex !== "icpswap") return true;
+
+        const [token0, token1] = exchangeArgs.zeroForOne
+            ? [swap.inputLedger, swap.outputLedger]
+            : [swap.outputLedger, swap.inputLedger];
+        const poolClient = this.icpSwapPoolClient(exchangeArgs.swapCanisterId, token0, token1);
+
+        let withdrawnAll = true;
+        for (const { ledger, balance } of await poolClient.unusedBalances(this.principal)) {
+            if (balance === 0n) continue;
+            const fee = this.ledgerFee(ledger);
+            if (fee === undefined) {
+                withdrawnAll = false;
+            } else if (balance > fee) {
+                withdrawnAll = (await poolClient.withdraw(ledger, balance, fee)) && withdrawnAll;
+            }
+        }
+        return withdrawnAll;
+    }
+
+    // An ICPSwap pool, which the user calls as themselves, so as the owner of their wallet
+    private icpSwapPoolClient(
+        canisterId: string,
+        token0: string,
+        token1: string,
+    ): IcpSwapPoolClient {
+        return new IcpSwapPoolClient(this.identity, this._agent, canisterId, token0, token1);
+    }
+
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
         return this.userClient.tokenSwapStatus(swapId);
     }
 
     private swapProviders(): DexId[] {
-        return this._registryValue?.swapProviders ?? [];
+        const swapProviders = this._registryValue?.swapProviders ?? [];
+        // A user who holds their own funds swaps straight from their wallet (see
+        // `swapTokensFromWallet`), which is only supported via ICPSwap so far
+        return this.holdsOwnFunds() ? swapProviders.filter((p) => p === "icpswap") : swapProviders;
     }
 
     // Approves `spender`, a canister such as the ProposalsBot which spends as its own default
@@ -5109,8 +5322,14 @@ export class OpenChatAgent extends EventTarget {
                     return error;
                 }
             }
+            // Only a tip pulled by a group or community carries a stamp, a user's canister stamping
+            // the tips it pulls or makes itself
             const wallet = encodeIcrcAccount(this.walletAccount(this._userClient.userId));
-            const paid = { ...transfer, fromAccount: transfer.fromAccount ?? wallet };
+            const paid = {
+                ...transfer,
+                fromAccount: transfer.fromAccount ?? wallet,
+                createdAtNanos: await icNowNanos(this._agent, transfer.ledger),
+            };
             return chatId.kind === "channel"
                 ? this._communityClient.tipMessage(
                       chatId,

@@ -51,6 +51,8 @@ mod manage_favourite_chats;
 mod mark_achievements_seen;
 mod mark_message_activity_feed_read;
 mod mark_read;
+mod mark_token_swap_completed;
+mod mark_token_swap_started;
 mod mute_notifications;
 mod pay_for_streak_insurance;
 mod pin_chat_v2;

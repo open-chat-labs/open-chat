@@ -10,6 +10,7 @@
         Switch,
     } from "component-lib";
     import {
+        currentUserIdStore,
         exchangeRatesLookupStore as exchangeRatesLookup,
         formatTokens,
         swappableTokensStore,
@@ -18,8 +19,9 @@
         type InterpolationValues,
         type OpenChat,
         type ResourceKey,
+        type SwapTokensResponse,
     } from "@client";
-    import { random128 } from "@shared";
+    import { isMultiUserCanisterUser, random128 } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/AlertOutline.svelte";
@@ -70,6 +72,7 @@
     let swapMessageValues: InterpolationValues | undefined = $state(undefined);
     let bestQuote: [DexId, bigint] | undefined = $state(undefined);
     let swapId: bigint | undefined = $state();
+    let swapResponse = $state<SwapTokensResponse>();
     let userAcceptedWarning = $state(false);
     let warnValueUnknown = $state(false);
     let warnValueDropped = $state(false);
@@ -175,6 +178,7 @@
             .then((balanceCheckSuccess) => {
                 if (balanceCheckSuccess) {
                     swapId = random128();
+                    swapResponse = undefined;
                     return client.swapTokens(
                         swapId,
                         ledgerInLocal,
@@ -184,6 +188,9 @@
                         bestQuoteLocal[0],
                     );
                 }
+            })
+            .then((response) => {
+                swapResponse = response;
             })
             .catch(() => {
                 swapId = undefined;
@@ -533,7 +540,9 @@
         ledgerOut={detailsOut.ledger}
         amountIn={amountInText}
         decimalsOut={detailsOut.decimals}
-        dex={dexName(bestQuote[0])} />
+        dex={dexName(bestQuote[0])}
+        {swapResponse}
+        fromWallet={isMultiUserCanisterUser($currentUserIdStore)} />
 {/if}
 
 <style lang="scss">

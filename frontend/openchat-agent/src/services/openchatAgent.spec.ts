@@ -7,6 +7,8 @@ import {
     spenderSubaccount,
     Stream,
     type CryptocurrencyContent,
+    type CryptocurrencyDetails,
+    type DexSwapResult,
     type EventWrapper,
     type Message,
     type MessageContent,
@@ -15,12 +17,17 @@ import {
     type PendingCryptocurrencyWithdrawal,
     type PrizeContentInitial,
     type TokenInfo,
+    type UnfinishedTokenSwap,
 } from "@shared";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 import { OpenChatAgent } from "./openchatAgent";
 
 const ICP_LEDGER = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+// The device's clock while a payment is made, which is also the time on the IC unless a test says
+// otherwise, so a payment is stamped with it
+const NOW_MS = 1_791_565_000_000;
+const NOW_NANOS = BigInt(NOW_MS) * 1_000_000n;
 const FEE = 10n;
 const CHAT_FEE = 1_000n;
 const ICP: TokenInfo = { ledger: ICP_LEDGER, symbol: "ICP", decimals: 8, fee: FEE };
@@ -47,7 +54,7 @@ function transfer(fromAccount?: string): PendingCryptocurrencyTransfer {
         recipient: THEM,
         amountE8s: 100n,
         feeE8s: FEE,
-        createdAtNanos: 0n,
+        createdAtNanos: NOW_NANOS,
         fromAccount,
     };
 }
@@ -105,6 +112,9 @@ describe("OpenChatAgent paying from the user's wallet", () => {
     let pinCheckResponse: "success" | "incorrect";
     let calls: string[];
     let callArgs: unknown[][];
+    // How far the IC's clock is ahead of the device's, and each ledger whose subnet it was read from
+    let timeDiffMsecs: number;
+    let syncedWith: string[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let agent: any;
 
@@ -118,6 +128,13 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             };
         agent = Object.create(OpenChatAgent.prototype);
         agent.identity = { getPrincipal: () => ME };
+        agent._agent = {
+            syncTime: (canisterId: Principal) => {
+                syncedWith.push(canisterId.toText());
+                return Promise.resolve();
+            },
+            getTimeDiffMsecs: () => timeDiffMsecs,
+        };
         agent._registryValue = {
             tokenDetails: [
                 { ledger: ICP_LEDGER, transferFee: FEE },
@@ -159,11 +176,12 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             tipMessage: called("communityTipMessage"),
         };
         agent._userIndexClient = { payForDiamondMembership: called("payForDiamondMembership") };
+        agent._proposalsBotClient = { get: () => ({ submitProposal: called("submitProposal") }) };
     }
 
     // Sends a message to a group or channel, giving the response once it is final
     const send = (
-        chatId: typeof GROUP | typeof CHANNEL,
+        chatId: typeof DIRECT | typeof GROUP | typeof CHANNEL,
         content: MessageContent,
         threadRootMessageIndex?: number,
         acceptedRules?: { chat: number; community: number },
@@ -298,8 +316,13 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         pinCheckResponse = "success";
         calls = [];
         callArgs = [];
+        timeDiffMsecs = 0;
+        syncedWith = [];
+        vi.spyOn(Date, "now").mockReturnValue(NOW_MS);
         vi.spyOn(console, "warn").mockImplementation(() => {});
     });
+
+    afterEach(() => vi.restoreAllMocks());
 
     describe("by a user in a MultiUser canister", () => {
         beforeEach(() => setup(MULTI_USER_CANISTER_USER));
@@ -713,6 +736,100 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             expect(calls).toEqual(["payForStreakInsurance"]);
         });
     });
+
+    // A ledger rejects a transfer created more than a minute in its future, which each transfer
+    // stamped by a device whose clock is fast would be
+    describe("from a device whose clock is ahead of the IC's", () => {
+        const AHEAD_MS = 160_000;
+        const icNow = BigInt(NOW_MS - AHEAD_MS) * 1_000_000n;
+
+        // The stamp on the transfer in the message sent
+        const stampSent = () => {
+            const event = callArgs[0].find(
+                (arg) => (arg as EventWrapper<Message> | undefined)?.event?.content !== undefined,
+            ) as EventWrapper<Message>;
+            return (event.event.content as { transfer: PendingCryptocurrencyTransfer }).transfer
+                .createdAtNanos;
+        };
+
+        beforeEach(() => {
+            timeDiffMsecs = -AHEAD_MS;
+        });
+
+        test.each([
+            ["crypto in a direct chat", MULTI_USER_CANISTER_USER, DIRECT, crypto],
+            ["crypto in a group", MULTI_USER_CANISTER_USER, GROUP, crypto],
+            ["a prize in a channel", MULTI_USER_CANISTER_USER, CHANNEL, prize],
+            [
+                "crypto in a group, by a user alone in their canister",
+                USER_CANISTER_USER,
+                GROUP,
+                crypto,
+            ],
+        ] as const)(
+            "%s is stamped with the time on the ledger's subnet",
+            async (_, userId, chatId, content) => {
+                setup(userId);
+
+                await send(chatId, content());
+
+                expect(stampSent()).toEqual(icNow);
+                expect(syncedWith).toEqual([ICP_LEDGER]);
+            },
+        );
+
+        test.each([
+            ["group", GROUP, "groupTipMessage"],
+            ["channel", CHANNEL, "communityTipMessage"],
+        ] as const)(
+            "a tip in a %s, pulled from the wallet by it, is stamped with the time on the ledger's subnet",
+            async (_, chatId, call) => {
+                setup(MULTI_USER_CANISTER_USER);
+
+                await agent.tipMessage(
+                    { chatId },
+                    1n,
+                    transfer(),
+                    8,
+                    undefined,
+                    "me",
+                    undefined,
+                    true,
+                );
+
+                expect(calls).toEqual([call]);
+                expect((callArgs[0][3] as PendingCryptocurrencyTransfer).createdAtNanos).toEqual(
+                    icNow,
+                );
+                expect(syncedWith).toEqual([ICP_LEDGER]);
+            },
+        );
+
+        test.each([
+            ["a user in a MultiUser canister", MULTI_USER_CANISTER_USER],
+            ["a user alone in their canister", USER_CANISTER_USER],
+        ])(
+            "the fee for a proposal by %s is stamped with the time on the ledger's subnet",
+            async (_, userId) => {
+                setup(userId);
+
+                await agent.submitProposal(userId, "", {}, ICP_LEDGER, "ICP", 100n, FEE);
+
+                expect(calls).toEqual(["submitProposal"]);
+                expect(callArgs[0].at(-1)).toEqual(icNow);
+                expect(syncedWith).toEqual([ICP_LEDGER]);
+            },
+        );
+
+        test("a swap offer has nothing to stamp, so the IC isn't asked the time", async () => {
+            setup(MULTI_USER_CANISTER_USER);
+
+            await send(GROUP, swapOffer());
+
+            expect(calls).toEqual(["groupSendMessage"]);
+            expect(syncedWith).toEqual([]);
+        });
+    });
 });
 
 // The wallet's "Send"
@@ -724,7 +841,7 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         to: EXTERNAL_ACCOUNT,
         amountE8s: 100n,
         feeE8s: FEE,
-        createdAtNanos: 0n,
+        createdAtNanos: NOW_NANOS,
     };
     const PIN = "1234";
     const LEDGER_RESPONSE = {
@@ -736,14 +853,27 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
 
     let ledgerWithdrawals: unknown[][];
     let canisterWithdrawals: unknown[][];
+    // How far the IC's clock is ahead of the device's, and each ledger whose subnet it was read from
+    let timeDiffMsecs: number;
+    let syncedWith: string[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let agent: any;
 
     function setup(userId: string) {
         ledgerWithdrawals = [];
         canisterWithdrawals = [];
+        timeDiffMsecs = 0;
+        syncedWith = [];
+        vi.spyOn(Date, "now").mockReturnValue(NOW_MS);
         agent = Object.create(OpenChatAgent.prototype);
         agent.identity = { getPrincipal: () => ME };
+        agent._agent = {
+            syncTime: (canisterId: Principal) => {
+                syncedWith.push(canisterId.toText());
+                return Promise.resolve();
+            },
+            getTimeDiffMsecs: () => timeDiffMsecs,
+        };
         agent._ledgerClient = {
             withdraw: (...args: unknown[]) => {
                 ledgerWithdrawals.push(args);
@@ -758,6 +888,8 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
             },
         };
     }
+
+    afterEach(() => vi.restoreAllMocks());
 
     test("a user in a MultiUser canister sends from their wallet on the ledger, with no PIN", async () => {
         setup(MULTI_USER_CANISTER_USER);
@@ -774,6 +906,27 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         expect(canisterWithdrawals).toEqual([[WITHDRAWAL, PIN]]);
         expect(ledgerWithdrawals).toEqual([]);
     });
+
+    // Whether the ledger is called by the website or by their canister, it rejects a withdrawal
+    // created more than a minute in its future
+    test.each([
+        ["a user in a MultiUser canister", MULTI_USER_CANISTER_USER, () => ledgerWithdrawals],
+        ["a user alone in their canister", USER_CANISTER_USER, () => canisterWithdrawals],
+    ])(
+        "a withdrawal by %s from a device whose clock is fast is stamped with the time on the ledger's subnet",
+        async (_, userId, withdrawals) => {
+            setup(userId);
+            timeDiffMsecs = -160_000;
+
+            await agent.withdrawCryptocurrency(WITHDRAWAL, PIN);
+
+            expect(withdrawals()[0][0]).toEqual({
+                ...WITHDRAWAL,
+                createdAtNanos: BigInt(NOW_MS - 160_000) * 1_000_000n,
+            });
+            expect(syncedWith).toEqual([ICP_LEDGER]);
+        },
+    );
 });
 
 // A user migrated to a MultiUser canister may have left funds in the wallet of their previous
@@ -1316,6 +1469,7 @@ describe("OpenChatAgent approving a spender", () => {
         agent = Object.create(OpenChatAgent.prototype);
         agent.identity = { getPrincipal: () => ME };
         agent._registryValue = { tokenDetails: [{ ledger: ICP_LEDGER, transferFee: FEE }] };
+        agent._agent = { syncTime: () => Promise.resolve(), getTimeDiffMsecs: () => 0 };
         agent._ledgerClient = {
             approveSpending: (...args: unknown[]) => {
                 approvals.push(args);
@@ -1579,5 +1733,262 @@ describe("OpenChatAgent listing the transactions of each of the user's wallets",
         await agent.getAccountTransactions(LEDGER_INDEX, CURRENT);
 
         expect(fetched).toEqual([{ owner: ME.toText(), userId: CURRENT }]);
+    });
+});
+
+// A user in a MultiUser canister holds their own funds, so swaps straight from their wallet, which
+// their canister only records as the swap starts and ends
+describe("OpenChatAgent swapping tokens", () => {
+    const POOL = "ne2vj-6yaaa-aaaag-qb3ia-cai";
+    const ICP_DETAILS = {
+        ledger: ICP_LEDGER,
+        symbol: "ICP",
+        decimals: 8,
+        transferFee: FEE,
+    } as CryptocurrencyDetails;
+    const CHAT_DETAILS = {
+        ledger: LEDGER_CANISTER_CHAT,
+        symbol: "CHAT",
+        decimals: 8,
+        transferFee: CHAT_FEE,
+    } as CryptocurrencyDetails;
+
+    let calls: unknown[][];
+    let approveResponse: "success" | "insufficient_funds" | "failure";
+    let swapResult: () => Promise<DexSwapResult>;
+    let unusedBalances: { ledger: string; balance: bigint }[];
+    let withdrawSucceeds: boolean;
+    let unfinishedSwaps: UnfinishedTokenSwap[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let agent: any;
+
+    function setup(userId: string) {
+        const called =
+            (name: string, response: unknown = { kind: "success" }) =>
+            (...args: unknown[]) => {
+                calls.push([name, ...args]);
+                return Promise.resolve(response);
+            };
+        agent = Object.create(OpenChatAgent.prototype);
+        agent.identity = { getPrincipal: () => ME };
+        agent._registryValue = {
+            tokenDetails: [
+                { ledger: ICP_LEDGER, transferFee: FEE },
+                { ledger: LEDGER_CANISTER_CHAT, transferFee: CHAT_FEE },
+            ],
+            swapProviders: ["icpswap", "taco"],
+        };
+        agent._dexesAgent = {
+            get: () => ({
+                getSwapPools: () =>
+                    Promise.resolve([
+                        {
+                            dex: "icpswap",
+                            canisterId: POOL,
+                            token0: ICP_LEDGER,
+                            token1: LEDGER_CANISTER_CHAT,
+                        },
+                    ]),
+            }),
+        };
+        agent._ledgerClient = {
+            approveSpending: (...args: unknown[]) => {
+                calls.push(["approve", ...args]);
+                return Promise.resolve(approveResponse);
+            },
+        };
+        agent._userClient = {
+            userId,
+            swapTokens: called("canisterSwap", { kind: "success", amountOut: 1n }),
+            markTokenSwapStarted: called("started"),
+            markTokenSwapCompleted: called("completed"),
+            unfinishedTokenSwaps: () => Promise.resolve(unfinishedSwaps),
+        };
+        agent.icpSwapPoolClient = (canisterId: string, token0: string, token1: string) => ({
+            swapFromWallet: (...args: unknown[]) => {
+                calls.push(["swap", canisterId, ...args]);
+                return swapResult();
+            },
+            unusedBalances: (principal: Principal) => {
+                calls.push(["unusedBalances", canisterId, token0, token1, principal]);
+                return Promise.resolve(unusedBalances);
+            },
+            withdraw: (...args: unknown[]) => {
+                calls.push(["withdraw", canisterId, ...args]);
+                return Promise.resolve(withdrawSucceeds);
+            },
+        });
+    }
+
+    beforeEach(() => {
+        calls = [];
+        approveResponse = "success";
+        swapResult = () => Promise.resolve({ kind: "success", amountOut: 400n });
+        unusedBalances = [];
+        withdrawSucceeds = true;
+        unfinishedSwaps = [];
+        setup(MULTI_USER_CANISTER_USER);
+    });
+
+    const swap = () =>
+        agent.swapTokens(123n, ICP_DETAILS, CHAT_DETAILS, 1_000n, 500n, "icpswap", undefined);
+
+    const exchangeArgs = { dex: "icpswap", swapCanisterId: POOL, zeroForOne: true };
+
+    test("approves the pool, records the swap as it starts, swaps, then records how it ended", async () => {
+        expect(await swap()).toEqual({ kind: "success", amountOut: 400n });
+
+        // The approval's fee and the pool's pull are taken out of the amount swapped, so the swap
+        // takes 1_000 from the wallet in all
+        expect(calls).toEqual([
+            [
+                "approve",
+                ICP_LEDGER,
+                { owner: Principal.fromText(POOL) },
+                990n,
+                FEE,
+                APPROVAL_VALIDITY_MS,
+            ],
+            ["started", 123n, ICP_DETAILS, CHAT_DETAILS, 1_000n, 500n, exchangeArgs],
+            ["swap", POOL, ICP_LEDGER, LEDGER_CANISTER_CHAT, 980n, 500n, FEE, CHAT_FEE],
+            ["completed", 123n, { kind: "swapped", amountOut: 400n }],
+        ]);
+    });
+
+    test("a swap the DEX refuses as the rate has moved is recorded as failed", async () => {
+        const error =
+            '{"InternalError":"Slippage check failed: minimum amount requirement not met"}';
+        swapResult = () => Promise.resolve({ kind: "error", error });
+
+        expect(await swap()).toEqual({ kind: "error", code: ErrorCode.SwapFailed, message: error });
+        expect(calls.at(-1)).toEqual(["completed", 123n, { kind: "failed", reason: error }]);
+    });
+
+    test("a swap the DEX refuses for any other reason is recorded as failed", async () => {
+        const error = '{"InternalError":"Wrong fee cache (expected: 20, received: 10)"}';
+        swapResult = () => Promise.resolve({ kind: "error", error });
+
+        expect(await swap()).toEqual({ kind: "internal_error", error });
+        expect(calls.at(-1)).toEqual(["completed", 123n, { kind: "failed", reason: error }]);
+    });
+
+    test("recording how a swap ended is retried", async () => {
+        let attempts = 0;
+        agent._userClient.markTokenSwapCompleted = (...args: unknown[]) => {
+            calls.push(["completed", ...args]);
+            return ++attempts < 3
+                ? Promise.reject(new Error("offline"))
+                : Promise.resolve({ kind: "success" });
+        };
+
+        expect(await swap()).toEqual({ kind: "success", amountOut: 400n });
+        expect(calls.filter((c) => c[0] === "completed")).toHaveLength(3);
+    });
+
+    test("a swap whose outcome is unknown is left unfinished", async () => {
+        swapResult = () => Promise.reject(new Error("timed out"));
+
+        const response = await swap();
+        expect(response.kind).toBe("error");
+        expect(response.code).toBe(ErrorCode.Unknown);
+        expect(calls.map((c) => c[0])).toEqual(["approve", "started", "swap"]);
+    });
+
+    test("nothing is recorded or swapped if the pool can't be approved", async () => {
+        approveResponse = "insufficient_funds";
+
+        expect((await swap()).code).toBe(ErrorCode.InsufficientFunds);
+        expect(calls.map((c) => c[0])).toEqual(["approve"]);
+    });
+
+    test("too little to cover the fees is refused before anything is approved", async () => {
+        const response = await agent.swapTokens(
+            123n,
+            ICP_DETAILS,
+            CHAT_DETAILS,
+            3n * FEE,
+            1n,
+            "icpswap",
+            undefined,
+        );
+
+        expect(response.code).toBe(ErrorCode.InsufficientFunds);
+        expect(calls).toEqual([]);
+    });
+
+    test("a user alone in their canister has their canister make the swap", async () => {
+        setup(USER_CANISTER_USER);
+
+        expect(await swap()).toEqual({ kind: "success", amountOut: 1n });
+        expect(calls.map((c) => c[0])).toEqual(["canisterSwap"]);
+    });
+
+    test("only ICPSwap is offered to a user who holds their own funds", () => {
+        expect(agent.swapProviders()).toEqual(["icpswap"]);
+        setup(USER_CANISTER_USER);
+        expect(agent.swapProviders()).toEqual(["icpswap", "taco"]);
+    });
+
+    describe("recovering unfinished swaps", () => {
+        const unfinished = (swapId: bigint): UnfinishedTokenSwap => ({
+            swapId,
+            started: 0n,
+            inputLedger: LEDGER_CANISTER_CHAT,
+            outputLedger: ICP_LEDGER,
+            exchangeArgs: { dex: "icpswap", swapCanisterId: POOL, zeroForOne: false },
+        });
+
+        test("withdraws what the pool holds for the user, then marks the swap completed", async () => {
+            unfinishedSwaps = [unfinished(1n)];
+            unusedBalances = [
+                { ledger: ICP_LEDGER, balance: 500n },
+                { ledger: LEDGER_CANISTER_CHAT, balance: CHAT_FEE },
+            ];
+
+            await agent.recoverUnfinishedTokenSwaps();
+
+            // The pool's tokens are put back in its order, and a balance too small to cover the
+            // fee is left where it is
+            expect(calls).toEqual([
+                ["unusedBalances", POOL, ICP_LEDGER, LEDGER_CANISTER_CHAT, ME],
+                ["withdraw", POOL, ICP_LEDGER, 500n, FEE],
+                [
+                    "completed",
+                    1n,
+                    {
+                        kind: "failed",
+                        reason: "Never marked as completed, so how it ended isn't known",
+                    },
+                ],
+            ]);
+        });
+
+        test("skips a zero balance, even of a token it doesn't know the fee of", async () => {
+            unfinishedSwaps = [unfinished(1n)];
+            unusedBalances = [{ ledger: THEM, balance: 0n }];
+
+            await agent.recoverUnfinishedTokenSwaps();
+
+            expect(calls.map((c) => c[0])).toEqual(["unusedBalances", "completed"]);
+        });
+
+        test("leaves a swap unfinished if its funds can't be withdrawn", async () => {
+            unfinishedSwaps = [unfinished(1n)];
+            unusedBalances = [{ ledger: ICP_LEDGER, balance: 500n }];
+            withdrawSucceeds = false;
+
+            await agent.recoverUnfinishedTokenSwaps();
+
+            expect(calls.map((c) => c[0])).toEqual(["unusedBalances", "withdraw"]);
+        });
+
+        test("does nothing for a user alone in their canister", async () => {
+            setup(USER_CANISTER_USER);
+            unfinishedSwaps = [unfinished(1n)];
+
+            await agent.recoverUnfinishedTokenSwaps();
+
+            expect(calls).toEqual([]);
+        });
     });
 });

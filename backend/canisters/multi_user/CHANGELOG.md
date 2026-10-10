@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Record the swaps users make straight from their own wallets, so that one left part way through can be finished off ([#9887](https://github.com/open-chat-labs/open-chat/pull/9887))
+
 ### Fixed
 
 - Drop events for users who have deleted their account or are bots, rather than retrying them forever ([#9886](https://github.com/open-chat-labs/open-chat/pull/9886))

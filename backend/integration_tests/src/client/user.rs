@@ -20,6 +20,7 @@ generate_msgpack_query_call!(public_profile);
 generate_msgpack_query_call!(saved_crypto_accounts);
 generate_msgpack_query_call!(search_messages);
 generate_msgpack_query_call!(token_swap_status);
+generate_msgpack_query_call!(unfinished_token_swaps);
 generate_msgpack_query_call!(updates);
 
 // Updates
@@ -64,6 +65,8 @@ generate_msgpack_update_call!(manage_favourite_chats);
 generate_msgpack_update_call!(mark_achievements_seen);
 generate_msgpack_update_call!(mark_message_activity_feed_read);
 generate_msgpack_update_call!(mark_read);
+generate_msgpack_update_call!(mark_token_swap_completed);
+generate_msgpack_update_call!(mark_token_swap_started);
 generate_msgpack_update_call!(mute_notifications);
 generate_msgpack_update_call!(pay_for_streak_insurance);
 generate_msgpack_update_call!(pin_chat_v2);

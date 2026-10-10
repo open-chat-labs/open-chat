@@ -1279,6 +1279,9 @@ function getAction(
         case "tokenSwapStatus":
             return agent.tokenSwapStatus(payload.swapId);
 
+        case "recoverUnfinishedTokenSwaps":
+            return agent.recoverUnfinishedTokenSwaps();
+
         case "deleteDirectChat":
             return agent.deleteDirectChat(payload.userId, payload.blockUser);
 
