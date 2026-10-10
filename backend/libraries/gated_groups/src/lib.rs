@@ -68,6 +68,30 @@ pub async fn check_if_passes_gate(gate: AccessGate, args: CheckGateArgs) -> Chec
     }
 }
 
+// Checks the gate as `check_if_passes_gate` does, then if the user fails it, checks it again under
+// each id they had before being migrated to a MultiUser canister, most recent first. A migrated
+// user's tokens stay in their old canister's wallet until they next come online, so without this, a
+// member who hasn't been online since would lapse from a token balance gate they still meet.
+pub async fn check_if_passes_gate_under_any_id(
+    gate: AccessGate,
+    args: CheckGateArgs,
+    previous_user_ids: Vec<UserId>,
+) -> CheckIfPassesGateResult {
+    let principal = args.user.principal;
+    let mut result = check_if_passes_gate(gate.clone(), args.clone()).await;
+    for user_id in previous_user_ids.into_iter().rev() {
+        if !matches!(result, CheckIfPassesGateResult::Failed(_)) {
+            break;
+        }
+        let args = CheckGateArgs {
+            user: UserIdAndPrincipal::new(user_id, principal),
+            ..args.clone()
+        };
+        result = check_if_passes_gate(gate.clone(), args).await;
+    }
+    result
+}
+
 pub fn check_if_passes_gate_synchronously(gate: AccessGate, args: CheckGateArgs) -> Option<CheckIfPassesGateResult> {
     match AccessGateScope::from(gate) {
         AccessGateScope::Composite(gate) => check_composite_gate_synchronously(gate, args),

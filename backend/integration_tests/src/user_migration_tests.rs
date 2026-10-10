@@ -3538,7 +3538,7 @@ fn wait_for_import(env: &mut PocketIc, sender: Principal, user_index: CanisterId
 
 // Ticks, moving time on a second at a time so that jobs retrying after a delay run, until
 // `condition` holds. Fails if it doesn't within a generous number of rounds.
-fn tick_until(env: &mut PocketIc, condition: impl Fn(&PocketIc) -> bool) {
+pub(crate) fn tick_until(env: &mut PocketIc, condition: impl Fn(&PocketIc) -> bool) {
     for _ in 0..100 {
         if condition(env) {
             return;
