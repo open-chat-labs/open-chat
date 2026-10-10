@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Record the swaps users make straight from their own wallets, so that one left part way through can be finished off ([#9887](https://github.com/open-chat-labs/open-chat/pull/9887))
 
+### Changed
+
+- Check the user's PIN as they start a swap from their wallet ([#9891](https://github.com/open-chat-labs/open-chat/pull/9891))
+
 ## [[2.0.2121](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2121-multi_user)] - 2026-10-08
 
 ### Changed
