@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Check a recurring gate under a migrated member's old ids before they lapse, since their tokens stay in their old wallet until they next come online ([#9892](https://github.com/open-chat-labs/open-chat/pull/9892))
+- Check a recurring gate under a migrated member's old ids before they lapse ([#9892](https://github.com/open-chat-labs/open-chat/pull/9892))
 
 ## [[2.0.2123](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2123-community)] - 2026-10-08
 

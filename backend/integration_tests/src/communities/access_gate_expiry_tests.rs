@@ -1,6 +1,6 @@
 use crate::client::user_index;
 use crate::env::ENV;
-use crate::user_migration_tests::{migrate, platform_operator};
+use crate::user_migration_tests::{migrate, platform_operator, tick_until};
 use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
@@ -631,14 +631,7 @@ fn migrated_member_whose_tokens_are_still_in_their_old_wallet_does_not_lapse(con
         .map(|user| migrate(env, canister_ids, &operator, user, multi_user_canister))
         .collect();
     for user in users.iter() {
-        for _ in 0..30 {
-            if holds_member(env, &owner, &container, user.user_id) {
-                break;
-            }
-            env.advance_time(Duration::from_secs(1));
-            env.tick();
-        }
-        assert!(holds_member(env, &owner, &container, user.user_id));
+        tick_until(env, |env| holds_member(env, &owner, &container, user.user_id));
     }
 
     // Move the time forward so that the gate expires
