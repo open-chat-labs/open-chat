@@ -1,17 +1,20 @@
 use crate::env::ENV;
+use crate::setup::install_sns_governance;
+use crate::user_migration_tests::{migrate, platform_operator, wait_until_local_user_index_knows_of_migration};
 use crate::utils::{tick_many, try_metrics};
 use crate::{TestEnv, User, client};
 use candid::Principal;
+use constants::DAY_IN_MS;
 use icrc_ledger_types::icrc1::account::Account;
 use pocket_ic::PocketIc;
 use pocket_ic::common::rest::RawMessageId;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use testing::rng::random_string;
+use testing::rng::{random_principal, random_string};
 use types::{
     AccessGate, AccessGateNonComposite, CanisterId, ChannelId, CompositeGate, GateCheckFailedReason, PaymentGate, Rules,
-    TokenBalanceGate,
+    SnsNeuronGate, TokenBalanceGate,
 };
 
 #[test_case(true, false; "diamond_member")]
@@ -474,6 +477,105 @@ fn payment_gate_is_only_paid_with_an_approval_under_the_members_spender_subaccou
         client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, alice.principal),
         amount - fee
     );
+}
+
+#[derive(Clone, Copy)]
+enum NeuronHotkey {
+    Principal,
+    OldUserCanister,
+    Neither,
+}
+
+// A user in a MultiUser canister is told to add their principal as a hotkey on their neurons, since no
+// one can add their user id. A migrated user's neurons may still list their old User canister, so
+// neurons listing that count too.
+#[test_case(NeuronHotkey::Principal; "principal")]
+#[test_case(NeuronHotkey::OldUserCanister; "old_user_canister")]
+#[test_case(NeuronHotkey::Neither; "neither")]
+fn multi_user_user_joins_sns_neuron_gated_group_with_neuron_listing(neuron_hotkey: NeuronHotkey) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::register_user(env, canister_ids);
+    let operator = platform_operator(env, canister_ids, *controller);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, user.local_user_index);
+    let migrated_user = migrate(env, canister_ids, &operator, &user, multi_user_canister);
+
+    let hotkey = match neuron_hotkey {
+        NeuronHotkey::Principal => user.principal,
+        NeuronHotkey::OldUserCanister => user.canister(),
+        NeuronHotkey::Neither => random_principal(),
+    };
+    let stake_e8s = 1_0000_0000;
+    let dissolve_delay = 30 * DAY_IN_MS;
+    let governance_canister_id = install_sns_governance(env, *controller, vec![hotkey], stake_e8s, dissolve_delay / 1000);
+
+    let name = random_string();
+    let group_id = match client::user::create_group(
+        env,
+        owner.principal,
+        owner.canister(),
+        &user_canister::create_group::Args {
+            is_public: true,
+            name: name.clone(),
+            description: format!("{name}_description"),
+            avatar: None,
+            history_visible_to_new_joiners: true,
+            permissions_v2: None,
+            rules: Rules::default(),
+            events_ttl: None,
+            gate_config: Some(
+                AccessGate::SnsNeuron(SnsNeuronGate {
+                    governance_canister_id,
+                    min_stake_e8s: Some(stake_e8s),
+                    min_dissolve_delay: Some(dissolve_delay),
+                })
+                .into(),
+            ),
+            messages_visible_to_non_members: None,
+        },
+    ) {
+        user_canister::create_group::Response::Success(result) => result.chat_id,
+        response => panic!("'create_group' error: {response:?}"),
+    };
+
+    // The group is told the user's old ids by its LocalUserIndex, once that knows of the migration
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+    wait_until_local_user_index_knows_of_migration(env, local_user_index, &user, migrated_user.user_id);
+
+    let response = client::local_user_index::join_group(
+        env,
+        migrated_user.principal,
+        local_user_index,
+        &local_user_index_canister::join_group::Args {
+            chat_id: group_id,
+            invite_code: None,
+            verified_credential_args: None,
+            composite_gate_index: None,
+        },
+    );
+
+    if matches!(neuron_hotkey, NeuronHotkey::Neither) {
+        assert!(
+            matches!(
+                response,
+                local_user_index_canister::join_group::Response::GateCheckFailed(GateCheckFailedReason::NoSnsNeuronsFound)
+            ),
+            "{response:?}"
+        );
+    } else {
+        assert!(
+            matches!(response, local_user_index_canister::join_group::Response::Success(_)),
+            "{response:?}"
+        );
+    }
 }
 
 // Creates a group or channel with a payment gate, returning the group or community, which pulls the

@@ -80,6 +80,8 @@ fn run() {
             if matches!(expiry_gate_type, AccessGateExpiryBehaviour::UserLookup) {
                 let mut check_gate_args = CheckGateArgs {
                     user: state.member_user(member.user_id),
+                    // Only the gates checked asynchronously look at these
+                    previous_user_ids: Vec::new(),
                     diamond_membership_expires_at: None,
                     this_canister: state.env.canister_id(),
                     is_unique_person: false,

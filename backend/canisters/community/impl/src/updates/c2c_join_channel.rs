@@ -96,6 +96,8 @@ pub(crate) fn join_channel_synchronously(
         is_permitted_to_join(
             channel_id,
             user_principal,
+            // Only the gates checked asynchronously look at these
+            Vec::new(),
             diamond_membership_expires_at,
             unique_person_proof,
             None,
@@ -135,6 +137,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
         is_permitted_to_join(
             args.channel_id,
             args.principal,
+            args.previous_user_ids.clone(),
             args.diamond_membership_expires_at,
             args.unique_person_proof.clone(),
             args.verified_credential_args.clone(),
@@ -179,6 +182,7 @@ async fn check_gate_then_join_channel(args: &Args) -> Response {
 fn is_permitted_to_join(
     channel_id: ChannelId,
     user_principal: Principal,
+    previous_user_ids: Vec<UserId>,
     diamond_membership_expires_at: Option<TimestampMillis>,
     unique_person_proof: Option<UniquePersonProof>,
     verified_credential_args: Option<VerifiedCredentialGateArgs>,
@@ -215,6 +219,7 @@ fn is_permitted_to_join(
                     g.clone(),
                     CheckGateArgs {
                         user: member.user(),
+                        previous_user_ids,
                         diamond_membership_expires_at,
                         this_canister: state.env.canister_id(),
                         is_unique_person: unique_person_proof.is_some(),
