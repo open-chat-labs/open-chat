@@ -13,7 +13,7 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_string;
 use types::{
-    AccessGate, AccessGateConfig, AccessGateNonComposite, ChannelId, ChatId, CommunityId, CompositeGate,
+    AccessGate, AccessGateConfig, AccessGateNonComposite, CanisterId, ChannelId, ChatId, CommunityId, CompositeGate,
     DiamondMembershipPlanDuration, Milliseconds, OptionUpdate, PaymentGate, TimestampMillis, TokenBalanceGate, UserId,
 };
 
@@ -643,6 +643,74 @@ fn migrated_member_whose_tokens_are_still_in_their_old_wallet_does_not_lapse(con
     assert!(!has_user_lapsed(env, &users[0], &container));
 }
 
+// Members who lapsed after being migrated, when a recurring gate was checked under their latest id
+// alone, are unlapsed by the one-off in the group or community's post_upgrade if they now pass the
+// gate under a previous id
+#[test_case(ContainerType::Community)]
+#[test_case(ContainerType::Channel)]
+#[test_case(ContainerType::Group)]
+fn lapsed_migrated_member_who_passes_under_their_old_id_is_unlapsed_on_upgrade(container_type: ContainerType) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let min_balance = 900_000_000;
+    let gate_config = AccessGateConfig {
+        gate: AccessGate::TokenBalance(TokenBalanceGate {
+            ledger_canister_id: canister_ids.icp_ledger,
+            min_balance,
+        }),
+        expiry: Some(DAY_IN_MS),
+    };
+
+    let TestData { owner, users, container } =
+        init_test_data(env, canister_ids, *controller, gate_config, 2, container_type, false);
+
+    // Both spend enough of the tokens in their wallets to fall below the gate's minimum
+    for user in users.iter() {
+        user_index::happy_path::pay_for_diamond_membership(
+            env,
+            user.principal,
+            canister_ids.user_index,
+            DiamondMembershipPlanDuration::OneYear,
+            false,
+            false,
+        );
+    }
+    tick_many(env, 4);
+
+    // Both are migrated, then lapse as the gate expires
+    let old_user_id1 = users[0].user_id;
+    let operator = platform_operator(env, canister_ids, *controller);
+    let multi_user_canister =
+        user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, users[0].local_user_index);
+    let users: Vec<User> = users
+        .iter()
+        .map(|user| migrate(env, canister_ids, &operator, user, multi_user_canister))
+        .collect();
+    for user in users.iter() {
+        tick_until(env, |env| holds_member(env, &owner, &container, user.user_id));
+    }
+    env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
+    tick_many(env, 5);
+    for user in users.iter() {
+        wait_for_user_to_lapse(env, user, &container);
+    }
+
+    // user1's old wallet is topped up, so that they now pass the gate under their old id
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, old_user_id1, min_balance);
+
+    upgrade_container(env, canister_ids, &container);
+
+    // user1 is unlapsed, but user2, who passes the gate under neither id, stays lapsed
+    wait_for_user_to_unlapse(env, &users[0], &container);
+    tick_many(env, 5);
+    assert!(has_user_lapsed(env, &users[1], &container));
+}
+
 // Members lapse in a timer job in the group or community canister, which may first check the gate
 // with another canister, so this can take a few rounds after the clock moves
 fn wait_for_user_to_lapse(env: &mut PocketIc, user: &User, container: &Container) {
@@ -680,6 +748,32 @@ fn has_user_lapsed(env: &mut PocketIc, user: &User, container: &Container) -> bo
             summary.membership.is_some_and(|m| m.lapsed)
         }
     }
+}
+
+// Upgrades the group or community to the wasm it's already running, as its LocalUserIndex, which
+// runs its post_upgrade
+fn upgrade_container(env: &mut PocketIc, canister_ids: &CanisterIds, container: &Container) {
+    let (canister_id, wasm, args): (CanisterId, _, _) = match container {
+        Container::Group(group_id) => {
+            let wasm = crate::wasms::GROUP.clone();
+            let args = msgpack::serialize_then_unwrap(&group_canister::post_upgrade::Args {
+                wasm_version: wasm.version,
+            });
+            ((*group_id).into(), wasm, args)
+        }
+        Container::Community(community_id) | Container::Channel(community_id, _) => {
+            let wasm = crate::wasms::COMMUNITY.clone();
+            let args = msgpack::serialize_then_unwrap(&community_canister::post_upgrade::Args {
+                wasm_version: wasm.version,
+            });
+            ((*community_id).into(), wasm, args)
+        }
+    };
+    let local_user_index = canister_ids.local_user_index(env, canister_id);
+    client::stop_canister(env, local_user_index, canister_id);
+    env.upgrade_canister(canister_id, wasm.module.into(), args, Some(local_user_index))
+        .unwrap();
+    client::start_canister(env, local_user_index, canister_id);
 }
 
 // Whether the container holds a member under `user_id`, as its owner sees it
