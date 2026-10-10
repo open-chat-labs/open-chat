@@ -372,8 +372,8 @@ const MAX_LEDGERS_PER_FUNDS_MOVE = 20;
 const MAX_FUNDS_MOVE_RETRIES = 3;
 const FUNDS_MOVE_RETRY_INTERVAL_MS = 10_000;
 const MARK_TOKEN_SWAP_COMPLETED_ATTEMPTS = 3;
-// How often, and for how long, the pool a swap was made in is checked for having paid out its output
-// before whatever it still holds is withdrawn directly
+// How often, and how many times, the pool a swap was made in is checked for having paid out its
+// output
 const POOL_PAYOUT_CHECKS = 10;
 const POOL_PAYOUT_CHECK_INTERVAL_MS = 1000;
 
@@ -4941,7 +4941,7 @@ export class OpenChatAgent extends EventTarget {
                           pool,
                           exchangeArgs,
                           pin,
-                          (step) => resolve({ kind: "swap_step", step }, false),
+                          (step) => resolve({ kind: "swap_step", ...step }, false),
                       )
                     : await this.userClient.swapTokens(
                           swapId,
@@ -4966,7 +4966,8 @@ export class OpenChatAgent extends EventTarget {
     // as it starts, which checks the user's PIN before anything is approved, and as it ends, so that
     // one which doesn't finish, eg. because the user leaves part way through, is found again (see
     // `recoverUnfinishedTokenSwaps`), and they get the achievement for swapping once it has. Each
-    // step after the swap is recorded is reported to `onStep` as it starts.
+    // step after the swap is recorded is reported to `onStep` as it starts, the last being ICPSwap
+    // paying the output to the wallet.
     private async swapTokensFromWallet(
         swapId: bigint,
         inputTokenDetails: CryptocurrencyDetails,
@@ -5001,7 +5002,7 @@ export class OpenChatAgent extends EventTarget {
             return started;
         }
 
-        onStep("approve");
+        onStep({ step: "approve" });
         // The pool pulls as its own default account. The PIN was checked as the swap started.
         const approvalError = await this.approveToPull(
             { owner: Principal.fromText(pool.canisterId) },
@@ -5018,7 +5019,7 @@ export class OpenChatAgent extends EventTarget {
             return approvalError;
         }
 
-        onStep("swap");
+        onStep({ step: "swap" });
         const poolClient = this.icpSwapPoolClient(pool.canisterId, pool.token0, pool.token1);
         let result: DexSwapResult;
         try {
@@ -5045,7 +5046,12 @@ export class OpenChatAgent extends EventTarget {
         );
 
         if (result.kind === "success") {
-            await this.withdrawWhatThePoolStillHolds(poolClient, () => onStep("withdraw"));
+            onStep({ step: "withdraw", amountOut: result.amountOut });
+            await this.waitForPoolToPayOut(
+                poolClient,
+                outputTokenDetails.ledger,
+                outputTokenDetails.transferFee,
+            );
             return { kind: "success", amountOut: result.amountOut };
         }
         // ICPSwap refuses a swap whose output would fall short of the minimum with a slippage
@@ -5057,28 +5063,27 @@ export class OpenChatAgent extends EventTarget {
             : { kind: "internal_error", error: result.error };
     }
 
-    // ICPSwap pays out the output of a swap made from the wallet from a queue, normally within a few
-    // seconds, and until then still holds it for the user. Anything it still holds for them once it
-    // has had time to pay out is withdrawn to the wallet directly, which `onWithdraw` is told of
-    // first. A balance which can't be read is left to the pool's queue.
-    private async withdrawWhatThePoolStillHolds(
+    // ICPSwap pays the output of a swap made from the wallet out of a queue, normally within a round
+    // or two, holding it for the user until the queue takes it. This waits, for a while, for the
+    // queue to have taken it, after which the payout is on its way to the wallet. It is left to the
+    // queue either way: the pool's own withdrawals join the same queue, so withdrawing it would only
+    // put the payout at the back. A balance which can't be read is left to the queue too.
+    private async waitForPoolToPayOut(
         poolClient: IcpSwapPoolClient,
-        onWithdraw: () => void,
+        ledger: string,
+        fee: bigint,
     ): Promise<void> {
-        for (let check = 1; ; check++) {
-            const held = await this.heldByPool(poolClient).catch((err) => {
+        for (let check = 1; check <= POOL_PAYOUT_CHECKS; check++) {
+            if (check > 1) {
+                await delay(POOL_PAYOUT_CHECK_INTERVAL_MS);
+            }
+            const balances = await poolClient.unusedBalances(this.principal).catch((err) => {
                 console.warn("Failed to check what ICPSwap holds after a swap", err);
-                return [];
+                return undefined;
             });
-            if (held.length === 0) return;
-            if (check === POOL_PAYOUT_CHECKS) break;
-            await delay(POOL_PAYOUT_CHECK_INTERVAL_MS);
+            const held = balances?.find((b) => b.ledger === ledger)?.balance ?? 0n;
+            if (balances === undefined || held <= fee) return;
         }
-
-        onWithdraw();
-        await this.withdrawAllHeldByPool(poolClient).catch((err) =>
-            console.warn("Failed to withdraw what ICPSwap holds after a swap", err),
-        );
     }
 
     // Records how a swap made straight from the wallet ended, trying a few times, since the swap is

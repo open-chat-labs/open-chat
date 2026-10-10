@@ -72,7 +72,7 @@
     // svelte-ignore state_referenced_locally
     let stages = $state<Stage["kind"][]>(
         fromWallet
-            ? ["init", "approve", "swap", "done"]
+            ? ["init", "approve", "swap", "withdraw", "done"]
             : ["get", "deposit", "notify", "swap", "withdraw", "done"],
     );
 
@@ -101,11 +101,10 @@
 
     $effect(() => {
         if (fromWallet && swapStep !== undefined && outcome === undefined) {
-            // A withdrawal is only shown if the DEX doesn't pay out the output itself in good time
-            if (swapStep === "withdraw") {
-                stages = ["init", "approve", "swap", "withdraw", "done"];
+            if (swapStep.step === "withdraw") {
+                amountOut = client.formatTokens(swapStep.amountOut, decimalsOut);
             }
-            currentStage = swapStep;
+            currentStage = swapStep.step;
         }
     });
 

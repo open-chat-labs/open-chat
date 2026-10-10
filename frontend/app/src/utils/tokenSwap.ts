@@ -4,8 +4,8 @@ export type SwapOutcome = "success" | "rateChanged" | "insufficientFunds" | "unk
 
 // The steps of a swap the user makes straight from their wallet, in order. The swap is initialised
 // (recorded by the user's canister, which checks their PIN) before any of the steps it reports. The
-// withdrawal only happens if the DEX doesn't pay out the output itself in good time.
-export type WalletSwapStep = "init" | SwapFromWalletStep;
+// withdrawal is the DEX paying the output to the wallet, so only follows a swap which went ahead.
+export type WalletSwapStep = "init" | SwapFromWalletStep["step"];
 
 const WALLET_SWAP_STEPS: WalletSwapStep[] = ["init", "approve", "swap", "withdraw"];
 
@@ -14,8 +14,7 @@ export function walletSwapStepsUpTo(current: WalletSwapStep): WalletSwapStep[] {
     return WALLET_SWAP_STEPS.slice(0, WALLET_SWAP_STEPS.indexOf(current) + 1);
 }
 
-// How a swap the user made straight from their wallet ended, from what swapping returned, since
-// there is no progress to follow for one
+// How a swap the user made straight from their wallet ended, from what swapping returned
 export function swapFromWalletOutcome(response: SwapTokensResponse): SwapOutcome {
     if (response.kind === "success") return "success";
     if (response.kind === "error") {

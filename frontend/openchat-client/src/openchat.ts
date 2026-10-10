@@ -9432,7 +9432,7 @@ export class OpenChat {
                 .subscribe({
                     onResult: (value) => {
                         if (value.kind === "swap_step") {
-                            onStep?.(value.step);
+                            onStep?.(value);
                         } else {
                             resolve(value);
                         }

@@ -1843,12 +1843,20 @@ describe("OpenChatAgent swapping tokens", () => {
                 .swapTokens(123n, ICP_DETAILS, CHAT_DETAILS, amountIn, 500n, "icpswap", pin)
                 .subscribe({
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    onResult: (value: any, final: boolean) =>
-                        final ? resolve({ response: value, steps }) : steps.push(value.step),
+                    onResult: (value: any, final: boolean) => {
+                        if (final) {
+                            resolve({ response: value, steps });
+                        } else {
+                            steps.push(value.step);
+                            withdrawStep = value.step === "withdraw" ? value : withdrawStep;
+                        }
+                    },
                     onError: reject,
                 });
         });
     const swap = (pin?: string) => swapWith(1_000n, pin);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let withdrawStep: any;
 
     const exchangeArgs = { dex: "icpswap", swapCanisterId: POOL, zeroForOne: true };
 
@@ -1856,7 +1864,8 @@ describe("OpenChatAgent swapping tokens", () => {
         const { response, steps } = await swap("1234");
 
         expect(response).toEqual({ kind: "success", amountOut: 400n });
-        expect(steps).toEqual(["approve", "swap"]);
+        expect(steps).toEqual(["approve", "swap", "withdraw"]);
+        expect(withdrawStep).toEqual({ kind: "swap_step", step: "withdraw", amountOut: 400n });
         // The PIN is checked as the swap is recorded, so not again for the approval. The
         // approval's fee and the pool's pull are taken out of the amount swapped, so the swap
         // takes 1_000 from the wallet in all. Once swapped, the pool is checked for having paid
@@ -1945,27 +1954,10 @@ describe("OpenChatAgent swapping tokens", () => {
         expect(calls).toEqual([]);
     });
 
-    test("doesn't withdraw what the pool pays out itself", async () => {
+    test("waits for the pool to pay out the output, without withdrawing it", async () => {
         let checks = 0;
         unusedBalances = () =>
             ++checks === 1 ? [{ ledger: LEDGER_CANISTER_CHAT, balance: 5_000n }] : [];
-
-        vi.useFakeTimers();
-        try {
-            const swapped = swap();
-            await vi.runAllTimersAsync();
-            const { steps } = await swapped;
-
-            expect(steps).toEqual(["approve", "swap"]);
-            expect(calls.filter((c) => c[0] === "unusedBalances")).toHaveLength(2);
-            expect(calls.some((c) => c[0] === "withdraw")).toBe(false);
-        } finally {
-            vi.useRealTimers();
-        }
-    });
-
-    test("withdraws what the pool still holds once it has had time to pay out", async () => {
-        unusedBalances = [{ ledger: LEDGER_CANISTER_CHAT, balance: 5_000n }];
 
         vi.useFakeTimers();
         try {
@@ -1975,16 +1967,43 @@ describe("OpenChatAgent swapping tokens", () => {
 
             expect(response).toEqual({ kind: "success", amountOut: 400n });
             expect(steps).toEqual(["approve", "swap", "withdraw"]);
-            expect(calls.at(-1)).toEqual([
-                "withdraw",
-                POOL,
-                LEDGER_CANISTER_CHAT,
-                5_000n,
-                CHAT_FEE,
-            ]);
+            expect(calls.filter((c) => c[0] === "unusedBalances")).toHaveLength(2);
+            expect(calls.some((c) => c[0] === "withdraw")).toBe(false);
         } finally {
             vi.useRealTimers();
         }
+    });
+
+    // The pool's own withdrawals join the queue it pays out from, so withdrawing the output would
+    // only put it at the back
+    test("leaves the output to the pool if it hasn't paid it out in time", async () => {
+        unusedBalances = [{ ledger: LEDGER_CANISTER_CHAT, balance: 5_000n }];
+
+        vi.useFakeTimers();
+        try {
+            const swapped = swap();
+            await vi.runAllTimersAsync();
+            const { response } = await swapped;
+
+            expect(response).toEqual({ kind: "success", amountOut: 400n });
+            expect(calls.filter((c) => c[0] === "unusedBalances")).toHaveLength(10);
+            expect(calls.some((c) => c[0] === "withdraw")).toBe(false);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test("a pool whose balances can't be read is left to pay out", async () => {
+        agent.icpSwapPoolClient = () => ({
+            swapFromWallet: () => swapResult(),
+            unusedBalances: () => {
+                calls.push(["unusedBalances"]);
+                return Promise.reject(new Error("unavailable"));
+            },
+        });
+
+        expect((await swap()).response).toEqual({ kind: "success", amountOut: 400n });
+        expect(calls.filter((c) => c[0] === "unusedBalances")).toHaveLength(1);
     });
 
     test("a user alone in their canister has their canister make the swap", async () => {

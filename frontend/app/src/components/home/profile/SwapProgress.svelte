@@ -54,7 +54,8 @@
         withdraw: 85,
     };
 
-    let percent: number | undefined = $state(0);
+    // svelte-ignore state_referenced_locally
+    let percent: number | undefined = $state(fromWallet ? WALLET_SWAP_PERCENT.init : 0);
     let amountOut = $state("");
     // A swap is made from the wallet or not for as long as this shows it
     // svelte-ignore state_referenced_locally
@@ -92,8 +93,11 @@
 
     $effect(() => {
         if (fromWallet && swapStep !== undefined && result === undefined) {
-            steps = walletSwapSteps(swapStep, "doing");
-            percent = WALLET_SWAP_PERCENT[swapStep];
+            if (swapStep.step === "withdraw") {
+                amountOut = client.formatTokens(swapStep.amountOut, decimalsOut);
+            }
+            steps = walletSwapSteps(swapStep.step, "doing");
+            percent = WALLET_SWAP_PERCENT[swapStep.step];
         }
     });
 
@@ -122,7 +126,7 @@
         if (response.kind === "success") {
             amountOut = client.formatTokens(response.amountOut, decimalsOut);
         }
-        steps = walletSwapSteps(swapStep ?? "init", outcome === "success" ? "done" : "failed");
+        steps = walletSwapSteps(swapStep?.step ?? "init", outcome === "success" ? "done" : "failed");
         if (outcome === "success" || outcome === "rateChanged") {
             result = { label: outcome === "success" ? "done" : "failed", status: "done" };
         } else {
