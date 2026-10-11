@@ -6,6 +6,7 @@
         ProposalDecisionStatus,
         type RegisterProposalVoteResponse,
         currentUserIdStore,
+        mobileWidth,
         proposalTopicsStore,
     } from "@client";
     import { ErrorCode, isMultiUserCanisterUser, type ReadonlyMap } from "@shared";
@@ -22,6 +23,8 @@
     import { now } from "../../../stores/time";
     import { toastStore } from "../../../stores/toast";
     import { round2 } from "../../../utils/math";
+    import Button from "../../Button.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -61,16 +64,27 @@
     let showNeuronInfo = $state(false);
     let showPayload = $state(false);
 
+    // Users in a MultiUser canister vote with the neurons hot-keyed to their own principal,
+    // everyone else with those hot-keyed to their User canister, ie. their user id
+    let votingWithPrincipal = $derived(isMultiUserCanisterUser($currentUserIdStore));
+    let votingHotkey = $derived(
+        votingWithPrincipal ? client.OcIdentityPrincipal : $currentUserIdStore,
+    );
+
     function noEligibleNeuronsMessage(): string {
-        // Users in a MultiUser canister vote with the neurons hot-keyed to their own principal,
-        // everyone else with those hot-keyed to their User canister, ie. their user id
-        return isMultiUserCanisterUser($currentUserIdStore)
+        return votingWithPrincipal
             ? $_("proposal.noEligibleNeuronsPrincipalMessage", {
-                  values: { principal: client.OcIdentityPrincipal },
+                  values: { principal: votingHotkey },
               })
             : $_("proposal.noEligibleNeuronsMessage", {
-                  values: { userId: $currentUserIdStore },
+                  values: { userId: votingHotkey },
               });
+    }
+
+    function copyVotingHotkey() {
+        navigator.clipboard.writeText(votingHotkey).then(() => {
+            toastStore.showSuccessToast(i18nKey("votingHotkeyCopiedToClipboard"));
+        });
     }
 
     function toggleSummary() {
@@ -312,6 +326,20 @@
             {/snippet}
             {#snippet body()}
                 <Markdown text={noEligibleNeuronsMessage()} />
+            {/snippet}
+            {#snippet footer(onClose)}
+                <ButtonGroup>
+                    <Button
+                        secondary
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        onClick={copyVotingHotkey}>
+                        <Translatable resourceKey={i18nKey("copy")} />
+                    </Button>
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} onClick={() => onClose?.()}>
+                        <Translatable resourceKey={i18nKey("close")} />
+                    </Button>
+                </ButtonGroup>
             {/snippet}
         </ModalContent>
     </Overlay>

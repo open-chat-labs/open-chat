@@ -29,6 +29,7 @@
     import Alert from "svelte-material-icons/ShieldAlert.svelte";
     import InfoSlabBoxOut from "svelte-material-icons/InformationOutline.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultipleOutline.svelte";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { NamedNeurons } from "../../../stores/namedNeurons";
     import { proposalVotes } from "../../../stores/proposalVotes";
@@ -123,16 +124,27 @@
 
     let showDetails = $state(false);
 
+    // Users in a MultiUser canister vote with the neurons hot-keyed to their own principal,
+    // everyone else with those hot-keyed to their User canister, ie. their user id
+    let votingWithPrincipal = $derived(isMultiUserCanisterUser($currentUserIdStore));
+    let votingHotkey = $derived(
+        votingWithPrincipal ? client.OcIdentityPrincipal : $currentUserIdStore,
+    );
+
     function noEligibleNeuronsMessage(): string {
-        // Users in a MultiUser canister vote with the neurons hot-keyed to their own principal,
-        // everyone else with those hot-keyed to their User canister, ie. their user id
-        return isMultiUserCanisterUser($currentUserIdStore)
+        return votingWithPrincipal
             ? $_("proposal.noEligibleNeuronsPrincipalMessage", {
-                  values: { principal: client.OcIdentityPrincipal },
+                  values: { principal: votingHotkey },
               })
             : $_("proposal.noEligibleNeuronsMessage", {
-                  values: { userId: $currentUserIdStore },
+                  values: { userId: votingHotkey },
               });
+    }
+
+    function copyVotingHotkey() {
+        navigator.clipboard.writeText(votingHotkey).then(() => {
+            toastStore.showSuccessToast(i18nKey("votingHotkeyCopiedToClipboard"));
+        });
     }
 
     function onVote(adopt: boolean) {
@@ -515,6 +527,12 @@
             <Body colour="textSecondary">
                 <Markdown inline={true} text={noEligibleNeuronsMessage()} />
             </Body>
+            <CommonButton2 onClick={copyVotingHotkey} variant="primary" mode="regular" width="fill">
+                {#snippet icon(color, size)}
+                    <CopyIcon {color} {size} />
+                {/snippet}
+                <Translatable resourceKey={i18nKey("copy")} />
+            </CommonButton2>
         </Column>
     </Sheet>
 {/if}
