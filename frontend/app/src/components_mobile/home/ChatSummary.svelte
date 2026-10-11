@@ -122,7 +122,7 @@
     });
 
     trackedEffect("unarchive-chat", () => {
-        if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+        if (chatSummary.membership.archived && unreadMessages > 0) {
             unarchiveChat();
         }
     });
@@ -143,7 +143,7 @@
 
             unreadMentions = getUnreadMentionCount(chatSummary);
 
-            if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+            if (chatSummary.membership.archived && unreadMessages > 0) {
                 unarchiveChat();
             }
         });
@@ -434,22 +434,20 @@
             <Translatable resourceKey={i18nKey("markAllRead")} />
         </MenuItem>
     {/if}
-    {#if !chat.bot}
-        {#if chatSummary.membership.archived}
-            <MenuItem onclick={selectChat}>
-                {#snippet icon(color, size)}
-                    <ArchiveOffIcon {color} {size} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("unarchiveChat")} />
-            </MenuItem>
-        {:else}
-            <MenuItem onclick={archiveChat}>
-                {#snippet icon(color, size)}
-                    <ArchiveIcon {color} {size} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("archiveChat")} />
-            </MenuItem>
-        {/if}
+    {#if chatSummary.membership.archived}
+        <MenuItem onclick={selectChat}>
+            {#snippet icon(color, size)}
+                <ArchiveOffIcon {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("unarchiveChat")} />
+        </MenuItem>
+    {:else}
+        <MenuItem onclick={archiveChat}>
+            {#snippet icon(color, size)}
+                <ArchiveIcon {color} {size} />
+            {/snippet}
+            <Translatable resourceKey={i18nKey("archiveChat")} />
+        </MenuItem>
     {/if}
     {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
         <MenuItem danger onclick={leaveGroup}>
