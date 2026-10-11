@@ -101,11 +101,6 @@
         chatSummary.kind === "direct_chat" && $blockedUsersStore.has(chatSummary.them.userId),
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
-    // Chats with installed bots aren't archived, but the OpenChat bot's chat is like any other
-    let canArchive = $derived(
-        !chat.bot ||
-            (chatSummary.kind === "direct_chat" && client.isOpenChatBot(chatSummary.them.userId)),
-    );
     let canDelete = $derived(getCanDelete(chatSummary, community));
     let pinned = $derived(
         $pinnedChatsStore
@@ -138,7 +133,7 @@
                   );
             unreadMentions = getUnreadMentionCount(chatSummary);
 
-            if (chatSummary.membership.archived && unreadMessages > 0 && canArchive) {
+            if (chatSummary.membership.archived && unreadMessages > 0) {
                 unarchiveChat();
             }
         });
@@ -651,32 +646,30 @@
                                             {/snippet}
                                         </MenuItem>
                                     {/if}
-                                    {#if canArchive}
-                                        {#if chatSummary.membership.archived}
-                                            <MenuItem onclick={selectChat}>
-                                                {#snippet icon()}
-                                                    <ArchiveOffIcon
-                                                        size={$iconSize}
-                                                        color={"var(--icon-inverted-txt)"} />
-                                                {/snippet}
-                                                {#snippet text()}
-                                                    <Translatable
-                                                        resourceKey={i18nKey("unarchiveChat")} />
-                                                {/snippet}
-                                            </MenuItem>
-                                        {:else}
-                                            <MenuItem onclick={archiveChat}>
-                                                {#snippet icon()}
-                                                    <ArchiveIcon
-                                                        size={$iconSize}
-                                                        color={"var(--icon-inverted-txt)"} />
-                                                {/snippet}
-                                                {#snippet text()}
-                                                    <Translatable
-                                                        resourceKey={i18nKey("archiveChat")} />
-                                                {/snippet}
-                                            </MenuItem>
-                                        {/if}
+                                    {#if chatSummary.membership.archived}
+                                        <MenuItem onclick={selectChat}>
+                                            {#snippet icon()}
+                                                <ArchiveOffIcon
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
+                                                <Translatable
+                                                    resourceKey={i18nKey("unarchiveChat")} />
+                                            {/snippet}
+                                        </MenuItem>
+                                    {:else}
+                                        <MenuItem onclick={archiveChat}>
+                                            {#snippet icon()}
+                                                <ArchiveIcon
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
+                                                <Translatable
+                                                    resourceKey={i18nKey("archiveChat")} />
+                                            {/snippet}
+                                        </MenuItem>
                                     {/if}
                                     {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
                                         <MenuItem warning onclick={leaveGroup}>
