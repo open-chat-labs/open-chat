@@ -23,6 +23,7 @@
     import { now } from "../../../stores/time";
     import { toastStore } from "../../../stores/toast";
     import { round2 } from "../../../utils/math";
+    import { copyToClipboard } from "../../../utils/urls";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
@@ -82,8 +83,14 @@
     }
 
     function copyVotingHotkey() {
-        navigator.clipboard.writeText(votingHotkey).then(() => {
-            toastStore.showSuccessToast(i18nKey("votingHotkeyCopiedToClipboard"));
+        copyToClipboard(votingHotkey).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast(i18nKey("votingHotkeyCopiedToClipboard"));
+            } else {
+                toastStore.showFailureToast(
+                    i18nKey("failedToCopyToClipboard", { account: votingHotkey }),
+                );
+            }
         });
     }
 
@@ -333,11 +340,11 @@
                         secondary
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        onClick={copyVotingHotkey}>
-                        <Translatable resourceKey={i18nKey("copy")} />
-                    </Button>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} onClick={() => onClose?.()}>
+                        onClick={() => onClose?.()}>
                         <Translatable resourceKey={i18nKey("close")} />
+                    </Button>
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} onClick={copyVotingHotkey}>
+                        <Translatable resourceKey={i18nKey("copy")} />
                     </Button>
                 </ButtonGroup>
             {/snippet}

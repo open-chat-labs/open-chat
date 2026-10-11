@@ -36,6 +36,7 @@
     import { now } from "../../../stores/time";
     import { toastStore } from "../../../stores/toast";
     import { round2 } from "../../../utils/math";
+    import { copyToClipboard } from "../../../utils/urls";
     import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
@@ -142,8 +143,16 @@
     }
 
     function copyVotingHotkey() {
-        navigator.clipboard.writeText(votingHotkey).then(() => {
-            toastStore.showSuccessToast(i18nKey("votingHotkeyCopiedToClipboard"));
+        copyToClipboard(votingHotkey).then((success) => {
+            // Close the sheet, otherwise it hides the toast
+            showNeuronInfo = false;
+            if (success) {
+                toastStore.showSuccessToast(i18nKey("votingHotkeyCopiedToClipboard"));
+            } else {
+                toastStore.showFailureToast(
+                    i18nKey("failedToCopyToClipboard", { account: votingHotkey }),
+                );
+            }
         });
     }
 
