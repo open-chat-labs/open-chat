@@ -101,6 +101,11 @@
         chatSummary.kind === "direct_chat" && $blockedUsersStore.has(chatSummary.them.userId),
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
+    // Chats with installed bots aren't archived, but the OpenChat bot's chat is like any other
+    let canArchive = $derived(
+        !chat.bot ||
+            (chatSummary.kind === "direct_chat" && client.isOpenChatBot(chatSummary.them.userId)),
+    );
     let canDelete = $derived(getCanDelete(chatSummary, community));
     let pinned = $derived(
         $pinnedChatsStore
@@ -133,7 +138,7 @@
                   );
             unreadMentions = getUnreadMentionCount(chatSummary);
 
-            if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+            if (chatSummary.membership.archived && unreadMessages > 0 && canArchive) {
                 unarchiveChat();
             }
         });
@@ -646,7 +651,7 @@
                                             {/snippet}
                                         </MenuItem>
                                     {/if}
-                                    {#if !chat.bot}
+                                    {#if canArchive}
                                         {#if chatSummary.membership.archived}
                                             <MenuItem onclick={selectChat}>
                                                 {#snippet icon()}

@@ -105,6 +105,11 @@
             : undefined,
     );
     let readonly = $derived(client.isChatReadOnly(chatSummary.id));
+    // Chats with installed bots aren't archived, but the OpenChat bot's chat is like any other
+    let canArchive = $derived(
+        !chat.bot ||
+            (chatSummary.kind === "direct_chat" && client.isOpenChatBot(chatSummary.them.userId)),
+    );
     let pinned = $derived(
         $pinnedChatsStore
             .get($chatListScopeStore.kind)
@@ -122,7 +127,7 @@
     });
 
     trackedEffect("unarchive-chat", () => {
-        if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+        if (chatSummary.membership.archived && unreadMessages > 0 && canArchive) {
             unarchiveChat();
         }
     });
@@ -143,7 +148,7 @@
 
             unreadMentions = getUnreadMentionCount(chatSummary);
 
-            if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+            if (chatSummary.membership.archived && unreadMessages > 0 && canArchive) {
                 unarchiveChat();
             }
         });
@@ -434,7 +439,7 @@
             <Translatable resourceKey={i18nKey("markAllRead")} />
         </MenuItem>
     {/if}
-    {#if !chat.bot}
+    {#if canArchive}
         {#if chatSummary.membership.archived}
             <MenuItem onclick={selectChat}>
                 {#snippet icon(color, size)}
