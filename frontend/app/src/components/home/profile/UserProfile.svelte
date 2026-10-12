@@ -61,6 +61,7 @@
         videoSectionOpen,
     } from "../../../stores/settings";
     import { toastStore } from "../../../stores/toast";
+    import { translatable } from "../../../actions/translatable";
     import { uniquePersonGate } from "../../../utils/access";
     import { isTouchDevice } from "../../../utils/devices";
     import { clearCrashLog, formatCrashLog } from "../../../utils/errorPostmortem";
@@ -73,6 +74,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import Verified from "../../icons/Verified.svelte";
     import Legend from "../../Legend.svelte";
+    import Link from "../../Link.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import Select from "../../Select.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -665,13 +667,11 @@
                 headerText={i18nKey("advanced")}>
                 {#if !$anonUserStore}
                     <AlertBox>
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_missing_attribute -->
-                        {addressesWarning.before}{#if addressesWarning.link}<a
-                                role="button"
-                                tabindex="0"
-                                onclick={() => publish("wallet")}>{addressesWarning.link}</a
-                            >{/if}{addressesWarning.after}
+                        <span use:translatable={{ key: i18nKey("notWalletAddressesWarning") }}
+                            >{addressesWarning.before}{#if addressesWarning.link}<Link
+                                    onClick={() => publish("wallet")}
+                                    >{addressesWarning.link}</Link
+                                >{/if}{addressesWarning.after}</span>
                     </AlertBox>
                     <div class="userid">
                         <Legend label={i18nKey("userId")} />
