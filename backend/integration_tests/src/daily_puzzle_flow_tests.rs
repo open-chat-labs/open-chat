@@ -613,7 +613,7 @@ fn daily_puzzle_streak_follows_a_migrated_user(same_local_user_index: bool) {
         .find(|s| (s.local_user_index == local_user_index) == same_local_user_index)
         .unwrap()
         .subnet_id;
-    let user = client::register_user_on_subnet(env, canister_ids, subnet);
+    let user = client::register_user_in_user_canister_on_subnet(env, canister_ids, subnet);
     let old_local_user_index = canister_ids.local_user_index(env, user.canister());
     tick_many(env, 3);
 

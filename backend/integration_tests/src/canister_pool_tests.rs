@@ -31,7 +31,7 @@ fn pool_canisters_are_topped_up_when_used() {
     assert_eq!(canisters_in_pool(env, local_user_index), 1);
 
     // A new user's canister is taken from the pool, then topped up and given the default threshold
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
     assert_eq!(user.canister(), pool_canister);
     assert_eq!(canisters_in_pool(env, local_user_index), 0);
     assert!(env.cycle_balance(pool_canister) > 400 * B);

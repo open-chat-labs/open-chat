@@ -38,8 +38,8 @@ fn users_with_a_p2p_swap_are_not_migrated_until_an_hour_after_it_expires() {
         ..
     } = wrapper.env();
 
-    let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::register_user(env, canister_ids);
+    let user1 = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
+    let user2 = client::register_user_in_user_canister(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     client::group::happy_path::join_group(env, user2.principal, group_id);
@@ -155,8 +155,8 @@ fn events_for_a_deleted_user_are_dropped_rather_than_holding_up_migrating_their_
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user1 = client::register_user(env, canister_ids);
-    let (user2, user2_auth) = client::register_user_and_include_auth(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
+    let (user2, user2_auth) = client::register_user_in_user_canister_and_include_auth(env, canister_ids);
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     tick_many(env, 3);
@@ -214,8 +214,8 @@ fn migrating_user_is_exported() {
         ..
     } = wrapper.env();
 
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
+    let user2 = client::register_user_in_user_canister(env, canister_ids);
     // Together with the avatar and profile background below, these take up more than one page of
     // stable memory entries
     for _ in 0..40 {
@@ -270,8 +270,8 @@ fn only_the_multi_user_canister_being_migrated_to_can_export() {
     } = wrapper.env();
 
     // One user is being migrated to another MultiUser canister, and the other isn't being migrated
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
+    let user2 = client::register_user_in_user_canister(env, canister_ids);
     start_migration(env, canister_ids, *controller, &user1, multi_user_canister(1));
 
     for user in [&user1, &user2] {
@@ -304,8 +304,8 @@ fn cancelling_a_migration_unfreezes_the_user_canister() {
     } = wrapper.env();
 
     let operator = platform_operator(env, canister_ids, *controller);
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
+    let user2 = client::register_user_in_user_canister(env, canister_ids);
 
     // A disappearing message, whose timer job is cancelled when the migration starts
     client::user::happy_path::update_chat_settings(
@@ -400,7 +400,7 @@ fn cancelled_migration_is_never_imported() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
 
     // The MultiUser canister is stopped, so it can't start importing the user
     env.stop_canister(multi_user_canister, Some(local_user_index)).unwrap();
@@ -496,7 +496,7 @@ fn stalled_migration_is_cancelled() {
     } = wrapper.env();
 
     let operator = platform_operator(env, canister_ids, *controller);
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
 
     // Migrated to a canister which doesn't import users, so the migration makes no more progress
     start_migration(env, canister_ids, *controller, &user, multi_user_canister(1));
@@ -538,7 +538,7 @@ fn migrate_users_starts_migrating_each_user_to_a_multi_user_canister() {
     let operator = platform_operator(env, canister_ids, *controller);
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
     let before = user_migration_metrics(env, canister_ids.user_index);
 
     let queued = migrate_users(env, operator.principal, canister_ids.user_index, vec![user.user_id], None);
@@ -581,8 +581,8 @@ fn migrated_user_is_imported_into_the_multi_user_canister() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let (user1, user1_auth) = client::register_user_and_include_auth(env, canister_ids);
-    let user2 = client::register_diamond_user(env, canister_ids, *controller);
+    let (user1, user1_auth) = client::register_user_in_user_canister_and_include_auth(env, canister_ids);
+    let user2 = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
     let group_id = client::user::happy_path::create_group(env, &user2, &random_string(), true, true);
     client::group::happy_path::join_group(env, user1.principal, group_id);
     // Messages to another user and to themselves, and an avatar and profile background large enough
@@ -727,8 +727,8 @@ fn migrated_users_message_reminders_are_sent_from_their_new_canister() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
+    let user2 = client::register_user_in_user_canister(env, canister_ids);
 
     // Reminders due once the user has been imported, one of which they cancel in their new canister
     let reminder = set_message_reminder(env, &user1, &user2, HOUR_IN_MS);
@@ -780,8 +780,8 @@ fn migrated_user_moves_the_funds_held_by_their_old_canister_to_their_wallet() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user = client::register_user(env, canister_ids);
-    let other_user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
+    let other_user = client::register_user_in_user_canister(env, canister_ids);
     // Ledgers of this test's own, known to the Registry, with fees of 10_000. The test env's ICP
     // ledger isn't used, since the Registry marks it as uninstalled, having been set up before it.
     let abc_ledger = install_registered_ledger(env, canister_ids, *controller, "ABC");
@@ -1007,8 +1007,8 @@ fn user_subscribed_before_being_migrated_is_notified_under_their_new_id() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
+    let user2 = client::register_user_in_user_canister(env, canister_ids);
 
     // A browser subscribed to web push and a phone registered for FCM pushes
     let subscription = SubscriptionInfo {
@@ -1070,9 +1070,9 @@ fn blocked_user_pairs_are_moved_onto_a_migrated_users_new_id() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
-    let user3 = client::register_user(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
+    let user2 = client::register_user_in_user_canister(env, canister_ids);
+    let user3 = client::register_user_in_user_canister(env, canister_ids);
     // A private group, since members who join a public group have its notifications muted
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
     let group_local_user_index = canister_ids.local_user_index(env, group_id);
@@ -1134,8 +1134,8 @@ fn user_removed_while_being_migrated_is_removed_in_their_new_canister(community:
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let user = client::register_user(env, canister_ids);
+    let owner = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
+    let user = client::register_user_in_user_canister(env, canister_ids);
     let chat: CanisterId = if community {
         let community_id =
             client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
@@ -1238,8 +1238,8 @@ fn user_who_joins_while_being_migrated_is_held_under_their_new_id() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let user = client::register_user(env, canister_ids);
+    let owner = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
+    let user = client::register_user_in_user_canister(env, canister_ids);
     let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
     tick_many(env, 5);
 
@@ -1315,8 +1315,8 @@ fn member_of_a_group_imported_while_being_migrated_is_held_under_their_new_id() 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let user = client::register_user(env, canister_ids);
+    let owner = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
+    let user = client::register_user_in_user_canister(env, canister_ids);
     let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
     client::group::happy_path::join_group(env, user.principal, group_id);
     let community_id = client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
@@ -1409,12 +1409,12 @@ fn users_with_a_direct_chat_with_or_a_block_of_a_migrated_user_hold_it_under_the
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user1 = client::register_user(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
     // user2 and user3 have direct chats with user1, user2 in a canister of their own and user3 in a
     // MultiUser canister, while user4 has blocked user1, with whom they have no chat
-    let user2 = client::register_user(env, canister_ids);
-    let user3 = client::register_user_in_multi_user_canister(env, canister_ids);
-    let user4 = client::register_user(env, canister_ids);
+    let user2 = client::register_user_in_user_canister(env, canister_ids);
+    let user3 = client::register_user(env, canister_ids);
+    let user4 = client::register_user_in_user_canister(env, canister_ids);
     client::user::happy_path::send_text_message(env, &user2, user1.user_id, random_string(), None);
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     client::user::happy_path::send_text_message(env, &user3, user1.user_id, random_string(), None);
@@ -1428,7 +1428,7 @@ fn users_with_a_direct_chat_with_or_a_block_of_a_migrated_user_hold_it_under_the
         .map(|s| s.subnet_id)
         .find(|s| *s != user2_subnet)
         .unwrap();
-    let user5 = client::register_user_on_subnet(env, canister_ids, other_subnet);
+    let user5 = client::register_user_in_user_canister_on_subnet(env, canister_ids, other_subnet);
     assert_ne!(user5.local_user_index, user2.local_user_index);
     client::user::happy_path::send_text_message(env, &user5, user1.user_id, random_string(), None);
     tick_many(env, 10);
@@ -1528,8 +1528,8 @@ fn direct_chat_between_users_migrated_together_is_held_under_their_new_ids() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
+    let user2 = client::register_user_in_user_canister(env, canister_ids);
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     client::user::happy_path::send_text_message(env, &user2, user1.user_id, random_string(), None);
     tick_many(env, 10);
@@ -1591,8 +1591,8 @@ fn events_from_a_migrated_user_move_what_is_held_under_their_previous_ids() {
 
     // user1 is held under the new id below, and has a chat with user2 under their old id, while
     // user3 has blocked them under it
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user_in_multi_user_canister(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
+    let user2 = client::register_user(env, canister_ids);
     let user3 =
         client::register_user_in_multi_user_canister_on(env, canister_ids, user2.local_user_index, user2.canister(), None);
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
@@ -1687,7 +1687,7 @@ fn events_from_a_migrated_user_move_what_is_held_under_their_previous_ids() {
     assert!(state.direct_chats.summaries.iter().all(|c| c.them != new_user_id));
 
     // Previous ids from a User canister are ignored, so user2's chat isn't moved onto user4
-    let user4 = client::register_user(env, canister_ids);
+    let user4 = client::register_user_in_user_canister(env, canister_ids);
     send(env, user4.canister(), user4.user_id, &user2, mark_read(), vec![new_user_id]);
     let state = client::user::happy_path::initial_state(env, &user2);
     assert!(state.direct_chats.summaries.iter().any(|c| c.them == new_user_id));
@@ -1712,11 +1712,11 @@ fn first_message_to_a_user_being_migrated_is_held_under_their_new_id(sender_in_m
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user1 = client::register_user(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
     let user2 = if sender_in_multi_user_canister {
-        client::register_user_in_multi_user_canister(env, canister_ids)
-    } else {
         client::register_user(env, canister_ids)
+    } else {
+        client::register_user_in_user_canister(env, canister_ids)
     };
     tick_many(env, 5);
 
@@ -1800,8 +1800,8 @@ fn migrated_user_is_not_rewarded_again_to_their_referrer() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let referrer = client::register_user(env, canister_ids);
-    let user = client::register_user_with_referrer(env, canister_ids, Some(referrer.user_id.to_string()));
+    let referrer = client::register_user_in_user_canister(env, canister_ids);
+    let user = client::register_user_in_user_canister_with_referrer(env, canister_ids, Some(referrer.user_id.to_string()));
     client::upgrade_user(
         &user,
         env,
@@ -1887,8 +1887,8 @@ fn events_for_a_user_being_migrated_reach_them_in_their_new_canister_in_order() 
         .find(|s| s.local_user_index != local_user_index)
         .unwrap()
         .subnet_id;
-    let user1 = client::register_user_on_subnet(env, canister_ids, subnet);
-    let user2 = client::register_diamond_user(env, canister_ids, *controller);
+    let user1 = client::register_user_in_user_canister_on_subnet(env, canister_ids, subnet);
+    let user2 = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
     let group_id = client::user::happy_path::create_group(env, &user2, &random_string(), true, true);
     tick_many(env, 3);
 
@@ -1979,8 +1979,8 @@ fn bot_installed_in_a_users_direct_chats_before_they_migrate_reaches_them_via_th
         .find(|s| s.local_user_index != local_user_index)
         .unwrap()
         .subnet_id;
-    let user = client::register_user_on_subnet(env, canister_ids, subnet);
-    let bot_owner = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister_on_subnet(env, canister_ids, subnet);
+    let bot_owner = client::register_user_in_user_canister(env, canister_ids);
 
     // The user installs a bot in their direct chats, which may send text messages autonomously, and
     // which only its owner may install anywhere else
@@ -2147,7 +2147,7 @@ fn bot_registered_privately_by_a_user_before_they_migrate_can_be_installed_by_th
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let owner = client::register_user(env, canister_ids);
+    let owner = client::register_user_in_user_canister(env, canister_ids);
     let (bot_id, _) = client::user_index::happy_path::register_bot(
         env,
         owner.principal,
@@ -2209,8 +2209,8 @@ fn bot_acting_autonomously_in_a_migrated_users_direct_chat_by_their_old_id(same_
         .find(|s| (s.local_user_index == local_user_index) == same_local_user_index)
         .unwrap()
         .subnet_id;
-    let user = client::register_user_on_subnet(env, canister_ids, subnet);
-    let other_user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister_on_subnet(env, canister_ids, subnet);
+    let other_user = client::register_user_in_user_canister(env, canister_ids);
 
     // The user installs a bot in their direct chats which may send text messages autonomously
     let (bot_id, bot_principal) = client::user_index::happy_path::register_bot(
@@ -2374,7 +2374,7 @@ fn user_referred_by_a_migrated_users_old_id_is_sent_to_their_new_canister(same_l
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let referrer = client::register_user(env, canister_ids);
+    let referrer = client::register_user_in_user_canister(env, canister_ids);
 
     migrate_users(
         env,
@@ -2393,7 +2393,12 @@ fn user_referred_by_a_migrated_users_old_id_is_sent_to_their_new_canister(same_l
         .map(|s| s.local_user_index)
         .find(|c| (*c == local_user_index) == same_local_user_index)
         .unwrap();
-    let user = client::register_user_with_referrer_on(env, canister_ids, registered_with, Some(referrer.user_id.to_string()));
+    let user = client::register_user_in_user_canister_with_referrer_on(
+        env,
+        canister_ids,
+        registered_with,
+        Some(referrer.user_id.to_string()),
+    );
 
     // The referral reaches the referrer in their MultiUser canister
     tick_until(env, |env| {
@@ -2418,7 +2423,7 @@ fn suspended_user_is_migrated() {
     } = wrapper.env();
 
     let operator = platform_operator(env, canister_ids, *controller);
-    let moderator = client::register_diamond_user(env, canister_ids, *controller);
+    let moderator = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
     client::user_index::add_platform_moderator(
         env,
         *controller,
@@ -2427,7 +2432,7 @@ fn suspended_user_is_migrated() {
             user_id: moderator.user_id,
         },
     );
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
 
     let response = client::user_index::suspend_user(
         env,
@@ -2472,8 +2477,8 @@ fn user_whose_canister_is_never_ready_fails_to_start_migrating() {
     let operator = platform_operator(env, canister_ids, *controller);
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
+    let user2 = client::register_user_in_user_canister(env, canister_ids);
 
     queue_event_for_stopped_user(env, &user1, &user2);
     let before = user_migration_metrics(env, canister_ids.user_index);
@@ -2523,7 +2528,7 @@ fn user_canister_is_upgraded_to_the_latest_wasm_before_migrating() {
     let operator = platform_operator(env, canister_ids, *controller);
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
 
     // Stop User canisters being upgraded as usual, then release a new User wasm
     let response = client::user_index::set_user_upgrade_concurrency(
@@ -2609,8 +2614,12 @@ fn migrated_users_chats_end_up_in_stable_memory() {
 
     // Each user to be migrated has a chat with each of two users who stay in User canisters, one of
     // which has disappearing messages
-    let partners: Vec<_> = (0..2).map(|_| client::register_user(env, canister_ids)).collect();
-    let users: Vec<_> = (0..2).map(|_| client::register_user(env, canister_ids)).collect();
+    let partners: Vec<_> = (0..2)
+        .map(|_| client::register_user_in_user_canister(env, canister_ids))
+        .collect();
+    let users: Vec<_> = (0..2)
+        .map(|_| client::register_user_in_user_canister(env, canister_ids))
+        .collect();
     let mut disappearing_messages = Vec::new();
     for user in users.iter() {
         assert_eq!(wasm_version(env, user.canister()), prod_version);
@@ -2631,7 +2640,7 @@ fn migrated_users_chats_end_up_in_stable_memory() {
     }
 
     // Each is also in a group and a community, having read some of each
-    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let owner = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
     let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
     let community_id =
         client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string(), random_string()]);
@@ -2891,9 +2900,9 @@ fn activity_on_messages_sent_before_their_sender_was_migrated_reaches_them() {
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
     // A Diamond member, so that they can create a public group for the others to join
-    let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let sender = client::register_user(env, canister_ids);
-    let other = client::register_user(env, canister_ids);
+    let owner = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
+    let sender = client::register_user_in_user_canister(env, canister_ids);
+    let other = client::register_user_in_user_canister(env, canister_ids);
 
     let message_id = random_from_u128();
     let poll_message_id = random_from_u128();
@@ -2967,8 +2976,8 @@ fn unclaimed_prize_sent_before_its_sender_was_migrated_is_refunded_to_their_new_
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
     // A Diamond member, so that they can create a public group for the claimant to join
-    let sender = client::register_diamond_user(env, canister_ids, *controller);
-    let claimant = client::register_user(env, canister_ids);
+    let sender = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
+    let claimant = client::register_user_in_user_canister(env, canister_ids);
     let group_id = client::user::happy_path::create_group(env, &sender, &random_string(), true, true);
     client::group::happy_path::join_group(env, claimant.principal, group_id);
 
@@ -3088,8 +3097,8 @@ fn migrated_user_deletes_the_files_of_a_message_they_sent_before_being_migrated(
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
-    let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
+    let user2 = client::register_user_in_user_canister(env, canister_ids);
 
     // A direct message's file names the canisters holding its users as accessors, which for users in
     // canisters of their own are their ids
@@ -3181,8 +3190,8 @@ fn message_sent_before_its_sender_was_migrated_can_be_tipped(tipped_in: TippedIn
     let multi_user_canister =
         client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
     // A Diamond member, so that they can create a public group or community for the others to join
-    let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let sender = client::register_user(env, canister_ids);
+    let owner = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
+    let sender = client::register_user_in_user_canister(env, canister_ids);
     let tipper = if tipper_in_multi_user_canister {
         // In a MultiUser canister other than the one the sender is migrated into, so that it hears of
         // the migration from the LocalUserIndex, and a tip in a direct chat reaches the sender's new
@@ -3191,7 +3200,7 @@ fn message_sent_before_its_sender_was_migrated_can_be_tipped(tipped_in: TippedIn
             client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
         client::register_user_in_multi_user_canister_on(env, canister_ids, local_user_index, tippers_canister, None)
     } else {
-        client::register_user(env, canister_ids)
+        client::register_user_in_user_canister(env, canister_ids)
     };
     let ledger = canister_ids.icp_ledger;
     let tip = 1_0000_0000;
@@ -3559,7 +3568,7 @@ fn wait_for_migration_attempts_to_run_out(env: &mut PocketIc) {
 // Registers a platform operator, and raises the migration concurrency so that migrations left
 // running by earlier tests in the env don't hold up those started here
 pub(crate) fn platform_operator(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
-    let operator = client::register_user(env, canister_ids);
+    let operator = client::register_user_in_user_canister(env, canister_ids);
     client::user_index::happy_path::add_platform_operator(env, controller, canister_ids.user_index, operator.user_id);
 
     let response = client::user_index::set_user_migration_concurrency(

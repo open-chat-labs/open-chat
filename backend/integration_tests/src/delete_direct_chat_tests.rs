@@ -1,7 +1,7 @@
 use crate::env::ENV;
-use crate::stable_memory::{STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID, get_stable_memory_map};
+use crate::stable_memory::get_stable_memory_map;
 use crate::utils::{now_millis, tick_many};
-use crate::{TestEnv, client};
+use crate::{TestEnv, User, client};
 use constants::DAY_IN_MS;
 use ic_stable_structures::memory_manager::MemoryId;
 use pocket_ic::PocketIc;
@@ -9,7 +9,7 @@ use stable_memory_map::KeyType;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_string};
-use types::{CanisterId, ChatId, MessageContentInitial, MessageId, OptionUpdate, TextContent};
+use types::{ChatId, MessageContentInitial, MessageId, OptionUpdate, TextContent};
 
 #[test]
 fn delete_direct_chat_succeeds() {
@@ -68,16 +68,14 @@ fn delete_direct_chat_succeeds() {
 
 #[test]
 fn stable_memory_garbage_collected_after_direct_chat_deleted() {
-    const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(3);
-
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    let initial_stable_memory_map_keys = get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_MEMORY_ID).len();
-    let initial_small_entries_keys = chat_small_entries_count(env, user1.canister());
+    let initial_stable_memory_map_keys = user_keys(env, &user1, STABLE_MEMORY_MAP_MEMORY_ID).len();
+    let initial_small_entries_keys = chat_small_entries_count(env, &user1);
 
     // Make the messages expire (though not within this test), so that the chat has expiring events
     client::user::happy_path::update_chat_settings(
@@ -88,7 +86,7 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
             events_ttl: OptionUpdate::SetToSome(DAY_IN_MS),
         },
     );
-    let small_entries_keys_before_messages = chat_small_entries_count(env, user1.canister());
+    let small_entries_keys_before_messages = chat_small_entries_count(env, &user1);
 
     let message_id: MessageId = random_from_u128();
     let result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), Some(message_id));
@@ -108,14 +106,11 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     }
     tick_many(env, 10);
 
-    assert!(get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_MEMORY_ID).len() > initial_stable_memory_map_keys);
+    assert!(user_keys(env, &user1, STABLE_MEMORY_MAP_MEMORY_ID).len() > initial_stable_memory_map_keys);
     // A message id for each message, an expiring event and two search index entries (a token and the
     // sender) for each message in the main events list, two entries (keyed by event and by timestamp)
     // recording when the thread root was last updated, plus the sender's metrics
-    assert_eq!(
-        chat_small_entries_count(env, user1.canister()),
-        small_entries_keys_before_messages + 21
-    );
+    assert_eq!(chat_small_entries_count(env, &user1), small_entries_keys_before_messages + 21);
 
     // Each canister only stores its own user's metrics for a direct chat, since only those are ever
     // read, so user1's messages are only counted by user1's canister and user2's reaction by user2's
@@ -125,8 +120,8 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     for (me, them) in [(&user1, &user2), (&user2, &user1)] {
         // The chat's keys use its `key_id` rather than the other user's id, so find the metrics
         // entries by their key type and the user id they end with
-        let user_metrics_keys: Vec<_> = get_stable_memory_map(env, me.canister(), STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID)
-            .keys()
+        let user_metrics_keys: Vec<_> = user_keys(env, me, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID)
+            .into_iter()
             .filter(|k| k[0] == KeyType::DirectChatUserMetrics as u8)
             .collect();
         assert!(user_metrics_keys.iter().any(|k| k.ends_with(me.user_id.as_slice())));
@@ -155,10 +150,10 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     env.tick();
 
     assert_eq!(
-        get_stable_memory_map(env, user1.canister(), STABLE_MEMORY_MAP_MEMORY_ID).len(),
+        user_keys(env, &user1, STABLE_MEMORY_MAP_MEMORY_ID).len(),
         initial_stable_memory_map_keys
     );
-    assert_eq!(chat_small_entries_count(env, user1.canister()), initial_small_entries_keys);
+    assert_eq!(chat_small_entries_count(env, &user1), initial_small_entries_keys);
 }
 
 // Key types whose entries aren't tied to a chat, so aren't removed when a chat is deleted (eg. the
@@ -173,9 +168,23 @@ const USER_KEY_TYPES: [u8; 4] = [
 
 // The number of entries in the small entries map, excluding those which belong to the user rather
 // than to any chat
-fn chat_small_entries_count(env: &PocketIc, canister_id: CanisterId) -> usize {
-    get_stable_memory_map(env, canister_id, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID)
-        .keys()
+fn chat_small_entries_count(env: &PocketIc, user: &User) -> usize {
+    user_keys(env, user, STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID)
+        .into_iter()
         .filter(|k| !USER_KEY_TYPES.contains(&k[0]))
         .count()
+}
+
+// The memories of a MultiUser canister's stable memory maps, one for large entries and one for small
+const STABLE_MEMORY_MAP_MEMORY_ID: MemoryId = MemoryId::new(1);
+const STABLE_MEMORY_MAP_SMALL_ENTRIES_MEMORY_ID: MemoryId = MemoryId::new(2);
+
+// The keys of the user's entries in their MultiUser canister's map, with the index of the user, which
+// prefixes each of them, removed
+fn user_keys(env: &PocketIc, user: &User, memory_id: MemoryId) -> Vec<Vec<u8>> {
+    let prefix = user.user_id.index().to_be_bytes();
+    get_stable_memory_map(env, user.canister(), memory_id)
+        .keys()
+        .filter_map(|k| k.strip_prefix(prefix.as_slice()).map(|k| k.to_vec()))
+        .collect()
 }

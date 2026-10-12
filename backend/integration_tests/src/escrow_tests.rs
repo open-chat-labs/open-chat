@@ -13,7 +13,7 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::time::Duration;
 use test_case::test_case;
-use types::{CanisterId, Chat, HttpRequest, P2PSwapLocation, TokenInfo, UserId};
+use types::{CanisterId, Chat, HttpRequest, P2PSwapLocation, TokenInfo};
 
 const TEST_TOKEN_FEE: u128 = 10_000;
 
@@ -35,7 +35,7 @@ fn swap_via_escrow_canister_succeeds() {
 
     let swap_id = client::escrow::happy_path::create_swap(
         env,
-        user1.user_id.canister_id(),
+        user1.principal,
         canister_ids.escrow,
         P2PSwapLocation::from_message(Chat::Direct(user2.user_id.into()), None, 0u64.into()),
         icp_token_info(),
@@ -49,7 +49,7 @@ fn swap_via_escrow_canister_succeeds() {
 
     let user1_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user1.user_id.as_principal(), swap_id)),
+        subaccount: Some(deposit_subaccount(user1.principal, swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -62,7 +62,7 @@ fn swap_via_escrow_canister_succeeds() {
 
     let user2_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user2.user_id.as_principal(), swap_id)),
+        subaccount: Some(deposit_subaccount(user2.principal, swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -73,10 +73,8 @@ fn swap_via_escrow_canister_succeeds() {
         chat_amount + 100_000,
     );
 
-    let result1 =
-        client::escrow::happy_path::notify_deposit(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id, None);
-    let result2 =
-        client::escrow::happy_path::notify_deposit(env, user2.user_id.canister_id(), canister_ids.escrow, swap_id, None);
+    let result1 = client::escrow::happy_path::notify_deposit(env, user1.principal, canister_ids.escrow, swap_id, None);
+    let result2 = client::escrow::happy_path::notify_deposit(env, user2.principal, canister_ids.escrow, swap_id, None);
 
     assert!(!result1.complete);
     assert!(result2.complete);
@@ -84,11 +82,11 @@ fn swap_via_escrow_canister_succeeds() {
     tick_many(env, 5);
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user1),
         chat_amount
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2),
         icp_amount
     );
 }
@@ -180,7 +178,7 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
 
     let swap_id = client::escrow::happy_path::create_swap(
         env,
-        user1.user_id.canister_id(),
+        user1.principal,
         canister_ids.escrow,
         P2PSwapLocation::from_message(Chat::Direct(user2.user_id.into()), None, 0u64.into()),
         icp_token_info(),
@@ -194,7 +192,7 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
 
     let user1_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user1.user_id.as_principal(), swap_id)),
+        subaccount: Some(deposit_subaccount(user1.principal, swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -207,7 +205,7 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
 
     let user2_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user2.user_id.as_principal(), swap_id)),
+        subaccount: Some(deposit_subaccount(user2.principal, swap_id)),
     };
 
     client::ledger::happy_path::transfer(
@@ -218,17 +216,17 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
         chat_amount + 100_000,
     );
 
-    client::escrow::happy_path::notify_deposit(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id, None);
+    client::escrow::happy_path::notify_deposit(env, user1.principal, canister_ids.escrow, swap_id, None);
 
     if expired {
         env.advance_time(Duration::from_millis((60 * MINUTE_IN_MS) + 1));
     } else {
-        client::escrow::happy_path::cancel_swap(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id);
+        client::escrow::happy_path::cancel_swap(env, user1.principal, canister_ids.escrow, swap_id);
     }
 
     let notify_response = client::escrow::notify_deposit(
         env,
-        user2.user_id.canister_id(),
+        user2.principal,
         canister_ids.escrow,
         &escrow_canister::notify_deposit::Args {
             swap_id,
@@ -251,11 +249,11 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
     tick_many(env, 10);
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1),
         icp_amount
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user2.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user2),
         chat_amount
     );
 }
@@ -278,11 +276,11 @@ fn a_recorded_deposit_is_not_refunded_when_notified_again() {
     let notify_naming = |env: &mut PocketIc, sender: &User, swap_id: u32, depositor: &User| {
         let response = client::escrow::notify_deposit(
             env,
-            sender.user_id.canister_id(),
+            sender.principal,
             canister_ids.escrow,
             &escrow_canister::notify_deposit::Args {
                 swap_id,
-                deposited_by: Some(depositor.user_id.as_principal()),
+                deposited_by: Some(depositor.principal),
             },
         );
         assert!(
@@ -291,7 +289,7 @@ fn a_recorded_deposit_is_not_refunded_when_notified_again() {
         );
     };
     let balance_of =
-        |env: &PocketIc, ledger: CanisterId, user: &User| client::ledger::happy_path::balance_of(env, ledger, user.user_id);
+        |env: &PocketIc, ledger: CanisterId, user: &User| client::ledger::happy_path::balance_of(env, ledger, user);
 
     // The offerer's deposit, notified again by someone else, stays in the swap
     let swap_id = create_icp_for_chat_swap(env, canister_ids, &user1, &user2, icp_amount, chat_amount);
@@ -300,7 +298,7 @@ fn a_recorded_deposit_is_not_refunded_when_notified_again() {
         canister_ids,
         *controller,
         swap_id,
-        user1.user_id,
+        user1.principal,
         canister_ids.icp_ledger,
         icp_amount + 10_000,
     );
@@ -315,7 +313,7 @@ fn a_recorded_deposit_is_not_refunded_when_notified_again() {
         canister_ids,
         *controller,
         swap_id,
-        user2.user_id,
+        user2.principal,
         canister_ids.chat_ledger,
         chat_amount + 100_000,
     );
@@ -332,7 +330,7 @@ fn a_recorded_deposit_is_not_refunded_when_notified_again() {
         canister_ids,
         *controller,
         swap_id,
-        user2.user_id,
+        user2.principal,
         canister_ids.chat_ledger,
         chat_amount + 100_000,
     );
@@ -346,7 +344,7 @@ fn a_recorded_deposit_is_not_refunded_when_notified_again() {
         canister_ids,
         *controller,
         swap_id,
-        user1.user_id,
+        user1.principal,
         canister_ids.icp_ledger,
         icp_amount + 10_000,
     );
@@ -379,13 +377,13 @@ fn deposit_is_refunded_if_swap_expires_while_it_is_checked() {
         canister_ids,
         *controller,
         swap_id,
-        user1.user_id,
+        user1.principal,
         canister_ids.icp_ledger,
         icp_amount + 10_000,
     );
 
     // One round starts the check, which then waits on the ledger while the swap expires
-    let message_id = submit_notify_deposit(env, canister_ids.escrow, swap_id, user1.user_id);
+    let message_id = submit_notify_deposit(env, canister_ids.escrow, swap_id, user1.principal);
     env.tick();
     env.advance_time(Duration::from_millis(HOUR_IN_MS + 1));
     env.tick();
@@ -400,7 +398,7 @@ fn deposit_is_refunded_if_swap_expires_while_it_is_checked() {
 
     // The deposit went back, less the fee for returning it
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1),
         icp_amount
     );
 }
@@ -424,7 +422,7 @@ fn only_one_of_two_users_accepting_at_once_is_accepted() {
     // Open to anyone, so that both may accept
     let swap_id = client::escrow::happy_path::create_swap(
         env,
-        user1.user_id.canister_id(),
+        user1.principal,
         canister_ids.escrow,
         P2PSwapLocation::from_message(Chat::Direct(user2.user_id.into()), None, 0u64.into()),
         icp_token_info(),
@@ -440,11 +438,11 @@ fn only_one_of_two_users_accepting_at_once_is_accepted() {
         canister_ids,
         *controller,
         swap_id,
-        user1.user_id,
+        user1.principal,
         canister_ids.icp_ledger,
         icp_amount + 10_000,
     );
-    client::escrow::happy_path::notify_deposit(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id, None);
+    client::escrow::happy_path::notify_deposit(env, user1.principal, canister_ids.escrow, swap_id, None);
 
     for user in [&user2, &user3] {
         deposit(
@@ -452,14 +450,14 @@ fn only_one_of_two_users_accepting_at_once_is_accepted() {
             canister_ids,
             *controller,
             swap_id,
-            user.user_id,
+            user.principal,
             canister_ids.chat_ledger,
             chat_amount + 100_000,
         );
     }
     let message_ids: Vec<_> = [&user2, &user3]
         .into_iter()
-        .map(|user| submit_notify_deposit(env, canister_ids.escrow, swap_id, user.user_id))
+        .map(|user| submit_notify_deposit(env, canister_ids.escrow, swap_id, user.principal))
         .collect();
     let responses: Vec<_> = message_ids.into_iter().map(|id| await_notify_deposit(env, id)).collect();
 
@@ -478,11 +476,11 @@ fn only_one_of_two_users_accepting_at_once_is_accepted() {
     tick_many(env, 10);
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, winner.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, winner),
         icp_amount
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, loser.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, loser),
         chat_amount
     );
 }
@@ -552,15 +550,15 @@ fn refund_queued_twice_is_recorded_once() {
         canister_ids,
         *controller,
         swap_id,
-        user1.user_id,
+        user1.principal,
         canister_ids.icp_ledger,
         icp_amount + 10_000,
     );
-    client::escrow::happy_path::notify_deposit(env, user1.user_id.canister_id(), canister_ids.escrow, swap_id, None);
+    client::escrow::happy_path::notify_deposit(env, user1.principal, canister_ids.escrow, swap_id, None);
 
     // The swap expires, and the deposit is notified again before the expiry's refund is made
     env.advance_time(Duration::from_millis(HOUR_IN_MS + 1));
-    let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, user1.user_id));
+    let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, user1.principal));
     assert!(
         matches!(response, escrow_canister::notify_deposit::Response::SwapExpired),
         "{response:?}"
@@ -569,7 +567,7 @@ fn refund_queued_twice_is_recorded_once() {
     tick_many(env, 10);
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1),
         icp_amount
     );
     let swap = swap_logs(env, canister_ids.escrow, swap_id);
@@ -659,12 +657,8 @@ fn deposit_is_locked_until_its_refund_is_made() {
     let ledger = canister_ids.chat_ledger;
     let fee = CHAT_TRANSFER_FEE;
     let required = chat_amount + CHAT_TRANSFER_FEE;
-    let notify = |env: &mut PocketIc| {
-        await_notify_deposit(
-            env,
-            submit_notify_deposit(env, canister_ids.escrow, swap_id, depositor.into()),
-        )
-    };
+    let notify =
+        |env: &mut PocketIc| await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, depositor));
     let deposit = |env: &mut PocketIc, amount: u128| {
         client::ledger::happy_path::transfer(env, *controller, ledger, account(depositor), amount);
         notify(env)
@@ -780,7 +774,7 @@ fn deposit_locked_by_its_refund_is_refunded_once_its_swap_ends() {
     // 1 short, so it's refunded once the payments ahead of it are made, and locked until then
     fill_payments_queue(env, canister_ids, *controller, Principal::from_slice(&[10, 10]), 40);
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, account, required - 1);
-    let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()));
+    let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer));
     assert!(
         matches!(response, escrow_canister::notify_deposit::Response::BalanceTooLow(_)),
         "{response:?}"
@@ -797,7 +791,7 @@ fn deposit_locked_by_its_refund_is_refunded_once_its_swap_ends() {
 
     // Notifying the deposit refunds it, despite the lock, and once the first refund is made, the rest of
     // the deposit is refunded by notifying it again
-    let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()));
+    let response = await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer));
     assert!(
         matches!(response, escrow_canister::notify_deposit::Response::SwapCancelled),
         "{response:?}"
@@ -809,7 +803,7 @@ fn deposit_locked_by_its_refund_is_refunded_once_its_swap_ends() {
         env.tick();
     }
     tick_many(env, 10);
-    await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()));
+    await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer));
     tick_many(env, 10);
 
     assert_eq!(
@@ -865,9 +859,8 @@ fn deposit_is_unlocked_if_its_balance_cannot_be_checked() {
         None,
         now_millis(env) + DAY_IN_MS,
     );
-    let notify = |env: &mut PocketIc| {
-        await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer.into()))
-    };
+    let notify =
+        |env: &mut PocketIc| await_notify_deposit(env, submit_notify_deposit(env, canister_ids.escrow, swap_id, offerer));
 
     client::stop_canister(env, *controller, ledger);
     let response = notify(env);
@@ -902,7 +895,7 @@ fn create_icp_for_chat_swap(
 ) -> u32 {
     client::escrow::happy_path::create_swap(
         env,
-        offerer.user_id.canister_id(),
+        offerer.principal,
         canister_ids.escrow,
         P2PSwapLocation::from_message(Chat::Direct(recipient.user_id.into()), None, 0u64.into()),
         icp_token_info(),
@@ -920,22 +913,22 @@ fn deposit(
     canister_ids: &CanisterIds,
     controller: Principal,
     swap_id: u32,
-    user_id: UserId,
+    depositor: Principal,
     ledger: CanisterId,
     amount: u128,
 ) {
     let account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user_id.as_principal(), swap_id)),
+        subaccount: Some(deposit_subaccount(depositor, swap_id)),
     };
     client::ledger::happy_path::transfer(env, controller, ledger, account, amount);
 }
 
 // Submits the user's notification of their deposit without waiting for it to complete
-fn submit_notify_deposit(env: &PocketIc, escrow_canister_id: CanisterId, swap_id: u32, user_id: UserId) -> RawMessageId {
+fn submit_notify_deposit(env: &PocketIc, escrow_canister_id: CanisterId, swap_id: u32, depositor: Principal) -> RawMessageId {
     env.submit_call(
         escrow_canister_id,
-        user_id.canister_id(),
+        depositor,
         "notify_deposit_msgpack",
         msgpack::serialize_then_unwrap(&escrow_canister::notify_deposit::Args {
             swap_id,

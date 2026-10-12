@@ -105,7 +105,7 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
 
     claim_then_check_result(env, &user, 1, 1);
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, 100 * ONE_CHAT);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user, 100 * ONE_CHAT);
 
     let expected_price = (2u128.pow(days_insured as u32) - 1) * ONE_CHAT;
 
@@ -204,7 +204,7 @@ fn streak_insurance_can_cover_multiple_days_missed_in_a_row(days_insured: u8) {
 
     let expected_price = (2u128.pow(days_insured as u32) - 1) * ONE_CHAT;
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, 2000 * ONE_CHAT);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user, 2000 * ONE_CHAT);
     client::user::happy_path::claim_daily_chit(env, &user, None);
     client::user::happy_path::pay_for_streak_insurance(env, &user, days_insured, expected_price);
 
@@ -243,7 +243,7 @@ fn streak_insurance_updates_returned_in_summary_updates(final_day_manually_claim
 
     let start = now_millis(env);
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, 2000 * ONE_CHAT);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user, 2000 * ONE_CHAT);
     client::user::happy_path::claim_daily_chit(env, &user, None);
     client::user::happy_path::pay_for_streak_insurance(env, &user, 1, ONE_CHAT);
 
@@ -336,8 +336,8 @@ fn pay_for_premium_item_succeeds() {
 }
 
 // Insurance paid for from an account OpenChat does not control, pulled via ICRC-2 against an
-// allowance that account granted to the user's canister. This is how paying from an external wallet
-// works.
+// allowance that account granted to the user's canister, under the user's spender subaccount. This is
+// how paying from an external wallet works.
 #[test]
 fn streak_insurance_can_be_paid_from_approved_account() {
     let mut wrapper = ENV.deref().get();
@@ -361,7 +361,10 @@ fn streak_insurance_can_be_paid_from_approved_account() {
         env,
         external_wallet,
         canister_ids.chat_ledger,
-        user.user_id,
+        icrc_ledger_types::icrc1::account::Account {
+            owner: user.canister(),
+            subaccount: Some(ledger_utils::spender_subaccount(user.principal)),
+        },
         price + CHAT_TRANSFER_FEE,
     );
 
@@ -390,7 +393,7 @@ fn streak_insurance_can_be_paid_from_approved_account() {
         wallet_balance - price - 2 * CHAT_TRANSFER_FEE
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user),
         0
     );
 }
@@ -435,7 +438,7 @@ fn streak_insurance_from_account_without_allowance_fails() {
     assert!(result.streak_insurance.is_none());
 
     // The payment lock was released, so paying from the user's own account still works
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user.user_id, 10 * ONE_CHAT);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user, 10 * ONE_CHAT);
     client::user::happy_path::pay_for_streak_insurance(env, &user, 1, ONE_CHAT);
 }
 

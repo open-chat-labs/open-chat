@@ -334,7 +334,7 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(container_type
         wait_for_user_to_lapse(env, user, &container);
 
         // Increase token balance
-        client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, min_balance);
+        client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user, min_balance);
 
         // User2 rejoins channel
         join_container(env, &owner, user, canister_ids, &container, false);
@@ -458,7 +458,7 @@ fn gate_changes_and_members_lapse_as_expected(container_type: ContainerType) {
     tick_many(env, 5);
 
     // A 3rd user now joins the channel
-    let user3 = &register_and_join(env, canister_ids, *controller, &owner, &container, false);
+    let user3 = &register_and_join(env, canister_ids, *controller, &owner, &container, false, false);
 
     // Change container to have payment gate expiring in 3 days
     update_container_gate(
@@ -575,7 +575,7 @@ fn invited_users_pass_composite_gate_then_expire_later(container_type: Container
     let user2 = &users[1];
 
     // Transfer more funds to user1 so they will pass the expiring gate check
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 200_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1, 200_000_000);
 
     // Move the time forward so that the gate expires
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
@@ -608,7 +608,7 @@ fn migrated_member_whose_tokens_are_still_in_their_old_wallet_does_not_lapse(con
     };
 
     let TestData { owner, users, container } =
-        init_test_data(env, canister_ids, *controller, gate_config, 2, container_type, false);
+        init_test_data_in_user_canisters(env, canister_ids, *controller, gate_config, 2, container_type, false);
 
     // user2 spends enough of the tokens in their wallet to fall below the gate's minimum
     user_index::happy_path::pay_for_diamond_membership(
@@ -833,8 +833,13 @@ fn register_and_join(
     owner: &User,
     container: &Container,
     invite: bool,
+    in_user_canister: bool,
 ) -> User {
-    let user = client::register_user(env, canister_ids);
+    let user = if in_user_canister {
+        client::register_user_in_user_canister(env, canister_ids)
+    } else {
+        client::register_user(env, canister_ids)
+    };
 
     // Upgrade users to non-recurring diamond membership
     client::upgrade_user(
@@ -902,6 +907,51 @@ fn init_test_data(
     container_type: ContainerType,
     invite: bool,
 ) -> TestData {
+    init_test_data_with_options(
+        env,
+        canister_ids,
+        controller,
+        gate_config,
+        num_users,
+        container_type,
+        invite,
+        false,
+    )
+}
+
+// The users are given canisters of their own, so that they can be migrated
+fn init_test_data_in_user_canisters(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    gate_config: AccessGateConfig,
+    num_users: usize,
+    container_type: ContainerType,
+    invite: bool,
+) -> TestData {
+    init_test_data_with_options(
+        env,
+        canister_ids,
+        controller,
+        gate_config,
+        num_users,
+        container_type,
+        invite,
+        true,
+    )
+}
+
+#[expect(clippy::too_many_arguments)]
+fn init_test_data_with_options(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    gate_config: AccessGateConfig,
+    num_users: usize,
+    container_type: ContainerType,
+    invite: bool,
+    in_user_canisters: bool,
+) -> TestData {
     let owner = client::register_diamond_user(env, canister_ids, controller);
 
     let community_id = client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
@@ -920,7 +970,7 @@ fn init_test_data(
     let mut users = Vec::new();
 
     for _i in 0..num_users {
-        let user = register_and_join(env, canister_ids, controller, &owner, &container, invite);
+        let user = register_and_join(env, canister_ids, controller, &owner, &container, invite, in_user_canisters);
         users.push(user);
     }
 

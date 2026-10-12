@@ -129,19 +129,24 @@ fn text_too_long_fails() {
 #[test]
 fn send_message_retries_if_fails() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
+    // In a canister of their own, so that stopping it doesn't stop user1's
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, *controller);
 
-    stop_canister(env, user2.local_user_index, user2.user_id.canister_id());
+    stop_canister(env, user2.local_user_index, user2.canister());
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
     // Long enough for the message to reach the stopped canister and the failure to come back, even
     // if the canisters are on different subnets
     tick_many(env, 25);
 
-    start_canister(env, user2.local_user_index, user2.user_id.canister_id());
+    start_canister(env, user2.local_user_index, user2.canister());
 
     env.advance_time(Duration::from_secs(10));
     tick_many(env, 10);
@@ -156,12 +161,17 @@ fn send_message_retries_if_fails() {
 #[test]
 fn messages_arrive_in_order_even_if_some_fail_originally() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
+    // In a canister of their own, so that stopping it doesn't stop user1's
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, *controller);
 
-    stop_canister(env, user2.local_user_index, user2.user_id.canister_id());
+    stop_canister(env, user2.local_user_index, user2.canister());
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "1", None);
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "2", None);
@@ -169,7 +179,7 @@ fn messages_arrive_in_order_even_if_some_fail_originally() {
     // if the canisters are on different subnets
     tick_many(env, 25);
 
-    start_canister(env, user2.local_user_index, user2.user_id.canister_id());
+    start_canister(env, user2.local_user_index, user2.canister());
 
     client::user::happy_path::send_text_message(env, &user1, user2.user_id, "3", None);
 

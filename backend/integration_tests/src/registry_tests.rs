@@ -267,19 +267,15 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 
     // Register user and give them enough CHAT for the token listing fee (1 CHAT in test)
     let user = client::register_user(env, canister_ids);
-    ledger::happy_path::transfer(env, controller, canister_ids.chat_ledger, user.user_id, 110_000_000);
+    ledger::happy_path::transfer(env, controller, canister_ids.chat_ledger, &user, 110_000_000);
 
-    // Approve the token listing fee payment (BURN)
-    client::user::happy_path::approve_transfer(
+    // Approve the token listing fee payment (BURN) from the user's wallet
+    ledger::happy_path::approve(
         env,
-        &user,
-        &user_canister::approve_transfer::Args {
-            spender: canister_ids.registry.into(),
-            ledger_canister_id: CHAT_LEDGER_CANISTER_ID,
-            amount: 100_000_000 + CHAT_TRANSFER_FEE,
-            expires_in: None,
-            pin: None,
-        },
+        user.principal,
+        CHAT_LEDGER_CANISTER_ID,
+        canister_ids.registry,
+        100_000_000 + CHAT_TRANSFER_FEE,
     );
 
     TestData {

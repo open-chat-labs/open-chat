@@ -156,7 +156,27 @@ fn transfer_requires_correct_pin(test_case: u32) {
     client::user::happy_path::set_pin_number(env, &user1, None, Some("1000".to_string()));
 
     // Send user1 some ICP
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user1, 1_000_000_000);
+
+    // The transfer is pulled from user1's wallet, which they approve their canister to do
+    let content = client::pay_from_wallet(
+        env,
+        &user1,
+        user1.canister(),
+        MessageContentInitial::Crypto(CryptoContent {
+            recipient: user2.user_id,
+            transfer: CryptoTransaction::Pending(create_pending_transaction(
+                ICP_SYMBOL.to_string(),
+                canister_ids.icp_ledger,
+                10000,
+                ICP_TRANSFER_FEE,
+                types::icrc1::Account::legacy_for_user(user2.user_id),
+                None,
+                now_nanos(env),
+            )),
+            caption: None,
+        }),
+    );
 
     let response = client::user::send_message_v2(
         env,
@@ -166,19 +186,7 @@ fn transfer_requires_correct_pin(test_case: u32) {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),
-            content: MessageContentInitial::Crypto(CryptoContent {
-                recipient: user2.user_id,
-                transfer: CryptoTransaction::Pending(create_pending_transaction(
-                    ICP_SYMBOL.to_string(),
-                    canister_ids.icp_ledger,
-                    10000,
-                    ICP_TRANSFER_FEE,
-                    types::icrc1::Account::legacy_for_user(user2.user_id),
-                    None,
-                    now_nanos(env),
-                )),
-                caption: None,
-            }),
+            content,
             replies_to: None,
             forwarding: false,
             block_level_markdown: false,

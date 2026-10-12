@@ -50,9 +50,11 @@ fn user_canisters_survive_upgrade_from_prod() {
     );
     tick_many(env, 3);
 
-    let user1 = client::register_user(env, canister_ids);
-    let large_chat_user = client::register_user(env, canister_ids);
-    let small_chat_users: Vec<_> = (0..SMALL_CHATS).map(|_| client::register_user(env, canister_ids)).collect();
+    let user1 = client::register_user_in_user_canister(env, canister_ids);
+    let large_chat_user = client::register_user_in_user_canister(env, canister_ids);
+    let small_chat_users: Vec<_> = (0..SMALL_CHATS)
+        .map(|_| client::register_user_in_user_canister(env, canister_ids))
+        .collect();
     for user in std::iter::once(&user1).chain(&small_chat_users) {
         assert_eq!(wasm_version(env, user.canister()), prod_version);
     }
@@ -134,7 +136,9 @@ fn user_canisters_survive_upgrade_from_prod() {
     assert_eq!(contacts(env, &user1), contacts_snapshot);
 
     // Blocked users, who user1 has no chats with, so that the chats aren't affected
-    let blocked: Vec<_> = (0..4).map(|_| client::register_user(env, canister_ids)).collect();
+    let blocked: Vec<_> = (0..4)
+        .map(|_| client::register_user_in_user_canister(env, canister_ids))
+        .collect();
     for user in blocked.iter() {
         client::user::happy_path::block_user(env, &user1, user.user_id);
     }
@@ -154,7 +158,7 @@ fn user_canisters_survive_upgrade_from_prod() {
     let total_events: usize = snapshots.iter().map(|s| s.len()).sum();
 
     // Chats user1 has been removed from: a deleted direct chat, two groups and a community
-    let owner = client::register_diamond_user(env, canister_ids, *controller);
+    let owner = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
     let removed_group_ids: Vec<_> = (0..2)
         .map(|_| client::user::happy_path::create_group(env, &owner, &random_string(), true, true))
         .collect();
@@ -164,7 +168,7 @@ fn user_canisters_survive_upgrade_from_prod() {
         client::group::happy_path::join_group(env, user1.principal, *group_id);
     }
     client::community::happy_path::join_community(env, user1.principal, removed_community_id);
-    let removed_chat_user = client::register_user(env, canister_ids);
+    let removed_chat_user = client::register_user_in_user_canister(env, canister_ids);
     client::user::happy_path::send_text_message(env, &user1, removed_chat_user.user_id, "hi", None);
     tick_many(env, 3);
     let removed_since = now_millis(env);
