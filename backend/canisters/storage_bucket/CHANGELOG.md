@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove `c2c_user_ids_migrated` and replacing migrated users' old ids among files' accessors ([#PRNUM3](https://github.com/open-chat-labs/open-chat/pull/PRNUM3))
+
 ## [[2.0.2117](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2117-storage_bucket)] - 2026-10-08
 
 ### Changed

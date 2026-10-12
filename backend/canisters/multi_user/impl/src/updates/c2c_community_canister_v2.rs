@@ -61,7 +61,8 @@ fn c2c_community_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Respo
                         awarded_achievement.insert(user_index);
                     }
                 }
-                CommunityCanisterEvent::P2PSwapCreated(swap) => user.p2p_swaps.add_created_in_chat(*swap, user_id),
+                // No longer sent, but some may still be queued
+                CommunityCanisterEvent::P2PSwapCreated(_) => {}
                 CommunityCanisterEvent::RemovedFromCommunity(_) => {}
             }
         });

@@ -202,16 +202,13 @@ fn process_event<F: FnOnce() -> TimestampMillis>(
             for channel in state.data.channels.iter_mut() {
                 channel.chat.members.remove(user_id, **now);
             }
-            state.data.members.remove(user_id, None, true, **now);
+            state.data.members.remove(user_id, None, **now);
         }
         LocalIndexEvent::BotRemoved(bot_id) => {
             state.data.uninstall_bot(bot_id, **now);
         }
         LocalIndexEvent::BotUpdated(ev) => {
             state.data.handle_bot_definition_updated(ev, **now);
-        }
-        LocalIndexEvent::UserIdMigrated(ev) => {
-            state.data.migrate_user_ids(&[ev.old_user_id], ev.new_user_id, None, **now);
         }
     }
 

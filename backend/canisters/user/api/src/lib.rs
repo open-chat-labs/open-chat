@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     Achievement, BotDefinitionUpdate, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId,
-    DiamondMembershipPlanDuration, EventIndex, Hash, IdempotentEnvelope, MessageContent, MessageContentInitial, MessageId,
+    DiamondMembershipPlanDuration, EventIndex, IdempotentEnvelope, MessageContent, MessageContentInitial, MessageId,
     MessageIndex, Milliseconds, OgPreview, P2PSwapLocation, P2PSwapStatus, PhoneNumber, Reaction, ReferralStatus,
     SuspensionDuration, TimestampMillis, TokenInfo, UniquePersonProof, User, UserId,
 };
@@ -108,7 +108,6 @@ pub enum LocalUserIndexEvent {
     ReinstateMissedDailyClaims(Vec<u16>),
     BotUpdated(Box<BotDefinitionUpdate>),
     BotRemoved(UserId),
-    UserIdMigrated(Box<UserIdMigrated>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -139,14 +138,6 @@ pub struct StorageUpgraded {
 pub struct ReferredUserRegistered {
     pub user_id: UserId,
     pub username: String,
-}
-
-// Another user, whom the user has a direct chat with or has blocked, has been migrated to a
-// MultiUser canister, which gave them a new id
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UserIdMigrated {
-    pub old_user_id: UserId,
-    pub new_user_id: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -326,13 +317,6 @@ pub struct SetReferralStatusV2 {
     pub previous_user_ids: Vec<UserId>,
 }
 
-// Identifies a migration of a user to a MultiUser canister: the hash of the user as serialized when
-// the migration started, along with when it started, so that each migration of a user is told apart
-// even if the user hasn't changed in between
-pub fn migration_hash(user: &[u8], started: TimestampMillis) -> Hash {
-    sha256::sha256_of_parts([started.to_be_bytes().as_slice(), user])
-}
-
 pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {
     chats
         .into_iter()
@@ -451,6 +435,8 @@ pub struct MessageActivitySummary {
 pub enum CommunityCanisterEvent {
     MessageActivity(MessageActivityEvent),
     Achievement(Achievement),
+    // No longer sent. Kept so that any still queued can be read, until every group and community
+    // has been upgraded.
     P2PSwapCreated(Box<P2PSwapCreated>),
     RemovedFromCommunity(Box<RemovedFromCommunity>),
 }
@@ -459,6 +445,8 @@ pub enum CommunityCanisterEvent {
 pub enum GroupCanisterEvent {
     MessageActivity(MessageActivityEvent),
     Achievement(Achievement),
+    // No longer sent. Kept so that any still queued can be read, until every group and community
+    // has been upgraded.
     P2PSwapCreated(Box<P2PSwapCreated>),
     RemovedFromGroup(Box<RemovedFromGroup>),
 }

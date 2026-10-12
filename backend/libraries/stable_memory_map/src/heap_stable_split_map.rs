@@ -37,10 +37,6 @@ pub trait HeapStableSplitMapValue: Serialize + DeserializeOwned {
 #[derive(Serialize, Deserialize)]
 #[serde(bound = "")]
 pub struct HeapStableSplitMap<V: HeapStableSplitMapValue> {
-    // Values which haven't yet been moved into stable memory, which `migrate_to_stable_memory` moves
-    // across. Only values read from the heap layout which preceded this one can be here.
-    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    on_heap: HashMap<V::Id, V>,
     #[serde(default)]
     in_stable_memory: HashMap<V::Id, V::Entry>,
 }
@@ -48,48 +44,30 @@ pub struct HeapStableSplitMap<V: HeapStableSplitMapValue> {
 impl<V: HeapStableSplitMapValue> Default for HeapStableSplitMap<V> {
     fn default() -> Self {
         HeapStableSplitMap {
-            on_heap: HashMap::new(),
             in_stable_memory: HashMap::new(),
         }
     }
 }
 
 impl<V: HeapStableSplitMapValue> HeapStableSplitMap<V> {
-    // Adds values from the heap layout which preceded this one, to be moved into stable memory by
-    // `migrate_to_stable_memory`
-    pub fn extend_from_heap(&mut self, values: HashMap<V::Id, V>) {
-        self.on_heap.extend(values);
-    }
-
-    pub fn get(&self, id: &V::Id) -> Option<HeapStableSplitMapRef<'_, V>> {
-        if let Some(entry) = self.in_stable_memory.get(id) {
-            Some(HeapStableSplitMapRef(RefInner::InStableMemory(Box::new(read(id, entry)))))
-        } else {
-            self.on_heap
-                .get(id)
-                .map(|value| HeapStableSplitMapRef(RefInner::OnHeap(value)))
-        }
+    pub fn get(&self, id: &V::Id) -> Option<HeapStableSplitMapRef<V>> {
+        self.in_stable_memory
+            .get(id)
+            .map(|entry| HeapStableSplitMapRef(Box::new(read(id, entry))))
     }
 
     pub fn get_mut(&mut self, id: &V::Id) -> Option<HeapStableSplitMapMut<'_, V>> {
-        if let Some(entry) = self.in_stable_memory.get_mut(id) {
-            Some(HeapStableSplitMapMut(MutInner::InStableMemory {
-                id: *id,
-                value: Box::new(read(id, entry)),
-                entry,
-                changed: false,
-            }))
-        } else {
-            self.on_heap
-                .get_mut(id)
-                .map(|value| HeapStableSplitMapMut(MutInner::OnHeap(value)))
-        }
+        self.in_stable_memory.get_mut(id).map(|entry| HeapStableSplitMapMut {
+            id: *id,
+            value: Box::new(read(id, entry)),
+            entry,
+            changed: false,
+        })
     }
 
     // Inserts the value, replacing any value with the same id. It is written to stable memory once
     // the `HeapStableSplitMapMut` is dropped.
     pub fn insert(&mut self, id: V::Id, value: V) -> HeapStableSplitMapMut<'_, V> {
-        self.on_heap.remove(&id);
         let new_entry = value.entry();
         if let Some(previous_entry) = self.in_stable_memory.insert(id, new_entry) {
             // The value being replaced is stored under a different key if the key depends on the
@@ -100,76 +78,54 @@ impl<V: HeapStableSplitMapValue> HeapStableSplitMap<V> {
             }
         }
         let entry = self.in_stable_memory.get_mut(&id).unwrap();
-        HeapStableSplitMapMut(MutInner::InStableMemory {
+        HeapStableSplitMapMut {
             id,
             value: Box::new(value),
             entry,
             changed: true,
-        })
-    }
-
-    pub fn remove(&mut self, id: &V::Id) -> Option<V> {
-        if let Some(entry) = self.in_stable_memory.remove(id) {
-            let bytes = with_map_mut(|m| m.remove(V::key(id, &entry)))
-                .unwrap_or_else(|| panic!("Value with id {id:?} not found in stable memory"));
-            Some(V::from_bytes(&bytes))
-        } else {
-            self.on_heap.remove(id)
         }
     }
 
+    pub fn remove(&mut self, id: &V::Id) -> Option<V> {
+        let entry = self.in_stable_memory.remove(id)?;
+        let bytes = with_map_mut(|m| m.remove(V::key(id, &entry)))
+            .unwrap_or_else(|| panic!("Value with id {id:?} not found in stable memory"));
+        Some(V::from_bytes(&bytes))
+    }
+
     pub fn contains_key(&self, id: &V::Id) -> bool {
-        self.in_stable_memory.contains_key(id) || self.on_heap.contains_key(id)
+        self.in_stable_memory.contains_key(id)
     }
 
     // The value's entry, without reading the value
     pub fn entry(&self, id: &V::Id) -> Option<V::Entry> {
-        if let Some(entry) = self.in_stable_memory.get(id) {
-            Some(*entry)
-        } else {
-            self.on_heap.get(id).map(|value| value.entry())
-        }
+        self.in_stable_memory.get(id).copied()
     }
 
     // Every value's id and entry, without reading the values
     pub fn entries(&self) -> impl Iterator<Item = (V::Id, V::Entry)> + '_ {
-        self.on_heap
-            .iter()
-            .map(|(id, value)| (*id, value.entry()))
-            .chain(self.in_stable_memory.iter().map(|(id, entry)| (*id, *entry)))
+        self.in_stable_memory.iter().map(|(id, entry)| (*id, *entry))
     }
 
     pub fn ids(&self) -> impl Iterator<Item = V::Id> + '_ {
-        self.on_heap.keys().chain(self.in_stable_memory.keys()).copied()
+        self.in_stable_memory.keys().copied()
     }
 
     // Every value, each of which is read from stable memory as the iterator reaches it
-    pub fn iter(&self) -> impl Iterator<Item = HeapStableSplitMapRef<'_, V>> {
+    pub fn iter(&self) -> impl Iterator<Item = HeapStableSplitMapRef<V>> {
         self.filter(|_| true)
     }
 
     // The values whose entries `predicate` returns true for, only those of which are read
-    pub fn filter<F: Fn(&V::Entry) -> bool>(&self, predicate: F) -> impl Iterator<Item = HeapStableSplitMapRef<'_, V>> {
-        let on_heap = self
-            .on_heap
-            .values()
-            .filter(|value| predicate(&value.entry()))
-            .map(|value| HeapStableSplitMapRef(RefInner::OnHeap(value)))
-            .collect::<Vec<_>>();
-
-        on_heap.into_iter().chain(
-            self.in_stable_memory
-                .iter()
-                .filter(move |(_, entry)| predicate(entry))
-                .map(|(id, entry)| HeapStableSplitMapRef(RefInner::InStableMemory(Box::new(read(id, entry))))),
-        )
+    pub fn filter<F: Fn(&V::Entry) -> bool>(&self, predicate: F) -> impl Iterator<Item = HeapStableSplitMapRef<V>> {
+        self.in_stable_memory
+            .iter()
+            .filter(move |(_, entry)| predicate(entry))
+            .map(|(id, entry)| HeapStableSplitMapRef(Box::new(read(id, entry))))
     }
 
-    // Applies `f` to every value, writing back each of those in stable memory
+    // Applies `f` to every value, writing each back
     pub fn for_each_mut(&mut self, mut f: impl FnMut(&V::Id, &mut V)) {
-        for (id, value) in self.on_heap.iter_mut() {
-            f(id, value);
-        }
         for (id, entry) in self.in_stable_memory.iter_mut() {
             let mut value = read(id, entry);
             f(id, &mut value);
@@ -178,92 +134,46 @@ impl<V: HeapStableSplitMapValue> HeapStableSplitMap<V> {
     }
 
     pub fn len(&self) -> usize {
-        self.on_heap.len() + self.in_stable_memory.len()
+        self.in_stable_memory.len()
     }
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
-
-    // The number of values which haven't yet been moved into stable memory
-    pub fn count_on_heap(&self) -> usize {
-        self.on_heap.len()
-    }
-
-    // Moves every value still on the heap into stable memory, returning how many were moved
-    pub fn migrate_to_stable_memory(&mut self) -> usize {
-        if self.on_heap.is_empty() {
-            return 0;
-        }
-
-        let values = std::mem::take(&mut self.on_heap);
-        let count = values.len();
-        let mut entries = Vec::with_capacity(count);
-        for (id, value) in values {
-            let entry = value.entry();
-            entries.push((V::key(&id, &entry), value.to_bytes()));
-            self.in_stable_memory.insert(id, entry);
-        }
-        // Sorted by key, since `insert_many` is far cheaper when the entries are in key order
-        entries.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
-        with_map_mut(|m| m.insert_many(entries));
-        count
-    }
 }
 
 // A value read from `HeapStableSplitMap`
-pub struct HeapStableSplitMapRef<'a, V>(RefInner<'a, V>);
+pub struct HeapStableSplitMapRef<V>(Box<V>);
 
-enum RefInner<'a, V> {
-    OnHeap(&'a V),
-    InStableMemory(Box<V>),
-}
-
-impl<V> Deref for HeapStableSplitMapRef<'_, V> {
+impl<V> Deref for HeapStableSplitMapRef<V> {
     type Target = V;
 
     fn deref(&self) -> &V {
-        match &self.0 {
-            RefInner::OnHeap(value) => value,
-            RefInner::InStableMemory(value) => value,
-        }
+        &self.0
     }
 }
 
-// A value borrowed mutably from `HeapStableSplitMap`. A value stored in stable memory is written back when
-// this is dropped, if it was changed, which is taken to be whenever it was dereferenced mutably.
-pub struct HeapStableSplitMapMut<'a, V: HeapStableSplitMapValue>(MutInner<'a, V>);
-
-enum MutInner<'a, V: HeapStableSplitMapValue> {
-    OnHeap(&'a mut V),
-    InStableMemory {
-        id: V::Id,
-        value: Box<V>,
-        entry: &'a mut V::Entry,
-        changed: bool,
-    },
+// A value borrowed mutably from `HeapStableSplitMap`. It is written back when this is dropped, if it
+// was changed, which is taken to be whenever it was dereferenced mutably.
+pub struct HeapStableSplitMapMut<'a, V: HeapStableSplitMapValue> {
+    id: V::Id,
+    value: Box<V>,
+    entry: &'a mut V::Entry,
+    changed: bool,
 }
 
 impl<V: HeapStableSplitMapValue> Deref for HeapStableSplitMapMut<'_, V> {
     type Target = V;
 
     fn deref(&self) -> &V {
-        match &self.0 {
-            MutInner::OnHeap(value) => value,
-            MutInner::InStableMemory { value, .. } => value,
-        }
+        &self.value
     }
 }
 
 impl<V: HeapStableSplitMapValue> DerefMut for HeapStableSplitMapMut<'_, V> {
     fn deref_mut(&mut self) -> &mut V {
-        match &mut self.0 {
-            MutInner::OnHeap(value) => value,
-            MutInner::InStableMemory { value, changed, .. } => {
-                *changed = true;
-                value
-            }
-        }
+        self.changed = true;
+        &mut self.value
     }
 }
 
@@ -273,14 +183,8 @@ impl<V: HeapStableSplitMapValue> Drop for HeapStableSplitMapMut<'_, V> {
         if std::thread::panicking() {
             return;
         }
-        if let MutInner::InStableMemory {
-            id,
-            value,
-            entry,
-            changed: true,
-        } = &mut self.0
-        {
-            **entry = write::<V>(id, entry, value);
+        if self.changed {
+            *self.entry = write::<V>(&self.id, self.entry, &self.value);
         }
     }
 }
@@ -401,52 +305,6 @@ mod tests {
         let mut ids: Vec<_> = values.ids().collect();
         ids.sort();
         assert_eq!(ids, vec![1, 2, 3]);
-    }
-
-    #[test]
-    fn values_on_the_heap_are_read_and_changed_until_moved_into_stable_memory() {
-        init();
-        let mut values = HeapStableSplitMap::default();
-        values.extend_from_heap(HashMap::from([(1, item("a", 10)), (2, item("b", 20))]));
-        values.insert(3, item("c", 30));
-
-        // Values on the heap survive being serialized, as when a User canister whose user is being
-        // migrated is upgraded again
-        let mut values: HeapStableSplitMap<Item> = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&values));
-        assert_eq!(values.count_on_heap(), 2);
-        assert_eq!(*values.get(&2).unwrap(), item("b", 20));
-        assert_eq!(*values.get(&3).unwrap(), item("c", 30));
-
-        values.get_mut(&1).unwrap().updated = 15;
-        assert_eq!(values.get(&1).unwrap().updated, 15);
-        assert_eq!(values.entry(&1), Some(15));
-        assert_eq!(values.count_on_heap(), 2);
-        assert_eq!(stored_count(), 1);
-        assert_eq!(values.filter(|updated| *updated > 12).count(), 3);
-
-        values.for_each_mut(|_, value| value.name.push('!'));
-        assert_eq!(values.get(&1).unwrap().name, "a!");
-        assert_eq!(values.get(&3).unwrap().name, "c!");
-
-        // Inserting a value with the id of one on the heap replaces it in stable memory
-        values.insert(2, item("d", 40));
-        assert_eq!(values.count_on_heap(), 1);
-
-        assert_eq!(values.migrate_to_stable_memory(), 1);
-        assert_eq!(values.migrate_to_stable_memory(), 0);
-        assert_eq!(values.count_on_heap(), 0);
-        assert_eq!(stored_count(), 3);
-        assert_eq!(*values.get(&1).unwrap(), item("a!", 15));
-        assert_eq!(*values.get(&2).unwrap(), item("d", 40));
-        assert_eq!(values.len(), 3);
-
-        // Once moved, nothing is serialized for the values on the heap
-        #[derive(Deserialize)]
-        struct Fields {
-            on_heap: Option<serde::de::IgnoredAny>,
-        }
-        let fields: Fields = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&values));
-        assert!(fields.on_heap.is_none());
     }
 
     #[test]

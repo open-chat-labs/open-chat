@@ -37,17 +37,5 @@ fn handle_event(event: UserIndexEvent, state: &mut RuntimeState) {
                 state.data.last_online_dates.remove(user_id);
             }
         }
-        UserIndexEvent::UserIdMigrated(ev) => {
-            // Only users already cached need updating, any others are looked up from the UserIndex,
-            // which returns their new id, when next needed
-            state.data.principal_to_user_id_map.update(&ev.user_principal, |user_id| {
-                *user_id = ev.new_user_id;
-                true
-            });
-            // Move what was recorded under their old id to their new one, so that they carry on
-            // from where they were, and aren't counted twice as active users
-            state.data.last_online_dates.migrate_user_id(ev.old_user_id, ev.new_user_id);
-            state.data.user_online_minutes.migrate_user_id(ev.old_user_id, ev.new_user_id);
-        }
     }
 }

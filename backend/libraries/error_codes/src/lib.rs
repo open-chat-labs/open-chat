@@ -192,9 +192,6 @@ pub enum OCErrorCode {
     PrizeUserNotElligible = 348,
     NoEventsToDelete = 349,
     InsufficientAllowance = 350,
-    NotReadyForMigration = 351,
-    UserImportFailed = 352,
-    UserMigrationStalled = 353,
     LimitReached = 354,
     UserMovedToNewSubnet = 355,
 

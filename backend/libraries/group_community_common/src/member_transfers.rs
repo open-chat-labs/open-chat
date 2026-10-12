@@ -120,21 +120,6 @@ impl NewP2PSwap {
         self.offered_by
     }
 
-    // The swap as the member is told of it once it has been created, so that it is recorded against
-    // them just as a swap created via their own canister is
-    pub fn created(&self, swap_id: u32, now: TimestampMillis) -> user_canister::P2PSwapCreated {
-        user_canister::P2PSwapCreated {
-            swap_id,
-            location: self.args.location.clone(),
-            token0: self.args.token0.clone(),
-            token0_amount: self.args.token0_amount,
-            token1: self.args.token1.clone(),
-            token1_amount: self.args.token1_amount,
-            expires_at: self.args.expires_at,
-            created: now,
-        }
-    }
-
     // Checks the member is a Diamond member, which creating a swap requires, then creates the swap
     // in the Escrow canister and funds it. If funding the swap fails once it exists, its id is
     // returned alongside the error, so that the swap can be cancelled.
