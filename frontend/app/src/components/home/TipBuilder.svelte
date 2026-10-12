@@ -238,7 +238,7 @@
             walletApprovalFee($currentUserIdStore, tokenDetails.transferFee, payFromWallet),
     );
     let exchangeRate = $derived(
-        to2SigFigs($exchangeRatesLookup.get(tokenDetails.symbol.toLowerCase())?.toUSD ?? 0),
+        to2SigFigs($exchangeRatesLookup.get(tokenDetails.ledger)?.toUSD ?? 0),
     );
     $effect(() => {
         if (ledger !== undefined) {

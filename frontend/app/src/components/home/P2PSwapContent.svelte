@@ -73,7 +73,7 @@
         fromDetails
             ? calculateDollarAmount(
                   content.token0Amount,
-                  $exchangeRatesLookup.get(fromDetails.symbol.toLowerCase())?.toUSD,
+                  $exchangeRatesLookup.get(fromDetails.ledger)?.toUSD,
                   fromDetails.decimals,
               )
             : "0",
@@ -82,7 +82,7 @@
         toDetails
             ? calculateDollarAmount(
                   content.token1Amount,
-                  $exchangeRatesLookup.get(toDetails.symbol.toLowerCase())?.toUSD,
+                  $exchangeRatesLookup.get(toDetails.ledger)?.toUSD,
                   toDetails.decimals,
               )
             : "0",

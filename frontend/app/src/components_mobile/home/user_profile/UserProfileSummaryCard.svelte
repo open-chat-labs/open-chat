@@ -261,7 +261,7 @@
         {/if}
 
         {#if me}
-            <!-- Account principal -->
+            <!-- User id -->
             <Row
                 onClick={onCopy}
                 backgroundColor={ColourVars.surface1}
@@ -270,7 +270,7 @@
                 crossAxisAlignment="center">
                 <Column gap="xs">
                     <Body colour="textSecondary" fontWeight="bold">
-                        <Translatable resourceKey={i18nKey("User & canister id")} />
+                        <Translatable resourceKey={i18nKey("userId")} />
                     </Body>
                     <Body>{user.userId}</Body>
                 </Column>

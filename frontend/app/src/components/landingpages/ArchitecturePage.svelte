@@ -492,14 +492,6 @@
                     the canister id of any group canister can be found in the url for that group in
                     the OpenChat app
                 </li>
-                <li>
-                    likewise the canister id of any user canister can be found in the url of a
-                    direct chat with that user
-                </li>
-                <li>
-                    your own canister id can be found from the main menu in the advanced section of
-                    your profile
-                </li>
             </ul>
         </div>
     </CollapsibleCard>

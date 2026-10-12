@@ -49,7 +49,7 @@ const prize: PrizeContentInitial = {
     lifetimeDiamondOnly: false,
     uniquePersonOnly: false,
     streakOnly: 0,
-    minChitEarned: 0,
+    minChitEarned: 5,
     endDate: 1_000n,
     caption: "a prize",
     transfer: { ...transfer, recipient: CANISTER },
@@ -227,7 +227,9 @@ describe.each([
                 kind: "prize_content",
                 prizesRemaining: 2,
                 token: "ICP",
+                ledger: LEDGER,
                 caption: "a prize",
+                minChitEarned: 5,
             },
         });
     });
