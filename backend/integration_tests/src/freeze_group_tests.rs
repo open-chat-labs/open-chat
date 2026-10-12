@@ -158,7 +158,9 @@ fn frozen_group_still_applies_changes_from_other_canisters() {
 
     client::group_index::happy_path::set_group_verification(env, *controller, canister_ids.group_index, group_id, group_name);
 
-    tick_until(env, |env| client::group::happy_path::summary(env, user2.principal, group_id).verified);
+    tick_until(env, |env| {
+        client::group::happy_path::summary(env, user2.principal, group_id).verified
+    });
 
     let summary = client::group::happy_path::summary(env, user2.principal, group_id);
     assert!(summary.frozen.is_some());
@@ -203,7 +205,9 @@ fn frozen_community_still_applies_changes_from_other_canisters() {
         community_name,
     );
 
-    tick_until(env, |env| client::community::happy_path::summary(env, user2.principal, community_id).verified);
+    tick_until(env, |env| {
+        client::community::happy_path::summary(env, user2.principal, community_id).verified
+    });
 
     let summary = client::community::happy_path::summary(env, user2.principal, community_id);
     assert!(summary.frozen.is_some());
@@ -258,7 +262,9 @@ fn group_being_imported_into_a_community_rejects_changes_from_other_canisters() 
 
     // The LocalUserIndex retries a trapped call after 5 minutes
     env.advance_time(Duration::from_secs(5 * 60));
-    tick_until(env, |env| client::group::happy_path::summary(env, user2.principal, group_id).verified);
+    tick_until(env, |env| {
+        client::group::happy_path::summary(env, user2.principal, group_id).verified
+    });
 
     // The community is left stopped with its import unfinished
     wrapper.discard();
