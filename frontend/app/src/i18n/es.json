@@ -1125,7 +1125,7 @@
         "sourceWallet": "Monedero de origen"
     },
     "failedToCopyLinkToClipboard": "No se puede copiar el enlace al portapapeles",
-    "failedToCopyToClipboard": "No se puede copiar al portapapeles",
+    "failedToCopyToClipboard": "No se puede copiar al portapapeles. {account}",
     "failedToCopyUrlToClipboard": "No se puede copiar la URL ({url}) al portapapeles",
     "failedToFreezeCommunity": "No se pudo congelar la comunidad",
     "failedToFreezeGroup": "No se pudo congelar el grupo",
