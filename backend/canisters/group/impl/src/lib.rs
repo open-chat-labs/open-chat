@@ -121,6 +121,10 @@ impl RuntimeState {
         self.env.caller() == self.data.escrow_canister_id
     }
 
+    pub fn is_caller_proposals_bot(&self) -> bool {
+        self.env.caller() == self.data.proposals_bot_user_id.canister_id()
+    }
+
     pub fn is_caller_video_call_operator(&self) -> bool {
         let caller = self.env.caller();
         self.data.video_call_operators.contains(&caller)
@@ -381,7 +385,7 @@ impl RuntimeState {
         &mut self,
         community: CommunityBeingImportedInto,
     ) -> OCResult<StartImportIntoCommunityResultSuccess> {
-        if self.data.community_being_imported_into.is_some() && self.data.is_frozen() {
+        if self.data.is_being_imported_into_community() {
             Err(OCErrorCode::AlreadyImportingIntoAnotherCommunity.into())
         } else if self.data.is_frozen() {
             Err(OCErrorCode::ChatFrozen.into())
@@ -847,6 +851,16 @@ impl Data {
         self.frozen.is_some()
     }
 
+    // A group being imported into a community is frozen as well, but unlike one frozen by a platform
+    // moderator, it must not apply changes from other canisters, since its state has already been
+    // exported to the community. `community_being_imported_into` alone isn't enough, since a group
+    // whose import was abandoned before #4084, or which is unfrozen while `convert_into_community`
+    // awaits the GroupIndex, can be left with it set while not frozen. `c2c_freeze_group` clears
+    // that, so a platform moderator's freeze is never mistaken for an import.
+    pub fn is_being_imported_into_community(&self) -> bool {
+        self.community_being_imported_into.is_some() && self.is_frozen()
+    }
+
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
         self.chat.is_public.value
             || self.get_member(caller).is_some()
@@ -1236,6 +1250,15 @@ pub struct Metrics {
 // frozen use `execute_update_even_if_frozen` instead.
 fn execute_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
     read_state(|state| trap_if_frozen(state.data.is_frozen()));
+    execute_update_even_if_frozen(f)
+}
+
+// Runs an update call made by another canister to keep the group in step with it, eg. the
+// LocalUserIndex passing on a change of verification. These keep working while a platform moderator
+// has frozen the group, but trap while it is being imported into a community, since any change then
+// would be lost. Their callers retry them after a trap.
+fn execute_c2c_update<F: FnOnce(&mut RuntimeState) -> R, R>(f: F) -> R {
+    read_state(|state| trap_if_frozen(state.data.is_being_imported_into_community()));
     execute_update_even_if_frozen(f)
 }
 

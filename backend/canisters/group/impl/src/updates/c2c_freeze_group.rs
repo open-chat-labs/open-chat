@@ -9,7 +9,15 @@ use types::{EventWrapper, FrozenGroupInfo, GroupFrozen, Timestamped, UserId};
 #[update(guard = "caller_is_group_index_or_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_freeze_group(args: Args) -> Response {
-    execute_update_even_if_frozen(|state| freeze_group_impl(args.caller, args.reason, args.return_members, state))
+    execute_update_even_if_frozen(|state| {
+        // An unfrozen group can't be being imported into a community, so any community it still
+        // names is left over from an import which didn't go ahead, and is cleared so that this
+        // freeze isn't mistaken for one (see `Data::is_being_imported_into_community`)
+        if !state.data.is_frozen() {
+            state.data.community_being_imported_into = None;
+        }
+        freeze_group_impl(args.caller, args.reason, args.return_members, state)
+    })
 }
 
 pub(crate) fn freeze_group_impl(
