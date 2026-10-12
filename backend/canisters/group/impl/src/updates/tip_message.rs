@@ -6,12 +6,12 @@ use chat_events::TipMessageArgs;
 use constants::MEMO_TIP;
 use group_canister::tip_message::*;
 use ledger_utils::{TransferRecipient, UserTransfer, format_crypto_amount_with_symbol};
+use multi_user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 use oc_error_codes::OCErrorCode;
 use types::{
     Achievement, Caller, CanisterId, Chat, ChatId, CryptoTransaction, EventIndex, GroupChatUserNotificationPayload,
     GroupMessageTipped, MessageId, MessageIndex, OCResult, UserId, icrc2,
 };
-use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
 #[trace]

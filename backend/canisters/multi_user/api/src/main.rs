@@ -1,3 +1,6 @@
+// The types keep the `user` names the website already knows them by, which `generate_ts_method`
+// looks up in `user_canister`
+use multi_user_canister as user_canister;
 use std::env;
 use ts_export::generate_ts_method;
 

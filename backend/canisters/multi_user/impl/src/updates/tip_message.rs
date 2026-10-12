@@ -6,10 +6,10 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
+use multi_user_canister::UserCanisterEvent;
+use multi_user_canister::tip_message::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, CanisterId, Chat, OCResult, UserId, icrc1, icrc2};
-use user_canister::UserCanisterEvent;
-use user_canister::tip_message::{Response::*, *};
 
 // The User canister's `tip_message`, for direct chats. Users hold their own funds in their own
 // wallets, so the tip is pulled from the user's wallet (or the account they name) via ICRC2, against

@@ -1,8 +1,8 @@
 use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
+use multi_user_canister::updates::{Response::*, *};
 use types::TimestampMillis;
-use user_canister::updates::{Response::*, *};
 
 #[query(guard = "caller_is_hosted_user", msgpack = true)]
 fn updates(args: Args) -> Response {

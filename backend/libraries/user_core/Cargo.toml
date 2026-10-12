@@ -21,6 +21,7 @@ icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../ledger_utils" }
 local_user_index_canister = { path = "../../canisters/local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../canisters/local_user_index/c2c_client" }
+multi_user_canister = { path = "../../canisters/multi_user/api" }
 user_index_canister = { path = "../../canisters/user_index/api" }
 user_index_canister_c2c_client = { path = "../../canisters/user_index/c2c_client" }
 ic-ledger-types = { workspace = true }
@@ -34,7 +35,6 @@ serde = { workspace = true }
 stable_memory_map = { path = "../stable_memory_map" }
 tracing = { workspace = true }
 types = { path = "../types" }
-user_canister = { path = "../../canisters/user/api" }
 utils = { path = "../utils" }
 
 [dev-dependencies]

@@ -1,9 +1,9 @@
 use crate::{MultiUserEventPusher, RuntimeState};
 use chat_events::{MessageContentInternal, TextContentInternal};
 use constants::{OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
+use multi_user_canister::C2CReplyContext;
 use rand::RngExt;
 use types::{EventWrapper, Message, User, UserId, UserType};
-use user_canister::C2CReplyContext;
 use user_core::openchat_bot;
 use user_core::updates::c2c_user_canister::ReceiveMessageArgs;
 

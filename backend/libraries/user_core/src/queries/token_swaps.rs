@@ -1,5 +1,5 @@
 use crate::User;
-use user_canister::token_swaps::{Args, SuccessResult};
+use multi_user_canister::token_swaps::{Args, SuccessResult};
 
 pub fn token_swaps(user: &User, args: Args) -> SuccessResult {
     let total = user.token_swaps.len() as u32;

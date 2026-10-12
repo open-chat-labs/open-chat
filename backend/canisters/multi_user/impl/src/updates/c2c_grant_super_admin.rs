@@ -2,8 +2,8 @@ use crate::guards::caller_is_user_index;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::c2c_grant_super_admin::*;
 use types::UserId;
-use user_canister::c2c_grant_super_admin::*;
 
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]

@@ -1,6 +1,6 @@
 use crate::read_state;
 use canister_api_macros::query;
-use user_canister::bio::{Response::*, *};
+use multi_user_canister::bio::{Response::*, *};
 
 #[query(msgpack = true)]
 fn bio(args: Args) -> Response {

@@ -70,7 +70,7 @@ fn commit(
     if state.holds_latest_id_of(user_id) {
         state.push_event_to_user(
             user_id,
-            UserEvent::UserJoinedGroup(Box::new(user_canister::UserJoinedGroup {
+            UserEvent::UserJoinedGroup(Box::new(multi_user_canister::UserJoinedGroup {
                 chat_id,
                 local_user_index_canister_id,
                 latest_message_index,

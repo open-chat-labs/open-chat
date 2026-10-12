@@ -354,7 +354,7 @@ fn wait_for_channel_membership(
     user: &User,
     community_id: CommunityId,
     channel_id: ChannelId,
-) -> user_canister::ChannelSummary {
+) -> multi_user_canister::ChannelSummary {
     for _ in 0..30 {
         let initial_state = client::user::happy_path::initial_state(env, user);
         if let Some(channel) = initial_state

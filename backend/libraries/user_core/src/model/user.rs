@@ -7,6 +7,7 @@ use candid::Principal;
 use constants::{MAX_WALLET_TOKENS, OPENCHAT_BOT_USER_ID};
 use direct_chat::{DirectChat, DirectChats};
 use installed_bots::InstalledBots;
+use multi_user_canister::{MessageActivityEvent, WalletConfig};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
@@ -15,7 +16,6 @@ use types::{
     Achievement, BotDefinitionUpdate, BotInitiator, BotPermissions, BotUpdated, Chat, ChatId, ChitEvent, ChitEventType,
     CommunityId, MultiUserChat, ReferralStatus, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
-use user_canister::{MessageActivityEvent, WalletConfig};
 use utils::migrated_user_ids::MigratedUserIds;
 
 // The state of a single user, shared by the User canister, which holds one, and the MultiUser
@@ -414,8 +414,8 @@ mod tests {
     use super::*;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use multi_user_canister::ManualWallet;
     use types::{CanisterId, UserType};
-    use user_canister::ManualWallet;
 
     #[test]
     fn manual_wallet_tokens_are_deduplicated_and_limited() {

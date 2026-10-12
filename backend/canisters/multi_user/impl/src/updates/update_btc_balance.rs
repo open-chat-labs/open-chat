@@ -4,9 +4,9 @@ use canister_tracing_macros::trace;
 use event_store_types::EventBuilder;
 use ledger_utils::format_crypto_amount;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
+use multi_user_canister::update_btc_balance::*;
 use oc_error_codes::{OCError, OCErrorCode};
 use types::{Achievement, UserIdAndPrincipal};
-use user_canister::update_btc_balance::*;
 use user_core::openchat_bot::{btc_deposit_failed_text, btc_deposit_received_text};
 use user_core::updates::update_btc_balance::{BtcDepositOrWithdrawalEventPayload, update_btc_balance as update};
 

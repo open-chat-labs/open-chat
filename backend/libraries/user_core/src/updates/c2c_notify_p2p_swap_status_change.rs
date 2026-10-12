@@ -2,11 +2,11 @@ use crate::User;
 use candid::Principal;
 use chat_events::EventPusher;
 use escrow_canister::{SwapStatus, SwapStatusChange};
+use multi_user_canister::P2PSwapStatusChange;
 use tracing::error;
 use types::{
     CanisterId, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus, TimestampMillis, UserId, UserIdAndPrincipal,
 };
-use user_canister::P2PSwapStatusChange;
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 // The user escrow names by `principal` as the offerer of a swap, the principal being the owner of

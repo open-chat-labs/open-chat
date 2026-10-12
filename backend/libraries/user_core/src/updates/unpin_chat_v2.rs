@@ -1,8 +1,8 @@
 use crate::User;
+use multi_user_canister::ChatInList;
+use multi_user_canister::unpin_chat_v2::Args;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, TimestampMillis};
-use user_canister::ChatInList;
-use user_canister::unpin_chat_v2::Args;
 
 pub fn unpin_chat_v2(user: &mut User, args: Args, now: TimestampMillis) -> OCResult {
     match args.chat {

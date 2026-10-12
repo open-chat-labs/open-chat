@@ -2,10 +2,10 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::set_avatar::*;
 use oc_error_codes::OCErrorCode;
 use stable_memory_map::ProfileDocumentType;
 use types::{Achievement, CanisterId, OCResult, UserId};
-use user_canister::set_avatar::*;
 use utils::document::validate_avatar;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]

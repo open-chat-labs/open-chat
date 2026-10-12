@@ -9,13 +9,13 @@ use chat_events::MessageContentInternal;
 use constants::HOUR_IN_MS;
 use direct_chat::DirectChat;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
-use rand::RngExt;
-use types::{Achievement, CallKind, TimestampMillis, UserId};
-use user_canister::c2c_user_canister_v2::*;
-use user_canister::{
+use multi_user_canister::c2c_user_canister_v2::*;
+use multi_user_canister::{
     DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, SendMessagesArgs,
     SetEventsTtl, StartVideoCallArgs, TipMessageArgs as C2CTipMessageArgs, ToggleReactionArgs, UserCanisterEvent,
 };
+use rand::RngExt;
+use types::{Achievement, CallKind, TimestampMillis, UserId};
 use user_core::updates::c2c_user_canister::{self, can_act_for};
 use utils::migrated_user_ids::MigratedUserIds;
 

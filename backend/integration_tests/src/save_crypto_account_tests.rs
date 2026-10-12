@@ -1,9 +1,9 @@
 use crate::env::ENV;
 use crate::{TestEnv, client};
+use multi_user_canister::NamedAccount;
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use testing::rng::{random_principal, random_string};
-use user_canister::NamedAccount;
 
 #[test]
 fn save_and_delete_crypto_account_succeeds() {
@@ -44,7 +44,7 @@ fn save_crypto_account_invalid() {
 
     let response = client::user::save_crypto_account(env, user.principal, user.canister(), &named_account);
     assert!(
-        matches!(response, user_canister::save_crypto_account::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest))
+        matches!(response, multi_user_canister::save_crypto_account::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest))
     );
 }
 
@@ -64,13 +64,16 @@ fn save_crypto_account_name_taken() {
     };
 
     let response = client::user::save_crypto_account(env, user.principal, user.canister(), &named_account1);
-    assert!(matches!(response, user_canister::save_crypto_account::Response::Success));
+    assert!(matches!(
+        response,
+        multi_user_canister::save_crypto_account::Response::Success
+    ));
 
     let named_account2 = NamedAccount { name, account: account2 };
 
     let response = client::user::save_crypto_account(env, user.principal, user.canister(), &named_account2);
     assert!(
-        matches!(response, user_canister::save_crypto_account::Response::Error(e) if e.matches_code(OCErrorCode::NameTaken))
+        matches!(response, multi_user_canister::save_crypto_account::Response::Error(e) if e.matches_code(OCErrorCode::NameTaken))
     );
 }
 

@@ -1,11 +1,11 @@
 use crate::mutate_state;
 use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
+use multi_user_canister::c2c_game_chit::{Args, Response, SuccessResult};
 use oc_error_codes::{OCError, OCErrorCode};
 use serde::{Deserialize, Serialize};
 use timer_job_queues::{TimerJobItem, TimerJobQueue};
 use tracing::error;
 use types::{C2CError, GameId, Milliseconds, PuzzleNumber, UserId};
-use user_canister::c2c_game_chit::{Args, Response, SuccessResult};
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 // One CHIT credit or debit against a user canister. Keys are idempotent on the user side, so a
@@ -51,8 +51,10 @@ pub async fn apply(credit: &GameChitCredit) -> GameChitOutcome {
         key: credit.key.clone(),
         amount: credit.amount,
     };
-    let response =
-        top_up_and_retry_if_out_of_cycles(canister_id, || user_canister_c2c_client::c2c_game_chit(canister_id, &args)).await;
+    let response = top_up_and_retry_if_out_of_cycles(canister_id, || {
+        multi_user_canister_c2c_client::c2c_game_chit(canister_id, &args)
+    })
+    .await;
 
     match response {
         Ok(Response::Success(result)) => GameChitOutcome::Applied(Some(result)),

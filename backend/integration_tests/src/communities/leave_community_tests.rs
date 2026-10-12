@@ -90,12 +90,12 @@ fn cannot_leave_community_if_last_owner() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::leave_community::Args { community_id },
+        &multi_user_canister::leave_community::Args { community_id },
     );
 
     assert!(matches!(
         leave_community_response,
-        user_canister::leave_community::Response::Error(e) if e.matches_code(OCErrorCode::LastOwnerCannotLeave)
+        multi_user_canister::leave_community::Response::Error(e) if e.matches_code(OCErrorCode::LastOwnerCannotLeave)
     ));
 
     let initial_state = client::user::happy_path::initial_state(env, &user1);
@@ -127,12 +127,12 @@ fn cannot_leave_community_if_last_owner_of_a_channel() {
         env,
         user2.principal,
         user2.canister(),
-        &user_canister::leave_community::Args { community_id },
+        &multi_user_canister::leave_community::Args { community_id },
     );
 
     assert!(matches!(
         leave_community_response,
-        user_canister::leave_community::Response::Error(e) if e.matches_code(OCErrorCode::LastOwnerCannotLeave)
+        multi_user_canister::leave_community::Response::Error(e) if e.matches_code(OCErrorCode::LastOwnerCannotLeave)
     ));
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);

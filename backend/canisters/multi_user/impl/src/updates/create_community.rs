@@ -3,9 +3,9 @@ use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community;
+use multi_user_canister::create_community::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, CommunityId, OCResult};
-use user_canister::create_community::{Response::*, *};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

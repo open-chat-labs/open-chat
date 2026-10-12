@@ -377,7 +377,7 @@ fn streak_insurance_can_be_paid_from_approved_account() {
         env,
         user.principal,
         user.canister(),
-        &user_canister::pay_for_streak_insurance::Args {
+        &multi_user_canister::pay_for_streak_insurance::Args {
             additional_days: 1,
             expected_price: price,
             from_account: Some(external_wallet.into()),
@@ -385,7 +385,7 @@ fn streak_insurance_can_be_paid_from_approved_account() {
         },
     );
     assert!(
-        matches!(response, user_canister::pay_for_streak_insurance::Response::Success),
+        matches!(response, multi_user_canister::pay_for_streak_insurance::Response::Success),
         "{response:?}"
     );
 
@@ -425,7 +425,7 @@ fn streak_insurance_from_account_without_allowance_fails() {
         env,
         user.principal,
         user.canister(),
-        &user_canister::pay_for_streak_insurance::Args {
+        &multi_user_canister::pay_for_streak_insurance::Args {
             additional_days: 1,
             expected_price: ONE_CHAT,
             from_account: Some(external_wallet.into()),
@@ -435,7 +435,7 @@ fn streak_insurance_from_account_without_allowance_fails() {
     assert!(
         matches!(
             &response,
-            user_canister::pay_for_streak_insurance::Response::Error(e) if e.matches_code(OCErrorCode::InsufficientAllowance)
+            multi_user_canister::pay_for_streak_insurance::Response::Error(e) if e.matches_code(OCErrorCode::InsufficientAllowance)
         ),
         "{response:?}"
     );

@@ -3,10 +3,10 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::{MAX_TOKEN_SWAPS, MAX_TOKEN_SYMBOL_LENGTH};
+use multi_user_canister::mark_token_swap_started::*;
+use multi_user_canister::swap_tokens::ExchangeArgs;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
-use user_canister::mark_token_swap_started::*;
-use user_canister::swap_tokens::ExchangeArgs;
 use user_core::TokenSwap;
 
 // The users of this canister hold their own funds, so make their swaps themselves, straight from
@@ -40,7 +40,7 @@ fn mark_token_swap_started_impl(mut args: Args, state: &mut RuntimeState) -> OCR
             return Err(OCErrorCode::LimitReached.with_message(MAX_TOKEN_SWAPS));
         }
         let mut token_swap = TokenSwap::new(
-            user_canister::swap_tokens::Args {
+            multi_user_canister::swap_tokens::Args {
                 swap_id: args.swap_id,
                 input_token: args.input_token,
                 output_token: args.output_token,

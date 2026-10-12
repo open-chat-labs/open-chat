@@ -3,6 +3,7 @@ use crate::utils::{chat_token_info, icp_token_info, now_millis, now_nanos, tick_
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
+use multi_user_canister::MessageActivity;
 use pocket_ic::PocketIc;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -14,7 +15,6 @@ use types::{
     P2PSwapContentInitial, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, TextContent, TimestampMillis,
     TotalVotes,
 };
-use user_canister::MessageActivity;
 
 #[test_case(ChatType::Direct)]
 #[test_case(ChatType::Group)]
@@ -473,7 +473,7 @@ fn mark_activity_feed_read_and_check_user_updates() {
         env,
         us.principal,
         us.canister(),
-        &user_canister::mark_message_activity_feed_read::Args { read_up_to: start },
+        &multi_user_canister::mark_message_activity_feed_read::Args { read_up_to: start },
     );
 
     let Some(summary) = client::user::happy_path::updates(env, &us, start).and_then(|result| result.message_activity_summary)

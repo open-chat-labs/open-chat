@@ -5,11 +5,11 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{MessageContentInternal, MessageReminderCreatedContentInternal};
 use constants::MAX_MESSAGE_REMINDERS;
+use multi_user_canister::C2CReplyContext;
+use multi_user_canister::set_message_reminder_v2::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{Achievement, FieldTooLongResult, OCResult};
-use user_canister::C2CReplyContext;
-use user_canister::set_message_reminder_v2::{Response::*, *};
 
 const MAX_NOTES_LENGTH: usize = 1000;
 

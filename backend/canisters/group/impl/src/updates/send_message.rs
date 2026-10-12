@@ -17,6 +17,7 @@ use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageSuccess;
 use group_community_common::{NewP2PSwap, prize_refund, validate_prize};
 use ledger_utils::{TransferRecipient, UserTransfer};
+use multi_user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 use oc_error_codes::OCErrorCode;
 use tracing::error;
 use types::{
@@ -24,7 +25,6 @@ use types::{
     EventWrapper, GroupChatUserNotificationPayload, GroupMessageNotification, Message, MessageContent, MessageContentInitial,
     MessageContentType, MessageIndex, OCResult, P2PSwapLocation, TimestampMillis, User, UserIdAndPrincipal, UserType, icrc2,
 };
-use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
 #[trace]

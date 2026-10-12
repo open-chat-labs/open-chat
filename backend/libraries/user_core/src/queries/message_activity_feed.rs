@@ -1,5 +1,5 @@
 use crate::User;
-use user_canister::message_activity_feed::{Args, SuccessResult};
+use multi_user_canister::message_activity_feed::{Args, SuccessResult};
 
 pub fn message_activity_feed(user: &User, args: Args) -> SuccessResult {
     SuccessResult {

@@ -51,7 +51,7 @@ impl Community {
         .unwrap()
     }
 
-    pub fn mark_read(&mut self, channels_read: Vec<user_canister::mark_read::ChannelMessagesRead>, now: TimestampMillis) {
+    pub fn mark_read(&mut self, channels_read: Vec<multi_user_canister::mark_read::ChannelMessagesRead>, now: TimestampMillis) {
         for channel_messages_read in channels_read {
             self.channels
                 .entry(channel_messages_read.channel_id)
@@ -81,14 +81,14 @@ impl Community {
         );
     }
 
-    pub fn to_summary(&self) -> user_canister::CommunitySummary {
-        user_canister::CommunitySummary {
+    pub fn to_summary(&self) -> multi_user_canister::CommunitySummary {
+        multi_user_canister::CommunitySummary {
             community_id: self.community_id,
             local_user_index_canister_id: self.local_user_index_canister_id,
             channels: self
                 .channels
                 .values()
-                .map(|c| user_canister::ChannelSummary {
+                .map(|c| multi_user_canister::ChannelSummary {
                     channel_id: c.channel_id,
                     read_by_me_up_to: c.messages_read.read_by_me_up_to.value,
                     threads_read: c
@@ -105,8 +105,8 @@ impl Community {
         }
     }
 
-    pub fn to_summary_updates(&self, updates_since: TimestampMillis) -> user_canister::CommunitySummaryUpdates {
-        user_canister::CommunitySummaryUpdates {
+    pub fn to_summary_updates(&self, updates_since: TimestampMillis) -> multi_user_canister::CommunitySummaryUpdates {
+        multi_user_canister::CommunitySummaryUpdates {
             community_id: self.community_id,
             channels: self
                 .channels
@@ -116,7 +116,7 @@ impl Community {
                     // If the channel has just been imported, return all updates
                     let since = if c.imported.unwrap_or_default() > updates_since { 0 } else { updates_since };
 
-                    user_canister::ChannelSummaryUpdates {
+                    multi_user_canister::ChannelSummaryUpdates {
                         channel_id: c.channel_id,
                         read_by_me_up_to: c.messages_read.read_by_me_up_to_updates(since),
                         threads_read: c

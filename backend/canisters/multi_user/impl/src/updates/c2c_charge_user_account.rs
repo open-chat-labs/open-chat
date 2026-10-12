@@ -3,9 +3,9 @@ use crate::{RuntimeState, execute_update_async, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ledger_utils::Payer;
+use multi_user_canister::c2c_charge_user_account::*;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult};
-use user_canister::c2c_charge_user_account::*;
 
 // Users hold their own funds in their own wallets, so they are always charged via ICRC-2: from their
 // wallet, or the external account they are paying from, either of which must have approved this

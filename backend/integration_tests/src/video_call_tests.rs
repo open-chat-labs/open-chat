@@ -181,7 +181,7 @@ fn start_direct_call(
         env,
         VIDEO_CALL_OPERATOR,
         callee.canister_id(),
-        &user_canister::start_video_call_v2::Args {
+        &multi_user_canister::start_video_call_v2::Args {
             user_id: callee,
             message_id: random_from_u128(),
             initiator: caller.user_id,
@@ -500,11 +500,11 @@ mod mixed_releases {
             message_index: 2.into(),
             max_duration: None,
         });
-        let decoded: user_canister::StartVideoCallArgs = msgpack::deserialize_then_unwrap(&old);
+        let decoded: multi_user_canister::StartVideoCallArgs = msgpack::deserialize_then_unwrap(&old);
         assert!(!decoded.audio_only);
 
         // the caller's canister is on the previous release: it records a video call and nothing fails
-        let new = msgpack::serialize_then_unwrap(user_canister::StartVideoCallArgs {
+        let new = msgpack::serialize_then_unwrap(multi_user_canister::StartVideoCallArgs {
             message_id: 1u64.into(),
             message_index: 2.into(),
             max_duration: None,

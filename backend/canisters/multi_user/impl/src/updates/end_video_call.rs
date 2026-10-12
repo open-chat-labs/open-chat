@@ -3,9 +3,9 @@ use crate::timer_job_types::TimerJob;
 use crate::{MultiUserEventPusher, RuntimeState, execute_update};
 use canister_tracing_macros::trace;
 use ic_cdk::update;
+use multi_user_canister::end_video_call_v2::*;
 use oc_error_codes::OCErrorCode;
 use types::{MessageId, OCResult, UserId};
-use user_canister::end_video_call_v2::*;
 
 // As in the User canister, the video call operator ends the call in one user's copy of the chat,
 // naming the user since this canister holds many

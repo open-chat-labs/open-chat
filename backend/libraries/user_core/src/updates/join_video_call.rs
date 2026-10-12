@@ -1,10 +1,10 @@
 use crate::User;
+use multi_user_canister::join_video_call::Args;
 use oc_error_codes::OCErrorCode;
 use types::{
     CallDismissalKind, DirectCallDismissedNotification, DirectChatUserNotificationPayload, OCResult, TimestampMillis, UserId,
     VideoCallPresence,
 };
-use user_canister::join_video_call::Args;
 
 // Records the user joining the call in their chat. On success the caller tells the other user's
 // canister and awards the `JoinedCall` achievement.

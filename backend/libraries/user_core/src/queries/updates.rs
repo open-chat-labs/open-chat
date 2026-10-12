@@ -1,9 +1,9 @@
 use crate::User;
 use crate::queries::{pinned_direct_and_group_chats, sorted_pinned};
 use installed_bots::BotUpdate;
+use multi_user_canister::updates::*;
 use std::collections::HashSet;
 use types::{InstalledBotDetails, OptionUpdate, TimestampMillis, UserId, UserIdAndPrincipal};
-use user_canister::updates::*;
 
 // None if nothing has changed since `updates_since`. `now` is only read once something has,
 // since calling `ic0.time()` stops the query's response being cached.

@@ -1,9 +1,9 @@
 use crate::User;
 use constants::MAX_FAVOURITE_CHATS;
+use multi_user_canister::manage_favourite_chats::Args;
 use oc_error_codes::OCErrorCode;
 use std::collections::HashSet;
 use types::{OCResult, TimestampMillis};
-use user_canister::manage_favourite_chats::Args;
 
 // Adds and removes the given favourite chats, returning true if any were added, which earns the
 // `FavouritedChat` achievement from the caller. Nothing is changed if new favourites would leave the

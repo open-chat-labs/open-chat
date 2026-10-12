@@ -67,8 +67,6 @@ members = [
     "backend/canisters/storage_index/impl",
     "backend/canisters/translations/api",
     "backend/canisters/translations/impl",
-    "backend/canisters/user/api",
-    "backend/canisters/user/c2c_client",
     "backend/canisters/user_index/api",
     "backend/canisters/user_index/c2c_client",
     "backend/canisters/user_index/client",

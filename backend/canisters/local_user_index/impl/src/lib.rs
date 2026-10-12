@@ -30,6 +30,7 @@ use local_user_index_canister::{ChildCanisterType, GlobalUser};
 use model::bots_map::BotsMap;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
+use multi_user_canister::LocalUserIndexEvent as UserEvent;
 use oc_error_codes::OCErrorCode;
 use p256_key_pair::P256KeyPair;
 use proof_of_unique_personhood::verify_proof_of_unique_personhood;
@@ -51,7 +52,6 @@ use types::{
     ModerationReferralConfig, Notification, NotificationEnvelope, OCResult, ReferralType, TimestampMillis, Timestamped, UserId,
     UserNotificationEnvelope, UserNotificationPayload, VerifiedCredentialGateArgs,
 };
-use user_canister::LocalUserIndexEvent as UserEvent;
 use user_ids_set::UserIdsSet;
 use user_index_canister::LocalUserIndexEvent as UserIndexEvent;
 use utils::canister;
@@ -398,7 +398,7 @@ impl RuntimeState {
         if self.holds_latest_id_of(user_id) {
             self.push_event_to_user(
                 user_id,
-                UserEvent::OpenChatBotMessageV2(Box::new(user_canister::OpenChatBotMessageV2 {
+                UserEvent::OpenChatBotMessageV2(Box::new(multi_user_canister::OpenChatBotMessageV2 {
                     thread_root_message_id: None,
                     content,
                     mentioned: Vec::new(),
@@ -467,7 +467,7 @@ impl RuntimeState {
         if self.holds_latest_id_of(user_id) {
             self.push_event_to_user(
                 user_id,
-                UserEvent::UserJoinedCommunityOrChannel(Box::new(user_canister::UserJoinedCommunityOrChannel {
+                UserEvent::UserJoinedCommunityOrChannel(Box::new(multi_user_canister::UserJoinedCommunityOrChannel {
                     community_id,
                     local_user_index_canister_id,
                     channels,

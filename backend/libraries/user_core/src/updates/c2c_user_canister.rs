@@ -11,15 +11,15 @@ use chat_events::{
 use direct_chat::{DirectChat, EventsTtlChange, EventsTtlLatestChange};
 use ledger_utils::format_crypto_amount_with_symbol;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
+use multi_user_canister::{
+    C2CReplyContext, DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs,
+    MessageActivity, MessageActivityEvent, P2PSwapStatusChange, SetEventsTtl, TipMessageArgs as C2CTipMessageArgs,
+    ToggleReactionArgs,
+};
 use types::{
     CanisterId, Chat, DirectChatUserNotificationPayload, DirectMessageNotification, DirectMessageTipped,
     DirectReactionAddedNotification, EventIndex, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId,
     MessageIndex, OCResult, OgPreview, P2PSwapStatus, TimestampMillis, UserId, UserType, VideoCallPresence,
-};
-use user_canister::{
-    C2CReplyContext, DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs,
-    MessageActivity, MessageActivityEvent, P2PSwapStatusChange, SetEventsTtl, TipMessageArgs as C2CTipMessageArgs,
-    ToggleReactionArgs,
 };
 use utils::migrated_user_ids::MigratedUserIds;
 

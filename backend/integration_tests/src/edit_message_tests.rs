@@ -57,11 +57,11 @@ fn update_block_level_markdown_succeeds(starting_value: bool) {
 
     let message_id = random_from_u128();
 
-    let user_canister::send_message_v2::Response::Success(send_message_result) = client::user::send_message_v2(
+    let multi_user_canister::send_message_v2::Response::Success(send_message_result) = client::user::send_message_v2(
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id,
@@ -137,7 +137,7 @@ fn edit_thread_reply_in_direct_chat_succeeds() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::edit_message_v2::Args {
+        &multi_user_canister::edit_message_v2::Args {
             user_id: user2.user_id,
             thread_root_message_index: Some(root.message_index),
             message_id,
@@ -149,7 +149,7 @@ fn edit_thread_reply_in_direct_chat_succeeds() {
         },
     );
     assert!(
-        matches!(response, user_canister::edit_message_v2::Response::Success),
+        matches!(response, multi_user_canister::edit_message_v2::Response::Success),
         "{response:?}"
     );
 

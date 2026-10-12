@@ -4,14 +4,14 @@ use chat_events::{
     ValidateNewMessageContentResult,
 };
 use constants::OPENCHAT_BOT_USER_ID;
+use multi_user_canister::c2c_bot_send_message::Args;
+use multi_user_canister::send_message_v2::{self, SuccessResult};
 use oc_error_codes::OCErrorCode;
 use types::{
     BlobReference, BotCaller, BotMessageContext, BotPermissions, DirectChatUserNotificationPayload, DirectMessageNotification,
     EventIndex, EventWrapper, Message, MessageContent, MessageId, MessageIndex, OCResult, OgPreview, SenderContext,
     TimestampMillis, UserId, UserType,
 };
-use user_canister::c2c_bot_send_message::Args;
-use user_canister::send_message_v2::{self, SuccessResult};
 use utils::migrated_user_ids::MigratedUserIds;
 
 // A message from a bot to the user, checked and validated

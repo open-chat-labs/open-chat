@@ -2,8 +2,8 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::c2c_game_chit::{Response::*, *};
 use oc_error_codes::OCErrorCode;
-use user_canister::c2c_game_chit::{Response::*, *};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]

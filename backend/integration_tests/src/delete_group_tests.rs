@@ -25,11 +25,11 @@ fn delete_group_succeeds() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_group::Args { chat_id: group_id },
+        &multi_user_canister::delete_group::Args { chat_id: group_id },
     );
 
     assert!(
-        matches!(delete_group_response, user_canister::delete_group::Response::Success),
+        matches!(delete_group_response, multi_user_canister::delete_group::Response::Success),
         "{delete_group_response:?}",
     );
 
@@ -67,10 +67,10 @@ fn events_queued_for_a_deleted_group_are_dropped() {
         env,
         user.principal,
         user.canister(),
-        &user_canister::delete_group::Args { chat_id: group_id },
+        &multi_user_canister::delete_group::Args { chat_id: group_id },
     );
     assert!(
-        matches!(delete_group_response, user_canister::delete_group::Response::Success),
+        matches!(delete_group_response, multi_user_canister::delete_group::Response::Success),
         "{delete_group_response:?}",
     );
     wait_for_deleted_canister_to_be_uninstalled(env, group_id.into());
@@ -105,11 +105,11 @@ fn user_canister_notified_of_group_deleted() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_group::Args { chat_id: group_id },
+        &multi_user_canister::delete_group::Args { chat_id: group_id },
     );
 
     assert!(
-        matches!(delete_group_response, user_canister::delete_group::Response::Success),
+        matches!(delete_group_response, multi_user_canister::delete_group::Response::Success),
         "{delete_group_response:?}",
     );
 

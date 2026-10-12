@@ -3,9 +3,9 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ledger_utils::{Payer, deposit_to_accept_p2p_swap};
+use multi_user_canister::c2c_accept_p2p_swap::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult, TimestampMillis};
-use user_canister::c2c_accept_p2p_swap::{Response::*, *};
 use user_core::updates::c2c_accept_p2p_swap::{deposited, prepare};
 
 // The User canister's `c2c_accept_p2p_swap`, by which a group or community has the user deposit

@@ -3,8 +3,8 @@ use crate::{RuntimeState, mutate_state, read_state};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{PlatformModeratorStatusChanged, UserIndexEvent};
+use multi_user_canister::c2c_grant_super_admin;
 use types::UserId;
-use user_canister::c2c_grant_super_admin;
 use user_index_canister::add_platform_moderator::{Response::*, *};
 
 #[proposal(guard = "caller_is_governance_principal")]
@@ -15,7 +15,7 @@ async fn add_platform_moderator(args: Args) -> Response {
     }
 
     let c2c_args = c2c_grant_super_admin::Args { user_id: args.user_id };
-    match user_canister_c2c_client::c2c_grant_super_admin(args.user_id.canister_id(), &c2c_args).await {
+    match multi_user_canister_c2c_client::c2c_grant_super_admin(args.user_id.canister_id(), &c2c_args).await {
         Ok(_) => {
             mutate_state(|state| commit(args.user_id, state));
             Success

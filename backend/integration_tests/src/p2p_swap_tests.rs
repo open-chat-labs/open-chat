@@ -37,7 +37,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id,
@@ -61,7 +61,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_v2::Response::TransferSuccessV2(_)
+        multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
     wait_for_direct_chat(env, &user2, user1.user_id);
@@ -70,7 +70,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
         env,
         user2.principal,
         user2.canister(),
-        &user_canister::accept_p2p_swap::Args {
+        &multi_user_canister::accept_p2p_swap::Args {
             user_id: user1.user_id,
             thread_root_message_index: None,
             message_id,
@@ -81,7 +81,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
 
     assert!(matches!(
         accept_offer_response,
-        user_canister::accept_p2p_swap::Response::Success(_)
+        multi_user_canister::accept_p2p_swap::Response::Success(_)
     ));
 
     tick_many(env, 10);
@@ -268,7 +268,7 @@ fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id,
@@ -292,7 +292,7 @@ fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_v2::Response::TransferSuccessV2(_)
+        multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
     wait_for_direct_chat(env, &user2, user1.user_id);
@@ -301,7 +301,7 @@ fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
         env,
         user2.principal,
         user2.canister(),
-        &user_canister::accept_p2p_swap::Args {
+        &multi_user_canister::accept_p2p_swap::Args {
             user_id: user1.user_id,
             thread_root_message_index: None,
             message_id,
@@ -312,7 +312,7 @@ fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
 
     assert!(matches!(
         accept_offer_response,
-        user_canister::accept_p2p_swap::Response::Success(_)
+        multi_user_canister::accept_p2p_swap::Response::Success(_)
     ));
 
     tick_many(env, 10);
@@ -489,7 +489,7 @@ fn p2p_swap_from_own_account_is_rejected() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),
@@ -513,7 +513,7 @@ fn p2p_swap_from_own_account_is_rejected() {
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_v2::Response::Error(_)
+        multi_user_canister::send_message_v2::Response::Error(_)
     ));
 }
 
@@ -541,7 +541,7 @@ fn accept_p2p_swap_from_own_account_is_rejected() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id,
@@ -569,7 +569,7 @@ fn accept_p2p_swap_from_own_account_is_rejected() {
         env,
         user2.principal,
         user2.canister(),
-        &user_canister::accept_p2p_swap::Args {
+        &multi_user_canister::accept_p2p_swap::Args {
             user_id: user1.user_id,
             thread_root_message_index: None,
             message_id,
@@ -580,7 +580,7 @@ fn accept_p2p_swap_from_own_account_is_rejected() {
 
     assert!(matches!(
         accept_offer_response,
-        user_canister::accept_p2p_swap::Response::Error(_)
+        multi_user_canister::accept_p2p_swap::Response::Error(_)
     ));
 }
 
@@ -609,7 +609,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id,
@@ -633,7 +633,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_v2::Response::TransferSuccessV2(_)
+        multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
     // user2's canister ignores the escrow canister's notification of the cancellation if it arrives
@@ -645,7 +645,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
             env,
             user1.principal,
             user1.canister(),
-            &user_canister::delete_messages::Args {
+            &multi_user_canister::delete_messages::Args {
                 user_id: user2.user_id,
                 thread_root_message_index: None,
                 message_ids: vec![message_id],
@@ -654,7 +654,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
 
         assert!(matches!(
             delete_message_response,
-            user_canister::delete_messages::Response::Success
+            multi_user_canister::delete_messages::Response::Success
         ));
 
         env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS));
@@ -663,7 +663,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
             env,
             user1.principal,
             user1.canister(),
-            &user_canister::cancel_p2p_swap::Args {
+            &multi_user_canister::cancel_p2p_swap::Args {
                 user_id: user2.user_id,
                 message_id,
             },
@@ -671,7 +671,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
 
         assert!(matches!(
             cancel_swap_response,
-            user_canister::cancel_p2p_swap::Response::Success
+            multi_user_canister::cancel_p2p_swap::Response::Success
         ));
     }
 
@@ -849,7 +849,7 @@ fn deposit_refunded_if_swap_expires() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id,
@@ -873,7 +873,7 @@ fn deposit_refunded_if_swap_expires() {
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_v2::Response::TransferSuccessV2(_)
+        multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
     // Let the offer reach user2's canister before jumping ahead, else the call delivering it, which
@@ -1030,7 +1030,7 @@ fn p2p_swap_rejected_for_non_diamond_user() {
         env,
         user.principal,
         user.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: diamond_user.user_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),
@@ -1044,7 +1044,7 @@ fn p2p_swap_rejected_for_non_diamond_user() {
         },
     );
     assert!(
-        matches!(&direct_response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
+        matches!(&direct_response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
         "{direct_response:?}"
     );
 
@@ -1165,7 +1165,7 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
                 env,
                 user1.principal,
                 user1.canister(),
-                &user_canister::send_message_v2::Args {
+                &multi_user_canister::send_message_v2::Args {
                     recipient: user2.user_id,
                     thread_root_message_index: None,
                     message_id,
@@ -1179,7 +1179,7 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
                 },
             );
             assert!(
-                matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+                matches!(response, multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)),
                 "{response:?}"
             );
             (Chat::Direct(user2.user_id.into()), user1.canister())
@@ -1336,7 +1336,7 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
                 env,
                 user2.principal,
                 user2.canister(),
-                &user_canister::accept_p2p_swap::Args {
+                &multi_user_canister::accept_p2p_swap::Args {
                     user_id: user1.user_id,
                     thread_root_message_index: None,
                     message_id,
@@ -1345,7 +1345,7 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
                 },
             );
             assert!(
-                matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
+                matches!(response, multi_user_canister::accept_p2p_swap::Response::Success(_)),
                 "{response:?}"
             );
         }

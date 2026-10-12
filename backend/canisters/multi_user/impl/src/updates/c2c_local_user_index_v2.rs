@@ -2,8 +2,8 @@ use crate::guards::caller_is_local_user_index;
 use crate::{RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use user_canister::c2c_local_user_index_v2::*;
-use user_canister::{LocalUserIndexEvent, SetReferralStatusV2, UserCanisterEvent};
+use multi_user_canister::c2c_local_user_index_v2::*;
+use multi_user_canister::{LocalUserIndexEvent, SetReferralStatusV2, UserCanisterEvent};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]

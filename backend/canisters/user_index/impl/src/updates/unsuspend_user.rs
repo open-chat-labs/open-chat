@@ -33,12 +33,12 @@ fn caller_is(user_id: &UserId, state: &RuntimeState) -> bool {
 }
 
 pub(crate) async fn unsuspend_user_impl(user_id: UserId) -> Response {
-    let c2c_args = user_canister::c2c_set_user_suspended::Args {
+    let c2c_args = multi_user_canister::c2c_set_user_suspended::Args {
         user_id,
         suspended: false,
     };
-    match user_canister_c2c_client::c2c_set_user_suspended(user_id.canister_id(), &c2c_args).await {
-        Ok(user_canister::c2c_set_user_suspended::Response::Success(result)) => {
+    match multi_user_canister_c2c_client::c2c_set_user_suspended(user_id.canister_id(), &c2c_args).await {
+        Ok(multi_user_canister::c2c_set_user_suspended::Response::Success(result)) => {
             mutate_state(|state| commit(user_id, result.groups, result.communities, state));
             Success
         }

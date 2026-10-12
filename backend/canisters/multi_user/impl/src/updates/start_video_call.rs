@@ -4,11 +4,11 @@ use crate::{MultiUserEventPusher, RuntimeState, execute_update};
 use canister_tracing_macros::trace;
 use constants::HOUR_IN_MS;
 use ic_cdk::update;
+use multi_user_canister::start_video_call_v2::*;
+use multi_user_canister::{StartVideoCallArgs, UserCanisterEvent};
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{CallKind, MessageId, MessageIndex, Milliseconds, OCResult, UserId};
-use user_canister::start_video_call_v2::*;
-use user_canister::{StartVideoCallArgs, UserCanisterEvent};
 use user_core::updates::start_video_call::{Started, notification, prepare};
 
 // As in the User canister, the video call operator starts the call in the callee's copy of the

@@ -1,11 +1,11 @@
 use crate::User;
 use chat_events::{CallParticipantInternal, EventPusher, MessageContentInternal, PushMessageArgs, VideoCallContentInternal};
+use multi_user_canister::start_video_call_v2::Args;
 use oc_error_codes::OCErrorCode;
 use types::{
     CallFacts, CallKind, DirectChatUserNotificationPayload, DirectMessageNotification, EventWrapper, Message, MessageId,
     MessageIndex, OCResult, TimestampMillis, UserId, UserType, VideoCallPresence, VideoCallType,
 };
-use user_canister::start_video_call_v2::Args;
 
 // Checks the user may be called by the initiator, returning the kind of call
 pub fn prepare(user: &User, my_user_id: UserId, args: &Args) -> OCResult<CallKind> {

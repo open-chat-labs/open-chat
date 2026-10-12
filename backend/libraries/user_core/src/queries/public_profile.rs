@@ -1,5 +1,5 @@
 use crate::User;
-use user_canister::public_profile::PublicProfile;
+use multi_user_canister::public_profile::PublicProfile;
 
 pub fn public_profile(user: &User) -> PublicProfile {
     PublicProfile {

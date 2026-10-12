@@ -4,6 +4,7 @@ use crate::utils::now_nanos;
 use crate::{TestEnv, client};
 use constants::{ICP_SYMBOL, ICP_TRANSFER_FEE, MINUTE_IN_MS};
 use ledger_utils::create_pending_transaction;
+use multi_user_canister::set_pin_number::PinNumberVerification;
 use oc_error_codes::OCErrorCode;
 use rand::random;
 use std::ops::Deref;
@@ -12,7 +13,6 @@ use std::time::Duration;
 use test_case::test_case;
 use testing::rng::random_from_u128;
 use types::{CryptoContent, CryptoTransaction, MessageContentInitial};
-use user_canister::set_pin_number::PinNumberVerification;
 
 #[test]
 fn can_set_pin_number_by_providing_current() {
@@ -61,7 +61,7 @@ fn can_set_pin_number_by_reauthenticating(within_5_minutes: bool) {
         env,
         user.principal,
         user.canister(),
-        &user_canister::set_pin_number::Args {
+        &multi_user_canister::set_pin_number::Args {
             new: None,
             verification: PinNumberVerification::Reauthenticated(prepare_delegation_response.proof_jwt),
         },
@@ -72,13 +72,13 @@ fn can_set_pin_number_by_reauthenticating(within_5_minutes: bool) {
     if within_5_minutes {
         assert!(matches!(
             set_pin_number_response,
-            user_canister::set_pin_number::Response::Success
+            multi_user_canister::set_pin_number::Response::Success
         ));
         assert!(initial_state2.pin_number_settings.is_none());
     } else {
         assert!(matches!(
             set_pin_number_response,
-            user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::InvalidSignature)
+            multi_user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::InvalidSignature)
         ));
         assert!(initial_state2.pin_number_settings.is_some());
     }
@@ -98,7 +98,7 @@ fn attempts_blocked_after_incorrect_attempts() {
             env,
             user.principal,
             user.canister(),
-            &user_canister::set_pin_number::Args {
+            &multi_user_canister::set_pin_number::Args {
                 verification: PinNumberVerification::PIN(format!("100{i}").into()),
                 new: Some("2000".to_string().into()),
             },
@@ -107,19 +107,19 @@ fn attempts_blocked_after_incorrect_attempts() {
         match i {
             1 | 2 => {
                 assert!(
-                    matches!(response, user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect) && e.message().unwrap() == "0")
+                    matches!(response, multi_user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect) && e.message().unwrap() == "0")
                 )
             }
             3 => {
                 assert!(matches!(
                     response,
-                    user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect) && u32::from_str(e.message().unwrap()).unwrap() > 0
+                    multi_user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect) && u32::from_str(e.message().unwrap()).unwrap() > 0
                 ));
             }
             _ => {
                 assert!(matches!(
                     response,
-                    user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::TooManyFailedPinAttempts) && u32::from_str(e.message().unwrap()).unwrap() > 0
+                    multi_user_canister::set_pin_number::Response::Error(e) if e.matches_code(OCErrorCode::TooManyFailedPinAttempts) && u32::from_str(e.message().unwrap()).unwrap() > 0
                 ));
             }
         }
@@ -182,7 +182,7 @@ fn transfer_requires_correct_pin(test_case: u32) {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),
@@ -204,13 +204,13 @@ fn transfer_requires_correct_pin(test_case: u32) {
     match test_case {
         1 => assert!(matches!(
             response,
-            user_canister::send_message_v2::Response::TransferSuccessV2(_)
+            multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)
         )),
         2 => assert!(
-            matches!(response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect))
+            matches!(response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::PinIncorrect))
         ),
         3 => assert!(
-            matches!(response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::PinRequired))
+            matches!(response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::PinRequired))
         ),
         _ => unreachable!(),
     }

@@ -1,8 +1,8 @@
 use crate::{RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::c2c_remove_from_community::*;
 use types::UserId;
-use user_canister::c2c_remove_from_community::*;
 
 #[update(msgpack = true)]
 #[trace]

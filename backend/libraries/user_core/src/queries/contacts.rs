@@ -1,5 +1,5 @@
 use crate::User;
-use user_canister::contacts::{Contact, SuccessResult};
+use multi_user_canister::contacts::{Contact, SuccessResult};
 
 pub fn contacts(user: &User) -> SuccessResult {
     SuccessResult {
