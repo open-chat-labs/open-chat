@@ -217,6 +217,7 @@ import type {
     WaitAllResult,
     WalletConfig,
     WithdrawBtcResponse,
+    WithdrawViaOneSecResponse,
     WithdrawCryptocurrencyResponse,
     VaultFileChunkResponse,
     VaultFileInfoResponse,
@@ -244,6 +245,7 @@ import {
     Lazy,
     MAX_ACTIVITY_EVENTS,
     ONE_MINUTE_MILLIS,
+    ONE_SEC_TOKENS,
     Stream,
     SyncHeadMoved,
     UnsupportedValueError,
@@ -5552,23 +5554,58 @@ export class OpenChatAgent extends EventTarget {
         return false;
     }
 
-    withdrawBtc(
+    // Withdraws BTC straight from the user's wallet, as the user, since their canister can't spend
+    // from it. The ckBTC minter is approved to burn `amount` of ckBTC from the wallet, then sends
+    // that much BTC, less its fees, to `address`. `pin` is checked before the approval (see
+    // `approveToPull`).
+    async withdrawBtc(
         address: string,
         amount: bigint,
         pin: string | undefined,
     ): Promise<WithdrawBtcResponse> {
-        return this.userClient.withdrawBtc(address, amount, pin);
+        const minter = this._ckbtcMinterClient.get();
+        const error = await this.approveToPull(
+            { owner: Principal.fromText(minter.canisterId) },
+            minter.ledger,
+            amount,
+            this.ledgerFee(minter.ledger),
+            pin,
+        );
+        if (error !== undefined) {
+            return error;
+        }
+        return minter.retrieveBtcWithApproval(address, amount);
     }
 
-    withdrawViaOneSec(
+    // Withdraws a token to an EVM chain via OneSec straight from the user's wallet, as the user, since
+    // their canister can't spend from it. OneSec is approved to take `amount` of the token from the
+    // wallet, then sends that much, less its fees, to `address` on `chain`. `pin` is checked before
+    // the approval (see `approveToPull`).
+    async withdrawViaOneSec(
         ledger: string,
         tokenSymbol: string,
         chain: EvmChain,
         address: string,
         amount: bigint,
         pin: string | undefined,
-    ) {
-        return this.userClient.withdrawViaOneSec(ledger, tokenSymbol, chain, address, amount, pin);
+    ): Promise<WithdrawViaOneSecResponse> {
+        if (!ONE_SEC_TOKENS.includes(tokenSymbol)) {
+            return { kind: "error", code: ErrorCode.CurrencyNotSupported, message: undefined };
+        }
+
+        const minter = this._oneSecMinterClient.get();
+        const error = await this.approveToPull(
+            { owner: Principal.fromText(minter.canisterId) },
+            ledger,
+            amount,
+            this.ledgerFee(ledger),
+            pin,
+        );
+        if (error !== undefined) {
+            return error;
+        }
+        const wallet = this.walletAccount(this._userClient.userId);
+        return minter.transferIcpToEvm(tokenSymbol, chain, address, wallet, amount);
     }
 
     getCkbtcMinterDepositInfo(): Promise<CkbtcMinterDepositInfo> {

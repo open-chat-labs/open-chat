@@ -30,7 +30,6 @@ import type {
     EditMessageResponse,
     EventsResponse,
     EventWrapper,
-    EvmChain,
     ExchangeTokenSwapArgs,
     GrantedBotPermissions,
     GroupChatIdentifier,
@@ -72,9 +71,7 @@ import type {
     Verification,
     VideoCallPresence,
     WalletConfig,
-    WithdrawBtcResponse,
     WithdrawCryptocurrencyResponse,
-    WithdrawViaOneSecResponse,
     OCError,
     Success,
 } from "@shared";
@@ -558,25 +555,6 @@ export class AnonUserClient implements IChatEventsReader<DirectChatIdentifier> {
     }
 
     updateBtcBalance(): Promise<boolean> {
-        throw new AnonymousOperationError();
-    }
-
-    withdrawBtc(
-        _address: string,
-        _amount: bigint,
-        _pin: string | undefined,
-    ): Promise<WithdrawBtcResponse> {
-        throw new AnonymousOperationError();
-    }
-
-    withdrawViaOneSec(
-        _ledger: string,
-        _tokenSymbol: string,
-        _chain: EvmChain,
-        _address: string,
-        _amount: bigint,
-        _pin: string | undefined,
-    ): Promise<WithdrawViaOneSecResponse> {
         throw new AnonymousOperationError();
     }
 

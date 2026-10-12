@@ -2,24 +2,35 @@ import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { CandidCanisterAgent } from "../canisterAgent/candid";
 import { idlFactory, type CkbtcMinterService } from "./candid/idl";
 import { utxo } from "../bitcoin/mappers";
-import type { CkbtcMinterDepositInfo, CkbtcMinterWithdrawalInfo, IcrcAccount, Utxo } from "@shared";
+import {
+    type CkbtcMinterDepositInfo,
+    type CkbtcMinterWithdrawalInfo,
+    type IcrcAccount,
+    LEDGER_CANISTER_CKBTC,
+    type Utxo,
+    type WithdrawBtcResponse,
+} from "@shared";
 import { identity } from "../../utils/mapping";
 import { apiIcrcAccount } from "../../utils/icrcAccount";
+import { retrieveBtcWithApprovalResponse } from "./mappers";
 
 const MAINNET_CKBTC_MINTER_CANISTER_ID = "mqygn-kiaaa-aaaar-qaadq-cai";
 const TESTNET_CKBTC_MINTER_CANISTER_ID = "ml52i-qqaaa-aaaar-qaaba-cai";
+const TESTNET_CKBTC_LEDGER_CANISTER_ID = "mc6ru-gyaaa-aaaar-qaaaq-cai";
 
 export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
     #cachedMinterInfo: CkbtcMinterInfo | undefined;
+    // The minter, and the ledger of the ckBTC it mints and burns
+    readonly canisterId: string;
+    readonly ledger: string;
 
     constructor(identity: Identity, agent: HttpAgent, mainnetEnabled: boolean) {
-        super(
-            identity,
-            agent,
-            mainnetEnabled ? MAINNET_CKBTC_MINTER_CANISTER_ID : TESTNET_CKBTC_MINTER_CANISTER_ID,
-            idlFactory,
-            "CkbtcMinter",
-        );
+        const canisterId = mainnetEnabled
+            ? MAINNET_CKBTC_MINTER_CANISTER_ID
+            : TESTNET_CKBTC_MINTER_CANISTER_ID;
+        super(identity, agent, canisterId, idlFactory, "CkbtcMinter");
+        this.canisterId = canisterId;
+        this.ledger = mainnetEnabled ? LEDGER_CANISTER_CKBTC : TESTNET_CKBTC_LEDGER_CANISTER_ID;
     }
 
     getKnownUtxos(account: IcrcAccount): Promise<Utxo[]> {
@@ -71,6 +82,17 @@ export class CkbtcMinterClient extends CandidCanisterAgent<CkbtcMinterService> {
             minWithdrawalAmount,
             feeEstimate,
         };
+    }
+
+    // Has the minter burn `amount` of ckBTC from the caller's wallet, which they have approved it to
+    // take, and send that much BTC, less its fees, to `address`
+    retrieveBtcWithApproval(address: string, amount: bigint): Promise<WithdrawBtcResponse> {
+        const args = { address, amount, from_subaccount: [] as [] };
+        return this.handleResponse(
+            this.service.retrieve_btc_with_approval(args),
+            retrieveBtcWithApprovalResponse,
+            args,
+        );
     }
 
     private estimateWithdrawalFee(amount: bigint | undefined): Promise<bigint> {

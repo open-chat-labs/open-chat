@@ -109,6 +109,20 @@ export const idlFactory = ({ IDL }) => {
     'protocol_fee_in_percent' : IDL.Float64,
     'destination_token' : IDL.Opt(Token),
   });
+  const TransferIcpToEvmArg = IDL.Record({
+    'token' : Token,
+    'evm_account' : EvmAccount,
+    'icp_account' : IcpAccount,
+    'evm_chain' : EvmChain,
+    'evm_amount' : IDL.Opt(IDL.Nat),
+    'icp_amount' : IDL.Nat,
+  });
+  const FetchedBlock = IDL.Record({ 'block_height' : IDL.Nat64 });
+  const TransferResponse = IDL.Variant({
+    'Failed' : ErrorMessage,
+    'Accepted' : TransferId,
+    'Fetching' : FetchedBlock,
+  });
   return IDL.Service({
     'forward_evm_to_icp' : IDL.Func(
         [ForwardEvmToIcpArg],
@@ -126,6 +140,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'get_transfer_fees' : IDL.Func([], [IDL.Vec(TransferFee)], ['query']),
+    'transfer_icp_to_evm' : IDL.Func(
+        [TransferIcpToEvmArg],
+        [TransferResponse],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => { return []; };

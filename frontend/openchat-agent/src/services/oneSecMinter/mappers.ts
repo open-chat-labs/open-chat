@@ -5,11 +5,14 @@ import type {
     ApiForwardingResponse,
     ApiToken,
     ApiTransferFee,
+    ApiTransferIcpToEvmArg,
+    ApiTransferResponse,
 } from "./candid/idl";
 import {
     ARBITRUM_NETWORK,
     BASE_NETWORK,
     type Chain,
+    ErrorCode,
     ETHEREUM_NETWORK,
     type EvmChain,
     type IcrcAccount,
@@ -19,6 +22,7 @@ import {
     UnsupportedValueError,
     USDC_SYMBOL,
     USDT_SYMBOL,
+    type WithdrawViaOneSecResponse,
 } from "@shared";
 import { identity, optional } from "../../utils/mapping";
 import { apiIcrcAccount } from "../../utils/icrcAccount";
@@ -68,6 +72,33 @@ export function apiForwardEvmToIcpArgs(
         address,
         receiver: { ICRC: apiIcrcAccount(receiver) },
     };
+}
+
+export function apiTransferIcpToEvmArgs(
+    tokenSymbol: string,
+    chain: EvmChain,
+    address: string,
+    sender: IcrcAccount,
+    amount: bigint,
+): ApiTransferIcpToEvmArg {
+    return {
+        token: apiToken(tokenSymbol),
+        evm_chain: apiEvmChain(chain),
+        evm_account: { address },
+        icp_account: { ICRC: apiIcrcAccount(sender) },
+        icp_amount: amount,
+        evm_amount: [],
+    };
+}
+
+// The minter only fetches a transfer's block for one from EVM to ICP, so an ICP to EVM transfer is
+// either accepted or has failed
+export function transferIcpToEvmResponse(candid: ApiTransferResponse): WithdrawViaOneSecResponse {
+    if ("Accepted" in candid) {
+        return { kind: "success" };
+    }
+    const message = "Failed" in candid ? candid.Failed.error : "Unexpected response: Fetching";
+    return { kind: "error", code: ErrorCode.TransferFailed, message };
 }
 
 export function transferFeesResponse(candid: ApiTransferFee[]): OneSecTransferFees[] {

@@ -1,5 +1,6 @@
 import { AnonymousIdentity, HttpAgent } from "@icp-sdk/core/agent";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { ErrorCode } from "@shared";
 import { CkbtcMinterClient } from "./ckbtcMinter.client";
 
 const MIN_WITHDRAWAL = 50_000n;
@@ -76,5 +77,49 @@ describe("CkbtcMinterClient.getWithdrawalInfo", () => {
         const rejected = expect(info).rejects.toThrow("cannot currently process");
         await vi.runAllTimersAsync();
         await rejected;
+    });
+});
+
+describe("CkbtcMinterClient.retrieveBtcWithApproval", () => {
+    function minterResponding(response: unknown) {
+        const client = new CkbtcMinterClient(
+            new AnonymousIdentity(),
+            HttpAgent.createSync({ host: "http://localhost" }),
+            true,
+        );
+        const calls: unknown[] = [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (client as any).service = {
+            retrieve_btc_with_approval: (args: unknown) => {
+                calls.push(args);
+                return Promise.resolve(response);
+            },
+        };
+        return { client, calls };
+    }
+
+    test("burns from the caller's default account", async () => {
+        const { client, calls } = minterResponding({ Ok: { block_index: 7n } });
+
+        const response = await client.retrieveBtcWithApproval("bc1qaddress", 60_000n);
+
+        expect(response).toEqual({ kind: "success" });
+        expect(calls).toEqual([{ address: "bc1qaddress", amount: 60_000n, from_subaccount: [] }]);
+    });
+
+    test("maps the minter's errors", async () => {
+        const insufficient = minterResponding({ Err: { InsufficientFunds: { balance: 5n } } });
+        const tooLow = minterResponding({ Err: { AmountTooLow: 50_000n } });
+
+        expect(await insufficient.client.retrieveBtcWithApproval("bc1q", 60_000n)).toEqual({
+            kind: "error",
+            code: ErrorCode.InsufficientFunds,
+            message: undefined,
+        });
+        expect(await tooLow.client.retrieveBtcWithApproval("bc1q", 10n)).toEqual({
+            kind: "error",
+            code: ErrorCode.Unknown,
+            message: '{"AmountTooLow":"50000"}',
+        });
     });
 });

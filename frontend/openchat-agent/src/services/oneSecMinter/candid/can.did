@@ -55,6 +55,45 @@ type Tx = variant {
     Icp : IcpTx
 };
 
+/// The argument of the `transfer_icp_to_evm` endpoint.
+/// Specifies tokens being sent and received.
+type TransferIcpToEvmArg = record {
+    /// The token being transferred.
+    token : Token;
+    /// The sender on the ICP side.
+    icp_account : IcpAccount;
+    /// The amount of tokens being sent.
+    /// It is represented in the smallest units of the token.
+    icp_amount : nat;
+    /// The destination EVM chain.
+    evm_chain : EvmChain;
+    /// The receiver on the EVM side.
+    evm_account : EvmAccount;
+    /// The amount that the user has agreed to receive.
+    /// The actual amount of received tokens may be higher
+    /// depending on the current transaction fees.
+    /// It is represented in the smallest units of the token.
+    evm_amount : opt nat
+};
+
+/// A result of the `transfer_icp_to_evm` endpoint.
+type TransferResponse = variant {
+    /// The transfer has been started and has the given id.
+    Accepted : TransferId;
+
+    /// The EVM to ICP transfer has not been detected yet.
+    /// `FetchedBlock` shows the last processed block
+    /// and can be used to estimate progress.
+    Fetching : FetchedBlock;
+
+    /// The transfer has failed.
+    Failed : ErrorMessage
+};
+
+type FetchedBlock = record {
+    block_height : nat64
+};
+
 /// The argument of the `forward_evm_to_icp` endpoint.
 /// Specifies that the given tokens have been transferred to the given
 /// forwarding address and are ready to be transferred from EVM To ICP.
@@ -205,6 +244,21 @@ service : {
     /////////////////////////////////////////////////////
     /// Cross-chain token transfer (bridging) operations
     /////////////////////////////////////////////////////
+
+    /// Starts a transfer of tokens from ICP to EVM.
+    ///
+    /// The transfer is performed from an ICRC2 ledger on ICP to the
+    /// corresponding ERC20 contract on EVM.
+    ///
+    /// Preconditions:
+    /// - The principal of the caller must match the principal of the sender.
+    /// - The caller has approved the transfer on the ICRC2 ledger using
+    ///   `icrc2_approve` and specifying this canister as the spender.
+    ///   The approval is not needed for tokens that are minted by this
+    ///   canister.
+    /// - The transfer amount is within the `[min_amount..max_amount]`
+    ///   range that can be queries via `get_transfer_fees()`.
+    transfer_icp_to_evm : (TransferIcpToEvmArg) -> (TransferResponse);
 
     /// Starts a transfer of tokens from EVM to ICP using a forwarding address.
     /// To get the lowest latency, call this endpoint after tokens have been

@@ -41,7 +41,6 @@ import {
     type EditMessageResponse,
     type EventsResponse,
     type EventWrapper,
-    type EvmChain,
     type ExchangeTokenSwapArgs,
     type GrantedBotPermissions,
     type GroupChatIdentifier,
@@ -84,9 +83,7 @@ import {
     type UpdatesResponse,
     type Verification,
     type WalletConfig,
-    type WithdrawBtcResponse,
     type WithdrawCryptocurrencyResponse,
-    type WithdrawViaOneSecResponse,
 } from "@shared";
 import type { AgentConfig } from "../../config";
 import {
@@ -187,11 +184,8 @@ import {
     UserUpdateChatSettingsArgs,
     UserUpdatesArgs,
     UserUpdatesResponse,
-    UserWithdrawBtcArgs,
-    UserWithdrawBtcResponse,
     UserWithdrawCryptoArgs,
     UserWithdrawCryptoResponse,
-    UserWithdrawViaOneSecArgs,
 } from "../../typebox";
 import type { ChatsDb } from "../../utils/chatsDb";
 import {
@@ -1679,48 +1673,6 @@ export class UserClient
             { user_id: principalStringToBytes(this.userId) },
             isSuccess,
             UserUpdateBtcBalanceArgs,
-            UnitResult,
-        );
-    }
-
-    withdrawBtc(
-        address: string,
-        amount: bigint,
-        pin: string | undefined,
-    ): Promise<WithdrawBtcResponse> {
-        return this.update(
-            "withdraw_btc",
-            {
-                address,
-                amount,
-                pin,
-            },
-            unitResult,
-            UserWithdrawBtcArgs,
-            UserWithdrawBtcResponse,
-        );
-    }
-
-    withdrawViaOneSec(
-        ledger: string,
-        tokenSymbol: string,
-        chain: EvmChain,
-        address: string,
-        amount: bigint,
-        pin: string | undefined,
-    ): Promise<WithdrawViaOneSecResponse> {
-        return this.update(
-            "withdraw_via_one_sec",
-            {
-                ledger_canister_id: principalStringToBytes(ledger),
-                token_symbol: tokenSymbol,
-                evm_chain: chain,
-                address,
-                amount,
-                pin,
-            },
-            unitResult,
-            UserWithdrawViaOneSecArgs,
             UnitResult,
         );
     }
