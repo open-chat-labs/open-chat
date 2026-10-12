@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.2136](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2136-multi_user)] - 2026-10-12
+
 ### Changed
 
 - Pass on the new `tip_messages` permission when creating a group ([#9902](https://github.com/open-chat-labs/open-chat/pull/9902))
