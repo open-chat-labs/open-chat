@@ -669,6 +669,7 @@
                     <AlertBox>
                         <span use:translatable={{ key: i18nKey("notWalletAddressesWarning") }}
                             >{addressesWarning.before}{#if addressesWarning.link}<Link
+                                    underline={"always"}
                                     onClick={() => publish("wallet")}
                                     >{addressesWarning.link}</Link
                                 >{/if}{addressesWarning.after}</span>
