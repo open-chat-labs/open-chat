@@ -125,6 +125,103 @@ fn frozen_group_rejects_updates_other_than_those_exempted() {
     client::group::happy_path::send_text_message(env, &user2, group_id, None, "hello", None);
 }
 
+// A group frozen by a platform moderator still applies the changes other canisters send it to keep
+// it in step, such as its verification, which the GroupIndex passes on via its LocalUserIndex
+#[test]
+fn frozen_group_still_applies_changes_from_other_canisters() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        group_id,
+        group_name,
+    } = init_test_data(env, canister_ids, *controller);
+
+    client::group_index::freeze_group(
+        env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::freeze_group::Args {
+            chat_id: group_id,
+            reason: None,
+            suspend_members: None,
+        },
+    );
+
+    client::group_index::happy_path::set_group_verification(env, *controller, canister_ids.group_index, group_id, group_name);
+
+    let verified = wait_until(env, |env| client::group::happy_path::summary(env, user2.principal, group_id).verified);
+    assert!(verified, "the frozen group never applied its verification");
+
+    let summary = client::group::happy_path::summary(env, user2.principal, group_id);
+    assert!(summary.frozen.is_some());
+}
+
+#[test]
+fn frozen_community_still_applies_changes_from_other_canisters() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user1, user2, .. } = init_test_data(env, canister_ids, *controller);
+
+    let community_name = random_string();
+    let community_id =
+        client::user::happy_path::create_community(env, &user2, &community_name, true, vec!["general".to_string()]);
+
+    let response = client::group_index::freeze_community(
+        env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::freeze_community::Args {
+            community_id,
+            reason: None,
+            suspend_members: None,
+        },
+    );
+    assert!(
+        matches!(response, group_index_canister::freeze_community::Response::Success(_)),
+        "{response:?}"
+    );
+
+    client::group_index::happy_path::set_community_verification(
+        env,
+        *controller,
+        canister_ids.group_index,
+        community_id,
+        community_name,
+    );
+
+    let verified = wait_until(env, |env| client::community::happy_path::summary(env, user2.principal, community_id).verified);
+    assert!(verified, "the frozen community never applied its verification");
+
+    let summary = client::community::happy_path::summary(env, user2.principal, community_id);
+    assert!(summary.frozen.is_some());
+}
+
+// Ticks until `condition` holds, giving up after enough rounds for an event to reach a group or
+// community via its LocalUserIndex, and says whether it held
+fn wait_until(env: &mut PocketIc, condition: impl Fn(&PocketIc) -> bool) -> bool {
+    for _ in 0..30 {
+        if condition(env) {
+            return true;
+        }
+        env.tick();
+    }
+    condition(env)
+}
+
 #[test]
 fn can_only_be_called_by_platform_moderator() {
     let mut wrapper = ENV.deref().get();
