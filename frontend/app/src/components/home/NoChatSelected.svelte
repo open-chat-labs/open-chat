@@ -14,7 +14,7 @@
     import Button from "../Button.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
-    import PreviewWrapper from "./communities/PreviewWrapper.svelte";
+    import { communityPreviewState } from "@src/utils/preview.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -45,38 +45,32 @@
 
 {#if previewingCommunity && $selectedCommunitySummaryStore !== undefined}
     <div class="wrapper community">
-        <PreviewWrapper>
-            {#snippet children(joiningCommunity, joinCommunity)}
-                {#if $selectedCommunitySummaryStore !== undefined}
-                    <CommunityCard
-                        id={$selectedCommunitySummaryStore.id.communityId}
-                        name={$selectedCommunitySummaryStore.name}
-                        description={$selectedCommunitySummaryStore.description}
-                        banner={$selectedCommunitySummaryStore.banner}
-                        memberCount={0}
-                        channelCount={0}
-                        language={$selectedCommunitySummaryStore.primaryLanguage}
-                        flags={0}
-                        header
-                        gateConfig={$selectedCommunitySummaryStore.gateConfig}
-                        avatar={$selectedCommunitySummaryStore.avatar}
-                        verified={$selectedCommunitySummaryStore.verified} />
-                    <div class="join">
-                        <Button
-                            loading={joiningCommunity}
-                            disabled={locked || joiningCommunity}
-                            onClick={joinCommunity}
-                            ><Translatable
-                                resourceKey={locked
-                                    ? i18nKey("access.lockedGate", undefined, "community", true)
-                                    : i18nKey("communities.joinCommunity")} /></Button>
-                        <Button secondary small onClick={cancelPreview}>
-                            <Translatable resourceKey={i18nKey("leave")} />
-                        </Button>
-                    </div>
-                {/if}
-            {/snippet}
-        </PreviewWrapper>
+        <CommunityCard
+            id={$selectedCommunitySummaryStore.id.communityId}
+            name={$selectedCommunitySummaryStore.name}
+            description={$selectedCommunitySummaryStore.description}
+            banner={$selectedCommunitySummaryStore.banner}
+            memberCount={0}
+            channelCount={0}
+            language={$selectedCommunitySummaryStore.primaryLanguage}
+            flags={0}
+            header
+            gateConfig={$selectedCommunitySummaryStore.gateConfig}
+            avatar={$selectedCommunitySummaryStore.avatar}
+            verified={$selectedCommunitySummaryStore.verified} />
+        <div class="join">
+            <Button
+                loading={communityPreviewState.joining}
+                disabled={locked || communityPreviewState.joining}
+                onClick={() => communityPreviewState.joinCommunity(client)}
+                ><Translatable
+                    resourceKey={locked
+                        ? i18nKey("access.lockedGate", undefined, "community", true)
+                        : i18nKey("communities.joinCommunity")} /></Button>
+            <Button secondary small onClick={cancelPreview}>
+                <Translatable resourceKey={i18nKey("leave")} />
+            </Button>
+        </div>
     </div>
 {:else}
     <div class="wrapper">

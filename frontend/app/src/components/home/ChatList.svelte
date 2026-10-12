@@ -43,7 +43,7 @@
     import BrowseChannels from "./communities/details/BrowseChannels.svelte";
     import DirectAndGroupChatsHeader from "./communities/DirectAndGroupChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
-    import PreviewWrapper from "./communities/PreviewWrapper.svelte";
+    import { communityPreviewState } from "@src/utils/preview.svelte";
     import SelectedCommunityHeader from "./communities/SelectedCommunityHeader.svelte";
     import Badges from "./profile/Badges.svelte";
     import SearchResult from "./SearchResult.svelte";
@@ -335,23 +335,18 @@
     </div>
     <ActiveCallSummary />
     {#if showPreview}
-        <PreviewWrapper>
-            {#snippet children(joiningCommunity, joinCommunity)}
-                <div class="join">
-                    <ButtonGroup align="center">
-                        <Button secondary small onClick={cancelPreview}>
-                            <Translatable resourceKey={i18nKey("leave")} />
-                        </Button>
-                        <Button
-                            loading={joiningCommunity}
-                            disabled={joiningCommunity}
-                            onClick={joinCommunity}
-                            ><Translatable
-                                resourceKey={i18nKey("communities.joinCommunity")} /></Button>
-                    </ButtonGroup>
-                </div>
-            {/snippet}
-        </PreviewWrapper>
+        <div class="join">
+            <ButtonGroup align="center">
+                <Button secondary small onClick={cancelPreview}>
+                    <Translatable resourceKey={i18nKey("leave")} />
+                </Button>
+                <Button
+                    loading={communityPreviewState.joining}
+                    disabled={communityPreviewState.joining}
+                    onClick={() => communityPreviewState.joinCommunity(client)}
+                    ><Translatable resourceKey={i18nKey("communities.joinCommunity")} /></Button>
+            </ButtonGroup>
+        </div>
     {/if}
 {/if}
 

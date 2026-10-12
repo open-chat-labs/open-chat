@@ -94,6 +94,7 @@
     import TermsUpdatedModal from "../TermsUpdatedModal.svelte";
     import GateCheckFailed from "./access/AccessGateCheckFailed.svelte";
     import AccessGateEvaluator from "./access/AccessGateEvaluator.svelte";
+    import { communityPreviewState } from "@src/utils/preview.svelte";
     import AnonFooter from "./AnonFooter.svelte";
     import ChitEarned from "./ChitEarned.svelte";
     import HallOfFame from "./ChitHallOfFame.svelte";
@@ -912,10 +913,14 @@
             console.log("We are now logged in so we are closing the register modal");
             closeModal();
         }
-        const postLoginGroup = postLoginJoin($identityStateStore, $chatsInitialisedStore);
-        if (postLoginGroup !== undefined) {
+        const join = postLoginJoin($identityStateStore, $chatsInitialisedStore);
+        if (join !== undefined) {
             client.clearPostLoginState();
-            tick().then(() => joinGroup(postLoginGroup));
+            tick().then(() =>
+                join.kind === "join_group"
+                    ? joinGroup(join.group)
+                    : communityPreviewState.joinCommunity(client, join.community),
+            );
         }
     });
 
@@ -1106,6 +1111,25 @@
 <Convert bind:group={convertGroup} />
 
 <EditLabel />
+
+{#if communityPreviewState.gatesToEvaluate.length > 0}
+    <Overlay dismissible onClose={() => communityPreviewState.reset()}>
+        <AccessGateEvaluator
+            gates={communityPreviewState.gatesToEvaluate}
+            onClose={() => communityPreviewState.reset()}
+            onSuccess={(gateCheck) => communityPreviewState.doJoinCommunity(client, gateCheck)}
+        />
+    </Overlay>
+{/if}
+
+{#if communityPreviewState.gateCheckFailed.length > 0}
+    <Overlay dismissible onClose={() => communityPreviewState.reset()}>
+        <GateCheckFailed
+            onClose={() => communityPreviewState.reset()}
+            gates={communityPreviewState.gateCheckFailed}
+        />
+    </Overlay>
+{/if}
 
 <!-- Not shown while the suspension notice is up: the two would stack, and the notice
      (which also carries the contest affordance) explains the account state first. The gate

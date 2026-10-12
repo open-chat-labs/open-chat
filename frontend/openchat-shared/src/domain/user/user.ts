@@ -1,5 +1,6 @@
 import { type ReadonlyMap } from "../../utils";
 import type { MultiUserChat, PinNumberFailures } from "../chat";
+import type { CommunitySummary } from "../community";
 import type { DataContent } from "../data/data";
 import type { OCError } from "../error";
 import type {
@@ -160,6 +161,7 @@ export type CreateGroup = {
 
 export type JoinCommunity = {
     kind: "join_community";
+    community: CommunitySummary;
 };
 
 export type JoinGroup = {
