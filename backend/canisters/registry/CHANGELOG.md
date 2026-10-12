@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Stop charging listing fees to the account of a user's id, which only User canisters held funds in ([#PRNUM2](https://github.com/open-chat-labs/open-chat/pull/PRNUM2))
+- Stop charging listing fees to the account of a user's id, which only User canisters held funds in ([#9919](https://github.com/open-chat-labs/open-chat/pull/9919))
 
 ## [[2.0.2113](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2113-registry)] - 2026-10-07
 
