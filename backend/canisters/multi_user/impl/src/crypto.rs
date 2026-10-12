@@ -1,8 +1,8 @@
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult, UserId, icrc1};
 
-// The wallet of a user in another canister. A bot holds its funds in the account of its user id, as
-// do old ids, which were User canisters' ids. A user holds their own funds in their principal's
+// The wallet of a user in another canister. A bot's wallet is the account of its user id, as is that
+// of an old id, which was a User canister's id. A user holds their own funds in their principal's
 // account, which is looked up.
 pub async fn user_wallet(user_id: UserId, local_user_index_canister_id: CanisterId) -> OCResult<icrc1::Account> {
     if !user_id.is_indexed() {

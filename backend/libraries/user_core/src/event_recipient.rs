@@ -1,7 +1,7 @@
 use types::{C2CError, CanisterId, UserId};
 
-// What has become of a user whose old id, which was a User canister's id, couldn't be called when
-// sending them events
+// What has become of a recipient whose id carries no index (a user's old id, which was a User
+// canister's id, or a bot's) when calling it failed as `is_user_canister_possibly_migrated` describes
 pub enum EventRecipient {
     // They have been migrated to a MultiUser canister, and have this new id
     Migrated(UserId),

@@ -12,12 +12,12 @@ them, for each such canister:
 3. uninstall it again.
 
 The LocalUserIndex embeds `cycles_refunder.wasm` and does exactly this (see its `refund_cycles`
-job), eg. as part of deleting a group or community. It first sets the
-canister's freezing threshold to 0, since `refund` can only send the canister's liquid balance,
-which excludes the cycles held back by the freezing threshold. It passes its own
-CyclesDispenser canister ID as the init arg, so works on any network. `install_code` alone needs
-~300B cycles up front, so canisters holding less are topped up first (the top-up comes back with
-the refund), and canisters holding under 100B are skipped as not worth it.
+job), eg. as part of deleting a group or community, or once a migrated user's funds have been moved
+out of their old canister. It first sets the canister's freezing threshold to 0, since `refund` can
+only send the canister's liquid balance, which excludes the cycles held back by the freezing
+threshold. It passes its own CyclesDispenser canister ID as the init arg, so works on any network.
+`install_code` alone needs ~300B cycles up front, so canisters holding less are topped up first (the
+top-up comes back with the refund), and canisters holding under 100B are skipped as not worth it.
 
 The target defaults to the production CyclesDispenser (`gonut-hqaaa-aaaaf-aby7a-cai`). **On
 any other network pass the CyclesDispenser's principal as the init arg**, eg.

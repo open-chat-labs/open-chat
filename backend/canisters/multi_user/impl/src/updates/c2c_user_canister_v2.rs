@@ -123,8 +123,7 @@ pub(crate) fn migrate_sender_user_id(
 // Applies an event from `sender` to the user at `recipient_index`, unless the recipient has blocked
 // the sender. Events from users in other canisters arrive via `c2c_user_canister_v2`, while those
 // from users in this canister are applied straight away (see `RuntimeState::send_user_canister_event`),
-// so an event has the same effect whichever canister its sender is in. Events for features the
-// MultiUser canister doesn't support yet are dropped.
+// so an event has the same effect whichever canister its sender is in.
 pub(crate) fn apply_event(event: UserCanisterEvent, sender: UserId, recipient_index: u16, state: &mut RuntimeState) {
     if is_blocked(recipient_index, sender, state) {
         return;
