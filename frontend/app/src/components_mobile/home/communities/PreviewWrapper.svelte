@@ -2,8 +2,7 @@
     import { communityPreviewState } from "@src/utils/preview.svelte";
     import { Sheet } from "component-lib";
     import type { OpenChat } from "@client";
-    import { identityStateStore } from "@client";
-    import { getContext, tick, type Snippet } from "svelte";
+    import { getContext, type Snippet } from "svelte";
     import GateCheckFailed from "../access/AccessGateCheckFailed.svelte";
 
     type ChildProps = [boolean, () => void, () => void, boolean];
@@ -15,19 +14,9 @@
     let { children }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-
-    $effect(() => {
-        if (
-            $identityStateStore.kind === "logged_in" &&
-            $identityStateStore.postLogin?.kind === "join_community"
-        ) {
-            client.clearPostLoginState();
-            tick().then(() => communityPreviewState.joinCommunity(client));
-        }
-    });
 </script>
 
-{#if communityPreviewState.gateCheckFailed}
+{#if communityPreviewState.gateCheckFailed.length > 0}
     <Sheet onDismiss={() => communityPreviewState.reset()}>
         <GateCheckFailed onClose={() => communityPreviewState.reset()} />
     </Sheet>

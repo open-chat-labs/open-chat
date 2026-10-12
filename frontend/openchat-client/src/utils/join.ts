@@ -4,8 +4,9 @@ import {
     type ClientJoinGroupResponse,
     type GateCheckFailed,
     type IdentityState,
+    type JoinCommunity,
+    type JoinGroup,
     type Level,
-    type MultiUserChat,
     type ResourceKey,
     type Success,
 } from "@shared";
@@ -32,19 +33,20 @@ export function joinGroupFailureMessage(
 }
 
 /**
- * The group an anonymous user asked to join, once they have logged in and their chats have
- * loaded. The caller clears the post-login state before joining, so the join is replayed once.
+ * The group or community an anonymous user asked to join, once they have logged in and their
+ * chats and communities have loaded. The caller clears the post-login state before joining, so the
+ * join is replayed once.
  */
 export function postLoginJoin(
     identityState: IdentityState,
     chatsInitialised: boolean,
-): MultiUserChat | undefined {
-    if (
-        identityState.kind === "logged_in" &&
-        identityState.postLogin?.kind === "join_group" &&
-        chatsInitialised
-    ) {
-        return identityState.postLogin.group;
+): JoinGroup | JoinCommunity | undefined {
+    if (identityState.kind !== "logged_in" || !chatsInitialised) return undefined;
+    switch (identityState.postLogin?.kind) {
+        case "join_group":
+        case "join_community":
+            return identityState.postLogin;
+        default:
+            return undefined;
     }
-    return undefined;
 }

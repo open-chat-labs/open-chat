@@ -250,10 +250,10 @@ export type GateCheckSucceeded = {
 };
 
 /**
- * What came of asking to join a group or channel. `skipped` means no join was sent: either the
- * user is anonymous (the join is replayed after login) or they are already a member.
+ * What came of asking to join a group, channel or community. `skipped` means no join was sent:
+ * either the user is anonymous (the join is replayed after login) or they are already a member.
  */
-export type JoinGroupOutcome =
+export type JoinOutcome =
     | Success
     | { kind: "skipped" }
     | { kind: "needs_gate_evaluation"; gates: EnhancedAccessGate[] }

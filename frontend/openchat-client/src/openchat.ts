@@ -165,7 +165,7 @@ import {
     type ClientJoinCommunityResponse,
     type ClientJoinGroupResponse,
     type GateCheckSucceeded,
-    type JoinGroupOutcome,
+    type JoinOutcome,
     type CommunitiesRoute,
     type CommunityDetailsResponse,
     type CommunityIdentifier,
@@ -587,7 +587,7 @@ import {
     stopTyping,
     updateExistingMessages,
 } from "./utils/chat";
-import { joinGroupFailureMessage } from "./utils/joinGroup";
+import { joinGroupFailureMessage } from "./utils/join";
 import {
     canBlockUsers as canBlockCommunityUsers,
     canChangeCommunityPermissions,
@@ -2164,10 +2164,7 @@ export class OpenChat {
      * evaluated by the user first; the caller does that when told `needs_gate_evaluation` and
      * calls again with the result. Rejects if the user cancels the PIN prompt for a payment.
      */
-    async joinGroup(
-        chat: MultiUserChat,
-        gateCheck?: GateCheckSucceeded,
-    ): Promise<JoinGroupOutcome> {
+    async joinGroup(chat: MultiUserChat, gateCheck?: GateCheckSucceeded): Promise<JoinOutcome> {
         if (anonUserStore.value) {
             this.updateIdentityState({
                 kind: "logging_in",
@@ -2194,7 +2191,7 @@ export class OpenChat {
 
         if (gateCheck === undefined) {
             const gates = this.accessGatesForChat(chat, true);
-            if (!this.doesUserMeetAccessGates(gates) && this.gatePreprocessingRequired(gates)) {
+            if (!this.#doesUserMeetAccessGates(gates) && this.#gatePreprocessingRequired(gates)) {
                 return { kind: "needs_gate_evaluation", gates };
             }
         }
@@ -2208,8 +2205,16 @@ export class OpenChat {
         switch (resp.kind) {
             case "success":
                 return resp;
-            case "gate_check_failed":
-                return { kind: "gate_check_failed", gates: this.accessGatesForChat(chat) };
+            case "gate_check_failed": {
+                // With no gates to show the user would see nothing, so report a plain failure
+                const gates = this.accessGatesForChat(chat);
+                return gates.length > 0
+                    ? { kind: "gate_check_failed", gates }
+                    : {
+                          kind: "failed",
+                          message: joinGroupFailureMessage(CommonResponses.failure(), chat.level),
+                      };
+            }
             default:
                 return { kind: "failed", message: joinGroupFailureMessage(resp, chat.level) };
         }
@@ -5990,7 +5995,7 @@ export class OpenChat {
      * We *may* be able to conclude that the user meets the gate purely through
      * reference to the user data in which case we don't need to do anything else
      */
-    doesUserMeetAccessGates(gates: AccessGate[]): boolean {
+    #doesUserMeetAccessGates(gates: AccessGate[]): boolean {
         return gates.every((g) => this.doesUserMeetAccessGate(g));
     }
 
@@ -6025,7 +6030,7 @@ export class OpenChat {
         }
     }
 
-    gatePreprocessingRequired(gates: AccessGate[]): boolean {
+    #gatePreprocessingRequired(gates: AccessGate[]): boolean {
         return this.#getAllPreprocessLeafGates(gates).length > 0;
     }
 
@@ -6054,16 +6059,9 @@ export class OpenChat {
             chat.kind === "channel" ? this.getCommunityForChannel(chat.id) : undefined;
         if (
             community !== undefined &&
-            community.gateConfig.gate.kind !== "no_gate" &&
-            (community.membership.role === ROLE_NONE || community.membership.lapsed) &&
-            (!community.isInvited || !excludeInvited)
+            (community.membership.role === ROLE_NONE || community.membership.lapsed)
         ) {
-            gates.push({
-                level: "community",
-                expiry: community.gateConfig.expiry,
-                collectionName: community.name,
-                ...community.gateConfig.gate,
-            });
+            gates.push(...this.#accessGatesForCommunity(community, excludeInvited));
         }
         if (
             chat.gateConfig.gate.kind !== "no_gate" &&
@@ -6078,6 +6076,26 @@ export class OpenChat {
             });
         }
         return gates;
+    }
+
+    #accessGatesForCommunity(
+        community: CommunitySummary,
+        excludeInvited: boolean = false,
+    ): EnhancedAccessGate[] {
+        if (
+            community.gateConfig.gate.kind === "no_gate" ||
+            (community.isInvited && excludeInvited)
+        ) {
+            return [];
+        }
+        return [
+            {
+                level: "community",
+                expiry: community.gateConfig.expiry,
+                collectionName: community.name,
+                ...community.gateConfig.gate,
+            },
+        ];
     }
 
     #handleWebRtcMessage(msg: WebRtcMessage): void {
@@ -10773,7 +10791,53 @@ export class OpenChat {
             });
     }
 
+    /**
+     * Join a community. Like `joinGroup`, gates that can't be checked from the user's own data come
+     * back as `needs_gate_evaluation`, and the caller calls again with the result. Rejects if the
+     * user cancels the PIN prompt for a payment.
+     */
     async joinCommunity(
+        community: CommunitySummary,
+        gateCheck?: GateCheckSucceeded,
+    ): Promise<JoinOutcome> {
+        if (anonUserStore.value) {
+            this.updateIdentityState({
+                kind: "logging_in",
+                postLogin: { kind: "join_community", community },
+            });
+            return { kind: "skipped" };
+        }
+
+        // We may have got here by replaying a join captured before login, in which case we may
+        // already be a member
+        const current = communitiesStore.value.get(community.id) ?? community;
+        if (current.membership.role !== ROLE_NONE && !current.membership.lapsed) {
+            return { kind: "skipped" };
+        }
+
+        if (gateCheck === undefined) {
+            const gates = this.#accessGatesForCommunity(community, true);
+            if (!this.#doesUserMeetAccessGates(gates) && this.#gatePreprocessingRequired(gates)) {
+                return { kind: "needs_gate_evaluation", gates };
+            }
+        }
+
+        const resp = await this.#sendJoinCommunity(
+            community,
+            gateCheck?.credentials ?? [],
+            gateCheck?.paymentApprovals ?? new Map(),
+            gateCheck?.compositeGateIndex,
+        );
+        if (resp.kind === "success") return resp;
+        if (resp.kind === "gate_check_failed") {
+            // With no gates to show the user would see nothing, so report a plain failure
+            const gates = this.#accessGatesForCommunity(community);
+            if (gates.length > 0) return { kind: "gate_check_failed", gates };
+        }
+        return { kind: "failed", message: i18nKey("communities.errors.joinFailed") };
+    }
+
+    async #sendJoinCommunity(
         community: CommunitySummary,
         credentials: string[],
         paymentApprovals: PaymentGateApprovals,

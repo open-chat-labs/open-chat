@@ -47,7 +47,7 @@
         suspendedUserStore,
     } from "@client";
     import { getContext, onMount, tick, untrack } from "svelte";
-    import { groupPreviewState } from "@src/utils/preview.svelte";
+    import { communityPreviewState, groupPreviewState } from "@src/utils/preview.svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import { chitPopup, disableChit } from "../../stores/settings";
@@ -510,10 +510,14 @@
     let showOnboarding = $derived(client.isHomeRoute($routeStore) && $anonUserStore);
 
     trackedEffect("identity-state", () => {
-        const postLoginGroup = postLoginJoin($identityStateStore, $chatsInitialisedStore);
-        if (postLoginGroup !== undefined) {
+        const join = postLoginJoin($identityStateStore, $chatsInitialisedStore);
+        if (join !== undefined) {
             client.clearPostLoginState();
-            tick().then(() => groupPreviewState.joinGroup(client, postLoginGroup));
+            tick().then(() =>
+                join.kind === "join_group"
+                    ? groupPreviewState.joinGroup(client, join.group)
+                    : communityPreviewState.joinCommunity(client, join.community),
+            );
         }
     });
 
