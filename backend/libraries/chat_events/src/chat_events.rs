@@ -312,9 +312,9 @@ impl ChatEvents {
         }
     }
 
-    // Called by the User canister holding this direct chat, so that the other user's metrics are no
-    // longer stored (and any already stored are deleted), since only its own user's metrics are ever
-    // read. This has no effect on the user's chat with themselves.
+    // Called with the user whose copy of the direct chat this is, so that the other user's metrics
+    // are no longer stored (and any already stored are deleted), since only that user's own metrics
+    // are ever read. This has no effect on the user's chat with themselves.
     pub fn skip_their_metrics(&mut self, my_user_id: UserId) {
         if !self.skip_their_metrics {
             self.skip_their_metrics =
@@ -414,8 +414,7 @@ impl ChatEvents {
             args.now,
         );
 
-        // The sender's principal isn't known here. The account of their user id is their wallet if
-        // they are alone in their canister, and nothing else in a new message depends on it.
+        // The sender's principal isn't known here, but nothing in a new message depends on it
         let sender = UserIdAndPrincipal::new(message_internal.sender, message_internal.sender.as_principal());
         let message = message_internal.clone().hydrate(Some(sender));
 

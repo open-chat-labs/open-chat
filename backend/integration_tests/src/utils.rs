@@ -150,7 +150,7 @@ pub fn wait_for_cycle_balance_above(env: &mut PocketIc, canister_id: CanisterId,
 }
 
 // Ticks until the user's canister lists their direct chat with `them`, ie. the first message sent in
-// it has been delivered. This can take many rounds, since a newly created User canister periodically
+// it has been delivered. This can take many rounds, since a newly created canister periodically
 // takes around 10 rounds to handle its first message (seemingly while the wasm is compiled on its
 // subnet), a number which grows with the size of the wasm.
 pub fn wait_for_direct_chat(env: &mut PocketIc, user: &User, them: UserId) {

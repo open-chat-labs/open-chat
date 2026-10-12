@@ -7,8 +7,8 @@ use multi_user_canister::end_video_call_v2::*;
 use oc_error_codes::OCErrorCode;
 use types::{MessageId, OCResult, UserId};
 
-// As in the User canister, the video call operator ends the call in one user's copy of the chat,
-// naming the user since this canister holds many
+// The video call operator ends the call in one user's copy of the chat, naming the user since this
+// canister holds many
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
 fn end_video_call_v2(args: Args) -> Response {
@@ -38,8 +38,8 @@ pub(crate) fn end_video_call_impl(user_index: u16, them: UserId, message_id: Mes
         .data
         .users
         .with_user_mut(user_index, |user| {
-            // As in the User canister, only the copy of the chat belonging to the user who started
-            // the call pushes its end to the event store, so it is counted once
+            // Only the copy of the chat belonging to the user who started the call pushes its end
+            // to the event store, so it is counted once
             user_core::updates::end_video_call(user, my_user_id, them, message_id, now, || MultiUserEventPusher {
                 user_id: my_user_id,
                 now,

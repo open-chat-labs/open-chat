@@ -25,7 +25,7 @@ async fn leave_group_impl(args: Args) -> Response {
         user_id: my_user_id,
     };
 
-    // As in the User canister, the group is removed if the user has left it or was not in it
+    // The group is removed if the user has left it or was not in it
     match group_canister_c2c_client::c2c_leave_group(args.chat_id.into(), &c2c_args).await {
         Ok(c2c_leave_group::Response::Success(_)) => {
             mutate_state(|state| state.remove_group(my_index, args.chat_id, state.env.now()));

@@ -19,7 +19,7 @@ fn update_bot_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         let my_user_id = UserId::new_indexed(canister_id, my_index);
         user_core::updates::update_bot(user, args, my_user_id, now).map(|n| (my_index, n))
     })?;
-    // Tells the bot via the LocalUserIndex, as the User canister's `push_bot_notification` does
+    // Tells the bot via the LocalUserIndex
     if !notification.recipients.is_empty() {
         state.push_local_user_index_canister_event(
             my_index,

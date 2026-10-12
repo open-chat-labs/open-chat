@@ -11,10 +11,9 @@ pub struct Args {
     pub user_id: UserId,
     pub ledger_canister_id: CanisterId,
     pub amount: Tokens,
-    // The account to charge, defaulting to the user's wallet. A User canister charges its own account
-    // directly, and pulls from any other via ICRC-2, which that account must have approved. A
-    // MultiUser canister's users hold their own funds, so it always pulls via ICRC-2, spending only
-    // an approval made under the user's own spender subaccount (see `ledger_utils::spender_subaccount`).
+    // The account to charge, defaulting to the user's wallet. The MultiUser canister's users hold
+    // their own funds, so it always pulls via ICRC-2, spending only an approval made under the
+    // user's own spender subaccount (see `ledger_utils::spender_subaccount`).
     pub from_account: Option<icrc1::Account>,
 }
 

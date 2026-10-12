@@ -44,10 +44,9 @@ export function buildTokenLogoUrl(
 }
 
 // Where the blobs of `ownerId`, such as its avatar, are served: the canister to fetch them from and
-// the path under which that canister serves blobs of `blobType`. A group, community or user alone in
-// their canister serves its own at its root. A MultiUser canister serves those of each of its users
-// under `user/{index}`, where `index` is the user's index within it (see `Route::User` in
-// backend/libraries/http_request).
+// the path under which that canister serves blobs of `blobType`. A group or community serves its own
+// at its root. A MultiUser canister serves those of each of its users under `user/{index}`, where
+// `index` is the user's index within it (see `Route::User` in backend/libraries/http_request).
 export function blobLocation(
     ownerId: string,
     blobType: string,

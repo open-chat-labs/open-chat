@@ -1,7 +1,7 @@
-// Messages holding transfers, and tips, sent to a Group or Community directly rather than via the
-// sender's User canister, which the chat canister makes the transfers for. The chat canister never pays from its own account on a member's behalf,
-// so these tests pull the sender's funds via ICRC-2, against an approval made under the sender's
-// own spender subaccount.
+// Messages holding transfers, and tips, sent to a Group or Community directly, which the chat
+// canister makes the transfers for. The chat canister never pays from its own account on a member's
+// behalf, so these tests pull the sender's funds via ICRC-2, against an approval made under the
+// sender's own spender subaccount.
 
 use crate::env::ENV;
 use crate::p2p_swap_tests::verify_swap_status;

@@ -504,8 +504,7 @@ export class OpenChatAgent extends EventTarget {
                 ),
         );
         // Withdrawals spend the ckBTC the Registry lists, which is mainnet ckBTC in every environment,
-        // so they go through the mainnet minter wherever the rest of the BTC flow uses testnet, as the
-        // User canister's withdrawals did
+        // so they go through the mainnet minter wherever the rest of the BTC flow uses testnet
         this._ckbtcWithdrawalMinterClient = new Lazy(
             () => new CkbtcMinterClient(this.identity, this._agent, true),
         );
@@ -563,9 +562,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // The ledger account holding the funds of `userId`. That is the principal's account for anyone
-    // but a user alone in their canister, and only the current user's principal is known here, so
-    // for anyone else `userId` has to be a canister, such as a User canister or the translations
-    // canister.
+    // but a canister, which holds funds in its own, and only the current user's principal is known
+    // here, so for anyone else `userId` has to be a canister, such as the User canister a user had
+    // before being migrated to a MultiUser canister, or the translations canister.
     private walletAccount(userId: string): IcrcAccount {
         if (userId !== this._userClient.userId && !isCanisterId(Principal.fromText(userId))) {
             throw new Error(`Only the current user's wallet is known, not ${userId}'s`);
@@ -1868,10 +1867,10 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
-    // The direct chats among those the User canister removed which were moved onto the other user's
-    // new id, after they were migrated to a MultiUser canister, rather than deleted, each mapped to
-    // that id (see `findMovedDirectChats`). The users are looked up by the ids the chats were under,
-    // for which the UserIndex returns their latest ids. Throws if they can't be.
+    // The direct chats among those the current user's canister removed which were moved onto the
+    // other user's new id, after they were migrated to a MultiUser canister, rather than deleted,
+    // each mapped to that id (see `findMovedDirectChats`). The users are looked up by the ids the
+    // chats were under, for which the UserIndex returns their latest ids. Throws if they can't be.
     #movedDirectChats(
         removed: string[],
         added: DirectChatSummary[],
@@ -1988,10 +1987,10 @@ export class OpenChatAgent extends EventTarget {
         };
 
         const previousUpdatesTimestamp = mapOptional(current?.latestUserCanisterUpdates, Number);
-        // Summary updates for the groups and communities already cached, started before the User
-        // canister call rather than after it: they only need what is cached, and waiting for the
-        // User canister first put a whole extra round trip in front of every pass. Chats the User
-        // canister reports as added are fetched once it has answered.
+        // Summary updates for the groups and communities already cached, started before the call to
+        // the user's canister rather than after it: they only need what is cached, and waiting for
+        // the user's canister first put a whole extra round trip in front of every pass. Chats the
+        // user's canister reports as added are fetched once it has answered.
         let cachedSummaryUpdates:
             | Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponseBatch>>
             | undefined = undefined;
@@ -2069,13 +2068,13 @@ export class OpenChatAgent extends EventTarget {
             streakInsurance = new UpdatableOption(current.streakInsurance);
             premiumItems = new Updatable(current.premiumItems);
 
-            // A chat the User canister goes on to report as removed is queried for nothing, as it
+            // A chat the user's canister goes on to report as removed is queried for nothing, as it
             // was before; the removal filter below drops whatever comes back for it
             cachedSummaryUpdates = this.#getSummaryUpdatesFromLocalUserIndexes(
                 summaryUpdatesArgsByLocalUserIndex(currentGroups, currentCommunities),
                 previousUpdatesTimestamp,
             );
-            // Nothing awaits this until the User canister has answered, so a rejection meanwhile
+            // Nothing awaits this until the user's canister has answered, so a rejection meanwhile
             // would be reported as unhandled, and would stay unhandled if this pass threw before
             // reaching the await. The await below still sees the rejection.
             cachedSummaryUpdates.catch(() => undefined);
@@ -2086,7 +2085,7 @@ export class OpenChatAgent extends EventTarget {
                     current.latestUserCanisterUpdates,
                 );
                 // Found before anything is taken from the answer, so that if the users can't be
-                // looked up, the answer is dropped, as if the User canister hadn't given one, and
+                // looked up, the answer is dropped, as if the user's canister hadn't given one, and
                 // is fetched again on the next pass, rather than a move being taken for a deletion
                 const moved =
                     userResponse.kind === "success"
@@ -2567,7 +2566,7 @@ export class OpenChatAgent extends EventTarget {
     /**
      * Brings one cached group, or the community holding a channel, up to date with a single
      * summary-updates query, and writes just that chat back to the cache. Much cheaper than a full
-     * updates pass, which also asks the User canister and every other group and community.
+     * updates pass, which also asks the user's canister and every other group and community.
      *
      * Resolves false when this can't be done on its own and a full pass is needed instead: the
      * chat isn't cached, the cache is empty, or the answer is one only a full pass handles (the
@@ -3789,9 +3788,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // The canisters which control `canisterId`. The IC certifies these for any canister, so unlike
-    // a canister's own `local_user_index` query, they can be had for a User canister which has been
-    // uninstalled, as one is once its user has been migrated to a MultiUser canister. A User
-    // canister is controlled by the LocalUserIndex which created it.
+    // a canister's own `local_user_index` query, they can be had for a User canister, each of which
+    // was uninstalled once its user had been migrated to a MultiUser canister. A User canister is
+    // controlled by the LocalUserIndex which created it.
     private async canisterControllers(canisterId: string): Promise<string[]> {
         // `CanisterStatus` doesn't fetch the root key itself, as calls do, when the agent has to
         if (this._agent.rootKey === null) {

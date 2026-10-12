@@ -10,8 +10,9 @@ use types::{
 use utils::canister::delay_if_should_retry_failed_c2c_call;
 
 // The user escrow names by `principal` as the offerer of a swap, the principal being the owner of
-// their wallet: their user id if they are alone in their canister, otherwise their principal, which
-// the LocalUserIndex resolves to their user id. None if there is no such user.
+// their wallet: their user id for a swap offered under an old id, which was a User canister's id,
+// otherwise their principal, which the LocalUserIndex resolves to their user id. None if there is
+// no such user.
 pub async fn offerer_user_id(principal: Principal, local_user_index_canister_id: CanisterId) -> Option<UserId> {
     if UserId::from(principal).is_canister() {
         return Some(principal.into());
@@ -20,9 +21,8 @@ pub async fn offerer_user_id(principal: Principal, local_user_index_canister_id:
         user_id_or_principal: principal,
     };
     match local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &args).await {
-        // The LocalUserIndex also finds a user alone in their canister by the principal they sign
-        // in with, but escrow never names them by it, so only a user whose wallet is owned by the
-        // principal is the offerer
+        // Escrow names the offerer by the owner of their wallet, so only a user whose wallet is
+        // owned by the principal is the offerer
         Ok(local_user_index_canister::c2c_lookup_user::Response::Success(user))
             if UserIdAndPrincipal::new(user.user_id, user.principal).wallet_owner() == principal =>
         {
@@ -86,7 +86,7 @@ pub fn apply_status_change<P: EventPusher>(
         SwapStatus::Completed(c) => {
             // Escrow names the acceptor by the owner of their wallet, which the swap recorded when
             // they reserved it. For a swap reserved before that was recorded, whose acceptor was
-            // alone in their canister, the owner is their user id.
+            // then in their own User canister, the owner is their user id.
             let accepted_by = chat
                 .events()
                 .p2p_swap_reserved_by(m.thread_root_message_index, m.message_id, c.accepted_by)

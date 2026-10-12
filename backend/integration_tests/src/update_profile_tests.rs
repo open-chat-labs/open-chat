@@ -90,7 +90,7 @@ fn update_profile_background_succeeds() {
 }
 
 // Ticks until the user's canister reports updates since the given time which satisfy the predicate.
-// A change made in the UserIndex can take many rounds to get there, since a newly created User canister
+// A change made in the UserIndex can take many rounds to get there, since a newly created canister
 // periodically takes around 10 rounds to handle its first message (seemingly while the wasm is compiled
 // on its subnet), a number which grows with the size of the wasm.
 fn wait_for_updates(

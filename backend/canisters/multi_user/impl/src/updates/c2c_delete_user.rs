@@ -5,8 +5,7 @@ use canister_tracing_macros::trace;
 use multi_user_canister::c2c_delete_user::*;
 use tracing::info;
 
-// Called by the LocalUserIndex to delete one of this canister's users, in place of the User
-// canister being uninstalled
+// Called by the LocalUserIndex to delete one of this canister's users
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_delete_user(args: Args) -> Response {
@@ -15,10 +14,9 @@ fn c2c_delete_user(args: Args) -> Response {
 
 // The user is removed, along with their timer jobs, and all of their entries in the stable memory
 // map are queued for garbage collection. Their index is never reused, so nothing left over can be
-// mistaken for another user's. Other users' copies of direct chats with them are kept, as when a
-// User canister is uninstalled. A user who isn't here (eg. because a retried call already deleted
-// them) is treated as deleted, as `c2c_groups_and_communities`, which the LocalUserIndex calls
-// first, also does.
+// mistaken for another user's. Other users' copies of direct chats with them are kept. A user who
+// isn't here (eg. because a retried call already deleted them) is treated as deleted, as
+// `c2c_groups_and_communities`, which the LocalUserIndex calls first, also does.
 fn c2c_delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     let Some(user_index) = state.index_of_local_user(args.user_id) else {
         return Response::Success;
@@ -27,7 +25,7 @@ fn c2c_delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.data.users.remove(user_index);
     state.data.timer_jobs.cancel_jobs(|job| job.user_index() == Some(user_index));
     // Nor are any events from them still waiting to be sent to the LocalUserIndex or to other
-    // users' canisters, as when a User canister is uninstalled
+    // users' canisters
     state
         .data
         .local_user_index_event_sync_queue

@@ -1633,9 +1633,9 @@ pub struct PrizeContentInternal {
     #[serde(rename = "mc", default, skip_serializing_if = "is_default")]
     pub min_chit_earned: u32,
     // The sender's principal, which along with their user id determines the wallet any refund is
-    // paid to. Recorded when the prize is sent, as the sender may have left the chat by the time
-    // it ends. Anonymous for prizes sent before it was recorded, which is fine as their senders are
-    // all alone in their canisters, so are refunded at their user id.
+    // paid to. Recorded when the prize is sent, as the sender may have left the chat by the time it
+    // ends. Anonymous for prizes sent before it was recorded, which is fine as their senders were
+    // then all in their own User canisters, so are refunded at their user id.
     #[serde(rename = "pr", default = "Principal::anonymous")]
     pub principal: Principal,
 }
@@ -2464,7 +2464,7 @@ mod poll_tests {
 mod prize_tests {
     use super::*;
 
-    // A user alone in their canister, whose user id is that canister's id
+    // A user's old id, which was their User canister's id
     fn old_user_id() -> UserId {
         Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap().into()
     }

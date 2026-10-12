@@ -244,12 +244,12 @@ impl RuntimeState {
         });
     }
 
-    // Sends a direct chat event from the user at `sender_index` to `recipient`, as the User canister
-    // does for its user. A recipient whose id is in this canister has it applied straight away,
-    // exactly as if it had come from another canister, while any other is sent it via the canister
-    // holding their latest id (which is this one for a user migrated here since having `recipient`,
-    // keeping the order of any events already queued for them). Nothing is sent to the sender
-    // themselves or to a bot, since no bot handles these events, and they would be retried forever.
+    // Sends a direct chat event from the user at `sender_index` to `recipient`. A recipient whose
+    // id is in this canister has it applied straight away, exactly as if it had come from another
+    // canister, while any other is sent it via the canister holding their latest id (which is this
+    // one for a user migrated here since having `recipient`, keeping the order of any events
+    // already queued for them). Nothing is sent to the sender themselves or to a bot, since no bot
+    // handles these events, and they would be retried forever.
     pub fn send_user_canister_event(&mut self, sender_index: u16, recipient: UserId, event: UserCanisterEvent) {
         let sender = self.user_id(sender_index);
         let recipient_is_bot = recipient == OPENCHAT_BOT_USER_ID
@@ -292,7 +292,7 @@ impl RuntimeState {
         );
     }
 
-    // Queues a notification for the user at `recipient_index`, as the User canister does for its user
+    // Queues a notification for the user at `recipient_index`
     pub fn push_notification(
         &mut self,
         sender: Option<UserId>,
@@ -340,8 +340,7 @@ impl RuntimeState {
     }
 
     // Records the status `referred` has reached for the user at `referrer_index` who referred them,
-    // telling the LocalUserIndex of their CHIT if it earned them any. This is the User canister's
-    // handling of the `SetReferralStatus` event.
+    // telling the LocalUserIndex of their CHIT if it earned them any
     pub fn set_referral_status(
         &mut self,
         referrer_index: u16,
@@ -378,8 +377,7 @@ impl RuntimeState {
         self.push_local_user_index_canister_event(user_index, LocalUserIndexEvent::NotifyChit(notify_chit), now);
     }
 
-    // Records a payment for streak insurance by the user at `user_index`, as the User canister's
-    // `mark_streak_insurance_payment`
+    // Records a payment for streak insurance by the user at `user_index`
     pub fn mark_streak_insurance_payment(&mut self, user_index: u16, payment: UserCanisterStreakInsurancePayment) {
         if self
             .data
@@ -408,7 +406,7 @@ impl RuntimeState {
     }
 
     // Records a day of streak insurance being used up to keep the streak of the user at
-    // `user_index`, as the User canister's `mark_streak_insurance_claim`
+    // `user_index`
     pub fn mark_streak_insurance_claim(&mut self, user_index: u16, claim: UserCanisterStreakInsuranceClaim) {
         if self
             .data
@@ -518,9 +516,9 @@ impl RuntimeState {
     }
 
     // A removed group or community only has a small number of entries, so they are removed
-    // immediately, as in the User canister, so that none are left to be wiped by a later garbage
-    // collection if the user rejoins. Any which can't be removed within this message are left for
-    // the garbage collection job.
+    // immediately, so that none are left to be wiped by a later garbage collection if the user
+    // rejoins. Any which can't be removed within this message are left for the garbage collection
+    // job.
     pub fn garbage_collect_removed_chat_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
         let remaining: Vec<_> = self
             .data
@@ -604,7 +602,7 @@ impl RuntimeState {
         if !thread_prefixes.is_empty() {
             self.garbage_collect_stable_memory_keys(user_index, thread_prefixes);
         }
-        // As in the User canister, each copy of the chat deletes the files of its expired messages.
+        // Each copy of the chat deletes the files of its expired messages.
         // A file already deleted from the other copy is simply not found.
         if !files_to_delete.is_empty() {
             DeleteFileReferencesJob { files: files_to_delete }.execute();
@@ -664,8 +662,8 @@ struct Data {
     // The indexes of deleted users, all of whose entries in the stable memory map are yet to be
     // removed by the garbage collection job
     pub deleted_users_to_garbage_collect: Vec<u16>,
-    // Events from other canisters are checked against this, as in the User canister. Each sender
-    // batches its events for this canister's users together, so one checker covers them all.
+    // Events from other canisters are checked against this. Each sender batches its events for this
+    // canister's users together, so one checker covers them all.
     pub idempotency_checker: IdempotencyChecker,
     // The MultiUser canisters the LocalUserIndex has confirmed, which may send events on behalf of
     // any of their users
@@ -721,7 +719,7 @@ impl Data {
     }
 }
 
-// The User canister's `UserEventPusher`, but naming the user the events are from, since the
+// Pushes event store events to the LocalUserIndex, naming the user they are from, since the
 // LocalUserIndex queue in this canister is shared by many users
 pub struct MultiUserEventPusher<'a> {
     pub user_id: UserId,

@@ -19,8 +19,8 @@ use utils::cycles::can_spend_cycles;
 // See backend/canisters/cycles_refunder, which is where this wasm is built from.
 const CYCLES_REFUNDER_WASM: &[u8] = include_bytes!("../../../../cycles_refunder/cycles_refunder.wasm");
 
-// A canister which recently ran a large `install_code` (eg. a user canister upgraded shortly
-// before the user was deleted) is rate limited from running another for several minutes
+// A canister which recently ran a large `install_code` (eg. a group or community upgraded shortly
+// before it was deleted) is rate limited from running another for several minutes
 const MAX_ATTEMPTS: usize = 10;
 
 // ~80B cycles can never be recovered (see the refunder's README), so below this there is nothing

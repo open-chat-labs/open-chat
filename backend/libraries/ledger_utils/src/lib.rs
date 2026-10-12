@@ -89,8 +89,8 @@ pub(crate) fn resolve_sender(sender: Option<UserIdAndPrincipal>) -> UserIdAndPri
 }
 
 // The account a transfer is made from, which is always this canister's own, since the ledger takes
-// the owner from the caller. So the sender must be this canister or its user, whose wallet it is -
-// a user in a MultiUser canister holds their own funds, which the canister can't transfer.
+// the owner from the caller. So the sender must be this canister - a user holds their own funds,
+// which the canister can't transfer.
 pub(crate) fn sender_account(sender: UserIdAndPrincipal) -> types::icrc1::Account {
     let account = types::icrc1::Account::from(sender);
     let canister_id = ic_cdk::api::canister_self();

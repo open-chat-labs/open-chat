@@ -5,8 +5,8 @@
 //!
 //! The index is applied at the boundary of the map, as keys are passed in and handed back out,
 //! rather than being part of the key types. So the key types, the code which builds them and the
-//! code which reads them back are exactly the same as in a canister which holds a single user,
-//! where nothing is added. Which of the two applies is fixed when the map is initialised.
+//! code which reads them back are exactly the same as in any other canister, where nothing is
+//! added. Which of the two applies is fixed when the map is initialised.
 //!
 //! The scope to apply is set with `with_key_scope`. In a multi-user canister every access to the
 //! map must happen within one, and accessing the map outside of one panics.
@@ -82,7 +82,7 @@ impl Drop for RestoreScope {
     }
 }
 
-// The scope to apply, or `None` in a canister which holds a single user
+// The scope to apply, or `None` in a canister which doesn't scope its keys
 fn current() -> Option<KeyScope> {
     SCOPED.get().then(|| {
         CURRENT

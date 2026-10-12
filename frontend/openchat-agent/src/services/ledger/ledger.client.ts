@@ -17,13 +17,13 @@ import { approvalToAdd, type Allowance } from "./approval";
 
 export type ApproveSpendingResponse = "success" | "insufficient_funds" | "failure";
 
-// The memo the User canister gives each withdrawal it makes, "OC_SEND" (`MEMO_SEND` in the backend's
-// constants), which the ICP ledger's `transfer` takes as a number, as its big-endian bytes
+// The memo each withdrawal is sent with, "OC_SEND" (`MEMO_SEND` in the backend's constants), which
+// the ICP ledger's `transfer` takes as a number, as its big-endian bytes
 const MEMO_SEND = new TextEncoder().encode("OC_SEND");
 const MEMO_SEND_NUMBER = bytesToBigint(MEMO_SEND);
 
-// What the ICP ledger charges for a transfer, which the User canister always pays for one to an
-// account identifier, whatever fee the withdrawal gives (`Tokens::DEFAULT_FEE`)
+// What the ICP ledger charges for a transfer, which a withdrawal to an account identifier always
+// pays, whatever fee it gives (`Tokens::DEFAULT_FEE`)
 const ICP_TRANSFER_FEE = 10_000n;
 
 export class LedgerClient extends CandidCanisterAgent<LedgerService> {

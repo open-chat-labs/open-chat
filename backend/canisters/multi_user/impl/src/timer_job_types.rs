@@ -67,8 +67,7 @@ pub struct ClaimOrResetStreakInsuranceJob {
     pub user_index: u16,
 }
 
-// Marks a call ended in one user's copy of the chat once its maximum duration is up, as the User
-// canister's job of the same name does
+// Marks a call ended in one user's copy of the chat once its maximum duration is up
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MarkVideoCallEndedJob {
     pub user_index: u16,
@@ -192,8 +191,8 @@ impl Job for HardDeleteMessageContentJob {
                     })
                 })
                 .flatten()?;
-            // Only the sender's copy of the message deletes its files and cancels its swap, as in the
-            // User canister, since each copy of the chat references the same files and swap.
+            // Only the sender's copy of the message deletes its files and cancels its swap, since each
+            // copy of the chat references the same files and swap.
             // Including a message the user sent under an earlier id, from before they were migrated.
             if !state.data.migrated_user_ids.is_same_user(sender, my_user_id) {
                 return Some((Vec::new(), None));

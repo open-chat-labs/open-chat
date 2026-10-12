@@ -3,7 +3,7 @@ use crate::{KeyPrefix, KeyType};
 
 // The user's token swaps, keyed by swap id.
 //
-// Each user canister currently holds a single user, so the prefix is just the key type.
+// The user's index is added by the key scope (see `key_scope`), so the prefix is just the key type.
 key!(TokenSwapKey, TokenSwapKeyPrefix, KeyType::TokenSwap);
 
 impl TokenSwapKeyPrefix {

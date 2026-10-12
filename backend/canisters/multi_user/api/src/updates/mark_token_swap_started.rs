@@ -6,8 +6,7 @@ use types::{PinNumberWrapper, TokenInfo, UnitResult};
 // Records a swap which the user is about to make themselves, straight from their own wallet, so that
 // if it doesn't finish (eg. the user leaves part way through) it can be found again later and any
 // funds left with the DEX withdrawn. The user's PIN, if they have set one, is checked first, so that
-// nothing is approved for a swap made with the wrong PIN. Only the MultiUser canister implements
-// this, since only its users hold their own funds.
+// nothing is approved for a swap made with the wrong PIN.
 #[ts_export(user, mark_token_swap_started)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {

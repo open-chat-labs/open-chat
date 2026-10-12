@@ -107,8 +107,8 @@ function message(content: MessageContent): EventWrapper<Message> {
 
 const PIN_INCORRECT = { kind: "error", code: ErrorCode.PinIncorrect, message: "0" } as const;
 
-// The payments the user's canister pulls from the user's wallet, each of which a user in a
-// MultiUser canister has to approve it for first
+// The payments the user's canister pulls from the user's wallet, each of which the user has to
+// approve it for first
 describe("OpenChatAgent paying from the user's wallet", () => {
     let approvals: unknown[][];
     let approveResponse: "success" | "insufficient_funds" | "failure";

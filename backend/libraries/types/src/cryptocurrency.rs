@@ -176,12 +176,12 @@ impl PendingCryptoTransaction {
     // in which case it must not be made. `wallet` must be where the user actually holds their funds,
     // taken from the canister's own data or a lookup, never from a caller's claim.
     //
-    // A client only knows the principal of its own user, so it addresses a transfer to the account of
-    // the recipient's user id. That is the wallet of a user alone in their canister, but for a user
-    // in a MultiUser canister, who holds their funds under their principal, it is an account no one
-    // can spend from. So a transfer addressed to either is sent to the wallet, and one addressed
-    // anywhere else is refused. A certified transfer has been made already, so can only be accepted
-    // if it was made to the wallet.
+    // A client only knows the principal of its own user, so it addresses a transfer to the account
+    // of the recipient's user id. But a user holds their funds under their principal, and the
+    // account of an indexed user id is one no one can spend from. So a transfer addressed to either
+    // is sent to the wallet, and one addressed anywhere else is refused. (For an old id, which was a
+    // User canister's id, the wallet is the account of that id, so the two are the same.) A
+    // certified transfer has been made already, so can only be accepted if it was made to the wallet.
     #[must_use]
     pub fn send_to_wallet(&mut self, user_id: UserId, wallet: icrc1::Account) -> bool {
         if self.is_to(wallet.into()) {
@@ -215,7 +215,7 @@ impl PendingCryptoTransaction {
         UserId::from(to.owner).is_indexed()
     }
 
-    // Checks the transfer is to exactly `account`. The whole account, not just the owner, since once
+    // Checks the transfer is to exactly `account`. The whole account, not just the owner, since where
     // a canister holds many users the owner alone is satisfied by a transfer destined for any of them.
     pub fn is_to(&self, account: Account) -> bool {
         let account_identifier = crate::account_identifier(account);
@@ -619,9 +619,8 @@ pub mod icrc1 {
     }
 
     impl Account {
-        // The account of the user's id, for where their principal isn't known yet. It is the user's
-        // wallet if they are alone in their canister, but no one's if they are in a MultiUser
-        // canister, since nobody can sign for an indexed user id.
+        // The account of the user's id, for where their principal isn't known yet. For an indexed
+        // user id it is no one's wallet, since nobody can sign for one.
         // TODO: Use `From<UserIdAndPrincipal>` instead, once the user's principal is known
         pub fn legacy_for_user(user_id: UserId) -> Account {
             user_id.as_principal().into()
@@ -1168,7 +1167,7 @@ mod tests {
 
     #[test]
     fn transfer_to_a_wallet_is_not_to_an_indexed_user_id() {
-        // A user alone in their canister holds their funds in the account of their user id
+        // The wallet of an old id, which was a User canister's id, is the account of that id
         let wallets = [canister_user().as_principal().into(), principal().into()];
 
         for to in wallets {

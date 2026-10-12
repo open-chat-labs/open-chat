@@ -10,9 +10,8 @@ use types::{Achievement, UserIdAndPrincipal};
 use user_core::openchat_bot::{btc_deposit_failed_text, btc_deposit_received_text};
 use user_core::updates::update_btc_balance::{BtcDepositOrWithdrawalEventPayload, update_btc_balance as update};
 
-// Only the user, or the LocalUserIndex for them, may ask for their balance to be updated. The User
-// canister lets anyone, but a canister holding many users would let one caller have it poll the
-// minter for every one of them.
+// Only the user, or the LocalUserIndex for them, may ask for their balance to be updated, since
+// otherwise one caller could have the canister poll the minter for every one of its users.
 #[update(msgpack = true)]
 #[trace]
 async fn update_btc_balance(args: Args) -> Response {

@@ -2,8 +2,7 @@ use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::UnitResult;
 
-// Records how a swap recorded by `mark_token_swap_started` ended. Only the MultiUser canister
-// implements this.
+// Records how a swap recorded by `mark_token_swap_started` ended
 #[ts_export(user, mark_token_swap_completed)]
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
