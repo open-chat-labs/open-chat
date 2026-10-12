@@ -44,6 +44,7 @@ export function publicGroupSummary(
             inviteUsers: ROLE_NONE,
             addMembers: ROLE_NONE,
             reactToMessages: ROLE_NONE,
+            tipMessages: ROLE_NONE,
             mentionAllMembers: ROLE_NONE,
             startVideoCall: ROLE_NONE,
             messagePermissions: {

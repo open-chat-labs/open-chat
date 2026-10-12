@@ -1760,6 +1760,7 @@
             "text": "envoyer des messages texte dans les fils de discussion",
             "video": "envoyer des messages vidéo dans les fils de discussion"
         },
+        "tipMessages": "donner un pourboire aux messages",
         "updateDetails": "modifier les informations de base",
         "updateGroup": "modifier les informations du groupe",
         "whoCan": "Qui peut"

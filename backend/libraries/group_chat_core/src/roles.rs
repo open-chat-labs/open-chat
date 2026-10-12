@@ -138,6 +138,10 @@ impl GroupRoleInternal {
         self.is_permitted(permissions.react_to_messages)
     }
 
+    pub fn can_tip_messages(&self, permissions: &GroupPermissions) -> bool {
+        self.is_permitted(permissions.tip_messages)
+    }
+
     pub fn can_delete_group(&self) -> bool {
         self.is_owner()
     }

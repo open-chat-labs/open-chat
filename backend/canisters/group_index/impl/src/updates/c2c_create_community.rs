@@ -101,19 +101,20 @@ struct PrepareResult {
 }
 
 fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
+    // Find the LocalIndex before reserving the name, so that the name isn't left reserved if there is none
+    let Some(local_user_index_canister) = state.data.local_index_map.index_for_new_community() else {
+        return Err(InternalError("No available LocalIndex found".to_string()));
+    };
+
     let now = state.env.now();
 
     if is_public && !state.data.public_group_and_community_names.reserve_name(name, now) {
         return Err(NameTaken);
     }
 
-    if let Some(local_user_index_canister) = state.data.local_index_map.index_for_new_community() {
-        Ok(PrepareResult {
-            local_user_index_canister,
-        })
-    } else {
-        Err(InternalError("No available LocalIndex found".to_string()))
-    }
+    Ok(PrepareResult {
+        local_user_index_canister,
+    })
 }
 
 fn commit(
@@ -149,4 +150,33 @@ fn commit(
         .data
         .local_index_map
         .add_community(local_user_index_canister, community_id);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Data;
+    use utils::env::test::TestEnv;
+
+    #[test]
+    fn name_is_not_reserved_if_there_is_no_local_index() {
+        let mut state = RuntimeState::new(Box::new(TestEnv::default()), Data::default());
+        let now = state.env.now();
+
+        assert!(matches!(prepare("Community", true, &mut state), Err(InternalError(_))));
+        assert!(!state.data.public_group_and_community_names.is_name_taken("Community", now));
+
+        state.data.local_index_map.add_index(local_user_index());
+
+        assert!(matches!(
+            prepare("Community", true, &mut state),
+            Ok(PrepareResult { local_user_index_canister }) if local_user_index_canister == local_user_index()
+        ));
+        assert!(state.data.public_group_and_community_names.is_name_taken("Community", now));
+        assert!(matches!(prepare("Community", true, &mut state), Err(NameTaken)));
+    }
+
+    fn local_user_index() -> CanisterId {
+        Principal::from_slice(&[1])
+    }
 }

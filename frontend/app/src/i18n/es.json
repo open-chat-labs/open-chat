@@ -1760,6 +1760,7 @@
             "text": "enviar mensajes de texto en hilos",
             "video": "enviar mensajes de vídeo en hilos"
         },
+        "tipMessages": "dar propinas a los mensajes",
         "updateDetails": "editar información básica",
         "updateGroup": "editar información del grupo",
         "whoCan": "Quién puede"
