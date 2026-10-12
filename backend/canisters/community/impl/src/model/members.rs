@@ -754,9 +754,8 @@ impl CommunityMembers {
         }
     }
 
-    // Returns whether the member's lapsed status changed
-    pub fn update_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) -> bool {
-        let updated = matches!(
+    pub fn update_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) {
+        if matches!(
             self.update_member(&user_id, |m| {
                 if lapsed {
                     // Owners can't lapse
@@ -766,8 +765,7 @@ impl CommunityMembers {
                 }
             }),
             Some(true)
-        );
-        if updated {
+        ) {
             if lapsed {
                 self.lapsed.insert(user_id);
             } else {
@@ -780,7 +778,6 @@ impl CommunityMembers {
                 now,
             );
         }
-        updated
     }
 
     // Starts unlapsing the members who have lapsed up to now, as is done once there is no longer an

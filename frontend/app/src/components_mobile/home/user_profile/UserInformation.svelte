@@ -6,9 +6,11 @@
         allUsersStore,
         anonUserStore,
         currentUserIdStore,
-        ErrorCode,
+        MAX_BIO_LENGTH,
         OpenChat,
+        profileChanges,
         suspendedUserStore,
+        type ProfileFieldErrors,
         type PublicProfile,
     } from "@client";
     import { getContext } from "svelte";
@@ -20,7 +22,6 @@
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import UserProfileImageEditor from "./UserProfileImageEditor.svelte";
 
-    const MAX_DESC_LENGTH = 1024;
     const client = getContext<OpenChat>("client");
 
     interface Props {
@@ -34,105 +35,30 @@
     let saving = $state(false);
     let usernameValid = $state(true);
     let displayNameValid = $state(true);
-    let usernameError = $state<string>();
-    let displayNameError = $state<string>();
-    let bioError: string | undefined = $state(undefined);
+    let errors = $state<ProfileFieldErrors>({});
     let readonly = $derived($suspendedUserStore || $anonUserStore);
-    let bioDirty = $derived(candidate.bio !== profile.bio);
-    let usernameDirty = $derived(candidate.username !== profile.username);
-    let displayNameDirty = $derived(candidate.displayName !== profile.displayName);
+    let changes = $derived(profileChanges(profile, candidate));
     let buttonEnabled = $derived(
         usernameValid &&
             displayNameValid &&
-            bioError === undefined &&
-            (bioDirty || usernameDirty || displayNameDirty) &&
+            (changes.username || changes.displayName || changes.bio) &&
             !saving &&
             !readonly,
     );
 
-    function saveUser(e: Event) {
+    async function saveUser(e: Event) {
         e.preventDefault();
-
-        if ($anonUserStore) return;
-
         saving = true;
-        bioError = undefined;
-        const promises = [];
-
-        if (bioDirty) {
-            promises.push(
-                client
-                    .setBio(candidate.bio)
-                    .then((resp) => {
-                        if (resp.kind === "error" && resp.code === ErrorCode.TextTooLong) {
-                            bioError = "register.bioTooLong";
-                        } else {
-                            bioError = undefined;
-                            profile.bio = candidate.bio;
-                        }
-                    })
-                    .catch((_) => {
-                        toastStore.showFailureToast(i18nKey("unableToSaveUserProfile"));
-                    }),
-            );
+        try {
+            const outcome = await client.saveProfile(profile, candidate);
+            Object.assign(profile, outcome.profile);
+            errors = outcome.errors;
+            if (outcome.failure !== undefined) {
+                toastStore.showFailureToast(outcome.failure);
+            }
+        } finally {
+            saving = false;
         }
-
-        if (usernameDirty) {
-            promises.push(
-                client
-                    .setUsername(user.userId, candidate.username)
-                    .then((resp) => {
-                        if (resp !== "success") {
-                            if (resp === "username_taken") {
-                                usernameError = "register.usernameTaken";
-                            } else if (resp === "user_not_found") {
-                                usernameError = "register.userNotFound";
-                            } else if (resp === "username_too_short") {
-                                usernameError = "register.usernameTooShort";
-                            } else if (resp === "username_too_long") {
-                                usernameError = "register.usernameTooLong";
-                            } else if (resp === "username_invalid") {
-                                usernameError = "register.usernameInvalid";
-                            }
-                        } else {
-                            usernameError = undefined;
-                            profile.username = candidate.username;
-                        }
-                    })
-                    .catch((err) => {
-                        toastStore.showFailureToast(i18nKey("unableToSaveUserProfile"));
-                        client.logError("Unable to save username: ", err);
-                    }),
-            );
-        }
-
-        if (displayNameDirty) {
-            promises.push(
-                client
-                    .setDisplayName(user.userId, candidate.displayName)
-                    .then((resp) => {
-                        if (resp !== "success") {
-                            if (resp === "user_not_found") {
-                                displayNameError = "register.userNotFound";
-                            } else if (resp === "display_name_too_short") {
-                                displayNameError = "register.displayNameTooShort";
-                            } else if (resp === "display_name_too_long") {
-                                displayNameError = "register.displayNameTooLong";
-                            } else if (resp === "display_name_invalid") {
-                                displayNameError = "register.displayNameInvalid";
-                            }
-                        } else {
-                            displayNameError = undefined;
-                            profile.displayName = candidate.displayName;
-                        }
-                    })
-                    .catch(() => {
-                        toastStore.showFailureToast(i18nKey("unableToSaveUserProfile"));
-                    }),
-            );
-        }
-
-        Promise.all(promises).finally(() => (saving = false));
     }
 </script>
 
@@ -162,7 +88,7 @@
                     supplementalClass={"user_profile_info"}>
                     <UsernameInput
                         {client}
-                        errorMsg={usernameError}
+                        errorMsg={errors.username}
                         originalUsername={profile.username}
                         disabled={readonly}
                         bind:username={candidate.username}
@@ -170,14 +96,14 @@
                     </UsernameInput>
                     <DisplayNameInput
                         {client}
-                        errorMsg={displayNameError}
+                        errorMsg={errors.displayName}
                         originalDisplayName={profile.displayName}
                         disabled={readonly}
                         bind:displayName={candidate.displayName}
                         bind:displayNameValid>
                     </DisplayNameInput>
                     <TextArea
-                        maxlength={MAX_DESC_LENGTH}
+                        maxlength={MAX_BIO_LENGTH}
                         countdown
                         rows={5}
                         id={"user_bio"}
@@ -186,7 +112,7 @@
                         {#snippet subtext()}
                             <Translatable
                                 resourceKey={i18nKey(
-                                    bioError ?? "Optionally tell us a bit more about yourself",
+                                    errors.bio ?? "Optionally tell us a bit more about yourself",
                                 )}></Translatable>
                         {/snippet}
                     </TextArea>

@@ -3,7 +3,6 @@
         type Level,
         type OpenChat,
         type PaymentGate,
-        type PaymentGateApprovals,
         type ResourceKey,
         cryptoBalanceStore,
     } from "@client";
@@ -20,30 +19,23 @@
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
+    import type { GateEvaluation } from "@shared_components/home/access/gateEvaluation.svelte";
 
     const client = getContext<OpenChat>("client");
 
     interface Props {
         gate: PaymentGate & { expiry: bigint | undefined };
         level: Level;
-        paymentApprovals: PaymentGateApprovals;
+        evaluation: GateEvaluation;
         onApprovePayment: (args: { ledger: string; amount: bigint; approvalFee: bigint }) => void;
         onClose: () => void;
     }
 
-    let { gate, level, paymentApprovals, onApprovePayment, onClose }: Props = $props();
+    let { gate, level, evaluation, onApprovePayment, onClose }: Props = $props();
 
     let error: ResourceKey | undefined = $state(undefined);
     let balanceWithRefresh: BalanceWithRefresh | undefined = $state();
     let refreshingBalance = $state(false);
-
-    function balanceAfterCurrentCommitments(
-        ledger: string,
-        approvals: PaymentGateApprovals,
-        balance: bigint,
-    ) {
-        return balance - (approvals.get(ledger)?.amount ?? 0n);
-    }
 
     function onStartRefreshingBalance() {
         refreshingBalance = true;
@@ -76,7 +68,7 @@
     let token = $derived(client.getTokenDetailsForAccessGate(gate));
     let originalBalance = $derived($cryptoBalanceStore.get(gate.ledgerCanister) ?? 0n);
     let cryptoBalance = $derived(
-        balanceAfterCurrentCommitments(gate.ledgerCanister, paymentApprovals, originalBalance),
+        evaluation.balanceAfterCurrentCommitments(gate.ledgerCanister, originalBalance),
     );
     let insufficientFunds = $derived(cryptoBalance < gate.amount);
     let approvalMessage = $derived(

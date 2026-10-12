@@ -5,7 +5,11 @@
         type BotClientConfigData,
         type ModerationFlag,
         ModerationFlags,
+        MAX_BIO_LENGTH,
         type OpenChat,
+        type ProfileFieldErrors,
+        profileChanges,
+        type PublicProfile,
         ROLE_NONE,
         type UserSummary,
         adultEnabledStore,
@@ -29,7 +33,6 @@
         userMetricsStore,
         userWalletAccount,
     } from "@client";
-    import { ErrorCode, type PublicProfile } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _, locale } from "svelte-i18n";
     import Close from "svelte-material-icons/Close.svelte";
@@ -98,7 +101,6 @@
     import VideoCallSettings from "./VideoCallSettings.svelte";
 
     const client = getContext<OpenChat>("client");
-    const MAX_BIO_LENGTH = 2000;
 
     interface Props {
         user: UserSummary;
@@ -110,9 +112,7 @@
 
     let userbio = $state("");
     let selectedLocale = $state(($locale as string).substring(0, 2));
-    let usernameError: string | undefined = $state(undefined);
-    let displayNameError: string | undefined = $state(undefined);
-    let bioError: string | undefined = $state(undefined);
+    let errors = $state<ProfileFieldErrors>({});
     let saving = $state(false);
     let username = $state("");
     let usernameValid = $state(true);
@@ -201,14 +201,17 @@
             bio: userbio,
         };
     });
-    let bioDirty = $derived(userbio !== originalProfile.bio);
-    let usernameDirty = $derived(username !== originalUsername);
-    let displayNameDirty = $derived(displayName !== originalDisplayName);
+    // username and display name are compared with the user record, which the client updates when they save
+    let savedProfile = $derived({
+        ...originalProfile,
+        username: originalUsername,
+        displayName: originalDisplayName,
+    });
+    let changes = $derived(profileChanges(savedProfile, candidateProfile));
     let buttonEnabled = $derived(
         usernameValid &&
             displayNameValid &&
-            bioError === undefined &&
-            (bioDirty || usernameDirty || displayNameDirty) &&
+            (changes.username || changes.displayName || changes.bio) &&
             !saving &&
             !readonly,
     );
@@ -236,85 +239,19 @@
         client.setModerationFlags($moderationFlagsEnabledStore ^ flag);
     }
 
-    function saveUser(e: Event) {
+    async function saveUser(e: Event) {
         e.preventDefault();
-
-        if ($anonUserStore) return;
-
         saving = true;
-        usernameError = undefined;
-        bioError = undefined;
-        const promises = [];
-
-        if (bioDirty) {
-            promises.push(
-                client
-                    .setBio(userbio)
-                    .then((resp) => {
-                        if (resp.kind === "error" && resp.code === ErrorCode.TextTooLong) {
-                            bioError = "register.bioTooLong";
-                        } else {
-                            originalProfile.bio = userbio;
-                        }
-                    })
-                    .catch((err) => {
-                        toastStore.showFailureToast(i18nKey("unableToSaveUserProfile"));
-                        client.logError("Unable to save user bio: ", err);
-                    }),
-            );
+        try {
+            const outcome = await client.saveProfile(savedProfile, candidateProfile);
+            originalProfile = outcome.profile;
+            errors = outcome.errors;
+            if (outcome.failure !== undefined) {
+                toastStore.showFailureToast(outcome.failure);
+            }
+        } finally {
+            saving = false;
         }
-
-        if (usernameDirty) {
-            promises.push(
-                client
-                    .setUsername(user.userId, username)
-                    .then((resp) => {
-                        if (resp !== "success") {
-                            if (resp === "username_taken") {
-                                usernameError = "register.usernameTaken";
-                            } else if (resp === "user_not_found") {
-                                usernameError = "register.userNotFound";
-                            } else if (resp === "username_too_short") {
-                                usernameError = "register.usernameTooShort";
-                            } else if (resp === "username_too_long") {
-                                usernameError = "register.usernameTooLong";
-                            } else if (resp === "username_invalid") {
-                                usernameError = "register.usernameInvalid";
-                            }
-                        }
-                    })
-                    .catch((err) => {
-                        toastStore.showFailureToast(i18nKey("unableToSaveUserProfile"));
-                        client.logError("Unable to save username: ", err);
-                    }),
-            );
-        }
-
-        if (displayNameDirty) {
-            promises.push(
-                client
-                    .setDisplayName(user.userId, displayName)
-                    .then((resp) => {
-                        if (resp !== "success") {
-                            if (resp === "user_not_found") {
-                                displayNameError = "register.userNotFound";
-                            } else if (resp === "display_name_too_short") {
-                                displayNameError = "register.displayNameTooShort";
-                            } else if (resp === "display_name_too_long") {
-                                displayNameError = "register.displayNameTooLong";
-                            } else if (resp === "display_name_invalid") {
-                                displayNameError = "register.displayNameInvalid";
-                            }
-                        }
-                    })
-                    .catch((err) => {
-                        toastStore.showFailureToast(i18nKey("unableToSaveUserProfile"));
-                        client.logError("Unable to save display name: ", err);
-                    }),
-            );
-        }
-
-        Promise.all(promises).finally(() => (saving = false));
     }
 
     function toggleNotifications() {
@@ -416,11 +353,11 @@
                         bind:username
                         bind:usernameValid
                         bind:checking={checkingUsername}
-                        bind:error={usernameError}>
-                        {#if usernameError !== undefined}
+                        bind:error={errors.username}>
+                        {#if errors.username !== undefined}
                             <ErrorMessage
                                 ><Translatable
-                                    resourceKey={i18nKey(usernameError)} /></ErrorMessage>
+                                    resourceKey={i18nKey(errors.username)} /></ErrorMessage>
                         {/if}
                     </UsernameInput>
                     <Legend label={i18nKey("displayName")} rules={i18nKey("displayNameRules")} />
@@ -430,10 +367,10 @@
                         disabled={readonly}
                         bind:displayName
                         bind:displayNameValid>
-                        {#if displayNameError !== undefined}
+                        {#if errors.displayName !== undefined}
                             <ErrorMessage
                                 ><Translatable
-                                    resourceKey={i18nKey(displayNameError)} /></ErrorMessage>
+                                    resourceKey={i18nKey(errors.displayName)} /></ErrorMessage>
                         {/if}
                     </DisplayNameInput>
                     <Legend label={i18nKey("bio")} rules={i18nKey("supportsMarkdown")} />
@@ -444,9 +381,9 @@
                         disabled={readonly}
                         maxlength={MAX_BIO_LENGTH}
                         placeholder={i18nKey("enterBio")}>
-                        {#if bioError !== undefined}
+                        {#if errors.bio !== undefined}
                             <ErrorMessage
-                                ><Translatable resourceKey={i18nKey(bioError)} /></ErrorMessage>
+                                ><Translatable resourceKey={i18nKey(errors.bio)} /></ErrorMessage>
                         {/if}
                     </TextArea>
                     <div class="full-width-btn">
