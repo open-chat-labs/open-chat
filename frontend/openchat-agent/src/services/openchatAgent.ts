@@ -4004,14 +4004,15 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<WithdrawCryptocurrencyResponse> {
         if (offline()) return CommonResponses.offline();
 
+        if (this.holdsOwnFunds() && pin !== undefined) {
+            const checked = await this.userClient.checkPinNumber(pin);
+            if (checked.kind === "error") {
+                return checked;
+            }
+        }
+
         const stamped = { ...domain, createdAtNanos: await icNowNanos(this._agent, domain.ledger) };
         if (this.holdsOwnFunds()) {
-            if (pin !== undefined) {
-                const checked = await this.userClient.checkPinNumber(pin);
-                if (checked.kind === "error") {
-                    return checked;
-                }
-            }
             return this._ledgerClient.withdraw(stamped);
         }
         return this.userClient.withdrawCryptocurrency(stamped, pin);

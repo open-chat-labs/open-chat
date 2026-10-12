@@ -918,7 +918,9 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         pinCheckResponse = PIN_INCORRECT;
 
         expect(await agent.withdrawCryptocurrency(WITHDRAWAL, PIN)).toEqual(PIN_INCORRECT);
+        expect(pinChecks).toEqual([PIN]);
         expect(ledgerWithdrawals).toEqual([]);
+        expect(syncedWith).toEqual([]);
     });
 
     test("a user in a MultiUser canister without a PIN sends with nothing to check", async () => {
