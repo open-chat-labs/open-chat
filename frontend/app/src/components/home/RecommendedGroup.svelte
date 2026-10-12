@@ -51,10 +51,7 @@
     }
 
     function joinGroup(group: GroupChatSummary) {
-        publish("joinGroup", {
-            group,
-            select: false,
-        });
+        publish("joinGroup", group);
     }
     function leaveGroup(group: GroupChatSummary) {
         publish("leaveGroup", { kind: "leave", chatId: group.id, level: "group" });

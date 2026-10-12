@@ -31,10 +31,7 @@
     let freezingInProgress = $state(false);
 
     function joinGroup() {
-        publish("joinGroup", {
-            group: chat,
-            select: false,
-        });
+        publish("joinGroup", chat);
     }
 
     function cancelPreview() {

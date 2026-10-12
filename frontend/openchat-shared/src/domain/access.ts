@@ -1,3 +1,5 @@
+import type { ResourceKey } from "../utils/i18n";
+import type { Success } from "./response";
 import type { Level } from "./structure";
 
 export type EnhancedAccessGate = {
@@ -246,3 +248,14 @@ export type GateCheckSucceeded = {
     paymentApprovals: PaymentGateApprovals;
     compositeGateIndex?: number;
 };
+
+/**
+ * What came of asking to join a group or channel. `skipped` means no join was sent: either the
+ * user is anonymous (the join is replayed after login) or they are already a member.
+ */
+export type JoinGroupOutcome =
+    | Success
+    | { kind: "skipped" }
+    | { kind: "needs_gate_evaluation"; gates: EnhancedAccessGate[] }
+    | { kind: "gate_check_failed"; gates: EnhancedAccessGate[] }
+    | { kind: "failed"; message: ResourceKey };

@@ -36,7 +36,6 @@
         chatListScopeStore,
         chatsInitialisedStore,
         chatSummariesListStore,
-        chatSummariesStore,
         communitiesStore,
         ANON_USER_ID,
         CURRENT_TERMS_VERSION,
@@ -49,7 +48,7 @@
         offlineStore,
         pinNumberResolverStore,
         querystringStore,
-        ROLE_NONE,
+        postLoginJoin,
         routeForChatIdentifier,
         routeForScope,
         routeStore,
@@ -194,14 +193,18 @@
         | {
               kind: "evaluating_access_gates";
               group: MultiUserChat;
-              select: boolean;
               gates: EnhancedAccessGate[];
               level: Level;
           };
 
     let modal: ModalType = $state({ kind: "none" });
     let confirmActionEvent: ConfirmActionEvent | undefined = $state();
-    let joining: MultiUserChat | undefined = $state(undefined);
+    let joinInFlight: MultiUserChat | undefined = $state(undefined);
+    // Derived rather than set and cleared by hand, because the Overlay's teardown calls closeModal
+    // after the next join has started
+    let joining: MultiUserChat | undefined = $derived.by(() =>
+        modal.kind === "evaluating_access_gates" ? modal.group : joinInFlight,
+    );
     let showUpgrade: boolean = $state(false);
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
@@ -232,7 +235,7 @@
                 attachmentToShare = content;
                 modal = { kind: "select_chat", excludeCurrent: false };
             }),
-            subscribe("joinGroup", joinGroup),
+            subscribe("joinGroup", (group) => joinGroup(group)),
             subscribe("createCommunity", createCommunity),
             subscribe("unarchiveChat", unarchiveChat),
             subscribe("forward", forwardMessage),
@@ -407,7 +410,6 @@
 
     function closeModal() {
         modal = { kind: "none" };
-        joining = undefined;
     }
 
     function closeNoAccess() {
@@ -639,95 +641,40 @@
         }
     }
 
-    async function joinGroup(detail: { group: MultiUserChat; select: boolean }): Promise<void> {
-        if ($anonUserStore) {
-            client.updateIdentityState({
-                kind: "logging_in",
-                postLogin: { kind: "join_group", ...detail },
-            });
-            return;
-        }
-        const { group, select } = detail;
-
-        // it's possible that we got here via a postLogin capture in which case it's possible
-        // that we are actually already a member of this group, so we should double check here
-        // that we actually *need* to join the group
-        const chat = $chatSummariesStore.get(group.id);
-        if (chat === undefined || chat.membership.role === ROLE_NONE || client.isLapsed(chat.id)) {
-            doJoinGroup(group, select, undefined);
+    async function joinGroup(group: MultiUserChat, gateCheck?: GateCheckSucceeded): Promise<void> {
+        joinInFlight = group;
+        const outcome = await client.joinGroup(group, gateCheck).catch(() => undefined);
+        joinInFlight = undefined;
+        if (outcome === undefined) return;
+        switch (outcome.kind) {
+            case "needs_gate_evaluation":
+                modal = {
+                    kind: "evaluating_access_gates",
+                    group,
+                    gates: outcome.gates,
+                    level: group.level,
+                };
+                break;
+            case "gate_check_failed":
+                modal = { kind: "gate_check_failed", gates: outcome.gates };
+                break;
+            case "failed":
+                toastStore.showFailureToast(outcome.message);
+                break;
+            case "success":
+            case "skipped":
+                break;
+            default:
+                outcome satisfies never;
         }
     }
 
     function accessGatesEvaluated(success: GateCheckSucceeded) {
         if (modal.kind === "evaluating_access_gates") {
-            const { group, select } = modal;
+            const { group } = modal;
             closeModal();
-            doJoinGroup(group, select, success);
+            joinGroup(group, success);
         }
-    }
-
-    /**
-     * When we try to join a group we need to first scrutinise the access gates and
-     * see whether any of them require client side action before we can proceed with the
-     * call to the back end. If there are gates which require action, we need to perform
-     * those actions one by one until they are all done and then feed their results
-     * back into this function.
-     */
-
-    async function doJoinGroup(
-        group: MultiUserChat,
-        select: boolean,
-        gateCheck: GateCheckSucceeded | undefined,
-    ): Promise<void> {
-        joining = group;
-        if (gateCheck === undefined) {
-            const gates = client.accessGatesForChat(group, true);
-            const passed = client.doesUserMeetAccessGates(gates);
-
-            if (!passed) {
-                /**
-                 * If we cannot already tell that the user passes the access gate(s), check if there are any gates that require front end
-                 * pre-processing.
-                 */
-                if (client.gatePreprocessingRequired(gates)) {
-                    modal = {
-                        kind: "evaluating_access_gates",
-                        group,
-                        select,
-                        gates,
-                        level: group.level,
-                    };
-                    return Promise.resolve();
-                }
-            }
-        }
-
-        const credentials = gateCheck?.credentials ?? [];
-        const paymentApprovals = gateCheck?.paymentApprovals ?? new Map();
-        const compositeGateIndex = gateCheck?.compositeGateIndex;
-
-        return client
-            .joinGroup(group, credentials, paymentApprovals, compositeGateIndex)
-            .then((resp) => {
-                if (resp.kind === "blocked") {
-                    toastStore.showFailureToast(i18nKey("youreBlocked"));
-                    joining = undefined;
-                } else if (resp.kind === "gate_check_failed") {
-                    const gates = client.accessGatesForChat(group);
-                    modal = { kind: "gate_check_failed", gates };
-                } else if (resp.kind !== "success") {
-                    toastStore.showFailureToast(
-                        i18nKey("joinGroupFailed", undefined, group.level, true),
-                    );
-                    joining = undefined;
-                } else if (select) {
-                    joining = undefined;
-                    navigate(routeForChatIdentifier($chatListScopeStore.kind, group.id));
-                } else {
-                    joining = undefined;
-                }
-            })
-            .catch(() => (joining = undefined));
     }
 
     function upgrade() {
@@ -965,14 +912,10 @@
             console.log("We are now logged in so we are closing the register modal");
             closeModal();
         }
-        if (
-            $identityStateStore.kind === "logged_in" &&
-            $identityStateStore.postLogin?.kind === "join_group" &&
-            $chatsInitialisedStore
-        ) {
-            const join = { ...$identityStateStore.postLogin };
+        const postLoginGroup = postLoginJoin($identityStateStore, $chatsInitialisedStore);
+        if (postLoginGroup !== undefined) {
             client.clearPostLoginState();
-            tick().then(() => joinGroup(join));
+            tick().then(() => joinGroup(postLoginGroup));
         }
     });
 
