@@ -1,5 +1,11 @@
-import type { EnhancedTokenDetails } from "@client";
-import { describe, expect, test } from "vitest";
+import {
+    exchangeRatesLookupStore,
+    LEDGER_CANISTER_CKBTC,
+    LEDGER_CANISTER_CKETH,
+    LEDGER_CANISTER_ICP,
+    type EnhancedTokenDetails,
+} from "@client";
+import { afterEach, describe, expect, test } from "vitest";
 import { TokenState } from "./walletState.svelte";
 
 const icp: EnhancedTokenDetails = {
@@ -72,5 +78,44 @@ describe("TokenState fees", () => {
         state.transferFees = 20000n;
         state.transferFees = undefined;
         expect(state.transferFees).toBe(10000n);
+    });
+});
+
+describe("TokenState unit value", () => {
+    // One of two tokens in the registry with the symbol TENDY
+    const tendy: EnhancedTokenDetails = {
+        ...icp,
+        name: "Tendy",
+        symbol: "TENDY",
+        ledger: "kylwo-viaaa-aaaaq-aae7a-cai",
+    };
+
+    afterEach(() => exchangeRatesLookupStore.set(new Map()));
+
+    test("is the rate of the token's ledger in the selected currency", () => {
+        exchangeRatesLookupStore.set(
+            new Map([
+                [LEDGER_CANISTER_ICP, { toUSD: 4 }],
+                [LEDGER_CANISTER_CKBTC, { toUSD: 80_000 }],
+                [LEDGER_CANISTER_CKETH, { toUSD: 2_000 }],
+                [tendy.ledger, { toUSD: 0.08 }],
+                ["iozql-7iaaa-aaaah-advvq-cai", { toUSD: 0.3 }],
+            ]),
+        );
+        const state = new TokenState(tendy);
+
+        expect(state.formattedUnitValue).toBe("$0.080");
+        state.selectedConversion = "icp";
+        expect(state.formattedUnitValue).toBe("0.020");
+        state.selectedConversion = "btc";
+        expect(state.formattedUnitValue).toBe("0.0000010");
+        state.selectedConversion = "eth";
+        expect(state.formattedUnitValue).toBe("0.000040");
+    });
+
+    test("is unknown without a rate for the selected currency", () => {
+        exchangeRatesLookupStore.set(new Map([[tendy.ledger, { toUSD: 0.08 }]]));
+
+        expect(new TokenState(tendy, "btc").formattedUnitValue).toBe("?????");
     });
 });
