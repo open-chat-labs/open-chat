@@ -7,6 +7,19 @@ export interface MinterInfo {
   'min_confirmations' : number,
   'kyt_fee' : bigint,
 }
+export interface RetrieveBtcOk { 'block_index' : bigint }
+export interface RetrieveBtcWithApprovalArgs {
+  'from_subaccount' : [] | [Uint8Array | number[]],
+  'address' : string,
+  'amount' : bigint,
+}
+export type RetrieveBtcWithApprovalError = { 'MalformedAddress' : string } |
+  { 'GenericError' : { 'error_message' : string, 'error_code' : bigint } } |
+  { 'TemporarilyUnavailable' : string } |
+  { 'InsufficientAllowance' : { 'allowance' : bigint } } |
+  { 'AlreadyProcessing' : null } |
+  { 'AmountTooLow' : bigint } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
 export interface Utxo {
   'height' : number,
   'value' : bigint,
@@ -28,6 +41,11 @@ export interface _SERVICE {
     Array<Utxo>
   >,
   'get_minter_info' : ActorMethod<[], MinterInfo>,
+  'retrieve_btc_with_approval' : ActorMethod<
+    [RetrieveBtcWithApprovalArgs],
+    { 'Ok' : RetrieveBtcOk } |
+      { 'Err' : RetrieveBtcWithApprovalError }
+  >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

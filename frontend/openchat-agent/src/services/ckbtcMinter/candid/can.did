@@ -10,9 +10,30 @@ type MinterInfo = record {
     kyt_fee : nat64;
 };
 
+type RetrieveBtcWithApprovalArgs = record {
+    address : text;
+    amount : nat64;
+    from_subaccount : opt blob;
+};
+
+type RetrieveBtcWithApprovalError = variant {
+    MalformedAddress : text;
+    AlreadyProcessing;
+    AmountTooLow : nat64;
+    InsufficientFunds : record { balance : nat64 };
+    InsufficientAllowance : record { allowance : nat64 };
+    TemporarilyUnavailable : text;
+    GenericError : record { error_message : text; error_code : nat64 };
+};
+
+type RetrieveBtcOk = record {
+    block_index : nat64
+};
+
 service : {
     get_known_utxos: (record { owner: opt principal; subaccount : opt blob }) -> (vec Utxo) query;
     estimate_withdrawal_fee : (record { amount : opt nat64 }) -> (record { bitcoin_fee : nat64; minter_fee : nat64 }) query;
     get_deposit_fee: () -> (nat64) query;
     get_minter_info : () -> (MinterInfo) query;
+    retrieve_btc_with_approval : (RetrieveBtcWithApprovalArgs) -> (variant { Ok : RetrieveBtcOk; Err : RetrieveBtcWithApprovalError });
 }

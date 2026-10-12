@@ -74,6 +74,4 @@ mod update_bot;
 mod update_btc_balance;
 mod update_chat_settings;
 mod wallet_receive;
-mod withdraw_btc;
 mod withdraw_crypto;
-mod withdraw_via_one_sec;
