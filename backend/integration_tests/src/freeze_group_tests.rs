@@ -506,6 +506,89 @@ fn delete_frozen_group() {
     wrapper.discard();
 }
 
+// The LocalUserIndex refunds a deleted frozen group's cycles by installing the refunder in its
+// canister. An upgrade part way through clears what it was doing, but the canister is still at the
+// front of the queue, so the refund is picked up again and completed.
+#[test]
+fn deleted_groups_refund_resumes_after_the_local_user_index_is_upgraded_mid_way() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user1, group_id, .. } = init_test_data(env, canister_ids, *controller);
+    let canister_id = CanisterId::from(group_id);
+    let local_user_index = canister_ids.local_user_index(env, group_id);
+
+    client::group_index::freeze_group(
+        env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::freeze_group::Args {
+            chat_id: group_id,
+            reason: None,
+            suspend_members: None,
+        },
+    );
+
+    // So that the refunds counted below are only this group's
+    wait_for_refund_queue_to_empty(env, local_user_index);
+    let balance_before = env.cycle_balance(canister_id);
+    let refunded_before = cycles_refunded_metric(env, local_user_index);
+
+    let response = client::group_index::delete_frozen_group(
+        env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::delete_frozen_group::Args { chat_id: group_id },
+    );
+    assert!(
+        matches!(response, group_index_canister::delete_frozen_group::Response::Success),
+        "{response:?}"
+    );
+    wait_for_deleted_canister_to_be_uninstalled(env, canister_id);
+
+    // Wait until the refunder has been installed but not yet uninstalled. The IC's install_code rate
+    // limit on the group's canister makes the LocalUserIndex retry after a delay, so time is advanced.
+    let mut refunder_installed = false;
+    for _ in 0..500 {
+        env.advance_time(Duration::from_secs(10));
+        env.tick();
+        if env
+            .canister_status(canister_id, Some(local_user_index))
+            .unwrap()
+            .module_hash
+            .is_some()
+        {
+            refunder_installed = true;
+            break;
+        }
+    }
+    assert!(refunder_installed);
+
+    let wasm = crate::wasms::LOCAL_USER_INDEX.clone();
+    let args = candid::encode_one(local_user_index_canister::post_upgrade::Args {
+        wasm_version: wasm.version,
+    })
+    .unwrap();
+    client::stop_canister(env, canister_ids.user_index, local_user_index);
+    env.upgrade_canister(local_user_index, wasm.module.into(), args, Some(canister_ids.user_index))
+        .unwrap();
+    client::start_canister(env, canister_ids.user_index, local_user_index);
+
+    wait_for_refund_queue_to_empty(env, local_user_index);
+    let refunded = cycles_refunded_metric(env, local_user_index) - refunded_before;
+    assert!(refunded > balance_before - MAX_RESIDUAL_CYCLES, "{refunded}");
+    let canister_status = env.canister_status(canister_id, Some(local_user_index)).unwrap();
+    assert!(canister_status.module_hash.is_none());
+
+    // The LocalUserIndex was upgraded
+    wrapper.discard();
+}
+
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::register_diamond_user(env, canister_ids, controller);

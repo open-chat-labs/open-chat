@@ -26,8 +26,8 @@ async fn c2c_user_canister_v2(args: Args) -> Response {
 }
 
 async fn c2c_user_canister_v2_impl(args: Args) -> Response {
-    // As in the User canister, the caller must be a User or MultiUser canister, and each event is
-    // only applied if it is from a user that kind of canister can act for
+    // The caller must be a MultiUser canister, and each event is only applied if it is from one of
+    // its users
     let caller_kind = verify_caller().await;
     if caller_kind == CanisterKind::Neither {
         return Response::Success;
@@ -54,9 +54,7 @@ async fn c2c_user_canister_v2_impl(args: Args) -> Response {
             }
             // Events for a user who isn't in this canister can never be applied, so are dropped
             if let Some(recipient_index) = state.index_of_local_user(recipient) {
-                if caller_kind == CanisterKind::MultiUserCanister {
-                    migrate_sender_user_id(recipient_index, sender, &sender_previous_user_ids, state);
-                }
+                migrate_sender_user_id(recipient_index, sender, &sender_previous_user_ids, state);
                 apply_event(event, sender, recipient_index, state);
             }
         }

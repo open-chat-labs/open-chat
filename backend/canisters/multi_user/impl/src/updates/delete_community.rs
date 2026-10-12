@@ -19,9 +19,7 @@ async fn delete_community_impl(args: Args) -> Response {
         Err(error) => return Response::Error(error),
     };
 
-    let c2c_args = c2c_delete_community::Args {
-        user_id: Some(my_user_id),
-    };
+    let c2c_args = c2c_delete_community::Args { user_id: my_user_id };
 
     match community_canister_c2c_client::c2c_delete_community(args.community_id.into(), &c2c_args).await {
         Ok(result) => {

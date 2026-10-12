@@ -8,11 +8,11 @@ pub fn caller_is_openchat_user() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_openchat_user_or_multi_user_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_openchat_user() || state.is_caller_multi_user_canister()) {
+pub fn caller_is_multi_user_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_multi_user_canister()) {
         Ok(())
     } else {
-        Err("Caller is not an OpenChat user or a MultiUser canister".to_string())
+        Err("Caller is not a MultiUser canister".to_string())
     }
 }
 

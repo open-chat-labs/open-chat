@@ -29,8 +29,6 @@ pub enum TimerJob {
     RetryPayment(Box<RetryPaymentJob>),
 }
 
-impl TimerJob {}
-
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RecurringDiamondMembershipPayment {
     pub user_id: UserId,

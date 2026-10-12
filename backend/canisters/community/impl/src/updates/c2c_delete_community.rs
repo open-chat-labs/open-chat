@@ -36,8 +36,8 @@ struct PrepareResult {
     members: Vec<UserId>,
 }
 
-fn prepare(user_id: Option<UserId>, state: &RuntimeState) -> OCResult<PrepareResult> {
-    let member = state.get_calling_member(user_id, true)?;
+fn prepare(user_id: UserId, state: &RuntimeState) -> OCResult<PrepareResult> {
+    let member = state.get_calling_member(Some(user_id), true)?;
     if !member.role().can_delete_community() {
         Err(OCErrorCode::InitiatorNotAuthorized.into())
     } else {

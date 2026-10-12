@@ -22,7 +22,7 @@ async fn leave_community_impl(args: Args) -> Response {
 
     let c2c_args = c2c_leave_community::Args {
         principal,
-        user_id: Some(my_user_id),
+        user_id: my_user_id,
     };
 
     // As in the User canister, the community is removed if the user has left it or was not in it

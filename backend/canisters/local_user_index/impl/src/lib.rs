@@ -317,8 +317,7 @@ impl RuntimeState {
     }
 
     // Whether this LocalUserIndex holds the user by their latest id, which, if they've been migrated to
-    // a MultiUser canister held by another LocalUserIndex, it doesn't, even while it still holds
-    // their old canister
+    // a MultiUser canister held by another LocalUserIndex, it doesn't
     pub fn holds_latest_id_of(&self, user_id: UserId) -> bool {
         self.data.local_users.contains(&self.data.migrated_user_ids.latest(user_id))
     }

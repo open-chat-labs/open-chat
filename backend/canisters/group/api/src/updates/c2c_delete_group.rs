@@ -1,11 +1,10 @@
 use serde::{Deserialize, Serialize};
 use types::{UnitResult, UserId};
 
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
-    // The user being acted for when the caller holds many users, which must be one of its users
-    #[serde(default)]
-    pub user_id: Option<UserId>,
+    // The user being acted for, which must be one of the calling MultiUser canister's users
+    pub user_id: UserId,
 }
 
 pub type Response = UnitResult;

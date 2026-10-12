@@ -132,9 +132,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, OCError> 
     if args.ledgers.len() > MAX_LEDGERS {
         return Err(OCErrorCode::InvalidRequest.with_message(format!("Too many ledgers, the maximum is {MAX_LEDGERS}")));
     }
-    if state.data.local_users.contains(&args.old_user_id) {
-        return Err(OCErrorCode::AlreadyInProgress.with_message("Old canister not yet uninstalled"));
-    }
     if state.data.registry_tokens.is_empty() {
         return Err(OCErrorCode::NotInitialized.with_message("Tokens not yet loaded from the Registry"));
     }

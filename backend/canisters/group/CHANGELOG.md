@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove the one-off which checked recurring gates again for lapsed migrated members, now that it has run ([#9915](https://github.com/open-chat-labs/open-chat/pull/9915))
-- Remove `register_proposal_vote` and `c2c_tip_message`, which only User canisters used ([#9919](https://github.com/open-chat-labs/open-chat/pull/9919))
+- Remove what was only used for users in User canisters, including `register_proposal_vote` and `c2c_tip_message` ([#9919](https://github.com/open-chat-labs/open-chat/pull/9919))
 
 ### Fixed
 
