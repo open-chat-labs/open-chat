@@ -53,7 +53,7 @@ fn swap_made_by_user_in_multi_user_canister_is_unfinished_until_marked_completed
         "{status:?}"
     );
     assert!(
-        matches!(status.withdraw_from_dex, Some(Ok(a)) if a == amount_out),
+        matches!(status.withdrawn_from_dex, Some(Ok(a)) if a == amount_out),
         "{status:?}"
     );
     assert!(has_swapped_from_wallet(env, &user));
@@ -87,7 +87,7 @@ fn failed_swap_made_by_user_in_multi_user_canister_earns_no_achievement() {
         matches!(&status.amount_swapped, Some(Ok(Err(e))) if e == "slippage"),
         "{status:?}"
     );
-    assert!(status.withdraw_from_dex.is_none(), "{status:?}");
+    assert!(status.withdrawn_from_dex.is_none(), "{status:?}");
     assert!(!has_swapped_from_wallet(env, &user));
 }
 
@@ -227,18 +227,19 @@ fn swap_args(
     }
 }
 
-fn swap_status(
-    env: &pocket_ic::PocketIc,
-    user: &crate::User,
-    swap_id: u128,
-) -> user_canister::token_swap_status::TokenSwapStatus {
-    match client::user::token_swap_status(
+fn swap_status(env: &pocket_ic::PocketIc, user: &crate::User, swap_id: u128) -> user_canister::token_swaps::TokenSwap {
+    let user_canister::token_swaps::Response::Success(result) = client::user::token_swaps(
         env,
         user.principal,
         user.canister(),
-        &user_canister::token_swap_status::Args { swap_id },
-    ) {
-        user_canister::token_swap_status::Response::Success(status) => status,
-        response => panic!("{response:?}"),
-    }
+        &user_canister::token_swaps::Args {
+            start: 0,
+            max_results: 100,
+        },
+    );
+    result
+        .swaps
+        .into_iter()
+        .find(|s| s.args.swap_id == swap_id)
+        .expect("The swap should be recorded")
 }

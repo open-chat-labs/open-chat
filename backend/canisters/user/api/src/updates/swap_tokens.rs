@@ -1,4 +1,3 @@
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CanisterId, ExchangeId, PinNumberWrapper, TokenInfo, icrc1};
@@ -70,17 +69,4 @@ pub struct TacoArgs {
     /// account TACO's `checkReceive` validates the user's ICRC1 transfer against
     /// (production: qbnpl-laaaa-aaaan-q52aq-cai). Distinct from swap_canister_id.
     pub treasury_canister_id: CanisterId,
-}
-
-#[ts_export(user, swap_tokens)]
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success(SuccessResult),
-    Error(OCError),
-}
-
-#[ts_export(user, swap_tokens)]
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub amount_out: u128,
 }

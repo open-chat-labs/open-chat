@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { OpenChat, SignerWallet, TokenInfo } from "@client";
-    import { cryptoBalanceStore, currentUserIdStore, mobileWidth, walletApprovalFee } from "@client";
+    import { cryptoBalanceStore, mobileWidth, walletApprovalFee } from "@client";
     import { getContext } from "svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Button from "../Button.svelte";
@@ -71,11 +71,8 @@
     // Token1 is deposited in the escrow canister along with the fee for paying it out, so the
     // deposit costs two fees
     let depositFees = $derived(BigInt(2) * token1.fee);
-    // An external wallet, or the wallet of a user who holds their own funds, also pays for the
-    // approval it makes before the deposit is pulled from it
-    let approvalFee = $derived(
-        walletApprovalFee($currentUserIdStore, token1.fee, sourceWallet !== undefined),
-    );
+    // The wallet also pays for the approval it makes before the deposit is pulled from it
+    let approvalFee = $derived(walletApprovalFee(token1.fee));
     let transferFees = $derived(depositFees + approvalFee);
     // An OpenChat balance which cannot cover the swap is no obstacle when an external wallet is
     // paying instead

@@ -25,10 +25,9 @@ fn accept_if_valid(state: &RuntimeState) {
         | "move_funds_from_old_canister"
         | "pay_for_premium_item"
         | "uninstall_bot" => state.is_caller_openchat_user(),
-        "reinstate_missed_daily_claims"
-        | "set_call_push_enabled"
-        | "set_daily_puzzle_canister_id"
-        | "withdraw_from_icpswap" => state.is_caller_platform_operator(),
+        "reinstate_missed_daily_claims" | "set_call_push_enabled" | "set_daily_puzzle_canister_id" => {
+            state.is_caller_platform_operator()
+        }
         "register_user" => true,
         "video_call_declined" => state.is_caller_video_call_operator(),
         // Canister callers bypass inspect_message; these only matter for tests that impersonate the canisters

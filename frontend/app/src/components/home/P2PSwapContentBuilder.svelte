@@ -2,7 +2,6 @@
     import type { MessageContext, OpenChat, P2PSwapContentInitial, SignerWallet } from "@client";
     import {
         enhancedCryptoLookup as cryptoLookup,
-        currentUserIdStore,
         isDiamondStore,
         mobileWidth,
         ONE_DAY,
@@ -64,11 +63,8 @@
     // The offer is deposited in the escrow canister along with the fee for paying it out, so the
     // deposit costs two fees
     let depositFees = $derived(fromDetails.transferFee * BigInt(2));
-    // An external wallet, or the wallet of a user who holds their own funds, also pays for the
-    // approval it makes before the deposit is pulled from it
-    let approvalFee = $derived(
-        walletApprovalFee($currentUserIdStore, fromDetails.transferFee, payFromWallet),
-    );
+    // The wallet also pays for the approval it makes before the deposit is pulled from it
+    let approvalFee = $derived(walletApprovalFee(fromDetails.transferFee));
     let totalFees = $derived(depositFees + approvalFee);
     let remainingBalance = $state(0n);
     $effect(() => {

@@ -231,11 +231,10 @@
         }
     });
     let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
-    // What the tip costs in fees, which includes the approval an external wallet, or the wallet of
-    // a user who holds their own funds, makes before the tip is pulled from it
+    // What the tip costs in fees, which includes the approval the wallet makes before the tip is
+    // pulled from it
     let transferFees = $derived(
-        tokenDetails.transferFee +
-            walletApprovalFee($currentUserIdStore, tokenDetails.transferFee, payFromWallet),
+        tokenDetails.transferFee + walletApprovalFee(tokenDetails.transferFee),
     );
     let exchangeRate = $derived(
         to2SigFigs($exchangeRatesLookup.get(tokenDetails.ledger)?.toUSD ?? 0),

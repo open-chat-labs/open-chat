@@ -2021,8 +2021,6 @@
         "noEligibleNeuronsMoreInfo": "Weitere Informationen zu Abstimmungen und Governance finden Sie <a target=\"_blank\" href=\"https://oc.app/blog/governance\">in diesem Blogbeitrag</a> .",
         "noEligibleNeuronsPrincipalIntro": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge in OpenChat abzustimmen, müssen Sie zunächst Ihren OpenChat-Principal als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten.",
         "noEligibleNeuronsPrincipalLabel": "Ihr OpenChat-Principal lautet:",
-        "noEligibleNeuronsUserIdIntro": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge in OpenChat abzustimmen, müssen Sie zunächst Ihre OpenChat-Benutzer-ID als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten.",
-        "noEligibleNeuronsUserIdLabel": "Ihre OpenChat-Benutzer-ID lautet:",
         "notificationsAction": "Indexaktionen für Benachrichtigungen",
         "openchatInstallerAction": "OpenChat-Installationsaktionen",
         "passing": {
@@ -2382,14 +2380,10 @@
         "noQuotes": "Keine DEXes haben ein Angebot für den Tausch von {tokenIn} bereitgestellt",
         "proceedWithSwap": "Der Tausch wird nur durchgeführt, wenn der zu erhaltende Betrag von {tokenOut} mindestens 98 % des angegebenen Betrags beträgt. Möchten Sie den Tausch durchführen?",
         "progress": {
-            "deposit": "Übertragen Sie {amountIn} {tokenIn} an {dex}",
             "done": "Tausch abgeschlossen",
             "error": "Swap-Fehler – es sind keine Gelder verloren gegangen",
             "failed": "Der Tausch ist fehlgeschlagen – der Wechselkurs hat sich geändert",
-            "get": "Holen Sie sich ein Einlagenkonto",
             "insufficientFunds": "Der Tausch ist fehlgeschlagen – unzureichende Mittel",
-            "notify": "Benachrichtigen Sie {dex} über die Einzahlung",
-            "refund": "Erstattung von {amountIn} {tokenIn} von {dex}",
             "swap": "Weisen Sie {dex} an, den Austausch durchzuführen",
             "withdraw": "{amountOut} {tokenOut} von {dex} abheben"
         },

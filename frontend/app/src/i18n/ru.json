@@ -2021,8 +2021,6 @@
         "noEligibleNeuronsMoreInfo": "Для получения дополнительной информации о голосовании и управлении прочитайте <a target=\"_blank\" href=\"https://oc.app/blog/governance\">этот пост в блоге</a> .",
         "noEligibleNeuronsPrincipalIntro": "Не обнаружено подходящих или связанных нейронов. Чтобы голосовать за предложения из OpenChat, вы должны сначала добавить свой principal OpenChat в качестве горячей клавиши ко всем нейронам, с помощью которых вы хотите проголосовать.",
         "noEligibleNeuronsPrincipalLabel": "Ваш principal OpenChat:",
-        "noEligibleNeuronsUserIdIntro": "Не обнаружено подходящих или связанных нейронов. Чтобы голосовать за предложения из OpenChat, вы должны сначала добавить свой идентификатор пользователя OpenChat в качестве горячей клавиши ко всем нейронам, с помощью которых вы хотите проголосовать.",
-        "noEligibleNeuronsUserIdLabel": "Ваш идентификатор пользователя OpenChat:",
         "notificationsAction": "Действия индекса уведомлений",
         "openchatInstallerAction": "Действия установщика OpenChat",
         "passing": {
@@ -2382,14 +2380,10 @@
         "noQuotes": "Ни одна DEX не предоставила котировку на обмен {tokenIn}",
         "proceedWithSwap": "Обмен будет произведен только в том случае, если сумма {tokenOut}, которую нужно получить, составляет не менее 98% от указанной суммы. Хотите попробовать обмен?",
         "progress": {
-            "deposit": "Перевести {amountIn} {tokenIn} в {dex}",
             "done": "Обмен завершен",
             "error": "Ошибка свопа - средства не потеряны",
             "failed": "Своп не удался – курс изменился",
-            "get": "Получить депозитный счет",
             "insufficientFunds": "Обмен не удался – недостаточно средств",
-            "notify": "Уведомить {dex} о депозите",
-            "refund": "Возврат средств на {amountIn} {tokenIn} от {dex}",
             "swap": "Поручите {dex} выполнить замену",
             "withdraw": "Вывести {amountOut} {tokenOut} из {dex}"
         },

@@ -2021,8 +2021,6 @@
         "noEligibleNeuronsMoreInfo": "למידע נוסף על הצבעה וממשל קרא <a target=\"_blank\" href=\"https://oc.app/blog/governance\">פוסט זה בבלוג</a> .",
         "noEligibleNeuronsPrincipalIntro": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את ה-principal שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם.",
         "noEligibleNeuronsPrincipalLabel": "ה-principal שלך ב-OpenChat הוא:",
-        "noEligibleNeuronsUserIdIntro": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את מזהה המשתמש שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם.",
-        "noEligibleNeuronsUserIdLabel": "מזהה המשתמש שלך ב-OpenChat הוא:",
         "notificationsAction": "פעולות אינדקס התראות",
         "openchatInstallerAction": "פעולות מתקין OpenChat",
         "passing": {
@@ -2382,14 +2380,10 @@
         "noQuotes": "שום DEXs לא סיפקו הצעת מחיר להחלפה {tokenIn}",
         "proceedWithSwap": "ההחלפה תתבצע רק אם הסכום של {tokenOut} שיתקבל הוא לפחות 98% מהסכום הנקוב. האם תרצה להמשיך ולנסות את ההחלפה?",
         "progress": {
-            "deposit": "העבר את {amountIn} {tokenIn} אל {dex}",
             "done": "ההחלפה הושלמה",
             "error": "שגיאת החלפה - לא אבדו כספים",
             "failed": "ההחלפה נכשלה - שער החליפין השתנה",
-            "get": "קבל חשבון פיקדון",
             "insufficientFunds": "ההחלפה נכשלה - אין מספיק כספים",
-            "notify": "הודע ל-{dex} על ההפקדה",
-            "refund": "החזר {amountIn} {tokenIn} מ-{dex}",
             "swap": "הוראה ל-{dex} לבצע את ההחלפה",
             "withdraw": "משך את {amountOut} {tokenOut} מ-{dex}"
         },

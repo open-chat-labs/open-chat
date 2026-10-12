@@ -66,7 +66,6 @@ import {
     LocalUserIndexRegisterUserResponse,
     LocalUserIndexReinstateMissedDailyClaimsArgs,
     LocalUserIndexUninstallBotArgs,
-    LocalUserIndexWithdrawFromIcpswapArgs,
     SuccessOnly,
     MultiUserChat as TMultiUserChat,
     UnitResult,
@@ -101,7 +100,6 @@ import {
     moveFundsFromOldCanisterResponse,
     payForPremiumItemResponse,
     registerUserResponse,
-    withdrawFromIcpSwapResponse,
 } from "./mappers";
 import {
     dailyPuzzleFetchResponse,
@@ -531,30 +529,6 @@ export class LocalUserIndexClient extends MultiCanisterMsgpackAgent {
             accessTokenResponse,
             LocalUserIndexAccessTokenV2Args,
             LocalUserIndexAccessTokenV2Response,
-        );
-    }
-
-    withdrawFromIcpSwap(
-        localUserIndex: string,
-        userId: string,
-        swapId: bigint,
-        inputToken: boolean,
-        amount: bigint | undefined,
-        fee: bigint | undefined,
-    ): Promise<boolean> {
-        return this.update(
-            localUserIndex,
-            "withdraw_from_icpswap",
-            {
-                user_id: principalStringToBytes(userId),
-                swap_id: swapId,
-                input_token: inputToken,
-                amount,
-                fee,
-            },
-            withdrawFromIcpSwapResponse,
-            LocalUserIndexWithdrawFromIcpswapArgs,
-            SuccessOnly,
         );
     }
 
