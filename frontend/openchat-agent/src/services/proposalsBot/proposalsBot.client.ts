@@ -2,7 +2,6 @@ import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { SingleCanisterMsgpackAgent } from "../canisterAgent/msgpack";
 import {
     type CandidateProposal,
-    nowNanos,
     type StakeNeuronForSubmittingProposalsResponse,
     type SubmitProposalResponse,
     type TopUpNeuronResponse,
@@ -29,7 +28,8 @@ export class ProposalsBotClient extends SingleCanisterMsgpackAgent {
         super(identity, agent, canisterId, "ProposalsBot");
     }
 
-    // The fee is pulled from `wallet`, the user's wallet, which must have approved this canister
+    // The fee is pulled from `wallet`, the user's wallet, which must have approved this canister.
+    // `createdAtNanos` is the time on the IC, which the ledger checks the transfer against.
     submitProposal(
         wallet: string,
         governanceCanisterId: string,
@@ -38,6 +38,7 @@ export class ProposalsBotClient extends SingleCanisterMsgpackAgent {
         token: string,
         proposalRejectionFee: bigint,
         transactionFee: bigint,
+        createdAtNanos: bigint,
     ): Promise<SubmitProposalResponse> {
         const args = {
             governance_canister_id: principalStringToBytes(governanceCanisterId),
@@ -50,7 +51,7 @@ export class ProposalsBotClient extends SingleCanisterMsgpackAgent {
                 to: principalToIcrcAccount(this.canisterId),
                 fee: transactionFee,
                 memo: undefined,
-                created: nowNanos(),
+                created: createdAtNanos,
             },
         };
         return this.update(

@@ -1,7 +1,8 @@
 import type { IDL } from "@icp-sdk/core/candid";
-import { NatResult, _SERVICE } from "./types";
+import { NatResult, UnusedBalanceResult, _SERVICE } from "./types";
 export {
     NatResult as ApiNatResult,
+    UnusedBalanceResult as ApiUnusedBalanceResult,
     _SERVICE as IcpSwapPoolService,
 };
 

@@ -18,15 +18,15 @@ use testing::rng::{random_from_u128, random_principal, random_string};
 use types::{
     AutonomousConfig, BotChatContext, BotDefinition, BotInstallationLocation, BotMessageContent, BotPermissions, BuildVersion,
     CLAIM_TYPE_START_VIDEO_CALL, CanisterId, CanisterWasm, ChannelId, Chat, ChatEvent, ChatId, CommunityId, CommunityRole,
-    DiamondMembershipPlanDuration, Document, Empty, EventIndex, EventsResponse, FcmToken, FileContent, IdempotentEnvelope,
-    MessageContent, MessageContentInitial, MessageIndex, NotificationSubscription, OptionUpdate, P2PSwapContentInitial,
-    PendingCryptoTransaction, ReferralStatus, StartVideoCallClaims, SubscriptionInfo, SubscriptionKeys, TextContent,
-    UnitResult, UserId, VideoCallType, icrc1, icrc2,
+    DiamondMembershipPlanDuration, Document, Empty, EventIndex, EventsResponse, FcmToken, FileContent, HttpRequest,
+    IdempotentEnvelope, MessageContent, MessageContentInitial, MessageIndex, NotificationSubscription, OptionUpdate,
+    P2PSwapContentInitial, PendingCryptoTransaction, ReferralStatus, StartVideoCallClaims, SubscriptionInfo, SubscriptionKeys,
+    TextContent, UnitResult, UserId, VideoCallType, icrc1, icrc2,
 };
 use user_canister::{MessageActivity, UserCanisterEvent};
 use user_index_canister::user_migration::UserMigrationStatus;
 
-const CALL_RELAY_WASM: &[u8] = include_bytes!("../../canisters/call_relay/call_relay.wasm");
+pub(crate) const CALL_RELAY_WASM: &[u8] = include_bytes!("../../canisters/call_relay/call_relay.wasm");
 
 #[test]
 fn users_with_a_p2p_swap_are_not_migrated_until_an_hour_after_it_expires() {
@@ -139,6 +139,69 @@ fn users_with_a_p2p_swap_are_not_migrated_until_an_hour_after_it_expires() {
     for user in [&user1, &user2] {
         started_migration(env, operator.principal, canister_ids.user_index, user.user_id);
     }
+}
+
+#[test]
+fn events_for_a_deleted_user_are_dropped_rather_than_holding_up_migrating_their_sender() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let operator = platform_operator(env, canister_ids, *controller);
+    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let multi_user_canister =
+        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let user1 = client::register_user(env, canister_ids);
+    let (user2, user2_auth) = client::register_user_and_include_auth(env, canister_ids);
+
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+    tick_many(env, 3);
+
+    // Wait until user2's canister no longer has the User wasm, being either uninstalled or briefly
+    // running the cycles refunder, so that events sent to it fail
+    client::identity::happy_path::delete_user(env, &user2_auth, canister_ids.identity);
+    let module_hash = |env: &PocketIc, user: &User| {
+        env.canister_status(user.canister(), Some(user.local_user_index))
+            .unwrap()
+            .module_hash
+    };
+    let user_wasm_hash = module_hash(env, &user1);
+    tick_until(env, |env| module_hash(env, &user2) != user_wasm_hash);
+
+    // An event for the deleted user can never be delivered, so it is dropped rather than retried
+    // forever, which would hold up migrating the user who sent it
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+    tick_until(env, |env| logged(env, user1.canister(), DROPPED_EVENTS));
+    assert_eq!(metrics(env, user1.canister())["queued_user_events"], 0);
+
+    let new_user1 = migrate(env, canister_ids, &operator, &user1, multi_user_canister);
+
+    // The MultiUser canister drops them too
+    client::user::happy_path::send_text_message(env, &new_user1, user2.user_id, random_string(), None);
+    tick_until(env, |env| logged(env, multi_user_canister, DROPPED_EVENTS));
+    assert_eq!(metrics(env, multi_user_canister)["queued_user_canister_events"], 0);
+}
+
+const DROPPED_EVENTS: &str = "Dropped events for a user who is gone";
+
+// Whether the canister has logged `message`
+fn logged(env: &PocketIc, canister_id: CanisterId, message: &str) -> bool {
+    let response = client::http_request(
+        env,
+        Principal::anonymous(),
+        canister_id,
+        &HttpRequest {
+            method: "GET".to_string(),
+            url: "/logs".to_string(),
+            headers: Vec::new(),
+            body: Vec::new(),
+        },
+    );
+    String::from_utf8_lossy(&response.body).contains(message)
 }
 
 #[test]
@@ -2596,8 +2659,7 @@ fn migrated_users_chats_end_up_in_stable_memory() {
     let migrated_0 = migrate(env, canister_ids, &operator, &users[0], multi_user_canister);
     assert_chats_in_stable_memory(env, multi_user_canister, &migrated_0, &partners, &snapshots[0]);
 
-    // A user exported by the new User canister brings their chats with them in stable memory, where
-    // the upgrade moved them
+    // A user exported by the new User canister brings their chats with them in stable memory
     client::user_index::happy_path::upgrade_user_canister_wasm(
         env,
         *controller,
@@ -3476,7 +3538,7 @@ fn wait_for_import(env: &mut PocketIc, sender: Principal, user_index: CanisterId
 
 // Ticks, moving time on a second at a time so that jobs retrying after a delay run, until
 // `condition` holds. Fails if it doesn't within a generous number of rounds.
-fn tick_until(env: &mut PocketIc, condition: impl Fn(&PocketIc) -> bool) {
+pub(crate) fn tick_until(env: &mut PocketIc, condition: impl Fn(&PocketIc) -> bool) {
     for _ in 0..100 {
         if condition(env) {
             return;
@@ -3535,7 +3597,7 @@ fn migrate_users(
 // The UserIndex tells each LocalUserIndex of a migration once the user has been imported, which can
 // take some rounds to arrive. The LocalUserIndex moves the user's subscriptions onto their new id when
 // told.
-fn wait_until_local_user_index_knows_of_migration(
+pub(crate) fn wait_until_local_user_index_knows_of_migration(
     env: &mut PocketIc,
     local_user_index: CanisterId,
     user: &User,

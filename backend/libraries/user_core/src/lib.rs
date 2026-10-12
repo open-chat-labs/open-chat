@@ -14,6 +14,7 @@
 //! `migration` holds what a User canister hands over when its user is migrated to a MultiUser
 //! canister.
 
+pub mod event_recipient;
 pub mod migration;
 pub mod model;
 pub mod openchat_bot;

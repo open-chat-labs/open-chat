@@ -1,7 +1,3 @@
-<script lang="ts" module>
-    export type SwapOutcome = "success" | "rateChanged" | "insufficientFunds" | "error";
-</script>
-
 <script lang="ts">
     import { i18nKey } from "@src/i18n/i18n";
     import {
@@ -13,8 +9,9 @@
         Subtitle,
         type SizeMode,
     } from "component-lib";
-    import type { OpenChat } from "@client";
+    import type { OpenChat, SwapFromWalletStep, SwapTokensResponse } from "@client";
     import { Poller, publish } from "@client";
+    import { swapFromWalletOutcome, type SwapOutcome } from "../../../utils/tokenSwap";
     import { getContext, onMount } from "svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -31,10 +28,28 @@
         amountIn: string;
         decimalsOut: number;
         dex: string;
+        // What swapping returned, once it has
+        swapResponse: SwapTokensResponse | undefined;
+        // Whether the user is swapping straight from their wallet, as a user who holds their own
+        // funds does, in which case its steps are reported as they start rather than polled for
+        fromWallet: boolean;
+        // The step a swap made from the wallet has reached, once it is past initialising
+        swapStep: SwapFromWalletStep | undefined;
     }
 
-    let { swapId, tokenIn, tokenOut, ledgerIn, ledgerOut, amountIn, decimalsOut, dex }: Props =
-        $props();
+    let {
+        swapId,
+        tokenIn,
+        tokenOut,
+        ledgerIn,
+        ledgerOut,
+        amountIn,
+        decimalsOut,
+        dex,
+        swapResponse,
+        fromWallet,
+        swapStep,
+    }: Props = $props();
 
     const height: SizeMode = { size: "16rem" };
     const client = getContext<OpenChat>("client");
@@ -53,9 +68,17 @@
         dex,
     });
 
-    let stages = $state<Stage["kind"][]>(["get", "deposit", "notify", "swap", "withdraw", "done"]);
+    // A swap is made from the wallet or not for as long as this shows it
+    // svelte-ignore state_referenced_locally
+    let stages = $state<Stage["kind"][]>(
+        fromWallet
+            ? ["init", "approve", "swap", "withdraw", "done"]
+            : ["get", "deposit", "notify", "swap", "withdraw", "done"],
+    );
 
     type Stage =
+        | { kind: "init" }
+        | { kind: "approve" }
         | { kind: "get" }
         | { kind: "deposit" }
         | { kind: "notify" }
@@ -64,21 +87,53 @@
         | { kind: "refund" }
         | { kind: "done" };
 
-    let currentStage = $state<Stage["kind"]>("get");
+    // svelte-ignore state_referenced_locally
+    let currentStage = $state<Stage["kind"]>(fromWallet ? "init" : "get");
     let currentStageIndex = $derived(stages.findIndex((s) => s === currentStage));
     let error = $state(false);
 
     onMount(() => {
+        if (fromWallet) return;
+
         poller = new Poller(querySwapProgress, POLL_INTERVAL, POLL_INTERVAL, true);
         return () => poller?.stop();
     });
 
-    function notifyFinished(o: "success" | "rateChanged" | "insufficientFunds" | "error") {
+    $effect(() => {
+        if (fromWallet && swapStep !== undefined && outcome === undefined) {
+            if (swapStep.step === "withdraw") {
+                amountOut = client.formatTokens(swapStep.amountOut, decimalsOut);
+            }
+            currentStage = swapStep.step;
+        }
+    });
+
+    $effect(() => {
+        if (fromWallet && swapResponse !== undefined && outcome === undefined) {
+            showSwapFromWalletOutcome(swapResponse);
+        }
+    });
+
+    function notifyFinished(o: SwapOutcome) {
         outcome = o;
         poller?.stop();
     }
 
+    function showSwapFromWalletOutcome(response: SwapTokensResponse) {
+        const o = swapFromWalletOutcome(response);
+        if (response.kind === "success") {
+            amountOut = client.formatTokens(response.amountOut, decimalsOut);
+            currentStage = "done";
+        } else {
+            error = true;
+        }
+        notifyFinished(o);
+    }
+
     async function querySwapProgress() {
+        // Read before asking, since a swap which isn't found by a query made before swapping
+        // returned may yet be recorded
+        const refused = swapResponse !== undefined && swapResponse.kind !== "success";
         const response = await client.tokenSwapStatus(swapId);
 
         if (response.kind === "success") {
@@ -116,6 +171,11 @@
                 error = true;
                 notifyFinished("error");
             }
+        } else if (refused) {
+            // Swapping returned an error and the swap was never recorded, so it was refused before
+            // it started (eg. the PIN was wrong) and there is no progress to wait for
+            error = true;
+            notifyFinished("error");
         }
     }
 
@@ -206,7 +266,9 @@
         {#if outcome && outcome !== "success"}
             <ErrorMessage>
                 {#if outcome === "error"}
-                    <Translatable resourceKey={i18nKey("Failed to get deposit account")} />
+                    <Translatable resourceKey={i18nKey("tokenSwap.progress.error")} />
+                {:else if outcome === "unknown"}
+                    <Translatable resourceKey={i18nKey("tokenSwap.progress.unknown")} />
                 {:else if outcome === "insufficientFunds"}
                     <Translatable resourceKey={i18nKey("Insufficient funds")} />
                 {:else if outcome === "rateChanged"}

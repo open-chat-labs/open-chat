@@ -14,7 +14,7 @@
 <div class="alert-box">
     {#if icon}
         <div class="alert">
-            <Alert size={$iconSize} color={"var(--warn"} />
+            <Alert size={$iconSize} color={"var(--warn)"} />
         </div>
     {/if}
     <div class="alert-txt">

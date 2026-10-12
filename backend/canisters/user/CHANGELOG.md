@@ -8,6 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Pass on the new `tip_messages` permission when creating a group ([#9902](https://github.com/open-chat-labs/open-chat/pull/9902))
+
+### Removed
+
+- Remove the one-offs which moved the chats into stable memory and capped the jobs to mark P2P swaps as expired, now that they have run ([#9885](https://github.com/open-chat-labs/open-chat/pull/9885))
+- Remove the unused `c2c_notify_achievement` endpoint ([#9899](https://github.com/open-chat-labs/open-chat/pull/9899))
+
+### Fixed
+
+- Drop events for users who have deleted their account or are bots, rather than retrying them forever ([#9886](https://github.com/open-chat-labs/open-chat/pull/9886))
+
+## [[2.0.2127](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2127-user)] - 2026-10-09
+
+### Changed
+
 - Check the cycles balance as background jobs run, not only as updates are handled ([#9747](https://github.com/open-chat-labs/open-chat/pull/9747))
 - Ask for a top up once the cycles above the freezing threshold fall below 0.3T, or below twice the threshold, keeping about the old minimum while User canisters are migrated ([#9748](https://github.com/open-chat-labs/open-chat/pull/9748), [#9751](https://github.com/open-chat-labs/open-chat/pull/9751))
 - Hand a migrating user's message reminders and other timer jobs over to their MultiUser canister, rather than waiting for them to run ([#9779](https://github.com/open-chat-labs/open-chat/pull/9779))

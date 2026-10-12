@@ -489,7 +489,10 @@ export const PrizeContentSchema = Type.Object({
     streakOnly: Type.Number(),
     winnerCount: Type.Number(),
     userIsWinner: Type.Boolean(),
+    // The token's symbol, for display. Several ledgers can share a symbol, so the token itself is
+    // looked up by `ledger`.
     token: Type.String(),
+    ledger: Type.String(),
     endDate: Type.BigInt(),
     caption: Type.Optional(Type.String()),
     requiresCaptcha: Type.Boolean(),

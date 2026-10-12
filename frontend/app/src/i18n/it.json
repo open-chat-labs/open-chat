@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "Notifiche disabilitate",
     "notificationsEnabled": "Notifiche abilitate",
     "notInterested": "Non interessato",
+    "notWalletAddressesWarning": "Questi non sono indirizzi del portafoglio. Non inviare token a questi indirizzi. Puoi visualizzare i tuoi indirizzi di deposito nel tuo [portafoglio].",
     "noUserSelected": "Nessun utente attualmente selezionato",
     "noVideo": "Il tuo browser non supporta il video incorporato",
     "nUsersJoined": "{number} utenti si sono uniti a {level}",
@@ -1760,6 +1761,7 @@
             "text": "inviare messaggi di testo nei thread",
             "video": "inviare messaggi video nei thread"
         },
+        "tipMessages": "lasciare mance ai messaggi",
         "updateDetails": "modificare le informazioni di base",
         "updateGroup": "modifica le informazioni sul gruppo",
         "whoCan": "Chi può"
@@ -2016,8 +2018,11 @@
         },
         "neuronControllerAction": "Azioni del controller neuronale",
         "noEligibleNeurons": "Nessun neurone idoneo trovato",
-        "noEligibleNeuronsMessage": "Nessun neurone idoneo o collegato trovato. Per votare proposte da OpenChat devi prima aggiungere il tuo ID utente OpenChat come tasto di scelta rapida a qualsiasi neurone con cui desideri votare.<br/><br/> Il tuo ID utente OpenChat è: {userId}.<br/><br/> Per ulteriori informazioni sul voto e sulla governance leggere <a target=\"_blank\" href=\"https://oc.app/blog/governance\">questo post del blog</a> .",
-        "noEligibleNeuronsPrincipalMessage": "Nessun neurone idoneo o collegato trovato. Per votare proposte da OpenChat devi prima aggiungere il tuo principal OpenChat come tasto di scelta rapida a qualsiasi neurone con cui desideri votare.<br/><br/> Il tuo principal OpenChat è: {principal}.<br/><br/> Per ulteriori informazioni sul voto e sulla governance leggere <a target=\"_blank\" href=\"https://oc.app/blog/governance\">questo post del blog</a> .",
+        "noEligibleNeuronsMoreInfo": "Per ulteriori informazioni sul voto e sulla governance leggere <a target=\"_blank\" href=\"https://oc.app/blog/governance\">questo post del blog</a> .",
+        "noEligibleNeuronsPrincipalIntro": "Nessun neurone idoneo o collegato trovato. Per votare proposte da OpenChat devi prima aggiungere il tuo principal OpenChat come tasto di scelta rapida a qualsiasi neurone con cui desideri votare.",
+        "noEligibleNeuronsPrincipalLabel": "Il tuo principal OpenChat è:",
+        "noEligibleNeuronsUserIdIntro": "Nessun neurone idoneo o collegato trovato. Per votare proposte da OpenChat devi prima aggiungere il tuo ID utente OpenChat come tasto di scelta rapida a qualsiasi neurone con cui desideri votare.",
+        "noEligibleNeuronsUserIdLabel": "Il tuo ID utente OpenChat è:",
         "notificationsAction": "Notifiche Indice Azioni",
         "openchatInstallerAction": "Azioni di installazione di OpenChat",
         "passing": {

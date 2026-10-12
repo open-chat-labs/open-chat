@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Pass on the new `tip_messages` permission when creating a group ([#9902](https://github.com/open-chat-labs/open-chat/pull/9902))
+
+### Removed
+
+- Remove the unused `c2c_notify_achievement` endpoint ([#9899](https://github.com/open-chat-labs/open-chat/pull/9899))
+
+## [[2.0.2128](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2128-multi_user)] - 2026-10-11
+
+### Added
+
+- Record the swaps users make straight from their own wallets, so that one left part way through can be finished off ([#9887](https://github.com/open-chat-labs/open-chat/pull/9887))
+
+### Changed
+
+- Check the user's PIN as they start a swap from their wallet ([#9891](https://github.com/open-chat-labs/open-chat/pull/9891))
+
+### Fixed
+
+- Drop events for users who have deleted their account or are bots, rather than retrying them forever ([#9886](https://github.com/open-chat-labs/open-chat/pull/9886))
+
 ## [[2.0.2121](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2121-multi_user)] - 2026-10-08
 
 ### Changed

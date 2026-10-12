@@ -4,6 +4,9 @@ import {
     CommunityMap,
     emptyChatMetrics,
     emptyRules,
+    LEDGER_CANISTER_CKBTC,
+    LEDGER_CANISTER_CKETH,
+    LEDGER_CANISTER_ICP,
     nullMembership,
     ROLE_ADMIN,
     ROLE_MEMBER,
@@ -15,6 +18,7 @@ import {
     type CommunityIdentifier,
     type CommunityPermissions,
     type CommunitySummary,
+    type CryptocurrencyDetails,
     type EventWrapper,
     type GroupChatIdentifier,
     type GroupChatSummary,
@@ -43,6 +47,7 @@ import { addToWritableMap } from "../utils";
 import {
     allChatsStore,
     cryptoBalanceStore,
+    cryptoLookup,
     allServerChatsStore,
     chatListScopeStore,
     chatSummariesListStore,
@@ -52,6 +57,7 @@ import {
     eventsStore,
     globalUnreadCountStore,
     expiredServerEventRanges,
+    getConvertedBalances,
     messageFiltersStore,
     pinnedChatsStore,
     selectedChatExpandedDeletedMessageStore,
@@ -68,6 +74,7 @@ import {
     serverGroupChatsStore,
     serverPinnedChatsStore,
     translationsStore,
+    walletTokenBySymbol,
 } from "./stores";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -834,6 +841,7 @@ function groupChat(groupId: string, lastMessage?: EventWrapper<Message>): GroupC
             addMembers: ROLE_ADMIN,
             mentionAllMembers: ROLE_MEMBER,
             reactToMessages: ROLE_MEMBER,
+            tipMessages: ROLE_MEMBER,
             startVideoCall: ROLE_MEMBER,
             messagePermissions: {
                 default: ROLE_MEMBER,
@@ -926,6 +934,123 @@ describe("cryptoBalanceStore", () => {
         expect(cryptoBalanceStore.value.get("ledger1")).toBe(200n);
         expect(cryptoBalanceStore.valueIfUpdatedRecently("ledger1")).toBe(200n);
         unsub();
+    });
+});
+
+describe("getConvertedBalances", () => {
+    // Two tokens in the registry with the symbol TENDY
+    const TENDY_LEDGER = "kylwo-viaaa-aaaaq-aae7a-cai";
+    const OTHER_TENDY_LEDGER = "iozql-7iaaa-aaaah-advvq-cai";
+    const xr = new Map([
+        [LEDGER_CANISTER_ICP, { toUSD: 4 }],
+        [LEDGER_CANISTER_CKBTC, { toUSD: 80_000 }],
+        [LEDGER_CANISTER_CKETH, { toUSD: 2_000 }],
+        [TENDY_LEDGER, { toUSD: 0.08 }],
+        [OTHER_TENDY_LEDGER, { toUSD: 0.3 }],
+    ]);
+    // 40,000 tokens with 8 decimals
+    const balance = 4_000_000_000_000n;
+
+    test("values a balance at its own ledger's rate, not that of a token with the same symbol", () => {
+        expect(getConvertedBalances(xr, balance, 8, TENDY_LEDGER).dollarBalance).toBeCloseTo(3_200);
+        expect(getConvertedBalances(xr, balance, 8, OTHER_TENDY_LEDGER).dollarBalance).toBeCloseTo(
+            12_000,
+        );
+    });
+
+    test("converts to ICP, BTC and ETH at the rates of the ICP, ckBTC and ckETH ledgers", () => {
+        const converted = getConvertedBalances(xr, balance, 8, TENDY_LEDGER);
+
+        expect(converted.icpBalance).toBeCloseTo(800);
+        expect(converted.btcBalance).toBeCloseTo(0.04);
+        expect(converted.ethBalance).toBeCloseTo(1.6);
+    });
+
+    test("has no value in a currency without a rate", () => {
+        const withoutCkETH = new Map(xr);
+        withoutCkETH.delete(LEDGER_CANISTER_CKETH);
+        const converted = getConvertedBalances(withoutCkETH, balance, 8, TENDY_LEDGER);
+
+        expect(converted.ethBalance).toBeUndefined();
+        expect(converted.btcBalance).toBeCloseTo(0.04);
+    });
+
+    test("has no values for a ledger without a rate", () => {
+        expect(getConvertedBalances(xr, balance, 8, "2ouva-viaaa-aaaaq-aaamq-cai")).toEqual({
+            dollarBalance: undefined,
+            icpBalance: undefined,
+            btcBalance: undefined,
+            ethBalance: undefined,
+        });
+    });
+});
+
+describe("walletTokenBySymbol", () => {
+    // Two tokens in the registry with the symbol TENDY
+    const TENDY_LEDGER = "kylwo-viaaa-aaaaq-aae7a-cai";
+    const OTHER_TENDY_LEDGER = "iozql-7iaaa-aaaah-advvq-cai";
+
+    function token(ledger: string, enabled: boolean): CryptocurrencyDetails {
+        return {
+            name: "Tendy",
+            symbol: "TENDY",
+            ledger,
+            index: undefined,
+            decimals: 8,
+            transferFee: 10_000n,
+            logo: "",
+            infoUrl: "",
+            transactionUrlFormat: "",
+            supportedStandards: [],
+            added: 0n,
+            enabled,
+            oneSecEnabled: false,
+            evmContractAddresses: [],
+            lastUpdated: 0n,
+        };
+    }
+
+    function registry(...tokens: CryptocurrencyDetails[]) {
+        cryptoLookup.set(new Map(tokens.map((t) => [t.ledger, t])));
+    }
+
+    afterEach(() => {
+        cryptoLookup.set(new Map());
+        cryptoBalanceStore.setBalance(TENDY_LEDGER, 0n);
+        cryptoBalanceStore.setBalance(OTHER_TENDY_LEDGER, 0n);
+    });
+
+    test("prefers the one the user holds", () => {
+        registry(token(TENDY_LEDGER, true), token(OTHER_TENDY_LEDGER, true));
+        cryptoBalanceStore.setBalance(OTHER_TENDY_LEDGER, 100n);
+
+        expect(walletTokenBySymbol("TENDY")?.ledger).toBe(OTHER_TENDY_LEDGER);
+    });
+
+    test("prefers an enabled one over a disabled one the user holds", () => {
+        registry(token(TENDY_LEDGER, true), token(OTHER_TENDY_LEDGER, false));
+        cryptoBalanceStore.setBalance(OTHER_TENDY_LEDGER, 100n);
+
+        expect(walletTokenBySymbol("TENDY")?.ledger).toBe(TENDY_LEDGER);
+    });
+
+    test("takes a disabled one the user holds when none is enabled", () => {
+        registry(token(TENDY_LEDGER, false), token(OTHER_TENDY_LEDGER, false));
+        cryptoBalanceStore.setBalance(OTHER_TENDY_LEDGER, 100n);
+
+        expect(walletTokenBySymbol("TENDY")?.ledger).toBe(OTHER_TENDY_LEDGER);
+    });
+
+    test("skips a disabled one the user holds none of", () => {
+        registry(token(TENDY_LEDGER, false));
+
+        expect(walletTokenBySymbol("TENDY")).toBeUndefined();
+    });
+
+    test("matches the symbol regardless of case", () => {
+        registry(token(TENDY_LEDGER, true));
+
+        expect(walletTokenBySymbol("tendy")?.ledger).toBe(TENDY_LEDGER);
     });
 });
 

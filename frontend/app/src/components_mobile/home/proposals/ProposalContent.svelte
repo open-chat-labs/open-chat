@@ -8,6 +8,7 @@
         ColourVars,
         Column,
         CommonButton2,
+        IconButton,
         Row,
         Sheet,
         Subtitle,
@@ -29,12 +30,14 @@
     import Alert from "svelte-material-icons/ShieldAlert.svelte";
     import InfoSlabBoxOut from "svelte-material-icons/InformationOutline.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultipleOutline.svelte";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { NamedNeurons } from "../../../stores/namedNeurons";
     import { proposalVotes } from "../../../stores/proposalVotes";
     import { now } from "../../../stores/time";
     import { toastStore } from "../../../stores/toast";
     import { round2 } from "../../../utils/math";
+    import { copyToClipboard } from "../../../utils/urls";
     import Translatable from "@shared_components/Translatable.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
@@ -123,16 +126,36 @@
 
     let showDetails = $state(false);
 
-    function noEligibleNeuronsMessage(): string {
-        // Users in a MultiUser canister vote with the neurons hot-keyed to their own principal,
-        // everyone else with those hot-keyed to their User canister, ie. their user id
-        return isMultiUserCanisterUser($currentUserIdStore)
-            ? $_("proposal.noEligibleNeuronsPrincipalMessage", {
-                  values: { principal: client.OcIdentityPrincipal },
-              })
-            : $_("proposal.noEligibleNeuronsMessage", {
-                  values: { userId: $currentUserIdStore },
-              });
+    // Users in a MultiUser canister vote with the neurons hot-keyed to their own principal,
+    // everyone else with those hot-keyed to their User canister, ie. their user id
+    let votingWithPrincipal = $derived(isMultiUserCanisterUser($currentUserIdStore));
+    let votingHotkey = $derived(
+        votingWithPrincipal ? client.OcIdentityPrincipal : $currentUserIdStore,
+    );
+
+    let noEligibleNeuronsIntro = $derived(
+        votingWithPrincipal
+            ? $_("proposal.noEligibleNeuronsPrincipalIntro")
+            : $_("proposal.noEligibleNeuronsUserIdIntro"),
+    );
+    let votingHotkeyLabel = $derived(
+        votingWithPrincipal
+            ? i18nKey("proposal.noEligibleNeuronsPrincipalLabel")
+            : i18nKey("proposal.noEligibleNeuronsUserIdLabel"),
+    );
+
+    function copyVotingHotkey() {
+        copyToClipboard(votingHotkey).then((success) => {
+            // Close the sheet, otherwise it hides the toast
+            showNeuronInfo = false;
+            if (success) {
+                toastStore.showSuccessToast(i18nKey("votingHotkeyCopiedToClipboard"));
+            } else {
+                toastStore.showFailureToast(
+                    i18nKey("failedToCopyToClipboard", { account: votingHotkey }),
+                );
+            }
+        });
     }
 
     function onVote(adopt: boolean) {
@@ -513,7 +536,23 @@
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
             </Title>
             <Body colour="textSecondary">
-                <Markdown inline={true} text={noEligibleNeuronsMessage()} />
+                <Markdown inline={true} text={noEligibleNeuronsIntro} />
+            </Body>
+            <Column gap="xs">
+                <Body colour="textSecondary">
+                    <Translatable resourceKey={votingHotkeyLabel} />
+                </Body>
+                <Row gap="sm" crossAxisAlignment="center">
+                    <Body>{votingHotkey}</Body>
+                    <IconButton size="md" onclick={copyVotingHotkey}>
+                        {#snippet icon(color)}
+                            <CopyIcon {color} title={$_("copyToClipboard")} />
+                        {/snippet}
+                    </IconButton>
+                </Row>
+            </Column>
+            <Body colour="textSecondary">
+                <Markdown inline={true} text={$_("proposal.noEligibleNeuronsMoreInfo")} />
             </Body>
         </Column>
     </Sheet>

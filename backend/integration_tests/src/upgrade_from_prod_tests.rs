@@ -247,7 +247,7 @@ fn user_canisters_survive_upgrade_from_prod() {
     assert_eq!(wasm_version(env, user1.canister()), new_version);
     assert_eq!(wasm_version(env, large_chat_user.canister()), new_version);
 
-    // Every chat, group and community is moved into stable memory, and reads as it did
+    // Every chat, group and community is in stable memory, and reads as it did
     assert_eq!(count_keys(env, user1.canister(), KeyType::DirectChat), direct_chat_count);
     assert_eq!(direct_chat_summaries(env, &user1), direct_chat_summaries_snapshot);
     assert_eq!(count_keys(env, user1.canister(), KeyType::GroupChat), 1);

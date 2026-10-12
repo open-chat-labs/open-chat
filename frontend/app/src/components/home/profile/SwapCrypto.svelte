@@ -1,13 +1,21 @@
 <script lang="ts">
-    import type { DexId, InterpolationValues, OpenChat, ResourceKey } from "@client";
+    import type {
+        DexId,
+        InterpolationValues,
+        OpenChat,
+        ResourceKey,
+        SwapFromWalletStep,
+        SwapTokensResponse,
+    } from "@client";
     import {
         cryptoBalanceStore,
+        currentUserIdStore,
         enhancedCryptoLookup as cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
         mobileWidth,
         swappableTokensStore,
     } from "@client";
-    import { random128 } from "@shared";
+    import { isMultiUserCanisterUser, random128 } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
@@ -25,7 +33,8 @@
     import CryptoSelector from "../CryptoSelector.svelte";
     import Markdown from "@shared_components/Markdown.svelte";
     import TokenInput from "../TokenInput.svelte";
-    import SwapProgress, { type SwapOutcome } from "./SwapProgress.svelte";
+    import SwapProgress from "./SwapProgress.svelte";
+    import type { SwapOutcome } from "../../../utils/tokenSwap";
 
     interface Props {
         ledgerIn: string;
@@ -37,7 +46,7 @@
     const client = getContext<OpenChat>("client");
 
     type SwapState = "quote" | "swap" | "finished";
-    type Result = "success" | "rateChanged" | "insufficientFunds" | "error" | undefined;
+    type Result = SwapOutcome | undefined;
 
     let error: string | undefined = $state(undefined);
     let amountIn: bigint = $state(BigInt(0));
@@ -51,6 +60,8 @@
     let swapMessageValues: InterpolationValues | undefined = $state(undefined);
     let bestQuote: [DexId, bigint] | undefined = $state(undefined);
     let swapId: bigint | undefined = $state();
+    let swapResponse = $state<SwapTokensResponse>();
+    let swapStep = $state<SwapFromWalletStep>();
     let userAcceptedWarning = $state(false);
     let warnValueUnknown = $state(false);
     let warnValueDropped = $state(false);
@@ -98,12 +109,12 @@
 
                     const usdInText = calculateDollarAmount(
                         amountIn,
-                        $exchangeRatesLookup.get(detailsIn.symbol.toLowerCase())?.toUSD,
+                        $exchangeRatesLookup.get(detailsIn.ledger)?.toUSD,
                         detailsIn.decimals,
                     );
                     const usdOutText = calculateDollarAmount(
                         bestQuote[1],
-                        $exchangeRatesLookup.get(detailsOut!.symbol.toLowerCase())?.toUSD,
+                        $exchangeRatesLookup.get(detailsOut!.ledger)?.toUSD,
                         detailsOut!.decimals,
                     );
 
@@ -164,6 +175,8 @@
             .then((balanceCheckSuccess) => {
                 if (balanceCheckSuccess) {
                     swapId = random128();
+                    swapResponse = undefined;
+                    swapStep = undefined;
                     return client.swapTokens(
                         swapId,
                         ledgerInLocal,
@@ -171,8 +184,12 @@
                         amountIn,
                         minAmountOut,
                         bestQuoteLocal[0],
+                        (step) => (swapStep = step),
                     );
                 }
+            })
+            .then((response) => {
+                swapResponse = response;
             })
             .catch(() => {
                 swapId = undefined;
@@ -322,6 +339,9 @@
                             amountIn={amountInText}
                             decimalsOut={detailsOut.decimals}
                             dex={dexName(bestQuote[0])}
+                            {swapResponse}
+                            fromWallet={isMultiUserCanisterUser($currentUserIdStore)}
+                            {swapStep}
                             onFinished={onSwapFinished} />
                     </div>
                 {/if}
@@ -378,7 +398,7 @@
                     <Button secondary tiny={$mobileWidth} onClick={onClose}
                         ><Translatable resourceKey={i18nKey("close")} /></Button>
                 {/if}
-                {#if result !== "success" && result !== "error"}
+                {#if result !== "success" && result !== "error" && result !== "unknown"}
                     <Button
                         disabled={busy || !valid}
                         loading={busy}

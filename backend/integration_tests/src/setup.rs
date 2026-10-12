@@ -2,7 +2,7 @@ use crate::client::{create_canister, create_canister_with_id, install_canister};
 use crate::env::VIDEO_CALL_OPERATOR;
 use crate::utils::tick_many;
 use crate::{CanisterIds, T, TestEnv, client, wasms};
-use candid::{CandidType, Nat, Principal};
+use candid::{CandidType, Empty, Nat, Principal};
 use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_SYMBOL, CHAT_TRANSFER_FEE, SNS_GOVERNANCE_CANISTER_ID};
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT, Tokens};
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
@@ -616,6 +616,209 @@ pub fn install_icrc_ledger(
     };
     install_canister(env, controller, canister_id, wasms::ICRC_LEDGER.clone(), args);
 
+    canister_id
+}
+
+// Installs an SNS governance canister with a neuron for each of `neurons`, given as the principals
+// it lists as hotkeys and its stake, each with a dissolve delay of `dissolve_delay_seconds`
+pub fn install_sns_governance(
+    env: &mut PocketIc,
+    controller: Principal,
+    neurons: Vec<(Vec<Principal>, u64)>,
+    dissolve_delay_seconds: u64,
+) -> CanisterId {
+    // Only the fields which aren't optional, plus those set below. Those left empty are typed with
+    // `empty`, which is a subtype of every type, so a vector of `empty` (or of `record { key; empty }`
+    // for a map) stands in for any vector (or map).
+    #[derive(CandidType)]
+    struct Governance {
+        root_canister_id: Option<Principal>,
+        ledger_canister_id: Option<Principal>,
+        swap_canister_id: Option<Principal>,
+        id_to_nervous_system_functions: Vec<(u64, Empty)>,
+        mode: i32,
+        parameters: Option<NervousSystemParameters>,
+        sns_initialization_parameters: String,
+        proposals: Vec<(u64, Empty)>,
+        in_flight_commands: Vec<(String, Empty)>,
+        sns_metadata: Option<SnsMetadata>,
+        neurons: Vec<(String, Neuron)>,
+        genesis_timestamp_seconds: u64,
+    }
+
+    #[derive(CandidType)]
+    struct NervousSystemParameters {
+        reject_cost_e8s: Option<u64>,
+        neuron_minimum_stake_e8s: Option<u64>,
+        transaction_fee_e8s: Option<u64>,
+        max_proposals_to_keep_per_action: Option<u32>,
+        initial_voting_period_seconds: Option<u64>,
+        wait_for_quiet_deadline_increase_seconds: Option<u64>,
+        default_followees: Option<DefaultFollowees>,
+        max_number_of_neurons: Option<u64>,
+        neuron_minimum_dissolve_delay_to_vote_seconds: Option<u64>,
+        max_followees_per_function: Option<u64>,
+        max_dissolve_delay_seconds: Option<u64>,
+        max_neuron_age_for_age_bonus: Option<u64>,
+        max_number_of_proposals_with_ballots: Option<u64>,
+        neuron_claimer_permissions: Option<NeuronPermissionList>,
+        neuron_grantable_permissions: Option<NeuronPermissionList>,
+        max_number_of_principals_per_neuron: Option<u64>,
+        voting_rewards_parameters: Option<VotingRewardsParameters>,
+        max_dissolve_delay_bonus_percentage: Option<u64>,
+        max_age_bonus_percentage: Option<u64>,
+        maturity_modulation_disabled: Option<bool>,
+    }
+
+    #[derive(CandidType)]
+    struct DefaultFollowees {
+        followees: Vec<(u64, Empty)>,
+    }
+
+    #[derive(CandidType)]
+    struct NeuronPermissionList {
+        permissions: Vec<i32>,
+    }
+
+    #[derive(CandidType)]
+    struct VotingRewardsParameters {
+        round_duration_seconds: Option<u64>,
+        reward_rate_transition_duration_seconds: Option<u64>,
+        initial_reward_rate_basis_points: Option<u64>,
+        final_reward_rate_basis_points: Option<u64>,
+    }
+
+    #[derive(CandidType)]
+    struct SnsMetadata {
+        url: Option<String>,
+        name: Option<String>,
+        description: Option<String>,
+    }
+
+    #[derive(CandidType)]
+    struct Neuron {
+        id: Option<NeuronId>,
+        permissions: Vec<NeuronPermission>,
+        maturity_e8s_equivalent: u64,
+        cached_neuron_stake_e8s: u64,
+        created_timestamp_seconds: u64,
+        aging_since_timestamp_seconds: u64,
+        dissolve_state: Option<DissolveState>,
+        voting_power_percentage_multiplier: u64,
+        disburse_maturity_in_progress: Vec<Empty>,
+        followees: Vec<(u64, Empty)>,
+        neuron_fees_e8s: u64,
+    }
+
+    #[derive(CandidType)]
+    struct NeuronId {
+        id: Vec<u8>,
+    }
+
+    #[derive(CandidType)]
+    struct NeuronPermission {
+        principal: Option<Principal>,
+        permission_type: Vec<i32>,
+    }
+
+    #[derive(CandidType)]
+    enum DissolveState {
+        DissolveDelaySeconds(u64),
+    }
+
+    const MODE_NORMAL: i32 = 1;
+    const PERMISSION_MANAGE_PRINCIPALS: i32 = 2;
+    const PERMISSION_SUBMIT_PROPOSAL: i32 = 3;
+    const PERMISSION_VOTE: i32 = 4;
+    const DAY_IN_SECONDS: u64 = 24 * 60 * 60;
+    const YEAR_IN_SECONDS: u64 = 365 * DAY_IN_SECONDS;
+
+    let neurons = neurons
+        .into_iter()
+        .enumerate()
+        .map(|(index, (hotkeys, stake_e8s))| {
+            // A neuron's id is its subaccount, and it is keyed by the id in hex
+            let id = vec![index as u8 + 1; 32];
+            let key = id.iter().map(|b| format!("{b:02x}")).collect();
+            let neuron = Neuron {
+                id: Some(NeuronId { id }),
+                // The permissions a hotkey has
+                permissions: hotkeys
+                    .into_iter()
+                    .map(|hotkey| NeuronPermission {
+                        principal: Some(hotkey),
+                        permission_type: vec![PERMISSION_SUBMIT_PROPOSAL, PERMISSION_VOTE],
+                    })
+                    .collect(),
+                maturity_e8s_equivalent: 0,
+                cached_neuron_stake_e8s: stake_e8s,
+                // Set to the genesis time when the canister is initialized
+                created_timestamp_seconds: 0,
+                aging_since_timestamp_seconds: 0,
+                dissolve_state: Some(DissolveState::DissolveDelaySeconds(dissolve_delay_seconds)),
+                voting_power_percentage_multiplier: 100,
+                disburse_maturity_in_progress: Vec::new(),
+                followees: Vec::new(),
+                neuron_fees_e8s: 0,
+            };
+            (key, neuron)
+        })
+        .collect();
+
+    // The default parameters, which the canister checks are all set
+    let parameters = NervousSystemParameters {
+        reject_cost_e8s: Some(100_000_000),
+        neuron_minimum_stake_e8s: Some(100_000_000),
+        transaction_fee_e8s: Some(CHAT_TRANSFER_FEE as u64),
+        max_proposals_to_keep_per_action: Some(100),
+        initial_voting_period_seconds: Some(4 * DAY_IN_SECONDS),
+        wait_for_quiet_deadline_increase_seconds: Some(DAY_IN_SECONDS),
+        default_followees: Some(DefaultFollowees { followees: Vec::new() }),
+        max_number_of_neurons: Some(200_000),
+        neuron_minimum_dissolve_delay_to_vote_seconds: Some(YEAR_IN_SECONDS / 2),
+        max_followees_per_function: Some(15),
+        max_dissolve_delay_seconds: Some(8 * YEAR_IN_SECONDS),
+        max_neuron_age_for_age_bonus: Some(4 * YEAR_IN_SECONDS),
+        max_number_of_proposals_with_ballots: Some(700),
+        neuron_claimer_permissions: Some(NeuronPermissionList {
+            permissions: vec![PERMISSION_MANAGE_PRINCIPALS, PERMISSION_VOTE, PERMISSION_SUBMIT_PROPOSAL],
+        }),
+        neuron_grantable_permissions: Some(NeuronPermissionList { permissions: Vec::new() }),
+        max_number_of_principals_per_neuron: Some(5),
+        voting_rewards_parameters: Some(VotingRewardsParameters {
+            round_duration_seconds: Some(DAY_IN_SECONDS),
+            reward_rate_transition_duration_seconds: Some(0),
+            initial_reward_rate_basis_points: Some(0),
+            final_reward_rate_basis_points: Some(0),
+        }),
+        max_dissolve_delay_bonus_percentage: Some(100),
+        max_age_bonus_percentage: Some(25),
+        maturity_modulation_disabled: Some(false),
+    };
+
+    // The SNS's root and swap canisters must be set, but aren't called while it is in normal mode
+    // with no upgrade in progress
+    let args = Governance {
+        root_canister_id: Some(controller),
+        ledger_canister_id: Some(CHAT_LEDGER_CANISTER_ID),
+        swap_canister_id: Some(controller),
+        id_to_nervous_system_functions: Vec::new(),
+        mode: MODE_NORMAL,
+        parameters: Some(parameters),
+        sns_initialization_parameters: String::new(),
+        proposals: Vec::new(),
+        in_flight_commands: Vec::new(),
+        sns_metadata: Some(SnsMetadata {
+            url: Some("https://example.com".to_string()),
+            name: Some("Test SNS".to_string()),
+            description: Some("An SNS for testing".to_string()),
+        }),
+        neurons,
+        genesis_timestamp_seconds: 0,
+    };
+
+    let canister_id = create_canister(env, controller);
+    install_canister(env, controller, canister_id, wasms::SNS_GOVERNANCE.clone(), args);
     canister_id
 }
 

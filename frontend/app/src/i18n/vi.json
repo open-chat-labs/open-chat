@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "Đã tắt thông báo",
     "notificationsEnabled": "Đã bật thông báo",
     "notInterested": "Không cần chú ý",
+    "notWalletAddressesWarning": "Đây không phải là địa chỉ ví. Đừng gửi mã thông báo đến các địa chỉ này. Bạn có thể xem địa chỉ nạp tiền trong [ví] của mình.",
     "noUserSelected": "Hiện không có người dùng nào được chọn",
     "noVideo": "Trình duyệt của bạn không hỗ trợ nhúng video (embedded video)",
     "nUsersJoined": "{number} người dùng đã tham gia {level}",
@@ -1760,6 +1761,7 @@
             "text": "gửi tin nhắn văn bản trong chủ đề",
             "video": "gửi tin nhắn video trong chủ đề"
         },
+        "tipMessages": "tặng tiền boa cho tin nhắn",
         "updateDetails": "chỉnh sửa thông tin cơ bản",
         "updateGroup": "chỉnh sửa thông tin nhóm",
         "whoCan": "Ai có thể"
@@ -2016,8 +2018,11 @@
         },
         "neuronControllerAction": "Hành động điều khiển nơ-ron",
         "noEligibleNeurons": "Không tìm thấy tế bào thần kinh đủ điều kiện",
-        "noEligibleNeuronsMessage": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm id người dùng OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.<br/><br/> Id người dùng OpenChat của bạn là: {userId}.<br/><br/> Để biết thêm thông tin về bỏ phiếu và quản trị, hãy đọc <a target=\"_blank\" href=\"https://oc.app/blog/governance\">bài đăng trên blog này</a> .",
-        "noEligibleNeuronsPrincipalMessage": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm principal OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.<br/><br/> Principal OpenChat của bạn là: {principal}.<br/><br/> Để biết thêm thông tin về bỏ phiếu và quản trị, hãy đọc <a target=\"_blank\" href=\"https://oc.app/blog/governance\">bài đăng trên blog này</a> .",
+        "noEligibleNeuronsMoreInfo": "Để biết thêm thông tin về bỏ phiếu và quản trị, hãy đọc <a target=\"_blank\" href=\"https://oc.app/blog/governance\">bài đăng trên blog này</a> .",
+        "noEligibleNeuronsPrincipalIntro": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm principal OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.",
+        "noEligibleNeuronsPrincipalLabel": "Principal OpenChat của bạn là:",
+        "noEligibleNeuronsUserIdIntro": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm id người dùng OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.",
+        "noEligibleNeuronsUserIdLabel": "Id người dùng OpenChat của bạn là:",
         "notificationsAction": "Thông báo Chỉ mục Hành động",
         "openchatInstallerAction": "Hành động cài đặt OpenChat",
         "passing": {
@@ -2551,7 +2556,7 @@
     "upgradeStorage": "Nâng cấp lưu trữ",
     "urlCopiedToClipboard": "Đã sao chép URL vào bảng tạm!",
     "useAtOwnRisk": "Sử dụng có nguy cơ của riêng bạn",
-    "userId": "tên người dùng",
+    "userId": "Id người dùng",
     "userIdCopiedToClipboard": "Đã sao chép Id người dùng vào bảng nhớ tạm",
     "userInfoHeader": "Công cộng",
     "userIsBlocked": "Bỏ chặn người dùng trước khi gửi tin nhắn",

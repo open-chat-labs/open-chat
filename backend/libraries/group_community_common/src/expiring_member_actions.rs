@@ -75,4 +75,7 @@ pub struct ExpiringMemberActionDetails {
     pub channel_id: Option<ChannelId>,
     pub member_expires: TimestampMillis,
     pub original_gate_expiry: Milliseconds,
+    // Set for a check of a lapsed member's gate, which only ever unlapses them, never lapsing anyone
+    #[serde(default)]
+    pub unlapse_only: bool,
 }

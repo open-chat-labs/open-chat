@@ -179,6 +179,7 @@ export function apiOptionalGroupPermissions(
         change_roles: mapOptional(permissions.changeRoles, apiPermissionRole),
         pin_messages: mapOptional(permissions.pinMessages, apiPermissionRole),
         react_to_messages: mapOptional(permissions.reactToMessages, apiPermissionRole),
+        tip_messages: mapOptional(permissions.tipMessages, apiPermissionRole),
         mention_all_members: mapOptional(permissions.mentionAllMembers, apiPermissionRole),
         start_video_call: mapOptional(permissions.startVideoCall, apiPermissionRole),
         message_permissions: mapOptional(

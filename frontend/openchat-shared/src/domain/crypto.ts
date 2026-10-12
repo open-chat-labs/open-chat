@@ -24,6 +24,8 @@ export type Chain = EvmChain | typeof ICP_SYMBOL;
 export const LEDGER_CANISTER_ICP = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const INDEX_CANISTER_ICP = "qhbym-qaaaa-aaaaa-aaafq-cai";
 export const LEDGER_CANISTER_CHAT = "2ouva-viaaa-aaaaq-aaamq-cai";
+export const LEDGER_CANISTER_CKBTC = "mxzaz-hqaaa-aaaar-qaada-cai";
+export const LEDGER_CANISTER_CKETH = "ss2fx-dyaaa-aaaar-qacoq-cai";
 
 export const DEFAULT_TOKENS = ["CHAT", "ICP", "BTC", "USDC", "USDT"];
 

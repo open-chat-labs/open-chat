@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "通知が無効になりました",
     "notificationsEnabled": "通知機能を有効にする",
     "notInterested": "興味なし",
+    "notWalletAddressesWarning": "これらはウォレットアドレスではありません。これらのアドレスにトークンを送らないでください。入金アドレスは[ウォレット]で確認できます。",
     "noUserSelected": "現在選択されているユーザーはいません",
     "noVideo": "お使いのブラウザは埋め込みビデオに対応していません",
     "nUsersJoined": "{number} 人のユーザーが {level} に参加しました",
@@ -1760,6 +1761,7 @@
             "text": "スレッドでテキストメッセージを送信する",
             "video": "スレッドでビデオメッセージを送信する"
         },
+        "tipMessages": "メッセージにチップを送る",
         "updateDetails": "基本情報を編集する",
         "updateGroup": "グループ設定の編集",
         "whoCan": "誰ができますか"
@@ -2016,8 +2018,11 @@
         },
         "neuronControllerAction": "ニューロン コントローラーのアクション",
         "noEligibleNeurons": "適格なニューロンが見つかりません",
-        "noEligibleNeuronsMessage": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat ユーザー ID をホットキーとして投票したいニューロンに追加する必要があります。<br/><br/>あなたの OpenChat ユーザー ID は: {userId} です。<br/><br/>投票とガバナンスの詳細については、<a target=\"_blank\" href=\"https://oc.app/blog/governance\">このブログ投稿を</a>参照してください。",
-        "noEligibleNeuronsPrincipalMessage": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat プリンシパルをホットキーとして投票したいニューロンに追加する必要があります。<br/><br/>あなたの OpenChat プリンシパルは: {principal} です。<br/><br/>投票とガバナンスの詳細については、<a target=\"_blank\" href=\"https://oc.app/blog/governance\">このブログ投稿を</a>参照してください。",
+        "noEligibleNeuronsMoreInfo": "投票とガバナンスの詳細については、<a target=\"_blank\" href=\"https://oc.app/blog/governance\">このブログ投稿を</a>参照してください。",
+        "noEligibleNeuronsPrincipalIntro": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat プリンシパルをホットキーとして投票したいニューロンに追加する必要があります。",
+        "noEligibleNeuronsPrincipalLabel": "あなたの OpenChat プリンシパルは次のとおりです:",
+        "noEligibleNeuronsUserIdIntro": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat ユーザー ID をホットキーとして投票したいニューロンに追加する必要があります。",
+        "noEligibleNeuronsUserIdLabel": "あなたの OpenChat ユーザー ID は次のとおりです:",
         "notificationsAction": "通知インデックス アクション",
         "openchatInstallerAction": "OpenChatインストーラーアクション",
         "passing": {

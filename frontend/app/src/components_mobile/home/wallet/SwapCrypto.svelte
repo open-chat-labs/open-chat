@@ -10,6 +10,7 @@
         Switch,
     } from "component-lib";
     import {
+        currentUserIdStore,
         exchangeRatesLookupStore as exchangeRatesLookup,
         formatTokens,
         swappableTokensStore,
@@ -18,8 +19,10 @@
         type InterpolationValues,
         type OpenChat,
         type ResourceKey,
+        type SwapFromWalletStep,
+        type SwapTokensResponse,
     } from "@client";
-    import { random128 } from "@shared";
+    import { isMultiUserCanisterUser, random128 } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/AlertOutline.svelte";
@@ -70,6 +73,8 @@
     let swapMessageValues: InterpolationValues | undefined = $state(undefined);
     let bestQuote: [DexId, bigint] | undefined = $state(undefined);
     let swapId: bigint | undefined = $state();
+    let swapResponse = $state<SwapTokensResponse>();
+    let swapStep = $state<SwapFromWalletStep>();
     let userAcceptedWarning = $state(false);
     let warnValueUnknown = $state(false);
     let warnValueDropped = $state(false);
@@ -111,12 +116,12 @@
 
                     const usdInText = calculateDollarAmount(
                         inToken.draftAmount,
-                        $exchangeRatesLookup.get(detailsIn.symbol.toLowerCase())?.toUSD,
+                        $exchangeRatesLookup.get(detailsIn.ledger)?.toUSD,
                         detailsIn.decimals,
                     );
                     const usdOutText = calculateDollarAmount(
                         bestQuote[1],
-                        $exchangeRatesLookup.get(detailsOut!.symbol.toLowerCase())?.toUSD,
+                        $exchangeRatesLookup.get(detailsOut!.ledger)?.toUSD,
                         detailsOut!.decimals,
                     );
 
@@ -175,6 +180,8 @@
             .then((balanceCheckSuccess) => {
                 if (balanceCheckSuccess) {
                     swapId = random128();
+                    swapResponse = undefined;
+                    swapStep = undefined;
                     return client.swapTokens(
                         swapId,
                         ledgerInLocal,
@@ -182,8 +189,12 @@
                         inToken.draftAmount,
                         minAmountOut,
                         bestQuoteLocal[0],
+                        (step) => (swapStep = step),
                     );
                 }
+            })
+            .then((response) => {
+                swapResponse = response;
             })
             .catch(() => {
                 swapId = undefined;
@@ -533,7 +544,10 @@
         ledgerOut={detailsOut.ledger}
         amountIn={amountInText}
         decimalsOut={detailsOut.decimals}
-        dex={dexName(bestQuote[0])} />
+        dex={dexName(bestQuote[0])}
+        {swapResponse}
+        fromWallet={isMultiUserCanisterUser($currentUserIdStore)}
+        {swapStep} />
 {/if}
 
 <style lang="scss">

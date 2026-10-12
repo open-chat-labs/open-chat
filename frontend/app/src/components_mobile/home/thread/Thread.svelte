@@ -81,6 +81,7 @@
     let editingEvent = $derived($selectedThreadDraftMessageStore?.editingEvent);
     let canSendAny = $derived(client.canSendMessage(chat.id, "thread"));
     let canReact = $derived(client.canReactToMessages(chat.id));
+    let canTipMessages = $derived(client.canTipMessages(chat.id));
     let atRoot = $derived($threadEventsStore.length === 0 || $threadEventsStore[0]?.index === 0);
     let events = $derived(atRoot ? [rootEvent, ...$threadEventsStore] : $threadEventsStore);
     const grouper = new TimelineGrouper();
@@ -363,6 +364,7 @@
                         editing={editingEvent === evt}
                         canSendAny
                         {canReact}
+                        {canTipMessages}
                         canInvite={false}
                         canReplyInThread={false}
                         collapsed={false}

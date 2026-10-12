@@ -243,6 +243,11 @@
                     p.reactToMessages,
                 )}
                 {@render permissionSummary(
+                    i18nKey("permissions.tipMessages"),
+                    (r) => (p.tipMessages = r ?? p.tipMessages),
+                    p.tipMessages,
+                )}
+                {@render permissionSummary(
                     i18nKey("permissions.mentionAllMembers", { mention: "@everyone" }),
                     (r) => (p.mentionAllMembers = r ?? p.mentionAllMembers),
                     p.mentionAllMembers,

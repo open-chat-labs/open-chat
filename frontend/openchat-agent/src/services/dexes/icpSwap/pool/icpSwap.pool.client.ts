@@ -1,8 +1,9 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
+import type { Principal } from "@icp-sdk/core/principal";
 import type { DexSwapResult } from "@shared";
 import { idlFactory, type IcpSwapPoolService } from "./candid/idl";
 import { CandidCanisterAgent } from "../../../canisterAgent/candid";
-import { quoteResponse, swapResponse } from "./mappers";
+import { quoteResponse, swapResponse, unusedBalancesResponse, withdrawResponse } from "./mappers";
 import type { SwapPoolClient } from "../../index";
 
 export class IcpSwapPoolClient
@@ -58,6 +59,23 @@ export class IcpSwapPoolClient
             (resp) => swapResponse(resp, outputTokenFee),
             args,
         );
+    }
+
+    // What the pool holds for `principal` which it hasn't swapped or paid out, eg. the input of a
+    // swap made from the wallet whose refund failed, by the ledger of each of the pool's tokens
+    unusedBalances(principal: Principal): Promise<{ ledger: string; balance: bigint }[]> {
+        return this.handleQueryResponse(
+            () => this.service.getUserUnusedBalance(principal),
+            (resp) => unusedBalancesResponse(resp, this.token0, this.token1),
+            principal,
+        );
+    }
+
+    // Withdraws `amount` of `ledger`'s token held for the caller. The pool queues its transfer to
+    // the caller's wallet, which arrives shortly after this returns, less `fee`.
+    withdraw(ledger: string, amount: bigint, fee: bigint): Promise<boolean> {
+        const args = { token: ledger, amount, fee };
+        return this.handleResponse(this.service.withdraw(args), withdrawResponse, args);
     }
 
     private zeroForOne(inputToken: string, outputToken: string): boolean {

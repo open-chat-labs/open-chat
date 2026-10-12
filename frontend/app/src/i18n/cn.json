@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "推送通知已关闭",
     "notificationsEnabled": "推送开启",
     "notInterested": "不感兴趣",
+    "notWalletAddressesWarning": "这些不是钱包地址。请勿向其发送代币。您可以在[钱包]中查看您的充值地址。",
     "noUserSelected": "当前没有选择用户",
     "noVideo": "您的浏览器不支持视频",
     "nUsersJoined": "{number} 用户加入了 {level}",
@@ -1760,6 +1761,7 @@
             "text": "在线程中发送短信",
             "video": "在线程中发送视频消息"
         },
+        "tipMessages": "打赏消息",
         "updateDetails": "编辑基本信息",
         "updateGroup": "编辑群聊信息",
         "whoCan": "谁可以"
@@ -2016,8 +2018,11 @@
         },
         "neuronControllerAction": "神经元控制器动作",
         "noEligibleNeurons": "未找到符合条件的神经元",
-        "noEligibleNeuronsMessage": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您想要投票的任何神经元。<br/><br/>您的 OpenChat 用户 ID 是：{userId}。<br/><br/>有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。",
-        "noEligibleNeuronsPrincipalMessage": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat principal 作为热键添加到您想要投票的任何神经元。<br/><br/>您的 OpenChat principal 是：{principal}。<br/><br/>有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。",
+        "noEligibleNeuronsMoreInfo": "有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。",
+        "noEligibleNeuronsPrincipalIntro": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat principal 作为热键添加到您想要投票的任何神经元。",
+        "noEligibleNeuronsPrincipalLabel": "您的 OpenChat principal 是：",
+        "noEligibleNeuronsUserIdIntro": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您想要投票的任何神经元。",
+        "noEligibleNeuronsUserIdLabel": "您的 OpenChat 用户 ID 是：",
         "notificationsAction": "通知索引操作",
         "openchatInstallerAction": "OpenChat 安装程序操作",
         "passing": {

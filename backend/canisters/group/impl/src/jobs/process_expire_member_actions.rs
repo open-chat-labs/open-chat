@@ -1,6 +1,6 @@
 use super::expire_members;
 use crate::{RuntimeState, activity_notifications::handle_activity_notification, mutate_state, read_state, run_regular_jobs};
-use gated_groups::{CheckGateArgs, CheckIfPassesGateResult, check_if_passes_gate};
+use gated_groups::{CheckGateArgs, CheckIfPassesGateResult, check_if_passes_gate_under_any_id};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails, Members};
 use ic_cdk_timers::TimerId;
 use local_user_index_canister_c2c_client::lookup_users;
@@ -68,7 +68,7 @@ async fn process_gate_check_async(details: ExpiringMemberActionDetails) {
         return;
     };
 
-    let result = check_if_passes_gate(prep.gate_config.gate, prep.check_gate_args).await;
+    let result = check_if_passes_gate_under_any_id(prep.gate_config.gate, prep.check_gate_args).await;
 
     mutate_state(|state| {
         handle_gate_check_result(prep.details, result, state);
@@ -93,6 +93,7 @@ fn prepare_gate_check(details: ExpiringMemberActionDetails, state: &RuntimeState
 
     let check_gate_args = CheckGateArgs {
         user: state.member_user(details.user_id),
+        previous_user_ids: state.data.migrated_user_ids.previous_ids(details.user_id),
         diamond_membership_expires_at,
         this_canister: state.env.canister_id(),
         is_unique_person,
@@ -122,12 +123,20 @@ fn handle_gate_check_result(details: ExpiringMemberActionDetails, result: CheckI
         return;
     };
 
-    // If the member can no longer lapse then do nothing
-    if !state.data.chat.members.can_member_lapse(&details.user_id) {
+    let now = state.env.now();
+
+    if details.unlapse_only {
+        // A check of a lapsed member's gate only ever unlapses them, if they're still lapsed and now
+        // pass it, after which their gate is checked as it expires like any other member's. Anyone
+        // else, such as a member who has rejoined since, is left as they are.
+        if !(result.success() && state.data.chat.members.update_lapsed(details.user_id, false, now)) {
+            return;
+        }
+        handle_activity_notification(state);
+    } else if !state.data.chat.members.can_member_lapse(&details.user_id) {
+        // If the member can no longer lapse then do nothing
         return;
     }
-
-    let now = state.env.now();
 
     // Determine if the gate expiry has increased since the action was added to the queue
     let expiry_increase = curr_gate_expiry.saturating_sub(details.original_gate_expiry);

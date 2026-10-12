@@ -24,6 +24,7 @@ fn main() {
     generate_ts_method!(user, saved_crypto_accounts);
     generate_ts_method!(user, token_swap_status);
     generate_ts_method!(user, token_swaps);
+    generate_ts_method!(user, unfinished_token_swaps);
     generate_ts_method!(user, updates);
 
     generate_ts_method!(user, accept_p2p_swap);
@@ -54,6 +55,8 @@ fn main() {
     generate_ts_method!(user, mark_achievements_seen);
     generate_ts_method!(user, mark_message_activity_feed_read);
     generate_ts_method!(user, mark_read);
+    generate_ts_method!(user, mark_token_swap_completed);
+    generate_ts_method!(user, mark_token_swap_started);
     generate_ts_method!(user, mute_notifications);
     generate_ts_method!(user, pay_for_streak_insurance);
     generate_ts_method!(user, pin_chat_v2);

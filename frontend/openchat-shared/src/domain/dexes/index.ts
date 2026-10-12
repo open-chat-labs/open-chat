@@ -16,6 +16,16 @@ export type ExchangeTokenSwapArgs =
     | { dex: "icpswap"; swapCanisterId: string; zeroForOne: boolean }
     | { dex: "taco"; swapCanisterId: string; treasuryCanisterId: string };
 
+// A swap the user started straight from their own wallet (as a user who holds their own funds) which
+// was never marked as completed, eg. because they left part way through
+export type UnfinishedTokenSwap = {
+    swapId: bigint;
+    started: bigint;
+    inputLedger: string;
+    outputLedger: string;
+    exchangeArgs: ExchangeTokenSwapArgs;
+};
+
 // The outcome of a swap made straight from the user's wallet, where the DEX pulls the input via
 // ICRC2 and sends the output back to the wallet. `amountOut` is what the DEX sends to the wallet.
 // An error means nothing was swapped; each DEX's client says what becomes of the input.

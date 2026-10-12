@@ -84,6 +84,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
             gate_config.gate.clone(),
             Box::new(CheckGateArgs {
                 user: UserIdAndPrincipal::new(args.user_id, args.principal),
+                previous_user_ids: args.previous_user_ids.clone(),
                 diamond_membership_expires_at: args.diamond_membership_expires_at,
                 this_canister: state.env.canister_id(),
                 is_unique_person: args.unique_person_proof.is_some(),

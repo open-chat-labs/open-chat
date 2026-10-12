@@ -249,6 +249,7 @@ import type {
     SubmitProposalResponse,
     SuspendUserResponse,
     SwapTokensResponse,
+    SwapTokensStep,
     TokenSwapStatusResponse,
     UnpinChatResponse,
     UnsuspendUserResponse,
@@ -463,6 +464,7 @@ export type WorkerRequest =
     | GetTokenSwapQuotes
     | SwapTokens
     | TokenSwapStatus
+    | RecoverUnfinishedTokenSwaps
     | ApproveTransfer
     | ApproveAccessGatePayment
     | DeleteDirectChat
@@ -954,6 +956,10 @@ type SwapTokens = {
 type TokenSwapStatus = {
     kind: "tokenSwapStatus";
     swapId: bigint;
+};
+
+type RecoverUnfinishedTokenSwaps = {
+    kind: "recoverUnfinishedTokenSwaps";
 };
 
 type SetCommunityIndexes = {
@@ -2256,6 +2262,7 @@ export type WorkerResponseInner =
     | Set<string>
     | [DexId, bigint][]
     | SwapTokensResponse
+    | SwapTokensStep
     | TokenSwapStatusResponse
     | DiamondMembershipFees[]
     | TranslationCorrections
@@ -2983,9 +2990,11 @@ export type WorkerResult<T> = T extends Init
     : T extends GetTokenSwapQuotes
     ? [DexId, bigint][]
     : T extends SwapTokens
-    ? SwapTokensResponse
+    ? SwapTokensResponse | SwapTokensStep
     : T extends TokenSwapStatus
     ? TokenSwapStatusResponse
+    : T extends RecoverUnfinishedTokenSwaps
+    ? void
     : T extends DeleteDirectChat
     ? boolean
     : T extends GetDiamondMembershipFees

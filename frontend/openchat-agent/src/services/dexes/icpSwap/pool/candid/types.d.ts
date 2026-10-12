@@ -20,9 +20,20 @@ export interface SwapArgs {
   'zeroForOne' : boolean,
   'amountOutMinimum' : string,
 }
+export type UnusedBalanceResult = {
+    'ok' : { 'balance0' : bigint, 'balance1' : bigint }
+  } |
+  { 'err' : Error };
+export interface WithdrawArgs {
+  'fee' : bigint,
+  'token' : string,
+  'amount' : bigint,
+}
 export interface _SERVICE {
   'depositFromAndSwap' : ActorMethod<[DepositAndSwapArgs], NatResult>,
+  'getUserUnusedBalance' : ActorMethod<[Principal], UnusedBalanceResult>,
   'quoteForAll' : ActorMethod<[SwapArgs], NatResult>,
+  'withdraw' : ActorMethod<[WithdrawArgs], NatResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

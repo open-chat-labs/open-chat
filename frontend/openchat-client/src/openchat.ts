@@ -314,6 +314,7 @@ import {
     type StreakInsurance,
     type SubmitProofOfUniquePersonhoodResponse,
     type Success,
+    type SwapFromWalletStep,
     type SwapTokensResponse,
     type TermsRoute,
     type PrivacyRoute,
@@ -479,6 +480,7 @@ import {
     translationsStore,
     userCreatedStore,
     walletConfigStore,
+    walletTokenBySymbol,
     webhookUserIdsStore,
 } from "./state";
 import { botState } from "./state/bots.svelte";
@@ -548,6 +550,7 @@ import {
     canSendDirectMessage,
     canSendGroupMessage,
     canStartVideoCalls,
+    canTipMessages,
     canUnblockUsers,
     confirmedEventIndexesLoaded,
     containsReaction,
@@ -2576,6 +2579,10 @@ export class OpenChat {
 
     canReactToMessages(chatId: ChatIdentifier): boolean {
         return this.#chatPredicate(chatId, canReactToMessages);
+    }
+
+    canTipMessages(chatId: ChatIdentifier): boolean {
+        return this.#chatPredicate(chatId, canTipMessages);
     }
 
     canMentionAllMembers(chatId: ChatIdentifier): boolean {
@@ -5468,7 +5475,7 @@ export class OpenChat {
                 return content.transfer.ledger;
 
             case "prize_content":
-                return content.token;
+                return content.ledger;
 
             case "p2p_swap_content":
             case "p2p_swap_content_initial":
@@ -7164,6 +7171,19 @@ export class OpenChat {
         }
     }
 
+    // Finishes off any swap the user made straight from their wallet which they left part way
+    // through, withdrawing to their wallet anything the DEX still holds for them. Only a user who
+    // holds their own funds makes such swaps.
+    async #recoverUnfinishedTokenSwaps(): Promise<void> {
+        if (!isMultiUserCanisterUser(currentUserIdStore.value)) return;
+
+        try {
+            await this.#worker.send({ kind: "recoverUnfinishedTokenSwaps" });
+        } catch (err) {
+            this.#logger.error("Failed to recover unfinished token swaps", err);
+        }
+    }
+
     refreshTranslationsBalance(): Promise<bigint> {
         return this.#worker
             .send({
@@ -8182,9 +8202,10 @@ export class OpenChat {
                 // them queries every token too
                 window.setTimeout(
                     () =>
-                        this.refreshBalancesInSeries().finally(() =>
-                            this.#movePreviousWalletFunds(),
-                        ),
+                        this.refreshBalancesInSeries().finally(() => {
+                            this.#movePreviousWalletFunds();
+                            this.#recoverUnfinishedTokenSwaps();
+                        }),
                     1000,
                 );
             }
@@ -9440,6 +9461,10 @@ export class OpenChat {
         });
     }
 
+    // Swaps tokens, asking for the user's PIN first if they have set one. `onStep` is told of each
+    // step of a swap the user makes straight from their wallet as it starts (see
+    // `SwapFromWalletStep`), whereas a swap made by the user's canister is followed through
+    // `tokenSwapStatus`.
     async swapTokens(
         swapId: bigint,
         inputTokenLedger: string,
@@ -9447,6 +9472,7 @@ export class OpenChat {
         amountIn: bigint,
         minAmountOut: bigint,
         dex: DexId,
+        onStep?: (step: SwapFromWalletStep) => void,
     ): Promise<SwapTokensResponse> {
         let pin: string | undefined = undefined;
 
@@ -9456,27 +9482,38 @@ export class OpenChat {
 
         const lookup = cryptoLookup.value;
 
-        return this.#worker
-            .send({
-                kind: "swapTokens",
-                swapId,
-                inputTokenDetails: lookup.get(inputTokenLedger)!,
-                outputTokenDetails: lookup.get(outputTokenLedger)!,
-                amountIn,
-                minAmountOut,
-                dex,
-                pin,
-            })
-            .then((resp) => {
-                if (resp.kind === "error") {
-                    const pinNumberFailure = pinNumberFailureFromError(resp);
-                    if (pinNumberFailure !== undefined) {
-                        pinNumberFailureStore.set(pinNumberFailure);
-                    }
-                }
+        const resp = await new Promise<SwapTokensResponse>((resolve, reject) => {
+            this.#worker
+                .stream({
+                    kind: "swapTokens",
+                    swapId,
+                    inputTokenDetails: lookup.get(inputTokenLedger)!,
+                    outputTokenDetails: lookup.get(outputTokenLedger)!,
+                    amountIn,
+                    minAmountOut,
+                    dex,
+                    pin,
+                })
+                .subscribe({
+                    onResult: (value) => {
+                        if (value.kind === "swap_step") {
+                            onStep?.(value);
+                        } else {
+                            resolve(value);
+                        }
+                    },
+                    onError: reject,
+                });
+        });
 
-                return resp;
-            });
+        if (resp.kind === "error") {
+            const pinNumberFailure = pinNumberFailureFromError(resp);
+            if (pinNumberFailure !== undefined) {
+                pinNumberFailureStore.set(pinNumberFailure);
+            }
+        }
+
+        return resp;
     }
 
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
@@ -11324,9 +11361,8 @@ export class OpenChat {
                 amount.kind === "decimal" &&
                 amount.value !== null
             ) {
-                const tokenDetails = [...cryptoLookup.value.values()].find(
-                    (t) => t.symbol.toLowerCase() === token.value?.toLocaleLowerCase(),
-                );
+                const tokenDetails =
+                    token.value !== undefined ? walletTokenBySymbol(token.value) : undefined;
                 if (tokenDetails !== undefined) {
                     ev.ledger = tokenDetails.ledger;
                     ev.amount = this.validateTokenInput(

@@ -36,7 +36,6 @@ import type {
     MessageContent,
     MessageContext,
     P2PSwapContent,
-    PrizeContent,
     PublicProfile,
     ReplyContext,
     SendMessageResponse,
@@ -74,7 +73,7 @@ import {
     type SyncTouched,
 } from "./sync";
 
-const CACHE_VERSION = 153;
+const CACHE_VERSION = 155;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -296,6 +295,17 @@ async function clearEvents(
     await tx.objectStore("chat_events").clear();
 }
 
+// Cached prize messages have no `ledger`, which their token is now looked up by. The event index
+// the primer has loaded each chat up to goes with the events, so that it fills the cache back in.
+async function clearEventsAndCachePrimer(
+    _db: IDBPDatabase<ChatSchema>,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("chat_events").clear();
+    await tx.objectStore("thread_events").clear();
+    await clearCachePrimerStore(_db, tx);
+}
+
 // async function clearChatAndGroups(
 //     _db: IDBPDatabase<ChatSchema>,
 //     _principal: Principal,
@@ -430,7 +440,9 @@ export class ChatsDb {
             .withMigration(149, clearChatsStore)
             .withMigration(150, createSyncStore)
             .withMigration(151, createChatRowStores)
-            .withMigration(152, clearDetailsStores);
+            .withMigration(152, clearDetailsStores)
+            .withMigration(153, clearChatsStore)
+            .withMigration(154, clearEventsAndCachePrimer);
     }
 
     getDb(): Database {
@@ -1634,6 +1646,7 @@ function messageToEvent(
                     winnerCount: 0,
                     userIsWinner: false,
                     token: message.content.transfer.token,
+                    ledger: message.content.transfer.ledger,
                     endDate: message.content.endDate,
                     caption: message.content.caption,
                     diamondOnly: message.content.diamondOnly,
@@ -1641,7 +1654,8 @@ function messageToEvent(
                     uniquePersonOnly: message.content.uniquePersonOnly,
                     streakOnly: message.content.streakOnly,
                     requiresCaptcha: message.content.requiresCaptcha,
-                } as PrizeContent;
+                    minChitEarned: message.content.minChitEarned,
+                };
                 break;
             case "p2p_swap_content_initial":
                 content = {

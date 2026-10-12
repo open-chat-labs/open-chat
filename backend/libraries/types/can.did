@@ -1078,6 +1078,7 @@ type GroupPermissions = record {
     invite_users : PermissionRole;
     add_members : PermissionRole;
     react_to_messages : PermissionRole;
+    tip_messages : PermissionRole;
     mention_all_members : PermissionRole;
     start_video_call : PermissionRole;
     message_permissions : MessagePermissions;
@@ -1114,6 +1115,7 @@ type OptionalGroupPermissions = record {
     invite_users : opt PermissionRole;
     add_members : opt PermissionRole;
     react_to_messages : opt PermissionRole;
+    tip_messages : opt PermissionRole;
     mention_all_members : opt PermissionRole;
     start_video_call : opt PermissionRole;
     message_permissions : opt OptionalMessagePermissions;
