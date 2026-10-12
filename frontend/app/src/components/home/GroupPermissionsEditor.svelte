@@ -91,6 +91,10 @@
             bind:rolePermission={permissions.reactToMessages} />
         <SelectPermissionRole
             {roles}
+            label={i18nKey("permissions.tipMessages")}
+            bind:rolePermission={permissions.tipMessages} />
+        <SelectPermissionRole
+            {roles}
             label={i18nKey("permissions.mentionAllMembers", { mention: "@everyone" })}
             bind:rolePermission={permissions.mentionAllMembers} />
     {:else if selectedTab === "permissions.message"}

@@ -1760,6 +1760,7 @@
             "text": "inviare messaggi di testo nei thread",
             "video": "inviare messaggi video nei thread"
         },
+        "tipMessages": "lasciare mance ai messaggi",
         "updateDetails": "modificare le informazioni di base",
         "updateGroup": "modifica le informazioni sul gruppo",
         "whoCan": "Chi può"

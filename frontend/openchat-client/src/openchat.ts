@@ -547,6 +547,7 @@ import {
     canSendDirectMessage,
     canSendGroupMessage,
     canStartVideoCalls,
+    canTipMessages,
     canUnblockUsers,
     confirmedEventIndexesLoaded,
     containsReaction,
@@ -2518,6 +2519,10 @@ export class OpenChat {
 
     canReactToMessages(chatId: ChatIdentifier): boolean {
         return this.#chatPredicate(chatId, canReactToMessages);
+    }
+
+    canTipMessages(chatId: ChatIdentifier): boolean {
+        return this.#chatPredicate(chatId, canTipMessages);
     }
 
     canMentionAllMembers(chatId: ChatIdentifier): boolean {

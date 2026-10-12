@@ -1760,6 +1760,7 @@
             "text": "gửi tin nhắn văn bản trong chủ đề",
             "video": "gửi tin nhắn video trong chủ đề"
         },
+        "tipMessages": "tặng tiền boa cho tin nhắn",
         "updateDetails": "chỉnh sửa thông tin cơ bản",
         "updateGroup": "chỉnh sửa thông tin nhóm",
         "whoCan": "Ai có thể"

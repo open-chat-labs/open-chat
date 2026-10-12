@@ -54,6 +54,7 @@
                 startVideoCall: permissions.startVideoCall,
                 pinMessages: permissions.pinMessages,
                 reactToMessages: permissions.reactToMessages,
+                tipMessages: permissions.tipMessages,
                 mentionAllMembers: permissions.mentionAllMembers,
             },
             "",

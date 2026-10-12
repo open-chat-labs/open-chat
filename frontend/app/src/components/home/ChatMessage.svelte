@@ -80,6 +80,7 @@
         canDelete: boolean;
         canQuoteReply: boolean;
         canReact: boolean;
+        canTipMessages: boolean;
         publicGroup: boolean;
         editing: boolean;
         canStartThread: boolean;
@@ -125,6 +126,7 @@
         canDelete,
         canQuoteReply,
         canReact,
+        canTipMessages,
         publicGroup,
         editing,
         canStartThread,
@@ -412,7 +414,7 @@
             ? reservedMediaWidth(mediaDimensions.width, mediaDimensions.height)
             : undefined,
     );
-    let canTip = $derived(!me && confirmed && !inert && !failed);
+    let canTip = $derived(canTipMessages && !me && confirmed && !inert && !failed);
     let inThread = $derived(threadRootMessage !== undefined);
     let threadRootMessageIndex = $derived(
         threadRootMessage?.messageId === msg.messageId

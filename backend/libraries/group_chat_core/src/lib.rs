@@ -1045,7 +1045,7 @@ impl GroupChatCore {
     ) -> OCResult<UserId> {
         let member = self.members.get_verified_member(user_id)?;
 
-        if !member.role().can_react_to_messages(&self.permissions) {
+        if !member.role().can_tip_messages(&self.permissions) {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
@@ -1069,7 +1069,7 @@ impl GroupChatCore {
     ) -> OCResult<UpdateMessageSuccess> {
         let member = self.members.get_verified_member(args.user_id)?;
 
-        if !member.role().can_react_to_messages(&self.permissions) {
+        if !member.role().can_tip_messages(&self.permissions) {
             return Err(OCErrorCode::InitiatorNotAuthorized.into());
         }
 
@@ -2149,6 +2149,7 @@ impl GroupChatCore {
             add_members: new.add_members.unwrap_or(old.add_members),
             invite_users: new.invite_users.unwrap_or(old.invite_users),
             react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),
+            tip_messages: new.tip_messages.unwrap_or(old.tip_messages),
             mention_all_members: new.mention_all_members.unwrap_or(old.mention_all_members),
             start_video_call: new.start_video_call.unwrap_or(old.start_video_call),
             message_permissions,
