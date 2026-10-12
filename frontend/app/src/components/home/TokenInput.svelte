@@ -103,7 +103,7 @@
         tokenDetails !== undefined && showDollarAmount
             ? calculateDollarAmount(
                   amount,
-                  $exchangeRatesLookup.get(tokenDetails.symbol.toLowerCase())?.toUSD,
+                  $exchangeRatesLookup.get(tokenDetails.ledger)?.toUSD,
                   tokenDetails.decimals,
               )
             : "???",

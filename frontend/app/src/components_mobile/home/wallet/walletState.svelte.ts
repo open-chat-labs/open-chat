@@ -1,5 +1,6 @@
 import { toastStore } from "@src/stores/toast";
 import {
+    conversionLedgers,
     cryptoBalanceStore,
     currentUserStore,
     exchangeRatesLookupStore,
@@ -13,6 +14,11 @@ import {
 } from "@client";
 
 export type ConversionToken = "usd" | "icp" | "btc" | "eth";
+
+function conversionToUSD(c: ConversionToken): number | undefined {
+    if (c === "usd") return 1;
+    return exchangeRatesLookupStore.value.get(conversionLedgers[c])?.toUSD;
+}
 
 export function getConvertedTokenValue(
     c: ConversionToken,
@@ -142,7 +148,7 @@ export class TokenState {
             exchangeRatesLookupStore.value,
             this.#remainingBalance,
             this.#decimals,
-            this.#symbol,
+            this.#ledger,
         ),
     );
     #formattedTokenBalance = $derived(this.formatTokens(this.#remainingBalance));
@@ -152,14 +158,9 @@ export class TokenState {
     #formattedConvertedValue = $derived(
         formatConvertedValue(this.#selectedConversion, this.#convertedValue),
     );
-    #usdRate(symbol: string) {
-        if (symbol === "usd") return 1;
-        return exchangeRatesLookupStore.value.get(symbol.toLowerCase())?.toUSD;
-    }
-
     #formattedUnitValue = $derived.by(() => {
-        const conversion = this.#usdRate(this.#selectedConversion.toLowerCase());
-        const token = this.#usdRate(this.#symbol);
+        const conversion = conversionToUSD(this.#selectedConversion);
+        const token = exchangeRatesLookupStore.value.get(this.#ledger)?.toUSD;
         if (conversion === undefined || token === undefined || conversion === 0) return "?????";
         return formatConvertedValue(this.#selectedConversion, token / conversion);
     });
@@ -209,7 +210,7 @@ export class TokenState {
                 exchangeRatesLookupStore.value,
                 amount,
                 this.#decimals,
-                this.#symbol,
+                this.#ledger,
             ),
         );
     }
