@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use multi_user_canister::mark_read::*;
-use multi_user_canister::{MarkMessagesReadArgs, UserCanisterEvent};
+use multi_user_canister::{MarkMessagesReadArgs, MultiUserCanisterEvent};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -60,10 +60,10 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         // Tell the other user how far this user has read
         if let Some(read_up_to_of_theirs) = read_up_to_of_theirs {
-            state.send_user_canister_event(
+            state.send_multi_user_canister_event(
                 my_index,
                 chat_id.into(),
-                UserCanisterEvent::MarkMessagesRead(MarkMessagesReadArgs {
+                MultiUserCanisterEvent::MarkMessagesRead(MarkMessagesReadArgs {
                     read_up_to: read_up_to_of_theirs,
                 }),
             );

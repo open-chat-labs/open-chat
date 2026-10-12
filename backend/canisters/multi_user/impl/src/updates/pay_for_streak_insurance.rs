@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ledger_utils::Payer;
 use multi_user_canister::pay_for_streak_insurance::*;
-use types::{OCResult, UserCanisterStreakInsurancePayment};
+use types::{MultiUserCanisterStreakInsurancePayment, OCResult};
 
 // Users hold their own funds in their own wallets, so they always pay via ICRC-2: from their wallet,
 // or the external account they are paying from, either of which must have approved this canister as
@@ -38,7 +38,7 @@ async fn pay_for_streak_insurance_impl(mut args: Args) -> Response {
                 let now = state.env.now();
                 state.mark_streak_insurance_payment(
                     my_index,
-                    UserCanisterStreakInsurancePayment {
+                    MultiUserCanisterStreakInsurancePayment {
                         timestamp: now,
                         chat_amount: args.expected_price,
                         additional_days: args.additional_days,

@@ -2185,7 +2185,7 @@ export class OpenChatAgent extends EventTarget {
                     premiumItems.updateIfNotUndefined(userResponse.premiumItems);
                 }
             } catch (error) {
-                console.error("Failed to get updates from User canister", error);
+                console.error("Failed to get updates from the user's canister", error);
             }
 
             directChats = directChatsAdded.concat(

@@ -11,8 +11,8 @@ use direct_chat::DirectChat;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
 use multi_user_canister::c2c_user_canister_v2::*;
 use multi_user_canister::{
-    DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, SendMessagesArgs,
-    SetEventsTtl, StartVideoCallArgs, TipMessageArgs as C2CTipMessageArgs, ToggleReactionArgs, UserCanisterEvent,
+    DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, MultiUserCanisterEvent,
+    SendMessagesArgs, SetEventsTtl, StartVideoCallArgs, TipMessageArgs as C2CTipMessageArgs, ToggleReactionArgs,
 };
 use rand::RngExt;
 use types::{Achievement, CallKind, TimestampMillis, UserId};
@@ -122,38 +122,40 @@ pub(crate) fn migrate_sender_user_id(
 
 // Applies an event from `sender` to the user at `recipient_index`, unless the recipient has blocked
 // the sender. Events from users in other canisters arrive via `c2c_user_canister_v2`, while those
-// from users in this canister are applied straight away (see `RuntimeState::send_user_canister_event`),
+// from users in this canister are applied straight away (see `RuntimeState::send_multi_user_canister_event`),
 // so an event has the same effect whichever canister its sender is in.
-pub(crate) fn apply_event(event: UserCanisterEvent, sender: UserId, recipient_index: u16, state: &mut RuntimeState) {
+pub(crate) fn apply_event(event: MultiUserCanisterEvent, sender: UserId, recipient_index: u16, state: &mut RuntimeState) {
     if is_blocked(recipient_index, sender, state) {
         return;
     }
     let now = state.env.now();
 
     match event {
-        UserCanisterEvent::SendMessages(args) => send_messages(*args, sender, recipient_index, now, state),
-        UserCanisterEvent::EditMessage(args) => edit_message(*args, sender, recipient_index, now, state),
-        UserCanisterEvent::DeleteMessages(args) => delete_messages(*args, sender, recipient_index, now, state),
-        UserCanisterEvent::UndeleteMessages(args) => undelete_messages(*args, sender, recipient_index, now, state),
-        UserCanisterEvent::ToggleReaction(args) => toggle_reaction(*args, sender, recipient_index, now, state),
-        UserCanisterEvent::MarkMessagesRead(args) => {
+        MultiUserCanisterEvent::SendMessages(args) => send_messages(*args, sender, recipient_index, now, state),
+        MultiUserCanisterEvent::EditMessage(args) => edit_message(*args, sender, recipient_index, now, state),
+        MultiUserCanisterEvent::DeleteMessages(args) => delete_messages(*args, sender, recipient_index, now, state),
+        MultiUserCanisterEvent::UndeleteMessages(args) => undelete_messages(*args, sender, recipient_index, now, state),
+        MultiUserCanisterEvent::ToggleReaction(args) => toggle_reaction(*args, sender, recipient_index, now, state),
+        MultiUserCanisterEvent::MarkMessagesRead(args) => {
             with_chat_mut(recipient_index, sender, state, |chat, _| {
                 chat.mark_read_by_them_up_to(args.read_up_to, now)
             });
         }
-        UserCanisterEvent::SetEventsTtl(args) => set_events_ttl(*args, sender, recipient_index, now, state),
-        UserCanisterEvent::SetReferralStatus(status) => state.set_referral_status(recipient_index, sender, &[], *status, now),
-        UserCanisterEvent::SetReferralStatusV2(args) => {
+        MultiUserCanisterEvent::SetEventsTtl(args) => set_events_ttl(*args, sender, recipient_index, now, state),
+        MultiUserCanisterEvent::SetReferralStatus(status) => {
+            state.set_referral_status(recipient_index, sender, &[], *status, now)
+        }
+        MultiUserCanisterEvent::SetReferralStatusV2(args) => {
             state.set_referral_status(recipient_index, sender, &args.previous_user_ids, args.status, now)
         }
-        UserCanisterEvent::StartVideoCall(args) => start_video_call(*args, sender, recipient_index, state),
-        UserCanisterEvent::JoinVideoCall(args) => {
+        MultiUserCanisterEvent::StartVideoCall(args) => start_video_call(*args, sender, recipient_index, state),
+        MultiUserCanisterEvent::JoinVideoCall(args) => {
             with_chat_mut(recipient_index, sender, state, |chat, _| {
                 c2c_user_canister::join_video_call(chat, sender, args.message_id, now)
             });
         }
-        UserCanisterEvent::TipMessage(args) => tip_message(*args, sender, recipient_index, now, state),
-        UserCanisterEvent::P2PSwapStatusChange(args) => {
+        MultiUserCanisterEvent::TipMessage(args) => tip_message(*args, sender, recipient_index, now, state),
+        MultiUserCanisterEvent::P2PSwapStatusChange(args) => {
             let message_id = args.message_id;
             let ended = args.status.has_ended();
             let applied = state

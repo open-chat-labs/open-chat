@@ -3,7 +3,7 @@ use crate::{RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use multi_user_canister::c2c_local_user_index_v2::*;
-use multi_user_canister::{LocalUserIndexEvent, SetReferralStatusV2, UserCanisterEvent};
+use multi_user_canister::{LocalUserIndexEvent, MultiUserCanisterEvent, SetReferralStatusV2};
 
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
@@ -52,11 +52,11 @@ fn process_event(user_index: u16, event: LocalUserIndexEvent, state: &mut Runtim
         // A user migrated here sends the ids they had before, which their referrer may hold their
         // referral under
         let previous_user_ids = state.data.migrated_user_ids.previous_ids(state.user_id(user_index));
-        let event = UserCanisterEvent::SetReferralStatusV2(Box::new(SetReferralStatusV2 {
+        let event = MultiUserCanisterEvent::SetReferralStatusV2(Box::new(SetReferralStatusV2 {
             status,
             previous_user_ids,
         }));
-        state.send_user_canister_event(user_index, referred_by, event);
+        state.send_multi_user_canister_event(user_index, referred_by, event);
     }
     state.garbage_collect_stable_memory_keys(user_index, effects.garbage_collect);
 }

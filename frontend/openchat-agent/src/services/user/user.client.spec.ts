@@ -9,7 +9,6 @@ import { describe, expect, test } from "vitest";
 import { UserClient } from "./user.client";
 
 const THEM = "ryjl3-tyaaa-aaaaa-aaaba-cai";
-const USER_CANISTER_USER = "rrkah-fqaaa-aaaaa-aaaaq-cai";
 const MULTI_USER_CANISTER_USER = indexedUserId(
     Principal.fromText("dfdal-2uaaa-aaaaa-qaama-cai"),
     3,
@@ -39,14 +38,13 @@ describe("UserClient reading a direct chat's events", () => {
         return queries;
     }
 
-    test("a MultiUser or User canister is told whose copy of the chat to read", async () => {
-        for (const userId of [MULTI_USER_CANISTER_USER, USER_CANISTER_USER]) {
-            expect(await sent(userId)).toEqual([
-                ["events", userId, THEM],
-                ["events_by_index", userId, THEM],
-                ["events_window", userId, THEM],
-            ]);
-        }
+    test("the user's canister is told whose copy of the chat to read", async () => {
+        const userId = MULTI_USER_CANISTER_USER;
+        expect(await sent(userId)).toEqual([
+            ["events", userId, THEM],
+            ["events_by_index", userId, THEM],
+            ["events_window", userId, THEM],
+        ]);
     });
 });
 

@@ -16,7 +16,7 @@ use chat_events::{
 use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, NANOS_PER_MILLISECOND, OPENCHAT_BOT_USER_ID};
 use ledger_utils::{TransferRecipient, UserTransfer};
 use multi_user_canister::send_message_v2::{Response::*, *};
-use multi_user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
+use multi_user_canister::{C2CReplyContext, MultiUserCanisterEvent, SendMessageArgs, SendMessagesArgs, c2c_bot_send_message};
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
@@ -630,11 +630,11 @@ fn send_message_impl(
     };
 
     // The recipient is sent the message, which one in this canister gets straight away. A chat with
-    // yourself has a single copy, and a bot is sent nothing (see `send_user_canister_event`).
-    state.send_user_canister_event(
+    // yourself has a single copy, and a bot is sent nothing (see `send_multi_user_canister_event`).
+    state.send_multi_user_canister_event(
         my_index,
         recipient,
-        UserCanisterEvent::SendMessages(Box::new(SendMessagesArgs {
+        MultiUserCanisterEvent::SendMessages(Box::new(SendMessagesArgs {
             messages: vec![message_for_recipient],
             sender_name: sender_details.name,
             sender_display_name: sender_details.display_name,

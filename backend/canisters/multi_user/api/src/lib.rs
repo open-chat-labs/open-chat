@@ -186,7 +186,7 @@ pub struct DiamondMembershipPaymentReceived {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum UserCanisterEvent {
+pub enum MultiUserCanisterEvent {
     SendMessages(Box<SendMessagesArgs>),
     EditMessage(Box<EditMessageArgs>),
     DeleteMessages(Box<DeleteUndeleteMessagesArgs>),

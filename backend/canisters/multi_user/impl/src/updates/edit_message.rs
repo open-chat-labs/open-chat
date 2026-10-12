@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
 use constants::OPENCHAT_BOT_USER_ID;
 use multi_user_canister::edit_message_v2::*;
-use multi_user_canister::{EditMessageArgs as C2CEditMessageArgs, UserCanisterEvent};
+use multi_user_canister::{EditMessageArgs as C2CEditMessageArgs, MultiUserCanisterEvent};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, EventIndex, OCResult};
 
@@ -61,10 +61,10 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 
     // Then in the other user's copy, where the thread is identified by the id of its root message
     // since message indexes differ between the copies
-    state.send_user_canister_event(
+    state.send_multi_user_canister_event(
         my_index,
         args.user_id,
-        UserCanisterEvent::EditMessage(Box::new(C2CEditMessageArgs {
+        MultiUserCanisterEvent::EditMessage(Box::new(C2CEditMessageArgs {
             thread_root_message_id,
             message_id: args.message_id,
             content: args.content.into(),

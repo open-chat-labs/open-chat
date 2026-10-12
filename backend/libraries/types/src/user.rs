@@ -296,7 +296,7 @@ mod tests {
     }
 
     #[test]
-    fn wallet_of_user_alone_in_their_canister_is_the_canisters_account() {
+    fn wallet_of_an_old_user_id_is_its_canisters_account() {
         let principal = Principal::from_slice(&[9; 29]);
         let account = Account::from(UserIdAndPrincipal::new(UserId::new(canister_id()), principal));
 

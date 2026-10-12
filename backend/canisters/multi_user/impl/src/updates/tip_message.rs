@@ -6,7 +6,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
-use multi_user_canister::UserCanisterEvent;
+use multi_user_canister::MultiUserCanisterEvent;
 use multi_user_canister::tip_message::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, CanisterId, Chat, OCResult, UserId, icrc1, icrc2};
@@ -130,6 +130,6 @@ fn tip_direct_chat_message(my_index: u16, args: TipMessageArgs, decimals: u8, st
         None => return Error(OCErrorCode::InitiatorNotFound.into()),
     };
 
-    state.send_user_canister_event(my_index, recipient, UserCanisterEvent::TipMessage(Box::new(c2c_args)));
+    state.send_multi_user_canister_event(my_index, recipient, MultiUserCanisterEvent::TipMessage(Box::new(c2c_args)));
     Success
 }

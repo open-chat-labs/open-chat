@@ -1,4 +1,4 @@
-use crate::UserCanisterEvent;
+use crate::MultiUserCanisterEvent;
 use serde::{Deserialize, Serialize};
 use types::{IdempotentEnvelope, SuccessOnly, UserId};
 
@@ -17,7 +17,7 @@ pub struct Event {
     #[serde(rename = "r")]
     pub recipient: UserId,
     #[serde(rename = "e")]
-    pub event: UserCanisterEvent,
+    pub event: MultiUserCanisterEvent,
     // The ids the sender had before being migrated to a MultiUser canister. The recipient moves what
     // it holds under them, such as its chat with the sender, onto the sender's id before applying the
     // event, in case it hasn't yet been told of the migration. Only taken from a MultiUser canister.

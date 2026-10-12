@@ -12,7 +12,7 @@ use constants::{
 };
 use multi_user_canister::set_pin_number::PinNumberVerification;
 use multi_user_canister::{
-    ChatInList, LocalUserIndexEvent, MessageActivity, UserCanisterEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    ChatInList, LocalUserIndexEvent, MessageActivity, MultiUserCanisterEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
     WalletConfig,
 };
 use oc_error_codes::OCErrorCode;
@@ -3206,7 +3206,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
                     sender_previous_user_ids: Vec::new(),
                     sender: carol.user_id,
                     recipient: alice_id,
-                    event: UserCanisterEvent::SetReferralStatusV2(Box::new(multi_user_canister::SetReferralStatusV2 {
+                    event: MultiUserCanisterEvent::SetReferralStatusV2(Box::new(multi_user_canister::SetReferralStatusV2 {
                         status: ReferralStatus::Diamond,
                         previous_user_ids: Vec::new(),
                     })),
@@ -3249,7 +3249,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
                     sender_previous_user_ids: Vec::new(),
                     sender: migrated_user_id,
                     recipient: alice_id,
-                    event: UserCanisterEvent::SetReferralStatusV2(Box::new(multi_user_canister::SetReferralStatusV2 {
+                    event: MultiUserCanisterEvent::SetReferralStatusV2(Box::new(multi_user_canister::SetReferralStatusV2 {
                         status: ReferralStatus::Diamond,
                         previous_user_ids: vec![referred_elsewhere],
                     })),
@@ -4213,7 +4213,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
     let alice = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
     let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
     let mut next_id = 0;
-    let mut send = |env: &mut PocketIc, caller: Principal, sender: UserId, event: UserCanisterEvent| {
+    let mut send = |env: &mut PocketIc, caller: Principal, sender: UserId, event: MultiUserCanisterEvent| {
         next_id += 1;
         let response = client::user::c2c_user_canister_v2(
             env,
@@ -4235,7 +4235,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         assert!(matches!(response, types::SuccessOnly::Success));
     };
     let send_text = |message_id: MessageId, sender_message_index: u32, text: &str| {
-        UserCanisterEvent::SendMessages(Box::new(multi_user_canister::SendMessagesArgs {
+        MultiUserCanisterEvent::SendMessages(Box::new(multi_user_canister::SendMessagesArgs {
             messages: vec![multi_user_canister::SendMessageArgs {
                 thread_root_message_id: None,
                 message_id,
@@ -4268,7 +4268,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         env,
         alice.canister(),
         alice.user_id,
-        UserCanisterEvent::EditMessage(Box::new(multi_user_canister::EditMessageArgs {
+        MultiUserCanisterEvent::EditMessage(Box::new(multi_user_canister::EditMessageArgs {
             thread_root_message_id: None,
             message_id,
             content: MessageContent::Text(TextContent {
@@ -4284,7 +4284,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         env,
         alice.canister(),
         alice.user_id,
-        UserCanisterEvent::ToggleReaction(Box::new(multi_user_canister::ToggleReactionArgs {
+        MultiUserCanisterEvent::ToggleReaction(Box::new(multi_user_canister::ToggleReactionArgs {
             thread_root_message_id: None,
             message_id,
             reaction: Reaction::new("👍".to_string()),
@@ -4300,13 +4300,13 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         env,
         alice.canister(),
         alice.user_id,
-        UserCanisterEvent::MarkMessagesRead(multi_user_canister::MarkMessagesReadArgs { read_up_to: 0.into() }),
+        MultiUserCanisterEvent::MarkMessagesRead(multi_user_canister::MarkMessagesReadArgs { read_up_to: 0.into() }),
     );
     send(
         env,
         alice.canister(),
         alice.user_id,
-        UserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
+        MultiUserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
             events_ttl: Some(3_600_000),
             timestamp: now_millis(env),
         })),
@@ -4326,14 +4326,14 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         env,
         alice.canister(),
         alice.user_id,
-        UserCanisterEvent::DeleteMessages(delete_args()),
+        MultiUserCanisterEvent::DeleteMessages(delete_args()),
     );
     assert!(matches!(message(&chat(env), message_id).content, MessageContent::Deleted(_)));
     send(
         env,
         alice.canister(),
         alice.user_id,
-        UserCanisterEvent::UndeleteMessages(delete_args()),
+        MultiUserCanisterEvent::UndeleteMessages(delete_args()),
     );
     assert_eq!(messages(&chat(env)), vec![(alice.user_id, "edited".to_string())]);
 
@@ -4419,7 +4419,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         env,
         alice.canister(),
         alice.user_id,
-        UserCanisterEvent::EditMessage(Box::new(multi_user_canister::EditMessageArgs {
+        MultiUserCanisterEvent::EditMessage(Box::new(multi_user_canister::EditMessageArgs {
             thread_root_message_id: None,
             message_id,
             content: MessageContent::Text(TextContent {
@@ -4444,7 +4444,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
             env,
             blocked.canister(),
             blocked.user_id,
-            UserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
+            MultiUserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
                 events_ttl: Some(60_000),
                 timestamp: now_millis(env),
             })),
@@ -4599,7 +4599,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
                     sender_previous_user_ids: Vec::new(),
                     sender: UserId::new_indexed(impostor, 1),
                     recipient: bob_id,
-                    event: UserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
+                    event: MultiUserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
                         events_ttl: Some(1),
                         timestamp: now_millis(env),
                     })),
@@ -4629,7 +4629,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
                     sender_previous_user_ids: Vec::new(),
                     sender: canister_ids.proposals_bot.into(),
                     recipient: bob_id,
-                    event: UserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
+                    event: MultiUserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
                         events_ttl: Some(1),
                         timestamp: now_millis(env),
                     })),
@@ -4678,7 +4678,7 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
             sender_previous_user_ids: Vec::new(),
             sender,
             recipient: carol_id,
-            event: UserCanisterEvent::SendMessages(Box::new(multi_user_canister::SendMessagesArgs {
+            event: MultiUserCanisterEvent::SendMessages(Box::new(multi_user_canister::SendMessagesArgs {
                 messages: vec![multi_user_canister::SendMessageArgs {
                     thread_root_message_id: None,
                     message_id: random_from_u128(),

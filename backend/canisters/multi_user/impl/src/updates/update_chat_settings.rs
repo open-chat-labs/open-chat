@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
 use multi_user_canister::update_chat_settings::*;
-use multi_user_canister::{SetEventsTtl, UserCanisterEvent};
+use multi_user_canister::{MultiUserCanisterEvent, SetEventsTtl};
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{CanisterId, OCResult, UserId, UserType};
@@ -80,10 +80,10 @@ fn commit(args: Args, their_user_type: UserType, state: &mut RuntimeState) -> OC
         .flatten();
 
     if let (Some(events_ttl), Some(changed_at)) = (events_ttl, changed_at) {
-        state.send_user_canister_event(
+        state.send_multi_user_canister_event(
             my_index,
             them,
-            UserCanisterEvent::SetEventsTtl(Box::new(SetEventsTtl {
+            MultiUserCanisterEvent::SetEventsTtl(Box::new(SetEventsTtl {
                 events_ttl,
                 timestamp: changed_at,
             })),

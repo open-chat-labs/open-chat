@@ -1,5 +1,5 @@
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
-use crate::model::user_canister_event_batch::UserCanisterEventBatch;
+use crate::model::multi_user_canister_event_batch::MultiUserCanisterEventBatch;
 use crate::model::users::Users;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
@@ -11,7 +11,7 @@ use direct_chat::DirectChat;
 use event_store_types::{Event, EventBuilder};
 use ledger_utils::certified::CertifiedTransfers;
 use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserEventWithUserId};
-use multi_user_canister::UserCanisterEvent;
+use multi_user_canister::MultiUserCanisterEvent;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::prelude::StdRng;
@@ -23,9 +23,9 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, IdempotentEnvelope, MessageId, MessageIndex, Notification, NotifyChit, OCResult,
-    ReferralStatus, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
-    UserNotification, UserType,
+    DirectChatUserNotificationPayload, IdempotentEnvelope, MessageId, MessageIndex, MultiUserCanisterStreakInsuranceClaim,
+    MultiUserCanisterStreakInsurancePayment, Notification, NotifyChit, OCResult, ReferralStatus, TimestampMillis, Timestamped,
+    UserId, UserNotification, UserType,
 };
 use user_core::User;
 use user_core::{Community, GroupChat};
@@ -250,7 +250,7 @@ impl RuntimeState {
     // one for a user migrated here since having `recipient`, keeping the order of any events
     // already queued for them). Nothing is sent to the sender themselves or to a bot, since no bot
     // handles these events, and they would be retried forever.
-    pub fn send_user_canister_event(&mut self, sender_index: u16, recipient: UserId, event: UserCanisterEvent) {
+    pub fn send_multi_user_canister_event(&mut self, sender_index: u16, recipient: UserId, event: MultiUserCanisterEvent) {
         let sender = self.user_id(sender_index);
         let recipient_is_bot = recipient == OPENCHAT_BOT_USER_ID
             || self
@@ -277,7 +277,7 @@ impl RuntimeState {
         // Sent to the recipient's latest id if they are known to have been migrated since having
         // `recipient`
         let recipient = self.data.migrated_user_ids.latest(recipient);
-        self.data.user_canister_events_queue.push(
+        self.data.multi_user_canister_events_queue.push(
             recipient.canister_id(),
             IdempotentEnvelope {
                 created_at: self.env.now(),
@@ -378,7 +378,7 @@ impl RuntimeState {
     }
 
     // Records a payment for streak insurance by the user at `user_index`
-    pub fn mark_streak_insurance_payment(&mut self, user_index: u16, payment: UserCanisterStreakInsurancePayment) {
+    pub fn mark_streak_insurance_payment(&mut self, user_index: u16, payment: MultiUserCanisterStreakInsurancePayment) {
         if self
             .data
             .users
@@ -407,7 +407,7 @@ impl RuntimeState {
 
     // Records a day of streak insurance being used up to keep the streak of the user at
     // `user_index`
-    pub fn mark_streak_insurance_claim(&mut self, user_index: u16, claim: UserCanisterStreakInsuranceClaim) {
+    pub fn mark_streak_insurance_claim(&mut self, user_index: u16, claim: MultiUserCanisterStreakInsuranceClaim) {
         if self
             .data
             .users
@@ -631,7 +631,7 @@ impl RuntimeState {
             deleted_users_to_garbage_collect: self.data.deleted_users_to_garbage_collect.len() as u32,
             timer_jobs: self.data.timer_jobs.len() as u32,
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
-            queued_user_canister_events: self.data.user_canister_events_queue.len() as u32,
+            queued_user_canister_events: self.data.multi_user_canister_events_queue.len() as u32,
             known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -655,7 +655,8 @@ struct Data {
     pub video_call_operators: Vec<Principal>,
     // Events for the LocalUserIndex, each naming the user it is from
     pub local_user_index_event_sync_queue: BatchedTimerJobQueue<LocalUserIndexEventBatch>,
-    pub user_canister_events_queue: GroupedTimerJobQueue<UserCanisterEventBatch>,
+    #[serde(alias = "user_canister_events_queue")]
+    pub multi_user_canister_events_queue: GroupedTimerJobQueue<MultiUserCanisterEventBatch>,
     // The prefixes of deleted direct chats, whose entries are removed by a background job, each
     // with the index of the user who held the chat since the entries are keyed under that user
     pub stable_memory_keys_to_garbage_collect: Vec<(u16, BaseKeyPrefix)>,
@@ -681,7 +682,7 @@ struct Data {
 impl Data {
     // Starts sending the events queued by the update, rather than waiting for the queues' timers
     pub fn flush_pending_events(&mut self) {
-        self.user_canister_events_queue.flush();
+        self.multi_user_canister_events_queue.flush();
         self.local_user_index_event_sync_queue.flush();
     }
 
@@ -705,7 +706,7 @@ impl Data {
             escrow_canister_id,
             video_call_operators,
             local_user_index_event_sync_queue: BatchedTimerJobQueue::new(local_user_index_canister_id, true),
-            user_canister_events_queue: GroupedTimerJobQueue::new(10, true),
+            multi_user_canister_events_queue: GroupedTimerJobQueue::new(10, true),
             stable_memory_keys_to_garbage_collect: Vec::new(),
             deleted_users_to_garbage_collect: Vec::new(),
             idempotency_checker: IdempotencyChecker::default(),

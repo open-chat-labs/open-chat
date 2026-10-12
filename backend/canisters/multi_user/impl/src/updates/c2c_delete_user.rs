@@ -32,7 +32,7 @@ fn c2c_delete_user_impl(args: Args, state: &mut RuntimeState) -> Response {
         .retain(|event| event.value.user_id != args.user_id);
     state
         .data
-        .user_canister_events_queue
+        .multi_user_canister_events_queue
         .retain(|event| event.value.sender != args.user_id);
     // The user's whole scope is garbage collected, so there is no need to remove these separately
     state

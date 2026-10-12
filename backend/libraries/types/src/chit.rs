@@ -54,7 +54,7 @@ pub struct StreakInsurance {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UserCanisterStreakInsurancePayment {
+pub struct MultiUserCanisterStreakInsurancePayment {
     pub timestamp: TimestampMillis,
     pub chat_amount: u128,
     pub additional_days: u8,
@@ -63,7 +63,7 @@ pub struct UserCanisterStreakInsurancePayment {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UserCanisterStreakInsuranceClaim {
+pub struct MultiUserCanisterStreakInsuranceClaim {
     pub timestamp: TimestampMillis,
     pub streak_length: u16,
     pub new_days_claimed: u8,
