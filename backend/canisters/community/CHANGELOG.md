@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the one-off which checked recurring gates again for lapsed migrated members, now that it has run ([#9915](https://github.com/open-chat-labs/open-chat/pull/9915))
 
+### Fixed
+
+- Apply changes sent by other canisters while frozen by a platform moderator ([#9912](https://github.com/open-chat-labs/open-chat/pull/9912))
+
 ## [[2.0.2134](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2134-community)] - 2026-10-12
 
 ### Added
