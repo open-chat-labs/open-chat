@@ -165,7 +165,7 @@ fn init_test_data(
 ) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     // In a canister of their own, so that stopping it doesn't stop user1's
-    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, controller);
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids);
 
     let group_name = random_string();
 

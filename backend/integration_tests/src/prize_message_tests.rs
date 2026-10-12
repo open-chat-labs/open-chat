@@ -41,7 +41,7 @@ fn prize_messages_can_be_claimed_successfully() {
         env,
         &user1,
         group_id,
-        &group_canister::send_message_v2::Args {
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
@@ -154,7 +154,7 @@ fn prize_message_requiring_reauthentication() {
         env,
         &user1,
         group_id,
-        &group_canister::send_message_v2::Args {
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
@@ -272,7 +272,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
         env,
         &user1,
         group_id,
-        &group_canister::send_message_v2::Args {
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
@@ -369,7 +369,7 @@ fn old_transactions_fixed_by_updating_created_date() {
         env,
         &user,
         group_id,
-        &group_canister::send_message_v2::Args {
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {

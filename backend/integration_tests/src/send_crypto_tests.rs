@@ -26,7 +26,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, from_approve
 
     let user1 = client::register_user(env, canister_ids);
     // In a canister of their own, which can be stopped without stopping user1's
-    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, *controller);
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids);
 
     if with_c2c_error {
         stop_canister(env, user2.local_user_index, user2.canister());

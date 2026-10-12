@@ -605,8 +605,7 @@ fn daily_puzzle_streak_follows_a_migrated_user(same_local_user_index: bool) {
 
     let operator = platform_operator(env, canister_ids, *controller);
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let multi_user_canister =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+    let multi_user_canister = client::user_index::happy_path::create_multi_user_canister(env, canister_ids, local_user_index);
     let subnet = canister_ids
         .subnets
         .iter()

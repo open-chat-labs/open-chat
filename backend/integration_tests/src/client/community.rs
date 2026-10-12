@@ -67,23 +67,10 @@ pub fn send_message_with_transfer(
     env: &mut pocket_ic::PocketIc,
     sender: &crate::User,
     community_id: types::CommunityId,
-    args: &send_message::Args,
+    mut args: send_message::Args,
 ) -> send_message::Response {
-    let content = crate::client::pay_from_wallet(env, sender, community_id.into(), args.content.clone());
-    send_message(
-        env,
-        sender.principal,
-        community_id.into(),
-        &send_message::Args {
-            content,
-            og_previews: args.og_previews.clone(),
-            mentioned: args.mentioned.clone(),
-            sender_name: args.sender_name.clone(),
-            sender_display_name: args.sender_display_name.clone(),
-            replies_to: args.replies_to.clone(),
-            ..*args
-        },
-    )
+    args.content = crate::client::pay_from_wallet(env, sender, community_id.into(), args.content);
+    send_message(env, sender.principal, community_id.into(), &args)
 }
 
 pub mod happy_path {

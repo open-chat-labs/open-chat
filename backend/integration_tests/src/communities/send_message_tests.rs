@@ -70,7 +70,7 @@ fn send_crypto_in_channel() {
         env,
         &user1,
         community_id,
-        &community_canister::send_message::Args {
+        community_canister::send_message::Args {
             channel_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),
@@ -152,7 +152,7 @@ fn send_prize_in_channel() {
         env,
         &user1,
         community_id,
-        &community_canister::send_message::Args {
+        community_canister::send_message::Args {
             channel_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),

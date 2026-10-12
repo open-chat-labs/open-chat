@@ -2,7 +2,6 @@ use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{metrics, tick_many, wait_for_deleted_canister_to_be_uninstalled};
 use crate::{CanisterIds, TestEnv, User, client};
-use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
@@ -12,13 +11,9 @@ use types::{CanisterId, ChatId};
 #[test]
 fn delete_group_succeeds() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let TestData { user1, group_id, .. } = init_test_data(env, canister_ids, *controller);
+    let TestData { user1, group_id, .. } = init_test_data(env, canister_ids);
 
     let delete_group_response = client::user::delete_group(
         env,
@@ -82,18 +77,14 @@ fn events_queued_for_a_deleted_group_are_dropped() {
 #[test]
 fn user_canister_notified_of_group_deleted() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let TestData {
         user1,
         user2,
         user3,
         group_id,
-    } = init_test_data(env, canister_ids, *controller);
+    } = init_test_data(env, canister_ids);
 
     stop_canister(env, user2.local_user_index, user2.canister());
     stop_canister(env, user3.local_user_index, user3.canister());
@@ -133,11 +124,11 @@ fn user_canister_notified_of_group_deleted() {
     assert!(initial_state3.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
 }
 
-fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
+fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {
     let user1 = client::register_user(env, canister_ids);
     // Each in a canister of their own, so that stopping it doesn't stop anyone else's
-    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, controller);
-    let user3 = client::register_user_in_new_multi_user_canister(env, canister_ids, controller);
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids);
+    let user3 = client::register_user_in_new_multi_user_canister(env, canister_ids);
 
     let group_name = random_string();
 

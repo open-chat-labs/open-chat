@@ -261,7 +261,7 @@ fn pending_prizes_transferred_to_community() {
         env,
         &user1,
         group_id,
-        &group_canister::send_message_v2::Args {
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {

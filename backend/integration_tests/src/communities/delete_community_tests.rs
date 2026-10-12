@@ -195,8 +195,8 @@ fn uninstalled_community_is_removed(is_public: bool) {
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     // Each in a canister of their own, so that stopping it doesn't stop anyone else's
-    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, controller);
-    let user3 = client::register_user_in_new_multi_user_canister(env, canister_ids, controller);
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids);
+    let user3 = client::register_user_in_new_multi_user_canister(env, canister_ids);
 
     let community_name = random_string();
 

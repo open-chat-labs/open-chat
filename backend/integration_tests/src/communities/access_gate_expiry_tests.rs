@@ -624,8 +624,7 @@ fn migrated_member_whose_tokens_are_still_in_their_old_wallet_does_not_lapse(con
     // Both are migrated, leaving their tokens in their old canisters' wallets, so their new wallets
     // are empty
     let operator = platform_operator(env, canister_ids, *controller);
-    let multi_user_canister =
-        user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, users[0].local_user_index);
+    let multi_user_canister = user_index::happy_path::create_multi_user_canister(env, canister_ids, users[0].local_user_index);
     let users: Vec<User> = users
         .iter()
         .map(|user| migrate(env, canister_ids, &operator, user, multi_user_canister))

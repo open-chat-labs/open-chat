@@ -529,7 +529,7 @@ fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
     let migrated_user = (!matches!(neurons, Neurons::UserCanister)).then(|| {
         let operator = platform_operator(env, canister_ids, *controller);
         let multi_user_canister =
-            client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, user.local_user_index);
+            client::user_index::happy_path::create_multi_user_canister(env, canister_ids, user.local_user_index);
         migrate(env, canister_ids, &operator, &user, multi_user_canister)
     });
     let member = migrated_user.as_ref().unwrap_or(&user);

@@ -285,17 +285,13 @@ pub mod happy_path {
         ));
     }
 
-    // Registers a new user and makes them a platform operator, since only platform operators
-    // can call `create_multi_user_canister`
+    // Created by the environment's platform operator, since only platform operators can call
+    // `create_multi_user_canister`
     pub fn create_multi_user_canister(
         env: &mut PocketIc,
-        controller: Principal,
         canister_ids: &CanisterIds,
         local_user_index_canister_id: CanisterId,
     ) -> CanisterId {
-        let operator = crate::client::register_user(env, canister_ids);
-        add_platform_operator(env, controller, canister_ids.user_index, operator.user_id);
-
         // New users go to the LocalUserIndex's most recently created MultiUser canister, with ties
         // on the (millisecond) creation time broken by canister id. PocketIC time barely moves
         // unless advanced, so step past any canister created earlier in this env to ensure the new
@@ -304,7 +300,7 @@ pub mod happy_path {
 
         let response = super::create_multi_user_canister(
             env,
-            operator.principal,
+            canister_ids.platform_operator,
             canister_ids.user_index,
             &user_index_canister::create_multi_user_canister::Args {
                 local_user_index_canister_id,

@@ -4780,7 +4780,7 @@ fn in_flight_detection_suspension_never_overwrites_an_upheld_downgrade() {
         controller,
     } = wrapper.env();
 
-    let test_data = init_test_data(env, canister_ids, *controller);
+    let test_data = init_test_data_with_sender_alone(env, canister_ids, *controller);
 
     let message_id = random_from_u128();
     let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
@@ -4794,8 +4794,8 @@ fn in_flight_detection_suspension_never_overwrites_an_upheld_downgrade() {
     );
     tick_many(env, 3);
 
-    // Stop the sender's user canister so the detection suspension cannot commit and sits in
-    // its retry loop
+    // Stop the sender's canister so the detection suspension cannot commit and sits in its retry
+    // loop
     stop_canister(env, test_data.sender.local_user_index, test_data.sender.canister());
 
     env.advance_time(Duration::from_secs(10));
@@ -4847,7 +4847,7 @@ fn in_flight_detection_suspension_never_lands_after_a_dismissal() {
         controller,
     } = wrapper.env();
 
-    let test_data = init_test_data(env, canister_ids, *controller);
+    let test_data = init_test_data_with_sender_alone(env, canister_ids, *controller);
 
     let message_id = random_from_u128();
     let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
@@ -5877,13 +5877,33 @@ fn get_authority_reports(env: &PocketIc, test_data: &TestData, canister_ids: &Ca
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
+    init_test_data_with_options(env, canister_ids, controller, false)
+}
+
+// The sender is given a MultiUser canister of their own, so that it can be stopped without stopping
+// anyone else's
+fn init_test_data_with_sender_alone(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
+    init_test_data_with_options(env, canister_ids, controller, true)
+}
+
+fn init_test_data_with_options(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    sender_alone: bool,
+) -> TestData {
     // The moderator doubles as the platform operator which configures the moderation channel
     // and the API key
     let moderator = client::register_diamond_user(env, canister_ids, controller);
     let operator2 = client::register_diamond_user(env, canister_ids, controller);
     let group_owner = client::register_diamond_user(env, canister_ids, controller);
-    let sender = client::register_user(env, canister_ids);
     let reporter = client::register_user(env, canister_ids);
+    // Registered last, since a user registered after them would join a canister of their own
+    let sender = if sender_alone {
+        client::register_user_in_new_multi_user_canister(env, canister_ids)
+    } else {
+        client::register_user(env, canister_ids)
+    };
 
     client::user_index::add_platform_moderator(
         env,

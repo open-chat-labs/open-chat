@@ -102,7 +102,20 @@ fn initialize_base_state(controller: Principal) -> (PocketIcState, CanisterIds) 
 
     println!("PocketIC instance ready. Installing canisters...");
 
-    let canister_ids = install_canisters(&mut env, controller);
+    let mut canister_ids = install_canisters(&mut env, controller);
+
+    // Registered here rather than by each test needing one, since registering a user can create a
+    // MultiUser canister, which would throw off tests counting them
+    let platform_operator = client::register_user(&mut env, &canister_ids);
+    client::user_index::happy_path::add_platform_operator(
+        &mut env,
+        controller,
+        canister_ids.user_index,
+        platform_operator.user_id,
+    );
+    tick_many(&mut env, 5);
+    canister_ids.platform_operator = platform_operator.principal;
+
     let duration = Instant::now().duration_since(started);
 
     println!("Initialization complete. Took: {}s", duration.as_secs());
@@ -556,6 +569,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         chat_ledger: chat_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
         subnets,
+        platform_operator: Principal::anonymous(),
     };
 
     println!("Test env setup complete. {canister_ids:?}");
