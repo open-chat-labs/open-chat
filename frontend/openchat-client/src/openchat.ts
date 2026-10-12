@@ -478,6 +478,7 @@ import {
     translationsStore,
     userCreatedStore,
     walletConfigStore,
+    walletTokenBySymbol,
     webhookUserIdsStore,
 } from "./state";
 import { botState } from "./state/bots.svelte";
@@ -5415,7 +5416,7 @@ export class OpenChat {
                 return content.transfer.ledger;
 
             case "prize_content":
-                return content.token;
+                return content.ledger;
 
             case "p2p_swap_content":
             case "p2p_swap_content_initial":
@@ -11301,9 +11302,8 @@ export class OpenChat {
                 amount.kind === "decimal" &&
                 amount.value !== null
             ) {
-                const tokenDetails = [...cryptoLookup.value.values()].find(
-                    (t) => t.symbol.toLowerCase() === token.value?.toLocaleLowerCase(),
-                );
+                const tokenDetails =
+                    token.value !== undefined ? walletTokenBySymbol(token.value) : undefined;
                 if (tokenDetails !== undefined) {
                     ev.ledger = tokenDetails.ledger;
                     ev.amount = this.validateTokenInput(

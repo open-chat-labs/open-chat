@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "اعلان‌ها غیرفعال است",
     "notificationsEnabled": "اعلان ها فعال شد",
     "notInterested": "علاقه مند نیست",
+    "notWalletAddressesWarning": "اینها آدرس کیف پول نیستند. به آنها توکن ارسال نکنید. می‌توانید آدرس‌های واریز خود را در [کیف پول] خود ببینید.",
     "noUserSelected": "هیچ کاربری در حال حاضر انتخاب نشده است",
     "noVideo": "مرورگر شما از ویدیوی جاسازی شده پشتیبانی نمی کند",
     "nUsersJoined": "کاربران {number} به {level} پیوستند",

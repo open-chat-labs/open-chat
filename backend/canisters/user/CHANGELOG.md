@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Pass on the new `tip_messages` permission when creating a group ([#9902](https://github.com/open-chat-labs/open-chat/pull/9902))
+
 ### Removed
 
 - Remove the one-offs which moved the chats into stable memory and capped the jobs to mark P2P swaps as expired, now that they have run ([#9885](https://github.com/open-chat-labs/open-chat/pull/9885))

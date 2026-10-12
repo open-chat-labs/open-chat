@@ -116,12 +116,12 @@
 
                     const usdInText = calculateDollarAmount(
                         inToken.draftAmount,
-                        $exchangeRatesLookup.get(detailsIn.symbol.toLowerCase())?.toUSD,
+                        $exchangeRatesLookup.get(detailsIn.ledger)?.toUSD,
                         detailsIn.decimals,
                     );
                     const usdOutText = calculateDollarAmount(
                         bestQuote[1],
-                        $exchangeRatesLookup.get(detailsOut!.symbol.toLowerCase())?.toUSD,
+                        $exchangeRatesLookup.get(detailsOut!.ledger)?.toUSD,
                         detailsOut!.decimals,
                     );
 

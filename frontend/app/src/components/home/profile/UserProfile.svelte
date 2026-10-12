@@ -61,9 +61,11 @@
         videoSectionOpen,
     } from "../../../stores/settings";
     import { toastStore } from "../../../stores/toast";
+    import { translatable } from "../../../actions/translatable";
     import { uniquePersonGate } from "../../../utils/access";
     import { isTouchDevice } from "../../../utils/devices";
     import { clearCrashLog, formatCrashLog } from "../../../utils/errorPostmortem";
+    import AlertBox from "../../AlertBox.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
@@ -72,6 +74,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import Verified from "../../icons/Verified.svelte";
     import Legend from "../../Legend.svelte";
+    import Link from "../../Link.svelte";
     import SectionHeader from "../../SectionHeader.svelte";
     import Select from "../../Select.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -139,6 +142,15 @@
     let votingHotkey = $derived(
         userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal).owner.toText(),
     );
+    // The warning not to send tokens to the addresses below, split around its bracketed link to
+    // the wallet, so each translation can put the link wherever its grammar needs it
+    let addressesWarning = $derived.by(() => {
+        const text = $_("notWalletAddressesWarning");
+        const match = text.match(/^(.*)\[(.+)\](.*)$/s);
+        return match === null
+            ? { before: text, link: "", after: "" }
+            : { before: match[1], link: match[2], after: match[3] };
+    });
 
     // @ts-expect-error OC_WEBSITE_VERSION is injected at build time and not declared on Window
     const version = window.OC_WEBSITE_VERSION;
@@ -654,6 +666,14 @@
                 open={$advancedSectionOpen}
                 headerText={i18nKey("advanced")}>
                 {#if !$anonUserStore}
+                    <AlertBox>
+                        <span use:translatable={{ key: i18nKey("notWalletAddressesWarning") }}
+                            >{addressesWarning.before}{#if addressesWarning.link}<Link
+                                    underline={"always"}
+                                    onClick={() => publish("wallet")}
+                                    >{addressesWarning.link}</Link
+                                >{/if}{addressesWarning.after}</span>
+                    </AlertBox>
                     <div class="userid">
                         <Legend label={i18nKey("userId")} />
                         <div class="userid-txt">

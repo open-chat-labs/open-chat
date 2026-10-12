@@ -2082,3 +2082,70 @@ describe("OpenChatAgent swapping tokens", () => {
         });
     });
 });
+
+describe("OpenChatAgent loading exchange rates", () => {
+    const CKUSDC_LEDGER = "xevnm-gaaaa-aaaar-qafnq-cai";
+    const CKUSDT_LEDGER = "cngnf-vqaaa-aaaar-qag4q-cai";
+    const USDC_LEDGER = "53nhb-haaaa-aaaar-qbn5q-cai";
+    const USDT_LEDGER = "ij33n-oiaaa-aaaar-qbooa-cai";
+    // Two tokens in the registry with the symbol TENDY
+    const TENDY_LEDGER = "kylwo-viaaa-aaaaq-aae7a-cai";
+    const OTHER_TENDY_LEDGER = "iozql-7iaaa-aaaah-advvq-cai";
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let agent: any;
+
+    beforeEach(() => {
+        agent = Object.create(OpenChatAgent.prototype);
+        agent._registryValue = { tokenDetails: [] };
+        agent._exchangeRateClients = [
+            {
+                exchangeRates: () =>
+                    Promise.resolve({
+                        [ICP_LEDGER]: { toUSD: 4 },
+                        [CKUSDC_LEDGER]: { toUSD: 1 },
+                        [USDC_LEDGER]: { toUSD: 1 },
+                        [OTHER_TENDY_LEDGER]: { toUSD: 0.26 },
+                    }),
+            },
+            {
+                // The prices on ICPSwap of stablecoins in pools with next to no liquidity
+                exchangeRates: () =>
+                    Promise.resolve({
+                        [ICP_LEDGER]: { toUSD: 6 },
+                        [CKUSDC_LEDGER]: { toUSD: 445 },
+                        [USDC_LEDGER]: { toUSD: 0.55 },
+                        [USDT_LEDGER]: { toUSD: 0.00018 },
+                        [TENDY_LEDGER]: { toUSD: 0.08 },
+                        [OTHER_TENDY_LEDGER]: { toUSD: 0.3 },
+                    }),
+            },
+        ];
+    });
+
+    test("pins stablecoins to $1", async () => {
+        const rates = await agent.exchangeRates();
+
+        expect(rates[CKUSDC_LEDGER]).toEqual({ toUSD: 1 });
+        expect(rates[CKUSDT_LEDGER]).toEqual({ toUSD: 1 });
+        expect(rates[USDC_LEDGER]).toEqual({ toUSD: 1 });
+        expect(rates[USDT_LEDGER]).toEqual({ toUSD: 1 });
+    });
+
+    test("averages the rates of each ledger across the providers", async () => {
+        const rates = await agent.exchangeRates();
+
+        expect(rates[ICP_LEDGER]).toEqual({ toUSD: 5 });
+        expect(rates[TENDY_LEDGER]).toEqual({ toUSD: 0.08 });
+        expect(rates[OTHER_TENDY_LEDGER].toUSD).toBeCloseTo(0.28);
+    });
+
+    test("uses the rates of the providers which respond", async () => {
+        agent._exchangeRateClients[0].exchangeRates = () => Promise.reject(new Error("down"));
+
+        const rates = await agent.exchangeRates();
+
+        expect(rates[ICP_LEDGER]).toEqual({ toUSD: 6 });
+        expect(rates[OTHER_TENDY_LEDGER]).toEqual({ toUSD: 0.3 });
+    });
+});

@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "Notifiche disabilitate",
     "notificationsEnabled": "Notifiche abilitate",
     "notInterested": "Non interessato",
+    "notWalletAddressesWarning": "Questi non sono indirizzi del portafoglio. Non inviare token a questi indirizzi. Puoi visualizzare i tuoi indirizzi di deposito nel tuo [portafoglio].",
     "noUserSelected": "Nessun utente attualmente selezionato",
     "noVideo": "Il tuo browser non supporta il video incorporato",
     "nUsersJoined": "{number} utenti si sono uniti a {level}",

@@ -129,11 +129,7 @@
     }
 
     let logo = $derived(
-        [...$cryptoLookup.values()].find((t) =>
-            content.kind === "prize_content"
-                ? t.symbol.toLowerCase() === content.token.toLowerCase()
-                : false,
-        )?.logo ?? "",
+        content.kind === "prize_content" ? ($cryptoLookup.get(content.ledger)?.logo ?? "") : "",
     );
     let total = $derived(
         content.kind === "prize_content"

@@ -981,6 +981,7 @@ function prizeContent(value: TPrizeContent): PrizeContent {
         winnerCount: value.winner_count,
         userIsWinner: value.user_is_winner,
         token: value.token_symbol,
+        ledger: principalBytesToString(value.ledger),
         endDate: value.end_date,
         caption: value.caption,
         requiresCaptcha: value.requires_captcha,

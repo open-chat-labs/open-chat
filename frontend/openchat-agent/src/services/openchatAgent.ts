@@ -376,6 +376,12 @@ const MARK_TOKEN_SWAP_COMPLETED_ATTEMPTS = 3;
 // output
 const POOL_PAYOUT_CHECKS = 10;
 const POOL_PAYOUT_CHECK_INTERVAL_MS = 1000;
+const PINNED_STABLECOIN_LEDGERS = [
+    "xevnm-gaaaa-aaaar-qafnq-cai", // ckUSDC
+    "cngnf-vqaaa-aaaar-qag4q-cai", // ckUSDT
+    "53nhb-haaaa-aaaar-qbn5q-cai", // USDC (OneSec)
+    "ij33n-oiaaa-aaaar-qbooa-cai", // USDT (OneSec)
+];
 
 function delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -5315,37 +5321,24 @@ export class OpenChatAgent extends EventTarget {
         const grouped: Record<string, TokenExchangeRates[]> = {};
         for (const response of exchangeRatesFromAllProviders) {
             if (response.status === "fulfilled") {
-                for (const [token, exchangeRates] of Object.entries(response.value)) {
-                    if (grouped[token] === undefined) {
-                        grouped[token] = [];
+                for (const [ledger, exchangeRates] of Object.entries(response.value)) {
+                    if (grouped[ledger] === undefined) {
+                        grouped[ledger] = [];
                     }
-                    grouped[token].push(exchangeRates);
+                    grouped[ledger].push(exchangeRates);
                 }
             }
         }
 
-        const equivalentSymbols = [
-            ["btc", "ckbtc"],
-            ["eth", "cketh"],
-        ];
-
-        // If any symbols within a group of equivalent symbols are missing exchange rates,
-        // copy them over from other symbols within the group
-        for (const group of equivalentSymbols) {
-            const symbolWithExchangeRates = group.find((s) => grouped[s] !== undefined);
-            if (symbolWithExchangeRates) {
-                const exchangeRates = grouped[symbolWithExchangeRates];
-                for (const symbol of group) {
-                    if (grouped[symbol] === undefined) {
-                        grouped[symbol] = exchangeRates;
-                    }
-                }
-            }
+        // The prices of these stablecoins on ICPSwap can be way off, since some of their pools have
+        // next to no liquidity (OneSec's USDC and USDT have a few dollars), so we pin them
+        for (const ledger of PINNED_STABLECOIN_LEDGERS) {
+            grouped[ledger] = [{ toUSD: 1 }];
         }
 
         return toRecord2(
             Object.entries(grouped),
-            ([token, _]) => token,
+            ([ledger, _]) => ledger,
             ([_, group]) => ({
                 toUSD: mean(group.map((e) => e.toUSD)),
             }),
@@ -6254,6 +6247,7 @@ export class OpenChatAgent extends EventTarget {
 }
 
 export interface ExchangeRateClient {
+    // Keyed by ledger
     exchangeRates(
         supportedTokens: CryptocurrencyDetails[],
     ): Promise<Record<string, TokenExchangeRates>>;
