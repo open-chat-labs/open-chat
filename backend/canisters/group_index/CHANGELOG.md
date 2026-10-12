@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Pass on the new `tip_messages` permission when creating a group ([#9902](https://github.com/open-chat-labs/open-chat/pull/9902))
+
 ### Removed
 
 - Remove the one-off which queued the chats deleted so far to have their files removed, now that it has run ([#9871](https://github.com/open-chat-labs/open-chat/pull/9871))
