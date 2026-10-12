@@ -14,7 +14,6 @@ use types::{
 };
 use utils::env::Environment;
 use utils::fcm_token_store::{FcmTokenAddResult, FcmTokenStore};
-use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
 mod jobs;
@@ -42,10 +41,6 @@ impl RuntimeState {
 
     pub fn is_caller_registry_canister(&self) -> bool {
         self.env.caller() == self.data.registry_canister_id
-    }
-
-    pub fn is_caller_user_index_canister(&self) -> bool {
-        self.env.caller() == self.data.user_index_canister_id
     }
 
     pub fn is_caller_push_service(&self) -> bool {
@@ -168,7 +163,6 @@ struct Data {
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub subscriptions: Subscriptions,
     pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
-    pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
     pub fcm_token_store: FcmTokenStore,
@@ -193,18 +187,10 @@ impl Data {
             principal_to_user_id_map: PrincipalToUserIdMap::default(),
             subscriptions: Subscriptions::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(5, false),
-            idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode,
             fcm_token_store: FcmTokenStore::default(),
         }
-    }
-
-    // Moves the subscriptions and FCM tokens held under the user's old id onto their new one. Each
-    // LocalUserIndex, told of the migration by the UserIndex, moves its own copies of them alike.
-    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
-        self.subscriptions.migrate_user_id(old_user_id, new_user_id);
-        self.fcm_token_store.migrate_user_id(old_user_id, new_user_id);
     }
 }
 

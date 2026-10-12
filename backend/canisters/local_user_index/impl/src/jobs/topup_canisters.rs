@@ -96,8 +96,7 @@ async fn run_async(canister_id: CanisterId) {
                 }
             } else {
                 // The canister may have stopped being one of this canister's children while its
-                // status was being fetched, eg. a migrated user's canister, which is uninstalled
-                // as the user is closed out
+                // status was being fetched, eg. a group or community which has been deleted
                 let Some(child_min) = read_state(|state| child_canister_min_cycles_balance(canister_id, state)) else {
                     return;
                 };

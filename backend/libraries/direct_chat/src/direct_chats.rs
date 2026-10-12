@@ -19,7 +19,6 @@ pub type DirectChatMut<'a> = HeapStableSplitMapMut<'a, DirectChat>;
 // `key_id` (see `HeapStableSplitMap`). The heap only holds a small entry per chat, from which the chats
 // which have been updated or have events due to expire can be found without reading them.
 #[derive(Serialize, Deserialize, Default)]
-#[serde(from = "DirectChatsCombined")]
 pub struct DirectChats {
     direct_chats_v2: HeapStableSplitMap<DirectChat>,
     pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
@@ -28,35 +27,6 @@ pub struct DirectChats {
     // the new chat's keys never collide with the old chat's (which may not yet have been garbage
     // collected)
     next_key_id: u32,
-}
-
-// Reads both the current layout and the one before it, in which every chat was on the heap. Chats
-// read from the previous layout are moved into stable memory by `migrate_to_stable_memory`. Only a
-// User canister whose user was being migrated when it was upgraded can still have any, since its
-// user mustn't change until the migration completes or is cancelled, as can a user imported from such
-// a canister until their import completes. This can be removed once every User canister has been
-// upgraded with no migration in progress.
-#[derive(Deserialize)]
-struct DirectChatsCombined {
-    #[serde(default)]
-    direct_chats: HashMap<ChatId, DirectChat>,
-    #[serde(default)]
-    direct_chats_v2: HeapStableSplitMap<DirectChat>,
-    pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
-    #[serde(default)]
-    next_key_id: u32,
-}
-
-impl From<DirectChatsCombined> for DirectChats {
-    fn from(value: DirectChatsCombined) -> Self {
-        let mut direct_chats_v2 = value.direct_chats_v2;
-        direct_chats_v2.extend_from_heap(value.direct_chats);
-        DirectChats {
-            direct_chats_v2,
-            pinned: value.pinned,
-            next_key_id: value.next_key_id,
-        }
-    }
 }
 
 // What is kept on the heap for each chat
@@ -294,11 +264,6 @@ impl DirectChats {
         self.unpin(&chat_id, now);
         Some(chat)
     }
-
-    // Moves every chat still on the heap into stable memory, returning how many were moved
-    pub fn migrate_to_stable_memory(&mut self) -> usize {
-        self.direct_chats_v2.migrate_to_stable_memory()
-    }
 }
 
 #[cfg(test)]
@@ -364,7 +329,6 @@ mod tests {
 
         direct_chats.get_or_create(me, them, UserType::User, || 1, 10);
         assert_eq!(chat_count_in_stable_memory(), 1);
-        assert_eq!(direct_chats.direct_chats_v2.count_on_heap(), 0);
         assert_eq!(direct_chats.len(), 1);
         assert!(direct_chats.exists(&them.into()));
 
@@ -421,69 +385,6 @@ mod tests {
         // A new chat with the same user is given a new key_id
         let chat = direct_chats.get_or_create(me, them, UserType::User, || 2, 40);
         assert_eq!(chat.key_id(), 2);
-    }
-
-    #[test]
-    fn chats_on_the_heap_are_read_and_changed_until_moved_into_stable_memory() {
-        init_stable_memory_map();
-        let me = user(1);
-        let mut direct_chats = legacy_direct_chats(me, &[user(2), user(3), user(4)]);
-        let (on_heap, moved, created) = (user(2), user(3), user(5));
-
-        // Chats on the heap are found, changed in place and included in every query
-        assert_eq!(direct_chats.len(), 3);
-        assert_eq!(chat_count_in_stable_memory(), 0);
-        direct_chats.get_mut(&on_heap.into()).unwrap().archived = Timestamped::new(true, 50);
-        assert!(direct_chats.get(&on_heap.into()).unwrap().archived.value);
-        assert_eq!(updated_since(&direct_chats, 40), vec![on_heap]);
-        assert_eq!(chat_count_in_stable_memory(), 0);
-
-        // A new chat is put straight into stable memory, after the last key_id used on the heap
-        assert_eq!(direct_chats.get_or_create(me, created, UserType::User, || 9, 60).key_id(), 4);
-        assert_eq!(chat_count_in_stable_memory(), 1);
-        assert_eq!(direct_chats.len(), 4);
-
-        // A chat moved onto a migrated user's new id is put into stable memory as it moves, and
-        // moving the others there keeps everything about them
-        let before = sorted_summaries(&direct_chats);
-        assert!(direct_chats.migrate_their_user_id(moved, user(6), 70));
-        assert_eq!(chat_count_in_stable_memory(), 2);
-        assert_eq!(direct_chats.migrate_to_stable_memory(), 2);
-        assert_eq!(direct_chats.direct_chats_v2.count_on_heap(), 0);
-        assert_eq!(chat_count_in_stable_memory(), 4);
-        assert_eq!(direct_chats.migrate_to_stable_memory(), 0);
-        let mut expected: Vec<_> = before
-            .into_iter()
-            .map(|(them, last_updated)| if them == moved { (user(6), 70) } else { (them, last_updated) })
-            .collect();
-        expected.sort();
-        assert_eq!(sorted_summaries(&direct_chats), expected);
-        assert!(direct_chats.get(&on_heap.into()).unwrap().archived.value);
-        assert_eq!(updated_since(&direct_chats, 60), vec![user(6)]);
-    }
-
-    #[test]
-    fn state_from_before_chats_were_in_stable_memory_is_read_as_on_the_heap() {
-        init_stable_memory_map();
-        let me = user(1);
-        let pinned = Timestamped::new(HashMap::from([(ChatId::from(user(2)), 10)]), 10);
-
-        let mut deserialized = previous_layout(me, &[user(2)], pinned);
-        assert_eq!(deserialized.direct_chats_v2.count_on_heap(), 1);
-        assert_eq!(deserialized.len(), 1);
-        assert_eq!(chat_count_in_stable_memory(), 0);
-        assert_eq!(deserialized.next_key_id, 1);
-        assert_eq!(deserialized.pinned_chats().len(), 1);
-        assert_eq!(deserialized.migrate_to_stable_memory(), 1);
-        assert_eq!(deserialized.get(&user(2).into()).unwrap().them, user(2));
-
-        // Once moved, the field holding the chats on the heap is no longer serialized
-        #[derive(Deserialize)]
-        struct Fields {
-            direct_chats: Option<serde::de::IgnoredAny>,
-        }
-        let fields: Fields = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&deserialized));
-        assert!(fields.direct_chats.is_none());
     }
 
     #[test]
@@ -582,40 +483,6 @@ mod tests {
         assert_eq!(direct_chats.pinned_chats().len(), MAX_PINNED_CHATS - 1);
         assert!(direct_chats.pinned_chats_if_updated(39).is_some());
         direct_chats.pin(extra.into(), 50).unwrap();
-    }
-
-    fn legacy_direct_chats(me: UserId, others: &[UserId]) -> DirectChats {
-        previous_layout(me, others, Timestamped::default())
-    }
-
-    // The user's chats with `others`, read from the layout the previous version serialized, in which
-    // every chat was on the heap
-    fn previous_layout(me: UserId, others: &[UserId], pinned: Timestamped<HashMap<ChatId, TimestampMillis>>) -> DirectChats {
-        #[derive(Serialize)]
-        struct DirectChatsPrevious {
-            direct_chats: HashMap<ChatId, DirectChat>,
-            pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
-            metrics: ChatMetricsInternal,
-            next_key_id: u32,
-        }
-
-        let direct_chats = others
-            .iter()
-            .zip(1..)
-            .map(|(&them, key_id)| (them.into(), DirectChat::new(me, them, UserType::User, key_id, None, 1, 10)))
-            .collect();
-        msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(DirectChatsPrevious {
-            direct_chats,
-            pinned,
-            metrics: ChatMetricsInternal::default(),
-            next_key_id: others.len() as u32,
-        }))
-    }
-
-    fn sorted_summaries(direct_chats: &DirectChats) -> Vec<(UserId, TimestampMillis)> {
-        let mut summaries: Vec<_> = direct_chats.iter().map(|c| (c.them, c.last_updated())).collect();
-        summaries.sort();
-        summaries
     }
 
     fn updated_since(direct_chats: &DirectChats, since: TimestampMillis) -> Vec<UserId> {

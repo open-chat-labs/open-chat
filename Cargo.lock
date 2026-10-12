@@ -6882,7 +6882,6 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
- "itertools 0.15.0",
  "json",
  "jwt",
  "ledger_utils",
@@ -6892,8 +6891,6 @@ dependencies = [
  "multi_user_canister_c2c_client",
  "notifications_index_canister",
  "oc_error_codes",
- "online_users_canister",
- "online_users_canister_c2c_client",
  "p256_key_pair",
  "per_round_timer",
  "principal_to_user_id_map",
@@ -12843,7 +12840,6 @@ dependencies = [
  "oc_error_codes",
  "serde",
  "serde_bytes",
- "sha256",
  "ts-rs",
  "ts_export",
  "types",
@@ -12904,7 +12900,6 @@ dependencies = [
 name = "user_ids_set"
 version = "0.1.0"
 dependencies = [
- "ic-stable-structures",
  "ic_principal",
  "serde",
  "stable_memory_map",
@@ -12960,7 +12955,6 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_api_macros",
- "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_time",
@@ -13000,10 +12994,6 @@ dependencies = [
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
- "multi_user_canister",
- "multi_user_canister_c2c_client",
- "notifications_index_canister",
- "notifications_index_canister_c2c_client",
  "oc_error_codes",
  "online_users_canister",
  "online_users_canister_c2c_client",
