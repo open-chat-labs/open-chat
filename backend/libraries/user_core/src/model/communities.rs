@@ -95,12 +95,12 @@ impl Communities {
         self.communities_v2.remove(&community_id)
     }
 
-    pub fn updated_since(&self, updated_since: TimestampMillis) -> impl Iterator<Item = HeapStableSplitMapRef<Community>> {
+    pub fn updated_since(&self, updated_since: TimestampMillis) -> impl Iterator<Item = HeapStableSplitMapRef<'_, Community>> {
         self.communities_v2.filter(move |entry| entry.last_updated > updated_since)
     }
 
     // Every community, each of which is read from stable memory as the iterator reaches it
-    pub fn iter(&self) -> impl Iterator<Item = HeapStableSplitMapRef<Community>> {
+    pub fn iter(&self) -> impl Iterator<Item = HeapStableSplitMapRef<'_, Community>> {
         self.communities_v2.iter()
     }
 

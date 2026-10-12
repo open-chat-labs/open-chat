@@ -55,7 +55,7 @@ impl GroupChats {
         self.group_chats_v2.contains_key(chat_id)
     }
 
-    pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = HeapStableSplitMapRef<GroupChat>> {
+    pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = HeapStableSplitMapRef<'_, GroupChat>> {
         self.group_chats_v2.filter(move |entry| entry.last_updated > since)
     }
 
@@ -116,7 +116,7 @@ impl GroupChats {
     }
 
     // Every group, each of which is read from stable memory as the iterator reaches it
-    pub fn iter(&self) -> impl Iterator<Item = HeapStableSplitMapRef<GroupChat>> {
+    pub fn iter(&self) -> impl Iterator<Item = HeapStableSplitMapRef<'_, GroupChat>> {
         self.group_chats_v2.iter()
     }
 

@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
 pub trait HeapStableSplitMapValue: Serialize + DeserializeOwned {
@@ -50,10 +51,10 @@ impl<V: HeapStableSplitMapValue> Default for HeapStableSplitMap<V> {
 }
 
 impl<V: HeapStableSplitMapValue> HeapStableSplitMap<V> {
-    pub fn get(&self, id: &V::Id) -> Option<HeapStableSplitMapRef<V>> {
+    pub fn get(&self, id: &V::Id) -> Option<HeapStableSplitMapRef<'_, V>> {
         self.in_stable_memory
             .get(id)
-            .map(|entry| HeapStableSplitMapRef(Box::new(read(id, entry))))
+            .map(|entry| HeapStableSplitMapRef::new(read(id, entry)))
     }
 
     pub fn get_mut(&mut self, id: &V::Id) -> Option<HeapStableSplitMapMut<'_, V>> {
@@ -112,16 +113,16 @@ impl<V: HeapStableSplitMapValue> HeapStableSplitMap<V> {
     }
 
     // Every value, each of which is read from stable memory as the iterator reaches it
-    pub fn iter(&self) -> impl Iterator<Item = HeapStableSplitMapRef<V>> {
+    pub fn iter(&self) -> impl Iterator<Item = HeapStableSplitMapRef<'_, V>> {
         self.filter(|_| true)
     }
 
     // The values whose entries `predicate` returns true for, only those of which are read
-    pub fn filter<F: Fn(&V::Entry) -> bool>(&self, predicate: F) -> impl Iterator<Item = HeapStableSplitMapRef<V>> {
+    pub fn filter<F: Fn(&V::Entry) -> bool>(&self, predicate: F) -> impl Iterator<Item = HeapStableSplitMapRef<'_, V>> {
         self.in_stable_memory
             .iter()
             .filter(move |(_, entry)| predicate(entry))
-            .map(|(id, entry)| HeapStableSplitMapRef(Box::new(read(id, entry))))
+            .map(|(id, entry)| HeapStableSplitMapRef::new(read(id, entry)))
     }
 
     // Applies `f` to every value, writing each back
@@ -142,10 +143,17 @@ impl<V: HeapStableSplitMapValue> HeapStableSplitMap<V> {
     }
 }
 
-// A value read from `HeapStableSplitMap`
-pub struct HeapStableSplitMapRef<V>(Box<V>);
+// A value read from `HeapStableSplitMap`. It holds its own copy of the value, but borrows the map so
+// that the map can't be changed while it is held, which would leave it out of date.
+pub struct HeapStableSplitMapRef<'a, V>(Box<V>, PhantomData<&'a ()>);
 
-impl<V> Deref for HeapStableSplitMapRef<V> {
+impl<V> HeapStableSplitMapRef<'_, V> {
+    fn new(value: V) -> Self {
+        HeapStableSplitMapRef(Box::new(value), PhantomData)
+    }
+}
+
+impl<V> Deref for HeapStableSplitMapRef<'_, V> {
     type Target = V;
 
     fn deref(&self) -> &V {

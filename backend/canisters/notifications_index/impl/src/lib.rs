@@ -14,7 +14,6 @@ use types::{
 };
 use utils::env::Environment;
 use utils::fcm_token_store::{FcmTokenAddResult, FcmTokenStore};
-use utils::idempotency_checker::IdempotencyChecker;
 
 mod guards;
 mod jobs;
@@ -164,7 +163,6 @@ struct Data {
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub subscriptions: Subscriptions,
     pub local_index_event_sync_queue: GroupedTimerJobQueue<LocalIndexEventBatch>,
-    pub idempotency_checker: IdempotencyChecker,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
     pub fcm_token_store: FcmTokenStore,
@@ -189,15 +187,11 @@ impl Data {
             principal_to_user_id_map: PrincipalToUserIdMap::default(),
             subscriptions: Subscriptions::default(),
             local_index_event_sync_queue: GroupedTimerJobQueue::new(5, false),
-            idempotency_checker: IdempotencyChecker::default(),
             rng_seed: [0; 32],
             test_mode,
             fcm_token_store: FcmTokenStore::default(),
         }
     }
-
-    // Moves the subscriptions and FCM tokens held under the user's old id onto their new one. Each
-    // LocalUserIndex, told of the migration by the UserIndex, moves its own copies of them alike.
 }
 
 #[derive(Serialize, Debug)]

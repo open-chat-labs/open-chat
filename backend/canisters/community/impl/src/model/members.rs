@@ -399,7 +399,7 @@ impl CommunityMembers {
         self.update_member(user_id, |member| member.accept_rules(version, now));
     }
 
-    // Moves the membership, block and former membership of a user migrated to a MultiUser canister
+    // Moves the membership and block of a user migrated to a MultiUser canister
     // onto their new id, along with their channels, user groups and referrals. `principal` is the
     // user's principal, if known, which is pointed at their new id if it points at the old one, as
     // it does for an invited user. Returns whether anything changed.

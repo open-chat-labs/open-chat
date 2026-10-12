@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use types::{Chat, ChatId, MessageIndex, OCResult, TimestampMillis, Timestamped, UserId, UserType};
 use utils::migrated_user_ids::MigratedUserIds;
 
-pub type DirectChatRef = HeapStableSplitMapRef<DirectChat>;
+pub type DirectChatRef<'a> = HeapStableSplitMapRef<'a, DirectChat>;
 pub type DirectChatMut<'a> = HeapStableSplitMapMut<'a, DirectChat>;
 
 // The user's direct chats, each of which is stored whole in the stable memory map, keyed by its
@@ -70,11 +70,11 @@ impl HeapStableSplitMapValue for DirectChat {
 }
 
 impl DirectChats {
-    pub fn get(&self, chat_id: &ChatId) -> Option<DirectChatRef> {
+    pub fn get(&self, chat_id: &ChatId) -> Option<DirectChatRef<'_>> {
         self.direct_chats_v2.get(chat_id)
     }
 
-    pub fn get_or_err(&self, chat_id: &ChatId) -> Result<DirectChatRef, OCErrorCode> {
+    pub fn get_or_err(&self, chat_id: &ChatId) -> Result<DirectChatRef<'_>, OCErrorCode> {
         self.get(chat_id).ok_or(OCErrorCode::ChatNotFound)
     }
 
@@ -112,7 +112,7 @@ impl DirectChats {
         self.direct_chats_v2.insert(chat_id, chat)
     }
 
-    pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = DirectChatRef> {
+    pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = DirectChatRef<'_>> {
         self.direct_chats_v2.filter(move |entry| entry.last_updated > since)
     }
 
@@ -140,7 +140,7 @@ impl DirectChats {
     }
 
     // Every chat, each of which is read from stable memory as the iterator reaches it
-    pub fn iter(&self) -> impl Iterator<Item = DirectChatRef> {
+    pub fn iter(&self) -> impl Iterator<Item = DirectChatRef<'_>> {
         self.direct_chats_v2.iter()
     }
 
