@@ -1804,6 +1804,7 @@
             "text": "send text messages in threads",
             "video": "send video messages in threads"
         },
+        "tipMessages": "tip messages",
         "updateDetails": "edit basic info",
         "updateGroup": "edit group info",
         "whoCan": "Who can "

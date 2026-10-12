@@ -56,6 +56,7 @@
         canDelete: boolean;
         canSendAny: boolean;
         canReact: boolean;
+        canTipMessages: boolean;
         canInvite: boolean;
         canReplyInThread: boolean;
         publicGroup: boolean;
@@ -92,6 +93,7 @@
         canDelete,
         canSendAny,
         canReact,
+        canTipMessages,
         canInvite,
         canReplyInThread,
         publicGroup,
@@ -191,6 +193,7 @@
             {canDelete}
             canQuoteReply={canSendAny}
             {canReact}
+            {canTipMessages}
             canStartThread={canReplyInThread}
             {publicGroup}
             {threadRootMessage}
