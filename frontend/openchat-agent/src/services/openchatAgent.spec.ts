@@ -449,7 +449,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             expect(calls).toEqual([]);
         });
 
-        test("crypto for another user is approved and sent like any other", async () => {
+        test("crypto for another user in the same canister is approved and sent like any other", async () => {
             await sendDirectMessage(crypto(undefined, OTHER_MULTI_USER_CANISTER_USER));
 
             expect(approvals).toEqual([[ICP_LEDGER, spender, 110n, FEE, APPROVAL_VALIDITY_MS]]);
