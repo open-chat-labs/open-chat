@@ -295,8 +295,8 @@ async function clearEvents(
     await tx.objectStore("chat_events").clear();
 }
 
-// Cached prize messages have no `ledger`, which their token is now looked up by. The primer's
-// timestamps go with the events so that it fills the cache back in.
+// Cached prize messages have no `ledger`, which their token is now looked up by. The event index
+// the primer has loaded each chat up to goes with the events, so that it fills the cache back in.
 async function clearEventsAndCachePrimer(
     _db: IDBPDatabase<ChatSchema>,
     tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,

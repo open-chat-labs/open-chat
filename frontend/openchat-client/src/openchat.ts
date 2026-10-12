@@ -388,7 +388,6 @@ import {
     confirmedThreadEventIndexesLoadedStore,
     cryptoBalanceStore,
     cryptoLookup,
-    cryptoTokensSorted,
     currentUserIdStore,
     currentUserProfileStore,
     currentUserStore,
@@ -479,6 +478,7 @@ import {
     translationsStore,
     userCreatedStore,
     walletConfigStore,
+    walletTokenBySymbol,
     webhookUserIdsStore,
 } from "./state";
 import { botState } from "./state/bots.svelte";
@@ -11302,13 +11302,8 @@ export class OpenChat {
                 amount.kind === "decimal" &&
                 amount.value !== null
             ) {
-                // Several ledgers can share a symbol, so prefer an enabled one, then the first in
-                // the wallet's order, which puts the tokens the user holds first
-                const symbol = token.value?.toLowerCase();
-                const matches = cryptoTokensSorted.value.filter(
-                    (t) => t.symbol.toLowerCase() === symbol,
-                );
-                const tokenDetails = matches.find((t) => t.enabled) ?? matches[0];
+                const tokenDetails =
+                    token.value !== undefined ? walletTokenBySymbol(token.value) : undefined;
                 if (tokenDetails !== undefined) {
                     ev.ledger = tokenDetails.ledger;
                     ev.amount = this.validateTokenInput(
