@@ -5416,7 +5416,7 @@ export class OpenChat {
                 return content.transfer.ledger;
 
             case "prize_content":
-                return content.token;
+                return content.ledger;
 
             case "p2p_swap_content":
             case "p2p_swap_content_initial":
@@ -11302,11 +11302,13 @@ export class OpenChat {
                 amount.kind === "decimal" &&
                 amount.value !== null
             ) {
-                // Several ledgers can share a symbol, so take the first in the wallet's order:
-                // that skips disabled tokens the user holds none of and prefers the one they hold
-                const tokenDetails = cryptoTokensSorted.value.find(
-                    (t) => t.symbol.toLowerCase() === token.value?.toLocaleLowerCase(),
+                // Several ledgers can share a symbol, so prefer an enabled one, then the first in
+                // the wallet's order, which puts the tokens the user holds first
+                const symbol = token.value?.toLowerCase();
+                const matches = cryptoTokensSorted.value.filter(
+                    (t) => t.symbol.toLowerCase() === symbol,
                 );
+                const tokenDetails = matches.find((t) => t.enabled) ?? matches[0];
                 if (tokenDetails !== undefined) {
                     ev.ledger = tokenDetails.ledger;
                     ev.amount = this.validateTokenInput(
