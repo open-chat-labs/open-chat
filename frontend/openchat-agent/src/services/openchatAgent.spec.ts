@@ -856,6 +856,8 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
     };
     const CANISTER_RESPONSE = { kind: "error", code: ErrorCode.PinIncorrect, message: undefined };
 
+    let pinChecks: string[];
+    let pinCheckResponse: { kind: "success" } | typeof PIN_INCORRECT;
     let ledgerWithdrawals: unknown[][];
     let canisterWithdrawals: unknown[][];
     // How far the IC's clock is ahead of the device's, and each ledger whose subnet it was read from
@@ -865,6 +867,8 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
     let agent: any;
 
     function setup(userId: string) {
+        pinChecks = [];
+        pinCheckResponse = { kind: "success" };
         ledgerWithdrawals = [];
         canisterWithdrawals = [];
         timeDiffMsecs = 0;
@@ -887,6 +891,10 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         };
         agent._userClient = {
             userId,
+            checkPinNumber: (pin: string) => {
+                pinChecks.push(pin);
+                return Promise.resolve(pinCheckResponse);
+            },
             withdrawCryptocurrency: (...args: unknown[]) => {
                 canisterWithdrawals.push(args);
                 return Promise.resolve(CANISTER_RESPONSE);
@@ -896,19 +904,37 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
 
     afterEach(() => vi.restoreAllMocks());
 
-    test("a user in a MultiUser canister sends from their wallet on the ledger, with no PIN", async () => {
+    test("a user in a MultiUser canister sends from their wallet on the ledger, once their PIN is checked", async () => {
         setup(MULTI_USER_CANISTER_USER);
 
         expect(await agent.withdrawCryptocurrency(WITHDRAWAL, PIN)).toBe(LEDGER_RESPONSE);
+        expect(pinChecks).toEqual([PIN]);
         expect(ledgerWithdrawals).toEqual([[WITHDRAWAL]]);
         expect(canisterWithdrawals).toEqual([]);
     });
 
-    test("a user alone in their canister has it send from its account, with their PIN", async () => {
+    test("a user in a MultiUser canister sends nothing with the wrong PIN", async () => {
+        setup(MULTI_USER_CANISTER_USER);
+        pinCheckResponse = PIN_INCORRECT;
+
+        expect(await agent.withdrawCryptocurrency(WITHDRAWAL, PIN)).toEqual(PIN_INCORRECT);
+        expect(ledgerWithdrawals).toEqual([]);
+    });
+
+    test("a user in a MultiUser canister without a PIN sends with nothing to check", async () => {
+        setup(MULTI_USER_CANISTER_USER);
+
+        expect(await agent.withdrawCryptocurrency(WITHDRAWAL, undefined)).toBe(LEDGER_RESPONSE);
+        expect(pinChecks).toEqual([]);
+        expect(ledgerWithdrawals).toEqual([[WITHDRAWAL]]);
+    });
+
+    test("a user alone in their canister has it send from its account, checking their PIN", async () => {
         setup(USER_CANISTER_USER);
 
         expect(await agent.withdrawCryptocurrency(WITHDRAWAL, PIN)).toBe(CANISTER_RESPONSE);
         expect(canisterWithdrawals).toEqual([[WITHDRAWAL, PIN]]);
+        expect(pinChecks).toEqual([]);
         expect(ledgerWithdrawals).toEqual([]);
     });
 
