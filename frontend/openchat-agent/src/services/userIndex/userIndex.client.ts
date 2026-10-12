@@ -194,12 +194,17 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                                 console.error("Failed to save the current user to the cache", err),
                             );
                         if (cachedUser !== undefined && cachedUser.userId !== liveUser.userId) {
-                            // The user has been migrated to a MultiUser canister. The client
-                            // restarts the session under their new id, so everything it needs
-                            // must be cached first.
+                            // A new account on the same principal, the cached one having been
+                            // deleted. The client restarts the session under the new id, so the
+                            // new user must be cached first, and the cached chat state, which is
+                            // the old account's, dropped, so that the chats are loaded in full.
                             await Promise.all([
                                 cachingUser,
-                                this.currentUserMigrated(cachedUser.userId, liveUser.userId),
+                                this.chatsDb
+                                    .forgetCachedChatState()
+                                    .catch((err) =>
+                                        console.error("Failed to clear the cached chat state", err),
+                                    ),
                             ]);
                         }
                     }
@@ -626,30 +631,6 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         const apiResponse = await this.getUsersFromBackend(args, suspendedUsersSyncedTo);
 
         const newMigrations = migrationsFromResponse(apiResponse);
-        let currentUserMigratedFrom: string | undefined = undefined;
-        if (apiResponse.currentUser !== undefined) {
-            // The current user comes back under their latest id, but the one we've got cached is
-            // the id they had when the session started. The server only returns them under a
-            // different id when we asked for that one, and if it's been deleted, this is a new
-            // account on the same principal rather than a migration.
-            const cachedCurrentUserId = (await this.chatsDb.getCachedCurrentUser())?.userId;
-            if (
-                cachedCurrentUserId !== undefined &&
-                cachedCurrentUserId !== apiResponse.currentUser.userId &&
-                requestedFromServer.has(cachedCurrentUserId) &&
-                !apiResponse.deletedUserIds.has(cachedCurrentUserId)
-            ) {
-                currentUserMigratedFrom = cachedCurrentUserId;
-                newMigrations.set(cachedCurrentUserId, apiResponse.currentUser.userId);
-            }
-            // getCurrentUser may have recorded the current user's migration while this request
-            // was in flight, in which case the cached current user already has their new id
-            for (const [previous, latest] of await this.userDb.getLatestUserIds(allUsers)) {
-                if (!newMigrations.has(previous)) {
-                    newMigrations.set(previous, latest);
-                }
-            }
-        }
 
         // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
         const mergedResponse = this.mergeGetUsersResponse(
@@ -678,27 +659,20 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
 
         this.userDb.setCachedDeletedUserIds(mergedResponse.deletedUserIds);
 
-        const cachingUsers = this.userDb
+        this.userDb
             .setCachedUsers(mergedResponse.users)
             .catch((err) => console.error("Failed to save users to the cache", err));
 
-        const cachingMigrations = this.userDb
+        this.userDb
             .setMigratedUserIds(newMigrations)
             .catch((err) => console.error("Failed to save migrated user ids to the cache", err));
 
         if (mergedResponse.currentUser) {
-            // Awaited so that, if the current user's id has changed, everything is cached before
-            // the client restarts the session under the new id
-            await Promise.all([
-                this.chatsDb
-                    .mergeCachedCurrentUser(mergedResponse.currentUser)
-                    .catch((err) =>
-                        console.error("Failed to save the current user to the cache", err),
-                    ),
-                currentUserMigratedFrom !== undefined
-                    ? Promise.all([cachingUsers, cachingMigrations, this.forgetCachedChatState()])
-                    : undefined,
-            ]);
+            // Awaited so that, if the current user's id has changed, the new one is cached before
+            // the client restarts the session under it
+            await this.chatsDb
+                .mergeCachedCurrentUser(mergedResponse.currentUser)
+                .catch((err) => console.error("Failed to save the current user to the cache", err));
         }
 
         if (mergedResponse.serverTimestamp !== undefined) {
@@ -755,26 +729,6 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             }
         }
         this.userDb.setCachedDeletedUserIds(deletedUserIds);
-    }
-
-    // The current user has been migrated to a MultiUser canister, so has a new id and a new
-    // canister. The cached chat state came from their old canister, so is dropped, and the chats
-    // are loaded in full from the new one.
-    private async currentUserMigrated(previousUserId: string, latestUserId: string): Promise<void> {
-        await Promise.all([
-            this.userDb
-                .setMigratedUserIds(new Map([[previousUserId, latestUserId]]))
-                .catch((err) =>
-                    console.error("Failed to save migrated user ids to the cache", err),
-                ),
-            this.forgetCachedChatState(),
-        ]);
-    }
-
-    private forgetCachedChatState(): Promise<void> {
-        return this.chatsDb
-            .forgetCachedChatState()
-            .catch((err) => console.error("Failed to clear the cached chat state", err));
     }
 
     private getUsersFromBackend(

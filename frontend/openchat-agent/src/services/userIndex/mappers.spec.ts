@@ -66,8 +66,7 @@ test("the current user comes with their previous ids", () => {
     expect(response).toMatchObject({ kind: "created_user", previousUserIds: [previous] });
 });
 
-// A summary of the current user under a new id, the user having been migrated during the session,
-// replaces the cached one, and has to carry the earlier ids for the next session to map them
+// A summary of the current user is merged into the cached one, so carries their earlier ids too
 test("a current user summary comes with the previous ids, which replace the cached user's", () => {
     const latest = "dfdal-2uaaa-aaaaa-qaama-cai";
     const previous = "rrkah-fqaaa-aaaaa-aaaaq-cai";
@@ -81,7 +80,7 @@ test("a current user summary comes with the previous ids, which replace the cach
     );
     expect(summary.previousUserIds).toEqual([previous]);
 
-    const cached = { ...anonymousUser(), userId: previous };
+    const cached = { ...anonymousUser(), userId: latest };
     expect(updateCreatedUser(cached, summary)).toMatchObject({
         userId: latest,
         previousUserIds: [previous],
