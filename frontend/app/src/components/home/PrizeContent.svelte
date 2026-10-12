@@ -78,11 +78,7 @@
     function onStreakClick() {
         publish("claimDailyChit");
     }
-    let logo = $derived(
-        [...$cryptoLookup.values()].find(
-            (t) => t.symbol.toLowerCase() === content.token.toLowerCase(),
-        )?.logo ?? "",
-    );
+    let logo = $derived($cryptoLookup.get(content.ledger)?.logo ?? "");
     let total = $derived(content.prizesRemaining + content.prizesPending + content.winnerCount);
     let percentage = $derived((content.winnerCount / total) * 100);
     let claimedByYou = $derived(content.userIsWinner);
