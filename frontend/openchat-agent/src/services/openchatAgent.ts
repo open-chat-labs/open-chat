@@ -422,6 +422,7 @@ export class OpenChatAgent extends EventTarget {
     // Lazy loaded clients which may never end up being used
     private _bitcoinClient: Lazy<BitcoinClient>;
     private _ckbtcMinterClient: Lazy<CkbtcMinterClient>;
+    private _ckbtcWithdrawalMinterClient: Lazy<CkbtcMinterClient>;
     private _dexesAgent: Lazy<DexesAgent>;
     private _marketMakerClient: Lazy<MarketMakerClient>;
     private _proposalsBotClient: Lazy<ProposalsBotClient>;
@@ -503,6 +504,12 @@ export class OpenChatAgent extends EventTarget {
                     this._agent,
                     this.config.bitcoinMainnetEnabled,
                 ),
+        );
+        // Withdrawals spend the ckBTC the Registry lists, which is mainnet ckBTC in every environment,
+        // so they go through the mainnet minter wherever the rest of the BTC flow uses testnet, as the
+        // User canister's withdrawals did
+        this._ckbtcWithdrawalMinterClient = new Lazy(
+            () => new CkbtcMinterClient(this.identity, this._agent, true),
         );
         this._dexesAgent = new Lazy(() => new DexesAgent(this._agent));
         this._marketMakerClient = new Lazy(
@@ -5563,7 +5570,7 @@ export class OpenChatAgent extends EventTarget {
         amount: bigint,
         pin: string | undefined,
     ): Promise<WithdrawBtcResponse> {
-        const minter = this._ckbtcMinterClient.get();
+        const minter = this._ckbtcWithdrawalMinterClient.get();
         const error = await this.approveToPull(
             { owner: Principal.fromText(minter.canisterId) },
             minter.ledger,
@@ -5589,7 +5596,7 @@ export class OpenChatAgent extends EventTarget {
         amount: bigint,
         pin: string | undefined,
     ): Promise<WithdrawViaOneSecResponse> {
-        if (!ONE_SEC_TOKENS.includes(tokenSymbol)) {
+        if (!ONE_SEC_TOKENS.includes(tokenSymbol.toUpperCase())) {
             return { kind: "error", code: ErrorCode.CurrencyNotSupported, message: undefined };
         }
 
