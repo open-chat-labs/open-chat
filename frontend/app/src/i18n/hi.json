@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "सूचनाएं अक्षम की गईं",
     "notificationsEnabled": "सूचनाएं सक्षम की गईं",
     "notInterested": "दिलचस्पी नहीं है",
+    "notWalletAddressesWarning": "ये वॉलेट पते नहीं हैं। इन पर टोकन न भेजें। आप अपने जमा पते अपने [वॉलेट] में देख सकते हैं।",
     "noUserSelected": "वर्तमान में कोई उपयोगकर्ता चयनित नहीं है",
     "noVideo": "आपका ब्राउज़र एम्बेडेड वीडियो का समर्थन नहीं करता है",
     "nUsersJoined": "{number} उपयोगकर्ता {level} में शामिल हुए",

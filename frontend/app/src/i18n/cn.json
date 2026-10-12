@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "推送通知已关闭",
     "notificationsEnabled": "推送开启",
     "notInterested": "不感兴趣",
+    "notWalletAddressesWarning": "这些不是钱包地址。请勿向其发送代币。您可以在[钱包]中查看您的充值地址。",
     "noUserSelected": "当前没有选择用户",
     "noVideo": "您的浏览器不支持视频",
     "nUsersJoined": "{number} 用户加入了 {level}",

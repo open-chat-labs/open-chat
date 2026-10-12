@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "تم تعطيل الإشعارات",
     "notificationsEnabled": "تم تمكين الإشعارات",
     "notInterested": "غير مهتم",
+    "notWalletAddressesWarning": "هذه ليست عناوين محافظ. لا ترسل رموزًا إليها. يمكنك عرض عناوين الإيداع الخاصة بك داخل [محفظتك].",
     "noUserSelected": "لم يتم تحديد أي مستخدم حاليًا",
     "noVideo": "متصفحك لا يدعم الفيديو المضمن",
     "nUsersJoined": "انضم مستخدمو {number} إلى {level}",
