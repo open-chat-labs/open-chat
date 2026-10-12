@@ -27,6 +27,7 @@ export {
     TimelineGrouper,
 } from "./utils/chat";
 export * from "./utils/cryptoFormatter";
+export { inviteLinkUrl } from "./utils/inviteLink";
 export { postLoginJoin } from "./utils/join";
 export { profileChanges } from "./utils/profile";
 export type { TrackingCategory } from "./utils/ga";

@@ -1,16 +1,15 @@
 <script lang="ts">
     import {
-        type CommunityIdentifier,
         type CommunitySummary,
         currentUserIdStore,
         iconSize,
+        type InviteLink,
+        type InviteLinkOutcome,
+        inviteLinkUrl,
         type MultiUserChat,
-        type MultiUserChatIdentifier,
         type OpenChat,
         type ResourceKey,
-        routeForChatIdentifier,
     } from "@client";
-    import { ErrorCode } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
@@ -34,135 +33,56 @@
     let { container }: Props = $props();
 
     const client = getContext<OpenChat>("client");
-    const unauthorized = i18nKey("permissions.notPermitted", {
-        permission: $_("permissions.inviteUsers"),
-    });
 
-    let ready = $state(false);
-    let code: string | undefined = $state(undefined);
-    let error: ResourceKey | undefined = $state(undefined);
+    // undefined until the link has loaded
+    let link = $state<InviteLink>();
+    let error = $state<ResourceKey>();
     let checked = $state(false);
     let loading = $state(false);
     let confirmReset = $state(false);
 
-    function getLink(id: CommunityIdentifier | MultiUserChatIdentifier, code: string | undefined) {
-        const qs = `/?ref=${$currentUserIdStore}` + (!container.public ? `&code=${code}` : "");
-        switch (id.kind) {
-            case "community":
-                return `${window.location.origin}/community/${id.communityId}${qs}`;
-            case "channel":
-                return `${window.location.origin}${routeForChatIdentifier("community", id)}${qs}`;
-            case "group_chat":
-                return `${window.location.origin}${routeForChatIdentifier("chats", id)}${qs}`;
+    function apply(outcome: InviteLinkOutcome) {
+        if (outcome.kind === "failed") {
+            error = outcome.message;
+        } else {
+            link = outcome;
+            error = undefined;
         }
+        checked = link?.kind === "enabled";
     }
 
-    export function init(container: MultiUserChat | CommunitySummary) {
-        ready = false;
-        if (container.public || container.kind === "channel") {
-            ready = true;
-            return;
-        }
+    onMount(async () => {
         loading = true;
-        client
-            .getInviteCode(container.id)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    ready = true;
-                    checked = resp.code !== undefined;
-                    code = resp.code;
-                } else if (
-                    resp.kind === "error" &&
-                    resp.code === ErrorCode.InitiatorNotAuthorized
-                ) {
-                    error = unauthorized;
-                    client.logMessage("Unauthorized response calling getInviteCode");
-                } else {
-                    error = i18nKey("invite.errorGettingLink");
-                }
-            })
-            .catch((err) => {
-                error = i18nKey("invite.errorGettingLink");
-                client.logError("Unable to get invite code: ", err);
-            })
-            .finally(() => {
-                loading = false;
-            });
-    }
+        try {
+            apply(await client.getInviteLink(container));
+        } finally {
+            loading = false;
+        }
+    });
 
-    /* we need to call this on mount but also when the chat changes.
-       you would think we could do that in a $: block, but that seems to cause it
-       to run twice on initial mount (grrrr)
-    */
-    onMount(() => init(container));
-
-    function toggleLink() {
-        if (container.kind === "channel") return;
+    async function toggleLink() {
         if (loading) return;
         loading = true;
-        if (checked) {
-            client
-                .enableInviteCode(container.id)
-                .then((resp) => {
-                    if (resp.kind === "success") {
-                        code = resp.code;
-                    } else {
-                        error = unauthorized;
-                        checked = false;
-                        client.logMessage("Unauthorized response calling enableInviteCode");
-                    }
-                })
-                .catch((err) => {
-                    checked = false;
-                    error = i18nKey("invite.errorEnablingLink");
-                    client.logError("Unable to enable invite code: ", err);
-                })
-                .finally(() => {
-                    loading = false;
-                });
-        } else {
-            client
-                .disableInviteCode(container.id)
-                .catch((err) => {
-                    code = undefined;
-                    checked = true;
-                    error = i18nKey("invite.errorDisablingLink");
-                    client.logError("Unable to disable invite code: ", err);
-                })
-                .finally(() => {
-                    loading = false;
-                });
+        try {
+            apply(await client.setInviteLinkEnabled(container, checked));
+        } finally {
+            loading = false;
         }
     }
 
-    function resetLink(): Promise<void> {
-        if (container.kind === "channel") return Promise.resolve();
-        return client
-            .resetInviteCode(container.id)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    code = resp.code;
-                } else {
-                    error = unauthorized;
-                    client.logMessage("Unauthorized response calling resetInviteCode");
-                }
-            })
-            .catch((err) => {
-                error = i18nKey("invite.errorResettingLink");
-                client.logError("Unable to reset invite code: ", err);
-            });
-    }
-
-    function onConfirmReset(yes: boolean): Promise<void> {
-        const result = yes ? resetLink() : Promise.resolve();
-
-        return result.finally(() => {
+    async function onConfirmReset(yes: boolean): Promise<void> {
+        try {
+            if (yes) {
+                apply(await client.resetInviteLink(container));
+            }
+        } finally {
             confirmReset = false;
-        });
+        }
     }
 
     function onCopy() {
-        navigator.clipboard.writeText(link).then(
+        if (url === undefined) return;
+        navigator.clipboard.writeText(url).then(
             () => {
                 toastStore.showSuccessToast(i18nKey("linkCopiedToClipboard"));
             },
@@ -173,13 +93,17 @@
     }
 
     function onShare() {
-        shareLink(link);
+        if (url !== undefined) shareLink(url);
     }
-    let link = $derived(getLink(container.id, code));
-    let spinner = $derived(loading && code === undefined);
+
+    let url = $derived(
+        inviteLinkUrl(client.canonicalOrigin(), container.id, $currentUserIdStore, link),
+    );
+    let hasCode = $derived(link?.kind === "enabled" || link?.kind === "disabled");
+    let spinner = $derived(loading && link?.kind !== "enabled");
 </script>
 
-{#if !container.public}
+{#if hasCode}
     <div class="toggle-row">
         <Toggle
             id="enable-invite-link"
@@ -193,45 +117,43 @@
         <div class:spinner></div>
     </div>
 {/if}
-{#if ready}
-    {#if container.public || (code !== undefined && checked)}
-        <div class="link-enabled">
-            <div class="link">{link}</div>
-            <QRCode text={link} border fullWidthOnMobile />
-            <div class="message">
-                <Markdown
-                    text={interpolate(
-                        $_,
-                        i18nKey("invite.shareMessage", undefined, container.level, true),
-                    ) + (container.public ? "" : $_("invite.shareMessageTrust"))} />
-            </div>
+{#if url !== undefined}
+    <div class="link-enabled">
+        <div class="link">{url}</div>
+        <QRCode text={url} border fullWidthOnMobile />
+        <div class="message">
+            <Markdown
+                text={interpolate(
+                    $_,
+                    i18nKey("invite.shareMessage", undefined, container.level, true),
+                ) + (container.public ? "" : $_("invite.shareMessageTrust"))} />
+        </div>
+        <div class="action">
+            <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+            <Link onClick={onCopy}>
+                <Translatable resourceKey={i18nKey("copy")} />
+            </Link>
+        </div>
+        {#if canShare()}
             <div class="action">
-                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
-                <Link onClick={onCopy}>
-                    <Translatable resourceKey={i18nKey("copy")} />
+                <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
+                <Link onClick={onShare}>
+                    <Translatable resourceKey={i18nKey("share")} />
                 </Link>
             </div>
-            {#if canShare()}
-                <div class="action">
-                    <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
-                    <Link onClick={onShare}>
-                        <Translatable resourceKey={i18nKey("share")} />
-                    </Link>
-                </div>
-            {/if}
-            {#if !container.public}
-                <div class="action">
-                    <RefreshIcon size={$iconSize} color={"var(--icon-txt)"} />
-                    <Link
-                        onClick={() => {
-                            confirmReset = true;
-                        }}>
-                        <Translatable resourceKey={i18nKey("invite.resetLink")} />
-                    </Link>
-                </div>
-            {/if}
-        </div>
-    {/if}
+        {/if}
+        {#if link?.kind === "enabled"}
+            <div class="action">
+                <RefreshIcon size={$iconSize} color={"var(--icon-txt)"} />
+                <Link
+                    onClick={() => {
+                        confirmReset = true;
+                    }}>
+                    <Translatable resourceKey={i18nKey("invite.resetLink")} />
+                </Link>
+            </div>
+        {/if}
+    </div>
 {/if}
 
 {#if confirmReset}
@@ -241,7 +163,7 @@
 {/if}
 
 {#if error !== undefined}
-    <ErrorMessage>{error}</ErrorMessage>
+    <ErrorMessage><Translatable resourceKey={error} /></ErrorMessage>
 {/if}
 
 <style lang="scss">
