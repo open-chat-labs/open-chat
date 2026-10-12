@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove the one-off which checked recurring gates again for lapsed migrated members, now that it has run ([#9915](https://github.com/open-chat-labs/open-chat/pull/9915))
 
+### Fixed
+
+- Apply changes sent by other canisters while frozen by a platform moderator ([#9912](https://github.com/open-chat-labs/open-chat/pull/9912))
+
 ## [[2.0.2134](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2134-community)] - 2026-10-12
 
 ### Added
@@ -21,7 +25,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Check a recurring gate under a migrated member's old ids before they lapse ([#9892](https://github.com/open-chat-labs/open-chat/pull/9892))
 - Check recurring gates again for lapsed migrated members, unlapsing those who pass ([#9893](https://github.com/open-chat-labs/open-chat/pull/9893))
 - Check an SNS neuron gate under a MultiUser user's principal and old ids ([#9894](https://github.com/open-chat-labs/open-chat/pull/9894))
-- Apply changes sent by other canisters while frozen by a platform moderator ([#9912](https://github.com/open-chat-labs/open-chat/pull/9912))
 
 ## [[2.0.2123](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2123-community)] - 2026-10-08
 
