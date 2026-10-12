@@ -74,7 +74,7 @@ import {
     type SyncTouched,
 } from "./sync";
 
-const CACHE_VERSION = 153;
+const CACHE_VERSION = 154;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -430,7 +430,8 @@ export class ChatsDb {
             .withMigration(149, clearChatsStore)
             .withMigration(150, createSyncStore)
             .withMigration(151, createChatRowStores)
-            .withMigration(152, clearDetailsStores);
+            .withMigration(152, clearDetailsStores)
+            .withMigration(153, clearChatsStore);
     }
 
     getDb(): Database {

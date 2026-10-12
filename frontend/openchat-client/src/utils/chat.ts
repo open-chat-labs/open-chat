@@ -481,6 +481,7 @@ export function mergePermissions(
         deleteMessages: updated.deleteMessages ?? current.deleteMessages,
         pinMessages: updated.pinMessages ?? current.pinMessages,
         reactToMessages: updated.reactToMessages ?? current.reactToMessages,
+        tipMessages: updated.tipMessages ?? current.tipMessages,
         mentionAllMembers: updated.mentionAllMembers ?? current.mentionAllMembers,
         startVideoCall: updated.startVideoCall ?? current.startVideoCall,
         messagePermissions: mergeMessagePermissions(
@@ -1440,6 +1441,14 @@ export function canReactToMessages(chat: ChatSummary): boolean {
     }
 }
 
+export function canTipMessages(chat: ChatSummary): boolean {
+    if (chat.kind !== "direct_chat") {
+        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.tipMessages);
+    } else {
+        return true;
+    }
+}
+
 export function canMentionAllMembers(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat" && !chat.frozen) {
         return isPermitted(chat.membership.role, chat.permissions.mentionAllMembers);
@@ -2203,6 +2212,9 @@ export function diffGroupPermissions(
     }
     if (original.reactToMessages !== updated.reactToMessages) {
         diff.reactToMessages = updated.reactToMessages;
+    }
+    if (original.tipMessages !== updated.tipMessages) {
+        diff.tipMessages = updated.tipMessages;
     }
     if (original.mentionAllMembers !== updated.mentionAllMembers) {
         diff.mentionAllMembers = updated.mentionAllMembers;

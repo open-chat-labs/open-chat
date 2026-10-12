@@ -1760,6 +1760,7 @@
             "text": "在线程中发送短信",
             "video": "在线程中发送视频消息"
         },
+        "tipMessages": "打赏消息",
         "updateDetails": "编辑基本信息",
         "updateGroup": "编辑群聊信息",
         "whoCan": "谁可以"

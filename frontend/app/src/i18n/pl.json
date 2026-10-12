@@ -1760,6 +1760,7 @@
             "text": "wysyłaj wiadomości tekstowe w wątkach",
             "video": "wysyłaj wiadomości wideo w wątkach"
         },
+        "tipMessages": "dawaj napiwki za wiadomości",
         "updateDetails": "edytuj podstawowe informacje",
         "updateGroup": "edytuj informacje o grupie",
         "whoCan": "Kto może "

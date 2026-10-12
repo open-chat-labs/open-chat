@@ -44,6 +44,7 @@
     let missingMessages = $derived(thread.totalReplies - thread.latestReplies.length);
     let threadRootMessageIndex = $derived(thread.rootMessage.event.messageIndex);
     let chat = $derived($chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined);
+    let canTipMessages = $derived(client.canTipMessages(thread.chatId));
     let muted = $derived(chat?.membership?.notificationsMuted || false);
     let syncDetails = $derived(
         chat?.membership?.latestThreads?.find(
@@ -207,6 +208,7 @@
                             canDelete={false}
                             canQuoteReply={false}
                             canReact={false}
+                            {canTipMessages}
                             canStartThread={false}
                             publicGroup={chat.kind === "group_chat" && chat.public}
                             editing={false}
@@ -251,6 +253,7 @@
                                 canDelete={false}
                                 canQuoteReply={false}
                                 canReact={false}
+                                {canTipMessages}
                                 canStartThread={false}
                                 publicGroup={chat.kind === "group_chat" && chat.public}
                                 editing={false}

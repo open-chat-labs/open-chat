@@ -64,6 +64,7 @@ function group(id: string, extra: Partial<GroupChatSummary> = {}): GroupChatSumm
             inviteUsers: ROLE_ADMIN,
             addMembers: ROLE_ADMIN,
             reactToMessages: ROLE_MEMBER,
+            tipMessages: ROLE_MEMBER,
             mentionAllMembers: ROLE_MEMBER,
             startVideoCall: ROLE_ADMIN,
             messagePermissions: { default: ROLE_MEMBER },
