@@ -12,10 +12,10 @@ use stable_memory_map::BaseKeyPrefix;
 use std::cmp::{max, min};
 use std::collections::HashSet;
 use types::{
-    BotNotification, BotUpdated, ChatEventCategory, ChatEventType, DirectChatSummary, DirectChatSummaryUpdates, EventIndex,
-    EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OCResult, OptionUpdate, P2PSwapAccepted, P2PSwapCompleted,
-    P2PSwapContent, P2PSwapStatus, ReserveP2PSwapSuccess, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserType,
-    VideoCallPresence,
+    BotNotification, BotUpdated, ChatEventCategory, ChatEventType, DirectChatSummary, DirectChatSummaryUpdates, EventContext,
+    EventIndex, EventWrapper, Message, MessageId, MessageIndex, Milliseconds, OCResult, OptionUpdate, P2PSwapAccepted,
+    P2PSwapCompleted, P2PSwapContent, P2PSwapStatus, ReserveP2PSwapSuccess, TimestampMillis, Timestamped, UserId,
+    UserIdAndPrincipal, UserType, VideoCallPresence,
 };
 use utils::migrated_user_ids::MigratedUserIds;
 
@@ -120,6 +120,21 @@ impl DirectChat {
 
     pub fn events(&self) -> &ChatEvents {
         &self.events
+    }
+
+    // See `ChatEvents::update_user_ids`
+    pub fn update_user_ids_in_events(
+        &mut self,
+        after: Option<EventContext>,
+        f: &mut dyn FnMut(EventContext, UserId) -> UserId,
+        should_stop: &mut dyn FnMut() -> bool,
+    ) -> Option<EventContext> {
+        self.events.update_user_ids(after, f, should_stop)
+    }
+
+    // See `ChatEvents::update_user_ids_in_event`
+    pub fn update_user_ids_in_event(&mut self, context: EventContext, f: &mut dyn FnMut(UserId) -> UserId) -> bool {
+        self.events.update_user_ids_in_event(context, f)
     }
 
     pub fn main_events_reader(&self) -> ChatEventsListReader<'_> {

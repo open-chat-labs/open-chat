@@ -5,7 +5,10 @@ use crate::updates::c2c_freeze_group::freeze_group_impl;
 use activity_notification_state::ActivityNotificationState;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, ChatEvents, EventPusher, Reader, RemoveEventsResult};
+use chat_events::{
+    ChatEventInternal, ChatEvents, EventPusher, Reader, RemoveEventsResult, UserIdsInEventsMigration,
+    UserIdsInEventsMigrationMetrics,
+};
 use constants::{DAY_IN_MS, HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -37,10 +40,11 @@ use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     AccessGateConfigInternal, Achievement, BotAdded, BotDefinitionUpdate, BotEventsCaller, BotInitiator, BotNotification,
     BotPermissions, BotRemoved, BotSubscriptions, BotUpdated, BuildVersion, CallDismissalKind, Caller, CanisterId, ChatId,
-    ChatMetrics, CommunityId, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupCallDismissedNotification,
-    GroupCanisterGroupChatSummary, GroupChatUserNotificationPayload, GroupMembership, GroupPermissions, GroupSubtype,
-    IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult,
-    Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType, icrc1,
+    ChatMetrics, CommunityId, Cycles, Document, EventContext, EventIndex, EventsCaller, FrozenGroupInfo,
+    GroupCallDismissedNotification, GroupCanisterGroupChatSummary, GroupChatUserNotificationPayload, GroupMembership,
+    GroupPermissions, GroupSubtype, IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds,
+    MultiUserChat, Notification, OCResult, Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification,
+    UserType, icrc1,
 };
 use user_canister::GroupCanisterEvent;
 use utils::async_work::AsyncWorkGuard;
@@ -630,6 +634,7 @@ impl RuntimeState {
             queued_user_events: self.data.user_events_queue.len() as u32,
             queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
+            user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -724,6 +729,8 @@ struct Data {
     // have changed
     #[serde(default)]
     migrated_user_ids: MigratedUserIds,
+    #[serde(default)]
+    user_ids_in_events_migration: UserIdsInEventsMigration<EventContext>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -821,6 +828,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
+            user_ids_in_events_migration: UserIdsInEventsMigration::default(),
         }
     }
 
@@ -1235,6 +1243,7 @@ pub struct Metrics {
     pub queued_user_events: u32,
     pub queued_local_index_events: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
     pub canister_ids: CanisterIds,
 }
 

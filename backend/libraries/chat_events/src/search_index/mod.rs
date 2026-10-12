@@ -103,6 +103,29 @@ impl SearchIndex {
         });
     }
 
+    // Moves the message's entry from `old_sender` onto `new_sender`, eg. once the id the sender had
+    // before being migrated to a MultiUser canister has been replaced with their latest id. Nothing
+    // is added for a message which isn't in the index.
+    pub fn change_sender(
+        &mut self,
+        events_prefix: &ChatEventKeyPrefix,
+        message_index: MessageIndex,
+        old_sender: UserId,
+        new_sender: UserId,
+    ) {
+        if let Some((sender, _)) = self.on_heap.get_mut(&message_index)
+            && *sender == old_sender
+        {
+            *sender = new_sender;
+        }
+        let sender_prefix = SearchSenderKeyPrefix::new_from_events_prefix(events_prefix);
+        with_map_mut(|m| {
+            if m.remove(sender_prefix.create_key(&(old_sender, message_index))).is_some() {
+                m.insert(sender_prefix.create_key(&(new_sender, message_index)), Vec::new());
+            }
+        });
+    }
+
     fn remove_from_stable_memory(
         events_prefix: &ChatEventKeyPrefix,
         message_index: MessageIndex,

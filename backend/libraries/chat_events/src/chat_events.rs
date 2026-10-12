@@ -18,7 +18,7 @@ use stable_memory_map::{
 };
 use std::cmp::max;
 use std::collections::{BTreeMap, BTreeSet, HashSet};
-use std::ops::DerefMut;
+use std::ops::{Bound, DerefMut};
 use tracing::error;
 use types::{
     AuthorityReportState, BlobReference, BotChatEvent, BotNotification, CallKind, CallParticipant, CanisterId, Chat, ChatEvent,
@@ -333,6 +333,113 @@ impl ChatEvents {
                 .chain(self.threads.values())
                 .map(|l| l.message_ids_on_heap_count() + l.message_event_indexes_on_heap_count())
                 .sum::<usize>()
+    }
+
+    // Passes the user ids in each event after `after` (or in every event if `after` is None)
+    // through `f`, along with where the event is, writing back each event in which any are
+    // replaced (see `ChatEventInternal::update_user_ids`). The main events list is processed first,
+    // then each thread in turn. `should_stop` is checked after each batch of up to 100 events, and
+    // once it returns true, the last event processed is returned, from which the next call carries
+    // on. Returns None once every event has been processed.
+    //
+    // The events aren't marked as updated, so clients aren't sent them again.
+    pub fn update_user_ids(
+        &mut self,
+        after: Option<EventContext>,
+        f: &mut dyn FnMut(EventContext, UserId) -> UserId,
+        should_stop: &mut dyn FnMut() -> bool,
+    ) -> Option<EventContext> {
+        let (mut thread_root_message_index, mut start) = match after {
+            Some(context) => (context.thread_root_message_index, context.event_index.incr()),
+            None => (None, EventIndex::default()),
+        };
+
+        if thread_root_message_index.is_none() {
+            if let Some(last) =
+                Self::update_user_ids_in_list(&mut self.main, Some(&mut self.search_index), None, start, f, should_stop)
+            {
+                return Some(EventContext::new(None, last));
+            }
+            thread_root_message_index = self.threads.keys().next().copied();
+            start = EventIndex::default();
+        }
+
+        while let Some(root_message_index) = thread_root_message_index {
+            if let Some(thread) = self.threads.get_mut(&root_message_index)
+                && let Some(last) = Self::update_user_ids_in_list(thread, None, Some(root_message_index), start, f, should_stop)
+            {
+                return Some(EventContext::new(Some(root_message_index), last));
+            }
+            thread_root_message_index = self
+                .threads
+                .range((Bound::Excluded(root_message_index), Bound::Unbounded))
+                .next()
+                .map(|(k, _)| *k);
+            start = EventIndex::default();
+        }
+        None
+    }
+
+    // Passes the user ids in the event at `context` through `f`, writing the event back if any are
+    // replaced. Returns whether they were.
+    pub fn update_user_ids_in_event(&mut self, context: EventContext, f: &mut dyn FnMut(UserId) -> UserId) -> bool {
+        let (events_list, search_index) = match context.thread_root_message_index {
+            None => (&mut self.main, Some(&mut self.search_index)),
+            Some(root_message_index) => match self.threads.get_mut(&root_message_index) {
+                Some(thread) => (thread, None),
+                None => return false,
+            },
+        };
+        let Some(event) = events_list.event_at(context.event_index) else {
+            return false;
+        };
+        Self::update_event_user_ids(events_list, search_index, event, f)
+    }
+
+    fn update_user_ids_in_list(
+        events_list: &mut ChatEventsList,
+        mut search_index: Option<&mut SearchIndex>,
+        thread_root_message_index: Option<MessageIndex>,
+        mut start: EventIndex,
+        f: &mut dyn FnMut(EventContext, UserId) -> UserId,
+        should_stop: &mut dyn FnMut() -> bool,
+    ) -> Option<EventIndex> {
+        const BATCH_SIZE: usize = 100;
+
+        loop {
+            let events = events_list.events_from(start, BATCH_SIZE);
+            let last = events.last()?.index;
+            for event in events {
+                let context = EventContext::new(thread_root_message_index, event.index);
+                Self::update_event_user_ids(events_list, search_index.as_deref_mut(), event, &mut |user_id| {
+                    f(context, user_id)
+                });
+            }
+            if should_stop() {
+                return Some(last);
+            }
+            start = last.incr();
+        }
+    }
+
+    // `search_index` is only given for the main events list, since threads aren't indexed
+    fn update_event_user_ids(
+        events_list: &mut ChatEventsList,
+        search_index: Option<&mut SearchIndex>,
+        mut event: EventWrapperInternal<ChatEventInternal>,
+        f: &mut dyn FnMut(UserId) -> UserId,
+    ) -> bool {
+        let sender = if let ChatEventInternal::Message(m) = &event.event { Some(m.sender) } else { None };
+        if !event.event.update_user_ids(f) {
+            return false;
+        }
+        if let (Some(search_index), Some(old_sender), ChatEventInternal::Message(m)) = (search_index, sender, &event.event)
+            && m.sender != old_sender
+        {
+            search_index.change_sender(events_list.stable_memory_prefix(), m.message_index, old_sender, m.sender);
+        }
+        events_list.replace_event(event);
+        true
     }
 
     pub fn thread_keys(&self) -> impl Iterator<Item = MessageIndex> + '_ {
@@ -3889,6 +3996,114 @@ mod tests {
         assert_eq!(result.thread.map(|t| t.root_message_index), Some(root_message_index));
         assert!(!events.threads.contains_key(&root_message_index));
         assert!(events.threads.contains_key(&other_root_message_index));
+    }
+
+    fn text_content(text: &str) -> MessageContentInternal {
+        MessageContentInternal::Text(TextContentInternal { text: text.to_string() })
+    }
+
+    #[test]
+    fn update_user_ids_replaces_ids_in_every_event_a_batch_at_a_time() {
+        let (mut events, _, _) = setup_events();
+        let old_user_id: UserId = Principal::from_slice(&[20]).into();
+        let new_user_id: UserId = Principal::from_slice(&[21]).into();
+        let other_user_id: UserId = Principal::from_slice(&[22]).into();
+
+        // More messages than are cached on the heap, so that some are only in stable memory
+        let mut message_indexes = Vec::new();
+        for i in 0..250 {
+            message_indexes.push(push_message(&mut events, old_user_id, 100 + i, text_content("hello")));
+        }
+        let root_message_index = push_message(&mut events, other_user_id, 1000, text_content("root"));
+        push_message_in_thread(
+            &mut events,
+            old_user_id,
+            Some(root_message_index),
+            1001,
+            text_content("reply"),
+        );
+
+        let main_events_count = u32::from(events.main.latest_event_index().unwrap()) as usize + 1;
+        let recently_updated = events.recently_updated_events(0, 1000);
+        let mut after = None;
+        let mut batches = 0;
+        let mut contexts_seen = HashSet::new();
+        loop {
+            let result = events.update_user_ids(
+                after,
+                &mut |context, user_id| {
+                    contexts_seen.insert(context);
+                    if user_id == old_user_id { new_user_id } else { user_id }
+                },
+                &mut || true,
+            );
+            match result {
+                Some(context) => {
+                    after = Some(context);
+                    batches += 1;
+                }
+                None => break,
+            }
+        }
+
+        // Batches of up to 100 events from the main list, then one for the thread
+        assert_eq!(batches, main_events_count.div_ceil(100) + 1);
+        assert_eq!(contexts_seen.len(), main_events_count + 1);
+        assert!(contexts_seen.contains(&EventContext::new(Some(root_message_index), EventIndex::default())));
+
+        let reader = events.main_events_reader();
+        for message_index in message_indexes {
+            let message = reader.message_internal(message_index.into()).unwrap();
+            assert_eq!(message.sender, new_user_id);
+        }
+        let root = reader.message_internal(root_message_index.into()).unwrap();
+        let thread_summary = root.thread_summary.unwrap();
+        assert_eq!(thread_summary.participants, vec![new_user_id]);
+        assert_eq!(thread_summary.followers, BTreeSet::from([new_user_id, other_user_id]));
+        let reply = events
+            .events_reader(EventIndex::default(), Some(root_message_index), None)
+            .unwrap()
+            .message_internal(MessageIndex::from(0).into())
+            .unwrap();
+        assert_eq!(reply.sender, new_user_id);
+
+        // The messages are found by searching under the sender's new id, but not their old one
+        assert_eq!(
+            events
+                .search_messages(MessageIndex::default(), "", &HashSet::from([new_user_id]), 255)
+                .len(),
+            250
+        );
+        assert!(
+            events
+                .search_messages(MessageIndex::default(), "", &HashSet::from([old_user_id]), 255)
+                .is_empty()
+        );
+
+        // Clients aren't sent the events again
+        assert_eq!(events.recently_updated_events(0, 1000), recently_updated);
+    }
+
+    #[test]
+    fn update_user_ids_in_event_only_updates_that_event() {
+        let (mut events, _, _) = setup_events();
+        let old_user_id: UserId = Principal::from_slice(&[20]).into();
+        let new_user_id: UserId = Principal::from_slice(&[21]).into();
+
+        let first = push_message(&mut events, old_user_id, 100, text_content("first"));
+        let second = push_message(&mut events, old_user_id, 101, text_content("second"));
+        let first_event_index = events.main.event_index(first.into()).unwrap();
+
+        let mut update = |u| if u == old_user_id { new_user_id } else { u };
+        assert!(events.update_user_ids_in_event(EventContext::new(None, first_event_index), &mut update));
+        // Nothing is left to replace
+        assert!(!events.update_user_ids_in_event(EventContext::new(None, first_event_index), &mut update));
+        // An event which doesn't exist
+        assert!(!events.update_user_ids_in_event(EventContext::new(Some(first), first_event_index), &mut update));
+
+        let reader = events.main_events_reader();
+        assert_eq!(reader.message_internal(first.into()).unwrap().sender, new_user_id);
+        assert_eq!(reader.message_internal(second.into()).unwrap().sender, old_user_id);
     }
 
     fn file_content(blob_id: u128) -> MessageContentInternal {

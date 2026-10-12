@@ -62,6 +62,11 @@ impl MigratedUserIds {
         self.map.iter().map(|(old, new)| (*old, *new))
     }
 
+    // Whether `user_id` is the id a user had before or after any of the migrations
+    pub fn contains(&self, user_id: &UserId) -> bool {
+        self.map.contains_key(user_id) || self.previous.contains_key(user_id)
+    }
+
     pub fn len(&self) -> usize {
         self.map.len()
     }
@@ -132,6 +137,18 @@ mod tests {
         let result = ids.get_many([user_id(1), user_id(3), user_id(4), user_id(6)]);
 
         assert_eq!(result, HashMap::from([(user_id(1), user_id(3)), (user_id(4), user_id(5))]));
+    }
+
+    #[test]
+    fn contains_both_sides_of_each_migration() {
+        let mut ids = MigratedUserIds::default();
+        ids.insert(user_id(1), user_id(2));
+        ids.insert(user_id(2), user_id(3));
+
+        assert!(ids.contains(&user_id(1)));
+        assert!(ids.contains(&user_id(2)));
+        assert!(ids.contains(&user_id(3)));
+        assert!(!ids.contains(&user_id(4)));
     }
 
     #[test]

@@ -7,7 +7,10 @@ use crate::timer_job_types::{DeleteFileReferencesJob, MakeTransferJob, RemoveExp
 use activity_notification_state::ActivityNotificationState;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::{ChatEventInternal, ChatEvents, ChatMetricsInternal, EventPusher, ExpiredThread};
+use chat_events::{
+    ChatEventInternal, ChatEvents, ChatMetricsInternal, EventPusher, ExpiredThread, UserIdsInEventsMigration,
+    UserIdsInEventsMigrationMetrics,
+};
 use community_canister::add_members_to_channel::UserFailedError;
 use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
@@ -38,9 +41,10 @@ use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BlobReference, BotCommunityEvent, BotDefinitionUpdate, BotEventsCaller,
     BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
     ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
-    CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
-    IdempotentEnvelope, MembersAdded, MessageId, MessageIndex, Milliseconds, Notification, OCResult, PendingCryptoTransaction,
-    Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType, icrc1,
+    CommunityMembership, CommunityPermissions, Cycles, Document, EventContext, EventIndex, EventsCaller, FrozenGroupInfo,
+    GroupRole, IdempotentEnvelope, MembersAdded, MessageId, MessageIndex, Milliseconds, Notification, OCResult,
+    PendingCryptoTransaction, Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType,
+    icrc1,
 };
 use types::{BotSubscriptions, CommunityId};
 use user_canister::CommunityCanisterEvent;
@@ -546,6 +550,7 @@ impl RuntimeState {
             queued_user_events: self.data.user_events_queue.len() as u32,
             queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
+            user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -669,6 +674,8 @@ struct Data {
     // have changed
     #[serde(default)]
     migrated_user_ids: MigratedUserIds,
+    #[serde(default)]
+    user_ids_in_events_migration: UserIdsInEventsMigration<(ChannelId, EventContext)>,
 }
 
 impl Data {
@@ -781,6 +788,7 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
+            user_ids_in_events_migration: UserIdsInEventsMigration::default(),
             public_channel_list_updated: now,
         }
     }
@@ -1471,6 +1479,7 @@ pub struct Metrics {
     pub queued_user_events: u32,
     pub queued_local_index_events: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
+    pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
     pub canister_ids: CanisterIds,
 }
 

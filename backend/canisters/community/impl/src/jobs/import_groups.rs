@@ -1,5 +1,5 @@
 use crate::activity_notifications::extract_activity;
-use crate::jobs::{migrate_chat_events_to_stable_memory, unlapse_members};
+use crate::jobs::{migrate_chat_events_to_stable_memory, unlapse_members, update_user_ids_in_events};
 use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
@@ -129,10 +129,7 @@ async fn import_group(group: GroupToImport) {
                 Ok(group_canister::c2c_export_group_events::Response::Success(result)) => {
                     mutate_state(|state| {
                         if let Some((up_to, _)) = result.events.last() {
-                            state
-                                .data
-                                .groups_being_imported
-                                .mark_events_batch_complete(&group_id, up_to.clone());
+                            state.data.groups_being_imported.mark_events_batch_complete(&group_id, *up_to);
                         }
                         if result.finished {
                             state.data.groups_being_imported.mark_events_import_complete(&group_id);
@@ -261,6 +258,13 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             migrate_chat_events_to_stable_memory::start_job_if_required(state);
             // The group may have been unlapsing its members when it was exported
             unlapse_members::start_job_if_required(state);
+            // The channel's events may still hold ids which users had before being migrated to
+            // MultiUser canisters, so are scanned for them, from the start if the scan has passed it
+            let migration = &mut state.data.user_ids_in_events_migration;
+            if migration.is_scan_complete() || migration.scanned_up_to().is_some_and(|(c, _)| c > channel_id) {
+                migration.restart_scan();
+            }
+            update_user_ids_in_events::start_job_if_required(state);
 
             state.data.timer_jobs.enqueue_job(
                 TimerJob::ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob {

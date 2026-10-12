@@ -144,6 +144,18 @@ impl DirectChats {
         self.direct_chats_v2.iter()
     }
 
+    // The id of each chat, ordered by its key_id, which, unlike its id, stays the same for as long as
+    // the chat exists (see `migrate_their_user_id`)
+    pub fn ids_ordered_by_key_id(&self) -> Vec<(u32, ChatId)> {
+        let mut ids: Vec<_> = self
+            .direct_chats_v2
+            .entries()
+            .map(|(chat_id, entry)| (entry.key_id, chat_id))
+            .collect();
+        ids.sort_unstable();
+        ids
+    }
+
     pub fn len(&self) -> usize {
         self.direct_chats_v2.len()
     }
