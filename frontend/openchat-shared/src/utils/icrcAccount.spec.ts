@@ -25,7 +25,7 @@ const noPrincipal = (): string => {
 };
 
 describe("userWalletAccount", () => {
-    test("a user alone in their canister holds their funds in its account", () => {
+    test("the wallet of an old user id is its canister's account", () => {
         const account = userWalletAccount(canisterId, noPrincipal);
 
         expect(account.owner.toText()).toBe(canisterId);
@@ -39,7 +39,7 @@ describe("userWalletAccount", () => {
         expect(account.subaccount).toBeUndefined();
     });
 
-    test("the wallet of a user alone in their canister encodes to their user id", () => {
+    test("the wallet of an old user id encodes to that id", () => {
         expect(encodeIcrcAccount(userWalletAccount(canisterId, noPrincipal))).toBe(canisterId);
     });
 });
