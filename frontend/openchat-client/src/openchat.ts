@@ -388,6 +388,7 @@ import {
     confirmedThreadEventIndexesLoadedStore,
     cryptoBalanceStore,
     cryptoLookup,
+    cryptoTokensSorted,
     currentUserIdStore,
     currentUserProfileStore,
     currentUserStore,
@@ -11301,7 +11302,9 @@ export class OpenChat {
                 amount.kind === "decimal" &&
                 amount.value !== null
             ) {
-                const tokenDetails = [...cryptoLookup.value.values()].find(
+                // Several ledgers can share a symbol, so take the first in the wallet's order:
+                // that skips disabled tokens the user holds none of and prefers the one they hold
+                const tokenDetails = cryptoTokensSorted.value.find(
                     (t) => t.symbol.toLowerCase() === token.value?.toLocaleLowerCase(),
                 );
                 if (tokenDetails !== undefined) {

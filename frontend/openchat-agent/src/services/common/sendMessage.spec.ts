@@ -227,7 +227,9 @@ describe.each([
                 kind: "prize_content",
                 prizesRemaining: 2,
                 token: "ICP",
+                ledger: LEDGER,
                 caption: "a prize",
+                minChitEarned: 0,
             },
         });
     });

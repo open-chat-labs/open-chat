@@ -102,6 +102,37 @@ describe("daily result custom content mapping", () => {
     });
 });
 
+describe("prize content mapping", () => {
+    // One of the two ledgers whose symbol is TENDY
+    const tendy = "kylwo-viaaa-aaaaq-aae7a-cai";
+
+    test("keeps the prize's ledger as well as its symbol", () => {
+        const content = messageContent(
+            {
+                Prize: {
+                    prizes_remaining: 2,
+                    prizes_pending: 1,
+                    winner_count: 3,
+                    user_is_winner: false,
+                    token_symbol: "TENDY",
+                    ledger: Principal.fromText(tendy).toUint8Array(),
+                    end_date: 1_000n,
+                    caption: "a prize",
+                    diamond_only: false,
+                    lifetime_diamond_only: false,
+                    unique_person_only: false,
+                    streak_only: 0,
+                    requires_captcha: false,
+                    min_chit_earned: 0,
+                },
+            },
+            "user-1",
+        );
+
+        expect(content).toMatchObject({ kind: "prize_content", token: "TENDY", ledger: tendy });
+    });
+});
+
 describe("a transfer pulled by the canister its message is sent to", () => {
     const crypto: MessageContent = { kind: "crypto_content", caption: undefined, transfer };
 
