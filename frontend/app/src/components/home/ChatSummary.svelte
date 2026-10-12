@@ -133,7 +133,7 @@
                   );
             unreadMentions = getUnreadMentionCount(chatSummary);
 
-            if (chatSummary.membership.archived && unreadMessages > 0 && !chat.bot) {
+            if (chatSummary.membership.archived && unreadMessages > 0) {
                 unarchiveChat();
             }
         });
@@ -646,32 +646,30 @@
                                             {/snippet}
                                         </MenuItem>
                                     {/if}
-                                    {#if !chat.bot}
-                                        {#if chatSummary.membership.archived}
-                                            <MenuItem onclick={selectChat}>
-                                                {#snippet icon()}
-                                                    <ArchiveOffIcon
-                                                        size={$iconSize}
-                                                        color={"var(--icon-inverted-txt)"} />
-                                                {/snippet}
-                                                {#snippet text()}
-                                                    <Translatable
-                                                        resourceKey={i18nKey("unarchiveChat")} />
-                                                {/snippet}
-                                            </MenuItem>
-                                        {:else}
-                                            <MenuItem onclick={archiveChat}>
-                                                {#snippet icon()}
-                                                    <ArchiveIcon
-                                                        size={$iconSize}
-                                                        color={"var(--icon-inverted-txt)"} />
-                                                {/snippet}
-                                                {#snippet text()}
-                                                    <Translatable
-                                                        resourceKey={i18nKey("archiveChat")} />
-                                                {/snippet}
-                                            </MenuItem>
-                                        {/if}
+                                    {#if chatSummary.membership.archived}
+                                        <MenuItem onclick={selectChat}>
+                                            {#snippet icon()}
+                                                <ArchiveOffIcon
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
+                                                <Translatable
+                                                    resourceKey={i18nKey("unarchiveChat")} />
+                                            {/snippet}
+                                        </MenuItem>
+                                    {:else}
+                                        <MenuItem onclick={archiveChat}>
+                                            {#snippet icon()}
+                                                <ArchiveIcon
+                                                    size={$iconSize}
+                                                    color={"var(--icon-inverted-txt)"} />
+                                            {/snippet}
+                                            {#snippet text()}
+                                                <Translatable
+                                                    resourceKey={i18nKey("archiveChat")} />
+                                            {/snippet}
+                                        </MenuItem>
                                     {/if}
                                     {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
                                         <MenuItem warning onclick={leaveGroup}>

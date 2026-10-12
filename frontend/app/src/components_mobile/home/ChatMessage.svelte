@@ -92,6 +92,7 @@
         canDelete: boolean;
         canQuoteReply: boolean;
         canReact: boolean;
+        canTipMessages: boolean;
         publicGroup: boolean;
         canStartThread: boolean;
         senderTyping: boolean;
@@ -137,6 +138,7 @@
         canDelete,
         canQuoteReply,
         canReact,
+        canTipMessages,
         publicGroup,
         canStartThread,
         senderTyping,
@@ -361,7 +363,7 @@
             msg.content.kind === "restricted_content" ||
             collapsed,
     );
-    let canTip = $derived(!me && confirmed && !inert && !failed);
+    let canTip = $derived(canTipMessages && !me && confirmed && !inert && !failed);
     let inThread = $derived(threadRootMessage !== undefined);
     let scrollingId = $derived(
         inThread ? "scrollable-list-thread-messages" : "scrollable-list-chat-messages",

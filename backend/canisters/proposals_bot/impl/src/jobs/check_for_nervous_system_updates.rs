@@ -32,6 +32,7 @@ async fn run_async() {
     {
         Ok(registry_canister::c2c_nervous_systems::Response::Success(result)) => {
             mutate_state(|state| {
+                let mut groups_to_create = false;
                 for ns in result.nervous_systems {
                     let governance_canister_id = ns.governance_canister_id;
                     if state.data.nervous_systems.exists(&governance_canister_id) {
@@ -40,10 +41,15 @@ async fn run_async() {
                     } else {
                         info!(%governance_canister_id, "Creating group for nervous system");
                         utils::async_work::spawn_tracked(create_group(ns, state.data.group_index_canister_id));
+                        groups_to_create = true;
                     }
                 }
-                state.data.registry_synced_up_to = result.last_updated;
-                info!(synced_up_to = result.last_updated, "Registry sync complete");
+                // Only move past these updates once every nervous system has a group, so that if creating a
+                // group fails, the next run fetches that nervous system again and retries
+                if !groups_to_create {
+                    state.data.registry_synced_up_to = result.last_updated;
+                    info!(synced_up_to = result.last_updated, "Registry sync complete");
+                }
                 jobs::increase_dissolve_delay::start_job_if_required(state);
             });
         }

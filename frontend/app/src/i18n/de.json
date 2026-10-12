@@ -1760,6 +1760,7 @@
             "text": "Senden Sie Textnachrichten in Threads",
             "video": "Senden Sie Videonachrichten in Threads"
         },
+        "tipMessages": "Trinkgeld für Nachrichten geben",
         "updateDetails": "Bearbeiten Sie grundlegende Informationen",
         "updateGroup": "Gruppeninformationen bearbeiten",
         "whoCan": "Wer kann"

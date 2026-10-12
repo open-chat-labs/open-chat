@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the unused `c2c_notify_achievement` endpoint ([#9899](https://github.com/open-chat-labs/open-chat/pull/9899))
+
+## [[2.0.2128](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2128-multi_user)] - 2026-10-11
+
 ### Added
 
 - Record the swaps users make straight from their own wallets, so that one left part way through can be finished off ([#9887](https://github.com/open-chat-labs/open-chat/pull/9887))

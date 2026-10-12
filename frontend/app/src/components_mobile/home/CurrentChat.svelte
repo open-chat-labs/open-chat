@@ -305,6 +305,7 @@
     let canDelete = $derived(client.canDeleteOtherUsersMessages(chat.id));
     let canReplyInThread = $derived(client.canSendMessage(chat.id, "thread"));
     let canReact = $derived(client.canReactToMessages(chat.id));
+    let canTipMessages = $derived(client.canTipMessages(chat.id));
     let canInvite = $derived(client.canInviteUsers(chat.id));
     let readonly = $derived(client.isChatReadOnly(chat.id));
     let externalUrl = $derived(chat.kind === "channel" ? chat.externalUrl : undefined);
@@ -383,6 +384,7 @@
             {canReplyInThread}
             {canSendAny}
             {canReact}
+            {canTipMessages}
             {canInvite}
             {readonly}
             {firstUnreadMention}

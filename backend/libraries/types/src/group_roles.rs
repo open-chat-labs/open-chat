@@ -15,6 +15,7 @@ pub enum GroupRole {
 
 #[ts_export]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "GroupPermissionsCombined")]
 pub struct GroupPermissions {
     pub change_roles: GroupPermissionRole,
     pub update_group: GroupPermissionRole,
@@ -24,10 +25,51 @@ pub struct GroupPermissions {
     pub delete_messages: GroupPermissionRole,
     pub pin_messages: GroupPermissionRole,
     pub react_to_messages: GroupPermissionRole,
+    pub tip_messages: GroupPermissionRole,
     pub mention_all_members: GroupPermissionRole,
     pub start_video_call: GroupPermissionRole,
     pub message_permissions: MessagePermissions,
     pub thread_permissions: Option<MessagePermissions>,
+}
+
+// Reads permissions saved or sent before `tip_messages` was added, defaulting it to the value of
+// `react_to_messages`, which used to govern tipping. This covers chats' current permissions, their
+// past `PermissionsChanged` events and args from canisters which haven't yet been upgraded.
+#[derive(Deserialize)]
+struct GroupPermissionsCombined {
+    change_roles: GroupPermissionRole,
+    update_group: GroupPermissionRole,
+    add_members: GroupPermissionRole,
+    invite_users: GroupPermissionRole,
+    remove_members: GroupPermissionRole,
+    delete_messages: GroupPermissionRole,
+    pin_messages: GroupPermissionRole,
+    react_to_messages: GroupPermissionRole,
+    tip_messages: Option<GroupPermissionRole>,
+    mention_all_members: GroupPermissionRole,
+    start_video_call: GroupPermissionRole,
+    message_permissions: MessagePermissions,
+    thread_permissions: Option<MessagePermissions>,
+}
+
+impl From<GroupPermissionsCombined> for GroupPermissions {
+    fn from(value: GroupPermissionsCombined) -> Self {
+        GroupPermissions {
+            change_roles: value.change_roles,
+            update_group: value.update_group,
+            add_members: value.add_members,
+            invite_users: value.invite_users,
+            remove_members: value.remove_members,
+            delete_messages: value.delete_messages,
+            pin_messages: value.pin_messages,
+            react_to_messages: value.react_to_messages,
+            tip_messages: value.tip_messages.unwrap_or(value.react_to_messages),
+            mention_all_members: value.mention_all_members,
+            start_video_call: value.start_video_call,
+            message_permissions: value.message_permissions,
+            thread_permissions: value.thread_permissions,
+        }
+    }
 }
 
 #[ts_export]
@@ -66,6 +108,7 @@ pub struct OptionalGroupPermissions {
     pub delete_messages: Option<GroupPermissionRole>,
     pub pin_messages: Option<GroupPermissionRole>,
     pub react_to_messages: Option<GroupPermissionRole>,
+    pub tip_messages: Option<GroupPermissionRole>,
     pub mention_all_members: Option<GroupPermissionRole>,
     pub start_video_call: Option<GroupPermissionRole>,
     pub message_permissions: Option<OptionalMessagePermissions>,
@@ -115,6 +158,7 @@ impl Default for GroupPermissions {
             pin_messages: GroupPermissionRole::Admins,
             invite_users: GroupPermissionRole::Admins,
             react_to_messages: GroupPermissionRole::Members,
+            tip_messages: GroupPermissionRole::Members,
             start_video_call: GroupPermissionRole::Admins,
             message_permissions: MessagePermissions::default(),
             thread_permissions: None,
@@ -255,5 +299,73 @@ impl TryFrom<u8> for MessagePermission {
             10 => Ok(MessagePermission::VideoCall),
             _ => Err(()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // `GroupPermissions` as it was before `tip_messages` was added
+    #[derive(Serialize)]
+    struct GroupPermissionsPrevious {
+        change_roles: GroupPermissionRole,
+        update_group: GroupPermissionRole,
+        add_members: GroupPermissionRole,
+        invite_users: GroupPermissionRole,
+        remove_members: GroupPermissionRole,
+        delete_messages: GroupPermissionRole,
+        pin_messages: GroupPermissionRole,
+        react_to_messages: GroupPermissionRole,
+        mention_all_members: GroupPermissionRole,
+        start_video_call: GroupPermissionRole,
+        message_permissions: MessagePermissions,
+        thread_permissions: Option<MessagePermissions>,
+    }
+
+    #[test]
+    fn tip_messages_defaults_to_react_to_messages() {
+        for react_to_messages in [
+            GroupPermissionRole::None,
+            GroupPermissionRole::Admins,
+            GroupPermissionRole::Members,
+        ] {
+            let p = GroupPermissions::default();
+            let previous = GroupPermissionsPrevious {
+                change_roles: p.change_roles,
+                update_group: p.update_group,
+                add_members: p.add_members,
+                invite_users: p.invite_users,
+                remove_members: p.remove_members,
+                delete_messages: p.delete_messages,
+                pin_messages: p.pin_messages,
+                react_to_messages,
+                mention_all_members: p.mention_all_members,
+                start_video_call: p.start_video_call,
+                message_permissions: p.message_permissions,
+                thread_permissions: p.thread_permissions,
+            };
+
+            let bytes = msgpack::serialize_then_unwrap(&previous);
+            let permissions: GroupPermissions = msgpack::deserialize_then_unwrap(&bytes);
+
+            assert_eq!(permissions.react_to_messages, react_to_messages);
+            assert_eq!(permissions.tip_messages, react_to_messages);
+        }
+    }
+
+    #[test]
+    fn tip_messages_is_kept_when_set() {
+        let permissions = GroupPermissions {
+            react_to_messages: GroupPermissionRole::Members,
+            tip_messages: GroupPermissionRole::Admins,
+            ..Default::default()
+        };
+
+        let bytes = msgpack::serialize_then_unwrap(&permissions);
+        let deserialized: GroupPermissions = msgpack::deserialize_then_unwrap(&bytes);
+
+        assert_eq!(deserialized.react_to_messages, GroupPermissionRole::Members);
+        assert_eq!(deserialized.tip_messages, GroupPermissionRole::Admins);
     }
 }

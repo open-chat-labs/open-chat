@@ -46,6 +46,7 @@ export const chatPermissionsList = [
     "deleteMessages",
     "pinMessages",
     "reactToMessages",
+    "tipMessages",
     "mentionAllMembers",
     "startVideoCall",
 ] as const;
@@ -98,6 +99,7 @@ export type ChatPermissions = {
     deleteMessages: ChatPermissionRole;
     pinMessages: ChatPermissionRole;
     reactToMessages: ChatPermissionRole;
+    tipMessages: ChatPermissionRole;
     mentionAllMembers: ChatPermissionRole;
     startVideoCall: ChatPermissionRole;
     messagePermissions: MessagePermissions;
@@ -128,6 +130,7 @@ export type OptionalChatPermissions = {
     deleteMessages?: ChatPermissionRole;
     pinMessages?: ChatPermissionRole;
     reactToMessages?: ChatPermissionRole;
+    tipMessages?: ChatPermissionRole;
     mentionAllMembers?: ChatPermissionRole;
     startVideoCall?: ChatPermissionRole;
     messagePermissions: OptionalMessagePermissions | undefined;
@@ -184,6 +187,7 @@ export function defaultChatPermissions(): ChatPermissions {
         addMembers: ROLE_ADMIN,
         mentionAllMembers: ROLE_MEMBER,
         reactToMessages: ROLE_MEMBER,
+        tipMessages: ROLE_MEMBER,
         startVideoCall: ROLE_MEMBER,
         messagePermissions: {
             default: ROLE_MEMBER,

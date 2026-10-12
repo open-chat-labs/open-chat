@@ -834,6 +834,7 @@ function groupChat(groupId: string, lastMessage?: EventWrapper<Message>): GroupC
             addMembers: ROLE_ADMIN,
             mentionAllMembers: ROLE_MEMBER,
             reactToMessages: ROLE_MEMBER,
+            tipMessages: ROLE_MEMBER,
             startVideoCall: ROLE_MEMBER,
             messagePermissions: {
                 default: ROLE_MEMBER,
