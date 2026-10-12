@@ -140,6 +140,15 @@
     let votingHotkey = $derived(
         userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal).owner.toText(),
     );
+    // The warning not to send tokens to the addresses below, split around its bracketed link to
+    // the wallet, so each translation can put the link wherever its grammar needs it
+    let addressesWarning = $derived.by(() => {
+        const text = $_("notWalletAddressesWarning");
+        const match = text.match(/^(.*)\[(.+)\](.*)$/s);
+        return match === null
+            ? { before: text, link: "", after: "" }
+            : { before: match[1], link: match[2], after: match[3] };
+    });
 
     // @ts-expect-error OC_WEBSITE_VERSION is injected at build time and not declared on Window
     const version = window.OC_WEBSITE_VERSION;
@@ -656,7 +665,13 @@
                 headerText={i18nKey("advanced")}>
                 {#if !$anonUserStore}
                     <AlertBox>
-                        <Translatable resourceKey={i18nKey("doNotSendTokensToTheseAddresses")} />
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <!-- svelte-ignore a11y_missing_attribute -->
+                        {addressesWarning.before}{#if addressesWarning.link}<a
+                                role="button"
+                                tabindex="0"
+                                onclick={() => publish("wallet")}>{addressesWarning.link}</a
+                            >{/if}{addressesWarning.after}
                     </AlertBox>
                     <div class="userid">
                         <Legend label={i18nKey("userId")} />
