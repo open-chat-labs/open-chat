@@ -2082,3 +2082,48 @@ describe("OpenChatAgent swapping tokens", () => {
         });
     });
 });
+
+describe("OpenChatAgent loading exchange rates", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let agent: any;
+
+    beforeEach(() => {
+        agent = Object.create(OpenChatAgent.prototype);
+        agent._registryValue = { tokenDetails: [] };
+        agent._exchangeRateClients = [
+            {
+                exchangeRates: () =>
+                    Promise.resolve({
+                        icp: { toUSD: 4 },
+                        ckusdc: { toUSD: 1 },
+                        usdc: { toUSD: 1 },
+                    }),
+            },
+            {
+                // The prices on ICPSwap of stablecoins in pools with next to no liquidity
+                exchangeRates: () =>
+                    Promise.resolve({
+                        icp: { toUSD: 6 },
+                        ckusdc: { toUSD: 445 },
+                        usdc: { toUSD: 0.55 },
+                        usdt: { toUSD: 0.00018 },
+                    }),
+            },
+        ];
+    });
+
+    test("pins stablecoins to $1", async () => {
+        const rates = await agent.exchangeRates();
+
+        expect(rates.ckusdc).toEqual({ toUSD: 1 });
+        expect(rates.ckusdt).toEqual({ toUSD: 1 });
+        expect(rates.usdc).toEqual({ toUSD: 1 });
+        expect(rates.usdt).toEqual({ toUSD: 1 });
+    });
+
+    test("averages the rates of other tokens", async () => {
+        const rates = await agent.exchangeRates();
+
+        expect(rates.icp).toEqual({ toUSD: 5 });
+    });
+});

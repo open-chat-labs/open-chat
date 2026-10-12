@@ -5343,6 +5343,12 @@ export class OpenChatAgent extends EventTarget {
             }
         }
 
+        // The prices of these stablecoins on ICPSwap can be way off, since some of their pools have
+        // next to no liquidity (OneSec's USDC and USDT have a few hundred dollars), so we pin them
+        for (const symbol of ["ckusdc", "ckusdt", "usdc", "usdt"]) {
+            grouped[symbol] = [{ toUSD: 1 }];
+        }
+
         return toRecord2(
             Object.entries(grouped),
             ([token, _]) => token,
