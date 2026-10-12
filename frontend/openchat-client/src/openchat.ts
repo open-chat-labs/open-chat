@@ -281,6 +281,7 @@ import {
     type ProposeResponse,
     type PubSubEvents,
     type PublicProfile,
+    type SaveProfileOutcome,
     type ReadonlyMap,
     type Referral,
     type RegisterProposalVoteResponse,
@@ -303,7 +304,6 @@ import {
     type SelectedCommunityRoute,
     type SendMessageResponse,
     type SendMessageSuccess,
-    type SetBioResponse,
     type SetDisplayNameResponse,
     type SetMemberDisplayNameResponse,
     type SetPinNumberResponse,
@@ -588,6 +588,13 @@ import {
     updateExistingMessages,
 } from "./utils/chat";
 import { joinGroupFailureMessage } from "./utils/join";
+import {
+    bioResult,
+    displayNameResult,
+    profileChanges,
+    usernameResult,
+    type ProfileFieldResult,
+} from "./utils/profile";
 import {
     canBlockUsers as canBlockCommunityUsers,
     canChangeCommunityPermissions,
@@ -7365,7 +7372,59 @@ export class OpenChat {
         return this.#worker.stream({ kind: "getPublicProfile", userId });
     }
 
-    setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
+    /**
+     * Saves the profile fields that differ from `original`, in parallel. A field the backend rejects keeps its
+     * unsaved value and carries the reason to show under it.
+     */
+    async saveProfile(original: PublicProfile, candidate: PublicProfile): Promise<SaveProfileOutcome> {
+        const outcome: SaveProfileOutcome = { profile: original, errors: {} };
+        if (anonUserStore.value) return outcome;
+
+        const userId = currentUserIdStore.value;
+        const changes = profileChanges(original, candidate);
+        const save = async (
+            field: "username" | "displayName" | "bio",
+            send: () => Promise<ProfileFieldResult>,
+        ) => {
+            try {
+                const result = await send();
+                switch (result.kind) {
+                    case "saved":
+                        outcome.profile = { ...outcome.profile, [field]: candidate[field] };
+                        break;
+                    case "rejected":
+                        outcome.errors[field] = result.message;
+                        break;
+                    case "failed":
+                        outcome.failure = i18nKey("unableToSaveUserProfile");
+                        break;
+                    default:
+                        result satisfies never;
+                }
+            } catch (err) {
+                outcome.failure = i18nKey("unableToSaveUserProfile");
+                this.logError(`Unable to save ${field}: `, err);
+            }
+        };
+
+        await Promise.all([
+            changes.username &&
+                save("username", async () =>
+                    usernameResult(await this.#setUsername(userId, candidate.username)),
+                ),
+            changes.displayName &&
+                save("displayName", async () =>
+                    displayNameResult(await this.#setDisplayName(userId, candidate.displayName)),
+                ),
+            changes.bio &&
+                save("bio", async () =>
+                    bioResult(await this.#worker.send({ kind: "setBio", bio: candidate.bio })),
+                ),
+        ]);
+        return outcome;
+    }
+
+    #setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
         return this.#worker.send({ kind: "setUsername", userId, username }).then((resp) => {
             if (resp === "success") {
                 currentUserStore.set({
@@ -7378,7 +7437,7 @@ export class OpenChat {
         });
     }
 
-    setDisplayName(
+    #setDisplayName(
         userId: string,
         displayName: string | undefined,
     ): Promise<SetDisplayNameResponse> {
@@ -7417,10 +7476,6 @@ export class OpenChat {
             kind: "setHideOnlineStatus",
             hideOnlineStatus,
         });
-    }
-
-    setBio(bio: string): Promise<SetBioResponse> {
-        return this.#worker.send({ kind: "setBio", bio });
     }
 
     getBio(userId?: string): Promise<string> {

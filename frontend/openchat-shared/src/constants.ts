@@ -39,3 +39,5 @@ export const FIND_MEMBERS_DELAY_MS = 300;
 // Bump this when the platform terms change: users whose recorded acceptance is below this
 // version are shown a blocking terms-updated notice and must affirmatively accept.
 export const CURRENT_TERMS_VERSION = 2;
+// The user canister rejects a longer bio (MAX_BIO_LEN in user_core set_bio.rs)
+export const MAX_BIO_LENGTH = 2000;
