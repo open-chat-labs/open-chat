@@ -214,7 +214,6 @@
             stakeNeuronForSubmittingProposals,
             topUpNeuronForSubmittingProposals,
             updateMarketMakerConfig,
-            withdrawFromIcpSwap,
             setPremiumItemCost,
             updateBlockedUsernamePatterns,
             pauseEventLoop: () => client.pauseEventLoop(),
@@ -584,16 +583,6 @@
                 console.error("Failed to update market maker config", resp);
             }
         });
-    }
-
-    function withdrawFromIcpSwap(
-        userId: string,
-        swapId: bigint,
-        inputToken: boolean,
-        amount: bigint | undefined,
-        fee: bigint | undefined,
-    ): void {
-        client.withdrawFromIcpSwap(userId, swapId, inputToken, amount, fee);
     }
 
     function setPremiumItemCost(item: PremiumItem, chitCost: number): void {

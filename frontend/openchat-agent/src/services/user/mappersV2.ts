@@ -9,7 +9,6 @@ import type {
     ClaimDailyChitResponse,
     CommunitiesInitial,
     CommunitiesUpdates,
-    CompletedCryptocurrencyWithdrawal,
     CreateCommunityResponse,
     DirectChatIdentifier,
     DirectChatsInitial,
@@ -34,13 +33,10 @@ import type {
     PublicProfile,
     Referral,
     ReferralStatus,
-    Result,
     SearchDirectChatResponse,
     SendMessageResponse,
     StreakInsurance,
-    SwapTokensResponse,
     TipMessageResponse,
-    TokenSwapStatusResponse,
     UnfinishedTokenSwap,
     UpdatedEvent,
     UpdatesResponse,
@@ -52,7 +48,6 @@ import type {
     UserCanisterGroupChatSummaryUpdates,
     Verification,
     WalletConfig,
-    WithdrawCryptocurrencyResponse,
 } from "@shared";
 import {
     CommonResponses,
@@ -64,8 +59,6 @@ import {
 } from "@shared";
 import type {
     StreakInsurance as ApiStreakInsurance,
-    CompletedCryptoTransactionICRC1,
-    CompletedCryptoTransactionNNS,
     Achievement as TAchievement,
     Chat as TChat,
     ChitEvent as TChitEvent,
@@ -98,13 +91,9 @@ import type {
     UserSavedCryptoAccountsResponse,
     UserSearchMessagesSuccessResult,
     UserSendMessageResponse,
-    UserSendMessageWithTransferToChannelResponse,
-    UserSendMessageWithTransferToGroupResponse,
     UserSetPinNumberPinNumberVerification,
     UserSwapTokensExchangeArgs,
-    UserSwapTokensSuccessResult,
     UserTipMessageResponse,
-    UserTokenSwapStatusResponse,
     UserUnfinishedTokenSwapsResponse,
     UserUpdatesCommunitiesUpdates,
     UserUpdatesDirectChatsUpdates,
@@ -112,11 +101,8 @@ import type {
     UserUpdatesGroupChatsUpdates,
     UserUpdatesResponse,
     UserWalletConfig,
-    UserWithdrawCryptoResponse,
 } from "../../typebox";
 import {
-    bytesToBigint,
-    bytesToHexString,
     identity,
     mapOptional,
     optionUpdateV2,
@@ -126,12 +112,10 @@ import {
 import {
     chatMetrics,
     completedCryptoTransfer,
-    formatIcrcAccount,
     installedBotDetails,
     mapResult,
     messageEvent,
     messageMatch,
-    ocError,
     sendMessageSuccess,
     unitResult,
     videoCallInProgress,
@@ -441,56 +425,6 @@ export function archiveChatResponse(value: UserArchiveUnarchiveChatsResponse): A
         return CommonResponses.failure();
     }
     return unitResult(value);
-}
-
-export function sendMessageWithTransferToChannelResponse(
-    value: UserSendMessageWithTransferToChannelResponse,
-    sender: string,
-    recipient: string | undefined,
-): SendMessageResponse {
-    if (typeof value === "object") {
-        if ("Success" in value) {
-            return {
-                kind: "transfer_success",
-                timestamp: value.Success.timestamp,
-                messageIndex: value.Success.message_index,
-                eventIndex: value.Success.event_index,
-                expiresAt: mapOptional(value.Success.expires_at, Number),
-                transfer: completedCryptoTransfer(value.Success.transfer, sender, recipient ?? ""),
-            };
-        }
-        if ("Error" in value) {
-            return ocError(value.Error);
-        }
-    }
-
-    console.warn("SendMessageWithTransferToChannel failed with", value);
-    return CommonResponses.failure();
-}
-
-export function sendMessageWithTransferToGroupResponse(
-    value: UserSendMessageWithTransferToGroupResponse,
-    sender: string,
-    recipient: string | undefined,
-): SendMessageResponse {
-    if (typeof value === "object") {
-        if ("Success" in value) {
-            return {
-                kind: "transfer_success",
-                timestamp: value.Success.timestamp,
-                messageIndex: value.Success.message_index,
-                eventIndex: value.Success.event_index,
-                expiresAt: mapOptional(value.Success.expires_at, Number),
-                transfer: completedCryptoTransfer(value.Success.transfer, sender, recipient ?? ""),
-            };
-        }
-        if ("Error" in value) {
-            return ocError(value.Error);
-        }
-    }
-
-    console.warn("SendMessageWithTransferToGroup failed with", value);
-    return CommonResponses.failure();
 }
 
 export function sendMessageResponse(
@@ -908,115 +842,6 @@ function directChatSummary(value: TDirectChatSummary): DirectChatSummary {
             archived: value.archived ?? false,
             rulesAccepted: false,
         },
-    };
-}
-
-function completedNnsCryptoWithdrawal(
-    value: CompletedCryptoTransactionNNS,
-): CompletedCryptocurrencyWithdrawal {
-    return {
-        kind: "completed",
-        ledger: principalBytesToString(value.ledger),
-        to: value.to !== "Mint" ? bytesToHexString(value.to.Account) : "",
-        amountE8s: value.amount.e8s,
-        feeE8s: value.fee.e8s,
-        memo: value.memo,
-        blockIndex: value.block_index,
-    };
-}
-
-function completedIcrc1CryptoWithdrawal(
-    value: CompletedCryptoTransactionICRC1,
-): CompletedCryptocurrencyWithdrawal {
-    return {
-        kind: "completed",
-        ledger: principalBytesToString(value.ledger),
-        to: value.to !== "Mint" ? formatIcrcAccount(value.to.Account) : "",
-        amountE8s: value.amount,
-        feeE8s: value.fee,
-        memo: mapOptional(value.memo, bytesToBigint) ?? BigInt(0),
-        blockIndex: value.block_index,
-    };
-}
-
-export function withdrawCryptoResponse(
-    value: UserWithdrawCryptoResponse,
-): WithdrawCryptocurrencyResponse {
-    if (typeof value === "object") {
-        if ("Success" in value) {
-            if ("NNS" in value.Success) {
-                return completedNnsCryptoWithdrawal(value.Success.NNS);
-            } else if ("ICRC1" in value.Success) {
-                return completedIcrc1CryptoWithdrawal(value.Success.ICRC1);
-            }
-        }
-        if ("Error" in value) {
-            return ocError(value.Error);
-        }
-    }
-
-    throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");
-}
-
-export function swapTokensSuccess(value: UserSwapTokensSuccessResult): SwapTokensResponse {
-    return {
-        kind: "success",
-        amountOut: value.amount_out,
-    };
-}
-
-export function tokenSwapStatusResponse(
-    value: UserTokenSwapStatusResponse,
-): TokenSwapStatusResponse {
-    if (typeof value === "object") {
-        if ("Success" in value) {
-            return {
-                kind: "success",
-                started: value.Success.started,
-                depositAccount: mapOptional(value.Success.deposit_account, result),
-                transfer: mapOptional(value.Success.transfer, result),
-                notifyDex: mapOptional(value.Success.notify_dex, result),
-                amountSwapped: mapOptional(value.Success.amount_swapped, resultOfResult),
-                withdrawnFromDex: mapOptional(value.Success.withdraw_from_dex, result),
-            };
-        }
-        if ("Error" in value) {
-            return ocError(value.Error);
-        }
-    }
-    if (value === "NotFound") {
-        return {
-            kind: "not_found",
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiTokenSwapStatusResponse type received", value);
-}
-
-function result<T>(value: { Ok: T } | { Err: string }): Result<T> {
-    if ("Ok" in value) {
-        return {
-            kind: "ok",
-            value: value.Ok,
-        };
-    }
-    return {
-        kind: "error",
-        error: value.Err,
-    };
-}
-
-function resultOfResult<T>(
-    value: { Ok: { Ok: T } | { Err: string } } | { Err: string },
-): Result<Result<T>> {
-    if ("Ok" in value) {
-        return {
-            kind: "ok",
-            value: result(value.Ok),
-        };
-    }
-    return {
-        kind: "error",
-        error: value.Err,
     };
 }
 

@@ -19,7 +19,7 @@ generate_msgpack_query_call!(messages_by_message_index);
 generate_msgpack_query_call!(public_profile);
 generate_msgpack_query_call!(saved_crypto_accounts);
 generate_msgpack_query_call!(search_messages);
-generate_msgpack_query_call!(token_swap_status);
+generate_msgpack_query_call!(token_swaps);
 generate_msgpack_query_call!(unfinished_token_swaps);
 generate_msgpack_query_call!(updates);
 
@@ -27,7 +27,6 @@ generate_msgpack_query_call!(updates);
 generate_msgpack_update_call!(accept_p2p_swap);
 generate_msgpack_update_call!(add_hot_group_exclusions);
 generate_msgpack_update_call!(add_reaction);
-generate_msgpack_update_call!(approve_transfer);
 generate_msgpack_update_call!(archive_unarchive_chats);
 generate_msgpack_update_call!(block_user);
 generate_msgpack_update_call!(c2c_charge_user_account);
@@ -43,7 +42,6 @@ generate_msgpack_update_call!(c2c_remove_from_group);
 generate_msgpack_update_call!(c2c_set_user_suspended);
 generate_msgpack_update_call!(c2c_uninstall_bot);
 generate_msgpack_update_call!(c2c_user_canister_v2);
-generate_msgpack_update_call!(c2c_withdraw_from_icpswap);
 generate_msgpack_update_call!(cancel_message_reminder);
 generate_msgpack_update_call!(cancel_p2p_swap);
 generate_msgpack_update_call!(check_pin_number);
@@ -74,8 +72,6 @@ generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(report_message);
 generate_msgpack_update_call!(save_crypto_account);
 generate_msgpack_update_call!(send_message_v2);
-generate_msgpack_update_call!(send_message_with_transfer_to_channel);
-generate_msgpack_update_call!(send_message_with_transfer_to_group);
 generate_msgpack_update_call!(set_avatar);
 generate_msgpack_update_call!(set_bio);
 generate_msgpack_update_call!(set_community_indexes);
@@ -84,14 +80,12 @@ generate_msgpack_update_call!(set_message_reminder_v2);
 generate_msgpack_update_call!(set_pin_number);
 generate_msgpack_update_call!(set_profile_background);
 generate_update_call!(start_video_call_v2);
-generate_msgpack_update_call!(swap_tokens);
 generate_msgpack_update_call!(tip_message);
 generate_msgpack_update_call!(unblock_user);
 generate_msgpack_update_call!(undelete_messages);
 generate_msgpack_update_call!(unmute_notifications);
 generate_msgpack_update_call!(unpin_chat_v2);
 generate_msgpack_update_call!(update_chat_settings);
-generate_msgpack_update_call!(withdraw_crypto_v2);
 
 pub mod happy_path {
     use crate::User;
@@ -721,15 +715,6 @@ pub mod happy_path {
             accept_offer_response,
             user_canister::accept_p2p_swap::Response::Success(_)
         ));
-    }
-
-    pub fn approve_transfer(env: &mut PocketIc, user: &User, args: &user_canister::approve_transfer::Args) {
-        let response = super::approve_transfer(env, user.principal, user.canister(), args);
-
-        match response {
-            user_canister::approve_transfer::Response::Success => (),
-            response => panic!("'approve_transfer' error: {response:?}"),
-        };
     }
 
     pub fn block_user(env: &mut PocketIc, user: &User, blocked: UserId) {

@@ -3,7 +3,6 @@ use stable_memory_map::{KeyPrefix, TokenSwapKey, TokenSwapKeyPrefix, with_map, w
 use std::ops::RangeInclusive;
 use types::icrc1::Account;
 use types::{TimestampMillis, Timestamped};
-use user_canister::token_swap_status::TokenSwapStatus;
 
 // The result of a swap the User canister's swap clients perform
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -143,27 +142,6 @@ impl From<TokenSwap> for user_canister::token_swaps::TokenSwap {
             amount_swapped: s.swap_result.map(|t| t.value.map(|r| r.map(|i| i.amount_out))),
             withdrawn_from_dex: s.withdrawn_from_dex_at.map(|t| t.value),
             success: s.success.map(|v| v.value),
-        }
-    }
-}
-
-impl From<TokenSwap> for TokenSwapStatus {
-    fn from(value: TokenSwap) -> Self {
-        TokenSwapStatus {
-            started: value.started,
-            icrc2: value.icrc2,
-            auto_withdrawals: value.auto_withdrawals,
-            funded_from_wallet: value.funded_from_wallet.map(|t| t.value),
-            deposit_account: value.deposit_account.map(|a| a.value.map(|_| ())),
-            transfer: value.transfer_or_approval.clone().map(|t| t.value),
-            transfer_or_approval: value.transfer_or_approval.map(|t| t.value),
-            notify_dex: value.notified_dex_at.map(|t| t.value.map(|_| ())),
-            amount_swapped: value
-                .swap_result
-                .as_ref()
-                .map(|t| t.value.clone().map(|r| r.map(|a| a.amount_out))),
-            withdraw_from_dex: value.withdrawn_from_dex_at.map(|t| t.value),
-            success: value.success.map(|t| t.value),
         }
     }
 }

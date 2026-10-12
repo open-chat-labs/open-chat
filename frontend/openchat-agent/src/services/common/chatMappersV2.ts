@@ -71,7 +71,6 @@ import type {
     P2PSwapContentInitial,
     P2PSwapStatus,
     PendingCryptocurrencyTransfer,
-    PendingCryptocurrencyWithdrawal,
     PermissionRole,
     PinMessageResponse,
     PollConfig,
@@ -122,7 +121,6 @@ import {
     isError,
     parseBigInt,
     CommonResponses,
-    ICP_SYMBOL,
     ProposalDecisionStatus,
     ProposalRewardStatus,
     ROLE_ADMIN,
@@ -137,7 +135,6 @@ import {
     codeToText,
     decodeIcrcAccount,
     encodeIcrcAccount,
-    isAccountIdentifierValid,
     messagePermissionsList,
     nullMembership,
     toBigInt32,
@@ -260,7 +257,6 @@ import type {
     ThreadPreview as TThreadPreview,
     ThreadSummary as TThreadSummary,
     TokenInfo as TTokenInfo,
-    Tokens as TTokens,
     TotalVotes as TTotalVotes,
     User as TUser,
     UserGroupSummary as TUserGroupSummary,
@@ -271,7 +267,6 @@ import type {
     UserCreateGroupSuccessResult,
     UserDeletedMessageSuccessResult,
     UserUndeleteMessagesSuccessResult,
-    UserWithdrawCryptoArgs,
     VideoCall,
     VideoCallParticipants,
 } from "../../typebox";
@@ -282,7 +277,6 @@ import {
     bytesToBigint,
     bytesToHexString,
     consolidateBytes,
-    hexStringToBytes,
     identity,
     mapOptional,
     principalBytesToString,
@@ -2272,45 +2266,6 @@ export function apiPendingTransaction(
     };
 }
 
-export function apiPendingCryptocurrencyWithdrawal(
-    domain: PendingCryptocurrencyWithdrawal,
-    pin: string | undefined,
-): UserWithdrawCryptoArgs {
-    if (domain.token === ICP_SYMBOL && isAccountIdentifierValid(domain.to)) {
-        return {
-            withdrawal: {
-                NNS: {
-                    ledger: principalStringToBytes(domain.ledger),
-                    token_symbol: domain.token,
-                    to: {
-                        Account: [...hexStringToBytes(domain.to)] as NumberArray32,
-                    },
-                    amount: apiICP(domain.amountE8s),
-                    fee: undefined,
-                    memo: domain.memo,
-                    created: domain.createdAtNanos,
-                },
-            },
-            pin,
-        };
-    } else {
-        return {
-            withdrawal: {
-                ICRC1: {
-                    ledger: principalStringToBytes(domain.ledger),
-                    token_symbol: domain.token,
-                    to: addressToIcrcAccount(domain.to),
-                    amount: domain.amountE8s,
-                    fee: domain.feeE8s ?? BigInt(0),
-                    memo: mapOptional(domain.memo, bigintToBytes),
-                    created: domain.createdAtNanos,
-                },
-            },
-            pin,
-        };
-    }
-}
-
 export function proposalVote(vote: number): boolean | undefined {
     if (vote === 1) return true;
     if (vote === 2) return false;
@@ -2345,12 +2300,6 @@ function apiFileContent(domain: FileContent): TFileContent {
         blob_reference: apiBlobReference(domain.blobReference),
         caption: domain.caption,
         file_size: domain.fileSize,
-    };
-}
-
-function apiICP(amountE8s: bigint): TTokens {
-    return {
-        e8s: amountE8s,
     };
 }
 

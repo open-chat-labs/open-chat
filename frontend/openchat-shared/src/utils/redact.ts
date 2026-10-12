@@ -5,7 +5,7 @@ export const REDACTED = "******";
 // turns on diagnostic logging, and in Rollbar when an error is reported. The PIN, plus the proof of
 // a recent sign-in which stands in for the PIN when setting a new one.
 export const SECRET_KEYS: readonly string[] = [
-    // Canister args (send_message_v2, withdraw_crypto_v2, accept_p2p_swap, ...) and worker requests
+    // Canister args (send_message_v2, accept_p2p_swap, mark_token_swap_started, ...) and worker requests
     "pin",
     // set_pin_number's `verification`
     "PIN",

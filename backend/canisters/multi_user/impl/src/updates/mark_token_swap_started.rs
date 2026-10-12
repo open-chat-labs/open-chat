@@ -10,9 +10,9 @@ use user_canister::swap_tokens::ExchangeArgs;
 use user_core::TokenSwap;
 
 // The users of this canister hold their own funds, so make their swaps themselves, straight from
-// their wallets, rather than through `swap_tokens`. This records each swap as it starts, so that one
-// which doesn't finish can be found again (see `unfinished_token_swaps`) and any funds left with the
-// DEX withdrawn. It checks the user's PIN, as `swap_tokens` does, before anything is approved.
+// their wallets. This records each swap as it starts, so that one which doesn't finish can be found
+// again (see `unfinished_token_swaps`) and any funds left with the DEX withdrawn. It checks the
+// user's PIN before anything is approved.
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn mark_token_swap_started(args: Args) -> Response {

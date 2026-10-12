@@ -10,9 +10,9 @@
         type SizeMode,
     } from "component-lib";
     import type { OpenChat, SwapFromWalletStep, SwapTokensResponse } from "@client";
-    import { Poller, publish } from "@client";
+    import { publish } from "@client";
     import { swapFromWalletOutcome, type SwapOutcome } from "../../../utils/tokenSwap";
-    import { getContext, onMount } from "svelte";
+    import { getContext } from "svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Robot from "svelte-material-icons/RobotOutline.svelte";
@@ -20,7 +20,6 @@
     import Translatable from "@shared_components/Translatable.svelte";
 
     interface Props {
-        swapId: bigint;
         tokenIn: string;
         tokenOut: string;
         ledgerIn: string;
@@ -30,15 +29,12 @@
         dex: string;
         // What swapping returned, once it has
         swapResponse: SwapTokensResponse | undefined;
-        // Whether the user is swapping straight from their wallet, as a user who holds their own
-        // funds does, in which case its steps are reported as they start rather than polled for
-        fromWallet: boolean;
-        // The step a swap made from the wallet has reached, once it is past initialising
+        // The step the swap, which the user makes straight from their wallet, has reached, once it
+        // is past initialising. Its steps are reported as they start.
         swapStep: SwapFromWalletStep | undefined;
     }
 
     let {
-        swapId,
         tokenIn,
         tokenOut,
         ledgerIn,
@@ -47,17 +43,14 @@
         decimalsOut,
         dex,
         swapResponse,
-        fromWallet,
         swapStep,
     }: Props = $props();
 
     const height: SizeMode = { size: "16rem" };
     const client = getContext<OpenChat>("client");
-    const POLL_INTERVAL = 1000;
     const labelPrefix = "tokenSwap.progress.";
 
     let amountOut = $state("");
-    let poller: Poller | undefined = undefined;
     let outcome = $state<SwapOutcome>();
 
     let labelValues = $derived({
@@ -68,39 +61,21 @@
         dex,
     });
 
-    // A swap is made from the wallet or not for as long as this shows it
-    // svelte-ignore state_referenced_locally
-    let stages = $state<Stage["kind"][]>(
-        fromWallet
-            ? ["init", "approve", "swap", "withdraw", "done"]
-            : ["get", "deposit", "notify", "swap", "withdraw", "done"],
-    );
-
     type Stage =
         | { kind: "init" }
         | { kind: "approve" }
-        | { kind: "get" }
-        | { kind: "deposit" }
-        | { kind: "notify" }
         | { kind: "swap" }
         | { kind: "withdraw" }
-        | { kind: "refund" }
         | { kind: "done" };
 
-    // svelte-ignore state_referenced_locally
-    let currentStage = $state<Stage["kind"]>(fromWallet ? "init" : "get");
+    const stages: Stage["kind"][] = ["init", "approve", "swap", "withdraw", "done"];
+
+    let currentStage = $state<Stage["kind"]>("init");
     let currentStageIndex = $derived(stages.findIndex((s) => s === currentStage));
     let error = $state(false);
 
-    onMount(() => {
-        if (fromWallet) return;
-
-        poller = new Poller(querySwapProgress, POLL_INTERVAL, POLL_INTERVAL, true);
-        return () => poller?.stop();
-    });
-
     $effect(() => {
-        if (fromWallet && swapStep !== undefined && outcome === undefined) {
+        if (swapStep !== undefined && outcome === undefined) {
             if (swapStep.step === "withdraw") {
                 amountOut = client.formatTokens(swapStep.amountOut, decimalsOut);
             }
@@ -109,74 +84,19 @@
     });
 
     $effect(() => {
-        if (fromWallet && swapResponse !== undefined && outcome === undefined) {
+        if (swapResponse !== undefined && outcome === undefined) {
             showSwapFromWalletOutcome(swapResponse);
         }
     });
 
-    function notifyFinished(o: SwapOutcome) {
-        outcome = o;
-        poller?.stop();
-    }
-
     function showSwapFromWalletOutcome(response: SwapTokensResponse) {
-        const o = swapFromWalletOutcome(response);
         if (response.kind === "success") {
             amountOut = client.formatTokens(response.amountOut, decimalsOut);
             currentStage = "done";
         } else {
             error = true;
         }
-        notifyFinished(o);
-    }
-
-    async function querySwapProgress() {
-        // Read before asking, since a swap which isn't found by a query made before swapping
-        // returned may yet be recorded
-        const refused = swapResponse !== undefined && swapResponse.kind !== "success";
-        const response = await client.tokenSwapStatus(swapId);
-
-        if (response.kind === "success") {
-            if (
-                response.amountSwapped?.kind === "ok" &&
-                response.amountSwapped?.value.kind === "ok"
-            ) {
-                amountOut = client.formatTokens(response.amountSwapped.value.value, decimalsOut);
-            }
-
-            if (response.withdrawnFromDex?.kind === "ok") {
-                const success =
-                    response.amountSwapped?.kind === "ok" &&
-                    response.amountSwapped.value.kind === "ok";
-
-                currentStage = "done";
-                notifyFinished(success ? "success" : "rateChanged");
-            } else if (response.amountSwapped?.kind === "ok") {
-                if (response.amountSwapped.value.kind === "ok") {
-                    currentStage = "withdraw";
-                } else {
-                    currentStage = "refund";
-                    stages = stages.filter((s) => (s === "withdraw" ? "refund" : s));
-                }
-            } else if (response.notifyDex?.kind == "ok") {
-                currentStage = "swap";
-            } else if (response.transfer?.kind == "ok") {
-                currentStage = "notify";
-            } else if (response.transfer?.kind == "error") {
-                error = true;
-                notifyFinished("insufficientFunds");
-            } else if (response.depositAccount?.kind == "ok") {
-                currentStage = "deposit";
-            } else if (response.depositAccount?.kind == "error") {
-                error = true;
-                notifyFinished("error");
-            }
-        } else if (refused) {
-            // Swapping returned an error and the swap was never recorded, so it was refused before
-            // it started (eg. the PIN was wrong) and there is no progress to wait for
-            error = true;
-            notifyFinished("error");
-        }
+        outcome = swapFromWalletOutcome(response);
     }
 
     function percentFromIndex(idx: number) {

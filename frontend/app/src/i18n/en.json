@@ -2065,8 +2065,6 @@
         "noEligibleNeuronsMoreInfo": "For more information on voting and governance read [this blog post](https://oc.app/blog/governance).",
         "noEligibleNeuronsPrincipalIntro": "No eligible or linked neurons found. In order to vote on proposals from within OpenChat you must first add your OpenChat principal as a hotkey to any neurons you wish to vote with.",
         "noEligibleNeuronsPrincipalLabel": "Your OpenChat principal is:",
-        "noEligibleNeuronsUserIdIntro": "No eligible or linked neurons found. In order to vote on proposals from within OpenChat you must first add your OpenChat user id as a hotkey to any neurons you wish to vote with.",
-        "noEligibleNeuronsUserIdLabel": "Your OpenChat user id is:",
         "notificationsAction": "Notifications Index Actions",
         "openchatInstallerAction": "OpenChat Installer Actions",
         "passing": {
@@ -2407,15 +2405,11 @@
         "proceedWithSwap": "The swap will only go ahead if the amount of {tokenOut} to be received is at least 98% of the amount quoted. Would you like to go ahead and attempt the swap?",
         "progress": {
             "approve": "Approve {dex} to transfer {tokenIn} from your wallet",
-            "deposit": "Transfer {amountIn} {tokenIn} to {dex}",
             "done": "Swap complete",
             "error": "Swap error - no funds have been lost",
             "failed": "Swap failed - the exchange rate has changed",
-            "get": "Get deposit account",
             "init": "Initialising swap",
             "insufficientFunds": "Swap failed - insufficient funds",
-            "notify": "Notify {dex} of deposit",
-            "refund": "Refund {amountIn} {tokenIn} from {dex}",
             "swap": "Instruct {dex} to perform the swap",
             "unknown": "Couldn't confirm whether the swap went through - check your balance before trying again",
             "withdraw": "Withdraw {amountOut} {tokenOut} from {dex}"

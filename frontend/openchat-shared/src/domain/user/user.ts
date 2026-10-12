@@ -554,9 +554,8 @@ export type InsufficientPayment = {
     kind: "insufficient_payment";
 };
 
-// A step of a swap the user makes straight from their wallet (as a user who holds their own funds
-// does), reported as the step starts, ahead of how the swap ended. The withdrawal is the DEX paying
-// the output, `amountOut`, to the wallet.
+// A step of a swap the user makes straight from their wallet, reported as the step starts, ahead of
+// how the swap ended. The withdrawal is the DEX paying the output, `amountOut`, to the wallet.
 export type SwapFromWalletStep =
     | { step: "approve" }
     | { step: "swap" }
@@ -574,31 +573,6 @@ export type SwapTokensResponse =
       }
     | PinNumberFailures
     | InternalError
-    | OCError;
-
-export type Result<T> =
-    | {
-          kind: "ok";
-          value: T;
-      }
-    | {
-          kind: "error";
-          error: string;
-      };
-
-export type TokenSwapStatusResponse =
-    | {
-          kind: "success";
-          started: bigint;
-          depositAccount?: Result<null>;
-          transfer?: Result<bigint>;
-          notifyDex?: Result<null>;
-          amountSwapped?: Result<Result<bigint>>;
-          withdrawnFromDex?: Result<bigint>;
-      }
-    | {
-          kind: "not_found";
-      }
     | OCError;
 
 export type ApproveTransferResponse = Success | OCError | InternalError;
