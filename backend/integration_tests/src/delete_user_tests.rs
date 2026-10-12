@@ -345,6 +345,28 @@ fn delete_user(env: &mut pocket_ic::PocketIc, user_auth: &UserAuth, identity_can
     );
 }
 
+// A user whose canister can't say which groups and communities they are in, here because it's
+// stopped, is still deleted once asking has failed enough times
+#[test]
+fn user_whose_canister_is_stopped_is_still_deleted() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
+    client::stop_canister(env, user.local_user_index, user.canister());
+
+    delete_user(env, &user_auth, canister_ids.identity);
+
+    // The LocalUserIndex tries every 30 seconds, then uninstalls the canister and refunds its cycles
+    wait_for_cycles_to_be_refunded(env, &user);
+
+    let current_user_response = client::user_index::current_user(env, user.principal, canister_ids.user_index, &Empty {});
+    assert!(matches!(
+        current_user_response,
+        user_index_canister::current_user::Response::UserNotFound
+    ));
+}
+
 #[test]
 fn deleted_user_removed_from_groups_and_communities() {
     let mut wrapper = ENV.deref().get();
