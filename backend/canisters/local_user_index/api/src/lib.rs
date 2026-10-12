@@ -9,9 +9,9 @@ use types::{
     AutonomousConfig, BotCommandDefinition, BotDataEncoding, BotDefinition, BotDefinitionUpdate, BotInstallationLocation,
     BotSubscriptions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChannelUserNotificationPayload, ChatId,
     ClassifyMessageRequest, CommunityId, CyclesTopUp, DiamondMembershipPlanDuration, GroupChatUserNotificationPayload,
-    MessageContentInitial, MessageId, MessageIndex, MultiUserCanisterStreakInsuranceClaim,
-    MultiUserCanisterStreakInsurancePayment, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration,
-    TimestampMillis, UniquePersonProof, User, UserId, UserNotificationPayload, UserType, is_default,
+    MessageContentInitial, MessageId, MessageIndex, Notification, NotifyChit, PhoneNumber, ReferralType, SuspensionDuration,
+    TimestampMillis, UniquePersonProof, User, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
+    UserNotificationPayload, UserType, is_default,
 };
 
 mod lifecycle;
@@ -320,8 +320,8 @@ pub struct UserDetailsFull {
 #[serde(bound = "T: Serialize + DeserializeOwned")]
 pub enum UserEvent<T = UserNotificationPayload> {
     NotifyChit(NotifyChit),
-    NotifyStreakInsurancePayment(MultiUserCanisterStreakInsurancePayment),
-    NotifyStreakInsuranceClaim(MultiUserCanisterStreakInsuranceClaim),
+    NotifyStreakInsurancePayment(UserCanisterStreakInsurancePayment),
+    NotifyStreakInsuranceClaim(UserCanisterStreakInsuranceClaim),
     UserBlocked(UserId),
     UserUnblocked(UserId),
     UserSetProfileBackground(Option<u128>),

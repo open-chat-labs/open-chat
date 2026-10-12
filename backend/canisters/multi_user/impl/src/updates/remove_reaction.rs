@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::AddRemoveReactionArgs;
 use multi_user_canister::remove_reaction::*;
-use multi_user_canister::{MultiUserCanisterEvent, ToggleReactionArgs};
+use multi_user_canister::{ToggleReactionArgs, UserCanisterEvent};
 use oc_error_codes::OCErrorCode;
 use types::{EventIndex, MessageId, MessageIndex, OCResult, Reaction, UserId};
 
@@ -88,10 +88,10 @@ pub(crate) fn toggle_reaction(
 
     // Then in the other user's copy, where the thread is identified by the id of its root message
     // since message indexes differ between the copies
-    state.send_multi_user_canister_event(
+    state.send_user_canister_event(
         my_index,
         them,
-        MultiUserCanisterEvent::ToggleReaction(Box::new(ToggleReactionArgs {
+        UserCanisterEvent::ToggleReaction(Box::new(ToggleReactionArgs {
             thread_root_message_id,
             message_id,
             reaction,

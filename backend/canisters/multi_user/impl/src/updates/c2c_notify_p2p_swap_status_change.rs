@@ -3,7 +3,7 @@ use crate::{MultiUserEventPusher, execute_update_async, mutate_state, read_state
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::SwapStatusChange as Args;
-use multi_user_canister::MultiUserCanisterEvent;
+use multi_user_canister::UserCanisterEvent;
 use types::{Chat, P2PSwapLocation, UserId};
 use user_core::updates::c2c_notify_p2p_swap_status_change::{apply_status_change, offerer_user_id};
 
@@ -70,10 +70,10 @@ async fn c2c_notify_p2p_swap_status_change_impl(args: Args) {
         if let Some((other, change)) = change {
             // The swap has ended, so there is no longer any need to mark it as expired
             state.cancel_mark_p2p_swap_expired_job(recipient_index, other, thread_root_message_index, change.message_id);
-            state.send_multi_user_canister_event(
+            state.send_user_canister_event(
                 recipient_index,
                 other,
-                MultiUserCanisterEvent::P2PSwapStatusChange(Box::new(change)),
+                UserCanisterEvent::P2PSwapStatusChange(Box::new(change)),
             );
         }
     })

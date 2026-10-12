@@ -4,8 +4,8 @@ use stable_memory_map::{KeyPrefix, StreakInsuranceKeyPrefix, with_map_mut};
 use std::collections::BTreeMap;
 use tracing::info;
 use types::{
-    ChitEvent, ChitEventType, MultiUserCanisterStreakInsuranceClaim, MultiUserCanisterStreakInsurancePayment, StreakInsurance,
-    TimestampMillis,
+    ChitEvent, ChitEventType, StreakInsurance, TimestampMillis, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment,
 };
 
 const DAY_ZERO: TimestampMillis = 1704067200000; // Mon Jan 01 2024 00:00:00 GMT+0000
@@ -61,7 +61,7 @@ impl Streak {
         self.day_to_timestamp(self.end_day + 2)
     }
 
-    pub fn claim(&mut self, now: TimestampMillis) -> Result<Option<MultiUserCanisterStreakInsuranceClaim>, TimestampMillis> {
+    pub fn claim(&mut self, now: TimestampMillis) -> Result<Option<UserCanisterStreakInsuranceClaim>, TimestampMillis> {
         if let Some(today) = self.timestamp_to_day(now)
             && today > self.end_day
         {
@@ -82,7 +82,7 @@ impl Streak {
         Err(self.next_claim())
     }
 
-    pub fn claim_via_insurance(&mut self, now: TimestampMillis) -> Option<MultiUserCanisterStreakInsuranceClaim> {
+    pub fn claim_via_insurance(&mut self, now: TimestampMillis) -> Option<UserCanisterStreakInsuranceClaim> {
         if !self.has_insurance() {
             return None;
         }
@@ -94,7 +94,7 @@ impl Streak {
             self.days_missed += 1;
             self.insurance_last_updated = now;
 
-            let claim = MultiUserCanisterStreakInsuranceClaim {
+            let claim = UserCanisterStreakInsuranceClaim {
                 // The timestamp of the end of the day for which the claim applied
                 timestamp: self.final_timestamp_of_day(today - 1),
                 streak_length: self.end_day - self.start_day,
@@ -202,7 +202,7 @@ impl Streak {
         }
     }
 
-    pub fn mark_streak_insurance_payment(&mut self, payment: MultiUserCanisterStreakInsurancePayment) {
+    pub fn mark_streak_insurance_payment(&mut self, payment: UserCanisterStreakInsurancePayment) {
         self.insurance_last_updated = payment.timestamp;
         self.days_insured = payment.new_days_insured;
         let key = StreakInsuranceKeyPrefix::new_for_payments().create_key(&self.payments_count);
@@ -384,8 +384,8 @@ mod tests {
         assert_eq!(claims_in_stable_memory(), to_bytes(&[claim]));
     }
 
-    fn payment(timestamp: TimestampMillis, new_days_insured: u8) -> MultiUserCanisterStreakInsurancePayment {
-        MultiUserCanisterStreakInsurancePayment {
+    fn payment(timestamp: TimestampMillis, new_days_insured: u8) -> UserCanisterStreakInsurancePayment {
+        UserCanisterStreakInsurancePayment {
             timestamp,
             chat_amount: 100_000_000,
             additional_days: 1,

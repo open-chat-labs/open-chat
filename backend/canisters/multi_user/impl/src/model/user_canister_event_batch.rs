@@ -13,9 +13,9 @@ use utils::canister::{
 // The direct chat events from this canister's users for users in other canisters, batched per
 // canister, so that those for every user a canister holds are sent to it together. They are always
 // sent via `c2c_user_canister_v2`, since only it can name a sender other than the calling canister.
-grouped_timer_job_batch!(MultiUserCanisterEventBatch, CanisterId, IdempotentEnvelope<Event>, 100);
+grouped_timer_job_batch!(UserCanisterEventBatch, CanisterId, IdempotentEnvelope<Event>, 100);
 
-impl TimerJobItem for MultiUserCanisterEventBatch {
+impl TimerJobItem for UserCanisterEventBatch {
     async fn process(&self) -> Result<(), Option<Milliseconds>> {
         if can_borrow_state() {
             run_regular_jobs();
@@ -53,7 +53,7 @@ impl TimerJobItem for MultiUserCanisterEventBatch {
                                     .items
                                     .iter()
                                     .cloned()
-                                    .chain(state.data.multi_user_canister_events_queue.take(&self.key))
+                                    .chain(state.data.user_canister_events_queue.take(&self.key))
                                     .collect();
 
                                 // The senders may not have been told of the migration, eg. if their
@@ -81,7 +81,7 @@ impl TimerJobItem for MultiUserCanisterEventBatch {
                                     .collect();
                                 state
                                     .data
-                                    .multi_user_canister_events_queue
+                                    .user_canister_events_queue
                                     .push_many(new_user_id.canister_id(), events);
                             });
                             return Ok(());
@@ -90,7 +90,7 @@ impl TimerJobItem for MultiUserCanisterEventBatch {
                         // and would otherwise be retried forever
                         Ok(EventRecipient::Gone) => {
                             // As are any events queued for them since this batch was taken
-                            let dropped = mutate_state(|state| state.data.multi_user_canister_events_queue.take(&self.key));
+                            let dropped = mutate_state(|state| state.data.user_canister_events_queue.take(&self.key));
                             let count = self.items.len() + dropped.len();
                             info!(canister_id = %self.key, count, "Dropped events for a user who is gone");
                             return Ok(());

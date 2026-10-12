@@ -5,7 +5,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::{DeleteUndeleteMessagesArgs, Reader};
 use multi_user_canister::undelete_messages::{Response::*, *};
-use multi_user_canister::{DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, MultiUserCanisterEvent};
+use multi_user_canister::{DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, UserCanisterEvent};
 use oc_error_codes::OCErrorCode;
 use types::{EventIndex, OCResult, UserIdAndPrincipal};
 
@@ -79,10 +79,10 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult<Succ
     // Then in the other user's copy, where the thread is identified by the id of its root message
     // since message indexes differ between the copies
     if !undeleted.is_empty() {
-        state.send_multi_user_canister_event(
+        state.send_user_canister_event(
             my_index,
             args.user_id,
-            MultiUserCanisterEvent::UndeleteMessages(Box::new(C2CDeleteUndeleteMessagesArgs {
+            UserCanisterEvent::UndeleteMessages(Box::new(C2CDeleteUndeleteMessagesArgs {
                 thread_root_message_id,
                 message_ids: undeleted,
             })),

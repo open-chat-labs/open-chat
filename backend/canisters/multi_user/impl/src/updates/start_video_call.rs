@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use constants::HOUR_IN_MS;
 use ic_cdk::update;
 use multi_user_canister::start_video_call_v2::*;
-use multi_user_canister::{MultiUserCanisterEvent, StartVideoCallArgs};
+use multi_user_canister::{StartVideoCallArgs, UserCanisterEvent};
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{CallKind, MessageId, MessageIndex, Milliseconds, OCResult, UserId};
@@ -57,11 +57,7 @@ fn start_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         max_duration: args.max_duration,
         audio_only: call_kind.audio_only(),
     };
-    state.send_multi_user_canister_event(
-        user_index,
-        sender,
-        MultiUserCanisterEvent::StartVideoCall(Box::new(start_args)),
-    );
+    state.send_user_canister_event(user_index, sender, UserCanisterEvent::StartVideoCall(Box::new(start_args)));
     Ok(())
 }
 

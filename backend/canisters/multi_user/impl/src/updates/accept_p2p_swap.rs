@@ -6,7 +6,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ledger_utils::{Payer, deposit_to_accept_p2p_swap};
 use multi_user_canister::accept_p2p_swap::{Response::*, *};
-use multi_user_canister::{MultiUserCanisterEvent, P2PSwapStatusChange};
+use multi_user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 use types::{AcceptSwapSuccess, Achievement, CanisterId, OCResult, P2PSwapStatus, TimestampMillis, UserId};
 use user_core::updates::accept_p2p_swap::{Reserved, deposit_failed, deposited, prepare};
 
@@ -61,10 +61,10 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
                     })
                     .flatten();
                 if let Some(accepted) = accepted {
-                    state.send_multi_user_canister_event(
+                    state.send_user_canister_event(
                         my_index,
                         args.user_id,
-                        MultiUserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
+                        UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
                             thread_root_message_id: reserved.thread_root_message_id,
                             message_id: args.message_id,
                             status: P2PSwapStatus::Accepted(accepted),

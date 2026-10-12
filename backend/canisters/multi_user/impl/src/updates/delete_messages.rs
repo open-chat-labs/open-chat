@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use chat_events::DeleteUndeleteMessagesArgs;
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
 use multi_user_canister::delete_messages::*;
-use multi_user_canister::{DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, MultiUserCanisterEvent};
+use multi_user_canister::{DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, UserCanisterEvent};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, ChatId, EventIndex, MessageId, MessageIndex, OCResult};
 
@@ -68,10 +68,10 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     // Only the caller's own messages are deleted in the other user's copy, where the thread is
     // identified by the id of its root message since message indexes differ between the copies
     if !my_messages.is_empty() {
-        state.send_multi_user_canister_event(
+        state.send_user_canister_event(
             my_index,
             args.user_id,
-            MultiUserCanisterEvent::DeleteMessages(Box::new(C2CDeleteUndeleteMessagesArgs {
+            UserCanisterEvent::DeleteMessages(Box::new(C2CDeleteUndeleteMessagesArgs {
                 thread_root_message_id,
                 message_ids: my_messages,
             })),
