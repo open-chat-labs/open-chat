@@ -187,24 +187,29 @@ describe("UserIndexClient.getUsers with migrated users", () => {
         expect(resp.deletedUserIds).toEqual(new Set([LATEST, OLD]));
     });
 
-    test("the current user returned under a different id isn't taken to have been migrated", async () => {
-        setup();
-        cachedCurrentUser = { ...anonymousUser(), userId: ME_DELETED };
-        respond = () => ({
-            currentUser: currentUserSummary(ME),
-            deletedUserIds: new Set([ME_DELETED]),
-        });
+    test.each([
+        ["reported deleted", new Set([ME_DELETED])],
+        ["not reported deleted", new Set<string>()],
+    ])(
+        "the current user returned under a different id, the old one %s, isn't taken to have been migrated",
+        async (_, deletedUserIds) => {
+            setup();
+            cachedCurrentUser = { ...anonymousUser(), userId: ME_DELETED };
+            respond = () => ({
+                currentUser: currentUserSummary(ME),
+                deletedUserIds,
+            });
 
-        const resp = await client.getUsers(args(ME_DELETED, ME), false);
+            const resp = await client.getUsers(args(ME_DELETED, ME), false);
 
-        // The current user is cached before getUsers returns, for the client to restart under
-        expect(cachedCurrentUser?.userId).toEqual(ME);
-        expect(resp.users.map((u) => u.userId)).toEqual([ME]);
-        expect(resp.deletedUserIds).toEqual(new Set([ME_DELETED]));
-        expect(resp.migratedUserIds).toBeUndefined();
-        await flush();
-        expect(stores.get("migratedUserIds")?.size ?? 0).toBe(0);
-    });
+            // The current user is cached before getUsers returns, for the client to restart under
+            expect(cachedCurrentUser?.userId).toEqual(ME);
+            expect(resp.users.map((u) => u.userId)).toEqual([ME]);
+            expect(resp.migratedUserIds).toBeUndefined();
+            await flush();
+            expect(stores.get("migratedUserIds")?.size ?? 0).toBe(0);
+        },
+    );
 
     test("getCurrentUser under a new account forgets the old one's chat state before returning it", async () => {
         setup();

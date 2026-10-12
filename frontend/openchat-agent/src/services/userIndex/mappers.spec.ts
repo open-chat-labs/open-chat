@@ -80,7 +80,11 @@ test("a current user summary comes with the previous ids, which replace the cach
     );
     expect(summary.previousUserIds).toEqual([previous]);
 
-    const cached = { ...anonymousUser(), userId: latest };
+    const cached = {
+        ...anonymousUser(),
+        userId: latest,
+        previousUserIds: ["renrk-eyaaa-aaaaa-aaada-cai"],
+    };
     expect(updateCreatedUser(cached, summary)).toMatchObject({
         userId: latest,
         previousUserIds: [previous],
