@@ -958,20 +958,13 @@ impl Data {
         }
     }
 
-    // Returns whether the member's lapsed status changed
-    pub fn update_lapsed(
-        &mut self,
-        user_id: UserId,
-        channel_id: Option<ChannelId>,
-        lapsed: bool,
-        now: TimestampMillis,
-    ) -> bool {
+    pub fn update_lapsed(&mut self, user_id: UserId, channel_id: Option<ChannelId>, lapsed: bool, now: TimestampMillis) {
         if let Some(channel_id) = channel_id {
-            self.channels
-                .get_mut(&channel_id)
-                .is_some_and(|channel| channel.chat.members.update_lapsed(user_id, lapsed, now))
+            if let Some(channel) = self.channels.get_mut(&channel_id) {
+                channel.chat.members.update_lapsed(user_id, lapsed, now);
+            }
         } else {
-            self.members.update_lapsed(user_id, lapsed, now)
+            self.members.update_lapsed(user_id, lapsed, now);
         }
     }
 
