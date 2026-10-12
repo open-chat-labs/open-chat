@@ -285,10 +285,9 @@ pub mod happy_path {
         ));
     }
 
-    // Created by the environment's platform operator, since only platform operators can call
-    // `create_multi_user_canister`
     pub fn create_multi_user_canister(
         env: &mut PocketIc,
+        platform_operator: Principal,
         canister_ids: &CanisterIds,
         local_user_index_canister_id: CanisterId,
     ) -> CanisterId {
@@ -300,7 +299,7 @@ pub mod happy_path {
 
         let response = super::create_multi_user_canister(
             env,
-            canister_ids.platform_operator,
+            platform_operator,
             canister_ids.user_index,
             &user_index_canister::create_multi_user_canister::Args {
                 local_user_index_canister_id,

@@ -40,6 +40,7 @@ fn csam_pipeline_detection_triggers_auto_sanction() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -150,6 +151,7 @@ fn report_then_upheld_as_csam_verdict_applies_sanction() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -377,6 +379,7 @@ fn repeat_reports_of_same_message_attach_to_a_single_report() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -450,6 +453,7 @@ fn escalated_media_report_upheld_as_csam_vaults_evidence() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -674,6 +678,7 @@ fn proactive_detection_upheld_downgrades_suspension() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -744,6 +749,7 @@ fn moderation_referral_creates_report_and_upheld_verdict_sanctions() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -845,6 +851,7 @@ fn csam_asserted_report_applies_auto_sanction_and_dismissal_reverses() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -941,6 +948,7 @@ fn csam_asserted_media_report_quarantines_immediately() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -1137,6 +1145,7 @@ fn shared_blob_evidence_survives_dismissal_of_a_sibling_report() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -1290,6 +1299,7 @@ fn media_report_dismissal_releases_the_vault() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -1420,6 +1430,7 @@ fn timed_suspension_expiry_never_lifts_a_later_csam_suspension() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -1487,6 +1498,7 @@ fn a_moderator_can_resolve_their_own_csam_assertion_only_by_upholding_it_as_csam
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -1578,6 +1590,7 @@ fn moderator_cannot_resolve_a_report_against_their_own_message() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -1713,6 +1726,7 @@ fn a_moderator_cannot_unsuspend_themselves() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -1790,6 +1804,7 @@ fn upheld_verdict_does_not_downgrade_while_another_sanction_stands() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -1890,6 +1905,7 @@ fn accept_terms_records_version_and_never_downgrades() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -2014,6 +2030,7 @@ fn media_scan_match_triggers_auto_sanction() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -2187,6 +2204,7 @@ fn media_scan_scope_and_kill_switch() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -2628,6 +2646,7 @@ fn blocked_reupload_of_pending_content_reports_and_dismissal_reverses() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -2730,6 +2749,7 @@ fn pending_quarantine_of_a_transcode_refuses_its_declared_source_without_sanctio
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -2792,6 +2812,7 @@ fn verdict_on_a_transcode_denylists_its_declared_source_as_derived() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -2866,6 +2887,7 @@ fn vault_ops_reject_attempt_report_indexes() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -2917,6 +2939,7 @@ fn upheld_original_registers_attempts_and_post_verdict_attempts_born_resolved() 
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -2988,6 +3011,7 @@ fn repeat_attempts_tally_inside_window_and_report_outside_it() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -3054,6 +3078,7 @@ fn spoofed_hashes_cannot_bypass_the_upload_gate() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -3083,6 +3108,7 @@ fn flag_word_merges_across_detector_race() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -3249,6 +3275,7 @@ fn verdict_redelivery_noops_and_ack_is_clamped() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -3358,6 +3385,7 @@ fn stalled_scan_pipeline_alerts_and_recovers() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -3455,6 +3483,7 @@ fn unrelated_dismissal_never_lifts_an_attempt_sanction() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -3583,6 +3612,7 @@ fn reporter_asserted_pin_blocks_without_sanction() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -3656,6 +3686,7 @@ fn repeat_after_uphold_is_state_derived() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -3709,6 +3740,7 @@ fn overwritten_sanction_record_never_strands_the_attempter() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -3795,6 +3827,7 @@ fn post_verdict_forward_is_still_reported() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -3892,6 +3925,7 @@ fn machine_detection_in_user_report_still_sanctions_attempts() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -4031,6 +4065,7 @@ fn unsanctioned_attempt_notices_are_throttled() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -4104,6 +4139,7 @@ fn attempt_reports_never_escalate_an_upheld_downgrade() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -4153,6 +4189,7 @@ fn dismissal_never_lifts_a_manual_suspension() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -4209,6 +4246,7 @@ fn upheld_never_downgrades_a_manual_suspension() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -4266,6 +4304,7 @@ fn attempt_escalates_a_timed_manual_suspension_to_indefinite() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -4331,6 +4370,7 @@ fn post_verdict_reupload_of_same_file_id_is_still_reported() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -4416,6 +4456,7 @@ fn sender_dismissal_never_lifts_a_manual_suspension() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -4477,6 +4518,7 @@ fn sender_upheld_never_downgrades_a_manual_suspension() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -4540,6 +4582,7 @@ fn resolved_attempt_reports_remain_contestable() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -4617,6 +4660,7 @@ fn claim_release_with_retained_pin_clears_sightings() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -4778,9 +4822,10 @@ fn in_flight_detection_suspension_never_overwrites_an_upheld_downgrade() {
         env,
         canister_ids,
         controller,
+        platform_operator,
     } = wrapper.env();
 
-    let test_data = init_test_data_with_sender_alone(env, canister_ids, *controller);
+    let test_data = init_test_data_with_sender_alone(env, canister_ids, *controller, *platform_operator);
 
     let message_id = random_from_u128();
     let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
@@ -4845,9 +4890,10 @@ fn in_flight_detection_suspension_never_lands_after_a_dismissal() {
         env,
         canister_ids,
         controller,
+        platform_operator,
     } = wrapper.env();
 
-    let test_data = init_test_data_with_sender_alone(env, canister_ids, *controller);
+    let test_data = init_test_data_with_sender_alone(env, canister_ids, *controller, *platform_operator);
 
     let message_id = random_from_u128();
     let message_text = format!("{TEST_MESSAGE_TEXT} {}", random_string());
@@ -5069,6 +5115,7 @@ fn legal_hold_blocks_destruction_of_vaulted_evidence() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -5191,6 +5238,7 @@ fn clearing_a_hold_which_would_release_evidence_requires_two_operators() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -5326,6 +5374,7 @@ fn a_holds_protection_extends_to_sibling_reports_sharing_the_blob() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -5546,6 +5595,7 @@ fn protected_action_alerts_reach_operators_without_a_moderation_channel() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -5623,6 +5673,7 @@ fn invalid_protected_actions_are_rejected_at_proposal_time() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -5702,6 +5753,7 @@ fn a_second_proposal_of_the_same_kind_supersedes_the_first() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -5877,20 +5929,27 @@ fn get_authority_reports(env: &PocketIc, test_data: &TestData, canister_ids: &Ca
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
-    init_test_data_with_options(env, canister_ids, controller, false)
+    init_test_data_with_options(env, canister_ids, controller, None)
 }
 
 // The sender is given a MultiUser canister of their own, so that it can be stopped without stopping
 // anyone else's
-fn init_test_data_with_sender_alone(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
-    init_test_data_with_options(env, canister_ids, controller, true)
+fn init_test_data_with_sender_alone(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    platform_operator: Principal,
+) -> TestData {
+    init_test_data_with_options(env, canister_ids, controller, Some(platform_operator))
 }
 
+// When given a platform operator, the sender is put in a MultiUser canister of their own, which the
+// operator creates
 fn init_test_data_with_options(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
     controller: Principal,
-    sender_alone: bool,
+    sender_alone_by: Option<Principal>,
 ) -> TestData {
     // The moderator doubles as the platform operator which configures the moderation channel
     // and the API key
@@ -5899,8 +5958,8 @@ fn init_test_data_with_options(
     let group_owner = client::register_diamond_user(env, canister_ids, controller);
     let reporter = client::register_user(env, canister_ids);
     // Registered last, since a user registered after them would join a canister of their own
-    let sender = if sender_alone {
-        client::register_user_in_new_multi_user_canister(env, canister_ids)
+    let sender = if let Some(platform_operator) = sender_alone_by {
+        client::register_user_in_new_multi_user_canister(env, canister_ids, platform_operator)
     } else {
         client::register_user(env, canister_ids)
     };
@@ -6148,6 +6207,7 @@ fn automated_authority_filing_files_and_records_the_reference() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -6337,6 +6397,7 @@ fn automated_filing_failure_clears_the_attempt_and_surfaces_the_contingency() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);
@@ -6435,6 +6496,7 @@ fn suspended_account_loses_all_privileged_authority() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let test_data = init_test_data(env, canister_ids, *controller);

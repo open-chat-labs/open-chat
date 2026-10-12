@@ -202,9 +202,14 @@ pub fn register_user_in_multi_user_canister_on(
 
 // Registers the user in a MultiUser canister created for them, which holds no one else, so that it can
 // be stopped, eg. to fail calls to it, without affecting other users
-pub fn register_user_in_new_multi_user_canister(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
+pub fn register_user_in_new_multi_user_canister(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    platform_operator: Principal,
+) -> User {
     let local_user_index = user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id = user_index::happy_path::create_multi_user_canister(env, canister_ids, local_user_index);
+    let canister_id =
+        user_index::happy_path::create_multi_user_canister(env, platform_operator, canister_ids, local_user_index);
     register_user_in_multi_user_canister_on(env, canister_ids, local_user_index, canister_id, None)
 }
 

@@ -35,6 +35,7 @@ fn user_canisters_survive_upgrade_from_prod() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let prod_version = BuildVersion::new(0, 0, 1);

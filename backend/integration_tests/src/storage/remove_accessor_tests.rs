@@ -44,6 +44,7 @@ fn deleting_a_group_removes_the_files_sent_in_it() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_diamond_user(env, canister_ids, *controller);
@@ -89,6 +90,7 @@ fn deleting_a_community_removes_the_files_sent_in_it_and_in_the_groups_imported_
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_diamond_user(env, canister_ids, *controller);

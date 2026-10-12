@@ -13,11 +13,16 @@ use types::ChatEvent;
 #[test_case(5)]
 fn retries_after_failures(failures: usize) {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        platform_operator,
+        ..
+    } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
     // In a canister of their own, so that stopping it doesn't stop user1's
-    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids);
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
     let message_id = random_from_u128();
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));

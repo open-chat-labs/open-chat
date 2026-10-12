@@ -98,6 +98,7 @@ fn chit_streak_maintained_if_insured(days_insured: u8) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_user(env, canister_ids);
@@ -197,6 +198,7 @@ fn streak_insurance_can_cover_multiple_days_missed_in_a_row(days_insured: u8) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_user(env, canister_ids);
@@ -236,6 +238,7 @@ fn streak_insurance_updates_returned_in_summary_updates(final_day_manually_claim
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_user(env, canister_ids);
@@ -307,6 +310,7 @@ fn pay_for_premium_item_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_user(env, canister_ids);
@@ -345,6 +349,7 @@ fn streak_insurance_can_be_paid_from_approved_account() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_user(env, canister_ids);
@@ -405,6 +410,7 @@ fn streak_insurance_from_account_without_allowance_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_user(env, canister_ids);

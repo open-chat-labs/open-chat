@@ -31,6 +31,7 @@ fn daily_puzzle_canister_serves_todays_puzzle_and_guards_operator_calls() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let operator = client::register_user(env, canister_ids);

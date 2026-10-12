@@ -17,6 +17,7 @@ fn chunk_store_holds_only_the_current_wasms_once_upgrades_complete() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
@@ -72,6 +73,7 @@ fn missing_chunks_are_uploaded_when_the_local_user_index_is_upgraded() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);

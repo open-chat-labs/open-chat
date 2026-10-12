@@ -21,6 +21,7 @@ fn swap_from_approved_account_pulls_input_from_that_account() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_user_in_user_canister(env, canister_ids);
@@ -67,6 +68,7 @@ fn swap_from_account_without_allowance_fails() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_user_in_user_canister(env, canister_ids);

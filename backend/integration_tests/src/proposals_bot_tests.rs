@@ -22,6 +22,7 @@ fn proposal_fee_is_only_taken_from_the_callers_own_wallet() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let alice = client::register_user_in_user_canister(env, canister_ids);

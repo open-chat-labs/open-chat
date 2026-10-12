@@ -25,6 +25,7 @@ fn react_to_message_and_check_activity_feed(chat_type: ChatType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
@@ -62,6 +63,7 @@ fn reacting_to_own_message_does_not_appear_in_other_users_activity_feed() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { them, us, .. } = init_test_data(env, canister_ids, *controller, ChatType::Direct);
@@ -97,6 +99,7 @@ fn mention_user_and_check_activity_feed(chat_type: ChatType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
@@ -171,6 +174,7 @@ fn tip_message_and_check_activity_feed(chat_type: ChatType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
@@ -219,6 +223,7 @@ fn send_crypto_message_and_check_activity_feed(chat_type: ChatType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
@@ -275,6 +280,7 @@ fn quote_reply_to_message_and_check_activity_feed(chat_type: ChatType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
@@ -328,6 +334,7 @@ fn vote_on_poll_and_check_activity_feed(chat_type: ChatType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
@@ -376,6 +383,7 @@ fn accept_p2p_swap_and_check_activity_feed(chat_type: ChatType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
@@ -442,6 +450,7 @@ fn mark_activity_feed_read_and_check_user_updates() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, ChatType::Group);
@@ -485,6 +494,7 @@ fn multiple_events_on_one_message_and_check_activity_feed(chat_type: ChatType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData { them, us, chat } = init_test_data(env, canister_ids, *controller, chat_type);
