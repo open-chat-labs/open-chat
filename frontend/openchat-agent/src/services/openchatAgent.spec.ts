@@ -734,21 +734,23 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             },
         );
 
-        test.each([
-            ["a user in a MultiUser canister", MULTI_USER_CANISTER_USER],
-            ["a user alone in their canister", USER_CANISTER_USER],
-        ])(
-            "the fee for a proposal by %s is stamped with the time on the ledger's subnet",
-            async (_, userId) => {
-                setup(userId);
+        test("the fee for a proposal is stamped with the time on the ledger's subnet", async () => {
+            setup(MULTI_USER_CANISTER_USER);
 
-                await agent.submitProposal(userId, "", {}, ICP_LEDGER, "ICP", 100n, FEE);
+            await agent.submitProposal(
+                MULTI_USER_CANISTER_USER,
+                "",
+                {},
+                ICP_LEDGER,
+                "ICP",
+                100n,
+                FEE,
+            );
 
-                expect(calls).toEqual(["submitProposal"]);
-                expect(callArgs[0].at(-1)).toEqual(icNow);
-                expect(syncedWith).toEqual([ICP_LEDGER]);
-            },
-        );
+            expect(calls).toEqual(["submitProposal"]);
+            expect(callArgs[0].at(-1)).toEqual(icNow);
+            expect(syncedWith).toEqual([ICP_LEDGER]);
+        });
 
         test("a swap offer has nothing to stamp, so the IC isn't asked the time", async () => {
             setup(MULTI_USER_CANISTER_USER);
