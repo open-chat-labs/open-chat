@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the one-off which checked recurring gates again for lapsed migrated members, now that it has run ([#9915](https://github.com/open-chat-labs/open-chat/pull/9915))
+
 ## [[2.0.2134](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2134-community)] - 2026-10-12
 
 ### Added

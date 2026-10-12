@@ -133,7 +133,6 @@ fn run() {
                         channel_id: member.channel_id,
                         member_expires: member.expires,
                         original_gate_expiry: gate_expiry,
-                        unlapse_only: false,
                     });
                 }
                 AccessGateExpiryBehaviour::Lapse => {

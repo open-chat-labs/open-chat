@@ -581,14 +581,13 @@ impl GroupMembers {
         }
     }
 
-    // Returns whether the member's lapsed status changed
-    pub fn update_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) -> bool {
+    pub fn update_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) {
         if !self.member_ids.contains(&user_id) {
-            return false;
+            return;
         }
         if lapsed && self.owners.contains(&user_id) {
             // Owners can't lapse
-            return false;
+            return;
         }
 
         let updated = if lapsed { self.lapsed.insert(user_id) } else { self.lapsed.remove(&user_id) };
@@ -602,7 +601,6 @@ impl GroupMembers {
                 now,
             );
         }
-        updated
     }
 
     pub fn owners(&self) -> &BTreeSet<UserId> {
