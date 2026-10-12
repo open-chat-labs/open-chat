@@ -185,7 +185,7 @@ describe("LedgerClient.withdraw", () => {
     const RECIPIENT = Principal.fromText("rno2w-sqaaa-aaaaa-aaacq-cai");
     const RECIPIENT_SUBACCOUNT = new Uint8Array(32).fill(5);
     const RECIPIENT_ACCOUNT_ID = AccountIdentifier.fromPrincipal({ principal: RECIPIENT });
-    // "OC_SEND", as the User canister's `withdraw_crypto_v2` memos a withdrawal
+    // "OC_SEND", the memo a withdrawal is sent with
     const MEMO = new TextEncoder().encode("OC_SEND");
     const MEMO_NUMBER = 0x4f435f53454e44n;
 

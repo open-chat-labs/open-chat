@@ -1,4 +1,3 @@
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use ts_export::ts_export;
 use types::{CanisterId, ExchangeId, PinNumberWrapper, TokenInfo, icrc1};
@@ -12,9 +11,7 @@ pub struct Args {
     pub input_amount: u128,
     pub exchange_args: ExchangeArgs,
     pub min_output_amount: u128,
-    // The account to swap from, defaulting to this canister's own. Any other account must have
-    // approved this canister as spender for `input_amount` plus the transfer fee, since the input is
-    // then pulled via ICRC-2 into this canister's own account before the swap goes ahead.
+    // Unset in the swaps the MultiUser canister records, which are made from the user's own wallet
     #[serde(default)]
     pub from_account: Option<icrc1::Account>,
     pub pin: Option<PinNumberWrapper>,
@@ -70,17 +67,4 @@ pub struct TacoArgs {
     /// account TACO's `checkReceive` validates the user's ICRC1 transfer against
     /// (production: qbnpl-laaaa-aaaan-q52aq-cai). Distinct from swap_canister_id.
     pub treasury_canister_id: CanisterId,
-}
-
-#[ts_export(user, swap_tokens)]
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success(SuccessResult),
-    Error(OCError),
-}
-
-#[ts_export(user, swap_tokens)]
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub amount_out: u128,
 }

@@ -7,7 +7,6 @@
         OpenChat,
         cryptoBalanceStore,
         cryptoLookup,
-        currentUserIdStore,
         streakInsuranceStore,
         walletApprovalFee,
     } from "@client";
@@ -41,11 +40,9 @@
     let refreshingBalance = $state(false);
     let priceE8s = $derived(client.streakInsurancePrice(currentDaysInsured, additionalDays));
     let price = $derived(priceE8s / 100_000_000n);
-    // The price is burned, which the ledger charges no fee for, but a user who holds their own funds
-    // pays for the approval they make before the price is pulled from their wallet
-    let approvalFee = $derived(
-        walletApprovalFee($currentUserIdStore, tokenDetails.symbol?.transferFee ?? 0n, false),
-    );
+    // The price is burned, which the ledger charges no fee for, but the user pays for the approval
+    // they make before the price is pulled from their wallet
+    let approvalFee = $derived(walletApprovalFee(tokenDetails.symbol?.transferFee ?? 0n));
     let remainingBalance = $derived(
         priceE8s > 0n ? tokenDetails.balance - priceE8s - approvalFee : tokenDetails.balance,
     );

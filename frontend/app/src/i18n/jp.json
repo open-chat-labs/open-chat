@@ -2021,8 +2021,6 @@
         "noEligibleNeuronsMoreInfo": "投票とガバナンスの詳細については、<a target=\"_blank\" href=\"https://oc.app/blog/governance\">このブログ投稿を</a>参照してください。",
         "noEligibleNeuronsPrincipalIntro": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat プリンシパルをホットキーとして投票したいニューロンに追加する必要があります。",
         "noEligibleNeuronsPrincipalLabel": "あなたの OpenChat プリンシパルは次のとおりです:",
-        "noEligibleNeuronsUserIdIntro": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat ユーザー ID をホットキーとして投票したいニューロンに追加する必要があります。",
-        "noEligibleNeuronsUserIdLabel": "あなたの OpenChat ユーザー ID は次のとおりです:",
         "notificationsAction": "通知インデックス アクション",
         "openchatInstallerAction": "OpenChatインストーラーアクション",
         "passing": {
@@ -2382,14 +2380,10 @@
         "noQuotes": "{tokenIn} をスワップするための見積もりを提供した DEX はありませんでした",
         "proceedWithSwap": "受け取る {tokenOut} の量が見積額の 98% 以上である場合にのみ、スワップが実行されます。スワップを試行しますか?",
         "progress": {
-            "deposit": "{amountIn} {tokenIn} を {dex} に転送します",
             "done": "交換完了",
             "error": "スワップエラー - 資金は失われていません",
             "failed": "スワップに失敗しました - 為替レートが変更されました",
-            "get": "預金口座を取得する",
             "insufficientFunds": "スワップ失敗 - 資金不足",
-            "notify": "{dex} に入金を通知する",
-            "refund": "{amountIn} から {tokenIn} を払い戻します",
             "swap": "{dex} にスワップを実行するように指示します",
             "withdraw": "{amountOut} {tokenOut} を {dex} から出金する"
         },

@@ -22,7 +22,6 @@ fn main() {
     generate_ts_method!(user, public_profile);
     generate_ts_method!(user, search_messages);
     generate_ts_method!(user, saved_crypto_accounts);
-    generate_ts_method!(user, token_swap_status);
     generate_ts_method!(user, token_swaps);
     generate_ts_method!(user, unfinished_token_swaps);
     generate_ts_method!(user, updates);
@@ -30,7 +29,6 @@ fn main() {
     generate_ts_method!(user, accept_p2p_swap);
     generate_ts_method!(user, add_hot_group_exclusions);
     generate_ts_method!(user, add_reaction);
-    generate_ts_method!(user, approve_transfer);
     generate_ts_method!(user, archive_unarchive_chats);
     generate_ts_method!(user, block_user);
     generate_ts_method!(user, cancel_message_reminder);
@@ -63,8 +61,6 @@ fn main() {
     generate_ts_method!(user, remove_reaction);
     generate_ts_method!(user, report_message);
     generate_ts_method!(user, save_crypto_account);
-    generate_ts_method!(user, send_message_with_transfer_to_channel);
-    generate_ts_method!(user, send_message_with_transfer_to_group);
     generate_ts_method!(user, send_message_v2);
     generate_ts_method!(user, set_avatar);
     generate_ts_method!(user, set_bio);
@@ -73,7 +69,6 @@ fn main() {
     generate_ts_method!(user, set_message_reminder_v2);
     generate_ts_method!(user, set_pin_number);
     generate_ts_method!(user, set_profile_background);
-    generate_ts_method!(user, swap_tokens);
     generate_ts_method!(user, tip_message);
     generate_ts_method!(user, unblock_user);
     generate_ts_method!(user, undelete_messages);
@@ -82,5 +77,4 @@ fn main() {
     generate_ts_method!(user, update_bot);
     generate_ts_method!(user, update_btc_balance);
     generate_ts_method!(user, update_chat_settings);
-    generate_ts_method!(user, withdraw_crypto_v2);
 }

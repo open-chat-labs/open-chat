@@ -16,8 +16,8 @@ export type ExchangeTokenSwapArgs =
     | { dex: "icpswap"; swapCanisterId: string; zeroForOne: boolean }
     | { dex: "taco"; swapCanisterId: string; treasuryCanisterId: string };
 
-// A swap the user started straight from their own wallet (as a user who holds their own funds) which
-// was never marked as completed, eg. because they left part way through
+// A swap the user started straight from their own wallet which was never marked as completed, eg.
+// because they left part way through
 export type UnfinishedTokenSwap = {
     swapId: bigint;
     started: bigint;

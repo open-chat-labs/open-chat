@@ -2021,8 +2021,6 @@
         "noEligibleNeuronsMoreInfo": "Pour plus d&#39;informations sur le vote et la gouvernance, lisez <a target=\"_blank\" href=\"https://oc.app/blog/governance\">cet article de blog</a> .",
         "noEligibleNeuronsPrincipalIntro": "Aucun neurone éligible ou lié trouvé. Afin de voter sur les propositions depuis OpenChat, vous devez d&#39;abord ajouter votre principal OpenChat comme raccourci clavier pour tous les neurones avec lesquels vous souhaitez voter.",
         "noEligibleNeuronsPrincipalLabel": "Votre principal OpenChat est :",
-        "noEligibleNeuronsUserIdIntro": "Aucun neurone éligible ou lié trouvé. Afin de voter sur les propositions depuis OpenChat, vous devez d&#39;abord ajouter votre identifiant d&#39;utilisateur OpenChat comme raccourci clavier pour tous les neurones avec lesquels vous souhaitez voter.",
-        "noEligibleNeuronsUserIdLabel": "Votre identifiant OpenChat est :",
         "notificationsAction": "Notifications Index Actions",
         "openchatInstallerAction": "Actions de l'installateur OpenChat",
         "passing": {
@@ -2382,14 +2380,10 @@
         "noQuotes": "Aucun DEX n'a fourni de devis pour échanger {tokenIn}",
         "proceedWithSwap": "L'échange n'aura lieu que si le montant de {tokenOut} à recevoir est au moins égal à 98 % du montant indiqué. Souhaitez-vous tenter l'échange ?",
         "progress": {
-            "deposit": "Transférer {amountIn} {tokenIn} vers {dex}",
             "done": "Échange terminé",
             "error": "Erreur d'échange - aucun fonds n'a été perdu",
             "failed": "Le swap a échoué : le taux de change a changé",
-            "get": "Obtenir un compte de dépôt",
             "insufficientFunds": "Échec du swap - fonds insuffisants",
-            "notify": "Informer {dex} du dépôt",
-            "refund": "Rembourser {amountIn} {tokenIn} à partir de {dex}",
             "swap": "Demandez à {dex} d'effectuer l'échange",
             "withdraw": "Retirer {amountOut} {tokenOut} de {dex}"
         },

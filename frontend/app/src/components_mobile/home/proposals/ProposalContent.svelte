@@ -20,10 +20,9 @@
         type ProposalContent,
         ProposalDecisionStatus,
         type RegisterProposalVoteResponse,
-        currentUserIdStore,
         proposalTopicsStore,
     } from "@client";
-    import { ErrorCode, isMultiUserCanisterUser, type ReadonlyMap } from "@shared";
+    import { ErrorCode, type ReadonlyMap } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
@@ -126,23 +125,8 @@
 
     let showDetails = $state(false);
 
-    // Users in a MultiUser canister vote with the neurons hot-keyed to their own principal,
-    // everyone else with those hot-keyed to their User canister, ie. their user id
-    let votingWithPrincipal = $derived(isMultiUserCanisterUser($currentUserIdStore));
-    let votingHotkey = $derived(
-        votingWithPrincipal ? client.OcIdentityPrincipal : $currentUserIdStore,
-    );
-
-    let noEligibleNeuronsIntro = $derived(
-        votingWithPrincipal
-            ? $_("proposal.noEligibleNeuronsPrincipalIntro")
-            : $_("proposal.noEligibleNeuronsUserIdIntro"),
-    );
-    let votingHotkeyLabel = $derived(
-        votingWithPrincipal
-            ? i18nKey("proposal.noEligibleNeuronsPrincipalLabel")
-            : i18nKey("proposal.noEligibleNeuronsUserIdLabel"),
-    );
+    // Users vote with the neurons hot-keyed to their own principal
+    let votingHotkey = $derived(client.OcIdentityPrincipal);
 
     function copyVotingHotkey() {
         copyToClipboard(votingHotkey).then((success) => {
@@ -536,11 +520,11 @@
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
             </Title>
             <Body colour="textSecondary">
-                <Markdown inline={true} text={noEligibleNeuronsIntro} />
+                <Markdown inline={true} text={$_("proposal.noEligibleNeuronsPrincipalIntro")} />
             </Body>
             <Column gap="xs">
                 <Body colour="textSecondary">
-                    <Translatable resourceKey={votingHotkeyLabel} />
+                    <Translatable resourceKey={i18nKey("proposal.noEligibleNeuronsPrincipalLabel")} />
                 </Body>
                 <Row gap="sm" crossAxisAlignment="center">
                     <Body>{votingHotkey}</Body>
