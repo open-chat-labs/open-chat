@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Retry creating a nervous system's proposals group if it fails ([#9901](https://github.com/open-chat-labs/open-chat/pull/9901))
+
 ## [[2.0.2107](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2107-proposals_bot)] - 2026-10-07
 
 ### Changed

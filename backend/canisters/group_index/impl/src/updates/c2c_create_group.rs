@@ -62,7 +62,12 @@ async fn c2c_create_group(args: Args) -> Response {
                 local_user_index_canister_id: result.local_user_index_canister_id,
             })
         }
-        Ok(local_user_index_canister::c2c_create_group::Response::Error(error)) => Error(error),
+        Ok(local_user_index_canister::c2c_create_group::Response::Error(error)) => {
+            if args.is_public {
+                mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
+            }
+            Error(error)
+        }
         Err(error) => {
             if args.is_public {
                 mutate_state(|state| state.data.public_group_and_community_names.unreserve_name(&args.name));
@@ -99,19 +104,20 @@ struct PrepareResult {
 }
 
 fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
+    // Find the LocalIndex before reserving the name, so that the name isn't left reserved if there is none
+    let Some(local_user_index_canister) = state.data.local_index_map.index_for_new_group() else {
+        return Err(InternalError);
+    };
+
     let now = state.env.now();
 
     if is_public && !state.data.public_group_and_community_names.reserve_name(name, now) {
         return Err(NameTaken);
     }
 
-    if let Some(local_user_index_canister) = state.data.local_index_map.index_for_new_group() {
-        Ok(PrepareResult {
-            local_user_index_canister,
-        })
-    } else {
-        Err(InternalError)
-    }
+    Ok(PrepareResult {
+        local_user_index_canister,
+    })
 }
 
 struct CommitArgs {
@@ -149,4 +155,33 @@ fn commit(args: CommitArgs, state: &mut RuntimeState) {
         .data
         .local_index_map
         .add_group(args.local_user_index_canister, args.chat_id);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Data;
+    use utils::env::test::TestEnv;
+
+    #[test]
+    fn name_is_not_reserved_if_there_is_no_local_index() {
+        let mut state = RuntimeState::new(Box::new(TestEnv::default()), Data::default());
+        let now = state.env.now();
+
+        assert!(matches!(prepare("Group", true, &mut state), Err(InternalError)));
+        assert!(!state.data.public_group_and_community_names.is_name_taken("Group", now));
+
+        state.data.local_index_map.add_index(local_user_index());
+
+        assert!(matches!(
+            prepare("Group", true, &mut state),
+            Ok(PrepareResult { local_user_index_canister }) if local_user_index_canister == local_user_index()
+        ));
+        assert!(state.data.public_group_and_community_names.is_name_taken("Group", now));
+        assert!(matches!(prepare("Group", true, &mut state), Err(NameTaken)));
+    }
+
+    fn local_user_index() -> CanisterId {
+        Principal::from_slice(&[1])
+    }
 }
