@@ -391,11 +391,12 @@ pub fn pay_from_wallet(
     content
 }
 
-// Whether the transfer is from the wallet of `principal`, as an ICRC1 one always is
+// Whether the transfer is from the wallet of `principal`, as an ICRC1 one always is. The wallet is the
+// default subaccount, which can also be given explicitly as all zeros.
 fn from_wallet(transfer: &CryptoTransaction, principal: Principal) -> bool {
     match transfer {
         CryptoTransaction::Pending(PendingCryptoTransaction::ICRC2(t)) => {
-            t.from.owner == principal && t.from.subaccount.is_none()
+            t.from.owner == principal && t.from.subaccount.is_none_or(|s| s == [0; 32])
         }
         _ => true,
     }
