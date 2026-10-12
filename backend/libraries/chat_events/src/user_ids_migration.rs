@@ -12,8 +12,9 @@ use utils::migrated_user_ids::MigratedUserIds;
 // The events are scanned in batches, each carrying on from the event the last one stopped at (`L`
 // being where an event is within the canister). An id is replaced as it is scanned if
 // `MigratedUserIds` has its migration. Any other id, unless `MigratedUserIds` has it as a user's
-// latest id, is looked up in the LocalUserIndex, so is recorded along with the events it is in,
-// which are updated once it has been looked up. Each id is only looked up once.
+// latest id, is looked up in the LocalUserIndex, so is recorded along with the events it is in.
+// Once looked up, the events of any which have been migrated are queued to be updated, in batches
+// of their own. Each id is only looked up once.
 #[derive(Serialize, Deserialize)]
 #[serde(bound(serialize = "L: Serialize", deserialize = "L: Deserialize<'de>"))]
 pub struct UserIdsInEventsMigration<L> {
@@ -23,9 +24,14 @@ pub struct UserIdsInEventsMigration<L> {
     scan_complete: bool,
     #[serde(rename = "p", default)]
     to_look_up: BTreeMap<UserId, Vec<L>>,
+    // The events of the ids which have been looked up and found to have been migrated
+    #[serde(rename = "e", default)]
+    to_update: Vec<L>,
     // The ids which have been looked up and found not to have been migrated
     #[serde(rename = "l", default)]
     not_migrated: HashSet<UserId>,
+    // The number of times an event has been written back with ids replaced, which counts an event
+    // updated both while being scanned and after a lookup twice
     #[serde(rename = "u", default)]
     events_updated: u64,
     // The event in which an id was last replaced while scanning, so that each event is only counted
@@ -40,6 +46,7 @@ impl<L> Default for UserIdsInEventsMigration<L> {
             scanned_up_to: None,
             scan_complete: false,
             to_look_up: BTreeMap::new(),
+            to_update: Vec::new(),
             not_migrated: HashSet::new(),
             events_updated: 0,
             last_updated: None,
@@ -49,7 +56,7 @@ impl<L> Default for UserIdsInEventsMigration<L> {
 
 impl<L: Copy + Eq + Hash> UserIdsInEventsMigration<L> {
     pub fn is_complete(&self) -> bool {
-        self.scan_complete && self.to_look_up.is_empty()
+        self.scan_complete && self.to_look_up.is_empty() && self.to_update.is_empty()
     }
 
     pub fn is_scan_complete(&self) -> bool {
@@ -104,15 +111,14 @@ impl<L: Copy + Eq + Hash> UserIdsInEventsMigration<L> {
     }
 
     // Records the result of looking up `user_ids`, `migrated` holding the latest id of each of them
-    // which has been migrated, and adds those migrations to `migrated_user_ids`. Returns the events
-    // in which the migrated ids were found, each once, which can then be updated.
+    // which has been migrated, adds those migrations to `migrated_user_ids` and queues the events in
+    // which they were found to be updated
     pub fn record_lookup(
         &mut self,
         user_ids: &[UserId],
         migrated: &HashMap<UserId, UserId>,
         migrated_user_ids: &mut MigratedUserIds,
-    ) -> Vec<L> {
-        let mut to_update = Vec::new();
+    ) {
         let mut seen = HashSet::new();
         for user_id in user_ids {
             let Some(locations) = self.to_look_up.remove(user_id) else {
@@ -126,13 +132,23 @@ impl<L: Copy + Eq + Hash> UserIdsInEventsMigration<L> {
                 error!(?user_id, ?latest, "Failed to record user id migration");
             }
             if migrated_user_ids.get(user_id).is_some() {
-                to_update.extend(locations.into_iter().filter(|l| seen.insert(*l)));
+                self.to_update.extend(locations.into_iter().filter(|l| seen.insert(*l)));
             } else {
                 self.not_migrated.insert(*user_id);
             }
         }
         self.tidy_if_complete();
-        to_update
+    }
+
+    pub fn has_events_to_update(&self) -> bool {
+        !self.to_update.is_empty()
+    }
+
+    // Takes up to `max_count` of the events queued to be updated
+    pub fn take_events_to_update(&mut self, max_count: usize) -> Vec<L> {
+        let events = self.to_update.split_off(self.to_update.len().saturating_sub(max_count));
+        self.tidy_if_complete();
+        events
     }
 
     pub fn record_events_updated(&mut self, count: u64) {
@@ -145,6 +161,7 @@ impl<L: Copy + Eq + Hash> UserIdsInEventsMigration<L> {
             scan_complete: self.scan_complete,
             events_updated: self.events_updated,
             user_ids_to_look_up: self.to_look_up.len() as u32,
+            events_to_update: self.to_update.len() as u32,
             user_ids_not_migrated: self.not_migrated.len() as u32,
         }
     }
@@ -163,6 +180,7 @@ pub struct UserIdsInEventsMigrationMetrics {
     pub scan_complete: bool,
     pub events_updated: u64,
     pub user_ids_to_look_up: u32,
+    pub events_to_update: u32,
     pub user_ids_not_migrated: u32,
 }
 
@@ -198,14 +216,23 @@ mod tests {
         assert_eq!(migration.user_ids_to_look_up(10), vec![user_id(2), user_id(3)]);
 
         // User 2 has been migrated, user 3 hasn't
-        let to_update = migration.record_lookup(
+        migration.record_lookup(
             &[user_id(2), user_id(3)],
             &HashMap::from([(user_id(2), user_id(12))]),
             &mut migrated_user_ids,
         );
 
-        assert_eq!(to_update, vec![0, 1, 2]);
         assert_eq!(migrated_user_ids.get(&user_id(2)), Some(user_id(12)));
+        assert!(migration.user_ids_to_look_up(10).is_empty());
+        assert_eq!(migration.metrics().events_to_update, 3);
+        assert!(!migration.is_complete());
+
+        let mut to_update = migration.take_events_to_update(2);
+        assert!(!migration.is_complete());
+        to_update.extend(migration.take_events_to_update(2));
+        to_update.sort();
+        assert_eq!(to_update, vec![0, 1, 2]);
+        assert!(migration.take_events_to_update(2).is_empty());
         assert!(migration.is_complete());
         migration.record_events_updated(3);
         let metrics = migration.metrics();
@@ -222,11 +249,8 @@ mod tests {
 
         migration.latest_user_id(user_id(2), 0, &migrated_user_ids);
         migration.record_scanned_up_to(Some(0));
-        assert!(
-            migration
-                .record_lookup(&[user_id(2)], &HashMap::new(), &mut migrated_user_ids)
-                .is_empty()
-        );
+        migration.record_lookup(&[user_id(2)], &HashMap::new(), &mut migrated_user_ids);
+        assert!(migration.take_events_to_update(10).is_empty());
 
         migration.latest_user_id(user_id(2), 1, &migrated_user_ids);
         assert!(migration.user_ids_to_look_up(10).is_empty());

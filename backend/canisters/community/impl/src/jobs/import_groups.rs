@@ -261,7 +261,9 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             // The channel's events may still hold ids which users had before being migrated to
             // MultiUser canisters, so are scanned for them, from the start if the scan has passed it
             let migration = &mut state.data.user_ids_in_events_migration;
-            if migration.is_scan_complete() || migration.scanned_up_to().is_some_and(|(c, _)| c > channel_id) {
+            if migration.is_scan_complete()
+                || matches!(migration.scanned_up_to(), Some(update_user_ids_in_events::EventLocation::Channel(c, _)) if c > channel_id)
+            {
                 migration.restart_scan();
             }
             update_user_ids_in_events::start_job_if_required(state);

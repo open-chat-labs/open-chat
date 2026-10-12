@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Apply changes sent by other canisters while frozen by a platform moderator ([#9912](https://github.com/open-chat-labs/open-chat/pull/9912))
+- Keep the cached copy of an event up to date once earlier cached events have been removed ([#9929](https://github.com/open-chat-labs/open-chat/pull/9929))
 
 ## [[2.0.2133](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2133-group)] - 2026-10-12
 

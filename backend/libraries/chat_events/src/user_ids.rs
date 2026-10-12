@@ -1,7 +1,7 @@
 use crate::{ChatEventInternal, MessageContentInternal, MessageInternal, PollContentInternal};
 use candid::Principal;
-use std::collections::{BTreeMap, BTreeSet, HashSet};
-use types::{P2PSwapStatus, SenderContext, UserId};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use types::{BotCommand, BotCommandArgValue, ModerationReportStatus, P2PSwapStatus, SenderContext, UserId};
 
 impl ChatEventInternal {
     // Passes every user id in the event through `f`, replacing each with the id returned, and
@@ -9,7 +9,7 @@ impl ChatEventInternal {
     // MultiUser canister onto their latest ids. Where that leaves a user listed twice, only one
     // entry is kept (see `UserIdUpdater`).
     pub fn update_user_ids(&mut self, f: &mut dyn FnMut(UserId) -> UserId) -> bool {
-        let mut updater = UserIdUpdater { f, changed: false };
+        let mut updater = UserIdUpdater::new(f);
         let u = &mut updater;
         match self {
             ChatEventInternal::Message(m) => m.update_user_ids(u),
@@ -78,7 +78,7 @@ impl ChatEventInternal {
             | ChatEventInternal::Empty
             | ChatEventInternal::FailedToDeserialize => {}
         }
-        updater.changed
+        updater.changed()
     }
 }
 
@@ -100,7 +100,7 @@ impl MessageInternal {
         if let Some(SenderContext::Bot(context)) = &mut self.sender_context
             && let Some(command) = &mut context.command
         {
-            u.id(&mut command.initiator);
+            u.bot_command(command);
         }
         for (_, users) in self.reactions.iter_mut() {
             u.set(users);
@@ -138,6 +138,12 @@ impl MessageContentInternal {
             MessageContentInternal::ModerationReport(r) => {
                 u.id(&mut r.sender);
                 u.vec(&mut r.reporters);
+                if let ModerationReportStatus::Upheld(resolution)
+                | ModerationReportStatus::UpheldAsCsam(resolution)
+                | ModerationReportStatus::Dismissed(resolution) = &mut r.status
+                {
+                    u.id(&mut resolution.moderator);
+                }
             }
             MessageContentInternal::P2PSwap(s) => match &mut s.status {
                 P2PSwapStatus::Reserved(r) => u.id(&mut r.reserved_by),
@@ -195,13 +201,21 @@ impl PollContentInternal {
 // Replaces each user id with the id returned by `f`, recording whether any were replaced. Where a
 // user ends up listed twice, the first entry is kept, other than in a map, where an entry already
 // under the user's new id is kept.
-pub(crate) struct UserIdUpdater<'a> {
+pub struct UserIdUpdater<'a> {
     f: &'a mut dyn FnMut(UserId) -> UserId,
     changed: bool,
 }
 
-impl UserIdUpdater<'_> {
-    fn id(&mut self, user_id: &mut UserId) {
+impl<'a> UserIdUpdater<'a> {
+    pub fn new(f: &'a mut dyn FnMut(UserId) -> UserId) -> Self {
+        UserIdUpdater { f, changed: false }
+    }
+
+    pub fn changed(&self) -> bool {
+        self.changed
+    }
+
+    pub fn id(&mut self, user_id: &mut UserId) {
         let new_user_id = (self.f)(*user_id);
         if new_user_id != *user_id {
             *user_id = new_user_id;
@@ -209,7 +223,7 @@ impl UserIdUpdater<'_> {
         }
     }
 
-    fn vec(&mut self, user_ids: &mut Vec<UserId>) {
+    pub fn vec(&mut self, user_ids: &mut Vec<UserId>) {
         let mut changed = false;
         for user_id in user_ids.iter_mut() {
             let new_user_id = (self.f)(*user_id);
@@ -225,7 +239,7 @@ impl UserIdUpdater<'_> {
         }
     }
 
-    fn set(&mut self, user_ids: &mut BTreeSet<UserId>) {
+    pub fn set(&mut self, user_ids: &mut BTreeSet<UserId>) {
         let mut changed = false;
         let updated: BTreeSet<_> = user_ids
             .iter()
@@ -241,7 +255,7 @@ impl UserIdUpdater<'_> {
         }
     }
 
-    fn keys<V>(&mut self, map: &mut BTreeMap<UserId, V>) {
+    pub fn keys<V>(&mut self, map: &mut BTreeMap<UserId, V>) {
         let moved: Vec<_> = map
             .keys()
             .filter_map(|&user_id| {
@@ -262,6 +276,43 @@ impl UserIdUpdater<'_> {
             map.entry(new_user_id).or_insert(value);
         }
         self.changed = true;
+    }
+
+    // Both the users and the users they map to, eg. who each user was referred by
+    pub fn user_map(&mut self, map: &mut HashMap<UserId, UserId>) {
+        let mut changed = false;
+        let entries: Vec<_> = map
+            .iter()
+            .map(|(&key, &value)| {
+                let (new_key, new_value) = ((self.f)(key), (self.f)(value));
+                changed |= new_key != key || new_value != value;
+                (key, new_key, new_value)
+            })
+            .collect();
+        if changed {
+            // An entry already under the user's new id is kept over one moved onto it
+            let mut updated: HashMap<_, _> = entries
+                .iter()
+                .filter(|(key, new_key, _)| key == new_key)
+                .map(|(_, new_key, new_value)| (*new_key, *new_value))
+                .collect();
+            for (key, new_key, new_value) in entries {
+                if key != new_key {
+                    updated.entry(new_key).or_insert(new_value);
+                }
+            }
+            *map = updated;
+            self.changed = true;
+        }
+    }
+
+    pub fn bot_command(&mut self, command: &mut BotCommand) {
+        self.id(&mut command.initiator);
+        for arg in command.args.iter_mut() {
+            if let BotCommandArgValue::User(user_id) = &mut arg.value {
+                self.id(user_id);
+            }
+        }
     }
 
     // The amounts tipped by a user under more than one of their ids are added together
@@ -295,8 +346,8 @@ mod tests {
     use crate::{DeletedByInternal, PollConfigInternal, ProposalContentInternal, TextContentInternal, ThreadSummaryInternal};
     use std::collections::HashMap;
     use types::{
-        BotCommand, BotMessageContext, NnsProposal, Proposal, ProposalDecisionStatus, ProposalRewardStatus, Reaction, Tally,
-        Tips, UsersBlocked,
+        BotCommand, BotCommandArg, BotMessageContext, Chat, ModerationReportContent, ModerationReportResolution, NnsProposal,
+        Proposal, ProposalDecisionStatus, ProposalRewardStatus, Reaction, Tally, Tips, UsersBlocked,
     };
 
     fn user_id(i: u8) -> UserId {
@@ -352,7 +403,10 @@ mod tests {
         message.sender_context = Some(SenderContext::Bot(BotMessageContext {
             command: Some(BotCommand {
                 name: "command".to_string(),
-                args: Vec::new(),
+                args: vec![BotCommandArg {
+                    name: "user".to_string(),
+                    value: BotCommandArgValue::User(user_id(1)),
+                }],
                 initiator: user_id(2),
                 meta: None,
             }),
@@ -377,7 +431,9 @@ mod tests {
         let Some(SenderContext::Bot(context)) = message.sender_context else {
             panic!();
         };
-        assert_eq!(context.command.unwrap().initiator, user_id(12));
+        let command = context.command.unwrap();
+        assert_eq!(command.initiator, user_id(12));
+        assert!(matches!(command.args[0].value, BotCommandArgValue::User(u) if u == user_id(11)));
         assert_eq!(message.reactions[0].1, BTreeSet::from([user_id(11), user_id(3)]));
         assert_eq!(*message.tips, vec![(ledger(), vec![(user_id(12), 5), (user_id(3), 2)])]);
         assert_eq!(message.deleted_by.unwrap().deleted_by, user_id(12));
@@ -511,6 +567,58 @@ mod tests {
         };
         assert_eq!(e.user_ids, vec![user_id(11), user_id(3)]);
         assert_eq!(e.blocked_by, user_id(12));
+    }
+
+    #[test]
+    fn ids_in_a_moderation_report_are_replaced() {
+        let report = ModerationReportContent {
+            report_index: None,
+            chat_id: Chat::Group(Principal::from_slice(&[102]).into()),
+            thread_root_message_index: None,
+            message_index: 1.into(),
+            message_id: 1u64.into(),
+            sender: user_id(1),
+            reporters: vec![user_id(2), user_id(3)],
+            flagged_categories: 0,
+            classification_failed: false,
+            auto_sanctioned: false,
+            content_excerpt: None,
+            blob_references: Vec::new(),
+            media_matches: Vec::new(),
+            is_blocked_attempt: false,
+            reported_at: 1,
+            status: ModerationReportStatus::Dismissed(ModerationReportResolution {
+                moderator: user_id(2),
+                timestamp: 1,
+            }),
+            authority_report: None,
+        };
+
+        let (changed, message) = update(message(
+            user_id(3),
+            MessageContentInternal::ModerationReport(Box::new(report)),
+        ));
+
+        assert!(changed);
+        let MessageContentInternal::ModerationReport(report) = message.content else {
+            panic!();
+        };
+        assert_eq!(report.sender, user_id(11));
+        assert_eq!(report.reporters, vec![user_id(12), user_id(3)]);
+        assert!(matches!(report.status, ModerationReportStatus::Dismissed(r) if r.moderator == user_id(12)));
+    }
+
+    #[test]
+    fn both_sides_of_a_user_map_are_replaced() {
+        // Who each user was referred by, with user 1 listed under both of their ids
+        let mut map = HashMap::from([(user_id(1), user_id(4)), (user_id(11), user_id(5)), (user_id(3), user_id(2))]);
+        let mut f = latest;
+        let mut updater = UserIdUpdater::new(&mut f);
+
+        updater.user_map(&mut map);
+
+        assert!(updater.changed());
+        assert_eq!(map, HashMap::from([(user_id(11), user_id(5)), (user_id(3), user_id(12))]));
     }
 
     #[test]

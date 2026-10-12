@@ -42,10 +42,9 @@ use types::{
     AccessGate, AccessGateConfigInternal, Achievement, BlobReference, BotCommunityEvent, BotDefinitionUpdate, BotEventsCaller,
     BotInitiator, BotNotification, BotPermissions, BotUpdated, BuildVersion, Caller, CanisterId, ChannelCreated, ChannelId,
     ChannelUserNotificationPayload, ChatMetrics, ChatPermission, CommunityCanisterCommunitySummary, CommunityEvent,
-    CommunityMembership, CommunityPermissions, Cycles, Document, EventContext, EventIndex, EventsCaller, FrozenGroupInfo,
-    GroupRole, IdempotentEnvelope, MembersAdded, MessageId, MessageIndex, Milliseconds, Notification, OCResult,
-    PendingCryptoTransaction, Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType,
-    icrc1,
+    CommunityMembership, CommunityPermissions, Cycles, Document, EventIndex, EventsCaller, FrozenGroupInfo, GroupRole,
+    IdempotentEnvelope, MembersAdded, MessageId, MessageIndex, Milliseconds, Notification, OCResult, PendingCryptoTransaction,
+    Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType, icrc1,
 };
 use types::{BotSubscriptions, CommunityId};
 use utils::async_work::AsyncWorkGuard;
@@ -675,7 +674,7 @@ struct Data {
     #[serde(default)]
     migrated_user_ids: MigratedUserIds,
     #[serde(default)]
-    user_ids_in_events_migration: UserIdsInEventsMigration<(ChannelId, EventContext)>,
+    user_ids_in_events_migration: UserIdsInEventsMigration<jobs::update_user_ids_in_events::EventLocation>,
 }
 
 impl Data {

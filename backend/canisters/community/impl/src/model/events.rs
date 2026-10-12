@@ -1,5 +1,5 @@
 use crate::model::events::stable_memory::EventsStableStorage;
-use chat_events::GroupGateUpdatedInternal;
+use chat_events::{GroupGateUpdatedInternal, UserIdUpdater};
 use community_canister::community_events::EventsPageArgs;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashSet};
@@ -127,6 +127,47 @@ impl CommunityEvents {
         self.latest_event_index.incr()
     }
 
+    // Passes the user ids in each event after `after` (or in every event if `after` is None)
+    // through `f`, along with the event's index, writing back each event in which any are replaced.
+    // `should_stop` is checked after each batch of up to 100 events, and once it returns true, the
+    // last event processed is returned, from which the next call carries on. Returns None once every
+    // event has been processed.
+    pub fn update_user_ids(
+        &mut self,
+        after: Option<EventIndex>,
+        f: &mut dyn FnMut(EventIndex, UserId) -> UserId,
+        should_stop: &mut dyn FnMut() -> bool,
+    ) -> Option<EventIndex> {
+        let mut start = after.map_or(EventIndex::default(), |i| i.incr());
+        loop {
+            let events = self.stable_events_map.page(start, true, 100);
+            let last = events.last()?.index;
+            for mut event in events {
+                let event_index = event.index;
+                if event.event.update_user_ids(&mut |user_id| f(event_index, user_id)) {
+                    self.stable_events_map.insert(event);
+                }
+            }
+            if should_stop() {
+                return Some(last);
+            }
+            start = last.incr();
+        }
+    }
+
+    // Passes the user ids in the event at `event_index` through `f`, writing the event back if any
+    // are replaced. Returns whether they were.
+    pub fn update_user_ids_in_event(&mut self, event_index: EventIndex, f: &mut dyn FnMut(UserId) -> UserId) -> bool {
+        let Some(mut event) = self.stable_events_map.get(event_index) else {
+            return false;
+        };
+        let updated = event.event.update_user_ids(f);
+        if updated {
+            self.stable_events_map.insert(event);
+        }
+        updated
+    }
+
     pub fn latest_event_index(&self) -> EventIndex {
         self.latest_event_index
     }
@@ -234,6 +275,81 @@ pub struct GroupImportedInternal {
     pub group_id: ChatId,
     pub channel_id: ChannelId,
     pub members_added: Vec<UserId>,
+}
+
+impl CommunityEventInternal {
+    // Passes every user id in the event through `f`, replacing each with the id returned, and
+    // returns whether any were replaced (see `ChatEventInternal::update_user_ids`)
+    pub fn update_user_ids(&mut self, f: &mut dyn FnMut(UserId) -> UserId) -> bool {
+        let mut updater = UserIdUpdater::new(f);
+        let u = &mut updater;
+        match self {
+            CommunityEventInternal::Created(e) => u.id(&mut e.created_by),
+            CommunityEventInternal::NameChanged(e) => u.id(&mut e.changed_by),
+            CommunityEventInternal::DescriptionChanged(e) => u.id(&mut e.changed_by),
+            CommunityEventInternal::RulesChanged(e) => u.id(&mut e.changed_by),
+            CommunityEventInternal::AvatarChanged(e) => u.id(&mut e.changed_by),
+            CommunityEventInternal::BannerChanged(e) => u.id(&mut e.changed_by),
+            CommunityEventInternal::UsersInvited(e) => {
+                u.vec(&mut e.user_ids);
+                u.id(&mut e.invited_by);
+            }
+            CommunityEventInternal::MembersRemoved(e) => {
+                u.vec(&mut e.user_ids);
+                u.id(&mut e.removed_by);
+                u.user_map(&mut e.referred_by);
+            }
+            CommunityEventInternal::MemberJoined(e) => {
+                u.id(&mut e.user_id);
+                if let Some(invited_by) = &mut e.invited_by {
+                    u.id(invited_by);
+                }
+            }
+            CommunityEventInternal::MemberLeft(e) => u.id(&mut e.user_id),
+            CommunityEventInternal::RoleChanged(e) => {
+                u.vec(&mut e.user_ids);
+                u.id(&mut e.changed_by);
+            }
+            CommunityEventInternal::UsersBlocked(e) => {
+                u.vec(&mut e.user_ids);
+                u.id(&mut e.blocked_by);
+                u.user_map(&mut e.referred_by);
+            }
+            CommunityEventInternal::UsersUnblocked(e) => {
+                u.vec(&mut e.user_ids);
+                u.id(&mut e.unblocked_by);
+            }
+            CommunityEventInternal::PermissionsChanged(e) => u.id(&mut e.changed_by),
+            CommunityEventInternal::VisibilityChanged(e) => u.id(&mut e.changed_by),
+            CommunityEventInternal::InviteCodeChanged(e) => u.id(&mut e.changed_by),
+            CommunityEventInternal::Frozen(e) => u.id(&mut e.frozen_by),
+            CommunityEventInternal::Unfrozen(e) => u.id(&mut e.unfrozen_by),
+            CommunityEventInternal::GateUpdated(e) => u.id(&mut e.updated_by),
+            CommunityEventInternal::ChannelCreated(e) => u.id(&mut e.created_by),
+            CommunityEventInternal::ChannelDeleted(e) => {
+                u.id(&mut e.deleted_by);
+                if let Some(command) = &mut e.bot_command {
+                    u.bot_command(command);
+                }
+            }
+            CommunityEventInternal::PrimaryLanguageChanged(e) => u.id(&mut e.changed_by),
+            CommunityEventInternal::GroupImported(e) => u.vec(&mut e.members_added),
+            CommunityEventInternal::BotAdded(e) => {
+                u.id(&mut e.user_id);
+                u.id(&mut e.added_by);
+            }
+            CommunityEventInternal::BotRemoved(e) => {
+                u.id(&mut e.user_id);
+                u.id(&mut e.removed_by);
+            }
+            CommunityEventInternal::BotUpdated(e) => {
+                u.id(&mut e.user_id);
+                u.id(&mut e.updated_by);
+            }
+            CommunityEventInternal::FailedToDeserialize => {}
+        }
+        updater.changed()
+    }
 }
 
 impl From<CommunityEventInternal> for CommunityEvent {
