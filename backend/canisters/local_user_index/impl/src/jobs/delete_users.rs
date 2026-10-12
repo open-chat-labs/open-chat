@@ -52,6 +52,7 @@ async fn process_user(user: UserToDelete) {
 
                 // The user's canister has been uninstalled but still holds its cycles
                 if removed && user_id.index() == 0 {
+                    state.data.users_requiring_upgrade.remove_failed(&user_id.canister_id());
                     state.data.cycles_refund_queue.push_back(CanisterToRefund {
                         canister_id: user_id.canister_id(),
                         attempt: 0,
@@ -87,11 +88,17 @@ async fn process_user_inner(user: &UserToDelete) -> Result<DeleteUserSuccess, C2
     let canister_id = user_id.canister_id();
 
     let args = user_canister::c2c_groups_and_communities::Args { user_id };
-    let (groups, communities) = top_up_and_retry_if_out_of_cycles(canister_id, || {
+    let (groups, communities) = match top_up_and_retry_if_out_of_cycles(canister_id, || {
         user_canister_c2c_client::c2c_groups_and_communities(canister_id, &args)
     })
     .await
-    .map(|r| (r.groups, r.communities))?;
+    {
+        Ok(response) => (response.groups, response.communities),
+        // A canister too old to have the method can't say which groups and communities its user is
+        // in, so it's deleted without them being told, leaving them holding the user as a member
+        Err(error) if error.is_method_not_found() => (Vec::new(), Vec::new()),
+        Err(error) => return Err(error),
+    };
 
     if user_id.index() == 0 {
         utils::canister::uninstall(canister_id).await?;

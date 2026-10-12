@@ -26,7 +26,7 @@ use types::{
 use user_canister::{MessageActivity, UserCanisterEvent};
 use user_index_canister::user_migration::UserMigrationStatus;
 
-const CALL_RELAY_WASM: &[u8] = include_bytes!("../../canisters/call_relay/call_relay.wasm");
+pub(crate) const CALL_RELAY_WASM: &[u8] = include_bytes!("../../canisters/call_relay/call_relay.wasm");
 
 #[test]
 fn users_with_a_p2p_swap_are_not_migrated_until_an_hour_after_it_expires() {

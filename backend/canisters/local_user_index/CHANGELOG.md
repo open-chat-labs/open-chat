@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Return the new `tip_messages` permission in chat summaries ([#9900](https://github.com/open-chat-labs/open-chat/pull/9900))
 
+### Fixed
+
+- During account deletion, skip retrying canisters that don't expose the method for saying which groups and communities they're in ([#9903](https://github.com/open-chat-labs/open-chat/pull/9903))
+
 ## [[2.0.2126](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2126-local_user_index)] - 2026-10-09
 
 ### Removed
