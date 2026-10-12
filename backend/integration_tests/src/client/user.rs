@@ -96,12 +96,13 @@ generate_msgpack_update_call!(withdraw_crypto_v2);
 pub mod happy_path {
     use crate::User;
     use crate::env::VIDEO_CALL_OPERATOR;
+    use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE};
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
         CanisterId, Chat, ChatEvent, ChatId, CommunityId, Empty, EventIndex, EventsResponse, Message, MessageContentInitial,
-        MessageId, MessageIndex, Milliseconds, Reaction, ReplyContext, Rules, TextContent, TimestampMillis, UserId,
-        VideoCallType,
+        MessageId, MessageIndex, Milliseconds, PendingCryptoTransaction, Reaction, ReplyContext, Rules, TextContent,
+        TimestampMillis, UnitResult, UserId, VideoCallType, icrc1, icrc2,
     };
     use user_canister::NamedAccount;
     use user_canister::set_pin_number::PinNumberVerification;
@@ -146,6 +147,8 @@ pub mod happy_path {
         replies_to: Option<ReplyContext>,
         message_id: Option<MessageId>,
     ) -> user_canister::send_message_v2::SuccessResult {
+        // A message holding a transfer is paid for from the sender's wallet
+        let content = crate::client::pay_from_wallet(env, sender, sender.canister(), content);
         let response = super::send_message_v2(
             env,
             sender.principal,
@@ -482,6 +485,8 @@ pub mod happy_path {
         }
     }
 
+    // Tips the message from the sender's wallet, as the website does: the tip is given via the sender's
+    // canister in a direct chat, or else via the group or community, having approved it to pull the tip
     #[expect(clippy::too_many_arguments)]
     pub fn tip_message(
         env: &mut PocketIc,
@@ -494,24 +499,86 @@ pub mod happy_path {
         amount: u128,
         fee: u128,
     ) {
-        let response = super::tip_message(
-            env,
-            sender.principal,
-            sender.canister(),
-            &user_canister::tip_message::Args {
-                chat,
-                recipient,
-                thread_root_message_index: None,
-                message_id,
+        let spender = match chat {
+            Chat::Direct(_) => sender.canister(),
+            Chat::Group(chat_id) => chat_id.into(),
+            Chat::Channel(community_id, _) => community_id.into(),
+        };
+        crate::client::approve_spender(env, sender, ledger, spender, amount + fee);
+
+        let transfer = || {
+            PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
                 ledger,
+                token_symbol: token_symbol.clone(),
                 amount,
+                from: sender.principal.into(),
+                to: icrc1::Account::legacy_for_user(recipient),
                 fee,
-                decimals: 8,
-                token_symbol,
-                from_account: None,
-                pin: None,
-            },
-        );
+                memo: None,
+                created: env.get_time().as_nanos_since_unix_epoch(),
+            })
+        };
+        let response = match chat {
+            Chat::Direct(_) => super::tip_message(
+                env,
+                sender.principal,
+                sender.canister(),
+                &user_canister::tip_message::Args {
+                    chat,
+                    recipient,
+                    thread_root_message_index: None,
+                    message_id,
+                    ledger,
+                    amount,
+                    fee,
+                    decimals: 8,
+                    token_symbol: token_symbol.clone(),
+                    from_account: None,
+                    pin: None,
+                },
+            ),
+            Chat::Group(chat_id) => {
+                let transfer = transfer();
+                match crate::client::group::tip_message(
+                    env,
+                    sender.principal,
+                    chat_id.into(),
+                    &group_canister::tip_message::Args {
+                        thread_root_message_index: None,
+                        message_id,
+                        transfer,
+                        decimals: 8,
+                        username: sender.username(),
+                        display_name: None,
+                        new_achievement: false,
+                    },
+                ) {
+                    UnitResult::Success => user_canister::tip_message::Response::Success,
+                    UnitResult::Error(error) => user_canister::tip_message::Response::Error(error),
+                }
+            }
+            Chat::Channel(community_id, channel_id) => {
+                let transfer = transfer();
+                match crate::client::community::tip_message(
+                    env,
+                    sender.principal,
+                    community_id.into(),
+                    &community_canister::tip_message::Args {
+                        channel_id,
+                        thread_root_message_index: None,
+                        message_id,
+                        transfer,
+                        decimals: 8,
+                        username: sender.username(),
+                        display_name: None,
+                        new_achievement: false,
+                    },
+                ) {
+                    UnitResult::Success => user_canister::tip_message::Response::Success,
+                    UnitResult::Error(error) => user_canister::tip_message::Response::Error(error),
+                }
+            }
+        };
 
         match response {
             user_canister::tip_message::Response::Success => (),
@@ -687,7 +754,10 @@ pub mod happy_path {
         assert!(matches!(response, user_canister::unblock_user::Response::Success));
     }
 
+    // Approves the user's canister to take the payment from their wallet, then pays
     pub fn pay_for_streak_insurance(env: &mut PocketIc, user: &User, additional_days: u8, expected_price: u128) {
+        crate::client::approve_user_canister(env, user, CHAT_LEDGER_CANISTER_ID, expected_price + CHAT_TRANSFER_FEE);
+
         let pay_for_insurance_response = super::pay_for_streak_insurance(
             env,
             user.principal,

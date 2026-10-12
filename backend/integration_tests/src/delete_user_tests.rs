@@ -1,4 +1,6 @@
-use crate::client::{register_user, register_user_and_include_auth};
+use crate::client::{
+    register_user_and_include_auth, register_user_in_user_canister, register_user_in_user_canister_and_include_auth,
+};
 use crate::env::ENV;
 use crate::utils::tick_many;
 use crate::{T, TestEnv, User, UserAuth, client};
@@ -18,7 +20,7 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
+    let (user, user_auth) = register_user_in_user_canister_and_include_auth(env, canister_ids);
 
     env.advance_time(Duration::from_millis(delay));
 
@@ -97,8 +99,8 @@ fn cycles_of_users_deleted_previously_can_be_refunded_by_a_platform_operator() {
         ..
     } = wrapper.env();
 
-    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
-    let operator = register_user(env, canister_ids);
+    let (user, user_auth) = register_user_in_user_canister_and_include_auth(env, canister_ids);
+    let operator = register_user_in_user_canister(env, canister_ids);
     client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
 
     delete_user(env, &user_auth, canister_ids.identity);
@@ -190,8 +192,8 @@ fn cycles_refund_tops_up_canisters_with_too_few_cycles_to_install_code() {
         ..
     } = wrapper.env();
 
-    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
-    let operator = register_user(env, canister_ids);
+    let (user, user_auth) = register_user_in_user_canister_and_include_auth(env, canister_ids);
+    let operator = register_user_in_user_canister(env, canister_ids);
     client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
 
     delete_user(env, &user_auth, canister_ids.identity);
@@ -227,8 +229,8 @@ fn cycles_refund_resumes_after_the_local_user_index_is_upgraded_mid_way() {
         ..
     } = wrapper.env();
 
-    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
-    let operator = register_user(env, canister_ids);
+    let (user, user_auth) = register_user_in_user_canister_and_include_auth(env, canister_ids);
+    let operator = register_user_in_user_canister(env, canister_ids);
     client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
 
     delete_user(env, &user_auth, canister_ids.identity);
@@ -352,7 +354,7 @@ fn user_whose_canister_lacks_the_groups_and_communities_method_is_still_deleted(
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
+    let (user, user_auth) = register_user_in_user_canister_and_include_auth(env, canister_ids);
 
     // Any other wasm lacks the method. The canister was only just installed, so reinstalling it
     // waits out the IC's install_code rate limit, which lifts as rounds pass. Time isn't advanced,

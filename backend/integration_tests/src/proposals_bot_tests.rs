@@ -24,9 +24,9 @@ fn proposal_fee_is_only_taken_from_the_callers_own_wallet() {
         controller,
     } = wrapper.env();
 
-    let alice = client::register_user(env, canister_ids);
-    let bob = client::register_user_in_multi_user_canister(env, canister_ids);
-    let mallory = client::register_user(env, canister_ids);
+    let alice = client::register_user_in_user_canister(env, canister_ids);
+    let bob = client::register_user(env, canister_ids);
+    let mallory = client::register_user_in_user_canister(env, canister_ids);
 
     // Alice's wallet is her User canister's account, and Bob's, as a user in a MultiUser canister,
     // is his principal's. Each holds CHAT and has approved the ProposalsBot to pull it.

@@ -58,7 +58,7 @@ fn chunk_store_holds_only_the_current_wasms_once_upgrades_complete() {
     assert_current_wasms_stored(&stored);
 
     // New users' canisters are installed with the latest wasm
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
     assert_eq!(wasm_version(env, user.canister()), version);
 
     // Releasing a new User wasm would break later tests which draw this env
@@ -102,7 +102,7 @@ fn missing_chunks_are_uploaded_when_the_local_user_index_is_upgraded() {
     assert!(stored.contains(&stale_chunk));
 
     // New canisters can still be created
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
     client::user::happy_path::create_group(env, &user, &random_string(), false, true);
 
     // Upgrading the LocalUserIndex would break later tests which draw this env

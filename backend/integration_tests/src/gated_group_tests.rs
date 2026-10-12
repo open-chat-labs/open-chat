@@ -142,7 +142,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
 
     let amount = if has_sufficient_balance { min_balance } else { min_balance - 1 };
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, amount);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user2, amount);
 
     let join_group_response = client::local_user_index::join_group(
         env,
@@ -235,7 +235,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
 
     let amount = if has_sufficient_balance { min_balance } else { min_balance - 1 };
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, amount);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user2, amount);
 
     let join_group_response = client::local_user_index::join_group(
         env,
@@ -278,7 +278,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
 
-    let original_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
+    let original_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1);
 
     let group_name = random_string();
     let amount = 1_0000_0000;
@@ -323,10 +323,10 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
         response => panic!("'create_group' error: {response:?}"),
     };
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, amount);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user2, amount);
     client::ledger::happy_path::approve(
         env,
-        user2.user_id.canister_id(),
+        user2.principal,
         canister_ids.icp_ledger,
         member_spender_account(group_id.into(), &user2),
         amount - fee,
@@ -335,7 +335,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
 
     tick_many(env, 3);
 
-    let balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
+    let balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1);
 
     assert_eq!(balance - original_balance, (amount * 98) / 100);
 }
@@ -364,9 +364,9 @@ fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canist
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
     let user = if in_multi_user_canister {
-        client::register_user_in_multi_user_canister(env, canister_ids)
-    } else {
         client::register_user(env, canister_ids)
+    } else {
+        client::register_user_in_user_canister(env, canister_ids)
     };
     let wallet = if in_multi_user_canister { user.principal } else { user.canister() };
 
@@ -375,7 +375,7 @@ fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canist
     let (spender, channel_id) = create_gated(env, &owner, &gated, payment_gate(canister_ids.icp_ledger, amount, fee));
     let spender_account = member_spender_account(spender, &user);
 
-    let owner_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id);
+    let owner_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &owner);
 
     // The wallet holds the gate's amount, and approves the gate's amount less the approval's fee
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, wallet, amount);
@@ -414,7 +414,7 @@ fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canist
         0
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id) - owner_balance,
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &owner) - owner_balance,
         (amount * 98) / 100
     );
 }
@@ -434,8 +434,8 @@ fn payment_gate_is_only_paid_with_an_approval_under_the_members_spender_subaccou
     } = wrapper.env();
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let alice = client::register_user_in_multi_user_canister(env, canister_ids);
-    let bob = client::register_user_in_multi_user_canister(env, canister_ids);
+    let alice = client::register_user(env, canister_ids);
+    let bob = client::register_user(env, canister_ids);
 
     let amount = 1_0000_0000;
     let fee = 10_000;
@@ -525,7 +525,7 @@ fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
     } = wrapper.env();
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
     let migrated_user = (!matches!(neurons, Neurons::UserCanister)).then(|| {
         let operator = platform_operator(env, canister_ids, *controller);
         let multi_user_canister =
@@ -792,19 +792,19 @@ fn only_selected_composite_gate_checked_if_index_provided() {
     let user2 = client::register_user(env, canister_ids);
 
     let initial_balance = 10_0000_0000;
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, initial_balance);
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, initial_balance);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user2, initial_balance);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user2, initial_balance);
 
     client::ledger::happy_path::approve(
         env,
-        user2.user_id.canister_id(),
+        user2.principal,
         canister_ids.icp_ledger,
         member_spender_account(group_id.into(), &user2),
         initial_balance,
     );
     client::ledger::happy_path::approve(
         env,
-        user2.user_id.canister_id(),
+        user2.principal,
         canister_ids.chat_ledger,
         member_spender_account(group_id.into(), &user2),
         initial_balance,
@@ -831,10 +831,10 @@ fn only_selected_composite_gate_checked_if_index_provided() {
     );
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2),
         initial_balance - 10_000
     );
-    assert!(client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user2.user_id) < initial_balance - 100_000);
+    assert!(client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user2) < initial_balance - 100_000);
 }
 
 // Two members joining make two equal payments to the owner. If both have to be retried, and the
@@ -855,32 +855,28 @@ fn equal_gate_payments_retried_in_the_same_round_are_both_made() {
     let amount = 1_000_000;
     let fee = 10_000;
     let (canister_id, _) = create_gated(env, &owner, &Gated::Group, payment_gate(ledger, amount, fee));
-    let owner_balance = client::ledger::happy_path::balance_of(env, ledger, owner.user_id);
+    let owner_balance = client::ledger::happy_path::balance_of(env, ledger, &owner);
 
     // Each member's payment is taken while the ledger is running, but the ledger is stopped before
     // the owner is paid, so the payment to the owner is retried 10 seconds later. Time doesn't pass
     // as the rounds do, so both retries fall due at the same time.
     for _ in 0..2 {
         let user = client::register_user(env, canister_ids);
-        client::ledger::happy_path::transfer(env, *controller, ledger, user.user_id, amount);
-        client::user::happy_path::approve_transfer(
+        client::ledger::happy_path::transfer(env, *controller, ledger, &user, amount);
+        client::ledger::happy_path::approve(
             env,
-            &user,
-            &user_canister::approve_transfer::Args {
-                spender: member_spender_account(canister_id, &user).into(),
-                ledger_canister_id: ledger,
-                amount: amount - fee,
-                expires_in: None,
-                pin: None,
-            },
+            user.principal,
+            ledger,
+            member_spender_account(canister_id, &user),
+            amount - fee,
         );
 
-        let balance = client::ledger::happy_path::balance_of(env, ledger, user.user_id);
+        let balance = client::ledger::happy_path::balance_of(env, ledger, &user);
 
         let message_id = submit_join(env, &user, canister_id);
         let charged = (0..50).any(|_| {
             env.tick();
-            client::ledger::happy_path::balance_of(env, ledger, user.user_id) < balance
+            client::ledger::happy_path::balance_of(env, ledger, &user) < balance
         });
         assert!(charged);
         client::stop_canister(env, *controller, ledger);
@@ -893,7 +889,7 @@ fn equal_gate_payments_retried_in_the_same_round_are_both_made() {
     env.advance_time(Duration::from_secs(11));
     tick_many(env, 10);
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, ledger, owner.user_id) - owner_balance,
+        client::ledger::happy_path::balance_of(env, ledger, &owner) - owner_balance,
         2 * 970_000
     );
     assert_eq!(metric(env, canister_id, "payments_awaiting_retry"), 0);

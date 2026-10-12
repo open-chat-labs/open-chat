@@ -23,7 +23,7 @@ fn swap_from_approved_account_pulls_input_from_that_account() {
         controller,
     } = wrapper.env();
 
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
 
     let input_amount = ONE_ICP;
     let wallet_balance = 10 * ONE_ICP;
@@ -57,10 +57,7 @@ fn swap_from_approved_account_pulls_input_from_that_account() {
         client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, external_wallet),
         wallet_balance - input_amount - 2 * ICP_TRANSFER_FEE
     );
-    assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id),
-        0
-    );
+    assert_eq!(client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user), 0);
 }
 
 #[test]
@@ -72,7 +69,7 @@ fn swap_from_account_without_allowance_fails() {
         controller,
     } = wrapper.env();
 
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
 
     let external_wallet = random_principal();
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, external_wallet, 10 * ONE_ICP);
@@ -102,7 +99,7 @@ fn swap_from_own_account_is_rejected() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
 
     let args = swap_args(canister_ids, ONE_ICP, Some(icrc1::Account::legacy_for_user(user.user_id)));
     let response = client::user::swap_tokens(env, user.principal, user.canister(), &args);
@@ -122,7 +119,7 @@ fn swap_made_by_user_in_multi_user_canister_is_unfinished_until_marked_completed
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::register_user_in_multi_user_canister(env, canister_ids);
+    let user = client::register_user(env, canister_ids);
     let swap_id = random_from_u128();
     mark_started(env, &user, canister_ids, swap_id);
 
@@ -178,7 +175,7 @@ fn failed_swap_made_by_user_in_multi_user_canister_earns_no_achievement() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::register_user_in_multi_user_canister(env, canister_ids);
+    let user = client::register_user(env, canister_ids);
     let swap_id = random_from_u128();
     mark_started(env, &user, canister_ids, swap_id);
     mark_completed(env, &user, swap_id, Err("slippage".to_string()));
@@ -201,7 +198,7 @@ fn completing_swap_which_was_never_started_fails() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::register_user_in_multi_user_canister(env, canister_ids);
+    let user = client::register_user(env, canister_ids);
     let response = client::user::mark_token_swap_completed(
         env,
         user.principal,
@@ -223,7 +220,7 @@ fn swap_made_by_user_in_multi_user_canister_needs_their_pin() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::register_user_in_multi_user_canister(env, canister_ids);
+    let user = client::register_user(env, canister_ids);
     client::user::happy_path::set_pin_number(env, &user, None, Some("1234".to_string()));
     let swap_id = random_from_u128();
 

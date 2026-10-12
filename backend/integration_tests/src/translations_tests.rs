@@ -30,7 +30,7 @@ fn payment_failing_to_call_into_ledger_is_retried_with_backoff() {
     client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
     client::ledger::happy_path::transfer(env, *controller, ledger, translations, 10 * PAYMENT_AMOUNT);
 
-    let proposer_balance = |env: &PocketIc| client::ledger::happy_path::balance_of(env, ledger, proposer.user_id);
+    let proposer_balance = |env: &PocketIc| client::ledger::happy_path::balance_of(env, ledger, &proposer);
     let awaiting_retry = |env: &PocketIc| {
         try_metrics(env, translations).unwrap()["payments_awaiting_retry"]
             .as_u64()

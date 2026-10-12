@@ -2,7 +2,7 @@ use crate::env::ENV;
 use crate::utils::{chat_token_info, icp_token_info, now_millis, now_nanos, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
-use constants::{DAY_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
+use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
 use pocket_ic::PocketIc;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -225,8 +225,14 @@ fn send_crypto_message_and_check_activity_feed(chat_type: ChatType) {
 
     let amount = 1_000_000;
 
-    // They send us a crypto message
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, them.user_id, amount);
+    // They send us a crypto message, paying for the transfer and for approving it
+    client::ledger::happy_path::transfer(
+        env,
+        *controller,
+        canister_ids.icp_ledger,
+        &them,
+        amount + 2 * ICP_TRANSFER_FEE,
+    );
 
     let transaction = PendingCryptoTransaction::ICRC1(types::icrc1::PendingCryptoTransaction {
         ledger: canister_ids.icp_ledger,
@@ -384,9 +390,11 @@ fn accept_p2p_swap_and_check_activity_feed(chat_type: ChatType) {
         true,
     );
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, us.user_id, 1_100_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &us, 1_100_000_000);
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, them.user_id, 11_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &them, 11_000_000_000);
+    // They approve their canister to deposit what they swap from their wallet
+    client::approve_user_canister(env, &them, canister_ids.chat_ledger, 10_000_000_000 + 2 * CHAT_TRANSFER_FEE);
 
     let message_id = random_from_u128();
     let content = MessageContentInitial::P2PSwap(P2PSwapContentInitial {

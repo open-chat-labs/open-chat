@@ -16,9 +16,9 @@ fn weekly_check_holds_user_canisters_to_their_old_minimum() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::register_user(env, canister_ids);
+    let user = client::register_user_in_user_canister(env, canister_ids);
     let local_user_index = user.local_user_index;
-    let frozen_user = client::register_user_with_referrer_on(env, canister_ids, local_user_index, None);
+    let frozen_user = client::register_user_in_user_canister_with_referrer_on(env, canister_ids, local_user_index, None);
 
     // Once the cycles its freezing threshold reserves are set aside, it holds less than the 1T other
     // canisters keep, but more than the User canister minimum, with room for what it burns while idle

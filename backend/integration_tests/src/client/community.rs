@@ -61,8 +61,33 @@ generate_msgpack_update_call!(update_channel);
 generate_msgpack_update_call!(update_community);
 generate_msgpack_update_call!(update_user_group);
 
+// Sends a message holding a transfer from the sender's wallet, as the website does: the community is
+// approved to pull the transfer, which is made an ICRC2 one if it isn't already
+pub fn send_message_with_transfer(
+    env: &mut pocket_ic::PocketIc,
+    sender: &crate::User,
+    community_id: types::CommunityId,
+    args: &send_message::Args,
+) -> send_message::Response {
+    let content = crate::client::pay_from_wallet(env, sender, community_id.into(), args.content.clone());
+    send_message(
+        env,
+        sender.principal,
+        community_id.into(),
+        &send_message::Args {
+            content,
+            og_previews: args.og_previews.clone(),
+            mentioned: args.mentioned.clone(),
+            sender_name: args.sender_name.clone(),
+            sender_display_name: args.sender_display_name.clone(),
+            replies_to: args.replies_to.clone(),
+            ..*args
+        },
+    )
+}
+
 pub mod happy_path {
-    use crate::{User, client::user};
+    use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
@@ -258,6 +283,8 @@ pub mod happy_path {
         }
     }
 
+    // Sends a message holding a transfer from the sender's wallet, which the community pulls, having
+    // been approved to, as the website does
     pub fn send_message_with_transfer(
         env: &mut PocketIc,
         community_id: CommunityId,
@@ -265,34 +292,9 @@ pub mod happy_path {
         sender: &User,
         content: MessageContentInitial,
         message_id: Option<MessageId>,
-    ) -> user_canister::send_message_with_transfer_to_channel::SuccessResult {
-        let response = user::send_message_with_transfer_to_channel(
-            env,
-            sender.principal,
-            sender.user_id.canister_id(),
-            &user_canister::send_message_with_transfer_to_channel::Args {
-                channel_id,
-                thread_root_message_index: None,
-                message_id: message_id.unwrap_or_else(random_from_u128),
-                content,
-                replies_to: None,
-                block_level_markdown: false,
-                message_filter_failed: None,
-                sender_name: sender.username(),
-                sender_display_name: None,
-                mentioned: Vec::new(),
-                community_rules_accepted: None,
-                channel_rules_accepted: None,
-                community_id,
-                pin: None,
-                og_previews: Vec::new(),
-            },
-        );
-
-        match response {
-            user_canister::send_message_with_transfer_to_channel::Response::Success(result) => result,
-            response => panic!("'send_message_with_transfer_to_channel' error: {response:?}"),
-        }
+    ) -> community_canister::send_message::SuccessResult {
+        let content = crate::client::pay_from_wallet(env, sender, community_id.into(), content);
+        send_message(env, sender, community_id, channel_id, None, content, None, message_id)
     }
 
     pub fn update_community(

@@ -49,9 +49,33 @@ generate_msgpack_update_call!(unpin_message);
 generate_msgpack_update_call!(update_bot);
 generate_msgpack_update_call!(update_group_v2);
 
+// Sends a message holding a transfer from the sender's wallet, as the website does: the group is
+// approved to pull the transfer, which is made an ICRC2 one if it isn't already
+pub fn send_message_with_transfer(
+    env: &mut pocket_ic::PocketIc,
+    sender: &crate::User,
+    group_id: types::ChatId,
+    args: &send_message_v2::Args,
+) -> send_message_v2::Response {
+    let content = crate::client::pay_from_wallet(env, sender, group_id.into(), args.content.clone());
+    send_message_v2(
+        env,
+        sender.principal,
+        group_id.into(),
+        &send_message_v2::Args {
+            content,
+            og_previews: args.og_previews.clone(),
+            mentioned: args.mentioned.clone(),
+            sender_name: args.sender_name.clone(),
+            sender_display_name: args.sender_display_name.clone(),
+            replies_to: args.replies_to.clone(),
+            ..*args
+        },
+    )
+}
+
 pub mod happy_path {
     use crate::User;
-    use crate::client::user;
     use crate::env::VIDEO_CALL_OPERATOR;
     use candid::Principal;
     use pocket_ic::PocketIc;
@@ -133,39 +157,17 @@ pub mod happy_path {
         }
     }
 
+    // Sends a message holding a transfer from the sender's wallet, which the group pulls, having been
+    // approved to, as the website does
     pub fn send_message_with_transfer(
         env: &mut PocketIc,
         group_chat_id: ChatId,
         sender: &User,
         content: MessageContentInitial,
         message_id: Option<MessageId>,
-    ) -> user_canister::send_message_with_transfer_to_group::SuccessResult {
-        let response = user::send_message_with_transfer_to_group(
-            env,
-            sender.principal,
-            sender.user_id.canister_id(),
-            &user_canister::send_message_with_transfer_to_group::Args {
-                thread_root_message_index: None,
-                message_id: message_id.unwrap_or_else(random_from_u128),
-                content,
-                replies_to: None,
-                block_level_markdown: false,
-                message_filter_failed: None,
-
-                sender_name: sender.username(),
-                sender_display_name: None,
-                mentioned: Vec::new(),
-                rules_accepted: None,
-                group_id: group_chat_id,
-                pin: None,
-                og_previews: Vec::new(),
-            },
-        );
-
-        match response {
-            user_canister::send_message_with_transfer_to_group::Response::Success(result) => result,
-            response => panic!("'send_message_with_transfer_to_group' error: {response:?}"),
-        }
+    ) -> group_canister::send_message_v2::SuccessResult {
+        let content = crate::client::pay_from_wallet(env, sender, group_chat_id.into(), content);
+        send_message(env, sender, group_chat_id, None, content, None, message_id)
     }
 
     pub fn join_group(env: &mut PocketIc, sender: Principal, group_chat_id: ChatId) {

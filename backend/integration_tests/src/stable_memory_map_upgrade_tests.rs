@@ -19,8 +19,8 @@ fn stable_memory_maps_survive_upgrades() {
         controller,
     } = wrapper.env();
 
-    let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::register_user(env, canister_ids);
+    let user1 = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
+    let user2 = client::register_user_in_user_canister(env, canister_ids);
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, true);
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), false, vec![random_string()]);
     let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, false, random_string());
