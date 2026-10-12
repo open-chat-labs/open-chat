@@ -963,6 +963,15 @@ describe("getConvertedBalances", () => {
         expect(converted.ethBalance).toBeCloseTo(1.6);
     });
 
+    test("has no value in a currency without a rate", () => {
+        const withoutCkETH = new Map(xr);
+        withoutCkETH.delete(LEDGER_CANISTER_CKETH);
+        const converted = getConvertedBalances(withoutCkETH, balance, 8, TENDY_LEDGER);
+
+        expect(converted.ethBalance).toBeUndefined();
+        expect(converted.btcBalance).toBeCloseTo(0.04);
+    });
+
     test("has no values for a ledger without a rate", () => {
         expect(getConvertedBalances(xr, balance, 8, "2ouva-viaaa-aaaaq-aaamq-cai")).toEqual({
             dollarBalance: undefined,

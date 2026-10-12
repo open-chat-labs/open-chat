@@ -201,9 +201,10 @@ export function getConvertedBalances(
     const xrICPtoDollar = xr.get(conversionLedgers.icp)?.toUSD;
     const xrBTCtoDollar = xr.get(conversionLedgers.btc)?.toUSD;
     const xrETHtoDollar = xr.get(conversionLedgers.eth)?.toUSD;
-    const xrDollarToICP = xrICPtoDollar === undefined ? 0 : 1 / xrICPtoDollar;
-    const xrDollarToBTC = xrBTCtoDollar === undefined ? 0 : 1 / xrBTCtoDollar;
-    const xrDollarToETH = xrETHtoDollar === undefined ? 0 : 1 / xrETHtoDollar;
+    // Without a rate (or with a rate of 0) a converted balance is unknown rather than 0
+    const xrDollarToICP = xrICPtoDollar ? 1 / xrICPtoDollar : undefined;
+    const xrDollarToBTC = xrBTCtoDollar ? 1 / xrBTCtoDollar : undefined;
+    const xrDollarToETH = xrETHtoDollar ? 1 / xrETHtoDollar : undefined;
 
     const balanceWholeUnits = Number(balance) / Math.pow(10, decimals);
     const xrUSD = xr.get(ledger)?.toUSD;

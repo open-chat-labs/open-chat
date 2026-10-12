@@ -2132,15 +2132,10 @@ describe("OpenChatAgent loading exchange rates", () => {
         expect(rates[USDT_LEDGER]).toEqual({ toUSD: 1 });
     });
 
-    test("averages the rates of other tokens", async () => {
+    test("averages the rates of each ledger across the providers", async () => {
         const rates = await agent.exchangeRates();
 
         expect(rates[ICP_LEDGER]).toEqual({ toUSD: 5 });
-    });
-
-    test("gives tokens which share a symbol their own rates", async () => {
-        const rates = await agent.exchangeRates();
-
         expect(rates[TENDY_LEDGER]).toEqual({ toUSD: 0.08 });
         expect(rates[OTHER_TENDY_LEDGER].toUSD).toBeCloseTo(0.28);
     });
