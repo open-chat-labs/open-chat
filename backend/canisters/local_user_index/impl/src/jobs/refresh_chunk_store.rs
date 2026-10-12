@@ -11,8 +11,7 @@ use utils::canister::{
     chunked_installs_in_progress, clear_chunk_store, stored_chunks, upload_wasm_in_chunks, wasm_chunk_hashes,
 };
 
-const CHILD_CANISTER_TYPES: [ChildCanisterType; 4] = [
-    ChildCanisterType::User,
+const CHILD_CANISTER_TYPES: [ChildCanisterType; 3] = [
     ChildCanisterType::Group,
     ChildCanisterType::Community,
     ChildCanisterType::MultiUser,
@@ -86,8 +85,7 @@ fn start(remove_stale: bool) {
 }
 
 fn no_pending_upgrades(state: &RuntimeState) -> bool {
-    state.data.users_requiring_upgrade.is_empty()
-        && state.data.groups_requiring_upgrade.is_empty()
+    state.data.groups_requiring_upgrade.is_empty()
         && state.data.communities_requiring_upgrade.is_empty()
         && state.data.multi_users_requiring_upgrade.is_empty()
 }

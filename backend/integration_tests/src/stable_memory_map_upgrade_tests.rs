@@ -20,20 +20,18 @@ fn stable_memory_maps_survive_upgrades() {
         ..
     } = wrapper.env();
 
-    let user1 = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
-    let user2 = client::register_user_in_user_canister(env, canister_ids);
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, true);
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), false, vec![random_string()]);
     let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, false, random_string());
 
-    let direct_event = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "direct", None).event_index;
     let group_event = client::group::happy_path::send_text_message(env, &user1, group_id, None, "group", None).event_index;
     let channel_event =
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id, None, "channel", None)
             .event_index;
     tick_many(env, 3);
 
-    let canisters: [CanisterId; 3] = [user1.canister(), group_id.into(), community_id.into()];
+    let canisters: [CanisterId; 2] = [group_id.into(), community_id.into()];
     for canister_id in canisters {
         assert_stable_memory_maps_initialised(env, canister_id);
     }
@@ -43,7 +41,6 @@ fn stable_memory_maps_survive_upgrades() {
         version,
         module: module.module.clone(),
     };
-    client::user_index::happy_path::upgrade_user_canister_wasm(env, *controller, canister_ids.user_index, wasm(&wasms::USER));
     client::group_index::happy_path::upgrade_group_canister_wasm(
         env,
         *controller,
@@ -64,10 +61,9 @@ fn stable_memory_maps_survive_upgrades() {
         assert_stable_memory_maps_initialised(env, canister_id);
     }
 
-    let direct = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![direct_event]);
     let group = client::group::happy_path::events_by_index(env, &user1, group_id, vec![group_event]);
     let channel = client::community::happy_path::events_by_index(env, &user1, community_id, channel_id, vec![channel_event]);
-    for response in [direct, group, channel] {
+    for response in [group, channel] {
         assert_eq!(response.events.len(), 1);
         assert!(matches!(response.events[0].event, ChatEvent::Message(_)));
     }

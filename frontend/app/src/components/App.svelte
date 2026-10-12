@@ -206,7 +206,6 @@
             addRemoveSwapProvider,
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
-            setUserUpgradeConcurrency,
             markLocalGroupIndexFull,
             reinstateMissedDailyClaims,
             setAirdropConfig,
@@ -495,16 +494,6 @@
                 console.log("Community upgrade concurrency set", value);
             } else {
                 console.error("Failed to set community upgrade concurrency", value);
-            }
-        });
-    }
-
-    function setUserUpgradeConcurrency(value: number): void {
-        client.setUserUpgradeConcurrency(value).then((success) => {
-            if (success) {
-                console.log("User upgrade concurrency set", value);
-            } else {
-                console.error("Failed to set user upgrade concurrency", value);
             }
         });
     }

@@ -30,7 +30,7 @@ async fn c2c_accept_p2p_swap_impl(mut args: Args) -> Response {
         Err(error) => return Error(error),
     };
 
-    let payer = Payer::Approved {
+    let payer = Payer {
         from: args.from_account.unwrap_or(principal.into()),
         spender_subaccount: Some(ledger_utils::spender_subaccount(principal)),
     };

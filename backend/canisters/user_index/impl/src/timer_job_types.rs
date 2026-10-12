@@ -29,22 +29,7 @@ pub enum TimerJob {
     RetryPayment(Box<RetryPaymentJob>),
 }
 
-impl TimerJob {
-    // Moves a job for a user onto the new id they were given when migrated to a MultiUser canister
-    pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
-        let user_id = match self {
-            TimerJob::RecurringDiamondMembershipPayment(job) => &mut job.user_id,
-            TimerJob::SetUserSuspended(job) => &mut job.user_id,
-            TimerJob::SetUserSuspendedInGroup(job) => &mut job.user_id,
-            TimerJob::SetUserSuspendedInCommunity(job) => &mut job.user_id,
-            TimerJob::UnsuspendUser(job) => &mut job.user_id,
-            TimerJob::ProcessReportClassification(_) | TimerJob::RetryPayment(_) => return,
-        };
-        if *user_id == old_user_id {
-            *user_id = new_user_id;
-        }
-    }
-}
+impl TimerJob {}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RecurringDiamondMembershipPayment {
@@ -432,31 +417,5 @@ impl Job for UnsuspendUser {
 impl Job for RetryPaymentJob {
     fn execute(self) {
         crate::jobs::make_pending_payments::retry(self.payment, self.failures);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use candid::Principal;
-
-    #[test]
-    fn only_jobs_for_the_migrated_user_are_moved_onto_their_new_id() {
-        let old_user_id: UserId = Principal::from_slice(&[1]).into();
-        let other_user_id: UserId = Principal::from_slice(&[2]).into();
-        let new_user_id: UserId = Principal::from_slice(&[3]).into();
-        let job = |user_id| TimerJob::RecurringDiamondMembershipPayment(RecurringDiamondMembershipPayment { user_id });
-        let user_id = |job: &TimerJob| match job {
-            TimerJob::RecurringDiamondMembershipPayment(j) => j.user_id,
-            _ => unreachable!(),
-        };
-
-        let mut migrated = job(old_user_id);
-        let mut other = job(other_user_id);
-        migrated.migrate_user_id(old_user_id, new_user_id);
-        other.migrate_user_id(old_user_id, new_user_id);
-
-        assert_eq!(user_id(&migrated), new_user_id);
-        assert_eq!(user_id(&other), other_user_id);
     }
 }

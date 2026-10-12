@@ -256,19 +256,6 @@ impl DirectChats {
         }
     }
 
-    // Moves the user's chats onto their new id, once they are migrated to a MultiUser canister. Their
-    // chat with themselves is keyed by their id, so is moved to the new id, along with its pin.
-    pub fn migrate_own_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
-        self.direct_chats_v2
-            .for_each_mut(|_, chat| chat.migrate_own_user_id(old_user_id, new_user_id));
-        if let Some(chat) = self.direct_chats_v2.remove(&old_user_id.into()) {
-            self.direct_chats_v2.insert(new_user_id.into(), chat);
-        }
-        if let Some(pinned_at) = self.pinned.value.remove(&old_user_id.into()) {
-            self.pinned.value.insert(new_user_id.into(), pinned_at);
-        }
-    }
-
     // Moves the chat with another user onto their new id, once they are migrated to a MultiUser
     // canister, along with its pin, so that events from them under their new id are added to it. The
     // chat under their old id is recorded as removed, so that clients drop it and pick it up under
@@ -544,23 +531,6 @@ mod tests {
             .remove_expired_events(&MigratedUserIds::default(), 60);
         assert_eq!(direct_chats.next_event_expiry(), Some(110));
         assert!(direct_chats.chats_with_events_expiring_by(109).is_empty());
-    }
-
-    #[test]
-    fn users_own_chats_are_moved_onto_their_new_id() {
-        init_stable_memory_map();
-        let (old, new, them) = (user(1), user(2), user(3));
-        let mut direct_chats = legacy_direct_chats(old, &[old]);
-        direct_chats.migrate_to_stable_memory();
-        direct_chats.get_or_create(old, them, UserType::User, || 2, 10);
-        direct_chats.pin(old.into(), 20).unwrap();
-
-        direct_chats.migrate_own_user_id(old, new);
-
-        assert!(direct_chats.get(&old.into()).is_none());
-        assert_eq!(direct_chats.get(&new.into()).unwrap().them, new);
-        assert_eq!(direct_chats.get(&them.into()).unwrap().them, them);
-        assert_eq!(direct_chats.pinned_chats(), HashMap::from([(Chat::Direct(new.into()), 20)]));
     }
 
     #[test]

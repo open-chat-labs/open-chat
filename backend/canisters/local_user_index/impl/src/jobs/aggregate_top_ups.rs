@@ -20,10 +20,6 @@ fn run_impl(state: &mut RuntimeState) {
     let now = state.env.now();
     let data = &state.data;
 
-    let users = data
-        .local_users
-        .iter_user_canisters()
-        .map(|(u, l)| (u.canister_id(), ChildCanisterType::User, l.cycle_top_ups.as_slice()));
     let groups = data
         .local_groups
         .iter()
@@ -37,6 +33,6 @@ fn run_impl(state: &mut RuntimeState) {
         .iter()
         .map(|(c, l)| (*c, ChildCanisterType::MultiUser, l.cycle_top_ups.as_slice()));
 
-    let leaderboards = TopUpLeaderboards::build(users.chain(groups).chain(communities).chain(multi_users), now);
+    let leaderboards = TopUpLeaderboards::build(groups.chain(communities).chain(multi_users), now);
     state.data.top_up_leaderboards = leaderboards;
 }

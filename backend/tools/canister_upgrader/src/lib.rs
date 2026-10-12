@@ -384,40 +384,6 @@ pub async fn upgrade_community_canister(
     println!("Community canister wasm upgraded to version {version}");
 }
 
-pub async fn upgrade_user_canister(
-    identity: Box<dyn Identity>,
-    url: String,
-    user_index_canister_id: CanisterId,
-    version: BuildVersion,
-) {
-    let agent = build_ic_agent(url, identity).await;
-    let canister_wasm = get_canister_wasm(CanisterName::User, version);
-
-    user_index_canister_client::upload_wasm_in_chunks(
-        &agent,
-        &user_index_canister_id,
-        &canister_wasm.module,
-        user_index_canister::ChildCanisterType::User,
-    )
-    .await
-    .unwrap();
-
-    let args = UpgradeChunkedCanisterWasmArgs {
-        version,
-        wasm_hash: sha256(&canister_wasm.module),
-        filter: None,
-    };
-
-    let response = user_index_canister_client::upgrade_user_canister_wasm(&agent, &user_index_canister_id, &args)
-        .await
-        .unwrap();
-
-    if !matches!(response, user_index_canister::upgrade_user_canister_wasm::Response::Success) {
-        panic!("{response:?}");
-    }
-    println!("User canister wasm upgraded to version {version}");
-}
-
 pub async fn upgrade_multi_user_canister(
     identity: Box<dyn Identity>,
     url: String,

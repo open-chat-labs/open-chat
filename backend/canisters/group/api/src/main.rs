@@ -47,7 +47,6 @@ fn main() {
     generate_ts_method!(group, pin_message_v2);
     generate_ts_method!(group, regenerate_webhook);
     generate_ts_method!(group, register_poll_vote);
-    generate_ts_method!(group, register_proposal_vote);
     generate_ts_method!(group, register_proposal_vote_v2);
     generate_ts_method!(group, register_webhook);
     generate_ts_method!(group, remove_participant);

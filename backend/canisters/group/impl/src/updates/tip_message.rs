@@ -1,12 +1,17 @@
-use crate::updates::c2c_tip_message::tip_message_with_completed_transfer;
-use crate::{RuntimeState, execute_update_async, mutate_state};
+use crate::activity_notifications::handle_activity_notification;
+use crate::{GroupEventPusher, RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use chat_events::TipMessageArgs;
 use constants::MEMO_TIP;
 use group_canister::tip_message::*;
-use ledger_utils::{TransferRecipient, UserTransfer};
+use ledger_utils::{TransferRecipient, UserTransfer, format_crypto_amount_with_symbol};
 use oc_error_codes::OCErrorCode;
-use types::{Achievement, Caller, CryptoTransaction, OCResult, UserId, icrc2};
+use types::{
+    Achievement, Caller, CanisterId, Chat, ChatId, CryptoTransaction, EventIndex, GroupChatUserNotificationPayload,
+    GroupMessageTipped, MessageId, MessageIndex, OCResult, UserId, icrc2,
+};
+use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
 #[trace]
@@ -54,7 +59,7 @@ struct TipToMake {
     user_id: UserId,
     // The caller's spender subaccount, under which they approved the transfer
     spender_subaccount: [u8; 32],
-    c2c_args: group_canister::c2c_tip_message::Args,
+    c2c_args: TipToRecord,
     transfer: icrc2::PendingCryptoTransaction,
 }
 
@@ -71,7 +76,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
         &state.data.migrated_user_ids,
     )?;
 
-    let c2c_args = group_canister::c2c_tip_message::Args {
+    let c2c_args = TipToRecord {
         recipient,
         thread_root_message_index: args.thread_root_message_index,
         message_id: args.message_id,
@@ -116,4 +121,95 @@ fn prepare(args: Args, state: &mut RuntimeState) -> OCResult<PrepareResult> {
             Ok(PrepareResult::Tipped(user_id))
         }
     }
+}
+
+// What is recorded of a tip once its transfer has been made
+struct TipToRecord {
+    recipient: UserId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    ledger: CanisterId,
+    token_symbol: String,
+    amount: u128,
+    decimals: u8,
+    username: String,
+    display_name: Option<String>,
+}
+
+// Records a tip whose transfer has been made
+fn tip_message_with_completed_transfer(user_id: UserId, args: TipToRecord, state: &mut RuntimeState) -> OCResult {
+    let now = state.env.now();
+
+    let tip_message_args = TipMessageArgs {
+        user_id,
+        recipient: args.recipient,
+        thread_root_message_index: args.thread_root_message_index,
+        message_id: args.message_id,
+        ledger: args.ledger,
+        token_symbol: args.token_symbol.clone(),
+        amount: args.amount,
+        now,
+    };
+
+    let result = state.data.chat.tip_message(
+        tip_message_args,
+        &state.data.migrated_user_ids,
+        GroupEventPusher {
+            now,
+            rng: state.env.rng(),
+            queue: &mut state.data.local_user_index_event_sync_queue,
+        },
+    )?;
+
+    if let Some((message, event_index)) =
+        state
+            .data
+            .chat
+            .events
+            .message_internal(EventIndex::default(), args.thread_root_message_index, args.message_id.into())
+        // The sender is a member under their latest id, in case they have been migrated since
+        // sending the message
+        && let sender_id = state.data.migrated_user_ids.latest(message.sender)
+        && let Some(sender) = state.data.chat.members.get(&sender_id)
+        && sender_id != user_id
+        && !sender.user_type().is_bot()
+    {
+        let chat_id: ChatId = state.env.canister_id().into();
+        let tip = format_crypto_amount_with_symbol(args.amount, args.decimals, &args.token_symbol);
+        let user_notification_payload = GroupChatUserNotificationPayload::GroupMessageTipped(GroupMessageTipped {
+            chat_id,
+            thread_root_message_index: args.thread_root_message_index,
+            message_index: message.message_index,
+            message_event_index: event_index,
+            group_name: state.data.chat.name.value.clone(),
+            tipped_by: user_id,
+            tipped_by_name: args.username,
+            tipped_by_display_name: args.display_name,
+            tip,
+            group_avatar_id: state.data.chat.avatar.as_ref().map(|a| a.id),
+        });
+
+        state.push_notification(Some(user_id), vec![sender_id], user_notification_payload);
+
+        state.push_event_to_user(
+            sender_id,
+            GroupCanisterEvent::MessageActivity(MessageActivityEvent {
+                chat: Chat::Group(chat_id),
+                thread_root_message_index: args.thread_root_message_index,
+                message_index: message.message_index,
+                message_id: message.message_id,
+                event_index,
+                activity: MessageActivity::Tip,
+                timestamp: now,
+                user_id: Some(user_id),
+            }),
+            now,
+        );
+
+        state.notify_user_of_achievement(sender_id, Achievement::HadMessageTipped, now);
+    }
+
+    state.push_bot_notification(result.bot_notification);
+    handle_activity_notification(state);
+    Ok(())
 }

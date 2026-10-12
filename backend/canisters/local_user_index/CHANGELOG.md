@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove the User canister, along with creating, upgrading and migrating User canisters ([#PRNUM2](https://github.com/open-chat-labs/open-chat/pull/PRNUM2))
+
 ## [[2.0.2130](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2130-local_user_index)] - 2026-10-12
 
 ### Added

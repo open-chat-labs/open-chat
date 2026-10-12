@@ -34,7 +34,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
     };
 
     let swap_id = reserved.reserve_success.content.swap_id;
-    let payer = Payer::Approved {
+    let payer = Payer {
         from: args.from_account.unwrap_or(my_principal.into()),
         spender_subaccount: Some(ledger_utils::spender_subaccount(my_principal)),
     };

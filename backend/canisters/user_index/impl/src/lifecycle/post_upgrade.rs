@@ -6,6 +6,7 @@ use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
 use tracing::info;
+use user_index_canister::ChildCanisterType;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
 use utils::env::canister::CanisterEnv;
@@ -18,8 +19,12 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
-    let (data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
+    let (mut data, errors, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>, Vec<LogEntry>) =
         msgpack::deserialize(reader).unwrap();
+
+    // One-off: there are no User canisters left, so their wasm is no longer needed
+    #[expect(deprecated)]
+    let user_wasm_removed = data.child_canister_wasms.remove(ChildCanisterType::User);
 
     canister_logger::init_with_logs(data.test_mode, errors, logs, traces);
 
@@ -28,5 +33,5 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
-    info!(version = %args.wasm_version, total_instructions, "Post-upgrade complete");
+    info!(version = %args.wasm_version, total_instructions, user_wasm_removed, "Post-upgrade complete");
 }

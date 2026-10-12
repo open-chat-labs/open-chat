@@ -238,11 +238,7 @@ import type {
     SetDisplayNameResponse,
     SetMessageReminderResponse,
     SetUsernameResponse,
-    SetUserUpgradeConcurrencyResponse,
     CreateMultiUserCanisterResponse,
-    MigrateUsersResponse,
-    UserMigrationResponse,
-    UsersToMigrate,
     FundsInPreviousWallet,
     MoveFundsOutcome,
     SubmitProofOfUniquePersonhoodResponse,
@@ -383,13 +379,7 @@ export type WorkerRequest =
     | SetGroupModerationFlags
     | SetGroupUpgradeConcurrency
     | SetCommunityUpgradeConcurrency
-    | SetUserUpgradeConcurrency
     | CreateMultiUserCanister
-    | SetMultiUserCanistersEnabled
-    | MigrateUsers
-    | SetUserMigrationConcurrency
-    | GetUserMigration
-    | CancelUserMigration
     | MarkLocalGroupIndexFull
     | SetDiamondMembershipFees
     | StakeNeuronForSubmittingProposals
@@ -1832,40 +1822,9 @@ type SetCommunityUpgradeConcurrency = {
     kind: "setCommunityUpgradeConcurrency";
 };
 
-type SetUserUpgradeConcurrency = {
-    value: number;
-    kind: "setUserUpgradeConcurrency";
-};
-
 type CreateMultiUserCanister = {
     localUserIndexCanisterId: string;
     kind: "createMultiUserCanister";
-};
-
-type SetMultiUserCanistersEnabled = {
-    enabled: boolean;
-    kind: "setMultiUserCanistersEnabled";
-};
-
-type MigrateUsers = {
-    users: UsersToMigrate;
-    kind: "migrateUsers";
-};
-
-type SetUserMigrationConcurrency = {
-    value: number;
-    kind: "setUserMigrationConcurrency";
-};
-
-type GetUserMigration = {
-    userId: string;
-    kind: "userMigration";
-};
-
-type CancelUserMigration = {
-    userId: string;
-    multiUserCanisterId: string;
-    kind: "cancelUserMigration";
 };
 
 type MarkLocalGroupIndexFull = {
@@ -2833,20 +2792,8 @@ export type WorkerResult<T> = T extends Init
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetCommunityUpgradeConcurrency
     ? SetGroupUpgradeConcurrencyResponse
-    : T extends SetUserUpgradeConcurrency
-    ? SetUserUpgradeConcurrencyResponse
     : T extends CreateMultiUserCanister
     ? CreateMultiUserCanisterResponse
-    : T extends SetMultiUserCanistersEnabled
-    ? boolean
-    : T extends MigrateUsers
-    ? MigrateUsersResponse
-    : T extends SetUserMigrationConcurrency
-    ? boolean
-    : T extends GetUserMigration
-    ? UserMigrationResponse
-    : T extends CancelUserMigration
-    ? Success | OCError
     : T extends MarkLocalGroupIndexFull
     ? boolean
     : T extends SetDiamondMembershipFees

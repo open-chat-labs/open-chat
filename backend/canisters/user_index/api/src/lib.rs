@@ -1,10 +1,9 @@
 use candid::{CandidType, Principal};
-use oc_error_codes::OCError;
 use serde::{Deserialize, Serialize};
 use types::{
-    BotInstallationLocation, BotPermissions, BuildVersion, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, Hash,
-    MessageContentInitial, MessageId, MessageIndex, Milliseconds, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim,
-    StreakInsurancePayment, TimestampMillis, UniquePersonProof, User, UserId,
+    BotInstallationLocation, BotPermissions, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContentInitial,
+    MessageId, MessageIndex, Milliseconds, NotifyChit, PremiumItemPurchase, StreakInsuranceClaim, StreakInsurancePayment,
+    TimestampMillis, UniquePersonProof, User, UserId,
 };
 
 mod lifecycle;
@@ -36,78 +35,6 @@ pub enum LocalUserIndexEvent {
     MediaScanStalled(Box<MediaScanStalled>),
     MediaScanRecovered,
     MultiUserCanisterCreated(CanisterId),
-    UserMigrationStarted(Box<UserMigrationStarted>),
-    UserMigrationFailedToStart(Box<UserMigrationFailedToStart>),
-    UserImported(Box<UserImported>),
-    UserImportFailed(Box<UserImportFailed>),
-    EventForMigratedUser(Box<EventForMigratedUser>),
-    DailyPuzzleDataForMigratedUser(Box<DailyPuzzleDataForMigratedUser>),
-}
-
-// An event which a LocalUserIndex had queued for a user's old canister, for a user who has since been
-// migrated to a MultiUser canister held by another LocalUserIndex. The UserIndex passes it on to that
-// LocalUserIndex, naming the user by their latest id.
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct EventForMigratedUser {
-    pub user_id: UserId,
-    // A msgpack serialized `user_canister::LocalUserIndexEvent`, which the UserIndex passes on as it
-    // is, so that it needn't be upgraded to pass on events of a new type
-    pub event: serde_bytes::ByteBuf,
-}
-
-// What a LocalUserIndex's daily puzzle engine held for a user under their old id, their streak among
-// it, for a user who has since been migrated to a MultiUser canister held by another LocalUserIndex.
-// The UserIndex passes it on to that LocalUserIndex, naming the user by their latest id.
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct DailyPuzzleDataForMigratedUser {
-    pub user_id: UserId,
-    // Msgpack serialized by the LocalUserIndex, which the UserIndex passes on as it is
-    pub data: serde_bytes::ByteBuf,
-}
-
-// The MultiUser canister the user is being migrated to has imported them, giving them a new id
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UserImported {
-    pub old_user_id: UserId,
-    pub new_user_id: UserId,
-    // The groups and communities the user is in, each of which is told of the user's new id
-    pub canisters_to_notify: Vec<CanisterId>,
-    // The users the user has, or had, a direct chat with, each of whom is told of the user's new id
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub users_to_notify: Vec<UserId>,
-}
-
-// The MultiUser canister the user is being migrated to couldn't import them
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UserImportFailed {
-    pub user_id: UserId,
-    pub multi_user_canister_id: CanisterId,
-    // The hash identifying the migration whose import failed
-    pub user_hash: Hash,
-    pub error: OCError,
-}
-
-// The user's canister has started migrating them to the MultiUser canister, and is now frozen
-// until the MultiUser canister has pulled them
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UserMigrationStarted {
-    pub user_id: UserId,
-    pub multi_user_canister_id: CanisterId,
-    // The size of the user serialized with msgpack, which the MultiUser canister pulls
-    pub user_bytes: u64,
-    // The version of the User canister the user was serialized by
-    pub wasm_version: BuildVersion,
-    // The hash of the user serialized, which identifies the migration
-    pub user_hash: Hash,
-}
-
-// The user couldn't be migrated to the MultiUser canister, either because their canister couldn't
-// be upgraded to the latest wasm or because it wasn't ready to be migrated
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UserMigrationFailedToStart {
-    pub user_id: UserId,
-    pub multi_user_canister_id: CanisterId,
-    pub error: OCError,
 }
 
 // Raised by a local index when media scan jobs are queued but no verdicts are arriving: the
@@ -183,6 +110,8 @@ pub struct ExternalAchievementInitial {
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ChildCanisterType {
     LocalUserIndex,
+    // No longer used, but kept until the User canister wasm has been dropped from the stored wasms
+    #[deprecated]
     User,
     MultiUser,
 }

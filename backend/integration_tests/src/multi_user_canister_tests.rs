@@ -4,7 +4,7 @@ use crate::utils::{
     liquid_cycle_balance, metrics, next_event_store_index, now_millis, set_freezing_threshold, tick_many, try_metrics,
     wait_for_cycle_balance_above, wait_for_event_store_events,
 };
-use crate::{CanisterIds, TestEnv, UserAuth, client, wasms};
+use crate::{CanisterIds, TestEnv, User, UserAuth, client, wasms};
 use candid::Principal;
 use constants::{
     HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, MULTI_USER_CANISTER_MIN_CYCLES_BALANCE,
@@ -37,28 +37,24 @@ use user_canister::{
 };
 
 #[test]
-fn register_user_with_flag_places_user_in_multi_user_canister() {
+fn register_user_places_user_in_multi_user_canister() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let user_counts_before = local_user_counts(env, local_user_index);
+    let local_user_count_before = local_user_count(env, local_user_index);
     let multi_user_canisters_before = multi_user_canisters(env, canister_ids.user_index);
 
     let alice = client::register_user(env, canister_ids);
     assert_eq!(alice.local_user_index, local_user_index);
 
-    // Alice is one of the LocalUserIndex's users, but isn't counted amongst its User canisters, so
-    // she is skipped by User canister upgrades and top ups
-    let (local_user_count, user_canister_count) = local_user_counts(env, local_user_index);
-    assert_eq!(local_user_count, user_counts_before.0 + 1);
-    assert_eq!(user_canister_count, user_counts_before.1);
+    // Alice is one of the LocalUserIndex's users
+    assert_eq!(local_user_count(env, local_user_index), local_user_count_before + 1);
 
     let bob = client::register_user(env, canister_ids);
-    let charlie = client::register_user_in_user_canister(env, canister_ids);
 
     // Alice and Bob are each held in a MultiUser canister on their LocalUserIndex (one is created
-    // if it has none), whereas without the flag Charlie gets a User canister of their own
+    // if it has none)
     for user in [&alice, &bob] {
         assert_ne!(user.user_id.index(), 0);
         let response = client::local_user_index::is_user_or_multi_user_canister(
@@ -74,7 +70,6 @@ fn register_user_with_flag_places_user_in_multi_user_canister() {
             local_user_index_canister::is_user_or_multi_user_canister::Response::MultiUserCanister
         );
     }
-    assert_eq!(charlie.user_id.index(), 0);
 
     // The UserIndex has recorded their registrations
     for user in [&alice, &bob] {
@@ -130,7 +125,7 @@ fn only_platform_operators_can_create_multi_user_canisters() {
     } = wrapper.env();
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let user = client::register_user_in_user_canister(env, canister_ids);
+    let user = client::register_user(env, canister_ids);
     let args = msgpack::serialize_then_unwrap(user_index_canister::create_multi_user_canister::Args {
         local_user_index_canister_id: local_user_index,
     });
@@ -769,7 +764,7 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
     assert_eq!(a_updates.avatar_id, OptionUpdate::SetToNone);
 
     // Blocking B stops A messaging B, and is reported to A alone. A message from B goes into B's
-    // copy of the chat but is dropped rather than delivered to A, as it is between User canisters.
+    // copy of the chat but is dropped rather than delivered to A.
     env.advance_time(Duration::from_secs(1));
     block_user(env, a_principal, canister_id, b);
     block_user(env, a_principal, canister_id, b);
@@ -1395,65 +1390,17 @@ fn upgrade_filter_naming_unknown_canister_is_rejected() {
 }
 
 #[test]
-fn multi_user_canisters_enabled_flag_fans_out_to_local_user_indexes() {
+fn new_users_are_placed_in_the_multi_user_canister_with_the_fewest_users() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
         canister_ids,
-        controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let user = client::register_user_in_user_canister(env, canister_ids);
-    let operator = client::register_user_in_user_canister(env, canister_ids);
-    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
-
-    assert!(!multi_user_canisters_enabled(env, canister_ids.user_index));
-    assert!(!multi_user_canisters_enabled(env, local_user_index));
-
-    // Neither an ordinary user nor the governance principal can set it
-    let args = msgpack::serialize_then_unwrap(user_index_canister::set_multi_user_canisters_enabled::Args { enabled: true });
-    for sender in [user.principal, *controller] {
-        let response = env.update_call(
-            canister_ids.user_index,
-            sender,
-            "set_multi_user_canisters_enabled_msgpack",
-            args.clone(),
-        );
-        assert!(response.is_err(), "{sender} was allowed to set multi_user_canisters_enabled");
-    }
-    assert!(!multi_user_canisters_enabled(env, canister_ids.user_index));
-
-    client::user_index::happy_path::set_multi_user_canisters_enabled(env, operator.principal, canister_ids.user_index, true);
-
-    // The UserIndex records it immediately, the LocalUserIndex receives it over the event queue
-    assert!(multi_user_canisters_enabled(env, canister_ids.user_index));
-    tick_many(env, 5);
-    assert!(multi_user_canisters_enabled(env, local_user_index));
-
-    client::user_index::happy_path::set_multi_user_canisters_enabled(env, operator.principal, canister_ids.user_index, false);
-    tick_many(env, 5);
-
-    assert!(!multi_user_canisters_enabled(env, canister_ids.user_index));
-    assert!(!multi_user_canisters_enabled(env, local_user_index));
-}
-
-#[test]
-fn once_enabled_new_users_are_placed_in_the_multi_user_canister_with_the_fewest_users() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        platform_operator,
-    } = wrapper.env();
-
-    let operator = client::register_user_in_user_canister(env, canister_ids);
-    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
-    let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
-    client::user_index::happy_path::set_multi_user_canisters_enabled(env, operator.principal, canister_ids.user_index, true);
     tick_many(env, 5);
 
     // The environment holds the MultiUser canisters of every test which has run in it, so which
@@ -1478,7 +1425,7 @@ fn once_enabled_new_users_are_placed_in_the_multi_user_canister_with_the_fewest_
         );
 
         // Which, without being asked to, places them in whichever of its canisters has the fewest
-        let user = client::register_user_in_user_canister(env, canister_ids);
+        let user = client::register_user(env, canister_ids);
         tick_many(env, 5);
         assert_eq!(user.local_user_index, registration_canister);
         assert_ne!(user.user_id.index(), 0);
@@ -1491,16 +1438,6 @@ fn once_enabled_new_users_are_placed_in_the_multi_user_canister_with_the_fewest_
             canisters_before[&user.canister()].user_count + 1
         );
     }
-
-    // Once disabled, new users get a canister of their own again
-    client::user_index::happy_path::set_multi_user_canisters_enabled(env, operator.principal, canister_ids.user_index, false);
-    tick_many(env, 5);
-    let user = client::register_user_in_user_canister(env, canister_ids);
-    assert_eq!(user.user_id.index(), 0);
-}
-
-fn multi_user_canisters_enabled(env: &PocketIc, canister_id: CanisterId) -> bool {
-    serde_json::from_value(metrics(env, canister_id)["multi_user_canisters_enabled"].clone()).unwrap()
 }
 
 // Creating a map writes its header, so each map's memory is non-empty once it has been initialised
@@ -1516,12 +1453,8 @@ fn assert_stable_memory_maps_initialised(env: &PocketIc, canister_id: CanisterId
     }
 }
 
-// The LocalUserIndex's count of all its users, and of those with a User canister of their own
-fn local_user_counts(env: &PocketIc, local_user_index: CanisterId) -> (u64, u64) {
-    let metrics = metrics(env, local_user_index);
-    let local_user_count = serde_json::from_value(metrics["local_user_count"].clone()).unwrap();
-    let user_versions: BTreeMap<String, u64> = serde_json::from_value(metrics["user_versions"].clone()).unwrap();
-    (local_user_count, user_versions.values().sum())
+fn local_user_count(env: &PocketIc, local_user_index: CanisterId) -> u64 {
+    serde_json::from_value(metrics(env, local_user_index)["local_user_count"].clone()).unwrap()
 }
 
 fn user_count(env: &PocketIc, canister_id: CanisterId) -> u32 {
@@ -2288,7 +2221,7 @@ fn game_chit_and_suspension_are_applied_per_user() {
         OCErrorCode::InitiatorSuspended,
     );
     assert!(game_chit(env, local_user_index, canister_id, b, "2:solve", 100).is_ok());
-    // And is told so before their input is checked, as in the User canister
+    // And is told so before their input is checked
     let set_bio_response = client::user::set_bio(
         env,
         a_principal,
@@ -3136,9 +3069,9 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
 
-    // Alice referred Bob, both in this canister, and Carol, a User canister user, referred Alice.
-    // Bob's registration tells Alice he used her referral code
-    let carol = client::register_user_in_user_canister(env, canister_ids);
+    // Alice referred Bob, both in this canister, and Carol, a user in another canister, referred
+    // Alice. Bob's registration tells Alice he used her referral code
+    let carol = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
     let (alice, alice_id) = create_user_referred_by(env, canister_ids, local_user_index, canister_id, Some(carol.user_id));
     let (bob, bob_id) = create_user_referred_by(env, canister_ids, local_user_index, canister_id, Some(alice_id));
     let bob_bot_messages = bot_message_texts(env, bob, canister_id, bob_id);
@@ -3229,8 +3162,8 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     assert!(bob_state.direct_chats.summaries.is_empty());
     assert_eq!(bot_message_texts(env, bob, canister_id, bob_id), bob_bot_messages);
 
-    // A referred user in another canister reaching a status is sent as a `SetReferralStatus`
-    // event from their canister, as the User canister sends it
+    // A referred user in another canister reaching a status is sent as a `SetReferralStatusV2`
+    // event from their canister
     let response = client::user::c2c_user_canister_v2(
         env,
         carol.canister(),
@@ -3243,7 +3176,10 @@ fn local_user_index_events_update_the_state_each_user_holds() {
                     sender_previous_user_ids: Vec::new(),
                     sender: carol.user_id,
                     recipient: alice_id,
-                    event: UserCanisterEvent::SetReferralStatus(Box::new(ReferralStatus::Diamond)),
+                    event: UserCanisterEvent::SetReferralStatusV2(Box::new(user_canister::SetReferralStatusV2 {
+                        status: ReferralStatus::Diamond,
+                        previous_user_ids: Vec::new(),
+                    })),
                 },
             }],
         },
@@ -4236,7 +4172,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
-    let alice = client::register_user_in_user_canister(env, canister_ids);
+    let alice = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
     let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
     let mut next_id = 0;
     let mut send = |env: &mut PocketIc, caller: Principal, sender: UserId, event: UserCanisterEvent| {
@@ -4280,7 +4216,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
     };
     let chat = |env: &PocketIc| events(env, bob, canister_id, bob_id, alice.user_id);
 
-    // Alice, a user in a User canister, messages Bob, creating his copy of their chat
+    // Alice, a user in another MultiUser canister, messages Bob, creating his copy of their chat
     let message_id: MessageId = random_from_u128();
     send(env, alice.canister(), alice.user_id, send_text(message_id, 0, "hello"));
     assert_eq!(messages(&chat(env)), vec![(alice.user_id, "hello".to_string())]);
@@ -4461,7 +4397,8 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
     );
 
     // Nor can she change the chat's TTL, and a blocked user Bob has no chat with can't create one
-    let dave = client::register_user_in_user_canister(env, canister_ids);
+    let dave =
+        client::register_user_in_multi_user_canister_on(env, canister_ids, alice.local_user_index, alice.canister(), None);
     block_user(env, bob, canister_id, dave.user_id);
     env.advance_time(Duration::from_millis(1));
     for blocked in [&alice, &dave] {
@@ -4493,7 +4430,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
-    let alice = client::register_user_in_user_canister(env, canister_ids);
+    let alice = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
     let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
 
     // A recipient in another canister is looked up in the LocalUserIndex
@@ -4511,7 +4448,8 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
 
     // So is a user in another canister whom Bob sets a time to live for before they have a chat,
     // which creates the chat. The principal a user signs in with isn't their user id.
-    let carol = client::register_user_in_user_canister(env, canister_ids);
+    let carol =
+        client::register_user_in_multi_user_canister_on(env, canister_ids, alice.local_user_index, alice.canister(), None);
     update_chat_settings(env, bob, canister_id, carol.user_id, OptionUpdate::SetToSome(60_000));
     assert!(
         initial_state(env, bob, canister_id)
@@ -4546,9 +4484,9 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
         "{response:?}"
     );
 
-    // Bob messages Alice, a user in a User canister, then edits, reacts to, deletes and undeletes
-    // the message and sets the chat's time to live, each of which is held in his copy of the chat
-    // and sent to Alice's canister
+    // Bob messages Alice, a user in another MultiUser canister, then edits, reacts to, deletes and
+    // undeletes the message and sets the chat's time to live, each of which is held in his copy of
+    // the chat and sent to Alice's canister
     let message_id: MessageId = random_from_u128();
     send_text_message(env, bob, canister_id, alice.user_id, "hello", message_id);
     edit_message(env, bob, canister_id, alice.user_id, None, message_id, "edited");
@@ -4592,9 +4530,9 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
     tick_many(env, 10);
     assert_eq!(queued_user_canister_events(env, canister_id), 0);
 
-    // Alice's canister accepts Bob, whom it has no chat with yet, since the UserIndex confirms the
-    // caller is a MultiUser canister, which only sends on behalf of the users it holds. Her copy of
-    // the chat has his message, edited, undeleted and with his reaction, and the time to live.
+    // Alice's canister accepts Bob, whom it has no chat with yet, since the LocalUserIndex confirms
+    // the caller is a MultiUser canister, which only sends on behalf of the users it holds. Her copy
+    // of the chat has his message, edited, undeleted and with his reaction, and the time to live.
     let alices_chat = client::user::happy_path::initial_state(env, &alice)
         .direct_chats
         .summaries
@@ -4606,7 +4544,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
     assert_eq!(messages(&alices_events), vec![(bob_id, "edited".to_string())]);
     assert_eq!(message(&alices_events, message_id).reactions.len(), 1);
 
-    // A canister which isn't a User or MultiUser canister can't send as one of its "users"
+    // A canister which isn't a MultiUser canister can't send as one of its "users"
     let impostor = CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
     let response = client::user::c2c_user_canister_v2(
         env,
@@ -4720,8 +4658,8 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
         },
     };
 
-    // The second MultiUser canister confirms the first with the UserIndex, then caches it, so that
-    // any of its users can message Carol, but it can't send as its own canister id
+    // The second MultiUser canister confirms the first with the LocalUserIndex, then caches it, so
+    // that any of its users can message Carol, but it can't send as its own canister id
     assert_eq!(known_multi_user_canisters(env, second), 0);
     let first_batch = vec![
         message_from(env, 1, alice_id, "from alice"),
@@ -4884,11 +4822,10 @@ fn users_can_chat_with_bots_but_not_send_them_crypto() {
     );
 }
 
-// Users hold their own funds in their own wallets, so crypto is sent via ICRC2, pulled from the
-// sender's wallet against an approval made under their own spender subaccount, to either a user in
-// the same canister, whose wallet is under their principal, or one in a User canister, whose wallet
-// is under their user id. An ICRC1 transfer would be made from the canister's own account, so is
-// refused.
+// Users hold their own funds in their own wallets, under their principals, so crypto is sent via
+// ICRC2, pulled from the sender's wallet against an approval made under their own spender subaccount,
+// to the recipient's wallet, which is looked up if they are in another canister. An ICRC1 transfer
+// would be made from the canister's own account, so is refused.
 #[test]
 fn users_send_crypto_from_their_own_wallets() {
     let mut wrapper = ENV.deref().get();
@@ -4905,7 +4842,7 @@ fn users_send_crypto_from_their_own_wallets() {
 
     let (a_principal, a) = create_user(env, canister_ids, local_user_index, canister_id);
     let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
-    let carol = client::register_user_in_user_canister(env, canister_ids);
+    let carol = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
 
     let amount = 1_000_000;
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, a_principal, 1_000_000_000);
@@ -4968,7 +4905,7 @@ fn users_send_crypto_from_their_own_wallets() {
         &initial_state(env, b_principal, canister_id),
         Achievement::ReceivedCrypto
     ));
-    // And it appears once in B's message activity feed, as it would were B in a User canister
+    // And it appears once in B's message activity feed, as it would were B in another canister
     let feed = message_activity_feed(env, b_principal, canister_id, 0);
     assert_eq!(
         feed.events
@@ -4978,15 +4915,15 @@ fn users_send_crypto_from_their_own_wallets() {
         1
     );
 
-    // To Carol, in a User canister
-    let transfer = icrc2_transfer(env, icrc1::Account::legacy_for_user(carol.user_id));
+    // To Carol, in another MultiUser canister, whose wallet is looked up
+    let transfer = icrc2_transfer(env, carol.principal.into());
     let response = send_crypto(env, carol.user_id, transfer);
     assert!(
         matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
         "{response:?}"
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, carol.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, carol.principal),
         amount
     );
 
@@ -5024,8 +4961,8 @@ fn users_send_crypto_from_their_own_wallets() {
 
     let a_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, a_principal);
 
-    // To B, but addressed to Carol's account
-    let transfer = icrc2_transfer(env, icrc1::Account::legacy_for_user(carol.user_id));
+    // To B, but addressed to Carol's wallet
+    let transfer = icrc2_transfer(env, carol.principal.into());
     let response = send_crypto(env, b, transfer);
     assert!(
         matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::RecipientMismatch)),
@@ -5110,14 +5047,16 @@ fn crypto_addressed_to_a_users_id_is_sent_to_their_wallet(in_channel: bool) {
 
     let alice = client::register_user_in_multi_user_canister_on(env, canister_ids, local_user_index, canister_id, None);
     let bob = client::register_user_in_multi_user_canister_on(env, canister_ids, local_user_index, canister_id, None);
-    // A Diamond member, so that she can create a public group or community for the others to join
-    let carol = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
+    // In another MultiUser canister, and a Diamond member, so that she can create a public group or
+    // community for the others to join
+    let carol = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
+    diamond_membership_payment_received(env, carol.local_user_index, carol.canister(), carol.user_id);
 
     let ledger = canister_ids.icp_ledger;
     let amount = 1_000_000;
     let bobs_user_id = icrc1::Account::legacy_for_user(bob.user_id);
     client::ledger::happy_path::transfer(env, *controller, ledger, alice.principal, 1_000_000_000);
-    client::ledger::happy_path::transfer(env, *controller, ledger, carol.user_id, 1_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, ledger, carol.principal, 1_000_000_000);
 
     let icrc1_transfer = |env: &PocketIc, to: icrc1::Account| {
         PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
@@ -5171,13 +5110,15 @@ fn crypto_addressed_to_a_users_id_is_sent_to_their_wallet(in_channel: bool) {
         assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.user_id), 0);
     };
 
-    // Carol's User canister makes the transfer in a direct chat, having looked up Bob's wallet
+    // Carol's canister makes the transfer in a direct chat, pulling it from her wallet, having looked
+    // up Bob's
+    let content = client::pay_from_wallet(env, &carol, carol.canister(), crypto(icrc1_transfer(env, bobs_user_id)));
     let response = client::user::send_message_v2(
         env,
         carol.principal,
         carol.canister(),
         &user_canister::send_message_v2::Args {
-            content: crypto(icrc1_transfer(env, bobs_user_id)),
+            content,
             ..send_message_args(bob.user_id, "", random_from_u128())
         },
     );
@@ -5207,88 +5148,83 @@ fn crypto_addressed_to_a_users_id_is_sent_to_their_wallet(in_channel: bool) {
     };
     tick_many(env, 3);
 
-    // There too Carol's User canister makes the transfer itself, before the group or community
-    // hears of it, and looks up Bob's wallet. The result is either the transfer made, or the error.
-    let carol_sends = |env: &mut PocketIc, transfer: PendingCryptoTransaction| match channel_id {
+    // There crypto is sent to the group or community itself, which knows each member's wallet, and
+    // pulls the transfer from the sender's. The result is either the transfer made, or the error.
+    let send_in_chat = |env: &mut PocketIc, sender: &User, content: MessageContentInitial| match channel_id {
         Some(channel_id) => {
-            use user_canister::send_message_with_transfer_to_channel::*;
-            let response = client::user::send_message_with_transfer_to_channel(
+            use community_canister::send_message::*;
+            let response = client::community::send_message(
                 env,
-                carol.principal,
-                carol.canister(),
+                sender.principal,
+                chat_canister_id,
                 &Args {
-                    community_id: chat_canister_id.into(),
                     channel_id,
                     thread_root_message_index: None,
                     message_id: random_from_u128(),
-                    content: crypto(transfer),
-                    sender_name: carol.username(),
+                    content,
+                    sender_name: sender.username(),
                     sender_display_name: None,
                     replies_to: None,
                     mentioned: Vec::new(),
+                    forwarding: false,
                     block_level_markdown: false,
                     community_rules_accepted: None,
                     channel_rules_accepted: None,
                     message_filter_failed: None,
-                    pin: None,
+                    new_achievement: false,
                     og_previews: Vec::new(),
                 },
             );
             match response {
-                Response::Success(result) => Ok(result.transfer),
+                Response::Success(result) => Ok(result.transfer.unwrap()),
                 Response::Error(error) => Err(error),
-                response => panic!("{response:?}"),
             }
         }
         None => {
-            use user_canister::send_message_with_transfer_to_group::*;
-            let response = client::user::send_message_with_transfer_to_group(
+            use group_canister::send_message_v2::*;
+            let response = client::group::send_message_v2(
                 env,
-                carol.principal,
-                carol.canister(),
+                sender.principal,
+                chat_canister_id,
                 &Args {
-                    group_id: chat_canister_id.into(),
                     thread_root_message_index: None,
                     message_id: random_from_u128(),
-                    content: crypto(transfer),
-                    sender_name: carol.username(),
+                    content,
+                    sender_name: sender.username(),
                     sender_display_name: None,
                     replies_to: None,
                     mentioned: Vec::new(),
+                    forwarding: false,
                     block_level_markdown: false,
                     rules_accepted: None,
                     message_filter_failed: None,
-                    pin: None,
+                    new_achievement: false,
                     og_previews: Vec::new(),
                 },
             );
             match response {
-                Response::Success(result) => Ok(result.transfer),
+                Response::Success(result) => Ok(result.transfer.unwrap()),
                 Response::Error(error) => Err(error),
-                response => panic!("{response:?}"),
             }
         }
     };
-    // Made later than the one in the direct chat, which the ledger would otherwise take it for a
-    // duplicate of
-    env.advance_time(Duration::from_secs(1));
-    let transfer = icrc1_transfer(env, bobs_user_id);
-    let completed = carol_sends(env, transfer).unwrap();
-    assert_eq!(paid_to(&completed), bobs_wallet);
-    assert_bob_paid(env, 2);
 
     // Crypto which says it is for Bob, but is addressed to Alice, is refused, and nothing moves
-    let carols_balance = client::ledger::happy_path::balance_of(env, ledger, carol.user_id);
-    let transfer = icrc1_transfer(env, alice.principal.into());
-    let error = carol_sends(env, transfer).unwrap_err();
+    let content = client::pay_from_wallet(
+        env,
+        &carol,
+        chat_canister_id,
+        crypto(icrc1_transfer(env, alice.principal.into())),
+    );
+    let carols_balance = client::ledger::happy_path::balance_of(env, ledger, carol.principal);
+    let error = send_in_chat(env, &carol, content).unwrap_err();
     assert!(error.matches_code(OCErrorCode::RecipientMismatch), "{error:?}");
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, ledger, carol.user_id),
+        client::ledger::happy_path::balance_of(env, ledger, carol.principal),
         carols_balance
     );
 
-    // The group or community knows each member's wallet, so crypto and a tip sent to it directly,
-    // which it pulls from Alice's wallet, both reach Bob's
+    // Crypto and a tip sent by Alice, addressed to Bob's user id, both reach Bob's wallet
     client::ledger::happy_path::approve(
         env,
         alice.principal,
@@ -5299,35 +5235,13 @@ fn crypto_addressed_to_a_users_id_is_sent_to_their_wallet(in_channel: bool) {
         },
         2 * (amount + ICP_TRANSFER_FEE),
     );
+    let completed = send_in_chat(env, &alice, crypto(icrc2_transfer(env))).unwrap();
+    assert_eq!(paid_to(&completed), bobs_wallet);
+    assert_bob_paid(env, 2);
+
     let message_id = random_from_u128();
-    let completed = match channel_id {
+    match channel_id {
         Some(channel_id) => {
-            use community_canister::send_message::*;
-            let response = client::community::send_message(
-                env,
-                alice.principal,
-                chat_canister_id,
-                &Args {
-                    channel_id,
-                    thread_root_message_index: None,
-                    message_id: random_from_u128(),
-                    content: crypto(icrc2_transfer(env)),
-                    sender_name: alice.username(),
-                    sender_display_name: None,
-                    replies_to: None,
-                    mentioned: Vec::new(),
-                    forwarding: false,
-                    block_level_markdown: false,
-                    community_rules_accepted: None,
-                    channel_rules_accepted: None,
-                    message_filter_failed: None,
-                    new_achievement: false,
-                    og_previews: Vec::new(),
-                },
-            );
-            let Response::Success(result) = response else {
-                panic!("{response:?}");
-            };
             client::community::happy_path::send_text_message(
                 env,
                 &bob,
@@ -5337,40 +5251,11 @@ fn crypto_addressed_to_a_users_id_is_sent_to_their_wallet(in_channel: bool) {
                 "tip me",
                 Some(message_id),
             );
-            result.transfer
         }
         None => {
-            use group_canister::send_message_v2::*;
-            let response = client::group::send_message_v2(
-                env,
-                alice.principal,
-                chat_canister_id,
-                &Args {
-                    thread_root_message_index: None,
-                    message_id: random_from_u128(),
-                    content: crypto(icrc2_transfer(env)),
-                    sender_name: alice.username(),
-                    sender_display_name: None,
-                    replies_to: None,
-                    mentioned: Vec::new(),
-                    forwarding: false,
-                    block_level_markdown: false,
-                    rules_accepted: None,
-                    message_filter_failed: None,
-                    new_achievement: false,
-                    og_previews: Vec::new(),
-                },
-            );
-            let Response::Success(result) = response else {
-                panic!("{response:?}");
-            };
             client::group::happy_path::send_text_message(env, &bob, chat_canister_id.into(), None, "tip me", Some(message_id));
-            result.transfer
         }
-    };
-    assert_eq!(paid_to(&completed.unwrap()), bobs_wallet);
-    assert_bob_paid(env, 3);
-
+    }
     let response = match channel_id {
         Some(channel_id) => client::community::tip_message(
             env,
@@ -5403,96 +5288,7 @@ fn crypto_addressed_to_a_users_id_is_sent_to_their_wallet(in_channel: bool) {
         ),
     };
     assert!(matches!(response, UnitResult::Success), "{response:?}");
-    assert_bob_paid(env, 4);
-}
-
-// No one can spend from an account of a MultiUser user's id, so a User canister refuses to withdraw
-// to one rather than lose the funds. Withdrawals to the user's wallet are unaffected.
-#[test]
-fn withdrawals_to_an_account_of_a_multi_user_users_id_are_refused() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let bob = client::register_user(env, canister_ids);
-    let carol = client::register_user_in_user_canister(env, canister_ids);
-
-    let ledger = canister_ids.icp_ledger;
-    let amount = 1_000_000;
-    client::ledger::happy_path::transfer(env, *controller, ledger, carol.user_id, 1_000_000_000);
-
-    let icrc1_withdrawal = |env: &PocketIc, to: icrc1::Account| {
-        PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
-            ledger,
-            token_symbol: ICP_SYMBOL.to_string(),
-            amount,
-            to,
-            fee: ICP_TRANSFER_FEE,
-            memo: None,
-            created: now_millis(env) * 1_000_000,
-        })
-    };
-    let nns_withdrawal = |env: &PocketIc, to: icrc1::Account| {
-        PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
-            ledger,
-            token_symbol: ICP_SYMBOL.to_string(),
-            amount: types::nns::Tokens::from_e8s(amount as u64),
-            to: types::nns::UserOrAccount::Account(types::account_identifier(to.into())),
-            fee: None,
-            memo: None,
-            created: now_millis(env) * 1_000_000,
-        })
-    };
-    let withdraw = |env: &mut PocketIc, withdrawal: PendingCryptoTransaction| {
-        client::user::withdraw_crypto_v2(
-            env,
-            carol.principal,
-            carol.canister(),
-            &user_canister::withdraw_crypto_v2::Args { withdrawal, pin: None },
-        )
-    };
-
-    let bobs_user_id = icrc1::Account::legacy_for_user(bob.user_id);
-    let subaccount_of_bobs_user_id = icrc1::Account {
-        subaccount: Some([1; 32]),
-        ..bobs_user_id
-    };
-    let carols_balance = client::ledger::happy_path::balance_of(env, ledger, carol.user_id);
-
-    // Bob's user id, given as the recipient, under any subaccount
-    for to in [bobs_user_id, subaccount_of_bobs_user_id] {
-        let response = withdraw(env, icrc1_withdrawal(env, to));
-        assert!(
-            matches!(&response, user_canister::withdraw_crypto_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
-            "{response:?}"
-        );
-    }
-    assert_eq!(
-        client::ledger::happy_path::balance_of(env, ledger, carol.user_id),
-        carols_balance
-    );
-    for account in [bobs_user_id, subaccount_of_bobs_user_id] {
-        assert_eq!(client::ledger::happy_path::balance_of(env, ledger, account), 0);
-    }
-
-    // Bob's wallet is the account of his principal, which Carol can withdraw to however she
-    // addresses it. Each is made later than the last, which the ledger could otherwise take for a
-    // duplicate of it.
-    let bobs_wallet = icrc1::Account::from(bob.principal);
-    for as_nns in [false, true] {
-        env.advance_time(Duration::from_secs(1));
-        let withdrawal = if as_nns { nns_withdrawal(env, bobs_wallet) } else { icrc1_withdrawal(env, bobs_wallet) };
-        let response = withdraw(env, withdrawal);
-        assert!(
-            matches!(response, user_canister::withdraw_crypto_v2::Response::Success(_)),
-            "{response:?}"
-        );
-    }
-    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, bob.principal), 2 * amount);
+    assert_bob_paid(env, 3);
 }
 
 #[test]
@@ -5510,12 +5306,12 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
         client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
     let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
     let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
-    let carol = client::register_user_in_user_canister(env, canister_ids);
+    let carol = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
 
     let tip = 1_0000_0000;
     let ledger = canister_ids.icp_ledger;
     // Alice holds her funds in her own wallet, and approves this canister to pull them under her own
-    // spender subaccount. Carol's are in her User canister's account.
+    // spender subaccount. Carol, in another MultiUser canister, holds hers in her own wallet too.
     client::ledger::happy_path::transfer(env, *controller, ledger, alice, 10 * tip);
     client::ledger::happy_path::approve(
         env,
@@ -5527,7 +5323,7 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
         },
         5 * (tip + ICP_TRANSFER_FEE),
     );
-    client::ledger::happy_path::transfer(env, *controller, ledger, carol.user_id, 10 * tip);
+    client::ledger::happy_path::transfer(env, *controller, ledger, carol.principal, 10 * tip);
     tick_many(env, 3);
 
     let tip_args = |chat: Chat, recipient: UserId, message_id| user_canister::tip_message::Args {
@@ -5565,7 +5361,7 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
         matches!(response, user_canister::tip_message::Response::Success),
         "{response:?}"
     );
-    // So that no later tip, eg. one from a User canister, has the same timestamp as this one
+    // So that no later tip, eg. Carol's, has the same timestamp as this one
     env.advance_time(Duration::from_millis(1));
     assert_eq!(
         tips_on(message(&events(env, alice, canister_id, alice_id, bob_id), message_id)),
@@ -5599,12 +5395,13 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     tick_many(env, 3);
     let carols_events = client::user::happy_path::events(env, &carol, alice_id, 0.into(), true, 10, 10);
     assert_eq!(tips_on(message(&carols_events, message_id)), tipped_by(alice_id));
-    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, carol.user_id), 11 * tip);
+    assert_eq!(client::ledger::happy_path::balance_of(env, ledger, carol.principal), 11 * tip);
 
-    // Carol tips Alice's message, into Alice's wallet, and her canister tells this one
+    // Carol tips Alice's message, from her wallet into Alice's, and her canister tells this one
     let message_id = random_from_u128();
     send_text_message(env, alice, canister_id, carol.user_id, "tip me back", message_id);
     tick_many(env, 3);
+    client::approve_user_canister(env, &carol, ledger, tip + ICP_TRANSFER_FEE);
     let response = client::user::tip_message(
         env,
         carol.principal,
@@ -5697,7 +5494,7 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     }
     assert_eq!(client::ledger::happy_path::balance_of(env, ledger, alice), alices_balance);
 
-    // Alice's first tip was pushed to the event store, as a User canister's is
+    // Alice's first tip was pushed to the event store
     let counts = wait_for_event_store_events(
         env,
         *controller,
@@ -5723,7 +5520,7 @@ fn video_calls_are_recorded_in_both_copies_of_the_chat() {
         client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
     let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
     let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
-    let carol = client::register_user_in_user_canister(env, canister_ids);
+    let carol = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
 
     // The video call operator starts a call in the callee's copy of the chat, naming the callee
     let start = |env: &mut PocketIc, callee: UserId, initiator: UserId, initiator_username: String, message_id| {
@@ -5776,8 +5573,8 @@ fn video_calls_are_recorded_in_both_copies_of_the_chat() {
         content => panic!("{content:?}"),
     };
 
-    // Carol, in a User canister, calls Alice: Alice's copy holds the call and Carol's canister is
-    // told; Alice joining is sent back to it; the operator then ends the call in each copy
+    // Carol, in another MultiUser canister, calls Alice: Alice's copy holds the call and Carol's
+    // canister is told; Alice joining is sent back to it; then the operator ends it in each copy
     let message_id = random_from_u128();
     start(env, alice_id, carol.user_id, carol.username(), message_id);
     tick_many(env, 10);
@@ -5914,22 +5711,30 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
         client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
     let (alice, alice_id) = create_user(env, canister_ids, local_user_index, canister_id);
     let (bob, bob_id) = create_user(env, canister_ids, local_user_index, canister_id);
-    let carol = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
-    // Dave is in another MultiUser canister
+    // Carol and Dave are in another MultiUser canister
     let other_canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
+    let carol = client::register_user_in_multi_user_canister_on(env, canister_ids, local_user_index, other_canister_id, None);
     let (dave, dave_id) = create_user(env, canister_ids, local_user_index, other_canister_id);
-    // Only Diamond members can offer swaps
+    // Only Diamond members can offer swaps. Carol also offers one in a group, which learns who is a
+    // Diamond member from the LocalUserIndex, so she pays for it through the UserIndex
     diamond_membership_payment_received(env, local_user_index, canister_id, alice_id);
+    client::upgrade_user(
+        &carol,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+        false,
+    );
 
     let icp = canister_ids.icp_ledger;
     let chat = canister_ids.chat_ledger;
     let token0_amount = 1_000_000_000;
     let token1_amount = 10_000_000_000;
 
-    // Alice and Bob hold their funds in their own wallets, and approve this canister to pull them
-    // under their own spender subaccounts: Alice offers ICP and Bob pays CHAT. Carol's funds are in
-    // her User canister's account.
+    // Each user holds their funds in their own wallet, and approves their canister to pull them under
+    // their own spender subaccount: Alice and Carol offer ICP, and Bob and Dave pay CHAT
     let spender = |canister_id, principal| icrc_ledger_types::icrc1::account::Account {
         owner: canister_id,
         subaccount: Some(ledger_utils::spender_subaccount(principal)),
@@ -5940,8 +5745,14 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
     client::ledger::happy_path::approve(env, bob, chat, spender(canister_id, bob), 5 * token1_amount);
     client::ledger::happy_path::transfer(env, *controller, chat, dave, 10 * token1_amount);
     client::ledger::happy_path::approve(env, dave, chat, spender(other_canister_id, dave), 5 * token1_amount);
-    client::ledger::happy_path::transfer(env, *controller, icp, carol.user_id, 10 * token0_amount);
-    client::ledger::happy_path::transfer(env, *controller, chat, carol.user_id, 10 * token1_amount);
+    client::ledger::happy_path::transfer(env, *controller, icp, carol.principal, 10 * token0_amount);
+    client::ledger::happy_path::approve(
+        env,
+        carol.principal,
+        icp,
+        spender(other_canister_id, carol.principal),
+        5 * token0_amount,
+    );
     tick_many(env, 3);
 
     let offer = |recipient: UserId, message_id| user_canister::send_message_v2::Args {
@@ -6008,40 +5819,9 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
         Achievement::AcceptedP2PSwapOffer
     ));
 
-    // Alice offers Carol, in her own User canister, a swap. Carol's canister is notified by the
-    // escrow canister, which names Alice by her principal, and tells this canister of the swap's
+    // Carol, in another MultiUser canister, offers Bob a swap. The escrow canister notifies this
+    // canister, whose copy of the chat is Bob's, and Carol's canister is told of the swap's
     // completion.
-    let message_id = random_from_u128();
-    let response = client::user::send_message_v2(env, alice, canister_id, &offer(carol.user_id, message_id));
-    assert!(
-        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
-        "{response:?}"
-    );
-    tick_many(env, 3);
-    let alices_chat = client::ledger::happy_path::balance_of(env, chat, alice);
-    let carols_icp = client::ledger::happy_path::balance_of(env, icp, carol.user_id);
-    let response = client::user::accept_p2p_swap(env, carol.principal, carol.canister(), &accept(alice_id, message_id));
-    assert!(
-        matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
-        "{response:?}"
-    );
-    tick_many(env, 10);
-    assert_eq!(
-        client::ledger::happy_path::balance_of(env, chat, alice),
-        alices_chat + token1_amount
-    );
-    assert_eq!(
-        client::ledger::happy_path::balance_of(env, icp, carol.user_id),
-        carols_icp + token0_amount
-    );
-    let status = swap_status(message(&events(env, alice, canister_id, alice_id, carol.user_id), message_id));
-    assert!(completed_by(&status, carol.user_id), "{status:?}");
-    let carols_events = client::user::happy_path::events(env, &carol, alice_id, 0.into(), true, 20, 20);
-    let status = swap_status(message(&carols_events, message_id));
-    assert!(completed_by(&status, carol.user_id), "{status:?}");
-
-    // Carol offers Bob a swap. The escrow canister notifies this canister, whose copy of the chat
-    // is Bob's, and Carol's canister is told of the swap's completion.
     let message_id = random_from_u128();
     let response = client::user::send_message_v2(env, carol.principal, carol.canister(), &offer(bob_id, message_id));
     assert!(
@@ -6049,7 +5829,7 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
         "{response:?}"
     );
     tick_many(env, 3);
-    let carols_chat = client::ledger::happy_path::balance_of(env, chat, carol.user_id);
+    let carols_chat = client::ledger::happy_path::balance_of(env, chat, carol.principal);
     let bobs_icp = client::ledger::happy_path::balance_of(env, icp, bob);
     let response = client::user::accept_p2p_swap(env, bob, canister_id, &accept(carol.user_id, message_id));
     assert!(
@@ -6058,7 +5838,7 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
     );
     tick_many(env, 10);
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, chat, carol.user_id),
+        client::ledger::happy_path::balance_of(env, chat, carol.principal),
         carols_chat + token1_amount
     );
     assert_eq!(
@@ -6134,40 +5914,38 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
         assert!(matches!(status, P2PSwapStatus::Cancelled(_)), "{status:?}");
     }
 
-    // Carol offers a swap in her group, which Bob accepts. The group has this canister deposit Bob's
-    // CHAT from his wallet, and he is paid into it.
+    // Carol offers a swap in her group, which Bob accepts. The group pulls Carol's ICP from her
+    // wallet, has this canister deposit Bob's CHAT from his, and each is paid into the other's.
     let group_id = client::user::happy_path::create_group(env, &carol, &random_string(), true, true);
     client::group::happy_path::join_group(env, bob, group_id);
     tick_many(env, 3);
     let message_id = random_from_u128();
-    let response = client::user::send_message_with_transfer_to_group(
+    let content = client::pay_from_wallet(env, &carol, group_id.into(), offer(bob_id, message_id).content);
+    let response = client::group::send_message_v2(
         env,
         carol.principal,
-        carol.canister(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
+        group_id.into(),
+        &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
-            content: offer(bob_id, message_id).content,
+            content,
             sender_name: carol.username(),
             sender_display_name: None,
             replies_to: None,
             mentioned: Vec::new(),
+            forwarding: false,
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
-            pin: None,
+            new_achievement: false,
             og_previews: Vec::new(),
         },
     );
     assert!(
-        matches!(
-            response,
-            user_canister::send_message_with_transfer_to_group::Response::Success(_)
-        ),
+        matches!(response, group_canister::send_message_v2::Response::Success(_)),
         "{response:?}"
     );
-    let carols_chat = client::ledger::happy_path::balance_of(env, chat, carol.user_id);
+    let carols_chat = client::ledger::happy_path::balance_of(env, chat, carol.principal);
     let bobs_icp = client::ledger::happy_path::balance_of(env, icp, bob);
     let response = client::group::accept_p2p_swap(
         env,
@@ -6187,7 +5965,7 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
     );
     tick_many(env, 10);
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, chat, carol.user_id),
+        client::ledger::happy_path::balance_of(env, chat, carol.principal),
         carols_chat + token1_amount
     );
     assert_eq!(
@@ -6217,74 +5995,8 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
     }
 }
 
-// `register_proposal_vote` votes via the member's User canister, which a MultiUser canister can't do
-// for its users, so they are pointed at `register_proposal_vote_v2`. Proposal messages can't be sent
-// in these tests, but users in MultiUser canisters are turned away before the message is looked up,
-// while anyone else gets as far as finding that it isn't a proposal.
-#[test]
-fn register_proposal_vote_rejects_users_in_multi_user_canisters() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let owner = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);
-    let alice = client::register_user(env, canister_ids);
-
-    let group_id = client::user::happy_path::create_group(env, &owner, &random_string(), true, true);
-    client::group::happy_path::join_group(env, alice.principal, group_id);
-    let group_message_index =
-        client::group::happy_path::send_text_message(env, &owner, group_id, None, random_string(), None).message_index;
-
-    let community_id = client::user::happy_path::create_community(env, &owner, &random_string(), true, vec![random_string()]);
-    let channel_id = client::community::happy_path::create_channel(env, owner.principal, community_id, true, random_string());
-    client::community::happy_path::join_community(env, alice.principal, community_id);
-    client::community::happy_path::join_channel(env, alice.principal, community_id, channel_id);
-    let channel_message_index =
-        client::community::happy_path::send_text_message(env, &owner, community_id, channel_id, None, random_string(), None)
-            .message_index;
-    env.tick();
-
-    for (user, in_multi_user_canister) in [(&alice, true), (&owner, false)] {
-        let expected = || {
-            if in_multi_user_canister { OCErrorCode::InvalidRequest } else { OCErrorCode::MessageNotFound }
-        };
-        let response = client::group::register_proposal_vote(
-            env,
-            user.principal,
-            group_id.into(),
-            &group_canister::register_proposal_vote::Args {
-                message_index: group_message_index,
-                adopt: true,
-            },
-        );
-        assert!(
-            matches!(&response, UnitResult::Error(e) if e.matches_code(expected())),
-            "{response:?}"
-        );
-
-        let response = client::community::register_proposal_vote(
-            env,
-            user.principal,
-            community_id.into(),
-            &community_canister::register_proposal_vote::Args {
-                channel_id,
-                message_index: channel_message_index,
-                adopt: true,
-            },
-        );
-        assert!(
-            matches!(&response, UnitResult::Error(e) if e.matches_code(expected())),
-            "{response:?}"
-        );
-    }
-}
-
-// Each user's avatar and profile background are served under their index within the canister, as a
-// User canister serves its user's at the root
+// Each user's avatar and profile background are served under their index within the canister,
+// rather than at the root
 #[test]
 fn avatars_and_profile_backgrounds_are_served_under_each_users_index() {
     let mut wrapper = ENV.deref().get();
@@ -6389,7 +6101,7 @@ fn ingress_messages_are_only_accepted_from_the_canisters_own_users() {
         client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
     let (principal, user_id) = create_user(env, canister_ids, local_user_index, canister_id);
     // An OpenChat user, but not one this canister holds
-    let outsider = client::register_user_in_user_canister(env, canister_ids);
+    let outsider = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
 
     // Rejected by `inspect_message` as the call is submitted, before it can cost the canister
     // anything, rather than by the endpoint's guard once it runs
@@ -6416,7 +6128,7 @@ fn ingress_messages_are_only_accepted_from_the_canisters_own_users() {
 }
 
 // The files in a direct message are deleted by the canister holding the sender once the message is
-// deleted for good, or by the canisters holding each user when it expires, as a User canister does.
+// deleted for good, or by the canisters holding each user when it expires.
 // The frontend names the canisters holding the two users as the files' accessors, which is what lets
 // them delete the files.
 #[test]
@@ -6495,7 +6207,7 @@ fn files_in_direct_messages_are_deleted_along_with_the_messages() {
 
 // A reply in a direct chat to a message in a group is recorded against the group, in both users'
 // copies of the chat, so that when the group is imported into a community the reply is pointed at
-// the channel it became, as in the User canister
+// the channel it became
 #[test]
 fn private_replies_to_a_group_follow_it_into_a_community() {
     let mut wrapper = ENV.deref().get();
@@ -6574,9 +6286,9 @@ fn private_replies_to_a_group_follow_it_into_a_community() {
     }
 }
 
-// A MultiUser canister checks its cycles balance as it handles updates, as a User canister does, and
-// asks the LocalUserIndex for a top up once it runs low. Since it hosts many users it keeps a larger
-// balance than a User canister, and is topped up by more each time.
+// A MultiUser canister checks its cycles balance as it handles updates, and asks the LocalUserIndex
+// for a top up once it runs low. Since it hosts many users it keeps a large balance, and is topped up
+// by half of it each time.
 #[test]
 fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
     let min_balance = MULTI_USER_CANISTER_MIN_CYCLES_BALANCE;
@@ -6794,8 +6506,8 @@ fn video_call_tokens_are_issued_for_direct_chats_with_users_in_multi_user_canist
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let canister_id =
         client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
-    // A is in a User canister of their own, calling B in the MultiUser canister
-    let a = client::register_user_in_user_canister(env, canister_ids);
+    // A, in another MultiUser canister, calls B in this one
+    let a = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
     let (b_principal, b) = create_user(env, canister_ids, local_user_index, canister_id);
 
     let request_token = |env: &mut PocketIc| {

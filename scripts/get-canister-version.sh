@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script finds the first canister release version that is lower than or equal to the tag passed in.
-# eg. `./get-canister-version.sh user v2.0.900-market-maker` outputs `v2.0.890-user`
+# eg. `./get-canister-version.sh group v2.0.900-market-maker` outputs `v2.0.890-group`
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")

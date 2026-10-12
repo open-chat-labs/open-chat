@@ -17,6 +17,7 @@ fn chunk_store_holds_only_the_current_wasms_once_upgrades_complete() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -31,16 +32,16 @@ fn chunk_store_holds_only_the_current_wasms_once_upgrades_complete() {
         .unwrap();
 
     let version = BuildVersion::new(0, 0, 1);
-    client::user_index::happy_path::upgrade_user_canister_wasm(
+    client::user_index::happy_path::upgrade_multi_user_canister_wasm(
         env,
         *controller,
         canister_ids.user_index,
         CanisterWasm {
             version,
-            module: wasms::USER.module.clone(),
+            module: wasms::MULTI_USER.module.clone(),
         },
     );
-    // Wait for the User canisters to be upgraded, after which the chunk store is cleared and the
+    // Wait for the MultiUser canisters to be upgraded, after which the chunk store is cleared and the
     // current wasms' chunks are uploaded again. That takes several rounds more, since only a few
     // chunks are uploaded per round
     let mut refreshed = false;
@@ -58,11 +59,12 @@ fn chunk_store_holds_only_the_current_wasms_once_upgrades_complete() {
     assert!(!stored.contains(&stale_chunk));
     assert_current_wasms_stored(&stored);
 
-    // New users' canisters are installed with the latest wasm
-    let user = client::register_user_in_user_canister(env, canister_ids);
-    assert_eq!(wasm_version(env, user.canister()), version);
+    // New MultiUser canisters are installed with the latest wasm
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
+    assert_eq!(wasm_version(env, canister_id), version);
 
-    // Releasing a new User wasm would break later tests which draw this env
+    // Releasing a new MultiUser wasm would break later tests which draw this env
     wrapper.discard();
 }
 
@@ -104,7 +106,7 @@ fn missing_chunks_are_uploaded_when_the_local_user_index_is_upgraded() {
     assert!(stored.contains(&stale_chunk));
 
     // New canisters can still be created
-    let user = client::register_user_in_user_canister(env, canister_ids);
+    let user = client::register_user(env, canister_ids);
     client::user::happy_path::create_group(env, &user, &random_string(), false, true);
 
     // Upgrading the LocalUserIndex would break later tests which draw this env
@@ -120,12 +122,7 @@ fn stored_chunks(env: &PocketIc, local_user_index: CanisterId, user_index: Canis
 }
 
 fn assert_current_wasms_stored(stored: &HashSet<Hash>) {
-    for wasm in [
-        &wasms::USER.module,
-        &wasms::GROUP.module,
-        &wasms::COMMUNITY.module,
-        &wasms::MULTI_USER.module,
-    ] {
+    for wasm in [&wasms::GROUP.module, &wasms::COMMUNITY.module, &wasms::MULTI_USER.module] {
         for chunk in chunk_hashes(wasm) {
             assert!(stored.contains(&chunk), "Chunk missing from the chunk store");
         }

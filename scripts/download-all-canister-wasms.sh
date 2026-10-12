@@ -44,7 +44,6 @@ pids=()
 ./download-canister-wasm.sh storage_bucket $WASM_SRC & pids+=($!)
 ./download-canister-wasm.sh storage_index $WASM_SRC & pids+=($!)
 ./download-canister-wasm.sh translations $WASM_SRC & pids+=($!)
-./download-canister-wasm.sh user $WASM_SRC & pids+=($!)
 ./download-canister-wasm.sh user_index $WASM_SRC & pids+=($!)
 
 ./download-canister-wasm-dfx.sh event_store  & pids+=($!)

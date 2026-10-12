@@ -199,6 +199,10 @@ impl<T: Eq + std::hash::Hash> ChildCanisterWasms<T> {
         self.manager(canister_type).map(|m| m.chunks_hash()).unwrap_or_default()
     }
 
+    pub fn remove(&mut self, canister_type: T) -> bool {
+        self.map.remove(&canister_type).is_some()
+    }
+
     pub fn chunk_hashes(&self) -> Vec<(&T, Hash)> {
         self.map
             .iter()

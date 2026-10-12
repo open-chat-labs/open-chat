@@ -14,13 +14,10 @@ pub mod premium_items;
 pub mod protected_actions;
 pub mod reported_messages;
 pub mod storage_index_user_config_batch;
-pub mod storage_index_user_ids_migrated_batch;
 pub mod storage_index_users_to_remove_batch;
 pub mod streak_insurance_logs;
 pub mod user;
 pub mod user_map;
-pub mod user_migrations;
-pub mod users_last_online;
 
 pub const MAX_AVATAR_SIZE: usize = 250_000;
 pub const MAX_DESCRIPTION_LEN: usize = 10_000;

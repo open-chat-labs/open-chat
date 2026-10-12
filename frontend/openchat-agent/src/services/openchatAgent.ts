@@ -159,11 +159,7 @@ import type {
     SetMemberDisplayNameResponse,
     SetMessageReminderResponse,
     SetPinNumberResponse,
-    SetUserUpgradeConcurrencyResponse,
     CreateMultiUserCanisterResponse,
-    MigrateUsersResponse,
-    UserMigrationResponse,
-    UsersToMigrate,
     FundsInPreviousWallet,
     MoveFundsFromOldCanisterResponse,
     MoveFundsOutcome,
@@ -4089,39 +4085,26 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<RegisterProposalVoteResponse> {
         if (offline()) return CommonResponses.offline();
 
-        // A User canister votes with the neurons hot-keyed to it. A MultiUser canister can't, since
-        // its users share its principal, so for them vote with the neurons hot-keyed to their own
-        // principal from here, then record the vote against the message.
-        if (isMultiUserCanisterUser(this._userClient.userId)) {
-            const voteResponse = await this.voteWithNeurons(
-                governanceCanisterId,
-                proposalId,
-                isNns,
-                adopt,
-            );
-            if (voteResponse.kind !== "success") return voteResponse;
-
-            switch (chatId.kind) {
-                case "group_chat":
-                    return this._groupClient.registerProposalVoteV2(
-                        chatId.groupId,
-                        messageIndex,
-                        adopt,
-                    );
-                case "channel":
-                    return this._communityClient.registerProposalVoteV2(
-                        chatId,
-                        messageIndex,
-                        adopt,
-                    );
-            }
-        }
+        // A MultiUser canister can't vote with its users' neurons, since they share its principal,
+        // so vote with the neurons hot-keyed to the user's own principal from here, then record the
+        // vote against the message.
+        const voteResponse = await this.voteWithNeurons(
+            governanceCanisterId,
+            proposalId,
+            isNns,
+            adopt,
+        );
+        if (voteResponse.kind !== "success") return voteResponse;
 
         switch (chatId.kind) {
             case "group_chat":
-                return this._groupClient.registerProposalVote(chatId.groupId, messageIndex, adopt);
+                return this._groupClient.registerProposalVoteV2(
+                    chatId.groupId,
+                    messageIndex,
+                    adopt,
+                );
             case "channel":
-                return this._communityClient.registerProposalVote(chatId, messageIndex, adopt);
+                return this._communityClient.registerProposalVoteV2(chatId, messageIndex, adopt);
         }
     }
 
@@ -4528,36 +4511,10 @@ export class OpenChatAgent extends EventTarget {
         return this._groupIndexClient.setCommunityUpgradeConcurrency(value);
     }
 
-    setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
-        if (offline()) return Promise.resolve("offline");
-
-        return this._userIndexClient.setUserUpgradeConcurrency(value);
-    }
-
     createMultiUserCanister(
         localUserIndexCanisterId: string,
     ): Promise<CreateMultiUserCanisterResponse> {
         return this._userIndexClient.createMultiUserCanister(localUserIndexCanisterId);
-    }
-
-    setMultiUserCanistersEnabled(enabled: boolean): Promise<boolean> {
-        return this._userIndexClient.setMultiUserCanistersEnabled(enabled);
-    }
-
-    migrateUsers(users: UsersToMigrate): Promise<MigrateUsersResponse> {
-        return this._userIndexClient.migrateUsers(users);
-    }
-
-    setUserMigrationConcurrency(value: number): Promise<boolean> {
-        return this._userIndexClient.setUserMigrationConcurrency(value);
-    }
-
-    userMigration(userId: string): Promise<UserMigrationResponse> {
-        return this._userIndexClient.userMigration(userId);
-    }
-
-    cancelUserMigration(userId: string, multiUserCanisterId: string): Promise<Success | OCError> {
-        return this._userIndexClient.cancelUserMigration(userId, multiUserCanisterId);
     }
 
     markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {

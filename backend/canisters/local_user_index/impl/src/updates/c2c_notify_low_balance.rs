@@ -151,9 +151,7 @@ pub(crate) fn top_up_amount(canister_id: CanisterId, state: &RuntimeState) -> Cy
 
 fn commit(canister_id: CanisterId, top_up: CyclesTopUp, state: &mut RuntimeState) {
     state.data.total_cycles_spent_on_canisters += top_up.amount;
-    if state.data.local_users.contains(&canister_id.into()) {
-        state.data.local_users.mark_cycles_top_up(&canister_id.into(), top_up);
-    } else if state.data.local_groups.contains(&canister_id.into()) {
+    if state.data.local_groups.contains(&canister_id.into()) {
         state.data.local_groups.mark_cycles_top_up(&canister_id.into(), top_up);
     } else if state.data.local_communities.contains(&canister_id.into()) {
         state.data.local_communities.mark_cycles_top_up(&canister_id.into(), top_up);

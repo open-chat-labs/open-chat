@@ -96,16 +96,11 @@ async fn add_token_impl(
     // Transfer the listing fee from the payer to the BURN address
     let mut payment: Option<Payment> = None;
     if let Some(user_id) = payer {
-        // A user in a MultiUser canister holds their own funds, in their principal's account, so
-        // their principal is looked up. Any other user's funds are in the account of their user id.
-        let from = if user_id.is_indexed() {
-            match user_index_canister_c2c_client::lookup_user(user_id.as_principal(), user_index_canister_id).await? {
-                // The lookup also resolves the principal a user signs in with, which isn't their user id
-                Some(user) if user.user_id == user_id => UserIdAndPrincipal::new(user_id, user.principal).into(),
-                _ => return Err(OCErrorCode::TargetUserNotFound.into()),
-            }
-        } else {
-            types::icrc1::Account::legacy_for_user(user_id).into()
+        // Users hold their own funds, in their principal's account, so their principal is looked up
+        let from = match user_index_canister_c2c_client::lookup_user(user_id.as_principal(), user_index_canister_id).await? {
+            // The lookup also resolves the principal a user signs in with, which isn't their user id
+            Some(user) if user.user_id == user_id => UserIdAndPrincipal::new(user_id, user.principal).into(),
+            _ => return Err(OCErrorCode::TargetUserNotFound.into()),
         };
 
         let amount = if test_mode { 100_000_000 } else { TOKEN_LISTING_FEE_E8S };

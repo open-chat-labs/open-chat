@@ -1,6 +1,5 @@
 use crate::guards::caller_is_registry_canister;
 use crate::updates::upgrade_multi_user_canister_wasm::upgrade_multi_user_wasm_in_local_user_index;
-use crate::updates::upgrade_user_canister_wasm::upgrade_user_wasm_in_local_user_index;
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -68,17 +67,6 @@ async fn add_local_user_index_canister(args: Args) -> Response {
                 info!("Installed wasm");
             }
 
-            if let Err(error) = upgrade_user_wasm_in_local_user_index(
-                args.canister_id,
-                &result.user_canister_wasm,
-                result.user_canister_wasm_hash,
-                None,
-            )
-            .await
-            {
-                return InternalError(format!("Failed to install user canister wasm: {error:?}"));
-            }
-
             // The MultiUser wasm is only pushed once one has been uploaded to the UserIndex, else
             // the new LocalUserIndex would reject the empty wasm with a hash mismatch
             if !result.multi_user_canister_wasm.module.is_empty()
@@ -105,8 +93,6 @@ struct PrepareResult {
     this_canister_id: CanisterId,
     canister_wasm: CanisterWasm,
     canister_wasm_hash: Hash,
-    user_canister_wasm: CanisterWasm,
-    user_canister_wasm_hash: Hash,
     multi_user_canister_wasm: CanisterWasm,
     multi_user_canister_wasm_hash: Hash,
     init_args: local_user_index_canister::init::Args,
@@ -116,16 +102,12 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
     if !state.data.local_index_map.contains_key(&args.canister_id) {
         let canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::LocalUserIndex);
 
-        let user_canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::User);
-
         let multi_user_canister_wasm = state.data.child_canister_wasms.get(ChildCanisterType::MultiUser);
 
         Ok(PrepareResult {
             this_canister_id: state.env.canister_id(),
             canister_wasm: canister_wasm.wasm.clone(),
             canister_wasm_hash: canister_wasm.wasm_hash,
-            user_canister_wasm: user_canister_wasm.wasm.clone(),
-            user_canister_wasm_hash: user_canister_wasm.wasm_hash,
             multi_user_canister_wasm: multi_user_canister_wasm.wasm.clone(),
             multi_user_canister_wasm_hash: multi_user_canister_wasm.wasm_hash,
             init_args: local_user_index_canister::init::Args {
@@ -138,7 +120,6 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
                 escrow_canister_id: state.data.escrow_canister_id,
                 event_relay_canister_id: state.data.event_store_client.info().event_store_canister_id,
-                online_users_canister_id: state.data.online_users_canister_id,
                 registry_canister_id: state.data.registry_canister_id,
                 internet_identity_canister_id: state.data.internet_identity_canister_id,
                 website_canister_id: state.data.website_canister_id,
@@ -149,7 +130,6 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 openai_api_key: state.data.openai_api_key.clone(),
                 moderation_referral_config: state.data.moderation_referral_config.clone(),
                 media_scan_config: state.data.media_scan_config.clone(),
-                multi_user_canisters_enabled: state.data.multi_user_canisters_enabled,
                 call_push_enabled: state.data.call_push_enabled,
                 test_mode: state.data.test_mode,
             },
@@ -196,10 +176,6 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 UserIndexEvent::UserIdMigrated(UserIdMigrated {
                     old_user_id,
                     new_user_id,
-                    canisters_to_notify: Vec::new(),
-                    blocked_users: Vec::new(),
-                    users_to_notify: Vec::new(),
-                    migrated_earlier: Vec::new(),
                 }),
             );
         }

@@ -3,7 +3,7 @@ use constants::MINUTE_IN_MS;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use types::{BuildVersion, CyclesTopUp, TimestampMillis, UserId};
+use types::{TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct LocalUserMap {
@@ -12,18 +12,10 @@ pub struct LocalUserMap {
 }
 
 impl LocalUserMap {
-    pub fn add(&mut self, user_id: UserId, principal: Principal, wasm_version: Option<BuildVersion>, now: TimestampMillis) {
-        let user = LocalUser::new(now, wasm_version);
+    pub fn add(&mut self, user_id: UserId, principal: Principal, now: TimestampMillis) {
+        let user = LocalUser::new(now);
         self.users.insert(user_id, user);
         self.registration_in_progress.remove(&principal);
-    }
-
-    pub fn get(&self, user_id: &UserId) -> Option<&LocalUser> {
-        self.users.get(user_id)
-    }
-
-    pub fn get_mut(&mut self, user_id: &UserId) -> Option<&mut LocalUser> {
-        self.users.get_mut(user_id)
     }
 
     pub fn contains(&self, user_id: &UserId) -> bool {
@@ -32,15 +24,6 @@ impl LocalUserMap {
 
     pub fn remove(&mut self, user_id: &UserId) -> bool {
         self.users.remove(user_id).is_some()
-    }
-
-    pub fn mark_cycles_top_up(&mut self, user_id: &UserId, top_up: CyclesTopUp) -> bool {
-        if let Some(user) = self.users.get_mut(user_id) {
-            user.mark_cycles_top_up(top_up);
-            true
-        } else {
-            false
-        }
     }
 
     pub fn mark_registration_in_progress(&mut self, principal: Principal, now: TimestampMillis) -> bool {
@@ -61,11 +44,6 @@ impl LocalUserMap {
         self.registration_in_progress.remove(principal);
     }
 
-    // Excludes the users held in MultiUser canisters, which are upgraded and topped up per canister
-    pub fn iter_user_canisters(&self) -> impl Iterator<Item = (&UserId, &LocalUser)> {
-        self.users.iter().filter(|(user_id, _)| user_id.index() == 0)
-    }
-
     pub fn len(&self) -> usize {
         self.users.len()
     }
@@ -74,33 +52,10 @@ impl LocalUserMap {
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct LocalUser {
     pub date_created: TimestampMillis,
-    // The version of the user's own canister. Not set for a user held in a MultiUser canister, since
-    // the version is tracked per MultiUser canister
-    pub wasm_version: Option<BuildVersion>,
-    pub upgrade_in_progress: bool,
-    pub cycle_top_ups: Vec<CyclesTopUp>,
 }
 
 impl LocalUser {
-    pub fn set_canister_upgrade_status(&mut self, upgrade_in_progress: bool, new_version: Option<BuildVersion>) {
-        self.upgrade_in_progress = upgrade_in_progress;
-        if let Some(version) = new_version {
-            self.wasm_version = Some(version);
-        }
-    }
-
-    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up)
-    }
-}
-
-impl LocalUser {
-    pub fn new(now: TimestampMillis, wasm_version: Option<BuildVersion>) -> LocalUser {
-        LocalUser {
-            date_created: now,
-            wasm_version,
-            upgrade_in_progress: false,
-            cycle_top_ups: Vec::new(),
-        }
+    pub fn new(now: TimestampMillis) -> LocalUser {
+        LocalUser { date_created: now }
     }
 }

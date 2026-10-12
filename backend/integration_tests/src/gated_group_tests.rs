@@ -1,6 +1,5 @@
 use crate::env::ENV;
 use crate::setup::install_sns_governance;
-use crate::user_migration_tests::{migrate, migration_operator, wait_until_local_user_index_knows_of_migration};
 use crate::utils::{tick_many, try_metrics};
 use crate::{TestEnv, User, client};
 use candid::Principal;
@@ -348,12 +347,11 @@ enum Gated {
 
 // A member approves the group or community to pull a gate's payment from their wallet, and it pulls
 // the payment when they join, spending the approval made under the member's own spender
-// subaccount, as for any other payment it pulls from a member's wallet. A user alone in their
-// canister has it make the approval, from its account. A user in a MultiUser canister holds their
-// own funds, in their principal's account, so the website makes the approval on the ledger itself.
-#[test_case(Gated::Group, true; "group_multi_user")]
-#[test_case(Gated::Channel, false; "channel_user_canister")]
-fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canister: bool) {
+// subaccount, as for any other payment it pulls from a member's wallet. Users hold their own funds,
+// in their principal's account, so the website makes the approval on the ledger itself.
+#[test_case(Gated::Group; "group")]
+#[test_case(Gated::Channel; "channel")]
+fn member_pays_payment_gate_from_their_wallet(gated: Gated) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -363,12 +361,8 @@ fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canist
     } = wrapper.env();
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let user = if in_multi_user_canister {
-        client::register_user(env, canister_ids)
-    } else {
-        client::register_user_in_user_canister(env, canister_ids)
-    };
-    let wallet = if in_multi_user_canister { user.principal } else { user.canister() };
+    let user = client::register_user(env, canister_ids);
+    let wallet = user.principal;
 
     let amount = 1_0000_0000;
     let fee = 10_000;
@@ -379,21 +373,7 @@ fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canist
 
     // The wallet holds the gate's amount, and approves the gate's amount less the approval's fee
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, wallet, amount);
-    if in_multi_user_canister {
-        client::ledger::happy_path::approve(env, wallet, canister_ids.icp_ledger, spender_account, amount - fee);
-    } else {
-        client::user::happy_path::approve_transfer(
-            env,
-            &user,
-            &user_canister::approve_transfer::Args {
-                spender: spender_account.into(),
-                ledger_canister_id: canister_ids.icp_ledger,
-                amount: amount - fee,
-                expires_in: None,
-                pin: None,
-            },
-        );
-    }
+    client::ledger::happy_path::approve(env, wallet, canister_ids.icp_ledger, spender_account, amount - fee);
 
     match gated {
         Gated::Group => client::group::happy_path::join_group(env, user.principal, spender.into()),
@@ -486,70 +466,35 @@ fn payment_gate_is_only_paid_with_an_approval_under_the_members_spender_subaccou
 // The neurons a user has, as the hotkeys they list
 #[derive(Clone, Copy)]
 enum Neurons {
-    // One listing their User canister, which they are still in
-    UserCanister,
-    // The rest are after they have been migrated to a MultiUser canister. One listing their principal.
+    // One listing their principal
     Principal,
-    // One listing their old User canister
-    OldUserCanister,
     // One listing someone else
     Neither,
-    // Two, each with half the stake the gate requires, one listing their principal and the other their
-    // old User canister
-    SplitAcrossIds,
-    // One with half the stake the gate requires, listing both their principal and their old User
-    // canister, so counted only once
-    SharedAcrossIds,
 }
 
-// A user in a MultiUser canister is told to add their principal as a hotkey on their neurons, since no
-// one can add their user id. A migrated user's neurons may still list their old User canister, so
-// neurons listing either count, both when they join and when the gate is checked again as it expires.
-#[test_case(Gated::Group, Neurons::UserCanister; "group_user_canister")]
+// A user is told to add their principal as a hotkey on their neurons, since no one can add their user
+// id, so neurons listing it count, both when they join and when the gate is checked again as it
+// expires
 #[test_case(Gated::Group, Neurons::Principal; "group_principal")]
-#[test_case(Gated::Group, Neurons::OldUserCanister; "group_old_user_canister")]
 #[test_case(Gated::Group, Neurons::Neither; "group_neither")]
-#[test_case(Gated::Group, Neurons::SplitAcrossIds; "group_split_across_ids")]
-#[test_case(Gated::Group, Neurons::SharedAcrossIds; "group_shared_across_ids")]
 #[test_case(Gated::Community, Neurons::Principal; "community_principal")]
-#[test_case(Gated::Community, Neurons::OldUserCanister; "community_old_user_canister")]
 #[test_case(Gated::Channel, Neurons::Principal; "channel_principal")]
-#[test_case(Gated::Channel, Neurons::OldUserCanister; "channel_old_user_canister")]
 fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
         canister_ids,
         controller,
-        platform_operator,
         ..
     } = wrapper.env();
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let user = client::register_user_in_user_canister(env, canister_ids);
-    let migrated_user = (!matches!(neurons, Neurons::UserCanister)).then(|| {
-        let operator = migration_operator(env, canister_ids, *controller);
-        let multi_user_canister = client::user_index::happy_path::create_multi_user_canister(
-            env,
-            *platform_operator,
-            canister_ids,
-            user.local_user_index,
-        );
-        migrate(env, canister_ids, &operator, &user, multi_user_canister)
-    });
-    let member = migrated_user.as_ref().unwrap_or(&user);
+    let member = client::register_user(env, canister_ids);
 
     let stake_e8s = 1_0000_0000;
-    let half_stake_e8s = stake_e8s / 2;
     let neurons_hotkeys_and_stakes = match neurons {
-        Neurons::UserCanister | Neurons::OldUserCanister => vec![(vec![user.canister()], stake_e8s)],
-        Neurons::Principal => vec![(vec![user.principal], stake_e8s)],
+        Neurons::Principal => vec![(vec![member.principal], stake_e8s)],
         Neurons::Neither => vec![(vec![random_principal()], stake_e8s)],
-        Neurons::SplitAcrossIds => vec![
-            (vec![user.principal], half_stake_e8s),
-            (vec![user.canister()], half_stake_e8s),
-        ],
-        Neurons::SharedAcrossIds => vec![(vec![user.principal, user.canister()], half_stake_e8s)],
     };
     let dissolve_delay = 30 * DAY_IN_MS;
     let governance_canister_id = install_sns_governance(env, *controller, neurons_hotkeys_and_stakes, dissolve_delay / 1000);
@@ -565,12 +510,7 @@ fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
     };
     let (canister_id, channel_id) = create_gated(env, &owner, &gated, gate_config);
 
-    // The group or community is told the user's old ids by its LocalUserIndex, once that knows of the
-    // migration
     let local_user_index = canister_ids.local_user_index(env, canister_id);
-    if let Some(migrated_user) = &migrated_user {
-        wait_until_local_user_index_knows_of_migration(env, local_user_index, &user, migrated_user.user_id);
-    }
 
     let result = match gated {
         Gated::Group => {
@@ -632,11 +572,7 @@ fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
 
     match neurons {
         Neurons::Neither => assert!(matches!(result, Err(GateCheckFailedReason::NoSnsNeuronsFound)), "{result:?}"),
-        Neurons::SharedAcrossIds => assert!(
-            matches!(result, Err(GateCheckFailedReason::NoSnsNeuronsWithRequiredStakeFound)),
-            "{result:?}"
-        ),
-        _ => {
+        Neurons::Principal => {
             assert!(result.is_ok(), "{result:?}");
 
             // Move the time forward so that the gate expires and is checked again, which takes a few
@@ -652,7 +588,7 @@ fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
                     .membership
                     .map(|m| m.lapsed),
                 Gated::Channel => {
-                    client::community::happy_path::channel_summary(env, member, canister_id.into(), channel_id.unwrap())
+                    client::community::happy_path::channel_summary(env, &member, canister_id.into(), channel_id.unwrap())
                         .membership
                         .map(|m| m.lapsed)
                 }

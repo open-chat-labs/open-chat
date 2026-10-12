@@ -3,7 +3,6 @@
 
 pub mod accept_p2p_swap;
 mod add_hot_group_exclusions;
-pub mod approve_transfer;
 mod archive_unarchive_chats;
 pub mod c2c_accept_p2p_swap;
 pub mod c2c_bot_send_message;
@@ -41,8 +40,6 @@ pub mod tip_message;
 mod unpin_chat_v2;
 mod update_bot;
 pub mod update_btc_balance;
-pub mod withdraw_btc;
-pub mod withdraw_via_one_sec;
 
 pub use add_hot_group_exclusions::add_hot_group_exclusions;
 pub use archive_unarchive_chats::archive_unarchive_chats;

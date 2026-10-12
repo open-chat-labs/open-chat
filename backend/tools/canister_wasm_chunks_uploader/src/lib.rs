@@ -57,25 +57,6 @@ pub async fn upload_local_user_index_canister_wasm(
     .unwrap();
 }
 
-pub async fn upload_user_canister_wasm(
-    identity: Box<dyn Identity>,
-    url: String,
-    user_index_canister_id: CanisterId,
-    version: BuildVersion,
-) {
-    let agent = build_ic_agent(url, identity).await;
-    let canister_wasm = get_canister_wasm(CanisterName::User, version);
-
-    user_index_canister_client::upload_wasm_in_chunks(
-        &agent,
-        &user_index_canister_id,
-        &canister_wasm.module,
-        user_index_canister::ChildCanisterType::User,
-    )
-    .await
-    .unwrap();
-}
-
 pub async fn upload_multi_user_canister_wasm(
     identity: Box<dyn Identity>,
     url: String,

@@ -28,7 +28,7 @@ everything (slow).
 - Test wasms embed a fixed commit id and aren't built with the worktree's path in `RUSTFLAGS`, so
   a new commit doesn't rebuild every canister and sccache can share compiled crates between
   worktrees. They aren't the wasms which would be released; release builds are unchanged.
-- PocketIC and the NNS, event store and prod User wasms are downloaded once per machine
+- PocketIC and the NNS, event store and prod MultiUser wasms are downloaded once per machine
   (`scripts/cached-download.sh`).
 
 On CI (`$CI` set) everything is built and downloaded as before.

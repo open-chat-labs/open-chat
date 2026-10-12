@@ -1,7 +1,6 @@
 use crate::delete_user_tests::{MAX_RESIDUAL_CYCLES, cycles_refunded_metric, wait_for_refund_queue_to_empty};
 use crate::env::ENV;
-use crate::user_migration_tests::tick_until;
-use crate::utils::{tick_many, wait_for_deleted_canister_to_be_uninstalled};
+use crate::utils::{tick_many, tick_until, wait_for_deleted_canister_to_be_uninstalled};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use group_index_canister::freeze_group::SuspensionDetails;

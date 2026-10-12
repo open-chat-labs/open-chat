@@ -130,34 +130,16 @@ pub fn execute_update_no_response<P: CandidType>(
         .unwrap();
 }
 
-// Users are registered into MultiUser canisters. The `_in_user_canister` variants instead give the
-// user a canister of their own, which only the tests of User canisters themselves need.
 pub fn register_user(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
     register_user_with_referrer(env, canister_ids, None)
 }
 
-pub fn register_user_in_user_canister(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
-    register_user_in_user_canister_with_referrer(env, canister_ids, None)
-}
-
 pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterIds, referral_code: Option<String>) -> User {
-    register_user_with_options(env, canister_ids, referral_code, None, true)
-}
-
-pub fn register_user_in_user_canister_with_referrer(
-    env: &mut PocketIc,
-    canister_ids: &CanisterIds,
-    referral_code: Option<String>,
-) -> User {
-    register_user_with_options(env, canister_ids, referral_code, None, false)
+    register_user_with_options(env, canister_ids, referral_code, None)
 }
 
 pub fn register_user_on_subnet(env: &mut PocketIc, canister_ids: &CanisterIds, subnet: Principal) -> User {
     register_user_with_referrer_on(env, canister_ids, local_user_index_on_subnet(canister_ids, subnet), None)
-}
-
-pub fn register_user_in_user_canister_on_subnet(env: &mut PocketIc, canister_ids: &CanisterIds, subnet: Principal) -> User {
-    register_user_in_user_canister_with_referrer_on(env, canister_ids, local_user_index_on_subnet(canister_ids, subnet), None)
 }
 
 pub fn register_user_with_referrer_on(
@@ -166,16 +148,7 @@ pub fn register_user_with_referrer_on(
     local_user_index: CanisterId,
     referral_code: Option<String>,
 ) -> User {
-    register_user_with_options(env, canister_ids, referral_code, Some(local_user_index), true)
-}
-
-pub fn register_user_in_user_canister_with_referrer_on(
-    env: &mut PocketIc,
-    canister_ids: &CanisterIds,
-    local_user_index: CanisterId,
-    referral_code: Option<String>,
-) -> User {
-    register_user_with_options(env, canister_ids, referral_code, Some(local_user_index), false)
+    register_user_with_options(env, canister_ids, referral_code, Some(local_user_index))
 }
 
 // Registers the user in the given MultiUser canister on the given LocalUserIndex
@@ -194,7 +167,6 @@ pub fn register_user_in_multi_user_canister_on(
         auth_principal,
         public_key,
         Some(local_user_index),
-        true,
         Some(multi_user_canister_id),
     )
     .0
@@ -227,7 +199,6 @@ fn register_user_with_options(
     canister_ids: &CanisterIds,
     referral_code: Option<String>,
     local_user_index: Option<CanisterId>,
-    use_multi_user_canister: bool,
 ) -> User {
     let (auth_principal, public_key) = random_internet_identity_principal();
     register_user_internal(
@@ -237,36 +208,15 @@ fn register_user_with_options(
         auth_principal,
         public_key,
         local_user_index,
-        use_multi_user_canister,
         None,
     )
     .0
 }
 
 pub fn register_user_and_include_auth(env: &mut PocketIc, canister_ids: &CanisterIds) -> (User, UserAuth) {
-    register_user_and_include_auth_with_options(env, canister_ids, true)
-}
-
-pub fn register_user_in_user_canister_and_include_auth(env: &mut PocketIc, canister_ids: &CanisterIds) -> (User, UserAuth) {
-    register_user_and_include_auth_with_options(env, canister_ids, false)
-}
-
-fn register_user_and_include_auth_with_options(
-    env: &mut PocketIc,
-    canister_ids: &CanisterIds,
-    use_multi_user_canister: bool,
-) -> (User, UserAuth) {
     let (auth_principal, auth_public_key, auth_delegation) = sign_in_with_email(env, canister_ids);
-    let (user, oc_public_key, oc_delegation) = register_user_internal(
-        env,
-        canister_ids,
-        None,
-        auth_principal,
-        auth_public_key.clone(),
-        None,
-        use_multi_user_canister,
-        None,
-    );
+    let (user, oc_public_key, oc_delegation) =
+        register_user_internal(env, canister_ids, None, auth_principal, auth_public_key.clone(), None, None);
 
     let user_auth = UserAuth {
         auth_public_key,
@@ -280,25 +230,15 @@ fn register_user_and_include_auth_with_options(
 
 pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
     let user = register_user(env, canister_ids);
-    make_diamond(&user, env, canister_ids, controller);
-    user
-}
-
-pub fn register_diamond_user_in_user_canister(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
-    let user = register_user_in_user_canister(env, canister_ids);
-    make_diamond(&user, env, canister_ids, controller);
-    user
-}
-
-fn make_diamond(user: &User, env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) {
     upgrade_user(
-        user,
+        &user,
         env,
         canister_ids,
         controller,
         DiamondMembershipPlanDuration::OneMonth,
         true,
     );
+    user
 }
 
 pub fn upgrade_user(
@@ -324,14 +264,11 @@ pub fn upgrade_user(
     tick_many(env, 4);
 }
 
-// Lets the user's canister pull payments from their wallet, as the website does before a payment. A
-// user in a MultiUser canister holds their own funds, so approves their canister to spend them, under
-// their own spender subaccount. A user alone in their canister needs no approval, since the funds are
-// its own.
+// Lets the user's canister pull payments from their wallet, as the website does before a payment. The
+// user holds their own funds, so approves their canister to spend them, under their own spender
+// subaccount.
 pub fn approve_user_canister(env: &mut PocketIc, user: &User, ledger_canister_id: CanisterId, amount: u128) {
-    if user.user_id.index() != 0 {
-        approve_spender(env, user, ledger_canister_id, user.canister(), amount);
-    }
+    approve_spender(env, user, ledger_canister_id, user.canister(), amount);
 }
 
 // Approves `spender` to pull up to `amount` from the user's wallet, under the user's own spender
@@ -349,19 +286,15 @@ pub fn approve_spender(env: &mut PocketIc, user: &User, ledger_canister_id: Cani
     );
 }
 
-// Readies a message's transfer to be pulled from the user's wallet by `spender`, as the website does
-// for a user in a MultiUser canister, who holds their own funds: an ICRC1 transfer is made an ICRC2
-// one from their wallet, and `spender` is approved to pull it. Content without a transfer, or for a
-// user alone in their canister, which pays from its own account, is returned as it is.
+// Readies a message's transfer to be pulled from the user's wallet by `spender`, as the website does,
+// since users hold their own funds: an ICRC1 transfer is made an ICRC2 one from their wallet, and
+// `spender` is approved to pull it. Content without a transfer is returned as it is.
 pub fn pay_from_wallet(
     env: &mut PocketIc,
     user: &User,
     spender: CanisterId,
     content: MessageContentInitial,
 ) -> MessageContentInitial {
-    if user.user_id.index() == 0 {
-        return content;
-    }
     let (content, ledger, allowance) = match content {
         // A transfer from another account is approved by that account
         MessageContentInitial::Crypto(c) if !from_wallet(&c.transfer, user.principal) => {
@@ -426,7 +359,6 @@ fn transfer_from_wallet(transfer: CryptoTransaction, from: Principal) -> (Crypto
     )
 }
 
-#[expect(clippy::too_many_arguments)]
 fn register_user_internal(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
@@ -434,7 +366,6 @@ fn register_user_internal(
     auth_principal: Principal,
     public_key: Vec<u8>,
     local_user_index: Option<CanisterId>,
-    use_multi_user_canister: bool,
     multi_user_canister_id: Option<CanisterId>,
 ) -> (User, Vec<u8>, SignedDelegation) {
     let session_key = random::<[u8; 32]>().to_vec();
@@ -464,7 +395,6 @@ fn register_user_internal(
         local_user_index,
         create_identity_result.user_key.clone(),
         referral_code,
-        use_multi_user_canister,
         multi_user_canister_id,
     );
 

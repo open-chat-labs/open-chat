@@ -10,7 +10,7 @@ use constants::HOUR_IN_MS;
 use direct_chat::DirectChat;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
 use rand::RngExt;
-use types::{Achievement, CallKind, CanisterId, TimestampMillis, UserId, UserType};
+use types::{Achievement, CallKind, TimestampMillis, UserId};
 use user_canister::c2c_user_canister_v2::*;
 use user_canister::{
     DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs, SendMessagesArgs,
@@ -28,7 +28,7 @@ async fn c2c_user_canister_v2(args: Args) -> Response {
 async fn c2c_user_canister_v2_impl(args: Args) -> Response {
     // As in the User canister, the caller must be a User or MultiUser canister, and each event is
     // only applied if it is from a user that kind of canister can act for
-    let caller_kind = verify_caller(&args).await;
+    let caller_kind = verify_caller().await;
     if caller_kind == CanisterKind::Neither {
         return Response::Success;
     }
@@ -66,20 +66,19 @@ async fn c2c_user_canister_v2_impl(args: Args) -> Response {
 }
 
 // Which kind of canister the caller is. A MultiUser canister the LocalUserIndex has already
-// confirmed is cached, and a User canister whose user one of the recipients has a chat with is
-// known. Any other caller is checked with the LocalUserIndex, which knows every user as soon as they
-// register, and cached if it is a MultiUser canister.
-async fn verify_caller(args: &Args) -> CanisterKind {
+// confirmed is cached. Any other caller is checked with the LocalUserIndex, which knows every user as
+// soon as they register, and cached if it is a MultiUser canister.
+async fn verify_caller() -> CanisterKind {
     let (caller, local_user_index_canister_id, known) = read_state(|state| {
         let caller = state.env.caller();
         (
             caller,
             state.data.local_user_index_canister_id,
-            known_caller_kind(caller, args, state),
+            state.data.known_multi_user_canisters.contains(&caller),
         )
     });
-    if let Some(kind) = known {
-        return kind;
+    if known {
+        return CanisterKind::MultiUserCanister;
     }
 
     // Every LocalUserIndex holds all users, so asking this canister's own avoids a cross-subnet call
@@ -97,21 +96,6 @@ async fn verify_caller(args: &Args) -> CanisterKind {
         mutate_state(|state| state.data.known_multi_user_canisters.insert(caller));
     }
     kind
-}
-
-fn known_caller_kind(caller: CanisterId, args: &Args, state: &RuntimeState) -> Option<CanisterKind> {
-    if state.data.known_multi_user_canisters.contains(&caller) {
-        return Some(CanisterKind::MultiUserCanister);
-    }
-    let caller_user_id = UserId::from(caller);
-    let has_chat_with_caller = args.events.iter().any(|e| {
-        state
-            .with_user(e.value.recipient, |user| {
-                user.direct_chats.user_type(&caller_user_id.into()) == Some(UserType::User)
-            })
-            .unwrap_or_default()
-    });
-    has_chat_with_caller.then_some(CanisterKind::UserCanister)
 }
 
 // Moves what the user at `recipient_index` holds under the sender's previous ids, such as their chat

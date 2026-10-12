@@ -23,12 +23,10 @@ use user_canister::{
 };
 use utils::migrated_user_ids::MigratedUserIds;
 
-// Whether a sender is one a canister of this kind can act for: a User canister acts only for its
-// own user, whose id is the canister's id, and a MultiUser canister only for the users it holds,
-// whose ids carry an index, never as its own canister id
+// Whether a sender is one a canister of this kind can act for: a MultiUser canister acts only for the
+// users it holds, whose ids carry an index, never as its own canister id
 pub fn can_act_for(kind: CanisterKind, sender: UserId, caller: CanisterId) -> bool {
     match kind {
-        CanisterKind::UserCanister => sender == UserId::from(caller),
         CanisterKind::MultiUserCanister => sender.index() != 0 && sender.canister_id() == caller,
         CanisterKind::Neither => false,
     }

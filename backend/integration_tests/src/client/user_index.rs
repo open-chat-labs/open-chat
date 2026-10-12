@@ -24,10 +24,8 @@ generate_msgpack_query_call!(explore_bots);
 generate_update_call!(add_local_user_index_canister);
 generate_update_call!(add_platform_moderator);
 generate_update_call!(add_platform_operator);
-generate_update_call!(refund_deleted_user_cycles);
 generate_update_call!(assign_platform_moderators_group);
 generate_msgpack_update_call!(create_multi_user_canister);
-generate_msgpack_update_call!(set_multi_user_canisters_enabled);
 generate_msgpack_update_call!(pay_for_diamond_membership);
 generate_msgpack_update_call!(remove_bot);
 generate_msgpack_update_call!(contest_moderation_sanction);
@@ -47,18 +45,11 @@ generate_msgpack_update_call!(set_call_push_enabled);
 generate_msgpack_update_call!(set_display_name);
 generate_msgpack_update_call!(set_premium_item_cost);
 generate_msgpack_update_call!(set_username);
-generate_msgpack_update_call!(migrate_users);
-generate_msgpack_query_call!(user_migration);
-generate_msgpack_update_call!(set_user_migration_concurrency);
-generate_msgpack_update_call!(set_user_upgrade_concurrency);
-generate_msgpack_update_call!(cancel_user_migration);
-generate_msgpack_update_call!(export_migrating_user);
 generate_msgpack_update_call!(suspend_user);
 generate_msgpack_update_call!(update_diamond_membership_subscription);
 generate_msgpack_update_call!(unsuspend_user);
 generate_update_call!(upgrade_local_user_index_canister_wasm);
 generate_update_call!(upgrade_multi_user_canister_wasm);
-generate_update_call!(upgrade_user_canister_wasm);
 generate_update_call!(upload_wasm_chunk);
 generate_msgpack_update_call!(register_bot);
 generate_msgpack_update_call!(publish_bot);
@@ -250,41 +241,6 @@ pub mod happy_path {
         ));
     }
 
-    pub fn upgrade_user_canister_wasm(
-        env: &mut PocketIc,
-        sender: Principal,
-        user_index_canister_id: CanisterId,
-        wasm: CanisterWasm,
-    ) {
-        upgrade_user_canister_wasm_with_filter(env, sender, user_index_canister_id, wasm, None);
-    }
-
-    pub fn upgrade_user_canister_wasm_with_filter(
-        env: &mut PocketIc,
-        sender: Principal,
-        user_index_canister_id: CanisterId,
-        wasm: CanisterWasm,
-        filter: Option<UpgradesFilter>,
-    ) {
-        upload_wasm_in_chunks(env, sender, user_index_canister_id, &wasm.module, ChildCanisterType::User);
-
-        let response = super::upgrade_user_canister_wasm(
-            env,
-            sender,
-            user_index_canister_id,
-            &user_index_canister::upgrade_user_canister_wasm::Args {
-                version: wasm.version,
-                wasm_hash: sha256(&wasm.module),
-                filter,
-            },
-        );
-
-        assert!(matches!(
-            response,
-            user_index_canister::upgrade_user_canister_wasm::Response::Success
-        ));
-    }
-
     pub fn create_multi_user_canister(
         env: &mut PocketIc,
         platform_operator: Principal,
@@ -310,25 +266,6 @@ pub mod happy_path {
             user_index_canister::create_multi_user_canister::Response::Success(canister_id) => canister_id,
             response => panic!("'create_multi_user_canister' error: {response:?}"),
         }
-    }
-
-    pub fn set_multi_user_canisters_enabled(
-        env: &mut PocketIc,
-        sender: Principal,
-        user_index_canister_id: CanisterId,
-        enabled: bool,
-    ) {
-        let response = super::set_multi_user_canisters_enabled(
-            env,
-            sender,
-            user_index_canister_id,
-            &user_index_canister::set_multi_user_canisters_enabled::Args { enabled },
-        );
-
-        assert!(matches!(
-            response,
-            user_index_canister::set_multi_user_canisters_enabled::Response::Success
-        ));
     }
 
     pub fn upgrade_multi_user_canister_wasm(
