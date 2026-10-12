@@ -11,7 +11,8 @@ pub struct Args {
     pub input_amount: u128,
     pub exchange_args: ExchangeArgs,
     pub min_output_amount: u128,
-    // Unset in the swaps the MultiUser canister records, which are made from the user's own wallet
+    // Unset in the swaps recorded since users were migrated to MultiUser canisters, which are made
+    // from the user's own wallet
     #[serde(default)]
     pub from_account: Option<icrc1::Account>,
     pub pin: Option<PinNumberWrapper>,

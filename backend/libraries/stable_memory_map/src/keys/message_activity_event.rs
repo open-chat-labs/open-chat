@@ -7,7 +7,7 @@ use types::{Chat, MessageIndex, TimestampMillis};
 // keyed by each event's identity which map to the event's timestamp, so that an event which
 // supersedes an existing one (eg. a second reaction to the same message) can find and remove it.
 //
-// Each user canister currently holds a single user, so the prefixes are just the key type.
+// The user's index is added by the key scope (see `key_scope`), so the prefixes are just the key type.
 key!(
     MessageActivityEventKey,
     MessageActivityEventKeyPrefix,

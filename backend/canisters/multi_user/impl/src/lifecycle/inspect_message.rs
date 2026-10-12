@@ -9,8 +9,7 @@ fn inspect_message() {
 
 // Only accepts ingress messages which could succeed, so that nobody else can make the canister pay
 // for update calls which will be rejected: those from its users, and the video call operators
-// starting and ending calls. As in the User canister, whose owner is the only user it accepts calls
-// from.
+// starting and ending calls.
 fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::msg_method_name()
         .trim_end_matches("_msgpack")

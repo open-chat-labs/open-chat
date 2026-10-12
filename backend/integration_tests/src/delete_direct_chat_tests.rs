@@ -112,8 +112,8 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     // recording when the thread root was last updated, plus the sender's metrics
     assert_eq!(chat_small_entries_count(env, &user1), small_entries_keys_before_messages + 21);
 
-    // Each canister only stores its own user's metrics for a direct chat, since only those are ever
-    // read, so user1's messages are only counted by user1's canister and user2's reaction by user2's
+    // Each copy of a direct chat only stores its own user's metrics, since only those are ever read,
+    // so user1's messages are only counted in user1's copy and user2's reaction in user2's
     client::user::happy_path::add_reaction(env, &user2, user1.user_id, "👍", message_id);
     tick_many(env, 10);
 

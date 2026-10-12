@@ -7,9 +7,8 @@ use multi_user_canister::UserCanisterEvent;
 use types::{Chat, P2PSwapLocation, UserId};
 use user_core::updates::c2c_notify_p2p_swap_status_change::{apply_status_change, offerer_user_id};
 
-// The User canister's `c2c_notify_p2p_swap_status_change`, for swaps offered in direct chats. The
-// escrow canister notifies the canister of the user the swap was offered to, whose copy of the
-// message records the change, which is then sent to the offerer as in the User canister.
+// For swaps offered in direct chats. The escrow canister notifies the canister of the user the swap
+// was offered to, whose copy of the message records the change, which is then sent to the offerer.
 #[update(guard = "caller_is_escrow_canister", msgpack = true)]
 #[trace]
 async fn c2c_notify_p2p_swap_status_change(args: Args) {
@@ -44,7 +43,7 @@ async fn c2c_notify_p2p_swap_status_change_impl(args: Args) {
             Some(offerer) => (offered_to_index, offerer),
             None => return,
         },
-        // As the User canister does, an offerer who is notified records the change themselves
+        // An offerer who is notified records the change themselves
         (None, Some(offerer_index)) => (offerer_index, offered_to),
         (None, None) => return,
     };

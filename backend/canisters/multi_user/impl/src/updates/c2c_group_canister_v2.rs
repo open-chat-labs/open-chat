@@ -11,11 +11,9 @@ fn c2c_group_canister_v2(args: Args) -> Response {
     execute_update(|state| c2c_group_canister_v2_impl(args, state))
 }
 
-// Handles the events a group sends this canister's users, in order, as the User canister does for
-// its user. As there, only a group the user is in may send them. Events which can't be applied
-// (the user is not here, or has left the group) are dropped rather than rejected with a trap,
-// which the group would keep retrying, just as the User canister's guard rejection causes them to
-// be dropped.
+// Handles the events a group sends this canister's users, in order. Only a group the user is in may
+// send them. Events which can't be applied (the user is not here, or has left the group) are
+// dropped rather than rejected with a trap, which the group would keep retrying.
 fn c2c_group_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();

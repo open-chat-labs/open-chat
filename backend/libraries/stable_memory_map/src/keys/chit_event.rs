@@ -5,7 +5,7 @@ use types::TimestampMillis;
 // The events which changed a user's CHIT balance, ordered by timestamp. Each key also holds a
 // sequence number so that events with the same timestamp have distinct keys.
 //
-// Each user canister currently holds a single user, so the prefix is just the key type.
+// The user's index is added by the key scope (see `key_scope`), so the prefix is just the key type.
 key!(ChitEventKey, ChitEventKeyPrefix, KeyType::ChitEvent);
 
 impl ChitEventKeyPrefix {

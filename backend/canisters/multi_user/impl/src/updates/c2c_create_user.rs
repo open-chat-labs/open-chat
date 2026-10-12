@@ -27,7 +27,6 @@ fn c2c_create_user_impl(args: Args, state: &mut RuntimeState) -> OCResult<UserId
             AddUserError::CanisterFull => OCErrorCode::UserLimitReached,
         })?;
 
-    // As a User canister does once it is installed
     for message in args.openchat_bot_messages {
         openchat_bot::send_message(index, message.into(), Vec::new(), true, state);
     }

@@ -4,7 +4,7 @@ use crate::{KeyPrefix, KeyType};
 // The user's streak insurance payments and claims, each keyed by its position in the order they
 // were made.
 //
-// Each user canister currently holds a single user, so the prefixes are just the key type.
+// The user's index is added by the key scope (see `key_scope`), so the prefixes are just the key type.
 key!(
     StreakInsuranceKey,
     StreakInsuranceKeyPrefix,

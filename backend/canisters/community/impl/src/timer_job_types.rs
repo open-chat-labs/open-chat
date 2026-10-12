@@ -105,7 +105,7 @@ pub struct MakeTransferJob {
 pub struct NotifyEscrowCanisterOfDepositJob {
     // The owner of the depositor's wallet, by which the escrow canister knows them. Jobs queued
     // before this was recorded hold the depositor's user id, which is the same principal since
-    // those depositors were all alone in their canisters.
+    // those depositors were then all in their own User canisters.
     #[serde(alias = "user_id")]
     pub principal: Principal,
     pub swap_id: u32,

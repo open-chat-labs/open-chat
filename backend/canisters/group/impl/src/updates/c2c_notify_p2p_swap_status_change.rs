@@ -75,7 +75,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
             let now = state.env.now();
             // Escrow identifies the acceptor by the owner of their wallet, which the swap recorded
             // when they reserved it. For a swap reserved before that was recorded, whose acceptor was
-            // alone in their canister, the owner is their user id.
+            // then in their own User canister, the owner is their user id.
             let accepted_by = state
                 .data
                 .chat

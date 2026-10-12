@@ -55,7 +55,7 @@ impl MultiUserCanisterMap {
             .map(|(_, c)| c.local_user_index)
     }
 
-    // Users held in their own canister are ignored, so this can be called for any user
+    // Ids which carry no index are ignored, so this can be called for any user
     pub fn on_user_added(&mut self, user_id: &UserId) {
         if let Some(canister) = self.canister_holding_mut(user_id) {
             canister.user_count = canister.user_count.saturating_add(1);
@@ -65,7 +65,7 @@ impl MultiUserCanisterMap {
         }
     }
 
-    // Users held in their own canister are ignored, so this can be called for any user
+    // Ids which carry no index are ignored, so this can be called for any user
     pub fn on_user_removed(&mut self, user_id: &UserId) {
         if let Some(canister) = self.canister_holding_mut(user_id) {
             canister.user_count = canister.user_count.saturating_sub(1);
@@ -117,7 +117,7 @@ mod tests {
         map.on_user_added(&UserId::new_indexed(canister_id(1), 1));
         map.on_user_added(&UserId::new_indexed(canister_id(1), 2));
         map.on_user_added(&UserId::new_indexed(canister_id(2), 1));
-        // Neither a user in their own canister nor one in an unknown MultiUser canister is counted
+        // Neither an id which carries no index nor one in an unknown MultiUser canister is counted
         map.on_user_added(&UserId::new(canister_id(1)));
         map.on_user_added(&UserId::new_indexed(canister_id(3), 1));
         map.on_user_removed(&UserId::new_indexed(canister_id(2), 1));

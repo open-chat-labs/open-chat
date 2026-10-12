@@ -161,8 +161,8 @@ impl RuntimeState {
         Ok(self.member_user(user_id))
     }
 
-    // The member's wallet, for paying them. A user sharing a MultiUser canister with others holds
-    // their funds under the principal held for them, and everyone else under their user id.
+    // The member's wallet, for paying them. A user holds their funds under the principal held for
+    // them, and anyone else whose id carries no index, eg. a bot, under their user id.
     pub fn member_wallet(&self, user_id: UserId) -> OCResult<icrc1::Account> {
         if !user_id.is_indexed() {
             return Ok(user_id.as_principal().into());
@@ -186,7 +186,7 @@ impl RuntimeState {
     }
 
     // The calling member, or when `user_id` is given, that member, whom the caller must hold (a
-    // MultiUser canister acting for one of its users, or a User canister for its own user)
+    // MultiUser canister acting for one of its users)
     pub fn get_calling_member(&self, user_id: Option<UserId>, verify: bool) -> Result<GroupMemberInternal, OCErrorCode> {
         let caller = self.env.caller();
         let member = match user_id {

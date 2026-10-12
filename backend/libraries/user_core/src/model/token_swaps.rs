@@ -4,7 +4,7 @@ use std::ops::RangeInclusive;
 use types::icrc1::Account;
 use types::{TimestampMillis, Timestamped};
 
-// The result of a swap the User canister's swap clients perform
+// The result of a token swap
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SwapSuccess {
     pub amount_out: u128,
@@ -105,7 +105,7 @@ pub struct TokenSwap {
     pub withdrawn_from_dex_at: SwapSubtask<u128>,
     pub success: Option<Timestamped<bool>>,
     // Set for a swap the user made themselves, straight from their own wallet, of which the canister
-    // only records the start and the end (in a MultiUser canister, whose users hold their own funds)
+    // only records the start and the end
     #[serde(default)]
     pub made_by_user: bool,
 }

@@ -9,8 +9,7 @@ use utils::text_validation::{
 };
 
 // Validates the args and that the user may create the group, returning what to send the GroupIndex.
-// `user_id` is the user the GroupIndex should create the group for, which a User canister leaves
-// unset since it is the user.
+// `user_id` is the user the GroupIndex should create the group for.
 pub fn prepare(
     user: &User,
     mut args: Args,

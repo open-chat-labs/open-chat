@@ -11,8 +11,7 @@ use utils::text_validation::{
 };
 
 // Validates the args and that the user may create the community, returning what to send the
-// GroupIndex. `user_id` is the user the GroupIndex should create the community for, which a User
-// canister leaves unset since it is the user.
+// GroupIndex. `user_id` is the user the GroupIndex should create the community for.
 pub fn prepare(
     user: &User,
     mut args: Args,

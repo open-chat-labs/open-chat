@@ -6,8 +6,8 @@ use types::{HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
-    // Serves the document of the user at `user_index`, as the User canister serves its own user's
-    // but under `/user/{user_index}`, so that a redirect to the document's latest id keeps it
+    // Serves the document of the user at `user_index`, under `/user/{user_index}`, so that a
+    // redirect to the document's latest id keeps it
     fn get_user_document_impl(user_index: u16, route: UserRoute, state: &RuntimeState) -> HttpResponse {
         state
             .data

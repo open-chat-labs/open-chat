@@ -3,7 +3,7 @@ use crate::{KeyPrefix, KeyType};
 
 // The user's avatar and profile background, keyed by which of the two the document is.
 //
-// Each user canister currently holds a single user, so the prefix is just the key type.
+// The user's index is added by the key scope (see `key_scope`), so the prefix is just the key type.
 key!(ProfileDocumentKey, ProfileDocumentKeyPrefix, KeyType::ProfileDocument);
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]

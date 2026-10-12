@@ -155,7 +155,7 @@ async fn notify_community_uninstalled(community_id: CommunityId) {
             state.data.communities_requiring_upgrade.remove_failed(&canister_id);
             state.data.community_event_sync_queue.take(&canister_id);
 
-            // Any cycles the canister still holds are refunded, as for a deleted user's canister
+            // Any cycles the canister still holds are refunded, as for a deleted community
             state.data.cycles_refund_queue.push_back(CanisterToRefund {
                 canister_id,
                 attempt: 0,

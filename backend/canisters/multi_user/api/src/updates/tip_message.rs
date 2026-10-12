@@ -15,8 +15,9 @@ pub struct Args {
     pub amount: u128,
     pub fee: u128,
     pub decimals: u8,
-    // The account the tip is given from, defaulting to this canister's own. Any other account must
-    // have approved this canister as spender, since the tip is then pulled via ICRC-2.
+    // The account the tip is given from, defaulting to the user's wallet. The tip is always pulled via
+    // ICRC-2, spending only an approval made under the user's own spender subaccount (see
+    // `ledger_utils::spender_subaccount`).
     pub from_account: Option<icrc1::Account>,
     pub pin: Option<PinNumberWrapper>,
 }

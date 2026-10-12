@@ -22,9 +22,9 @@ const INDEXED_TAG: u8 = 0x80;
 pub const MAX_USER_INDEX: u16 = (1 << 15) - 1;
 
 impl UserId {
-    // The id of a user who is not held alongside others - a canister id where that canister holds
-    // the user alone, and otherwise whatever principal identifies them, eg. a bot or a webhook.
-    // Use `new_indexed` for a user sharing a canister.
+    // The id of a user who is not held alongside others - whatever principal identifies them, eg. a
+    // bot or a webhook, or for a user's old id, the User canister which held them alone. Use
+    // `new_indexed` for a user sharing a canister.
     pub const fn new(principal: Principal) -> UserId {
         UserId(principal)
     }
@@ -44,9 +44,9 @@ impl UserId {
         UserId(Principal::from_slice(&new_bytes))
     }
 
-    // The id's own bytes, ie. the user's identity as it goes over the wire. Only equal to the
-    // holding canister's id when that canister holds this user alone, so never use this to address
-    // a canister - `canister_id` does that.
+    // The id's own bytes, ie. the user's identity as it goes over the wire. Not the holding
+    // canister's id for a user sharing a canister, so never use this to address a canister -
+    // `canister_id` does that.
     pub fn as_principal(&self) -> Principal {
         self.0
     }
@@ -68,8 +68,8 @@ impl UserId {
         }
     }
 
-    // The user's index within the canister which holds their data. Zero when that canister holds
-    // this user alone.
+    // The user's index within the canister which holds their data. Zero for an id which carries no
+    // index (see `is_indexed`).
     pub fn index(&self) -> u16 {
         if self.is_indexed() {
             let bytes = self.0.as_slice();
@@ -137,9 +137,8 @@ impl UserIdAndPrincipal {
     }
 }
 
-// The user's wallet. A user alone in their canister holds their funds in that canister's account,
-// whose id is their UserId. Anyone else, such as a user in a MultiUser canister or a bot, holds
-// their own funds in their principal's account.
+// The user's wallet. Users and bots hold their own funds in their principal's account, while the
+// wallet of an old id, which was a User canister's id, is that canister's account.
 impl From<UserIdAndPrincipal> for Account {
     fn from(value: UserIdAndPrincipal) -> Self {
         Account {
@@ -297,7 +296,7 @@ mod tests {
     }
 
     #[test]
-    fn wallet_of_user_alone_in_their_canister_is_the_canisters_account() {
+    fn wallet_of_an_old_user_id_is_its_canisters_account() {
         let principal = Principal::from_slice(&[9; 29]);
         let account = Account::from(UserIdAndPrincipal::new(UserId::new(canister_id()), principal));
 

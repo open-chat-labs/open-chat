@@ -10,10 +10,9 @@ use multi_user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 use types::{AcceptSwapSuccess, Achievement, CanisterId, OCResult, P2PSwapStatus, TimestampMillis, UserId};
 use user_core::updates::accept_p2p_swap::{Reserved, deposit_failed, deposited, prepare};
 
-// The User canister's `accept_p2p_swap`. Users hold their own funds in their own wallets, so token1
-// is pulled from the user's wallet (or the account they name) via ICRC2, against an approval made
-// under their own spender subaccount, and deposited into the escrow canister under their principal,
-// by which it knows them.
+// Users hold their own funds in their own wallets, so token1 is pulled from the user's wallet (or
+// the account they name) via ICRC2, against an approval made under their own spender subaccount,
+// and deposited into the escrow canister under their principal, by which it knows them.
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {

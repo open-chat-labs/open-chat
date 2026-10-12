@@ -41,7 +41,7 @@ const THEM = "rrkah-fqaaa-aaaaa-aaaaq-cai";
 const MULTI_USER_CANISTER = Principal.fromText("dfdal-2uaaa-aaaaa-qaama-cai");
 const MULTI_USER_CANISTER_USER = indexedUserId(MULTI_USER_CANISTER, 3);
 const OTHER_MULTI_USER_CANISTER_USER = indexedUserId(MULTI_USER_CANISTER, 4);
-const USER_CANISTER_USER = "renrk-eyaaa-aaaaa-aaada-cai";
+const OLD_USER_ID = "renrk-eyaaa-aaaaa-aaada-cai";
 const EXTERNAL_ACCOUNT = "rno2w-sqaaa-aaaaa-aaacq-cai";
 const DIRECT = { kind: "direct_chat", userId: THEM } as const;
 const GROUP = { kind: "group_chat", groupId: "rdmx6-jaaaa-aaaaa-aaadq-cai" } as const;
@@ -107,8 +107,8 @@ function message(content: MessageContent): EventWrapper<Message> {
 
 const PIN_INCORRECT = { kind: "error", code: ErrorCode.PinIncorrect, message: "0" } as const;
 
-// The payments the user's canister pulls from the user's wallet, each of which a user in a
-// MultiUser canister has to approve it for first
+// The payments the user's canister pulls from the user's wallet, each of which the user has to
+// approve it for first
 describe("OpenChatAgent paying from the user's wallet", () => {
     let approvals: unknown[][];
     let approveResponse: "success" | "insufficient_funds" | "failure";
@@ -327,7 +327,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
 
     afterEach(() => vi.restoreAllMocks());
 
-    describe("by a user in a MultiUser canister", () => {
+    describe("by a user", () => {
         beforeEach(() => setup(MULTI_USER_CANISTER_USER));
 
         const spender = { owner: MULTI_USER_CANISTER, subaccount: spenderSubaccount(ME) };
@@ -449,7 +449,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             expect(calls).toEqual([]);
         });
 
-        test("crypto for another user in a MultiUser canister is approved and sent like any other", async () => {
+        test("crypto for another user is approved and sent like any other", async () => {
             await sendDirectMessage(crypto(undefined, OTHER_MULTI_USER_CANISTER_USER));
 
             expect(approvals).toEqual([[ICP_LEDGER, spender, 110n, FEE, APPROVAL_VALIDITY_MS]]);
@@ -1311,7 +1311,7 @@ describe("OpenChatAgent moving funds from the user's previous wallets", () => {
 // A user migrated to a MultiUser canister is referred to by their earlier id in the events from
 // before then, which the agent replaces with their current id
 describe("OpenChatAgent referring to the user by their current id", () => {
-    const PREVIOUS = USER_CANISTER_USER;
+    const PREVIOUS = OLD_USER_ID;
     const CURRENT = MULTI_USER_CANISTER_USER;
     const GROUP_ID = { kind: "group_chat", groupId: "rdmx6-jaaaa-aaaaa-aaadq-cai" } as const;
 
@@ -1599,7 +1599,7 @@ describe("OpenChatAgent approving a spender", () => {
         submitted = [];
     });
 
-    describe("by a user in a MultiUser canister", () => {
+    describe("by a user", () => {
         beforeEach(() => setup(MULTI_USER_CANISTER_USER));
 
         test.each([
@@ -1679,7 +1679,7 @@ describe("OpenChatAgent approving a spender", () => {
 // A user migrated to a MultiUser canister held their funds in their User canister's account until
 // then, and in their principal's account since, so their history is that of both
 describe("OpenChatAgent listing the transactions of each of the user's wallets", () => {
-    const PREVIOUS = USER_CANISTER_USER;
+    const PREVIOUS = OLD_USER_ID;
     const CURRENT = MULTI_USER_CANISTER_USER;
     const LEDGER_INDEX = "qhbym-qaaaa-aaaaa-aaafq-cai";
 

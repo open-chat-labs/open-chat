@@ -6,7 +6,7 @@ use types::{ChannelId, ChatId, CommunityId, MessageIndex, MultiUserChat};
 // How far a user has read each thread in a group or channel, keyed by the thread's root message
 // index.
 //
-// Each user canister currently holds a single user, so the prefixes identify only the chat.
+// The user's index is added by the key scope (see `key_scope`), so the prefixes identify only the chat.
 key!(
     ThreadReadKey,
     ThreadReadKeyPrefix,

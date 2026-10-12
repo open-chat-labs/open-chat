@@ -881,7 +881,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Keys are only scoped in a canister initialised with `init_multi_user`")]
-    fn key_scope_in_single_user_canister_panics() {
+    fn key_scope_in_a_canister_which_doesnt_scope_its_keys_panics() {
         let memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
         init_with_small_entries_map(memory_manager.get(MAIN), memory_manager.get(SMALL));
 

@@ -18,12 +18,10 @@ use types::{
 };
 use utils::migrated_user_ids::MigratedUserIds;
 
-// The state of a single user, shared by the User canister, which holds one, and the MultiUser
-// canister, which holds many, so that the logic of each endpoint can be shared and a user could
-// later be moved between the two kinds of canister.
+// The state of a single user, many of whom are held in each MultiUser canister.
 //
-// In the MultiUser canister any stable memory map entries a user holds are keyed under that user's
-// index, so there a `User` must only be accessed within its key scope, which `Users` takes care of.
+// Any stable memory map entries a user holds are keyed under that user's index, so a `User` must
+// only be accessed within its key scope, which `Users` takes care of.
 #[derive(Serialize, Deserialize)]
 pub struct User {
     pub principal: Principal,
@@ -325,7 +323,7 @@ impl User {
     }
 
     // Blocks the user with the given id, returning false if they were already blocked. The caller
-    // tells the LocalUserIndex (`UserBlocked`) if the user is newly blocked, as the User canister does.
+    // tells the LocalUserIndex (`UserBlocked`) if the user is newly blocked.
     pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         self.blocked_users.block(user_id, now)
     }
@@ -337,7 +335,7 @@ impl User {
     }
 
     // Awards the achievement along with its CHIT, returning false if the user already had it. The
-    // caller tells the LocalUserIndex of the user's new CHIT balance, as the User canister does.
+    // caller tells the LocalUserIndex of the user's new CHIT balance.
     pub fn award_achievement(&mut self, achievement: Achievement, now: TimestampMillis) -> bool {
         if self.achievements.insert(achievement) {
             self.chit_events.push(ChitEvent {
@@ -351,7 +349,7 @@ impl User {
         }
     }
 
-    // As the User canister's `award_external_achievement`, returning whether it was newly awarded
+    // Awards the external achievement along with its CHIT, returning whether it was newly awarded
     pub fn award_external_achievement(&mut self, name: String, chit_reward: u32, now: TimestampMillis) -> bool {
         if self.external_achievements.insert(name.clone()) {
             self.chit_events.push(ChitEvent {
@@ -365,7 +363,7 @@ impl User {
         }
     }
 
-    // Records the status a user this user referred has reached, as the User canister does on a
+    // Records the status a user this user referred has reached, as sent in a
     // `SetReferralStatus` event, returning whether CHIT was awarded for it. `previous_user_ids` are
     // the ids the referred user had before being migrated to a MultiUser canister.
     pub fn set_referral_status(

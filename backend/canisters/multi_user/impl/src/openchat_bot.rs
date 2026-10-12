@@ -59,8 +59,7 @@ pub(crate) fn send_text_message(
 }
 
 // Pushes a message from the OpenChat bot to the chat with it of the user at `user_index`, creating
-// the chat if they have none, as the User canister's `openchat_bot::send_message_with_reply` does
-// for its user. Returns None if there is no such user.
+// the chat if they have none. Returns None if there is no such user.
 pub(crate) fn send_message_with_reply(
     user_index: u16,
     content: MessageContentInternal,
@@ -90,7 +89,7 @@ pub(crate) fn send_message_with_reply(
         mute_notification,
     };
 
-    // As in the User canister, the OpenChat bot's messages are pushed to the event store
+    // The OpenChat bot's messages are pushed to the event store
     let event_pusher = MultiUserEventPusher {
         user_id: my_user_id,
         now,

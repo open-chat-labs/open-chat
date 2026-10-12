@@ -1,5 +1,4 @@
-//! The texts of the messages the OpenChat bot sends users, shared by the User and MultiUser
-//! canisters, which each send them in their own way
+//! The texts of the messages the OpenChat bot sends users
 
 use crate::Membership;
 use constants::{DAY_IN_MS, HOUR_IN_MS, OPENCHAT_BOT_USER_ID};
