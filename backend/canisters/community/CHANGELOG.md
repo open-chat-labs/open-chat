@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add a `tip_messages` permission, defaulting to `react_to_messages`, and base tipping on it ([#9900](https://github.com/open-chat-labs/open-chat/pull/9900))
+- Add a `tip_messages` permission, defaulting to `react_to_messages`, and apply it to `tip_message` requests ([#9900](https://github.com/open-chat-labs/open-chat/pull/9900))
 
 ### Fixed
 
