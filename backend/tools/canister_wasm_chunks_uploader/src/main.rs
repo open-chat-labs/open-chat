@@ -25,7 +25,6 @@ async fn main() {
         CanisterName::NotificationsIndex => {
             upload_notifications_index_canister_wasm(identity, opts.url, opts.openchat_installer, opts.version).await
         }
-        CanisterName::User => upload_user_canister_wasm(identity, opts.url, opts.user_index, opts.version).await,
         CanisterName::UserIndex => {
             upload_user_index_canister_wasm(identity, opts.url, opts.openchat_installer, opts.version).await
         }

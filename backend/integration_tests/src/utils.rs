@@ -20,6 +20,19 @@ pub fn tick_many(env: &mut PocketIc, count: usize) {
     }
 }
 
+// Ticks, moving time on a second at a time so that jobs retrying after a delay run, until
+// `condition` holds. Fails if it doesn't within a generous number of rounds.
+pub fn tick_until(env: &mut PocketIc, condition: impl Fn(&PocketIc) -> bool) {
+    for _ in 0..100 {
+        if condition(env) {
+            return;
+        }
+        env.advance_time(Duration::from_secs(1));
+        env.tick();
+    }
+    assert!(condition(env), "Condition not met");
+}
+
 pub fn now_millis(env: &PocketIc) -> TimestampMillis {
     now_nanos(env) / 1_000_000
 }

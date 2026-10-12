@@ -484,34 +484,10 @@ export type PayForDiamondMembershipResponse =
     | OCError
     | Offline;
 
-export type SetUserUpgradeConcurrencyResponse = "success" | "offline";
-
 export type CreateMultiUserCanisterResponse =
     | { kind: "success"; canisterId: string }
     | { kind: "local_user_index_not_found" }
     | InternalError;
-
-export type UsersToMigrate =
-    | { kind: "longest_offline"; count: number }
-    | { kind: "specific"; userIds: string[] };
-
-// Users who can't be migrated, or who are already queued or being migrated, are left out of `queued`
-export type MigrateUsersResponse = { kind: "success"; queued: string[] } | OCError;
-
-export type UserMigrationStatus =
-    | { kind: "queued" }
-    | { kind: "requested"; multiUserCanisterId: string; timestamp: bigint }
-    | {
-          kind: "started";
-          multiUserCanisterId: string;
-          timestamp: bigint;
-          userBytes: bigint;
-          wasmVersion: string;
-      }
-    | { kind: "imported"; multiUserCanisterId: string; timestamp: bigint; newUserId: string }
-    | { kind: "failed"; multiUserCanisterId: string; timestamp: bigint; error: OCError };
-
-export type UserMigrationResponse = UserMigrationStatus | { kind: "not_found" } | OCError;
 
 // A balance left behind in the wallet of a canister the user had before being migrated to a
 // MultiUser canister. Only that canister can move it, so it isn't in the user's wallet until the

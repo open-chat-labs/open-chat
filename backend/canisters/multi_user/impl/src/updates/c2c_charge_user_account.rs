@@ -35,7 +35,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<(Payer, CanisterId)> {
         .with_user(index, |user| user.principal)
         .ok_or(OCErrorCode::TargetUserNotFound)?;
 
-    let payer = Payer::Approved {
+    let payer = Payer {
         from: args.from_account.unwrap_or(wallet.into()),
         spender_subaccount: Some(ledger_utils::spender_subaccount(wallet)),
     };

@@ -24,7 +24,6 @@ fn init(args: Args) {
         args.cycles_dispenser_canister_id,
         args.escrow_canister_id,
         args.event_relay_canister_id,
-        args.online_users_canister_id,
         args.registry_canister_id,
         args.internet_identity_canister_id,
         args.website_canister_id,
@@ -34,7 +33,6 @@ fn init(args: Args) {
         args.openai_api_key,
         args.moderation_referral_config,
         args.media_scan_config,
-        args.multi_user_canisters_enabled,
         args.call_push_enabled,
         args.test_mode,
     );

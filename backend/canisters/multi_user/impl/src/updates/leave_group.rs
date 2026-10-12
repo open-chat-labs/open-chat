@@ -22,7 +22,7 @@ async fn leave_group_impl(args: Args) -> Response {
 
     let c2c_args = c2c_leave_group::Args {
         principal,
-        user_id: Some(my_user_id),
+        user_id: my_user_id,
     };
 
     // As in the User canister, the group is removed if the user has left it or was not in it

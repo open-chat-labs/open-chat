@@ -19,9 +19,7 @@ async fn delete_group_impl(args: Args) -> Response {
         Err(error) => return Response::Error(error),
     };
 
-    let c2c_args = c2c_delete_group::Args {
-        user_id: Some(my_user_id),
-    };
+    let c2c_args = c2c_delete_group::Args { user_id: my_user_id };
 
     match group_canister_c2c_client::c2c_delete_group(args.chat_id.into(), &c2c_args).await {
         Ok(result) => {

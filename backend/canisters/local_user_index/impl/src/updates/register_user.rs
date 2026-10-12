@@ -1,22 +1,17 @@
 use crate::model::referral_codes::{ReferralCode, ReferralCodeError};
 use crate::updates::c2c_create_multi_user_canister::create_multi_user_canister;
 use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
-use crate::{RuntimeState, UserEvent, UserIndexEvent, child_initial_cycles_balance, mutate_state, read_state};
+use crate::{RuntimeState, UserEvent, UserIndexEvent, mutate_state};
 use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use constants::{CREATE_CANISTER_CYCLES_FEE, USER_LIMIT, min_cycles_balance};
+use constants::USER_LIMIT;
 use email_address::EmailAddress;
-use local_user_index_canister::ChildCanisterType;
 use local_user_index_canister::register_user::{Response::*, *};
 use oc_error_codes::{OCError, OCErrorCode};
-use rand::RngExt;
-use tracing::error;
-use types::{BuildVersion, CanisterId, Cycles, MAX_USER_INDEX, MessageContentInitial, TextContent, UserId, UserType};
+use types::{CanisterId, MAX_USER_INDEX, MessageContentInitial, TextContent, UserId, UserType};
 use user_canister::ReferredUserRegistered;
-use user_canister::init::Args as InitUserCanisterArgs;
 use user_index_canister::UserRegistered;
-use utils::canister::{self, VersionedWasmToInstall};
 use utils::text_validation::{UsernameValidationError, validate_username};
 use x509_parser::prelude::{FromDer, SubjectPublicKeyInfo};
 
@@ -28,46 +23,32 @@ async fn register_user(args: Args) -> Response {
         caller,
         referred_by,
         is_from_identity_canister,
-        target,
+        canister_id,
+        openchat_bot_messages,
     } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
-    let result = match target {
-        Target::UserCanister {
-            canister_id,
-            canister_wasm,
-            cycles_to_use,
-            init_canister_args,
-        } => create_user_canister(canister_id, canister_wasm, cycles_to_use, init_canister_args)
-            .await
-            .map(|(user_id, wasm_version)| (user_id, Some(wasm_version))),
-        Target::MultiUserCanister {
-            canister_id,
+    let result = create_user_in_multi_user_canister(
+        canister_id,
+        multi_user_canister::c2c_create_user::Args {
+            principal: caller,
+            username: args.username.clone(),
+            referred_by,
             openchat_bot_messages,
-        } => create_user_in_multi_user_canister(
-            canister_id,
-            multi_user_canister::c2c_create_user::Args {
-                principal: caller,
-                username: args.username.clone(),
-                referred_by,
-                openchat_bot_messages,
-            },
-        )
-        .await
-        .map(|user_id| (user_id, None)),
-    };
+        },
+    )
+    .await;
 
     match result {
-        Ok((user_id, wasm_version)) => {
+        Ok(user_id) => {
             mutate_state(|state| {
                 commit(
                     caller,
                     user_id,
                     args.username,
                     args.email,
-                    wasm_version,
                     referred_by,
                     is_from_identity_canister,
                     state,
@@ -81,45 +62,6 @@ async fn register_user(args: Args) -> Response {
         Err(error) => {
             mutate_state(|state| state.data.local_users.mark_registration_failed(&caller));
             Error(error)
-        }
-    }
-}
-
-async fn create_user_canister(
-    canister_id: Option<CanisterId>,
-    canister_wasm: VersionedWasmToInstall,
-    cycles_to_use: Cycles,
-    init_canister_args: Box<InitUserCanisterArgs>,
-) -> Result<(UserId, BuildVersion), OCError> {
-    let wasm_version = canister_wasm.version;
-
-    match canister::create_and_install(
-        canister_id,
-        None,
-        canister_wasm,
-        candid::encode_one(&init_canister_args).unwrap(),
-        cycles_to_use,
-        read_state(|state| min_cycles_balance(state.data.test_mode)),
-        on_cycles_spent,
-    )
-    .await
-    {
-        Ok(canister_id) => Ok((canister_id.into(), wasm_version)),
-        Err((canister_id, error)) => {
-            if let Some(id) = canister_id {
-                mutate_state(|state| {
-                    // If this canister is not controlled by the LocalUserIndex then installs into
-                    // it can never succeed, so drop it from the pool, else registrations would keep
-                    // pulling the same unusable canisters out of the pool
-                    if canister::is_invalid_controller_error(error.reject_code(), error.message()) {
-                        error!(canister_id = %id, "Dropping canister from pool - LocalUserIndex is not a controller");
-                        crate::jobs::topup_canister_pool::start_job_if_required(state, None);
-                    } else {
-                        state.data.canister_pool.push(id);
-                    }
-                });
-            }
-            Err(error.into())
         }
     }
 }
@@ -165,22 +107,10 @@ struct PrepareOk {
     caller: Principal,
     referred_by: Option<UserId>,
     is_from_identity_canister: bool,
-    target: Target,
-}
-
-enum Target {
-    UserCanister {
-        canister_id: Option<CanisterId>,
-        canister_wasm: VersionedWasmToInstall,
-        cycles_to_use: Cycles,
-        init_canister_args: Box<InitUserCanisterArgs>,
-    },
     // The canister to add the user to, being the one with the fewest users. If it is full, whichever
     // has the fewest users next is tried, and a new one is only created once none remain
-    MultiUserCanister {
-        canister_id: Option<CanisterId>,
-        openchat_bot_messages: Vec<MessageContentInitial>,
-    },
+    canister_id: Option<CanisterId>,
+    openchat_bot_messages: Vec<MessageContentInitial>,
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
@@ -190,21 +120,18 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         return Err(AlreadyRegistered);
     }
 
-    let multi_user_canister_requested =
-        args.use_multi_user_canister.unwrap_or_default() || args.multi_user_canister_id.is_some();
-    if multi_user_canister_requested && !state.data.test_mode {
-        return Err(Error(
-            OCErrorCode::InvalidRequest.with_message("MultiUser canisters can only be requested in test mode"),
-        ));
+    if let Some(canister_id) = args.multi_user_canister_id {
+        if !state.data.test_mode {
+            return Err(Error(
+                OCErrorCode::InvalidRequest.with_message("A MultiUser canister can only be requested in test mode"),
+            ));
+        }
+        if !state.data.local_multi_user_canisters.contains(&canister_id) {
+            return Err(Error(
+                OCErrorCode::InvalidRequest.with_message("MultiUser canister not found on this LocalUserIndex"),
+            ));
+        }
     }
-    if let Some(canister_id) = args.multi_user_canister_id
-        && !state.data.local_multi_user_canisters.contains(&canister_id)
-    {
-        return Err(Error(
-            OCErrorCode::InvalidRequest.with_message("MultiUser canister not found on this LocalUserIndex"),
-        ));
-    }
-    let use_multi_user_canister = multi_user_canister_requested || state.data.multi_user_canisters_enabled;
 
     let now = state.env.now();
     if !state.data.local_users.mark_registration_in_progress(caller, now) {
@@ -274,92 +201,36 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
             .collect()
     };
 
-    if use_multi_user_canister {
-        return Ok(PrepareOk {
-            caller,
-            referred_by,
-            is_from_identity_canister,
-            target: Target::MultiUserCanister {
-                canister_id: args
-                    .multi_user_canister_id
-                    .or_else(|| state.data.local_multi_user_canisters.canister_for_new_user()),
-                openchat_bot_messages,
-            },
-        });
-    }
-
-    // A canister taken from the pool is given its cycles now
-    let initial_cycles_balance = child_initial_cycles_balance(ChildCanisterType::User);
-    let cycles_to_use = if state.data.canister_pool.is_empty() {
-        initial_cycles_balance + CREATE_CANISTER_CYCLES_FEE
-    } else {
-        initial_cycles_balance
-    };
-    if !utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(state.data.test_mode)) {
-        return Err(CyclesBalanceTooLow);
-    }
-
-    let canister_id = state.data.canister_pool.pop();
-    let canister_wasm = state.child_canister_wasm_to_install(ChildCanisterType::User);
-
-    #[expect(deprecated)]
-    let init_canister_args = InitUserCanisterArgs {
-        owner: caller,
-        group_index_canister_id: state.data.group_index_canister_id,
-        user_index_canister_id: state.data.user_index_canister_id,
-        local_user_index_canister_id: state.env.canister_id(),
-        identity_canister_id: state.data.identity_canister_id,
-        notifications_canister_id: CanisterId::anonymous(),
-        proposals_bot_canister_id: CanisterId::anonymous(),
-        escrow_canister_id: state.data.escrow_canister_id,
-        wasm_version: canister_wasm.version,
-        username: args.username.clone(),
-        openchat_bot_messages,
-        video_call_operators: state.data.video_call_operators.clone(),
-        referred_by,
-        test_mode: state.data.test_mode,
-        rng_seed: state.env.rng().random(),
-        bot_api_gateway_canister_id: Principal::anonymous(),
-    };
-
-    crate::jobs::topup_canister_pool::start_job_if_required(state, None);
-
     Ok(PrepareOk {
         caller,
         referred_by,
         is_from_identity_canister,
-        target: Target::UserCanister {
-            canister_id,
-            canister_wasm,
-            cycles_to_use,
-            init_canister_args: Box::new(init_canister_args),
-        },
+        canister_id: args
+            .multi_user_canister_id
+            .or_else(|| state.data.local_multi_user_canisters.canister_for_new_user()),
+        openchat_bot_messages,
     })
 }
 
-#[expect(clippy::too_many_arguments)]
 fn commit(
     principal: Principal,
     user_id: UserId,
     username: String,
     email: Option<String>,
-    wasm_version: Option<BuildVersion>,
     referred_by: Option<UserId>,
     is_from_identity_canister: bool,
     state: &mut RuntimeState,
 ) {
     let now = state.env.now();
 
-    state.data.local_users.add(user_id, principal, wasm_version, now);
+    state.data.local_users.add(user_id, principal, now);
     state.data.global_users.add(principal, user_id, UserType::User);
-    if user_id.index() != 0 {
-        let canister_id = user_id.canister_id();
-        state.data.local_multi_user_canisters.on_user_added(&canister_id);
-        // Indexes aren't reused, so once the last one is given out the canister can take no more
-        // users. Marking it now saves the next registration from trying it
-        if user_id.index() == MAX_USER_INDEX {
-            state.data.local_multi_user_canisters.mark_full(&canister_id);
-        }
+    let canister_id = user_id.canister_id();
+    state.data.local_multi_user_canisters.on_user_added(&canister_id);
+    // Indexes aren't reused, so once the last one is given out the canister can take no more users.
+    // Marking it now saves the next registration from trying it
+    if user_id.index() == MAX_USER_INDEX {
+        state.data.local_multi_user_canisters.mark_full(&canister_id);
     }
 
     state.push_event_to_user_index(
@@ -414,8 +285,4 @@ fn validate_public_key(caller: Principal, public_key: &[u8], identity_canister_i
     } else {
         Err("PublicKey does not match caller".to_string())
     }
-}
-
-fn on_cycles_spent(cycles: Cycles) {
-    mutate_state(|state| state.data.total_cycles_spent_on_canisters += cycles);
 }

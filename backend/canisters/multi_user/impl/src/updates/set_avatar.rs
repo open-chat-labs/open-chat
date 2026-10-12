@@ -39,9 +39,6 @@ fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 }
 
 async fn update_index_canister(user_index_canister_id: CanisterId, user_id: UserId, avatar_id: Option<u128>) {
-    let args = user_index_canister::c2c_set_avatar::Args {
-        avatar_id,
-        user_id: Some(user_id),
-    };
+    let args = user_index_canister::c2c_set_avatar::Args { avatar_id, user_id };
     let _ = user_index_canister_c2c_client::c2c_set_avatar(user_index_canister_id, &args).await;
 }

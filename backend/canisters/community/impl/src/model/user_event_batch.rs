@@ -24,32 +24,11 @@ impl TimerJobItem for UserEventBatch {
 
         let canister_id = self.key;
 
-        // A MultiUser canister's users carry an index, and it takes the events for all of them in a
-        // single call. A User canister is sent its user's events via the original endpoint, so that
-        // this doesn't depend on every User canister having been upgraded to support the new one.
-        let response = if self.items.first().is_some_and(|event| event.value.0.index() != 0) {
-            user_canister_c2c_client::c2c_community_canister_v2(
-                canister_id,
-                &user_canister::c2c_community_canister_v2::Args::new(self.items.clone()),
-            )
-            .await
-        } else {
-            user_canister_c2c_client::c2c_community_canister(
-                canister_id,
-                &user_canister::c2c_community_canister::Args::new(
-                    canister_id.into(),
-                    self.items
-                        .iter()
-                        .map(|event| IdempotentEnvelope {
-                            created_at: event.created_at,
-                            idempotency_id: event.idempotency_id,
-                            value: event.value.1.clone(),
-                        })
-                        .collect(),
-                ),
-            )
-            .await
-        };
+        let response = user_canister_c2c_client::c2c_community_canister_v2(
+            canister_id,
+            &user_canister::c2c_community_canister_v2::Args::new(self.items.clone()),
+        )
+        .await;
 
         match response {
             Ok(types::SuccessOnly::Success) => Ok(()),

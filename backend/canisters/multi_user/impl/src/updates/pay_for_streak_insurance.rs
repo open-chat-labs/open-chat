@@ -68,7 +68,7 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
         OCResult::Ok((my_index, (days_currently_insured, user.principal)))
     })?;
 
-    let payer = Payer::Approved {
+    let payer = Payer {
         from: args.from_account.unwrap_or(wallet.into()),
         spender_subaccount: Some(ledger_utils::spender_subaccount(wallet)),
     };

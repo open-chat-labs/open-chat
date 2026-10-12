@@ -8,17 +8,14 @@ fn user_registration_canister(_args: Args) -> Response {
 }
 
 fn user_registration_canister_impl(state: &RuntimeState) -> Response {
-    // New users go into MultiUser canisters once they are enabled, so route them to the
-    // LocalUserIndex controlling the one with the fewest users. That LocalUserIndex then picks
-    // whichever of its own has the fewest, since its counts may be more up to date than ours
-    let multi_user_local_user_index = if state.data.multi_user_canisters_enabled {
-        state
-            .data
-            .multi_user_canisters
-            .local_user_index_for_new_user(|c| state.data.local_index_map.is_accepting_users(c))
-    } else {
-        None
-    };
+    // New users go into MultiUser canisters, so are routed to the LocalUserIndex controlling the one
+    // with the fewest users. That LocalUserIndex then picks whichever of its own has the fewest, since
+    // its counts may be more up to date than ours. If none can take them, the LocalUserIndex with the
+    // fewest users is chosen, which creates a MultiUser canister for them.
+    let multi_user_local_user_index = state
+        .data
+        .multi_user_canisters
+        .local_user_index_for_new_user(|c| state.data.local_index_map.is_accepting_users(c));
 
     if let Some(canister_id) = multi_user_local_user_index.or_else(|| state.data.local_index_map.index_for_new_user()) {
         Success(canister_id)
@@ -36,7 +33,7 @@ mod tests {
     use utils::env::test::TestEnv;
 
     #[test]
-    fn routes_to_the_multi_user_canister_with_the_fewest_users_once_enabled() {
+    fn routes_to_the_multi_user_canister_with_the_fewest_users() {
         let [quiet, busy] = [canister_id(1), canister_id(2)];
         let [fewer, more] = [canister_id(11), canister_id(12)];
         let mut state = RuntimeState::new(Box::new(TestEnv::default()), Data::default());
@@ -59,9 +56,6 @@ mod tests {
             _ => None,
         };
 
-        assert_eq!(registration_canister(&state), Some(quiet));
-
-        state.data.multi_user_canisters_enabled = true;
         assert_eq!(registration_canister(&state), Some(busy));
 
         // A full MultiUser canister is skipped, however few users it holds

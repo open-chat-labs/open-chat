@@ -12,8 +12,8 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::collections::HashSet;
 use types::{
-    Achievement, BotDefinitionUpdate, BotInitiator, BotPermissions, BotUpdated, CanisterId, Chat, ChatId, ChitEvent,
-    ChitEventType, CommunityId, MultiUserChat, ReferralStatus, TimestampMillis, Timestamped, UniquePersonProof, UserId,
+    Achievement, BotDefinitionUpdate, BotInitiator, BotPermissions, BotUpdated, Chat, ChatId, ChitEvent, ChitEventType,
+    CommunityId, MultiUserChat, ReferralStatus, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
 use user_canister::{MessageActivityEvent, WalletConfig};
 use utils::migrated_user_ids::MigratedUserIds;
@@ -95,17 +95,6 @@ pub struct User {
 }
 
 impl User {
-    // Moves what the user holds under their own id onto their new id once they are migrated from a
-    // canister of their own to a MultiUser canister
-    pub fn migrate_own_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
-        self.direct_chats.migrate_own_user_id(old_user_id, new_user_id);
-        self.favourite_chats.migrate_own_user_id(old_user_id, new_user_id);
-        // The deposit addresses were generated for the account of the user's old canister, so new
-        // ones are generated for the user's own account when next asked for
-        self.btc_address = None;
-        self.one_sec_address = None;
-    }
-
     // Moves what the user holds under the id of another user onto that user's new id once they are
     // migrated to a MultiUser canister: their chat with them, their block of them and their contact
     // for them. Messages keep the id they were sent under.
@@ -138,30 +127,6 @@ impl User {
                 self.migrate_their_user_id(previous_user_id, sender, now);
             }
         }
-    }
-
-    // The users the user has, or had, a direct chat with, other than themselves and bots, who are
-    // told of the user's new id once they are migrated to a MultiUser canister
-    pub fn direct_chat_user_ids(&self, my_user_id: UserId) -> Vec<UserId> {
-        let mut user_ids: HashSet<UserId> = self
-            .direct_chats
-            .iter()
-            .filter(|chat| !chat.user_type.is_bot())
-            .map(|chat| chat.them)
-            .collect();
-        // A chat removed by the user is still held by the other user
-        user_ids.extend(self.direct_chats.removed_since(0).into_iter().map(UserId::from));
-        user_ids.remove(&my_user_id);
-        user_ids.into_iter().collect()
-    }
-
-    // The canisters of the groups and communities the user is in
-    pub fn group_and_community_canisters(&self) -> Vec<CanisterId> {
-        self.group_chats
-            .ids()
-            .map(CanisterId::from)
-            .chain(self.communities.ids().map(CanisterId::from))
-            .collect()
     }
 
     // Moves every direct chat, group and community still on the heap into stable memory, returning
@@ -457,7 +422,7 @@ mod tests {
     use super::*;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-    use types::UserType;
+    use types::{CanisterId, UserType};
     use user_canister::ManualWallet;
 
     #[test]

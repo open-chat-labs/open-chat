@@ -36,7 +36,6 @@ pub enum CanisterName {
     StorageBucket,
     StorageIndex,
     Translations,
-    User,
     UserIndex,
 }
 
@@ -69,7 +68,6 @@ impl FromStr for CanisterName {
             "storage_bucket" => Ok(CanisterName::StorageBucket),
             "storage_index" => Ok(CanisterName::StorageIndex),
             "translations" => Ok(CanisterName::Translations),
-            "user" => Ok(CanisterName::User),
             "user_index" => Ok(CanisterName::UserIndex),
             _ => Err(format!("Unrecognised canister name: {s}")),
         }
@@ -103,7 +101,6 @@ impl Display for CanisterName {
             CanisterName::StorageBucket => "storage_bucket",
             CanisterName::StorageIndex => "storage_index",
             CanisterName::Translations => "translations",
-            CanisterName::User => "user",
             CanisterName::UserIndex => "user_index",
         };
 

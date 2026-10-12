@@ -193,7 +193,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let storage_bucket_canister_wasm = wasms::STORAGE_BUCKET.clone();
     let storage_index_canister_wasm = wasms::STORAGE_INDEX.clone();
     let translations_canister_wasm = wasms::TRANSLATIONS.clone();
-    let user_canister_wasm = wasms::USER.clone();
     let user_index_canister_wasm = wasms::USER_INDEX.clone();
 
     let wasm_version = BuildVersion::min();
@@ -466,7 +465,6 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         sign_in_with_email_init_args,
     );
 
-    client::user_index::happy_path::upgrade_user_canister_wasm(env, controller, user_index_canister_id, user_canister_wasm);
     client::user_index::happy_path::upgrade_local_user_index_canister_wasm(
         env,
         controller,

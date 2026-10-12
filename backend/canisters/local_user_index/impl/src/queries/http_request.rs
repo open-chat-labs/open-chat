@@ -1,10 +1,9 @@
 use crate::{RuntimeState, read_state};
 use http_request::{Route, build_json_response, encode_logs, extract_route};
 use ic_cdk::query;
-use serde::Serialize;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::str::FromStr;
-use types::{BuildVersion, CanisterId, CyclesTopUpHumanReadable, HttpRequest, HttpResponse, TimestampMillis, UserId};
+use types::{HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -24,45 +23,8 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         build_json_response(&state.metrics())
     }
 
-    fn get_top_ups(qs: HashMap<String, String>, state: &RuntimeState) -> HttpResponse {
-        let user_id: UserId = CanisterId::from_text(qs.get("canister_id").unwrap()).unwrap().into();
-
-        let Some(user) = state.data.local_users.get(&user_id) else {
-            return HttpResponse::not_found();
-        };
-
-        let total = user.cycle_top_ups.iter().map(|c| c.amount).sum::<u128>() as f64 / 1_000_000_000_000f64;
-
-        build_json_response(&TopUps {
-            total,
-            top_ups: user.cycle_top_ups.iter().map(|c| c.into()).collect(),
-        })
-    }
-
     fn get_top_up_leaderboard(state: &RuntimeState) -> HttpResponse {
         build_json_response(&state.data.top_up_leaderboards)
-    }
-
-    fn get_user_canister_versions(state: &RuntimeState) -> HttpResponse {
-        let mut map = BTreeMap::new();
-        for (user_id, wasm_version) in state
-            .data
-            .local_users
-            .iter_user_canisters()
-            .filter_map(|(user_id, user)| user.wasm_version.map(|v| (user_id, v)))
-        {
-            let version = map.entry(wasm_version).or_insert(UserCanisterVersion {
-                version: wasm_version,
-                count: 0,
-                users: Vec::new(),
-            });
-            version.count += 1;
-            if version.users.len() < 100 {
-                version.users.push(*user_id);
-            }
-        }
-        let vec: Vec<_> = map.values().collect();
-        build_json_response(&vec)
     }
 
     fn get_remote_user_events(qs: HashMap<String, String>, state: &RuntimeState) -> HttpResponse {
@@ -85,22 +47,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(p, _) if p == "top_up_leaderboard" => read_state(get_top_up_leaderboard),
-        Route::Other(p, qs) if p == "top_ups" => read_state(|state| get_top_ups(qs, state)),
-        Route::Other(p, _) if p == "user_canister_versions" => read_state(get_user_canister_versions),
         Route::Other(p, qs) if p == "remote_user_events" => read_state(|state| get_remote_user_events(qs, state)),
         _ => HttpResponse::not_found(),
     }
-}
-
-#[derive(Serialize)]
-struct UserCanisterVersion {
-    version: BuildVersion,
-    count: u32,
-    users: Vec<UserId>,
-}
-
-#[derive(Serialize)]
-struct TopUps {
-    total: f64,
-    top_ups: Vec<CyclesTopUpHumanReadable>,
 }

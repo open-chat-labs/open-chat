@@ -44,7 +44,6 @@ ALL_CANISTERS=(
   storage_bucket
   storage_index
   translations
-  user
   user_index
 )
 

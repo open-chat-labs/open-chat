@@ -13,7 +13,12 @@ use types::{CanisterId, SuccessOnly};
 #[test]
 fn pool_canisters_are_topped_up_when_used() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        platform_operator,
+        ..
+    } = wrapper.env();
 
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let pool_canister = create_refunded_canister(env, local_user_index);
@@ -30,9 +35,10 @@ fn pool_canisters_are_topped_up_when_used() {
     assert!(matches!(response, SuccessOnly::Success));
     assert_eq!(canisters_in_pool(env, local_user_index), 1);
 
-    // A new user's canister is taken from the pool, then topped up and given the default threshold
-    let user = client::register_user_in_user_canister(env, canister_ids);
-    assert_eq!(user.canister(), pool_canister);
+    // A new MultiUser canister is taken from the pool, then topped up and given the default threshold
+    let canister_id =
+        client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
+    assert_eq!(canister_id, pool_canister);
     assert_eq!(canisters_in_pool(env, local_user_index), 0);
     assert!(env.cycle_balance(pool_canister) > 400 * B);
     let status = env.canister_status(pool_canister, Some(local_user_index)).unwrap();

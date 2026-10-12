@@ -1,23 +1,21 @@
-use crate::guards::caller_is_local_user_or_multi_user_canister;
+use crate::guards::caller_is_local_multi_user_canister;
 use crate::updates::c2c_user_canister_v2::is_valid_user_for_caller;
 use crate::{RuntimeState, read_state};
 use candid::Principal;
 use canister_api_macros::update;
 use local_user_index_canister::c2c_verify_sign_in_proof::*;
 use oc_error_codes::OCErrorCode;
-use types::{CLAIM_TYPE_USER_SIGNED_IN, TimestampMillis, UserId, UserSignedInClaims};
+use types::{CLAIM_TYPE_USER_SIGNED_IN, TimestampMillis, UserSignedInClaims};
 
-// Checks a user has just signed in again, for a User canister or for a MultiUser canister acting for
-// one of the users it hosts
-#[update(guard = "caller_is_local_user_or_multi_user_canister", msgpack = true)]
+// Checks a user has just signed in again, for a MultiUser canister acting for one of the users it hosts
+#[update(guard = "caller_is_local_multi_user_canister", msgpack = true)]
 fn c2c_verify_sign_in_proof(args: Args) -> Response {
     read_state(|state| c2c_verify_sign_in_proof_impl(args, state))
 }
 
 fn c2c_verify_sign_in_proof_impl(args: Args, state: &RuntimeState) -> Response {
-    let caller = state.env.caller();
-    let user_id = args.user_id.unwrap_or_else(|| UserId::from(caller));
-    if !is_valid_user_for_caller(user_id, caller, state.is_caller_local_multi_user_canister()) {
+    let user_id = args.user_id;
+    if !is_valid_user_for_caller(user_id, state.env.caller()) {
         return Response::Error(OCErrorCode::InitiatorNotAuthorized.into());
     }
     let Some(user) = state.data.global_users.get_by_user_id(&user_id) else {

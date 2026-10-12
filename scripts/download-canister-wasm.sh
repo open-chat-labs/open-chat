@@ -6,7 +6,7 @@ cd $SCRIPT_DIR/..
 
 CANISTER_NAME=$1
 WASM_SRC=$2 # WASM_SRC is either empty, "latest", "prod" the commit Id or the release version
-OUTPUT_NAME=${3:-$CANISTER_NAME} # Optionally save the wasm under a different name (eg. "user_prod")
+OUTPUT_NAME=${3:-$CANISTER_NAME} # Optionally save the wasm under a different name (eg. "multi_user_prod")
 
 if [[ -z $WASM_SRC ]] || [[ $WASM_SRC == "latest" ]]
 then

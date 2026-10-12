@@ -60,7 +60,6 @@ fn main() {
     generate_ts_method!(community, pin_message);
     generate_ts_method!(community, regenerate_webhook);
     generate_ts_method!(community, register_poll_vote);
-    generate_ts_method!(community, register_proposal_vote);
     generate_ts_method!(community, register_proposal_vote_v2);
     generate_ts_method!(community, register_webhook);
     generate_ts_method!(community, remove_member_from_channel);

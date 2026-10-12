@@ -19,7 +19,7 @@ fn c2c_leave_group(args: Args) -> Response {
 
 fn c2c_leave_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let caller = state.env.caller();
-    let user_id = args.user_id.unwrap_or(caller.into());
+    let user_id = args.user_id;
     if user_id.canister_id() != caller {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }

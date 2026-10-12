@@ -1,5 +1,4 @@
 use crate::{MultiUserEventPusher, RuntimeState};
-use candid::Principal;
 use chat_events::{MessageContentInternal, TextContentInternal};
 use constants::{OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
 use rand::RngExt;
@@ -36,25 +35,6 @@ pub(crate) fn send_removed_from_group_or_community_message(
     let text =
         openchat_bot::removed_from_group_or_community_text(is_group, removed_by, &group_or_community_name, public, blocked);
     send_text_message(user_index, text, Vec::new(), false, state);
-}
-
-// Tells a user migrated here from a User canister of their new wallet address. Their funds were held
-// by their canister, whereas now they are held in the account of the principal they sign in with,
-// which is also what they must add as a hotkey to their neurons to vote with them from OpenChat.
-pub(crate) fn send_account_migrated_message(user_index: u16, wallet: Principal, state: &mut RuntimeState) {
-    send_text_message(user_index, account_migrated_text(wallet), Vec::new(), false, state);
-}
-
-fn account_migrated_text(wallet: Principal) -> String {
-    format!(
-        "We've moved your account to our new system, which gives you a new wallet address:
-
-{wallet}
-
-Any tokens in your old wallet will be transferred to your new one automatically.
-
-To vote on proposals from within OpenChat, you'll need to add this address as a hotkey to each neuron you would like to vote with."
-    )
 }
 
 pub(crate) fn send_message(

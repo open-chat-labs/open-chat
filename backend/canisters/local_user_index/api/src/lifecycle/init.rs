@@ -14,7 +14,6 @@ pub struct Args {
     pub cycles_dispenser_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
     pub event_relay_canister_id: CanisterId,
-    pub online_users_canister_id: CanisterId,
     pub registry_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub website_canister_id: CanisterId,
@@ -27,8 +26,6 @@ pub struct Args {
     pub moderation_referral_config: Option<ModerationReferralConfig>,
     #[serde(default)]
     pub media_scan_config: MediaScanConfig,
-    #[serde(default)]
-    pub multi_user_canisters_enabled: bool,
     #[serde(default)]
     pub call_push_enabled: bool,
     pub test_mode: bool,

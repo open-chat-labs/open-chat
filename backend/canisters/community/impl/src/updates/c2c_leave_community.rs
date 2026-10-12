@@ -15,7 +15,7 @@ fn c2c_leave_community(args: Args) -> Response {
 }
 
 fn c2c_leave_community_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    let member = state.get_calling_member(args.user_id, false)?;
+    let member = state.get_calling_member(Some(args.user_id), false)?;
 
     if member.suspended().value {
         return Err(OCErrorCode::InitiatorSuspended.into());

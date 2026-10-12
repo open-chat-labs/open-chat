@@ -50,7 +50,6 @@ async fn main() {
         CanisterName::StorageIndex => {
             upgrade_storage_index_canister(identity, opts.url, opts.storage_index, opts.version).await
         }
-        CanisterName::User => upgrade_user_canister(identity, opts.url, opts.user_index, opts.version).await,
         CanisterName::LocalUserIndex => {
             upgrade_local_user_index_canister(identity, opts.url, opts.user_index, opts.version).await
         }

@@ -35,7 +35,6 @@ generate_c2c_call!(c2c_local_index, 300);
 generate_c2c_call!(c2c_send_message);
 generate_c2c_call!(c2c_set_user_suspended);
 generate_c2c_call!(c2c_start_import_into_community);
-generate_c2c_call!(c2c_tip_message);
 generate_c2c_call!(c2c_unfreeze_group);
 generate_c2c_call!(c2c_uninstall_bot);
 generate_c2c_call!(c2c_update_proposals);
