@@ -16,7 +16,6 @@ mod c2c_group_canister_v2;
 pub(crate) mod c2c_import_user;
 mod c2c_install_bot;
 mod c2c_local_user_index_v2;
-mod c2c_notify_achievement;
 mod c2c_notify_community_deleted;
 mod c2c_notify_group_deleted;
 mod c2c_notify_p2p_swap_status_change;
