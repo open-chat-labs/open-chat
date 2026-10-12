@@ -17,6 +17,9 @@ import {
     emptyDailyPuzzleState,
     getDisplayDate,
     Immutable,
+    LEDGER_CANISTER_CKBTC,
+    LEDGER_CANISTER_CKETH,
+    LEDGER_CANISTER_ICP,
     mergeListOfCombinedUnreadCounts,
     mergePairOfCombinedUnreadCounts,
     messageContextsEqual,
@@ -132,7 +135,7 @@ export const nervousSystemLookup = writable<ReadonlyMap<GovernanceCanister, Nerv
     undefined,
     notEq,
 );
-export const exchangeRatesLookupStore = writable<ReadonlyMap<string, TokenExchangeRates>>(
+export const exchangeRatesLookupStore = writable<ReadonlyMap<LedgerCanister, TokenExchangeRates>>(
     new SafeMap(),
     undefined,
     notEq,
@@ -181,23 +184,29 @@ export type ConvertedBalances = {
     ethBalance: number | undefined;
 };
 
+// The ledgers whose exchange rates balances are converted at. ckBTC and ckETH are backed 1:1 by
+// BTC and ETH, so their prices are those of BTC and ETH
+export const conversionLedgers = {
+    icp: LEDGER_CANISTER_ICP,
+    btc: LEDGER_CANISTER_CKBTC,
+    eth: LEDGER_CANISTER_CKETH,
+};
+
 export function getConvertedBalances(
-    xr: ReadonlyMap<string, TokenExchangeRates>,
+    xr: ReadonlyMap<LedgerCanister, TokenExchangeRates>,
     balance: bigint,
     decimals: number,
-    symbol: string,
+    ledger: LedgerCanister,
 ): ConvertedBalances {
-    const xrICPtoDollar = xr.get("icp")?.toUSD;
-    const xrBTCtoDollar = xr.get("btc")?.toUSD;
-    const xrETHtoDollar = xr.get("eth")?.toUSD;
+    const xrICPtoDollar = xr.get(conversionLedgers.icp)?.toUSD;
+    const xrBTCtoDollar = xr.get(conversionLedgers.btc)?.toUSD;
+    const xrETHtoDollar = xr.get(conversionLedgers.eth)?.toUSD;
     const xrDollarToICP = xrICPtoDollar === undefined ? 0 : 1 / xrICPtoDollar;
     const xrDollarToBTC = xrBTCtoDollar === undefined ? 0 : 1 / xrBTCtoDollar;
     const xrDollarToETH = xrETHtoDollar === undefined ? 0 : 1 / xrETHtoDollar;
 
-    const symbolLower = symbol.toLowerCase();
     const balanceWholeUnits = Number(balance) / Math.pow(10, decimals);
-    const rates = exchangeRatesLookupStore.value.get(symbolLower);
-    const xrUSD = rates?.toUSD;
+    const xrUSD = xr.get(ledger)?.toUSD;
     const dollarBalance = xrUSD !== undefined ? xrUSD * balanceWholeUnits : undefined;
     const icpBalance =
         dollarBalance !== undefined && xrDollarToICP !== undefined
@@ -224,12 +233,11 @@ export const enhancedCryptoLookup = derived(
     ([$lookup, $balance, $exchangeRatesLookup]) => {
         return [...$lookup.entries()].reduce((result, [key, t]) => {
             const balance = $balance.get(t.ledger) ?? BigInt(0);
-            const symbolLower = t.symbol.toLowerCase();
             const balances = getConvertedBalances(
                 $exchangeRatesLookup,
                 balance,
                 t.decimals,
-                symbolLower,
+                t.ledger,
             );
 
             const zero = balance === BigInt(0) && !DEFAULT_TOKENS.includes(t.symbol);

@@ -4,6 +4,9 @@ import {
     CommunityMap,
     emptyChatMetrics,
     emptyRules,
+    LEDGER_CANISTER_CKBTC,
+    LEDGER_CANISTER_CKETH,
+    LEDGER_CANISTER_ICP,
     nullMembership,
     ROLE_ADMIN,
     ROLE_MEMBER,
@@ -52,6 +55,7 @@ import {
     eventsStore,
     globalUnreadCountStore,
     expiredServerEventRanges,
+    getConvertedBalances,
     messageFiltersStore,
     pinnedChatsStore,
     selectedChatExpandedDeletedMessageStore,
@@ -927,6 +931,45 @@ describe("cryptoBalanceStore", () => {
         expect(cryptoBalanceStore.value.get("ledger1")).toBe(200n);
         expect(cryptoBalanceStore.valueIfUpdatedRecently("ledger1")).toBe(200n);
         unsub();
+    });
+});
+
+describe("getConvertedBalances", () => {
+    // Two tokens in the registry with the symbol TENDY
+    const TENDY_LEDGER = "kylwo-viaaa-aaaaq-aae7a-cai";
+    const OTHER_TENDY_LEDGER = "iozql-7iaaa-aaaah-advvq-cai";
+    const xr = new Map([
+        [LEDGER_CANISTER_ICP, { toUSD: 4 }],
+        [LEDGER_CANISTER_CKBTC, { toUSD: 80_000 }],
+        [LEDGER_CANISTER_CKETH, { toUSD: 2_000 }],
+        [TENDY_LEDGER, { toUSD: 0.08 }],
+        [OTHER_TENDY_LEDGER, { toUSD: 0.3 }],
+    ]);
+    // 40,000 tokens with 8 decimals
+    const balance = 4_000_000_000_000n;
+
+    test("values a balance at its own ledger's rate, not that of a token with the same symbol", () => {
+        expect(getConvertedBalances(xr, balance, 8, TENDY_LEDGER).dollarBalance).toBeCloseTo(3_200);
+        expect(getConvertedBalances(xr, balance, 8, OTHER_TENDY_LEDGER).dollarBalance).toBeCloseTo(
+            12_000,
+        );
+    });
+
+    test("converts to ICP, BTC and ETH at the rates of the ICP, ckBTC and ckETH ledgers", () => {
+        const converted = getConvertedBalances(xr, balance, 8, TENDY_LEDGER);
+
+        expect(converted.icpBalance).toBeCloseTo(800);
+        expect(converted.btcBalance).toBeCloseTo(0.04);
+        expect(converted.ethBalance).toBeCloseTo(1.6);
+    });
+
+    test("has no values for a ledger without a rate", () => {
+        expect(getConvertedBalances(xr, balance, 8, "2ouva-viaaa-aaaaq-aaamq-cai")).toEqual({
+            dollarBalance: undefined,
+            icpBalance: undefined,
+            btcBalance: undefined,
+            ethBalance: undefined,
+        });
     });
 });
 
