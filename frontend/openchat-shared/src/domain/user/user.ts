@@ -1,4 +1,5 @@
 import { type ReadonlyMap } from "../../utils";
+import type { ResourceKey } from "../../utils/i18n";
 import type { MultiUserChat, PinNumberFailures } from "../chat";
 import type { CommunitySummary } from "../community";
 import type { DataContent } from "../data/data";
@@ -414,6 +415,17 @@ export type SetDisplayNameResponse =
 export type InvalidCurrency = { kind: "invalid_currency" };
 
 export type SetBioResponse = Success | OCError | Offline;
+
+/** i18n keys of the reasons the backend rejected profile fields, shown under each field */
+export type ProfileFieldErrors = { username?: string; displayName?: string; bio?: string };
+
+export type SaveProfileOutcome = {
+    // the original profile with every field the backend accepted applied
+    profile: PublicProfile;
+    errors: ProfileFieldErrors;
+    // set when a change could not be saved for a reason the user can't fix in the form
+    failure?: ResourceKey;
+};
 
 export type RegisterUserResponse =
     | {
