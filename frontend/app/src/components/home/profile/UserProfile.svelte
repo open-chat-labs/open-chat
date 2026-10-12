@@ -656,7 +656,7 @@
                 headerText={i18nKey("advanced")}>
                 {#if !$anonUserStore}
                     <AlertBox>
-                        <Translatable resourceKey={i18nKey("notWalletAddressesWarning")} />
+                        <Translatable resourceKey={i18nKey("doNotSendTokensToTheseAddresses")} />
                     </AlertBox>
                     <div class="userid">
                         <Legend label={i18nKey("userId")} />
