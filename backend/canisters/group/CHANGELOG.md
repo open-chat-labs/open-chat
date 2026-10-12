@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Replace the ids users had before being migrated with their latest ids in every event ([#PRNUM](https://github.com/open-chat-labs/open-chat/pull/PRNUM))
+- Replace the ids users had before being migrated with their latest ids in every event ([#9929](https://github.com/open-chat-labs/open-chat/pull/9929))
 
 ### Removed
 
