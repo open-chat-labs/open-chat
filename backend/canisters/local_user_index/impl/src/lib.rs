@@ -884,7 +884,6 @@ struct Data {
     pub cycles_refunded_from_pool_canisters: Cycles,
     #[serde(default)]
     pub cycles_topped_up_for_refunds: Cycles,
-    pub events_for_remote_users: Vec<(UserId, UserEvent)>,
     pub cycles_balance_check_queue: VecDeque<CanisterId>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub idempotency_checker: IdempotencyChecker,
@@ -1025,7 +1024,6 @@ impl Data {
             cycles_refunded_from_deleted_users: 0,
             cycles_refunded_from_pool_canisters: 0,
             cycles_topped_up_for_refunds: 0,
-            events_for_remote_users: Vec::new(),
             cycles_balance_check_queue: VecDeque::new(),
             bots: BotsMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
