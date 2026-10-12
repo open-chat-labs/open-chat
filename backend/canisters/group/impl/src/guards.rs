@@ -40,6 +40,14 @@ pub fn caller_is_escrow_canister() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_proposals_bot() -> Result<(), String> {
+    if read_state(|state| state.is_caller_proposals_bot()) {
+        Ok(())
+    } else {
+        Err("Caller is not the proposals_bot".to_string())
+    }
+}
+
 pub fn caller_is_community_being_imported_into() -> Result<(), String> {
     if read_state(|state| state.is_caller_community_being_imported_into()) {
         Ok(())

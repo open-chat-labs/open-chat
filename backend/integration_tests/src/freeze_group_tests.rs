@@ -259,6 +259,9 @@ fn group_being_imported_into_a_community_rejects_changes_from_other_canisters() 
     // The LocalUserIndex retries a trapped call after 5 minutes
     env.advance_time(Duration::from_secs(5 * 60));
     tick_until(env, |env| client::group::happy_path::summary(env, user2.principal, group_id).verified);
+
+    // The community is left stopped with its import unfinished
+    wrapper.discard();
 }
 
 #[test]

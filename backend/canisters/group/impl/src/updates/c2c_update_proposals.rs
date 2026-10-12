@@ -1,11 +1,12 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::guards::caller_is_proposals_bot;
 use crate::{RuntimeState, execute_c2c_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_update_proposals::*;
 use types::OCResult;
 
-#[update(msgpack = true)]
+#[update(guard = "caller_is_proposals_bot", msgpack = true)]
 #[trace]
 async fn c2c_update_proposals(args: Args) -> Response {
     execute_c2c_update(|state| c2c_update_proposals_impl(args, state)).into()

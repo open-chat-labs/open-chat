@@ -121,6 +121,10 @@ impl RuntimeState {
         self.env.caller() == self.data.escrow_canister_id
     }
 
+    pub fn is_caller_proposals_bot(&self) -> bool {
+        self.env.caller() == self.data.proposals_bot_user_id.canister_id()
+    }
+
     pub fn is_caller_video_call_operator(&self) -> bool {
         let caller = self.env.caller();
         self.data.video_call_operators.contains(&caller)
@@ -851,7 +855,8 @@ impl Data {
     // moderator, it must not apply changes from other canisters, since its state has already been
     // exported to the community. `community_being_imported_into` alone isn't enough, since a group
     // whose import was abandoned before #4084, or which is unfrozen while `convert_into_community`
-    // awaits the GroupIndex, can be left with it set while not frozen.
+    // awaits the GroupIndex, can be left with it set while not frozen. `c2c_freeze_group` clears
+    // that, so a platform moderator's freeze is never mistaken for an import.
     pub fn is_being_imported_into_community(&self) -> bool {
         self.community_being_imported_into.is_some() && self.is_frozen()
     }
