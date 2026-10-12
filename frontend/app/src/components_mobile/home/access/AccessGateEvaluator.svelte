@@ -1,25 +1,22 @@
 <script lang="ts">
     import {
-        cryptoBalanceStore,
-        currentUserStore,
         isBalanceGate,
         isCompositeGate,
         isDiamondGate,
-        isLeafGate,
         isLifetimeDiamondGate,
         isNeuronGate,
         isPaymentGate,
         isUniquePersonGate,
         publish,
         type EnhancedAccessGate,
-        type EnhancedLeafGate,
-        type LeafGate,
-        type TokenBalanceGate,
     } from "@client";
     import { i18nKey } from "../../../i18n/i18n";
 
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
-    import { accessApprovalState } from "@src/utils/preview.svelte";
+    import type {
+        EvaluatedLeafGate,
+        GateEvaluation,
+    } from "@shared_components/home/access/gateEvaluation.svelte";
     import {
         Body,
         BodySmall,
@@ -31,7 +28,6 @@
         Row,
         transition,
     } from "component-lib";
-    import { untrack } from "svelte";
     import ShieldStar from "svelte-material-icons/ShieldStarOutline.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import SlidingPageContent from "../SlidingPageContent.svelte";
@@ -43,170 +39,58 @@
     import PaymentGateEvaluator from "./PaymentGateEvaluator.svelte";
     import UniqueHumanGateEvaluator from "./UniqueHumanGateEvaluator.svelte";
 
-    type SatisfiedLeafGate = EnhancedLeafGate & {
-        satisfied: boolean;
-        satisfiable: boolean;
-        originalIndex: number;
-    };
-
     interface Props {
         gate: EnhancedAccessGate;
+        evaluation: GateEvaluation;
         onClose: () => void;
         onComplete: () => void;
     }
 
-    let { gate, onClose, onComplete }: Props = $props();
+    let { gate, evaluation, onClose, onComplete }: Props = $props();
 
-    $effect(() => {
-        void $cryptoBalanceStore;
-        untrack(refreshBalanceGates);
-    });
+    // originalIndex of the leaf the user is satisfying
+    let selected = $state<number>();
+    let evaluatingGate = $derived(evaluation.leaves.find((g) => g.originalIndex === selected));
 
-    let flattenedGates = $state<SatisfiedLeafGate[]>(normaliseGates(gate));
-
-    let sortedGates = $derived(flattenedGates.toSorted(orderBySatisfied));
-
-    function orderBySatisfied(a: SatisfiedLeafGate, b: SatisfiedLeafGate): number {
-        if (a.satisfied && b.satisfied) return 0;
-        return a.satisfied ? -1 : 1;
-    }
-
-    let currentGateIndex = $state(-1);
-    let satisfiedGates = $derived(sortedGates.filter((g) => g.satisfied).length);
-    let compositeOr = $derived(isCompositeGate(gate) && gate.operator === "or");
-    let complete = $derived(
-        compositeOr ? satisfiedGates >= 1 : satisfiedGates === sortedGates.length,
-    );
-    let evaluatingGate = $derived<SatisfiedLeafGate>(sortedGates[currentGateIndex]);
-
-    function normaliseGates(gate: EnhancedAccessGate): SatisfiedLeafGate[] {
-        if (isCompositeGate(gate)) {
-            // Keep originalIndex before filtering so compositeGateIndex still maps to the real gate.
-            // Unique person (DecideAI) verification is suspended - hide it from the join flow.
-            return gate.gates
-                .map((l, i) => ({
-                    ...l,
-                    level: gate.level,
-                    collectionName: gate.collectionName,
-                    expiry: gate.expiry,
-                    satisfied: doesUserMeetLeafGate(l),
-                    satisfiable: false,
-                    originalIndex: i,
-                }))
-                .filter((g) => !isUniquePersonGate(g));
-        }
-        if (isLeafGate(gate)) {
-            if (isUniquePersonGate(gate)) return [];
-            return [
-                {
-                    ...gate,
-                    satisfied: doesUserMeetLeafGate(gate),
-                    satisfiable: false,
-                    originalIndex: 0,
-                },
-            ];
-        }
-        return [];
-    }
-
-    function doesUserMeetLeafGate(gate: LeafGate): boolean {
-        if (gate.kind === "diamond_gate") {
-            return $currentUserStore.diamondStatus.kind !== "inactive";
-        } else if (gate.kind === "lifetime_diamond_gate") {
-            return $currentUserStore.diamondStatus.kind === "lifetime";
-        } else if (gate.kind === "unique_person_gate") {
-            return $currentUserStore.isUniquePerson;
-        } else if (gate.kind === "chit_earned_gate") {
-            return $currentUserStore.totalChitEarned >= gate.minEarned;
-        } else if (gate.kind === "token_balance_gate") {
-            return doesUserMeetBalanceGate(gate);
-        } else {
-            return false;
-        }
-    }
-
-    function doesUserMeetBalanceGate(gate: TokenBalanceGate): boolean {
-        const balance = $cryptoBalanceStore.get(gate.ledgerCanister) ?? 0n;
-        const liveBalance = accessApprovalState.balanceAfterCurrentCommitments(
-            gate.ledgerCanister,
-            balance,
-        );
-        return liveBalance >= gate.minBalance;
-    }
-
-    function selectGate(idx: number) {
+    function selectGate(leaf: EvaluatedLeafGate | undefined) {
         transition(["fade"], () => {
-            currentGateIndex = idx;
+            selected = leaf?.originalIndex;
         });
     }
 
     function cancelGate() {
-        transition(["fade"], () => {
-            currentGateIndex = -1;
-        });
-    }
-
-    function refreshBalanceGates() {
-        flattenedGates = flattenedGates.map((g) => {
-            if (g.kind === "token_balance_gate") {
-                g.satisfied = doesUserMeetBalanceGate(g);
-            }
-            return g;
-        });
+        selectGate(undefined);
     }
 
     function confirmNeuronGate() {
         if (evaluatingGate !== undefined) {
-            evaluatingGate.satisfied = true;
+            evaluation.confirm(evaluatingGate);
             onBack();
         }
     }
 
-    function onApprovePayment({
-        ledger,
-        amount,
-        approvalFee,
-    }: {
-        ledger: string;
-        amount: bigint;
-        approvalFee: bigint;
-    }) {
+    function onApprovePayment(approval: { ledger: string; amount: bigint; approvalFee: bigint }) {
         // TODO problem is that topping up a token can cause gates to be spontaneously satisfied
         // This is not accounted for an it's difficult to account for.
         if (evaluatingGate !== undefined) {
-            accessApprovalState.addPaymentApproval({ ledger, amount, approvalFee });
-            evaluatingGate.satisfied = true;
-            refreshBalanceGates();
+            evaluation.approvePayment(evaluatingGate, approval);
             onBack();
         }
     }
 
     function credentialReceived(cred: string) {
         if (evaluatingGate !== undefined) {
-            evaluatingGate.satisfied = true;
-            accessApprovalState.addCredential(cred);
-            refreshBalanceGates();
+            evaluation.addCredential(evaluatingGate, cred);
             onBack();
         }
     }
 
     function onBack() {
         if (evaluatingGate !== undefined) {
-            selectGate(-1);
+            selectGate(undefined);
         } else {
             publish("closeModalPage");
         }
-    }
-
-    function handleComplete() {
-        if (compositeOr) {
-            // Use originalIndex so the backend still maps to the real gate after filtering.
-            const satisfied = flattenedGates.find((g) => g.satisfied);
-            if (satisfied !== undefined) {
-                accessApprovalState.setCompositeGateIndex(satisfied.originalIndex);
-            }
-        }
-        onComplete();
     }
 </script>
 
@@ -224,6 +108,7 @@
                     level={evaluatingGate.level} />
             {:else if isPaymentGate(evaluatingGate)}
                 <PaymentGateEvaluator
+                    {evaluation}
                     gate={evaluatingGate}
                     level={evaluatingGate.level}
                     {onApprovePayment}
@@ -234,7 +119,7 @@
                     onClose={cancelGate}
                     onApprove={confirmNeuronGate} />
             {:else if isBalanceGate(evaluatingGate)}
-                <BalanceGateEvaluator gate={evaluatingGate} onClose={cancelGate} />
+                <BalanceGateEvaluator {evaluation} gate={evaluatingGate} onClose={cancelGate} />
             {:else if isLifetimeDiamondGate(evaluatingGate)}
                 <DiamondGateEvaluator
                     onCancel={cancelGate}
@@ -303,10 +188,11 @@
                 </Row>
             </Column>
             <Column gap={"md"}>
-                {#each sortedGates as subgate, i}
+                {#each evaluation.leaves as subgate (subgate.originalIndex)}
                     <AccessGateSummary
+                        {evaluation}
                         satisfied={subgate.satisfied}
-                        onClick={() => selectGate(i)}
+                        onClick={() => evaluation.needs(subgate) && selectGate(subgate)}
                         gate={subgate} />
                 {/each}
             </Column>
@@ -320,7 +206,7 @@
                                 colour: "textSecondary",
                             },
                             {
-                                text: i18nKey(`${satisfiedGates} out of ${sortedGates.length}`),
+                                text: i18nKey(`${evaluation.satisfiedCount} out of ${evaluation.leaves.length}`),
                                 colour: "primary",
                             },
                             {
@@ -331,7 +217,7 @@
                 </BodySmall>
             {/if}
             <Column crossAxisAlignment={"center"} gap={"md"}>
-                <Button disabled={!complete} onClick={handleComplete}>
+                <Button disabled={!evaluation.complete} onClick={onComplete}>
                     <Translatable resourceKey={i18nKey("Join")} />
                 </Button>
                 <CommonButton onClick={onClose} width={"hug"} mode={"active"} size={"small_text"}>
