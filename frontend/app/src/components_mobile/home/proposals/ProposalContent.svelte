@@ -546,7 +546,7 @@
                     <Body>{votingHotkey}</Body>
                     <IconButton size="md" onclick={copyVotingHotkey}>
                         {#snippet icon(color)}
-                            <CopyIcon {color} ariaLabel={$_("copyToClipboard")} />
+                            <CopyIcon {color} title={$_("copyToClipboard")} />
                         {/snippet}
                     </IconButton>
                 </Row>
