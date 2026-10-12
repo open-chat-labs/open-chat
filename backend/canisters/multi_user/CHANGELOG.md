@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove importing users from User canisters ([#9919](https://github.com/open-chat-labs/open-chat/pull/9919))
-- Remove what was only needed while users were being migrated, including the `UserIdMigrated` event and reading the heap layouts kept for imported users ([#PRNUM3](https://github.com/open-chat-labs/open-chat/pull/PRNUM3))
+- Remove what was only needed while users were being migrated, including the `UserIdMigrated` event and reading the heap layouts kept for imported users ([#9922](https://github.com/open-chat-labs/open-chat/pull/9922))
 
 ## [[2.0.2136](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2136-multi_user)] - 2026-10-12
 

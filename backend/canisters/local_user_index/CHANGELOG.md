@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Remove the User canister, along with creating, upgrading and migrating User canisters ([#9919](https://github.com/open-chat-labs/open-chat/pull/9919))
-- Remove mapping user ids sent by the UserIndex and NotificationsIndex onto their latest ids, which they already are ([#PRNUM3](https://github.com/open-chat-labs/open-chat/pull/PRNUM3))
+- Remove mapping user ids sent by the UserIndex and NotificationsIndex onto their latest ids, which they already are ([#9922](https://github.com/open-chat-labs/open-chat/pull/9922))
 
 ## [[2.0.2130](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2130-local_user_index)] - 2026-10-12
 
