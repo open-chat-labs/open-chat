@@ -1,6 +1,6 @@
 use crate::client::user_index;
 use crate::env::ENV;
-use crate::user_migration_tests::{migrate, platform_operator, tick_until};
+use crate::user_migration_tests::{migrate, migration_operator, tick_until};
 use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
@@ -42,6 +42,7 @@ fn diamond_members_remain_unlapsed_after_expiry(container_type: ContainerType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let gate_config = AccessGateConfig {
@@ -95,6 +96,7 @@ fn diamond_member_lapses_and_rejoins_successfully(container_type: ContainerType)
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let gate_config = AccessGateConfig {
@@ -143,6 +145,7 @@ fn remove_gate_unlapses_members(container_type: ContainerType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let gate_config = AccessGateConfig {
@@ -208,6 +211,7 @@ fn extend_or_reduce_expiry_then_member_lapses_when_expected(container_type: Cont
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let min_balance = 900_000_000;
@@ -287,6 +291,7 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(container_type
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let min_balance = 900_000_000;
@@ -355,6 +360,7 @@ fn member_is_not_charged_for_a_payment_gate_as_it_expires(container_type: Contai
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let min_balance = 900_000_000;
@@ -436,6 +442,7 @@ fn gate_changes_and_members_lapse_as_expected(container_type: ContainerType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let gate_config = AccessGateConfig {
@@ -544,6 +551,7 @@ fn invited_users_pass_composite_gate_then_expire_later(container_type: Container
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     // Create a composite gate
@@ -597,6 +605,7 @@ fn migrated_member_whose_tokens_are_still_in_their_old_wallet_does_not_lapse(con
         env,
         canister_ids,
         controller,
+        platform_operator,
     } = wrapper.env();
 
     let gate_config = AccessGateConfig {
@@ -623,9 +632,9 @@ fn migrated_member_whose_tokens_are_still_in_their_old_wallet_does_not_lapse(con
 
     // Both are migrated, leaving their tokens in their old canisters' wallets, so their new wallets
     // are empty
-    let operator = platform_operator(env, canister_ids, *controller);
+    let operator = migration_operator(env, canister_ids, *controller);
     let multi_user_canister =
-        user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, users[0].local_user_index);
+        user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, users[0].local_user_index);
     let users: Vec<User> = users
         .iter()
         .map(|user| migrate(env, canister_ids, &operator, user, multi_user_canister))

@@ -17,6 +17,7 @@ fn stable_memory_maps_survive_upgrades() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_diamond_user_in_user_canister(env, canister_ids, *controller);

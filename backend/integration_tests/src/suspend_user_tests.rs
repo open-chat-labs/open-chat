@@ -17,6 +17,7 @@ fn suspend_user() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -262,6 +263,7 @@ fn suspended_users_returned_from_user_index_users() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {

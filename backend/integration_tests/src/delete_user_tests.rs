@@ -395,6 +395,7 @@ fn deleted_user_removed_from_groups_and_communities() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);

@@ -39,6 +39,7 @@ fn update_display_name_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_diamond_user(env, canister_ids, *controller);

@@ -132,12 +132,13 @@ fn send_message_retries_if_fails() {
     let TestEnv {
         env,
         canister_ids,
-        controller,
+        platform_operator,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
     // In a canister of their own, so that stopping it doesn't stop user1's
-    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, *controller);
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
 
     stop_canister(env, user2.local_user_index, user2.canister());
 
@@ -164,12 +165,13 @@ fn messages_arrive_in_order_even_if_some_fail_originally() {
     let TestEnv {
         env,
         canister_ids,
-        controller,
+        platform_operator,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
     // In a canister of their own, so that stopping it doesn't stop user1's
-    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, *controller);
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
 
     stop_canister(env, user2.local_user_index, user2.canister());
 

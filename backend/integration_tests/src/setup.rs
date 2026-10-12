@@ -35,14 +35,14 @@ static POCKET_IC_SERVER_URL: OnceLock<Url> = OnceLock::new();
 // This base state is set at the end of the initialization process, so each thread (other than
 // the one doing the initialization) waits until the state is available at which point they
 // create their own PocketIC instance which is initialized with this state.
-static BASE_STATE: OnceLock<(PocketIcState, CanisterIds)> = OnceLock::new();
+static BASE_STATE: OnceLock<(PocketIcState, CanisterIds, Principal)> = OnceLock::new();
 
 pub fn setup_new_env() -> TestEnv {
     verify_pocket_ic_exists();
 
     let controller = Principal::from_text("xuxyr-xopen-chatx-xxxbu-cai").unwrap();
 
-    let (state, canister_ids) = BASE_STATE.get_or_init(|| initialize_base_state_or_exit(controller));
+    let (state, canister_ids, platform_operator) = BASE_STATE.get_or_init(|| initialize_base_state_or_exit(controller));
 
     let env = PocketIcBuilder::new()
         .with_server_url(pocket_ic_server_url())
@@ -54,12 +54,13 @@ pub fn setup_new_env() -> TestEnv {
         env,
         canister_ids: canister_ids.clone(),
         controller,
+        platform_operator: *platform_operator,
     }
 }
 
 // If initializing the base state fails, every other test would fail the same way trying it again,
 // so end the test run
-fn initialize_base_state_or_exit(controller: Principal) -> (PocketIcState, CanisterIds) {
+fn initialize_base_state_or_exit(controller: Principal) -> (PocketIcState, CanisterIds, Principal) {
     std::panic::catch_unwind(|| initialize_base_state(controller)).unwrap_or_else(|payload| {
         let message = payload
             .downcast_ref::<String>()
@@ -75,7 +76,7 @@ fn initialize_base_state_or_exit(controller: Principal) -> (PocketIcState, Canis
     })
 }
 
-fn initialize_base_state(controller: Principal) -> (PocketIcState, CanisterIds) {
+fn initialize_base_state(controller: Principal) -> (PocketIcState, CanisterIds, Principal) {
     let started = Instant::now();
 
     // This thread is first, so it is the only one which will run the full initialization
@@ -103,13 +104,25 @@ fn initialize_base_state(controller: Principal) -> (PocketIcState, CanisterIds) 
     println!("PocketIC instance ready. Installing canisters...");
 
     let canister_ids = install_canisters(&mut env, controller);
+
+    // Registered here rather than by each test needing one, since registering a user can create a
+    // MultiUser canister, which would throw off tests counting them
+    let platform_operator = client::register_user(&mut env, &canister_ids);
+    client::user_index::happy_path::add_platform_operator(
+        &mut env,
+        controller,
+        canister_ids.user_index,
+        platform_operator.user_id,
+    );
+    tick_many(&mut env, 5);
+
     let duration = Instant::now().duration_since(started);
 
     println!("Initialization complete. Took: {}s", duration.as_secs());
 
     let state = env.drop_and_take_state().unwrap();
 
-    (state, canister_ids)
+    (state, canister_ids, platform_operator.principal)
 }
 
 // PocketIC's beta features consist of the `flexible_http_requests` flag, which lets HTTPS outcalls

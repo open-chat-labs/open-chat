@@ -20,6 +20,7 @@ fn e2e_group_and_community_verification_test() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let group_name = "DFINITY".to_string();
@@ -196,6 +197,7 @@ fn group_verification_revoked_if_name_changed() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_diamond_user(env, canister_ids, *controller);
@@ -241,6 +243,7 @@ fn community_verification_revoked_if_name_changed() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user = client::register_diamond_user(env, canister_ids, *controller);

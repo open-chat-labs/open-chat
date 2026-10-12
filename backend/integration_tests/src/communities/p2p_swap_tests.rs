@@ -40,7 +40,7 @@ fn p2p_swap_in_channel_succeeds() {
         env,
         &user1,
         community_id,
-        &community_canister::send_message::Args {
+        community_canister::send_message::Args {
             channel_id,
             thread_root_message_index: None,
             message_id,
@@ -150,7 +150,7 @@ fn cancel_p2p_swap_in_channel_succeeds(delete_message: bool) {
         env,
         &user1,
         community_id,
-        &community_canister::send_message::Args {
+        community_canister::send_message::Args {
             channel_id,
             thread_root_message_index: None,
             message_id,

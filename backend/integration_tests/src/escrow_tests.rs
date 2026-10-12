@@ -24,6 +24,7 @@ fn swap_via_escrow_canister_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
@@ -98,6 +99,7 @@ fn external_swap_via_escrow_canister_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let sender = Principal::from_slice(&[1]);
@@ -167,6 +169,7 @@ fn deposits_refunded_if_swap_no_longer_available(expired: bool) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
@@ -267,6 +270,7 @@ fn a_recorded_deposit_is_not_refunded_when_notified_again() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
@@ -366,6 +370,7 @@ fn deposit_is_refunded_if_swap_expires_while_it_is_checked() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
@@ -412,6 +417,7 @@ fn only_one_of_two_users_accepting_at_once_is_accepted() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
@@ -495,6 +501,7 @@ fn payment_rejected_as_too_old_is_remade() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let offerer = Principal::from_slice(&[10, 3]);
@@ -538,6 +545,7 @@ fn refund_queued_twice_is_recorded_once() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
@@ -587,6 +595,7 @@ fn payment_rejected_by_ledger_is_parked() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let offerer = Principal::from_slice(&[10, 4]);
@@ -620,6 +629,7 @@ fn deposit_is_locked_until_its_refund_is_made() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let offerer = Principal::from_slice(&[10, 5, 0]);
@@ -748,6 +758,7 @@ fn deposit_locked_by_its_refund_is_refunded_once_its_swap_ends() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let offerer = Principal::from_slice(&[10, 9]);
@@ -829,6 +840,7 @@ fn deposit_is_unlocked_if_its_balance_cannot_be_checked() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let offerer = Principal::from_slice(&[10, 11]);

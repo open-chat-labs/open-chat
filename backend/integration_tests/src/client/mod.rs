@@ -131,7 +131,7 @@ pub fn execute_update_no_response<P: CandidType>(
 }
 
 // Users are registered into MultiUser canisters. The `_in_user_canister` variants instead give the
-// user a canister of their own, which only the tests of migrating users to MultiUser canisters need.
+// user a canister of their own, which only the tests of User canisters themselves need.
 pub fn register_user(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
     register_user_with_referrer(env, canister_ids, None)
 }
@@ -202,9 +202,14 @@ pub fn register_user_in_multi_user_canister_on(
 
 // Registers the user in a MultiUser canister created for them, which holds no one else, so that it can
 // be stopped, eg. to fail calls to it, without affecting other users
-pub fn register_user_in_new_multi_user_canister(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
+pub fn register_user_in_new_multi_user_canister(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    platform_operator: Principal,
+) -> User {
     let local_user_index = user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
-    let canister_id = user_index::happy_path::create_multi_user_canister(env, controller, canister_ids, local_user_index);
+    let canister_id =
+        user_index::happy_path::create_multi_user_canister(env, platform_operator, canister_ids, local_user_index);
     register_user_in_multi_user_canister_on(env, canister_ids, local_user_index, canister_id, None)
 }
 
@@ -358,6 +363,11 @@ pub fn pay_from_wallet(
         return content;
     }
     let (content, ledger, allowance) = match content {
+        // A transfer from another account is approved by that account
+        MessageContentInitial::Crypto(c) if !from_wallet(&c.transfer, user.principal) => {
+            return MessageContentInitial::Crypto(c);
+        }
+        MessageContentInitial::Prize(p) if !from_wallet(&p.transfer, user.principal) => return MessageContentInitial::Prize(p),
         MessageContentInitial::Crypto(mut c) => {
             let (transfer, ledger, allowance) = transfer_from_wallet(c.transfer, user.principal);
             c.transfer = transfer;
@@ -379,6 +389,17 @@ pub fn pay_from_wallet(
     };
     approve_spender(env, user, ledger, spender, allowance);
     content
+}
+
+// Whether the transfer is from the wallet of `principal`, as an ICRC1 one always is. The wallet is the
+// default subaccount, which can also be given explicitly as all zeros.
+fn from_wallet(transfer: &CryptoTransaction, principal: Principal) -> bool {
+    match transfer {
+        CryptoTransaction::Pending(PendingCryptoTransaction::ICRC2(t)) => {
+            t.from.owner == principal && t.from.subaccount.is_none_or(|s| s == [0; 32])
+        }
+        _ => true,
+    }
 }
 
 // The transfer as an ICRC2 one from `from`'s wallet, along with its ledger and the allowance needed to

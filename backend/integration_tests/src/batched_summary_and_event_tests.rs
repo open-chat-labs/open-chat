@@ -19,6 +19,7 @@ fn get_batched_events_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -88,6 +89,7 @@ fn get_batched_summaries_succeeds() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {

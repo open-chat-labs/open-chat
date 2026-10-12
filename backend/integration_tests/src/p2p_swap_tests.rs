@@ -144,7 +144,7 @@ fn p2p_swap_in_group_succeeds() {
         env,
         &user1,
         group_id,
-        &group_canister::send_message_v2::Args {
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
@@ -400,7 +400,7 @@ fn p2p_swap_in_group_from_approved_accounts_succeeds() {
         env,
         &user1,
         group_id,
-        &group_canister::send_message_v2::Args {
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
@@ -735,7 +735,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
         env,
         &user1,
         group_id,
-        &group_canister::send_message_v2::Args {
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
@@ -952,7 +952,7 @@ fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
         env,
         &user,
         group_id,
-        &group_canister::send_message_v2::Args {
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
@@ -1192,7 +1192,7 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
                 env,
                 &user1,
                 group_id,
-                &group_canister::send_message_v2::Args {
+                group_canister::send_message_v2::Args {
                     thread_root_message_index: None,
                     message_id,
                     content,
@@ -1228,7 +1228,7 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
                 env,
                 &user1,
                 community_id,
-                &community_canister::send_message::Args {
+                community_canister::send_message::Args {
                     channel_id,
                     thread_root_message_index: None,
                     message_id,

@@ -3,7 +3,7 @@
 //! the one test that pins a board and says so.
 
 use crate::env::ENV;
-use crate::user_migration_tests::{migrate, platform_operator};
+use crate::user_migration_tests::{migrate, migration_operator};
 use crate::utils::{now_millis, tick_many};
 use crate::{TestEnv, User, client};
 use constants::DAY_IN_MS;
@@ -32,6 +32,7 @@ fn daily_puzzle_end_to_end() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     ensure_time_at_least_day0(env);
@@ -292,6 +293,7 @@ fn daily_puzzle_refused_debits_and_replayed_keys() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     ensure_time_at_least_day0(env);
@@ -467,6 +469,7 @@ fn daily_puzzle_survives_a_missing_wrong_or_stopped_daily_canister() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     ensure_time_at_least_day0(env);
@@ -598,15 +601,16 @@ fn daily_puzzle_streak_follows_a_migrated_user(same_local_user_index: bool) {
         env,
         canister_ids,
         controller,
+        platform_operator,
     } = wrapper.env();
 
     ensure_time_at_least_day0(env);
     keep_clear_of_midnight(env);
 
-    let operator = platform_operator(env, canister_ids, *controller);
+    let operator = migration_operator(env, canister_ids, *controller);
     let local_user_index = client::user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
     let multi_user_canister =
-        client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, local_user_index);
+        client::user_index::happy_path::create_multi_user_canister(env, *platform_operator, canister_ids, local_user_index);
     let subnet = canister_ids
         .subnets
         .iter()

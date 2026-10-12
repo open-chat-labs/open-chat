@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::setup::install_sns_governance;
-use crate::user_migration_tests::{migrate, platform_operator, wait_until_local_user_index_knows_of_migration};
+use crate::user_migration_tests::{migrate, migration_operator, wait_until_local_user_index_knows_of_migration};
 use crate::utils::{tick_many, try_metrics};
 use crate::{TestEnv, User, client};
 use candid::Principal;
@@ -521,15 +521,20 @@ fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
     let user = client::register_user_in_user_canister(env, canister_ids);
     let migrated_user = (!matches!(neurons, Neurons::UserCanister)).then(|| {
-        let operator = platform_operator(env, canister_ids, *controller);
-        let multi_user_canister =
-            client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, user.local_user_index);
+        let operator = migration_operator(env, canister_ids, *controller);
+        let multi_user_canister = client::user_index::happy_path::create_multi_user_canister(
+            env,
+            *platform_operator,
+            canister_ids,
+            user.local_user_index,
+        );
         migrate(env, canister_ids, &operator, &user, multi_user_canister)
     });
     let member = migrated_user.as_ref().unwrap_or(&user);

@@ -88,6 +88,9 @@ pub struct TestEnv {
     pub env: PocketIc,
     pub canister_ids: CanisterIds,
     pub controller: Principal,
+    // A user made a platform operator as the environment was set up, for making the calls only
+    // platform operators can make
+    pub platform_operator: Principal,
 }
 
 #[derive(Debug)]
