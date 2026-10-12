@@ -781,6 +781,8 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         message: undefined,
     };
 
+    let pinChecks: string[];
+    let pinCheckResponse: { kind: "success" } | typeof PIN_INCORRECT;
     let ledgerWithdrawals: unknown[][];
     // How far the IC's clock is ahead of the device's, and each ledger whose subnet it was read from
     let timeDiffMsecs: number;
@@ -789,6 +791,8 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
     let agent: any;
 
     function setup(userId: string) {
+        pinChecks = [];
+        pinCheckResponse = { kind: "success" };
         ledgerWithdrawals = [];
         timeDiffMsecs = 0;
         syncedWith = [];
@@ -808,15 +812,40 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
                 return Promise.resolve(LEDGER_RESPONSE);
             },
         };
-        agent._userClient = { userId };
+        agent._userClient = {
+            userId,
+            checkPinNumber: (pin: string) => {
+                pinChecks.push(pin);
+                return Promise.resolve(pinCheckResponse);
+            },
+        };
     }
 
     afterEach(() => vi.restoreAllMocks());
 
-    test("sends from the user's wallet on the ledger, with no PIN", async () => {
+    test("sends from the user's wallet on the ledger, once their PIN is checked", async () => {
         setup(MULTI_USER_CANISTER_USER);
 
         expect(await agent.withdrawCryptocurrency(WITHDRAWAL, PIN)).toBe(LEDGER_RESPONSE);
+        expect(pinChecks).toEqual([PIN]);
+        expect(ledgerWithdrawals).toEqual([[WITHDRAWAL]]);
+    });
+
+    test("sends nothing with the wrong PIN", async () => {
+        setup(MULTI_USER_CANISTER_USER);
+        pinCheckResponse = PIN_INCORRECT;
+
+        expect(await agent.withdrawCryptocurrency(WITHDRAWAL, PIN)).toEqual(PIN_INCORRECT);
+        expect(pinChecks).toEqual([PIN]);
+        expect(ledgerWithdrawals).toEqual([]);
+        expect(syncedWith).toEqual([]);
+    });
+
+    test("a user without a PIN sends with nothing to check", async () => {
+        setup(MULTI_USER_CANISTER_USER);
+
+        expect(await agent.withdrawCryptocurrency(WITHDRAWAL, undefined)).toBe(LEDGER_RESPONSE);
+        expect(pinChecks).toEqual([]);
         expect(ledgerWithdrawals).toEqual([[WITHDRAWAL]]);
     });
 

@@ -3941,12 +3941,21 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // The user sends their funds from their wallet on the ledger, as themselves, since their
-    // canister can't send them. Only their canister could check their PIN, so it isn't checked.
+    // canister can't send them. `pin` is checked by their canister first, if they have set one, so
+    // that nothing is sent with the wrong PIN, as it is before a payment from their wallet is
+    // approved (see `approveToPull`).
     async withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
-        _pin: string | undefined,
+        pin: string | undefined,
     ): Promise<WithdrawCryptocurrencyResponse> {
         if (offline()) return CommonResponses.offline();
+
+        if (pin !== undefined) {
+            const checked = await this.userClient.checkPinNumber(pin);
+            if (checked.kind === "error") {
+                return checked;
+            }
+        }
 
         const stamped = { ...domain, createdAtNanos: await icNowNanos(this._agent, domain.ledger) };
         return this._ledgerClient.withdraw(stamped);
