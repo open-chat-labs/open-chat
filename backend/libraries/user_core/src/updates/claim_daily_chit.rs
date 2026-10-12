@@ -1,7 +1,7 @@
 use crate::User;
+use multi_user_canister::claim_daily_chit::{Args, SuccessResult};
 use serde::Serialize;
 use types::{Achievement, ChitEvent, ChitEventType, TimestampMillis, UserCanisterStreakInsuranceClaim};
-use user_canister::claim_daily_chit::{Args, SuccessResult};
 
 // What a claim leaves the caller to do: record any streak insurance claim, set up the insurance
 // timer job, tell the LocalUserIndex of the user's CHIT and record the claim in the event store

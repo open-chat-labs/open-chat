@@ -36,7 +36,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::create_group::Args {
+        &multi_user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
             description: format!("{group_name}_description"),
@@ -49,7 +49,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
             messages_visible_to_non_members: None,
         },
     ) {
-        user_canister::create_group::Response::Success(result) => result.chat_id,
+        multi_user_canister::create_group::Response::Success(result) => result.chat_id,
         response => panic!("'create_group' error: {response:?}"),
     };
 
@@ -116,7 +116,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::create_group::Args {
+        &multi_user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
             description: format!("{group_name}_description"),
@@ -135,7 +135,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
             messages_visible_to_non_members: None,
         },
     ) {
-        user_canister::create_group::Response::Success(result) => result.chat_id,
+        multi_user_canister::create_group::Response::Success(result) => result.chat_id,
         response => panic!("'create_group' error: {response:?}"),
     };
 
@@ -197,7 +197,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::create_group::Args {
+        &multi_user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
             description: format!("{group_name}_description"),
@@ -222,7 +222,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
             messages_visible_to_non_members: None,
         },
     ) {
-        user_canister::create_group::Response::Success(result) => result.chat_id,
+        multi_user_canister::create_group::Response::Success(result) => result.chat_id,
         response => panic!("'create_group' error: {response:?}"),
     };
 
@@ -305,7 +305,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::create_group::Args {
+        &multi_user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
             description: format!("{group_name}_description"),
@@ -318,7 +318,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
             messages_visible_to_non_members: None,
         },
     ) {
-        user_canister::create_group::Response::Success(result) => result.chat_id,
+        multi_user_canister::create_group::Response::Success(result) => result.chat_id,
         response => panic!("'create_group' error: {response:?}"),
     };
 
@@ -625,7 +625,7 @@ fn create_gated(
             env,
             owner.principal,
             owner.canister(),
-            &user_canister::create_community::Args {
+            &multi_user_canister::create_community::Args {
                 is_public: true,
                 name: name.clone(),
                 description: format!("{name}_description"),
@@ -640,7 +640,7 @@ fn create_gated(
                 primary_language: "en".to_string(),
             },
         ) {
-            user_canister::create_community::Response::Success(result) => (Principal::from(result.community_id), None),
+            multi_user_canister::create_community::Response::Success(result) => (Principal::from(result.community_id), None),
             response => panic!("'create_community' error: {response:?}"),
         },
         Gated::Channel => {
@@ -659,7 +659,7 @@ fn create_gated(
             env,
             owner.principal,
             owner.canister(),
-            &user_canister::create_group::Args {
+            &multi_user_canister::create_group::Args {
                 is_public: true,
                 name: name.clone(),
                 description: format!("{name}_description"),
@@ -672,7 +672,7 @@ fn create_gated(
                 messages_visible_to_non_members: None,
             },
         ) {
-            user_canister::create_group::Response::Success(result) => (Principal::from(result.chat_id), None),
+            multi_user_canister::create_group::Response::Success(result) => (Principal::from(result.chat_id), None),
             response => panic!("'create_group' error: {response:?}"),
         },
     }
@@ -696,7 +696,7 @@ fn only_selected_composite_gate_checked_if_index_provided() {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::create_group::Args {
+        &multi_user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
             description: format!("{group_name}_description"),
@@ -726,7 +726,7 @@ fn only_selected_composite_gate_checked_if_index_provided() {
             messages_visible_to_non_members: None,
         },
     ) {
-        user_canister::create_group::Response::Success(result) => result.chat_id,
+        multi_user_canister::create_group::Response::Success(result) => result.chat_id,
         response => panic!("'create_group' error: {response:?}"),
     };
 

@@ -22,6 +22,7 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use ledger_utils::certified::CertifiedTransfers;
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
+use multi_user_canister::GroupCanisterEvent;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::Rng;
@@ -42,7 +43,6 @@ use types::{
     IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult,
     Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType, icrc1,
 };
-use user_canister::GroupCanisterEvent;
 use utils::async_work::AsyncWorkGuard;
 use utils::canister::trap_if_frozen;
 use utils::env::Environment;

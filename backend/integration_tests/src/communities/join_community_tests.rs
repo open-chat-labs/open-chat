@@ -280,7 +280,7 @@ pub(super) fn wait_for_community_membership(
     env: &mut PocketIc,
     user: &User,
     community_id: CommunityId,
-) -> user_canister::CommunitySummary {
+) -> multi_user_canister::CommunitySummary {
     for _ in 0..30 {
         let initial_state = client::user::happy_path::initial_state(env, user);
         if let Some(community) = initial_state

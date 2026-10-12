@@ -75,9 +75,9 @@ async fn process_user_inner(user: &UserToDelete) -> Result<DeleteUserSuccess, C2
     let user_id = user.user_id;
     let canister_id = user_id.canister_id();
 
-    let args = user_canister::c2c_groups_and_communities::Args { user_id };
+    let args = multi_user_canister::c2c_groups_and_communities::Args { user_id };
     let response = top_up_and_retry_if_out_of_cycles(canister_id, || {
-        user_canister_c2c_client::c2c_groups_and_communities(canister_id, &args)
+        multi_user_canister_c2c_client::c2c_groups_and_communities(canister_id, &args)
     })
     .await?;
 

@@ -1,8 +1,8 @@
 use crate::User;
 use chat_events::{DeleteUndeleteMessagesArgs, Reader};
+use multi_user_canister::report_message::Args;
 use oc_error_codes::OCErrorCode;
 use types::{Chat, EventIndex, OCResult, TimestampMillis, UserId, UserIdAndPrincipal};
-use user_canister::report_message::Args;
 use user_index_canister::c2c_report_message;
 use utils::migrated_user_ids::MigratedUserIds;
 

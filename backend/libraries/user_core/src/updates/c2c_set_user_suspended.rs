@@ -1,6 +1,6 @@
 use crate::User;
+use multi_user_canister::c2c_set_user_suspended::SuccessResult;
 use types::{TimestampMillis, Timestamped};
-use user_canister::c2c_set_user_suspended::SuccessResult;
 
 // Returns the user's groups and communities, which the UserIndex suspends them in
 pub fn c2c_set_user_suspended(user: &mut User, suspended: bool, now: TimestampMillis) -> SuccessResult {

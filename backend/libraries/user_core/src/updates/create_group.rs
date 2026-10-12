@@ -1,8 +1,8 @@
 use crate::User;
 use group_index_canister::c2c_create_group;
+use multi_user_canister::create_group::Args;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, TimestampMillis, UserId};
-use user_canister::create_group::Args;
 use utils::document::validate_avatar;
 use utils::text_validation::{
     NameValidationError, RulesValidationError, validate_description, validate_group_name, validate_rules,

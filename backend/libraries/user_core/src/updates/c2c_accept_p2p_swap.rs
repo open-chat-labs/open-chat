@@ -1,6 +1,6 @@
 use crate::{P2PSwap, User};
+use multi_user_canister::c2c_accept_p2p_swap::Args;
 use types::{CanisterId, OCResult, TimestampMillis};
-use user_canister::c2c_accept_p2p_swap::Args;
 
 // Checks the acceptance of a swap in a group or channel, which the group or community has already
 // reserved for the user. The caller then deposits token1 into the escrow canister.

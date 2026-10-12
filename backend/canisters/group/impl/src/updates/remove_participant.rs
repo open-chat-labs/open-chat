@@ -6,9 +6,9 @@ use canister_tracing_macros::trace;
 use group_canister::remove_participant::*;
 use group_chat_core::GroupRoleInternal;
 use local_user_index_canister_c2c_client::lookup_user;
+use multi_user_canister::{GroupCanisterEvent, RemovedFromGroup};
 use oc_error_codes::OCErrorCode;
 use types::{BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, OCResult, UnitResult, UserId};
-use user_canister::{GroupCanisterEvent, RemovedFromGroup};
 
 #[update(msgpack = true)]
 #[trace]

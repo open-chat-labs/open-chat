@@ -1,9 +1,9 @@
 use candid::Principal;
+use multi_user_canister::Referral;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{Entry, KeyPrefix, ReferralKey, ReferralKeyPrefix, with_map, with_map_mut};
 use std::ops::RangeInclusive;
 use types::{ReferralStatus, TimestampMillis, Timestamped, UserId};
-use user_canister::Referral;
 
 // The users the user has referred, stored in the stable memory map for small entries keyed by
 // user id, each value holding the referral's status and when it was last updated

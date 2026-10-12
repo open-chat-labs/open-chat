@@ -3,8 +3,8 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
+use multi_user_canister::block_user::*;
 use types::OCResult;
-use user_canister::block_user::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

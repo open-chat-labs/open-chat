@@ -1,9 +1,9 @@
 use crate::{User, openchat_bot};
 use chat_events::{MessageContentInternal, TextContentInternal};
+use multi_user_canister::LocalUserIndexEvent;
+use multi_user_canister::mark_read::ChannelMessagesRead;
 use stable_memory_map::BaseKeyPrefix;
 use types::{Achievement, DiamondMembershipPlanDuration, ReferralStatus, TimestampMillis, Timestamped, UserId};
-use user_canister::LocalUserIndexEvent;
-use user_canister::mark_read::ChannelMessagesRead;
 
 // A message for the OpenChat bot to send the user
 pub struct BotMessage {

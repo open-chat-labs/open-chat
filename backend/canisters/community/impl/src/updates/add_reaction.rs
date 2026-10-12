@@ -4,12 +4,12 @@ use crate::{CommunityEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::{add_reaction::*, c2c_bot_add_reaction};
+use multi_user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 use oc_error_codes::OCErrorCode;
 use types::{
     Achievement, BotCaller, BotPermissions, Caller, ChannelReactionAddedNotification, ChannelUserNotificationPayload, Chat,
     ChatPermission, CommunityId, OCResult,
 };
-use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
 #[trace]

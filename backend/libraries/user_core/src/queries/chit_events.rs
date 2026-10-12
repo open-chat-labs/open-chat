@@ -1,5 +1,5 @@
 use crate::User;
-use user_canister::chit_events::{Args, SuccessResult};
+use multi_user_canister::chit_events::{Args, SuccessResult};
 
 pub fn chit_events(user: &User, args: Args) -> SuccessResult {
     let (events, total) = user.chit_events.events(

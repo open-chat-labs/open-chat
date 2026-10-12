@@ -28,7 +28,7 @@ fn delete_direct_chat_succeeds() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_direct_chat::Args {
+        &multi_user_canister::delete_direct_chat::Args {
             user_id: user2.user_id,
             block_user: false,
         },
@@ -37,7 +37,7 @@ fn delete_direct_chat_succeeds() {
     assert!(
         matches!(
             delete_direct_chat_response,
-            user_canister::delete_direct_chat::Response::Success
+            multi_user_canister::delete_direct_chat::Response::Success
         ),
         "{delete_direct_chat_response:?}",
     );
@@ -81,7 +81,7 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     client::user::happy_path::update_chat_settings(
         env,
         &user1,
-        &user_canister::update_chat_settings::Args {
+        &multi_user_canister::update_chat_settings::Args {
             user_id: user2.user_id,
             events_ttl: OptionUpdate::SetToSome(DAY_IN_MS),
         },
@@ -132,7 +132,7 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_direct_chat::Args {
+        &multi_user_canister::delete_direct_chat::Args {
             user_id: user2.user_id,
             block_user: false,
         },
@@ -140,7 +140,7 @@ fn stable_memory_garbage_collected_after_direct_chat_deleted() {
     assert!(
         matches!(
             delete_direct_chat_response,
-            user_canister::delete_direct_chat::Response::Success
+            multi_user_canister::delete_direct_chat::Response::Success
         ),
         "{delete_direct_chat_response:?}",
     );

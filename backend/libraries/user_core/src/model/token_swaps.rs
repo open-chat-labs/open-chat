@@ -21,7 +21,7 @@ pub struct TokenSwaps {
 impl TokenSwaps {
     pub fn push_new(
         &mut self,
-        args: user_canister::swap_tokens::Args,
+        args: multi_user_canister::swap_tokens::Args,
         icrc2: bool,
         auto_withdrawals: bool,
         now: TimestampMillis,
@@ -90,7 +90,7 @@ fn swap_from_bytes(bytes: &[u8]) -> TokenSwap {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TokenSwap {
-    pub args: user_canister::swap_tokens::Args,
+    pub args: multi_user_canister::swap_tokens::Args,
     pub started: TimestampMillis,
     pub icrc2: bool,
     pub auto_withdrawals: bool,
@@ -113,7 +113,12 @@ pub struct TokenSwap {
 type SwapSubtask<T = ()> = Option<Timestamped<Result<T, String>>>;
 
 impl TokenSwap {
-    pub fn new(args: user_canister::swap_tokens::Args, icrc2: bool, auto_withdrawals: bool, now: TimestampMillis) -> TokenSwap {
+    pub fn new(
+        args: multi_user_canister::swap_tokens::Args,
+        icrc2: bool,
+        auto_withdrawals: bool,
+        now: TimestampMillis,
+    ) -> TokenSwap {
         TokenSwap {
             args,
             started: now,
@@ -131,9 +136,9 @@ impl TokenSwap {
     }
 }
 
-impl From<TokenSwap> for user_canister::token_swaps::TokenSwap {
+impl From<TokenSwap> for multi_user_canister::token_swaps::TokenSwap {
     fn from(s: TokenSwap) -> Self {
-        user_canister::token_swaps::TokenSwap {
+        multi_user_canister::token_swaps::TokenSwap {
             args: s.args,
             started: s.started,
             icrc2: s.icrc2,
@@ -152,8 +157,8 @@ mod tests {
     use candid::Principal;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use multi_user_canister::swap_tokens::{ExchangeArgs, ExchangeSwapArgs};
     use types::TokenInfo;
-    use user_canister::swap_tokens::{ExchangeArgs, ExchangeSwapArgs};
 
     #[test]
     fn swaps_are_upserted_by_swap_id() {
@@ -182,14 +187,14 @@ mod tests {
         assert_eq!(swaps.page(0, 1).iter().map(|s| s.args.swap_id).collect::<Vec<_>>(), vec![1]);
     }
 
-    fn args(swap_id: u128) -> user_canister::swap_tokens::Args {
+    fn args(swap_id: u128) -> multi_user_canister::swap_tokens::Args {
         let token = |symbol: &str, ledger: u8| TokenInfo {
             symbol: symbol.to_string(),
             ledger: Principal::from_slice(&[ledger; 10]),
             decimals: 8,
             fee: 10_000,
         };
-        user_canister::swap_tokens::Args {
+        multi_user_canister::swap_tokens::Args {
             swap_id,
             input_token: token("ICP", 1),
             output_token: token("CHAT", 2),

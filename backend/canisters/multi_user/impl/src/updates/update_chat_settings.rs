@@ -3,11 +3,11 @@ use crate::{RuntimeState, execute_update_async, look_up_direct_chat_user, mutate
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
+use multi_user_canister::update_chat_settings::*;
+use multi_user_canister::{SetEventsTtl, UserCanisterEvent};
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{CanisterId, OCResult, UserId, UserType};
-use user_canister::update_chat_settings::*;
-use user_canister::{SetEventsTtl, UserCanisterEvent};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

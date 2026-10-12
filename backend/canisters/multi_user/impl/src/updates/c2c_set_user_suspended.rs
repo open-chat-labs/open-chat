@@ -2,7 +2,7 @@ use crate::guards::caller_is_user_index;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use user_canister::c2c_set_user_suspended::{Response::*, *};
+use multi_user_canister::c2c_set_user_suspended::{Response::*, *};
 
 #[update(guard = "caller_is_user_index", msgpack = true)]
 #[trace]

@@ -95,11 +95,11 @@ impl From<group_canister::EventsResponse> for EventsResponse {
     }
 }
 
-impl From<user_canister::EventsResponse> for EventsResponse {
-    fn from(value: user_canister::EventsResponse) -> Self {
+impl From<multi_user_canister::EventsResponse> for EventsResponse {
+    fn from(value: multi_user_canister::EventsResponse) -> Self {
         match value {
-            user_canister::EventsResponse::Success(events) => EventsResponse::Success(events),
-            user_canister::EventsResponse::Error(error) => EventsResponse::Error(error),
+            multi_user_canister::EventsResponse::Success(events) => EventsResponse::Success(events),
+            multi_user_canister::EventsResponse::Error(error) => EventsResponse::Error(error),
         }
     }
 }

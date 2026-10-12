@@ -2,7 +2,7 @@ use crate::guards::caller_is_hosted_user;
 use crate::read_state;
 use canister_api_macros::query;
 use constants::MINUTE_IN_MS;
-use user_canister::unfinished_token_swaps::{Response::*, *};
+use multi_user_canister::unfinished_token_swaps::{Response::*, *};
 
 // How long a swap the user makes from their wallet can take, after which one which hasn't been marked
 // as completed was left part way through

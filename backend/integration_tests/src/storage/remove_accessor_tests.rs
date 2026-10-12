@@ -66,10 +66,10 @@ fn deleting_a_group_removes_the_files_sent_in_it() {
         env,
         user.principal,
         user.canister(),
-        &user_canister::delete_group::Args { chat_id: group_id },
+        &multi_user_canister::delete_group::Args { chat_id: group_id },
     );
     assert!(
-        matches!(response, user_canister::delete_group::Response::Success),
+        matches!(response, multi_user_canister::delete_group::Response::Success),
         "{response:?}"
     );
 
@@ -124,10 +124,10 @@ fn deleting_a_community_removes_the_files_sent_in_it_and_in_the_groups_imported_
         env,
         user.principal,
         user.canister(),
-        &user_canister::delete_community::Args { community_id },
+        &multi_user_canister::delete_community::Args { community_id },
     );
     assert!(
-        matches!(response, user_canister::delete_community::Response::Success),
+        matches!(response, multi_user_canister::delete_community::Response::Success),
         "{response:?}"
     );
 

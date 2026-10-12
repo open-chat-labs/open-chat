@@ -2,8 +2,8 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::unpin_chat_v2::*;
 use types::OCResult;
-use user_canister::unpin_chat_v2::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

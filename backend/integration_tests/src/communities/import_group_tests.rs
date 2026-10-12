@@ -4,6 +4,7 @@ use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, PRIZE_FEE_PERCENT};
 use itertools::Itertools;
+use multi_user_canister::mark_read::{ChatMessagesRead, ThreadRead};
 use pocket_ic::PocketIc;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -12,7 +13,6 @@ use types::{
     CanisterId, Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, EventIndex, MessageContentInitial, MultiUserChat,
     PendingCryptoTransaction, PrizeContentInitial, ReplyContext, TextContent, icrc1,
 };
-use user_canister::mark_read::{ChatMessagesRead, ThreadRead};
 
 #[test]
 fn import_group_succeeds() {
@@ -190,7 +190,7 @@ fn read_up_to_data_maintained_after_import() {
         env,
         user2.principal,
         user2.user_id.canister_id(),
-        &user_canister::mark_read::Args {
+        &multi_user_canister::mark_read::Args {
             messages_read: vec![ChatMessagesRead {
                 chat_id: group_id,
                 read_up_to: Some(4.into()),
@@ -366,7 +366,7 @@ fn private_replies_to_group_updated_to_community() {
         env,
         user2.principal,
         user2.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user1.user_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),

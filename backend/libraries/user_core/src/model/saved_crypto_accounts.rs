@@ -1,11 +1,11 @@
 use constants::MAX_SAVED_CRYPTO_ACCOUNTS;
 use ic_ledger_types::AccountIdentifier;
 use icrc_ledger_types::icrc1::account::Account;
+use multi_user_canister::NamedAccount;
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use types::OCResult;
-use user_canister::NamedAccount;
 
 const MAX_NAME_LENGTH: usize = 25;
 

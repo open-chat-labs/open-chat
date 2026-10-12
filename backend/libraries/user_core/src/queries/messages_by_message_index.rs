@@ -1,8 +1,8 @@
 use crate::User;
 use chat_events::Reader;
+use multi_user_canister::messages_by_message_index::Args;
 use oc_error_codes::OCErrorCode;
 use types::{MessagesResponse, OCResult, UserId, UserIdAndPrincipal};
-use user_canister::messages_by_message_index::Args;
 
 // The caller checks the replica is up to date first
 pub fn messages_by_message_index(user: &User, args: Args, my_user_id: UserId) -> OCResult<MessagesResponse> {

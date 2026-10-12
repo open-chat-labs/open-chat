@@ -3,10 +3,10 @@ use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group;
+use multi_user_canister::create_group::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use tracing::error;
 use types::{CanisterId, ChatId, OCResult};
-use user_canister::create_group::{Response::*, *};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

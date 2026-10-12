@@ -2,7 +2,7 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
-use user_canister::set_community_indexes::*;
+use multi_user_canister::set_community_indexes::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

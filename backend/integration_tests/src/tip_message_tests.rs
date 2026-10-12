@@ -220,7 +220,7 @@ fn tip_direct_message_from_approved_account_succeeds() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::tip_message::Args {
+        &multi_user_canister::tip_message::Args {
             chat: Chat::Direct(user2.user_id.into()),
             recipient: user2.user_id,
             thread_root_message_index: None,
@@ -235,7 +235,7 @@ fn tip_direct_message_from_approved_account_succeeds() {
         },
     );
     assert!(
-        matches!(response, user_canister::tip_message::Response::Success),
+        matches!(response, multi_user_canister::tip_message::Response::Success),
         "{response:?}"
     );
 
@@ -288,7 +288,7 @@ fn tip_from_own_account_is_rejected() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::tip_message::Args {
+        &multi_user_canister::tip_message::Args {
             chat: Chat::Direct(user2.user_id.into()),
             recipient: user2.user_id,
             thread_root_message_index: None,
@@ -304,7 +304,7 @@ fn tip_from_own_account_is_rejected() {
     );
 
     assert!(
-        matches!(response, user_canister::tip_message::Response::Error(_)),
+        matches!(response, multi_user_canister::tip_message::Response::Error(_)),
         "{response:?}"
     );
 }

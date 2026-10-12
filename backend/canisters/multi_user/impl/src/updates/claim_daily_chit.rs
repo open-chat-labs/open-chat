@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use event_store_types::EventBuilder;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
-use user_canister::claim_daily_chit::{Response::*, *};
+use multi_user_canister::claim_daily_chit::{Response::*, *};
 use user_core::updates::claim_daily_chit::{Claimed, UserClaimedDailyChitEventPayload};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]

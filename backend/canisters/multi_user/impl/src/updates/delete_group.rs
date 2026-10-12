@@ -4,8 +4,8 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_delete_group;
+use multi_user_canister::delete_group::*;
 use types::{OCResult, UserId};
-use user_canister::delete_group::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

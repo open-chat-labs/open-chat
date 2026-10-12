@@ -30,7 +30,7 @@ fn delete_direct_message_succeeds() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_messages::Args {
+        &multi_user_canister::delete_messages::Args {
             user_id: user2.user_id,
             thread_root_message_index: None,
             message_ids: vec![message_id],
@@ -38,7 +38,7 @@ fn delete_direct_message_succeeds() {
     );
     assert!(matches!(
         delete_messages_response,
-        user_canister::delete_messages::Response::Success
+        multi_user_canister::delete_messages::Response::Success
     ));
 
     let user1_events_response =
@@ -75,7 +75,7 @@ fn file_deleted_after_direct_message_deleted() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id,
@@ -106,7 +106,7 @@ fn file_deleted_after_direct_message_deleted() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_messages::Args {
+        &multi_user_canister::delete_messages::Args {
             user_id: user2.user_id,
             thread_root_message_index: None,
             message_ids: vec![message_id],
@@ -114,7 +114,7 @@ fn file_deleted_after_direct_message_deleted() {
     );
     assert!(matches!(
         delete_messages_response,
-        user_canister::delete_messages::Response::Success
+        multi_user_canister::delete_messages::Response::Success
     ));
 
     env.advance_time(Duration::from_secs(300));
@@ -163,14 +163,17 @@ fn delete_thread_reply_in_direct_chat_succeeds() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_messages::Args {
+        &multi_user_canister::delete_messages::Args {
             user_id: user2.user_id,
             thread_root_message_index: Some(root.message_index),
             message_ids: vec![message_id],
         },
     );
     assert!(
-        matches!(delete_messages_response, user_canister::delete_messages::Response::Success),
+        matches!(
+            delete_messages_response,
+            multi_user_canister::delete_messages::Response::Success
+        ),
         "{delete_messages_response:?}"
     );
 
@@ -220,7 +223,7 @@ fn delete_their_direct_message_succeeds() {
         env,
         user2.principal,
         user2.canister(),
-        &user_canister::delete_messages::Args {
+        &multi_user_canister::delete_messages::Args {
             user_id: user1.user_id,
             thread_root_message_index: None,
             message_ids: vec![message_id],
@@ -228,7 +231,7 @@ fn delete_their_direct_message_succeeds() {
     );
     assert!(matches!(
         delete_messages_response,
-        user_canister::delete_messages::Response::Success
+        multi_user_canister::delete_messages::Response::Success
     ));
 
     // Long enough for the deletion to have reached user1's canister, had it been sent there
@@ -307,7 +310,7 @@ fn delete_then_undelete_direct_message(delay: bool) {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::delete_messages::Args {
+        &multi_user_canister::delete_messages::Args {
             user_id: user2.user_id,
             thread_root_message_index: None,
             message_ids: vec![message_id],
@@ -315,7 +318,7 @@ fn delete_then_undelete_direct_message(delay: bool) {
     );
     assert!(matches!(
         delete_messages_response,
-        user_canister::delete_messages::Response::Success
+        multi_user_canister::delete_messages::Response::Success
     ));
 
     // The message and then its deletion have to reach user2's canister
@@ -330,13 +333,13 @@ fn delete_then_undelete_direct_message(delay: bool) {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::undelete_messages::Args {
+        &multi_user_canister::undelete_messages::Args {
             user_id: user2.user_id,
             thread_root_message_index: None,
             message_ids: vec![message_id],
         },
     );
-    if let user_canister::undelete_messages::Response::Success(result) = undelete_messages_response {
+    if let multi_user_canister::undelete_messages::Response::Success(result) = undelete_messages_response {
         assert_eq!(result.messages.len(), if delay { 0 } else { 1 });
     } else {
         panic!("Unexpected response from `undelete_messages`: {undelete_messages_response:?}");
@@ -394,13 +397,13 @@ fn deleting_an_undeleted_direct_message_again_gives_a_full_undelete_window() {
             env,
             user1.principal,
             user1.user_id.canister_id(),
-            &user_canister::delete_messages::Args {
+            &multi_user_canister::delete_messages::Args {
                 user_id: user2.user_id,
                 thread_root_message_index: None,
                 message_ids: vec![message_id],
             },
         );
-        assert!(matches!(response, user_canister::delete_messages::Response::Success));
+        assert!(matches!(response, multi_user_canister::delete_messages::Response::Success));
         wait_for_message(env, &user2, user1.user_id, None, message_id, is_deleted);
     };
     let undelete = |env: &mut PocketIc| {
@@ -408,14 +411,14 @@ fn deleting_an_undeleted_direct_message_again_gives_a_full_undelete_window() {
             env,
             user1.principal,
             user1.user_id.canister_id(),
-            &user_canister::undelete_messages::Args {
+            &multi_user_canister::undelete_messages::Args {
                 user_id: user2.user_id,
                 thread_root_message_index: None,
                 message_ids: vec![message_id],
             },
         );
         match response {
-            user_canister::undelete_messages::Response::Success(result) => assert_eq!(result.messages.len(), 1),
+            multi_user_canister::undelete_messages::Response::Success(result) => assert_eq!(result.messages.len(), 1),
             response => panic!("Unexpected response from `undelete_messages`: {response:?}"),
         }
         wait_for_message(env, &user2, user1.user_id, None, message_id, is_text);
@@ -609,7 +612,7 @@ fn message_content(
         env,
         user.principal,
         user.canister(),
-        &user_canister::events::Args {
+        &multi_user_canister::events::Args {
             user_id: user.user_id,
             them,
             thread_root_message_index,
@@ -621,7 +624,7 @@ fn message_content(
         },
     );
 
-    let user_canister::events::Response::Success(result) = response else {
+    let multi_user_canister::events::Response::Success(result) = response else {
         return None;
     };
 
@@ -640,14 +643,14 @@ fn wait_for_direct_message_content_to_be_removed(env: &mut PocketIc, user: &User
             env,
             user.principal,
             user.canister(),
-            &user_canister::deleted_message::Args {
+            &multi_user_canister::deleted_message::Args {
                 user_id: them,
                 message_id,
             },
         );
         if matches!(
             response,
-            user_canister::deleted_message::Response::Error(e) if e.matches_code(OCErrorCode::MessageHardDeleted)
+            multi_user_canister::deleted_message::Response::Error(e) if e.matches_code(OCErrorCode::MessageHardDeleted)
         ) {
             return;
         }

@@ -24,9 +24,9 @@ async fn bot_chat_summary(args: Args) -> Response {
     match chat {
         // The chat is read from the user's canister, which for a user in a MultiUser canister is not
         // the user's id
-        Chat::Direct(chat_id) => match user_canister_c2c_client::c2c_bot_chat_summary(
+        Chat::Direct(chat_id) => match multi_user_canister_c2c_client::c2c_bot_chat_summary(
             UserId::from(chat_id).canister_id(),
-            &user_canister::c2c_bot_chat_summary::Args {
+            &multi_user_canister::c2c_bot_chat_summary::Args {
                 user_id: chat_id.into(),
                 bot_id: context.bot_id,
                 initiator: context.initiator,
