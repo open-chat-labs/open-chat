@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Pass on the new `tip_messages` permission when creating a group ([#9902](https://github.com/open-chat-labs/open-chat/pull/9902))
+
 ### Removed
 
 - Remove the unused `c2c_notify_achievement` endpoint ([#9899](https://github.com/open-chat-labs/open-chat/pull/9899))
