@@ -2017,8 +2017,11 @@
         },
         "neuronControllerAction": "Działania kontrolera neuronów",
         "noEligibleNeurons": "Nie znaleziono odpowiednich neuronów",
-        "noEligibleNeuronsMessage": "Nie znaleziono odpowiednich lub połączonych neuronów. Aby głosować na propozycje z poziomu OpenChat, musisz najpierw dodać swój identyfikator użytkownika OpenChat jako klawisz skrótu do dowolnych neuronów, za pomocą których chcesz głosować. <br/><br/>Twój identyfikator użytkownika OpenChat to: {userId}. <br/><br/>Więcej informacji na temat głosowania i zarządzania znajdziesz w <a target=\"_blank\" href=\"https://oc.app/blog/governance\">tym poście na blogu</a>.",
-        "noEligibleNeuronsPrincipalMessage": "Nie znaleziono odpowiednich lub połączonych neuronów. Aby głosować na propozycje z poziomu OpenChat, musisz najpierw dodać swój principal OpenChat jako klawisz skrótu do dowolnych neuronów, za pomocą których chcesz głosować. <br/><br/>Twój principal OpenChat to: {principal}. <br/><br/>Więcej informacji na temat głosowania i zarządzania znajdziesz w <a target=\"_blank\" href=\"https://oc.app/blog/governance\">tym poście na blogu</a>.",
+        "noEligibleNeuronsMoreInfo": "Więcej informacji na temat głosowania i zarządzania znajdziesz w <a target=\"_blank\" href=\"https://oc.app/blog/governance\">tym poście na blogu</a>.",
+        "noEligibleNeuronsPrincipalIntro": "Nie znaleziono odpowiednich lub połączonych neuronów. Aby głosować na propozycje z poziomu OpenChat, musisz najpierw dodać swój principal OpenChat jako klawisz skrótu do dowolnych neuronów, za pomocą których chcesz głosować.",
+        "noEligibleNeuronsPrincipalLabel": "Twój principal OpenChat to:",
+        "noEligibleNeuronsUserIdIntro": "Nie znaleziono odpowiednich lub połączonych neuronów. Aby głosować na propozycje z poziomu OpenChat, musisz najpierw dodać swój identyfikator użytkownika OpenChat jako klawisz skrótu do dowolnych neuronów, za pomocą których chcesz głosować.",
+        "noEligibleNeuronsUserIdLabel": "Twój identyfikator użytkownika OpenChat to:",
         "notificationsAction": "Powiadomienia Akcje indeksu",
         "openchatInstallerAction": "Akcje instalatora OpenChat",
         "passing": {

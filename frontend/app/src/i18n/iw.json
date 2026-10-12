@@ -2017,8 +2017,11 @@
         },
         "neuronControllerAction": "פעולות בקר נוירון",
         "noEligibleNeurons": "לא נמצאו נוירונים מתאימים",
-        "noEligibleNeuronsMessage": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את מזהה המשתמש שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם.<br/><br/> מזהה המשתמש שלך ב-OpenChat הוא: {userId}.<br/><br/> למידע נוסף על הצבעה וממשל קרא <a target=\"_blank\" href=\"https://oc.app/blog/governance\">פוסט זה בבלוג</a> .",
-        "noEligibleNeuronsPrincipalMessage": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את ה-principal שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם.<br/><br/> ה-principal שלך ב-OpenChat הוא: {principal}.<br/><br/> למידע נוסף על הצבעה וממשל קרא <a target=\"_blank\" href=\"https://oc.app/blog/governance\">פוסט זה בבלוג</a> .",
+        "noEligibleNeuronsMoreInfo": "למידע נוסף על הצבעה וממשל קרא <a target=\"_blank\" href=\"https://oc.app/blog/governance\">פוסט זה בבלוג</a> .",
+        "noEligibleNeuronsPrincipalIntro": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את ה-principal שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם.",
+        "noEligibleNeuronsPrincipalLabel": "ה-principal שלך ב-OpenChat הוא:",
+        "noEligibleNeuronsUserIdIntro": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את מזהה המשתמש שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם.",
+        "noEligibleNeuronsUserIdLabel": "מזהה המשתמש שלך ב-OpenChat הוא:",
         "notificationsAction": "פעולות אינדקס התראות",
         "openchatInstallerAction": "פעולות מתקין OpenChat",
         "passing": {

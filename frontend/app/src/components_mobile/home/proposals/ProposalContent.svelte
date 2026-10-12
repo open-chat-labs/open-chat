@@ -8,6 +8,7 @@
         ColourVars,
         Column,
         CommonButton2,
+        IconButton,
         Row,
         Sheet,
         Subtitle,
@@ -132,15 +133,16 @@
         votingWithPrincipal ? client.OcIdentityPrincipal : $currentUserIdStore,
     );
 
-    function noEligibleNeuronsMessage(): string {
-        return votingWithPrincipal
-            ? $_("proposal.noEligibleNeuronsPrincipalMessage", {
-                  values: { principal: votingHotkey },
-              })
-            : $_("proposal.noEligibleNeuronsMessage", {
-                  values: { userId: votingHotkey },
-              });
-    }
+    let noEligibleNeuronsIntro = $derived(
+        votingWithPrincipal
+            ? $_("proposal.noEligibleNeuronsPrincipalIntro")
+            : $_("proposal.noEligibleNeuronsUserIdIntro"),
+    );
+    let votingHotkeyLabel = $derived(
+        votingWithPrincipal
+            ? i18nKey("proposal.noEligibleNeuronsPrincipalLabel")
+            : i18nKey("proposal.noEligibleNeuronsUserIdLabel"),
+    );
 
     function copyVotingHotkey() {
         copyToClipboard(votingHotkey).then((success) => {
@@ -534,14 +536,24 @@
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
             </Title>
             <Body colour="textSecondary">
-                <Markdown inline={true} text={noEligibleNeuronsMessage()} />
+                <Markdown inline={true} text={noEligibleNeuronsIntro} />
             </Body>
-            <CommonButton2 onClick={copyVotingHotkey} variant="primary" mode="regular" width="fill">
-                {#snippet icon(color, size)}
-                    <CopyIcon {color} {size} />
-                {/snippet}
-                <Translatable resourceKey={i18nKey("copy")} />
-            </CommonButton2>
+            <Column gap="xs">
+                <Body colour="textSecondary">
+                    <Translatable resourceKey={votingHotkeyLabel} />
+                </Body>
+                <Row gap="sm" crossAxisAlignment="center">
+                    <Body>{votingHotkey}</Body>
+                    <IconButton size="md" onclick={copyVotingHotkey}>
+                        {#snippet icon(color)}
+                            <CopyIcon {color} />
+                        {/snippet}
+                    </IconButton>
+                </Row>
+            </Column>
+            <Body colour="textSecondary">
+                <Markdown inline={true} text={$_("proposal.noEligibleNeuronsMoreInfo")} />
+            </Body>
         </Column>
     </Sheet>
 {/if}

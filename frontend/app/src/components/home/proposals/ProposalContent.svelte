@@ -6,7 +6,7 @@
         ProposalDecisionStatus,
         type RegisterProposalVoteResponse,
         currentUserIdStore,
-        mobileWidth,
+        iconSize,
         proposalTopicsStore,
     } from "@client";
     import { ErrorCode, isMultiUserCanisterUser, type ReadonlyMap } from "@shared";
@@ -14,6 +14,7 @@
     import { _ } from "svelte-i18n";
     import ExpandIcon from "svelte-material-icons/ArrowExpandDown.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import Launch from "svelte-material-icons/Launch.svelte";
     import OpenInNew from "svelte-material-icons/OpenInNew.svelte";
     import { i18nKey } from "../../../i18n/i18n";
@@ -24,8 +25,6 @@
     import { toastStore } from "../../../stores/toast";
     import { round2 } from "../../../utils/math";
     import { copyToClipboard } from "../../../utils/urls";
-    import Button from "../../Button.svelte";
-    import ButtonGroup from "../../ButtonGroup.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Overlay from "../../Overlay.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
@@ -72,15 +71,16 @@
         votingWithPrincipal ? client.OcIdentityPrincipal : $currentUserIdStore,
     );
 
-    function noEligibleNeuronsMessage(): string {
-        return votingWithPrincipal
-            ? $_("proposal.noEligibleNeuronsPrincipalMessage", {
-                  values: { principal: votingHotkey },
-              })
-            : $_("proposal.noEligibleNeuronsMessage", {
-                  values: { userId: votingHotkey },
-              });
-    }
+    let noEligibleNeuronsIntro = $derived(
+        votingWithPrincipal
+            ? $_("proposal.noEligibleNeuronsPrincipalIntro")
+            : $_("proposal.noEligibleNeuronsUserIdIntro"),
+    );
+    let votingHotkeyLabel = $derived(
+        votingWithPrincipal
+            ? i18nKey("proposal.noEligibleNeuronsPrincipalLabel")
+            : i18nKey("proposal.noEligibleNeuronsUserIdLabel"),
+    );
 
     function copyVotingHotkey() {
         copyToClipboard(votingHotkey).then((success) => {
@@ -332,21 +332,23 @@
                 <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
             {/snippet}
             {#snippet body()}
-                <Markdown text={noEligibleNeuronsMessage()} />
-            {/snippet}
-            {#snippet footer(onClose)}
-                <ButtonGroup>
-                    <Button
-                        secondary
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        onClick={() => onClose?.()}>
-                        <Translatable resourceKey={i18nKey("close")} />
-                    </Button>
-                    <Button small={!$mobileWidth} tiny={$mobileWidth} onClick={copyVotingHotkey}>
-                        <Translatable resourceKey={i18nKey("copy")} />
-                    </Button>
-                </ButtonGroup>
+                <div class="no-neurons">
+                    <Markdown text={noEligibleNeuronsIntro} />
+                    <div>
+                        <Translatable resourceKey={votingHotkeyLabel} />
+                        <div class="voting-hotkey">
+                            <span class="voting-hotkey-text">{votingHotkey}</span>
+                            <button
+                                type="button"
+                                aria-label={$_("copyToClipboard")}
+                                onclick={copyVotingHotkey}
+                                class="copy">
+                                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+                            </button>
+                        </div>
+                    </div>
+                    <Markdown text={$_("proposal.noEligibleNeuronsMoreInfo")} />
+                </div>
             {/snippet}
         </ModalContent>
     </Overlay>
@@ -368,6 +370,32 @@
 {/if}
 
 <style lang="scss">
+    .no-neurons {
+        display: flex;
+        flex-direction: column;
+        gap: $sp4;
+    }
+
+    .voting-hotkey {
+        display: flex;
+        gap: $sp3;
+        align-items: center;
+
+        // Wraps at the principal's hyphens rather than mid-group
+        .voting-hotkey-text {
+            overflow-wrap: anywhere;
+        }
+
+        .copy {
+            display: flex;
+            flex-shrink: 0;
+            padding: 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+    }
+
     .header {
         margin-bottom: toRem(4);
 
