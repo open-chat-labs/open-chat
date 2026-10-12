@@ -30,11 +30,10 @@ use user_core::updates::offer_p2p_swap;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
-// As the User canister's `send_message_v2`, except that a message holding crypto is sent with a
-// transfer the user makes from their own wallet, since this canister doesn't hold its users' funds:
-// either pulled by this canister via ICRC2, against an approval made under the user's own spender
-// subaccount (see `ledger_utils::spender_subaccount`), or already made by the user and certified
-// (see `ledger_utils::UserTransfer`).
+// A message holding crypto is sent with a transfer the user makes from their own wallet, since this
+// canister doesn't hold its users' funds: either pulled by this canister via ICRC2, against an
+// approval made under the user's own spender subaccount (see `ledger_utils::spender_subaccount`),
+// or already made by the user and certified (see `ledger_utils::UserTransfer`).
 async fn send_message_v2(args: Args) -> Response {
     execute_update_async(|| send_message_v2_impl(args)).await
 }
@@ -61,8 +60,8 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
         Err(error) => return Error(error),
     };
 
-    // As in the User canister, a recipient in another canister whom the sender has no chat with yet
-    // is looked up in the LocalUserIndex
+    // A recipient in another canister whom the sender has no chat with yet is looked up in the
+    // LocalUserIndex
     let recipient = if let Some(recipient) = maybe_recipient {
         recipient
     } else {
@@ -72,7 +71,7 @@ async fn send_message_v2_impl(mut args: Args) -> Response {
         }
     };
 
-    // Crypto and P2P swaps aren't sent to bots, as in the User canister
+    // Crypto and P2P swaps aren't sent to bots
     if recipient.user_type().is_bot()
         && matches!(
             args.content,
@@ -275,8 +274,7 @@ async fn prepare_crypto_transfer(
     })
 }
 
-// The User canister's `c2c_bot_send_message`, naming the user the bot is messaging since this
-// canister holds many users
+// Pushes a bot's message, sent via the LocalUserIndex, into its direct chat with the user it names
 #[update(guard = "caller_is_local_user_index", msgpack = true)]
 #[trace]
 fn c2c_bot_send_message(args: c2c_bot_send_message::Args) -> c2c_bot_send_message::Response {
@@ -334,12 +332,12 @@ fn c2c_bot_send_message_impl(args: c2c_bot_send_message::Args, state: &mut Runti
     c2c_bot_send_message::Response::Success(result)
 }
 
-// Offers a swap in a direct chat, as the User canister does: creates the swap in the escrow canister
-// and deposits token0 into it. Users hold their own funds in their own wallets, so the deposit is
-// pulled from the user's wallet (or the account they name) via ICRC2, against an approval made under
-// their own spender subaccount. The escrow canister knows the user by their principal, which is
-// named as the offerer since it is this canister which creates the swap, and this canister, as its
-// creator, may cancel it for them.
+// Offers a swap in a direct chat: creates the swap in the escrow canister and deposits token0 into
+// it. Users hold their own funds in their own wallets, so the deposit is pulled from the user's
+// wallet (or the account they name) via ICRC2, against an approval made under their own spender
+// subaccount. The escrow canister knows the user by their principal, which is named as the offerer
+// since it is this canister which creates the swap, and this canister, as its creator, may cancel
+// it for them.
 async fn offer_p2p_swap(
     content: P2PSwapContentInitial,
     my_index: u16,
@@ -428,8 +426,7 @@ async fn offer_p2p_swap(
     Ok((content, completed))
 }
 
-// Marks a swap offered in a message expired in one user's copy of the chat once its time is up, as
-// the User canister does for each copy
+// Marks a swap offered in a message expired in one user's copy of the chat once its time is up
 fn register_p2p_swap_expiry(
     user_index: u16,
     chat_id: ChatId,
@@ -548,7 +545,7 @@ fn send_message_impl(
         .unwrap_or(recipient);
 
     let reply_context = replies_to.as_ref().map(ReplyContextInternal::from);
-    // A reply to a message in a group is recorded against the group, as in the User canister
+    // A reply to a message in a group is recorded against the group
     let chat_private_replying_to = private_reply_chat(reply_context.as_ref().and_then(|r| r.chat_if_other));
 
     let push_message_args = PushMessageArgs {
@@ -591,7 +588,7 @@ fn send_message_impl(
 
         // The message as the recipient's copy of the chat receives it: message ids are the same in
         // both copies while the indexes are not, so what the reply is to and which thread it is in
-        // are given by id (as in the User canister's `send_message`)
+        // are given by id
         let replies_to = replies_to.and_then(|r| {
             if let Some((chat, thread_root_message_index)) = r.chat_if_other {
                 Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, r.event_index))
@@ -645,7 +642,7 @@ fn send_message_impl(
         })),
     );
 
-    // As in the User canister, messages sent to yourself earn no achievements
+    // Messages sent to yourself earn no achievements
     if !matches!(recipient_kind, Recipient::Me) {
         state.award_achievements_and_notify(my_index, message_event.event.achievements(true, false), now);
     }
@@ -714,7 +711,7 @@ impl Recipient {
 }
 
 // Pushes a message from `sender` to the recipient's copy of the chat between them, via `user_core`,
-// as the User canister does for the `SendMessages` event it receives from the sender's canister.
+// on receiving a `SendMessages` event from the sender's canister.
 // Only reached once the recipient is known not to have blocked the sender.
 pub(crate) fn receive_message(
     their_index: u16,

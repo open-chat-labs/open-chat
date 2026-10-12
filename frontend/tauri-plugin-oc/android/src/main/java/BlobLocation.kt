@@ -3,9 +3,9 @@ package com.ocplugin.app
 import java.util.zip.CRC32
 
 // Where the blobs of an entity, such as its avatar, are served: the canister to fetch them from and
-// the path under which that canister serves blobs of a given type. A group, community or user alone
-// in their canister serves its own at its root. A MultiUser canister serves those of each of its
-// users under `user/{index}`, where `index` is the user's index within it. Mirrors `blobLocation` in
+// the path under which that canister serves blobs of a given type. A group or community serves its
+// own at its root. A MultiUser canister serves those of each of its users under `user/{index}`,
+// where `index` is the user's index within it. Mirrors `blobLocation` in
 // frontend/openchat-shared/src/utils/blobs.ts.
 data class BlobLocation(val canisterId: String, val path: String) {
     companion object {

@@ -487,8 +487,8 @@ fn merge_in_removals<T, R>(
     events
 }
 
-// A P2P swap the user created directly in a group or community rather than via their own canister,
-// which the group or community tells them of so that it is recorded against them just the same
+// A P2P swap the user created directly in a group or community, which the group or community used
+// to tell them of so that it was recorded against them
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapCreated {
     pub swap_id: u32,

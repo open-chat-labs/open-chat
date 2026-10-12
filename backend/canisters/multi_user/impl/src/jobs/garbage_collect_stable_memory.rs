@@ -21,9 +21,8 @@ pub(crate) fn start_job_if_required(data: &Data) -> bool {
     }
 }
 
-// As in the User canister, except that each prefix is removed within the key scope of the user
-// whose chat it belonged to, since that is where its entries are keyed. Deleted users then have
-// all of their entries removed.
+// Each prefix is removed within the key scope of the user whose chat it belonged to, since that is
+// where its entries are keyed. Deleted users then have all of their entries removed.
 fn run() {
     trace!("'garbage_collect_stable_memory' job running");
     TIMER_ID.set(None);

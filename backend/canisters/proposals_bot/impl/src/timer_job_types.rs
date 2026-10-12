@@ -36,7 +36,7 @@ pub struct SubmitProposalJob {
 pub struct ProcessUserRefundJob {
     pub user_id: UserId,
     // Anonymous for refunds queued before the principal was recorded, which is fine as those users
-    // are all alone in their canisters, so are refunded at their user id
+    // were then all in their own User canisters, so are refunded at their user id
     #[serde(default = "Principal::anonymous")]
     pub principal: Principal,
     pub ledger_canister_id: CanisterId,

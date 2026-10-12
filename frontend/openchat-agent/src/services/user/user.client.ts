@@ -234,7 +234,7 @@ export class UserClient
         private readonly chatsDb: ChatsDb,
         private readonly userDb: UserDb,
     ) {
-        // A MultiUser canister holds many users, so the canister is not always the user id
+        // A MultiUser canister holds many users, so the canister is not the user id
         super(identity, agent, userCanisterId(userId).toText(), "User");
         this.userId = userId;
     }
@@ -1271,8 +1271,8 @@ export class UserClient
         );
     }
 
-    // Only a MultiUser canister checks a PIN on its own, which it does ahead of each payment the
-    // user approves or sends from their wallet, so that none is approved or sent with the wrong PIN
+    // Checks a PIN on its own, ahead of each payment the user approves or sends from their wallet, so
+    // that none is approved or sent with the wrong PIN
     checkPinNumber(pin: string): Promise<CheckPinNumberResponse> {
         return this.update(
             "check_pin_number",

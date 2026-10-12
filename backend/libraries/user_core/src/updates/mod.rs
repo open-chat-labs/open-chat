@@ -1,5 +1,5 @@
-//! The update endpoints shared by the User and MultiUser canisters, one function per endpoint.
-//! Endpoints which share only part of their logic, or several functions, stay as modules.
+//! The logic of the MultiUser canister's update endpoints, one function per endpoint. Endpoints
+//! with only part of their logic here, or several functions, stay as modules.
 
 pub mod accept_p2p_swap;
 mod add_hot_group_exclusions;

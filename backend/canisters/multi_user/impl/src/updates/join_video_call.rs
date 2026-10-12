@@ -25,7 +25,7 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         state.push_notification(None, my_index, dismissal, now);
     }
 
-    // The other user is told, as the User canister tells them
+    // The other user is told
     state.send_user_canister_event(
         my_index,
         args.user_id,

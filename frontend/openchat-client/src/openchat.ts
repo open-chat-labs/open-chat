@@ -5911,8 +5911,8 @@ export class OpenChat {
      * latest message, a video call starting or ending, and the selected chat's new messages.
      *
      * A group or channel is refreshed on its own, with one query. A direct chat's summary comes
-     * only from the User canister, and being added to a channel changes User canister state too,
-     * so those, and a refresh that can't be done on its own, run a full updates pass instead.
+     * only from the user's canister, and being added to a channel changes its state too, so those,
+     * and a refresh that can't be done on its own, run a full updates pass instead.
      */
     notificationReceived(notification: Notification): void {
         const chatId = notification.chatId;

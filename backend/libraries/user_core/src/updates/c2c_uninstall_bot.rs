@@ -6,9 +6,9 @@ use types::c2c_uninstall_bot::Args;
 use types::{OCResult, TimestampMillis, UserId};
 
 // Uninstalls the bot, provided the user themselves asked for it or the OpenChat bot did on their
-// behalf. The OpenChat bot names no user, so only a User canister, which holds one, can honour it;
-// a MultiUser canister rejects that caller before reaching here. Returns the stable memory prefixes
-// of the chat with the bot, for the caller to garbage collect.
+// behalf. The OpenChat bot names no user, so the MultiUser canister rejects that caller before
+// reaching here. Returns the stable memory prefixes of the chat with the bot, for the caller to
+// garbage collect.
 pub fn c2c_uninstall_bot(
     user: &mut User,
     args: &Args,

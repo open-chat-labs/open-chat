@@ -5,7 +5,7 @@ use types::UserId;
 
 // The user's contacts, keyed by user id.
 //
-// Each user canister currently holds a single user, so the prefix is just the key type.
+// The user's index is added by the key scope (see `key_scope`), so the prefix is just the key type.
 key!(ContactKey, ContactKeyPrefix, KeyType::Contact);
 
 impl ContactKeyPrefix {

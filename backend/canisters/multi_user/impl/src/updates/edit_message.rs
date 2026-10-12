@@ -73,7 +73,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         })),
     );
 
-    // As in the User canister, which doesn't award it for the chat with the OpenChat bot
+    // Not awarded for the chat with the OpenChat bot
     if args.user_id != OPENCHAT_BOT_USER_ID {
         state.award_achievement_and_notify(my_index, Achievement::EditedMessage, now);
     }

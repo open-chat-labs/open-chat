@@ -454,7 +454,7 @@ pub(crate) fn ensure_time_at_least_day0(env: &mut PocketIc) {
     }
 }
 
-// Streak insurance is claimed by a timer job in the User canister, which can take a few rounds to
+// Streak insurance is claimed by a timer job in the MultiUser canister, which can take a few rounds to
 // run after the clock moves. A claim only counts on the day it falls due, so a test must wait for
 // it before moving the clock on again.
 fn wait_for_streak_lengths(env: &mut PocketIc, user: &User, streak: u16, max_streak: u16) {

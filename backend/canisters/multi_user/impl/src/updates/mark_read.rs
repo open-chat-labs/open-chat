@@ -23,7 +23,7 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
         date_read_pinned,
     } in args.messages_read
     {
-        // A group is marked read in the user's own state, as in the User canister
+        // A group is marked read in the user's own state
         let is_group = state.with_caller_user_mut(|_, user| match user.group_chats.get_mut(&chat_id) {
             Some(mut group) => {
                 group.mark_read(read_up_to, threads, date_read_pinned, now);
@@ -39,9 +39,9 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
             continue;
         };
 
-        // A chat the user doesn't have is skipped, as in the User canister. If the read position
-        // moved, `read_up_to_of_theirs` is how far the user has read in the other user's copy of
-        // the chat, which has its own message indexes.
+        // A chat the user doesn't have is skipped. If the read position moved,
+        // `read_up_to_of_theirs` is how far the user has read in the other user's copy of the chat,
+        // which has its own message indexes.
         let read_up_to_of_theirs = state
             .with_direct_chat_mut(my_index, chat_id, |chat| {
                 if read_up_to <= chat.main_events_reader().latest_message_index().unwrap_or_default()

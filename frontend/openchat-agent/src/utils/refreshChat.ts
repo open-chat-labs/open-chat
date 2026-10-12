@@ -53,9 +53,9 @@ export type RefreshResult =
 
 /**
  * Applies one group's or community's summary updates to the cached state, as an updates pass
- * would with no User canister updates for it. Anything else in the answer - the canister not
- * found (possibly deleted), an error, or a full summary rather than updates - is left to a full
- * updates pass, which knows how to handle those.
+ * would with no updates for it from the user's canister. Anything else in the answer - the
+ * canister not found (possibly deleted), an error, or a full summary rather than updates - is left
+ * to a full updates pass, which knows how to handle those.
  */
 export function applyRefresh(
     state: ChatStateFull,

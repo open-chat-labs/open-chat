@@ -18,7 +18,8 @@ const indexedUserId = "qp43m-xeaaa-aaaaa-qaama-daa";
 // A self-authenticating principal, as users sign in with
 const principal = Principal.fromUint8Array(new Uint8Array(29).fill(7)).toText();
 const getPrincipal = () => principal;
-// A user alone in their canister has no need of their principal, so it must never be asked for
+// The wallet of an id a user had before being migrated to a MultiUser canister, which was their
+// User canister's, has no need of their principal, so it must never be asked for
 const noPrincipal = (): string => {
     throw new Error("The principal was asked for");
 };

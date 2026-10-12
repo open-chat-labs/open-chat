@@ -3,7 +3,7 @@ use crate::{KeyPrefix, KeyType};
 
 // The P2P swaps the user has created or accepted, keyed by swap id.
 //
-// Each user canister currently holds a single user, so the prefix is just the key type.
+// The user's index is added by the key scope (see `key_scope`), so the prefix is just the key type.
 key!(P2PSwapKey, P2PSwapKeyPrefix, KeyType::P2PSwap);
 
 impl P2PSwapKeyPrefix {

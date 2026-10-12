@@ -1,4 +1,4 @@
-//! The query endpoints shared by the User and MultiUser canisters, one function per endpoint
+//! The logic of the MultiUser canister's query endpoints, one function per endpoint
 
 use crate::User;
 use chat_events::ChatEventsListReader;

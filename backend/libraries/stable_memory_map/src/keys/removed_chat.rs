@@ -6,7 +6,7 @@ use types::TimestampMillis;
 // The direct chats, groups and communities which a user has been removed from, ordered by when
 // they were removed.
 //
-// Each user canister currently holds a single user, so the prefixes are just the key type.
+// The user's index is added by the key scope (see `key_scope`), so the prefixes are just the key type.
 key!(
     RemovedChatKey,
     RemovedChatKeyPrefix,

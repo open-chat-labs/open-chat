@@ -129,10 +129,10 @@ function hexStringToUint8Array(hex: string): Uint8Array {
 const SUBACCOUNT_LENGTH = 32;
 
 // The ledger account holding a user's funds. Mirrors `impl From<UserIdAndPrincipal> for Account` in
-// backend/libraries/types/src/user.rs: a user alone in their canister holds their funds in that
-// canister's account, whose id is their user id, while anyone else, such as a user in a MultiUser
-// canister, holds their own funds in the account of the principal they sign in with. `principal` is
-// only called for the latter, so a user alone in their canister never needs it.
+// backend/libraries/types/src/user.rs: the id a user had before being migrated to a MultiUser
+// canister was that of their User canister, whose account held their funds, while anyone else, such
+// as a user in a MultiUser canister, holds their own funds in the account of the principal they sign
+// in with. `principal` is only called for the latter, so an earlier id's wallet never needs it.
 export function userWalletAccount(userId: string, principal: () => string): IcrcAccount {
     const userIdPrincipal = Principal.fromText(userId);
     return {
@@ -218,9 +218,10 @@ export function spenderSubaccount(principal: Principal): Uint8Array {
 
 // The user whose wallet this ledger account might be, which is what lets the UI name the other side
 // of a transaction. Only an account with the default subaccount can be a wallet (see
-// `userWalletAccount`), and then it is the owner's: a User canister's id is its user's id, and the
-// principal of a user in a MultiUser canister is left for the caller to resolve, since it is not
-// their user id. Undefined for any other subaccount.
+// `userWalletAccount`), and then it is the owner's: the id of the User canister a user had before
+// being migrated to a MultiUser canister is the id they had then, and the principal of a user in a
+// MultiUser canister is left for the caller to resolve, since it is not their user id. Undefined for
+// any other subaccount.
 //
 // There is no equivalent for the ICP ledger's AccountIdentifier, which is a hash and so cannot be
 // inverted.

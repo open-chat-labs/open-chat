@@ -70,8 +70,7 @@
         } else if (isOneSecNetwork) {
             return oneSecAddress;
         } else {
-            // The user's wallet, which is their principal's account if they are in a MultiUser
-            // canister. For a user alone in their canister this is just their user id.
+            // The user's wallet, which is their principal's account
             return encodeIcrcAccount(
                 userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal),
             );

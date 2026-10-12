@@ -25,7 +25,7 @@ async fn leave_community_impl(args: Args) -> Response {
         user_id: my_user_id,
     };
 
-    // As in the User canister, the community is removed if the user has left it or was not in it
+    // The community is removed if the user has left it or was not in it
     match community_canister_c2c_client::c2c_leave_community(args.community_id.into(), &c2c_args).await {
         Ok(result) => {
             if matches!(result, Response::Success)

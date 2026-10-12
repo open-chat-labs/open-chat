@@ -11,8 +11,8 @@ use rand::RngExt;
 use types::{CallKind, MessageId, MessageIndex, Milliseconds, OCResult, UserId};
 use user_core::updates::start_video_call::{Started, notification, prepare};
 
-// As in the User canister, the video call operator starts the call in the callee's copy of the
-// chat, naming the callee since this canister holds many users, and the initiator is told
+// The video call operator starts the call in the callee's copy of the chat, naming the callee since
+// this canister holds many users, and the initiator is told
 #[update(guard = "caller_is_video_call_operator")]
 #[trace]
 fn start_video_call_v2(args: Args) -> Response {

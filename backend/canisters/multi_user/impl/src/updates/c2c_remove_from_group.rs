@@ -10,8 +10,7 @@ fn c2c_remove_from_group(args: Args) -> Response {
     execute_update(|state| c2c_remove_from_group_impl(args, state))
 }
 
-// Called by the group the user was removed from, so, as in the User canister, the caller is the
-// group to remove
+// Called by the group the user was removed from, so the caller is the group to remove
 fn c2c_remove_from_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     let Some(user_index) = state.index_of_local_user(args.user_id) else {
         return Response::Success;

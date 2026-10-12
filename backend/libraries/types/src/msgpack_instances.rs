@@ -1,12 +1,12 @@
 //! Instantiates, in this crate, the msgpack serializers and deserializers of the types below,
-//! which many crates (de)serialize, eg. the c2c clients of the Group, Community and User canisters.
+//! which many crates (de)serialize, eg. the c2c clients of the Group, Community and MultiUser canisters.
 //!
 //! The canisters are built with `opt-level = "z"`, under which rustc shares generic instances
 //! between crates: a crate links to an instance which a crate it depends on has already
 //! instantiated rather than instantiating its own. But crates which don't depend on one another
 //! each instantiate their own copy of an instance which none of their dependencies has, and every
 //! copy then ends up in the wasm, as they're different symbols. So a canister using several of
-//! those crates contains the same code several times over: the LocalUserIndex, which calls the
+//! those crates contains the same code several times over: the LocalUserIndex, which called the
 //! Group, Community and User canisters for their events, had three copies of `MessageContent`'s
 //! deserializer, of up to ~200KB each, and ~1.3MB of duplicated code in all, which took it within
 //! 250KB of the 12MB limit on a canister's code. And since which copy a crate links to depends on

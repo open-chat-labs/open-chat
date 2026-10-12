@@ -1465,10 +1465,10 @@ type MovableStore<V> = {
 // user's new id after they were migrated to a MultiUser canister. The move
 // doesn't change the events, the messages keeping the ids they were sent under, so they're rekeyed,
 // along with the chat they're recorded as being in. A reply to a message in the same chat is cached
-// without the chat, so needs nothing. The chat comes back from the User canister in full, which
-// can't say which of its events were updated since it was last synced, so the moved events are
-// marked dirty: they're shown at once, and fetched again when they are. An event already cached
-// under the new id, eg. one another tab loaded, is at least as new, so is kept.
+// without the chat, so needs nothing. The chat comes back from the current user's canister in
+// full, which can't say which of its events were updated since it was last synced, so the moved
+// events are marked dirty: they're shown at once, and fetched again when they are. An event
+// already cached under the new id, eg. one another tab loaded, is at least as new, so is kept.
 async function moveCachedEvents(
     store: MovableStore<EnhancedWrapper<ChatEvent> | ExpiredEventsRange>,
     from: string,

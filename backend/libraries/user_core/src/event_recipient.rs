@@ -1,7 +1,7 @@
 use types::{C2CError, CanisterId, UserId};
 
-// What has become of a user whose canister couldn't be called as a User canister when sending them
-// events
+// What has become of a user whose old id, which was a User canister's id, couldn't be called when
+// sending them events
 pub enum EventRecipient {
     // They have been migrated to a MultiUser canister, and have this new id
     Migrated(UserId),

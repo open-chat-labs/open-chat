@@ -22,8 +22,7 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
 
     // Delete the messages in the caller's copy of the chat, where they can delete the other user's
-    // messages as well as their own. Unlike the User canister, which passes no thread, this deletes
-    // messages within threads too.
+    // messages as well as their own. Messages within threads are deleted too.
     let (deleted, my_messages, thread_root_message_id) = state
         .data
         .users

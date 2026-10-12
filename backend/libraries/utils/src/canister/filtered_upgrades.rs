@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use types::{CanisterId, UpgradesFilter};
 
 // Used when upgrading canisters which are 2 levels below in the hierarchy
-// Essentially, user canisters (UserIndex -> LocalUserIndex -> User) and group canisters.
+// Essentially, MultiUser canisters (UserIndex -> LocalUserIndex -> MultiUser) and group canisters.
 // The return value is the list of child canisters to forward the upgrade request onto along with
 // the corresponding filter for each canister.
 //

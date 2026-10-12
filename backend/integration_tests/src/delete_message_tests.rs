@@ -575,7 +575,7 @@ fn is_deleted(content: &MessageContent) -> bool {
 }
 
 // Ticks until the message in the user's direct chat with `them` has reached their canister and its
-// content there satisfies the predicate. This can take many rounds, since a newly created User canister
+// content there satisfies the predicate. This can take many rounds, since a newly created canister
 // periodically takes around 10 rounds to handle its first message (seemingly while the wasm is compiled
 // on its subnet), a number which grows with the size of the wasm.
 fn wait_for_message(

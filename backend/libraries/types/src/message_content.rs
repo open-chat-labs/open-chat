@@ -906,10 +906,8 @@ pub struct P2PSwapContentInitial {
     pub token1_amount: u128,
     pub expires_in: Milliseconds,
     pub caption: Option<String>,
-    // The account token0 is deposited from. Sent via the user's canister it defaults to that
-    // canister's own account, and sent to a Group or Community directly, to the caller's wallet. Any
-    // other account must have approved the canister taking the deposit as spender, since it is then
-    // pulled via ICRC-2.
+    // The account token0 is deposited from, defaulting to the user's wallet. It must have approved
+    // the canister taking the deposit as spender, since the deposit is pulled via ICRC-2.
     pub from_account: Option<icrc1::Account>,
 }
 
