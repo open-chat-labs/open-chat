@@ -18,6 +18,7 @@ import {
     type CommunityIdentifier,
     type CommunityPermissions,
     type CommunitySummary,
+    type CryptocurrencyDetails,
     type EventWrapper,
     type GroupChatIdentifier,
     type GroupChatSummary,
@@ -46,6 +47,7 @@ import { addToWritableMap } from "../utils";
 import {
     allChatsStore,
     cryptoBalanceStore,
+    cryptoLookup,
     allServerChatsStore,
     chatListScopeStore,
     chatSummariesListStore,
@@ -72,6 +74,7 @@ import {
     serverGroupChatsStore,
     serverPinnedChatsStore,
     translationsStore,
+    walletTokenBySymbol,
 } from "./stores";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -979,6 +982,75 @@ describe("getConvertedBalances", () => {
             btcBalance: undefined,
             ethBalance: undefined,
         });
+    });
+});
+
+describe("walletTokenBySymbol", () => {
+    // Two tokens in the registry with the symbol TENDY
+    const TENDY_LEDGER = "kylwo-viaaa-aaaaq-aae7a-cai";
+    const OTHER_TENDY_LEDGER = "iozql-7iaaa-aaaah-advvq-cai";
+
+    function token(ledger: string, enabled: boolean): CryptocurrencyDetails {
+        return {
+            name: "Tendy",
+            symbol: "TENDY",
+            ledger,
+            index: undefined,
+            decimals: 8,
+            transferFee: 10_000n,
+            logo: "",
+            infoUrl: "",
+            transactionUrlFormat: "",
+            supportedStandards: [],
+            added: 0n,
+            enabled,
+            oneSecEnabled: false,
+            evmContractAddresses: [],
+            lastUpdated: 0n,
+        };
+    }
+
+    function registry(...tokens: CryptocurrencyDetails[]) {
+        cryptoLookup.set(new Map(tokens.map((t) => [t.ledger, t])));
+    }
+
+    afterEach(() => {
+        cryptoLookup.set(new Map());
+        cryptoBalanceStore.setBalance(TENDY_LEDGER, 0n);
+        cryptoBalanceStore.setBalance(OTHER_TENDY_LEDGER, 0n);
+    });
+
+    test("prefers the one the user holds", () => {
+        registry(token(TENDY_LEDGER, true), token(OTHER_TENDY_LEDGER, true));
+        cryptoBalanceStore.setBalance(OTHER_TENDY_LEDGER, 100n);
+
+        expect(walletTokenBySymbol("TENDY")?.ledger).toBe(OTHER_TENDY_LEDGER);
+    });
+
+    test("prefers an enabled one over a disabled one the user holds", () => {
+        registry(token(TENDY_LEDGER, true), token(OTHER_TENDY_LEDGER, false));
+        cryptoBalanceStore.setBalance(OTHER_TENDY_LEDGER, 100n);
+
+        expect(walletTokenBySymbol("TENDY")?.ledger).toBe(TENDY_LEDGER);
+    });
+
+    test("takes a disabled one the user holds when none is enabled", () => {
+        registry(token(TENDY_LEDGER, false), token(OTHER_TENDY_LEDGER, false));
+        cryptoBalanceStore.setBalance(OTHER_TENDY_LEDGER, 100n);
+
+        expect(walletTokenBySymbol("TENDY")?.ledger).toBe(OTHER_TENDY_LEDGER);
+    });
+
+    test("skips a disabled one the user holds none of", () => {
+        registry(token(TENDY_LEDGER, false));
+
+        expect(walletTokenBySymbol("TENDY")).toBeUndefined();
+    });
+
+    test("matches the symbol regardless of case", () => {
+        registry(token(TENDY_LEDGER, true));
+
+        expect(walletTokenBySymbol("tendy")?.ledger).toBe(TENDY_LEDGER);
     });
 });
 

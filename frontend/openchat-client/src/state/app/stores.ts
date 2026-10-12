@@ -258,6 +258,14 @@ export const cryptoTokensSorted = derived(enhancedCryptoLookup, ($lookup) => {
     return [...$lookup.values()].filter((t) => t.enabled || !t.zero).sort(compareTokens);
 });
 
+// Several ledgers can share a symbol, so prefer an enabled one, then the first in the wallet's
+// order, which puts the tokens the user holds first
+export function walletTokenBySymbol(symbol: string): EnhancedTokenDetails | undefined {
+    const lower = symbol.toLowerCase();
+    const matches = cryptoTokensSorted.value.filter((t) => t.symbol.toLowerCase() === lower);
+    return matches.find((t) => t.enabled) ?? matches[0];
+}
+
 function meetsAutoWalletCriteria(config: WalletConfig, token: EnhancedTokenDetails): boolean {
     return (
         config.kind === "auto_wallet" &&
