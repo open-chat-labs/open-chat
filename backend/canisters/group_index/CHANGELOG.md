@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Don't leave a group or community name reserved when there's no LocalIndex to create it on ([#9901](https://github.com/open-chat-labs/open-chat/pull/9901))
+- Don't leave a group or community name reserved when creating it fails ([#9901](https://github.com/open-chat-labs/open-chat/pull/9901))
 
 ## [[2.0.2120](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2120-group_index)] - 2026-10-08
 
