@@ -1,3 +1,4 @@
+use crate::jobs::start_user_migrations;
 use crate::lifecycle::init_state;
 use crate::memory::{get_stable_memory_map_memory, get_upgrades_memory};
 use crate::{Data, RuntimeState, mutate_state};
@@ -67,4 +68,7 @@ fn delete_users_stuck_on_0_0_0(state: &mut RuntimeState) {
         }
         info!(%user_id, deleted, "Deleted user stuck on 0.0.0");
     }
+
+    // Their migrations' slots are free for others
+    start_user_migrations::run(state);
 }

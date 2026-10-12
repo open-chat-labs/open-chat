@@ -56,6 +56,7 @@ async fn process_user(user: UserToDelete) {
 
                 // The user's canister has been uninstalled but still holds its cycles
                 if removed && user_id.index() == 0 {
+                    state.data.users_requiring_upgrade.remove_failed(&user_id.canister_id());
                     state.data.cycles_refund_queue.push_back(CanisterToRefund {
                         canister_id: user_id.canister_id(),
                         attempt: 0,
