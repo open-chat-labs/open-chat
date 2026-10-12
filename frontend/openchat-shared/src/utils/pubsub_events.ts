@@ -89,10 +89,7 @@ export type PubSubEvents = {
     claimDailyChit: undefined;
     dailyPuzzle: { gameId?: string };
     shareDailyResult: DailyResultContent;
-    joinGroup: {
-        group: MultiUserChat;
-        select: boolean;
-    };
+    joinGroup: MultiUserChat;
     createCommunity: undefined;
     unarchiveChat: ChatIdentifier;
     forward: Message;

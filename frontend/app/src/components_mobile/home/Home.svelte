@@ -34,6 +34,7 @@
         localUpdates,
         offlineStore,
         pinNumberResolverStore,
+        postLoginJoin,
         publish,
         querystringStore,
         routeForChatIdentifier,
@@ -45,7 +46,8 @@
         subscribe,
         suspendedUserStore,
     } from "@client";
-    import { getContext, onMount, untrack } from "svelte";
+    import { getContext, onMount, tick, untrack } from "svelte";
+    import { groupPreviewState } from "@src/utils/preview.svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../i18n/i18n";
     import { chitPopup, disableChit } from "../../stores/settings";
@@ -140,6 +142,7 @@
             subscribe("makeProposal", showMakeProposalModal),
             subscribe("leaveGroup", onTriggerConfirm),
             subscribe("unarchiveChat", unarchiveChat),
+            subscribe("joinGroup", (group) => groupPreviewState.joinGroup(client, group)),
             subscribe("toggleMuteNotifications", toggleMuteNotifications),
             subscribe("successfulImport", successfulImport),
             subscribe("clearSelection", () => navigate(routeForScope($chatListScopeStore))),
@@ -507,14 +510,10 @@
     let showOnboarding = $derived(client.isHomeRoute($routeStore) && $anonUserStore);
 
     trackedEffect("identity-state", () => {
-        if (
-            $identityStateStore.kind === "logged_in" &&
-            $identityStateStore.postLogin?.kind === "join_group" &&
-            $chatsInitialisedStore
-        ) {
-            // const join = { ...$identityStateStore.postLogin };
+        const postLoginGroup = postLoginJoin($identityStateStore, $chatsInitialisedStore);
+        if (postLoginGroup !== undefined) {
             client.clearPostLoginState();
-            // tick().then(() => joinGroup(join));
+            tick().then(() => groupPreviewState.joinGroup(client, postLoginGroup));
         }
     });
 

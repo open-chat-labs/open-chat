@@ -27,6 +27,7 @@ export {
     TimelineGrouper,
 } from "./utils/chat";
 export * from "./utils/cryptoFormatter";
+export { postLoginJoin } from "./utils/joinGroup";
 export type { TrackingCategory } from "./utils/ga";
 export { toRecord } from "./utils/list";
 export { quantiseWaveform, type Dimensions } from "./utils/media";

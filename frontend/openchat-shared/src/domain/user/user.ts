@@ -165,7 +165,6 @@ export type JoinCommunity = {
 export type JoinGroup = {
     kind: "join_group";
     group: MultiUserChat;
-    select: boolean;
 };
 
 export type IdentityState =
