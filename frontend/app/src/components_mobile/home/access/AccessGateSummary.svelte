@@ -2,7 +2,7 @@
     import type { IconComponent } from "@src/utils/iconComponent";
     import { i18nKey } from "@src/i18n/i18n";
     import { disableCryptoPaymentsFeature } from "@src/utils/features";
-    import { accessApprovalState } from "@src/utils/preview.svelte";
+    import type { GateEvaluation } from "@shared_components/home/access/gateEvaluation.svelte";
     import {
         Avatar,
         Body,
@@ -35,6 +35,7 @@
 
     interface Props {
         gate: LeafGate;
+        evaluation: GateEvaluation;
         satisfied: boolean;
         onClick: (g: LeafGate) => void;
     }
@@ -42,7 +43,7 @@
     const restrictedMsg = i18nKey(
         "Unfortunately access gates of this type cannot be met from the native app",
     );
-    let { gate, onClick, satisfied }: Props = $props();
+    let { gate, evaluation, onClick, satisfied }: Props = $props();
     let token = $derived(client.getTokenDetailsForAccessGate(gate));
     let tokenState = $derived.by(() => {
         switch (gate.kind) {
@@ -179,7 +180,7 @@
 
 {#if gate.kind !== "no_gate"}
     {#if gate.kind === "payment_gate" && tokenState}
-        {@const balance = accessApprovalState.balanceAfterCurrentCommitments(
+        {@const balance = evaluation.balanceAfterCurrentCommitments(
             tokenState.ledger,
             tokenState.cryptoBalance,
         )}
@@ -195,7 +196,7 @@
             tokenState.unknown ? undefined : () => tokenState.refreshBalance(client),
         )}
     {:else if gate.kind === "token_balance_gate" && tokenState}
-        {@const balance = accessApprovalState.balanceAfterCurrentCommitments(
+        {@const balance = evaluation.balanceAfterCurrentCommitments(
             tokenState.ledger,
             tokenState.cryptoBalance,
         )}

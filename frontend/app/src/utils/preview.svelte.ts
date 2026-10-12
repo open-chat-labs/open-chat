@@ -10,67 +10,8 @@ import type {
     MultiUserChat,
     OpenChat,
 } from "@client";
-import { chatListScopeStore, type PaymentGateApprovals, publish, ROLE_NONE, routeForScope, selectedChatSummaryStore, selectedCommunitySummaryStore, stripSuspendedGate } from "@client";
+import { chatListScopeStore, publish, ROLE_NONE, routeForScope, selectedChatSummaryStore, selectedCommunitySummaryStore, stripSuspendedGate } from "@client";
 import { navigate } from "@utils/navigation";
-
-class ApprovalsAndCredentials {
-    #credentials = $state<string[]>([]);
-    #paymentApprovals = $state<PaymentGateApprovals>(new Map());
-    #compositeGateIndex = $state<number | undefined>(undefined);
-
-    get credentials() {
-        return this.#credentials;
-    }
-
-    get paymentApprovals() {
-        return this.#paymentApprovals;
-    }
-
-    get compositeGateIndex() {
-        return this.#compositeGateIndex;
-    }
-
-    setCompositeGateIndex(index: number) {
-        this.#compositeGateIndex = index;
-    }
-
-    reset() {
-        this.#credentials = [];
-        this.#paymentApprovals = new Map();
-        this.#compositeGateIndex = undefined;
-    }
-
-    addCredential(cred: string) {
-        this.#credentials.push(cred);
-    }
-
-    addPaymentApproval({
-        ledger,
-        amount,
-        approvalFee,
-    }: {
-        ledger: string;
-        amount: bigint;
-        approvalFee: bigint;
-    }) {
-        const existing = this.#paymentApprovals.get(ledger);
-        if (existing !== undefined) {
-            // if we already have an approval pending for this ledger we add on the amount
-            // but there will only be one fee
-            existing.amount += amount;
-            this.#paymentApprovals.set(ledger, existing);
-        } else {
-            this.#paymentApprovals.set(ledger, {
-                amount,
-                approvalFee,
-            });
-        }
-    }
-
-    balanceAfterCurrentCommitments(ledger: string, balance: bigint) {
-        return balance - (this.#paymentApprovals.get(ledger)?.amount ?? 0n);
-    }
-}
 
 class GroupPreview {
     #community = $state<CommunitySummary>();
@@ -147,7 +88,6 @@ class GroupPreview {
             const outcome = await client.joinGroup(group, gateCheck);
             switch (outcome.kind) {
                 case "needs_gate_evaluation":
-                    accessApprovalState.reset();
                     this.#gatesToEvaluate = outcome.gates;
                     publish("evaluateGroupAccessGate");
                     break;
@@ -241,7 +181,6 @@ class CommunityPreview {
             const outcome = await client.joinCommunity(community, gateCheck);
             switch (outcome.kind) {
                 case "needs_gate_evaluation":
-                    accessApprovalState.reset();
                     this.#gatesToEvaluate = outcome.gates;
                     publish("evaluateCommunityAccessGate");
                     break;
@@ -279,4 +218,3 @@ class CommunityPreview {
 
 export const groupPreviewState = new GroupPreview();
 export const communityPreviewState = new CommunityPreview();
-export const accessApprovalState = new ApprovalsAndCredentials();

@@ -86,7 +86,7 @@
         "sirv-cli": "^2.0.2",
         "smoothscroll": "^0.4.0",
         "svelte-confetti": "^2.1.2",
-        "svelte-dnd-action": "^0.9.52",
+        "svelte-dnd-action": "^0.9.80",
         "svelte-easy-crop": "^5.0.1",
         "svelte-i18n": "3.7.4",
         "svelte-material-icons": "^3.0.5",
