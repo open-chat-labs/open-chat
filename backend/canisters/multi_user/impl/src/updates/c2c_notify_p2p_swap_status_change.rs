@@ -3,8 +3,8 @@ use crate::{MultiUserEventPusher, execute_update_async, mutate_state, read_state
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use escrow_canister::SwapStatusChange as Args;
+use multi_user_canister::UserCanisterEvent;
 use types::{Chat, P2PSwapLocation, UserId};
-use user_canister::UserCanisterEvent;
 use user_core::updates::c2c_notify_p2p_swap_status_change::{apply_status_change, offerer_user_id};
 
 // The User canister's `c2c_notify_p2p_swap_status_change`, for swaps offered in direct chats. The

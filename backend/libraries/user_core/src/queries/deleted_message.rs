@@ -1,8 +1,8 @@
 use crate::User;
 use chat_events::{MessageContentInternal, Reader};
+use multi_user_canister::deleted_message::{Args, SuccessResult};
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, UserId, UserIdAndPrincipal};
-use user_canister::deleted_message::{Args, SuccessResult};
 use utils::migrated_user_ids::MigratedUserIds;
 
 pub fn deleted_message(

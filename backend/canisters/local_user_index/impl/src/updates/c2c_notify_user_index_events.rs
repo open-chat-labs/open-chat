@@ -5,17 +5,17 @@ use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_index_events::*;
 use local_user_index_canister::{UserIndexEvent, UserRegistered};
+use multi_user_canister::{
+    DiamondMembershipPaymentReceived, DisplayNameChanged, ExternalAchievementAwarded, OpenChatBotMessageV2,
+    PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    UserSuspended, UsernameChanged,
+};
 use p256_key_pair::P256KeyPair;
 use stable_memory_map::StableMemoryMap;
 use std::cell::LazyCell;
 use types::{
     BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotRegisteredEvent, PushIfNotContains,
     TimestampMillis,
-};
-use user_canister::{
-    DiamondMembershipPaymentReceived, DisplayNameChanged, ExternalAchievementAwarded, OpenChatBotMessageV2,
-    PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup,
-    UserSuspended, UsernameChanged,
 };
 
 #[update(guard = "caller_is_user_index", msgpack = true)]

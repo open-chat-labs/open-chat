@@ -3,8 +3,8 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
-use user_canister::mark_read::*;
-use user_canister::{MarkMessagesReadArgs, UserCanisterEvent};
+use multi_user_canister::mark_read::*;
+use multi_user_canister::{MarkMessagesReadArgs, UserCanisterEvent};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

@@ -4,7 +4,7 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use constants::OPENCHAT_BOT_USER_ID;
-use user_canister::cancel_message_reminder::*;
+use multi_user_canister::cancel_message_reminder::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

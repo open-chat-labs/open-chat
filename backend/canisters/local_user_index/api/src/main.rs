@@ -45,7 +45,6 @@ fn main() {
     generate_ts_method!(local_user_index, reinstate_missed_daily_claims);
     generate_ts_method!(local_user_index, register_user);
     generate_ts_method!(local_user_index, uninstall_bot);
-    generate_ts_method!(local_user_index, withdraw_from_icpswap);
 
     <BotEventWrapper as ::ts_rs::TS>::export_all_to("tsBindings").unwrap();
 }

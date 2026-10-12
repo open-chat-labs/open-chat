@@ -3,8 +3,8 @@ use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::reinstate_missed_daily_claims::*;
+use multi_user_canister::LocalUserIndexEvent;
 use oc_error_codes::OCErrorCode;
-use user_canister::LocalUserIndexEvent;
 
 #[update(guard = "caller_is_platform_operator", msgpack = true)]
 #[trace]

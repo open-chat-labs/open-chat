@@ -1,8 +1,8 @@
 use crate::User;
+use multi_user_canister::ChatInList;
+use multi_user_canister::pin_chat_v2::Args;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, TimestampMillis};
-use user_canister::ChatInList;
-use user_canister::pin_chat_v2::Args;
 
 // The caller awards the `PinnedChat` achievement on success
 pub fn pin_chat_v2(user: &mut User, args: Args, now: TimestampMillis) -> OCResult {

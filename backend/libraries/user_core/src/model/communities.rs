@@ -142,9 +142,9 @@ mod tests {
     use candid::Principal;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use multi_user_canister::mark_read::ChannelMessagesRead;
     use stable_memory_map::{with_map, with_map_mut};
     use types::ChannelId;
-    use user_canister::mark_read::ChannelMessagesRead;
 
     #[test]
     fn removed_since_excludes_communities_rejoined() {

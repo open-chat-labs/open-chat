@@ -1,7 +1,7 @@
 use crate::User;
+use multi_user_canister::c2c_pay_for_premium_item::{Args, SuccessResult};
 use oc_error_codes::OCErrorCode;
 use types::{ChitEvent, ChitEventType, OCResult, TimestampMillis};
-use user_canister::c2c_pay_for_premium_item::{Args, SuccessResult};
 
 // Spends the user's CHIT on the item. The caller tells the LocalUserIndex of the user's new CHIT
 // balance on success.

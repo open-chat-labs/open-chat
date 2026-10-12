@@ -3,8 +3,8 @@ use crate::updates::remove_reaction::toggle_reaction;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::add_reaction::*;
 use types::Achievement;
-use user_canister::add_reaction::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

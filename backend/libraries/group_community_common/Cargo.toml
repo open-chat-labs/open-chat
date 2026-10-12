@@ -15,13 +15,13 @@ ic-cdk-management-canister = { workspace = true }
 icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../ledger_utils" }
 local_user_index_canister_c2c_client = { path = "../../canisters/local_user_index/c2c_client" }
+multi_user_canister = { path = "../../canisters/multi_user/api" }
 oc_error_codes = { path = "../error_codes" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_repr = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../types" }
-user_canister = { path = "../../canisters/user/api" }
 utils = { path = "../utils" }
 
 [dev-dependencies]

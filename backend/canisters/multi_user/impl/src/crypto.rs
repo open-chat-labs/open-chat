@@ -1,13 +1,5 @@
-use oc_error_codes::{OCError, OCErrorCode};
+use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult, UserId, icrc1};
-
-// Users hold their own funds in their principal's account, which this canister can't spend from or
-// approve transfers from. So the endpoints which would spend a user's funds for them reject the
-// request until users can make those payments themselves.
-pub fn user_funds_not_spendable() -> OCError {
-    OCErrorCode::InvalidRequest
-        .with_message("Not supported by the MultiUser canister, since users hold their own funds in their own wallets")
-}
 
 // The wallet of a user in another canister, as in the User canister. A user alone in their canister,
 // or a bot, holds their funds in the account of their user id. A user in a MultiUser canister holds

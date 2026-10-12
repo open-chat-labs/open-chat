@@ -44,13 +44,6 @@ describe("userWalletAccount", () => {
 });
 
 describe("userCanisterSpenderAccount", () => {
-    test("a User canister spends as itself", () => {
-        const account = userCanisterSpenderAccount(canisterId, noPrincipal);
-
-        expect(account.owner.toText()).toBe(canisterId);
-        expect(account.subaccount).toBeUndefined();
-    });
-
     test("a MultiUser canister spends under the user's own subaccount", () => {
         const account = userCanisterSpenderAccount(indexedUserId, getPrincipal);
 
@@ -66,16 +59,7 @@ describe("paymentSpenderAccount", () => {
     const channel = { kind: "channel", communityId, channelId: 1 } as const;
     const direct = { kind: "direct_chat", userId: groupId } as const;
 
-    test("a User canister pulls every payment its user makes", () => {
-        for (const chatId of [group, channel, direct, undefined]) {
-            const account = paymentSpenderAccount(canisterId, chatId, noPrincipal);
-
-            expect(account.owner.toText()).toBe(canisterId);
-            expect(account.subaccount).toBeUndefined();
-        }
-    });
-
-    test("a group or community pulls a payment made in it by a user who holds their own funds", () => {
+    test("a group or community pulls a payment made in it", () => {
         for (const [chatId, owner] of [
             [group, groupId],
             [channel, communityId],
@@ -87,7 +71,7 @@ describe("paymentSpenderAccount", () => {
         }
     });
 
-    test("a MultiUser canister pulls any other payment made by a user who holds their own funds", () => {
+    test("a MultiUser canister pulls any other payment", () => {
         for (const chatId of [direct, undefined]) {
             const account = paymentSpenderAccount(indexedUserId, chatId, getPrincipal);
 
@@ -98,17 +82,8 @@ describe("paymentSpenderAccount", () => {
 });
 
 describe("walletApprovalFee", () => {
-    test("a user alone in their canister pays no approval fee from their OpenChat wallet", () => {
-        expect(walletApprovalFee(canisterId, 10_000n, false)).toBe(0n);
-    });
-
-    test("a user who holds their own funds pays the transfer fee for the approval", () => {
-        expect(walletApprovalFee(indexedUserId, 10_000n, false)).toBe(10_000n);
-    });
-
-    test("any user pays the transfer fee for an external wallet's approval", () => {
-        expect(walletApprovalFee(canisterId, 10_000n, true)).toBe(10_000n);
-        expect(walletApprovalFee(indexedUserId, 10_000n, true)).toBe(10_000n);
+    test("the wallet pays the transfer fee for the approval", () => {
+        expect(walletApprovalFee(10_000n)).toBe(10_000n);
     });
 });
 

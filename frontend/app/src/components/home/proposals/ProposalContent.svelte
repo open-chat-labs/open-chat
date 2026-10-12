@@ -5,11 +5,10 @@
         type ProposalContent,
         ProposalDecisionStatus,
         type RegisterProposalVoteResponse,
-        currentUserIdStore,
         iconSize,
         proposalTopicsStore,
     } from "@client";
-    import { ErrorCode, isMultiUserCanisterUser, type ReadonlyMap } from "@shared";
+    import { ErrorCode, type ReadonlyMap } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ExpandIcon from "svelte-material-icons/ArrowExpandDown.svelte";
@@ -64,23 +63,8 @@
     let showNeuronInfo = $state(false);
     let showPayload = $state(false);
 
-    // Users in a MultiUser canister vote with the neurons hot-keyed to their own principal,
-    // everyone else with those hot-keyed to their User canister, ie. their user id
-    let votingWithPrincipal = $derived(isMultiUserCanisterUser($currentUserIdStore));
-    let votingHotkey = $derived(
-        votingWithPrincipal ? client.OcIdentityPrincipal : $currentUserIdStore,
-    );
-
-    let noEligibleNeuronsIntro = $derived(
-        votingWithPrincipal
-            ? $_("proposal.noEligibleNeuronsPrincipalIntro")
-            : $_("proposal.noEligibleNeuronsUserIdIntro"),
-    );
-    let votingHotkeyLabel = $derived(
-        votingWithPrincipal
-            ? i18nKey("proposal.noEligibleNeuronsPrincipalLabel")
-            : i18nKey("proposal.noEligibleNeuronsUserIdLabel"),
-    );
+    // Users vote with the neurons hot-keyed to their own principal
+    let votingHotkey = $derived(client.OcIdentityPrincipal);
 
     function copyVotingHotkey() {
         copyToClipboard(votingHotkey).then((success) => {
@@ -333,9 +317,9 @@
             {/snippet}
             {#snippet body()}
                 <div class="no-neurons">
-                    <Markdown text={noEligibleNeuronsIntro} />
+                    <Markdown text={$_("proposal.noEligibleNeuronsPrincipalIntro")} />
                     <div>
-                        <Translatable resourceKey={votingHotkeyLabel} />
+                        <Translatable resourceKey={i18nKey("proposal.noEligibleNeuronsPrincipalLabel")} />
                         <div class="voting-hotkey">
                             <span class="voting-hotkey-text">{votingHotkey}</span>
                             <button

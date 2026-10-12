@@ -77,7 +77,7 @@ fn empty_message_fails() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    let send_message_args = user_canister::send_message_v2::Args {
+    let send_message_args = multi_user_canister::send_message_v2::Args {
         recipient: user2.user_id,
         thread_root_message_index: None,
         message_id: random_from_u128(),
@@ -90,7 +90,7 @@ fn empty_message_fails() {
         og_previews: Vec::new(),
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
-    if !matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent))
+    if !matches!(&response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidMessageContent))
     {
         panic!("SendMessage was expected to return InvalidMessageContent but did not: {response:?}");
     }
@@ -104,7 +104,7 @@ fn text_too_long_fails() {
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
 
-    let send_message_args = user_canister::send_message_v2::Args {
+    let send_message_args = multi_user_canister::send_message_v2::Args {
         recipient: user2.user_id,
         thread_root_message_index: None,
         message_id: random_from_u128(),
@@ -119,7 +119,7 @@ fn text_too_long_fails() {
         og_previews: Vec::new(),
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
-    if !matches!(&response, user_canister::send_message_v2::Response::Error(e)
+    if !matches!(&response, multi_user_canister::send_message_v2::Response::Error(e)
         if e.matches_code(OCErrorCode::InvalidMessageContent) && e.message().is_some_and(|m| m.contains("10000")))
     {
         panic!("SendMessage was expected to return InvalidMessageContent but did not: {response:?}");

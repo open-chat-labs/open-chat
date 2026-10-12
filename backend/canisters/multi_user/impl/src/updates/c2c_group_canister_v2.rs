@@ -1,9 +1,9 @@
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::GroupCanisterEvent;
+use multi_user_canister::c2c_group_canister_v2::*;
 use std::collections::BTreeSet;
-use user_canister::GroupCanisterEvent;
-use user_canister::c2c_group_canister_v2::*;
 
 #[update(msgpack = true)]
 #[trace]

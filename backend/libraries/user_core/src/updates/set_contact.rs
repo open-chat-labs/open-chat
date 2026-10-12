@@ -1,7 +1,7 @@
 use crate::{SetContactResponse, User};
+use multi_user_canister::set_contact::Args;
 use oc_error_codes::OCErrorCode;
 use types::OCResult;
-use user_canister::set_contact::Args;
 
 pub fn set_contact(user: &mut User, args: Args) -> OCResult {
     user.verify_not_suspended()?;

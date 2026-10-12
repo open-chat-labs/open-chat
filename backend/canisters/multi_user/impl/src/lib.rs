@@ -11,6 +11,7 @@ use direct_chat::DirectChat;
 use event_store_types::{Event, EventBuilder};
 use ledger_utils::certified::CertifiedTransfers;
 use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserEventWithUserId};
+use multi_user_canister::UserCanisterEvent;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::prelude::StdRng;
@@ -26,7 +27,6 @@ use types::{
     OCResult, ReferralStatus, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim,
     UserCanisterStreakInsurancePayment, UserId, UserNotification, UserType,
 };
-use user_canister::UserCanisterEvent;
 use user_core::User;
 use user_core::{Community, GroupChat};
 use utils::async_work::AsyncWorkGuard;
@@ -282,7 +282,7 @@ impl RuntimeState {
             IdempotentEnvelope {
                 created_at: self.env.now(),
                 idempotency_id: self.env.rng().next_u64(),
-                value: user_canister::c2c_user_canister_v2::Event {
+                value: multi_user_canister::c2c_user_canister_v2::Event {
                     sender,
                     recipient,
                     event,

@@ -1,5 +1,5 @@
 use crate::{generate_msgpack_query_call, generate_msgpack_update_call, generate_update_call};
-use user_canister::*;
+use multi_user_canister::*;
 
 // Queries
 generate_msgpack_query_call!(bio);
@@ -19,7 +19,7 @@ generate_msgpack_query_call!(messages_by_message_index);
 generate_msgpack_query_call!(public_profile);
 generate_msgpack_query_call!(saved_crypto_accounts);
 generate_msgpack_query_call!(search_messages);
-generate_msgpack_query_call!(token_swap_status);
+generate_msgpack_query_call!(token_swaps);
 generate_msgpack_query_call!(unfinished_token_swaps);
 generate_msgpack_query_call!(updates);
 
@@ -27,7 +27,6 @@ generate_msgpack_query_call!(updates);
 generate_msgpack_update_call!(accept_p2p_swap);
 generate_msgpack_update_call!(add_hot_group_exclusions);
 generate_msgpack_update_call!(add_reaction);
-generate_msgpack_update_call!(approve_transfer);
 generate_msgpack_update_call!(archive_unarchive_chats);
 generate_msgpack_update_call!(block_user);
 generate_msgpack_update_call!(c2c_charge_user_account);
@@ -43,7 +42,6 @@ generate_msgpack_update_call!(c2c_remove_from_group);
 generate_msgpack_update_call!(c2c_set_user_suspended);
 generate_msgpack_update_call!(c2c_uninstall_bot);
 generate_msgpack_update_call!(c2c_user_canister_v2);
-generate_msgpack_update_call!(c2c_withdraw_from_icpswap);
 generate_msgpack_update_call!(cancel_message_reminder);
 generate_msgpack_update_call!(cancel_p2p_swap);
 generate_msgpack_update_call!(check_pin_number);
@@ -74,8 +72,6 @@ generate_msgpack_update_call!(remove_reaction);
 generate_msgpack_update_call!(report_message);
 generate_msgpack_update_call!(save_crypto_account);
 generate_msgpack_update_call!(send_message_v2);
-generate_msgpack_update_call!(send_message_with_transfer_to_channel);
-generate_msgpack_update_call!(send_message_with_transfer_to_group);
 generate_msgpack_update_call!(set_avatar);
 generate_msgpack_update_call!(set_bio);
 generate_msgpack_update_call!(set_community_indexes);
@@ -84,19 +80,19 @@ generate_msgpack_update_call!(set_message_reminder_v2);
 generate_msgpack_update_call!(set_pin_number);
 generate_msgpack_update_call!(set_profile_background);
 generate_update_call!(start_video_call_v2);
-generate_msgpack_update_call!(swap_tokens);
 generate_msgpack_update_call!(tip_message);
 generate_msgpack_update_call!(unblock_user);
 generate_msgpack_update_call!(undelete_messages);
 generate_msgpack_update_call!(unmute_notifications);
 generate_msgpack_update_call!(unpin_chat_v2);
 generate_msgpack_update_call!(update_chat_settings);
-generate_msgpack_update_call!(withdraw_crypto_v2);
 
 pub mod happy_path {
     use crate::User;
     use crate::env::VIDEO_CALL_OPERATOR;
     use constants::{CHAT_LEDGER_CANISTER_ID, CHAT_TRANSFER_FEE};
+    use multi_user_canister::NamedAccount;
+    use multi_user_canister::set_pin_number::PinNumberVerification;
     use pocket_ic::PocketIc;
     use testing::rng::random_from_u128;
     use types::{
@@ -104,8 +100,6 @@ pub mod happy_path {
         MessageId, MessageIndex, Milliseconds, PendingCryptoTransaction, Reaction, ReplyContext, Rules, TextContent,
         TimestampMillis, UnitResult, UserId, VideoCallType, icrc1, icrc2,
     };
-    use user_canister::NamedAccount;
-    use user_canister::set_pin_number::PinNumberVerification;
 
     pub fn send_text_message(
         env: &mut PocketIc,
@@ -113,12 +107,12 @@ pub mod happy_path {
         recipient: UserId,
         text: impl ToString,
         message_id: Option<MessageId>,
-    ) -> user_canister::send_message_v2::SuccessResult {
+    ) -> multi_user_canister::send_message_v2::SuccessResult {
         let response = super::send_message_v2(
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::send_message_v2::Args {
+            &multi_user_canister::send_message_v2::Args {
                 recipient,
                 thread_root_message_index: None,
                 message_id: message_id.unwrap_or_else(random_from_u128),
@@ -133,7 +127,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_canister::send_message_v2::Response::Success(result) => result,
+            multi_user_canister::send_message_v2::Response::Success(result) => result,
             response => panic!("'send_message' error: {response:?}"),
         }
     }
@@ -146,14 +140,14 @@ pub mod happy_path {
         content: MessageContentInitial,
         replies_to: Option<ReplyContext>,
         message_id: Option<MessageId>,
-    ) -> user_canister::send_message_v2::SuccessResult {
+    ) -> multi_user_canister::send_message_v2::SuccessResult {
         // A message holding a transfer is paid for from the sender's wallet
         let content = crate::client::pay_from_wallet(env, sender, sender.canister(), content);
         let response = super::send_message_v2(
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::send_message_v2::Args {
+            &multi_user_canister::send_message_v2::Args {
                 recipient,
                 thread_root_message_index,
                 message_id: message_id.unwrap_or_else(random_from_u128),
@@ -169,8 +163,8 @@ pub mod happy_path {
         );
 
         match response {
-            user_canister::send_message_v2::Response::Success(result) => result,
-            user_canister::send_message_v2::Response::TransferSuccessV2(result) => result.into(),
+            multi_user_canister::send_message_v2::Response::Success(result) => result,
+            multi_user_canister::send_message_v2::Response::TransferSuccessV2(result) => result.into(),
             response => panic!("'send_message' error: {response:?}"),
         }
     }
@@ -187,7 +181,7 @@ pub mod happy_path {
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::edit_message_v2::Args {
+            &multi_user_canister::edit_message_v2::Args {
                 user_id,
                 thread_root_message_index: None,
                 message_id,
@@ -198,7 +192,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_canister::edit_message_v2::Response::Success => {}
+            multi_user_canister::edit_message_v2::Response::Success => {}
             response => panic!("'edit_message_v2' error: {response:?}"),
         }
     }
@@ -214,7 +208,7 @@ pub mod happy_path {
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::create_group::Args {
+            &multi_user_canister::create_group::Args {
                 is_public,
                 name: name.to_string(),
                 description: format!("{name}_description"),
@@ -229,7 +223,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_canister::create_group::Response::Success(result) => result.chat_id,
+            multi_user_canister::create_group::Response::Success(result) => result.chat_id,
             response => panic!("'create_group' error: {response:?}"),
         }
     }
@@ -245,7 +239,7 @@ pub mod happy_path {
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::create_community::Args {
+            &multi_user_canister::create_community::Args {
                 is_public,
                 name: name.to_string(),
                 description: format!("{name}_description"),
@@ -262,7 +256,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_canister::create_community::Response::Success(result) => result.community_id,
+            multi_user_canister::create_community::Response::Success(result) => result.community_id,
             response => panic!("'create_community' error: {response:?}"),
         }
     }
@@ -272,42 +266,42 @@ pub mod happy_path {
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::add_reaction::Args {
+            &multi_user_canister::add_reaction::Args {
                 user_id,
                 thread_root_message_index: None,
                 message_id,
                 reaction: Reaction::new(reaction.to_string()),
             },
         );
-        assert!(matches!(response, user_canister::add_reaction::Response::Success));
+        assert!(matches!(response, multi_user_canister::add_reaction::Response::Success));
     }
 
     pub fn mark_read(
         env: &mut PocketIc,
         sender: &User,
-        messages_read: Vec<user_canister::mark_read::ChatMessagesRead>,
-        community_messages_read: Vec<user_canister::mark_read::CommunityMessagesRead>,
+        messages_read: Vec<multi_user_canister::mark_read::ChatMessagesRead>,
+        community_messages_read: Vec<multi_user_canister::mark_read::CommunityMessagesRead>,
     ) {
-        let user_canister::mark_read::Response::Success = super::mark_read(
+        let multi_user_canister::mark_read::Response::Success = super::mark_read(
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::mark_read::Args {
+            &multi_user_canister::mark_read::Args {
                 messages_read,
                 community_messages_read,
             },
         );
     }
 
-    pub fn initial_state(env: &PocketIc, sender: &User) -> user_canister::initial_state::SuccessResult {
+    pub fn initial_state(env: &PocketIc, sender: &User) -> multi_user_canister::initial_state::SuccessResult {
         let response = super::initial_state(
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::initial_state::Args {},
+            &multi_user_canister::initial_state::Args {},
         );
 
-        let user_canister::initial_state::Response::Success(result) = response;
+        let multi_user_canister::initial_state::Response::Success(result) = response;
         result
     }
 
@@ -324,7 +318,7 @@ pub mod happy_path {
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::events::Args {
+            &multi_user_canister::events::Args {
                 user_id: sender.user_id,
                 them,
                 thread_root_message_index: None,
@@ -337,7 +331,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_canister::events::Response::Success(result) => result,
+            multi_user_canister::events::Response::Success(result) => result,
             response => panic!("'events' error: {response:?}"),
         }
     }
@@ -347,7 +341,7 @@ pub mod happy_path {
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::events_by_index::Args {
+            &multi_user_canister::events_by_index::Args {
                 user_id: sender.user_id,
                 them,
                 thread_root_message_index: None,
@@ -357,7 +351,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_canister::events_by_index::Response::Success(result) => result,
+            multi_user_canister::events_by_index::Response::Success(result) => result,
             response => panic!("'events_by_index' error: {response:?}"),
         }
     }
@@ -373,7 +367,7 @@ pub mod happy_path {
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::events::Args {
+            &multi_user_canister::events::Args {
                 user_id: sender.user_id,
                 them,
                 thread_root_message_index: Some(thread_root_message_index),
@@ -385,7 +379,7 @@ pub mod happy_path {
             },
         );
 
-        let user_canister::events::Response::Success(result) = response else {
+        let multi_user_canister::events::Response::Success(result) = response else {
             panic!("'events' error: {response:?}");
         };
 
@@ -411,7 +405,7 @@ pub mod happy_path {
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::events_window::Args {
+            &multi_user_canister::events_window::Args {
                 user_id: sender.user_id,
                 them,
                 thread_root_message_index: None,
@@ -423,7 +417,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_canister::events_by_index::Response::Success(result) => result,
+            multi_user_canister::events_by_index::Response::Success(result) => result,
             response => panic!("'events_by_index' error: {response:?}"),
         }
     }
@@ -433,10 +427,10 @@ pub mod happy_path {
             env,
             user.principal,
             user.canister(),
-            &user_canister::leave_group::Args { chat_id: group_id },
+            &multi_user_canister::leave_group::Args { chat_id: group_id },
         );
 
-        assert!(matches!(response, user_canister::leave_group::Response::Success));
+        assert!(matches!(response, multi_user_canister::leave_group::Response::Success));
     }
 
     pub fn leave_community(env: &mut PocketIc, user: &User, community_id: CommunityId) {
@@ -444,27 +438,27 @@ pub mod happy_path {
             env,
             user.principal,
             user.canister(),
-            &user_canister::leave_community::Args { community_id },
+            &multi_user_canister::leave_community::Args { community_id },
         );
 
-        assert!(matches!(response, user_canister::leave_community::Response::Success));
+        assert!(matches!(response, multi_user_canister::leave_community::Response::Success));
     }
 
     pub fn updates(
         env: &PocketIc,
         user: &User,
         updates_since: TimestampMillis,
-    ) -> Option<user_canister::updates::SuccessResult> {
+    ) -> Option<multi_user_canister::updates::SuccessResult> {
         let response = super::updates(
             env,
             user.principal,
             user.canister(),
-            &user_canister::updates::Args { updates_since },
+            &multi_user_canister::updates::Args { updates_since },
         );
 
         match response {
-            user_canister::updates::Response::Success(result) => Some(result),
-            user_canister::updates::Response::SuccessNoUpdates => None,
+            multi_user_canister::updates::Response::Success(result) => Some(result),
+            multi_user_canister::updates::Response::SuccessNoUpdates => None,
         }
     }
 
@@ -472,16 +466,16 @@ pub mod happy_path {
         env: &PocketIc,
         user: &User,
         since: TimestampMillis,
-    ) -> user_canister::message_activity_feed::SuccessResult {
+    ) -> multi_user_canister::message_activity_feed::SuccessResult {
         let response = super::message_activity_feed(
             env,
             user.principal,
             user.canister(),
-            &user_canister::message_activity_feed::Args { since },
+            &multi_user_canister::message_activity_feed::Args { since },
         );
 
         match response {
-            user_canister::message_activity_feed::Response::Success(success_result) => success_result,
+            multi_user_canister::message_activity_feed::Response::Success(success_result) => success_result,
         }
     }
 
@@ -523,7 +517,7 @@ pub mod happy_path {
                 env,
                 sender.principal,
                 sender.canister(),
-                &user_canister::tip_message::Args {
+                &multi_user_canister::tip_message::Args {
                     chat,
                     recipient,
                     thread_root_message_index: None,
@@ -553,8 +547,8 @@ pub mod happy_path {
                         new_achievement: false,
                     },
                 ) {
-                    UnitResult::Success => user_canister::tip_message::Response::Success,
-                    UnitResult::Error(error) => user_canister::tip_message::Response::Error(error),
+                    UnitResult::Success => multi_user_canister::tip_message::Response::Success,
+                    UnitResult::Error(error) => multi_user_canister::tip_message::Response::Error(error),
                 }
             }
             Chat::Channel(community_id, channel_id) => {
@@ -574,14 +568,14 @@ pub mod happy_path {
                         new_achievement: false,
                     },
                 ) {
-                    UnitResult::Success => user_canister::tip_message::Response::Success,
-                    UnitResult::Error(error) => user_canister::tip_message::Response::Error(error),
+                    UnitResult::Success => multi_user_canister::tip_message::Response::Success,
+                    UnitResult::Error(error) => multi_user_canister::tip_message::Response::Error(error),
                 }
             }
         };
 
         match response {
-            user_canister::tip_message::Response::Success => (),
+            multi_user_canister::tip_message::Response::Success => (),
             response => panic!("'tip_message' error: {response:?}"),
         }
     }
@@ -597,7 +591,7 @@ pub mod happy_path {
             env,
             VIDEO_CALL_OPERATOR,
             recipient.canister_id(),
-            &user_canister::start_video_call_v2::Args {
+            &multi_user_canister::start_video_call_v2::Args {
                 user_id: recipient,
                 message_id,
                 initiator: user.user_id,
@@ -610,7 +604,10 @@ pub mod happy_path {
             },
         );
 
-        assert!(matches!(response, user_canister::start_video_call_v2::Response::Success))
+        assert!(matches!(
+            response,
+            multi_user_canister::start_video_call_v2::Response::Success
+        ))
     }
 
     pub fn join_video_call(env: &mut PocketIc, joiner: &User, other: UserId, message_id: MessageId) {
@@ -618,13 +615,13 @@ pub mod happy_path {
             env,
             joiner.principal,
             joiner.canister(),
-            &user_canister::join_video_call::Args {
+            &multi_user_canister::join_video_call::Args {
                 user_id: other,
                 message_id,
             },
         );
 
-        assert!(matches!(response, user_canister::join_video_call::Response::Success))
+        assert!(matches!(response, multi_user_canister::join_video_call::Response::Success))
     }
 
     pub fn end_video_call(env: &mut PocketIc, initiator: UserId, recipient: UserId, message_id: MessageId) {
@@ -632,14 +629,14 @@ pub mod happy_path {
             env,
             VIDEO_CALL_OPERATOR,
             recipient.canister_id(),
-            &user_canister::end_video_call_v2::Args {
+            &multi_user_canister::end_video_call_v2::Args {
                 user_id: recipient,
                 them: initiator,
                 message_id,
             },
         );
 
-        assert!(matches!(response, user_canister::end_video_call_v2::Response::Success))
+        assert!(matches!(response, multi_user_canister::end_video_call_v2::Response::Success))
     }
 
     pub fn set_pin_number(env: &mut PocketIc, user: &User, current: Option<String>, new: Option<String>) {
@@ -651,13 +648,13 @@ pub mod happy_path {
             env,
             user.principal,
             user.canister(),
-            &user_canister::set_pin_number::Args {
+            &multi_user_canister::set_pin_number::Args {
                 verification,
                 new: new.map(|p| p.into()),
             },
         );
 
-        assert!(matches!(response, user_canister::set_pin_number::Response::Success));
+        assert!(matches!(response, multi_user_canister::set_pin_number::Response::Success));
     }
 
     pub fn chit_events(
@@ -666,12 +663,12 @@ pub mod happy_path {
         from: Option<TimestampMillis>,
         to: Option<TimestampMillis>,
         max: u32,
-    ) -> user_canister::chit_events::SuccessResult {
+    ) -> multi_user_canister::chit_events::SuccessResult {
         let response = super::chit_events(
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::chit_events::Args {
+            &multi_user_canister::chit_events::Args {
                 from,
                 to,
                 skip: None,
@@ -681,7 +678,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_canister::chit_events::Response::Success(result) => result,
+            multi_user_canister::chit_events::Response::Success(result) => result,
         }
     }
 
@@ -689,16 +686,16 @@ pub mod happy_path {
         env: &mut PocketIc,
         sender: &User,
         utc_offset_mins: Option<i16>,
-    ) -> user_canister::claim_daily_chit::SuccessResult {
+    ) -> multi_user_canister::claim_daily_chit::SuccessResult {
         let response = super::claim_daily_chit(
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::claim_daily_chit::Args { utc_offset_mins },
+            &multi_user_canister::claim_daily_chit::Args { utc_offset_mins },
         );
 
         match response {
-            user_canister::claim_daily_chit::Response::Success(result) => result,
+            multi_user_canister::claim_daily_chit::Response::Success(result) => result,
             response => panic!("'claim_daily_chit' error: {response:?}"),
         }
     }
@@ -708,7 +705,7 @@ pub mod happy_path {
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::accept_p2p_swap::Args {
+            &multi_user_canister::accept_p2p_swap::Args {
                 thread_root_message_index: None,
                 message_id,
                 from_account: None,
@@ -719,17 +716,8 @@ pub mod happy_path {
 
         assert!(matches!(
             accept_offer_response,
-            user_canister::accept_p2p_swap::Response::Success(_)
+            multi_user_canister::accept_p2p_swap::Response::Success(_)
         ));
-    }
-
-    pub fn approve_transfer(env: &mut PocketIc, user: &User, args: &user_canister::approve_transfer::Args) {
-        let response = super::approve_transfer(env, user.principal, user.canister(), args);
-
-        match response {
-            user_canister::approve_transfer::Response::Success => (),
-            response => panic!("'approve_transfer' error: {response:?}"),
-        };
     }
 
     pub fn block_user(env: &mut PocketIc, user: &User, blocked: UserId) {
@@ -737,10 +725,10 @@ pub mod happy_path {
             env,
             user.principal,
             user.canister(),
-            &user_canister::block_user::Args { user_id: blocked },
+            &multi_user_canister::block_user::Args { user_id: blocked },
         );
 
-        assert!(matches!(response, user_canister::block_user::Response::Success));
+        assert!(matches!(response, multi_user_canister::block_user::Response::Success));
     }
 
     pub fn unblock_user(env: &mut PocketIc, user: &User, unblocked: UserId) {
@@ -748,10 +736,10 @@ pub mod happy_path {
             env,
             user.principal,
             user.canister(),
-            &user_canister::unblock_user::Args { user_id: unblocked },
+            &multi_user_canister::unblock_user::Args { user_id: unblocked },
         );
 
-        assert!(matches!(response, user_canister::unblock_user::Response::Success));
+        assert!(matches!(response, multi_user_canister::unblock_user::Response::Success));
     }
 
     // Approves the user's canister to take the payment from their wallet, then pays
@@ -762,7 +750,7 @@ pub mod happy_path {
             env,
             user.principal,
             user.canister(),
-            &user_canister::pay_for_streak_insurance::Args {
+            &multi_user_canister::pay_for_streak_insurance::Args {
                 additional_days,
                 expected_price,
                 from_account: None,
@@ -772,15 +760,18 @@ pub mod happy_path {
         assert!(
             matches!(
                 pay_for_insurance_response,
-                user_canister::pay_for_streak_insurance::Response::Success
+                multi_user_canister::pay_for_streak_insurance::Response::Success
             ),
             "{pay_for_insurance_response:?}"
         );
     }
 
-    pub fn update_chat_settings(env: &mut PocketIc, user: &User, args: &user_canister::update_chat_settings::Args) {
+    pub fn update_chat_settings(env: &mut PocketIc, user: &User, args: &multi_user_canister::update_chat_settings::Args) {
         let response = super::update_chat_settings(env, user.principal, user.canister(), args);
-        assert!(matches!(response, user_canister::update_chat_settings::Response::Success));
+        assert!(matches!(
+            response,
+            multi_user_canister::update_chat_settings::Response::Success
+        ));
     }
 
     pub fn set_avatar(env: &mut PocketIc, user: &User, avatar: Option<types::Document>) {
@@ -788,19 +779,22 @@ pub mod happy_path {
             env,
             user.principal,
             user.canister(),
-            &user_canister::set_avatar::Args { avatar },
+            &multi_user_canister::set_avatar::Args { avatar },
         );
 
         assert!(
-            matches!(response, user_canister::set_avatar::Response::Success),
+            matches!(response, multi_user_canister::set_avatar::Response::Success),
             "{response:?}"
         );
     }
 
-    pub fn set_profile_background(env: &mut PocketIc, user: &User, args: &user_canister::set_profile_background::Args) {
+    pub fn set_profile_background(env: &mut PocketIc, user: &User, args: &multi_user_canister::set_profile_background::Args) {
         let response = super::set_profile_background(env, user.principal, user.canister(), args);
 
-        assert!(matches!(response, user_canister::set_profile_background::Response::Success));
+        assert!(matches!(
+            response,
+            multi_user_canister::set_profile_background::Response::Success
+        ));
     }
 
     pub fn save_crypto_account(env: &mut PocketIc, user: &User, name: impl Into<String>, account: impl Into<String>) {
@@ -808,13 +802,16 @@ pub mod happy_path {
             env,
             user.principal,
             user.canister(),
-            &user_canister::save_crypto_account::Args {
+            &multi_user_canister::save_crypto_account::Args {
                 name: name.into(),
                 account: account.into(),
             },
         );
 
-        assert!(matches!(response, user_canister::save_crypto_account::Response::Success));
+        assert!(matches!(
+            response,
+            multi_user_canister::save_crypto_account::Response::Success
+        ));
     }
 
     pub fn delete_saved_crypto_account(env: &mut PocketIc, user: &User, name: impl Into<String>) {
@@ -822,17 +819,17 @@ pub mod happy_path {
             env,
             user.principal,
             user.canister(),
-            &user_canister::delete_saved_crypto_account::Args { name: name.into() },
+            &multi_user_canister::delete_saved_crypto_account::Args { name: name.into() },
         );
 
         assert!(matches!(
             response,
-            user_canister::delete_saved_crypto_account::Response::Success
+            multi_user_canister::delete_saved_crypto_account::Response::Success
         ));
     }
 
     pub fn saved_crypto_accounts(env: &mut PocketIc, user: &User) -> Vec<NamedAccount> {
-        let user_canister::saved_crypto_accounts::Response::Success(accounts) =
+        let multi_user_canister::saved_crypto_accounts::Response::Success(accounts) =
             super::saved_crypto_accounts(env, user.principal, user.canister(), &Empty {});
 
         accounts

@@ -23,9 +23,9 @@ impl TimerJobItem for UserEventBatch {
 
 impl UserEventBatch {
     async fn send(&self) -> Result<types::SuccessOnly, C2CError> {
-        user_canister_c2c_client::c2c_local_user_index_v2(
+        multi_user_canister_c2c_client::c2c_local_user_index_v2(
             self.key,
-            &user_canister::c2c_local_user_index_v2::Args {
+            &multi_user_canister::c2c_local_user_index_v2::Args {
                 events: self.items.clone(),
             },
         )

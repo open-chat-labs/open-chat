@@ -1,7 +1,7 @@
 use crate::User;
+use multi_user_canister::archive_unarchive_chats::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{Chat, TimestampMillis, Timestamped};
-use user_canister::archive_unarchive_chats::{Response::*, *};
 
 pub fn archive_unarchive_chats(user: &mut User, args: Args, now: TimestampMillis) -> Response {
     let chats_to_update = args.to_archive.len() + args.to_unarchive.len();

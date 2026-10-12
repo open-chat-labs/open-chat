@@ -51,7 +51,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, from_approve
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),
@@ -81,7 +81,7 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool, from_approve
     assert!(
         matches!(
             send_message_result,
-            user_canister::send_message_v2::Response::TransferSuccessV2(_)
+            multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)
         ),
         "{send_message_result:?}"
     );
@@ -222,7 +222,7 @@ fn send_crypto_to_a_bot_is_refused() {
         env,
         user.principal,
         user.user_id.canister_id(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: bot,
             thread_root_message_index: None,
             message_id: random_from_u128(),
@@ -249,7 +249,7 @@ fn send_crypto_to_a_bot_is_refused() {
     );
 
     assert!(
-        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(oc_error_codes::OCErrorCode::InvalidRequest)),
+        matches!(&response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(oc_error_codes::OCErrorCode::InvalidRequest)),
         "{response:?}"
     );
     assert_eq!(

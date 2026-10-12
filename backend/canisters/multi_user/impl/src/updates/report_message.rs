@@ -2,9 +2,9 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::report_message::*;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult};
-use user_canister::report_message::*;
 use user_core::updates::report_message::{build_report, delete_reported_message};
 use user_index_canister::c2c_report_message;
 

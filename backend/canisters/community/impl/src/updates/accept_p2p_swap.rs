@@ -5,10 +5,10 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::accept_p2p_swap::{Response::*, *};
+use multi_user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 use types::{
     AcceptSwapSuccess, Achievement, ChannelId, Chat, EventIndex, MessageId, MessageIndex, OCResult, P2PSwapLocation, UserId,
 };
-use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
 #[trace]
@@ -31,8 +31,8 @@ async fn accept_p2p_swap_impl(args: Args) -> Response {
         Err(response) => return Error(response),
     };
 
-    let result = match user_canister_c2c_client::c2c_accept_p2p_swap(user_id.canister_id(), &c2c_args).await {
-        Ok(user_canister::c2c_accept_p2p_swap::Response::Success(transaction_index)) => {
+    let result = match multi_user_canister_c2c_client::c2c_accept_p2p_swap(user_id.canister_id(), &c2c_args).await {
+        Ok(multi_user_canister::c2c_accept_p2p_swap::Response::Success(transaction_index)) => {
             NotifyEscrowCanisterOfDepositJob::run(
                 depositor,
                 c2c_args.swap_id,
@@ -85,7 +85,7 @@ async fn accept_p2p_swap_impl(args: Args) -> Response {
                 token1_txn_in: transaction_index,
             })
         }
-        Ok(user_canister::c2c_accept_p2p_swap::Response::Error(error)) => Error(error),
+        Ok(multi_user_canister::c2c_accept_p2p_swap::Response::Error(error)) => Error(error),
         Err(error) => Error(error.into()),
     };
 
@@ -100,7 +100,7 @@ struct ReserveP2PSwapResult {
     user_id: UserId,
     // The owner of the member's wallet, which the escrow canister knows them by
     depositor: Principal,
-    c2c_args: user_canister::c2c_accept_p2p_swap::Args,
+    c2c_args: multi_user_canister::c2c_accept_p2p_swap::Args,
 }
 
 fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> OCResult<ReserveP2PSwapResult> {
@@ -119,7 +119,7 @@ fn reserve_p2p_swap(args: Args, state: &mut RuntimeState) -> OCResult<ReserveP2P
     Ok(ReserveP2PSwapResult {
         user_id,
         depositor,
-        c2c_args: user_canister::c2c_accept_p2p_swap::Args {
+        c2c_args: multi_user_canister::c2c_accept_p2p_swap::Args {
             user_id,
             swap_id: result.content.swap_id,
             location: P2PSwapLocation::from_message(

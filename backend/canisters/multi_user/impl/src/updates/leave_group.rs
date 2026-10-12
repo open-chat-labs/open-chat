@@ -4,9 +4,9 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group;
+use multi_user_canister::leave_group::*;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, UserId};
-use user_canister::leave_group::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

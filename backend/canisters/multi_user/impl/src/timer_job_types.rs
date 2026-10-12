@@ -4,10 +4,10 @@ use candid::Principal;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
+use multi_user_canister::C2CReplyContext;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
-use user_canister::C2CReplyContext;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {

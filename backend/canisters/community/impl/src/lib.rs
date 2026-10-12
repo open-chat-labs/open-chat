@@ -28,6 +28,7 @@ use ledger_utils::certified::CertifiedTransfers;
 use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
+use multi_user_canister::CommunityCanisterEvent;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::rngs::StdRng;
@@ -47,7 +48,6 @@ use types::{
     icrc1,
 };
 use types::{BotSubscriptions, CommunityId};
-use user_canister::CommunityCanisterEvent;
 use utils::async_work::AsyncWorkGuard;
 use utils::canister::trap_if_frozen;
 use utils::env::Environment;

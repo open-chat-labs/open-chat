@@ -15,6 +15,8 @@ use chat_events::{
 };
 use constants::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, NANOS_PER_MILLISECOND, OPENCHAT_BOT_USER_ID};
 use ledger_utils::{TransferRecipient, UserTransfer};
+use multi_user_canister::send_message_v2::{Response::*, *};
+use multi_user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
 use oc_error_codes::OCErrorCode;
 use rand::RngExt;
 use types::{
@@ -22,8 +24,6 @@ use types::{
     OCResult, OgPreview, P2PSwapContentInitial, P2PSwapLocation, PinNumberWrapper, ReplyContext, TimestampMillis, UserId,
     UserType, certified, icrc1, icrc2,
 };
-use user_canister::send_message_v2::{Response::*, *};
-use user_canister::{C2CReplyContext, SendMessageArgs, SendMessagesArgs, UserCanisterEvent, c2c_bot_send_message};
 use user_core::updates::c2c_bot_send_message::Sent;
 use user_core::updates::c2c_user_canister::ReceiveMessageArgs;
 use user_core::updates::offer_p2p_swap;

@@ -2,8 +2,8 @@ use crate::guards::caller_is_hosted_user;
 use crate::{execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::generate_btc_address::{Response::*, *};
 use types::{Timestamped, UserIdAndPrincipal};
-use user_canister::generate_btc_address::{Response::*, *};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

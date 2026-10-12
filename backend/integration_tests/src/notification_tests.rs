@@ -111,7 +111,7 @@ fn direct_message_notification_muted() {
         env,
         user2.principal,
         user2.user_id.canister_id(),
-        &user_canister::mute_notifications::Args {
+        &multi_user_canister::mute_notifications::Args {
             chat_id: user1.user_id.into(),
         },
     );

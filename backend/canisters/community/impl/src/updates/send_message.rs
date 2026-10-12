@@ -21,6 +21,7 @@ use group_community_common::{NewP2PSwap, prize_refund, validate_prize};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use ledger_utils::{TransferRecipient, UserTransfer};
+use multi_user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 use oc_error_codes::OCErrorCode;
 use regex_lite::Regex;
 use std::str::FromStr;
@@ -31,7 +32,6 @@ use types::{
     MessageContent, MessageContentInitial, MessageContentType, MessageIndex, OCResult, P2PSwapLocation, TimestampMillis, User,
     UserId, UserIdAndPrincipal, UserType, Version, icrc2,
 };
-use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
 #[trace]

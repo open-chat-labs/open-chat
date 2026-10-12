@@ -7,13 +7,13 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::remove_member::*;
 use local_user_index_canister_c2c_client::lookup_user;
+use multi_user_canister::{CommunityCanisterEvent, RemovedFromCommunity};
 use oc_error_codes::OCErrorCode;
 use std::collections::HashMap;
 use types::{
     BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, CommunityMembersRemoved, CommunityPermission, CommunityRole,
     CommunityUsersBlocked, OCResult, UnitResult, UserId,
 };
-use user_canister::{CommunityCanisterEvent, RemovedFromCommunity};
 
 #[update(msgpack = true)]
 #[trace]

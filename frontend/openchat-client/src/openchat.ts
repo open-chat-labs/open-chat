@@ -75,7 +75,6 @@ import {
     isCredentialGate,
     isDeletedUser,
     isEditableContent,
-    isMultiUserCanisterUser,
     isNeuronGate,
     isPaymentGate,
     isProposalsChat,
@@ -322,7 +321,6 @@ import {
     type ThreadSyncDetails,
     type TipMessageResponse,
     type TokenInfo,
-    type TokenSwapStatusResponse,
     type TransferSuccess,
     type UpdateGroupResponse,
     type UpdateMarketMakerConfigArgs,
@@ -7194,11 +7192,8 @@ export class OpenChat {
     }
 
     // Finishes off any swap the user made straight from their wallet which they left part way
-    // through, withdrawing to their wallet anything the DEX still holds for them. Only a user who
-    // holds their own funds makes such swaps.
+    // through, withdrawing to their wallet anything the DEX still holds for them
     async #recoverUnfinishedTokenSwaps(): Promise<void> {
-        if (!isMultiUserCanisterUser(currentUserIdStore.value)) return;
-
         try {
             await this.#worker.send({ kind: "recoverUnfinishedTokenSwaps" });
         } catch (err) {
@@ -8868,15 +8863,10 @@ export class OpenChat {
         expectedPriceE8s: bigint,
         fromAccount?: string,
     ): Promise<PayForDiamondMembershipResponse> {
-        // A user who holds their own funds approves the payment from their wallet, which is only
-        // approved once their PIN is checked. A user alone in their canister approves nothing, and
-        // neither does a payment from another account.
+        // The user approves the payment from their wallet, which is only approved once their PIN
+        // is checked. A payment from another account approves nothing.
         let pin: string | undefined = undefined;
-        if (
-            pinNumberRequiredStore.value &&
-            fromAccount === undefined &&
-            isMultiUserCanisterUser(currentUserIdStore.value)
-        ) {
+        if (pinNumberRequiredStore.value && fromAccount === undefined) {
             pin = await this.#promptForCurrentPin("pinNumber.enterPinInfo");
         }
 
@@ -9490,10 +9480,8 @@ export class OpenChat {
         });
     }
 
-    // Swaps tokens, asking for the user's PIN first if they have set one. `onStep` is told of each
-    // step of a swap the user makes straight from their wallet as it starts (see
-    // `SwapFromWalletStep`), whereas a swap made by the user's canister is followed through
-    // `tokenSwapStatus`.
+    // Swaps tokens straight from the user's wallet, asking for the user's PIN first if they have set
+    // one. `onStep` is told of each step of the swap as it starts (see `SwapFromWalletStep`).
     async swapTokens(
         swapId: bigint,
         inputTokenLedger: string,
@@ -9543,13 +9531,6 @@ export class OpenChat {
         }
 
         return resp;
-    }
-
-    tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
-        return this.#worker.send({
-            kind: "tokenSwapStatus",
-            swapId,
-        });
     }
 
     cachedLocalUserIndexForCommunity(communityId: string): string | undefined {
@@ -11964,23 +11945,6 @@ export class OpenChat {
                 undo();
                 return false;
             });
-    }
-
-    withdrawFromIcpSwap(
-        userId: string,
-        swapId: bigint,
-        inputToken: boolean,
-        amount: bigint | undefined,
-        fee: bigint | undefined,
-    ): Promise<boolean> {
-        return this.#worker.send({
-            kind: "withdrawFromIcpSwap",
-            userId,
-            swapId,
-            inputToken,
-            amount,
-            fee,
-        });
     }
 
     isEventKindHidden = isEventKindHidden;

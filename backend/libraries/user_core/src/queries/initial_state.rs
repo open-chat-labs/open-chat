@@ -1,7 +1,7 @@
 use crate::User;
 use crate::queries::{pinned_direct_and_group_chats, sorted_pinned};
+use multi_user_canister::initial_state::*;
 use types::{CanisterId, InstalledBotDetails, TimestampMillis, UserId, UserIdAndPrincipal};
-use user_canister::initial_state::*;
 
 pub fn initial_state(
     user: &User,

@@ -1,7 +1,7 @@
 use crate::User;
+use multi_user_canister::cancel_p2p_swap::Args;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, TimestampMillis, UserId};
-use user_canister::cancel_p2p_swap::Args;
 use utils::migrated_user_ids::MigratedUserIds;
 
 // Cancels the swap the user offered in a direct chat, returning its id for the caller to cancel in

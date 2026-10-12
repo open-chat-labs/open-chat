@@ -246,7 +246,6 @@ import type {
     SuspendUserResponse,
     SwapTokensResponse,
     SwapTokensStep,
-    TokenSwapStatusResponse,
     UnpinChatResponse,
     UnsuspendUserResponse,
     User,
@@ -453,7 +452,6 @@ export type WorkerRequest =
     | GetTokenSwaps
     | GetTokenSwapQuotes
     | SwapTokens
-    | TokenSwapStatus
     | RecoverUnfinishedTokenSwaps
     | ApproveTransfer
     | ApproveAccessGatePayment
@@ -513,7 +511,6 @@ export type WorkerRequest =
     | UpdateRegisteredBot
     | GetBotDefinition
     | CallBotCommandEndpoint
-    | WithdrawFromIcpSwap
     | RegisterWebhook
     | UpdateWebhook
     | RegenerateWebhook
@@ -941,11 +938,6 @@ type SwapTokens = {
     minAmountOut: bigint;
     dex: DexId;
     pin: string | undefined;
-};
-
-type TokenSwapStatus = {
-    kind: "tokenSwapStatus";
-    swapId: bigint;
 };
 
 type RecoverUnfinishedTokenSwaps = {
@@ -2040,15 +2032,6 @@ type DeleteUser = {
     delegation: JsonnableDelegationChain;
 };
 
-type WithdrawFromIcpSwap = {
-    kind: "withdrawFromIcpSwap";
-    userId: string;
-    swapId: bigint;
-    inputToken: boolean;
-    amount: bigint | undefined;
-    fee: bigint | undefined;
-};
-
 type CreateAccountLinkingCode = {
     kind: "createAccountLinkingCode";
 };
@@ -2222,7 +2205,6 @@ export type WorkerResponseInner =
     | [DexId, bigint][]
     | SwapTokensResponse
     | SwapTokensStep
-    | TokenSwapStatusResponse
     | DiamondMembershipFees[]
     | TranslationCorrections
     | AcceptP2PSwapResponse
@@ -2938,8 +2920,6 @@ export type WorkerResult<T> = T extends Init
     ? [DexId, bigint][]
     : T extends SwapTokens
     ? SwapTokensResponse | SwapTokensStep
-    : T extends TokenSwapStatus
-    ? TokenSwapStatusResponse
     : T extends RecoverUnfinishedTokenSwaps
     ? void
     : T extends DeleteDirectChat
@@ -3051,8 +3031,6 @@ export type WorkerResult<T> = T extends Init
     : T extends UninstallBot
     ? boolean
     : T extends UpdateInstalledBot
-    ? boolean
-    : T extends WithdrawFromIcpSwap
     ? boolean
     : T extends RegisterWebhook
     ? FullWebhookDetails | undefined

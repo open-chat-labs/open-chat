@@ -1,9 +1,9 @@
 use candid::Principal;
+use multi_user_canister::set_contact::OptionalContact;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{ContactKey, ContactKeyPrefix, EntryExt, KeyPrefix, with_map, with_map_mut};
 use std::ops::RangeInclusive;
 use types::{FieldTooLongResult, FieldTooShortResult, OptionUpdate, UserId};
-use user_canister::set_contact::OptionalContact;
 
 const MAX_NICKNAME_LEN: u32 = 32;
 const MIN_NICKNAME_LEN: u32 = 2;

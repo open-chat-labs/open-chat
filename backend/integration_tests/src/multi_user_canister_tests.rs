@@ -10,6 +10,11 @@ use constants::{
     HOUR_IN_MS, ICP_LEDGER_CANISTER_ID, ICP_SYMBOL, ICP_TRANSFER_FEE, MULTI_USER_CANISTER_MIN_CYCLES_BALANCE,
     OPENCHAT_BOT_USER_ID,
 };
+use multi_user_canister::set_pin_number::PinNumberVerification;
+use multi_user_canister::{
+    ChatInList, LocalUserIndexEvent, MessageActivity, UserCanisterEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
+    WalletConfig,
+};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use serde::Deserialize;
@@ -29,11 +34,6 @@ use types::{
     Milliseconds, NotificationEnvelope, OptionUpdate, P2PSwapContentInitial, P2PSwapStatus, PendingCryptoTransaction, Reaction,
     ReferralStatus, ReplyContext, TextContent, TimestampMillis, UnitResult, UpgradesFilter, UserId, VideoCallType, icrc1,
     icrc2,
-};
-use user_canister::set_pin_number::PinNumberVerification;
-use user_canister::{
-    ChatInList, LocalUserIndexEvent, MessageActivity, UserCanisterEvent, UserJoinedCommunityOrChannel, UserJoinedGroup,
-    WalletConfig,
 };
 
 #[test]
@@ -234,11 +234,11 @@ fn users_created_in_multi_user_canister_are_addressed_by_indexed_user_id() {
         )
     };
     let bio = |env: &PocketIc, user_id: UserId| {
-        let user_canister::bio::Response::Success(bio) = client::user::bio(
+        let multi_user_canister::bio::Response::Success(bio) = client::user::bio(
             env,
             Principal::anonymous(),
             canister_id,
-            &user_canister::bio::Args { user_id },
+            &multi_user_canister::bio::Args { user_id },
         );
         bio
     };
@@ -248,7 +248,7 @@ fn users_created_in_multi_user_canister_are_addressed_by_indexed_user_id() {
             Principal::anonymous(),
             canister_id,
             "bio",
-            &user_canister::bio::Args { user_id },
+            &multi_user_canister::bio::Args { user_id },
         )
     };
 
@@ -338,7 +338,7 @@ fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat()
         env,
         b_principal,
         canister_id,
-        &user_canister::events_by_index::Args {
+        &multi_user_canister::events_by_index::Args {
             user_id: b,
             them: a,
             thread_root_message_index: None,
@@ -346,7 +346,7 @@ fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat()
             latest_known_update: None,
         },
     );
-    let user_canister::events_by_index::Response::Success(by_index) = by_index else {
+    let multi_user_canister::events_by_index::Response::Success(by_index) = by_index else {
         panic!("{by_index:?}");
     };
     assert_eq!(messages(&by_index), vec![(b, "hi".to_string())]);
@@ -355,7 +355,7 @@ fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat()
         env,
         a_principal,
         canister_id,
-        &user_canister::events_window::Args {
+        &multi_user_canister::events_window::Args {
             user_id: a,
             them: b,
             thread_root_message_index: None,
@@ -365,7 +365,7 @@ fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat()
             latest_known_update: None,
         },
     );
-    let user_canister::events_window::Response::Success(window) = window else {
+    let multi_user_canister::events_window::Response::Success(window) = window else {
         panic!("{window:?}");
     };
     assert_eq!(messages(&window), expected);
@@ -373,7 +373,7 @@ fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat()
     // A message id can only be used once in a chat
     let duplicate = client::user::send_message_v2(env, a_principal, canister_id, &send_message_args(b, "again", message_id));
     assert!(
-        matches!(&duplicate, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::MessageIdAlreadyExists)),
+        matches!(&duplicate, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::MessageIdAlreadyExists)),
         "{duplicate:?}"
     );
 
@@ -382,13 +382,13 @@ fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat()
         env,
         a_principal,
         canister_id,
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             thread_root_message_index: Some(100.into()),
             ..send_message_args(b, "in a thread", random_from_u128())
         },
     );
     assert!(
-        matches!(&missing_thread, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::ThreadNotFound)),
+        matches!(&missing_thread, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::ThreadNotFound)),
         "{missing_thread:?}"
     );
 
@@ -401,19 +401,19 @@ fn users_in_the_same_multi_user_canister_each_hold_a_copy_of_their_direct_chat()
         &send_message_args(elsewhere, "hello?", random_from_u128()),
     );
     assert!(
-        matches!(&unknown, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
+        matches!(&unknown, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
         "{unknown:?}"
     );
 
     // A user's chats can only be read as that user by the user themselves or the LocalUserIndex
     let as_b = client::user::events(env, b_principal, canister_id, &events_args(a, b));
     assert!(
-        matches!(&as_b, user_canister::events::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        matches!(&as_b, multi_user_canister::events::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
         "{as_b:?}"
     );
     assert!(matches!(
         client::user::events(env, local_user_index, canister_id, &events_args(a, b)),
-        user_canister::events::Response::Success(_)
+        multi_user_canister::events::Response::Success(_)
     ));
     assert!(is_query_rejected(
         env,
@@ -461,7 +461,7 @@ fn a_user_who_deletes_a_direct_chat_gets_a_fresh_copy_when_messaged_again() {
         &delete_direct_chat_args(local_user_index.into()),
     );
     assert!(
-        matches!(&missing, user_canister::delete_direct_chat::Response::Error(e) if e.matches_code(OCErrorCode::ChatNotFound)),
+        matches!(&missing, multi_user_canister::delete_direct_chat::Response::Error(e) if e.matches_code(OCErrorCode::ChatNotFound)),
         "{missing:?}"
     );
 
@@ -470,7 +470,7 @@ fn a_user_who_deletes_a_direct_chat_gets_a_fresh_copy_when_messaged_again() {
     delete_direct_chat(env, a_principal, canister_id, b);
     let deleted = client::user::events(env, a_principal, canister_id, &events_args(a, b));
     assert!(
-        matches!(&deleted, user_canister::events::Response::Error(e) if e.matches_code(OCErrorCode::ChatNotFound)),
+        matches!(&deleted, multi_user_canister::events::Response::Error(e) if e.matches_code(OCErrorCode::ChatNotFound)),
         "{deleted:?}"
     );
     assert!(stable_memory_keys_to_garbage_collect(env, canister_id) > 0);
@@ -581,18 +581,21 @@ fn initial_state_and_updates_track_a_users_direct_chats() {
         env,
         b_principal,
         canister_id,
-        &user_canister::mute_notifications::Args { chat_id: a.into() },
+        &multi_user_canister::mute_notifications::Args { chat_id: a.into() },
     );
-    assert!(matches!(muted, user_canister::mute_notifications::Response::Success));
+    assert!(matches!(muted, multi_user_canister::mute_notifications::Response::Success));
     let pinned = client::user::pin_chat_v2(
         env,
         b_principal,
         canister_id,
-        &user_canister::pin_chat_v2::Args {
+        &multi_user_canister::pin_chat_v2::Args {
             chat: ChatInList::Direct(a.into()),
         },
     );
-    assert!(matches!(pinned, user_canister::pin_chat_v2::Response::Success), "{pinned:?}");
+    assert!(
+        matches!(pinned, multi_user_canister::pin_chat_v2::Response::Success),
+        "{pinned:?}"
+    );
     let b_updates = updates(env, b_principal, canister_id, after_read).unwrap();
     let after_pin = b_updates.timestamp;
     assert_eq!(b_updates.pinned_chats, Some(vec![a_chat]));
@@ -605,22 +608,25 @@ fn initial_state_and_updates_track_a_users_direct_chats() {
         env,
         b_principal,
         canister_id,
-        &user_canister::archive_unarchive_chats::Args {
+        &multi_user_canister::archive_unarchive_chats::Args {
             to_archive: vec![a_chat, Chat::Direct(local_user_index.into())],
             to_unarchive: Vec::new(),
         },
     );
     assert!(
-        matches!(&archived, user_canister::archive_unarchive_chats::Response::PartialSuccess(r) if r.chats_not_found == vec![Chat::Direct(local_user_index.into())]),
+        matches!(&archived, multi_user_canister::archive_unarchive_chats::Response::PartialSuccess(r) if r.chats_not_found == vec![Chat::Direct(local_user_index.into())]),
         "{archived:?}"
     );
     let unmuted = client::user::unmute_notifications(
         env,
         b_principal,
         canister_id,
-        &user_canister::mute_notifications::Args { chat_id: a.into() },
+        &multi_user_canister::mute_notifications::Args { chat_id: a.into() },
     );
-    assert!(matches!(unmuted, user_canister::unmute_notifications::Response::Success));
+    assert!(matches!(
+        unmuted,
+        multi_user_canister::unmute_notifications::Response::Success
+    ));
     let b_updates = updates(env, b_principal, canister_id, after_pin).unwrap();
     let after_archive = b_updates.timestamp;
     assert_eq!(b_updates.pinned_chats, Some(Vec::new()));
@@ -636,22 +642,22 @@ fn initial_state_and_updates_track_a_users_direct_chats() {
         env,
         b_principal,
         canister_id,
-        &user_canister::unpin_chat_v2::Args {
+        &multi_user_canister::unpin_chat_v2::Args {
             chat: ChatInList::Direct(a.into()),
         },
     );
-    assert!(matches!(unpinned, user_canister::unpin_chat_v2::Response::Success));
+    assert!(matches!(unpinned, multi_user_canister::unpin_chat_v2::Response::Success));
     let nothing = client::user::archive_unarchive_chats(
         env,
         b_principal,
         canister_id,
-        &user_canister::archive_unarchive_chats::Args {
+        &multi_user_canister::archive_unarchive_chats::Args {
             to_archive: Vec::new(),
             to_unarchive: vec![Chat::Direct(local_user_index.into())],
         },
     );
     assert!(
-        matches!(&nothing, user_canister::archive_unarchive_chats::Response::Error(e) if e.matches_code(OCErrorCode::NoChange)),
+        matches!(&nothing, multi_user_canister::archive_unarchive_chats::Response::Error(e) if e.matches_code(OCErrorCode::NoChange)),
         "{nothing:?}"
     );
     assert!(updates(env, b_principal, canister_id, after_archive).is_none());
@@ -712,26 +718,29 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
         env,
         a_principal,
         canister_id,
-        &user_canister::set_profile_background::Args {
+        &multi_user_canister::set_profile_background::Args {
             profile_background: Some(profile_background.clone()),
         },
     );
-    assert!(matches!(response, user_canister::set_profile_background::Response::Success));
+    assert!(matches!(
+        response,
+        multi_user_canister::set_profile_background::Response::Success
+    ));
     let response = client::user::set_bio(
         env,
         a_principal,
         canister_id,
-        &user_canister::set_bio::Args {
+        &multi_user_canister::set_bio::Args {
             text: "Hello".to_string(),
         },
     );
-    assert!(matches!(response, user_canister::set_bio::Response::Success));
+    assert!(matches!(response, multi_user_canister::set_bio::Response::Success));
 
-    let user_canister::public_profile::Response::Success(profile) = client::user::public_profile(
+    let multi_user_canister::public_profile::Response::Success(profile) = client::user::public_profile(
         env,
         b_principal,
         canister_id,
-        &user_canister::public_profile::Args { user_id: a },
+        &multi_user_canister::public_profile::Args { user_id: a },
     );
     assert_eq!(profile.avatar_id, Some(avatar.id));
     assert_eq!(profile.profile_background_id, Some(profile_background.id));
@@ -749,12 +758,12 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
         env,
         a_principal,
         canister_id,
-        &user_canister::set_avatar::Args {
+        &multi_user_canister::set_avatar::Args {
             avatar: Some(document(1024 * 800 + 1)),
         },
     );
     assert!(
-        matches!(&response, user_canister::set_avatar::Response::Error(e) if e.matches_code(OCErrorCode::AvatarTooBig)),
+        matches!(&response, multi_user_canister::set_avatar::Response::Error(e) if e.matches_code(OCErrorCode::AvatarTooBig)),
         "{response:?}"
     );
     assert!(updates(env, a_principal, canister_id, after_profile).is_none());
@@ -776,7 +785,7 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
     let response =
         client::user::send_message_v2(env, a_principal, canister_id, &send_message_args(b, "hi", random_from_u128()));
     assert!(
-        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserBlocked)),
+        matches!(&response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserBlocked)),
         "{response:?}"
     );
     send_text_message(env, b_principal, canister_id, a, "hi", random_from_u128());
@@ -794,9 +803,9 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
         env,
         a_principal,
         canister_id,
-        &user_canister::unblock_user::Args { user_id: b },
+        &multi_user_canister::unblock_user::Args { user_id: b },
     );
-    assert!(matches!(response, user_canister::unblock_user::Response::Success));
+    assert!(matches!(response, multi_user_canister::unblock_user::Response::Success));
     let a_updates = updates(env, a_principal, canister_id, after_block).unwrap();
     let after_unblock = a_updates.timestamp;
     assert_eq!(a_updates.blocked_users, Some(Vec::new()));
@@ -813,15 +822,15 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
     // Deleting a chat can block the other user at the same time, but not if there is no chat
     env.advance_time(Duration::from_secs(1));
     send_text_message(env, a_principal, canister_id, c, "hi", random_from_u128());
-    let block_args = user_canister::delete_direct_chat::Args {
+    let block_args = multi_user_canister::delete_direct_chat::Args {
         user_id: c,
         block_user: true,
     };
     let response = client::user::delete_direct_chat(env, a_principal, canister_id, &block_args);
-    assert!(matches!(response, user_canister::delete_direct_chat::Response::Success));
+    assert!(matches!(response, multi_user_canister::delete_direct_chat::Response::Success));
     let response = client::user::delete_direct_chat(env, a_principal, canister_id, &block_args);
     assert!(
-        matches!(&response, user_canister::delete_direct_chat::Response::Error(e) if e.matches_code(OCErrorCode::ChatNotFound)),
+        matches!(&response, multi_user_canister::delete_direct_chat::Response::Error(e) if e.matches_code(OCErrorCode::ChatNotFound)),
         "{response:?}"
     );
     let a_updates = updates(env, a_principal, canister_id, after_unblock).unwrap();
@@ -845,11 +854,11 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
         env,
         a_principal,
         canister_id,
-        &user_canister::pin_chat_v2::Args {
+        &multi_user_canister::pin_chat_v2::Args {
             chat: ChatInList::Favourite(b_chat),
         },
     );
-    assert!(matches!(response, user_canister::pin_chat_v2::Response::Success));
+    assert!(matches!(response, multi_user_canister::pin_chat_v2::Response::Success));
     let a_updates = updates(env, a_principal, canister_id, after_favourites).unwrap();
     let after_pin = a_updates.timestamp;
     assert_eq!(a_updates.favourite_chats.chats, None);
@@ -865,11 +874,11 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
         env,
         a_principal,
         canister_id,
-        &user_canister::unpin_chat_v2::Args {
+        &multi_user_canister::unpin_chat_v2::Args {
             chat: ChatInList::Favourite(b_chat),
         },
     );
-    assert!(matches!(response, user_canister::unpin_chat_v2::Response::Success));
+    assert!(matches!(response, multi_user_canister::unpin_chat_v2::Response::Success));
     manage_favourite_chats(env, a_principal, canister_id, Vec::new(), vec![c_chat]);
     let a_updates = updates(env, a_principal, canister_id, after_pin).unwrap();
     let after_unpin = a_updates.timestamp;
@@ -882,31 +891,31 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
             env,
             a_principal,
             canister_id,
-            &user_canister::set_contact::Args {
-                contact: user_canister::set_contact::OptionalContact { user_id: b, nickname },
+            &multi_user_canister::set_contact::Args {
+                contact: multi_user_canister::set_contact::OptionalContact { user_id: b, nickname },
             },
         )
     };
     let response = set_contact(env, OptionUpdate::SetToSome("Bee".to_string()));
     assert!(
-        matches!(response, user_canister::set_contact::Response::Success),
+        matches!(response, multi_user_canister::set_contact::Response::Success),
         "{response:?}"
     );
     let response = set_contact(env, OptionUpdate::NoChange);
     assert!(
-        matches!(&response, user_canister::set_contact::Response::Error(e) if e.matches_code(OCErrorCode::NoChange)),
+        matches!(&response, multi_user_canister::set_contact::Response::Error(e) if e.matches_code(OCErrorCode::NoChange)),
         "{response:?}"
     );
     let response = set_contact(env, OptionUpdate::SetToSome("B".to_string()));
     assert!(
-        matches!(&response, user_canister::set_contact::Response::Error(e) if e.matches_code(OCErrorCode::NameTooShort)),
+        matches!(&response, multi_user_canister::set_contact::Response::Error(e) if e.matches_code(OCErrorCode::NameTooShort)),
         "{response:?}"
     );
     assert_eq!(contacts(env, a_principal, canister_id), vec![(b, Some("Bee".to_string()))]);
     assert!(contacts(env, b_principal, canister_id).is_empty());
     let response = set_contact(env, OptionUpdate::SetToNone);
     assert!(
-        matches!(response, user_canister::set_contact::Response::Success),
+        matches!(response, multi_user_canister::set_contact::Response::Success),
         "{response:?}"
     );
     assert!(contacts(env, a_principal, canister_id).is_empty());
@@ -918,13 +927,13 @@ fn initial_state_and_updates_track_a_users_profile_blocked_users_favourites_and_
         env,
         a_principal,
         canister_id,
-        &user_canister::configure_wallet::Args {
-            config: WalletConfig::Manual(user_canister::ManualWallet {
+        &multi_user_canister::configure_wallet::Args {
+            config: WalletConfig::Manual(multi_user_canister::ManualWallet {
                 tokens: vec![canister_ids.icp_ledger],
             }),
         },
     );
-    assert!(matches!(response, user_canister::configure_wallet::Response::Success));
+    assert!(matches!(response, multi_user_canister::configure_wallet::Response::Success));
     let a_updates = updates(env, a_principal, canister_id, after_unpin).unwrap();
     assert!(
         matches!(&a_updates.wallet_config, Some(WalletConfig::Manual(w)) if w.tokens == vec![canister_ids.icp_ledger]),
@@ -947,17 +956,17 @@ fn document(len: usize) -> Document {
 }
 
 fn set_avatar(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, avatar: Option<Document>) {
-    let response = client::user::set_avatar(env, sender, canister_id, &user_canister::set_avatar::Args { avatar });
+    let response = client::user::set_avatar(env, sender, canister_id, &multi_user_canister::set_avatar::Args { avatar });
     assert!(
-        matches!(response, user_canister::set_avatar::Response::Success),
+        matches!(response, multi_user_canister::set_avatar::Response::Success),
         "{response:?}"
     );
 }
 
 fn block_user(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, user_id: UserId) {
-    let response = client::user::block_user(env, sender, canister_id, &user_canister::block_user::Args { user_id });
+    let response = client::user::block_user(env, sender, canister_id, &multi_user_canister::block_user::Args { user_id });
     assert!(
-        matches!(response, user_canister::block_user::Response::Success),
+        matches!(response, multi_user_canister::block_user::Response::Success),
         "{response:?}"
     );
 }
@@ -973,26 +982,30 @@ fn manage_favourite_chats(
         env,
         sender,
         canister_id,
-        &user_canister::manage_favourite_chats::Args { to_add, to_remove },
+        &multi_user_canister::manage_favourite_chats::Args { to_add, to_remove },
     );
     assert!(
-        matches!(response, user_canister::manage_favourite_chats::Response::Success),
+        matches!(response, multi_user_canister::manage_favourite_chats::Response::Success),
         "{response:?}"
     );
 }
 
 // The user id and nickname of each contact
 fn contacts(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> Vec<(UserId, Option<String>)> {
-    let user_canister::contacts::Response::Success(result) =
-        client::user::contacts(env, sender, canister_id, &user_canister::contacts::Args {});
+    let multi_user_canister::contacts::Response::Success(result) =
+        client::user::contacts(env, sender, canister_id, &multi_user_canister::contacts::Args {});
     result.contacts.into_iter().map(|c| (c.user_id, c.nickname)).collect()
 }
 
 // Leaves out the user's chat with the OpenChat bot, which every user has from being sent the
 // welcome messages when they registered
-fn initial_state(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> user_canister::initial_state::SuccessResult {
-    let user_canister::initial_state::Response::Success(mut result) =
-        client::user::initial_state(env, sender, canister_id, &user_canister::initial_state::Args {});
+fn initial_state(
+    env: &PocketIc,
+    sender: Principal,
+    canister_id: CanisterId,
+) -> multi_user_canister::initial_state::SuccessResult {
+    let multi_user_canister::initial_state::Response::Success(mut result) =
+        client::user::initial_state(env, sender, canister_id, &multi_user_canister::initial_state::Args {});
     result.direct_chats.summaries.retain(|c| c.them != OPENCHAT_BOT_USER_ID);
     result
 }
@@ -1003,9 +1016,14 @@ fn updates(
     sender: Principal,
     canister_id: CanisterId,
     updates_since: TimestampMillis,
-) -> Option<user_canister::updates::SuccessResult> {
-    match client::user::updates(env, sender, canister_id, &user_canister::updates::Args { updates_since }) {
-        user_canister::updates::Response::Success(mut result) => {
+) -> Option<multi_user_canister::updates::SuccessResult> {
+    match client::user::updates(
+        env,
+        sender,
+        canister_id,
+        &multi_user_canister::updates::Args { updates_since },
+    ) {
+        multi_user_canister::updates::Response::Success(mut result) => {
             result.direct_chats.added.retain(|c| c.them != OPENCHAT_BOT_USER_ID);
             result
                 .direct_chats
@@ -1013,18 +1031,18 @@ fn updates(
                 .retain(|c| c.chat_id != ChatId::from(OPENCHAT_BOT_USER_ID));
             Some(result)
         }
-        user_canister::updates::Response::SuccessNoUpdates => None,
+        multi_user_canister::updates::Response::SuccessNoUpdates => None,
     }
 }
 
-fn single_direct_chat_summary(initial_state: user_canister::initial_state::SuccessResult) -> DirectChatSummary {
+fn single_direct_chat_summary(initial_state: multi_user_canister::initial_state::SuccessResult) -> DirectChatSummary {
     let Ok([summary]) = <[DirectChatSummary; 1]>::try_from(initial_state.direct_chats.summaries) else {
         panic!("Expected a single direct chat");
     };
     summary
 }
 
-fn single_direct_chat_update(updates: user_canister::updates::SuccessResult) -> DirectChatSummaryUpdates {
+fn single_direct_chat_update(updates: multi_user_canister::updates::SuccessResult) -> DirectChatSummaryUpdates {
     assert!(updates.direct_chats.added.is_empty(), "{:?}", updates.direct_chats);
     let Ok([update]) = <[DirectChatSummaryUpdates; 1]>::try_from(updates.direct_chats.updated) else {
         panic!("Expected a single direct chat update");
@@ -1033,12 +1051,12 @@ fn single_direct_chat_update(updates: user_canister::updates::SuccessResult) -> 
 }
 
 fn mark_read(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, them: UserId, read_up_to: MessageIndex) {
-    let user_canister::mark_read::Response::Success = client::user::mark_read(
+    let multi_user_canister::mark_read::Response::Success = client::user::mark_read(
         env,
         sender,
         canister_id,
-        &user_canister::mark_read::Args {
-            messages_read: vec![user_canister::mark_read::ChatMessagesRead {
+        &multi_user_canister::mark_read::Args {
+            messages_read: vec![multi_user_canister::mark_read::ChatMessagesRead {
                 chat_id: them.into(),
                 read_up_to: Some(read_up_to),
                 threads: Vec::new(),
@@ -1060,8 +1078,8 @@ fn create_user(
     create_user_referred_by(env, canister_ids, local_user_index, canister_id, None)
 }
 
-fn send_message_args(recipient: UserId, text: &str, message_id: MessageId) -> user_canister::send_message_v2::Args {
-    user_canister::send_message_v2::Args {
+fn send_message_args(recipient: UserId, text: &str, message_id: MessageId) -> multi_user_canister::send_message_v2::Args {
+    multi_user_canister::send_message_v2::Args {
         recipient,
         thread_root_message_index: None,
         message_id,
@@ -1082,16 +1100,16 @@ fn send_text_message(
     recipient: UserId,
     text: &str,
     message_id: MessageId,
-) -> user_canister::send_message_v2::SuccessResult {
+) -> multi_user_canister::send_message_v2::SuccessResult {
     let response = client::user::send_message_v2(env, sender, canister_id, &send_message_args(recipient, text, message_id));
     match response {
-        user_canister::send_message_v2::Response::Success(result) => result,
+        multi_user_canister::send_message_v2::Response::Success(result) => result,
         response => panic!("{response:?}"),
     }
 }
 
-fn events_args(user_id: UserId, them: UserId) -> user_canister::events::Args {
-    user_canister::events::Args {
+fn events_args(user_id: UserId, them: UserId) -> multi_user_canister::events::Args {
+    multi_user_canister::events::Args {
         user_id,
         them,
         thread_root_message_index: None,
@@ -1105,7 +1123,7 @@ fn events_args(user_id: UserId, them: UserId) -> user_canister::events::Args {
 
 fn events(env: &PocketIc, sender: Principal, canister_id: CanisterId, user_id: UserId, them: UserId) -> EventsResponse {
     match client::user::events(env, sender, canister_id, &events_args(user_id, them)) {
-        user_canister::events::Response::Success(response) => response,
+        multi_user_canister::events::Response::Success(response) => response,
         response => panic!("{response:?}"),
     }
 }
@@ -1125,8 +1143,8 @@ fn messages(response: &EventsResponse) -> Vec<(UserId, String)> {
         .collect()
 }
 
-fn delete_direct_chat_args(user_id: UserId) -> user_canister::delete_direct_chat::Args {
-    user_canister::delete_direct_chat::Args {
+fn delete_direct_chat_args(user_id: UserId) -> multi_user_canister::delete_direct_chat::Args {
+    multi_user_canister::delete_direct_chat::Args {
         user_id,
         block_user: false,
     }
@@ -1135,7 +1153,7 @@ fn delete_direct_chat_args(user_id: UserId) -> user_canister::delete_direct_chat
 fn delete_direct_chat(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, them: UserId) {
     let response = client::user::delete_direct_chat(env, sender, canister_id, &delete_direct_chat_args(them));
     assert!(
-        matches!(response, user_canister::delete_direct_chat::Response::Success),
+        matches!(response, multi_user_canister::delete_direct_chat::Response::Success),
         "{response:?}"
     );
 }
@@ -1181,7 +1199,7 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
         env,
         a_principal,
         canister_id,
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             thread_root_message_index: a_root,
             ..send_message_args(b, "reply", reply_id)
         },
@@ -1244,11 +1262,11 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
     }
     assert!(matches!(
         deleted_message(env, a_principal, canister_id, b, hello_id),
-        user_canister::deleted_message::Response::Success(r) if matches!(&r.content, MessageContent::Text(t) if t.text == "hello")
+        multi_user_canister::deleted_message::Response::Success(r) if matches!(&r.content, MessageContent::Text(t) if t.text == "hello")
     ));
     let not_deleter = deleted_message(env, b_principal, canister_id, a, hello_id);
     assert!(
-        matches!(&not_deleter, user_canister::deleted_message::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
+        matches!(&not_deleter, multi_user_canister::deleted_message::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorNotAuthorized)),
         "{not_deleter:?}"
     );
 
@@ -1257,13 +1275,13 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
         env,
         a_principal,
         canister_id,
-        &user_canister::undelete_messages::Args {
+        &multi_user_canister::undelete_messages::Args {
             user_id: b,
             thread_root_message_index: None,
             message_ids: vec![hello_id],
         },
     );
-    let user_canister::undelete_messages::Response::Success(undeleted) = undeleted else {
+    let multi_user_canister::undelete_messages::Response::Success(undeleted) = undeleted else {
         panic!("{undeleted:?}");
     };
     assert_eq!(undeleted.messages.len(), 1);
@@ -1277,20 +1295,20 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
     tick_many(env, 3);
     assert!(matches!(
         deleted_message(env, a_principal, canister_id, b, hello_id),
-        user_canister::deleted_message::Response::Success(r) if matches!(&r.content, MessageContent::Text(t) if t.text == "hello")
+        multi_user_canister::deleted_message::Response::Success(r) if matches!(&r.content, MessageContent::Text(t) if t.text == "hello")
     ));
     let undeleted = client::user::undelete_messages(
         env,
         a_principal,
         canister_id,
-        &user_canister::undelete_messages::Args {
+        &multi_user_canister::undelete_messages::Args {
             user_id: b,
             thread_root_message_index: None,
             message_ids: vec![hello_id],
         },
     );
     assert!(
-        matches!(&undeleted, user_canister::undelete_messages::Response::Success(r) if r.messages.len() == 1),
+        matches!(&undeleted, multi_user_canister::undelete_messages::Response::Success(r) if r.messages.len() == 1),
         "{undeleted:?}"
     );
 
@@ -1319,13 +1337,13 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
         env,
         b_principal,
         canister_id,
-        &user_canister::deleted_message::Args {
+        &multi_user_canister::deleted_message::Args {
             user_id: a,
             message_id: root_id,
         },
     );
     assert!(
-        matches!(&hard_deleted, user_canister::deleted_message::Response::Error(e) if e.matches_code(OCErrorCode::MessageHardDeleted)),
+        matches!(&hard_deleted, multi_user_canister::deleted_message::Response::Error(e) if e.matches_code(OCErrorCode::MessageHardDeleted)),
         "{hard_deleted:?}"
     );
 
@@ -1334,14 +1352,14 @@ fn edits_deletions_and_reactions_reach_both_copies_of_a_direct_chat() {
         env,
         b_principal,
         canister_id,
-        &user_canister::messages_by_message_index::Args {
+        &multi_user_canister::messages_by_message_index::Args {
             user_id: a,
             thread_root_message_index: None,
             messages: vec![0.into(), 1.into(), 5.into()],
             latest_known_update: None,
         },
     );
-    let user_canister::messages_by_message_index::Response::Success(by_index) = by_index else {
+    let multi_user_canister::messages_by_message_index::Response::Success(by_index) = by_index else {
         panic!("{by_index:?}");
     };
     let ids: Vec<_> = by_index.messages.iter().map(|m| m.event.message_id).collect();
@@ -1494,9 +1512,9 @@ fn multi_user_canisters(env: &PocketIc, user_index_canister_id: CanisterId) -> B
 }
 
 fn unblock_user(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, user_id: UserId) {
-    let response = client::user::unblock_user(env, sender, canister_id, &user_canister::unblock_user::Args { user_id });
+    let response = client::user::unblock_user(env, sender, canister_id, &multi_user_canister::unblock_user::Args { user_id });
     assert!(
-        matches!(response, user_canister::unblock_user::Response::Success),
+        matches!(response, multi_user_canister::unblock_user::Response::Success),
         "{response:?}"
     );
 }
@@ -1509,12 +1527,12 @@ fn thread_events(
     them: UserId,
     thread_root_message_index: Option<MessageIndex>,
 ) -> EventsResponse {
-    let args = user_canister::events::Args {
+    let args = multi_user_canister::events::Args {
         thread_root_message_index,
         ..events_args(user_id, them)
     };
     match client::user::events(env, sender, canister_id, &args) {
-        user_canister::events::Response::Success(response) => response,
+        multi_user_canister::events::Response::Success(response) => response,
         response => panic!("{response:?}"),
     }
 }
@@ -1536,8 +1554,8 @@ fn edit_message_args(
     thread_root_message_index: Option<MessageIndex>,
     message_id: MessageId,
     text: &str,
-) -> user_canister::edit_message_v2::Args {
-    user_canister::edit_message_v2::Args {
+) -> multi_user_canister::edit_message_v2::Args {
+    multi_user_canister::edit_message_v2::Args {
         user_id,
         thread_root_message_index,
         message_id,
@@ -1569,7 +1587,7 @@ fn delete_messages(
     thread_root_message_index: Option<MessageIndex>,
     message_ids: Vec<MessageId>,
 ) {
-    let args = user_canister::delete_messages::Args {
+    let args = multi_user_canister::delete_messages::Args {
         user_id,
         thread_root_message_index,
         message_ids,
@@ -1584,12 +1602,12 @@ fn deleted_message(
     canister_id: CanisterId,
     user_id: UserId,
     message_id: MessageId,
-) -> user_canister::deleted_message::Response {
+) -> multi_user_canister::deleted_message::Response {
     client::user::deleted_message(
         env,
         sender,
         canister_id,
-        &user_canister::deleted_message::Args { user_id, message_id },
+        &multi_user_canister::deleted_message::Args { user_id, message_id },
     )
 }
 
@@ -1609,7 +1627,7 @@ fn toggle_reaction(
             env,
             sender,
             canister_id,
-            &user_canister::add_reaction::Args {
+            &multi_user_canister::add_reaction::Args {
                 user_id,
                 thread_root_message_index,
                 message_id,
@@ -1621,7 +1639,7 @@ fn toggle_reaction(
             env,
             sender,
             canister_id,
-            &user_canister::remove_reaction::Args {
+            &multi_user_canister::remove_reaction::Args {
                 user_id,
                 thread_root_message_index,
                 message_id,
@@ -1710,7 +1728,7 @@ fn update_chat_settings(
         env,
         sender,
         canister_id,
-        &user_canister::update_chat_settings::Args { user_id, events_ttl },
+        &multi_user_canister::update_chat_settings::Args { user_id, events_ttl },
     );
     assert!(matches!(response, UnitResult::Success), "{response:?}");
 }
@@ -1720,12 +1738,12 @@ fn message_activity_feed(
     sender: Principal,
     canister_id: CanisterId,
     since: TimestampMillis,
-) -> user_canister::message_activity_feed::SuccessResult {
-    let user_canister::message_activity_feed::Response::Success(result) = client::user::message_activity_feed(
+) -> multi_user_canister::message_activity_feed::SuccessResult {
+    let multi_user_canister::message_activity_feed::Response::Success(result) = client::user::message_activity_feed(
         env,
         sender,
         canister_id,
-        &user_canister::message_activity_feed::Args { since },
+        &multi_user_canister::message_activity_feed::Args { since },
     );
     result
 }
@@ -1889,7 +1907,7 @@ fn check_pin_number(env: &mut PocketIc, sender: Principal, canister_id: Canister
         env,
         sender,
         canister_id,
-        &user_canister::check_pin_number::Args {
+        &multi_user_canister::check_pin_number::Args {
             pin: pin.to_string().into(),
         },
     )
@@ -1910,7 +1928,7 @@ fn set_pin_number(
         env,
         sender,
         canister_id,
-        &user_canister::set_pin_number::Args {
+        &multi_user_canister::set_pin_number::Args {
             new: new.map(|p| p.to_string().into()),
             verification,
         },
@@ -1921,24 +1939,24 @@ fn claim_daily_chit(
     env: &mut PocketIc,
     sender: Principal,
     canister_id: CanisterId,
-) -> user_canister::claim_daily_chit::SuccessResult {
+) -> multi_user_canister::claim_daily_chit::SuccessResult {
     match client::user::claim_daily_chit(
         env,
         sender,
         canister_id,
-        &user_canister::claim_daily_chit::Args { utc_offset_mins: None },
+        &multi_user_canister::claim_daily_chit::Args { utc_offset_mins: None },
     ) {
-        user_canister::claim_daily_chit::Response::Success(result) => result,
+        multi_user_canister::claim_daily_chit::Response::Success(result) => result,
         response => panic!("'claim_daily_chit' error: {response:?}"),
     }
 }
 
-fn chit_events(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> user_canister::chit_events::SuccessResult {
-    let user_canister::chit_events::Response::Success(result) = client::user::chit_events(
+fn chit_events(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> multi_user_canister::chit_events::SuccessResult {
+    let multi_user_canister::chit_events::Response::Success(result) = client::user::chit_events(
         env,
         sender,
         canister_id,
-        &user_canister::chit_events::Args {
+        &multi_user_canister::chit_events::Args {
             from: None,
             to: None,
             skip: None,
@@ -1985,7 +2003,7 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
         env,
         a_principal,
         canister_id,
-        &user_canister::set_message_reminder_v2::Args {
+        &multi_user_canister::set_message_reminder_v2::Args {
             chat: Chat::Direct(b.into()),
             thread_root_message_index: None,
             event_index: 10.into(),
@@ -1994,7 +2012,7 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
         },
     );
     assert!(
-        matches!(response, user_canister::set_message_reminder_v2::Response::Error(e) if e.matches_code(OCErrorCode::DateInThePast))
+        matches!(response, multi_user_canister::set_message_reminder_v2::Response::Error(e) if e.matches_code(OCErrorCode::DateInThePast))
     );
 
     // Another user in the canister can't cancel a user's reminder, while the user can
@@ -2003,9 +2021,12 @@ fn message_reminders_are_sent_by_the_openchat_bot_to_the_user_who_set_them() {
             env,
             principal,
             canister_id,
-            &user_canister::cancel_message_reminder::Args { reminder_id },
+            &multi_user_canister::cancel_message_reminder::Args { reminder_id },
         );
-        assert!(matches!(response, user_canister::cancel_message_reminder::Response::Success));
+        assert!(matches!(
+            response,
+            multi_user_canister::cancel_message_reminder::Response::Success
+        ));
     }
 
     env.advance_time(Duration::from_millis(999));
@@ -2064,7 +2085,7 @@ fn set_message_reminder(
         env,
         sender,
         canister_id,
-        &user_canister::set_message_reminder_v2::Args {
+        &multi_user_canister::set_message_reminder_v2::Args {
             chat,
             thread_root_message_index: None,
             event_index: 10.into(),
@@ -2073,7 +2094,7 @@ fn set_message_reminder(
         },
     );
     match response {
-        user_canister::set_message_reminder_v2::Response::Success(reminder_id) => reminder_id,
+        multi_user_canister::set_message_reminder_v2::Response::Success(reminder_id) => reminder_id,
         response => panic!("{response:?}"),
     }
 }
@@ -2175,7 +2196,7 @@ fn game_chit_and_suspension_are_applied_per_user() {
 
     // Only the LocalUserIndex may add game CHIT, and only the UserIndex may suspend users, who must
     // be in the canister
-    let game_chit_args = user_canister::c2c_game_chit::Args {
+    let game_chit_args = multi_user_canister::c2c_game_chit::Args {
         user_id: a,
         game_id: "light_up".to_string(),
         key: "3:solve".to_string(),
@@ -2191,7 +2212,7 @@ fn game_chit_and_suspension_are_applied_per_user() {
         .is_err()
     );
     for (sender, user_id) in [(local_user_index, a), (canister_ids.user_index, missing)] {
-        let args = user_canister::c2c_set_user_suspended::Args {
+        let args = multi_user_canister::c2c_set_user_suspended::Args {
             user_id,
             suspended: true,
         };
@@ -2226,7 +2247,7 @@ fn game_chit_and_suspension_are_applied_per_user() {
         env,
         a_principal,
         canister_id,
-        &user_canister::set_bio::Args { text: "x".repeat(2001) },
+        &multi_user_canister::set_bio::Args { text: "x".repeat(2001) },
     );
     assert!(matches!(set_bio_response, UnitResult::Error(e) if e.matches_code(OCErrorCode::InitiatorSuspended)));
 
@@ -2244,12 +2265,12 @@ fn game_chit(
     user_id: UserId,
     key: &str,
     amount: i32,
-) -> Result<user_canister::c2c_game_chit::SuccessResult, oc_error_codes::OCError> {
+) -> Result<multi_user_canister::c2c_game_chit::SuccessResult, oc_error_codes::OCError> {
     let response = client::user::c2c_game_chit(
         env,
         sender,
         canister_id,
-        &user_canister::c2c_game_chit::Args {
+        &multi_user_canister::c2c_game_chit::Args {
             user_id,
             game_id: "light_up".to_string(),
             key: key.to_string(),
@@ -2257,8 +2278,8 @@ fn game_chit(
         },
     );
     match response {
-        user_canister::c2c_game_chit::Response::Success(result) => Ok(result),
-        user_canister::c2c_game_chit::Response::Error(error) => Err(error),
+        multi_user_canister::c2c_game_chit::Response::Success(result) => Ok(result),
+        multi_user_canister::c2c_game_chit::Response::Error(error) => Err(error),
     }
 }
 
@@ -2283,9 +2304,9 @@ fn set_user_suspended(env: &mut PocketIc, sender: Principal, canister_id: Canist
         env,
         sender,
         canister_id,
-        &user_canister::c2c_set_user_suspended::Args { user_id, suspended },
+        &multi_user_canister::c2c_set_user_suspended::Args { user_id, suspended },
     );
-    let user_canister::c2c_set_user_suspended::Response::Success(result) = response;
+    let multi_user_canister::c2c_set_user_suspended::Response::Success(result) = response;
     assert!(result.groups.is_empty() && result.communities.is_empty());
 }
 
@@ -2382,7 +2403,7 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
     approve(env, a_principal, a_principal);
     let response = pay_for_streak_insurance(env, a_principal, canister_id, 1, ONE_CHAT, None);
     assert!(
-        matches!(response, user_canister::pay_for_streak_insurance::Response::Success),
+        matches!(response, multi_user_canister::pay_for_streak_insurance::Response::Success),
         "{response:?}"
     );
     // A paid for both approvals and the insurance
@@ -2413,7 +2434,7 @@ fn streak_insurance_is_paid_for_and_used_per_user() {
     approve(env, external_wallet, b_principal);
     let response = pay_for_streak_insurance(env, b_principal, canister_id, 1, ONE_CHAT, Some(external_wallet.into()));
     assert!(
-        matches!(response, user_canister::pay_for_streak_insurance::Response::Success),
+        matches!(response, multi_user_canister::pay_for_streak_insurance::Response::Success),
         "{response:?}"
     );
     assert_eq!(balance(env, external_wallet), wallet_balance - ONE_CHAT - 3 * FEE);
@@ -2502,7 +2523,7 @@ fn users_are_charged_from_their_own_wallets() {
             env,
             canister_ids.user_index,
             canister_id,
-            &user_canister::c2c_charge_user_account::Args {
+            &multi_user_canister::c2c_charge_user_account::Args {
                 user_id,
                 ledger_canister_id: canister_ids.chat_ledger,
                 amount: types::nns::Tokens::from_e8s(ONE_CHAT as u64),
@@ -2510,15 +2531,15 @@ fn users_are_charged_from_their_own_wallets() {
             },
         )
     };
-    let is_insufficient_allowance = |response: &user_canister::c2c_charge_user_account::Response| {
+    let is_insufficient_allowance = |response: &multi_user_canister::c2c_charge_user_account::Response| {
         matches!(
             response,
-            user_canister::c2c_charge_user_account::Response::TransferFromError(
+            multi_user_canister::c2c_charge_user_account::Response::TransferFromError(
                 types::icrc2::TransferFromError::InsufficientAllowance { .. }
             )
         )
     };
-    let is_error = |response: &user_canister::c2c_charge_user_account::Response, code: OCErrorCode| matches!(response, user_canister::c2c_charge_user_account::Response::Error(e) if e.matches_code(code));
+    let is_error = |response: &multi_user_canister::c2c_charge_user_account::Response, code: OCErrorCode| matches!(response, multi_user_canister::c2c_charge_user_account::Response::Error(e) if e.matches_code(code));
     let user_index_balance = balance(env, canister_ids.user_index);
 
     // Neither a user the canister doesn't hold, nor an account the canister holds, can be charged
@@ -2538,7 +2559,7 @@ fn users_are_charged_from_their_own_wallets() {
     approve(env, a_principal);
     let response = charge(env, a, None);
     assert!(
-        matches!(response, user_canister::c2c_charge_user_account::Response::Success(_)),
+        matches!(response, multi_user_canister::c2c_charge_user_account::Response::Success(_)),
         "{response:?}"
     );
 
@@ -2554,12 +2575,12 @@ fn pay_for_streak_insurance(
     additional_days: u8,
     expected_price: u128,
     from_account: Option<types::icrc1::Account>,
-) -> user_canister::pay_for_streak_insurance::Response {
+) -> multi_user_canister::pay_for_streak_insurance::Response {
     client::user::pay_for_streak_insurance(
         env,
         sender,
         canister_id,
-        &user_canister::pay_for_streak_insurance::Args {
+        &multi_user_canister::pay_for_streak_insurance::Args {
             additional_days,
             expected_price,
             from_account,
@@ -2579,7 +2600,7 @@ fn assert_pay_for_streak_insurance_error(
 ) {
     let expected = code as u16;
     match pay_for_streak_insurance(env, sender, canister_id, additional_days, expected_price, from_account) {
-        user_canister::pay_for_streak_insurance::Response::Error(error) => assert_eq!(error.code(), expected),
+        multi_user_canister::pay_for_streak_insurance::Response::Error(error) => assert_eq!(error.code(), expected),
         response => panic!("{response:?}"),
     }
 }
@@ -2655,14 +2676,14 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
         env,
         local_user_index,
         canister_id,
-        &user_canister::c2c_groups_and_communities::Args { user_id: bob_id },
+        &multi_user_canister::c2c_groups_and_communities::Args { user_id: bob_id },
     );
     assert_eq!((response.groups, response.communities), (vec![group], vec![community]));
-    let user_canister::c2c_set_user_suspended::Response::Success(result) = client::user::c2c_set_user_suspended(
+    let multi_user_canister::c2c_set_user_suspended::Response::Success(result) = client::user::c2c_set_user_suspended(
         env,
         canister_ids.user_index,
         canister_id,
-        &user_canister::c2c_set_user_suspended::Args {
+        &multi_user_canister::c2c_set_user_suspended::Args {
             user_id: bob_id,
             suspended: false,
         },
@@ -2673,23 +2694,23 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
     let since = now_millis(env);
     env.advance_time(Duration::from_millis(1));
     for chat in [ChatInList::Group(group), ChatInList::Community(community, channels[0])] {
-        let response = client::user::pin_chat_v2(env, bob, canister_id, &user_canister::pin_chat_v2::Args { chat });
+        let response = client::user::pin_chat_v2(env, bob, canister_id, &multi_user_canister::pin_chat_v2::Args { chat });
         assert!(matches!(response, UnitResult::Success), "{response:?}");
     }
     let response = client::user::mark_read(
         env,
         bob,
         canister_id,
-        &user_canister::mark_read::Args {
-            messages_read: vec![user_canister::mark_read::ChatMessagesRead {
+        &multi_user_canister::mark_read::Args {
+            messages_read: vec![multi_user_canister::mark_read::ChatMessagesRead {
                 chat_id: group,
                 read_up_to: Some(6.into()),
                 threads: Vec::new(),
                 date_read_pinned: None,
             }],
-            community_messages_read: vec![user_canister::mark_read::CommunityMessagesRead {
+            community_messages_read: vec![multi_user_canister::mark_read::CommunityMessagesRead {
                 community_id: community,
-                channels_read: vec![user_canister::mark_read::ChannelMessagesRead {
+                channels_read: vec![multi_user_canister::mark_read::ChannelMessagesRead {
                     channel_id: channels[1],
                     read_up_to: Some(2.into()),
                     threads: Vec::new(),
@@ -2698,16 +2719,19 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
             }],
         },
     );
-    assert!(matches!(response, user_canister::mark_read::Response::Success));
+    assert!(matches!(response, multi_user_canister::mark_read::Response::Success));
     let response = client::user::set_community_indexes(
         env,
         bob,
         canister_id,
-        &user_canister::set_community_indexes::Args {
+        &multi_user_canister::set_community_indexes::Args {
             indexes: vec![(community, 3)],
         },
     );
-    assert!(matches!(response, user_canister::set_community_indexes::Response::Success));
+    assert!(matches!(
+        response,
+        multi_user_canister::set_community_indexes::Response::Success
+    ));
 
     let bobs_updates = updates(env, bob, canister_id, since).unwrap();
     assert_eq!(bobs_updates.pinned_chats, Some(vec![Chat::Group(group)]));
@@ -2727,12 +2751,15 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
         env,
         bob,
         canister_id,
-        &user_canister::archive_unarchive_chats::Args {
+        &multi_user_canister::archive_unarchive_chats::Args {
             to_archive: vec![Chat::Group(group)],
             to_unarchive: Vec::new(),
         },
     );
-    assert!(matches!(response, user_canister::archive_unarchive_chats::Response::Success));
+    assert!(matches!(
+        response,
+        multi_user_canister::archive_unarchive_chats::Response::Success
+    ));
     let bobs_state = initial_state(env, bob, canister_id);
     assert!(bobs_state.group_chats.summaries[0].archived);
     assert!(bobs_state.pinned_chats.is_empty());
@@ -2740,10 +2767,10 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
     // Only a group Bob is in can send him events. Those from any other caller are dropped.
     let now = now_millis(env);
     let achievement_event = |id, achievement| {
-        user_canister::c2c_group_canister_v2::Args::new(vec![IdempotentEnvelope {
+        multi_user_canister::c2c_group_canister_v2::Args::new(vec![IdempotentEnvelope {
             created_at: now,
             idempotency_id: id,
-            value: (bob_id, user_canister::GroupCanisterEvent::Achievement(achievement)),
+            value: (bob_id, multi_user_canister::GroupCanisterEvent::Achievement(achievement)),
         }])
     };
     client::user::c2c_group_canister_v2(
@@ -2776,7 +2803,7 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
         env,
         group.into(),
         canister_id,
-        &user_canister::c2c_remove_from_group::Args {
+        &multi_user_canister::c2c_remove_from_group::Args {
             user_id: bob_id,
             removed_by: alice_id,
             blocked: false,
@@ -2784,7 +2811,10 @@ fn groups_and_communities_joined_are_held_per_user_in_a_multi_user_canister() {
             public: true,
         },
     );
-    assert!(matches!(response, user_canister::c2c_remove_from_group::Response::Success));
+    assert!(matches!(
+        response,
+        multi_user_canister::c2c_remove_from_group::Response::Success
+    ));
     assert!(group_ids(&initial_state(env, bob, canister_id)).is_empty());
     assert_eq!(
         updates(env, bob, canister_id, since).unwrap().group_chats.removed,
@@ -2834,11 +2864,11 @@ fn mark_thread_read(
         env,
         sender,
         canister_id,
-        &user_canister::mark_read::Args {
-            messages_read: vec![user_canister::mark_read::ChatMessagesRead {
+        &multi_user_canister::mark_read::Args {
+            messages_read: vec![multi_user_canister::mark_read::ChatMessagesRead {
                 chat_id: group,
                 read_up_to: None,
-                threads: vec![user_canister::mark_read::ThreadRead {
+                threads: vec![multi_user_canister::mark_read::ThreadRead {
                     root_message_index: root_message_index.into(),
                     read_up_to: read_up_to.into(),
                 }],
@@ -2847,7 +2877,7 @@ fn mark_thread_read(
             community_messages_read: Vec::new(),
         },
     );
-    assert!(matches!(response, user_canister::mark_read::Response::Success));
+    assert!(matches!(response, multi_user_canister::mark_read::Response::Success));
 }
 
 fn threads_read(
@@ -2906,7 +2936,7 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
 
     let now = now_millis(env);
     let group_deleted_args = |chat_id: ChatId, community_imported_into: Option<CommunityImportedInto>| {
-        user_canister::c2c_notify_group_deleted::Args {
+        multi_user_canister::c2c_notify_group_deleted::Args {
             user_id: bob_id,
             deleted_group: DeletedGroupInfoInternal {
                 id: chat_id,
@@ -2979,7 +3009,7 @@ fn deleted_groups_and_communities_are_removed_from_multi_user_canister_users() {
         env,
         canister_ids.group_index,
         canister_id,
-        &user_canister::c2c_notify_community_deleted::Args {
+        &multi_user_canister::c2c_notify_community_deleted::Args {
             user_id: bob_id,
             deleted_community: DeletedCommunityInfo {
                 id: community,
@@ -3019,7 +3049,7 @@ fn creating_a_community_requires_diamond_membership_in_a_multi_user_canister() {
             env,
             alice,
             canister_id,
-            &user_canister::create_community::Args {
+            &multi_user_canister::create_community::Args {
                 is_public: false,
                 name: random_string(),
                 description: random_string(),
@@ -3038,7 +3068,7 @@ fn creating_a_community_requires_diamond_membership_in_a_multi_user_canister() {
 
     let response = create_community(env);
     assert!(
-        matches!(&response, user_canister::create_community::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
+        matches!(&response, multi_user_canister::create_community::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
         "{response:?}"
     );
 
@@ -3049,7 +3079,7 @@ fn creating_a_community_requires_diamond_membership_in_a_multi_user_canister() {
         Achievement::UpgradedToDiamond
     ));
     let response = create_community(env);
-    let user_canister::create_community::Response::Success(result) = response else {
+    let multi_user_canister::create_community::Response::Success(result) = response else {
         panic!("{response:?}");
     };
     assert!(community_ids(&initial_state(env, alice, canister_id)).contains(&result.community_id));
@@ -3082,15 +3112,15 @@ fn local_user_index_events_update_the_state_each_user_holds() {
             timestamp: now_millis(env),
             provider: types::UniquePersonProofProvider::DecideAI,
         })),
-        LocalUserIndexEvent::ReferredUserRegistered(Box::new(user_canister::ReferredUserRegistered {
+        LocalUserIndexEvent::ReferredUserRegistered(Box::new(multi_user_canister::ReferredUserRegistered {
             user_id: referred_elsewhere,
             username: "referred".to_string(),
         })),
-        LocalUserIndexEvent::ExternalAchievementAwarded(Box::new(user_canister::ExternalAchievementAwarded {
+        LocalUserIndexEvent::ExternalAchievementAwarded(Box::new(multi_user_canister::ExternalAchievementAwarded {
             name: "Played a game".to_string(),
             chit_reward: 500,
         })),
-        LocalUserIndexEvent::StorageUpgraded(Box::new(user_canister::StorageUpgraded {
+        LocalUserIndexEvent::StorageUpgraded(Box::new(multi_user_canister::StorageUpgraded {
             cost: types::nns::CryptoAmount {
                 token_symbol: "ICP".to_string(),
                 amount: types::nns::Tokens::from_e8s(100_000_000),
@@ -3098,7 +3128,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
             storage_added: 1024 * 1024 * 1024,
             new_storage_limit: 1024 * 1024 * 1024,
         })),
-        LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(user_canister::OpenChatBotMessageV2 {
+        LocalUserIndexEvent::OpenChatBotMessageV2(Box::new(multi_user_canister::OpenChatBotMessageV2 {
             thread_root_message_id: None,
             content: MessageContentInitial::Text(TextContent {
                 text: "A message from the bot".to_string(),
@@ -3168,15 +3198,15 @@ fn local_user_index_events_update_the_state_each_user_holds() {
         env,
         carol.canister(),
         canister_id,
-        &user_canister::c2c_user_canister_v2::Args {
+        &multi_user_canister::c2c_user_canister_v2::Args {
             events: vec![IdempotentEnvelope {
                 created_at: now_millis(env),
                 idempotency_id: 1,
-                value: user_canister::c2c_user_canister_v2::Event {
+                value: multi_user_canister::c2c_user_canister_v2::Event {
                     sender_previous_user_ids: Vec::new(),
                     sender: carol.user_id,
                     recipient: alice_id,
-                    event: UserCanisterEvent::SetReferralStatusV2(Box::new(user_canister::SetReferralStatusV2 {
+                    event: UserCanisterEvent::SetReferralStatusV2(Box::new(multi_user_canister::SetReferralStatusV2 {
                         status: ReferralStatus::Diamond,
                         previous_user_ids: Vec::new(),
                     })),
@@ -3185,7 +3215,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
         },
     );
     assert!(
-        matches!(response, user_canister::c2c_user_canister_v2::Response::Success),
+        matches!(response, multi_user_canister::c2c_user_canister_v2::Response::Success),
         "{response:?}"
     );
     let alice_state_after = initial_state(env, alice, canister_id);
@@ -3211,15 +3241,15 @@ fn local_user_index_events_update_the_state_each_user_holds() {
         env,
         other_canister_id,
         canister_id,
-        &user_canister::c2c_user_canister_v2::Args {
+        &multi_user_canister::c2c_user_canister_v2::Args {
             events: vec![IdempotentEnvelope {
                 created_at: now_millis(env),
                 idempotency_id: 1,
-                value: user_canister::c2c_user_canister_v2::Event {
+                value: multi_user_canister::c2c_user_canister_v2::Event {
                     sender_previous_user_ids: Vec::new(),
                     sender: migrated_user_id,
                     recipient: alice_id,
-                    event: UserCanisterEvent::SetReferralStatusV2(Box::new(user_canister::SetReferralStatusV2 {
+                    event: UserCanisterEvent::SetReferralStatusV2(Box::new(multi_user_canister::SetReferralStatusV2 {
                         status: ReferralStatus::Diamond,
                         previous_user_ids: vec![referred_elsewhere],
                     })),
@@ -3228,7 +3258,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
         },
     );
     assert!(
-        matches!(response, user_canister::c2c_user_canister_v2::Response::Success),
+        matches!(response, multi_user_canister::c2c_user_canister_v2::Response::Success),
         "{response:?}"
     );
     let alice_state_after = initial_state(env, alice, canister_id);
@@ -3253,18 +3283,20 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     let event = local_user_index_event(
         env,
         11,
-        LocalUserIndexEvent::DiamondMembershipPaymentReceived(Box::new(user_canister::DiamondMembershipPaymentReceived {
-            timestamp: now,
-            expires_at: now + 365 * constants::DAY_IN_MS,
-            ledger: Principal::anonymous(),
-            token_symbol: "CHAT".to_string(),
-            token: None,
-            amount_e8s: 0,
-            block_index: 0,
-            duration: DiamondMembershipPlanDuration::Lifetime,
-            recurring: false,
-            send_bot_message: true,
-        })),
+        LocalUserIndexEvent::DiamondMembershipPaymentReceived(Box::new(
+            multi_user_canister::DiamondMembershipPaymentReceived {
+                timestamp: now,
+                expires_at: now + 365 * constants::DAY_IN_MS,
+                ledger: Principal::anonymous(),
+                token_symbol: "CHAT".to_string(),
+                token: None,
+                amount_e8s: 0,
+                block_index: 0,
+                duration: DiamondMembershipPlanDuration::Lifetime,
+                recurring: false,
+                send_bot_message: true,
+            },
+        )),
     );
     send_local_user_index_events(env, local_user_index, canister_id, bob_id, vec![event]);
 
@@ -3291,7 +3323,7 @@ fn local_user_index_events_update_the_state_each_user_holds() {
     let event = local_user_index_event(
         env,
         12,
-        LocalUserIndexEvent::PhoneNumberConfirmed(Box::new(user_canister::PhoneNumberConfirmed {
+        LocalUserIndexEvent::PhoneNumberConfirmed(Box::new(multi_user_canister::PhoneNumberConfirmed {
             phone_number: types::PhoneNumber::new(44, "07887123456".to_string()),
             storage_added: 1024 * 1024 * 1024,
             new_storage_limit: 2 * 1024 * 1024 * 1024,
@@ -3355,9 +3387,13 @@ fn public_profile(
     sender: Principal,
     canister_id: CanisterId,
     user_id: UserId,
-) -> user_canister::public_profile::PublicProfile {
-    let user_canister::public_profile::Response::Success(profile) =
-        client::user::public_profile(env, sender, canister_id, &user_canister::public_profile::Args { user_id });
+) -> multi_user_canister::public_profile::PublicProfile {
+    let multi_user_canister::public_profile::Response::Success(profile) = client::user::public_profile(
+        env,
+        sender,
+        canister_id,
+        &multi_user_canister::public_profile::Args { user_id },
+    );
     profile
 }
 
@@ -3434,14 +3470,14 @@ fn bots_are_installed_per_user() {
         env,
         local_user_index,
         canister_id,
-        &user_canister::c2c_bot_chat_summary::Args {
+        &multi_user_canister::c2c_bot_chat_summary::Args {
             user_id: alice_id,
             bot_id,
             initiator: BotInitiator::Autonomous,
         },
     );
     assert!(
-        matches!(response, user_canister::c2c_bot_chat_summary::Response::Success(_)),
+        matches!(response, multi_user_canister::c2c_bot_chat_summary::Response::Success(_)),
         "{response:?}"
     );
 
@@ -3470,13 +3506,13 @@ fn bots_are_installed_per_user() {
             env,
             local_user_index,
             canister_id,
-            &user_canister::c2c_bot_chat_summary::Args {
+            &multi_user_canister::c2c_bot_chat_summary::Args {
                 user_id: bob_id,
                 bot_id,
                 initiator: BotInitiator::Autonomous,
             },
         ),
-        user_canister::c2c_bot_chat_summary::Response::Success(_)
+        multi_user_canister::c2c_bot_chat_summary::Response::Success(_)
     ));
 
     // A bot removed everywhere reaches each user as an event from the LocalUserIndex
@@ -3614,9 +3650,9 @@ fn a_bot_can_send_a_direct_message_to_a_user_in_a_multi_user_canister() {
         env,
         alice,
         canister_id,
-        &user_canister::mute_notifications::Args { chat_id: bot_id.into() },
+        &multi_user_canister::mute_notifications::Args { chat_id: bot_id.into() },
     );
-    assert!(matches!(muted, user_canister::mute_notifications::Response::Success));
+    assert!(matches!(muted, multi_user_canister::mute_notifications::Response::Success));
     let response = send(env, alice_id, random_from_u128(), "Still there?", true);
     assert!(
         matches!(response, local_user_index_canister::bot_send_message::Response::Success(_)),
@@ -3655,7 +3691,7 @@ fn reporting_a_message_deletes_it_from_the_reporters_copy_only() {
     let message_id = random_from_u128();
     let response = client::user::send_message_v2(env, bob, canister_id, &send_message_args(alice_id, "rude", message_id));
     assert!(
-        matches!(response, user_canister::send_message_v2::Response::Success(_)),
+        matches!(response, multi_user_canister::send_message_v2::Response::Success(_)),
         "{response:?}"
     );
 
@@ -3663,7 +3699,7 @@ fn reporting_a_message_deletes_it_from_the_reporters_copy_only() {
         env,
         alice,
         canister_id,
-        &user_canister::report_message::Args {
+        &multi_user_canister::report_message::Args {
             them: bob_id,
             thread_root_message_index: None,
             message_id,
@@ -3705,7 +3741,7 @@ fn premium_items_are_paid_for_from_the_users_chit() {
     let event = local_user_index_event(
         env,
         1,
-        LocalUserIndexEvent::ExternalAchievementAwarded(Box::new(user_canister::ExternalAchievementAwarded {
+        LocalUserIndexEvent::ExternalAchievementAwarded(Box::new(multi_user_canister::ExternalAchievementAwarded {
             name: "Played a game".to_string(),
             chit_reward: 1000,
         })),
@@ -3718,7 +3754,7 @@ fn premium_items_are_paid_for_from_the_users_chit() {
             env,
             local_user_index,
             canister_id,
-            &user_canister::c2c_pay_for_premium_item::Args {
+            &multi_user_canister::c2c_pay_for_premium_item::Args {
                 user_id: alice_id,
                 item_id,
                 pay_in_chat: false,
@@ -3730,14 +3766,14 @@ fn premium_items_are_paid_for_from_the_users_chit() {
     // Too expensive
     let response = pay(env, 1, 1001);
     assert!(
-        matches!(&response, user_canister::c2c_pay_for_premium_item::Response::Error(e) if e.matches_code(OCErrorCode::InsufficientFunds)),
+        matches!(&response, multi_user_canister::c2c_pay_for_premium_item::Response::Error(e) if e.matches_code(OCErrorCode::InsufficientFunds)),
         "{response:?}"
     );
 
     // Bought, and reported in the user's state along with the CHIT spent
     let response = pay(env, 1, 400);
     assert!(
-        matches!(&response, user_canister::c2c_pay_for_premium_item::Response::Success(r) if r.chit_balance == 600),
+        matches!(&response, multi_user_canister::c2c_pay_for_premium_item::Response::Success(r) if r.chit_balance == 600),
         "{response:?}"
     );
     let state = initial_state(env, alice, canister_id);
@@ -3753,7 +3789,7 @@ fn premium_items_are_paid_for_from_the_users_chit() {
     // Only once
     let response = pay(env, 1, 400);
     assert!(
-        matches!(&response, user_canister::c2c_pay_for_premium_item::Response::Error(e) if e.matches_code(OCErrorCode::AlreadyAdded)),
+        matches!(&response, multi_user_canister::c2c_pay_for_premium_item::Response::Error(e) if e.matches_code(OCErrorCode::AlreadyAdded)),
         "{response:?}"
     );
 
@@ -3762,7 +3798,7 @@ fn premium_items_are_paid_for_from_the_users_chit() {
         env,
         local_user_index,
         canister_id,
-        &user_canister::c2c_pay_for_premium_item::Args {
+        &multi_user_canister::c2c_pay_for_premium_item::Args {
             user_id: random_principal().into(),
             item_id: 2,
             pay_in_chat: false,
@@ -3770,7 +3806,7 @@ fn premium_items_are_paid_for_from_the_users_chit() {
         },
     );
     assert!(
-        matches!(&response, user_canister::c2c_pay_for_premium_item::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
+        matches!(&response, multi_user_canister::c2c_pay_for_premium_item::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
         "{response:?}"
     );
 }
@@ -3798,7 +3834,7 @@ fn send_local_user_index_events(
         env,
         local_user_index,
         canister_id,
-        &user_canister::c2c_local_user_index_v2::Args {
+        &multi_user_canister::c2c_local_user_index_v2::Args {
             events: events.into_iter().map(|event| paired(user_id, event)).collect(),
         },
     );
@@ -3839,7 +3875,7 @@ fn is_rejected<A: serde::Serialize>(
     .is_err()
 }
 
-fn has_achievement(initial_state: &user_canister::initial_state::SuccessResult, achievement: Achievement) -> bool {
+fn has_achievement(initial_state: &multi_user_canister::initial_state::SuccessResult, achievement: Achievement) -> bool {
     initial_state
         .achievements
         .iter()
@@ -3856,27 +3892,29 @@ fn diamond_membership_payment_received(
     let event = local_user_index_event(
         env,
         1,
-        LocalUserIndexEvent::DiamondMembershipPaymentReceived(Box::new(user_canister::DiamondMembershipPaymentReceived {
-            timestamp: now,
-            expires_at: now + 30 * 24 * 60 * 60 * 1000,
-            ledger: Principal::anonymous(),
-            token_symbol: "CHAT".to_string(),
-            token: None,
-            amount_e8s: 0,
-            block_index: 0,
-            duration: DiamondMembershipPlanDuration::OneMonth,
-            recurring: false,
-            send_bot_message: false,
-        })),
+        LocalUserIndexEvent::DiamondMembershipPaymentReceived(Box::new(
+            multi_user_canister::DiamondMembershipPaymentReceived {
+                timestamp: now,
+                expires_at: now + 30 * 24 * 60 * 60 * 1000,
+                ledger: Principal::anonymous(),
+                token_symbol: "CHAT".to_string(),
+                token: None,
+                amount_e8s: 0,
+                block_index: 0,
+                duration: DiamondMembershipPlanDuration::OneMonth,
+                recurring: false,
+                send_bot_message: false,
+            },
+        )),
     );
     send_local_user_index_events(env, local_user_index, canister_id, user_id, vec![event]);
 }
 
-fn group_ids(initial_state: &user_canister::initial_state::SuccessResult) -> Vec<ChatId> {
+fn group_ids(initial_state: &multi_user_canister::initial_state::SuccessResult) -> Vec<ChatId> {
     initial_state.group_chats.summaries.iter().map(|g| g.chat_id).collect()
 }
 
-fn community_ids(initial_state: &user_canister::initial_state::SuccessResult) -> Vec<CommunityId> {
+fn community_ids(initial_state: &multi_user_canister::initial_state::SuccessResult) -> Vec<CommunityId> {
     initial_state.communities.summaries.iter().map(|c| c.community_id).collect()
 }
 
@@ -3929,7 +3967,7 @@ fn a_user_is_deleted_from_a_multi_user_canister_without_affecting_the_others() {
         alice,
         canister_id,
         "initial_state",
-        &user_canister::initial_state::Args {}
+        &multi_user_canister::initial_state::Args {}
     ));
     assert_eq!(timer_jobs(env, canister_id), timer_jobs_before - 1);
     assert_eq!(
@@ -3953,7 +3991,7 @@ fn a_user_is_deleted_from_a_multi_user_canister_without_affecting_the_others() {
         env,
         local_user_index,
         canister_id,
-        &user_canister::c2c_groups_and_communities::Args { user_id: alice_id },
+        &multi_user_canister::c2c_groups_and_communities::Args { user_id: alice_id },
     );
     assert!(response.groups.is_empty() && response.communities.is_empty());
     delete_user(env, local_user_index, canister_id, alice_id);
@@ -3976,8 +4014,8 @@ fn a_user_is_deleted_from_a_multi_user_canister_without_affecting_the_others() {
     };
     assert_eq!(new_alice_id.index(), 3);
     // Created without welcome messages, so she has no chat at all, not even with the OpenChat bot
-    let user_canister::initial_state::Response::Success(new_alice_state) =
-        client::user::initial_state(env, alice, canister_id, &user_canister::initial_state::Args {});
+    let multi_user_canister::initial_state::Response::Success(new_alice_state) =
+        client::user::initial_state(env, alice, canister_id, &multi_user_canister::initial_state::Args {});
     assert!(new_alice_state.direct_chats.summaries.is_empty());
 }
 
@@ -4036,7 +4074,7 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         env,
         local_user_index,
         canister_id,
-        &user_canister::c2c_local_user_index_v2::Args {
+        &multi_user_canister::c2c_local_user_index_v2::Args {
             events: vec![
                 paired(alice_id, joined_group(env, 1, group1)),
                 paired(bob_id, joined_group(env, 2, group2)),
@@ -4074,13 +4112,13 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
     let achievement = |id| IdempotentEnvelope {
         created_at: now,
         idempotency_id: id,
-        value: user_canister::GroupCanisterEvent::Achievement(Achievement::ReactedToMessage),
+        value: multi_user_canister::GroupCanisterEvent::Achievement(Achievement::ReactedToMessage),
     };
     client::user::c2c_group_canister_v2(
         env,
         group2.into(),
         canister_id,
-        &user_canister::c2c_group_canister_v2::Args::new(vec![
+        &multi_user_canister::c2c_group_canister_v2::Args::new(vec![
             paired(alice_id, achievement(1)),
             paired(bob_id, achievement(2)),
         ]),
@@ -4098,13 +4136,13 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
     let community_achievement = |id| IdempotentEnvelope {
         created_at: now,
         idempotency_id: id,
-        value: user_canister::CommunityCanisterEvent::Achievement(Achievement::SentGiphy),
+        value: multi_user_canister::CommunityCanisterEvent::Achievement(Achievement::SentGiphy),
     };
     client::user::c2c_community_canister_v2(
         env,
         community.into(),
         canister_id,
-        &user_canister::c2c_community_canister_v2::Args::new(vec![
+        &multi_user_canister::c2c_community_canister_v2::Args::new(vec![
             paired(alice_id, community_achievement(1)),
             paired(bob_id, community_achievement(2)),
         ]),
@@ -4135,7 +4173,7 @@ fn v2_events_are_applied_to_the_user_each_is_paired_with() {
         env,
         local_user_index,
         canister_id,
-        &user_canister::c2c_local_user_index_v2::Args {
+        &multi_user_canister::c2c_local_user_index_v2::Args {
             events: vec![
                 paired(bob_id, joined_at(10, now, group4)),
                 paired(bob_id, joined_at(11, now - 1, group5)),
@@ -4181,11 +4219,11 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
             env,
             caller,
             canister_id,
-            &user_canister::c2c_user_canister_v2::Args {
+            &multi_user_canister::c2c_user_canister_v2::Args {
                 events: vec![IdempotentEnvelope {
                     created_at: now_millis(env),
                     idempotency_id: next_id,
-                    value: user_canister::c2c_user_canister_v2::Event {
+                    value: multi_user_canister::c2c_user_canister_v2::Event {
                         sender_previous_user_ids: Vec::new(),
                         sender,
                         recipient: bob_id,
@@ -4197,8 +4235,8 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         assert!(matches!(response, types::SuccessOnly::Success));
     };
     let send_text = |message_id: MessageId, sender_message_index: u32, text: &str| {
-        UserCanisterEvent::SendMessages(Box::new(user_canister::SendMessagesArgs {
-            messages: vec![user_canister::SendMessageArgs {
+        UserCanisterEvent::SendMessages(Box::new(multi_user_canister::SendMessagesArgs {
+            messages: vec![multi_user_canister::SendMessageArgs {
                 thread_root_message_id: None,
                 message_id,
                 sender_message_index: sender_message_index.into(),
@@ -4230,7 +4268,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         env,
         alice.canister(),
         alice.user_id,
-        UserCanisterEvent::EditMessage(Box::new(user_canister::EditMessageArgs {
+        UserCanisterEvent::EditMessage(Box::new(multi_user_canister::EditMessageArgs {
             thread_root_message_id: None,
             message_id,
             content: MessageContent::Text(TextContent {
@@ -4246,7 +4284,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         env,
         alice.canister(),
         alice.user_id,
-        UserCanisterEvent::ToggleReaction(Box::new(user_canister::ToggleReactionArgs {
+        UserCanisterEvent::ToggleReaction(Box::new(multi_user_canister::ToggleReactionArgs {
             thread_root_message_id: None,
             message_id,
             reaction: Reaction::new("👍".to_string()),
@@ -4262,13 +4300,13 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         env,
         alice.canister(),
         alice.user_id,
-        UserCanisterEvent::MarkMessagesRead(user_canister::MarkMessagesReadArgs { read_up_to: 0.into() }),
+        UserCanisterEvent::MarkMessagesRead(multi_user_canister::MarkMessagesReadArgs { read_up_to: 0.into() }),
     );
     send(
         env,
         alice.canister(),
         alice.user_id,
-        UserCanisterEvent::SetEventsTtl(Box::new(user_canister::SetEventsTtl {
+        UserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
             events_ttl: Some(3_600_000),
             timestamp: now_millis(env),
         })),
@@ -4279,7 +4317,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
 
     // She deletes the message, then undeletes it
     let delete_args = || {
-        Box::new(user_canister::DeleteUndeleteMessagesArgs {
+        Box::new(multi_user_canister::DeleteUndeleteMessagesArgs {
             thread_root_message_id: None,
             message_ids: vec![message_id],
         })
@@ -4327,7 +4365,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
     let retried = IdempotentEnvelope {
         created_at: now_millis(env),
         idempotency_id: 1_000,
-        value: user_canister::c2c_user_canister_v2::Event {
+        value: multi_user_canister::c2c_user_canister_v2::Event {
             sender_previous_user_ids: Vec::new(),
             sender: alice.user_id,
             recipient: bob_id,
@@ -4339,7 +4377,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
             env,
             alice.canister(),
             canister_id,
-            &user_canister::c2c_user_canister_v2::Args {
+            &multi_user_canister::c2c_user_canister_v2::Args {
                 events: vec![retried.clone()],
             },
         );
@@ -4354,11 +4392,11 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         env,
         alice.canister(),
         canister_id,
-        &user_canister::c2c_user_canister_v2::Args {
+        &multi_user_canister::c2c_user_canister_v2::Args {
             events: vec![IdempotentEnvelope {
                 created_at: now_millis(env),
                 idempotency_id: 1_001,
-                value: user_canister::c2c_user_canister_v2::Event {
+                value: multi_user_canister::c2c_user_canister_v2::Event {
                     sender_previous_user_ids: Vec::new(),
                     sender: alice.user_id,
                     recipient: UserId::new_indexed(canister_id, 99),
@@ -4381,7 +4419,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
         env,
         alice.canister(),
         alice.user_id,
-        UserCanisterEvent::EditMessage(Box::new(user_canister::EditMessageArgs {
+        UserCanisterEvent::EditMessage(Box::new(multi_user_canister::EditMessageArgs {
             thread_root_message_id: None,
             message_id,
             content: MessageContent::Text(TextContent {
@@ -4406,7 +4444,7 @@ fn events_from_users_in_other_canisters_are_applied_to_their_chats() {
             env,
             blocked.canister(),
             blocked.user_id,
-            UserCanisterEvent::SetEventsTtl(Box::new(user_canister::SetEventsTtl {
+            UserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
                 events_ttl: Some(60_000),
                 timestamp: now_millis(env),
             })),
@@ -4442,7 +4480,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
         &send_message_args(unknown, "hello", random_from_u128()),
     );
     assert!(
-        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
+        matches!(&response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
         "{response:?}"
     );
 
@@ -4463,7 +4501,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
             env,
             bob,
             canister_id,
-            &user_canister::update_chat_settings::Args {
+            &multi_user_canister::update_chat_settings::Args {
                 user_id: them,
                 events_ttl: OptionUpdate::SetToSome(60_000),
             },
@@ -4480,7 +4518,7 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
         &send_message_args(carol.principal.into(), "hello", random_from_u128()),
     );
     assert!(
-        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
+        matches!(&response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::TargetUserNotFound)),
         "{response:?}"
     );
 
@@ -4505,13 +4543,16 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
         env,
         bob,
         canister_id,
-        &user_canister::undelete_messages::Args {
+        &multi_user_canister::undelete_messages::Args {
             user_id: alice.user_id,
             thread_root_message_index: None,
             message_ids: vec![message_id],
         },
     );
-    assert!(matches!(response, user_canister::undelete_messages::Response::Success(_)));
+    assert!(matches!(
+        response,
+        multi_user_canister::undelete_messages::Response::Success(_)
+    ));
     update_chat_settings(env, bob, canister_id, alice.user_id, OptionUpdate::SetToSome(3_600_000));
 
     let bobs_chat = events(env, bob, canister_id, bob_id, alice.user_id);
@@ -4550,15 +4591,15 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
         env,
         impostor,
         canister_id,
-        &user_canister::c2c_user_canister_v2::Args {
+        &multi_user_canister::c2c_user_canister_v2::Args {
             events: vec![IdempotentEnvelope {
                 created_at: now_millis(env),
                 idempotency_id: 1,
-                value: user_canister::c2c_user_canister_v2::Event {
+                value: multi_user_canister::c2c_user_canister_v2::Event {
                     sender_previous_user_ids: Vec::new(),
                     sender: UserId::new_indexed(impostor, 1),
                     recipient: bob_id,
-                    event: UserCanisterEvent::SetEventsTtl(Box::new(user_canister::SetEventsTtl {
+                    event: UserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
                         events_ttl: Some(1),
                         timestamp: now_millis(env),
                     })),
@@ -4580,15 +4621,15 @@ fn events_for_users_in_other_canisters_are_sent_to_their_canisters() {
         env,
         canister_ids.proposals_bot,
         canister_id,
-        &user_canister::c2c_user_canister_v2::Args {
+        &multi_user_canister::c2c_user_canister_v2::Args {
             events: vec![IdempotentEnvelope {
                 created_at: now_millis(env),
                 idempotency_id: 1,
-                value: user_canister::c2c_user_canister_v2::Event {
+                value: multi_user_canister::c2c_user_canister_v2::Event {
                     sender_previous_user_ids: Vec::new(),
                     sender: canister_ids.proposals_bot.into(),
                     recipient: bob_id,
-                    event: UserCanisterEvent::SetEventsTtl(Box::new(user_canister::SetEventsTtl {
+                    event: UserCanisterEvent::SetEventsTtl(Box::new(multi_user_canister::SetEventsTtl {
                         events_ttl: Some(1),
                         timestamp: now_millis(env),
                     })),
@@ -4633,12 +4674,12 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
     let message_from = |env: &PocketIc, id: u64, sender: UserId, text: &str| IdempotentEnvelope {
         created_at: now_millis(env),
         idempotency_id: id,
-        value: user_canister::c2c_user_canister_v2::Event {
+        value: multi_user_canister::c2c_user_canister_v2::Event {
             sender_previous_user_ids: Vec::new(),
             sender,
             recipient: carol_id,
-            event: UserCanisterEvent::SendMessages(Box::new(user_canister::SendMessagesArgs {
-                messages: vec![user_canister::SendMessageArgs {
+            event: UserCanisterEvent::SendMessages(Box::new(multi_user_canister::SendMessagesArgs {
+                messages: vec![multi_user_canister::SendMessageArgs {
                     thread_root_message_id: None,
                     message_id: random_from_u128(),
                     sender_message_index: 0.into(),
@@ -4670,7 +4711,7 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
         env,
         first,
         second,
-        &user_canister::c2c_user_canister_v2::Args { events: first_batch },
+        &multi_user_canister::c2c_user_canister_v2::Args { events: first_batch },
     );
     assert!(matches!(response, types::SuccessOnly::Success));
     assert_eq!(known_multi_user_canisters(env, second), 1);
@@ -4690,7 +4731,7 @@ fn a_multi_user_canister_is_verified_once_then_trusted_for_any_of_its_users() {
         env,
         first,
         second,
-        &user_canister::c2c_user_canister_v2::Args {
+        &multi_user_canister::c2c_user_canister_v2::Args {
             events: vec![
                 message_from(env, 4, bob_id, "blocked"),
                 message_from(env, 5, alice_id, "again"),
@@ -4755,7 +4796,7 @@ fn users_can_chat_with_bots_but_not_send_them_crypto() {
         &send_message_args(canister_ids.proposals_bot.into(), "hello", random_from_u128()),
     );
     assert!(
-        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        matches!(&response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{response:?}"
     );
 
@@ -4794,7 +4835,7 @@ fn users_can_chat_with_bots_but_not_send_them_crypto() {
         env,
         alice,
         canister_id,
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             content: MessageContentInitial::Crypto(CryptoContent {
                 recipient: bot_id,
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC2(icrc2::PendingCryptoTransaction {
@@ -4813,7 +4854,7 @@ fn users_can_chat_with_bots_but_not_send_them_crypto() {
         },
     );
     assert!(
-        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        matches!(&response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{response:?}"
     );
     assert_eq!(
@@ -4862,7 +4903,7 @@ fn users_send_crypto_from_their_own_wallets() {
             env,
             a_principal,
             canister_id,
-            &user_canister::send_message_v2::Args {
+            &multi_user_canister::send_message_v2::Args {
                 content: MessageContentInitial::Crypto(CryptoContent {
                     recipient,
                     transfer: CryptoTransaction::Pending(transfer),
@@ -4889,7 +4930,7 @@ fn users_send_crypto_from_their_own_wallets() {
     let transfer = icrc2_transfer(env, b_principal.into());
     let response = send_crypto(env, b, transfer);
     assert!(
-        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        matches!(response, multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)),
         "{response:?}"
     );
     assert_eq!(
@@ -4919,7 +4960,7 @@ fn users_send_crypto_from_their_own_wallets() {
     let transfer = icrc2_transfer(env, carol.principal.into());
     let response = send_crypto(env, carol.user_id, transfer);
     assert!(
-        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        matches!(response, multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)),
         "{response:?}"
     );
     assert_eq!(
@@ -4939,7 +4980,7 @@ fn users_send_crypto_from_their_own_wallets() {
     });
     let response = send_crypto(env, b, transfer);
     assert!(
-        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
+        matches!(&response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InvalidRequest)),
         "{response:?}"
     );
 
@@ -4950,7 +4991,7 @@ fn users_send_crypto_from_their_own_wallets() {
     let transfer = icrc2_transfer(env, icrc1::Account::legacy_for_user(b));
     let response = send_crypto(env, b, transfer);
     assert!(
-        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        matches!(response, multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)),
         "{response:?}"
     );
     assert_eq!(
@@ -4965,7 +5006,7 @@ fn users_send_crypto_from_their_own_wallets() {
     let transfer = icrc2_transfer(env, carol.principal.into());
     let response = send_crypto(env, b, transfer);
     assert!(
-        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::RecipientMismatch)),
+        matches!(&response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::RecipientMismatch)),
         "{response:?}"
     );
 
@@ -4975,7 +5016,7 @@ fn users_send_crypto_from_their_own_wallets() {
         env,
         a_principal,
         canister_id,
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             thread_root_message_index: Some(99.into()),
             content: MessageContentInitial::Crypto(CryptoContent {
                 recipient: b,
@@ -4986,7 +5027,7 @@ fn users_send_crypto_from_their_own_wallets() {
         },
     );
     assert!(
-        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::ThreadNotFound)),
+        matches!(&response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::ThreadNotFound)),
         "{response:?}"
     );
     assert_eq!(
@@ -5018,7 +5059,7 @@ fn users_send_crypto_from_their_own_wallets() {
     });
     let response = send_crypto(env, b, transfer);
     assert!(
-        matches!(&response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InsufficientAllowance)),
+        matches!(&response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InsufficientAllowance)),
         "{response:?}"
     );
     assert_eq!(
@@ -5117,12 +5158,12 @@ fn crypto_addressed_to_a_users_id_is_sent_to_their_wallet(in_channel: bool) {
         env,
         carol.principal,
         carol.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             content,
             ..send_message_args(bob.user_id, "", random_from_u128())
         },
     );
-    let user_canister::send_message_v2::Response::TransferSuccessV2(result) = response else {
+    let multi_user_canister::send_message_v2::Response::TransferSuccessV2(result) = response else {
         panic!("{response:?}");
     };
     assert_eq!(paid_to(&result.transfer), bobs_wallet);
@@ -5326,7 +5367,7 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     client::ledger::happy_path::transfer(env, *controller, ledger, carol.principal, 10 * tip);
     tick_many(env, 3);
 
-    let tip_args = |chat: Chat, recipient: UserId, message_id| user_canister::tip_message::Args {
+    let tip_args = |chat: Chat, recipient: UserId, message_id| multi_user_canister::tip_message::Args {
         chat,
         recipient,
         thread_root_message_index: None,
@@ -5358,7 +5399,7 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     let tipped = now_millis(env);
     let response = alice_tips(env, bob_id, message_id);
     assert!(
-        matches!(response, user_canister::tip_message::Response::Success),
+        matches!(response, multi_user_canister::tip_message::Response::Success),
         "{response:?}"
     );
     // So that no later tip, eg. Carol's, has the same timestamp as this one
@@ -5389,7 +5430,7 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     tick_many(env, 3);
     let response = alice_tips(env, carol.user_id, message_id);
     assert!(
-        matches!(response, user_canister::tip_message::Response::Success),
+        matches!(response, multi_user_canister::tip_message::Response::Success),
         "{response:?}"
     );
     tick_many(env, 3);
@@ -5409,7 +5450,7 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
         &tip_args(Chat::Direct(alice_id.into()), alice_id, message_id),
     );
     assert!(
-        matches!(response, user_canister::tip_message::Response::Success),
+        matches!(response, multi_user_canister::tip_message::Response::Success),
         "{response:?}"
     );
     tick_many(env, 3);
@@ -5460,7 +5501,7 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
                 env,
                 bob,
                 canister_id,
-                &user_canister::tip_message::Args {
+                &multi_user_canister::tip_message::Args {
                     from_account: Some(alice.into()),
                     ..tip_args(Chat::Direct(alice_id.into()), alice_id, alices_message_to_bob)
                 },
@@ -5488,7 +5529,7 @@ fn tips_are_paid_from_the_tippers_own_wallet() {
     ];
     for (response, code) in refused {
         assert!(
-            matches!(&response, user_canister::tip_message::Response::Error(e) if e.matches_code(code)),
+            matches!(&response, multi_user_canister::tip_message::Response::Error(e) if e.matches_code(code)),
             "{response:?}"
         );
     }
@@ -5528,7 +5569,7 @@ fn video_calls_are_recorded_in_both_copies_of_the_chat() {
             env,
             VIDEO_CALL_OPERATOR,
             canister_id,
-            &user_canister::start_video_call_v2::Args {
+            &multi_user_canister::start_video_call_v2::Args {
                 user_id: callee,
                 message_id,
                 initiator,
@@ -5547,7 +5588,7 @@ fn video_calls_are_recorded_in_both_copies_of_the_chat() {
             env,
             joiner,
             canister_id,
-            &user_canister::join_video_call::Args {
+            &multi_user_canister::join_video_call::Args {
                 user_id: other,
                 message_id,
             },
@@ -5605,7 +5646,7 @@ fn video_calls_are_recorded_in_both_copies_of_the_chat() {
         env,
         VIDEO_CALL_OPERATOR,
         canister_id,
-        &user_canister::end_video_call_v2::Args {
+        &multi_user_canister::end_video_call_v2::Args {
             user_id: alice_id,
             them: carol.user_id,
             message_id,
@@ -5639,7 +5680,7 @@ fn video_calls_are_recorded_in_both_copies_of_the_chat() {
         env,
         VIDEO_CALL_OPERATOR,
         canister_id,
-        &user_canister::end_video_call_v2::Args {
+        &multi_user_canister::end_video_call_v2::Args {
             user_id: bob_id,
             them: alice_id,
             message_id,
@@ -5670,7 +5711,7 @@ fn video_calls_are_recorded_in_both_copies_of_the_chat() {
         env,
         VIDEO_CALL_OPERATOR,
         carol.canister(),
-        &user_canister::start_video_call_v2::Args {
+        &multi_user_canister::start_video_call_v2::Args {
             user_id: carol.user_id,
             message_id,
             initiator: alice_id,
@@ -5755,7 +5796,7 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
     );
     tick_many(env, 3);
 
-    let offer = |recipient: UserId, message_id| user_canister::send_message_v2::Args {
+    let offer = |recipient: UserId, message_id| multi_user_canister::send_message_v2::Args {
         recipient,
         thread_root_message_index: None,
         message_id,
@@ -5775,7 +5816,7 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
         pin: None,
         og_previews: Vec::new(),
     };
-    let accept = |them: UserId, message_id| user_canister::accept_p2p_swap::Args {
+    let accept = |them: UserId, message_id| multi_user_canister::accept_p2p_swap::Args {
         user_id: them,
         thread_root_message_index: None,
         message_id,
@@ -5794,14 +5835,14 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
     let message_id = random_from_u128();
     let response = client::user::send_message_v2(env, alice, canister_id, &offer(bob_id, message_id));
     assert!(
-        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        matches!(response, multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)),
         "{response:?}"
     );
     tick_many(env, 3);
     let alices_chat = client::ledger::happy_path::balance_of(env, chat, alice);
     let response = client::user::accept_p2p_swap(env, bob, canister_id, &accept(alice_id, message_id));
     assert!(
-        matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
+        matches!(response, multi_user_canister::accept_p2p_swap::Response::Success(_)),
         "{response:?}"
     );
     tick_many(env, 10);
@@ -5825,7 +5866,7 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
     let message_id = random_from_u128();
     let response = client::user::send_message_v2(env, carol.principal, carol.canister(), &offer(bob_id, message_id));
     assert!(
-        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        matches!(response, multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)),
         "{response:?}"
     );
     tick_many(env, 3);
@@ -5833,7 +5874,7 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
     let bobs_icp = client::ledger::happy_path::balance_of(env, icp, bob);
     let response = client::user::accept_p2p_swap(env, bob, canister_id, &accept(carol.user_id, message_id));
     assert!(
-        matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
+        matches!(response, multi_user_canister::accept_p2p_swap::Response::Success(_)),
         "{response:?}"
     );
     tick_many(env, 10);
@@ -5857,14 +5898,14 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
     let message_id = random_from_u128();
     let response = client::user::send_message_v2(env, alice, canister_id, &offer(dave_id, message_id));
     assert!(
-        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        matches!(response, multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)),
         "{response:?}"
     );
     tick_many(env, 3);
     let alices_chat = client::ledger::happy_path::balance_of(env, chat, alice);
     let response = client::user::accept_p2p_swap(env, dave, other_canister_id, &accept(alice_id, message_id));
     assert!(
-        matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
+        matches!(response, multi_user_canister::accept_p2p_swap::Response::Success(_)),
         "{response:?}"
     );
     tick_many(env, 10);
@@ -5886,7 +5927,7 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
     let message_id = random_from_u128();
     let response = client::user::send_message_v2(env, alice, canister_id, &offer(bob_id, message_id));
     assert!(
-        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        matches!(response, multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)),
         "{response:?}"
     );
     tick_many(env, 3);
@@ -5895,13 +5936,13 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
         env,
         alice,
         canister_id,
-        &user_canister::cancel_p2p_swap::Args {
+        &multi_user_canister::cancel_p2p_swap::Args {
             user_id: bob_id,
             message_id,
         },
     );
     assert!(
-        matches!(response, user_canister::cancel_p2p_swap::Response::Success),
+        matches!(response, multi_user_canister::cancel_p2p_swap::Response::Success),
         "{response:?}"
     );
     tick_many(env, 10);
@@ -5978,7 +6019,7 @@ fn p2p_swaps_are_paid_from_and_into_users_own_wallets() {
     let message_id = random_from_u128();
     let response = client::user::send_message_v2(env, alice, canister_id, &offer(bob_id, message_id));
     assert!(
-        matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+        matches!(response, multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)),
         "{response:?}"
     );
     tick_many(env, 3);
@@ -6020,11 +6061,14 @@ fn avatars_and_profile_backgrounds_are_served_under_each_users_index() {
         env,
         a_principal,
         canister_id,
-        &user_canister::set_profile_background::Args {
+        &multi_user_canister::set_profile_background::Args {
             profile_background: Some(profile_background.clone()),
         },
     );
-    assert!(matches!(response, user_canister::set_profile_background::Response::Success));
+    assert!(matches!(
+        response,
+        multi_user_canister::set_profile_background::Response::Success
+    ));
 
     let get = |env: &PocketIc, url: String| {
         client::http_request(
@@ -6105,14 +6149,14 @@ fn ingress_messages_are_only_accepted_from_the_canisters_own_users() {
 
     // Rejected by `inspect_message` as the call is submitted, before it can cost the canister
     // anything, rather than by the endpoint's guard once it runs
-    let set_bio = msgpack::serialize_then_unwrap(user_canister::set_bio::Args { text: "bio".to_string() });
+    let set_bio = msgpack::serialize_then_unwrap(multi_user_canister::set_bio::Args { text: "bio".to_string() });
     let error = env
         .submit_call(canister_id, outsider.principal, "set_bio_msgpack", set_bio.clone())
         .unwrap_err();
     assert_eq!(error.error_code, pocket_ic::ErrorCode::CanisterRejectedMessage, "{error:?}");
 
     // Nor may even one of its users call a c2c method, which only canisters call
-    let game_chit = msgpack::serialize_then_unwrap(user_canister::c2c_game_chit::Args {
+    let game_chit = msgpack::serialize_then_unwrap(multi_user_canister::c2c_game_chit::Args {
         user_id,
         game_id: "game".to_string(),
         key: "key".to_string(),
@@ -6160,7 +6204,7 @@ fn files_in_direct_messages_are_deleted_along_with_the_messages() {
             env,
             a_principal,
             canister_id,
-            &user_canister::send_message_v2::Args {
+            &multi_user_canister::send_message_v2::Args {
                 content: MessageContentInitial::File(FileContent {
                     name: random_string(),
                     caption: None,
@@ -6172,7 +6216,7 @@ fn files_in_direct_messages_are_deleted_along_with_the_messages() {
             },
         );
         assert!(
-            matches!(response, user_canister::send_message_v2::Response::Success(_)),
+            matches!(response, multi_user_canister::send_message_v2::Response::Success(_)),
             "{response:?}"
         );
         (blob_reference, message_id)
@@ -6233,7 +6277,7 @@ fn private_replies_to_a_group_follow_it_into_a_community() {
         env,
         a_principal,
         canister_id,
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             replies_to: Some(ReplyContext {
                 chat_if_other: Some((Chat::Group(group), None)),
                 event_index: replied_to_event_index,
@@ -6242,7 +6286,7 @@ fn private_replies_to_a_group_follow_it_into_a_community() {
         },
     );
     assert!(
-        matches!(response, user_canister::send_message_v2::Response::Success(_)),
+        matches!(response, multi_user_canister::send_message_v2::Response::Success(_)),
         "{response:?}"
     );
 
@@ -6252,7 +6296,7 @@ fn private_replies_to_a_group_follow_it_into_a_community() {
             env,
             canister_ids.group_index,
             canister_id,
-            &user_canister::c2c_notify_group_deleted::Args {
+            &multi_user_canister::c2c_notify_group_deleted::Args {
                 user_id,
                 deleted_group: DeletedGroupInfoInternal {
                     id: group,
@@ -6316,9 +6360,9 @@ fn a_multi_user_canister_is_topped_up_when_its_cycles_run_low() {
             env,
             principal,
             canister_id,
-            &user_canister::set_bio::Args { text: random_string() },
+            &multi_user_canister::set_bio::Args { text: random_string() },
         );
-        assert!(matches!(response, user_canister::set_bio::Response::Success));
+        assert!(matches!(response, multi_user_canister::set_bio::Response::Success));
         tick_many(env, 5);
     };
 

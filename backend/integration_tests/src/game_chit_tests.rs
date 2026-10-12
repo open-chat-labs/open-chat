@@ -1,7 +1,7 @@
 use crate::env::ENV;
 use crate::{TestEnv, client};
+use multi_user_canister::c2c_game_chit::Args;
 use std::ops::Deref;
-use user_canister::c2c_game_chit::Args;
 
 // `c2c_game_chit` is refused at ingress, so its idempotency and refusal paths are driven through
 // the local user index's daily puzzle endpoints in `daily_puzzle_flow_tests`.

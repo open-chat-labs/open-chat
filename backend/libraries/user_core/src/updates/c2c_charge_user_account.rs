@@ -1,7 +1,7 @@
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use ledger_utils::Payer;
-use user_canister::c2c_charge_user_account::{Args, Response::*, *};
+use multi_user_canister::c2c_charge_user_account::{Args, Response::*, *};
 
 // Charges the user, paying the UserIndex from `payer`. The caller has already checked the user is
 // one it holds, and chosen the payer: the user's wallet, since they hold their own funds, or the

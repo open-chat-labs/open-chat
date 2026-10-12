@@ -118,9 +118,8 @@ export class LedgerClient extends CandidCanisterAgent<LedgerService> {
     }
 
     // Sends a withdrawal from the caller's own account, the one held by the principal they sign in
-    // with, as the User canister's `withdraw_crypto_v2` sends one from its own: ICP to an account
-    // identifier through the ICP ledger's `transfer`, and anything else to an ICRC-1 account, with
-    // the same fee and memo.
+    // with: ICP to an account identifier through the ICP ledger's `transfer`, and anything else to an
+    // ICRC-1 account.
     async withdraw(
         domain: PendingCryptocurrencyWithdrawal,
     ): Promise<WithdrawCryptocurrencyResponse> {
@@ -156,8 +155,7 @@ export class LedgerClient extends CandidCanisterAgent<LedgerService> {
     }
 }
 
-// Maps what the ledger made of a withdrawal to what the User canister's `withdraw_crypto_v2` would
-// have answered
+// Maps what the ledger made of a withdrawal to the withdrawal's response
 function withdrawalResponse(
     domain: PendingCryptocurrencyWithdrawal,
     fee: bigint,

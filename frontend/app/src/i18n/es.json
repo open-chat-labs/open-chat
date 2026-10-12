@@ -2021,8 +2021,6 @@
         "noEligibleNeuronsMoreInfo": "Para obtener más información sobre votación y gobernanza, lea <a target=\"_blank\" href=\"https://oc.app/blog/governance\">esta publicación de blog</a> .",
         "noEligibleNeuronsPrincipalIntro": "No se encontraron neuronas elegibles o vinculadas. Para votar propuestas desde OpenChat, primero debe agregar su principal de OpenChat como tecla de acceso rápido a cualquier neurona con la que desee votar.",
         "noEligibleNeuronsPrincipalLabel": "Su principal de OpenChat es:",
-        "noEligibleNeuronsUserIdIntro": "No se encontraron neuronas elegibles o vinculadas. Para votar propuestas desde OpenChat, primero debe agregar su identificación de usuario de OpenChat como tecla de acceso rápido a cualquier neurona con la que desee votar.",
-        "noEligibleNeuronsUserIdLabel": "Su ID de usuario de OpenChat es:",
         "notificationsAction": "Índice de notificaciones Acciones",
         "openchatInstallerAction": "Acciones del instalador de OpenChat",
         "passing": {
@@ -2382,14 +2380,10 @@
         "noQuotes": "Ningún DEX proporcionó una cotización para intercambiar {tokenIn}",
         "proceedWithSwap": "El canje solo se realizará si la cantidad de {tokenOut} a recibir es al menos el 98 % del monto cotizado. ¿Le gustaría continuar e intentar realizar el canje?",
         "progress": {
-            "deposit": "Transferir {amountIn} {tokenIn} a {dex}",
             "done": "Intercambio completo",
             "error": "Error de intercambio: no se han perdido fondos",
             "failed": "El intercambio falló: el tipo de cambio ha cambiado",
-            "get": "Obtener cuenta de depósito",
             "insufficientFunds": "El intercambio falló: fondos insuficientes",
-            "notify": "Notificar a {dex} del depósito",
-            "refund": "Reembolso {amountIn} {tokenIn} de {dex}",
             "swap": "Indique a {dex} que realice el intercambio",
             "withdraw": "Retirar {amountOut} {tokenOut} de {dex}"
         },

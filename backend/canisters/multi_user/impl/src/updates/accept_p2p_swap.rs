@@ -5,9 +5,9 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ledger_utils::{Payer, deposit_to_accept_p2p_swap};
+use multi_user_canister::accept_p2p_swap::{Response::*, *};
+use multi_user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 use types::{AcceptSwapSuccess, Achievement, CanisterId, OCResult, P2PSwapStatus, TimestampMillis, UserId};
-use user_canister::accept_p2p_swap::{Response::*, *};
-use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 use user_core::updates::accept_p2p_swap::{Reserved, deposit_failed, deposited, prepare};
 
 // The User canister's `accept_p2p_swap`. Users hold their own funds in their own wallets, so token1

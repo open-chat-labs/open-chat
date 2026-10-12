@@ -14,18 +14,18 @@ async fn pay_for_premium_item(args: Args) -> Response {
     match read_state(|state| prepare(&args, state)) {
         Ok(PrepareResult { user_id }) => {
             let canister_id = user_id.canister_id();
-            let c2c_args = user_canister::c2c_pay_for_premium_item::Args {
+            let c2c_args = multi_user_canister::c2c_pay_for_premium_item::Args {
                 user_id,
                 item_id: args.item_id,
                 pay_in_chat: args.pay_in_chat,
                 cost: args.expected_cost,
             };
             match top_up_and_retry_if_out_of_cycles(canister_id, || {
-                user_canister_c2c_client::c2c_pay_for_premium_item(canister_id, &c2c_args)
+                multi_user_canister_c2c_client::c2c_pay_for_premium_item(canister_id, &c2c_args)
             })
             .await
             {
-                Ok(user_canister::c2c_pay_for_premium_item::Response::Success(result)) => {
+                Ok(multi_user_canister::c2c_pay_for_premium_item::Response::Success(result)) => {
                     mutate_state(|state| {
                         let now = state.env.now();
                         state.push_event_to_user_index(
@@ -46,7 +46,7 @@ async fn pay_for_premium_item(args: Args) -> Response {
                         chit_balance: result.chit_balance,
                     })
                 }
-                Ok(user_canister::c2c_pay_for_premium_item::Response::Error(error)) => Error(error),
+                Ok(multi_user_canister::c2c_pay_for_premium_item::Response::Error(error)) => Error(error),
                 Err(error) => Error(error.into()),
             }
         }

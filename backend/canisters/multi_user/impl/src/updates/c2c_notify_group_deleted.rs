@@ -3,8 +3,8 @@ use crate::timer_job_types::TimerJob;
 use crate::{RuntimeState, execute_update, openchat_bot};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::c2c_notify_group_deleted::*;
 use types::Chat;
-use user_canister::c2c_notify_group_deleted::*;
 
 #[update(guard = "caller_is_group_index", msgpack = true)]
 #[trace]

@@ -1,7 +1,7 @@
 use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
+use multi_user_canister::GroupCanisterEvent;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
-use user_canister::GroupCanisterEvent;
 use utils::canister::{
     delay_if_should_retry_failed_c2c_call, delay_if_should_retry_failed_c2c_call_to_new_method,
     is_user_canister_possibly_migrated,
@@ -24,9 +24,9 @@ impl TimerJobItem for UserEventBatch {
 
         let canister_id = self.key;
 
-        let response = user_canister_c2c_client::c2c_group_canister_v2(
+        let response = multi_user_canister_c2c_client::c2c_group_canister_v2(
             canister_id,
-            &user_canister::c2c_group_canister_v2::Args::new(self.items.clone()),
+            &multi_user_canister::c2c_group_canister_v2::Args::new(self.items.clone()),
         )
         .await;
 

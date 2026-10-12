@@ -1,12 +1,12 @@
 use crate::env::ENV;
 use crate::{CanisterIds, TestEnv, client};
 use constants::{CHAT_SYMBOL, CHAT_TRANSFER_FEE, ICP_SYMBOL, ICP_TRANSFER_FEE};
+use multi_user_canister::swap_tokens::{ExchangeArgs, ExchangeSwapArgs};
 use oc_error_codes::OCErrorCode;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::{random_from_u128, random_principal};
 use types::{TokenInfo, icrc1};
-use user_canister::swap_tokens::{ExchangeArgs, ExchangeSwapArgs};
 
 const ONE_ICP: u128 = 100_000_000;
 
@@ -53,7 +53,7 @@ fn swap_made_by_user_in_multi_user_canister_is_unfinished_until_marked_completed
         "{status:?}"
     );
     assert!(
-        matches!(status.withdraw_from_dex, Some(Ok(a)) if a == amount_out),
+        matches!(status.withdrawn_from_dex, Some(Ok(a)) if a == amount_out),
         "{status:?}"
     );
     assert!(has_swapped_from_wallet(env, &user));
@@ -87,7 +87,7 @@ fn failed_swap_made_by_user_in_multi_user_canister_earns_no_achievement() {
         matches!(&status.amount_swapped, Some(Ok(Err(e))) if e == "slippage"),
         "{status:?}"
     );
-    assert!(status.withdraw_from_dex.is_none(), "{status:?}");
+    assert!(status.withdrawn_from_dex.is_none(), "{status:?}");
     assert!(!has_swapped_from_wallet(env, &user));
 }
 
@@ -101,7 +101,7 @@ fn completing_swap_which_was_never_started_fails() {
         env,
         user.principal,
         user.canister(),
-        &user_canister::mark_token_swap_completed::Args {
+        &multi_user_canister::mark_token_swap_completed::Args {
             swap_id: random_from_u128(),
             result: Ok(ONE_ICP),
         },
@@ -127,7 +127,7 @@ fn swap_made_by_user_in_multi_user_canister_needs_their_pin() {
             env,
             user.principal,
             user.canister(),
-            &user_canister::mark_token_swap_started::Args {
+            &multi_user_canister::mark_token_swap_started::Args {
                 pin: pin.map(|p| p.to_string().into()),
                 ..mark_started_args(canister_ids, swap_id)
             },
@@ -145,9 +145,9 @@ fn swap_made_by_user_in_multi_user_canister_needs_their_pin() {
     assert!(matches!(response, types::UnitResult::Success), "{response:?}");
 }
 
-fn mark_started_args(canister_ids: &CanisterIds, swap_id: u128) -> user_canister::mark_token_swap_started::Args {
+fn mark_started_args(canister_ids: &CanisterIds, swap_id: u128) -> multi_user_canister::mark_token_swap_started::Args {
     let args = swap_args(canister_ids, ONE_ICP, None);
-    user_canister::mark_token_swap_started::Args {
+    multi_user_canister::mark_token_swap_started::Args {
         swap_id,
         input_token: args.input_token,
         output_token: args.output_token,
@@ -173,13 +173,13 @@ fn mark_completed(env: &mut pocket_ic::PocketIc, user: &crate::User, swap_id: u1
         env,
         user.principal,
         user.canister(),
-        &user_canister::mark_token_swap_completed::Args { swap_id, result },
+        &multi_user_canister::mark_token_swap_completed::Args { swap_id, result },
     );
     assert!(matches!(response, types::UnitResult::Success), "{response:?}");
 }
 
 fn unfinished_swap_ids(env: &pocket_ic::PocketIc, user: &crate::User) -> Vec<u128> {
-    let user_canister::unfinished_token_swaps::Response::Success(swaps) =
+    let multi_user_canister::unfinished_token_swaps::Response::Success(swaps) =
         client::user::unfinished_token_swaps(env, user.principal, user.canister(), &types::Empty {});
     swaps.into_iter().map(|s| s.args.swap_id).collect()
 }
@@ -200,8 +200,8 @@ fn swap_args(
     canister_ids: &CanisterIds,
     input_amount: u128,
     from_account: Option<icrc1::Account>,
-) -> user_canister::swap_tokens::Args {
-    user_canister::swap_tokens::Args {
+) -> multi_user_canister::swap_tokens::Args {
+    multi_user_canister::swap_tokens::Args {
         swap_id: random_from_u128(),
         input_token: TokenInfo {
             symbol: ICP_SYMBOL.to_string(),
@@ -227,18 +227,19 @@ fn swap_args(
     }
 }
 
-fn swap_status(
-    env: &pocket_ic::PocketIc,
-    user: &crate::User,
-    swap_id: u128,
-) -> user_canister::token_swap_status::TokenSwapStatus {
-    match client::user::token_swap_status(
+fn swap_status(env: &pocket_ic::PocketIc, user: &crate::User, swap_id: u128) -> multi_user_canister::token_swaps::TokenSwap {
+    let multi_user_canister::token_swaps::Response::Success(result) = client::user::token_swaps(
         env,
         user.principal,
         user.canister(),
-        &user_canister::token_swap_status::Args { swap_id },
-    ) {
-        user_canister::token_swap_status::Response::Success(status) => status,
-        response => panic!("{response:?}"),
-    }
+        &multi_user_canister::token_swaps::Args {
+            start: 0,
+            max_results: 100,
+        },
+    );
+    result
+        .swaps
+        .into_iter()
+        .find(|s| s.args.swap_id == swap_id)
+        .expect("The swap should be recorded")
 }

@@ -1,7 +1,7 @@
 use crate::User;
+use multi_user_canister::c2c_bot_chat_summary::Args;
 use oc_error_codes::OCErrorCode;
 use types::{BotPermissions, ChatPermission, ChatSummaryDirect, OCResult};
-use user_canister::c2c_bot_chat_summary::Args;
 
 // The summary of the user's chat with the bot, provided the bot may read it
 pub fn c2c_bot_chat_summary(user: &User, args: &Args) -> OCResult<ChatSummaryDirect> {

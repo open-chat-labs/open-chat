@@ -2,9 +2,9 @@ use crate::guards::caller_is_hosted_user_or_local_user_index;
 use crate::queries::check_replica_up_to_date;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
+use multi_user_canister::events_window::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{EventsResponse, OCResult};
-use user_canister::events_window::{Response::*, *};
 
 #[query(guard = "caller_is_hosted_user_or_local_user_index", msgpack = true)]
 fn events_window(args: Args) -> Response {

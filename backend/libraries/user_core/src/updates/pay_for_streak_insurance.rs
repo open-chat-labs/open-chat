@@ -3,9 +3,9 @@ use constants::{CHAT_LEDGER_CANISTER_ID, MEMO_STREAK_INSURANCE, SNS_GOVERNANCE_C
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use ledger_utils::Payer;
+use multi_user_canister::pay_for_streak_insurance::Args;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, TimestampMillis};
-use user_canister::pay_for_streak_insurance::Args;
 
 // Checks the request against the user's streak and takes the payment lock, which the caller
 // releases once the payment has been attempted. Returns the days currently insured, for the caller

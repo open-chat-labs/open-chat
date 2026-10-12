@@ -27,11 +27,14 @@ fn delete_community_succeeds() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_community::Args { community_id },
+        &multi_user_canister::delete_community::Args { community_id },
     );
 
     assert!(
-        matches!(delete_community_response, user_canister::delete_community::Response::Success),
+        matches!(
+            delete_community_response,
+            multi_user_canister::delete_community::Response::Success
+        ),
         "{delete_community_response:?}",
     );
 
@@ -62,11 +65,14 @@ fn user_canister_notified_of_community_deleted() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_community::Args { community_id },
+        &multi_user_canister::delete_community::Args { community_id },
     );
 
     assert!(
-        matches!(delete_community_response, user_canister::delete_community::Response::Success),
+        matches!(
+            delete_community_response,
+            multi_user_canister::delete_community::Response::Success
+        ),
         "{delete_community_response:?}",
     );
 

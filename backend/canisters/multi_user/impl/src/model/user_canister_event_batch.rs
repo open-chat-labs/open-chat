@@ -1,9 +1,9 @@
 use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
+use multi_user_canister::c2c_user_canister_v2::Event;
 use std::collections::HashSet;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use tracing::info;
 use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
-use user_canister::c2c_user_canister_v2::Event;
 use user_core::event_recipient::{EventRecipient, lookup_event_recipient};
 use utils::canister::{
     delay_if_should_retry_failed_c2c_call, delay_if_should_retry_failed_c2c_call_to_new_method,
@@ -21,16 +21,16 @@ impl TimerJobItem for UserCanisterEventBatch {
             run_regular_jobs();
         }
 
-        let response = user_canister_c2c_client::c2c_user_canister_v2(
+        let response = multi_user_canister_c2c_client::c2c_user_canister_v2(
             self.key,
-            &user_canister::c2c_user_canister_v2::Args {
+            &multi_user_canister::c2c_user_canister_v2::Args {
                 events: self.items.clone(),
             },
         )
         .await;
 
         match response {
-            Ok(user_canister::c2c_user_canister_v2::Response::Success) => Ok(()),
+            Ok(multi_user_canister::c2c_user_canister_v2::Response::Success) => Ok(()),
             Err(error) => {
                 // If the user has been migrated to a MultiUser canister, their events are sent on
                 // to them there instead. Only a canister which holds a user alone is ever migrated.

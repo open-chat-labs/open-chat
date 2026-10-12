@@ -1,8 +1,8 @@
 use crate::User;
 use constants::MAX_GAME_CHIT_ABS_AMOUNT;
+use multi_user_canister::c2c_game_chit::{Args, SuccessResult};
 use oc_error_codes::OCErrorCode;
 use types::{ChitEvent, ChitEventType, OCResult, TimestampMillis};
-use user_canister::c2c_game_chit::{Args, SuccessResult};
 
 const MAX_ID_LENGTH: usize = 64;
 

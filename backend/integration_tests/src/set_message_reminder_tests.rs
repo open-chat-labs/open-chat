@@ -31,7 +31,7 @@ fn set_message_reminder_succeeds() {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::set_message_reminder_v2::Args {
+        &multi_user_canister::set_message_reminder_v2::Args {
             chat: Chat::Direct(user2.user_id.into()),
             thread_root_message_index: None,
             event_index: 10.into(),
@@ -99,7 +99,7 @@ fn cancel_message_reminder_succeeds() {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::set_message_reminder_v2::Args {
+        &multi_user_canister::set_message_reminder_v2::Args {
             chat: Chat::Direct(user2.user_id.into()),
             thread_root_message_index: None,
             event_index: 10.into(),
@@ -107,7 +107,8 @@ fn cancel_message_reminder_succeeds() {
             remind_at: now + 1000,
         },
     );
-    let reminder_id = if let user_canister::set_message_reminder_v2::Response::Success(id) = set_message_reminder_response {
+    let reminder_id = if let multi_user_canister::set_message_reminder_v2::Response::Success(id) = set_message_reminder_response
+    {
         id
     } else {
         panic!()
@@ -117,7 +118,7 @@ fn cancel_message_reminder_succeeds() {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::cancel_message_reminder::Args { reminder_id },
+        &multi_user_canister::cancel_message_reminder::Args { reminder_id },
     );
 
     let latest_bot_message_index =
@@ -153,7 +154,7 @@ fn pending_message_reminders_are_limited() {
 
     let user1 = client::register_user(env, canister_ids);
     let user2 = client::register_user(env, canister_ids);
-    let args = user_canister::set_message_reminder_v2::Args {
+    let args = multi_user_canister::set_message_reminder_v2::Args {
         chat: Chat::Direct(user2.user_id.into()),
         thread_root_message_index: None,
         event_index: 10.into(),
@@ -164,13 +165,13 @@ fn pending_message_reminders_are_limited() {
     let mut reminder_ids = Vec::new();
     for _ in 0..MAX_MESSAGE_REMINDERS {
         match client::user::set_message_reminder_v2(env, user1.principal, user1.canister(), &args) {
-            user_canister::set_message_reminder_v2::Response::Success(reminder_id) => reminder_ids.push(reminder_id),
+            multi_user_canister::set_message_reminder_v2::Response::Success(reminder_id) => reminder_ids.push(reminder_id),
             response => panic!("{response:?}"),
         }
     }
     let response = client::user::set_message_reminder_v2(env, user1.principal, user1.canister(), &args);
     assert!(
-        matches!(response, user_canister::set_message_reminder_v2::Response::Error(ref e) if e.matches_code(OCErrorCode::LimitReached)),
+        matches!(response, multi_user_canister::set_message_reminder_v2::Response::Error(ref e) if e.matches_code(OCErrorCode::LimitReached)),
         "{response:?}"
     );
 
@@ -179,13 +180,13 @@ fn pending_message_reminders_are_limited() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::cancel_message_reminder::Args {
+        &multi_user_canister::cancel_message_reminder::Args {
             reminder_id: reminder_ids[0],
         },
     );
     let response = client::user::set_message_reminder_v2(env, user1.principal, user1.canister(), &args);
     assert!(
-        matches!(response, user_canister::set_message_reminder_v2::Response::Success(_)),
+        matches!(response, multi_user_canister::set_message_reminder_v2::Response::Success(_)),
         "{response:?}"
     );
 }

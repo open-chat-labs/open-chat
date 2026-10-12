@@ -1258,9 +1258,6 @@ function getAction(
                 payload.pin,
             );
 
-        case "tokenSwapStatus":
-            return agent.tokenSwapStatus(payload.swapId);
-
         case "recoverUnfinishedTokenSwaps":
             return agent.recoverUnfinishedTokenSwaps();
 
@@ -1522,15 +1519,6 @@ function getAction(
 
         case "callBotCommandEndpoint":
             return agent.callBotCommandEndpoint(payload.endpoint, payload.token);
-
-        case "withdrawFromIcpSwap":
-            return agent.withdrawFromIcpSwap(
-                payload.userId,
-                payload.swapId,
-                payload.inputToken,
-                payload.amount,
-                payload.fee,
-            );
 
         case "payForStreakInsurance":
             return agent.payForStreakInsurance(

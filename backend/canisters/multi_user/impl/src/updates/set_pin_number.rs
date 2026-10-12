@@ -2,9 +2,9 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::set_pin_number::*;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, FieldTooLongResult, FieldTooShortResult};
-use user_canister::set_pin_number::*;
 
 const MIN_LENGTH: usize = 4;
 const MAX_LENGTH: usize = 20;

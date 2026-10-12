@@ -5,10 +5,10 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::DeleteUndeleteMessagesArgs;
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID};
+use multi_user_canister::delete_messages::*;
+use multi_user_canister::{DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, UserCanisterEvent};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, ChatId, EventIndex, MessageId, MessageIndex, OCResult};
-use user_canister::delete_messages::*;
-use user_canister::{DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, UserCanisterEvent};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
