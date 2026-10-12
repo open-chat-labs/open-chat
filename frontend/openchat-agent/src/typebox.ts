@@ -4965,23 +4965,6 @@ export const UserChannelSummaryUpdates = /* @__PURE__ */ Type.Object({
     date_read_pinned: Type.Optional(Type.BigInt()),
 });
 
-export type UserWithdrawBtcResponse = Static<typeof UserWithdrawBtcResponse>;
-export const UserWithdrawBtcResponse = /* @__PURE__ */ Type.Union([
-    Type.Object({
-        Success: Type.BigInt(),
-    }),
-    Type.Object({
-        Error: OCError,
-    }),
-]);
-
-export type UserWithdrawBtcArgs = Static<typeof UserWithdrawBtcArgs>;
-export const UserWithdrawBtcArgs = /* @__PURE__ */ Type.Object({
-    amount: Type.BigInt(),
-    address: Type.String(),
-    pin: Type.Optional(PinNumberWrapper),
-});
-
 export type UserContactsContact = Static<typeof UserContactsContact>;
 export const UserContactsContact = /* @__PURE__ */ Type.Object({
     user_id: UserId,
@@ -5084,16 +5067,6 @@ export const UserAddReactionArgs = /* @__PURE__ */ Type.Object({
     thread_root_message_index: Type.Optional(MessageIndex),
     message_id: MessageId,
     reaction: Reaction,
-});
-
-export type UserWithdrawViaOneSecArgs = Static<typeof UserWithdrawViaOneSecArgs>;
-export const UserWithdrawViaOneSecArgs = /* @__PURE__ */ Type.Object({
-    ledger_canister_id: TSPrincipal,
-    token_symbol: Type.String(),
-    amount: Type.BigInt(),
-    address: Type.String(),
-    evm_chain: EvmChain,
-    pin: Type.Optional(PinNumberWrapper),
 });
 
 export type UserReferral = Static<typeof UserReferral>;
