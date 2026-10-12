@@ -381,7 +381,7 @@ impl RuntimeState {
         &mut self,
         community: CommunityBeingImportedInto,
     ) -> OCResult<StartImportIntoCommunityResultSuccess> {
-        if self.data.community_being_imported_into.is_some() && self.data.is_frozen() {
+        if self.data.is_being_imported_into_community() {
             Err(OCErrorCode::AlreadyImportingIntoAnotherCommunity.into())
         } else if self.data.is_frozen() {
             Err(OCErrorCode::ChatFrozen.into())
@@ -848,9 +848,12 @@ impl Data {
     }
 
     // A group being imported into a community is frozen as well, but unlike one frozen by a platform
-    // moderator, nothing may change it, since its state has already been exported to the community
+    // moderator, it must not apply changes from other canisters, since its state has already been
+    // exported to the community. `community_being_imported_into` alone isn't enough, since a group
+    // whose import was abandoned before #4084, or which is unfrozen while `convert_into_community`
+    // awaits the GroupIndex, can be left with it set while not frozen.
     pub fn is_being_imported_into_community(&self) -> bool {
-        self.community_being_imported_into.is_some()
+        self.community_being_imported_into.is_some() && self.is_frozen()
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {

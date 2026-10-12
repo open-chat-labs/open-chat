@@ -1,5 +1,6 @@
 use crate::delete_user_tests::{MAX_RESIDUAL_CYCLES, cycles_refunded_metric, wait_for_refund_queue_to_empty};
 use crate::env::ENV;
+use crate::user_migration_tests::tick_until;
 use crate::utils::{tick_many, wait_for_deleted_canister_to_be_uninstalled};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
@@ -157,8 +158,7 @@ fn frozen_group_still_applies_changes_from_other_canisters() {
 
     client::group_index::happy_path::set_group_verification(env, *controller, canister_ids.group_index, group_id, group_name);
 
-    let verified = wait_until(env, |env| client::group::happy_path::summary(env, user2.principal, group_id).verified);
-    assert!(verified, "the frozen group never applied its verification");
+    tick_until(env, |env| client::group::happy_path::summary(env, user2.principal, group_id).verified);
 
     let summary = client::group::happy_path::summary(env, user2.principal, group_id);
     assert!(summary.frozen.is_some());
@@ -203,23 +203,62 @@ fn frozen_community_still_applies_changes_from_other_canisters() {
         community_name,
     );
 
-    let verified = wait_until(env, |env| client::community::happy_path::summary(env, user2.principal, community_id).verified);
-    assert!(verified, "the frozen community never applied its verification");
+    tick_until(env, |env| client::community::happy_path::summary(env, user2.principal, community_id).verified);
 
     let summary = client::community::happy_path::summary(env, user2.principal, community_id);
     assert!(summary.frozen.is_some());
 }
 
-// Ticks until `condition` holds, giving up after enough rounds for an event to reach a group or
-// community via its LocalUserIndex, and says whether it held
-fn wait_until(env: &mut PocketIc, condition: impl Fn(&PocketIc) -> bool) -> bool {
-    for _ in 0..30 {
-        if condition(env) {
-            return true;
-        }
+// A group being imported into a community is frozen too, but rejects the changes other canisters
+// send it, since its state has already been exported and they would be lost. They are retried, and
+// applied once the import is abandoned by unfreezing the group.
+#[test]
+fn group_being_imported_into_a_community_rejects_changes_from_other_canisters() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        group_id,
+        group_name,
+    } = init_test_data(env, canister_ids, *controller);
+
+    let community_id =
+        client::user::happy_path::create_community(env, &user2, &random_string(), true, vec!["general".to_string()]);
+
+    client::community::happy_path::import_group(env, user2.principal, community_id, group_id);
+
+    // Stopping the community leaves the import unfinished, so the group stays frozen for it
+    client::stop_canister(env, canister_ids.local_user_index(env, community_id), community_id.into());
+
+    client::group_index::happy_path::set_group_verification(env, *controller, canister_ids.group_index, group_id, group_name);
+
+    // Long enough for the LocalUserIndex's first attempt and, 5 minutes after it traps, its retry
+    for _ in 0..40 {
+        env.advance_time(Duration::from_secs(10));
         env.tick();
     }
-    condition(env)
+    let summary = client::group::happy_path::summary(env, user2.principal, group_id);
+    assert!(summary.frozen.is_some());
+    assert!(!summary.verified, "the group applied a change while being imported");
+
+    // Unfreezing the group abandons the import, after which the change is applied
+    client::group_index::unfreeze_group(
+        env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::unfreeze_group::Args { chat_id: group_id },
+    );
+
+    // The LocalUserIndex retries a trapped call after 5 minutes
+    env.advance_time(Duration::from_secs(5 * 60));
+    tick_until(env, |env| client::group::happy_path::summary(env, user2.principal, group_id).verified);
 }
 
 #[test]
