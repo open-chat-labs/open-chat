@@ -1,6 +1,6 @@
 <script lang="ts">
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
-    import { accessApprovalState } from "@src/utils/preview.svelte";
+    import type { GateEvaluation } from "@shared_components/home/access/gateEvaluation.svelte";
     import {
         Avatar,
         Body,
@@ -36,12 +36,13 @@
 
     interface Props {
         gate: PaymentGate & { expiry: bigint | undefined };
+        evaluation: GateEvaluation;
         level: Level;
         onApprovePayment: (args: { ledger: string; amount: bigint; approvalFee: bigint }) => void;
         onClose: () => void;
     }
 
-    let { gate, level, onApprovePayment, onClose }: Props = $props();
+    let { gate, evaluation, level, onApprovePayment, onClose }: Props = $props();
 
     // A gate can name a ledger the registry does not carry. `token.ledger` below then threw and
     // took the app down; and with no decimals or fee we can neither state the amount nor build a
@@ -59,7 +60,7 @@
     let toOC = $derived(tokenState.formatTokens(gate.amount - ownerShare));
 
     let cryptoBalance = $derived(
-        accessApprovalState.balanceAfterCurrentCommitments(
+        evaluation.balanceAfterCurrentCommitments(
             tokenState.ledger,
             tokenState.cryptoBalance,
         ),

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { accessApprovalState } from "@src/utils/preview.svelte";
+    import { GateEvaluation } from "@shared_components/home/access/gateEvaluation.svelte";
     import { OpenChat, type EnhancedAccessGate, type GateCheckSucceeded } from "@client";
     import { getContext } from "svelte";
     import AccessGateEvaluator from "./AccessGateEvaluator.svelte";
@@ -14,32 +14,21 @@
 
     let { gates, onSuccess, onClose }: Props = $props();
 
-    // find the first gate that the user does not meet
-    let currentGateIndex = $state(gates.findIndex((g) => !client.doesUserMeetAccessGate(g)));
-    let currentGate = $derived(gates[currentGateIndex]);
-    let cancelled = $state(false);
-
-    function internalClose() {
-        cancelled = true;
-        accessApprovalState.reset();
-        onClose();
-    }
-
-    $effect(() => {
-        if (currentGate === undefined && !cancelled) {
-            onSuccess({
-                credentials: accessApprovalState.credentials,
-                paymentApprovals: accessApprovalState.paymentApprovals,
-                compositeGateIndex: accessApprovalState.compositeGateIndex,
-            });
-        }
-    });
+    // svelte-ignore state_referenced_locally
+    const evaluation = new GateEvaluation(client, gates);
 
     function nextGate() {
-        currentGateIndex += 1;
+        const gateCheck = evaluation.next();
+        if (gateCheck !== undefined) {
+            onSuccess(gateCheck);
+        }
     }
 </script>
 
-{#if currentGate}
-    <AccessGateEvaluator gate={currentGate} onComplete={nextGate} onClose={internalClose} />
+{#if evaluation.gate}
+    <AccessGateEvaluator
+        gate={evaluation.gate}
+        {evaluation}
+        onComplete={nextGate}
+        {onClose} />
 {/if}

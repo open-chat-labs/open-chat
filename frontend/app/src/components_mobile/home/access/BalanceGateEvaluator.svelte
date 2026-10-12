@@ -1,6 +1,6 @@
 <script lang="ts">
     import MulticolourText from "@src/components_mobile/MulticolourText.svelte";
-    import { accessApprovalState } from "@src/utils/preview.svelte";
+    import type { GateEvaluation } from "@shared_components/home/access/gateEvaluation.svelte";
     import {
         Avatar,
         Body,
@@ -24,14 +24,15 @@
 
     interface Props {
         gate: TokenBalanceGate & { expiry: bigint | undefined };
+        evaluation: GateEvaluation;
         onClose: () => void;
     }
 
-    let { gate, onClose }: Props = $props();
+    let { gate, evaluation, onClose }: Props = $props();
 
     let tokenState = $derived(new TokenState($enhancedCryptoLookup.get(gate.ledgerCanister)));
     let cryptoBalance = $derived(
-        accessApprovalState.balanceAfterCurrentCommitments(
+        evaluation.balanceAfterCurrentCommitments(
             tokenState.ledger,
             tokenState.cryptoBalance,
         ),
