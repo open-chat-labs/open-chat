@@ -178,9 +178,10 @@ impl PendingCryptoTransaction {
     //
     // A client only knows the principal of its own user, so it addresses a transfer to the account
     // of the recipient's user id. But a user holds their funds under their principal, and the
-    // account of their user id is one no one can spend from. So a transfer addressed to either is
-    // sent to the wallet, and one addressed anywhere else is refused. A certified transfer has been
-    // made already, so can only be accepted if it was made to the wallet.
+    // account of an indexed user id is one no one can spend from. So a transfer addressed to either
+    // is sent to the wallet, and one addressed anywhere else is refused. (For an old id, which was a
+    // User canister's id, the wallet is the account of that id, so the two are the same.) A
+    // certified transfer has been made already, so can only be accepted if it was made to the wallet.
     #[must_use]
     pub fn send_to_wallet(&mut self, user_id: UserId, wallet: icrc1::Account) -> bool {
         if self.is_to(wallet.into()) {
