@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "Powiadomienia wyłączone",
     "notificationsEnabled": "Powiadomienia włączone",
     "notInterested": "Nie zainteresowany",
+    "notWalletAddressesWarning": "To nie są adresy portfela. Nie wysyłaj na nie tokenów. Aby otrzymać tokeny, pobierz swój adres z portfela.",
     "noUserSelected": "Aktualnie nie wybrano żadnego użytkownika",
     "noVideo": "Twoja przeglądarka nie obsługuje osadzonego wideo",
     "nUsersJoined": "Użytkownicy {number} dołączyli do {level}",

@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "התראות מושבתות",
     "notificationsEnabled": "התראות מופעלות",
     "notInterested": "לא מעוניין",
+    "notWalletAddressesWarning": "אלה אינן כתובות ארנק. אל תשלח אליהן אסימונים. כדי לקבל אסימונים, קח את הכתובת שלך מהארנק שלך.",
     "noUserSelected": "לא נבחר משתמש כרגע",
     "noVideo": "הדפדפן שלך אינו תומך בוידאו מוטבע",
     "nUsersJoined": "משתמשים {number} הצטרפו ל-{level}",

@@ -64,6 +64,7 @@
     import { uniquePersonGate } from "../../../utils/access";
     import { isTouchDevice } from "../../../utils/devices";
     import { clearCrashLog, formatCrashLog } from "../../../utils/errorPostmortem";
+    import AlertBox from "../../AlertBox.svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
@@ -654,6 +655,9 @@
                 open={$advancedSectionOpen}
                 headerText={i18nKey("advanced")}>
                 {#if !$anonUserStore}
+                    <AlertBox>
+                        <Translatable resourceKey={i18nKey("notWalletAddressesWarning")} />
+                    </AlertBox>
                     <div class="userid">
                         <Legend label={i18nKey("userId")} />
                         <div class="userid-txt">

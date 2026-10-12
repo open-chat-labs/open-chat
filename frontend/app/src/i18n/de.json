@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "Benachrichtigungen deaktiviert",
     "notificationsEnabled": "Benachrichtigungen aktiviert",
     "notInterested": "Nicht interessiert",
+    "notWalletAddressesWarning": "Dies sind keine Wallet-Adressen. Senden Sie keine Token an sie. Um Token zu empfangen, holen Sie sich Ihre Adresse aus Ihrer Wallet.",
     "noUserSelected": "Derzeit ist kein Benutzer ausgewählt",
     "noVideo": "Ihr Browser unterstützt keine eingebetteten Videos",
     "nUsersJoined": "{number} Benutzer sind der {level} beigetreten",

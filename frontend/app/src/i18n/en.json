@@ -1671,6 +1671,7 @@
     "notificationsDisabled": "Notifications disabled",
     "notificationsEnabled": "Notifications enabled",
     "notInterested": "Not interested",
+    "notWalletAddressesWarning": "These are not wallet addresses. Do not send tokens to them. To receive tokens, get your address from your wallet.",
     "noUserSelected": "No user currently selected",
     "noVideo": "You browser does not support embedded video",
     "nUsersJoined": "{number} users joined the {level}",

@@ -1627,6 +1627,7 @@
     "notificationsDisabled": "通知が無効になりました",
     "notificationsEnabled": "通知機能を有効にする",
     "notInterested": "興味なし",
+    "notWalletAddressesWarning": "これらはウォレットアドレスではありません。トークンを送らないでください。トークンを受け取るには、ウォレットからアドレスを取得してください。",
     "noUserSelected": "現在選択されているユーザーはいません",
     "noVideo": "お使いのブラウザは埋め込みビデオに対応していません",
     "nUsersJoined": "{number} 人のユーザーが {level} に参加しました",
