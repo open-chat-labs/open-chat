@@ -345,19 +345,38 @@ fn delete_user(env: &mut pocket_ic::PocketIc, user_auth: &UserAuth, identity_can
     );
 }
 
-// A user whose canister can't say which groups and communities they are in, here because it's
-// stopped, is still deleted once asking has failed enough times
+// A user whose canister doesn't have the method for saying which groups and communities they are in,
+// such as one too old to have been upgraded, is still deleted
 #[test]
-fn user_whose_canister_is_stopped_is_still_deleted() {
+fn user_whose_canister_lacks_the_groups_and_communities_method_is_still_deleted() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
-    client::stop_canister(env, user.local_user_index, user.canister());
+
+    // Any other wasm lacks the method. The canister was only just installed, so reinstalling it
+    // waits out the IC's install_code rate limit, which lifts as rounds pass. Time isn't advanced,
+    // since the user's sign-in must be recent to delete them.
+    let mut reinstalled = false;
+    for _ in 0..50 {
+        reinstalled = env
+            .reinstall_canister(
+                user.canister(),
+                crate::user_migration_tests::CALL_RELAY_WASM.to_vec(),
+                Vec::new(),
+                Some(user.local_user_index),
+            )
+            .is_ok();
+        if reinstalled {
+            break;
+        }
+        tick_many(env, 5);
+    }
+    assert!(reinstalled);
 
     delete_user(env, &user_auth, canister_ids.identity);
 
-    // The LocalUserIndex tries every 30 seconds, then uninstalls the canister and refunds its cycles
+    // The LocalUserIndex uninstalls the canister and refunds its cycles
     wait_for_cycles_to_be_refunded(env, &user);
 
     let current_user_response = client::user_index::current_user(env, user.principal, canister_ids.user_index, &Empty {});

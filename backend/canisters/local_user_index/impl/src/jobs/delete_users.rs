@@ -11,10 +11,6 @@ thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
-// A user's canister which still can't say which groups and communities they are in after this many
-// attempts, eg. one which is stopped or too old to have the method, is deleted anyway
-const ATTEMPTS_BEFORE_SKIPPING_GROUPS_LOOKUP: usize = 10;
-
 pub(crate) fn start_job_if_required(state: &RuntimeState, delay: Option<Milliseconds>) -> bool {
     if TIMER_ID.get().is_none() && !state.data.users_to_delete_queue.is_empty() {
         let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(delay.unwrap_or_default()), async { run() });
@@ -98,8 +94,9 @@ async fn process_user_inner(user: &UserToDelete) -> Result<DeleteUserSuccess, C2
     .await
     {
         Ok(response) => (response.groups, response.communities),
-        // Their groups and communities aren't told, so they're left holding the user as a member
-        Err(_) if user.attempt >= ATTEMPTS_BEFORE_SKIPPING_GROUPS_LOOKUP => (Vec::new(), Vec::new()),
+        // A canister too old to have the method can't say which groups and communities its user is
+        // in, so it's deleted without them being told, leaving them holding the user as a member
+        Err(error) if error.is_method_not_found() => (Vec::new(), Vec::new()),
         Err(error) => return Err(error),
     };
 
