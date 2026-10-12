@@ -30,11 +30,11 @@ lazy_static = { workspace = true }
 ledger_utils = { path = "../libraries/ledger_utils" }
 light_up = { path = "../libraries/light_up" }
 loopy = { path = "../libraries/loopy" }
-multi_user_canister = { path = "../canisters/multi_user/api" }
 unruly = { path = "../libraries/unruly" }
 chat_rooms = { path = "../libraries/chat_rooms" }
 local_user_index_canister = { path = "../canisters/local_user_index/api" }
 msgpack = { path = "../libraries/msgpack" }
+multi_user_canister = { path = "../canisters/multi_user/api" }
 notifications_index_canister = { path = "../canisters/notifications_index/api" }
 oc_error_codes = { path = "../libraries/error_codes" }
 online_users_canister = { path = "../canisters/online_users/api" }
