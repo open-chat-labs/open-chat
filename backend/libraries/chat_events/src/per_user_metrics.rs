@@ -3,7 +3,7 @@ use candid::Principal;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{ChatEventKeyPrefix, EntryExt, Key, KeyPrefix, UserMetricsKeyPrefix, with_map, with_map_mut};
 use std::cmp::{max, min};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::ops::Bound;
 use types::{Chat, ChatId, TimestampMillis, UserId};
 
@@ -146,6 +146,28 @@ impl PerUserMetrics {
             entry.set(metrics.to_bytes());
             true
         })
+    }
+
+    // The users who have metrics, whether on the heap or in stable memory
+    pub fn user_ids(&self, events_prefix: &ChatEventKeyPrefix) -> BTreeSet<UserId> {
+        let prefix = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix);
+        let start = prefix.create_key(&Principal::from_slice(&[]).into());
+        let mut user_ids: BTreeSet<_> = self.on_heap.keys().copied().collect();
+        with_map(|m| {
+            user_ids.extend(
+                m.range(start..)
+                    .take_while(|(k, _)| k.matches_prefix(&prefix))
+                    .map(|(k, _)| k.user_id()),
+            )
+        });
+        user_ids
+    }
+
+    // Removes the user's metrics, returning whether they had any
+    pub fn remove(&mut self, events_prefix: &ChatEventKeyPrefix, user_id: UserId) -> bool {
+        let on_heap = self.on_heap.remove(&user_id).is_some();
+        let key = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix).create_key(&user_id);
+        with_map_mut(|m| m.remove(key)).is_some() || on_heap
     }
 
     pub fn on_heap_count(&self) -> usize {
@@ -537,6 +559,40 @@ mod tests {
             vec![vec![user_id(0), user_id(1)], vec![user_id(2), user_id(3)], vec![user_id(4)]]
         );
         assert_eq!(metrics.user_ids_on_heap().collect::<Vec<_>>(), vec![user_id(100)]);
+    }
+
+    #[test]
+    fn users_with_metrics_are_found_and_removed_whether_on_the_heap_or_in_stable_memory() {
+        init_stable_memory_map();
+        let chat = Chat::Group(Principal::anonymous().into());
+        let [on_heap, in_stable_memory, both] = [1, 2, 3].map(user_id);
+        let (mut metrics, mut model) = legacy_metrics(&[on_heap, both]);
+        apply(
+            &mut metrics,
+            &mut model,
+            chat,
+            false,
+            in_stable_memory,
+            MetricKey::TextMessages,
+            true,
+            1000,
+        );
+        // A user can have both, the heap entry having been copied from stable memory (see
+        // `copy_to_heap`)
+        with_map_mut(|m| {
+            let key = UserMetricsKeyPrefix::new_from_events_prefix(&p(chat)).create_key(&both);
+            m.insert(key, model[&both].to_bytes())
+        });
+
+        assert_eq!(metrics.user_ids(&p(chat)), BTreeSet::from([on_heap, in_stable_memory, both]));
+
+        for user_id in [on_heap, in_stable_memory, both] {
+            assert!(metrics.remove(&p(chat), user_id));
+            assert!(metrics.get(&p(chat), &user_id).is_none());
+            assert!(!metrics.remove(&p(chat), user_id));
+        }
+        assert!(metrics.user_ids(&p(chat)).is_empty());
+        assert!(stable_user_ids(chat).is_empty());
     }
 
     #[allow(clippy::too_many_arguments)]

@@ -1,43 +1,40 @@
 use candid::Principal;
 use types::UserId;
 
-const START_PATTERN: &str = "UserId(";
+// How a user is mentioned in text, eg. `@UserId(rrkah-fqaaa-aaaaa-aaaaq-cai)`, as the website writes
+// and reads them
+pub const MENTION_PREFIX: &str = "@UserId(";
 
-pub fn extract_mentioned_users(str: &str) -> Vec<UserId> {
-    let mut mentions = Vec::new();
-    for start in str.match_indices(START_PATTERN).map(|(i, _)| i + START_PATTERN.len()) {
-        if let Some(len) = str[start..].find(')')
-            && let Ok(user_id) = Principal::from_text(&str[start..(start + len)])
-        {
-            mentions.push(user_id.into());
-        }
+// Passes the id of each user mentioned in `text` through `f`, replacing it with the id returned.
+// Returns the updated text if any were replaced, otherwise None.
+pub fn replace_mentioned_users(text: &str, mut f: impl FnMut(UserId) -> UserId) -> Option<String> {
+    if !text.contains(MENTION_PREFIX) {
+        return None;
     }
-    mentions
-}
-
-// Passes the user id in each mention in `str` (written `@UserId(<id>)`) through `f`, returning the
-// text with each replaced by the id returned, or None if none were replaced
-pub fn replace_mentioned_users(str: &str, f: &mut dyn FnMut(UserId) -> UserId) -> Option<String> {
-    let mut replaced = String::new();
-    let mut copied_up_to = 0;
-    for start in str.match_indices(START_PATTERN).map(|(i, _)| i + START_PATTERN.len()) {
-        if let Some(len) = str[start..].find(')')
-            && let Ok(principal) = Principal::from_text(&str[start..(start + len)])
+    let mut updated = String::with_capacity(text.len());
+    let mut rest = text;
+    let mut changed = false;
+    while let Some(index) = rest.find(MENTION_PREFIX) {
+        let start = index + MENTION_PREFIX.len();
+        updated.push_str(&rest[..start]);
+        rest = &rest[start..];
+        if let Some(len) = rest.find(')')
+            && let Ok(principal) = Principal::from_text(&rest[..len])
         {
             let user_id = UserId::from(principal);
-            let latest = f(user_id);
-            if latest != user_id {
-                replaced.push_str(&str[copied_up_to..start]);
-                replaced.push_str(&latest.to_string());
-                copied_up_to = start + len;
+            let new_user_id = f(user_id);
+            if new_user_id != user_id {
+                updated.push_str(&new_user_id.to_string());
+                rest = &rest[len..];
+                changed = true;
             }
         }
     }
-    if copied_up_to == 0 {
-        None
+    if changed {
+        updated.push_str(rest);
+        Some(updated)
     } else {
-        replaced.push_str(&str[copied_up_to..]);
-        Some(replaced)
+        None
     }
 }
 
@@ -45,47 +42,76 @@ pub fn replace_mentioned_users(str: &str, f: &mut dyn FnMut(UserId) -> UserId) -
 mod tests {
     use super::*;
 
-    #[test]
-    fn with_no_mentions() {
-        let u1 = UserId::from(Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap());
+    fn u1() -> UserId {
+        Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into()
+    }
 
-        assert!(extract_mentioned_users("").is_empty());
-        assert!(extract_mentioned_users("a").is_empty());
-        assert!(extract_mentioned_users("abc 123").is_empty());
-        assert!(extract_mentioned_users("123 @UserId(xyz)").is_empty());
-        assert!(extract_mentioned_users(&format!("{u1}")).is_empty());
-        assert!(extract_mentioned_users(&format!("@UserId({u1}_)")).is_empty());
+    fn u2() -> UserId {
+        Principal::from_text("2fzwl-cu3hl-bawo2-idwrw-7yygk-uccms-cbo3a-c6kqt-lnk3j-mewg3-hae")
+            .unwrap()
+            .into()
+    }
+
+    fn u3() -> UserId {
+        Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap().into()
+    }
+
+    // Replaces u1 with u3, recording each id it is given
+    fn replace(text: &str) -> (Option<String>, Vec<UserId>) {
+        let mut seen = Vec::new();
+        let result = replace_mentioned_users(text, |u| {
+            seen.push(u);
+            if u == u1() { u3() } else { u }
+        });
+        (result, seen)
     }
 
     #[test]
-    fn with_mentions() {
-        let u1 = UserId::from(Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap());
-        let u2 = UserId::from(Principal::from_text("2fzwl-cu3hl-bawo2-idwrw-7yygk-uccms-cbo3a-c6kqt-lnk3j-mewg3-hae").unwrap());
-
-        assert_eq!(extract_mentioned_users(&format!("@UserId({u1})")), vec![u1]);
-        assert_eq!(extract_mentioned_users(&format!("123 @UserId({u1}) xyz")), vec![u1]);
-        assert_eq!(
-            extract_mentioned_users(&format!("@UserId({u1}) and @UserId({u2})")),
-            vec![u1, u2]
-        );
-        assert_eq!(
-            extract_mentioned_users(&format!("123@UserId({u1})___@UserId({u2})___&&&!!!")),
-            vec![u1, u2]
-        );
+    fn text_without_mentions_is_unchanged() {
+        for text in [
+            "",
+            "abc 123",
+            "123 @UserId(xyz)",
+            &u1().to_string(),
+            &format!("UserId({})", u1()),
+            &format!("@UserId({}_)", u1()),
+            &format!("@UserId({}", u1()),
+            "@UserId(",
+        ] {
+            assert_eq!(replace(text), (None, Vec::new()), "{text}");
+        }
     }
 
     #[test]
     fn mentions_are_replaced() {
-        let u1 = UserId::from(Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap());
-        let u2 = UserId::from(Principal::from_text("2fzwl-cu3hl-bawo2-idwrw-7yygk-uccms-cbo3a-c6kqt-lnk3j-mewg3-hae").unwrap());
-        let u3 = UserId::from(Principal::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap());
-        let mut f = |user_id| if user_id == u1 { u3 } else { user_id };
+        let (u1, u2, u3) = (u1(), u2(), u3());
 
+        assert_eq!(replace(&format!("@UserId({u1})")), (Some(format!("@UserId({u3})")), vec![u1]));
         assert_eq!(
-            replace_mentioned_users(&format!("@UserId({u1}) and @UserId({u2}), then @UserId({u1})!"), &mut f),
-            Some(format!("@UserId({u3}) and @UserId({u2}), then @UserId({u3})!"))
+            replace(&format!("123@UserId({u1})___@UserId({u2})___&&&!!!")),
+            (Some(format!("123@UserId({u3})___@UserId({u2})___&&&!!!")), vec![u1, u2])
         );
-        assert_eq!(replace_mentioned_users(&format!("@UserId({u2}) @UserId(xyz"), &mut f), None);
-        assert_eq!(replace_mentioned_users("no mentions", &mut f), None);
+        // Adjacent, and with text which isn't ASCII around them
+        assert_eq!(
+            replace(&format!("你好@UserId({u2})@UserId({u1})ü")),
+            (Some(format!("你好@UserId({u2})@UserId({u3})ü")), vec![u2, u1])
+        );
+        // Nested in something which isn't itself a mention
+        assert_eq!(
+            replace(&format!("@UserId(@UserId({u1}))")),
+            (Some(format!("@UserId(@UserId({u3}))")), vec![u1])
+        );
+        // A principal in upper case is the same principal
+        assert_eq!(
+            replace(&format!("@UserId({})", u1.to_string().to_uppercase())),
+            (Some(format!("@UserId({u3})")), vec![u1])
+        );
+    }
+
+    #[test]
+    fn mentions_of_users_whose_ids_are_unchanged_are_left_as_they_are() {
+        let (u2, u3) = (u2(), u3());
+
+        assert_eq!(replace(&format!("@UserId({u2}) and @UserId({u3})")), (None, vec![u2, u3]));
     }
 }

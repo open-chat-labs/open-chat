@@ -383,10 +383,10 @@ fn update_community_heap(data: &mut Data, migration: &mut UserIdsInStateMigratio
     // when the community was last updated, so clients only pick up the change along with the
     // community's next update, or when they next fetch its details afresh. The rules keep their
     // version, so needn't be accepted again.
-    if let Some(description) = replace_mentioned_users(&data.description.value, f) {
+    if let Some(description) = replace_mentioned_users(&data.description.value, &mut *f) {
         data.description = Timestamped::new(description, now);
     }
-    if let Some(text) = replace_mentioned_users(&data.rules.text.value, f) {
+    if let Some(text) = replace_mentioned_users(&data.rules.text.value, &mut *f) {
         let mut rules = data.rules.value.clone();
         rules.text.value = text;
         data.rules = Timestamped::new(rules, now);

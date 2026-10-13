@@ -15,6 +15,7 @@ use types::{
 };
 use user_index_canister::bot_updates::BotDetails;
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
+use utils::migrated_user_ids::MigratedUserIds;
 use utils::time::MonthKey;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -883,6 +884,48 @@ impl UserMap {
         }
     }
 
+    // One-off: a report made after its sender was migrated to a MultiUser canister, but naming them
+    // by their old id, wasn't recorded against them, since no user has that id. Records it, unless it
+    // already is, keeping the user's reports in the order they were made. Returns whether it was
+    // recorded.
+    pub fn add_reported_message_if_missing(&mut self, user_id: UserId, report_index: u64) -> bool {
+        if let Some(user) = self.users.get_mut(&user_id)
+            && !user.reported_messages.contains(&report_index)
+        {
+            let position = user.reported_messages.partition_point(|i| *i < report_index);
+            user.reported_messages.insert(position, report_index);
+            true
+        } else {
+            false
+        }
+    }
+
+    // One-off: replaces the ids users had before being migrated to a MultiUser canister with their
+    // latest ids, in who suspended each user and who installed each bot where it is now. The bots'
+    // installation events are left alone, since bots replay them. Returns how many of each were
+    // replaced.
+    pub fn replace_old_user_ids(&mut self, migrated_user_ids: &MigratedUserIds) -> (usize, usize) {
+        let mut suspended_by_replaced = 0;
+        for details in self.users.values_mut().filter_map(|u| u.suspension_details.as_mut()) {
+            let latest = migrated_user_ids.latest(details.suspended_by);
+            if latest != details.suspended_by {
+                details.suspended_by = latest;
+                suspended_by_replaced += 1;
+            }
+        }
+
+        let mut installed_by_replaced = 0;
+        for installation in self.bots.values_mut().flat_map(|b| b.installations.values_mut()) {
+            let latest = migrated_user_ids.latest(installation.installed_by);
+            if latest != installation.installed_by {
+                installation.installed_by = latest;
+                installed_by_replaced += 1;
+            }
+        }
+
+        (suspended_by_replaced, installed_by_replaced)
+    }
+
     pub fn record_proof_of_unique_personhood(
         &mut self,
         user_id: UserId,
@@ -1213,5 +1256,130 @@ mod tests {
         updated.username = "ABC".to_string();
 
         assert!(matches!(user_map.update(updated, 2, false, false), UpdateUserResult::Success));
+    }
+
+    #[test]
+    fn old_user_ids_are_replaced_with_the_latest() {
+        let user_id = |i: u8| -> UserId { Principal::from_slice(&[3, i]).into() };
+        let (old_moderator, latest_moderator) = (user_id(1), user_id(2));
+        let (old_installer, latest_installer) = (user_id(3), user_id(4));
+        let unmigrated = user_id(5);
+        let suspended1 = user_id(6);
+        let suspended2 = user_id(7);
+        let bot_id = user_id(8);
+        let group = BotInstallationLocation::Group(Principal::from_slice(&[9]).into());
+        let community = BotInstallationLocation::Community(Principal::from_slice(&[10]).into());
+
+        let mut migrated_user_ids = MigratedUserIds::default();
+        migrated_user_ids.insert(old_moderator, latest_moderator);
+        migrated_user_ids.insert(old_installer, latest_installer);
+
+        let mut user_map = UserMap::default();
+        for (i, user_id) in [suspended1, suspended2].into_iter().enumerate() {
+            user_map.register(
+                Principal::from_slice(&[i as u8]),
+                user_id,
+                format!("user{i}"),
+                None,
+                1,
+                None,
+                UserType::User,
+                None,
+            );
+        }
+        user_map.suspend_user(suspended1, None, "reason".to_string(), old_moderator, 2);
+        user_map.suspend_user(suspended2, None, "reason".to_string(), unmigrated, 2);
+
+        let mut bot = Bot {
+            name: "bot".to_string(),
+            avatar: None,
+            owner: latest_installer,
+            endpoint: "https://my.bot.xyz/".to_string(),
+            definition: BotDefinition {
+                description: "bot".to_string(),
+                commands: Vec::new(),
+                autonomous_config: None,
+                default_subscriptions: None,
+                data_encoding: None,
+                restricted_locations: None,
+            },
+            last_updated: 0,
+            installations: HashMap::new(),
+            installation_events: Vec::new(),
+            registration_status: BotRegistrationStatus::Public,
+        };
+        for (location, installed_by) in [(group, old_installer), (community, unmigrated)] {
+            bot.add_installation(
+                location,
+                Principal::from_slice(&[11]),
+                BotPermissions::text_only(),
+                BotPermissions::default(),
+                installed_by,
+                3,
+            );
+        }
+        user_map.register(
+            Principal::from_slice(&[12]),
+            bot_id,
+            "bot".to_string(),
+            None,
+            3,
+            None,
+            UserType::BotV2,
+            Some(bot),
+        );
+
+        assert_eq!(user_map.replace_old_user_ids(&migrated_user_ids), (1, 1));
+
+        let suspended_by = |user_id| {
+            user_map
+                .get_by_user_id(&user_id)
+                .unwrap()
+                .suspension_details
+                .as_ref()
+                .unwrap()
+                .suspended_by
+        };
+        assert_eq!(suspended_by(suspended1), latest_moderator);
+        assert_eq!(suspended_by(suspended2), unmigrated);
+
+        let bot = user_map.get_bot(&bot_id).unwrap();
+        assert_eq!(bot.installations[&group].installed_by, latest_installer);
+        assert_eq!(bot.installations[&community].installed_by, unmigrated);
+        // The installation events are left alone, since bots replay them
+        assert!(matches!(
+            &bot.installation_events[0],
+            BotInstallationEvent::Installed(e) if e.installed_by == old_installer
+        ));
+
+        // Every old id has now been replaced, so running it again changes nothing
+        assert_eq!(user_map.replace_old_user_ids(&migrated_user_ids), (0, 0));
+    }
+
+    #[test]
+    fn reported_message_is_only_added_if_missing() {
+        let mut user_map = UserMap::default();
+        let user_id: UserId = Principal::from_slice(&[3, 1]).into();
+        user_map.register(
+            Principal::from_slice(&[1]),
+            user_id,
+            "user".to_string(),
+            None,
+            1,
+            None,
+            UserType::User,
+            None,
+        );
+        user_map.push_reported_message(user_id, 1);
+        user_map.push_reported_message(user_id, 4);
+
+        assert!(!user_map.add_reported_message_if_missing(user_id, 1));
+        // An earlier report goes in order, since the user's reports are walked latest first
+        assert!(user_map.add_reported_message_if_missing(user_id, 2));
+        assert!(!user_map.add_reported_message_if_missing(user_id, 2));
+        assert!(user_map.add_reported_message_if_missing(user_id, 5));
+        assert!(!user_map.add_reported_message_if_missing(Principal::from_slice(&[3, 2]).into(), 3));
+
+        assert_eq!(user_map.get_by_user_id(&user_id).unwrap().reported_messages, vec![1, 2, 4, 5]);
     }
 }

@@ -3,7 +3,7 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use multi_user_canister::{JoinVideoCall, UserCanisterEvent, join_video_call::*};
-use types::{Achievement, OCResult, UserId};
+use types::{Achievement, OCResult};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -13,12 +13,16 @@ fn join_video_call(args: Args) -> Response {
 
 fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
-    let canister_id = state.env.canister_id();
-    let (my_index, dismissal) = state.with_caller_user_mut(|my_index, user| {
-        let my_user_id = UserId::new_indexed(canister_id, my_index);
-        user_core::updates::join_video_call(user, &args, my_user_id, now)
-            .map(|()| (my_index, user_core::updates::answered_dismissal(user, &args)))
-    })?;
+    let my_index = state.caller_user_index_or_trap();
+    let my_user_id = state.user_id(my_index);
+    let data = &mut state.data;
+    let dismissal = data
+        .users
+        .with_user_mut(my_index, |user| {
+            user_core::updates::join_video_call(user, &args, my_user_id, &data.migrated_user_ids, now)
+                .map(|()| user_core::updates::answered_dismissal(user, &args))
+        })
+        .expect("User not found")?;
 
     // this user has answered: any other device of theirs that is still ringing should stop
     if let Some(dismissal) = dismissal {
