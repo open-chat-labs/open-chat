@@ -7,6 +7,7 @@ use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk::post_upgrade;
 use stable_memory::get_reader;
+use std::time::Duration;
 use tracing::{error, info};
 use types::{TimestampMillis, UserId};
 use user_index_canister::ChildCanisterType;
@@ -38,13 +39,11 @@ fn post_upgrade(args: Args) {
 
     // TODO remove after the release containing this has been deployed, and the jobs replacing old ids
     // in every chat (#9929, #9933) have completed
-    mutate_state(|state| {
-        replace_old_user_ids(state);
-        // The storage buckets were last told the vault reviewers' ids before they were migrated, and
-        // record views of quarantined material under them, so are told their latest ids. Sent from
-        // here since a fire-and-forget call can't be queued in a unit test.
-        moderation::sync_vault_reviewers(state);
-    });
+    mutate_state(replace_old_user_ids);
+    // The storage buckets were last told the vault reviewers' ids before they were migrated, and
+    // record views of quarantined material under them, so are told their latest ids. That's a call
+    // to the StorageIndex, so can't be made during the upgrade.
+    ic_cdk_timers::set_timer(Duration::ZERO, async { mutate_state(moderation::sync_vault_reviewers) });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, user_wasm_removed, "Post-upgrade complete");
