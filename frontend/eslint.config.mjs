@@ -119,7 +119,6 @@ export default defineConfig([
             "app/src/stores/pendingShare.ts",
             "app/src/stores/pinNumber.ts",
             "app/src/stores/proposalSections.ts",
-            "app/src/stores/proposalVotes.ts",
             "app/src/stores/quickReactions.ts",
             "app/src/stores/rtl.ts",
             "app/src/stores/search.svelte.ts",
