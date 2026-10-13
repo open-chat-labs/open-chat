@@ -878,14 +878,24 @@ impl Data {
             .is_some_and(|u| self.invited_users.contains(&u) || self.invited_users.contains(&self.migrated_user_ids.latest(u)))
     }
 
-    // The member who referred a user joining the community. The id comes from the client, so may be
-    // one a user had before being migrated to a MultiUser canister, or not a member's at all. It is
-    // taken as it is if it is a member's (which, while old user ids are being replaced, may still be
-    // an old id, to be moved along with the referrer's membership), otherwise as the user's latest id
-    // if that is a member's. Otherwise there is no referrer, so that an id which isn't a member's is
-    // never stored.
-    pub fn referring_member(&self, referred_by: Option<UserId>) -> Option<UserId> {
-        let user_id = referred_by?;
+    // Who referred a user joining the community: whoever invited them, if they were invited,
+    // otherwise the referrer the client gave. Either way, only a member is taken as the referrer, by
+    // the id they are held under (see `referring_member`).
+    pub fn referrer_of_joining_user(&self, user_id: UserId, referred_by: Option<UserId>) -> Option<UserId> {
+        match self.invited_users.get(&user_id) {
+            Some(invitation) => self.referring_member(invitation.invited_by),
+            None => referred_by.and_then(|referred_by| self.referring_member(referred_by)),
+        }
+    }
+
+    // The id a referrer is held under as a member. The id given may be one a user had before being
+    // migrated to a MultiUser canister (eg. one given by the client, or an inviter's which hasn't been
+    // replaced yet), or not a member's at all. It is taken as it is if it is a member's, which, while
+    // old user ids are being replaced, may still be an old id, so that the joining user is added to
+    // the referrer's referrals, both then being moved along with the referrer's membership. Otherwise
+    // it is taken as the user's latest id if that is a member's. Otherwise there is no referrer, so
+    // that an id which isn't a member's is never stored.
+    pub fn referring_member(&self, user_id: UserId) -> Option<UserId> {
         [user_id, self.migrated_user_ids.latest(user_id)]
             .into_iter()
             .find(|u| self.members.contains(u))
@@ -1621,13 +1631,54 @@ mod tests {
             data.migrated_user_ids.insert(old_user_id(i), new_user_id(i));
         }
 
-        assert_eq!(data.referring_member(None), None);
-        assert_eq!(data.referring_member(Some(owner)), Some(owner));
-        assert_eq!(data.referring_member(Some(old_user_id(2))), Some(new_user_id(2)));
-        assert_eq!(data.referring_member(Some(new_user_id(2))), Some(new_user_id(2)));
-        assert_eq!(data.referring_member(Some(old_user_id(3))), Some(old_user_id(3)));
-        assert_eq!(data.referring_member(Some(old_user_id(4))), None);
-        assert_eq!(data.referring_member(Some(new_user_id(4))), None);
+        assert_eq!(data.referring_member(owner), Some(owner));
+        assert_eq!(data.referring_member(old_user_id(2)), Some(new_user_id(2)));
+        assert_eq!(data.referring_member(new_user_id(2)), Some(new_user_id(2)));
+        assert_eq!(data.referring_member(old_user_id(3)), Some(old_user_id(3)));
+        assert_eq!(data.referring_member(old_user_id(4)), None);
+        assert_eq!(data.referring_member(new_user_id(4)), None);
+
+        // Without an invitation, the referrer the client gives is taken, if they are a member
+        assert_eq!(
+            data.referrer_of_joining_user(new_user_id(6), Some(old_user_id(2))),
+            Some(new_user_id(2))
+        );
+        assert_eq!(data.referrer_of_joining_user(new_user_id(6), Some(new_user_id(4))), None);
+        assert_eq!(data.referrer_of_joining_user(new_user_id(6), None), None);
+    }
+
+    #[test]
+    fn an_inviter_still_held_under_their_old_id_keeps_their_referrals_in_step() {
+        let owner = new_user_id(1);
+        let mut data = Data::new_for_tests(owner, Principal::from_slice(&[1]), String::new(), Vec::new());
+        // User 3 invited user 5, and is still a member under their old id while old ids are being
+        // replaced, though their migration is known
+        data.members
+            .add(old_user_id(3), Principal::from_slice(&[3]), UserType::User, None, 0);
+        data.migrated_user_ids.insert(old_user_id(3), new_user_id(3));
+        data.invited_users.add(
+            new_user_id(5),
+            UserInvitation {
+                invited_by: old_user_id(3),
+                timestamp: 0,
+            },
+        );
+
+        // The inviter is taken as the referrer rather than whoever the client gives, by the id they
+        // are held under, so user 5 is added to their referrals
+        let referred_by = data.referrer_of_joining_user(new_user_id(5), Some(owner));
+        assert_eq!(referred_by, Some(old_user_id(3)));
+        data.members
+            .add(new_user_id(5), Principal::from_slice(&[5]), UserType::User, referred_by, 0);
+        let inviter = data.members.get_by_user_id(&old_user_id(3)).unwrap();
+        assert_eq!(inviter.referrals(), &BTreeSet::from([new_user_id(5)]));
+
+        // Once the inviter is moved onto their latest id, both sides of the referral are
+        data.migrate_user_ids(&[old_user_id(3)], new_user_id(3), None, 1);
+        let inviter = data.members.get_by_user_id(&new_user_id(3)).unwrap();
+        assert_eq!(inviter.referrals(), &BTreeSet::from([new_user_id(5)]));
+        let invited = data.members.get_by_user_id(&new_user_id(5)).unwrap();
+        assert_eq!(invited.referred_by, Some(new_user_id(3)));
     }
 
     #[test]
