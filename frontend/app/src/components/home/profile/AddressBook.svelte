@@ -90,20 +90,24 @@
         );
     }
 
-    // Saving an account which is already saved renames it
+    // Saving an account which is already saved renames it. The list is updated here to match
+    // what the canister stores, rather than loaded again.
     async function save(account: NamedAccount): Promise<boolean> {
         busy = true;
         const resp = await client.saveCryptoAccount(account);
-        if (resp.kind === "success") {
-            accounts = await client.loadSavedCryptoAccounts();
-        } else {
-            toastStore.showFailureToast(i18nKey("addressBook.saveFailed"));
-        }
         busy = false;
-        return resp.kind === "success";
+        if (resp.kind !== "success") {
+            toastStore.showFailureToast(i18nKey("addressBook.saveFailed"));
+            return false;
+        }
+        accounts = accounts.some((a) => a.account === account.account)
+            ? accounts.map((a) => (a.account === account.account ? account : a))
+            : [...accounts, account];
+        return true;
     }
 
     function startAdding() {
+        if (busy) return;
         renaming = undefined;
         name = "";
         address = "";
@@ -118,6 +122,7 @@
     }
 
     function startRenaming(account: NamedAccount) {
+        if (busy) return;
         newName = account.name;
         renaming = account;
     }
@@ -133,6 +138,12 @@
         }
     }
 
+    function startDeleting(account: NamedAccount) {
+        if (busy) return;
+        deleting = account;
+    }
+
+    // The canister deletes by name, ignoring case
     function deleteAccount(yes: boolean): Promise<void> {
         const account = deleting;
         deleting = undefined;
@@ -141,9 +152,10 @@
         busy = true;
         return client
             .deleteCryptoAccount(account.name)
-            .then(async (resp) => {
+            .then((resp) => {
                 if (resp.kind === "success") {
-                    accounts = await client.loadSavedCryptoAccounts();
+                    const nameLower = account.name.toLowerCase();
+                    accounts = accounts.filter((a) => a.name.toLowerCase() !== nameLower);
                 } else {
                     toastStore.showFailureToast(i18nKey("addressBook.deleteFailed"));
                 }
@@ -206,6 +218,7 @@
                                         invalid={!renameValid}
                                         placeholder={i18nKey("addressBook.namePlaceholder")}
                                         onEnter={rename} />
+                                    <div class="address">{account.account}</div>
                                 </div>
                                 <HoverIcon
                                     title={$_("save")}
@@ -232,7 +245,7 @@
                                 <HoverIcon
                                     title={$_("addressBook.delete")}
                                     disabled={busy}
-                                    onclick={() => (deleting = account)}>
+                                    onclick={() => startDeleting(account)}>
                                     <DeleteOutline size={$iconSize} color={"var(--icon-txt)"} />
                                 </HoverIcon>
                             {/if}
@@ -267,7 +280,7 @@
                 {:else}
                     <Button
                         secondary
-                        disabled={loading}
+                        disabled={loading || busy}
                         onClick={startAdding}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}>
@@ -324,7 +337,7 @@
         }
 
         .rename :global(.input-wrapper) {
-            margin-bottom: 0;
+            margin-bottom: $sp2;
         }
 
         .name {
