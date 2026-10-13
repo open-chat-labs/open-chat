@@ -343,10 +343,13 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
                 }
             }
 
-            if !to_remove.is_empty() {
+            // The channel may have been deleted while its members were being imported, in which case
+            // the import carries on to the end, so that the community stops waiting for it
+            if !to_remove.is_empty()
+                && let Some(channel) = state.data.channels.get_mut(&channel_id)
+            {
                 // In order of user id, as they were looked at, so that the events are pushed in that order
                 to_remove.sort_unstable();
-                let channel = state.data.channels.get_mut(&channel_id).unwrap();
                 for user_id in to_remove {
                     let _ = channel
                         .chat

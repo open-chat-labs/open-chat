@@ -697,6 +697,30 @@ mod tests {
     }
 
     #[test]
+    fn the_community_is_not_complete_while_a_groups_members_are_being_imported() {
+        let mut data = setup();
+        let finish = |data: &mut Data| {
+            run_to_completion(data, &mut || false);
+            prepare_events_migration(data);
+            data.user_ids_in_events_migration.record_scanned_up_to(None);
+        };
+        finish(&mut data);
+        assert!(data.user_id_migration_complete());
+
+        // Both jobs are still complete, but the state job will run again once the members are in
+        data.channels_importing_members.insert(channel_id(5));
+        assert!(data.user_ids_in_state_migration.is_complete());
+        assert!(data.user_ids_in_events_migration.is_complete());
+        assert!(!data.user_id_migration_complete());
+
+        on_channel_members_imported(&mut data, channel_id(5));
+        assert!(!data.user_id_migration_complete());
+
+        finish(&mut data);
+        assert!(data.user_id_migration_complete());
+    }
+
+    #[test]
     fn a_migration_learned_during_a_pass_is_only_applied_once_the_records_under_it_have_moved() {
         let mut data = setup();
         // The first lookup doesn't find user 2's migration, eg. because the LocalUserIndex hadn't yet

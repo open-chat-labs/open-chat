@@ -552,6 +552,7 @@ impl RuntimeState {
             user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
             user_ids_in_state_migration: self.data.user_ids_in_state_migration.metrics(),
             user_id_migration_complete_reported: self.data.user_id_migration_complete_reported,
+            user_id_migration_held_for_import: jobs::update_user_ids_in_state::is_held(&self.data),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -606,11 +607,7 @@ impl RuntimeState {
     // ids (first in the community's state, then in its events) become complete, or start again, so that
     // it can report how many of its canisters have finished. Called at the end of each run of either.
     pub fn report_user_id_migration_progress(&mut self) {
-        // While a group's members are still being imported the state job is certain to run again, so
-        // the community isn't counted as complete until they have been
-        let complete = self.data.user_ids_in_state_migration.is_complete()
-            && self.data.user_ids_in_events_migration.is_complete()
-            && !jobs::update_user_ids_in_state::is_held(&self.data);
+        let complete = self.data.user_id_migration_complete();
         if complete != self.data.user_id_migration_complete_reported {
             self.data.user_id_migration_complete_reported = complete;
             self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
@@ -638,6 +635,15 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
 
 #[cfg(test)]
 impl Data {
+    // Whether the jobs replacing migrated users' old ids have finished. While a group's members are
+    // still being imported the state job is certain to run again, so the community isn't complete
+    // until they have been.
+    pub fn user_id_migration_complete(&self) -> bool {
+        self.user_ids_in_state_migration.is_complete()
+            && self.user_ids_in_events_migration.is_complete()
+            && !jobs::update_user_ids_in_state::is_held(self)
+    }
+
     // A public community created by the given user, with the given channels, and a fresh stable
     // memory map
     fn new_for_tests(
@@ -1606,6 +1612,8 @@ pub struct Metrics {
     pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
     pub user_ids_in_state_migration: UserIdsInStateMigrationMetrics,
     pub user_id_migration_complete_reported: bool,
+    // Whether the state job is waiting for a group's members to be imported
+    pub user_id_migration_held_for_import: bool,
     pub canister_ids: CanisterIds,
 }
 
