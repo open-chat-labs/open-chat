@@ -100,8 +100,7 @@
       "sourceHash": "c325b36b",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/ContextMenu.svelte",
-        "src/lib/components/ContextMenu.logic.js"
+        "src/lib/components/ContextMenu.svelte"
       ],
       "group": "library"
     },
@@ -337,8 +336,7 @@
       "sourceHash": "44598fe9",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/StatsDonut.svelte",
-        "src/lib/components/StatsDonut.logic.js"
+        "src/lib/components/StatsDonut.svelte"
       ],
       "group": "library"
     },
@@ -464,8 +462,7 @@
       "sourceHash": "3d01a726",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/ChatPicker.svelte",
-        "src/lib/components/ChatPicker.logic.js"
+        "src/lib/components/ChatPicker.svelte"
       ],
       "group": "library"
     },
@@ -582,8 +579,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/CallEvent.svelte",
-        "src/lib/components/CallEvent.logic.js"
+        "src/lib/components/CallEvent.svelte"
       ]
     },
     "CallPanel": {

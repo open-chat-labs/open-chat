@@ -48,8 +48,11 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **Badge** — from source hash `ac70dfd9`.
 - **Banner** — from source hash `0beff5f6`.
 - **Button** — from source hash `8b5cf575`.
+- **CallEvent** — from source hash `229acee3`.
+- **ChatPicker** — from source hash `3d01a726`.
 - **ComposerBar** — from source hash `6f9180bd`.
 - **Confetti** — from source hash `29b4b5be`.
+- **ContextMenu** — from source hash `c325b36b`.
 - **CopyButton** — from source hash `454e21c1`.
 - **Countdown** — from source hash `4ac813fd`.
 - **DetailRow** — from source hash `10ca55c5`.
@@ -86,6 +89,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **SortableInputList** — from source hash `eb476c6d`.
 - **Spinner** — from source hash `8547dbf9`.
 - **StatCard** — from source hash `99b85629`.
+- **StatsDonut** — from source hash `44598fe9`.
 - **StepIndicator** — from source hash `491490cf`.
 - **SwapOffer** — from source hash `da54ba4f`.
 - **TextArea** — from source hash `6aad1311`.
