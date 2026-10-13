@@ -698,6 +698,46 @@ impl RuntimeState {
             }));
     }
 
+    fn user_id_migrations_complete(&self) -> UserIdMigrationsComplete {
+        // Up to this many of the canisters which haven't finished are listed, so that any which are
+        // stuck can be found
+        const MAX_REMAINING_LISTED: usize = 50;
+
+        let incomplete_groups: Vec<CanisterId> = self
+            .data
+            .local_groups
+            .iter()
+            .filter(|(_, g)| !g.user_id_migration_complete)
+            .map(|(chat_id, _)| (*chat_id).into())
+            .collect();
+        let incomplete_communities: Vec<CanisterId> = self
+            .data
+            .local_communities
+            .iter()
+            .filter(|(_, c)| !c.user_id_migration_complete)
+            .map(|(community_id, _)| (*community_id).into())
+            .collect();
+        let incomplete_multi_user_canisters: Vec<CanisterId> = self
+            .data
+            .local_multi_user_canisters
+            .iter()
+            .filter(|(_, c)| !c.user_id_migration_complete)
+            .map(|(canister_id, _)| *canister_id)
+            .collect();
+
+        UserIdMigrationsComplete {
+            groups: (self.data.local_groups.len() - incomplete_groups.len()) as u32,
+            communities: (self.data.local_communities.len() - incomplete_communities.len()) as u32,
+            multi_user_canisters: (self.data.local_multi_user_canisters.len() - incomplete_multi_user_canisters.len()) as u32,
+            remaining: incomplete_groups
+                .into_iter()
+                .chain(incomplete_communities)
+                .chain(incomplete_multi_user_canisters)
+                .take(MAX_REMAINING_LISTED)
+                .collect(),
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let group_upgrades_metrics = self.data.groups_requiring_upgrade.metrics();
@@ -743,26 +783,7 @@ impl RuntimeState {
             multi_user_upgrades_in_progress: multi_user_upgrades_metrics.in_progress,
             multi_user_wasm_version: self.data.child_canister_wasms.get(ChildCanisterType::MultiUser).wasm.version,
             migrated_user_ids: self.data.migrated_user_ids.len(),
-            user_id_migrations_complete: UserIdMigrationsComplete {
-                groups: self
-                    .data
-                    .local_groups
-                    .iter()
-                    .filter(|(_, g)| g.user_id_migration_complete)
-                    .count() as u32,
-                communities: self
-                    .data
-                    .local_communities
-                    .iter()
-                    .filter(|(_, c)| c.user_id_migration_complete)
-                    .count() as u32,
-                multi_user_canisters: self
-                    .data
-                    .local_multi_user_canisters
-                    .iter()
-                    .filter(|(_, c)| c.user_id_migration_complete)
-                    .count() as u32,
-            },
+            user_id_migrations_complete: self.user_id_migrations_complete(),
             call_push_enabled: self.data.call_push_enabled,
             group_versions: self
                 .data
@@ -1176,6 +1197,8 @@ pub struct UserIdMigrationsComplete {
     pub groups: u32,
     pub communities: u32,
     pub multi_user_canisters: u32,
+    // Up to 50 of the canisters which haven't finished
+    pub remaining: Vec<CanisterId>,
 }
 
 #[derive(Serialize, Debug)]
