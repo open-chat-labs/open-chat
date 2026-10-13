@@ -99,89 +99,94 @@ impl CommunityMembers {
         user_id: UserId,
         principal: Principal,
         user_type: UserType,
-        mut referred_by: Option<UserId>,
-        now: TimestampMillis,
-    ) -> AddResult {
-        if referred_by == Some(user_id) {
-            referred_by = None;
-        }
-
-        let result = self.add_to_heap(user_id, principal, user_type, referred_by, now);
-        if let AddResult::Success(member) = &result {
-            self.add_user_id(principal, user_id);
-            self.members_map.insert(user_id, member.as_ref().clone());
-
-            if let Some(referrer) = referred_by
-                && matches!(
-                    self.update_member(&referrer, |m| {
-                        m.add_referral(user_id);
-                        true
-                    }),
-                    Some(true)
-                )
-            {
-                self.members_with_referrals.insert(referrer);
-            }
-        }
-        result
-    }
-
-    // Adds the member as `add` does for one with no referrer, other than writing them to stable
-    // memory, so that many can be written together by `write_added`. The caller must pass it every
-    // member added this way, and mustn't read them before then.
-    pub fn add_unwritten(
-        &mut self,
-        user_id: UserId,
-        principal: Principal,
-        user_type: UserType,
-        now: TimestampMillis,
-    ) -> AddResult {
-        self.add_to_heap(user_id, principal, user_type, None, now)
-    }
-
-    // Writes the members added by `add_unwritten` to stable memory, together with their principals,
-    // so that each node of the map is written once rather than once per member
-    pub fn write_added(&mut self, members: Vec<CommunityMemberInternal>) {
-        self.principal_to_user_id_map
-            .insert_many(members.iter().map(|m| (m.principal, m.user_id)));
-        self.members_map.insert_many(members);
-    }
-
-    fn add_to_heap(
-        &mut self,
-        user_id: UserId,
-        principal: Principal,
-        user_type: UserType,
         referred_by: Option<UserId>,
         now: TimestampMillis,
     ) -> AddResult {
-        if self.blocked.contains(&user_id) {
-            AddResult::Blocked
-        } else if let Vacant(e) = self.members_and_channels.entry(user_id) {
-            e.insert(Vec::new());
+        let mut members = MembersToAdd::default();
+        members.push(user_id, principal, user_type, referred_by);
+        let (_, result) = self.add_many(members, now).pop().unwrap();
+        result
+    }
 
-            let member = CommunityMemberInternal {
-                user_id,
-                principal,
-                date_added: now,
-                role: CommunityRole::Member,
-                suspended: Timestamped::default(),
-                rules_accepted: None,
-                user_type,
-                display_name: Timestamped::default(),
-                referred_by,
-                referrals: BTreeSet::new(),
-                referrals_removed: BTreeSet::new(),
-                lapsed: Timestamped::default(),
+    // Adds the members in the order they were pushed, then writes those added to stable memory, along
+    // with their principals, together, so that each node of the map is written once rather than once
+    // per member. Returns each one's result.
+    pub fn add_many(&mut self, members: MembersToAdd, now: TimestampMillis) -> Vec<(UserId, AddResult)> {
+        let mut results = Vec::with_capacity(members.0.len());
+        let mut referrals = Vec::new();
+        for MemberToAdd {
+            user_id,
+            principal,
+            user_type,
+            mut referred_by,
+        } in members.0
+        {
+            let result = if self.blocked.contains(&user_id) {
+                AddResult::Blocked
+            } else if let Vacant(e) = self.members_and_channels.entry(user_id) {
+                e.insert(Vec::new());
+
+                if referred_by == Some(user_id) {
+                    referred_by = None;
+                }
+                // A referrer who isn't a member by now isn't updated, as when members are added one at
+                // a time
+                if let Some(referrer) = referred_by
+                    && self.members_and_channels.contains_key(&referrer)
+                {
+                    referrals.push((referrer, user_id));
+                }
+
+                let member = CommunityMemberInternal {
+                    user_id,
+                    principal,
+                    date_added: now,
+                    role: CommunityRole::Member,
+                    suspended: Timestamped::default(),
+                    rules_accepted: None,
+                    user_type,
+                    display_name: Timestamped::default(),
+                    referred_by,
+                    referrals: BTreeSet::new(),
+                    referrals_removed: BTreeSet::new(),
+                    lapsed: Timestamped::default(),
+                };
+                if user_type.is_bot() {
+                    self.bots.insert(user_id, user_type);
+                }
+                self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
+                AddResult::Success(Box::new(member))
+            } else {
+                AddResult::AlreadyInCommunity
             };
-            if user_type.is_bot() {
-                self.bots.insert(user_id, user_type);
-            }
-            self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
-            AddResult::Success(Box::new(member))
-        } else {
-            AddResult::AlreadyInCommunity
+            results.push((user_id, result));
         }
+
+        let added: Vec<_> = results
+            .iter()
+            .filter_map(|(_, result)| match result {
+                AddResult::Success(member) => Some(member.as_ref().clone()),
+                _ => None,
+            })
+            .collect();
+        self.principal_to_user_id_map
+            .insert_many(added.iter().map(|m| (m.principal, m.user_id)));
+        self.members_map.insert_many(added);
+
+        // The referrers are updated once the members have been written, since they may be among them
+        for (referrer, user_id) in referrals {
+            if matches!(
+                self.update_member(&referrer, |m| {
+                    m.add_referral(user_id);
+                    true
+                }),
+                Some(true)
+            ) {
+                self.members_with_referrals.insert(referrer);
+            }
+        }
+
+        results
     }
 
     pub fn add_user_id(&mut self, principal: Principal, user_id: UserId) {
@@ -1159,6 +1164,32 @@ impl Member for CommunityMemberInternal {
     }
 }
 
+// The members to be added to the community together (see `CommunityMembers::add_many`)
+#[derive(Default)]
+pub struct MembersToAdd(Vec<MemberToAdd>);
+
+struct MemberToAdd {
+    user_id: UserId,
+    principal: Principal,
+    user_type: UserType,
+    referred_by: Option<UserId>,
+}
+
+impl MembersToAdd {
+    pub fn push(&mut self, user_id: UserId, principal: Principal, user_type: UserType, referred_by: Option<UserId>) {
+        self.0.push(MemberToAdd {
+            user_id,
+            principal,
+            user_type,
+            referred_by,
+        });
+    }
+
+    pub fn contains(&self, user_id: &UserId) -> bool {
+        self.0.iter().any(|m| m.user_id == *user_id)
+    }
+}
+
 pub enum AddResult {
     Success(Box<CommunityMemberInternal>),
     AlreadyInCommunity,
@@ -1553,7 +1584,7 @@ mod tests {
     }
 
     #[test]
-    fn members_added_then_written_together_match_those_added_one_at_a_time() {
+    fn add_many_matches_adding_one_at_a_time() {
         // User 3 has been invited, so their principal is already mapped, and user 5 is blocked
         let setup = || {
             let mut members = members_for_page_tests(1);
@@ -1562,28 +1593,41 @@ mod tests {
             members
         };
         // Of different lengths, so that the order of the user ids differs from that of their keys, as
-        // does the order of the principals
-        let user_ids = [&[9, 9][..], &[3], &[5], &[2], &[9, 9], &[7, 7, 7]].map(long_user_id);
+        // does the order of the principals. Of the referrers, user 1 is already a member, user 9,9 is
+        // added before the member they referred, user 7,7,7 after, and user 7,7,7 refers themselves.
+        let members_to_add = [
+            (&[9, 9][..], Some(&[1][..])),
+            (&[3], Some(&[7, 7, 7])),
+            (&[5], None),
+            (&[2], Some(&[9, 9])),
+            (&[9, 9], None),
+            (&[7, 7, 7], Some(&[7, 7, 7])),
+        ]
+        .map(|(user_id, referred_by)| (long_user_id(user_id), referred_by.map(long_user_id)));
         let user_type = |user_id: UserId| if user_id == long_user_id(&[2]) { UserType::BotV2 } else { UserType::User };
 
         let mut one_at_a_time = setup();
-        let results: Vec<_> = user_ids
+        let results: Vec<_> = members_to_add
             .iter()
-            .map(|u| result_name(&one_at_a_time.add(*u, principal_for(*u), user_type(*u), None, 10)))
+            .map(|(u, r)| {
+                (
+                    *u,
+                    result_name(&one_at_a_time.add(*u, principal_for(*u), user_type(*u), *r, 10)),
+                )
+            })
             .collect();
         let expected = stored_state(&one_at_a_time);
 
         let mut together = setup();
-        let mut added = Vec::new();
-        let mut results_together = Vec::new();
-        for user_id in user_ids {
-            let result = together.add_unwritten(user_id, principal_for(user_id), user_type(user_id), 10);
-            results_together.push(result_name(&result));
-            if let AddResult::Success(member) = result {
-                added.push(*member);
-            }
+        let mut to_add = MembersToAdd::default();
+        for (user_id, referred_by) in members_to_add {
+            to_add.push(user_id, principal_for(user_id), user_type(user_id), referred_by);
         }
-        together.write_added(added);
+        let results_together: Vec<_> = together
+            .add_many(to_add, 10)
+            .iter()
+            .map(|(user_id, result)| (*user_id, result_name(result)))
+            .collect();
 
         assert_eq!(results_together, results);
         assert_eq!(stored_state(&together), expected);
@@ -1592,6 +1636,10 @@ mod tests {
             together.lookup_user_id(principal_for(long_user_id(&[7, 7, 7]))),
             Some(long_user_id(&[7, 7, 7]))
         );
+        let referrals = |user_id| together.get_by_user_id(&long_user_id(user_id)).unwrap().referrals;
+        assert_eq!(referrals(&[1]), BTreeSet::from([long_user_id(&[9, 9])]));
+        assert_eq!(referrals(&[9, 9]), BTreeSet::from([long_user_id(&[2])]));
+        assert!(referrals(&[7, 7, 7]).is_empty());
         together.check_invariants();
     }
 
@@ -1678,6 +1726,7 @@ mod tests {
             members.members_and_channels.clone(),
             members.bots.clone(),
             members.lapsed.clone(),
+            members.members_with_referrals.clone(),
             members.updates.clone(),
         )
     }

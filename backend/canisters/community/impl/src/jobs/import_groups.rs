@@ -3,7 +3,7 @@ use crate::jobs::{migrate_chat_events_to_stable_memory, unlapse_members, update_
 use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
-use crate::model::members::AddResult;
+use crate::model::members::{AddResult, MembersToAdd};
 use crate::timer_job_types::{
     FinalizeGroupImportJob, JoinMembersToPublicChannelJob, ProcessGroupImportChannelMembersJob, TimerJob,
 };
@@ -320,8 +320,11 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
             let users: BTreeMap<_, _> = users.into_iter().collect();
 
             let mut added = Vec::new();
-            // The members added are written to stable memory together once the batch is processed
-            let mut members_added = Vec::new();
+            // The members are added together once the batch has been looked through, so that they're
+            // written to stable memory together
+            let mut to_add = MembersToAdd::default();
+            // Those blocked from the community, who are removed from the channel
+            let mut to_remove = Vec::new();
             // Where the next run carries on from: after the last member looked at, unless this run
             // stops before it has processed them all
             let mut processed_to = scanned_to;
@@ -338,49 +341,54 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
                 }
                 last_processed = Some(user_id);
 
-                let principal = latest.principal;
                 if latest.user_id != user_id {
                     // The group held the member by an id they've since been migrated from. They're added
                     // under it, as the channel holds them, then moved onto their latest id below. If
-                    // they're already a member under it, only the channel is moved. If they've been
-                    // blocked under it, they're removed from the channel as when blocked under the old.
+                    // they're already a member under it, or are to be added under it, only the channel is
+                    // moved. If they've been blocked under it, they're removed from the channel as when
+                    // blocked under the old.
                     migrated.push((user_id, latest));
                     if state.data.members.is_blocked(&latest.user_id) {
-                        let channel = state.data.channels.get_mut(&channel_id).unwrap();
-                        let _ = channel
-                            .chat
-                            .remove_member(Caller::OCBot(OPENCHAT_BOT_USER_ID), user_id, false, now);
+                        to_remove.push(user_id);
                         continue;
                     }
-                    if state.data.members.contains(&latest.user_id) {
+                    if state.data.members.contains(&latest.user_id) || to_add.contains(&latest.user_id) {
                         continue;
                     }
                 }
 
-                match state.data.members.add_unwritten(
+                to_add.push(
                     user_id,
-                    principal,
+                    latest.principal,
                     batch.get(&user_id).copied().unwrap_or_default(),
-                    now,
-                ) {
-                    AddResult::Success(member) => {
+                    None,
+                );
+            }
+
+            for (user_id, result) in state.data.members.add_many(to_add, now) {
+                match result {
+                    AddResult::Success(_) => {
                         state.data.invited_users.remove(&user_id, now);
                         state.data.members.mark_member_joined_channel(user_id, channel_id);
                         added.push(user_id);
-                        members_added.push(*member);
                     }
                     AddResult::AlreadyInCommunity => {
                         state.data.members.mark_member_joined_channel(user_id, channel_id);
                     }
-                    AddResult::Blocked => {
-                        let channel = state.data.channels.get_mut(&channel_id).unwrap();
-                        let _ = channel
-                            .chat
-                            .remove_member(Caller::OCBot(OPENCHAT_BOT_USER_ID), user_id, false, now);
-                    }
+                    AddResult::Blocked => to_remove.push(user_id),
                 }
             }
-            state.data.members.write_added(members_added);
+
+            if !to_remove.is_empty() {
+                // In order of user id, as they were looked at, so that the events are pushed in that order
+                to_remove.sort_unstable();
+                let channel = state.data.channels.get_mut(&channel_id).unwrap();
+                for user_id in to_remove {
+                    let _ = channel
+                        .chat
+                        .remove_member(Caller::OCBot(OPENCHAT_BOT_USER_ID), user_id, false, now);
+                }
+            }
 
             for (old_user_id, latest) in migrated {
                 state

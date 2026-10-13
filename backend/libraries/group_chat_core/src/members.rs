@@ -124,30 +124,74 @@ impl GroupMembers {
         notifications_muted: bool,
         user_type: UserType,
     ) -> AddResult {
-        let result = self.add_unwritten(
-            MemberToAdd {
-                user_id,
-                principal,
-                min_visible_event_index,
-                min_visible_message_index,
-                notifications_muted,
-                user_type,
-            },
-            now,
+        let mut members = MembersToAdd::default();
+        members.push(
+            user_id,
+            principal,
+            min_visible_event_index,
+            min_visible_message_index,
+            notifications_muted,
+            user_type,
         );
-        if let AddResult::Success(success) = &result {
-            self.members_map.insert(user_id, success.member.clone());
-        }
+        let (_, result) = self.add_many(members, now).pop().unwrap();
         result
     }
 
-    // Adds the members in turn, as `add` does, then writes those added to stable memory together, so
-    // that each node of the map is written once rather than once per member. Returns each one's result.
-    pub fn add_many(&mut self, members: Vec<MemberToAdd>, now: TimestampMillis) -> Vec<(UserId, AddResult)> {
-        let results: Vec<_> = members
-            .into_iter()
-            .map(|member| (member.user_id, self.add_unwritten(member, now)))
-            .collect();
+    // Adds the members in the order they were pushed, then writes those added to stable memory
+    // together, so that each node of the map is written once rather than once per member. Returns
+    // each one's result.
+    pub fn add_many(&mut self, members: MembersToAdd, now: TimestampMillis) -> Vec<(UserId, AddResult)> {
+        let mut results = Vec::with_capacity(members.0.len());
+        for MemberToAdd {
+            user_id,
+            principal,
+            min_visible_event_index,
+            min_visible_message_index,
+            notifications_muted,
+            user_type,
+        } in members.0
+        {
+            let result = if self.blocked.contains(&user_id) {
+                AddResult::Blocked
+            } else if let Some(limit) = self.user_limit_reached() {
+                AddResult::MemberLimitReached(limit)
+            } else if self.member_ids.insert(user_id) {
+                let member = GroupMemberInternal {
+                    user_id,
+                    principal,
+                    date_added: now,
+                    role: Timestamped::new(GroupRoleInternal::Member, 0),
+                    min_visible_event_index,
+                    min_visible_message_index,
+                    notifications_muted: Timestamped::new(notifications_muted, 0),
+                    at_everyone_muted: Timestamped::new(false, 0),
+                    mentions: Mentions::default(),
+                    followed_threads: TimestampedSet::default(),
+                    unfollowed_threads: TimestampedSet::default(),
+                    proposal_votes: BTreeSet::default(),
+                    latest_proposal_vote_removed: 0,
+                    suspended: Timestamped::default(),
+                    rules_accepted: None,
+                    user_type,
+                    lapsed: Timestamped::default(),
+                };
+                if user_type.is_bot() {
+                    self.bots.insert(user_id, user_type);
+                }
+                if !notifications_muted {
+                    self.notifications_unmuted.insert(user_id);
+                }
+                self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
+                AddResult::Success(Box::new(AddMemberSuccess {
+                    member,
+                    unlapse: false,
+                    bot_notification: None,
+                }))
+            } else {
+                AddResult::AlreadyInGroup
+            };
+            results.push((user_id, result));
+        }
 
         self.members_map
             .insert_many(results.iter().filter_map(|(_, result)| match result {
@@ -156,58 +200,6 @@ impl GroupMembers {
             }));
 
         results
-    }
-
-    // Adds the member, other than writing them to stable memory, which is left to the caller
-    fn add_unwritten(&mut self, member: MemberToAdd, now: TimestampMillis) -> AddResult {
-        let MemberToAdd {
-            user_id,
-            principal,
-            min_visible_event_index,
-            min_visible_message_index,
-            notifications_muted,
-            user_type,
-        } = member;
-
-        if self.blocked.contains(&user_id) {
-            AddResult::Blocked
-        } else if let Some(limit) = self.user_limit_reached() {
-            AddResult::MemberLimitReached(limit)
-        } else if self.member_ids.insert(user_id) {
-            let member = GroupMemberInternal {
-                user_id,
-                principal,
-                date_added: now,
-                role: Timestamped::new(GroupRoleInternal::Member, 0),
-                min_visible_event_index,
-                min_visible_message_index,
-                notifications_muted: Timestamped::new(notifications_muted, 0),
-                at_everyone_muted: Timestamped::new(false, 0),
-                mentions: Mentions::default(),
-                followed_threads: TimestampedSet::default(),
-                unfollowed_threads: TimestampedSet::default(),
-                proposal_votes: BTreeSet::default(),
-                latest_proposal_vote_removed: 0,
-                suspended: Timestamped::default(),
-                rules_accepted: None,
-                user_type,
-                lapsed: Timestamped::default(),
-            };
-            if user_type.is_bot() {
-                self.bots.insert(user_id, user_type);
-            }
-            if !notifications_muted {
-                self.notifications_unmuted.insert(user_id);
-            }
-            self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
-            AddResult::Success(Box::new(AddMemberSuccess {
-                member,
-                unlapse: false,
-                bot_notification: None,
-            }))
-        } else {
-            AddResult::AlreadyInGroup
-        }
     }
 
     pub fn remove(&mut self, user_id: UserId, now: TimestampMillis) -> Option<GroupMemberInternal> {
@@ -858,13 +850,38 @@ impl Members for GroupMembers {
     }
 }
 
-pub struct MemberToAdd {
-    pub user_id: UserId,
-    pub principal: Option<Principal>,
-    pub min_visible_event_index: EventIndex,
-    pub min_visible_message_index: MessageIndex,
-    pub notifications_muted: bool,
-    pub user_type: UserType,
+// The members to be added to a group or channel together (see `GroupMembers::add_many`)
+#[derive(Default)]
+pub struct MembersToAdd(Vec<MemberToAdd>);
+
+struct MemberToAdd {
+    user_id: UserId,
+    principal: Option<Principal>,
+    min_visible_event_index: EventIndex,
+    min_visible_message_index: MessageIndex,
+    notifications_muted: bool,
+    user_type: UserType,
+}
+
+impl MembersToAdd {
+    pub fn push(
+        &mut self,
+        user_id: UserId,
+        principal: Option<Principal>,
+        min_visible_event_index: EventIndex,
+        min_visible_message_index: MessageIndex,
+        notifications_muted: bool,
+        user_type: UserType,
+    ) {
+        self.0.push(MemberToAdd {
+            user_id,
+            principal,
+            min_visible_event_index,
+            min_visible_message_index,
+            notifications_muted,
+            user_type,
+        });
+    }
 }
 
 pub enum AddResult {
@@ -1530,8 +1547,19 @@ mod tests {
         let expected = stored_state(&one_at_a_time);
 
         let mut together = setup();
+        let mut to_add = MembersToAdd::default();
+        for m in members_to_add() {
+            to_add.push(
+                m.user_id,
+                m.principal,
+                m.min_visible_event_index,
+                m.min_visible_message_index,
+                m.notifications_muted,
+                m.user_type,
+            );
+        }
         let results_together: Vec<_> = together
-            .add_many(members_to_add(), 10)
+            .add_many(to_add, 10)
             .iter()
             .map(|(user_id, result)| (*user_id, result_name(result)))
             .collect();

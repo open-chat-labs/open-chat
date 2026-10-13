@@ -12,7 +12,7 @@ use gated_groups::{
     CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs, GatePayment, check_if_passes_gate,
     check_if_passes_gate_synchronously,
 };
-use group_chat_core::{AddMemberSuccess, AddResult, MemberToAdd};
+use group_chat_core::{AddMemberSuccess, AddResult, MembersToAdd};
 use group_community_common::{ExpiringMember, PaymentLockGuard};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
@@ -377,20 +377,18 @@ pub(crate) fn join_channel_unchecked_many(
     notifications_muted: bool,
     now: TimestampMillis,
 ) -> Vec<(UserId, AddResult)> {
-    let members = users
-        .into_iter()
-        .map(|(user_id, user_type)| {
-            let (min_visible_event_index, min_visible_message_index) = min_visible_indexes_for_new_member(channel, user_id);
-            MemberToAdd {
-                user_id,
-                principal: None,
-                min_visible_event_index,
-                min_visible_message_index,
-                notifications_muted,
-                user_type,
-            }
-        })
-        .collect();
+    let mut members = MembersToAdd::default();
+    for (user_id, user_type) in users {
+        let (min_visible_event_index, min_visible_message_index) = min_visible_indexes_for_new_member(channel, user_id);
+        members.push(
+            user_id,
+            None,
+            min_visible_event_index,
+            min_visible_message_index,
+            notifications_muted,
+            user_type,
+        );
+    }
 
     let mut results = channel.chat.members.add_many(members, now);
 
