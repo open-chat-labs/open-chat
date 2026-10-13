@@ -435,11 +435,11 @@ impl User {
         if self.suspended.value { Err(OCErrorCode::InitiatorSuspended) } else { Ok(()) }
     }
 
-    // Blocks the user under their latest id, since a client which hasn't yet heard that they have
-    // been migrated to a MultiUser canister names them by the id they had before, as does the chat
-    // with them if it was left under that id (see `DirectChats::migrate_their_user_id`). Returns
-    // the id they were blocked under, or None if they already were. The caller tells the
-    // LocalUserIndex (`UserBlocked`).
+    // Blocks the user under their latest id, since they may be named by an earlier id which
+    // `MigratedUserIds` records them as having been migrated from. The caller refuses a User
+    // canister's id, which users had before being migrated to MultiUser canisters. Returns the id
+    // they were blocked under, or None if they already were. The caller tells the LocalUserIndex
+    // (`UserBlocked`).
     pub fn block_user(&mut self, user_id: UserId, migrated_user_ids: &MigratedUserIds, now: TimestampMillis) -> Option<UserId> {
         let latest = migrated_user_ids.latest(user_id);
         self.blocked_users.block(latest, now).then_some(latest)

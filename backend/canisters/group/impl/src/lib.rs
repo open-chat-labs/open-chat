@@ -161,10 +161,13 @@ impl RuntimeState {
         Ok(self.member_user(user_id))
     }
 
-    // The member's wallet, for paying them. A user holds their funds under the principal held for
-    // them, and anyone else whose id carries no index, eg. a bot, under their user id.
+    // The member's wallet, for paying them, by their latest id. A user holds their funds under the
+    // principal held for them, and anyone else whose id carries no index, eg. a bot, under their
+    // user id, other than a User canister (see `verify_not_old_user_id`).
     pub fn member_wallet(&self, user_id: UserId) -> OCResult<icrc1::Account> {
+        let user_id = self.data.migrated_user_ids.latest(user_id);
         if !user_id.is_indexed() {
+            self.data.verify_not_old_user_id(user_id)?;
             return Ok(user_id.as_principal().into());
         }
         let user = self.member_user(user_id);
@@ -915,6 +918,20 @@ impl Data {
             .unwrap_or(user_id_or_principal.into());
 
         self.chat.members.get(&user_id)
+    }
+
+    // Refuses a User canister's id, which users had before being migrated to MultiUser canisters.
+    // Every user has been, so such an id names nobody, unless it is a bot's with a canister of its
+    // own, which is a member as a bot. Other bots and webhooks have ids which aren't canisters'.
+    // Callers pass the latest id `MigratedUserIds` gives, since clients still name users by their
+    // old ids in the events from before they were migrated, so only an old id which isn't known
+    // here is refused.
+    pub fn verify_not_old_user_id(&self, user_id: UserId) -> OCResult {
+        if user_id.is_canister() && !self.chat.members.bots().contains_key(&user_id) {
+            Err(OCErrorCode::TargetUserNotFound.into())
+        } else {
+            Ok(())
+        }
     }
 
     pub fn is_frozen(&self) -> bool {

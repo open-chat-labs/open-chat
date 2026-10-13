@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Replace the ids users had before being migrated with their latest ids throughout the rest of the group's state ([#9943](https://github.com/open-chat-labs/open-chat/pull/9943))
 - Tell the LocalUserIndex when the jobs replacing migrated users' old ids have completed ([#9949](https://github.com/open-chat-labs/open-chat/pull/9949))
 - Show in the metrics whether the jobs replacing migrated users' old ids were last reported complete ([#9950](https://github.com/open-chat-labs/open-chat/pull/9950))
+- Resolve a User canister's id to the user's latest id when removing, blocking or paying a member, and refuse one which can't be resolved, unless it's a bot's ([#9953](https://github.com/open-chat-labs/open-chat/pull/9953))
 
 ### Removed
 
