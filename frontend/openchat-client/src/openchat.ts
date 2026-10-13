@@ -8774,10 +8774,10 @@ export class OpenChat {
         });
     }
 
-    // When the current user is migrated to a MultiUser canister, they get a new user id. The session
-    // (the user client, the chats and everything else keyed by user id) was built for the old one,
-    // so rather than swap the id out from under it, we have the app restart under the new one.
-    // Returns whether the id has changed.
+    // The current user's id changes if their account is deleted and a new one created on the same
+    // principal. The session (the user client, the chats and everything else keyed by user id) was
+    // built for the old one, so rather than swap the id out from under it, we have the app restart
+    // under the new one. Returns whether the id has changed.
     #currentUserIdChanged(userId: string): boolean {
         const currentUserId = currentUserStore.value.userId;
         if (currentUserId === ANON_USER_ID || currentUserId === userId) return false;

@@ -171,7 +171,7 @@ export function missingUserIds(
     return missing;
 }
 
-// Whether to restart the session because the current user has been migrated to a new user id.
+// Whether to restart the session because the current user's id has changed.
 // It's done at most once for each change of id, since the restart relies on the new id having been
 // cached, and if that failed, restarting again would only get the old id again, then restart again,
 // and so on. It's kept in localStorage because the native app's restart doesn't keep sessionStorage.

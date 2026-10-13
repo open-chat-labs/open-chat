@@ -1026,7 +1026,7 @@ mod tests {
         })
     }
 
-    fn unindexed_user() -> UserId {
+    fn old_user_id() -> UserId {
         UserId::new(Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 5, 1, 1]))
     }
 
@@ -1078,7 +1078,7 @@ mod tests {
     }
 
     fn indexed_user() -> UserId {
-        UserId::new_indexed(unindexed_user().canister_id(), 7)
+        UserId::new_indexed(old_user_id().canister_id(), 7)
     }
 
     // Whether the transfer was sent to the user's wallet
@@ -1088,10 +1088,10 @@ mod tests {
 
     #[test]
     fn transfer_to_an_old_user_id_is_to_its_account() {
-        let recipient = UserIdAndPrincipal::new(unindexed_user(), principal());
+        let recipient = UserIdAndPrincipal::new(old_user_id(), principal());
 
         assert!(sent_to_wallet(
-            icrc1_transfer_to(unindexed_user().as_principal().into()),
+            icrc1_transfer_to(old_user_id().as_principal().into()),
             recipient
         ));
         assert!(!sent_to_wallet(icrc1_transfer_to(principal().into()), recipient));
@@ -1168,7 +1168,7 @@ mod tests {
     #[test]
     fn transfer_to_a_wallet_is_not_to_an_indexed_user_id() {
         // The wallet of an old id, which was a User canister's id, is the account of that id
-        let wallets = [unindexed_user().as_principal().into(), principal().into()];
+        let wallets = [old_user_id().as_principal().into(), principal().into()];
 
         for to in wallets {
             for transfer in [icrc1_transfer_to(to), icrc2_transfer_to(to), certified_transfer_to(to)] {
@@ -1180,7 +1180,7 @@ mod tests {
 
     #[test]
     fn nns_transfer_to_recipients_account_identifier_is_accepted() {
-        let recipient = UserIdAndPrincipal::new(unindexed_user(), principal());
+        let recipient = UserIdAndPrincipal::new(old_user_id(), principal());
 
         assert!(sent_to_wallet(nns_transfer_to(AccountIdentifier::from(recipient)), recipient));
         assert!(!sent_to_wallet(

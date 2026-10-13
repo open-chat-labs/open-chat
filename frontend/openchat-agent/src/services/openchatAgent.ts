@@ -391,10 +391,8 @@ export class OpenChatAgent extends EventTarget {
     private _dailyPuzzleClient: Lazy<DailyPuzzleClient>;
     private _groupIndexClient: GroupIndexClient;
     private _userClient: UserClient | AnonUserClient;
-    // The current user's id, and the ids they had before being migrated to a MultiUser canister, as
-    // last returned by `getCurrentUser`
-    private _ownUserIds: { userId: string; previousUserIds: string[] } | undefined;
-    // Each of the user's ids other than the one this session is under, mapped to that one
+    // Each of the ids the current user had before being migrated to a MultiUser canister, mapped to
+    // their latest, as last returned by `getCurrentUser`
     private _ownLatestUserIds: ReadonlyMap<string, string> = new Map();
     private _notificationClient: NotificationsClient;
     private _registryClient: RegistryClient;
@@ -750,26 +748,14 @@ export class OpenChatAgent extends EventTarget {
 
         this._userClient = userClient;
         this._chatEventsReader.setUserClient(userClient);
-        this.updateOwnLatestUserIds();
         return this;
     }
 
-    // Maps each of the user's ids to the one this session is under. That's their latest id, unless the
-    // session carries on under an earlier one, which the client does if it can't restart under the
-    // latest, in which case whatever they did under either still shows as their own. An id the
-    // session doesn't recognise as one of the user's, eg. a new account on the same principal, maps
-    // nothing onto it.
-    private updateOwnLatestUserIds() {
-        const own = this._ownUserIds;
-        if (own === undefined) {
-            this._ownLatestUserIds = new Map();
-            return;
-        }
-        const ids = [...own.previousUserIds, own.userId];
-        const sessionUserId = this._userClient.userId;
-        const target = ids.includes(sessionUserId) ? sessionUserId : own.userId;
+    // Maps each of the ids the user had before being migrated to a MultiUser canister to their latest
+    // id, so that whatever they did under an earlier id shows as their own
+    private updateOwnLatestUserIds(user: CreatedUser) {
         this._ownLatestUserIds = new Map(
-            ids.filter((id) => id !== target).map((id) => [id, target]),
+            (user.previousUserIds ?? []).map((id) => [id, user.userId]),
         );
     }
 
@@ -2789,11 +2775,7 @@ export class OpenChatAgent extends EventTarget {
             // Taken from each result, the cached user then the live one. The client creates the user
             // client from the first, and restarts the session if the live one's id differs.
             if (user.kind === "created_user") {
-                this._ownUserIds = {
-                    userId: user.userId,
-                    previousUserIds: user.previousUserIds ?? [],
-                };
-                this.updateOwnLatestUserIds();
+                this.updateOwnLatestUserIds(user);
             }
             return user;
         });
@@ -3838,12 +3820,11 @@ export class OpenChatAgent extends EventTarget {
         return mergeAccountTransactions(results);
     }
 
-    // The wallet of `userId`, along with, for the current user, the wallet of each of their other ids,
-    // since the funds of a user migrated to a MultiUser canister were held in their User canister's
-    // account until then, and in their principal's since. That's whichever of those the session isn't
-    // under, which is usually their earlier one (see `updateOwnLatestUserIds`). Each of the user's ids
-    // maps to the same principal, so ids which were each in a MultiUser canister share a wallet,
-    // which is listed once.
+    // The wallet of `userId`, along with, for the current user, the wallet of each of their earlier
+    // ids, since the funds of a user migrated to a MultiUser canister were held in their User
+    // canister's account until then, and in their principal's since. Each of the user's ids maps to
+    // the same principal, so ids which were each in a MultiUser canister share a wallet, which is
+    // listed once.
     private walletsOf(userId: string): Wallets {
         const accounts = new Map<string, IcrcAccount>();
         const add = (account: IcrcAccount) => accounts.set(encodeIcrcAccount(account), account);
