@@ -2466,6 +2466,13 @@ export type Metrics = {
 
 export type RegisterProposalVoteResponse = Success | OCError | Offline | Failure;
 
+/** How a vote on a proposal went. `skipped` means nothing was sent because the user has already voted or a vote is in flight */
+export type ProposalVoteOutcome =
+    | { kind: "voted" }
+    | { kind: "skipped" }
+    | { kind: "no_eligible_neurons" }
+    | { kind: "failed"; message: ResourceKey };
+
 export type ListNervousSystemFunctionsResponse = {
     reservedIds: bigint[];
     functions: NervousSystemFunction[];

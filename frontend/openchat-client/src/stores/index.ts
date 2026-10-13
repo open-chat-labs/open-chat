@@ -2,6 +2,7 @@ export * from "./diamond";
 export * from "./minutesOnline";
 export * from "./network";
 export * from "./profiling";
+export * from "./proposalVotes";
 export * from "./rules";
 export * from "./throttling";
 export * from "./typing";

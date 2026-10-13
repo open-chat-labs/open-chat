@@ -272,7 +272,9 @@ import {
     type PendingCryptocurrencyTransfer,
     type PendingCryptocurrencyWithdrawal,
     type PreprocessedGate,
+    type ProposalContent,
     type ProposalVoteDetails,
+    type ProposalVoteOutcome,
     type ProposeResponse,
     type PubSubEvents,
     type PublicProfile,
@@ -495,6 +497,7 @@ import { captureRulesAcceptanceStore } from "./stores/rules";
 import { initialiseMostRecentSentMessageTimes, shouldThrottle } from "./stores/throttling";
 import { isTyping, typing } from "./stores/typing";
 import { unconfirmedReadByThem } from "./stores/unconfirmed";
+import { proposalVotesStore } from "./stores/proposalVotes";
 import { undeletingMessagesStore } from "./stores/undeletingMessages";
 import {
     airdropBotUser,
@@ -581,6 +584,7 @@ import {
     updateExistingMessages,
 } from "./utils/chat";
 import { disableInviteCodeResult, inviteCodeResult } from "./utils/inviteLink";
+import { proposalVoteResult } from "./utils/proposalVote";
 import { joinGroupFailureMessage } from "./utils/join";
 import {
     bioResult,
@@ -6856,7 +6860,52 @@ export class OpenChat {
             });
     }
 
-    registerProposalVote(
+    /**
+     * Votes on the proposal in `content`, recording the vote in `proposalVotesStore` while it is in flight
+     * and once it succeeds, and clearing it if it fails so the user can try again
+     */
+    async voteOnProposal(
+        chatId: ChatIdentifier,
+        messageIndex: number,
+        messageId: bigint,
+        content: ProposalContent,
+        adopt: boolean,
+    ): Promise<ProposalVoteOutcome> {
+        if (
+            (chatId.kind !== "group_chat" && chatId.kind !== "channel") ||
+            content.myVote !== undefined ||
+            proposalVotesStore.has(messageId)
+        ) {
+            return { kind: "skipped" };
+        }
+
+        const { governanceCanisterId, proposal } = content;
+        const isNns = proposal.kind === "nns";
+        proposalVotesStore.insert(messageId, adopt ? "adopting" : "rejecting");
+
+        const outcome = proposalVoteResult(
+            await this.#registerProposalVote(
+                chatId,
+                messageIndex,
+                governanceCanisterId,
+                proposal.id,
+                isNns,
+                adopt,
+            ),
+        );
+
+        if (outcome.kind === "voted") {
+            proposalVotesStore.insert(messageId, adopt ? "adopted" : "rejected");
+            this.#getProposalVoteDetails(messageId, governanceCanisterId, proposal.id, isNns).catch(
+                (err) => this.#logger.error("Unable to refresh the proposal tally", err),
+            );
+        } else {
+            proposalVotesStore.delete(messageId);
+        }
+        return outcome;
+    }
+
+    #registerProposalVote(
         chatId: MultiUserChatIdentifier,
         messageIndex: number,
         governanceCanisterId: string,
@@ -6877,7 +6926,7 @@ export class OpenChat {
             .catch(CommonResponses.failure);
     }
 
-    getProposalVoteDetails(
+    #getProposalVoteDetails(
         messageId: bigint,
         governanceCanisterId: string,
         proposalId: bigint,

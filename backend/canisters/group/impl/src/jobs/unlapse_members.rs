@@ -6,7 +6,7 @@ use std::time::Duration;
 use tracing::trace;
 
 // Once a group's access gate has been removed, the members who had lapsed are unlapsed. Each is
-// written to stable memory, so a great many are unlapsed a batch at a time (see
+// read from and written to stable memory, so a great many are unlapsed a batch at a time (see
 // `GroupMembers::unlapse_while`).
 
 thread_local! {

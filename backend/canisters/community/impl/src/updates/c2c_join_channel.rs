@@ -12,13 +12,13 @@ use gated_groups::{
     CheckGateArgs, CheckIfPassesGateResult, CheckVerifiedCredentialGateArgs, GatePayment, check_if_passes_gate,
     check_if_passes_gate_synchronously,
 };
-use group_chat_core::{AddMemberSuccess, AddResult};
+use group_chat_core::{AddMemberSuccess, AddResult, MembersToAdd};
 use group_community_common::{ExpiringMember, PaymentLockGuard};
 use ic_principal::Principal;
 use oc_error_codes::OCErrorCode;
 use types::{
-    AccessGateConfigInternal, ChannelId, MemberJoinedInternal, TimestampMillis, UniquePersonProof, UserId, UserType,
-    VerifiedCredentialGateArgs,
+    AccessGateConfigInternal, ChannelId, EventIndex, MemberJoinedInternal, MessageIndex, TimestampMillis, UniquePersonProof,
+    UserId, UserType, VerifiedCredentialGateArgs,
 };
 
 #[update(guard = "caller_is_user_index_or_local_user_index", msgpack = true)]
@@ -274,7 +274,6 @@ fn commit(
         channel,
         &mut state.data.members,
         state.data.is_public.value && channel.chat.is_public.value,
-        true,
         explicit_join,
         now,
     ) {
@@ -325,74 +324,100 @@ fn commit(
     }
 }
 
-#[expect(clippy::too_many_arguments)]
-pub(crate) fn join_channel_unchecked(
+fn join_channel_unchecked(
     user_id: UserId,
     user_type: UserType,
     channel: &mut Channel,
     community_members: &mut CommunityMembers,
     notifications_muted: bool,
-    push_event: bool,
     explicit_join: bool,
     now: TimestampMillis,
 ) -> AddResult {
-    let min_visible_event_index;
-    let min_visible_message_index;
+    // Read before joining, which removes the invitation
+    let invited_by = channel.chat.invited_users.get(&user_id).map(|i| i.invited_by);
 
-    if let Some(invitation) = channel.chat.invited_users.get(&user_id) {
-        min_visible_event_index = invitation.min_visible_event_index;
-        min_visible_message_index = invitation.min_visible_message_index;
-    } else if channel.chat.history_visible_to_new_joiners {
-        let (e, m) = channel.chat.min_visible_indexes_for_new_members.unwrap_or_default();
-
-        min_visible_event_index = e;
-        min_visible_message_index = m;
-    } else {
-        let events_reader = channel.chat.events.main_events_reader();
-        min_visible_event_index = events_reader.next_event_index();
-        min_visible_message_index = events_reader.next_message_index();
-    };
-
-    let mut result = channel.chat.members.add(
-        user_id,
-        None,
-        now,
-        min_visible_event_index,
-        min_visible_message_index,
+    let (_, mut result) = join_channel_unchecked_many(
+        vec![(user_id, user_type)],
+        channel,
+        community_members,
         notifications_muted,
-        user_type,
-    );
+        now,
+    )
+    .pop()
+    .unwrap();
 
-    if matches!(result, AddResult::AlreadyInGroup) {
-        let member = channel.chat.members.get(&user_id).unwrap();
-        if member.lapsed().value {
-            return AddResult::Success(Box::new(AddMemberSuccess {
-                member: member.clone(),
-                unlapse: true,
-                bot_notification: None,
-            }));
-        }
-    }
-
-    if let AddResult::Success(success) = &mut result {
-        let invitation = channel.chat.invited_users.remove(&user_id, now);
-        community_members.mark_member_joined_channel(user_id, channel.id);
-
-        if push_event {
-            if channel.chat.is_public.value && !explicit_join {
-                success.bot_notification = channel.chat.events.mark_members_added_to_public_channel(1, now);
-            } else {
-                let push_result = channel.chat.events.push_main_event(
-                    ChatEventInternal::ParticipantJoined(Box::new(MemberJoinedInternal {
-                        user_id,
-                        invited_by: invitation.map(|i| i.invited_by),
-                    })),
-                    now,
-                );
-                success.bot_notification = push_result.bot_notification;
-            }
+    if let AddResult::Success(success) = &mut result
+        && !success.unlapse
+    {
+        if channel.chat.is_public.value && !explicit_join {
+            success.bot_notification = channel.chat.events.mark_members_added_to_public_channel(1, now);
+        } else {
+            let push_result = channel.chat.events.push_main_event(
+                ChatEventInternal::ParticipantJoined(Box::new(MemberJoinedInternal { user_id, invited_by })),
+                now,
+            );
+            success.bot_notification = push_result.bot_notification;
         }
     }
 
     result
+}
+
+// Joins the users to the channel in turn, as `join_channel_unchecked` does without pushing events,
+// writing those added to stable memory together (see `GroupMembers::add_many`). Returns each one's
+// result.
+pub(crate) fn join_channel_unchecked_many(
+    users: Vec<(UserId, UserType)>,
+    channel: &mut Channel,
+    community_members: &mut CommunityMembers,
+    notifications_muted: bool,
+    now: TimestampMillis,
+) -> Vec<(UserId, AddResult)> {
+    let mut members = MembersToAdd::default();
+    for (user_id, user_type) in users {
+        let (min_visible_event_index, min_visible_message_index) = min_visible_indexes_for_new_member(channel, user_id);
+        members.push(
+            user_id,
+            None,
+            min_visible_event_index,
+            min_visible_message_index,
+            notifications_muted,
+            user_type,
+        );
+    }
+
+    let mut results = channel.chat.members.add_many(members, now);
+
+    for (user_id, result) in results.iter_mut() {
+        match result {
+            AddResult::Success(_) => {
+                channel.chat.invited_users.remove(user_id, now);
+                community_members.mark_member_joined_channel(*user_id, channel.id);
+            }
+            AddResult::AlreadyInGroup => {
+                let member = channel.chat.members.get(user_id).unwrap();
+                if member.lapsed().value {
+                    *result = AddResult::Success(Box::new(AddMemberSuccess {
+                        member,
+                        unlapse: true,
+                        bot_notification: None,
+                    }));
+                }
+            }
+            AddResult::MemberLimitReached(_) | AddResult::Blocked => {}
+        }
+    }
+
+    results
+}
+
+fn min_visible_indexes_for_new_member(channel: &Channel, user_id: UserId) -> (EventIndex, MessageIndex) {
+    if let Some(invitation) = channel.chat.invited_users.get(&user_id) {
+        (invitation.min_visible_event_index, invitation.min_visible_message_index)
+    } else if channel.chat.history_visible_to_new_joiners {
+        channel.chat.min_visible_indexes_for_new_members.unwrap_or_default()
+    } else {
+        let events_reader = channel.chat.events.main_events_reader();
+        (events_reader.next_event_index(), events_reader.next_message_index())
+    }
 }
