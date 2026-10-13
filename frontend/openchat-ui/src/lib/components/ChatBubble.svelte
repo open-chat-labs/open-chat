@@ -1,4 +1,4 @@
-<!-- Text message bubble: optional reply quote (sent side), forwarded tag, code block, text with an inline time/status stamp,
+<!-- Text message bubble: optional reply quote, forwarded tag, code block, text with an inline time/status stamp,
      failed + Retry line, thread link and reaction chips. Emoji-only messages of one or two emoji render large.
      Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
@@ -40,7 +40,7 @@
     edited?: boolean;
     deleted?: boolean;
     deletedText?: string;
-    /** Sent side only. */
+    /** Reply quote: who wrote the quoted message ("You" for your own). */
     quoteName?: string;
     quoteText?: string;
     reactions?: Reaction[];
@@ -134,7 +134,7 @@
   {:else}
     <div class="column" class:sent>
       <div class="bubble" class:last={lastInGroup} bind:this={bubble} data-oc-bubble>
-        {#if sent && quoteName}
+        {#if quoteName}
           <div class="quote">
             <span class="quote-bar"></span>
             <div class="quote-body">
@@ -290,20 +290,32 @@
     box-shadow: none;
   }
 
+  /* received: a tinted panel with an accent bar; sent: the bubble's own reply shade */
   .quote {
+    --quote-bg: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    --quote-bar: var(--accent, #ff5672);
+    --quote-name: var(--accent-bright, #ff8298);
+    --quote-text: var(--ink-3, #8a8a99);
     display: flex;
     gap: var(--space-8);
     padding: var(--space-8) var(--space-10);
     border-radius: var(--radius-md);
-    background: var(--bubble-reply, #8c2a3d);
+    background: var(--quote-bg);
     margin: -5px -6px 8px;
+  }
+
+  .sent .quote {
+    --quote-bg: var(--bubble-reply, #8c2a3d);
+    --quote-bar: var(--bubble-text-soft, rgba(255, 255, 255, 0.6));
+    --quote-name: var(--bubble-text, #fff);
+    --quote-text: var(--bubble-text-soft, rgba(255, 255, 255, 0.78));
   }
 
   .quote-bar {
     flex: none;
     width: 4px;
     border-radius: var(--radius-pill);
-    background: var(--bubble-text-soft, rgba(255, 255, 255, 0.6));
+    background: var(--quote-bar);
   }
 
   .quote-body {
@@ -312,12 +324,12 @@
 
   .quote-name {
     font: var(--weight-bold) var(--text-sm) / 1.3 var(--font-sans);
-    color: var(--bubble-text, #fff);
+    color: var(--quote-name);
   }
 
   .quote-text {
     font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
-    color: var(--bubble-text-soft, rgba(255, 255, 255, 0.78));
+    color: var(--quote-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
