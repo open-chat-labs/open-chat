@@ -173,7 +173,7 @@ export type GroupRole = 'member' | 'moderator' | 'admin' | 'owner' | 'nobody';
 export interface AccessGatesState {
   count: number;
   joiner: string;
-  rules: { id: string; type: string; asset: string; a: string; b: string }[];
+  rules: AccessGateRule[];
   intervalOn: boolean;
   every: string;
 }
@@ -223,5 +223,78 @@ export interface ComposerContext {
   thumb?: string;
   /** Edit mode: the original text. */
   text?: string;
+}
+
+/** One token in the user's wallet, as the wallet screens (WalletMain, WalletPanel, WalletSend …) take it. */
+export interface WalletToken {
+  symbol: string;
+  name: string;
+  mark: string;
+  /** Brand gradient (CSS background). */
+  grad: string;
+  /** Balance, in whole tokens. */
+  held: number;
+  /** USD per token. */
+  price: number;
+  /** Decimal places shown for amounts. */
+  dp: number;
+  /** Ledger transfer fee, in whole tokens. */
+  fee?: number;
+  /** Accepted for payments (e.g. Diamond membership). */
+  payable?: boolean;
+  /** Networks it can be sent on: icp, btc, eth … */
+  nets?: string[];
+}
+
+/** One configured access gate (AccessGates rules, AccessGatesCards gates). `a` / `b` are the type's numeric fields as typed. */
+export interface AccessGateRule {
+  id: string;
+  /** Gate type key: lifetime, diamond, neuron, payment, balance, credential, unique, locked, chit … */
+  type: string;
+  /** Token / governance asset, for gate types that need one. */
+  asset: string;
+  a: string;
+  b: string;
+}
+
+/** AccessGatesCards `onChange` value. */
+export interface AccessGatesCardsState {
+  count: number;
+  /** How gates combine. */
+  mode: 'All' | 'Any';
+  gates: AccessGateRule[];
+}
+
+/** CreateGroupDialog `onCreate` value. */
+export interface CreateGroupResult {
+  name: string;
+  about: string;
+  /** Avatar gradient key when there is no photo. */
+  color: string;
+  coverKey: string;
+  /** Object URL of the picked photo. */
+  avatar: string | null;
+  kind: 'group' | 'community' | 'channel' | 'embedded';
+  embedded: boolean;
+  /** Communities only. */
+  language: string | null;
+  coverUrl: string | null;
+  /** Communities: the public channels to create. */
+  channels: string[];
+  /** Embedded channels: the page shown. */
+  url: string;
+  previewForNonMembers: boolean;
+  isPublic: boolean;
+  visibleHistory: boolean;
+  /** e.g. "12 hours", or null when messages are kept. */
+  disappearAfter: string | null;
+  /** Handles added (channels) or invited (groups, communities). */
+  members: string[];
+  /** Channels: handles invited from outside the community. */
+  invites: string[];
+  /** `{ count: 0 }` when no gate was touched. */
+  gates: AccessGatesState | { count: 0 };
+  rules: { enabled: boolean; text: string };
+  permissions: GroupSettings['permissions'];
 }
 

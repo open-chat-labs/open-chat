@@ -1,7 +1,8 @@
-<!-- Generated from lib/WalletSend.dc.html (source hash 7681cb15) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Send in the wallet main column: recipient (OpenChat user or address, with network detection), amount (token or USD,
+     quick chips), optional message, and a live summary beside the form; below 760px the summary becomes a sticky footer.
+     Continue opens a PIN dialog over the form; confirming hands the transfer back through onSent. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './WalletSend.logic.js';
+  import type { WalletToken } from '../../lib/types';
   import DetailRow from '../../lib/components/DetailRow.svelte';
   import DialogShell from '../../lib/components/DialogShell.svelte';
   import ListSectionLabel from '../../lib/components/ListSectionLabel.svelte';
@@ -9,247 +10,1391 @@
   import QuickAmountChips from '../../lib/components/QuickAmountChips.svelte';
   import SideCard from '../../lib/components/SideCard.svelte';
 
+  const mask = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
+  // sample contacts and pasted addresses until the address book is wired
+  const UG = [
+    'linear-gradient(140deg,#FFB35C,#FF6B6B)',
+    'linear-gradient(140deg,#8B7BFF,#FF6FD8)',
+    'linear-gradient(140deg,#5CD0FF,#4B7BFF)',
+    'linear-gradient(140deg,#63E6A8,#2AA6FF)',
+    'linear-gradient(140deg,#FFD166,#F2795C)',
+  ];
+  const PEOPLE = ['Jane Doe', 'Annie Schwartz', 'Nikki Laudia', 'Chris Hanls', 'Neil Armstrong'];
+  const HANDLES = ['@common_jane', '@anti_ice_cold', '@the_pineal', '@guru_of_thunder', '@i_walked_on_moon'];
+  const SAMPLE: Record<string, string> = {
+    ICP: '6fe2b-qpkus-3dzpo-iuc7d-nwyfk-7tqaf-2lhi4-cpm5c-ys7gz-wbf3a-dae',
+    BTC: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
+    CHAT: '5sj6i-pqaaa-aaaaf-a3cmq-cai',
+    ETH: '0x4E2a9F07c1B3dD58e7A9b2c06F1d3E8a5C7b9D21',
+    USDT: '0x4E2a9F07c1B3dD58e7A9b2c06F1d3E8a5C7b9D21',
+    XRP: 'rPEPPER7kfTD9w2To4CQk6UCfuHM9c6GDY',
+  };
+  const NETS = [
+    { label: 'Bitcoin', short: 'Native BTC', time: '10–60 min', fee: '~0.0000042 BTC', f: 0.0000042 },
+    { label: 'ckBTC on ICP', short: 'Needs an ICP wallet', time: 'Seconds', fee: '0.0000001 BTC', f: 0.0000001 },
+  ];
+  type Chain = 'BTC' | 'ETH' | 'XRP' | 'ICP';
+  const NET_NAME: Record<Chain, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP Ledger', ICP: 'Internet Computer' };
+  const ADDR_NAME: Record<Chain, string> = { BTC: 'Bitcoin', ETH: 'Ethereum', XRP: 'XRP', ICP: 'ICP' };
+
+  const fmt = (v: number, dp: number) => v.toLocaleString('en-US', { maximumFractionDigits: dp });
+  const money = (v: number) => `$${v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const detectNet = (a: string): Chain | 'unknown' | null => {
+    const v = (a || '').trim();
+    if (!v) return null;
+    if (/^(bc1[a-z0-9]{20,}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/.test(v)) return 'BTC';
+    if (/^0x[0-9a-fA-F]{40}$/.test(v)) return 'ETH';
+    if (/^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(v)) return 'XRP';
+    if (/^([a-z0-9]{5}-){2,10}[a-z0-9]{3}$/.test(v) || /^[0-9a-f]{64}$/.test(v)) return 'ICP';
+    return 'unknown';
+  };
+
   interface Props {
+    tokens: WalletToken[];
+    /** Symbol to send; falls back to ICP. */
     token?: string;
+    /** Pre-fills the address mode, e.g. from a saved recipient. */
+    address?: string;
     onClose?: () => void;
-    onSent?: (v: { symbol: string, amount: number, fiat: number, to: string, dp: number }) => void;
-    [key: string]: unknown;
+    onSent?: (v: { symbol: string; amount: number; fiat: number; to: string; dp: number; person: boolean }) => void;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { tokens, token, address: initialAddress = '', onClose, onSent }: Props = $props();
+
+  const held = $derived(tokens.filter((t) => t.held > 0));
+  const startSymbol = (() => {
+    const list = tokens.filter((t) => t.held > 0);
+    return (list.find((x) => x.symbol === token) ?? list.find((x) => x.symbol === 'ICP') ?? list[0])?.symbol ?? '';
+  })();
+
+  let sym = $state(startSymbol);
+  let mode = $state<'user' | 'address'>(initialAddress ? 'address' : 'user');
+  let user = $state<number | null>(null);
+  let address = $state(initialAddress);
+  let amt = $state('');
+  let msg = $state('');
+  let msgOpen = $state(false);
+  let inUsd = $state(false);
+  let netOpen = $state(false);
+  let footOpen = $state(false);
+  let net = $state(0);
+  let step = $state<'form' | 'pin' | 'done'>('form');
+  let pin = $state(0);
+  let width = $state(0);
+
+  const narrow = $derived(width > 0 && width < 760);
+  const tk = $derived(held.find((x) => x.symbol === sym) ?? held[0]);
+  const typed = $derived(parseFloat(amt.replace(/,/g, '')) || 0);
+  const n = $derived(tk ? (inUsd ? typed / tk.price : typed) : 0);
+  const det = $derived(mode === 'address' ? detectNet(address) : null);
+  const multi = $derived(mode === 'address' && tk?.symbol === 'BTC' && det === 'BTC');
+  const fee = $derived(multi ? NETS[net].f : (tk?.fee ?? 0));
+  const person = $derived(user != null ? { name: PEOPLE[user], handle: HANDLES[user], grad: UG[user] } : null);
+  const first = $derived(person ? person.name.split(' ')[0] : '');
+  const wrongNet = $derived(!!det && det !== 'unknown' && det !== tk?.symbol);
+  const badAddress = $derived(det === 'unknown' || wrongNet);
+  const recipOk = $derived(mode === 'user' ? !!person : !!det && det !== 'unknown' && !wrongNet);
+  const over = $derived(!!tk && n + fee > tk.held);
+  const ok = $derived(recipOk && n > 0 && !over);
+  const avail = $derived(tk ? Math.max(0, tk.held - fee) : 0);
+  const shortAddress = $derived(address ? `${address.slice(0, 10)}…${address.slice(-6)}` : '');
+  const toLabel = $derived(mode === 'user' ? (person ? person.name : '—') : shortAddress || '—');
+  const toMain = $derived(mode === 'user' ? (person ? person.name : 'Not chosen yet') : shortAddress || 'Not entered yet');
+  const dpCap = $derived(Math.pow(10, Math.min(tk?.dp ?? 0, 6)));
+
+  const rows = $derived([
+    { k: 'Network', v: mode === 'user' ? 'OpenChat' : multi ? NETS[net].label : det && det !== 'unknown' ? NET_NAME[det] : '—', ink: 'var(--ink,#ECECF1)' },
+    { k: 'Network fee', v: `${fmt(fee, tk?.dp ?? 0)} ${tk?.symbol}`, ink: 'var(--ink,#ECECF1)' },
+    { k: mode === 'user' && person ? `${first} receives` : 'They receive', v: `${fmt(n, tk?.dp ?? 0)} ${tk?.symbol}`, ink: n > 0 ? 'var(--ink,#ECECF1)' : 'var(--ink-5,#6E6E7C)' },
+  ]);
+
+  const history = $derived.by(() => {
+    if (!person || !tk) return [];
+    const big = tk.held > 10;
+    return [
+      { label: 'You sent · 28 Sep', sign: '−', v: big ? 50 : 0.002, mask: mask('arrow-up'), incoming: false },
+      { label: `${first} sent · 14 Sep`, sign: '+', v: big ? 20 : 0.001, mask: mask('arrow-down'), incoming: true },
+      { label: 'You sent · 2 Sep', sign: '−', v: big ? 120 : 0.005, mask: mask('arrow-up'), incoming: false },
+    ];
+  });
+
+  const ctaLabel = $derived(ok ? 'Continue' : !recipOk ? (mode === 'user' ? 'Choose a recipient' : 'Add a valid address') : n <= 0 ? 'Enter an amount' : 'Amount too high');
+
+  function toggleUnit() {
+    if (!tk) return;
+    amt = typed > 0 ? (inUsd ? String(Math.round(n * dpCap) / dpCap) : (n * tk.price).toFixed(2)) : '';
+    inUsd = !inUsd;
+  }
+
+  function chooseFraction(k: number) {
+    if (!tk) return;
+    const v = Math.floor(avail * k * dpCap) / dpCap;
+    amt = inUsd ? (v * tk.price).toFixed(2) : String(v);
+  }
+
+  function reuse(v: number) {
+    if (!tk) return;
+    amt = inUsd ? (v * tk.price).toFixed(2) : String(v);
+  }
+
+  function back() {
+    if (step === 'pin') {
+      step = 'form';
+      pin = 0;
+      return;
+    }
+    onClose?.();
+  }
+
+  // confirming hands back to the wallet, which shows the pending row and a toast
+  function confirmPin() {
+    if (!tk) return;
+    if (pin < 6) {
+      pin = 6;
+      return;
+    }
+    if (onSent) onSent({ symbol: tk.symbol, amount: n, fiat: n * tk.price, to: toLabel, dp: tk.dp, person: mode === 'user' && !!person });
+    else step = 'done';
+  }
 </script>
 
-<div style="position:absolute;inset:0;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;background:var(--surface-1,#0e0e12)" use:ref={v.rootRef} data-screen-label="Wallet send">
-      <PageHeader title={v.s2.title} onBack={v.s2.back} avatarMark={v.s2.headMark} avatarGradient={v.s2.tok.grad}>{#if v.s2.showFormHead}<span style="font:500 12.5px/1 'JetBrains Mono',monospace;color:var(--ink-4,#8A8A99)">{t(v.s2.tok.balance)}</span>{/if}</PageHeader>
-      {#if v.wideForm}
-      <div style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:minmax(0,1fr) 320px;grid-auto-rows:auto;align-content:start;gap:28px;padding:28px max(32px, calc((100% - 960px) / 2));align-items:stretch">
-        <div style="display:flex;flex-direction:column;gap:32px;min-width:0">
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:5px;border-radius:14px;background:var(--overlay-1)">
-              {#each v.s2.modes ?? [] as o, i0}<span style="display:flex;align-items:center;justify-content:center;gap:9px;height:44px;border-radius:10px;background:{o.bg};font:600 14px/1 'Plus Jakarta Sans',sans-serif;color:{o.ink};cursor:pointer" onclick={o.pick} tabindex="0" role="tab" aria-selected={o.on}><span style="width:14px;height:14px;background:{o.ink};mask:{o.mask}"></span>{t(o.label)}</span>{/each}
-            </div>
-            {#if v.s2.isUser}
-              <span style="margin-top:22px;font:600 11.5px/1 'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--ink-4,#8A8A99)">OPENCHAT USER</span>
-              {#if v.s2.hasUser}
-                <div style="display:flex;align-items:center;gap:12px;height:56px;padding:0 10px 0 14px;border-radius:12px;background:var(--overlay-1);box-shadow:inset 0 0 0 1px var(--accent,#FF5672)">
-                  <span style="width:32px;height:32px;border-radius:50%;background:{v.s2.user.grad}"></span>
-                  <span style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:600 14px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1)">{t(v.s2.user.name)}</span><span style="font:400 12px/1 'JetBrains Mono',monospace;color:var(--ink-4,#8A8A99)">{t(v.s2.user.handle)}</span></span>
-                  <span class="dc-p0" style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick={v.s2.clearUser} role="button" tabindex="0" aria-label="Clear" title="Clear"><span style="width:14px;height:14px;background:var(--ink-3,#9A9AA8);mask:{v.m.close}"></span></span>
-                </div>
-              {/if}
-              {#if v.s2.noUser}
-                <div style="display:flex;align-items:center;gap:10px;height:56px;padding:0 14px;border-radius:12px;background:var(--overlay-1);box-shadow:inset 0 0 0 1px var(--line-1)"><span style="width:15px;height:15px;background:var(--ink-4,#8A8A99);mask:{v.m.search}"></span><span style="flex:1;font:400 14px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink-5,#6E6E7C)">Search OpenChat users</span></div>
-              {/if}
-              <div style="display:flex;flex-wrap:wrap;gap:6px">
-                {#each v.s2.quick ?? [] as p, i1}<span class="dc-p1" style="display:flex;align-items:center;gap:8px;height:34px;padding:0 12px 0 4px;border-radius:999px;background:{p.bg};box-shadow:{p.ring};cursor:pointer" onclick={p.pick} tabindex="0" role="button"><span style="width:26px;height:26px;border-radius:50%;background:{p.grad}"></span><span style="font:600 12.5px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1)">{t(p.first)}</span></span>{/each}
-              </div>
-            {/if}
-            {#if v.s2.isAddr}
-              <span style="margin-top:22px;font:600 11.5px/1 'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--ink-4,#8A8A99)">ADDRESS</span>
-              <div style="display:flex;align-items:center;gap:10px;min-height:56px;padding:10px 10px 10px 14px;box-sizing:border-box;border-radius:12px;background:var(--overlay-1);box-shadow:inset 0 0 0 1px {v.s2.addrLine}">
-                <input style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:500 13.5px/1.5 'JetBrains Mono',monospace;color:var(--ink,#ECECF1)" value={v.s2.address} oninput={v.s2.onAddress} placeholder="Paste or type an address" aria-label="Destination address">
-                {#if v.s2.hasDetect}<span style="flex:none;height:24px;padding:0 8px;display:flex;align-items:center;gap:5px;border-radius:7px;background:{v.s2.detectBg};font:600 11.5px/1 'Plus Jakarta Sans',sans-serif;color:{v.s2.detectInk};white-space:nowrap"><span style="width:11px;height:11px;background:{v.s2.detectInk};mask:{v.s2.detectMask}"></span>{t(v.s2.detectLabel)}</span>{/if}
-              </div>
-              <div style="display:flex;gap:6px">{#each v.s2.tools ?? [] as a, i2}<span class="dc-p2" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:10px;background:var(--overlay-1);font:600 12.5px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink-2,#C9C9D4);cursor:pointer" onclick={a.go} tabindex="0" role="button"><span style="width:14px;height:14px;background:var(--ink-2,#C9C9D4);mask:{a.mask}"></span>{t(a.label)}</span>{/each}</div>
-            {/if}
-          </div>
-          {#if v.s2.showNets}
-            <div style="display:flex;flex-direction:column;gap:10px">
-              <ListSectionLabel label="NETWORK"></ListSectionLabel>
-              <div style="position:relative">
-                <div class="dc-p3" style="display:flex;align-items:center;gap:12px;height:56px;padding:0 14px 0 16px;border-radius:12px;background:var(--overlay-1);box-shadow:inset 0 0 0 1px {v.s2.netLine};cursor:pointer;user-select:none" onclick={v.s2.toggleNet} tabindex="0" role="button" aria-expanded={v.s2.netOpen}>
-                  <span style="flex:1;min-width:0;font:600 14px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1)">{t(v.s2.netSel.label)}</span>
-                  <span style="flex:none;font:500 12.5px/1 'JetBrains Mono',monospace;color:var(--ink-3,#9A9AA8)">{t(v.s2.netSel.time)} · {t(v.s2.netSel.fee)}</span>
-                  <span style="flex:none;width:13px;height:13px;background:var(--ink-3,#9A9AA8);mask:{v.m.caret};transform:{v.s2.netCaret}"></span>
-                </div>
-                {#if v.s2.netOpen}
-                  <div style="position:fixed;inset:0;z-index:9" onclick={v.s2.toggleNet}></div>
-                  <div style="position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:10;display:flex;flex-direction:column;padding:6px;border-radius:12px;background:var(--surface-2,#1b1b22);box-shadow:inset 0 0 0 1px var(--line-2),0 18px 40px rgba(0,0,0,.5)">
-                    {#each v.s2.nets ?? [] as n, i3}<div class="dc-p4" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 12px;border-radius:9px;cursor:pointer" onclick={n.pick} tabindex="0" role="option" aria-selected={n.on}>
-                      <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px"><span style="font:600 14px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1)">{t(n.label)}</span><span style="font:400 12px/1.3 'Plus Jakarta Sans',sans-serif;color:var(--ink-4,#8A8A99)">{t(n.short)}</span></span>
-                      <span style="flex:none;width:80px;text-align:end;font:600 12.5px/1 'JetBrains Mono',monospace;color:var(--ink-2,#C9C9D4)">{t(n.time)}</span>
-                      <span style="flex:none;width:110px;text-align:end;font:500 12.5px/1 'JetBrains Mono',monospace;color:var(--ink-3,#9A9AA8)">{t(n.fee)}</span>
-                      <span style="flex:none;width:16px;height:16px;background:{n.tick};mask:{v.m.check}"></span>
-                    </div>{/each}
-                  </div>
-                {/if}
-              </div>
-            </div>
-          {/if}
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="display:flex;align-items:center"><span style="flex:1;font:600 11.5px/1 'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--ink-4,#8A8A99)">AMOUNT</span><span style="font:500 12px/1 'JetBrains Mono',monospace;color:var(--ink-4,#8A8A99)">Available {t(v.s2.available)}</span></div>
-            <div style="display:flex;align-items:center;gap:14px;height:92px;padding:0 14px 0 20px;border-radius:14px;background:var(--overlay-1);box-shadow:inset 0 0 0 1px {v.s2.amtLine}">
-              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
-                <div style="display:flex;align-items:baseline;gap:8px">{#if v.s2.inUsd}<span style="font:700 34px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink-3,#9A9AA8)">$</span>{/if}<input style="flex:1;min-width:0;border:0;outline:0;padding:0;background:transparent;font:700 34px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:-.02em;color:var(--ink,#ECECF1);font-variant-numeric:tabular-nums" value={v.s2.amount} oninput={v.s2.onAmount} inputmode="decimal" placeholder="0" aria-label="Amount"></div>
-                <span style="font:500 13px/1 'JetBrains Mono',monospace;color:{v.s2.amtNoteInk}">{t(v.s2.amtNote)}</span>
-              </div>
-              <span class="dc-p5" style="flex:none;display:flex;align-items:center;gap:7px;height:40px;padding:0 12px;border-radius:10px;background:var(--overlay-2);font:700 14px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1);cursor:pointer;user-select:none" onclick={v.s2.toggleUnit} tabindex="0" aria-label="Switch between token and USD" role="button" title="Switch between token and USD">{t(v.s2.unitLabel)}<span style="width:13px;height:13px;background:var(--ink-3,#9A9AA8);mask:{v.m.swap}"></span></span>
-            </div>
-            <QuickAmountChips size="md" onSelect={v.s2.onChip}></QuickAmountChips>
-          </div>
-          {#if v.s2.msgCollapsed}<span class="dc-p6" style="align-self:flex-start;display:flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 8px;margin-top:-8px;border-radius:10px;font:600 13.5px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink-2,#C9C9D4);cursor:pointer;user-select:none" onclick={v.s2.openMsg} tabindex="0" role="button"><span style="width:16px;height:16px;background:var(--ink-2,#C9C9D4);mask:{v.m.plus}"></span>Add a message</span>{/if}
-          {#if v.s2.msgOpen}
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="display:flex;align-items:center;gap:6px"><ListSectionLabel label="MESSAGE"></ListSectionLabel><span style="font:500 11.5px/1 'JetBrains Mono',monospace;color:var(--ink-5,#6E6E7C)">· OPTIONAL</span></div>
-            <textarea style="resize:none;min-height:124px;padding:16px 18px;box-sizing:border-box;border:0;outline:0;border-radius:12px;background:var(--overlay-1);font:400 14px/1.5 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1)" value={v.s2.message} oninput={v.s2.onMessage} placeholder={v.s2.msgPlaceholder} rows="5"></textarea>
-          </div>
-          {/if}
+{#snippet column()}
+  {#if tk}
+    <div class="column">
+      <div class="group">
+        <div class="modes">
+          {#each [['user', 'OpenChat user', 'user'], ['address', 'Wallet address', 'wallet']] as [key, label, icon]}
+            <span class="mode" class:on={mode === key} onclick={() => (mode = key as 'user' | 'address')} tabindex="0" role="tab" aria-selected={mode === key}
+              ><span class="mode-icon" style:mask={mask(icon)}></span>{label}</span
+            >
+          {/each}
         </div>
-        <div style="min-width:0;align-self:stretch;display:grid"><SideCard>
-          <ListSectionLabel label="SUMMARY"></ListSectionLabel>
-          <div style="display:flex;align-items:center;gap:14px;padding:22px 0 24px">
-            <span style="flex:none;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{v.s2.tok.grad};font:700 19px/1 'Plus Jakarta Sans',sans-serif;color:#0b0b10">{t(v.s2.tok.mark)}</span>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px"><span style="font:700 30px/1.05 'Plus Jakarta Sans',sans-serif;letter-spacing:-.02em;color:{v.s2.sumInk};word-break:break-word">{t(v.s2.sumAmount)}</span><span style="font:500 13px/1 'JetBrains Mono',monospace;color:var(--ink-3,#9A9AA8)">{t(v.s2.sumFiat)}</span></div>
-          </div>
-          <div style="display:flex;flex-direction:column;border-top:1px solid var(--line-1)">
-            <div style="display:flex;align-items:center;gap:12px;min-height:64px;border-bottom:1px solid var(--line-1)">
-              <span style="flex:none;font:500 13.5px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink-3,#9A9AA8)">To</span>
-              <span style="flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:10px">
-                {#if v.s2.sumHasAvatar}<span style="flex:none;width:28px;height:28px;border-radius:50%;background:{v.s2.user.grad}"></span>{/if}
-                <span style="min-width:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="max-width:100%;font:600 14px/1.2 'Plus Jakarta Sans',sans-serif;color:{v.s2.toInk};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(v.s2.toMain)}</span>{#if v.s2.hasToSub}<span style="font:400 12px/1 'JetBrains Mono',monospace;color:var(--ink-4,#8A8A99)">{t(v.s2.toSub)}</span>{/if}</span>
-              </span>
+        {#if mode === 'user'}
+          <span class="kicker">OPENCHAT USER</span>
+          {#if person}
+            <div class="person">
+              <span class="person-avatar" style:background={person.grad}></span>
+              <span class="person-text"><span class="person-name">{person.name}</span><span class="person-handle">{person.handle}</span></span>
+              <span class="icon-button" onclick={() => (user = null)} role="button" tabindex="0" aria-label="Clear" title="Clear"><span class="icon-button-icon" style:mask={mask('close')}></span></span>
             </div>
-            {#each v.s2.rows ?? [] as r, i4}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="lg" rule="bottom"></DetailRow>{/each}
-            {#if v.s2.hasMsg}<div style="display:flex;flex-direction:column;gap:8px;padding:16px 0;border-bottom:1px solid var(--line-1)"><span style="font:500 13.5px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink-3,#9A9AA8)">Message</span><span style="font:400 13.5px/1.5 'Plus Jakarta Sans',sans-serif;color:var(--ink-2,#C9C9D4);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">{t(v.s2.message)}</span></div>{/if}
-            <div style="display:flex;align-items:center;gap:10px;min-height:64px"><span style="flex:none;font:700 14.5px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1)">Total</span><span style="flex:1;min-width:0;text-align:end;display:flex;flex-direction:column;align-items:flex-end;gap:5px"><span style="font:700 15px/1.2 'JetBrains Mono',monospace;color:{v.s2.totalInk}">{t(v.s2.total)}</span><span style="font:400 12px/1 'JetBrains Mono',monospace;color:var(--ink-4,#8A8A99)">{t(v.s2.totalFiat)}</span></span></div>
-          </div>
-          {#if v.s2.hasHistory}
-            <div style="display:flex;flex-direction:column;gap:10px;padding-top:24px">
-              <ListSectionLabel label={v.s2.histLabel}></ListSectionLabel>
-              <div style="display:flex;flex-direction:column;gap:4px">
-                {#each v.s2.history ?? [] as h, i5}<div class="dc-p7" style="display:flex;align-items:center;gap:10px;min-height:44px;padding:0 10px;margin:0 -10px;border-radius:10px;cursor:pointer" onclick={h.reuse} tabindex="0" aria-label="Use this amount" role="button" title="Use this amount"><span style="flex:none;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--overlay-2)"><span style="width:11px;height:11px;background:var(--ink-2,#C9C9D4);mask:{h.mask}"></span></span><span style="flex:1;min-width:0;font:500 13px/1.2 'Plus Jakarta Sans',sans-serif;color:var(--ink-2,#C9C9D4)">{t(h.label)}</span><span style="flex:none;font:600 12.5px/1 'JetBrains Mono',monospace;color:{h.ink}">{t(h.amount)}</span></div>{/each}
-              </div>
-            </div>
+          {:else}
+            <div class="search"><span class="search-icon"></span><span class="search-placeholder">Search OpenChat users</span></div>
           {/if}
-          <span style="flex:1;min-height:24px"></span>
-          <span style="display:flex;align-items:center;justify-content:center;height:46px;border-radius:12px;background:{v.s2.ctaBg};font:700 14px/1 'Plus Jakarta Sans',sans-serif;color:{v.s2.ctaInk};cursor:{v.s2.ctaCursor};user-select:none" onclick={v.s2.go} tabindex="0" role="button" aria-disabled={v.s2.blocked}>{t(v.s2.ctaLabel)}</span>
-          <span style="margin-top:14px;font:400 12px/1.5 'Plus Jakarta Sans',sans-serif;color:var(--ink-4,#8A8A99);text-align:center;text-wrap:pretty">{t(v.s2.ctaHint)}</span>
-        </SideCard></div>
+          <div class="quick">
+            {#each PEOPLE as name, i}
+              <span class="quick-person" class:on={user === i} onclick={() => (user = i)} tabindex="0" role="button"
+                ><span class="quick-avatar" style:background={UG[i]}></span><span class="quick-name">{name.split(' ')[0]}</span></span
+              >
+            {/each}
+          </div>
+        {:else}
+          <span class="kicker">ADDRESS</span>
+          <div class="address-box" class:bad={badAddress} class:good={!!det && !badAddress}>
+            <input
+              class="address-input"
+              value={address}
+              oninput={(e) => {
+                address = e.currentTarget.value.trim();
+                net = 0;
+              }}
+              placeholder="Paste or type an address"
+              aria-label="Destination address"
+            />
+            {#if det}
+              <span class="detect" class:bad={badAddress}
+                ><span class="detect-icon" style:mask={mask(badAddress ? 'close' : 'check')}></span>{det === 'unknown'
+                  ? 'Unrecognised address'
+                  : wrongNet
+                    ? `${det} address — not ${tk.symbol}`
+                    : `${ADDR_NAME[det]} address`}</span
+              >
+            {/if}
+          </div>
+          <div class="tools">
+            {#each [['Paste', 'paste'], ['Saved', 'bookmark'], ['Scan QR', 'qr']] as [label, icon]}
+              <span
+                class="tool"
+                onclick={() => {
+                  if (label === 'Scan QR') return;
+                  address = SAMPLE[tk.symbol] ?? '';
+                  net = 0;
+                }}
+                tabindex="0"
+                role="button"><span class="tool-icon" style:mask={mask(icon)}></span>{label}</span
+              >
+            {/each}
+          </div>
+        {/if}
       </div>
-      {/if}
-      
-      {#if v.narrowForm}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:24px 22px 28px">
-          <div style="display:flex;flex-direction:column;gap:32px;min-width:0">
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:5px;border-radius:14px;background:var(--overlay-1)">
-              {#each v.s2.modes ?? [] as o, i6}<span style="display:flex;align-items:center;justify-content:center;gap:9px;height:44px;border-radius:10px;background:{o.bg};font:600 14px/1 'Plus Jakarta Sans',sans-serif;color:{o.ink};cursor:pointer" onclick={o.pick} tabindex="0" role="tab" aria-selected={o.on}><span style="width:14px;height:14px;background:{o.ink};mask:{o.mask}"></span>{t(o.label)}</span>{/each}
+      {#if multi}
+        <div class="group">
+          <ListSectionLabel label="NETWORK" />
+          <div class="net-picker">
+            <div class="net-select" class:open={netOpen} onclick={() => (netOpen = !netOpen)} tabindex="0" role="button" aria-expanded={netOpen}>
+              <span class="net-label">{NETS[net].label}</span>
+              <span class="net-meta">{NETS[net].time} · {NETS[net].fee}</span>
+              <span class="caret" class:open={netOpen}></span>
             </div>
-            {#if v.s2.isUser}
-              <span style="margin-top:22px;font:600 11.5px/1 'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--ink-4,#8A8A99)">OPENCHAT USER</span>
-              {#if v.s2.hasUser}
-                <div style="display:flex;align-items:center;gap:12px;height:56px;padding:0 10px 0 14px;border-radius:12px;background:var(--overlay-1);box-shadow:inset 0 0 0 1px var(--accent,#FF5672)">
-                  <span style="width:32px;height:32px;border-radius:50%;background:{v.s2.user.grad}"></span>
-                  <span style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:600 14px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1)">{t(v.s2.user.name)}</span><span style="font:400 12px/1 'JetBrains Mono',monospace;color:var(--ink-4,#8A8A99)">{t(v.s2.user.handle)}</span></span>
-                  <span class="dc-p8" style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick={v.s2.clearUser} role="button" tabindex="0" aria-label="Clear" title="Clear"><span style="width:14px;height:14px;background:var(--ink-3,#9A9AA8);mask:{v.m.close}"></span></span>
-                </div>
-              {/if}
-              {#if v.s2.noUser}
-                <div style="display:flex;align-items:center;gap:10px;height:56px;padding:0 14px;border-radius:12px;background:var(--overlay-1);box-shadow:inset 0 0 0 1px var(--line-1)"><span style="width:15px;height:15px;background:var(--ink-4,#8A8A99);mask:{v.m.search}"></span><span style="flex:1;font:400 14px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink-5,#6E6E7C)">Search OpenChat users</span></div>
-              {/if}
-              <div style="display:flex;flex-wrap:wrap;gap:6px">
-                {#each v.s2.quick ?? [] as p, i7}<span class="dc-p9" style="display:flex;align-items:center;gap:8px;height:34px;padding:0 12px 0 4px;border-radius:999px;background:{p.bg};box-shadow:{p.ring};cursor:pointer" onclick={p.pick} tabindex="0" role="button"><span style="width:26px;height:26px;border-radius:50%;background:{p.grad}"></span><span style="font:600 12.5px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1)">{t(p.first)}</span></span>{/each}
-              </div>
-            {/if}
-            {#if v.s2.isAddr}
-              <span style="margin-top:22px;font:600 11.5px/1 'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--ink-4,#8A8A99)">ADDRESS</span>
-              <div style="display:flex;align-items:center;gap:10px;min-height:56px;padding:10px 10px 10px 14px;box-sizing:border-box;border-radius:12px;background:var(--overlay-1);box-shadow:inset 0 0 0 1px {v.s2.addrLine}">
-                <input style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:500 13.5px/1.5 'JetBrains Mono',monospace;color:var(--ink,#ECECF1)" value={v.s2.address} oninput={v.s2.onAddress} placeholder="Paste or type an address" aria-label="Destination address">
-                {#if v.s2.hasDetect}<span style="flex:none;height:24px;padding:0 8px;display:flex;align-items:center;gap:5px;border-radius:7px;background:{v.s2.detectBg};font:600 11.5px/1 'Plus Jakarta Sans',sans-serif;color:{v.s2.detectInk};white-space:nowrap"><span style="width:11px;height:11px;background:{v.s2.detectInk};mask:{v.s2.detectMask}"></span>{t(v.s2.detectLabel)}</span>{/if}
-              </div>
-              <div style="display:flex;gap:6px">{#each v.s2.tools ?? [] as a, i8}<span class="dc-p10" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:10px;background:var(--overlay-1);font:600 12.5px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink-2,#C9C9D4);cursor:pointer" onclick={a.go} tabindex="0" role="button"><span style="width:14px;height:14px;background:var(--ink-2,#C9C9D4);mask:{a.mask}"></span>{t(a.label)}</span>{/each}</div>
-            {/if}
-          </div>
-          {#if v.s2.showNets}
-            <div style="display:flex;flex-direction:column;gap:10px">
-              <ListSectionLabel label="NETWORK"></ListSectionLabel>
-              <div style="position:relative">
-                <div class="dc-p11" style="display:flex;align-items:center;gap:12px;height:56px;padding:0 14px 0 16px;border-radius:12px;background:var(--overlay-1);box-shadow:inset 0 0 0 1px {v.s2.netLine};cursor:pointer;user-select:none" onclick={v.s2.toggleNet} tabindex="0" role="button" aria-expanded={v.s2.netOpen}>
-                  <span style="flex:1;min-width:0;font:600 14px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1)">{t(v.s2.netSel.label)}</span>
-                  <span style="flex:none;font:500 12.5px/1 'JetBrains Mono',monospace;color:var(--ink-3,#9A9AA8)">{t(v.s2.netSel.time)} · {t(v.s2.netSel.fee)}</span>
-                  <span style="flex:none;width:13px;height:13px;background:var(--ink-3,#9A9AA8);mask:{v.m.caret};transform:{v.s2.netCaret}"></span>
-                </div>
-                {#if v.s2.netOpen}
-                  <div style="position:fixed;inset:0;z-index:9" onclick={v.s2.toggleNet}></div>
-                  <div style="position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:10;display:flex;flex-direction:column;padding:6px;border-radius:12px;background:var(--surface-2,#1b1b22);box-shadow:inset 0 0 0 1px var(--line-2),0 18px 40px rgba(0,0,0,.5)">
-                    {#each v.s2.nets ?? [] as n, i9}<div class="dc-p12" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 12px;border-radius:9px;cursor:pointer" onclick={n.pick} tabindex="0" role="option" aria-selected={n.on}>
-                      <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px"><span style="font:600 14px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1)">{t(n.label)}</span><span style="font:400 12px/1.3 'Plus Jakarta Sans',sans-serif;color:var(--ink-4,#8A8A99)">{t(n.short)}</span></span>
-                      <span style="flex:none;width:80px;text-align:end;font:600 12.5px/1 'JetBrains Mono',monospace;color:var(--ink-2,#C9C9D4)">{t(n.time)}</span>
-                      <span style="flex:none;width:110px;text-align:end;font:500 12.5px/1 'JetBrains Mono',monospace;color:var(--ink-3,#9A9AA8)">{t(n.fee)}</span>
-                      <span style="flex:none;width:16px;height:16px;background:{n.tick};mask:{v.m.check}"></span>
-                    </div>{/each}
+            {#if netOpen}
+              <div class="away" onclick={() => (netOpen = false)} role="presentation"></div>
+              <div class="net-options">
+                {#each NETS as x, i}
+                  <div
+                    class="net-option"
+                    onclick={() => {
+                      net = i;
+                      netOpen = false;
+                    }}
+                    tabindex="0"
+                    role="option"
+                    aria-selected={net === i}
+                  >
+                    <span class="net-option-text"><span class="net-label">{x.label}</span><span class="net-short">{x.short}</span></span>
+                    <span class="net-time">{x.time}</span>
+                    <span class="net-fee">{x.fee}</span>
+                    <span class="net-tick" class:on={net === i}></span>
                   </div>
-                {/if}
+                {/each}
               </div>
-            </div>
-          {/if}
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="display:flex;align-items:center"><span style="flex:1;font:600 11.5px/1 'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--ink-4,#8A8A99)">AMOUNT</span><span style="font:500 12px/1 'JetBrains Mono',monospace;color:var(--ink-4,#8A8A99)">Available {t(v.s2.available)}</span></div>
-            <div style="display:flex;align-items:center;gap:14px;height:92px;padding:0 14px 0 20px;border-radius:14px;background:var(--overlay-1);box-shadow:inset 0 0 0 1px {v.s2.amtLine}">
-              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
-                <div style="display:flex;align-items:baseline;gap:8px">{#if v.s2.inUsd}<span style="font:700 34px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink-3,#9A9AA8)">$</span>{/if}<input style="flex:1;min-width:0;border:0;outline:0;padding:0;background:transparent;font:700 34px/1 'Plus Jakarta Sans',sans-serif;letter-spacing:-.02em;color:var(--ink,#ECECF1);font-variant-numeric:tabular-nums" value={v.s2.amount} oninput={v.s2.onAmount} inputmode="decimal" placeholder="0" aria-label="Amount"></div>
-                <span style="font:500 13px/1 'JetBrains Mono',monospace;color:{v.s2.amtNoteInk}">{t(v.s2.amtNote)}</span>
-              </div>
-              <span class="dc-p13" style="flex:none;display:flex;align-items:center;gap:7px;height:40px;padding:0 12px;border-radius:10px;background:var(--overlay-2);font:700 14px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1);cursor:pointer;user-select:none" onclick={v.s2.toggleUnit} tabindex="0" aria-label="Switch between token and USD" role="button" title="Switch between token and USD">{t(v.s2.unitLabel)}<span style="width:13px;height:13px;background:var(--ink-3,#9A9AA8);mask:{v.m.swap}"></span></span>
-            </div>
-            <QuickAmountChips size="md" onSelect={v.s2.onChip}></QuickAmountChips>
-          </div>
-          {#if v.s2.msgCollapsed}<span class="dc-p14" style="align-self:flex-start;display:flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 8px;margin-top:-8px;border-radius:10px;font:600 13.5px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink-2,#C9C9D4);cursor:pointer;user-select:none" onclick={v.s2.openMsg} tabindex="0" role="button"><span style="width:16px;height:16px;background:var(--ink-2,#C9C9D4);mask:{v.m.plus}"></span>Add a message</span>{/if}
-          {#if v.s2.msgOpen}
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="display:flex;align-items:center;gap:6px"><ListSectionLabel label="MESSAGE"></ListSectionLabel><span style="font:500 11.5px/1 'JetBrains Mono',monospace;color:var(--ink-5,#6E6E7C)">· OPTIONAL</span></div>
-            <textarea style="resize:none;min-height:124px;padding:16px 18px;box-sizing:border-box;border:0;outline:0;border-radius:12px;background:var(--overlay-1);font:400 14px/1.5 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1)" value={v.s2.message} oninput={v.s2.onMessage} placeholder={v.s2.msgPlaceholder} rows="5"></textarea>
-          </div>
-          {/if}
-        </div>
-        </div>
-        <div style="flex:none;display:flex;flex-direction:column;border-top:1px solid var(--line-1);background:#121217">
-          {#if v.s2.footOpen}
-            <div style="display:flex;flex-direction:column;padding:6px 22px 0">
-              {#each v.s2.rows ?? [] as r, i10}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="sm" rule="bottom"></DetailRow>{/each}
-            </div>
-          {/if}
-          <div style="display:flex;align-items:center;gap:14px;min-height:80px;padding:0 22px">
-            <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;cursor:pointer" onclick={v.s2.toggleFoot} tabindex="0" role="button"><span style="display:flex;align-items:center;gap:6px;font:700 15px/1.2 'JetBrains Mono',monospace;color:{v.s2.totalInk}">{t(v.s2.total)}<span style="width:12px;height:12px;background:var(--ink-3,#9A9AA8);mask:{v.m.caret};transform:{v.s2.footCaret}"></span></span><span style="font:400 12px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink-4,#8A8A99);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">To {t(v.s2.toMain)}</span></span>
-            <span style="flex:none;display:flex;align-items:center;justify-content:center;min-width:160px;height:46px;padding:0 16px;border-radius:12px;background:{v.s2.ctaBg};font:700 14px/1 'Plus Jakarta Sans',sans-serif;color:{v.s2.ctaInk};cursor:{v.s2.ctaCursor};white-space:nowrap" onclick={v.s2.go} tabindex="0" role="button">{t(v.s2.ctaLabel)}</span>
+            {/if}
           </div>
         </div>
       {/if}
-      {#if v.s2.isPin}
-        <DialogShell title="Enter your PIN" width={420} height="auto" flush={true} onClose={v.cancelPin}>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:22px;padding:28px 24px 24px">
-              <span style="font:400 14px/1.5 'Plus Jakarta Sans',sans-serif;color:var(--ink-3,#9A9AA8);text-align:center;text-wrap:pretty">{t(v.s2.pinSub)}</span>
-              <div style="display:flex;gap:10px">{#each v.s2.pinDots ?? [] as d, i11}<span style="width:44px;height:52px;border-radius:12px;background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px {d.ring};display:flex;align-items:center;justify-content:center"><span style="width:10px;height:10px;border-radius:50%;background:{d.fill}"></span></span>{/each}</div>
-              <span style="align-self:stretch;display:flex;align-items:center;justify-content:center;height:46px;border-radius:12px;background:var(--accent,#FF5672);font:700 14px/1 'Plus Jakarta Sans',sans-serif;color:var(--on-accent,#2E0512);cursor:pointer;user-select:none" onclick={v.s2.fakePin} tabindex="0" role="button">{t(v.s2.pinCta)}</span>
+      <div class="group">
+        <div class="amount-head"><span class="kicker plain">AMOUNT</span><span class="available">Available {fmt(avail, tk.dp)} {tk.symbol}</span></div>
+        <div class="amount-box" class:over class:filled={n > 0 && !over}>
+          <div class="amount-main">
+            <div class="amount-line">
+              {#if inUsd}<span class="dollar">$</span>{/if}<input
+                class="amount-input"
+                value={amt}
+                oninput={(e) => (amt = e.currentTarget.value.replace(/[^0-9.,]/g, ''))}
+                inputmode="decimal"
+                placeholder="0"
+                aria-label="Amount"
+              />
             </div>
-        </DialogShell>
+            <span class="amount-note" class:over
+              >{over
+                ? 'More than you can send'
+                : n > 0
+                  ? `≈ ${inUsd ? `${fmt(n, tk.dp)} ${tk.symbol}` : money(n * tk.price)}`
+                  : inUsd
+                    ? 'Type an amount in USD'
+                    : `Type an amount in ${tk.symbol}`}</span
+            >
+          </div>
+          <span class="unit" onclick={toggleUnit} tabindex="0" aria-label="Switch between token and USD" role="button" title="Switch between token and USD"
+            >{inUsd ? 'USD' : tk.symbol}<span class="unit-icon"></span></span
+          >
+        </div>
+        <QuickAmountChips size="md" onSelect={chooseFraction} />
+      </div>
+      {#if !msgOpen && !msg}
+        <span class="add-message" onclick={() => (msgOpen = true)} tabindex="0" role="button"><span class="add-icon"></span>Add a message</span>
+      {:else}
+        <div class="group">
+          <div class="message-head"><ListSectionLabel label="MESSAGE" /><span class="optional">· OPTIONAL</span></div>
+          <textarea
+            class="message"
+            bind:value={msg}
+            placeholder={mode === 'user' && person ? `Add a note ${first} will see in your chat` : 'A note for your own records'}
+            rows="5"
+          ></textarea>
+        </div>
       {/if}
+    </div>
+  {/if}
+{/snippet}
 
-      {#if v.s2.isDone}
-        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;text-align:center">
-          <span style="width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(46,230,168,.12)"><span style="width:28px;height:28px;background:var(--status-online);mask:{v.m.check}"></span></span>
-          <span style="margin-top:6px;font:700 24px/1.25 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1);max-width:480px;text-wrap:pretty">{t(v.s2.doneTitle)}</span>
-          <span style="font:400 14px/1.5 'Plus Jakarta Sans',sans-serif;color:var(--ink-3,#9A9AA8)">{t(v.s2.doneSub)}</span>
-          <span style="margin-top:10px;display:flex;align-items:center;justify-content:center;width:220px;height:46px;border-radius:12px;background:var(--overlay-2);font:600 14px/1 'Plus Jakarta Sans',sans-serif;color:var(--ink,#ECECF1);cursor:pointer" onclick={v.s2.reset} tabindex="0" role="button">{t(v.s2.backLabel)}</span>
+<div class="send" bind:clientWidth={width} data-screen-label="Wallet send">
+  {#if tk}
+    <PageHeader title="Send {tk.symbol}" onBack={back} avatarMark={step === 'done' ? '' : tk.mark} avatarGradient={tk.grad}
+      >{#if step !== 'done'}<span class="balance">{fmt(tk.held, tk.dp)} {tk.symbol} · {money(tk.held * tk.price)}</span>{/if}</PageHeader
+    >
+    {#if step !== 'done' && !narrow}
+      <div class="wide">
+        {@render column()}
+        <div class="summary-cell">
+          <SideCard>
+            <ListSectionLabel label="SUMMARY" />
+            <div class="summary-amount">
+              <span class="summary-mark" style:background={tk.grad}>{tk.mark}</span>
+              <div class="summary-figures"
+                ><span class="summary-value" class:empty={n <= 0}>{n > 0 ? `${fmt(n, tk.dp)} ${tk.symbol}` : `0 ${tk.symbol}`}</span><span class="summary-fiat">≈ {money(n * tk.price)}</span></div
+              >
+            </div>
+            <div class="summary-rows">
+              <div class="to-row">
+                <span class="to-label">To</span>
+                <span class="to-value">
+                  {#if mode === 'user' && person}<span class="to-avatar" style:background={person.grad}></span>{/if}
+                  <span class="to-text"
+                    ><span class="to-main" class:empty={!recipOk}>{toMain}</span>{#if mode === 'user' ? !!person : !!det && det !== 'unknown'}<span class="to-sub"
+                        >{mode === 'user' ? (person?.handle ?? '') : 'Wallet address'}</span
+                      >{/if}</span
+                  >
+                </span>
+              </div>
+              {#each rows as r}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="lg" rule="bottom" />{/each}
+              {#if msg.trim()}<div class="summary-message"><span class="summary-message-label">Message</span><span class="summary-message-text">{msg}</span></div>{/if}
+              <div class="total-row">
+                <span class="total-label">Total</span><span class="total-figures"
+                  ><span class="total" class:over>{fmt(n + fee, tk.dp)} {tk.symbol}</span><span class="total-fiat">≈ {money((n + fee) * tk.price)}</span></span
+                >
+              </div>
+            </div>
+            {#if mode === 'user' && person}
+              <div class="history">
+                <ListSectionLabel label="BETWEEN YOU AND {first.toUpperCase()}" />
+                <div class="history-rows">
+                  {#each history as h}
+                    <div class="history-row" onclick={() => reuse(h.v)} tabindex="0" aria-label="Use this amount" role="button" title="Use this amount">
+                      <span class="history-badge"><span class="history-icon" style:mask={h.mask}></span></span>
+                      <span class="history-label">{h.label}</span>
+                      <span class="history-amount" class:incoming={h.incoming}>{h.sign}{fmt(h.v, tk.dp)} {tk.symbol}</span>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {/if}
+            <span class="grow"></span>
+            <span class="cta" class:blocked={!ok} onclick={() => ok && ((step = 'pin'), (pin = 0))} tabindex="0" role="button" aria-disabled={!ok}>{ctaLabel}</span>
+            <span class="cta-hint">{ok ? "You'll confirm with your PIN next. Transfers can't be reversed." : 'The summary fills in as you go.'}</span>
+          </SideCard>
         </div>
-      {/if}
+      </div>
+    {/if}
+    {#if step !== 'done' && narrow}
+      <div class="narrow">{@render column()}</div>
+      <div class="foot">
+        {#if footOpen}
+          <div class="foot-rows">
+            {#each rows as r}<DetailRow label={r.k} value={r.v} valueColor={r.ink} size="sm" rule="bottom" />{/each}
+          </div>
+        {/if}
+        <div class="foot-bar">
+          <span class="foot-summary" onclick={() => (footOpen = !footOpen)} tabindex="0" role="button"
+            ><span class="foot-total" class:over>{fmt(n + fee, tk.dp)} {tk.symbol}<span class="foot-caret" class:open={footOpen}></span></span><span class="foot-to">To {toMain}</span></span
+          >
+          <span class="cta foot-cta" class:blocked={!ok} onclick={() => ok && ((step = 'pin'), (pin = 0))} tabindex="0" role="button">{ctaLabel}</span>
+        </div>
+      </div>
+    {/if}
+    {#if step === 'pin'}
+      <DialogShell
+        title="Enter your PIN"
+        width={420}
+        height="auto"
+        flush={true}
+        onClose={() => {
+          step = 'form';
+          pin = 0;
+        }}
+      >
+        <div class="pin">
+          <span class="pin-sub">Confirm sending {fmt(n, tk.dp)} {tk.symbol} to {toLabel}.</span>
+          <div class="pin-dots">
+            {#each [0, 1, 2, 3, 4, 5] as i}<span class="pin-box" class:current={i === pin}><span class="pin-dot" class:filled={i < pin}></span></span>{/each}
+          </div>
+          <span class="cta pin-cta" onclick={confirmPin} tabindex="0" role="button">{pin < 6 ? 'Type PIN (demo)' : 'Send'}</span>
+        </div>
+      </DialogShell>
+    {/if}
+    {#if step === 'done'}
+      <div class="done">
+        <span class="done-badge"><span class="done-icon"></span></span>
+        <span class="done-title">Sent {fmt(n, tk.dp)} {tk.symbol} to {toLabel}</span>
+        <span class="done-sub">{multi && net === 0 ? 'Bitcoin transfers take 10 to 60 minutes to confirm.' : 'It usually arrives within a few seconds.'}</span>
+        <span class="done-back" onclick={() => onClose?.()} tabindex="0" role="button">Back to {tk.symbol}</span>
+      </div>
+    {/if}
+  {:else}
+    <PageHeader title="Send" onBack={() => onClose?.()} />
+  {/if}
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--overlay-2) !important}
-  .dc-p1:hover{background:var(--overlay-2) !important}
-  .dc-p2:hover{background:var(--overlay-2) !important}
-  .dc-p3:hover{background:var(--overlay-2) !important}
-  .dc-p4:hover{background:var(--overlay-2) !important}
-  .dc-p5:hover{background:var(--btn-hover) !important}
-  .dc-p6:hover{background:var(--overlay-1) !important}
-  .dc-p7:hover{background:var(--overlay-1) !important}
-  .dc-p8:hover{background:var(--overlay-2) !important}
-  .dc-p9:hover{background:var(--overlay-2) !important}
-  .dc-p10:hover{background:var(--overlay-2) !important}
-  .dc-p11:hover{background:var(--overlay-2) !important}
-  .dc-p12:hover{background:var(--overlay-2) !important}
-  .dc-p13:hover{background:var(--btn-hover) !important}
-  .dc-p14:hover{background:var(--overlay-1) !important}
+  .send {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface-1, #0e0e12);
+    --sans: 'Plus Jakarta Sans', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  .balance {
+    font: 500 12.5px/1 var(--mono);
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .wide {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-auto-rows: auto;
+    align-content: start;
+    gap: 28px;
+    padding: 28px max(32px, calc((100% - 960px) / 2));
+    align-items: stretch;
+  }
+
+  .narrow {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px 22px 28px;
+  }
+
+  .column {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    min-width: 0;
+  }
+
+  .group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 5px;
+    border-radius: 14px;
+    background: var(--overlay-1);
+  }
+
+  .mode {
+    --mode-ink: var(--ink-3, #9a9aa8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    height: 44px;
+    border-radius: 10px;
+    background: transparent;
+    font: 600 14px/1 var(--sans);
+    color: var(--mode-ink);
+    cursor: pointer;
+  }
+
+  .mode.on {
+    --mode-ink: var(--ink, #ececf1);
+    background: var(--btn-hover);
+  }
+
+  .mode-icon {
+    width: 14px;
+    height: 14px;
+    background: var(--mode-ink);
+  }
+
+  .kicker {
+    margin-top: 22px;
+    font: 600 11.5px/1 var(--mono);
+    letter-spacing: 0.08em;
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .kicker.plain {
+    flex: 1;
+    margin-top: 0;
+  }
+
+  .person,
+  .search {
+    display: flex;
+    align-items: center;
+    height: 56px;
+    border-radius: 12px;
+    background: var(--overlay-1);
+  }
+
+  .person {
+    gap: 12px;
+    padding: 0 10px 0 14px;
+    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+  }
+
+  .person-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+  }
+
+  .person-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .person-name {
+    font: 600 14px/1 var(--sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .person-handle {
+    font: 400 12px/1 var(--mono);
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .icon-button {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .icon-button-icon {
+    width: 14px;
+    height: 14px;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .search {
+    gap: 10px;
+    padding: 0 14px;
+    box-shadow: inset 0 0 0 1px var(--line-1);
+  }
+
+  .search-icon {
+    width: 15px;
+    height: 15px;
+    background: var(--ink-4, #8a8a99);
+    mask: var(--icon-search) center/contain no-repeat;
+  }
+
+  .search-placeholder {
+    flex: 1;
+    font: 400 14px/1 var(--sans);
+    color: var(--ink-5, #6e6e7c);
+  }
+
+  .quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .quick-person {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 12px 0 4px;
+    border-radius: 999px;
+    background: var(--overlay-1);
+    cursor: pointer;
+  }
+
+  .quick-person.on {
+    background: rgba(255, 86, 114, 0.1);
+    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+  }
+
+  .quick-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+  }
+
+  .quick-name {
+    font: 600 12.5px/1 var(--sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .address-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 10px 10px 10px 14px;
+    box-sizing: border-box;
+    border-radius: 12px;
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--overlay-2);
+  }
+
+  .address-box.good {
+    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+  }
+
+  .address-box.bad {
+    box-shadow: inset 0 0 0 1px var(--status-danger, #f5493d);
+  }
+
+  .address-input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font: 500 13.5px/1.5 var(--mono);
+    color: var(--ink, #ececf1);
+  }
+
+  .detect {
+    --detect-ink: #2ee6a8;
+    flex: none;
+    height: 24px;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 7px;
+    background: rgba(46, 230, 168, 0.12);
+    font: 600 11.5px/1 var(--sans);
+    color: var(--detect-ink);
+    white-space: nowrap;
+  }
+
+  .detect.bad {
+    --detect-ink: var(--status-danger, #f5493d);
+    background: rgba(245, 73, 61, 0.12);
+  }
+
+  .detect-icon {
+    width: 11px;
+    height: 11px;
+    background: var(--detect-ink);
+  }
+
+  .tools {
+    display: flex;
+    gap: 6px;
+  }
+
+  .tool {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: var(--overlay-1);
+    font: 600 12.5px/1 var(--sans);
+    color: var(--ink-2, #c9c9d4);
+    cursor: pointer;
+  }
+
+  .tool-icon {
+    width: 14px;
+    height: 14px;
+    background: var(--ink-2, #c9c9d4);
+  }
+
+  .icon-button:hover,
+  .quick-person:hover,
+  .tool:hover,
+  .net-select:hover,
+  .net-option:hover {
+    background: var(--overlay-2);
+  }
+
+  .net-picker {
+    position: relative;
+  }
+
+  .net-select {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 56px;
+    padding: 0 14px 0 16px;
+    border-radius: 12px;
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--overlay-2);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .net-select.open {
+    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+  }
+
+  .net-label {
+    flex: 1;
+    min-width: 0;
+    font: 600 14px/1 var(--sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .net-meta,
+  .net-fee {
+    flex: none;
+    font: 500 12.5px/1 var(--mono);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .caret {
+    flex: none;
+    width: 13px;
+    height: 13px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-chevron-down) center/contain no-repeat;
+  }
+
+  .caret.open {
+    transform: rotate(180deg);
+  }
+
+  .away {
+    position: fixed;
+    inset: 0;
+    z-index: 9;
+  }
+
+  .net-options {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    border-radius: 12px;
+    background: var(--surface-2, #1b1b22);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2),
+      0 18px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .net-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+    padding: 0 12px;
+    border-radius: 9px;
+    cursor: pointer;
+  }
+
+  .net-option-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .net-short {
+    font: 400 12px/1.3 var(--sans);
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .net-time {
+    flex: none;
+    width: 80px;
+    text-align: end;
+    font: 600 12.5px/1 var(--mono);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .net-fee {
+    width: 110px;
+    text-align: end;
+  }
+
+  .net-tick {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    background: transparent;
+    mask: var(--icon-check) center/contain no-repeat;
+  }
+
+  .net-tick.on {
+    background: var(--accent, #ff5672);
+  }
+
+  .amount-head {
+    display: flex;
+    align-items: center;
+  }
+
+  .available {
+    font: 500 12px/1 var(--mono);
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .amount-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    height: 92px;
+    padding: 0 14px 0 20px;
+    border-radius: 14px;
+    background: var(--overlay-1);
+    box-shadow: inset 0 0 0 1px var(--overlay-2);
+  }
+
+  .amount-box.filled {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  }
+
+  .amount-box.over {
+    box-shadow: inset 0 0 0 1px var(--status-danger, #f5493d);
+  }
+
+  .amount-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .amount-line {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .dollar {
+    font: 700 34px/1 var(--sans);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .amount-input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    padding: 0;
+    background: transparent;
+    font: 700 34px/1 var(--sans);
+    letter-spacing: -0.02em;
+    color: var(--ink, #ececf1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .amount-note {
+    font: 500 13px/1 var(--mono);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .amount-note.over {
+    color: var(--status-danger, #f5493d);
+  }
+
+  .unit {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: var(--overlay-2);
+    font: 700 14px/1 var(--sans);
+    color: var(--ink, #ececf1);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .unit:hover {
+    background: var(--btn-hover);
+  }
+
+  .unit-icon {
+    width: 13px;
+    height: 13px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-swap) center/contain no-repeat;
+  }
+
+  .add-message {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 12px 0 8px;
+    margin-top: -8px;
+    border-radius: 10px;
+    font: 600 13.5px/1 var(--sans);
+    color: var(--ink-2, #c9c9d4);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .add-message:hover,
+  .history-row:hover {
+    background: var(--overlay-1);
+  }
+
+  .add-icon {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-2, #c9c9d4);
+    mask: var(--icon-plus) center/contain no-repeat;
+  }
+
+  .message-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .optional {
+    font: 500 11.5px/1 var(--mono);
+    color: var(--ink-5, #6e6e7c);
+  }
+
+  .message {
+    resize: none;
+    min-height: 124px;
+    padding: 16px 18px;
+    box-sizing: border-box;
+    border: 0;
+    outline: 0;
+    border-radius: 12px;
+    background: var(--overlay-1);
+    font: 400 14px/1.5 var(--sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .summary-cell {
+    min-width: 0;
+    align-self: stretch;
+    display: grid;
+  }
+
+  .summary-amount {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 0 24px;
+  }
+
+  .summary-mark {
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 700 19px/1 var(--sans);
+    color: #0b0b10;
+  }
+
+  .summary-figures {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .summary-value {
+    font: 700 30px/1.05 var(--sans);
+    letter-spacing: -0.02em;
+    color: var(--ink, #ececf1);
+    word-break: break-word;
+  }
+
+  .summary-value.empty,
+  .to-main.empty {
+    color: var(--ink-5, #6e6e7c);
+  }
+
+  .summary-fiat {
+    font: 500 13px/1 var(--mono);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .summary-rows {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--line-1);
+  }
+
+  .to-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 64px;
+    border-bottom: 1px solid var(--line-1);
+  }
+
+  .to-label {
+    flex: none;
+    font: 500 13.5px/1 var(--sans);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .to-value {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .to-avatar {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+  }
+
+  .to-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+
+  .to-main {
+    max-width: 100%;
+    font: 600 14px/1.2 var(--sans);
+    color: var(--ink, #ececf1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .to-sub {
+    font: 400 12px/1 var(--mono);
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .summary-message {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line-1);
+  }
+
+  .summary-message-label {
+    font: 500 13.5px/1 var(--sans);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .summary-message-text {
+    font: 400 13.5px/1.5 var(--sans);
+    color: var(--ink-2, #c9c9d4);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .total-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 64px;
+  }
+
+  .total-label {
+    flex: none;
+    font: 700 14.5px/1 var(--sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .total-figures {
+    flex: 1;
+    min-width: 0;
+    text-align: end;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+  }
+
+  .total,
+  .foot-total {
+    font: 700 15px/1.2 var(--mono);
+    color: var(--ink, #ececf1);
+  }
+
+  .total.over,
+  .foot-total.over {
+    color: var(--status-danger, #f5493d);
+  }
+
+  .total-fiat {
+    font: 400 12px/1 var(--mono);
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .history {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 24px;
+  }
+
+  .history-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .history-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 0 10px;
+    margin: 0 -10px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .history-badge {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--overlay-2);
+  }
+
+  .history-icon {
+    width: 11px;
+    height: 11px;
+    background: var(--ink-2, #c9c9d4);
+  }
+
+  .history-label {
+    flex: 1;
+    min-width: 0;
+    font: 500 13px/1.2 var(--sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .history-amount {
+    flex: none;
+    font: 600 12.5px/1 var(--mono);
+    color: var(--ink, #ececf1);
+  }
+
+  .history-amount.incoming {
+    color: #2ee6a8;
+  }
+
+  .grow {
+    flex: 1;
+    min-height: 24px;
+  }
+
+  .cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 46px;
+    border-radius: 12px;
+    background: var(--accent, #ff5672);
+    font: 700 14px/1 var(--sans);
+    color: var(--on-accent, #2e0512);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .cta.blocked {
+    background: var(--overlay-2);
+    color: #7c7c8c;
+    cursor: default;
+  }
+
+  .cta-hint {
+    margin-top: 14px;
+    font: 400 12px/1.5 var(--sans);
+    color: var(--ink-4, #8a8a99);
+    text-align: center;
+    text-wrap: pretty;
+  }
+
+  .foot {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--line-1);
+    background: #121217;
+  }
+
+  .foot-rows {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 22px 0;
+  }
+
+  .foot-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 80px;
+    padding: 0 22px;
+  }
+
+  .foot-summary {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .foot-total {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .foot-caret {
+    width: 12px;
+    height: 12px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-chevron-down) center/contain no-repeat;
+    transform: rotate(180deg);
+  }
+
+  .foot-caret.open {
+    transform: none;
+  }
+
+  .foot-to {
+    font: 400 12px/1 var(--sans);
+    color: var(--ink-4, #8a8a99);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .foot-cta {
+    flex: none;
+    min-width: 160px;
+    padding: 0 16px;
+    white-space: nowrap;
+    user-select: auto;
+  }
+
+  .pin {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    padding: 28px 24px 24px;
+  }
+
+  .pin-sub {
+    font: 400 14px/1.5 var(--sans);
+    color: var(--ink-3, #9a9aa8);
+    text-align: center;
+    text-wrap: pretty;
+  }
+
+  .pin-dots {
+    display: flex;
+    gap: 10px;
+  }
+
+  .pin-box {
+    width: 44px;
+    height: 52px;
+    border-radius: 12px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px var(--btn-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pin-box.current {
+    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+  }
+
+  .pin-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: transparent;
+  }
+
+  .pin-dot.filled {
+    background: var(--ink, #ececf1);
+  }
+
+  .pin-cta {
+    align-self: stretch;
+  }
+
+  .done {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 32px;
+    text-align: center;
+  }
+
+  .done-badge {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(46, 230, 168, 0.12);
+  }
+
+  .done-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--status-online);
+    mask: var(--icon-check) center/contain no-repeat;
+  }
+
+  .done-title {
+    margin-top: 6px;
+    font: 700 24px/1.25 var(--sans);
+    color: var(--ink, #ececf1);
+    max-width: 480px;
+    text-wrap: pretty;
+  }
+
+  .done-sub {
+    font: 400 14px/1.5 var(--sans);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .done-back {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 220px;
+    height: 46px;
+    border-radius: 12px;
+    background: var(--overlay-2);
+    font: 600 14px/1 var(--sans);
+    color: var(--ink, #ececf1);
+    cursor: pointer;
+  }
 </style>
