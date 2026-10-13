@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Replace the ids of mentioned users and of direct chats replied to with their latest ids ([#9939](https://github.com/open-chat-labs/open-chat/pull/9939))
 - Write the members and proposal events updated in bulk to stable memory together ([#9940](https://github.com/open-chat-labs/open-chat/pull/9940))
 - Replace the ids users had before being migrated with their latest ids throughout the rest of the group's state ([#9943](https://github.com/open-chat-labs/open-chat/pull/9943))
+- Tell the LocalUserIndex when the jobs replacing migrated users' old ids have completed ([#9949](https://github.com/open-chat-labs/open-chat/pull/9949))
 
 ### Removed
 

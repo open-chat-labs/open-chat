@@ -76,6 +76,7 @@ mod tip_message_tests;
 mod translations_tests;
 mod update_group_tests;
 mod update_profile_tests;
+mod user_id_migration_tests;
 mod utils;
 mod video_call_tests;
 mod wasms;

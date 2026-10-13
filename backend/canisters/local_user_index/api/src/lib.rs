@@ -82,6 +82,9 @@ pub enum GroupOrCommunityEvent<T = UserNotificationPayload> {
     Notification(Box<Notification<T>>),
     MessageClassifyRequest(Box<ClassifyMessageRequest>),
     MediaScanRequest(Box<types::MediaScanRequest>),
+    // Whether the canister has finished replacing the ids users had before being migrated to
+    // MultiUser canisters with their latest ids, sent each time that changes
+    UserIdMigrationComplete(bool),
 }
 
 pub type GroupEvent = GroupOrCommunityEvent<GroupChatUserNotificationPayload>;
@@ -328,6 +331,17 @@ pub enum UserEvent<T = UserNotificationPayload> {
     SetMaxStreak(u16),
     EventStoreEvent(Event),
     Notification(Box<Notification<T>>),
+    // Whether the MultiUser canister has finished replacing the ids users had before being migrated
+    // with their latest ids, sent each time that changes. This is about the canister rather than one
+    // of its users, so is sent naming the canister's own id.
+    UserIdMigrationComplete(bool),
+}
+
+impl<T> UserEvent<T> {
+    // Whether the event is about the MultiUser canister itself rather than one of its users
+    pub fn is_about_canister(&self) -> bool {
+        matches!(self, UserEvent::UserIdMigrationComplete(_))
+    }
 }
 
 // An event along with the user it is from, as taken by `c2c_user_canister_v2`. A MultiUser canister
@@ -359,6 +373,9 @@ pub struct LocalGroup {
     #[serde(default)]
     pub latest_activity_per_user: HashMap<UserId, TimestampMillis>,
     pub cycle_top_ups: Vec<CyclesTopUp>,
+    // Whether the group has finished replacing migrated users' old ids with their latest ids
+    #[serde(default)]
+    pub user_id_migration_complete: bool,
 }
 
 impl LocalGroup {
@@ -369,6 +386,7 @@ impl LocalGroup {
             latest_activity: 0,
             latest_activity_per_user: HashMap::new(),
             cycle_top_ups: Vec::new(),
+            user_id_migration_complete: false,
         }
     }
 
@@ -401,6 +419,9 @@ pub struct LocalCommunity {
     #[serde(default)]
     pub latest_activity_per_user: HashMap<UserId, TimestampMillis>,
     pub cycle_top_ups: Vec<CyclesTopUp>,
+    // Whether the community has finished replacing migrated users' old ids with their latest ids
+    #[serde(default)]
+    pub user_id_migration_complete: bool,
 }
 
 impl LocalCommunity {
@@ -411,6 +432,7 @@ impl LocalCommunity {
             latest_activity: 0,
             latest_activity_per_user: HashMap::new(),
             cycle_top_ups: Vec::new(),
+            user_id_migration_complete: false,
         }
     }
 

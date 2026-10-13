@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Count in the metrics how many Group, Community and MultiUser canisters have finished replacing migrated users' old ids ([#9949](https://github.com/open-chat-labs/open-chat/pull/9949))
+
 ### Removed
 
 - Remove the User canister, along with creating, upgrading and migrating User canisters ([#9919](https://github.com/open-chat-labs/open-chat/pull/9919))
