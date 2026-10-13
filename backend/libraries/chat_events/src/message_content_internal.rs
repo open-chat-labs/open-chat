@@ -1635,7 +1635,9 @@ pub struct PrizeContentInternal {
     // The sender's principal, which along with their user id determines the wallet any refund is
     // paid to. Recorded when the prize is sent, as the sender may have left the chat by the time it
     // ends. Anonymous for prizes sent before it was recorded, which is fine as their senders were
-    // then all in their own User canisters, so are refunded at their user id.
+    // then all in their own User canisters, so are refunded at their user id, until the sender's id
+    // is moved onto the id they were migrated to, when it is set to their User canister's id (see
+    // `MessageInternal::update_user_ids`).
     #[serde(rename = "pr", default = "Principal::anonymous")]
     pub principal: Principal,
 }
@@ -2517,6 +2519,67 @@ mod prize_tests {
             panic!("Expected a single refund: {payments:?}");
         };
         refund.to.owner
+    }
+
+    // The prize, as the content of a message sent under `old_user_id`, once the message's ids have
+    // been moved onto the sender's latest id
+    fn prize_sent_by_old_user_id_once_updated(principal: Principal) -> (UserId, PrizeContentInternal) {
+        let mut event = crate::ChatEventInternal::Message(Box::new(crate::MessageInternal {
+            message_index: 1.into(),
+            message_id: 1u64.into(),
+            sender: old_user_id(),
+            content: MessageContentInternal::Prize(prize(principal)),
+            sender_context: None,
+            replies_to: None,
+            reactions: Vec::new(),
+            tips: types::Tips::default(),
+            last_edited: None,
+            deleted_by: None,
+            thread_summary: None,
+            forwarded: false,
+            block_level_markdown: false,
+            og_previews: Vec::new(),
+            moderation_flags: 0,
+        }));
+        assert!(event.update_user_ids(&mut |u| if u == old_user_id() { new_user_id() } else { u }));
+        let message = event.into_message().unwrap();
+        let MessageContentInternal::Prize(prize) = message.content else {
+            panic!();
+        };
+        (message.sender, prize)
+    }
+
+    fn refund_owner(mut prize: PrizeContentInternal, sender: UserId, migrated_user_ids: &MigratedUserIds) -> Principal {
+        let payments = prize.final_payments(sender, migrated_user_ids, 0);
+        let [PendingCryptoTransaction::ICRC1(refund)] = payments.as_slice() else {
+            panic!("Expected a single refund: {payments:?}");
+        };
+        refund.to.owner
+    }
+
+    #[test]
+    fn prize_moved_onto_its_senders_new_id_is_refunded_to_the_same_wallet() {
+        let mut migrated_user_ids = MigratedUserIds::default();
+        migrated_user_ids.insert(old_user_id(), new_user_id());
+
+        // Refunded to the account of the user's principal, as when the message has the old id
+        let (sender, prize) = prize_sent_by_old_user_id_once_updated(principal());
+        assert_eq!(sender, new_user_id());
+        assert_eq!(prize.principal, principal());
+        assert_eq!(refund_owner(prize, sender, &migrated_user_ids), principal());
+
+        // Refunded to the account of the canister it was sent from, as when the message has the old
+        // id, whether or not the canister still knows of the migration
+        let (sender, prize) = prize_sent_by_old_user_id_once_updated(Principal::anonymous());
+        assert_eq!(sender, new_user_id());
+        assert_eq!(
+            refund_owner(prize.clone(), sender, &migrated_user_ids),
+            old_user_id().as_principal()
+        );
+        assert_eq!(
+            refund_owner(prize, sender, &MigratedUserIds::default()),
+            old_user_id().as_principal()
+        );
     }
 
     #[test]

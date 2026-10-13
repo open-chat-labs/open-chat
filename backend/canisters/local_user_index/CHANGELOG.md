@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove `events_for_remote_users`, which has held the same undelivered events since October 2024, and its `/remote_user_events` route ([#9923](https://github.com/open-chat-labs/open-chat/pull/9923))
 - Remove `withdraw_from_icpswap`, since users swap straight from their own wallets ([#9924](https://github.com/open-chat-labs/open-chat/pull/9924))
 
+### Fixed
+
+- Leave a ledger's burn fee behind when moving funds from old canisters ([#9935](https://github.com/open-chat-labs/open-chat/pull/9935))
+- Only move amounts which exceed the fee from old canisters, as some ledgers require ([#9936](https://github.com/open-chat-labs/open-chat/pull/9936))
+
 ## [[2.0.2130](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2130-local_user_index)] - 2026-10-12
 
 ### Added

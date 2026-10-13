@@ -69,6 +69,11 @@ async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), C
                 args.fee = Some(fee);
             }
 
+            let burn_fee = metadata_helper.burn_fee();
+            if burn_fee != token.burn_fee {
+                args.burn_fee = Some(burn_fee);
+            }
+
             if args.has_updates() {
                 state.data.tokens.update(args, state.env.now());
             }

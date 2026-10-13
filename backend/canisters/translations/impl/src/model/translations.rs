@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use translations_canister::{
     proposed::{CandidateTranslation, Record},
     reject::RejectReason,
@@ -90,10 +90,7 @@ impl Translations {
             previously_approved,
         });
 
-        ApproveResponse::Success(ApproveSuccess {
-            proposed_by,
-            previously_approved,
-        })
+        ApproveResponse::Success(ApproveSuccess { previously_approved })
     }
 
     pub fn reject(&mut self, id: u64, reason: RejectReason, user_id: UserId, now: TimestampMillis) -> RejectResponse {
@@ -213,6 +210,60 @@ impl Translations {
         summary
     }
 
+    // One-off: the distinct ids, of proposers and of those who decided on translations, which carry no
+    // index. Among them are the old ids of users who did so before being migrated to a MultiUser
+    // canister, but also ids which are current, eg. legacy ids or those of bots.
+    pub fn user_ids_without_index(&self) -> Vec<UserId> {
+        self.translations
+            .iter()
+            .flat_map(|t| [Some(&t.proposed), t.status.attribution()])
+            .flatten()
+            .map(|a| a.who)
+            .filter(|user_id| !user_id.is_indexed())
+            .unique()
+            .collect()
+    }
+
+    // One-off: rewrites each id found in `latest_user_ids` to the id it maps to, which is the latest id
+    // of the user it belongs to. Returns the number of ids rewritten.
+    pub fn rewrite_user_ids(&mut self, latest_user_ids: &HashMap<UserId, UserId>) -> usize {
+        let mut rewritten = 0;
+        for translation in self.translations.iter_mut() {
+            for attribution in [Some(&mut translation.proposed), translation.status.attribution_mut()]
+                .into_iter()
+                .flatten()
+            {
+                if let Some(latest_user_id) = latest_user_ids.get(&attribution.who) {
+                    attribution.who = *latest_user_id;
+                    rewritten += 1;
+                }
+            }
+        }
+        rewritten
+    }
+
+    // One-off: a user who proposed a translation of a record under their old id, then another under
+    // their latest id, still has the first proposed, since `propose` didn't know the ids were the same
+    // user's. Once the ids are rewritten, this overrides each proposal which a later one by the same
+    // user supersedes, whatever has since become of the later one, as `propose` would have. Returns the
+    // number of proposals overridden.
+    pub fn override_superseded_proposals(&mut self) -> usize {
+        let mut overridden = 0;
+        for indexes in self.records.values() {
+            let mut proposers = HashSet::new();
+            for index in indexes.iter().rev() {
+                if let Some(translation) = self.translations.get_mut(*index)
+                    && !proposers.insert(translation.proposed.who)
+                    && matches!(translation.status, TranslationStatus::Proposed)
+                {
+                    translation.status = TranslationStatus::Overidden;
+                    overridden += 1;
+                }
+            }
+        }
+        overridden
+    }
+
     fn find_most_recent_approved_or_deployed(&self, indexes: &[usize]) -> Option<&Translation> {
         indexes
             .iter()
@@ -258,6 +309,27 @@ pub enum TranslationStatus {
     Deployed(DeployedStatus),
 }
 
+impl TranslationStatus {
+    // Who decided on the translation, and when
+    fn attribution(&self) -> Option<&Attribution> {
+        match self {
+            TranslationStatus::Approved(s) => Some(&s.attribution),
+            TranslationStatus::Rejected(s) => Some(&s.attribution),
+            TranslationStatus::Deployed(s) => Some(&s.approved.attribution),
+            TranslationStatus::Proposed | TranslationStatus::Overidden => None,
+        }
+    }
+
+    fn attribution_mut(&mut self) -> Option<&mut Attribution> {
+        match self {
+            TranslationStatus::Approved(s) => Some(&mut s.attribution),
+            TranslationStatus::Rejected(s) => Some(&mut s.attribution),
+            TranslationStatus::Deployed(s) => Some(&mut s.approved.attribution),
+            TranslationStatus::Proposed | TranslationStatus::Overidden => None,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ApprovedStatus {
     pub attribution: Attribution,
@@ -289,7 +361,6 @@ pub enum ApproveResponse {
 }
 
 pub struct ApproveSuccess {
-    pub proposed_by: UserId,
     pub previously_approved: bool,
 }
 
@@ -533,8 +604,171 @@ mod tests {
         assert_eq!(summary_2.newly_approved, 0);
     }
 
+    #[test]
+    fn user_ids_without_index_are_each_proposer_and_decider_once() {
+        let mut translations = Translations::default();
+        let indexed1 = indexed_user_id(1);
+        let indexed2 = indexed_user_id(2);
+
+        translations.propose(test_proposal_1());
+        translations.propose(test_proposal_2());
+        translations.propose(ProposeArgs {
+            user_id: indexed1,
+            ..test_proposal_3()
+        });
+        translations.approve(0, user_id(USER3), 2);
+        translations.reject(1, RejectReason::IncorrectMeaning, user_id(USER3), 3);
+        translations.approve(2, indexed2, 4);
+        translations.mark_deployed(4, 5);
+
+        let mut user_ids = translations.user_ids_without_index();
+        user_ids.sort();
+
+        let mut expected = vec![user_id(USER1), user_id(USER2), user_id(USER3)];
+        expected.sort();
+        assert_eq!(user_ids, expected);
+    }
+
+    #[test]
+    fn rewrite_user_ids_rewrites_proposers_and_deciders_found_in_the_map() {
+        let mut translations = Translations::default();
+        let latest1 = indexed_user_id(1);
+        let latest3 = indexed_user_id(3);
+
+        translations.propose(test_proposal_1());
+        translations.propose(test_proposal_2());
+        translations.propose(test_proposal_3());
+        translations.propose(ProposeArgs {
+            user_id: user_id(USER2),
+            value: "jkl".to_string(),
+            ..test_proposal_3()
+        });
+        translations.approve(0, user_id(USER3), 2);
+        translations.reject(1, RejectReason::IncorrectMeaning, user_id(USER3), 3);
+        translations.mark_deployed(2, 4);
+        translations.approve(2, user_id(USER3), 5);
+
+        // USER2 isn't in the map, eg. because theirs is a legacy id or a bot's, so isn't rewritten
+        let latest_user_ids = HashMap::from([(user_id(USER1), latest1), (user_id(USER3), latest3)]);
+        assert_eq!(translations.rewrite_user_ids(&latest_user_ids), 5);
+
+        assert!(matches!(translations.translations[0].status, TranslationStatus::Deployed(_)));
+        assert_eq!(ids(&translations, 0), (latest1, Some(latest3)));
+        assert!(matches!(translations.translations[1].status, TranslationStatus::Rejected(_)));
+        assert_eq!(ids(&translations, 1), (user_id(USER2), Some(latest3)));
+        assert!(matches!(translations.translations[2].status, TranslationStatus::Approved(_)));
+        assert_eq!(ids(&translations, 2), (latest1, Some(latest3)));
+        assert!(matches!(translations.translations[3].status, TranslationStatus::Proposed));
+        assert_eq!(ids(&translations, 3), (user_id(USER2), None));
+
+        // Every id in the map has now been rewritten, so running it again changes nothing
+        assert_eq!(translations.rewrite_user_ids(&latest_user_ids), 0);
+    }
+
+    #[test]
+    fn proposal_under_old_id_is_overridden_by_one_under_latest_id_once_rewritten() {
+        let mut translations = Translations::default();
+        let latest1 = indexed_user_id(1);
+
+        translations.propose(test_proposal_1());
+        translations.rewrite_user_ids(&HashMap::from([(user_id(USER1), latest1)]));
+        translations.propose(ProposeArgs {
+            user_id: latest1,
+            ..test_proposal_2()
+        });
+
+        let results = translations.proposed();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].candidates.len(), 1);
+        assert_eq!(results[0].candidates[0].id, 1);
+        assert_eq!(results[0].candidates[0].proposed_by, latest1);
+    }
+
+    #[test]
+    fn approval_under_old_id_is_previous_approval_once_rewritten() {
+        let mut translations = Translations::default();
+        let latest1 = indexed_user_id(1);
+
+        translations.propose(test_proposal_1());
+        translations.approve(0, user_id(USER3), 2);
+        translations.rewrite_user_ids(&HashMap::from([(user_id(USER1), latest1)]));
+        translations.propose(ProposeArgs {
+            user_id: latest1,
+            ..test_proposal_2()
+        });
+
+        let ApproveResponse::Success(result) = translations.approve(1, user_id(USER3), 3) else {
+            panic!("ApproveSuccess expected");
+        };
+        assert_eq!(translations.proposed_by(1), Some(latest1));
+        assert!(result.previously_approved);
+    }
+
+    #[test]
+    fn proposals_superseded_under_latest_id_are_overridden() {
+        let mut translations = Translations::default();
+        let latest1 = indexed_user_id(1);
+
+        // USER1 proposes under their old id, then under their latest id before the ids are known to be
+        // the same user's, and USER2 proposes after them
+        translations.propose(test_proposal_1());
+        translations.propose(ProposeArgs {
+            user_id: latest1,
+            ..test_proposal_2()
+        });
+        translations.propose(ProposeArgs {
+            value: "jkl".to_string(),
+            ..test_proposal_2()
+        });
+        translations.rewrite_user_ids(&HashMap::from([(user_id(USER1), latest1)]));
+
+        assert_eq!(translations.override_superseded_proposals(), 1);
+
+        let results = translations.proposed();
+
+        assert_eq!(results.len(), 1);
+        let candidates: Vec<_> = results[0].candidates.iter().map(|c| c.id).collect();
+        assert_eq!(candidates, vec![1, 2]);
+        assert!(matches!(translations.translations[0].status, TranslationStatus::Overidden));
+
+        // Each user is now left with one proposal of the record, so running it again changes nothing
+        assert_eq!(translations.override_superseded_proposals(), 0);
+    }
+
+    #[test]
+    fn proposal_superseded_under_latest_id_is_overridden_once_the_later_one_is_decided() {
+        let mut translations = Translations::default();
+        let latest1 = indexed_user_id(1);
+
+        // USER1 proposes under their old id, then under their latest id, and the later proposal is
+        // rejected before the ids are known to be the same user's
+        translations.propose(test_proposal_1());
+        translations.propose(ProposeArgs {
+            user_id: latest1,
+            ..test_proposal_2()
+        });
+        translations.reject(1, RejectReason::IncorrectMeaning, user_id(USER3), 3);
+        translations.rewrite_user_ids(&HashMap::from([(user_id(USER1), latest1)]));
+
+        assert_eq!(translations.override_superseded_proposals(), 1);
+
+        assert!(matches!(translations.translations[0].status, TranslationStatus::Overidden));
+        assert!(translations.proposed().is_empty());
+    }
+
+    fn ids(translations: &Translations, id: usize) -> (UserId, Option<UserId>) {
+        let translation = &translations.translations[id];
+        (translation.proposed.who, translation.status.attribution().map(|a| a.who))
+    }
+
     fn user_id(text: &str) -> UserId {
         Principal::from_text(text).unwrap().into()
+    }
+
+    // The latest id of a user who has been migrated to a MultiUser canister
+    fn indexed_user_id(index: u16) -> UserId {
+        UserId::new_indexed(Principal::from_text(USER1).unwrap(), index)
     }
 
     fn test_proposal_1() -> ProposeArgs {
@@ -554,6 +788,17 @@ mod tests {
             value: "ghi".to_string(),
             user_id: user_id(USER2),
             when: 2,
+        }
+    }
+
+    // A proposal of another record
+    fn test_proposal_3() -> ProposeArgs {
+        ProposeArgs {
+            locale: "en".to_string(),
+            key: "abc.xyz".to_string(),
+            value: "uvw".to_string(),
+            user_id: user_id(USER1),
+            when: 3,
         }
     }
 }

@@ -501,7 +501,8 @@ export type FundsInPreviousWallet = {
 export type MoveFundsResult =
     // `amount` arrived in the user's wallet, the ledger having charged `fee` on top
     | { kind: "moved"; amount: bigint; fee: bigint; blockIndex: bigint }
-    // The balance didn't exceed the fee, so there was nothing to move
+    // The balance, less the fee and any fee the ledger burns, didn't exceed the fee, so there was
+    // nothing to move
     | { kind: "nothing_to_move" }
     // A transfer which timed out may still have been made, in which case the balance is gone from
     // the previous wallet

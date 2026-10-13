@@ -1,3 +1,4 @@
+use crate::jobs::migrate_their_user_ids::TheirUserIdsMigration;
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
 use crate::model::users::Users;
@@ -5,7 +6,7 @@ use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReference
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::{Job, TimerJobs};
-use chat_events::EventPusher;
+use chat_events::{EventPusher, UserIdsInEventsMigration, UserIdsInEventsMigrationMetrics};
 use constants::OPENCHAT_BOT_USER_ID;
 use direct_chat::DirectChat;
 use event_store_types::{Event, EventBuilder};
@@ -23,9 +24,9 @@ use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
     Achievement, BuildVersion, CanisterId, ChatId, ChitEvent, ChitEventType, CommunityId, Cycles,
-    DirectChatUserNotificationPayload, IdempotentEnvelope, MessageId, MessageIndex, Notification, NotifyChit, OCResult,
-    ReferralStatus, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
-    UserNotification, UserType,
+    DirectChatUserNotificationPayload, EventContext, IdempotentEnvelope, MessageId, MessageIndex, Notification, NotifyChit,
+    OCResult, ReferralStatus, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim,
+    UserCanisterStreakInsurancePayment, UserId, UserNotification, UserType,
 };
 use user_core::User;
 use user_core::{Community, GroupChat};
@@ -633,6 +634,8 @@ impl RuntimeState {
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             queued_user_canister_events: self.data.user_canister_events_queue.len() as u32,
             known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
+            user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
+            their_user_ids_migration: self.data.their_user_ids_migration.clone(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -674,6 +677,12 @@ struct Data {
     // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
     // have changed
     pub migrated_user_ids: MigratedUserIds,
+    // Each event's location is the index of the user holding the chat, the chat's key_id and where
+    // the event is in the chat
+    #[serde(default)]
+    pub user_ids_in_events_migration: UserIdsInEventsMigration<(u16, u32, EventContext)>,
+    #[serde(default)]
+    pub their_user_ids_migration: TheirUserIdsMigration,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -713,6 +722,8 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
+            user_ids_in_events_migration: UserIdsInEventsMigration::default(),
+            their_user_ids_migration: TheirUserIdsMigration::default(),
             rng_seed,
             test_mode,
         }
@@ -758,6 +769,8 @@ pub struct Metrics {
     pub queued_local_user_index_events: u32,
     pub queued_user_canister_events: u32,
     pub known_multi_user_canisters: u32,
+    pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
+    pub their_user_ids_migration: TheirUserIdsMigration,
     pub canister_ids: CanisterIds,
 }
 

@@ -599,7 +599,7 @@ fn text_content(text: &str) -> MessageContentInternal {
 fn export_events(events: &ChatEvents) -> Vec<(EventContext, serde_bytes::ByteBuf)> {
     let mut exported = Vec::new();
     loop {
-        let batch = events.read_events_as_bytes_from_stable_memory(exported.last().map(|(c, _): &(EventContext, _)| c.clone()));
+        let batch = events.read_events_as_bytes_from_stable_memory(exported.last().map(|(c, _): &(EventContext, _)| *c));
         if batch.is_empty() {
             return exported;
         }

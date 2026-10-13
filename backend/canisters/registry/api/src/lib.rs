@@ -24,6 +24,11 @@ pub struct TokenDetails {
     pub symbol: String,
     pub decimals: u8,
     pub fee: u128,
+    // Burned from the sender on each transfer, on top of `fee`, by the few ledgers which declare an
+    // `icrc1:burn_fee` in their metadata, which isn't part of the ICRC-1 standard
+    #[serde(default)]
+    #[ts(skip)]
+    pub burn_fee: u128,
     pub logo: String,
     pub logo_id: Option<u128>,
     pub info_url: String,

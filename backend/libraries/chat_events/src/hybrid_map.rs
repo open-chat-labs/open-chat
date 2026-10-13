@@ -30,6 +30,24 @@ impl<MSlow: EventsMap> HybridMap<MSlow> {
     fn fast_enabled(&self) -> bool {
         self.max_events_in_fast_map > 0
     }
+
+    // Records the event as the latest if it is, and adds it to the fast map if it belongs there
+    fn insert_into_fast(&mut self, event: &EventWrapperInternal<ChatEventInternal>) {
+        if event.index > self.latest_event_index {
+            self.latest_event_index = event.index;
+        }
+        if self.fast_enabled() {
+            let fast_cut_off = EventIndex::from(u32::from(self.latest_event_index).saturating_sub(self.max_events_in_fast_map));
+            // Once events have been removed from the fast map it can hold fewer than the max, so
+            // events below the cut off are left in it, and so must be kept up to date too
+            if event.index >= fast_cut_off || self.fast.contains_key(&event.index) {
+                self.fast.insert(event.index, event.clone());
+                while self.fast.len() > self.max_events_in_fast_map as usize {
+                    self.fast.pop_first();
+                }
+            }
+        }
+    }
 }
 
 impl HybridMap<ChatEventsStableStorage> {
@@ -70,19 +88,15 @@ impl<MSlow: EventsMap> EventsMap for HybridMap<MSlow> {
     }
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
-        if event.index > self.latest_event_index {
-            self.latest_event_index = event.index;
-        }
-        if self.fast_enabled() {
-            let fast_cut_off = EventIndex::from(u32::from(self.latest_event_index).saturating_sub(self.max_events_in_fast_map));
-            if event.index >= fast_cut_off {
-                self.fast.insert(event.index, event.clone());
-                while self.fast.len() > self.max_events_in_fast_map as usize {
-                    self.fast.pop_first();
-                }
-            }
-        }
+        self.insert_into_fast(&event);
         self.slow.insert(event);
+    }
+
+    fn insert_many(&mut self, events: Vec<EventWrapperInternal<ChatEventInternal>>) {
+        for event in events.iter() {
+            self.insert_into_fast(event);
+        }
+        self.slow.insert_many(events);
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
@@ -410,6 +424,38 @@ mod tests {
         }
         assert!(iter.next().is_none());
         assert!(!LAST_READ_FROM_SLOW.get());
+    }
+
+    #[test]
+    fn updating_an_event_left_in_the_fast_map_below_the_cut_off_updates_it_there() {
+        let mut map = setup_map(true);
+        // The fast map holds 90-99. Removing 98 and 99 then adding 100 and 101 moves the cut off to
+        // 91, but leaves 90 in the fast map, since it still holds no more than the max.
+        map.remove(98.into());
+        map.remove(99.into());
+        for i in 100u32..102 {
+            map.insert(event(i, ChatEventInternal::Empty));
+        }
+
+        map.insert(event(90, ChatEventInternal::FailedToDeserialize));
+
+        assert!(matches!(
+            map.get(90.into()).unwrap().event,
+            ChatEventInternal::FailedToDeserialize
+        ));
+        assert!(matches!(
+            map.slow.get(90.into()).unwrap().event,
+            ChatEventInternal::FailedToDeserialize
+        ));
+    }
+
+    fn event(index: u32, event: ChatEventInternal) -> EventWrapperInternal<ChatEventInternal> {
+        EventWrapperInternal {
+            index: index.into(),
+            timestamp: index.into(),
+            event,
+            expires_at: None,
+        }
     }
 
     fn setup_map(fast_map_enabled: bool) -> HybridMap<ChatEventsMap> {

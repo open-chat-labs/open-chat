@@ -1,5 +1,6 @@
 use crate::guards::caller_is_openchat_user;
 use crate::jobs::refund_cycles::{self, CYCLES_REQUIRED_FOR_INSTALL};
+use crate::model::registry_tokens::Fees;
 use crate::{CanisterToRefund, RuntimeState, call_relay, mutate_state, read_state};
 use candid::de::DecoderConfig;
 use candid::{CandidType, Nat};
@@ -114,7 +115,7 @@ struct PrepareResult {
     wallet: Account,
     now_nanos: TimestampNanos,
     // The ledgers known to the Registry, with their fees
-    ledgers: Vec<(CanisterId, u128)>,
+    ledgers: Vec<(CanisterId, Fees)>,
     unknown_ledgers: Vec<CanisterId>,
     guard: call_relay::InUseGuard,
 }
@@ -148,8 +149,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, OCError> 
     let mut ledgers = Vec::new();
     let mut unknown_ledgers = Vec::new();
     for ledger in args.ledgers.iter().copied().collect::<BTreeSet<_>>() {
-        match state.data.registry_tokens.fee(&ledger) {
-            Some(fee) => ledgers.push((ledger, fee)),
+        match state.data.registry_tokens.fees(&ledger) {
+            Some(fees) => ledgers.push((ledger, fees)),
             None => unknown_ledgers.push(ledger),
         }
     }
@@ -188,27 +189,36 @@ async fn old_canister_status(canister_id: CanisterId) -> Result<(CanisterStatusM
 struct Transfer {
     ledger: CanisterId,
     balance: u128,
-    fee: u128,
+    fees: Fees,
+    // The balance less the fees
+    amount: u128,
 }
 
-// Looks up the old canister's balance on each ledger, returning the transfers of those with a
-// balance which exceeds the fee, and the outcomes for the rest
+// Looks up the old canister's balance on each ledger, returning the transfers of those with enough
+// to move (see `amount_to_move`), and the outcomes for the rest
 async fn transfers_to_make(
     old_canister_id: CanisterId,
-    ledgers: Vec<(CanisterId, u128)>,
+    ledgers: Vec<(CanisterId, Fees)>,
 ) -> (Vec<LedgerOutcome>, Vec<Transfer>) {
     let account = Account::from(old_canister_id);
     let balances = join_all(ledgers.iter().map(|(ledger, _)| balance_of(*ledger, account))).await;
 
     let mut outcomes = Vec::new();
     let mut transfers = Vec::new();
-    for ((ledger, fee), balance) in ledgers.into_iter().zip(balances) {
+    for ((ledger, fees), balance) in ledgers.into_iter().zip(balances) {
         match balance {
-            Ok(balance) if balance > fee => transfers.push(Transfer { ledger, balance, fee }),
-            Ok(_) => outcomes.push(LedgerOutcome {
-                ledger,
-                result: MoveFundsResult::NothingToMove,
-            }),
+            Ok(balance) => match amount_to_move(balance, fees) {
+                Some(amount) => transfers.push(Transfer {
+                    ledger,
+                    balance,
+                    fees,
+                    amount,
+                }),
+                None => outcomes.push(LedgerOutcome {
+                    ledger,
+                    result: MoveFundsResult::NothingToMove,
+                }),
+            },
             Err(error) => outcomes.push(LedgerOutcome {
                 ledger,
                 result: MoveFundsResult::Failed(error.into()),
@@ -251,32 +261,45 @@ fn to_u128(value: Nat) -> u128 {
     value.0.try_into().unwrap_or(u128::MAX)
 }
 
-// Makes the transfer as the old canister, through the relay, of the balance less the fee. The fee
-// is the Registry's, which may be out of date, in which case the ledger rejects the transfer with
-// the fee it expects, and the transfer is tried once more with that fee.
+// The amount left of `balance` once the fee, and any burn fee, are taken off it, or None if that
+// doesn't exceed the fee. Some ledgers (eg. WUMBO, SNEED and TRAPRE) reject a transfer of an amount
+// which doesn't exceed the fee, so no ledger is sent one.
+fn amount_to_move(balance: u128, fees: Fees) -> Option<u128> {
+    balance
+        .checked_sub(fees.fee)
+        .and_then(|b| b.checked_sub(fees.burn_fee))
+        .filter(|&amount| amount > fees.fee)
+}
+
+// Makes the transfer as the old canister, through the relay, of the balance less the fees. A ledger
+// which burns a fee takes it from the balance on top of the transfer's fee, so the transfer must
+// leave it behind. The fee is the Registry's, which may be out of date, in which case the ledger
+// rejects the transfer with the fee it expects, and the transfer is tried once more with that fee.
 async fn make_transfer(
     old_canister_id: CanisterId,
     to: Account,
     transfer: &Transfer,
     now_nanos: TimestampNanos,
 ) -> LedgerOutcome {
-    let mut fee = transfer.fee;
-    let mut response = relay_transfer(old_canister_id, to, transfer, fee, now_nanos).await;
+    let mut fees = transfer.fees;
+    let mut amount = transfer.amount;
+    let mut response = relay_transfer(old_canister_id, to, transfer.ledger, amount, fees.fee, now_nanos).await;
     if let Ok(Err(TransferError::BadFee { expected_fee })) = &response {
-        fee = to_u128(expected_fee.clone());
-        if transfer.balance <= fee {
+        fees.fee = to_u128(expected_fee.clone());
+        let Some(amount_after_fees) = amount_to_move(transfer.balance, fees) else {
             return LedgerOutcome {
                 ledger: transfer.ledger,
                 result: MoveFundsResult::NothingToMove,
             };
-        }
-        response = relay_transfer(old_canister_id, to, transfer, fee, now_nanos).await;
+        };
+        amount = amount_after_fees;
+        response = relay_transfer(old_canister_id, to, transfer.ledger, amount, fees.fee, now_nanos).await;
     }
 
     let result = match response {
         Ok(Ok(block_index)) => MoveFundsResult::Moved {
-            amount: transfer.balance - fee,
-            fee,
+            amount,
+            fee: transfer.balance - amount,
             block_index: block_index.0.try_into().unwrap_or_default(),
         },
         Ok(Err(error)) => MoveFundsResult::Failed(OCErrorCode::TransferFailed.with_message(format!("{error:?}"))),
@@ -292,7 +315,8 @@ async fn make_transfer(
 async fn relay_transfer(
     old_canister_id: CanisterId,
     to: Account,
-    transfer: &Transfer,
+    ledger: CanisterId,
+    amount: u128,
     fee: u128,
     now_nanos: TimestampNanos,
 ) -> Result<Result<Nat, TransferError>, C2CError> {
@@ -303,18 +327,18 @@ async fn relay_transfer(
         fee: Some(fee.into()),
         created_at_time: Some(now_nanos),
         memo: None,
-        amount: (transfer.balance - fee).into(),
+        amount: amount.into(),
     };
 
     let reply = call_relay::call(
         old_canister_id,
-        transfer.ledger,
+        ledger,
         method,
         &candid::encode_one(&args).unwrap(),
         RELAY_CALL_TIMEOUT_SECONDS,
     )
     .await?;
-    decode_untrusted(transfer.ledger, method, &reply)
+    decode_untrusted(ledger, method, &reply)
 }
 
 // Queues the canister's cycles to be refunded, unless they already are. A canister which has
@@ -370,4 +394,53 @@ async fn install_relay(
         .await?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn amount_to_move_leaves_the_fee_and_burn_fee() {
+        // FOREST, which burns 0.1 FOREST on each transfer, at a fee of 0
+        let fees = Fees {
+            fee: 0,
+            burn_fee: 10_000_000,
+        };
+        assert_eq!(amount_to_move(25_000_000, fees), Some(15_000_000));
+        assert_eq!(amount_to_move(10_000_000, fees), None);
+        assert_eq!(amount_to_move(5_000_000, fees), None);
+    }
+
+    #[test]
+    fn amount_to_move_without_burn_fee_leaves_the_fee() {
+        let fees = Fees {
+            fee: 10_000,
+            burn_fee: 0,
+        };
+        assert_eq!(amount_to_move(20_001, fees), Some(10_001));
+        assert_eq!(amount_to_move(20_000, fees), None);
+        assert_eq!(amount_to_move(10_001, fees), None);
+    }
+
+    #[test]
+    fn amount_to_move_must_exceed_the_fee() {
+        // DITTO, which burns 0.01 DITTO on each transfer, on top of a fee of 0.01 DITTO
+        let fees = Fees {
+            fee: 1_000_000,
+            burn_fee: 1_000_000,
+        };
+        assert_eq!(amount_to_move(3_000_001, fees), Some(1_000_001));
+        assert_eq!(amount_to_move(3_000_000, fees), None);
+        assert_eq!(amount_to_move(2_500_000, fees), None);
+    }
+
+    #[test]
+    fn amount_to_move_with_fees_too_large_is_none() {
+        let fees = Fees {
+            fee: u128::MAX,
+            burn_fee: u128::MAX,
+        };
+        assert_eq!(amount_to_move(u128::MAX, fees), None);
+    }
 }

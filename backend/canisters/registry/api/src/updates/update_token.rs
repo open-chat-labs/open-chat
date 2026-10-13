@@ -12,6 +12,7 @@ pub struct Args {
     pub transaction_url_format: Option<String>,
     pub logo: Option<String>,
     pub fee: Option<u128>,
+    pub burn_fee: Option<u128>,
     pub one_sec_enabled: Option<bool>,
 }
 
@@ -25,6 +26,7 @@ impl Args {
             transaction_url_format: None,
             logo: None,
             fee: None,
+            burn_fee: None,
             one_sec_enabled: None,
         }
     }
@@ -36,6 +38,7 @@ impl Args {
             || self.transaction_url_format.is_some()
             || self.logo.is_some()
             || self.fee.is_some()
+            || self.burn_fee.is_some()
             || self.one_sec_enabled.is_some()
     }
 }
@@ -55,6 +58,7 @@ pub struct HumanReadableArgs {
     transaction_url_format: Option<String>,
     logo: Option<String>,
     fee: Option<u128>,
+    burn_fee: Option<u128>,
     one_sec_enabled: Option<bool>,
 }
 
@@ -70,6 +74,7 @@ impl ToHumanReadable for Args {
             transaction_url_format: self.transaction_url_format.clone(),
             logo: self.logo.clone(),
             fee: self.fee,
+            burn_fee: self.burn_fee,
             one_sec_enabled: self.one_sec_enabled,
         }
     }
