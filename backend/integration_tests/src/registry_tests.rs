@@ -132,6 +132,7 @@ fn update_token_succeeds() {
             transaction_url_format: None,
             logo: None,
             fee: None,
+            burn_fee: None,
             one_sec_enabled: None,
         },
     );
