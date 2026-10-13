@@ -167,6 +167,11 @@ impl DirectChats {
         self.direct_chats_v2.update_many(chat_ids, f)
     }
 
+    // The id of every chat, without reading the chats from stable memory
+    pub fn ids(&self) -> impl Iterator<Item = ChatId> + '_ {
+        self.direct_chats_v2.entries().map(|(chat_id, _)| chat_id)
+    }
+
     pub fn len(&self) -> usize {
         self.direct_chats_v2.len()
     }

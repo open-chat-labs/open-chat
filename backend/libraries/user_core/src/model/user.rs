@@ -107,6 +107,17 @@ impl User {
         self.contacts.migrate_user_id(old_user_id, new_user_id);
     }
 
+    // The ids of the other users whom the user holds anything under which `migrate_their_user_id`
+    // moves: their direct chats, blocks and contacts
+    pub fn their_user_ids(&self) -> HashSet<UserId> {
+        self.direct_chats
+            .ids()
+            .map(UserId::from)
+            .chain(self.blocked_users.all())
+            .chain(self.contacts.all().into_iter().map(|(user_id, _)| user_id))
+            .collect()
+    }
+
     // Moves what the user holds under the previous ids a sender's MultiUser canister sent with their
     // event onto the sender's id, before the event is applied, in case the notice of the sender's
     // migration hasn't arrived yet. The ids, oldest first, are recorded in `migrated_user_ids`
@@ -414,7 +425,8 @@ mod tests {
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use multi_user_canister::ManualWallet;
-    use types::{CanisterId, UserType};
+    use multi_user_canister::set_contact::OptionalContact;
+    use types::{CanisterId, OptionUpdate, UserType};
 
     #[test]
     fn manual_wallet_tokens_are_deduplicated_and_limited() {
@@ -450,5 +462,24 @@ mod tests {
         assert!(user.favourite_chats.is_empty());
         assert!(user.favourite_chats.pinned().is_empty());
         assert!(user.remove_direct_chat(them, 40).is_none());
+    }
+
+    #[test]
+    fn their_user_ids_are_those_of_the_users_direct_chats_blocks_and_contacts() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
+        let user_id = |i: u8| -> UserId { Principal::from_slice(&[i; 10]).into() };
+        let me = user_id(1);
+        let mut user = User::new(Principal::from_slice(&[1]), "user".to_string(), None, 0);
+        user.direct_chats.get_or_create(me, user_id(2), UserType::User, || 1, 10);
+        user.direct_chats.get_or_create(me, user_id(3), UserType::User, || 2, 10);
+        user.blocked_users.block(user_id(3), 20);
+        user.blocked_users.block(user_id(4), 20);
+        user.contacts.set_contact(OptionalContact {
+            user_id: user_id(5),
+            nickname: OptionUpdate::SetToSome("five".to_string()),
+        });
+
+        assert_eq!(user.their_user_ids(), (2..=5).map(user_id).collect());
     }
 }
