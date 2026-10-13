@@ -93,5 +93,20 @@ mod tests {
             HashMap::from([(Chat::Direct(user_id(4).into()), 10)])
         );
         assert!(user.favourite_chats.pinned().is_empty());
+
+        // Including when the chat is named by the latest id, though a chat left under an old id is
+        // a chat of its own, so its pin is kept
+        user.direct_chats.pin(user_id(2).into(), 50).unwrap();
+        user.direct_chats.pin(user_id(5).into(), 50).unwrap();
+        user.favourite_chats.pin(Chat::Direct(user_id(2).into()), 50).unwrap();
+        for chat in [direct(3), direct(5), favourite(3)] {
+            let args = multi_user_canister::unpin_chat_v2::Args { chat };
+            unpin_chat_v2(&mut user, args, &migrated_user_ids, 60).unwrap();
+        }
+        assert_eq!(
+            user.direct_chats.pinned_chats(),
+            HashMap::from([(Chat::Direct(user_id(4).into()), 10)])
+        );
+        assert!(user.favourite_chats.pinned().is_empty());
     }
 }

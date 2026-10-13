@@ -20,18 +20,16 @@ pub fn manage_favourite_chats(
 
     // A direct chat is added under the id it is under now, for a client which hasn't yet heard that
     // the other user has been migrated to a MultiUser canister (see `DirectChats::latest_user_id`).
-    // One is removed under both that id and the id given, since a favourite can still be under the
-    // id the other user had before until the `migrate_their_user_ids` job reaches the user.
+    // One is removed under every id it may be a favourite under (see
+    // `DirectChats::ids_naming_chat`), since a favourite can still be under an id the other user had
+    // before until the `migrate_their_user_ids` job reaches the user.
     for chat in args.to_add.iter_mut() {
         *chat = user.direct_chats.latest_chat(*chat, migrated_user_ids);
     }
-    for chat in std::mem::take(&mut args.to_remove) {
-        let latest = user.direct_chats.latest_chat(chat, migrated_user_ids);
-        args.to_remove.push(chat);
-        if latest != chat {
-            args.to_remove.push(latest);
-        }
-    }
+    args.to_remove = std::mem::take(&mut args.to_remove)
+        .into_iter()
+        .flat_map(|chat| user.direct_chats.chats_naming_chat(chat, migrated_user_ids))
+        .collect();
 
     // The chats are added before any are removed, so a chat both added and removed ends up removed
     let new: HashSet<_> = args.to_add.iter().filter(|c| !user.favourite_chats.contains(c)).collect();
@@ -95,6 +93,13 @@ mod tests {
         manage_favourite_chats(&mut user, args(vec![direct(2)], Vec::new()), &migrated_user_ids, 4).unwrap();
         assert_eq!(user.favourite_chats.chats(), &[direct(3), direct(2), direct(4)]);
         manage_favourite_chats(&mut user, args(Vec::new(), vec![direct(2)]), &migrated_user_ids, 5).unwrap();
+        assert_eq!(user.favourite_chats.chats(), &[direct(4)]);
+
+        // Including when the chat is named by the latest id, though a chat left under an old id is a
+        // chat of its own, so its favourite is kept
+        user.favourite_chats.add(direct(2), 6).unwrap();
+        user.favourite_chats.add(direct(5), 6).unwrap();
+        manage_favourite_chats(&mut user, args(Vec::new(), vec![direct(3), direct(5)]), &migrated_user_ids, 7).unwrap();
         assert_eq!(user.favourite_chats.chats(), &[direct(4)]);
     }
 

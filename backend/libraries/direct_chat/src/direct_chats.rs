@@ -329,6 +329,39 @@ impl DirectChats {
         private_replies::update_user_ids(|user_id| direct_chats.latest_user_id(user_id, migrated_user_ids))
     }
 
+    // The ids a pin or favourite of the chat which `user_id` names may be under until the
+    // `migrate_their_user_ids` job reaches the user, so which removing one acts on: the id the chat
+    // is under now (see `latest_user_id`) and, if that is the other user's latest id, each id they
+    // had before which no chat is under, since the job moves a pin or favourite under one of those
+    // onto the latest id. A chat left under an id they had before is a chat of its own, so is only
+    // named by that id.
+    pub fn ids_naming_chat(&self, user_id: UserId, migrated_user_ids: &MigratedUserIds) -> Vec<UserId> {
+        let chat_user_id = self.latest_user_id(user_id, migrated_user_ids);
+        let latest = migrated_user_ids.latest(user_id);
+        if chat_user_id != latest {
+            return vec![chat_user_id];
+        }
+        let mut user_ids: Vec<_> = migrated_user_ids
+            .previous_ids(latest)
+            .into_iter()
+            .filter(|previous| !self.exists(&(*previous).into()))
+            .collect();
+        user_ids.push(latest);
+        user_ids
+    }
+
+    // Every way the chat may be named (see `ids_naming_chat`) if it is a direct chat
+    pub fn chats_naming_chat(&self, chat: Chat, migrated_user_ids: &MigratedUserIds) -> Vec<Chat> {
+        match chat {
+            Chat::Direct(chat_id) => self
+                .ids_naming_chat(chat_id.into(), migrated_user_ids)
+                .into_iter()
+                .map(|user_id| Chat::Direct(user_id.into()))
+                .collect(),
+            _ => vec![chat],
+        }
+    }
+
     // `chat` as `latest_user_id` names it if it is a direct chat
     pub fn latest_chat(&self, chat: Chat, migrated_user_ids: &MigratedUserIds) -> Chat {
         match chat {
@@ -519,6 +552,39 @@ mod tests {
         assert_eq!(latest(4), Chat::Direct(user(4).into()));
         assert_eq!(latest(6), Chat::Direct(user(6).into()));
         assert_eq!(direct_chats.latest_chat(group, &migrated_user_ids), group);
+    }
+
+    #[test]
+    fn a_chat_is_named_by_every_id_without_a_chat_of_its_own() {
+        init_stable_memory_map();
+        let me = user(1);
+        // User 2 was migrated to 3 then to 4, and user 5 to 6, and the chat with user 5 was left
+        // under their old id, since there is one under their new id too
+        let mut migrated_user_ids = MigratedUserIds::default();
+        migrated_user_ids.insert(user(2), user(3));
+        migrated_user_ids.insert(user(3), user(4));
+        migrated_user_ids.insert(user(5), user(6));
+        let mut direct_chats = DirectChats::default();
+        direct_chats.get_or_create(me, user(4), UserType::User, || 1, 10);
+        direct_chats.get_or_create(me, user(5), UserType::User, || 2, 10);
+        direct_chats.get_or_create(me, user(6), UserType::User, || 3, 10);
+
+        for i in [2, 3, 4] {
+            assert_eq!(
+                direct_chats.ids_naming_chat(user(i), &migrated_user_ids),
+                vec![user(2), user(3), user(4)]
+            );
+        }
+        assert_eq!(direct_chats.ids_naming_chat(user(5), &migrated_user_ids), vec![user(5)]);
+        assert_eq!(direct_chats.ids_naming_chat(user(6), &migrated_user_ids), vec![user(6)]);
+        assert_eq!(direct_chats.ids_naming_chat(user(7), &migrated_user_ids), vec![user(7)]);
+
+        let group = Chat::Group(Principal::from_slice(&[10; 10]).into());
+        assert_eq!(direct_chats.chats_naming_chat(group, &migrated_user_ids), vec![group]);
+        assert_eq!(
+            direct_chats.chats_naming_chat(Chat::Direct(user(6).into()), &migrated_user_ids),
+            vec![Chat::Direct(user(6).into())]
+        );
     }
 
     #[test]

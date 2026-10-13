@@ -455,13 +455,14 @@ impl User {
             .collect()
     }
 
-    // Whether the user has blocked `user_id`, under that id or the latest id they have been
-    // migrated to (see `block_user`)
+    // Whether the user has blocked `user_id` under any id they have had, since a block is added
+    // under their latest id (see `block_user`), but can still be under an id they had before until
+    // the `migrate_their_user_ids` job reaches the user
     pub fn has_blocked(&self, user_id: UserId, migrated_user_ids: &MigratedUserIds) -> bool {
-        self.blocked_users.contains(&user_id) || {
-            let latest = migrated_user_ids.latest(user_id);
-            latest != user_id && self.blocked_users.contains(&latest)
-        }
+        !self.blocked_users.is_empty()
+            && all_ids_of(user_id, migrated_user_ids)
+                .iter()
+                .any(|user_id| self.blocked_users.contains(user_id))
     }
 
     // Awards the achievement along with its CHIT, returning false if the user already had it. The
@@ -722,6 +723,11 @@ mod tests {
         assert!(user.has_blocked(old, &migrated_user_ids));
         assert!(user.has_blocked(latest, &migrated_user_ids));
         assert!(!user.has_blocked(other, &migrated_user_ids));
+        // A block still under the old id is found whichever id they are named by
+        user.blocked_users.unblock(latest, 15);
+        user.blocked_users.block(old, 15);
+        assert!(user.has_blocked(old, &migrated_user_ids));
+        assert!(user.has_blocked(latest, &migrated_user_ids));
 
         // A block still under the old id, before the user's blocks have been moved off it, is
         // removed too, whichever id they are named by
