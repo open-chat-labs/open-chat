@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove the one-off which deleted the two users stuck on 0.0.0, now that it has run ([#9915](https://github.com/open-chat-labs/open-chat/pull/9915))
 - Remove the User canister, along with upgrading User canisters and migrating users to MultiUser canisters ([#9919](https://github.com/open-chat-labs/open-chat/pull/9919))
 
+### Fixed
+
+- Replace migrated users' old ids with their latest in reported messages, so that sanctions reach the sender ([#9941](https://github.com/open-chat-labs/open-chat/pull/9941))
+
 ## [[2.0.2131](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2131-user_index)] - 2026-10-12
 
 ### Fixed
