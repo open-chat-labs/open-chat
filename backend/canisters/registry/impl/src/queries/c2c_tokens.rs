@@ -19,6 +19,7 @@ fn c2c_tokens_impl(state: &RuntimeState) -> Response {
             .map(|t| Token {
                 ledger_canister_id: t.ledger_canister_id,
                 fee: t.fee,
+                burn_fee: t.burn_fee,
             })
             .collect(),
     )

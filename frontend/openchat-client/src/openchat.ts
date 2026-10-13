@@ -193,8 +193,6 @@ import {
     type Dimensions,
     type DirectChatIdentifier,
     type DirectChatSummary,
-    type DisableInviteCodeResponse,
-    type EnableInviteCodeResponse,
     type EnhancedAccessGate,
     type EventWrapper,
     type EventsResponse,
@@ -226,7 +224,8 @@ import {
     type IdentityKeyAndChain,
     type IdentityState,
     type InternalBotCommandInstance,
-    type InviteCodeResponse,
+    type InviteLink,
+    type InviteLinkOutcome,
     type JoinVideoCallResponse,
     type Level,
     type LinkIdentitiesResponse,
@@ -287,7 +286,6 @@ import {
     type RemoteUserToggledReaction,
     type RemoveIdentityLinkResponse,
     type RemoveMemberResponse,
-    type ResetInviteCodeResponse,
     type ResourceKey,
     type RightPanelContent,
     type RoadmapRoute,
@@ -582,6 +580,7 @@ import {
     stopTyping,
     updateExistingMessages,
 } from "./utils/chat";
+import { disableInviteCodeResult, inviteCodeResult } from "./utils/inviteLink";
 import { joinGroupFailureMessage } from "./utils/join";
 import {
     bioResult,
@@ -7528,26 +7527,54 @@ export class OpenChat {
         }
     }
 
-    getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
-        return this.#worker.send({ kind: "getInviteCode", id }).catch(CommonResponses.failure);
+    /** The current invite link of a group or community, loaded from the backend if it is private */
+    async getInviteLink(collection: MultiUserChat | CommunitySummary): Promise<InviteLinkOutcome> {
+        const id = this.#inviteCodeId(collection);
+        if (id === undefined) return this.#codelessInviteLink(collection);
+        const resp = await this.#worker
+            .send({ kind: "getInviteCode", id })
+            .catch(CommonResponses.failure);
+        return inviteCodeResult(resp, "invite.errorGettingLink");
     }
 
-    enableInviteCode(
-        id: GroupChatIdentifier | CommunityIdentifier,
-    ): Promise<EnableInviteCodeResponse> {
-        return this.#worker.send({ kind: "enableInviteCode", id }).catch(CommonResponses.failure);
+    async setInviteLinkEnabled(
+        collection: MultiUserChat | CommunitySummary,
+        enabled: boolean,
+    ): Promise<InviteLinkOutcome> {
+        const id = this.#inviteCodeId(collection);
+        if (id === undefined) return this.#codelessInviteLink(collection);
+        if (enabled) {
+            const resp = await this.#worker
+                .send({ kind: "enableInviteCode", id })
+                .catch(CommonResponses.failure);
+            return inviteCodeResult(resp, "invite.errorEnablingLink");
+        }
+        const resp = await this.#worker
+            .send({ kind: "disableInviteCode", id })
+            .catch(CommonResponses.failure);
+        return disableInviteCodeResult(resp);
     }
 
-    disableInviteCode(
-        id: GroupChatIdentifier | CommunityIdentifier,
-    ): Promise<DisableInviteCodeResponse> {
-        return this.#worker.send({ kind: "disableInviteCode", id }).catch(CommonResponses.failure);
+    /** Replaces the invite code, so links shared with the old one stop working */
+    async resetInviteLink(collection: MultiUserChat | CommunitySummary): Promise<InviteLinkOutcome> {
+        const id = this.#inviteCodeId(collection);
+        if (id === undefined) return this.#codelessInviteLink(collection);
+        const resp = await this.#worker
+            .send({ kind: "resetInviteCode", id })
+            .catch(CommonResponses.failure);
+        return inviteCodeResult(resp, "invite.errorResettingLink");
     }
 
-    resetInviteCode(
-        id: GroupChatIdentifier | CommunityIdentifier,
-    ): Promise<ResetInviteCodeResponse> {
-        return this.#worker.send({ kind: "resetInviteCode", id }).catch(CommonResponses.failure);
+    // Only private groups and communities have an invite code
+    #inviteCodeId(
+        collection: MultiUserChat | CommunitySummary,
+    ): GroupChatIdentifier | CommunityIdentifier | undefined {
+        if (collection.public || collection.id.kind === "channel") return undefined;
+        return collection.id;
+    }
+
+    #codelessInviteLink(collection: MultiUserChat | CommunitySummary): InviteLink {
+        return collection.public ? { kind: "public" } : { kind: "none" };
     }
 
     updateGroup(
@@ -8747,10 +8774,10 @@ export class OpenChat {
         });
     }
 
-    // When the current user is migrated to a MultiUser canister, they get a new user id. The session
-    // (the user client, the chats and everything else keyed by user id) was built for the old one,
-    // so rather than swap the id out from under it, we have the app restart under the new one.
-    // Returns whether the id has changed.
+    // The current user's id changes if their account is deleted and a new one created on the same
+    // principal. The session (the user client, the chats and everything else keyed by user id) was
+    // built for the old one, so rather than swap the id out from under it, we have the app restart
+    // under the new one. Returns whether the id has changed.
     #currentUserIdChanged(userId: string): boolean {
         const currentUserId = currentUserStore.value.userId;
         if (currentUserId === ANON_USER_ID || currentUserId === userId) return false;

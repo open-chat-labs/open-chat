@@ -40,7 +40,7 @@ describe("indexed user ids", () => {
         expect(() => indexedUserId(canister, 1.5)).toThrow();
     });
 
-    test("an old user id is held by the canister it names, at index 0", () => {
+    test("an old user id names its own canister, at index 0", () => {
         expect(userCanisterId(canisterId).toText()).toBe(canisterId);
         expect(userIndexWithinCanister(canisterId)).toBe(0);
     });

@@ -48,6 +48,9 @@ impl Tokens {
                 symbol,
                 decimals,
                 fee,
+                // A token whose ledger burns a fee isn't added, but its ledger could start burning
+                // one later, which `check_for_token_updates` then records
+                burn_fee: 0,
                 logo,
                 logo_id,
                 info_url,
@@ -89,6 +92,9 @@ impl Tokens {
                 }
                 if let Some(fee) = args.fee {
                     t.fee = fee;
+                }
+                if let Some(burn_fee) = args.burn_fee {
+                    t.burn_fee = burn_fee;
                 }
                 if let Some(one_sec_enabled) = args.one_sec_enabled {
                     t.one_sec_enabled = one_sec_enabled;
@@ -224,6 +230,7 @@ pub struct TokenMetrics {
     symbol: String,
     decimals: u8,
     fee: u128,
+    burn_fee: u128,
     logo_length: usize,
     logo_id: Option<u128>,
     info_url: String,
@@ -247,6 +254,7 @@ impl From<&TokenDetails> for TokenMetrics {
             symbol: value.symbol.clone(),
             decimals: value.decimals,
             fee: value.fee,
+            burn_fee: value.burn_fee,
             logo_length: value.logo.len(),
             logo_id: value.logo_id,
             info_url: value.info_url.clone(),

@@ -449,7 +449,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             expect(calls).toEqual([]);
         });
 
-        test("crypto for another user is approved and sent like any other", async () => {
+        test("crypto for another user in the same canister is approved and sent like any other", async () => {
             await sendDirectMessage(crypto(undefined, OTHER_MULTI_USER_CANISTER_USER));
 
             expect(approvals).toEqual([[ICP_LEDGER, spender, 110n, FEE, APPROVAL_VALIDITY_MS]]);
@@ -1372,14 +1372,10 @@ describe("OpenChatAgent referring to the user by their current id", () => {
         expect(rehydrated([], fromPrevious)).toBe(fromPrevious);
     });
 
-    // Runs `getCurrentUser` with the given results, the last being the live one, as the session
-    // `sessionUserId`, returning the mapping after each
-    async function mappingsAfter(
-        sessionUserId: string,
-        results: { userId: string; previousUserIds?: string[] }[],
-    ) {
+    // Runs `getCurrentUser` with the given results, the last being the live one, returning the
+    // mapping after each
+    async function mappingsAfter(results: { userId: string; previousUserIds?: string[] }[]) {
         const user = agent([]);
-        user._userClient = { userId: sessionUserId };
         user._userIndexClient = {
             getCurrentUser: () =>
                 new Stream((resolve) =>
@@ -1404,7 +1400,7 @@ describe("OpenChatAgent referring to the user by their current id", () => {
 
     test("the previous ids are taken from each current user result, the cached one then the live one", async () => {
         // A user cached before their previous ids were, then the live one
-        const { seen } = await mappingsAfter(CURRENT, [
+        const { seen } = await mappingsAfter([
             { userId: CURRENT },
             { userId: CURRENT, previousUserIds: [PREVIOUS] },
         ]);
@@ -1412,32 +1408,13 @@ describe("OpenChatAgent referring to the user by their current id", () => {
         expect(seen).toEqual([new Map(), new Map([[PREVIOUS, CURRENT]])]);
     });
 
-    test("the user's ids are mapped to the one the session is under", async () => {
-        // Before the user client is created, the result's own id
-        const before = await mappingsAfter("anon", [
-            { userId: CURRENT, previousUserIds: [PREVIOUS] },
+    test("a new account on the same principal as a deleted one doesn't take on its earlier ids", async () => {
+        const { seen } = await mappingsAfter([
+            { userId: THEM, previousUserIds: [PREVIOUS] },
+            { userId: CURRENT },
         ]);
-        expect(before.seen).toEqual([new Map([[PREVIOUS, CURRENT]])]);
 
-        // A session carrying on under the earlier id, which the client does if it can't restart
-        // under the latest, has what they did under the latest mapped back to it
-        const stayed = await mappingsAfter(PREVIOUS, [
-            { userId: PREVIOUS },
-            { userId: CURRENT, previousUserIds: [PREVIOUS] },
-        ]);
-        expect(stayed.seen).toEqual([new Map(), new Map([[CURRENT, PREVIOUS]])]);
-
-        // And once the session's user client is created under the latest id, the other way round
-        stayed.user._chatEventsReader = { setUserClient: () => {} };
-        stayed.user.createUserClient(CURRENT);
-        expect(stayed.user._ownLatestUserIds).toEqual(new Map([[PREVIOUS, CURRENT]]));
-    });
-
-    test("an id which isn't one of the user's maps nothing onto the session's", async () => {
-        // eg. a new account on the same principal as a deleted one
-        const { seen } = await mappingsAfter(THEM, [{ userId: THEM }, { userId: CURRENT }]);
-
-        expect(seen).toEqual([new Map(), new Map()]);
+        expect(seen).toEqual([new Map([[PREVIOUS, THEM]]), new Map()]);
     });
 
     test("a reply to a message from before they were migrated is from their current id", () => {
@@ -1686,7 +1663,7 @@ describe("OpenChatAgent listing the transactions of each of the user's wallets",
     // The wallets fetched, by their owner, and the user each was named as being
     let fetched: { owner: string; userId: string }[];
 
-    // An agent whose session is under `sessionUserId`, with the user's other ids mapped as given,
+    // An agent whose session is under `sessionUserId`, with the user's earlier ids mapped as given,
     // and whose ledger index holds `history`, by wallet owner, of transaction ids
     function setup(
         sessionUserId: string,
@@ -1743,24 +1720,14 @@ describe("OpenChatAgent listing the transactions of each of the user's wallets",
         expect(fetched).toEqual([{ owner: ME.toText(), userId: CURRENT }]);
     });
 
-    test("a session under the earlier id lists the latest id's wallet too", async () => {
-        const agent = setup(PREVIOUS, [[CURRENT, PREVIOUS]]);
+    test("a session under an id other than the user's latest adds no wallets", async () => {
+        // eg. that of a deleted account, until the session restarts under the new one on the same
+        // principal
+        const agent = setup(THEM, [[PREVIOUS, CURRENT]]);
 
-        await agent.getAccountTransactions(LEDGER_INDEX, PREVIOUS);
+        await agent.getAccountTransactions(LEDGER_INDEX, THEM);
 
-        expect(fetched).toEqual([
-            { owner: PREVIOUS, userId: PREVIOUS },
-            { owner: ME.toText(), userId: PREVIOUS },
-        ]);
-    });
-
-    test("ids which aren't mapped onto the session's add no wallets", async () => {
-        // eg. a new account on the same principal as a deleted one
-        const agent = setup(CURRENT, [[PREVIOUS, THEM]]);
-
-        await agent.getAccountTransactions(LEDGER_INDEX, CURRENT);
-
-        expect(fetched).toEqual([{ owner: ME.toText(), userId: CURRENT }]);
+        expect(fetched).toEqual([{ owner: THEM, userId: THEM }]);
     });
 });
 

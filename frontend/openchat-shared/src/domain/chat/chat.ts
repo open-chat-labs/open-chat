@@ -1,6 +1,7 @@
 import { Type, type Static } from "@sinclair/typebox";
 import { ROLE_NONE } from "../../constants";
 import { emptyChatMetrics } from "../../utils";
+import type { ResourceKey } from "../../utils/i18n";
 import type { AccessControlled, AccessGateConfig, UpdatedRules, VersionedRules } from "../access";
 import type {
     CommandArg,
@@ -2419,6 +2420,16 @@ export type ResetInviteCodeSuccess = {
     kind: "success";
     code: string;
 };
+
+/** A group's or community's invite link, as the backend last reported it */
+export type InviteLink =
+    | { kind: "public" } // anyone can join, so the link carries no code
+    | { kind: "none" } // a private channel: it has no invite link of its own
+    | { kind: "disabled" }
+    | { kind: "enabled"; code: string };
+
+/** The link after an invite link operation, or why it failed, in which case the link is unchanged */
+export type InviteLinkOutcome = InviteLink | { kind: "failed"; message: ResourceKey };
 
 export type ThreadPreviewsResponse = ThreadPreviewsSuccess | OCError | Offline;
 

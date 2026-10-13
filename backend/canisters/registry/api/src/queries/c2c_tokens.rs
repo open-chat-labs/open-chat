@@ -13,4 +13,7 @@ pub enum Response {
 pub struct Token {
     pub ledger_canister_id: CanisterId,
     pub fee: u128,
+    // Burned from the sender on each transfer, on top of `fee`, by the few ledgers which charge one
+    #[serde(default)]
+    pub burn_fee: u128,
 }
