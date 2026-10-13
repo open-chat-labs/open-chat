@@ -305,7 +305,11 @@ impl CommunityEventInternal {
         match self {
             CommunityEventInternal::Created(e) => u.id(&mut e.created_by),
             CommunityEventInternal::NameChanged(e) => u.id(&mut e.changed_by),
-            CommunityEventInternal::DescriptionChanged(e) => u.id(&mut e.changed_by),
+            CommunityEventInternal::DescriptionChanged(e) => {
+                u.id(&mut e.changed_by);
+                u.mentions(&mut e.new_description);
+                u.mentions(&mut e.previous_description);
+            }
             CommunityEventInternal::RulesChanged(e) => u.id(&mut e.changed_by),
             CommunityEventInternal::AvatarChanged(e) => u.id(&mut e.changed_by),
             CommunityEventInternal::BannerChanged(e) => u.id(&mut e.changed_by),
