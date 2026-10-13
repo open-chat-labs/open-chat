@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Refuse to award an external achievement to an id which isn't a user's ([#9953](https://github.com/open-chat-labs/open-chat/pull/9953))
+
 ### Removed
 
 - Remove the one-off which deleted the two users stuck on 0.0.0, now that it has run ([#9915](https://github.com/open-chat-labs/open-chat/pull/9915))

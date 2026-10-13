@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move everything else users hold outside their chats' events off old user ids ([#9942](https://github.com/open-chat-labs/open-chat/pull/9942))
 - Tell the LocalUserIndex when the jobs replacing migrated users' old ids have completed ([#9949](https://github.com/open-chat-labs/open-chat/pull/9949))
 - Show in the metrics whether the jobs replacing migrated users' old ids were last reported complete ([#9950](https://github.com/open-chat-labs/open-chat/pull/9950))
+- Refuse a User canister's id when blocking a user, adding a contact or paying a user in another canister ([#9953](https://github.com/open-chat-labs/open-chat/pull/9953))
 
 ### Removed
 
