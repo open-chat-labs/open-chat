@@ -10,7 +10,7 @@
         type FullMember,
         type MultiUserChat,
     } from "@client";
-    import { getContext, onDestroy } from "svelte";
+    import { getContext } from "svelte";
     import AccountPlus from "svelte-material-icons/AccountPlusOutline.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import Separator from "../Separator.svelte";
@@ -44,10 +44,6 @@
             [...membersState.members.values()].slice(0, TO_SHOW),
         ),
     );
-
-    onDestroy(() => {
-        membersState.destroy();
-    });
 </script>
 
 <Separator />

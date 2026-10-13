@@ -10,13 +10,13 @@ import {
     type ConvertedBalances,
     type EnhancedTokenDetails,
 } from "@client";
-import { createSubscriber } from "svelte/reactivity";
+import { reactiveValue } from "@src/utils/reactiveValue";
 
 export type ConversionToken = "usd" | "icp" | "btc" | "eth";
 
 function conversionToUSD(c: ConversionToken): number | undefined {
     if (c === "usd") return 1;
-    return exchangeRatesLookupStore.value.get(conversionLedgers[c])?.toUSD;
+    return rates().get(conversionLedgers[c])?.toUSD;
 }
 
 export function getConvertedTokenValue(
@@ -92,18 +92,8 @@ export function convertAndFormat(c: ConversionToken, t: EnhancedTokenDetails): s
     return formatConvertedValue(c, getConvertedTokenValue(c, t));
 }
 
-// A store's `.value` is a snapshot, so a $derived that only reads it is computed once and never again.
-// Calling the returned function inside the derived subscribes it to the store for as long as something
-// is rendering it. The store emits on subscribe, which is skipped.
-function changesOf(store: { subscribe: (run: () => void) => () => void }) {
-    return createSubscriber((update) => {
-        let first = true;
-        return store.subscribe(() => (first ? (first = false) : update()));
-    });
-}
-
-const subscribeToBalances = changesOf(cryptoBalanceStore);
-const subscribeToRates = changesOf(exchangeRatesLookupStore);
+const balances = reactiveValue(cryptoBalanceStore);
+const rates = reactiveValue(exchangeRatesLookupStore);
 
 const nullToken: EnhancedTokenDetails = {
     name: "",
@@ -143,10 +133,7 @@ export class TokenState {
     #ledger = $derived(this.#token.ledger);
     #draftAmount = $state(this.#minAmount);
     #symbol = $derived(this.#token.symbol);
-    #cryptoBalance = $derived.by(() => {
-        subscribeToBalances();
-        return cryptoBalanceStore.value.get(this.#ledger) ?? 0n;
-    });
+    #cryptoBalance = $derived(balances().get(this.#ledger) ?? 0n);
     #transferFee = $derived(this.#token.transferFee);
     // What the draft costs in fees. One transfer's fee unless the flow sets otherwise, eg. to add
     // the approval the wallet makes before a payment is pulled from it (see `walletApprovalFee`)
@@ -157,15 +144,9 @@ export class TokenState {
             ? this.#cryptoBalance - this.#draftAmount - this.#transferFees
             : this.#cryptoBalance,
     );
-    #convertedBalances = $derived.by(() => {
-        subscribeToRates();
-        return getConvertedBalances(
-            exchangeRatesLookupStore.value,
-            this.#remainingBalance,
-            this.#decimals,
-            this.#ledger,
-        );
-    });
+    #convertedBalances = $derived(
+        getConvertedBalances(rates(), this.#remainingBalance, this.#decimals, this.#ledger),
+    );
     #formattedTokenBalance = $derived(this.formatTokens(this.#remainingBalance));
     #convertedValue = $derived(
         getConvertedTokenValue(this.#selectedConversion, this.#convertedBalances),
@@ -174,9 +155,8 @@ export class TokenState {
         formatConvertedValue(this.#selectedConversion, this.#convertedValue),
     );
     #formattedUnitValue = $derived.by(() => {
-        subscribeToRates();
         const conversion = conversionToUSD(this.#selectedConversion);
-        const token = exchangeRatesLookupStore.value.get(this.#ledger)?.toUSD;
+        const token = rates().get(this.#ledger)?.toUSD;
         if (conversion === undefined || token === undefined || conversion === 0) return "?????";
         return formatConvertedValue(this.#selectedConversion, token / conversion);
     });
@@ -213,15 +193,9 @@ export class TokenState {
     }
 
     getConvertedTokens(amount: bigint) {
-        subscribeToRates();
         return getConvertedTokenValue(
             this.#selectedConversion,
-            getConvertedBalances(
-                exchangeRatesLookupStore.value,
-                amount,
-                this.#decimals,
-                this.#ledger,
-            ),
+            getConvertedBalances(rates(), amount, this.#decimals, this.#ledger),
         );
     }
 
