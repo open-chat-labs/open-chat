@@ -1,4 +1,4 @@
-<!-- Voice note bubble: play button, seekable waveform, speed toggle (1x → 1.5x → 2x), elapsed / total and time.
+<!-- Voice note bubble: play/pause button, seekable waveform, speed toggle (1x → 1.5x → 2x), elapsed / total and time.
      cornerBottomLeft (px or any CSS length) overrides the tail corner, e.g. to sit flush against a reply strip. -->
 <script lang="ts">
   import Waveform from './Waveform.svelte';
@@ -18,14 +18,17 @@
     lastInGroup?: boolean;
     time: string;
     cornerBottomLeft?: number | string | null;
+    playing?: boolean;
     onPlay?: () => void;
+    onPause?: () => void;
     onSpeedChange?: (speed: Speed) => void;
     onSeek?: (fraction: number) => void;
   }
 
-  let { progress = 0, elapsed, total, speed = '1x', side = 'received', lastInGroup = true, time, cornerBottomLeft = null, onPlay, onSpeedChange, onSeek }: Props = $props();
+  let { progress = 0, elapsed, total, speed = '1x', side = 'received', lastInGroup = true, time, cornerBottomLeft = null, playing = false, onPlay, onPause, onSpeedChange, onSeek }: Props = $props();
 
-  // seeking and speed changes stick locally until the parent sends new values
+  // play state, seeking and speed changes stick locally until the parent sends new values
+  let isPlaying = $derived(playing);
   let at = $derived(Math.max(0, Math.min(1, progress)));
   let speedIndex = $derived(Math.max(0, SPEEDS.indexOf(speed)));
 
@@ -35,6 +38,12 @@
       ? sent ? 'var(--radius-xl)' : lastInGroup ? 'var(--radius-lg)' : 'var(--radius-xl)'
       : /[a-z%]/i.test(String(cornerBottomLeft)) ? String(cornerBottomLeft) : `${cornerBottomLeft}px`,
   );
+
+  function togglePlay() {
+    isPlaying = !isPlaying;
+    if (isPlaying) onPlay?.();
+    else onPause?.();
+  }
 
   function cycleSpeed() {
     speedIndex = (speedIndex + 1) % SPEEDS.length;
@@ -50,7 +59,9 @@
 <div class="row">
   <div class="bubble" class:sent class:last={lastInGroup} style:border-end-start-radius={bottomLeft}>
     <div class="controls">
-      <div class="play" onclick={onPlay} role="button" tabindex="0"><span class="play-icon"></span></div>
+      <div class="play" class:playing={isPlaying} onclick={togglePlay} role="button" tabindex="0" aria-label={isPlaying ? 'Pause voice message' : 'Play voice message'}>
+        <span class="play-icon"></span>
+      </div>
       <div class="wave"><Waveform levels={LEVELS} progress={at} seekable={true} onSeek={seek} height={22} label="Seek voice message" /></div>
       <div class="speed" onclick={cycleSpeed} role="button" tabindex="0">{SPEEDS[speedIndex]}</div>
     </div>
@@ -116,12 +127,17 @@
     background: var(--btn-hover, rgba(255, 255, 255, 0.14));
   }
 
-  /* the export used the compass glyph here; kept until a play icon is chosen */
   .play-icon {
     width: 14px;
     height: 14px;
+    margin-left: 2px;
     background: var(--ink, #e4e4ec);
-    mask: var(--icon-compass) center/contain no-repeat;
+    mask: var(--icon-play-filled) center/contain no-repeat;
+  }
+
+  .playing .play-icon {
+    margin-left: 0;
+    mask: var(--icon-pause-filled) center/contain no-repeat;
   }
 
   .wave {

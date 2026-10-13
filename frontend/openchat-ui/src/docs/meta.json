@@ -3624,14 +3624,6 @@
         "section": null
       },
       {
-        "name": "barCount",
-        "type": "number",
-        "default": 34,
-        "editor": "int",
-        "options": null,
-        "section": null
-      },
-      {
         "name": "elapsed",
         "type": "string",
         "default": "0:12",
@@ -3695,8 +3687,32 @@
         "section": "Shape"
       },
       {
+        "name": "playing",
+        "type": "boolean",
+        "default": false,
+        "editor": "boolean",
+        "options": null,
+        "section": null
+      },
+      {
         "name": "onPlay",
         "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null
+      },
+      {
+        "name": "onPause",
+        "type": "() => void",
+        "default": null,
+        "editor": null,
+        "options": null,
+        "section": null
+      },
+      {
+        "name": "onSeek",
+        "type": "(fraction: number) => void",
         "default": null,
         "editor": null,
         "options": null,

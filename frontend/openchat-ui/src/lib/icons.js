@@ -103,11 +103,13 @@ export const ICONS = {
   "party": "<path d=\"M5.8 11.3 2 22l10.7-3.79\"/><path d=\"M4 3h.01\"/><path d=\"M22 8h.01\"/><path d=\"M15 2h.01\"/><path d=\"M22 20h.01\"/><path d=\"m22 2-2.24.75a2.9 2.9 0 0 0-1.960 3.12c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10\"/><path d=\"m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11-.11.7-.72 1.22-1.43 1.22H17\"/><path d=\"m11 2 .33.82c.34.86-.2 1.82-1.11 1.98-.7.1-1.22.72-1.22 1.43V7\"/><path d=\"M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.170-2-5 .83-.83 3.07.07 5 2Z\"/>",
   "passkey": "<circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M3 21v-2a4 4 0 0 1 4-4h4\"/><circle cx=\"18\" cy=\"14\" r=\"2.5\"/><path d=\"M18 16.5V21\"/><path d=\"M18 19h1.5\"/>",
   "paste": "<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/>",
+  "pause-filled": "<rect x=\"6\" y=\"4.5\" width=\"4\" height=\"15\" rx=\"1.2\"/><rect x=\"14\" y=\"4.5\" width=\"4\" height=\"15\" rx=\"1.2\"/>",
   "payment": "<rect width=\"18\" height=\"14\" x=\"3\" y=\"5\" rx=\"2\"/><path d=\"M3 10h18\"/><path d=\"M7 15h3\"/>",
   "person": "<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M6 21a6 6 0 0 1 12 0\"/>",
   "phone": "<path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z\"/>",
   "pin": "<path d=\"M12 17v5\"/><path d=\"M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z\"/>",
   "play": "<path d=\"M6 4.5v15l13-7.5z\"/>",
+  "play-filled": "<path d=\"M7 4.8v14.4a1 1 0 0 0 1.53.85l11.5-7.2a1 1 0 0 0 0-1.7L8.53 3.95A1 1 0 0 0 7 4.8z\"/>",
   "plus": "<path d=\"M5 12h14\"/><path d=\"M12 5v14\"/>",
   "poll": "<path d=\"M3 3v18h18\"/><path d=\"M18 17V9\"/><path d=\"M13 17V5\"/><path d=\"M8 17v-3\"/>",
   "qr": "<rect width=\"5\" height=\"5\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"5\" height=\"5\" x=\"16\" y=\"3\" rx=\"1\"/><rect width=\"5\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/><path d=\"M21 16h-3a2 2 0 0 0-2 2v3\"/><path d=\"M21 21v.01\"/><path d=\"M12 7v3a2 2 0 0 1-2 2H7\"/><path d=\"M3 12h.01\"/><path d=\"M12 3h.01\"/><path d=\"M12 16v.01\"/><path d=\"M16 12h1\"/><path d=\"M21 12v.01\"/><path d=\"M12 21v-1\"/>",
@@ -147,6 +149,8 @@ export const ICONS = {
 export const ICON_ATTRS = {
   "dot-heavy": "fill=\"none\" stroke=\"#000\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"",
   "heart-filled": "fill=\"#000\"",
+  "pause-filled": "fill=\"#000\"",
+  "play-filled": "fill=\"#000\"",
   "list": "fill=\"none\" stroke=\"#000\" stroke-width=\"2\" stroke-linecap=\"round\"",
 };
 
