@@ -254,9 +254,9 @@ impl ChatEventsList {
         self.events_map.get(event_index)
     }
 
-    // Writes back an event which has been changed in place
-    pub(crate) fn replace_event(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
-        self.events_map.insert(event);
+    // Writes back events which have been changed in place, which must be in order of index
+    pub(crate) fn replace_events(&mut self, events: Vec<EventWrapperInternal<ChatEventInternal>>) {
+        self.events_map.insert_many(events);
     }
 
     pub fn latest_event_index(&self) -> Option<EventIndex> {

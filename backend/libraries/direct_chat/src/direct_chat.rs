@@ -123,7 +123,7 @@ impl DirectChat {
     }
 
     // See `ChatEvents::update_user_ids`
-    pub fn update_user_ids_in_events(
+    pub fn update_user_ids(
         &mut self,
         after: Option<EventContext>,
         f: &mut dyn FnMut(EventContext, UserId) -> UserId,
@@ -132,9 +132,13 @@ impl DirectChat {
         self.events.update_user_ids(after, f, should_stop)
     }
 
-    // See `ChatEvents::update_user_ids_in_event`
-    pub fn update_user_ids_in_event(&mut self, context: EventContext, f: &mut dyn FnMut(UserId) -> UserId) -> bool {
-        self.events.update_user_ids_in_event(context, f)
+    // See `ChatEvents::update_user_ids_in_events`
+    pub fn update_user_ids_in_events(
+        &mut self,
+        contexts: impl IntoIterator<Item = EventContext>,
+        f: &mut dyn FnMut(UserId) -> UserId,
+    ) -> u32 {
+        self.events.update_user_ids_in_events(contexts, f)
     }
 
     pub fn main_events_reader(&self) -> ChatEventsListReader<'_> {

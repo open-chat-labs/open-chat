@@ -30,6 +30,24 @@ impl<MSlow: EventsMap> HybridMap<MSlow> {
     fn fast_enabled(&self) -> bool {
         self.max_events_in_fast_map > 0
     }
+
+    // Records the event as the latest if it is, and adds it to the fast map if it belongs there
+    fn insert_into_fast(&mut self, event: &EventWrapperInternal<ChatEventInternal>) {
+        if event.index > self.latest_event_index {
+            self.latest_event_index = event.index;
+        }
+        if self.fast_enabled() {
+            let fast_cut_off = EventIndex::from(u32::from(self.latest_event_index).saturating_sub(self.max_events_in_fast_map));
+            // Once events have been removed from the fast map it can hold fewer than the max, so
+            // events below the cut off are left in it, and so must be kept up to date too
+            if event.index >= fast_cut_off || self.fast.contains_key(&event.index) {
+                self.fast.insert(event.index, event.clone());
+                while self.fast.len() > self.max_events_in_fast_map as usize {
+                    self.fast.pop_first();
+                }
+            }
+        }
+    }
 }
 
 impl HybridMap<ChatEventsStableStorage> {
@@ -70,21 +88,15 @@ impl<MSlow: EventsMap> EventsMap for HybridMap<MSlow> {
     }
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
-        if event.index > self.latest_event_index {
-            self.latest_event_index = event.index;
-        }
-        if self.fast_enabled() {
-            let fast_cut_off = EventIndex::from(u32::from(self.latest_event_index).saturating_sub(self.max_events_in_fast_map));
-            // Once events have been removed from the fast map it can hold fewer than the max, so
-            // events below the cut off are left in it, and so must be kept up to date too
-            if event.index >= fast_cut_off || self.fast.contains_key(&event.index) {
-                self.fast.insert(event.index, event.clone());
-                while self.fast.len() > self.max_events_in_fast_map as usize {
-                    self.fast.pop_first();
-                }
-            }
-        }
+        self.insert_into_fast(&event);
         self.slow.insert(event);
+    }
+
+    fn insert_many(&mut self, events: Vec<EventWrapperInternal<ChatEventInternal>>) {
+        for event in events.iter() {
+            self.insert_into_fast(event);
+        }
+        self.slow.insert_many(events);
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {

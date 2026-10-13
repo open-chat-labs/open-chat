@@ -5,7 +5,7 @@ use chat_events::UserIdsInEventsMigration;
 use ic_cdk_timers::TimerId;
 use serde::{Deserialize, Serialize};
 use std::cell::Cell;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{CanisterId, ChannelId, EventContext, EventIndex, UserId};
@@ -189,17 +189,20 @@ fn update_events(state: &mut RuntimeState) {
         if events.is_empty() {
             break;
         }
+        // Grouped so that the events in each list are written together
+        let mut community_events = Vec::new();
+        let mut channel_events: BTreeMap<ChannelId, Vec<EventContext>> = BTreeMap::new();
         for location in events {
-            let latest = &mut |user_id| migrated_user_ids.latest(user_id);
-            let event_updated = match location {
-                EventLocation::Community(event_index) => data.events.update_user_ids_in_event(event_index, latest),
-                EventLocation::Channel(channel_id, context) => data
-                    .channels
-                    .get_mut(&channel_id)
-                    .is_some_and(|channel| channel.chat.events.update_user_ids_in_event(context, latest)),
-            };
-            if event_updated {
-                updated += 1;
+            match location {
+                EventLocation::Community(event_index) => community_events.push(event_index),
+                EventLocation::Channel(channel_id, context) => channel_events.entry(channel_id).or_default().push(context),
+            }
+        }
+        let latest = &mut |user_id| migrated_user_ids.latest(user_id);
+        updated += data.events.update_user_ids_in_events(community_events, latest);
+        for (channel_id, contexts) in channel_events {
+            if let Some(channel) = data.channels.get_mut(&channel_id) {
+                updated += channel.chat.events.update_user_ids_in_events(contexts, latest);
             }
         }
         if ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_PER_BATCH {

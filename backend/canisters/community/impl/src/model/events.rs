@@ -2,7 +2,7 @@ use crate::model::events::stable_memory::EventsStableStorage;
 use chat_events::{GroupGateUpdatedInternal, UserIdUpdater};
 use community_canister::community_events::EventsPageArgs;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use types::{
     AvatarChanged, BannerChanged, BotAdded, BotRemoved, BotUpdated, ChannelCreated, ChannelDeleted, ChannelId, ChatId,
     CommunityEvent, CommunityEventCategory, CommunityEventType, CommunityMemberJoined, CommunityMembersRemoved,
@@ -142,12 +142,7 @@ impl CommunityEvents {
         loop {
             let events = self.stable_events_map.page(start, true, 100);
             let last = events.last()?.index;
-            for mut event in events {
-                let event_index = event.index;
-                if event.event.update_user_ids(&mut |user_id| f(event_index, user_id)) {
-                    self.stable_events_map.insert(event);
-                }
-            }
+            self.update_events_user_ids(events, f);
             if should_stop() {
                 return Some(last);
             }
@@ -155,17 +150,41 @@ impl CommunityEvents {
         }
     }
 
-    // Passes the user ids in the event at `event_index` through `f`, writing the event back if any
-    // are replaced. Returns whether they were.
-    pub fn update_user_ids_in_event(&mut self, event_index: EventIndex, f: &mut dyn FnMut(UserId) -> UserId) -> bool {
-        let Some(mut event) = self.stable_events_map.get(event_index) else {
-            return false;
-        };
-        let updated = event.event.update_user_ids(f);
-        if updated {
-            self.stable_events_map.insert(event);
-        }
-        updated
+    // Passes the user ids in the events at `event_indexes` through `f`, writing back those in which
+    // any are replaced. Returns how many were.
+    pub fn update_user_ids_in_events(
+        &mut self,
+        event_indexes: impl IntoIterator<Item = EventIndex>,
+        f: &mut dyn FnMut(UserId) -> UserId,
+    ) -> u32 {
+        let event_indexes: BTreeSet<_> = event_indexes.into_iter().collect();
+        let events = event_indexes
+            .into_iter()
+            .filter_map(|i| self.stable_events_map.get(i))
+            .collect();
+        self.update_events_user_ids(events, &mut |_, user_id| f(user_id))
+    }
+
+    // Passes the user ids in each of `events`, which must be in order of index, through `f`, then
+    // writes back together those in which any are replaced. Returns how many were.
+    fn update_events_user_ids(
+        &mut self,
+        events: Vec<EventWrapperInternal<CommunityEventInternal>>,
+        f: &mut dyn FnMut(EventIndex, UserId) -> UserId,
+    ) -> u32 {
+        let updated: Vec<_> = events
+            .into_iter()
+            .filter_map(|mut event| {
+                let event_index = event.index;
+                event
+                    .event
+                    .update_user_ids(&mut |user_id| f(event_index, user_id))
+                    .then_some(event)
+            })
+            .collect();
+        let count = updated.len() as u32;
+        self.stable_events_map.insert_many(updated);
+        count
     }
 
     pub fn latest_event_index(&self) -> EventIndex {

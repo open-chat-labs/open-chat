@@ -151,8 +151,8 @@ impl<L: Copy + Eq + Hash> UserIdsInEventsMigration<L> {
         events
     }
 
-    pub fn record_events_updated(&mut self, count: u64) {
-        self.events_updated += count;
+    pub fn record_events_updated(&mut self, count: u32) {
+        self.events_updated += u64::from(count);
     }
 
     pub fn metrics(&self) -> UserIdsInEventsMigrationMetrics {

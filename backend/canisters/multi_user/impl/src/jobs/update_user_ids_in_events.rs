@@ -134,7 +134,7 @@ fn scan(
                     let Some(mut chat) = user.direct_chats.get_mut(&chat_id) else {
                         continue;
                     };
-                    if let Some(context) = chat.update_user_ids_in_events(
+                    if let Some(context) = chat.update_user_ids(
                         after,
                         &mut |context, user_id| {
                             migration.latest_user_id(user_id, (user_index, key_id, context), migrated_user_ids)
@@ -187,11 +187,7 @@ fn update_events(state: &mut RuntimeState) {
                     let Some(mut chat) = chat_ids.get(&key_id).and_then(|chat_id| user.direct_chats.get_mut(chat_id)) else {
                         continue;
                     };
-                    for context in contexts {
-                        if chat.update_user_ids_in_event(context, &mut |user_id| migrated_user_ids.latest(user_id)) {
-                            updated += 1;
-                        }
-                    }
+                    updated += chat.update_user_ids_in_events(contexts, &mut |user_id| migrated_user_ids.latest(user_id));
                 }
             });
         }

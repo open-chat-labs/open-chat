@@ -116,15 +116,10 @@ fn update_events(state: &mut RuntimeState) {
         if events.is_empty() {
             break;
         }
-        for context in events {
-            if data
-                .chat
-                .events
-                .update_user_ids_in_event(context, &mut |user_id| migrated_user_ids.latest(user_id))
-            {
-                updated += 1;
-            }
-        }
+        updated += data
+            .chat
+            .events
+            .update_user_ids_in_events(events, &mut |user_id| migrated_user_ids.latest(user_id));
         if ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_PER_BATCH {
             break;
         }

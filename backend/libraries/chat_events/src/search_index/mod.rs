@@ -103,26 +103,31 @@ impl SearchIndex {
         });
     }
 
-    // Moves the message's entry from `old_sender` onto `new_sender`, eg. once the id the sender had
-    // before being migrated to a MultiUser canister has been replaced with their latest id. Nothing
-    // is added for a message which isn't in the index.
-    pub fn change_sender(
-        &mut self,
-        events_prefix: &ChatEventKeyPrefix,
-        message_index: MessageIndex,
-        old_sender: UserId,
-        new_sender: UserId,
-    ) {
-        if let Some((sender, _)) = self.on_heap.get_mut(&message_index)
-            && *sender == old_sender
-        {
-            *sender = new_sender;
+    // Moves each message's entry from its old sender onto its new sender, eg. once the id the
+    // sender had before being migrated to a MultiUser canister has been replaced with their latest
+    // id. Nothing is added for a message which isn't in the index.
+    pub fn change_senders(&mut self, events_prefix: &ChatEventKeyPrefix, changes: Vec<(MessageIndex, UserId, UserId)>) {
+        if changes.is_empty() {
+            return;
+        }
+        for (message_index, old_sender, new_sender) in changes.iter() {
+            if let Some((sender, _)) = self.on_heap.get_mut(message_index)
+                && sender == old_sender
+            {
+                *sender = *new_sender;
+            }
         }
         let sender_prefix = SearchSenderKeyPrefix::new_from_events_prefix(events_prefix);
         with_map_mut(|m| {
-            if m.remove(sender_prefix.create_key(&(old_sender, message_index))).is_some() {
-                m.insert(sender_prefix.create_key(&(new_sender, message_index)), Vec::new());
-            }
+            let mut new_keys: Vec<_> = changes
+                .into_iter()
+                .filter(|(message_index, old_sender, _)| {
+                    m.remove(sender_prefix.create_key(&(*old_sender, *message_index))).is_some()
+                })
+                .map(|(message_index, _, new_sender)| sender_prefix.create_key(&(new_sender, message_index)))
+                .collect();
+            new_keys.sort();
+            m.insert_many(new_keys.into_iter().map(|k| (k, Vec::new())));
         });
     }
 
