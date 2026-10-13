@@ -149,6 +149,22 @@
         "title": "Feed attività"
     },
     "addedBy": "{changedBy} ha aggiunto {changed} a {level}",
+    "addressBook": {
+        "add": "Aggiungi indirizzo",
+        "address": "Indirizzo",
+        "addressPlaceholder": "Inserisci l'indirizzo",
+        "alreadySaved": "Questo indirizzo è già salvato come \"{name}\"",
+        "confirmDelete": "Eliminare \"{name}\" dalla tua rubrica?",
+        "delete": "Elimina",
+        "deleteFailed": "Spiacenti, non è stato possibile eliminare questo indirizzo",
+        "empty": "Non hai ancora salvato alcun indirizzo. Gli indirizzi che salvi possono essere scelti quando invii token dal tuo portafoglio.",
+        "name": "Nome",
+        "namePlaceholder": "Inserisci un nome per questo indirizzo",
+        "nameTaken": "Hai già un indirizzo salvato con questo nome",
+        "rename": "Rinomina",
+        "saveFailed": "Spiacenti, non è stato possibile salvare questo indirizzo",
+        "title": "Rubrica indirizzi"
+    },
     "admin": "amministratore",
     "advanced": "Avanzate",
     "airdropWarning": "Per qualificarti per il prossimo Airdrop, devi essere un membro del canale **{channelName}** nella community **{communityName}**. [Clicca qui per unirti.]({url})",

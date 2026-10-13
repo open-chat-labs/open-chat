@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove what was only needed while users were being migrated, including the `UserIdMigrated` event and reading the heap layouts kept for imported users ([#9922](https://github.com/open-chat-labs/open-chat/pull/9922))
 - Remove the endpoints the website only called for users outside MultiUser canisters: `swap_tokens`, `approve_transfer`, `withdraw_crypto_v2`, `token_swap_status` and `c2c_withdraw_from_icpswap` ([#9924](https://github.com/open-chat-labs/open-chat/pull/9924))
 
+### Fixed
+
+- Fix saving an address under a name with multi-byte characters, and renaming one to a name already in use ([#9944](https://github.com/open-chat-labs/open-chat/pull/9944))
+
 ## [[2.0.2136](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2136-multi_user)] - 2026-10-12
 
 ### Changed

@@ -149,6 +149,22 @@
         "title": "Flux d'activité"
     },
     "addedBy": "{changedBy} a ajouté {changed} au {level}",
+    "addressBook": {
+        "add": "Ajouter une adresse",
+        "address": "Adresse",
+        "addressPlaceholder": "Entrez l'adresse",
+        "alreadySaved": "Cette adresse est déjà enregistrée sous le nom « {name} »",
+        "confirmDelete": "Supprimer « {name} » de votre carnet d'adresses ?",
+        "delete": "Supprimer",
+        "deleteFailed": "Désolé, nous n'avons pas pu supprimer cette adresse",
+        "empty": "Vous n'avez encore enregistré aucune adresse. Les adresses que vous enregistrez peuvent être choisies lors de l'envoi de jetons depuis votre portefeuille.",
+        "name": "Nom",
+        "namePlaceholder": "Entrez un nom pour cette adresse",
+        "nameTaken": "Vous avez déjà une adresse enregistrée sous ce nom",
+        "rename": "Renommer",
+        "saveFailed": "Désolé, nous n'avons pas pu enregistrer cette adresse",
+        "title": "Carnet d'adresses"
+    },
     "admin": "administrateur",
     "advanced": "Avancé",
     "airdropWarning": "Pour pouvoir participer au prochain Airdrop, vous devez être membre du canal **{channelName}** de la communauté **{communityName}**. [Cliquez ici pour nous rejoindre.]({url})",
