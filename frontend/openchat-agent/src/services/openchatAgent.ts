@@ -3625,8 +3625,10 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // The balances left behind in the wallets of the canisters the user had before being migrated to
-    // a MultiUser canister, on each token in the Registry, which are large enough to be moved. Only
-    // those of `previousUserIds` which were canisters of their own had wallets. A balance which
+    // a MultiUser canister, on each token in the Registry, which are large enough to be moved, ie.
+    // more than twice the fee, since the LocalUserIndex only moves an amount which exceeds the fee
+    // (some ledgers reject any less). Only those of `previousUserIds` which were canisters of their
+    // own had wallets. A balance which
     // can't be read, eg. on a ledger which has been decommissioned, is left out, but if none can be
     // checked, while offline or before the Registry has loaded, this rejects.
     async fundsInPreviousWallets(previousUserIds: string[]): Promise<FundsInPreviousWallet[]> {
@@ -3653,7 +3655,7 @@ export class OpenChatAgent extends EventTarget {
             );
             batch.forEach(({ previousUserId, ledger, fee }, i) => {
                 const balance = balances[i];
-                if (balance.status === "fulfilled" && balance.value > fee) {
+                if (balance.status === "fulfilled" && balance.value > 2n * fee) {
                     funds.push({ previousUserId, ledger, balance: balance.value });
                 }
             });
