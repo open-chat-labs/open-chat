@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
-use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
+use crate::{Data, RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::remove_participant::*;
@@ -62,7 +62,9 @@ async fn remove_participant_impl(user_to_remove: UserId, block: bool, ext_caller
         }
     }
 
-    // Remove the user from the group
+    // Remove the user from the group, unless it has been frozen (eg. to be imported into a community)
+    // while awaiting a lookup
+    verify_not_frozen()?;
     mutate_state(|state| commit(user_to_remove, block, prepare_result.remove, prepare_result.removed_by, state))
 }
 
@@ -73,10 +75,8 @@ async fn remove_participant_impl(user_to_remove: UserId, block: bool, ext_caller
 // a member under the old id is removed along with being blocked.
 async fn latest_user_id(user_id: UserId) -> OCResult<UserId> {
     let (known_latest, local_user_index_canister_id) = read_state(|state| {
-        let migrated_user_ids = &state.data.migrated_user_ids;
-        let known = user_id.is_indexed() || migrated_user_ids.contains(&user_id);
         (
-            known.then(|| migrated_user_ids.latest(user_id)),
+            known_latest_user_id(&state.data, user_id),
             state.data.local_user_index_canister_id,
         )
     });
@@ -87,6 +87,7 @@ async fn latest_user_id(user_id: UserId) -> OCResult<UserId> {
             let args = local_user_index_canister::migrated_user_ids::Args { user_ids: vec![user_id] };
             let local_user_index_canister::migrated_user_ids::Response::Success(migrated) =
                 local_user_index_canister_c2c_client::migrated_user_ids(local_user_index_canister_id, &args).await?;
+            verify_not_frozen()?;
             migrated.get(&user_id).copied().unwrap_or(user_id)
         }
     };
@@ -98,6 +99,22 @@ async fn latest_user_id(user_id: UserId) -> OCResult<UserId> {
         });
     }
     Ok(latest)
+}
+
+// The user's latest id if it is known without a lookup. An id carrying an index wasn't a User
+// canister's, so can only have been migrated from as `MigratedUserIds` records. None for an
+// unindexed id which `MigratedUserIds` doesn't know, which must be looked up.
+fn known_latest_user_id(data: &Data, user_id: UserId) -> Option<UserId> {
+    (user_id.is_indexed() || data.migrated_user_ids.contains(&user_id)).then(|| data.migrated_user_ids.latest(user_id))
+}
+
+// The group may have been frozen (including to be imported into a community) while awaiting a call
+fn verify_not_frozen() -> OCResult {
+    if read_state(|state| state.data.is_frozen()) {
+        Err(OCErrorCode::ChatFrozen.into())
+    } else {
+        Ok(())
+    }
 }
 
 struct PrepareResult {
@@ -199,4 +216,59 @@ fn commit(user_to_remove: UserId, block: bool, remove: bool, caller: Caller, sta
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ic_principal::Principal;
+    use stable_memory_map::StableMemoryMap;
+    use types::{EventIndex, MessageIndex, UserIdAndPrincipal, UserType};
+
+    fn canister_id(i: u8) -> CanisterId {
+        CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1])
+    }
+
+    // The User canister id a migrated user had, and the id they were migrated to
+    fn old_user_id(i: u8) -> UserId {
+        canister_id(100 + i).into()
+    }
+
+    fn new_user_id(i: u8) -> UserId {
+        UserId::new_indexed(canister_id(1), i as u16)
+    }
+
+    #[test]
+    fn a_member_blocked_by_an_old_id_is_moved_onto_their_latest_id_and_blocked_under_it() {
+        let owner = UserIdAndPrincipal::new(new_user_id(1), Principal::from_slice(&[1]));
+        let mut data = Data::new_for_tests(owner.user_id, owner.principal, String::new());
+        let principal = Principal::from_slice(&[2]);
+        data.chat.members.add(
+            old_user_id(2),
+            Some(principal),
+            0,
+            EventIndex::default(),
+            MessageIndex::default(),
+            false,
+            UserType::User,
+        );
+        data.principal_to_user_id_map.insert(principal, old_user_id(2));
+
+        // An indexed id is the user's latest, whereas an unindexed id the group doesn't know is
+        // looked up
+        assert_eq!(known_latest_user_id(&data, owner.user_id), Some(owner.user_id));
+        assert_eq!(known_latest_user_id(&data, old_user_id(2)), None);
+
+        // The lookup finds that they have been migrated, so their membership is moved onto their
+        // latest id, under which they are then blocked, as `latest_user_id` and `commit` do
+        data.migrate_user_ids(&[old_user_id(2)], new_user_id(2), None, 1);
+        assert_eq!(known_latest_user_id(&data, old_user_id(2)), Some(new_user_id(2)));
+        assert_eq!(data.principal_to_user_id_map.get(&principal), Some(new_user_id(2)));
+        data.chat.remove_member(Caller::User(owner), new_user_id(2), true, 2).unwrap();
+        data.remove_user(new_user_id(2), None);
+
+        assert!(!data.chat.members.contains(&old_user_id(2)));
+        assert!(!data.chat.members.contains(&new_user_id(2)));
+        assert_eq!(data.chat.members.blocked(), vec![new_user_id(2)]);
+    }
 }

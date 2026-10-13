@@ -1508,8 +1508,10 @@ impl GroupChatCore {
     // `migrate_user_id` through `f`, replacing each with the id returned: who created the chat, the
     // senders of @everyone mentions, and the users mentioned in the description and rules. Used to
     // replace the ids users had before being migrated to MultiUser canisters with their latest ids.
-    // The description and rules are marked as updated if changed, so that clients which ask for them
-    // are sent them again, but the rules keep their version, so needn't be accepted again.
+    // The description's and rules' timestamps are moved on if they change. The rules' counts towards
+    // when the chat was last updated, but the description's doesn't, so clients only pick up a change
+    // to it along with the chat's next update, or when they next fetch its details afresh. The rules
+    // keep their version, so needn't be accepted again.
     pub fn update_user_ids_outside_records(&mut self, f: &mut dyn FnMut(UserId) -> UserId, now: TimestampMillis) {
         self.created_by = f(self.created_by);
         for mention in self.at_everyone_mentions.values_mut() {

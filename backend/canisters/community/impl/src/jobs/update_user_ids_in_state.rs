@@ -1,4 +1,5 @@
 use crate::jobs::update_user_ids_in_events;
+use crate::timer_job_types::TimerJob;
 use crate::{Data, RuntimeState, mutate_state, read_state, run_regular_jobs};
 use group_community_common::UserIdsInStateMigration;
 use ic_cdk_timers::TimerId;
@@ -6,10 +7,12 @@ use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
 use std::cell::Cell;
 use std::collections::HashMap;
+use std::ops::Deref;
 use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{CanisterId, ChannelId, TimestampMillis, Timestamped, UserId};
 use utils::mentions::replace_mentioned_users;
+use utils::migrated_user_ids::MigratedUserIds;
 
 const MAX_INSTRUCTIONS_PER_BATCH: u64 = 2_000_000_000;
 const MAX_USER_IDS_PER_LOOKUP: usize = 5_000;
@@ -56,15 +59,39 @@ thread_local! {
 // up a batch of the ids found in the LocalUserIndex, or passes through as much of the state as it
 // can. Once complete, the job which does the same for the community's events is started, from the
 // start if it had already begun, so that it also catches any old ids written into events in the
-// meantime. This is restarted when a group is imported. It can be removed once it has completed in
-// every community.
+// meantime. This is held back while a group's members are being imported, then restarted (see
+// `on_channel_members_imported`). It can be removed once it has completed in every community.
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none() && !state.data.user_ids_in_state_migration.is_complete() {
+    if TIMER_ID.get().is_none() && !state.data.user_ids_in_state_migration.is_complete() && !is_held(&state.data) {
         start_timer(Duration::ZERO);
         true
     } else {
         false
     }
+}
+
+// The members of a group imported into the community are added to it a batch at a time, in order of
+// user id, so moving them onto their latest ids meanwhile could make the import skip some of them,
+// leaving them members of the channel but not the community. So the job waits until the members of
+// every group being imported have been added, including any whose import was finalized by an
+// earlier version, which are only known by their jobs still being queued.
+fn is_held(data: &Data) -> bool {
+    !data.channels_importing_members.is_empty()
+        || data.timer_jobs.iter().any(|(_, job)| {
+            matches!(
+                job.deref().borrow().as_ref(),
+                Some(TimerJob::ProcessGroupImportChannelMembers(_))
+            )
+        })
+}
+
+// Called once the members of a group imported into the channel have been added to the community.
+// The channel's state may still hold ids which users had before being migrated to MultiUser
+// canisters (eg. its former members' metrics, or those it blocked, who are now blocked from the
+// community), so the community's state is passed through again.
+pub(crate) fn on_channel_members_imported(data: &mut Data, channel_id: ChannelId) {
+    data.channels_importing_members.remove(&channel_id);
+    data.user_ids_in_state_migration.restart();
 }
 
 // `TIMER_ID` stays set until the run has finished, including while it waits on a lookup, so that
@@ -99,6 +126,9 @@ async fn run() {
 
 // Returns the next ids to look up if there are any, otherwise passes through a batch of the state
 fn run_batch(state: &mut RuntimeState) -> Option<(Vec<UserId>, CanisterId)> {
+    if is_held(&state.data) {
+        return None;
+    }
     let user_ids = state
         .data
         .user_ids_in_state_migration
@@ -161,9 +191,12 @@ fn update(data: &mut Data, now: TimestampMillis, should_stop: &mut dyn FnMut() -
 // Takes one step through the state from `position`, returning where the next carries on from, None
 // once the pass has finished. A pass gathers the ids in the community's own state on the heap first,
 // then moves the records held under old ids, which moves their memberships of channels too, then
-// replaces the ids in the members' referrals and in the map of principals, which by then only points
-// at old ids for those who aren't members (eg. invited users). Then each channel's ids are gathered
-// from the heap and stable memory, and the records under old ids moved.
+// replaces the ids in the members' referrals and in the map of principals, which by then only hold
+// old ids with nothing held under them (eg. those of invited users, whose invitations have been
+// moved), unless their migrations were learned during the pass (see
+// `UserIdsInStateMigration::defer`). Then each channel's ids are gathered from the heap and stable
+// memory, and the channel's records under old ids moved. Those of community members are left to be
+// moved along with their memberships of the community.
 fn step(
     data: &mut Data,
     migration: &mut UserIdsInStateMigration<StatePosition>,
@@ -190,10 +223,16 @@ fn step(
         }
         Some(StatePosition::Referrals(mut after)) => loop {
             let migrated_user_ids = &data.migrated_user_ids;
+            let invited_users = &data.invited_users;
             after = data
                 .members
-                .update_referral_user_ids(after, STABLE_MEMORY_BATCH_SIZE, &mut |user_id| {
-                    migration.latest_user_id(user_id, migrated_user_ids)
+                .update_referral_user_ids(after, STABLE_MEMORY_BATCH_SIZE, &mut |user_id, held| {
+                    latest_unless_held(
+                        user_id,
+                        held || invited_users.contains(&user_id),
+                        migration,
+                        migrated_user_ids,
+                    )
                 });
             if after.is_none() {
                 return Some(StatePosition::Principals(None));
@@ -204,10 +243,16 @@ fn step(
         },
         Some(StatePosition::Principals(mut after)) => loop {
             let migrated_user_ids = &data.migrated_user_ids;
+            let invited_users = &data.invited_users;
             after = data
                 .members
-                .update_principal_user_ids(after, STABLE_MEMORY_BATCH_SIZE, &mut |user_id| {
-                    migration.latest_user_id(user_id, migrated_user_ids)
+                .update_principal_user_ids(after, STABLE_MEMORY_BATCH_SIZE, &mut |user_id, held| {
+                    latest_unless_held(
+                        user_id,
+                        held || invited_users.contains(&user_id),
+                        migration,
+                        migrated_user_ids,
+                    )
                 });
             if after.is_none() {
                 return start_next_channel(data, migration, None, now);
@@ -218,6 +263,8 @@ fn step(
         },
         Some(StatePosition::Channel(channel_id, ChannelPosition::Metrics(mut after))) => {
             let Some(channel) = data.channels.get(&channel_id) else {
+                // The channel has been deleted, so its records went with it
+                migration.clear_to_move();
                 return start_next_channel(data, migration, Some(channel_id), now);
             };
             loop {
@@ -226,7 +273,7 @@ fn step(
                     .events
                     .user_ids_with_metrics_in_stable_memory(after, STABLE_MEMORY_BATCH_SIZE);
                 for user_id in user_ids.iter() {
-                    migration.record_key(*user_id, &data.migrated_user_ids);
+                    record_channel_key(*user_id, data, migration);
                 }
                 if user_ids.len() < STABLE_MEMORY_BATCH_SIZE {
                     return Some(StatePosition::Channel(channel_id, ChannelPosition::Move));
@@ -250,10 +297,37 @@ fn step(
                 }
             } else {
                 // The channel has been deleted, so its records went with it
-                while migration.take_next_to_move().is_some() {}
+                migration.clear_to_move();
             }
             start_next_channel(data, migration, Some(channel_id), now)
         }
+    }
+}
+
+// What to replace `user_id`, held as a value, with: its latest id, unless records are still held
+// under it (`held`), in which case it is deferred (see `UserIdsInStateMigration::defer`)
+fn latest_unless_held(
+    user_id: UserId,
+    held: bool,
+    migration: &mut UserIdsInStateMigration<StatePosition>,
+    migrated_user_ids: &MigratedUserIds,
+) -> UserId {
+    if held {
+        migration.defer(user_id, migrated_user_ids);
+        user_id
+    } else {
+        migration.latest_user_id(user_id, migrated_user_ids)
+    }
+}
+
+// Records an id under which the channel holds a record. A community member's records in the channel
+// are only moved along with their membership of the community, which moves them in every channel,
+// so are deferred if the community still holds them under an old id.
+fn record_channel_key(user_id: UserId, data: &Data, migration: &mut UserIdsInStateMigration<StatePosition>) {
+    if data.members.contains(&user_id) {
+        migration.defer(user_id, &data.migrated_user_ids);
+    } else {
+        migration.record_key(user_id, &data.migrated_user_ids);
     }
 }
 
@@ -271,11 +345,12 @@ fn start_next_channel(
         .map(|c| c.id)
         .filter(|id| after.is_none_or(|a| *id > a))
         .min()?;
+    let channel = data.channels.get(&channel_id)?;
+    for user_id in channel.chat.user_ids_holding_records() {
+        record_channel_key(user_id, data, migration);
+    }
     let channel = data.channels.get_mut(&channel_id)?;
     let migrated_user_ids = &data.migrated_user_ids;
-    for user_id in channel.chat.user_ids_holding_records() {
-        migration.record_key(user_id, migrated_user_ids);
-    }
     channel
         .chat
         .update_user_ids_outside_records(&mut |user_id| migration.latest_user_id(user_id, migrated_user_ids), now);
@@ -304,7 +379,10 @@ fn update_community_heap(data: &mut Data, migration: &mut UserIdsInStateMigratio
         frozen.frozen_by = f(frozen.frozen_by);
     }
     data.total_payment_receipts.update_user_ids(f);
-    // The rules keep their version, so needn't be accepted again
+    // The description's and rules' timestamps are moved on if they change, but neither counts towards
+    // when the community was last updated, so clients only pick up the change along with the
+    // community's next update, or when they next fetch its details afresh. The rules keep their
+    // version, so needn't be accepted again.
     if let Some(description) = replace_mentioned_users(&data.description.value, f) {
         data.description = Timestamped::new(description, now);
     }
@@ -320,13 +398,10 @@ mod tests {
     use super::*;
     use crate::model::invited_users::UserInvitation;
     use chat_events::{MessageContentInternal, NullEventPusher, PushMessageArgs, TextContentInternal};
-    use ic_stable_structures::DefaultMemoryImpl;
-    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use rand::SeedableRng;
     use rand::rngs::StdRng;
     use std::collections::{BTreeSet, HashSet};
-    use types::{BotPermissions, CommunityPermissions, EventIndex, FrozenGroupInfo, MessageId, MessageIndex, Rules, UserType};
-    use utils::migrated_user_ids::MigratedUserIds;
+    use types::{BotPermissions, EventIndex, FrozenGroupInfo, MessageId, MessageIndex, UserType};
 
     const NOW: TimestampMillis = 1_000;
 
@@ -372,38 +447,13 @@ mod tests {
     // who sent a message there. User 7 is a member under their latest id, referred by migrated user
     // 8, who has since left.
     fn setup() -> Data {
-        let memory = MemoryManager::init(DefaultMemoryImpl::default());
-        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
-
-        let mut rng = StdRng::seed_from_u64(1);
-        let mut data = Data::new(
-            Principal::from_slice(&[200]).into(),
-            principal(1),
+        let mut data = Data::new_for_tests(
             old_user_id(1),
-            UserType::User,
-            true,
-            "name".to_string(),
+            principal(1),
             format!("Run by @UserId({})", old_user_id(1)),
-            Rules::default(),
-            None,
-            None,
-            CommunityPermissions::default(),
-            "en".to_string(),
-            canister_id(10),
-            canister_id(11),
-            canister_id(12),
-            canister_id(13).into(),
-            canister_id(14),
-            canister_id(15),
-            None,
             vec![(channel_id(5), "five".to_string()), (channel_id(2), "two".to_string())],
-            None,
-            0,
-            Vec::new(),
-            true,
-            &mut rng,
-            0,
         );
+        let mut rng = StdRng::seed_from_u64(1);
         data.members
             .add(old_user_id(2), principal(2), UserType::User, Some(old_user_id(1)), 0);
         data.members
@@ -594,24 +644,26 @@ mod tests {
 
     #[test]
     fn the_pass_carries_on_if_the_channel_it_stopped_in_is_deleted() {
-        let mut data = setup();
-        data.migrated_user_ids = lookup();
-        while data.user_ids_in_state_migration.pass_position()
-            != Some(Some(StatePosition::Channel(channel_id(2), ChannelPosition::Move)))
-        {
-            update(&mut data, NOW, &mut || true);
+        for stopped_at in [ChannelPosition::Metrics(None), ChannelPosition::Move] {
+            let mut data = setup();
+            data.migrated_user_ids = lookup();
+            while data.user_ids_in_state_migration.pass_position()
+                != Some(Some(StatePosition::Channel(channel_id(2), stopped_at)))
+            {
+                update(&mut data, NOW, &mut || true);
+            }
+            data.channels.delete(channel_id(2), 0);
+
+            run_to_completion(&mut data, &mut || true);
+
+            let channel = data.channels.get(&channel_id(5)).unwrap();
+            assert_eq!(channel.chat.created_by, new_user_id(1));
+            assert!(channel.chat.members.contains(&new_user_id(1)));
         }
-        data.channels.delete(channel_id(2), 0);
-
-        run_to_completion(&mut data, &mut || true);
-
-        let channel = data.channels.get(&channel_id(5)).unwrap();
-        assert_eq!(channel.chat.created_by, new_user_id(1));
-        assert!(channel.chat.members.contains(&new_user_id(1)));
     }
 
     #[test]
-    fn restarting_passes_through_the_state_again_and_holds_back_the_events_job() {
+    fn the_job_waits_until_a_groups_members_are_imported_then_passes_through_the_state_again() {
         let mut data = setup();
         data.user_ids_in_events_migration.record_scanned_up_to(None);
         assert!(!update_user_ids_in_events::is_required(&data));
@@ -619,28 +671,72 @@ mod tests {
         prepare_events_migration(&mut data);
         assert!(update_user_ids_in_events::is_required(&data));
 
-        // A channel member is added under an old id, as when a group is imported
-        let channel = data.channels.get_mut(&channel_id(5)).unwrap();
-        channel.chat.members.add(
-            old_user_id(6),
-            None,
-            0,
-            EventIndex::default(),
-            MessageIndex::default(),
-            false,
-            UserType::User,
-        );
-        data.user_ids_in_state_migration.restart();
-        assert!(!update_user_ids_in_events::is_required(&data));
+        // A group is imported into channel 5, holding the metrics of a former member under their old
+        // id, and blocking another user under theirs, who is blocked from the community. The job is
+        // held while the group's members are added to the community.
+        data.channels_importing_members.insert(channel_id(5));
+        send_message(&mut data, channel_id(5), old_user_id(6));
+        data.members.block(old_user_id(8), 0);
+        assert!(is_held(&data));
 
+        on_channel_members_imported(&mut data, channel_id(5));
+        assert!(!is_held(&data));
+        assert!(!update_user_ids_in_events::is_required(&data));
         let (looked_up, _) = run_to_completion(&mut data, &mut || false);
         prepare_events_migration(&mut data);
 
-        // Its migration is already known
+        // Their migrations are already known
         assert!(looked_up.is_empty());
-        let channel = data.channels.get(&channel_id(5)).unwrap();
-        assert!(channel.chat.members.contains(&new_user_id(6)));
-        assert!(!channel.chat.members.contains(&old_user_id(6)));
+        let events = &data.channels.get(&channel_id(5)).unwrap().chat.events;
+        assert_eq!(events.user_metrics(&new_user_id(6), None).unwrap().hydrate().text_messages, 1);
+        assert!(events.user_metrics(&old_user_id(6), None).is_none());
+        assert!(data.members.is_blocked(&new_user_id(8)));
+        assert!(!data.members.is_blocked(&old_user_id(8)));
         assert!(update_user_ids_in_events::is_required(&data));
+    }
+
+    #[test]
+    fn a_migration_learned_during_a_pass_is_only_applied_once_the_records_under_it_have_moved() {
+        let mut data = setup();
+        // The first lookup doesn't find user 2's migration, eg. because the LocalUserIndex hadn't yet
+        // heard of it
+        let mut lookup_without_user_2 = MigratedUserIds::default();
+        for i in [1, 3, 4, 5, 6, 7, 8] {
+            lookup_without_user_2.insert(old_user_id(i), new_user_id(i));
+        }
+        while data.user_ids_in_state_migration.pass_position().is_some() {
+            update(&mut data, NOW, &mut || true);
+        }
+        let user_ids = data.user_ids_in_state_migration.user_ids_to_look_up(MAX_USER_IDS_PER_LOOKUP);
+        let migrated = lookup_without_user_2.get_many(user_ids.iter().copied());
+        data.user_ids_in_state_migration
+            .record_lookup(&user_ids, &migrated, &mut data.migrated_user_ids);
+
+        // During the next pass, once the community's records have been moved, user 2's migration is
+        // learned, eg. by events for them being sent on to their latest id
+        while data.user_ids_in_state_migration.pass_position() != Some(Some(StatePosition::Referrals(None))) {
+            update(&mut data, NOW, &mut || true);
+        }
+        data.migrated_user_ids.insert(old_user_id(2), new_user_id(2));
+        while matches!(data.user_ids_in_state_migration.pass_position(), Some(Some(_))) {
+            update(&mut data, NOW, &mut || true);
+        }
+
+        // Nothing has been pointed at their latest id while their records are still under their old
+        // id, so their principal still leads to their membership, and their membership of channel 2
+        // hasn't been moved apart from their membership of the community
+        assert!(data.members.contains(&old_user_id(2)));
+        assert_eq!(data.members.lookup_user_id(principal(2)), Some(old_user_id(2)));
+        let member1 = data.members.get_by_user_id(&new_user_id(1)).unwrap();
+        assert_eq!(member1.referrals(), &BTreeSet::from([old_user_id(2)]));
+        let channel = data.channels.get(&channel_id(2)).unwrap();
+        assert!(channel.chat.members.contains(&old_user_id(2)));
+        assert!(!channel.chat.members.contains(&new_user_id(2)));
+
+        // Another pass is made, with nothing to look up, which moves them
+        assert_eq!(data.user_ids_in_state_migration.pass_position(), Some(None));
+        let (looked_up, _) = run_to_completion(&mut data, &mut || false);
+        assert!(looked_up.is_empty());
+        assert_every_old_id_replaced(&data);
     }
 }

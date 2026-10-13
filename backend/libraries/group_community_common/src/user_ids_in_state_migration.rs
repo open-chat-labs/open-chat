@@ -18,6 +18,12 @@ use utils::migrated_user_ids::MigratedUserIds;
 // Once a pass has finished, those ids are looked up, adding any migrations found to
 // `MigratedUserIds`, then another pass is made to replace them. The job is complete once a pass
 // finds nothing to look up. Each id is only looked up once.
+//
+// A value is never replaced by the latest id while records are still held under the old id (eg. a
+// principal mapped to a member who hasn't been moved yet), since the value would then lead nowhere.
+// That can only happen if the migration was learned during the pass, after the records had been
+// passed, eg. by events for the user being sent on to their latest id. Such a value is deferred, and
+// another pass is made, which moves the records and then replaces it.
 #[derive(Serialize, Deserialize)]
 #[serde(bound(serialize = "P: Serialize", deserialize = "P: Deserialize<'de>"))]
 pub struct UserIdsInStateMigration<P> {
@@ -31,6 +37,9 @@ pub struct UserIdsInStateMigration<P> {
     // The ids which have been looked up and found not to have been migrated
     #[serde(rename = "n", default, skip_serializing_if = "HashSet::is_empty")]
     not_migrated: HashSet<UserId>,
+    // Whether the current pass has deferred anything (see `defer`)
+    #[serde(rename = "d", default)]
+    another_pass_needed: bool,
     #[serde(rename = "c", default)]
     passes_completed: u32,
     #[serde(rename = "l", default)]
@@ -69,6 +78,7 @@ impl<P> Default for UserIdsInStateMigration<P> {
             to_look_up: BTreeSet::new(),
             to_move: BTreeSet::new(),
             not_migrated: HashSet::new(),
+            another_pass_needed: false,
             passes_completed: 0,
             user_ids_looked_up: 0,
             user_ids_replaced: 0,
@@ -89,18 +99,22 @@ impl<P: Copy> UserIdsInStateMigration<P> {
     }
 
     // Records where a step got to, None meaning the pass has finished, after which the ids it found
-    // are looked up, if there are any, otherwise the job is complete
+    // are looked up, if there are any, then another pass is made if needed, otherwise the job is
+    // complete
     pub fn record_position(&mut self, position: Option<P>) {
         if position.is_some() {
             self.phase = Phase::Pass(position);
         } else {
             self.passes_completed += 1;
-            if self.to_look_up.is_empty() {
+            let another_pass_needed = std::mem::take(&mut self.another_pass_needed);
+            if !self.to_look_up.is_empty() {
+                self.phase = Phase::LookUp;
+            } else if another_pass_needed {
+                self.phase = Phase::Pass(None);
+            } else {
                 self.phase = Phase::Complete;
                 // The ids found not to have been migrated are only needed while passing
                 self.not_migrated = HashSet::new();
-            } else {
-                self.phase = Phase::LookUp;
             }
         }
     }
@@ -110,6 +124,7 @@ impl<P: Copy> UserIdsInStateMigration<P> {
     pub fn restart(&mut self) {
         self.phase = Phase::Pass(None);
         self.to_move.clear();
+        self.another_pass_needed = false;
     }
 
     // What to replace `user_id`, held as a value, with: the user's latest id if they are known to
@@ -136,9 +151,25 @@ impl<P: Copy> UserIdsInStateMigration<P> {
         }
     }
 
+    // Leaves `user_id` as it is for now, because records are still held under it elsewhere, which
+    // the pass has already gone by if it is known to have been migrated. Another pass is then made,
+    // which moves those records before replacing it.
+    pub fn defer(&mut self, user_id: UserId, migrated_user_ids: &MigratedUserIds) {
+        if migrated_user_ids.get(&user_id).is_some() {
+            self.another_pass_needed = true;
+        } else {
+            self.look_up_if_unknown(user_id, migrated_user_ids);
+        }
+    }
+
     // Takes the next of the ids whose records are waiting to be moved
     pub fn take_next_to_move(&mut self) -> Option<UserId> {
         self.to_move.pop_first()
+    }
+
+    // Drops the ids waiting to be moved, eg. once the channel holding their records has been deleted
+    pub fn clear_to_move(&mut self) {
+        self.to_move.clear();
     }
 
     pub fn record_moved(&mut self) {
@@ -281,6 +312,40 @@ mod tests {
         assert_eq!(metrics.user_ids_moved, 1);
         // The ids found not to have been migrated are dropped once complete
         assert_eq!(metrics.user_ids_not_migrated, 0);
+    }
+
+    #[test]
+    fn deferring_an_id_with_a_known_migration_makes_another_pass() {
+        let mut migrated_user_ids = MigratedUserIds::default();
+        let mut migration = UserIdsInStateMigration::<u32>::default();
+
+        // A latest id, or one found not to have been migrated, needs nothing more
+        migration.defer(new_user_id(1), &migrated_user_ids);
+        migration.record_position(None);
+        assert!(migration.is_complete());
+
+        migration.restart();
+        migrated_user_ids.insert(old_user_id(1), new_user_id(1));
+        migration.defer(old_user_id(1), &migrated_user_ids);
+        migration.record_position(None);
+
+        assert_eq!(migration.pass_position(), Some(None));
+        assert!(migration.user_ids_to_look_up(10).is_empty());
+        // The next pass has nothing left to defer
+        migration.record_position(None);
+        assert!(migration.is_complete());
+        assert_eq!(migration.metrics().passes_completed, 3);
+    }
+
+    #[test]
+    fn deferring_an_unknown_unindexed_id_looks_it_up() {
+        let migrated_user_ids = MigratedUserIds::default();
+        let mut migration = UserIdsInStateMigration::<u32>::default();
+
+        migration.defer(old_user_id(1), &migrated_user_ids);
+        migration.record_position(None);
+
+        assert_eq!(migration.user_ids_to_look_up(10), vec![old_user_id(1)]);
     }
 
     #[test]

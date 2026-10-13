@@ -258,12 +258,10 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             migrate_chat_events_to_stable_memory::start_job_if_required(state);
             // The group may have been unlapsing its members when it was exported
             unlapse_members::start_job_if_required(state);
-            // The channel's state may still hold ids which users had before being migrated to
-            // MultiUser canisters (eg. its members, or those it blocked, who are blocked from the
-            // community above), so the community's state is passed through again, which holds back
-            // the job which replaces them in the events until done
-            state.data.user_ids_in_state_migration.restart();
-            update_user_ids_in_state::start_job_if_required(state);
+            // The job which replaces the ids users had before being migrated to MultiUser canisters
+            // throughout the community's state waits until the channel's members have been added to
+            // the community (see `update_user_ids_in_state::is_held`)
+            state.data.channels_importing_members.insert(channel_id);
             // The channel's events may still hold ids which users had before being migrated to
             // MultiUser canisters, so are scanned for them, from the start if the scan has passed it
             let migration = &mut state.data.user_ids_in_events_migration;
@@ -460,6 +458,8 @@ fn next_batch_of_channel_members(
     let batch_size = if data.test_mode { IMPORT_MEMBERS_BATCH_SIZE_TEST_MODE } else { IMPORT_MEMBERS_BATCH_SIZE };
     let mut batch = BTreeMap::new();
     let mut scanned_to = job.after;
+    // Already recorded when the import was finalized, unless that was by an earlier version
+    data.channels_importing_members.insert(job.channel_id);
 
     if let Some(channel) = data.channels.get(&job.channel_id) {
         let bots = channel.chat.members.bots();
@@ -497,6 +497,13 @@ fn complete_processing_channel_members(group_id: ChatId, channel_id: ChannelId, 
             channel_id,
             members_added,
         })));
+
+        // The channel's state may still hold ids which users had before being migrated to MultiUser
+        // canisters (eg. its former members' metrics, or those it blocked, who are now blocked from
+        // the community), so the community's state is passed through again, which holds back the job
+        // which replaces them in the events until done
+        update_user_ids_in_state::on_channel_members_imported(&mut state.data, channel_id);
+        update_user_ids_in_state::start_job_if_required(state);
     });
 
     ic_cdk_timers::set_timer(Duration::ZERO, async move {

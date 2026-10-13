@@ -740,6 +740,48 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
     InstructionCountsLog::init(get_instruction_counts_index_memory(), get_instruction_counts_data_memory())
 }
 
+#[cfg(test)]
+impl Data {
+    // A public group created by the given user, with a fresh stable memory map
+    fn new_for_tests(creator_user_id: UserId, creator_principal: Principal, description: String) -> Data {
+        use ic_stable_structures::DefaultMemoryImpl;
+        use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
+
+        let canister_id = |i: u8| CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1]);
+        Data::new(
+            Principal::from_slice(&[200]).into(),
+            true,
+            "name".to_string(),
+            description,
+            Rules::default(),
+            None,
+            None,
+            true,
+            false,
+            creator_principal,
+            creator_user_id,
+            UserType::User,
+            None,
+            0,
+            0,
+            canister_id(10),
+            canister_id(11),
+            canister_id(12),
+            canister_id(13).into(),
+            canister_id(14),
+            canister_id(15),
+            true,
+            None,
+            None,
+            Vec::new(),
+            0,
+        )
+    }
+}
+
 #[expect(clippy::too_many_arguments)]
 impl Data {
     pub fn new(
@@ -879,10 +921,16 @@ impl Data {
         if self.is_accessible(caller, invite_code) { Ok(()) } else { Err(OCErrorCode::InitiatorNotInChat) }
     }
 
+    // The invitation is looked for under the latest id of the user the principal is mapped to as
+    // well, since while old user ids are being replaced (see `update_user_ids_in_state`) it may have
+    // been moved before the principal is
     pub fn get_invitation(&self, caller: Principal) -> Option<&UserInvitation> {
-        self.principal_to_user_id_map
-            .get(&caller)
-            .and_then(|user_id| self.chat.invited_users.get(&user_id))
+        self.principal_to_user_id_map.get(&caller).and_then(|user_id| {
+            self.chat
+                .invited_users
+                .get(&user_id)
+                .or_else(|| self.chat.invited_users.get(&self.migrated_user_ids.latest(user_id)))
+        })
     }
 
     pub fn invite_users(
@@ -902,11 +950,14 @@ impl Data {
         Ok(result)
     }
 
+    // As with `get_invitation`, the invitation may be held under the latest id of the user the
+    // principal is mapped to
     pub fn remove_invitation(&mut self, caller: Principal, now: TimestampMillis) -> Option<UserInvitation> {
-        self.principal_to_user_id_map
-            .remove(&caller)
-            .map(|v| v.into_value())
-            .and_then(|user_id| self.chat.invited_users.remove(&user_id, now))
+        let user_id = self.principal_to_user_id_map.remove(&caller)?.into_value();
+        self.chat
+            .invited_users
+            .remove(&user_id, now)
+            .or_else(|| self.chat.invited_users.remove(&self.migrated_user_ids.latest(user_id), now))
     }
 
     pub fn record_instructions_count(&self, function_id: InstructionCountFunctionId, now: TimestampMillis) {

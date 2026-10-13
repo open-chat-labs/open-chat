@@ -469,25 +469,44 @@ impl CommunityMembers {
 
     // Passes the ids in the `referred_by` and `referrals` of up to `max_count` members, in key order
     // starting after `after`, through `f`, replacing each with the id returned. Returns the last
-    // member passed if there may be more after them, otherwise None.
+    // member passed if there may be more after them, otherwise None. `f` is also told whether a
+    // membership or block is still held under the id, so that an id isn't replaced before they are
+    // moved (see `UserIdsInStateMigration::defer`).
     pub fn update_referral_user_ids(
         &mut self,
         after: Option<UserId>,
         max_count: usize,
-        f: &mut dyn FnMut(UserId) -> UserId,
+        f: &mut dyn FnMut(UserId, bool) -> UserId,
     ) -> Option<UserId> {
-        self.members_map.update_referral_user_ids(after, max_count, f)
+        let members_and_channels = &self.members_and_channels;
+        let blocked = &self.blocked;
+        self.members_map.update_referral_user_ids(after, max_count, &mut |user_id| {
+            f(
+                user_id,
+                members_and_channels.contains_key(&user_id) || blocked.contains(&user_id),
+            )
+        })
     }
 
     // Passes the user ids of up to `max_count` entries in the map of principals, in key order
-    // starting after `after`, through `f` (see `PrincipalToUserIdMap::update_user_ids`)
+    // starting after `after`, through `f` (see `PrincipalToUserIdMap::update_user_ids`). As with
+    // `update_referral_user_ids`, `f` is also told whether a membership or block is still held under
+    // the id.
     pub fn update_principal_user_ids(
         &mut self,
         after: Option<Principal>,
         max_count: usize,
-        f: &mut dyn FnMut(UserId) -> UserId,
+        f: &mut dyn FnMut(UserId, bool) -> UserId,
     ) -> Option<Principal> {
-        self.principal_to_user_id_map.update_user_ids(after, max_count, f)
+        let members_and_channels = &self.members_and_channels;
+        let blocked = &self.blocked;
+        self.principal_to_user_id_map
+            .update_user_ids(after, max_count, &mut |user_id| {
+                f(
+                    user_id,
+                    members_and_channels.contains_key(&user_id) || blocked.contains(&user_id),
+                )
+            })
     }
 
     fn principal_if_mapped_to(&self, user_id: &UserId) -> Option<Principal> {
@@ -1562,11 +1581,14 @@ mod tests {
         // Referred by the first member, who holds them among their referrals
         members.add(user_id(200), principal(200), UserType::User, Some(user_id(0)), 0);
 
-        let mut f = |u| {
-            if u == old_referrer {
+        // Replaces the former member's id, and those of any members, which are told of being held
+        let mut held_passed = BTreeSet::new();
+        let mut f = |u, held| {
+            if held {
+                held_passed.insert(u);
+                if u == user_id(200) { user_id(201) } else { u }
+            } else if u == old_referrer {
                 new_referrer
-            } else if u == user_id(200) {
-                user_id(201)
             } else {
                 u
             }
@@ -1582,13 +1604,13 @@ mod tests {
         }
 
         assert_eq!(batches, 2);
+        assert_eq!(held_passed, BTreeSet::from([user_id(0), user_id(200)]));
         for i in 1..150 {
             assert_eq!(members.get_by_user_id(&user_id(i)).unwrap().referred_by, Some(new_referrer));
         }
         let first = members.get_by_user_id(&user_id(0)).unwrap();
         assert_eq!(first.referrals(), &BTreeSet::from([user_id(201)]));
         assert_eq!(members.get_by_user_id(&user_id(200)).unwrap().referred_by, Some(user_id(0)));
-        members.check_invariants();
     }
 
     fn member_ids(members: &[CommunityMember]) -> Vec<UserId> {

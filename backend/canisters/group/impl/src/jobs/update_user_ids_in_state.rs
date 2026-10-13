@@ -152,7 +152,8 @@ fn update(data: &mut Data, now: TimestampMillis, should_stop: &mut dyn FnMut() -
 // Takes one step through the state from `position`, returning where the next carries on from, None
 // once the pass has finished. A pass gathers the ids on the heap first, then those in stable memory,
 // then moves the records held under old ids, then replaces the ids in the map of principals, which
-// by then only points at old ids for those who aren't members (eg. invited users).
+// by then only points at old ids with nothing held under them (eg. those of invited users, whose
+// invitations have been moved), unless their migrations were learned during the pass.
 fn step(
     data: &mut Data,
     migration: &mut UserIdsInStateMigration<StatePosition>,
@@ -195,11 +196,23 @@ fn step(
         }
         Some(StatePosition::Principals(mut after)) => loop {
             let migrated_user_ids = &data.migrated_user_ids;
+            let chat = &data.chat;
             // None once there are no entries left, which finishes the pass
             let last = data
                 .principal_to_user_id_map
                 .update_user_ids(after, STABLE_MEMORY_BATCH_SIZE, &mut |user_id| {
-                    migration.latest_user_id(user_id, migrated_user_ids)
+                    // A principal is left pointing at an id under which a membership, block or
+                    // invitation is still held, so that it never points at an id the user has no
+                    // records under (see `UserIdsInStateMigration::defer`)
+                    if chat.members.contains(&user_id)
+                        || chat.members.is_blocked(&user_id)
+                        || chat.invited_users.contains(&user_id)
+                    {
+                        migration.defer(user_id, migrated_user_ids);
+                        user_id
+                    } else {
+                        migration.latest_user_id(user_id, migrated_user_ids)
+                    }
                 })?;
             after = Some(last);
             if should_stop() {
@@ -239,12 +252,9 @@ mod tests {
     use chat_events::{MessageContentInternal, NullEventPusher, PushMessageArgs, TextContentInternal};
     use group_chat_core::UserInvitation;
     use group_community_common::ExpiringMember;
-    use ic_stable_structures::DefaultMemoryImpl;
-    use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use stable_memory_map::StableMemoryMap;
     use types::{
-        Achievement, BotPermissions, EventContext, EventIndex, FrozenGroupInfo, MessageId, MessageIndex, Rules, Timestamped,
-        UserType,
+        Achievement, BotPermissions, EventContext, EventIndex, FrozenGroupInfo, MessageId, MessageIndex, Timestamped, UserType,
     };
     use utils::migrated_user_ids::MigratedUserIds;
 
@@ -287,37 +297,7 @@ mod tests {
     // user 1, user 5 froze the group and user 6 is a former member who sent a message. Migrated user
     // 7 is a member under their latest id. The bot is a member.
     fn setup() -> Data {
-        let memory = MemoryManager::init(DefaultMemoryImpl::default());
-        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
-
-        let mut data = Data::new(
-            Principal::from_slice(&[200]).into(),
-            true,
-            "name".to_string(),
-            format!("Run by @UserId({})", old_user_id(1)),
-            Rules::default(),
-            None,
-            None,
-            true,
-            false,
-            principal(1),
-            old_user_id(1),
-            UserType::User,
-            None,
-            0,
-            0,
-            canister_id(10),
-            canister_id(11),
-            canister_id(12),
-            canister_id(13).into(),
-            canister_id(14),
-            canister_id(15),
-            true,
-            None,
-            None,
-            Vec::new(),
-            0,
-        );
+        let mut data = Data::new_for_tests(old_user_id(1), principal(1), format!("Run by @UserId({})", old_user_id(1)));
         for (user_id, principal, user_type) in [
             (old_user_id(2), principal(2), UserType::User),
             (old_user_id(6), principal(6), UserType::User),
@@ -573,5 +553,57 @@ mod tests {
 
         assert!(!data.user_ids_in_events_migration.is_complete());
         assert!(update_user_ids_in_events::is_required(&data));
+    }
+
+    #[test]
+    fn a_migration_learned_during_a_pass_is_only_applied_once_the_records_under_it_have_moved() {
+        let mut data = setup();
+        // The first lookup doesn't find user 2's migration, eg. because the LocalUserIndex hadn't yet
+        // heard of it
+        let mut lookup_without_user_2 = MigratedUserIds::default();
+        for i in [1, 3, 4, 5, 6, 7] {
+            lookup_without_user_2.insert(old_user_id(i), new_user_id(i));
+        }
+        while data.user_ids_in_state_migration.pass_position().is_some() {
+            update(&mut data, NOW, &mut || true);
+        }
+        let user_ids = data.user_ids_in_state_migration.user_ids_to_look_up(MAX_USER_IDS_PER_LOOKUP);
+        let migrated = lookup_without_user_2.get_many(user_ids.iter().copied());
+        data.user_ids_in_state_migration
+            .record_lookup(&user_ids, &migrated, &mut data.migrated_user_ids);
+
+        // During the next pass, once the records have been moved, user 2's migration is learned, eg.
+        // by events for them being sent on to their latest id
+        while data.user_ids_in_state_migration.pass_position() != Some(Some(StatePosition::Principals(None))) {
+            update(&mut data, NOW, &mut || true);
+        }
+        data.migrated_user_ids.insert(old_user_id(2), new_user_id(2));
+        while matches!(data.user_ids_in_state_migration.pass_position(), Some(Some(_))) {
+            update(&mut data, NOW, &mut || true);
+        }
+
+        // Their principal hasn't been pointed at their latest id, so still leads to their membership
+        assert_eq!(data.get_member(principal(2)).map(|m| m.user_id()), Some(old_user_id(2)));
+
+        // Another pass is made, with nothing to look up, which moves them
+        assert_eq!(data.user_ids_in_state_migration.pass_position(), Some(None));
+        let looked_up = run_to_completion(&mut data, &mut || false);
+        assert!(looked_up.is_empty());
+        assert_every_old_id_replaced(&data);
+    }
+
+    #[test]
+    fn an_invitation_moved_before_the_principal_is_still_found() {
+        let mut data = setup();
+        data.migrated_user_ids = lookup();
+        while data.user_ids_in_state_migration.pass_position() != Some(Some(StatePosition::Principals(None))) {
+            update(&mut data, NOW, &mut || true);
+        }
+        assert_eq!(data.principal_to_user_id_map.get(&principal(4)), Some(old_user_id(4)));
+        assert!(data.chat.invited_users.contains(&new_user_id(4)));
+
+        assert!(data.get_invitation(principal(4)).is_some());
+        assert!(data.remove_invitation(principal(4), NOW).is_some());
+        assert!(data.chat.invited_users.is_empty());
     }
 }
