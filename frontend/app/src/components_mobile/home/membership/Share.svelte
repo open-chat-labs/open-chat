@@ -17,12 +17,10 @@
     import Translatable from "@shared_components/Translatable.svelte";
 
     import { canShare } from "@src/utils/share";
-    import { OpenChat, type Level } from "@client";
-    import { getContext, onMount } from "svelte";
+    import { type Level } from "@client";
+    import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import type { MemberManagement } from "./membersState.svelte";
-
-    const client = getContext<OpenChat>("client");
 
     interface Props {
         membersState: MemberManagement;
@@ -32,16 +30,14 @@
 
     onMount(() => membersState.initialiseSharing());
 
-    let link = $derived(membersState.getSharingLink(client));
+    let link = $derived(membersState.sharingLink);
+    let hasCode = $derived(
+        membersState.inviteLink?.kind === "enabled" || membersState.inviteLink?.kind === "disabled",
+    );
 
     function onShare() {
-        membersState.shareLink(link);
+        if (link !== undefined) membersState.shareLink(link);
     }
-
-    let showLink = $derived(
-        membersState.isPublic ||
-            (membersState.sharingLinkCode !== undefined && membersState.sharingLinkEnabled),
-    );
 </script>
 
 {#if membersState.confirmingResetLink}
@@ -66,7 +62,7 @@
 {/snippet}
 
 <Container gap={"xl"} direction={"vertical"} height={"fill"}>
-    {#if !membersState.isPublic}
+    {#if hasCode}
         <Container padding={["zero", "md"]} gap={"xl"} direction={"vertical"}>
             <Setting
                 toggle={() => membersState.toggleInviteLink()}
@@ -76,13 +72,14 @@
                     onChange={() => membersState.toggleInviteLink()}
                     width={"fill"}
                     reverse
-                    checked={membersState.sharingLinkEnabled}>
+                    bound={false}
+                    checked={membersState.inviteLink?.kind === "enabled"}>
                     <Translatable resourceKey={i18nKey("Enable sharing via link")}></Translatable>
                 </Switch>
             </Setting>
         </Container>
     {/if}
-    {#if showLink}
+    {#if link !== undefined}
         <StatusCard
             mode={"warning"}
             title={interpolate(
@@ -101,7 +98,7 @@
         </StatusCard>
         <Container gap={"xs"} direction={"vertical"}>
             <CopyCard
-                action={membersState.sharingLinkCode !== undefined ? action : undefined}
+                action={membersState.inviteLink?.kind === "enabled" ? action : undefined}
                 title={"Share using this link"}
                 body={link}>
             </CopyCard>
@@ -112,7 +109,7 @@
     {/if}
 </Container>
 
-{#if showLink && canShare()}
+{#if link !== undefined && canShare()}
     <FloatingButton onClick={onShare} pos={{ bottom: "lg", right: "lg" }}>
         {#snippet icon(color)}
             <ShareIcon {color} />
