@@ -4,10 +4,11 @@ use crate::{RuntimeState, mutate_state, run_regular_jobs};
 use gated_groups::{CheckGateArgs, check_if_passes_gate_synchronously};
 use group_community_common::{ExpiringMember, ExpiringMemberAction, ExpiringMemberActionDetails};
 use ic_cdk_timers::TimerId;
+use std::collections::BTreeMap;
 use std::time::Duration;
 use std::{cell::Cell, mem};
 use tracing::trace;
-use types::{AccessGateExpiryBehaviour, Milliseconds};
+use types::{AccessGateExpiryBehaviour, ChannelId, Milliseconds, TimestampMillis, UserId};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -52,13 +53,18 @@ fn run() {
         let mut check_gate_actions = Vec::new();
         let mut any_lapsed = false;
         let mut processed = 0u32;
+        let mut to_lapse = BTreeMap::new();
 
         loop {
             // Many members can fall due together (eg. those who were already members when an
             // expiring gate was added), so once the instructions for this run are used up the
-            // rest are left for the next
-            if processed > 0 && processed.is_multiple_of(100) && ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_PER_RUN {
-                break;
+            // rest are left for the next. Those lapsed are written to stable memory together, a
+            // batch per 100 members processed.
+            if processed > 0 && processed.is_multiple_of(100) {
+                lapse(mem::take(&mut to_lapse), state, now);
+                if ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_PER_RUN {
+                    break;
+                }
             }
             let Some(member) = state.data.expiring_members.pop_if_expires_before(now) else {
                 break;
@@ -136,7 +142,10 @@ fn run() {
                     });
                 }
                 AccessGateExpiryBehaviour::Lapse => {
-                    state.data.update_lapsed(member.user_id, member.channel_id, true, now);
+                    to_lapse
+                        .entry(member.channel_id)
+                        .or_insert_with(Vec::new)
+                        .push(member.user_id);
                     any_lapsed = true;
                 }
                 AccessGateExpiryBehaviour::Invalid => {
@@ -144,6 +153,7 @@ fn run() {
                 }
             }
         }
+        lapse(to_lapse, state, now);
 
         if !users_to_lookup.is_empty() {
             state
@@ -168,4 +178,12 @@ fn run() {
             handle_activity_notification(state);
         }
     });
+}
+
+// Lapses the members of the community (under `None`) and of each channel, writing each one's members
+// to stable memory together
+fn lapse(to_lapse: BTreeMap<Option<ChannelId>, Vec<UserId>>, state: &mut RuntimeState, now: TimestampMillis) {
+    for (channel_id, user_ids) in to_lapse {
+        state.data.update_lapsed_many(user_ids, channel_id, true, now);
+    }
 }

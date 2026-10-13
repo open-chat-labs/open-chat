@@ -966,12 +966,23 @@ impl Data {
     }
 
     pub fn update_lapsed(&mut self, user_id: UserId, channel_id: Option<ChannelId>, lapsed: bool, now: TimestampMillis) {
+        self.update_lapsed_many(vec![user_id], channel_id, lapsed, now);
+    }
+
+    // As `update_lapsed` for each of the users, writing the members updated to stable memory together
+    pub fn update_lapsed_many(
+        &mut self,
+        user_ids: Vec<UserId>,
+        channel_id: Option<ChannelId>,
+        lapsed: bool,
+        now: TimestampMillis,
+    ) {
         if let Some(channel_id) = channel_id {
             if let Some(channel) = self.channels.get_mut(&channel_id) {
-                channel.chat.members.update_lapsed(user_id, lapsed, now);
+                channel.chat.members.update_lapsed_many(user_ids, lapsed, now);
             }
         } else {
-            self.members.update_lapsed(user_id, lapsed, now);
+            self.members.update_lapsed_many(user_ids, lapsed, now);
         }
     }
 

@@ -123,12 +123,10 @@ fn execute_operation(files: &mut Files, op: Operation, timestamp: TimestampMilli
 
             // Only files linked to the accessor which it was the last accessor of are removed
             files.queue_accessor_removals([accessor]);
-            while let Some(files_removed) = files.remove_next_queued_accessor(2) {
-                for file_removed in files_removed {
-                    let file = &files_before[&file_removed.file_id];
-                    assert!(file.owner == accessor || file.accessors.contains(&accessor));
-                    assert!(file.accessors.iter().all(|a| *a == accessor));
-                }
+            for file_removed in files.remove_queued_accessors_while(2, || true) {
+                let file = &files_before[&file_removed.file_id];
+                assert!(file.owner == accessor || file.accessors.contains(&accessor));
+                assert!(file.accessors.iter().all(|a| *a == accessor));
             }
             assert!(files.files.get_all().iter().all(|(_, f)| !f.accessors.contains(&accessor)));
         }

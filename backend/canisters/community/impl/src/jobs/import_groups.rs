@@ -320,14 +320,15 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
             let users: BTreeMap<_, _> = users.into_iter().collect();
 
             let mut added = Vec::new();
+            // The members added are written to stable memory together once the batch is processed
+            let mut members_added = Vec::new();
             // Where the next run carries on from: after the last member looked at, unless this run
             // stops before it has processed them all
             let mut processed_to = scanned_to;
             let mut last_processed = job.after;
             let mut migrated = Vec::new();
             for (index, (user_id, latest)) in users.into_iter().enumerate() {
-                // Each is written to stable memory, so if the instructions for this run are used up,
-                // the rest are left for the next run
+                // If the instructions for this run are used up, the rest are left for the next run
                 if index > 0
                     && index.is_multiple_of(100)
                     && ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_PER_MEMBERS_BATCH
@@ -356,17 +357,17 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
                     }
                 }
 
-                match state.data.members.add(
+                match state.data.members.add_unwritten(
                     user_id,
                     principal,
                     batch.get(&user_id).copied().unwrap_or_default(),
-                    None,
                     now,
                 ) {
-                    AddResult::Success(_) => {
+                    AddResult::Success(member) => {
                         state.data.invited_users.remove(&user_id, now);
                         state.data.members.mark_member_joined_channel(user_id, channel_id);
                         added.push(user_id);
+                        members_added.push(*member);
                     }
                     AddResult::AlreadyInCommunity => {
                         state.data.members.mark_member_joined_channel(user_id, channel_id);
@@ -379,6 +380,7 @@ pub(crate) async fn process_channel_members(mut job: ProcessGroupImportChannelMe
                     }
                 }
             }
+            state.data.members.write_added(members_added);
 
             for (old_user_id, latest) in migrated {
                 state
