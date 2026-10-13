@@ -1,43 +1,120 @@
-<!-- Generated from lib/Button.dc.html (source hash 8b5cf575) on 2026-10-07. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Text button. variant: primary | secondary | ghost | danger; disabled overrides the variant.
+     `state` forces a look (hover / focus / active) for specimens; leave it at default in real use. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './Button.logic.js';
-
   interface Props {
-    label?: string;
-    variant?: string;
-    state?: string;
+    label: string;
+    variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+    state?: 'default' | 'hover' | 'focus' | 'active';
     fullWidth?: boolean;
     disabled?: boolean;
     onClick?: () => void;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { label, variant = 'primary', state = 'default', fullWidth = false, disabled = false, onClick }: Props = $props();
 </script>
 
-<div style="display:inline-flex;width:{v.rootWidth}">
-  {#if v.isPrimary}
-    <div class="dc-p0" style="display:inline-flex;width:{v.rootWidth};box-sizing:border-box;align-items:center;justify-content:center;gap:var(--space-8);height:40px;padding:0 var(--space-18);box-sizing:border-box;border-radius:var(--radius-md);color:var(--on-accent,#2E0512);font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);cursor:pointer;user-select:none;transform:{v.pressTransform};background:{v.primaryBg};box-shadow:{v.focusRing};" onclick={v.onPress} role="button" tabindex="0">{t(v.label)}</div>
-  {/if}
-  {#if v.isSecondary}
-    <div class="dc-p1" style="display:inline-flex;width:{v.rootWidth};box-sizing:border-box;align-items:center;justify-content:center;gap:var(--space-8);height:40px;padding:0 var(--space-18);box-sizing:border-box;border-radius:var(--radius-md);color:var(--ink,#ECECF1);font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);cursor:pointer;user-select:none;transform:{v.pressTransform};background:{v.secondaryBg};box-shadow:{v.secondaryRing};" onclick={v.onPress} role="button" tabindex="0">{t(v.label)}</div>
-  {/if}
-  {#if v.isGhost}
-    <div class="dc-p2" style="display:inline-flex;width:{v.rootWidth};box-sizing:border-box;align-items:center;justify-content:center;gap:var(--space-8);height:40px;padding:0 var(--space-14);box-sizing:border-box;border-radius:var(--radius-md);color:var(--ink-2,#B9B9C6);font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);cursor:pointer;user-select:none;transform:{v.pressTransform};background:{v.ghostBg};box-shadow:{v.focusRing};" onclick={v.onPress} role="button" tabindex="0">{t(v.label)}</div>
-  {/if}
-  {#if v.isDanger}
-    <div class="dc-p3" style="display:inline-flex;width:{v.rootWidth};box-sizing:border-box;align-items:center;justify-content:center;gap:var(--space-8);height:40px;padding:0 var(--space-18);box-sizing:border-box;border-radius:var(--radius-md);color:var(--status-danger,#FF6B6B);font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);cursor:pointer;user-select:none;transform:{v.pressTransform};background:{v.dangerBg};box-shadow:{v.dangerRing};" onclick={v.onPress} role="button" tabindex="0">{t(v.label)}</div>
-  {/if}
-  {#if v.isDisabled}
-    <div style="display:inline-flex;width:{v.rootWidth};box-sizing:border-box;align-items:center;justify-content:center;gap:var(--space-8);height:40px;padding:0 var(--space-18);box-sizing:border-box;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));color:var(--ink-4,#6E6E7C);font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);cursor:not-allowed;user-select:none">{t(v.label)}</div>
+<div class="wrap" class:full={fullWidth}>
+  {#if disabled}
+    <div class="button disabled">{label}</div>
+  {:else}
+    <div class="button {variant} {state}" onclick={onClick} role="button" tabindex="0">{label}</div>
   {/if}
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--accent-hover,#ff6d85) !important}
-  .dc-p1:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p2:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p3:hover{background:var(--btn-danger-bg-hover,rgba(224,49,49,.16)) !important}
+  .wrap {
+    display: inline-flex;
+    width: auto;
+  }
+
+  .button {
+    --ring: none;
+    display: inline-flex;
+    width: auto;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+    height: 40px;
+    padding: 0 var(--space-18);
+    border-radius: var(--radius-md);
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    cursor: pointer;
+    user-select: none;
+    box-shadow: var(--ring);
+  }
+
+  .full,
+  .full .button {
+    width: 100%;
+  }
+
+  .focus {
+    --ring: 0 0 0 3px var(--accent-dim, rgba(255, 86, 114, 0.35));
+  }
+
+  .active {
+    --ring: inset 0 2px 6px rgba(0, 0, 0, 0.32);
+    transform: scale(0.97);
+  }
+
+  .primary {
+    color: var(--on-accent, #2e0512);
+    background: var(--accent, #ff5672);
+  }
+
+  .primary:hover,
+  .primary.hover {
+    background: var(--accent-hover, #ff6d85);
+  }
+
+  .secondary {
+    color: var(--ink, #ececf1);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)), var(--ring);
+  }
+
+  .secondary.default,
+  .secondary.hover {
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .secondary:hover,
+  .secondary.hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+  }
+
+  .ghost {
+    padding: 0 var(--space-14);
+    color: var(--ink-2, #b9b9c6);
+    background: transparent;
+  }
+
+  .ghost:hover,
+  .ghost.hover,
+  .ghost.active {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .danger {
+    color: var(--status-danger, #ff6b6b);
+    background: var(--btn-danger-bg, rgba(224, 49, 49, 0.07));
+    box-shadow: inset 0 0 0 1px var(--btn-danger-line, rgba(224, 49, 49, 0.45)), var(--ring);
+  }
+
+  .danger.default,
+  .danger.hover {
+    box-shadow: inset 0 0 0 1px var(--btn-danger-line, rgba(224, 49, 49, 0.45));
+  }
+
+  .danger:hover,
+  .danger.hover {
+    background: var(--btn-danger-bg-hover, rgba(224, 49, 49, 0.16));
+  }
+
+  .disabled {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    color: var(--ink-4, #6e6e7c);
+    cursor: not-allowed;
+  }
 </style>

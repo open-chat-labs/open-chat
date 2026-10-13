@@ -41,18 +41,27 @@ Re-exporting these overwrites the hand edits — re-apply them (they're small).
 
 ## Converted to plain Svelte 5
 No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, styles as scoped classes, typed props. Do not re-export these; port design changes by hand.
+- **ActivityRow** — from source hash `ada8248e`.
 - **AmountCard** — from source hash `39ed836c`.
 - **Avatar** — from source hash `1f9bbb41`.
 - **AvatarStack** — from source hash `5c9166f0`.
+- **Badge** — from source hash `ac70dfd9`.
 - **Banner** — from source hash `0beff5f6`.
+- **Button** — from source hash `8b5cf575`.
+- **ComposerBar** — from source hash `6f9180bd`.
 - **Confetti** — from source hash `29b4b5be`.
 - **CopyButton** — from source hash `454e21c1`.
 - **Countdown** — from source hash `4ac813fd`.
 - **DetailRow** — from source hash `10ca55c5`.
 - **DetailSection** — from source hash `e0ad49a0`.
+- **DialogShell** — from source hash `972fe63e`.
 - **DurationChips** — from source hash `f945e31c`.
+- **EmptyState** — from source hash `824a4c25`.
+- **Field** — from source hash `5b2c7160`.
 - **Icon** — from source hash `88fc81a7`.
+- **LinkPreview** — from source hash `ebdc8a5b`.
 - **ListSectionLabel** — from source hash `0ec0eea5`.
+- **MenuItem** — from source hash `81252d62`.
 - **PageHeader** — from source hash `5a474f84`.
 - **PanelCover** — from source hash `8d024aca`.
 - **PanelNavRow** — from source hash `f29bf4af`.
@@ -67,15 +76,18 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **Spinner** — from source hash `8547dbf9`.
 - **StatCard** — from source hash `99b85629`.
 - **StepIndicator** — from source hash `491490cf`.
+- **SwapOffer** — from source hash `da54ba4f`.
 - **ThresholdBar** — from source hash `3a0c0b95`.
 - **TileButtons** — from source hash `58a09cd3`.
 - **Toggle** — from source hash `4b90cec2`.
 - **TokenAvatar** — from source hash `362ee2f9`.
 - **TokenPicker** — from source hash `8699ab5d`.
 - **Tooltip** — from source hash `27d349b2`.
+- **TransactionRow** — from source hash `235ffaf2`.
 - **TransferMessage** — from source hash `06196d3d`.
 - **TypingIndicator** — from source hash `e4d33efe`.
 - **UnreadDivider** — from source hash `d4f40e6e`.
+- **Waveform** — from source hash `d43e3c8e`.
 
 ## Known gaps
 - Not yet verified with `npm run build` / `svelte-check` — run both first and fix what they flag (expect a11y warnings on custom roles; they're intentional and covered by `a11y.js`).

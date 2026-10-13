@@ -17,8 +17,7 @@
       "sourceHash": "ada8248e",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/ActivityRow.svelte",
-        "src/lib/components/ActivityRow.logic.js"
+        "src/lib/components/ActivityRow.svelte"
       ],
       "group": "library"
     },
@@ -45,8 +44,7 @@
       "sourceHash": "ac70dfd9",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/Badge.svelte",
-        "src/lib/components/Badge.logic.js"
+        "src/lib/components/Badge.svelte"
       ],
       "group": "library"
     },
@@ -64,8 +62,7 @@
       "sourceHash": "8b5cf575",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/Button.svelte",
-        "src/lib/components/Button.logic.js"
+        "src/lib/components/Button.svelte"
       ],
       "group": "library"
     },
@@ -95,8 +92,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/ComposerBar.svelte",
-        "src/lib/components/ComposerBar.logic.js"
+        "src/lib/components/ComposerBar.svelte"
       ]
     },
     "ContextMenu": {
@@ -141,8 +137,7 @@
       "sourceHash": "972fe63e",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/DialogShell.svelte",
-        "src/lib/components/DialogShell.logic.js"
+        "src/lib/components/DialogShell.svelte"
       ],
       "group": "library"
     },
@@ -160,8 +155,7 @@
       "sourceHash": "824a4c25",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/EmptyState.svelte",
-        "src/lib/components/EmptyState.logic.js"
+        "src/lib/components/EmptyState.svelte"
       ],
       "group": "library"
     },
@@ -170,8 +164,7 @@
       "sourceHash": "5b2c7160",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/Field.svelte",
-        "src/lib/components/Field.logic.js"
+        "src/lib/components/Field.svelte"
       ],
       "group": "library"
     },
@@ -228,8 +221,7 @@
       "sourceHash": "81252d62",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/MenuItem.svelte",
-        "src/lib/components/MenuItem.logic.js"
+        "src/lib/components/MenuItem.svelte"
       ],
       "group": "library"
     },
@@ -425,8 +417,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/TransactionRow.svelte",
-        "src/lib/components/TransactionRow.logic.js"
+        "src/lib/components/TransactionRow.svelte"
       ]
     },
     "TypingIndicator": {
@@ -868,8 +859,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/LinkPreview.svelte",
-        "src/lib/components/LinkPreview.logic.js"
+        "src/lib/components/LinkPreview.svelte"
       ]
     },
     "MediaMessage": {
@@ -1075,8 +1065,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/SwapOffer.svelte",
-        "src/lib/components/SwapOffer.logic.js"
+        "src/lib/components/SwapOffer.svelte"
       ]
     },
     "SwapOfferDialog": {
@@ -1253,8 +1242,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/Waveform.svelte",
-        "src/lib/components/Waveform.logic.js"
+        "src/lib/components/Waveform.svelte"
       ]
     },
     "WebhookDialog": {

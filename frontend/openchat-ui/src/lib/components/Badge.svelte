@@ -1,41 +1,99 @@
-<!-- Generated from lib/Badge.dc.html (source hash ac70dfd9) on 2026-10-07. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Small marker. variant: count (accent number) | tag (accent label) | neutral | chit (amount + "CHIT"; `short` drops the word)
+     | dot (unread dot) | verified (blue check). -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './Badge.logic.js';
-
   interface Props {
     label?: string;
-    variant?: string;
+    variant?: 'count' | 'tag' | 'neutral' | 'chit' | 'dot' | 'verified';
     short?: boolean;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { label = '', variant = 'count', short = false }: Props = $props();
 </script>
 
-<div style="display:inline-flex;flex:none;width:{v.rootW};height:{v.rootH}" use:ref={v.rootRef}>
-  {#if v.isCount}
-    <span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 var(--space-4);box-sizing:border-box;border-radius:var(--radius-pill);background:var(--accent,#FF5672);color:var(--on-accent,#2E0512);font:var(--weight-bold) var(--text-xs)/1 var(--font-sans)">{t(v.label)}</span>
-  {/if}
-  {#if v.isTag}
-    <span style="display:inline-flex;align-items:center;justify-content:center;height:22px;padding:0 var(--space-8);border-radius:var(--radius-pill);background:var(--accent-soft,rgba(255,86,114,.14));color:var(--accent-bright,#FF8298);font:var(--weight-medium) var(--text-sm)/1 var(--font-mono);letter-spacing:.02em">{t(v.label)}</span>
-  {/if}
-  {#if v.isNeutral}
-    <span style="display:inline-flex;align-items:center;justify-content:center;height:22px;padding:0 var(--space-8);border-radius:var(--radius-pill);background:var(--overlay-1,rgba(255,255,255,.06));color:var(--ink-2,#B9B9C6);font:var(--weight-medium) var(--text-sm)/1 var(--font-mono);letter-spacing:.02em">{t(v.label)}</span>
-  {/if}
-  {#if v.isChit}
-    <span style="display:inline-flex;align-items:center;gap:var(--space-6);height:22px;padding:0 var(--space-8);border-radius:var(--radius-pill);background:var(--status-chit-soft,rgba(255,159,69,.14));font:var(--weight-medium) var(--text-sm)/1 var(--font-mono);letter-spacing:.02em;color:var(--status-chit,#FF9F45)">
-      <span>{t(v.label)}</span>
-      {#if v.hasChitLabel}
-        <span style="opacity:.72">CHIT</span>
+<div class="badge">
+  {#if variant === 'count'}
+    <span class="count">{label}</span>
+  {:else if variant === 'tag' || variant === 'neutral'}
+    <span class="chip {variant}">{label}</span>
+  {:else if variant === 'chit'}
+    <span class="chip chit">
+      <span>{label}</span>
+      {#if !short}
+        <span class="unit">CHIT</span>
       {/if}
     </span>
-  {/if}
-  {#if v.isVerified}
-    <span style="flex:none;width:17px;height:17px;background:var(--status-verified,#3D9BFF);mask:var(--icon-verified) center/contain no-repeat"></span>
-  {/if}
-  {#if v.isDot}
-    <span style="width:8px;height:8px;border-radius:var(--radius-pill);background:var(--accent,#FF5672);box-shadow:0 0 0 2.5px var(--card-ring-1,#0e0e12)"></span>
+  {:else if variant === 'verified'}
+    <span class="verified"></span>
+  {:else if variant === 'dot'}
+    <span class="dot"></span>
   {/if}
 </div>
+
+<style>
+  .badge {
+    display: inline-flex;
+    flex: none;
+  }
+
+  .count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 var(--space-4);
+    box-sizing: border-box;
+    border-radius: var(--radius-pill);
+    background: var(--accent, #ff5672);
+    color: var(--on-accent, #2e0512);
+    font: var(--weight-bold) var(--text-xs) / 1 var(--font-sans);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 22px;
+    padding: 0 var(--space-8);
+    border-radius: var(--radius-pill);
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
+    letter-spacing: 0.02em;
+  }
+
+  .tag {
+    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
+    color: var(--accent-bright, #ff8298);
+  }
+
+  .neutral {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
+    color: var(--ink-2, #b9b9c6);
+  }
+
+  .chit {
+    justify-content: flex-start;
+    gap: var(--space-6);
+    background: var(--status-chit-soft, rgba(255, 159, 69, 0.14));
+    color: var(--status-chit, #ff9f45);
+  }
+
+  .unit {
+    opacity: 0.72;
+  }
+
+  .verified {
+    flex: none;
+    width: 17px;
+    height: 17px;
+    background: var(--status-verified, #3d9bff);
+    mask: var(--icon-verified) center/contain no-repeat;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-pill);
+    background: var(--accent, #ff5672);
+    box-shadow: 0 0 0 2.5px var(--card-ring-1, #0e0e12);
+  }
+</style>
