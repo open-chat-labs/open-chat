@@ -5,15 +5,14 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ledger_utils::{Payer, deposit_to_accept_p2p_swap};
+use multi_user_canister::accept_p2p_swap::{Response::*, *};
+use multi_user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 use types::{AcceptSwapSuccess, Achievement, CanisterId, OCResult, P2PSwapStatus, TimestampMillis, UserId};
-use user_canister::accept_p2p_swap::{Response::*, *};
-use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 use user_core::updates::accept_p2p_swap::{Reserved, deposit_failed, deposited, prepare};
 
-// The User canister's `accept_p2p_swap`. Users hold their own funds in their own wallets, so token1
-// is pulled from the user's wallet (or the account they name) via ICRC2, against an approval made
-// under their own spender subaccount, and deposited into the escrow canister under their principal,
-// by which it knows them.
+// Users hold their own funds in their own wallets, so token1 is pulled from the user's wallet (or
+// the account they name) via ICRC2, against an approval made under their own spender subaccount,
+// and deposited into the escrow canister under their principal, by which it knows them.
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {
@@ -34,7 +33,7 @@ async fn accept_p2p_swap_impl(mut args: Args) -> Response {
     };
 
     let swap_id = reserved.reserve_success.content.swap_id;
-    let payer = Payer::Approved {
+    let payer = Payer {
         from: args.from_account.unwrap_or(my_principal.into()),
         spender_subaccount: Some(ledger_utils::spender_subaccount(my_principal)),
     };

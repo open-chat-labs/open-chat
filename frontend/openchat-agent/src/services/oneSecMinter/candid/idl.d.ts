@@ -7,6 +7,8 @@ import {
     ForwardingResponse,
     Token,
     TransferFee,
+    TransferIcpToEvmArg,
+    TransferResponse,
     _SERVICE,
 } from "./types";
 export {
@@ -16,6 +18,8 @@ export {
     ForwardingResponse as ApiForwardingResponse,
     Token as ApiToken,
     TransferFee as ApiTransferFee,
+    TransferIcpToEvmArg as ApiTransferIcpToEvmArg,
+    TransferResponse as ApiTransferResponse,
     _SERVICE as OneSecMinterService,
 };
 

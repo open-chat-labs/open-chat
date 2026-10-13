@@ -1,3 +1,4 @@
+use multi_user_canister::{MessageActivity, MessageActivityEvent, MessageActivitySummary};
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{
     Entry, KeyPrefix, MessageActivityEventId, MessageActivityEventIdKeyPrefix, MessageActivityEventKey,
@@ -5,7 +6,6 @@ use stable_memory_map::{
 };
 use std::ops::RangeInclusive;
 use types::{Chat, EventIndex, MessageId, MessageIndex, TimestampMillis, UserId};
-use user_canister::{MessageActivity, MessageActivityEvent, MessageActivitySummary};
 
 // The events in the user's message activity feed, of which no more than `MAX_EVENTS` are kept.
 // They are stored in the stable memory map for small entries, keyed by timestamp, with a second

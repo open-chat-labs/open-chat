@@ -55,7 +55,7 @@ impl MultiUserCanisterMap {
             .map(|(_, c)| c.local_user_index)
     }
 
-    // Users held in their own canister are ignored, so this can be called for any user
+    // Ids which carry no index are ignored, so this can be called for any user
     pub fn on_user_added(&mut self, user_id: &UserId) {
         if let Some(canister) = self.canister_holding_mut(user_id) {
             canister.user_count = canister.user_count.saturating_add(1);
@@ -65,25 +65,11 @@ impl MultiUserCanisterMap {
         }
     }
 
-    // Users held in their own canister are ignored, so this can be called for any user
+    // Ids which carry no index are ignored, so this can be called for any user
     pub fn on_user_removed(&mut self, user_id: &UserId) {
         if let Some(canister) = self.canister_holding_mut(user_id) {
             canister.user_count = canister.user_count.saturating_sub(1);
         }
-    }
-
-    // The MultiUser canister to migrate a user to, which is whichever of those which aren't full has
-    // the fewest users, counting those being migrated to each canister, since a canister's
-    // `user_count` is only updated once a migration completes
-    pub fn canister_for_migrating_user(&self, in_progress: &HashMap<CanisterId, u32>) -> Option<CanisterId> {
-        self.canisters
-            .iter()
-            .filter(|(_, c)| !c.full)
-            .min_by_key(|(canister_id, c)| {
-                let migrating = in_progress.get(*canister_id).copied().unwrap_or_default();
-                (c.user_count.saturating_add(migrating), **canister_id)
-            })
-            .map(|(canister_id, _)| *canister_id)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&CanisterId, &MultiUserCanister)> {
@@ -131,7 +117,7 @@ mod tests {
         map.on_user_added(&UserId::new_indexed(canister_id(1), 1));
         map.on_user_added(&UserId::new_indexed(canister_id(1), 2));
         map.on_user_added(&UserId::new_indexed(canister_id(2), 1));
-        // Neither a user in their own canister nor one in an unknown MultiUser canister is counted
+        // Neither an id which carries no index nor one in an unknown MultiUser canister is counted
         map.on_user_added(&UserId::new(canister_id(1)));
         map.on_user_added(&UserId::new_indexed(canister_id(3), 1));
         map.on_user_removed(&UserId::new_indexed(canister_id(2), 1));
@@ -141,32 +127,6 @@ mod tests {
         assert_eq!(user_count(1), Some(2));
         assert_eq!(user_count(2), Some(0));
         assert_eq!(user_count(3), None);
-    }
-
-    #[test]
-    fn migrating_user_goes_to_canister_with_fewest_users() {
-        let mut map = MultiUserCanisterMap::default();
-        assert_eq!(map.canister_for_migrating_user(&HashMap::new()), None);
-
-        map.add(canister_id(1), canister_id(100), 10);
-        map.add(canister_id(2), canister_id(101), 20);
-        map.add(canister_id(3), canister_id(100), 30);
-        for (canister, users) in [(1, 3), (2, 1), (3, 2)] {
-            for i in 0..users {
-                map.on_user_added(&UserId::new_indexed(canister_id(canister), i + 1));
-            }
-        }
-
-        assert_eq!(map.canister_for_migrating_user(&HashMap::new()), Some(canister_id(2)));
-        // Users being migrated to a canister count towards its users
-        let in_progress = HashMap::from([(canister_id(2), 2)]);
-        assert_eq!(map.canister_for_migrating_user(&in_progress), Some(canister_id(3)));
-
-        // Full canisters are skipped, however few users they hold
-        map.on_user_added(&UserId::new_indexed(canister_id(2), MAX_USER_INDEX));
-        map.on_user_removed(&UserId::new_indexed(canister_id(2), 1));
-        map.on_user_removed(&UserId::new_indexed(canister_id(2), MAX_USER_INDEX));
-        assert_eq!(map.canister_for_migrating_user(&HashMap::new()), Some(canister_id(3)));
     }
 
     #[test]

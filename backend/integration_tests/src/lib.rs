@@ -76,9 +76,6 @@ mod tip_message_tests;
 mod translations_tests;
 mod update_group_tests;
 mod update_profile_tests;
-mod upgrade_from_prod_tests;
-mod user_canister_cycles_tests;
-mod user_migration_tests;
 mod utils;
 mod video_call_tests;
 mod wasms;
@@ -88,6 +85,9 @@ pub struct TestEnv {
     pub env: PocketIc,
     pub canister_ids: CanisterIds,
     pub controller: Principal,
+    // A user made a platform operator as the environment was set up, for making the calls only
+    // platform operators can make
+    pub platform_operator: Principal,
 }
 
 #[derive(Debug)]

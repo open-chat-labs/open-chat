@@ -13,6 +13,7 @@ canister_names=(
   group_index
   identity
   local_user_index
+  multi_user
   notifications_index
   online_users
   proposals_bot
@@ -20,7 +21,6 @@ canister_names=(
   storage_bucket
   storage_index
   translations
-  user
   user_index
 )
 

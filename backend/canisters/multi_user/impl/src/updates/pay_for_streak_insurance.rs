@@ -3,8 +3,8 @@ use crate::{RuntimeState, execute_update_async, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ledger_utils::Payer;
+use multi_user_canister::pay_for_streak_insurance::*;
 use types::{OCResult, UserCanisterStreakInsurancePayment};
-use user_canister::pay_for_streak_insurance::*;
 
 // Users hold their own funds in their own wallets, so they always pay via ICRC-2: from their wallet,
 // or the external account they are paying from, either of which must have approved this canister as
@@ -68,7 +68,7 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
         OCResult::Ok((my_index, (days_currently_insured, user.principal)))
     })?;
 
-    let payer = Payer::Approved {
+    let payer = Payer {
         from: args.from_account.unwrap_or(wallet.into()),
         spender_subaccount: Some(ledger_utils::spender_subaccount(wallet)),
     };

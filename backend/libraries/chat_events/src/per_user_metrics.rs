@@ -9,7 +9,7 @@ use types::{Chat, ChatId, TimestampMillis, UserId};
 // Each user's metrics within a chat. The entries are stored in the stable memory map for small
 // entries.
 //
-// A User canister only ever reads its own user's metrics for a direct chat, so the other user's
+// Only the user's own metrics are ever read from their copy of a direct chat, so the other user's
 // metrics can be skipped (see `skip_their_metrics`).
 #[derive(Serialize, Deserialize, Default)]
 #[serde(transparent)]
@@ -63,9 +63,9 @@ impl PerUserMetrics {
         });
     }
 
-    // Called with the user whose canister holds this direct chat. Their metrics are the only ones
+    // Called with the user whose copy of the direct chat this is. Their metrics are the only ones
     // which are ever read, so the other user's metrics can be skipped, unless the chat is the user's
-    // chat with themselves, in which case the other user *is* the canister's user. Returns whether
+    // chat with themselves, in which case the other user *is* that user. Returns whether
     // the other user's metrics should be skipped, in which case any already stored are deleted.
     pub fn skip_their_metrics(&mut self, events_prefix: &ChatEventKeyPrefix, chat: Chat, my_user_id: UserId) -> bool {
         let Chat::Direct(them) = chat else {

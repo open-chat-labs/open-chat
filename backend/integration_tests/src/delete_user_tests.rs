@@ -1,10 +1,9 @@
-use crate::client::{register_user, register_user_and_include_auth};
+use crate::client::register_user_and_include_auth;
 use crate::env::ENV;
 use crate::utils::tick_many;
-use crate::{T, TestEnv, User, UserAuth, client};
-use candid::{CandidType, Nat, Principal};
+use crate::{TestEnv, client};
+use candid::Principal;
 use oc_error_codes::OCErrorCode;
-use pocket_ic::common::rest::RawEffectivePrincipal;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -60,16 +59,6 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
         ));
     }
 
-    if should_delete_user {
-        // The uninstalled canister's cycles are sent to the CyclesDispenser, for which the cycles
-        // refunder is briefly installed on it, so wait for that to finish before checking it's
-        // uninstalled
-        wait_for_cycles_to_be_refunded(env, &user);
-    }
-
-    let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
-    assert_eq!(canister_status.module_hash.is_none(), should_delete_user);
-
     // The identity canister should no longer know the auth principal of a deleted user
     let check_auth_principal_response =
         client::identity::check_auth_principal_v2(env, user_auth.auth_principal(), canister_ids.identity, &Empty {});
@@ -80,196 +69,6 @@ fn delete_user_succeeds_if_signed_in_recently(delay: Milliseconds, should_delete
         ),
         should_delete_user
     );
-
-    if should_delete_user {
-        // Waiting for the refund advanced the clock significantly
-        wrapper.discard();
-    }
-}
-
-#[test]
-fn cycles_of_users_deleted_previously_can_be_refunded_by_a_platform_operator() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
-    let operator = register_user(env, canister_ids);
-    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
-
-    delete_user(env, &user_auth, canister_ids.identity);
-    wait_for_cycles_to_be_refunded(env, &user);
-
-    // Simulate a user deleted before cycles were refunded on deletion, whose canister still has
-    // the default freezing threshold
-    env.add_cycles(user.canister(), T);
-    set_default_freezing_threshold(env, &user);
-    let refunded_before = cycles_refunded_metric(env, user.local_user_index);
-
-    let response = client::user_index::refund_deleted_user_cycles(
-        env,
-        operator.principal,
-        canister_ids.user_index,
-        &user_index_canister::refund_deleted_user_cycles::Args {},
-    );
-    assert!(
-        matches!(response, user_index_canister::refund_deleted_user_cycles::Response::Success(ref r) if r.canisters >= 1),
-        "{response:?}"
-    );
-
-    wait_for_cycles_to_be_refunded(env, &user);
-    let refunded = cycles_refunded_metric(env, user.local_user_index) - refunded_before;
-    assert!(refunded > T - MAX_RESIDUAL_CYCLES, "{refunded}");
-
-    // The refunder is uninstalled again afterwards
-    let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
-    assert!(canister_status.module_hash.is_none());
-
-    // Queueing it again leaves it untouched, since what remains isn't worth refunding
-    set_default_freezing_threshold(env, &user);
-    let refunded_before = cycles_refunded_metric(env, user.local_user_index);
-    client::user_index::refund_deleted_user_cycles(
-        env,
-        operator.principal,
-        canister_ids.user_index,
-        &user_index_canister::refund_deleted_user_cycles::Args {},
-    );
-    tick_many(env, 20);
-    wait_for_refund_queue_to_empty(env, user.local_user_index);
-    assert_eq!(cycles_refunded_metric(env, user.local_user_index), refunded_before);
-    let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
-    assert_eq!(canister_status.settings.freezing_threshold, DEFAULT_FREEZING_THRESHOLD);
-
-    wrapper.discard();
-}
-
-// 30 days, in seconds
-const DEFAULT_FREEZING_THRESHOLD: u64 = 2_592_000;
-
-// Calls the management canister directly, since the pocket-ic crate doesn't export the settings
-// type which `PocketIc::update_canister_settings` takes
-fn set_default_freezing_threshold(env: &pocket_ic::PocketIc, user: &User) {
-    #[derive(CandidType)]
-    struct UpdateSettingsArgs {
-        canister_id: Principal,
-        settings: Settings,
-    }
-
-    #[derive(CandidType)]
-    struct Settings {
-        freezing_threshold: Option<Nat>,
-    }
-
-    env.update_call_with_effective_principal(
-        Principal::management_canister(),
-        RawEffectivePrincipal::CanisterId(user.canister().as_slice().to_vec()),
-        user.local_user_index,
-        "update_settings",
-        candid::encode_one(UpdateSettingsArgs {
-            canister_id: user.canister(),
-            settings: Settings {
-                freezing_threshold: Some(DEFAULT_FREEZING_THRESHOLD.into()),
-            },
-        })
-        .unwrap(),
-    )
-    .unwrap();
-}
-
-#[test]
-fn cycles_refund_tops_up_canisters_with_too_few_cycles_to_install_code() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
-    let operator = register_user(env, canister_ids);
-    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
-
-    delete_user(env, &user_auth, canister_ids.identity);
-    wait_for_cycles_to_be_refunded(env, &user);
-
-    // ~200B is worth refunding but not enough to run install_code
-    env.add_cycles(user.canister(), 120_000_000_000);
-    let balance_before = env.cycle_balance(user.canister());
-    let refunded_before = cycles_refunded_metric(env, user.local_user_index);
-
-    client::user_index::refund_deleted_user_cycles(
-        env,
-        operator.principal,
-        canister_ids.user_index,
-        &user_index_canister::refund_deleted_user_cycles::Args {},
-    );
-    wait_for_cycles_to_be_refunded(env, &user);
-
-    // The top-up is refunded along with what the canister held
-    let refunded = cycles_refunded_metric(env, user.local_user_index) - refunded_before;
-    assert!(refunded > balance_before, "{refunded}");
-
-    wrapper.discard();
-}
-
-#[test]
-fn cycles_refund_resumes_after_the_local_user_index_is_upgraded_mid_way() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
-    } = wrapper.env();
-
-    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
-    let operator = register_user(env, canister_ids);
-    client::user_index::happy_path::add_platform_operator(env, *controller, canister_ids.user_index, operator.user_id);
-
-    delete_user(env, &user_auth, canister_ids.identity);
-    wait_for_cycles_to_be_refunded(env, &user);
-
-    env.add_cycles(user.canister(), T);
-    client::user_index::refund_deleted_user_cycles(
-        env,
-        operator.principal,
-        canister_ids.user_index,
-        &user_index_canister::refund_deleted_user_cycles::Args {},
-    );
-
-    // Wait until the refunder has been installed but not yet uninstalled
-    let mut refunder_installed = false;
-    for _ in 0..100 {
-        env.tick();
-        let canister_status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
-        if canister_status.module_hash.is_some() {
-            refunder_installed = true;
-            break;
-        }
-    }
-    assert!(refunder_installed);
-
-    // Upgrading the LocalUserIndex drops whatever it was in the middle of
-    let wasm = crate::wasms::LOCAL_USER_INDEX.clone();
-    let args = candid::encode_one(local_user_index_canister::post_upgrade::Args {
-        wasm_version: wasm.version,
-    })
-    .unwrap();
-    client::stop_canister(env, canister_ids.user_index, user.local_user_index);
-    env.upgrade_canister(user.local_user_index, wasm.module.into(), args, Some(canister_ids.user_index))
-        .unwrap();
-    client::start_canister(env, canister_ids.user_index, user.local_user_index);
-
-    // The canister is still queued, so the refund is picked up again and completed
-    wait_for_cycles_to_be_refunded(env, &user);
-    wait_for_refund_queue_to_empty(env, user.local_user_index);
-
-    wrapper.discard();
 }
 
 // See backend/canisters/cycles_refunder/README.md for why ~110B cycles can't be recovered
@@ -292,100 +91,6 @@ pub(crate) fn wait_for_refund_queue_to_empty(env: &mut pocket_ic::PocketIc, loca
     panic!("Refund queue did not empty");
 }
 
-// Refunding takes a handful of rounds: canister_status, install_code, the refund call (which
-// deposits into the CyclesDispenser via the management canister), then uninstall_code. The user
-// canister was itself installed only moments ago though, so the IC's install_code rate limit
-// applies and the LocalUserIndex has to retry after a delay, hence time is advanced too.
-pub(crate) fn wait_for_cycles_to_be_refunded(env: &mut pocket_ic::PocketIc, user: &User) {
-    for _ in 0..200 {
-        // The balance drops once `refund` completes, and the refunder is uninstalled after that
-        let status = env.canister_status(user.canister(), Some(user.local_user_index)).unwrap();
-        if env.cycle_balance(user.canister()) < MAX_RESIDUAL_CYCLES && status.module_hash.is_none() {
-            // Zeroed so that the cycles its freezing threshold held back were refunded too
-            assert_eq!(status.settings.freezing_threshold, 0u32);
-            return;
-        }
-        env.advance_time(Duration::from_secs(60));
-        tick_many(env, 5);
-    }
-    let metrics = crate::utils::metrics(env, user.local_user_index);
-    let errors = client::http_request(
-        env,
-        candid::Principal::anonymous(),
-        user.local_user_index,
-        &types::HttpRequest {
-            method: "GET".to_string(),
-            url: "/errors".to_string(),
-            headers: Vec::new(),
-            body: Vec::new(),
-        },
-    );
-    panic!(
-        "Cycles not refunded, balance: {}, queue: {}, refunded: {}, errors: {}",
-        env.cycle_balance(user.canister()),
-        metrics["cycles_refund_queue_length"],
-        metrics["cycles_refunded_from_deleted_users"],
-        String::from_utf8_lossy(&errors.body)
-    );
-}
-
-fn delete_user(env: &mut pocket_ic::PocketIc, user_auth: &UserAuth, identity_canister_id: types::CanisterId) {
-    let response = client::identity::delete_user(
-        env,
-        user_auth.auth_principal(),
-        identity_canister_id,
-        &identity_canister::delete_user::Args {
-            public_key: user_auth.auth_public_key.clone(),
-            delegation: user_auth.auth_delegation.clone(),
-        },
-    );
-    assert!(
-        matches!(response, identity_canister::delete_user::Response::Success),
-        "{response:?}"
-    );
-}
-
-// A user whose canister doesn't have the method for saying which groups and communities they are in,
-// such as one too old to have been upgraded, is still deleted
-#[test]
-fn user_whose_canister_lacks_the_groups_and_communities_method_is_still_deleted() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
-
-    let (user, user_auth) = register_user_and_include_auth(env, canister_ids);
-
-    // Any other wasm lacks the method. The canister was only just installed, so reinstalling it
-    // waits out the IC's install_code rate limit, which lifts as rounds pass. Time isn't advanced,
-    // since the user's sign-in must be recent to delete them.
-    let mut reinstalled = false;
-    for _ in 0..50 {
-        reinstalled = env
-            .reinstall_canister(
-                user.canister(),
-                crate::user_migration_tests::CALL_RELAY_WASM.to_vec(),
-                Vec::new(),
-                Some(user.local_user_index),
-            )
-            .is_ok();
-        if reinstalled {
-            break;
-        }
-        tick_many(env, 5);
-    }
-    assert!(reinstalled);
-
-    delete_user(env, &user_auth, canister_ids.identity);
-
-    // The LocalUserIndex uninstalls the canister and refunds its cycles
-    wait_for_cycles_to_be_refunded(env, &user);
-
-    let current_user_response = client::user_index::current_user(env, user.principal, canister_ids.user_index, &Empty {});
-    assert!(matches!(
-        current_user_response,
-        user_index_canister::current_user::Response::UserNotFound
-    ));
-}
-
 #[test]
 fn deleted_user_removed_from_groups_and_communities() {
     let mut wrapper = ENV.deref().get();
@@ -393,6 +98,7 @@ fn deleted_user_removed_from_groups_and_communities() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);

@@ -13,7 +13,7 @@ use gated_groups::{GatePayment, calculate_gate_payments};
 use group_canister::c2c_export_group::ExportExtras;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersSuccess, UserInvitation};
 use group_community_common::{
-    Achievements, ExpiringMemberActions, ExpiringMembers, FormerMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
+    Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
     PendingPaymentReason, PendingPaymentsQueue, UserCache,
 };
 use ic_principal::Principal;
@@ -22,6 +22,7 @@ use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, 
 use ledger_utils::certified::CertifiedTransfers;
 use model::user_event_batch::UserEventBatch;
 use msgpack::serialize_then_unwrap;
+use multi_user_canister::GroupCanisterEvent;
 use oc_error_codes::OCErrorCode;
 use principal_to_user_id_map::PrincipalToUserIdMap;
 use rand::Rng;
@@ -42,7 +43,6 @@ use types::{
     IdempotentEnvelope, MAX_THREADS_IN_SUMMARY, MessageId, MessageIndex, Milliseconds, MultiUserChat, Notification, OCResult,
     Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType, icrc1,
 };
-use user_canister::GroupCanisterEvent;
 use utils::async_work::AsyncWorkGuard;
 use utils::canister::trap_if_frozen;
 use utils::env::Environment;
@@ -157,8 +157,8 @@ impl RuntimeState {
         Ok(self.member_user(user_id))
     }
 
-    // The member's wallet, for paying them. A user sharing a MultiUser canister with others holds
-    // their funds under the principal held for them, and everyone else under their user id.
+    // The member's wallet, for paying them. A user holds their funds under the principal held for
+    // them, and anyone else whose id carries no index, eg. a bot, under their user id.
     pub fn member_wallet(&self, user_id: UserId) -> OCResult<icrc1::Account> {
         if !user_id.is_indexed() {
             return Ok(user_id.as_principal().into());
@@ -182,7 +182,7 @@ impl RuntimeState {
     }
 
     // The calling member, or when `user_id` is given, that member, whom the caller must hold (a
-    // MultiUser canister acting for one of its users, or a User canister for its own user)
+    // MultiUser canister acting for one of its users)
     pub fn get_calling_member(&self, user_id: Option<UserId>, verify: bool) -> Result<GroupMemberInternal, OCErrorCode> {
         let caller = self.env.caller();
         let member = match user_id {
@@ -375,7 +375,6 @@ impl RuntimeState {
 
         if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
             self.data.principal_to_user_id_map.insert(args.principal, args.user_id);
-            self.data.former_members.on_member_added(args.user_id);
         }
 
         result
@@ -399,7 +398,6 @@ impl RuntimeState {
             // The channel's events still refer to users by their ids from before any migrations to
             // MultiUser canisters, so the community needs these to recognise them
             let extras = ExportExtras {
-                former_members: self.data.former_members.iter().collect(),
                 migrated_user_ids: self.data.migrated_user_ids.iter().collect(),
             };
             msgpack::serialize(&extras, &mut serialized).unwrap();
@@ -726,8 +724,6 @@ struct Data {
     // have changed
     #[serde(default)]
     migrated_user_ids: MigratedUserIds,
-    #[serde(default)]
-    former_members: FormerMembers,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -825,7 +821,6 @@ impl Data {
             idempotency_checker: IdempotencyChecker::default(),
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
-            former_members: FormerMembers::default(),
         }
     }
 
@@ -932,7 +927,7 @@ impl Data {
         false
     }
 
-    pub fn remove_user(&mut self, user_id: UserId, principal: Option<Principal>, user_deleted: bool) {
+    pub fn remove_user(&mut self, user_id: UserId, principal: Option<Principal>) {
         if let Some(principal) = principal {
             let user_id_removed = self.principal_to_user_id_map.remove(&principal).map(|v| v.into_value());
             assert_eq!(user_id_removed, Some(user_id));
@@ -942,7 +937,6 @@ impl Data {
         self.expiring_member_actions.remove_member(user_id, None);
         self.achievements.remove_user(&user_id);
         self.user_cache.delete(user_id);
-        self.former_members.on_member_removed(user_id, user_deleted);
     }
 
     // Moves everything held under the previous ids of a user migrated to a MultiUser canister (their
@@ -992,7 +986,6 @@ impl Data {
             self.remove_user(
                 old_user_id,
                 member_principal.filter(|p| self.principal_to_user_id_map.get(p) == Some(old_user_id)),
-                false,
             );
         }
         for principal in [old_member_principal.flatten(), principal].into_iter().flatten() {
@@ -1001,7 +994,6 @@ impl Data {
                 migrated = true;
             }
         }
-        migrated |= self.former_members.migrate_user_id(old_user_id, new_user_id, is_member);
         self.expiring_members.migrate_user_id(old_user_id, new_user_id);
         self.expiring_member_actions.migrate_user_id(old_user_id, new_user_id);
         self.achievements.migrate_user_id(old_user_id, new_user_id);

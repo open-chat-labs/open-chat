@@ -18,19 +18,23 @@ fn delete_community_succeeds() {
         env,
         canister_ids,
         controller,
+        platform_operator,
     } = wrapper.env();
 
-    let TestData { user1, community_id, .. } = init_test_data(env, canister_ids, *controller);
+    let TestData { user1, community_id, .. } = init_test_data(env, canister_ids, *controller, *platform_operator);
 
     let delete_community_response = client::user::delete_community(
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_community::Args { community_id },
+        &multi_user_canister::delete_community::Args { community_id },
     );
 
     assert!(
-        matches!(delete_community_response, user_canister::delete_community::Response::Success),
+        matches!(
+            delete_community_response,
+            multi_user_canister::delete_community::Response::Success
+        ),
         "{delete_community_response:?}",
     );
 
@@ -44,6 +48,7 @@ fn user_canister_notified_of_community_deleted() {
         env,
         canister_ids,
         controller,
+        platform_operator,
     } = wrapper.env();
 
     let TestData {
@@ -51,7 +56,7 @@ fn user_canister_notified_of_community_deleted() {
         user2,
         user3,
         community_id,
-    } = init_test_data(env, canister_ids, *controller);
+    } = init_test_data(env, canister_ids, *controller, *platform_operator);
 
     stop_canister(env, user2.local_user_index, user2.canister());
     stop_canister(env, user3.local_user_index, user3.canister());
@@ -60,11 +65,14 @@ fn user_canister_notified_of_community_deleted() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_community::Args { community_id },
+        &multi_user_canister::delete_community::Args { community_id },
     );
 
     assert!(
-        matches!(delete_community_response, user_canister::delete_community::Response::Success),
+        matches!(
+            delete_community_response,
+            multi_user_canister::delete_community::Response::Success
+        ),
         "{delete_community_response:?}",
     );
 
@@ -130,6 +138,7 @@ fn uninstalled_community_is_removed(is_public: bool) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
@@ -192,10 +201,16 @@ fn uninstalled_community_is_removed(is_public: bool) {
     assert!(!is_deleted(env, group_index, live_community_id));
 }
 
-fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
+fn init_test_data(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    platform_operator: Principal,
+) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::register_user(env, canister_ids);
-    let user3 = client::register_user(env, canister_ids);
+    // Each in a canister of their own, so that stopping it doesn't stop anyone else's
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, platform_operator);
+    let user3 = client::register_user_in_new_multi_user_canister(env, canister_ids, platform_operator);
 
     let community_name = random_string();
 

@@ -1,21 +1,16 @@
-//! The user held by the User canister, which holds a single one, and by the MultiUser canister,
-//! which holds many, along with the logic of the endpoints over that user which both canisters
-//! share.
+//! A user held by the MultiUser canister, which holds many, along with the logic of the endpoints
+//! over that user.
 //!
-//! `model` holds the state. Each model is the same in both canisters: the entries a model keeps in
-//! the stable memory map are scoped to the user they belong to at the boundary of the map, so the
-//! MultiUser canister only has to access a model within its user's key scope.
+//! `model` holds the state. The entries a model keeps in the stable memory map are scoped to the
+//! user they belong to at the boundary of the map, so the MultiUser canister only has to access a
+//! model within its user's key scope.
 //!
 //! `queries` and `updates` hold one function per endpoint, named as the endpoint is, over a `User`
 //! plus its args, the time and whichever facts only the canister knows. Guards, resolving the
-//! caller and the canister's own side effects stay in the canisters, which get anything they must
+//! caller and the canister's own side effects stay in the canister, which gets anything it must
 //! do afterwards back as data rather than through callbacks.
-//!
-//! `migration` holds what a User canister hands over when its user is migrated to a MultiUser
-//! canister.
 
 pub mod event_recipient;
-pub mod migration;
 pub mod model;
 pub mod openchat_bot;
 pub mod queries;

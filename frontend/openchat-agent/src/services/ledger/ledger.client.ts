@@ -17,13 +17,13 @@ import { approvalToAdd, type Allowance } from "./approval";
 
 export type ApproveSpendingResponse = "success" | "insufficient_funds" | "failure";
 
-// The memo the User canister gives each withdrawal it makes, "OC_SEND" (`MEMO_SEND` in the backend's
-// constants), which the ICP ledger's `transfer` takes as a number, as its big-endian bytes
+// The memo each withdrawal is sent with, "OC_SEND" (`MEMO_SEND` in the backend's constants), which
+// the ICP ledger's `transfer` takes as a number, as its big-endian bytes
 const MEMO_SEND = new TextEncoder().encode("OC_SEND");
 const MEMO_SEND_NUMBER = bytesToBigint(MEMO_SEND);
 
-// What the ICP ledger charges for a transfer, which the User canister always pays for one to an
-// account identifier, whatever fee the withdrawal gives (`Tokens::DEFAULT_FEE`)
+// What the ICP ledger charges for a transfer, which a withdrawal to an account identifier always
+// pays, whatever fee it gives (`Tokens::DEFAULT_FEE`)
 const ICP_TRANSFER_FEE = 10_000n;
 
 export class LedgerClient extends CandidCanisterAgent<LedgerService> {
@@ -118,9 +118,8 @@ export class LedgerClient extends CandidCanisterAgent<LedgerService> {
     }
 
     // Sends a withdrawal from the caller's own account, the one held by the principal they sign in
-    // with, as the User canister's `withdraw_crypto_v2` sends one from its own: ICP to an account
-    // identifier through the ICP ledger's `transfer`, and anything else to an ICRC-1 account, with
-    // the same fee and memo.
+    // with: ICP to an account identifier through the ICP ledger's `transfer`, and anything else to an
+    // ICRC-1 account.
     async withdraw(
         domain: PendingCryptocurrencyWithdrawal,
     ): Promise<WithdrawCryptocurrencyResponse> {
@@ -156,8 +155,7 @@ export class LedgerClient extends CandidCanisterAgent<LedgerService> {
     }
 }
 
-// Maps what the ledger made of a withdrawal to what the User canister's `withdraw_crypto_v2` would
-// have answered
+// Maps what the ledger made of a withdrawal to the withdrawal's response
 function withdrawalResponse(
     domain: PendingCryptocurrencyWithdrawal,
     fee: bigint,

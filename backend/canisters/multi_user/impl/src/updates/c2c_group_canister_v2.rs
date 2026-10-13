@@ -1,9 +1,9 @@
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::GroupCanisterEvent;
+use multi_user_canister::c2c_group_canister_v2::*;
 use std::collections::BTreeSet;
-use user_canister::GroupCanisterEvent;
-use user_canister::c2c_group_canister_v2::*;
 
 #[update(msgpack = true)]
 #[trace]
@@ -11,11 +11,9 @@ fn c2c_group_canister_v2(args: Args) -> Response {
     execute_update(|state| c2c_group_canister_v2_impl(args, state))
 }
 
-// Handles the events a group sends this canister's users, in order, as the User canister does for
-// its user. As there, only a group the user is in may send them. Events which can't be applied
-// (the user is not here, or has left the group) are dropped rather than rejected with a trap,
-// which the group would keep retrying, just as the User canister's guard rejection causes them to
-// be dropped.
+// Handles the events a group sends this canister's users, in order. Only a group the user is in may
+// send them. Events which can't be applied (the user is not here, or has left the group) are
+// dropped rather than rejected with a trap, which the group would keep retrying.
 fn c2c_group_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
@@ -61,7 +59,8 @@ fn c2c_group_canister_v2_impl(args: Args, state: &mut RuntimeState) -> Response 
                         awarded_achievement.insert(user_index);
                     }
                 }
-                GroupCanisterEvent::P2PSwapCreated(swap) => user.p2p_swaps.add_created_in_chat(*swap, user_id),
+                // No longer sent, but some may still be queued
+                GroupCanisterEvent::P2PSwapCreated(_) => {}
                 GroupCanisterEvent::RemovedFromGroup(_) => {}
             }
         });

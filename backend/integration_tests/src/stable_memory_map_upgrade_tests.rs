@@ -7,8 +7,9 @@ use std::ops::Deref;
 use testing::rng::random_string;
 use types::{BuildVersion, CanisterId, CanisterWasm, ChatEvent};
 
-const STABLE_MEMORY_MAP: u8 = 3;
-const STABLE_MEMORY_MAP_SMALL_ENTRIES: u8 = 4;
+// The ids of each canister's stable memory maps: the map, then the map for small entries
+const GROUP_STABLE_MEMORY_MAPS: [u8; 2] = [3, 4];
+const MULTI_USER_STABLE_MEMORY_MAPS: [u8; 2] = [1, 2];
 
 #[test]
 fn stable_memory_maps_survive_upgrades() {
@@ -17,6 +18,7 @@ fn stable_memory_maps_survive_upgrades() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
@@ -32,9 +34,13 @@ fn stable_memory_maps_survive_upgrades() {
             .event_index;
     tick_many(env, 3);
 
-    let canisters: [CanisterId; 3] = [user1.canister(), group_id.into(), community_id.into()];
-    for canister_id in canisters {
-        assert_stable_memory_maps_initialised(env, canister_id);
+    let canisters: [(CanisterId, [u8; 2]); 3] = [
+        (user1.canister(), MULTI_USER_STABLE_MEMORY_MAPS),
+        (group_id.into(), GROUP_STABLE_MEMORY_MAPS),
+        (community_id.into(), GROUP_STABLE_MEMORY_MAPS),
+    ];
+    for (canister_id, memory_ids) in canisters {
+        assert_stable_memory_maps_initialised(env, canister_id, memory_ids);
     }
 
     let version = BuildVersion::new(0, 0, 1);
@@ -42,7 +48,12 @@ fn stable_memory_maps_survive_upgrades() {
         version,
         module: module.module.clone(),
     };
-    client::user_index::happy_path::upgrade_user_canister_wasm(env, *controller, canister_ids.user_index, wasm(&wasms::USER));
+    client::user_index::happy_path::upgrade_multi_user_canister_wasm(
+        env,
+        *controller,
+        canister_ids.user_index,
+        wasm(&wasms::MULTI_USER),
+    );
     client::group_index::happy_path::upgrade_group_canister_wasm(
         env,
         *controller,
@@ -58,9 +69,9 @@ fn stable_memory_maps_survive_upgrades() {
 
     // Every canister in the environment is upgraded, so how long that takes depends on how many
     // earlier tests have created, and until then a canister may be stopped for its upgrade
-    for canister_id in canisters {
+    for (canister_id, memory_ids) in canisters {
         wait_for_wasm_version(env, canister_id, version);
-        assert_stable_memory_maps_initialised(env, canister_id);
+        assert_stable_memory_maps_initialised(env, canister_id, memory_ids);
     }
 
     let direct = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![direct_event]);
@@ -76,10 +87,10 @@ fn stable_memory_maps_survive_upgrades() {
 }
 
 // Creating a map writes its header, so each map's memory is non-empty once it has been initialised
-fn assert_stable_memory_maps_initialised(env: &PocketIc, canister_id: CanisterId) {
+fn assert_stable_memory_maps_initialised(env: &PocketIc, canister_id: CanisterId, memory_ids: [u8; 2]) {
     let sizes: BTreeMap<u8, u64> = serde_json::from_value(metrics(env, canister_id)["stable_memory_sizes"].clone()).unwrap();
 
-    for memory_id in [STABLE_MEMORY_MAP, STABLE_MEMORY_MAP_SMALL_ENTRIES] {
+    for memory_id in memory_ids {
         assert!(
             sizes.get(&memory_id).is_some_and(|size| *size > 0),
             "{canister_id}: stable memory map {memory_id} not initialised: {sizes:?}"

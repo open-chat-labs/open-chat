@@ -9,13 +9,12 @@
     } from "@client";
     import {
         cryptoBalanceStore,
-        currentUserIdStore,
         enhancedCryptoLookup as cryptoLookup,
         exchangeRatesLookupStore as exchangeRatesLookup,
         mobileWidth,
         swappableTokensStore,
     } from "@client";
-    import { isMultiUserCanisterUser, random128 } from "@shared";
+    import { random128 } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import { i18nKey } from "../../../i18n/i18n";
@@ -331,7 +330,6 @@
                 {#if (swapping || swapState === "finished") && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
                     <div>
                         <SwapProgress
-                            {swapId}
                             tokenIn={detailsIn.symbol}
                             tokenOut={detailsOut.symbol}
                             ledgerIn={detailsIn.ledger}
@@ -340,7 +338,6 @@
                             decimalsOut={detailsOut.decimals}
                             dex={dexName(bestQuote[0])}
                             {swapResponse}
-                            fromWallet={isMultiUserCanisterUser($currentUserIdStore)}
                             {swapStep}
                             onFinished={onSwapFinished} />
                     </div>

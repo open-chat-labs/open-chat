@@ -4,9 +4,9 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::c2c_leave_community;
+use multi_user_canister::leave_community::*;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, UserId};
-use user_canister::leave_community::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -22,10 +22,10 @@ async fn leave_community_impl(args: Args) -> Response {
 
     let c2c_args = c2c_leave_community::Args {
         principal,
-        user_id: Some(my_user_id),
+        user_id: my_user_id,
     };
 
-    // As in the User canister, the community is removed if the user has left it or was not in it
+    // The community is removed if the user has left it or was not in it
     match community_canister_c2c_client::c2c_leave_community(args.community_id.into(), &c2c_args).await {
         Ok(result) => {
             if matches!(result, Response::Success)

@@ -141,8 +141,7 @@ pub enum KeyType {
     // The events of direct chats created before `key_id`s were introduced were stored under these
     // two `Legacy` key types, then moved across to `DirectChatEvent` and `DirectChatThreadEvent`.
     // The events of a thread removed before they were moved may still be under them, so they are
-    // kept: those events are garbage collected along with their chat, and `insert_raw_entries`
-    // refuses entries of an unknown key type, which would stop the user being imported.
+    // kept: those events are garbage collected along with their chat.
     DirectChatEventLegacy = 1,
     GroupChatEvent = 2,
     ChannelEvent = 3,

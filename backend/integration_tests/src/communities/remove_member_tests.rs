@@ -20,6 +20,7 @@ fn block_user_succeeds(user_has_left_community: bool) {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -28,7 +29,7 @@ fn block_user_succeeds(user_has_left_community: bool) {
         user2,
         community_id,
         community_name,
-    } = init_test_data(env, canister_ids, *controller, true, true);
+    } = init_test_data(env, canister_ids, *controller, *platform_operator, true, true);
 
     if user_has_left_community {
         client::user::happy_path::leave_community(env, &user2, community_id);
@@ -86,6 +87,7 @@ fn block_user_fails_for_private_communities() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -94,7 +96,7 @@ fn block_user_fails_for_private_communities() {
         user2,
         community_id,
         community_name: _,
-    } = init_test_data(env, canister_ids, *controller, false, true);
+    } = init_test_data(env, canister_ids, *controller, *platform_operator, false, true);
 
     let block_user_response = client::community::block_user(
         env,
@@ -116,6 +118,7 @@ fn remove_user_succeeds() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -124,7 +127,7 @@ fn remove_user_succeeds() {
         user2,
         community_id,
         community_name,
-    } = init_test_data(env, canister_ids, *controller, false, true);
+    } = init_test_data(env, canister_ids, *controller, *platform_operator, false, true);
 
     // Remove user2
     let remove_member_response = client::community::remove_member(
@@ -184,6 +187,7 @@ fn removal_reaches_a_user_canister_unreachable_for_longer_than_the_direct_call_i
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -192,7 +196,7 @@ fn removal_reaches_a_user_canister_unreachable_for_longer_than_the_direct_call_i
         user2,
         community_id,
         community_name,
-    } = init_test_data(env, canister_ids, *controller, false, true);
+    } = init_test_data(env, canister_ids, *controller, *platform_operator, false, true);
 
     stop_canister(env, user2.local_user_index, user2.canister());
 
@@ -257,6 +261,7 @@ fn community_referral_added_and_removed() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -265,7 +270,7 @@ fn community_referral_added_and_removed() {
         user2,
         community_id,
         community_name: _,
-    } = init_test_data(env, canister_ids, *controller, false, true);
+    } = init_test_data(env, canister_ids, *controller, *platform_operator, false, true);
 
     // Check the referral has been added - method 1
     let response1 = client::community::happy_path::selected_initial(env, user1.principal, community_id);
@@ -311,6 +316,7 @@ fn remove_invite_succeeds(user_joins_community: bool) {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
@@ -319,7 +325,14 @@ fn remove_invite_succeeds(user_joins_community: bool) {
         user2,
         community_id,
         ..
-    } = init_test_data(env, canister_ids, *controller, false, user_joins_community);
+    } = init_test_data(
+        env,
+        canister_ids,
+        *controller,
+        *platform_operator,
+        false,
+        user_joins_community,
+    );
 
     // Remove user2
     let remove_member_response = client::community::remove_member(
@@ -341,9 +354,17 @@ fn remove_invite_succeeds(user_joins_community: bool) {
     assert!(!response.members.iter().any(|member| member.user_id == user2.user_id));
 }
 
-fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool, join: bool) -> TestData {
+fn init_test_data(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    platform_operator: Principal,
+    public: bool,
+    join: bool,
+) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::register_user(env, canister_ids);
+    // In a canister of their own, so that stopping it doesn't stop user1's
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, platform_operator);
 
     let community_name = random_string();
 

@@ -6,15 +6,15 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::TipMessageArgs;
 use constants::{MEMO_TIP, NANOS_PER_MILLISECOND};
+use multi_user_canister::UserCanisterEvent;
+use multi_user_canister::tip_message::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, CanisterId, Chat, OCResult, UserId, icrc1, icrc2};
-use user_canister::UserCanisterEvent;
-use user_canister::tip_message::{Response::*, *};
 
-// The User canister's `tip_message`, for direct chats. Users hold their own funds in their own
-// wallets, so the tip is pulled from the user's wallet (or the account they name) via ICRC2, against
-// an approval made under their own spender subaccount, and paid into the recipient's wallet. Tips in
-// groups and channels are given by calling the group or community directly.
+// Tips a message in a direct chat. Users hold their own funds in their own wallets, so the tip is
+// pulled from the user's wallet (or the account they name) via ICRC2, against an approval made
+// under their own spender subaccount, and paid into the recipient's wallet. Tips in groups and
+// channels are given by calling the group or community directly.
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 async fn tip_message(args: Args) -> Response {
@@ -106,8 +106,7 @@ fn prepare(args: &mut Args, state: &mut RuntimeState) -> OCResult<PrepareOk> {
     })
 }
 
-// Records the tip in the tipper's copy of the chat, then sends it to the recipient, as the User
-// canister does
+// Records the tip in the tipper's copy of the chat, then sends it to the recipient
 fn tip_direct_chat_message(my_index: u16, args: TipMessageArgs, decimals: u8, state: &mut RuntimeState) -> Response {
     let recipient = args.recipient;
     let event_pusher = MultiUserEventPusher {

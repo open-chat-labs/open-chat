@@ -1,9 +1,12 @@
+import { AnonymousIdentity, HttpAgent } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import {
     APPROVAL_VALIDITY_MS,
     ErrorCode,
     indexedUserId,
     LEDGER_CANISTER_CHAT,
+    LEDGER_CANISTER_CKBTC,
+    Lazy,
     spenderSubaccount,
     Stream,
     type CryptocurrencyContent,
@@ -21,6 +24,8 @@ import {
 } from "@shared";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { AsyncMessageContextMap } from "../utils/messageContext";
+import { CkbtcMinterClient } from "./ckbtcMinter/ckbtcMinter.client";
+import { OneSecMinterClient } from "./oneSecMinter/oneSecMinter.client";
 import { OpenChatAgent } from "./openchatAgent";
 
 const ICP_LEDGER = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -36,7 +41,7 @@ const THEM = "rrkah-fqaaa-aaaaa-aaaaq-cai";
 const MULTI_USER_CANISTER = Principal.fromText("dfdal-2uaaa-aaaaa-qaama-cai");
 const MULTI_USER_CANISTER_USER = indexedUserId(MULTI_USER_CANISTER, 3);
 const OTHER_MULTI_USER_CANISTER_USER = indexedUserId(MULTI_USER_CANISTER, 4);
-const USER_CANISTER_USER = "renrk-eyaaa-aaaaa-aaada-cai";
+const OLD_USER_ID = "renrk-eyaaa-aaaaa-aaada-cai";
 const EXTERNAL_ACCOUNT = "rno2w-sqaaa-aaaaa-aaacq-cai";
 const DIRECT = { kind: "direct_chat", userId: THEM } as const;
 const GROUP = { kind: "group_chat", groupId: "rdmx6-jaaaa-aaaaa-aaadq-cai" } as const;
@@ -102,8 +107,8 @@ function message(content: MessageContent): EventWrapper<Message> {
 
 const PIN_INCORRECT = { kind: "error", code: ErrorCode.PinIncorrect, message: "0" } as const;
 
-// The payments the user's canister pulls from the user's wallet, each of which a user in a
-// MultiUser canister has to approve it for first
+// The payments the user's canister pulls from the user's wallet, each of which the user has to
+// approve it for first
 describe("OpenChatAgent paying from the user's wallet", () => {
     let approvals: unknown[][];
     let approveResponse: "success" | "insufficient_funds" | "failure";
@@ -159,8 +164,6 @@ describe("OpenChatAgent paying from the user's wallet", () => {
                 }
             },
             sendMessage: called("sendMessage"),
-            sendMessageWithTransferToGroup: called("sendMessageWithTransferToGroup"),
-            sendMessageWithTransferToChannel: called("sendMessageWithTransferToChannel"),
             tipMessage: called("tipMessage"),
             acceptP2PSwap: called("acceptP2PSwap"),
             payForStreakInsurance: called("payForStreakInsurance"),
@@ -324,7 +327,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
 
     afterEach(() => vi.restoreAllMocks());
 
-    describe("by a user in a MultiUser canister", () => {
+    describe("by a user", () => {
         beforeEach(() => setup(MULTI_USER_CANISTER_USER));
 
         const spender = { owner: MULTI_USER_CANISTER, subaccount: spenderSubaccount(ME) };
@@ -446,7 +449,7 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             expect(calls).toEqual([]);
         });
 
-        test("crypto for another user in a MultiUser canister is approved and sent like any other", async () => {
+        test("crypto for another user is approved and sent like any other", async () => {
             await sendDirectMessage(crypto(undefined, OTHER_MULTI_USER_CANISTER_USER));
 
             expect(approvals).toEqual([[ICP_LEDGER, spender, 110n, FEE, APPROVAL_VALIDITY_MS]]);
@@ -669,74 +672,6 @@ describe("OpenChatAgent paying from the user's wallet", () => {
         });
     });
 
-    describe("by a user alone in their canister", () => {
-        beforeEach(() => setup(USER_CANISTER_USER));
-
-        test.each(payments)("%s needs no approval", async (_, pay) => {
-            await pay();
-
-            expect(approvals).toEqual([]);
-            expect(calls.length).toEqual(1);
-        });
-
-        test("a payment has no PIN checked first, since nothing is approved", async () => {
-            await sendDirectMessage(crypto(), "1234");
-
-            expect(pinChecks).toEqual([]);
-            expect(approvals).toEqual([]);
-            expect(calls.length).toEqual(1);
-        });
-
-        test.each(transferMessages)(
-            "%s in a group is sent via their canister, which makes the transfer",
-            async (_, content) => {
-                await send(GROUP, content());
-
-                expect(approvals).toEqual([]);
-                expect(calls).toEqual(["sendMessageWithTransferToGroup"]);
-            },
-        );
-
-        test.each(transferMessages)(
-            "%s in a channel is sent via their canister, which makes the transfer",
-            async (_, content) => {
-                await send(CHANNEL, content());
-
-                expect(approvals).toEqual([]);
-                expect(calls).toEqual(["sendMessageWithTransferToChannel"]);
-            },
-        );
-
-        test.each([
-            ["group", GROUP],
-            ["channel", CHANNEL],
-        ] as const)(
-            "a tip in a %s is given via their canister, which makes the transfer",
-            async (_, chatId) => {
-                await agent.tipMessage(
-                    { chatId },
-                    1n,
-                    transfer(),
-                    8,
-                    undefined,
-                    "me",
-                    undefined,
-                    true,
-                );
-
-                expect(approvals).toEqual([]);
-                expect(calls).toEqual(["tipMessage"]);
-            },
-        );
-
-        test("streak insurance needs no approval", async () => {
-            await agent.payForStreakInsurance(1, 5_000n, undefined);
-
-            expect(approvals).toEqual([]);
-            expect(calls).toEqual(["payForStreakInsurance"]);
-        });
-    });
-
     // A ledger rejects a transfer created more than a minute in its future, which each transfer
     // stamped by a device whose clock is fast would be
     describe("from a device whose clock is ahead of the IC's", () => {
@@ -760,12 +695,6 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             ["crypto in a direct chat", MULTI_USER_CANISTER_USER, DIRECT, crypto],
             ["crypto in a group", MULTI_USER_CANISTER_USER, GROUP, crypto],
             ["a prize in a channel", MULTI_USER_CANISTER_USER, CHANNEL, prize],
-            [
-                "crypto in a group, by a user alone in their canister",
-                USER_CANISTER_USER,
-                GROUP,
-                crypto,
-            ],
         ] as const)(
             "%s is stamped with the time on the ledger's subnet",
             async (_, userId, chatId, content) => {
@@ -805,21 +734,23 @@ describe("OpenChatAgent paying from the user's wallet", () => {
             },
         );
 
-        test.each([
-            ["a user in a MultiUser canister", MULTI_USER_CANISTER_USER],
-            ["a user alone in their canister", USER_CANISTER_USER],
-        ])(
-            "the fee for a proposal by %s is stamped with the time on the ledger's subnet",
-            async (_, userId) => {
-                setup(userId);
+        test("the fee for a proposal is stamped with the time on the ledger's subnet", async () => {
+            setup(MULTI_USER_CANISTER_USER);
 
-                await agent.submitProposal(userId, "", {}, ICP_LEDGER, "ICP", 100n, FEE);
+            await agent.submitProposal(
+                MULTI_USER_CANISTER_USER,
+                "",
+                {},
+                ICP_LEDGER,
+                "ICP",
+                100n,
+                FEE,
+            );
 
-                expect(calls).toEqual(["submitProposal"]);
-                expect(callArgs[0].at(-1)).toEqual(icNow);
-                expect(syncedWith).toEqual([ICP_LEDGER]);
-            },
-        );
+            expect(calls).toEqual(["submitProposal"]);
+            expect(callArgs[0].at(-1)).toEqual(icNow);
+            expect(syncedWith).toEqual([ICP_LEDGER]);
+        });
 
         test("a swap offer has nothing to stamp, so the IC isn't asked the time", async () => {
             setup(MULTI_USER_CANISTER_USER);
@@ -849,10 +780,10 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         code: ErrorCode.InsufficientFunds,
         message: undefined,
     };
-    const CANISTER_RESPONSE = { kind: "error", code: ErrorCode.PinIncorrect, message: undefined };
 
+    let pinChecks: string[];
+    let pinCheckResponse: { kind: "success" } | typeof PIN_INCORRECT;
     let ledgerWithdrawals: unknown[][];
-    let canisterWithdrawals: unknown[][];
     // How far the IC's clock is ahead of the device's, and each ledger whose subnet it was read from
     let timeDiffMsecs: number;
     let syncedWith: string[];
@@ -860,8 +791,9 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
     let agent: any;
 
     function setup(userId: string) {
+        pinChecks = [];
+        pinCheckResponse = { kind: "success" };
         ledgerWithdrawals = [];
-        canisterWithdrawals = [];
         timeDiffMsecs = 0;
         syncedWith = [];
         vi.spyOn(Date, "now").mockReturnValue(NOW_MS);
@@ -882,51 +814,192 @@ describe("OpenChatAgent withdrawing from the user's wallet", () => {
         };
         agent._userClient = {
             userId,
-            withdrawCryptocurrency: (...args: unknown[]) => {
-                canisterWithdrawals.push(args);
-                return Promise.resolve(CANISTER_RESPONSE);
+            checkPinNumber: (pin: string) => {
+                pinChecks.push(pin);
+                return Promise.resolve(pinCheckResponse);
             },
         };
     }
 
     afterEach(() => vi.restoreAllMocks());
 
-    test("a user in a MultiUser canister sends from their wallet on the ledger, with no PIN", async () => {
+    test("sends from the user's wallet on the ledger, once their PIN is checked", async () => {
         setup(MULTI_USER_CANISTER_USER);
 
         expect(await agent.withdrawCryptocurrency(WITHDRAWAL, PIN)).toBe(LEDGER_RESPONSE);
+        expect(pinChecks).toEqual([PIN]);
         expect(ledgerWithdrawals).toEqual([[WITHDRAWAL]]);
-        expect(canisterWithdrawals).toEqual([]);
     });
 
-    test("a user alone in their canister has it send from its account, with their PIN", async () => {
-        setup(USER_CANISTER_USER);
+    test("sends nothing with the wrong PIN", async () => {
+        setup(MULTI_USER_CANISTER_USER);
+        pinCheckResponse = PIN_INCORRECT;
 
-        expect(await agent.withdrawCryptocurrency(WITHDRAWAL, PIN)).toBe(CANISTER_RESPONSE);
-        expect(canisterWithdrawals).toEqual([[WITHDRAWAL, PIN]]);
+        expect(await agent.withdrawCryptocurrency(WITHDRAWAL, PIN)).toEqual(PIN_INCORRECT);
+        expect(pinChecks).toEqual([PIN]);
         expect(ledgerWithdrawals).toEqual([]);
+        expect(syncedWith).toEqual([]);
     });
 
-    // Whether the ledger is called by the website or by their canister, it rejects a withdrawal
-    // created more than a minute in its future
+    test("a user without a PIN sends with nothing to check", async () => {
+        setup(MULTI_USER_CANISTER_USER);
+
+        expect(await agent.withdrawCryptocurrency(WITHDRAWAL, undefined)).toBe(LEDGER_RESPONSE);
+        expect(pinChecks).toEqual([]);
+        expect(ledgerWithdrawals).toEqual([[WITHDRAWAL]]);
+    });
+
+    // The ledger rejects a withdrawal created more than a minute in its future
+    test("a withdrawal from a device whose clock is fast is stamped with the time on the ledger's subnet", async () => {
+        setup(MULTI_USER_CANISTER_USER);
+        timeDiffMsecs = -160_000;
+
+        await agent.withdrawCryptocurrency(WITHDRAWAL, PIN);
+
+        expect(ledgerWithdrawals[0][0]).toEqual({
+            ...WITHDRAWAL,
+            createdAtNanos: BigInt(NOW_MS - 160_000) * 1_000_000n,
+        });
+        expect(syncedWith).toEqual([ICP_LEDGER]);
+    });
+});
+
+// BTC and OneSec withdrawals, which the user makes from their wallet by approving the minter to
+// take the amount, then having it send that much on
+describe("OpenChatAgent withdrawing BTC and via OneSec", () => {
+    const CKBTC_MINTER = Principal.fromText("mqygn-kiaaa-aaaar-qaadq-cai");
+    const ONE_SEC_MINTER = Principal.fromText("5okwm-giaaa-aaaar-qbn6a-cai");
+    const USDC_LEDGER = "53nhb-haaaa-aaaar-qbn5q-cai";
+    const USDC_FEE = 10_000n;
+    const PIN = "1234";
+
+    let pinChecks: string[];
+    let pinCheckResponse: { kind: "success" } | typeof PIN_INCORRECT;
+    let approvals: unknown[][];
+    let approvalResponse: "success" | "insufficient_funds";
+    let minterCalls: unknown[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let agent: any;
+
+    function minterClient<T>(client: T, method: string, response: unknown): Lazy<T> {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (client as any).service = {
+            [method]: (args: unknown) => {
+                minterCalls.push(args);
+                return Promise.resolve(response);
+            },
+        };
+        return new Lazy(() => client);
+    }
+
+    beforeEach(() => {
+        pinChecks = [];
+        pinCheckResponse = { kind: "success" };
+        approvals = [];
+        approvalResponse = "success";
+        minterCalls = [];
+        const httpAgent = HttpAgent.createSync({ host: "http://localhost" });
+        agent = Object.create(OpenChatAgent.prototype);
+        agent.identity = { getPrincipal: () => ME };
+        agent._registryValue = {
+            tokenDetails: [
+                { ledger: LEDGER_CANISTER_CKBTC, transferFee: FEE },
+                { ledger: USDC_LEDGER, transferFee: USDC_FEE },
+            ],
+        };
+        agent._ledgerClient = {
+            approveSpending: (...args: unknown[]) => {
+                approvals.push(args);
+                return Promise.resolve(approvalResponse);
+            },
+        };
+        agent._userClient = {
+            userId: MULTI_USER_CANISTER_USER,
+            checkPinNumber: (pin: string) => {
+                pinChecks.push(pin);
+                return Promise.resolve(pinCheckResponse);
+            },
+        };
+        agent._ckbtcWithdrawalMinterClient = minterClient(
+            new CkbtcMinterClient(new AnonymousIdentity(), httpAgent, true),
+            "retrieve_btc_with_approval",
+            { Ok: { block_index: 1n } },
+        );
+        agent._oneSecMinterClient = minterClient(
+            new OneSecMinterClient(new AnonymousIdentity(), httpAgent, ONE_SEC_MINTER.toText()),
+            "transfer_icp_to_evm",
+            { Accepted: { id: 1n } },
+        );
+    });
+
+    const withdrawBtc = () => agent.withdrawBtc("bc1qaddress", 60_000n, PIN);
+    const withdrawUsdc = (symbol = "USDC") =>
+        agent.withdrawViaOneSec(USDC_LEDGER, symbol, "Base", "0xabc", 5_000_000n, PIN);
+
+    test("BTC is withdrawn by approving the ckBTC minter to burn the amount, once the PIN is checked", async () => {
+        expect(await withdrawBtc()).toEqual({ kind: "success" });
+        expect(pinChecks).toEqual([PIN]);
+        expect(approvals).toEqual([
+            [LEDGER_CANISTER_CKBTC, { owner: CKBTC_MINTER }, 60_000n, FEE, APPROVAL_VALIDITY_MS],
+        ]);
+        expect(minterCalls).toEqual([
+            { address: "bc1qaddress", amount: 60_000n, from_subaccount: [] },
+        ]);
+    });
+
+    test("USDC is withdrawn by approving OneSec to take the amount from the wallet, once the PIN is checked", async () => {
+        expect(await withdrawUsdc()).toEqual({ kind: "success" });
+        expect(pinChecks).toEqual([PIN]);
+        expect(approvals).toEqual([
+            [USDC_LEDGER, { owner: ONE_SEC_MINTER }, 5_000_000n, USDC_FEE, APPROVAL_VALIDITY_MS],
+        ]);
+        expect(minterCalls).toEqual([
+            {
+                token: { USDC: null },
+                evm_chain: { Base: null },
+                evm_account: { address: "0xabc" },
+                icp_account: { ICRC: { owner: ME, subaccount: [] } },
+                icp_amount: 5_000_000n,
+                evm_amount: [],
+            },
+        ]);
+    });
+
     test.each([
-        ["a user in a MultiUser canister", MULTI_USER_CANISTER_USER, () => ledgerWithdrawals],
-        ["a user alone in their canister", USER_CANISTER_USER, () => canisterWithdrawals],
-    ])(
-        "a withdrawal by %s from a device whose clock is fast is stamped with the time on the ledger's subnet",
-        async (_, userId, withdrawals) => {
-            setup(userId);
-            timeDiffMsecs = -160_000;
+        ["BTC", withdrawBtc],
+        ["USDC", () => withdrawUsdc()],
+    ])("%s isn't withdrawn with the wrong PIN", async (_, withdraw) => {
+        pinCheckResponse = PIN_INCORRECT;
 
-            await agent.withdrawCryptocurrency(WITHDRAWAL, PIN);
+        expect(await withdraw()).toEqual(PIN_INCORRECT);
+        expect(approvals).toEqual([]);
+        expect(minterCalls).toEqual([]);
+    });
 
-            expect(withdrawals()[0][0]).toEqual({
-                ...WITHDRAWAL,
-                createdAtNanos: BigInt(NOW_MS - 160_000) * 1_000_000n,
-            });
-            expect(syncedWith).toEqual([ICP_LEDGER]);
-        },
-    );
+    test.each([
+        ["BTC", withdrawBtc],
+        ["USDC", () => withdrawUsdc()],
+    ])("%s isn't withdrawn if the wallet can't cover it", async (_, withdraw) => {
+        approvalResponse = "insufficient_funds";
+
+        expect(await withdraw()).toEqual({
+            kind: "error",
+            code: ErrorCode.InsufficientFunds,
+            message: undefined,
+        });
+        expect(minterCalls).toEqual([]);
+    });
+
+    test("a token OneSec isn't used for is refused before anything is approved", async () => {
+        expect(await withdrawUsdc("ICP")).toEqual({
+            kind: "error",
+            code: ErrorCode.CurrencyNotSupported,
+            message: undefined,
+        });
+        expect(pinChecks).toEqual([]);
+        expect(approvals).toEqual([]);
+        expect(minterCalls).toEqual([]);
+    });
 });
 
 // A user migrated to a MultiUser canister may have left funds in the wallet of their previous
@@ -1238,7 +1311,7 @@ describe("OpenChatAgent moving funds from the user's previous wallets", () => {
 // A user migrated to a MultiUser canister is referred to by their earlier id in the events from
 // before then, which the agent replaces with their current id
 describe("OpenChatAgent referring to the user by their current id", () => {
-    const PREVIOUS = USER_CANISTER_USER;
+    const PREVIOUS = OLD_USER_ID;
     const CURRENT = MULTI_USER_CANISTER_USER;
     const GROUP_ID = { kind: "group_chat", groupId: "rdmx6-jaaaa-aaaaa-aaadq-cai" } as const;
 
@@ -1460,7 +1533,6 @@ describe("OpenChatAgent approving a spender", () => {
     let approvals: unknown[][];
     let pinChecks: [string, number][];
     let pinCheckResponse: "success" | "incorrect";
-    let userCanisterApprovals: unknown[][];
     let submitted: unknown[][];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let agent: any;
@@ -1483,10 +1555,6 @@ describe("OpenChatAgent approving a spender", () => {
                 return Promise.resolve(
                     pinCheckResponse === "success" ? { kind: "success" } : PIN_INCORRECT,
                 );
-            },
-            approveTransfer: (...args: unknown[]) => {
-                userCanisterApprovals.push(args);
-                return Promise.resolve({ kind: "success" });
             },
         };
         agent._proposalsBotClient = {
@@ -1528,11 +1596,10 @@ describe("OpenChatAgent approving a spender", () => {
         approvals = [];
         pinChecks = [];
         pinCheckResponse = "success";
-        userCanisterApprovals = [];
         submitted = [];
     });
 
-    describe("by a user in a MultiUser canister", () => {
+    describe("by a user", () => {
         beforeEach(() => setup(MULTI_USER_CANISTER_USER));
 
         test.each([
@@ -1553,7 +1620,6 @@ describe("OpenChatAgent approving a spender", () => {
                         Number(FIVE_MINUTES),
                     ],
                 ]);
-                expect(userCanisterApprovals).toEqual([]);
             },
         );
 
@@ -1563,7 +1629,6 @@ describe("OpenChatAgent approving a spender", () => {
             expect(approvals).toEqual([
                 [ICP_LEDGER, proposalsBotSpender, 100n, FEE, Number(FIVE_MINUTES)],
             ]);
-            expect(userCanisterApprovals).toEqual([]);
         });
 
         test.each([
@@ -1600,7 +1665,6 @@ describe("OpenChatAgent approving a spender", () => {
                 message: undefined,
             });
             expect(approvals).toEqual([]);
-            expect(userCanisterApprovals).toEqual([]);
         });
 
         test("a proposal's fee is pulled from their wallet", async () => {
@@ -1610,48 +1674,12 @@ describe("OpenChatAgent approving a spender", () => {
             expect(submitted[0][0]).toEqual(ME.toText());
         });
     });
-
-    describe("by a user alone in their canister", () => {
-        beforeEach(() => setup(USER_CANISTER_USER));
-
-        test.each([
-            ["group", GROUP.groupId],
-            ["community", CHANNEL.communityId],
-        ])(
-            "their canister approves a %s to pull a gate's payment as their member spender, checking their PIN",
-            async (_, canisterId) => {
-                expect(await approveGatePayment(canisterId)).toEqual({ kind: "success" });
-
-                expect(userCanisterApprovals).toEqual([
-                    [memberSpender(canisterId), ICP_LEDGER, GATE_APPROVAL, FIVE_MINUTES, "1234"],
-                ]);
-                expect(approvals).toEqual([]);
-                expect(pinChecks).toEqual([]);
-            },
-        );
-
-        test("their canister approves the ProposalsBot to pull a proposal's fee as its own account, checking their PIN", async () => {
-            expect(await approveProposalFee()).toEqual({ kind: "success" });
-
-            expect(userCanisterApprovals).toEqual([
-                [proposalsBotSpender, ICP_LEDGER, 100n, FIVE_MINUTES, "1234"],
-            ]);
-            expect(approvals).toEqual([]);
-        });
-
-        test("a proposal's fee is pulled from their canister's account", async () => {
-            await submitProposal(USER_CANISTER_USER);
-
-            expect(submitted.length).toEqual(1);
-            expect(submitted[0][0]).toEqual(USER_CANISTER_USER);
-        });
-    });
 });
 
 // A user migrated to a MultiUser canister held their funds in their User canister's account until
 // then, and in their principal's account since, so their history is that of both
 describe("OpenChatAgent listing the transactions of each of the user's wallets", () => {
-    const PREVIOUS = USER_CANISTER_USER;
+    const PREVIOUS = OLD_USER_ID;
     const CURRENT = MULTI_USER_CANISTER_USER;
     const LEDGER_INDEX = "qhbym-qaaaa-aaaaa-aaafq-cai";
 
@@ -1736,8 +1764,8 @@ describe("OpenChatAgent listing the transactions of each of the user's wallets",
     });
 });
 
-// A user in a MultiUser canister holds their own funds, so swaps straight from their wallet, which
-// their canister only records as the swap starts and ends
+// The user swaps straight from their wallet, which their canister only records as the swap starts
+// and ends
 describe("OpenChatAgent swapping tokens", () => {
     const POOL = "ne2vj-6yaaa-aaaag-qb3ia-cai";
     const ICP_DETAILS = {
@@ -1801,7 +1829,6 @@ describe("OpenChatAgent swapping tokens", () => {
         };
         agent._userClient = {
             userId,
-            swapTokens: called("canisterSwap", { kind: "success", amountOut: 1n }),
             markTokenSwapStarted: called("started"),
             markTokenSwapCompleted: called("completed"),
             unfinishedTokenSwaps: () => Promise.resolve(unfinishedSwaps),
@@ -2006,17 +2033,8 @@ describe("OpenChatAgent swapping tokens", () => {
         expect(calls.filter((c) => c[0] === "unusedBalances")).toHaveLength(1);
     });
 
-    test("a user alone in their canister has their canister make the swap", async () => {
-        setup(USER_CANISTER_USER);
-
-        expect(await swap()).toEqual({ response: { kind: "success", amountOut: 1n }, steps: [] });
-        expect(calls.map((c) => c[0])).toEqual(["canisterSwap"]);
-    });
-
-    test("only ICPSwap is offered to a user who holds their own funds", () => {
+    test("only ICPSwap is offered", () => {
         expect(agent.swapProviders()).toEqual(["icpswap"]);
-        setup(USER_CANISTER_USER);
-        expect(agent.swapProviders()).toEqual(["icpswap", "taco"]);
     });
 
     describe("recovering unfinished swaps", () => {
@@ -2070,15 +2088,6 @@ describe("OpenChatAgent swapping tokens", () => {
             await agent.recoverUnfinishedTokenSwaps();
 
             expect(calls.map((c) => c[0])).toEqual(["unusedBalances", "withdraw"]);
-        });
-
-        test("does nothing for a user alone in their canister", async () => {
-            setup(USER_CANISTER_USER);
-            unfinishedSwaps = [unfinished(1n)];
-
-            await agent.recoverUnfinishedTokenSwaps();
-
-            expect(calls).toEqual([]);
         });
     });
 });

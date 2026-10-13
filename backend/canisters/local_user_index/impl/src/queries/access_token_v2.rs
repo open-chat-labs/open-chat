@@ -294,9 +294,9 @@ async fn can_issue_access_token(scope: AutonomousBotScope, access_type_args: &Ac
         AutonomousBotScope::Chat(Chat::Direct(chat_id)) => {
             let user_id = UserId::from(chat_id);
             // A MultiUser canister holds many users, so is told which one is being asked
-            user_canister_c2c_client::c2c_can_issue_access_token_v2(
+            multi_user_canister_c2c_client::c2c_can_issue_access_token_v2(
                 user_id.canister_id(),
-                &user_canister::c2c_can_issue_access_token_v2::Args {
+                &multi_user_canister::c2c_can_issue_access_token_v2::Args {
                     user_id,
                     args: access_type_args.clone(),
                 },

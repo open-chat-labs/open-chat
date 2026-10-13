@@ -1,10 +1,9 @@
 use crate::{MultiUserEventPusher, RuntimeState};
-use candid::Principal;
 use chat_events::{MessageContentInternal, TextContentInternal};
 use constants::{OPENCHAT_BOT_USER_ID, OPENCHAT_BOT_USERNAME};
+use multi_user_canister::C2CReplyContext;
 use rand::RngExt;
 use types::{EventWrapper, Message, User, UserId, UserType};
-use user_canister::C2CReplyContext;
 use user_core::openchat_bot;
 use user_core::updates::c2c_user_canister::ReceiveMessageArgs;
 
@@ -38,25 +37,6 @@ pub(crate) fn send_removed_from_group_or_community_message(
     send_text_message(user_index, text, Vec::new(), false, state);
 }
 
-// Tells a user migrated here from a User canister of their new wallet address. Their funds were held
-// by their canister, whereas now they are held in the account of the principal they sign in with,
-// which is also what they must add as a hotkey to their neurons to vote with them from OpenChat.
-pub(crate) fn send_account_migrated_message(user_index: u16, wallet: Principal, state: &mut RuntimeState) {
-    send_text_message(user_index, account_migrated_text(wallet), Vec::new(), false, state);
-}
-
-fn account_migrated_text(wallet: Principal) -> String {
-    format!(
-        "We've moved your account to our new system, which gives you a new wallet address:
-
-{wallet}
-
-Any tokens in your old wallet will be transferred to your new one automatically.
-
-To vote on proposals from within OpenChat, you'll need to add this address as a hotkey to each neuron you would like to vote with."
-    )
-}
-
 pub(crate) fn send_message(
     user_index: u16,
     content: MessageContentInternal,
@@ -79,8 +59,7 @@ pub(crate) fn send_text_message(
 }
 
 // Pushes a message from the OpenChat bot to the chat with it of the user at `user_index`, creating
-// the chat if they have none, as the User canister's `openchat_bot::send_message_with_reply` does
-// for its user. Returns None if there is no such user.
+// the chat if they have none. Returns None if there is no such user.
 pub(crate) fn send_message_with_reply(
     user_index: u16,
     content: MessageContentInternal,
@@ -110,7 +89,7 @@ pub(crate) fn send_message_with_reply(
         mute_notification,
     };
 
-    // As in the User canister, the OpenChat bot's messages are pushed to the event store
+    // The OpenChat bot's messages are pushed to the event store
     let event_pusher = MultiUserEventPusher {
         user_id: my_user_id,
         now,

@@ -4,9 +4,9 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group;
+use multi_user_canister::leave_group::*;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, UserId};
-use user_canister::leave_group::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -22,10 +22,10 @@ async fn leave_group_impl(args: Args) -> Response {
 
     let c2c_args = c2c_leave_group::Args {
         principal,
-        user_id: Some(my_user_id),
+        user_id: my_user_id,
     };
 
-    // As in the User canister, the group is removed if the user has left it or was not in it
+    // The group is removed if the user has left it or was not in it
     match group_canister_c2c_client::c2c_leave_group(args.chat_id.into(), &c2c_args).await {
         Ok(c2c_leave_group::Response::Success(_)) => {
             mutate_state(|state| state.remove_group(my_index, args.chat_id, state.env.now()));

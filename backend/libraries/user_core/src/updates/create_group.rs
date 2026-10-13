@@ -1,16 +1,15 @@
 use crate::User;
 use group_index_canister::c2c_create_group;
+use multi_user_canister::create_group::Args;
 use oc_error_codes::OCErrorCode;
 use types::{OCResult, TimestampMillis, UserId};
-use user_canister::create_group::Args;
 use utils::document::validate_avatar;
 use utils::text_validation::{
     NameValidationError, RulesValidationError, validate_description, validate_group_name, validate_rules,
 };
 
 // Validates the args and that the user may create the group, returning what to send the GroupIndex.
-// `user_id` is the user the GroupIndex should create the group for, which a User canister leaves
-// unset since it is the user.
+// `user_id` is the user the GroupIndex should create the group for.
 pub fn prepare(
     user: &User,
     mut args: Args,

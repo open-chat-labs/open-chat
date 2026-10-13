@@ -51,7 +51,6 @@ import type {
     LocalUserIndexPayForPremiumItemResponse,
     LocalUserIndexPayForPremiumItemSuccessResult,
     LocalUserIndexRegisterUserResponse,
-    SuccessOnly,
     VerifiedCredentialGateArgs as TVerifiedCredentialGateArgs,
     VideoCallType as TVideoCallType,
 } from "../../typebox";
@@ -534,9 +533,4 @@ export function apiVerifiedCredentialArgs(
         credential_jwts: domain.credentialJwts,
         credential_jwt: domain.credentialJwts[0],
     };
-}
-
-export function withdrawFromIcpSwapResponse(value: SuccessOnly): boolean {
-    console.log("Withdraw from ICPSwap response", value);
-    return value === "Success";
 }

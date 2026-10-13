@@ -17,6 +17,7 @@ fn suspend_user() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {
@@ -49,7 +50,7 @@ fn suspend_user() {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),
@@ -64,7 +65,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         direct_message_response1,
-        user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorSuspended)
+        multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::InitiatorSuspended)
     ));
 
     let group_message_response1 = client::group::send_message_v2(
@@ -135,7 +136,7 @@ fn suspend_user() {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),
@@ -150,7 +151,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         direct_message_response2,
-        user_canister::send_message_v2::Response::Success(_)
+        multi_user_canister::send_message_v2::Response::Success(_)
     ));
 
     let group_message_response2 = client::group::send_message_v2(
@@ -262,6 +263,7 @@ fn suspended_users_returned_from_user_index_users() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let TestData {

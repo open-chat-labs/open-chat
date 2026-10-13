@@ -40,14 +40,14 @@ describe("indexed user ids", () => {
         expect(() => indexedUserId(canister, 1.5)).toThrow();
     });
 
-    test("a User canister user is held by the canister their id names, at index 0", () => {
+    test("an old user id is held by the canister it names, at index 0", () => {
         expect(userCanisterId(canisterId).toText()).toBe(canisterId);
         expect(userIndexWithinCanister(canisterId)).toBe(0);
     });
 });
 
 describe("isMultiUserCanisterUser", () => {
-    test("a user with a User canister of their own is not", () => {
+    test("an old user id is not", () => {
         expect(isMultiUserCanisterUser(canisterId)).toBe(false);
     });
 

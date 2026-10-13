@@ -20,7 +20,7 @@ fn disappearing_messages_in_direct_chats() {
     client::user::happy_path::update_chat_settings(
         env,
         &user1,
-        &user_canister::update_chat_settings::Args {
+        &multi_user_canister::update_chat_settings::Args {
             user_id: user2.user_id,
             events_ttl: OptionUpdate::SetToSome(1000),
         },
@@ -85,7 +85,7 @@ fn disappearing_messages_in_direct_chats() {
     client::user::happy_path::update_chat_settings(
         env,
         &user2,
-        &user_canister::update_chat_settings::Args {
+        &multi_user_canister::update_chat_settings::Args {
             user_id: user1.user_id,
             events_ttl: OptionUpdate::SetToNone,
         },

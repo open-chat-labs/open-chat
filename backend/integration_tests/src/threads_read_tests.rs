@@ -1,12 +1,12 @@
 use crate::env::ENV;
 use crate::utils::now_millis;
 use crate::{TestEnv, client};
+use multi_user_canister::mark_read::{ChannelMessagesRead, ChatMessagesRead, CommunityMessagesRead, ThreadRead};
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::time::Duration;
 use testing::rng::random_string;
 use types::MessageIndex;
-use user_canister::mark_read::{ChannelMessagesRead, ChatMessagesRead, CommunityMessagesRead, ThreadRead};
 
 #[test]
 fn threads_read_in_group_returned_in_summaries_and_updates() {

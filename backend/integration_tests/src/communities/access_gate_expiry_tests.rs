@@ -1,6 +1,5 @@
 use crate::client::user_index;
 use crate::env::ENV;
-use crate::user_migration_tests::{migrate, platform_operator, tick_until};
 use crate::utils::{now_millis, tick_many};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
@@ -42,6 +41,7 @@ fn diamond_members_remain_unlapsed_after_expiry(container_type: ContainerType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let gate_config = AccessGateConfig {
@@ -95,6 +95,7 @@ fn diamond_member_lapses_and_rejoins_successfully(container_type: ContainerType)
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let gate_config = AccessGateConfig {
@@ -143,6 +144,7 @@ fn remove_gate_unlapses_members(container_type: ContainerType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let gate_config = AccessGateConfig {
@@ -208,6 +210,7 @@ fn extend_or_reduce_expiry_then_member_lapses_when_expected(container_type: Cont
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let min_balance = 900_000_000;
@@ -287,6 +290,7 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(container_type
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let min_balance = 900_000_000;
@@ -334,7 +338,7 @@ fn member_lapses_from_token_balance_gate_and_rejoins_successfully(container_type
         wait_for_user_to_lapse(env, user, &container);
 
         // Increase token balance
-        client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, min_balance);
+        client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user, min_balance);
 
         // User2 rejoins channel
         join_container(env, &owner, user, canister_ids, &container, false);
@@ -355,6 +359,7 @@ fn member_is_not_charged_for_a_payment_gate_as_it_expires(container_type: Contai
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let min_balance = 900_000_000;
@@ -436,6 +441,7 @@ fn gate_changes_and_members_lapse_as_expected(container_type: ContainerType) {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let gate_config = AccessGateConfig {
@@ -544,6 +550,7 @@ fn invited_users_pass_composite_gate_then_expire_later(container_type: Container
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     // Create a composite gate
@@ -575,7 +582,7 @@ fn invited_users_pass_composite_gate_then_expire_later(container_type: Container
     let user2 = &users[1];
 
     // Transfer more funds to user1 so they will pass the expiring gate check
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 200_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1, 200_000_000);
 
     // Move the time forward so that the gate expires
     env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
@@ -583,64 +590,6 @@ fn invited_users_pass_composite_gate_then_expire_later(container_type: Container
 
     wait_for_user_to_lapse(env, user2, &container);
     assert!(!has_user_lapsed(env, user1, &container));
-}
-
-// A migrated member's tokens stay in their old canister's wallet until they next come online, so a
-// token balance gate they fail under their new id is checked again under their old one before they
-// lapse
-#[test_case(ContainerType::Community)]
-#[test_case(ContainerType::Channel)]
-#[test_case(ContainerType::Group)]
-fn migrated_member_whose_tokens_are_still_in_their_old_wallet_does_not_lapse(container_type: ContainerType) {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let gate_config = AccessGateConfig {
-        gate: AccessGate::TokenBalance(TokenBalanceGate {
-            ledger_canister_id: canister_ids.icp_ledger,
-            min_balance: 900_000_000,
-        }),
-        expiry: Some(DAY_IN_MS),
-    };
-
-    let TestData { owner, users, container } =
-        init_test_data(env, canister_ids, *controller, gate_config, 2, container_type, false);
-
-    // user2 spends enough of the tokens in their wallet to fall below the gate's minimum
-    user_index::happy_path::pay_for_diamond_membership(
-        env,
-        users[1].principal,
-        canister_ids.user_index,
-        DiamondMembershipPlanDuration::OneYear,
-        false,
-        false,
-    );
-    tick_many(env, 4);
-
-    // Both are migrated, leaving their tokens in their old canisters' wallets, so their new wallets
-    // are empty
-    let operator = platform_operator(env, canister_ids, *controller);
-    let multi_user_canister =
-        user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, users[0].local_user_index);
-    let users: Vec<User> = users
-        .iter()
-        .map(|user| migrate(env, canister_ids, &operator, user, multi_user_canister))
-        .collect();
-    for user in users.iter() {
-        tick_until(env, |env| holds_member(env, &owner, &container, user.user_id));
-    }
-
-    // Move the time forward so that the gate expires
-    env.advance_time(Duration::from_millis(2 * DAY_IN_MS));
-    tick_many(env, 5);
-
-    // user1 still passes the gate under their old id, but user2 passes it under neither
-    wait_for_user_to_lapse(env, &users[1], &container);
-    assert!(!has_user_lapsed(env, &users[0], &container));
 }
 
 // Members lapse in a timer job in the group or community canister, which may first check the gate
@@ -678,24 +627,6 @@ fn has_user_lapsed(env: &mut PocketIc, user: &User, container: &Container) -> bo
         Container::Group(group_id) => {
             let summary = client::group::happy_path::summary(env, user.principal, *group_id);
             summary.membership.is_some_and(|m| m.lapsed)
-        }
-    }
-}
-
-// Whether the container holds a member under `user_id`, as its owner sees it
-fn holds_member(env: &PocketIc, owner: &User, container: &Container, user_id: UserId) -> bool {
-    match container {
-        Container::Community(community_id) => {
-            let response = client::community::happy_path::selected_initial(env, owner.principal, *community_id);
-            response.members.iter().any(|m| m.user_id == user_id) || response.basic_members.contains(&user_id)
-        }
-        Container::Channel(community_id, channel_id) => {
-            let response = client::community::happy_path::selected_channel_initial(env, owner, *community_id, *channel_id);
-            response.members.iter().any(|m| m.user_id == user_id) || response.basic_members.contains(&user_id)
-        }
-        Container::Group(group_id) => {
-            let response = client::group::happy_path::selected_initial(env, owner.principal, *group_id);
-            response.participants.iter().any(|m| m.user_id == user_id) || response.basic_members.contains(&user_id)
         }
     }
 }

@@ -2,8 +2,8 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::mute_notifications::*;
 use types::ChatId;
-use user_canister::mute_notifications::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

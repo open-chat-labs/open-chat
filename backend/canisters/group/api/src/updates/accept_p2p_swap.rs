@@ -8,9 +8,9 @@ use types::{AcceptSwapSuccess, MessageId, MessageIndex, PinNumberWrapper, icrc1}
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    // The account token1 is deposited from, defaulting to the accepting user's own canister. Any
-    // other account must have approved that canister as spender, since the deposit is then pulled
-    // via ICRC-2.
+    // The account token1 is deposited from, defaulting to the accepting user's wallet. The user's
+    // canister pulls the deposit via ICRC-2, spending only an approval made under the user's own
+    // spender subaccount (see `ledger_utils::spender_subaccount`).
     pub from_account: Option<icrc1::Account>,
     pub pin: Option<PinNumberWrapper>,
     pub new_achievement: bool,

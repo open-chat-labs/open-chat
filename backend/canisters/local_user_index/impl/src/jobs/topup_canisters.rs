@@ -26,10 +26,6 @@ fn populate_canisters() {
             state
                 .data
                 .cycles_balance_check_queue
-                .extend(state.data.local_users.iter_user_canisters().map(|(u, _)| u.canister_id()));
-            state
-                .data
-                .cycles_balance_check_queue
                 .extend(state.data.local_groups.iter().map(|(u, _)| CanisterId::from(*u)));
             state
                 .data
@@ -100,8 +96,7 @@ async fn run_async(canister_id: CanisterId) {
                 }
             } else {
                 // The canister may have stopped being one of this canister's children while its
-                // status was being fetched, eg. a migrated user's canister, which is uninstalled
-                // as the user is closed out
+                // status was being fetched, eg. a group or community which has been deleted
                 let Some(child_min) = read_state(|state| child_canister_min_cycles_balance(canister_id, state)) else {
                     return;
                 };
@@ -160,7 +155,7 @@ async fn notify_community_uninstalled(community_id: CommunityId) {
             state.data.communities_requiring_upgrade.remove_failed(&canister_id);
             state.data.community_event_sync_queue.take(&canister_id);
 
-            // Any cycles the canister still holds are refunded, as for a deleted user's canister
+            // Any cycles the canister still holds are refunded, as for a deleted community
             state.data.cycles_refund_queue.push_back(CanisterToRefund {
                 canister_id,
                 attempt: 0,

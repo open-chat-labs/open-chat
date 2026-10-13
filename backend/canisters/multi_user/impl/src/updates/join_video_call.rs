@@ -2,8 +2,8 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::{JoinVideoCall, UserCanisterEvent, join_video_call::*};
 use types::{Achievement, OCResult, UserId};
-use user_canister::{JoinVideoCall, UserCanisterEvent, join_video_call::*};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -25,7 +25,7 @@ fn join_video_call_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         state.push_notification(None, my_index, dismissal, now);
     }
 
-    // The other user is told, as the User canister tells them
+    // The other user is told
     state.send_user_canister_event(
         my_index,
         args.user_id,

@@ -26,18 +26,6 @@ pub enum NotificationsIndexEvent {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum UserIndexEvent {
-    UserIdMigrated(UserIdMigrated),
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct UserIdMigrated {
-    pub user_principal: Principal,
-    pub old_user_id: UserId,
-    pub new_user_id: UserId,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct SubscriptionAdded {
     pub user_id: UserId,
     pub subscription: SubscriptionInfo,

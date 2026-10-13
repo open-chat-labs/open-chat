@@ -484,34 +484,10 @@ export type PayForDiamondMembershipResponse =
     | OCError
     | Offline;
 
-export type SetUserUpgradeConcurrencyResponse = "success" | "offline";
-
 export type CreateMultiUserCanisterResponse =
     | { kind: "success"; canisterId: string }
     | { kind: "local_user_index_not_found" }
     | InternalError;
-
-export type UsersToMigrate =
-    | { kind: "longest_offline"; count: number }
-    | { kind: "specific"; userIds: string[] };
-
-// Users who can't be migrated, or who are already queued or being migrated, are left out of `queued`
-export type MigrateUsersResponse = { kind: "success"; queued: string[] } | OCError;
-
-export type UserMigrationStatus =
-    | { kind: "queued" }
-    | { kind: "requested"; multiUserCanisterId: string; timestamp: bigint }
-    | {
-          kind: "started";
-          multiUserCanisterId: string;
-          timestamp: bigint;
-          userBytes: bigint;
-          wasmVersion: string;
-      }
-    | { kind: "imported"; multiUserCanisterId: string; timestamp: bigint; newUserId: string }
-    | { kind: "failed"; multiUserCanisterId: string; timestamp: bigint; error: OCError };
-
-export type UserMigrationResponse = UserMigrationStatus | { kind: "not_found" } | OCError;
 
 // A balance left behind in the wallet of a canister the user had before being migrated to a
 // MultiUser canister. Only that canister can move it, so it isn't in the user's wallet until the
@@ -578,9 +554,8 @@ export type InsufficientPayment = {
     kind: "insufficient_payment";
 };
 
-// A step of a swap the user makes straight from their wallet (as a user who holds their own funds
-// does), reported as the step starts, ahead of how the swap ended. The withdrawal is the DEX paying
-// the output, `amountOut`, to the wallet.
+// A step of a swap the user makes straight from their wallet, reported as the step starts, ahead of
+// how the swap ended. The withdrawal is the DEX paying the output, `amountOut`, to the wallet.
 export type SwapFromWalletStep =
     | { step: "approve" }
     | { step: "swap" }
@@ -598,31 +573,6 @@ export type SwapTokensResponse =
       }
     | PinNumberFailures
     | InternalError
-    | OCError;
-
-export type Result<T> =
-    | {
-          kind: "ok";
-          value: T;
-      }
-    | {
-          kind: "error";
-          error: string;
-      };
-
-export type TokenSwapStatusResponse =
-    | {
-          kind: "success";
-          started: bigint;
-          depositAccount?: Result<null>;
-          transfer?: Result<bigint>;
-          notifyDex?: Result<null>;
-          amountSwapped?: Result<Result<bigint>>;
-          withdrawnFromDex?: Result<bigint>;
-      }
-    | {
-          kind: "not_found";
-      }
     | OCError;
 
 export type ApproveTransferResponse = Success | OCError | InternalError;

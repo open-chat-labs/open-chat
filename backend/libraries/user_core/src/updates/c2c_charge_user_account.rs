@@ -1,13 +1,11 @@
 use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use ledger_utils::Payer;
-use user_canister::c2c_charge_user_account::{Args, Response::*, *};
+use multi_user_canister::c2c_charge_user_account::{Args, Response::*, *};
 
 // Charges the user, paying the UserIndex from `payer`. The caller has already checked the user is
-// one it holds, and chosen the payer: for a user alone in their canister, the canister's own account
-// or the external account they approved, and for a user in a MultiUser canister, who holds their own
-// funds, their wallet or the external account they approved.
+// one it holds, and chosen the payer: the user's wallet, since they hold their own funds, or the
+// external account they approved.
 pub async fn c2c_charge_user_account(args: Args, payer: Payer, user_index_canister_id: types::CanisterId) -> Response {
     // Whatever the caller checked, the user must be one of this canister's, since it is charging
     // them
@@ -20,55 +18,31 @@ pub async fn c2c_charge_user_account(args: Args, payer: Payer, user_index_canist
     );
 
     // The account actually paid from, whichever the caller chose, can't be one of this canister's
-    if let Payer::Approved { from, .. } = &payer
-        && let Err(error) = ledger_utils::validate_from_account(Some(*from), this_canister_id)
-    {
+    if let Err(error) = ledger_utils::validate_from_account(Some(payer.from), this_canister_id) {
         return Error(error);
     }
 
     let to = Account::from(user_index_canister_id);
     let amount = args.amount.e8s().into();
 
-    match payer {
-        // The allowance is what authorises this - the ledger only lets us pull from an account
-        // which has approved this canister as spender - so there is nothing for us to check here.
-        Payer::Approved {
-            from,
-            spender_subaccount,
-        } => match icrc_ledger_canister_c2c_client::icrc2_transfer_from(
-            args.ledger_canister_id,
-            &TransferFromArgs {
-                spender_subaccount,
-                from: from.into(),
-                to,
-                fee: None,
-                created_at_time: None,
-                memo: None,
-                amount,
-            },
-        )
-        .await
-        {
-            Ok(Ok(block_index)) => Success(block_index.0.try_into().unwrap()),
-            Ok(Err(transfer_error)) => TransferFromError(transfer_error),
-            Err(error) => InternalError(format!("{error:?}")),
+    // The allowance is what authorises this - the ledger only lets us pull from an account which has
+    // approved this canister as spender - so there is nothing for us to check here.
+    match icrc_ledger_canister_c2c_client::icrc2_transfer_from(
+        args.ledger_canister_id,
+        &TransferFromArgs {
+            spender_subaccount: payer.spender_subaccount,
+            from: payer.from.into(),
+            to,
+            fee: None,
+            created_at_time: None,
+            memo: None,
+            amount,
         },
-        Payer::ThisCanister => match icrc_ledger_canister_c2c_client::icrc1_transfer(
-            args.ledger_canister_id,
-            &TransferArg {
-                from_subaccount: None,
-                to,
-                fee: None,
-                created_at_time: None,
-                memo: None,
-                amount,
-            },
-        )
-        .await
-        {
-            Ok(Ok(block_index)) => Success(block_index.0.try_into().unwrap()),
-            Ok(Err(transfer_error)) => TransferErrorV2(transfer_error),
-            Err(error) => InternalError(format!("{error:?}")),
-        },
+    )
+    .await
+    {
+        Ok(Ok(block_index)) => Success(block_index.0.try_into().unwrap()),
+        Ok(Err(transfer_error)) => TransferFromError(transfer_error),
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }

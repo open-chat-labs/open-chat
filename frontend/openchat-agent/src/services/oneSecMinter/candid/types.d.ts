@@ -60,6 +60,7 @@ export type EvmChain = { 'Base' : null } |
  * / An EVM transaction hash with an optional log index.
  */
 export interface EvmTx { 'log_index' : [] | [bigint], 'hash' : string }
+export interface FetchedBlock { 'block_height' : bigint }
 /**
  * / The argument of the `forward_evm_to_icp` endpoint.
  * / Specifies that the given tokens have been transferred to the given
@@ -232,9 +233,66 @@ export interface TransferFee {
   'destination_token' : [] | [Token],
 }
 /**
+ * / The argument of the `transfer_icp_to_evm` endpoint.
+ * / Specifies tokens being sent and received.
+ */
+export interface TransferIcpToEvmArg {
+  /**
+   * / The token being transferred.
+   */
+  'token' : Token,
+  /**
+   * / The receiver on the EVM side.
+   */
+  'evm_account' : EvmAccount,
+  /**
+   * / The sender on the ICP side.
+   */
+  'icp_account' : IcpAccount,
+  /**
+   * / The destination EVM chain.
+   */
+  'evm_chain' : EvmChain,
+  /**
+   * / The amount that the user has agreed to receive.
+   * / The actual amount of received tokens may be higher
+   * / depending on the current transaction fees.
+   * / It is represented in the smallest units of the token.
+   */
+  'evm_amount' : [] | [bigint],
+  /**
+   * / The amount of tokens being sent.
+   * / It is represented in the smallest units of the token.
+   */
+  'icp_amount' : bigint,
+}
+/**
  * / The unique identifier of an accepted transfer.
  */
 export interface TransferId { 'id' : bigint }
+/**
+ * / A result of the `transfer_icp_to_evm` endpoint.
+ */
+export type TransferResponse = {
+    /**
+     * / The transfer has failed.
+     */
+    'Failed' : ErrorMessage
+  } |
+  {
+    /**
+     * / The transfer has been started and has the given id.
+     */
+    'Accepted' : TransferId
+  } |
+  {
+    /**
+     * / The EVM to ICP transfer has not been detected yet.
+     * / `FetchedBlock` shows the last processed block
+     * / and can be used to estimate progress.
+     */
+    'Fetching' : FetchedBlock
+  };
 /**
  * / A general transaction that can be either an EVM transaction or an ICP
  * / transaction.
@@ -272,6 +330,22 @@ export interface _SERVICE {
    * / minimum and maximum supported amounts per chain and token.
    */
   'get_transfer_fees' : ActorMethod<[], Array<TransferFee>>,
+  /**
+   * / Starts a transfer of tokens from ICP to EVM.
+   * /
+   * / The transfer is performed from an ICRC2 ledger on ICP to the
+   * / corresponding ERC20 contract on EVM.
+   * /
+   * / Preconditions:
+   * / - The principal of the caller must match the principal of the sender.
+   * / - The caller has approved the transfer on the ICRC2 ledger using
+   * /   `icrc2_approve` and specifying this canister as the spender.
+   * /   The approval is not needed for tokens that are minted by this
+   * /   canister.
+   * / - The transfer amount is within the `[min_amount..max_amount]`
+   * /   range that can be queries via `get_transfer_fees()`.
+   */
+  'transfer_icp_to_evm' : ActorMethod<[TransferIcpToEvmArg], TransferResponse>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

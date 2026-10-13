@@ -1,9 +1,9 @@
 use crate::model::threads_read::ThreadsRead;
 use constants::HOUR_IN_MS;
+use multi_user_canister::mark_read::ThreadRead;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{CanisterId, ChatId, MessageIndex, MultiUserChat, TimestampMillis, Timestamped};
-use user_canister::mark_read::ThreadRead;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChat {
@@ -58,8 +58,8 @@ impl GroupChat {
             .mark_read(MultiUserChat::Group(self.chat_id), read_up_to, threads, date_read_pinned, now);
     }
 
-    pub fn to_summary(&self) -> user_canister::GroupChatSummary {
-        user_canister::GroupChatSummary {
+    pub fn to_summary(&self) -> multi_user_canister::GroupChatSummary {
+        multi_user_canister::GroupChatSummary {
             chat_id: self.chat_id,
             local_user_index_canister_id: self.local_user_index_canister_id,
             read_by_me_up_to: self.messages_read.read_by_me_up_to.value,
@@ -69,8 +69,8 @@ impl GroupChat {
         }
     }
 
-    pub fn to_summary_updates(&self, updates_since: TimestampMillis) -> user_canister::GroupChatSummaryUpdates {
-        user_canister::GroupChatSummaryUpdates {
+    pub fn to_summary_updates(&self, updates_since: TimestampMillis) -> multi_user_canister::GroupChatSummaryUpdates {
+        multi_user_canister::GroupChatSummaryUpdates {
             chat_id: self.chat_id,
             read_by_me_up_to: self.messages_read.read_by_me_up_to_updates(updates_since),
             threads_read: self

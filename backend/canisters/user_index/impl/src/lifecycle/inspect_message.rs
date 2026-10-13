@@ -47,29 +47,20 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_diamond_membership_fees"
         | "set_moderation_referral_config"
         | "set_premium_item_cost"
-        | "set_user_upgrade_concurrency"
-        | "migrate_users"
-        | "set_user_migration_concurrency"
-        | "cancel_user_migration"
         | "create_multi_user_canister"
-        | "set_multi_user_canisters_enabled"
         | "update_blocked_username_patterns" => state.is_caller_platform_operator(),
         "record_authority_report_filed" => state.is_caller_platform_operator() || state.is_caller_authority_reporter(),
-        "refund_deleted_user_cycles" => state.is_caller_platform_operator(),
         "upload_wasm_chunk" => state.can_caller_upload_wasm_chunks(),
         "add_platform_moderator"
         | "add_platform_operator"
         | "remove_platform_moderator"
         | "remove_platform_operator"
         | "assign_platform_moderators_group"
-        | "set_max_concurrent_user_canister_upgrades"
         | "add_local_user_index_canister"
         | "set_daily_puzzle_canister_id"
-        | "upgrade_user_canister_wasm"
         | "upgrade_multi_user_canister_wasm"
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
-        | "export_migrating_user"
         | "register_external_achievement"
         | "publish_bot"
         | "suspected_bots" => state.is_caller_governance_principal(),

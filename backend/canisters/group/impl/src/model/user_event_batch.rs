@@ -1,7 +1,7 @@
 use crate::{can_borrow_state, mutate_state, read_state, run_regular_jobs};
+use multi_user_canister::GroupCanisterEvent;
 use timer_job_queues::{TimerJobItem, grouped_timer_job_batch};
 use types::{C2CError, CanisterId, IdempotentEnvelope, Milliseconds, UserId};
-use user_canister::GroupCanisterEvent;
 use utils::canister::{
     delay_if_should_retry_failed_c2c_call, delay_if_should_retry_failed_c2c_call_to_new_method,
     is_user_canister_possibly_migrated,
@@ -24,38 +24,18 @@ impl TimerJobItem for UserEventBatch {
 
         let canister_id = self.key;
 
-        // A MultiUser canister's users carry an index, and it takes the events for all of them in a
-        // single call. A User canister is sent its user's events via the original endpoint, so that
-        // this doesn't depend on every User canister having been upgraded to support the new one.
-        let response = if self.items.first().is_some_and(|event| event.value.0.index() != 0) {
-            user_canister_c2c_client::c2c_group_canister_v2(
-                canister_id,
-                &user_canister::c2c_group_canister_v2::Args::new(self.items.clone()),
-            )
-            .await
-        } else {
-            user_canister_c2c_client::c2c_group_canister(
-                canister_id,
-                &user_canister::c2c_group_canister::Args::new(
-                    canister_id.into(),
-                    self.items
-                        .iter()
-                        .map(|event| IdempotentEnvelope {
-                            created_at: event.created_at,
-                            idempotency_id: event.idempotency_id,
-                            value: event.value.1.clone(),
-                        })
-                        .collect(),
-                ),
-            )
-            .await
-        };
+        let response = multi_user_canister_c2c_client::c2c_group_canister_v2(
+            canister_id,
+            &multi_user_canister::c2c_group_canister_v2::Args::new(self.items.clone()),
+        )
+        .await;
 
         match response {
             Ok(types::SuccessOnly::Success) => Ok(()),
             Err(error) => {
                 // If the user has been migrated to a MultiUser canister, their events are sent on
-                // to them there instead. Only a canister which holds a user alone is ever migrated.
+                // to them there instead. Only a user's old id, which was a User canister's id, can be one
+                // they have been migrated from.
                 if is_user_canister_possibly_migrated(&error) && self.items.iter().all(|event| event.value.0.index() == 0) {
                     match latest_id_if_migrated(canister_id.into()).await {
                         Ok(Some(new_user_id)) => {
@@ -85,8 +65,8 @@ impl TimerJobItem for UserEventBatch {
                             return Ok(());
                         }
                         // The LocalUserIndex may not have heard of the migration yet, so the events are
-                        // retried, including while the cycles refunder is installed, which is only
-                        // briefly, and is otherwise the only time a User canister is missing the method
+                        // retried, including while the cycles refunder, which lacks the method, is briefly
+                        // installed in the old canister
                         Ok(None) => return Err(delay_if_should_retry_failed_c2c_call_to_new_method(&error)),
                         // They may have been migrated, so the events are retried as the lookup would
                         // be, falling back to retrying them as the call to the old canister would be

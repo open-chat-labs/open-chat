@@ -11,7 +11,7 @@ use test_case::test_case;
 use testing::rng::random_principal;
 use types::{
     Achievement, CLAIM_TYPE_DIAMOND_MEMBERSHIP, ChitEventType, DiamondMembershipDetails, DiamondMembershipFees,
-    DiamondMembershipPlanDuration, DiamondMembershipSubscription, ReferralStatus, icrc1,
+    DiamondMembershipPlanDuration, DiamondMembershipSubscription, ReferralStatus,
 };
 
 #[test_case(true, false)]
@@ -33,7 +33,8 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
 
     let user = client::register_user(env, canister_ids);
 
-    client::ledger::happy_path::transfer(env, *controller, ledger, user.user_id, 10_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, ledger, &user, 10_000_000_000);
+    client::approve_user_canister(env, &user, ledger, 9_000_000_000);
 
     let now = now_millis(env);
 
@@ -90,16 +91,18 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
         (fees.icp_price_e8s(duration) as u128, ICP_TRANSFER_FEE)
     };
 
-    let new_balance = client::ledger::happy_path::balance_of(env, ledger, user.user_id);
-    assert_eq!(new_balance, 10_000_000_000 - expected_price);
+    // The user also paid the fee for approving their canister to take the payment
+    let new_balance = client::ledger::happy_path::balance_of(env, ledger, &user);
+    assert_eq!(new_balance, 10_000_000_000 - expected_price - transfer_fee);
 
     let treasury_balance = client::ledger::happy_path::balance_of(env, ledger, SNS_GOVERNANCE_CANISTER_ID);
 
     assert_eq!(treasury_balance - init_treasury_balance, expected_price - (2 * transfer_fee));
 }
 
-// Paying from a wallet OpenChat does not control. The user's own account is never touched - the
-// payment is pulled from the wallet via ICRC-2 against an allowance it granted the user's canister.
+// Paying from a wallet OpenChat does not control. The user's own wallet is never touched - the
+// payment is pulled from the other wallet via ICRC-2 against an allowance it granted the user's
+// canister, under the user's spender subaccount.
 #[test]
 fn can_upgrade_to_diamond_from_approved_account() {
     let mut wrapper = ENV.deref().get();
@@ -126,7 +129,7 @@ fn can_upgrade_to_diamond_from_approved_account() {
         env,
         wallet,
         canister_ids.icp_ledger,
-        user.user_id,
+        user_canister_spender(&user),
         price as u128 + ICP_TRANSFER_FEE,
     );
 
@@ -155,15 +158,12 @@ fn can_upgrade_to_diamond_from_approved_account() {
 
     assert_eq!(success.expires_at, now + duration.as_millis());
 
-    // The wallet paid, and the user's own account was never touched.
+    // The wallet paid, and the user's own wallet was never touched.
     assert_eq!(
         wallet_balance_before - client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, wallet),
         price as u128
     );
-    assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id),
-        0
-    );
+    assert_eq!(client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user), 0);
 
     let treasury_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
     assert_eq!(
@@ -172,8 +172,8 @@ fn can_upgrade_to_diamond_from_approved_account() {
     );
 }
 
-// Paying from our own account would need an approval we had granted ourselves, so it is rejected up
-// front rather than left to fail at the ledger.
+// Paying from an account of the user's canister would need an approval it had granted itself, so it
+// is rejected up front rather than left to fail at the ledger.
 #[test]
 fn paying_for_diamond_membership_from_own_account_is_rejected() {
     let mut wrapper = ENV.deref().get();
@@ -185,7 +185,8 @@ fn paying_for_diamond_membership_from_own_account_is_rejected() {
     } = wrapper.env();
 
     let user = client::register_user(env, canister_ids);
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, 10_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user, 10_000_000_000);
+    client::approve_user_canister(env, &user, canister_ids.icp_ledger, 9_000_000_000);
 
     let duration = DiamondMembershipPlanDuration::OneMonth;
     let fees = DiamondMembershipFees::default();
@@ -199,7 +200,7 @@ fn paying_for_diamond_membership_from_own_account_is_rejected() {
             ledger: ICP_LEDGER_CANISTER_ID,
             expected_price_e8s: fees.icp_price_e8s(duration),
             recurring: false,
-            from_account: Some(icrc1::Account::legacy_for_user(user.user_id)),
+            from_account: Some(user.canister().into()),
         },
     );
 
@@ -221,7 +222,7 @@ fn paying_for_diamond_membership_from_own_account_is_rejected() {
 }
 
 // A one off approval must not silently fund renewals, so recurring payments always come from the
-// user's own account even when the first payment came from a wallet.
+// user's own wallet even when the first payment came from another wallet.
 #[test]
 fn recurring_diamond_payment_comes_from_own_account() {
     let mut wrapper = ENV.deref().get();
@@ -241,9 +242,11 @@ fn recurring_diamond_payment_comes_from_own_account() {
 
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, wallet, 10_000_000_000);
     // Deliberately approve enough for several payments - only the first should ever spend it.
-    client::ledger::happy_path::approve(env, wallet, canister_ids.icp_ledger, user.user_id, 10 * price);
-    // Enough in the user's own account to cover the renewal.
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, 10_000_000_000);
+    client::ledger::happy_path::approve(env, wallet, canister_ids.icp_ledger, user_canister_spender(&user), 10 * price);
+    // Enough in the user's own wallet to cover the renewal, which it approves their canister to take
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user, 10_000_000_000);
+    client::approve_user_canister(env, &user, canister_ids.icp_ledger, 10 * price);
+    let user_balance_before = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user);
 
     let wallet_balance_before = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, wallet);
     let start_time = now_millis(env);
@@ -263,14 +266,14 @@ fn recurring_diamond_payment_comes_from_own_account() {
 
     tick_many(env, 10);
 
-    // The first payment came from the wallet, leaving the user's own account untouched.
+    // The first payment came from the wallet, leaving the user's own wallet untouched.
     assert_eq!(
         wallet_balance_before - client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, wallet),
         price
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id),
-        10_000_000_000
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user),
+        user_balance_before
     );
 
     let one_month_millis = duration.as_millis();
@@ -283,10 +286,10 @@ fn recurring_diamond_payment_comes_from_own_account() {
         start_time + (2 * one_month_millis)
     );
 
-    // The renewal came out of the user's own account, leaving the remaining allowance untouched.
+    // The renewal came out of the user's own wallet, leaving the remaining allowance untouched.
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id),
-        10_000_000_000 - price
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user),
+        user_balance_before - price
     );
     assert_eq!(
         client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, wallet),
@@ -345,12 +348,13 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
             .is_active()
     );
 
-    let new_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
+    let new_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user);
     let fees = DiamondMembershipFees::default();
 
+    // Less the fee for approving their canister to take the payments
     assert_eq!(
         new_balance,
-        1_000_000_000 - (2 * fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth) as u128)
+        1_000_000_000 - (2 * fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth) as u128) - ICP_TRANSFER_FEE
     );
 }
 
@@ -500,10 +504,10 @@ fn update_subscription_succeeds(disable: bool) {
             DiamondMembershipSubscription::Disabled
         ));
 
-        let new_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
+        let new_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user);
         assert_eq!(
             new_balance,
-            1_000_000_000 - fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth) as u128
+            1_000_000_000 - fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth) as u128 - ICP_TRANSFER_FEE
         );
     } else {
         let one_year_millis = DiamondMembershipPlanDuration::OneYear.as_millis();
@@ -516,12 +520,22 @@ fn update_subscription_succeeds(disable: bool) {
             DiamondMembershipSubscription::OneYear
         ));
 
-        let new_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
+        let new_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user);
         assert_eq!(
             new_balance,
             1_000_000_000
                 - (fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth)
                     + fees.icp_price_e8s(DiamondMembershipPlanDuration::OneYear)) as u128
+                - ICP_TRANSFER_FEE
         );
+    }
+}
+
+// The account a wallet approves for the user's canister to pull a payment for the user, under their
+// spender subaccount
+fn user_canister_spender(user: &crate::User) -> icrc_ledger_types::icrc1::account::Account {
+    icrc_ledger_types::icrc1::account::Account {
+        owner: user.canister(),
+        subaccount: Some(ledger_utils::spender_subaccount(user.principal)),
     }
 }

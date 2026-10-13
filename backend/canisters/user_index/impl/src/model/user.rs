@@ -4,8 +4,8 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{
-    CyclesTopUp, CyclesTopUpInternal, PhoneNumber, RegistrationFee, SuspensionAction, SuspensionDuration, TimestampMillis,
-    UniquePersonProof, UserId, UserSummary, UserSummaryStable, UserSummaryV2, UserSummaryVolatile, UserType, is_default,
+    PhoneNumber, RegistrationFee, SuspensionAction, SuspensionDuration, TimestampMillis, UniquePersonProof, UserId,
+    UserSummary, UserSummaryStable, UserSummaryV2, UserSummaryVolatile, UserType, is_default,
 };
 use utils::time::MonthKey;
 
@@ -25,8 +25,6 @@ pub struct User {
     pub date_created: TimestampMillis,
     #[serde(rename = "du")]
     pub date_updated: TimestampMillis,
-    #[serde(rename = "ct")]
-    pub cycle_top_ups: Vec<CyclesTopUpInternal>,
     #[serde(rename = "av", skip_serializing_if = "Option::is_none")]
     pub avatar_id: Option<u128>,
     #[serde(rename = "pb", skip_serializing_if = "Option::is_none")]
@@ -129,7 +127,6 @@ impl User {
             display_name_upper,
             date_created: now,
             date_updated: now,
-            cycle_top_ups: Vec::new(),
             avatar_id,
             profile_background_id: None,
             registration_fee: None,
@@ -228,10 +225,6 @@ impl User {
         self.profile_background_id = profile_background_id;
         self.date_updated = now;
     }
-
-    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up.into())
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -276,7 +269,6 @@ impl Default for User {
             display_name_upper: None,
             date_created: 0,
             date_updated: 0,
-            cycle_top_ups: Vec::new(),
             avatar_id: None,
             profile_background_id: None,
             registration_fee: None,

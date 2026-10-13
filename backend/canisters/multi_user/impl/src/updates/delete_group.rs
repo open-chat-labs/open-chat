@@ -4,8 +4,8 @@ use candid::Principal;
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use group_canister::c2c_delete_group;
+use multi_user_canister::delete_group::*;
 use types::{OCResult, UserId};
-use user_canister::delete_group::*;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -19,9 +19,7 @@ async fn delete_group_impl(args: Args) -> Response {
         Err(error) => return Response::Error(error),
     };
 
-    let c2c_args = c2c_delete_group::Args {
-        user_id: Some(my_user_id),
-    };
+    let c2c_args = c2c_delete_group::Args { user_id: my_user_id };
 
     match group_canister_c2c_client::c2c_delete_group(args.chat_id.into(), &c2c_args).await {
         Ok(result) => {

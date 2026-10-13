@@ -1,4 +1,4 @@
-//! The query endpoints shared by the User and MultiUser canisters, one function per endpoint
+//! The logic of the MultiUser canister's query endpoints, one function per endpoint
 
 use crate::User;
 use chat_events::ChatEventsListReader;
@@ -22,7 +22,6 @@ mod initial_state;
 mod message_activity_feed;
 mod messages_by_message_index;
 mod public_profile;
-mod token_swap_status;
 mod token_swaps;
 mod updates;
 
@@ -40,7 +39,6 @@ pub use initial_state::initial_state;
 pub use message_activity_feed::message_activity_feed;
 pub use messages_by_message_index::messages_by_message_index;
 pub use public_profile::public_profile;
-pub use token_swap_status::token_swap_status;
 pub use token_swaps::token_swaps;
 pub use updates::updates;
 

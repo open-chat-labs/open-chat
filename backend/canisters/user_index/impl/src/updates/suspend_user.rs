@@ -30,12 +30,12 @@ pub(crate) async fn suspend_user_impl(
     downgrade: bool,
     caused_by_report: Option<u64>,
 ) -> Response {
-    let c2c_args = user_canister::c2c_set_user_suspended::Args {
+    let c2c_args = multi_user_canister::c2c_set_user_suspended::Args {
         user_id,
         suspended: true,
     };
-    match user_canister_c2c_client::c2c_set_user_suspended(user_id.canister_id(), &c2c_args).await {
-        Ok(user_canister::c2c_set_user_suspended::Response::Success(result)) => {
+    match multi_user_canister_c2c_client::c2c_set_user_suspended(user_id.canister_id(), &c2c_args).await {
+        Ok(multi_user_canister::c2c_set_user_suspended::Response::Success(result)) => {
             mutate_state(|state| {
                 commit(
                     user_id,

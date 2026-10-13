@@ -120,7 +120,8 @@ fn cancel_retries(state: &mut RuntimeState, swap_id: u32) -> Option<u32> {
 // have failed, or `None` if it is to be dropped
 fn retry_delay(error: &C2CError, failures: u32) -> Option<Milliseconds> {
     // An uninstalled canister fails the call with a `CanisterError`, which would otherwise be retried,
-    // but the canister won't be reinstalled, eg. its user was deleted or migrated to a MultiUser canister
+    // but the canister won't be reinstalled, eg. a deleted group or community, or a migrated user's old
+    // User canister
     if is_target_canister_uninstalled_or_deleted(error.reject_code(), error.message()) || failures >= MAX_ATTEMPTS {
         None
     } else {

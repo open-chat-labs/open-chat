@@ -13,38 +13,10 @@ use types::{CanisterId, Chat, ChatId, MessageIndex, OCResult, TimestampMillis, T
 // The groups the user is in, each of which is stored whole in the stable memory map (see
 // `HeapStableSplitMap`). The heap only holds when each was last updated.
 #[derive(Serialize, Deserialize, Default)]
-#[serde(from = "GroupChatsCombined")]
 pub struct GroupChats {
     groups_created: u32,
     group_chats_v2: HeapStableSplitMap<GroupChat>,
     pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
-}
-
-// Reads both the current layout and the one before it, in which every group was on the heap. Groups
-// read from the previous layout are moved into stable memory by `migrate_to_stable_memory`, which
-// only leaves them there in a User canister whose user was being migrated when it was upgraded, or in
-// a user imported from such a canister until their import completes. This can be removed once every
-// User canister has been upgraded with no migration in progress.
-#[derive(Deserialize)]
-struct GroupChatsCombined {
-    groups_created: u32,
-    #[serde(default)]
-    group_chats: HashMap<ChatId, GroupChat>,
-    #[serde(default)]
-    group_chats_v2: HeapStableSplitMap<GroupChat>,
-    pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
-}
-
-impl From<GroupChatsCombined> for GroupChats {
-    fn from(value: GroupChatsCombined) -> Self {
-        let mut group_chats_v2 = value.group_chats_v2;
-        group_chats_v2.extend_from_heap(value.group_chats);
-        GroupChats {
-            groups_created: value.groups_created,
-            group_chats_v2,
-            pinned: value.pinned,
-        }
-    }
 }
 
 // What is kept on the heap for each group
@@ -183,11 +155,6 @@ impl GroupChats {
             self.pinned.value.remove(chat_id);
         }
     }
-
-    // Moves every group still on the heap into stable memory, returning how many were moved
-    pub fn migrate_to_stable_memory(&mut self) -> usize {
-        self.group_chats_v2.migrate_to_stable_memory()
-    }
 }
 
 #[cfg(test)]
@@ -281,64 +248,6 @@ mod tests {
         assert!(group_chats.exists(&chat(2)));
         assert!(group_chats.updated_since(50).next().is_none());
         assert_eq!(group_chats.len(), 2);
-    }
-
-    #[test]
-    fn groups_from_the_previous_layout_are_moved_into_stable_memory() {
-        init_stable_memory_map();
-        let local_user_index = Principal::from_slice(&[9; 10]);
-
-        #[derive(Serialize)]
-        struct GroupChatsPrevious {
-            groups_created: u32,
-            group_chats: HashMap<ChatId, GroupChat>,
-            pinned: Timestamped<HashMap<ChatId, TimestampMillis>>,
-        }
-        let mut group = GroupChat::new(chat(1), local_user_index, Some(3.into()), 10);
-        group.archived = Timestamped::new(true, 20);
-        let previous = GroupChatsPrevious {
-            groups_created: 4,
-            group_chats: HashMap::from([
-                (chat(1), group),
-                (chat(2), GroupChat::new(chat(2), local_user_index, None, 30)),
-            ]),
-            pinned: Timestamped::new(HashMap::from([(chat(2), 30)]), 30),
-        };
-        let group_chats: GroupChats = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(previous));
-
-        // The groups are read from the heap until they are moved
-        assert_eq!(group_chats.len(), 2);
-        assert_eq!(group_chats.groups_created(), 4);
-        assert_eq!(group_chats.pinned_chats().len(), 1);
-        assert_eq!(group_chats.updated_since(25).count(), 1);
-        assert!(!is_stored(chat(1)));
-
-        // They survive being serialized while still on the heap, as when a User canister whose user
-        // is being migrated is upgraded again
-        let mut group_chats: GroupChats = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&group_chats));
-        assert_eq!(group_chats.len(), 2);
-        assert_eq!(group_chats.groups_created(), 4);
-        assert_eq!(group_chats.updated_since(25).count(), 1);
-        assert!(!is_stored(chat(1)));
-
-        assert_eq!(group_chats.migrate_to_stable_memory(), 2);
-        assert_eq!(group_chats.migrate_to_stable_memory(), 0);
-        assert!(is_stored(chat(1)) && is_stored(chat(2)));
-        let group = group_chats.iter().find(|g| g.chat_id == chat(1)).unwrap();
-        assert_eq!(group.messages_read.read_by_me_up_to.value, Some(3.into()));
-        assert!(group.archived.value);
-        assert_eq!(group_chats.updated_since(25).count(), 1);
-
-        // Once moved, they are serialized under the current layout only
-        #[derive(Deserialize)]
-        struct Fields {
-            group_chats: Option<serde::de::IgnoredAny>,
-        }
-        let fields: Fields = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&group_chats));
-        assert!(fields.group_chats.is_none());
-        let deserialized: GroupChats = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&group_chats));
-        assert_eq!(deserialized.len(), 2);
-        assert!(deserialized.updated_since(25).next().is_some());
     }
 
     fn is_stored(chat_id: ChatId) -> bool {

@@ -2,9 +2,9 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::mark_token_swap_completed::*;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, OCResult, Timestamped};
-use user_canister::mark_token_swap_completed::*;
 use user_core::SwapSuccess;
 
 // Records how a swap the user made from their own wallet ended (see `mark_token_swap_started`). A

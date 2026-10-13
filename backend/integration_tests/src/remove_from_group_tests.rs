@@ -20,10 +20,12 @@ fn remove_group_member_succeeds(user_joins_group: bool) {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
-    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, false, user_joins_group);
+    let TestData { user1, user2, group_id } =
+        init_test_data(env, canister_ids, *controller, *platform_operator, false, user_joins_group);
 
     let remove_member_response = client::group::remove_participant(
         env,
@@ -58,10 +60,11 @@ fn removal_reaches_a_user_canister_unreachable_for_longer_than_the_direct_call_i
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
-    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, false, true);
+    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, *platform_operator, false, true);
 
     stop_canister(env, user2.local_user_index, user2.canister());
 
@@ -118,10 +121,11 @@ fn block_user_who_is_no_longer_group_member_succeeds() {
         env,
         canister_ids,
         controller,
+        platform_operator,
         ..
     } = wrapper.env();
 
-    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, true, true);
+    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, *platform_operator, true, true);
 
     client::user::happy_path::leave_group(env, &user2, group_id);
 
@@ -160,11 +164,13 @@ fn init_test_data(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
     controller: Principal,
+    platform_operator: Principal,
     public: bool,
     user_joins_group: bool,
 ) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::register_user(env, canister_ids);
+    // In a canister of their own, so that stopping it doesn't stop user1's
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, platform_operator);
 
     let group_name = random_string();
 

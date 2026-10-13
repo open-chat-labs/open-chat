@@ -32,19 +32,11 @@ pub fn caller_is_notifications_index() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_local_user_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_local_user_canister()) {
+pub fn caller_is_local_multi_user_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_local_multi_user_canister()) {
         Ok(())
     } else {
-        Err("Caller is not a local user canister".to_string())
-    }
-}
-
-pub fn caller_is_local_user_or_multi_user_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_local_user_canister() || state.is_caller_local_multi_user_canister()) {
-        Ok(())
-    } else {
-        Err("Caller is not a local User or MultiUser canister".to_string())
+        Err("Caller is not a local MultiUser canister".to_string())
     }
 }
 
@@ -68,7 +60,7 @@ pub fn caller_is_local_child_canister() -> Result<(), String> {
     if read_state(|state| state.is_caller_local_child_canister()) {
         Ok(())
     } else {
-        Err("Caller is not a local user, group or community".to_string())
+        Err("Caller is not a local MultiUser, group or community canister".to_string())
     }
 }
 

@@ -7,23 +7,21 @@ use candid::Principal;
 use constants::{MAX_WALLET_TOKENS, OPENCHAT_BOT_USER_ID};
 use direct_chat::{DirectChat, DirectChats};
 use installed_bots::InstalledBots;
+use multi_user_canister::{MessageActivityEvent, WalletConfig};
 use oc_error_codes::OCErrorCode;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::BaseKeyPrefix;
 use std::collections::HashSet;
 use types::{
-    Achievement, BotDefinitionUpdate, BotInitiator, BotPermissions, BotUpdated, CanisterId, Chat, ChatId, ChitEvent,
-    ChitEventType, CommunityId, MultiUserChat, ReferralStatus, TimestampMillis, Timestamped, UniquePersonProof, UserId,
+    Achievement, BotDefinitionUpdate, BotInitiator, BotPermissions, BotUpdated, Chat, ChatId, ChitEvent, ChitEventType,
+    CommunityId, MultiUserChat, ReferralStatus, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
-use user_canister::{MessageActivityEvent, WalletConfig};
 use utils::migrated_user_ids::MigratedUserIds;
 
-// The state of a single user, shared by the User canister, which holds one, and the MultiUser
-// canister, which holds many, so that the logic of each endpoint can be shared and a user could
-// later be moved between the two kinds of canister.
+// The state of a single user, many of whom are held in each MultiUser canister.
 //
-// In the MultiUser canister any stable memory map entries a user holds are keyed under that user's
-// index, so there a `User` must only be accessed within its key scope, which `Users` takes care of.
+// Any stable memory map entries a user holds are keyed under that user's index, so a `User` must
+// only be accessed within its key scope, which `Users` takes care of.
 #[derive(Serialize, Deserialize)]
 pub struct User {
     pub principal: Principal,
@@ -95,17 +93,6 @@ pub struct User {
 }
 
 impl User {
-    // Moves what the user holds under their own id onto their new id once they are migrated from a
-    // canister of their own to a MultiUser canister
-    pub fn migrate_own_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
-        self.direct_chats.migrate_own_user_id(old_user_id, new_user_id);
-        self.favourite_chats.migrate_own_user_id(old_user_id, new_user_id);
-        // The deposit addresses were generated for the account of the user's old canister, so new
-        // ones are generated for the user's own account when next asked for
-        self.btc_address = None;
-        self.one_sec_address = None;
-    }
-
     // Moves what the user holds under the id of another user onto that user's new id once they are
     // migrated to a MultiUser canister: their chat with them, their block of them and their contact
     // for them. Messages keep the id they were sent under.
@@ -138,38 +125,6 @@ impl User {
                 self.migrate_their_user_id(previous_user_id, sender, now);
             }
         }
-    }
-
-    // The users the user has, or had, a direct chat with, other than themselves and bots, who are
-    // told of the user's new id once they are migrated to a MultiUser canister
-    pub fn direct_chat_user_ids(&self, my_user_id: UserId) -> Vec<UserId> {
-        let mut user_ids: HashSet<UserId> = self
-            .direct_chats
-            .iter()
-            .filter(|chat| !chat.user_type.is_bot())
-            .map(|chat| chat.them)
-            .collect();
-        // A chat removed by the user is still held by the other user
-        user_ids.extend(self.direct_chats.removed_since(0).into_iter().map(UserId::from));
-        user_ids.remove(&my_user_id);
-        user_ids.into_iter().collect()
-    }
-
-    // The canisters of the groups and communities the user is in
-    pub fn group_and_community_canisters(&self) -> Vec<CanisterId> {
-        self.group_chats
-            .ids()
-            .map(CanisterId::from)
-            .chain(self.communities.ids().map(CanisterId::from))
-            .collect()
-    }
-
-    // Moves every direct chat, group and community still on the heap into stable memory, returning
-    // how many were moved
-    pub fn migrate_to_stable_memory(&mut self) -> usize {
-        self.direct_chats.migrate_to_stable_memory()
-            + self.group_chats.migrate_to_stable_memory()
-            + self.communities.migrate_to_stable_memory()
     }
 
     pub fn new(principal: Principal, username: String, referred_by: Option<UserId>, now: TimestampMillis) -> User {
@@ -367,7 +322,7 @@ impl User {
     }
 
     // Blocks the user with the given id, returning false if they were already blocked. The caller
-    // tells the LocalUserIndex (`UserBlocked`) if the user is newly blocked, as the User canister does.
+    // tells the LocalUserIndex (`UserBlocked`) if the user is newly blocked.
     pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
         self.blocked_users.block(user_id, now)
     }
@@ -379,7 +334,7 @@ impl User {
     }
 
     // Awards the achievement along with its CHIT, returning false if the user already had it. The
-    // caller tells the LocalUserIndex of the user's new CHIT balance, as the User canister does.
+    // caller tells the LocalUserIndex of the user's new CHIT balance.
     pub fn award_achievement(&mut self, achievement: Achievement, now: TimestampMillis) -> bool {
         if self.achievements.insert(achievement) {
             self.chit_events.push(ChitEvent {
@@ -393,7 +348,7 @@ impl User {
         }
     }
 
-    // As the User canister's `award_external_achievement`, returning whether it was newly awarded
+    // Awards the external achievement along with its CHIT, returning whether it was newly awarded
     pub fn award_external_achievement(&mut self, name: String, chit_reward: u32, now: TimestampMillis) -> bool {
         if self.external_achievements.insert(name.clone()) {
             self.chit_events.push(ChitEvent {
@@ -407,7 +362,7 @@ impl User {
         }
     }
 
-    // Records the status a user this user referred has reached, as the User canister does on a
+    // Records the status a user this user referred has reached, as sent in a
     // `SetReferralStatus` event, returning whether CHIT was awarded for it. `previous_user_ids` are
     // the ids the referred user had before being migrated to a MultiUser canister.
     pub fn set_referral_status(
@@ -457,8 +412,8 @@ mod tests {
     use super::*;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-    use types::UserType;
-    use user_canister::ManualWallet;
+    use multi_user_canister::ManualWallet;
+    use types::{CanisterId, UserType};
 
     #[test]
     fn manual_wallet_tokens_are_deduplicated_and_limited() {

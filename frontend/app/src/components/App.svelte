@@ -206,7 +206,6 @@
             addRemoveSwapProvider,
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
-            setUserUpgradeConcurrency,
             markLocalGroupIndexFull,
             reinstateMissedDailyClaims,
             setAirdropConfig,
@@ -215,7 +214,6 @@
             stakeNeuronForSubmittingProposals,
             topUpNeuronForSubmittingProposals,
             updateMarketMakerConfig,
-            withdrawFromIcpSwap,
             setPremiumItemCost,
             updateBlockedUsernamePatterns,
             pauseEventLoop: () => client.pauseEventLoop(),
@@ -499,16 +497,6 @@
         });
     }
 
-    function setUserUpgradeConcurrency(value: number): void {
-        client.setUserUpgradeConcurrency(value).then((success) => {
-            if (success) {
-                console.log("User upgrade concurrency set", value);
-            } else {
-                console.error("Failed to set user upgrade concurrency", value);
-            }
-        });
-    }
-
     function markLocalGroupIndexFull(canisterId: string, full: boolean): void {
         client.markLocalGroupIndexFull(canisterId, full).then((success) => {
             if (success) {
@@ -595,16 +583,6 @@
                 console.error("Failed to update market maker config", resp);
             }
         });
-    }
-
-    function withdrawFromIcpSwap(
-        userId: string,
-        swapId: bigint,
-        inputToken: boolean,
-        amount: bigint | undefined,
-        fee: bigint | undefined,
-    ): void {
-        client.withdrawFromIcpSwap(userId, swapId, inputToken, amount, fee);
     }
 
     function setPremiumItemCost(item: PremiumItem, chitCost: number): void {

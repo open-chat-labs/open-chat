@@ -8,9 +8,6 @@ import type {
     CheckUsernameResponse,
     CreateMultiUserCanisterResponse,
     ChitLeaderboardResponse,
-    MigrateUsersResponse,
-    UserMigrationResponse,
-    UsersToMigrate,
     CurrentUserResponse,
     DiamondMembershipDuration,
     DiamondMembershipFees,
@@ -25,7 +22,6 @@ import type {
     NcaReporterContact,
     AuthorityReportTokenResponse,
     SetUsernameResponse,
-    SetUserUpgradeConcurrencyResponse,
     SubmitProofOfUniquePersonhoodResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
@@ -86,14 +82,6 @@ import {
     UserIndexClearAuthorityReportAttemptArgs,
     UserIndexCreateMultiUserCanisterArgs,
     UserIndexCreateMultiUserCanisterResponse,
-    UserIndexSetMultiUserCanistersEnabledArgs,
-    UserIndexMigrateUsersArgs,
-    UserIndexMigrateUsersResponse,
-    UserIndexSetUserMigrationConcurrencyArgs,
-    UserIndexUserMigrationArgs,
-    UserIndexUserMigrationResponse,
-    UserIndexCancelUserMigrationArgs,
-    UserIndexCancelUserMigrationResponse,
     UserIndexModerationConfigResponse,
     UserIndexCallPushEnabledResponse,
     UserIndexSetCallPushEnabledArgs,
@@ -108,7 +96,6 @@ import {
     UserIndexSetPremiumItemCostArgs,
     UserIndexSetUsernameArgs,
     UserIndexSetUsernameResponse,
-    UserIndexSetUserUpgradeConcurrencyArgs,
     UserIndexSubmitProofOfUniquePersonhoodArgs,
     UserIndexSubmitProofOfUniquePersonhoodResponse,
     UserIndexSuspendUserArgs,
@@ -123,7 +110,7 @@ import {
     UserIndexUsersResponse,
 } from "../../typebox";
 import type { UserIndexProposeProtectedActionProtectedAction } from "../../typebox";
-import { addressToIcrcAccount, mapResult, unitResult } from "../common/chatMappersV2";
+import { addressToIcrcAccount, unitResult } from "../common/chatMappersV2";
 import type { ChatsDb } from "../../utils/chatsDb";
 import { groupBy } from "../../utils/list";
 import {
@@ -153,7 +140,6 @@ import {
     submitProofOfUniquePersonhoodResponse,
     suspendUserResponse,
     unsuspendUserResponse,
-    userMigrationResponse,
     userRegistrationCanisterResponse,
     usersApiResponse,
     userSearchResponse,
@@ -190,16 +176,6 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                         Empty,
                         UserIndexCurrentUserResponse,
                     );
-                    if (
-                        liveUser.kind === "created_user" &&
-                        cachedUser !== undefined &&
-                        (await this.isEarlierUserId(liveUser.userId))
-                    ) {
-                        // From a replica which is behind, so it still has the user under an id
-                        // they've since been migrated from. The cached user is more up to date.
-                        resolve(cachedUser, true);
-                        return;
-                    }
                     if (liveUser.kind === "created_user") {
                         // A terms acceptance recorded while this query was in flight must not
                         // be clobbered by the (older) response - that would re-open the
@@ -647,9 +623,7 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
 
         const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
 
-        const apiResponse = await this.withoutStaleCurrentUser(
-            await this.getUsersFromBackend(args, suspendedUsersSyncedTo),
-        );
+        const apiResponse = await this.getUsersFromBackend(args, suspendedUsersSyncedTo);
 
         const newMigrations = migrationsFromResponse(apiResponse);
         let currentUserMigratedFrom: string | undefined = undefined;
@@ -795,20 +769,6 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
                 ),
             this.forgetCachedChatState(),
         ]);
-    }
-
-    // A replica which is behind can return the current user under an id they've since been migrated
-    // from. That's out of date, rather than a migration back to the earlier id, so it's dropped.
-    private async withoutStaleCurrentUser(response: UsersApiResponse): Promise<UsersApiResponse> {
-        return response.currentUser !== undefined &&
-            (await this.isEarlierUserId(response.currentUser.userId))
-            ? { ...response, currentUser: undefined }
-            : response;
-    }
-
-    // Whether `userId` is known to be an id from before a user was migrated to a MultiUser canister
-    private async isEarlierUserId(userId: string): Promise<boolean> {
-        return (await this.userDb.getLatestUserIds([userId])).size > 0;
     }
 
     private forgetCachedChatState(): Promise<void> {
@@ -1086,16 +1046,6 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
         });
     }
 
-    setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
-        return this.update(
-            "set_user_upgrade_concurrency",
-            { value },
-            () => "success",
-            UserIndexSetUserUpgradeConcurrencyArgs,
-            SuccessOnly,
-        );
-    }
-
     createMultiUserCanister(
         localUserIndexCanisterId: string,
     ): Promise<CreateMultiUserCanisterResponse> {
@@ -1113,68 +1063,6 @@ export class UserIndexClient extends SingleCanisterMsgpackAgent {
             },
             UserIndexCreateMultiUserCanisterArgs,
             UserIndexCreateMultiUserCanisterResponse,
-        );
-    }
-
-    setMultiUserCanistersEnabled(enabled: boolean): Promise<boolean> {
-        return this.update(
-            "set_multi_user_canisters_enabled",
-            { enabled },
-            () => true,
-            UserIndexSetMultiUserCanistersEnabledArgs,
-            SuccessOnly,
-        );
-    }
-
-    migrateUsers(users: UsersToMigrate): Promise<MigrateUsersResponse> {
-        return this.update(
-            "migrate_users",
-            {
-                users:
-                    users.kind === "longest_offline"
-                        ? { LongestOffline: users.count }
-                        : { Specific: users.userIds.map(principalStringToBytes) },
-            },
-            (resp): MigrateUsersResponse =>
-                mapResult(resp, (result) => ({
-                    kind: "success",
-                    queued: result.queued.map(principalBytesToString),
-                })),
-            UserIndexMigrateUsersArgs,
-            UserIndexMigrateUsersResponse,
-        );
-    }
-
-    setUserMigrationConcurrency(value: number): Promise<boolean> {
-        return this.update(
-            "set_user_migration_concurrency",
-            { value },
-            () => true,
-            UserIndexSetUserMigrationConcurrencyArgs,
-            SuccessOnly,
-        );
-    }
-
-    userMigration(userId: string): Promise<UserMigrationResponse> {
-        return this.query(
-            "user_migration",
-            { user_id: principalStringToBytes(userId) },
-            userMigrationResponse,
-            UserIndexUserMigrationArgs,
-            UserIndexUserMigrationResponse,
-        );
-    }
-
-    cancelUserMigration(userId: string, multiUserCanisterId: string): Promise<Success | OCError> {
-        return this.update(
-            "cancel_user_migration",
-            {
-                user_id: principalStringToBytes(userId),
-                multi_user_canister_id: principalStringToBytes(multiUserCanisterId),
-            },
-            unitResult,
-            UserIndexCancelUserMigrationArgs,
-            UserIndexCancelUserMigrationResponse,
         );
     }
 

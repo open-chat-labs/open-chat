@@ -212,9 +212,6 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
                     ExportExtras::default()
                 })
             };
-            // The channel's events refer to the group's former members, so they are recorded as the
-            // community's former members too
-            state.data.members.add_former_members(extras.former_members);
             for (old_user_id, new_user_id) in extras.migrated_user_ids {
                 state.data.migrated_user_ids.insert(old_user_id, new_user_id);
             }

@@ -1,9 +1,9 @@
 use crate::{COMMUNITY_CREATION_LIMIT, User};
 use group_index_canister::c2c_create_community;
+use multi_user_canister::create_community::Args;
 use oc_error_codes::OCErrorCode;
 use std::collections::HashSet;
 use types::{OCResult, TimestampMillis, UserId};
-use user_canister::create_community::Args;
 use utils::document::{validate_avatar, validate_banner};
 use utils::text_validation::{
     NameValidationError, RulesValidationError, validate_channel_name, validate_community_name, validate_description,
@@ -11,8 +11,7 @@ use utils::text_validation::{
 };
 
 // Validates the args and that the user may create the community, returning what to send the
-// GroupIndex. `user_id` is the user the GroupIndex should create the community for, which a User
-// canister leaves unset since it is the user.
+// GroupIndex. `user_id` is the user the GroupIndex should create the community for.
 pub fn prepare(
     user: &User,
     mut args: Args,

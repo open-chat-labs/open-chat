@@ -26,9 +26,9 @@ fn c2c_delete_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
 }
 
 // Uninstalls the canister of a deleted group or community, then queues it to have its cycles
-// refunded to the CyclesDispenser, as is done for a deleted user's canister. The canister itself is
-// never deleted, since that would destroy the cycles which can't yet be refunded (see the refund
-// job), which the IC may in future let us recover.
+// refunded to the CyclesDispenser. The canister itself is never deleted, since that would destroy
+// the cycles which can't yet be refunded (see the refund job), which the IC may in future let us
+// recover.
 pub(crate) fn spawn_uninstall_then_refund_canister(canister_id: CanisterId) {
     utils::async_work::spawn_tracked(async move {
         // Stopping the canister lets the calls it has in progress finish before it is uninstalled,

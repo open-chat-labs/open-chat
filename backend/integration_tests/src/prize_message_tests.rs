@@ -31,18 +31,17 @@ fn prize_messages_can_be_claimed_successfully() {
     client::group::happy_path::join_group(env, user3.principal, group_id);
 
     // Send user1 some ICP
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user1, 1_000_000_000);
 
     let prizes = [100000, 200000];
     let fee = ICP_TRANSFER_FEE;
     let message_id = random_from_u128();
 
-    let send_message_response = client::user::send_message_with_transfer_to_group(
+    let send_message_response = client::group::send_message_with_transfer(
         env,
-        user1.principal,
-        user1.user_id.canister_id(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
+        &user1,
+        group_id,
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
@@ -50,7 +49,7 @@ fn prize_messages_can_be_claimed_successfully() {
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token_symbol: ICP_SYMBOL.to_string(),
-                    amount: prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128,
+                    amount: prize_amount(&prizes, fee),
                     to: CanisterId::from(group_id).into(),
                     fee,
                     memo: None,
@@ -72,12 +71,17 @@ fn prize_messages_can_be_claimed_successfully() {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
-            pin: None,
+            forwarding: false,
+            new_achievement: false,
             og_previews: Vec::new(),
         },
     );
 
-    if let user_canister::send_message_with_transfer_to_group::Response::Success(result) = send_message_response {
+    assert!(
+        matches!(send_message_response, group_canister::send_message_v2::Response::Success(_)),
+        "{send_message_response:?}"
+    );
+    if let group_canister::send_message_v2::Response::Success(result) = send_message_response {
         let local_user_index = canister_ids.local_user_index(env, group_id);
 
         client::local_user_index::happy_path::claim_prize(
@@ -88,7 +92,7 @@ fn prize_messages_can_be_claimed_successfully() {
             message_id,
             None,
         );
-        let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
+        let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2);
         assert_eq!(user2_balance, 200000);
 
         client::local_user_index::happy_path::claim_prize(
@@ -99,7 +103,7 @@ fn prize_messages_can_be_claimed_successfully() {
             message_id,
             None,
         );
-        let user3_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user3.user_id);
+        let user3_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user3);
         assert_eq!(user3_balance, 100000);
 
         let events = client::group::happy_path::thread_events(
@@ -140,18 +144,17 @@ fn prize_message_requiring_reauthentication() {
     client::group::happy_path::join_group(env, user2.principal, group_id);
 
     // Send user1 some ICP
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user1, 1_000_000_000);
 
     let prizes = [100000, 200000];
     let fee = ICP_TRANSFER_FEE;
     let message_id = random_from_u128();
 
-    let send_message_response = client::user::send_message_with_transfer_to_group(
+    let send_message_response = client::group::send_message_with_transfer(
         env,
-        user1.principal,
-        user1.user_id.canister_id(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
+        &user1,
+        group_id,
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
@@ -159,7 +162,7 @@ fn prize_message_requiring_reauthentication() {
                 transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
                     ledger: canister_ids.icp_ledger,
                     token_symbol: ICP_SYMBOL.to_string(),
-                    amount: prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128,
+                    amount: prize_amount(&prizes, fee),
                     to: CanisterId::from(group_id).into(),
                     fee,
                     memo: None,
@@ -181,15 +184,16 @@ fn prize_message_requiring_reauthentication() {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
-            pin: None,
+            forwarding: false,
+            new_achievement: false,
             og_previews: Vec::new(),
         },
     );
 
-    assert!(matches!(
-        send_message_response,
-        user_canister::send_message_with_transfer_to_group::Response::Success(_)
-    ));
+    assert!(
+        matches!(send_message_response, group_canister::send_message_v2::Response::Success(_)),
+        "{send_message_response:?}"
+    );
 
     let local_user_index = canister_ids.local_user_index(env, group_id);
 
@@ -220,7 +224,7 @@ fn prize_message_requiring_reauthentication() {
         message_id,
         Some(prepare_delegation_response.proof_jwt),
     );
-    let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
+    let user2_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2);
     assert_eq!(user2_balance, 200000);
 }
 
@@ -256,7 +260,7 @@ fn unclaimed_prizes_get_refunded(case: u32) {
     client::group::happy_path::join_group(env, user2.principal, group_id);
 
     // Send user1 some ICP
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user1, 1_000_000_000);
 
     let prizes = vec![100000, 200000];
     let fee = ICP_TRANSFER_FEE;
@@ -264,12 +268,11 @@ fn unclaimed_prizes_get_refunded(case: u32) {
     let amount = total + (fee * prizes.len() as u128) + (total * PRIZE_FEE_PERCENT as u128 / 100);
     let message_id = random_from_u128();
 
-    client::user::send_message_with_transfer_to_group(
+    client::group::send_message_with_transfer(
         env,
-        user1.principal,
-        user1.user_id.canister_id(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
+        &user1,
+        group_id,
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
@@ -299,7 +302,8 @@ fn unclaimed_prizes_get_refunded(case: u32) {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
-            pin: None,
+            forwarding: false,
+            new_achievement: false,
             og_previews: Vec::new(),
         },
     );
@@ -327,12 +331,12 @@ fn unclaimed_prizes_get_refunded(case: u32) {
     env.advance_time(Duration::from_millis(interval - 1));
     tick_many(env, 3);
 
-    let user1_balance_before_refund = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
+    let user1_balance_before_refund = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1);
 
     env.advance_time(Duration::from_millis(1));
     tick_many(env, 3);
 
-    let user1_balance_after_refund = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
+    let user1_balance_after_refund = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1);
 
     assert_eq!(user1_balance_after_refund, user1_balance_before_refund + 105000);
 }
@@ -350,10 +354,10 @@ fn old_transactions_fixed_by_updating_created_date() {
     let user = client::register_diamond_user(env, canister_ids, *controller);
     let group_id = client::user::happy_path::create_group(env, &user, random_string().as_str(), true, true);
 
-    let starting_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
+    let starting_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user);
 
     // Send user1 some ICP
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, 200_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user, 200_000);
 
     let prizes = vec![100_000];
     let fee = ICP_TRANSFER_FEE;
@@ -361,12 +365,11 @@ fn old_transactions_fixed_by_updating_created_date() {
     let amount = total + (fee * prizes.len() as u128) + (total * PRIZE_FEE_PERCENT as u128 / 100);
     let message_id = random_from_u128();
 
-    let send_message_response = client::user::send_message_with_transfer_to_group(
+    let send_message_response = client::group::send_message_with_transfer(
         env,
-        user.principal,
-        user.user_id.canister_id(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
+        &user,
+        group_id,
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
@@ -396,26 +399,37 @@ fn old_transactions_fixed_by_updating_created_date() {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
-            pin: None,
+            forwarding: false,
+            new_achievement: false,
             og_previews: Vec::new(),
         },
     );
 
-    assert!(matches!(
-        send_message_response,
-        user_canister::send_message_with_transfer_to_group::Response::Success(_)
-    ));
+    assert!(
+        matches!(send_message_response, group_canister::send_message_v2::Response::Success(_)),
+        "{send_message_response:?}"
+    );
     client::stop_canister(env, *controller, canister_ids.icp_ledger);
     env.advance_time(Duration::from_millis(HOUR_IN_MS + 1));
     tick_many(env, 3);
     client::start_canister(env, *controller, canister_ids.icp_ledger);
 
-    let user_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
-    assert_eq!(user_balance, starting_balance + 75_000);
+    // The user paid the prize and the fee for transferring it, plus the fee for approving the group to
+    // pull it
+    let user_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user);
+    assert_eq!(user_balance, starting_balance + 75_000 - ICP_TRANSFER_FEE);
 
     env.advance_time(Duration::from_millis(MINUTE_IN_MS + 1));
     tick_many(env, 3);
 
-    let user_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
-    assert_eq!(user_balance, starting_balance + 180_000);
+    // The unclaimed prize was refunded, less the fee for refunding it
+    let user_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user);
+    assert_eq!(user_balance, starting_balance + 180_000 - ICP_TRANSFER_FEE);
+}
+
+// What a prize message's transfer must hold: the prizes, a transfer fee for paying out each one and
+// OpenChat's fee
+fn prize_amount(prizes: &[u64], fee: u128) -> u128 {
+    let total = prizes.iter().sum::<u64>() as u128;
+    total + fee * prizes.len() as u128 + total * PRIZE_FEE_PERCENT as u128 / 100
 }

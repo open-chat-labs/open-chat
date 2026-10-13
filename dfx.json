@@ -73,12 +73,6 @@
       "wasm": "wasms/proposals_bot.wasm.gz",
       "build": "./scripts/generate-wasm.sh proposals_bot"
     },
-    "user": {
-      "type": "custom",
-      "candid": "backend/canisters/user/api/can.did",
-      "wasm": "wasms/user.wasm.gz",
-      "build": "./scripts/generate-wasm.sh user"
-    },
     "group": {
       "type": "custom",
       "candid": "backend/canisters/group/api/can.did",

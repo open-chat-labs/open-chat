@@ -10,32 +10,6 @@ pub struct CyclesTopUp {
     pub amount: Cycles,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct CyclesTopUpInternal {
-    #[serde(rename = "d")]
-    pub date: TimestampMillis,
-    #[serde(rename = "a")]
-    pub amount: Cycles,
-}
-
-impl From<CyclesTopUp> for CyclesTopUpInternal {
-    fn from(value: CyclesTopUp) -> Self {
-        CyclesTopUpInternal {
-            date: value.date,
-            amount: value.amount,
-        }
-    }
-}
-
-impl From<&CyclesTopUpInternal> for CyclesTopUp {
-    fn from(value: &CyclesTopUpInternal) -> Self {
-        CyclesTopUp {
-            date: value.date,
-            amount: value.amount,
-        }
-    }
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct NotifyLowBalanceArgs {}
 

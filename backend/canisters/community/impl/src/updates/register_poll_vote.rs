@@ -3,8 +3,8 @@ use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use community_canister::register_poll_vote::{Response::*, *};
+use multi_user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 use types::{Achievement, Chat, EventIndex, OCResult, PollVotes, TotalVotes};
-use user_canister::{CommunityCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
 #[trace]

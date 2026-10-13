@@ -1,0 +1,80 @@
+use std::env;
+use ts_export::generate_ts_method;
+
+fn main() {
+    let directory = env::current_dir().unwrap().join("tsBindings/user");
+    if directory.exists() {
+        std::fs::remove_dir_all(&directory).unwrap();
+    }
+
+    generate_ts_method!(multi_user, bio);
+    generate_ts_method!(multi_user, chit_events);
+    generate_ts_method!(multi_user, contacts);
+    generate_ts_method!(multi_user, deleted_message);
+    generate_ts_method!(multi_user, events);
+    generate_ts_method!(multi_user, events_by_index);
+    generate_ts_method!(multi_user, events_window);
+    generate_ts_method!(multi_user, hot_group_exclusions);
+    generate_ts_method!(multi_user, initial_state);
+    generate_ts_method!(multi_user, local_user_index);
+    generate_ts_method!(multi_user, message_activity_feed);
+    generate_ts_method!(multi_user, messages_by_message_index);
+    generate_ts_method!(multi_user, public_profile);
+    generate_ts_method!(multi_user, search_messages);
+    generate_ts_method!(multi_user, saved_crypto_accounts);
+    generate_ts_method!(multi_user, token_swaps);
+    generate_ts_method!(multi_user, unfinished_token_swaps);
+    generate_ts_method!(multi_user, updates);
+
+    generate_ts_method!(multi_user, accept_p2p_swap);
+    generate_ts_method!(multi_user, add_hot_group_exclusions);
+    generate_ts_method!(multi_user, add_reaction);
+    generate_ts_method!(multi_user, archive_unarchive_chats);
+    generate_ts_method!(multi_user, block_user);
+    generate_ts_method!(multi_user, cancel_message_reminder);
+    generate_ts_method!(multi_user, cancel_p2p_swap);
+    generate_ts_method!(multi_user, check_pin_number);
+    generate_ts_method!(multi_user, claim_daily_chit);
+    generate_ts_method!(multi_user, configure_wallet);
+    generate_ts_method!(multi_user, create_community);
+    generate_ts_method!(multi_user, create_group);
+    generate_ts_method!(multi_user, delete_community);
+    generate_ts_method!(multi_user, delete_direct_chat);
+    generate_ts_method!(multi_user, delete_group);
+    generate_ts_method!(multi_user, delete_messages);
+    generate_ts_method!(multi_user, delete_saved_crypto_account);
+    generate_ts_method!(multi_user, edit_message_v2);
+    generate_ts_method!(multi_user, generate_btc_address);
+    generate_ts_method!(multi_user, generate_one_sec_address);
+    generate_ts_method!(multi_user, join_video_call);
+    generate_ts_method!(multi_user, leave_community);
+    generate_ts_method!(multi_user, leave_group);
+    generate_ts_method!(multi_user, manage_favourite_chats);
+    generate_ts_method!(multi_user, mark_achievements_seen);
+    generate_ts_method!(multi_user, mark_message_activity_feed_read);
+    generate_ts_method!(multi_user, mark_read);
+    generate_ts_method!(multi_user, mark_token_swap_completed);
+    generate_ts_method!(multi_user, mark_token_swap_started);
+    generate_ts_method!(multi_user, mute_notifications);
+    generate_ts_method!(multi_user, pay_for_streak_insurance);
+    generate_ts_method!(multi_user, pin_chat_v2);
+    generate_ts_method!(multi_user, remove_reaction);
+    generate_ts_method!(multi_user, report_message);
+    generate_ts_method!(multi_user, save_crypto_account);
+    generate_ts_method!(multi_user, send_message_v2);
+    generate_ts_method!(multi_user, set_avatar);
+    generate_ts_method!(multi_user, set_bio);
+    generate_ts_method!(multi_user, set_community_indexes);
+    generate_ts_method!(multi_user, set_contact);
+    generate_ts_method!(multi_user, set_message_reminder_v2);
+    generate_ts_method!(multi_user, set_pin_number);
+    generate_ts_method!(multi_user, set_profile_background);
+    generate_ts_method!(multi_user, tip_message);
+    generate_ts_method!(multi_user, unblock_user);
+    generate_ts_method!(multi_user, undelete_messages);
+    generate_ts_method!(multi_user, unmute_notifications);
+    generate_ts_method!(multi_user, unpin_chat_v2);
+    generate_ts_method!(multi_user, update_bot);
+    generate_ts_method!(multi_user, update_btc_balance);
+    generate_ts_method!(multi_user, update_chat_settings);
+}

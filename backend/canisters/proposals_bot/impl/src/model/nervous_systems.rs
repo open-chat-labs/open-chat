@@ -554,14 +554,14 @@ pub struct UserSubmittedProposalResult {
     pub proposal_id: ProposalId,
     pub user_id: UserId,
     // Anonymous for proposals submitted before the principal was recorded, which is fine as those
-    // users are all alone in their canisters, so are refunded at their user id
+    // users were then all in their own User canisters, so are refunded at their user id
     #[serde(default = "Principal::anonymous")]
     pub principal: Principal,
     pub adopted: bool,
 }
 
 // Proposals submitted before the principal was recorded hold just the user id, and are given an
-// anonymous principal, which is fine as those users are all alone in their canisters
+// anonymous principal, which is fine as those users were then all in their own User canisters
 fn deserialize_user_submitted_proposals<'de, D: Deserializer<'de>>(
     deserializer: D,
 ) -> Result<BTreeMap<ProposalId, UserIdAndPrincipal>, D::Error> {

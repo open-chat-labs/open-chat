@@ -1,11 +1,10 @@
-//! The texts of the messages the OpenChat bot sends users, shared by the User and MultiUser
-//! canisters, which each send them in their own way
+//! The texts of the messages the OpenChat bot sends users
 
 use crate::Membership;
 use constants::{DAY_IN_MS, HOUR_IN_MS, OPENCHAT_BOT_USER_ID};
+use multi_user_canister::{PhoneNumberConfirmed, StorageUpgraded, UserSuspended};
 use types::nns::Tokens;
 use types::{ChannelId, CommunityId, SuspensionDuration, UserId};
-use user_canister::{PhoneNumberConfirmed, StorageUpgraded, UserSuspended};
 use utils::format::format_to_decimal_places;
 
 pub fn community_deleted_text(deleted_by: UserId, name: &str, public: bool) -> String {

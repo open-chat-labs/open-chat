@@ -1,7 +1,6 @@
 mod achievements;
 mod expiring_member_actions;
 mod expiring_members;
-mod former_members;
 mod member;
 mod member_transfers;
 mod members_page;
@@ -15,7 +14,6 @@ mod user_cache;
 pub use achievements::*;
 pub use expiring_member_actions::*;
 pub use expiring_members::*;
-pub use former_members::*;
 pub use member::*;
 pub use member_transfers::*;
 pub use members_page::*;

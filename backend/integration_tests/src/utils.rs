@@ -20,6 +20,19 @@ pub fn tick_many(env: &mut PocketIc, count: usize) {
     }
 }
 
+// Ticks, moving time on a second at a time so that jobs retrying after a delay run, until
+// `condition` holds. Fails if it doesn't within a generous number of rounds.
+pub fn tick_until(env: &mut PocketIc, condition: impl Fn(&PocketIc) -> bool) {
+    for _ in 0..100 {
+        if condition(env) {
+            return;
+        }
+        env.advance_time(Duration::from_secs(1));
+        env.tick();
+    }
+    assert!(condition(env), "Condition not met");
+}
+
 pub fn now_millis(env: &PocketIc) -> TimestampMillis {
     now_nanos(env) / 1_000_000
 }
@@ -137,7 +150,7 @@ pub fn wait_for_cycle_balance_above(env: &mut PocketIc, canister_id: CanisterId,
 }
 
 // Ticks until the user's canister lists their direct chat with `them`, ie. the first message sent in
-// it has been delivered. This can take many rounds, since a newly created User canister periodically
+// it has been delivered. This can take many rounds, since a newly created canister periodically
 // takes around 10 rounds to handle its first message (seemingly while the wasm is compiled on its
 // subnet), a number which grows with the size of the wasm.
 pub fn wait_for_direct_chat(env: &mut PocketIc, user: &User, them: UserId) {

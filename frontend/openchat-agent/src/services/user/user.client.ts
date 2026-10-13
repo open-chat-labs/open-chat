@@ -2,7 +2,6 @@ import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
 import { Type } from "@sinclair/typebox";
 import {
     encodeIcrcAccount,
-    isMultiUserCanisterUser,
     MAX_EVENTS,
     MAX_MESSAGES,
     offline,
@@ -12,15 +11,12 @@ import {
     userCanisterId,
     type AcceptP2PSwapResponse,
     type AddRemoveReactionResponse,
-    type ApproveTransferResponse,
     type ArchiveChatResponse,
     type BlobReference,
     type BlockUserResponse,
     type CancelP2PSwapResponse,
     type CheckPinNumberResponse,
     type CandidateGroupChat,
-    type IcrcAccount,
-    type ChannelIdentifier,
     type ChatEvent,
     type ChatIdentifier,
     type ChitEventsRequest,
@@ -29,7 +25,6 @@ import {
     type CommunityIdentifier,
     type CommunitySummary,
     type CreateCommunityResponse,
-    type CreatedUser,
     type CreateGroupResponse,
     type CryptocurrencyDetails,
     type DeleteCommunityResponse,
@@ -41,10 +36,8 @@ import {
     type EditMessageResponse,
     type EventsResponse,
     type EventWrapper,
-    type EvmChain,
     type ExchangeTokenSwapArgs,
     type GrantedBotPermissions,
-    type GroupChatIdentifier,
     type InitialStateResponse,
     type JoinVideoCallResponse,
     type LeaveCommunityResponse,
@@ -61,7 +54,6 @@ import {
     type OptionUpdate,
     type PayForStreakInsuranceResponse,
     type PendingCryptocurrencyTransfer,
-    type PendingCryptocurrencyWithdrawal,
     type PinChatResponse,
     type PublicProfile,
     type Rules,
@@ -72,11 +64,9 @@ import {
     type SetMessageReminderResponse,
     type SetPinNumberResponse,
     type Success,
-    type SwapTokensResponse,
     type ThreadRead,
     type TipMessageResponse,
     type ToggleMuteNotificationResponse,
-    type TokenSwapStatusResponse,
     type UnblockUserResponse,
     type UndeleteMessageResponse,
     type UnfinishedTokenSwap,
@@ -84,9 +74,6 @@ import {
     type UpdatesResponse,
     type Verification,
     type WalletConfig,
-    type WithdrawBtcResponse,
-    type WithdrawCryptocurrencyResponse,
-    type WithdrawViaOneSecResponse,
 } from "@shared";
 import type { AgentConfig } from "../../config";
 import {
@@ -98,7 +85,6 @@ import {
     UserAcceptP2pSwapResponse,
     UserAddHotGroupExclusionsArgs,
     UserAddReactionArgs,
-    UserApproveTransferArgs,
     UserArchiveUnarchiveChatsArgs,
     UserArchiveUnarchiveChatsResponse,
     UserBioArgs,
@@ -160,10 +146,6 @@ import {
     UserSearchMessagesResponse,
     UserSendMessageArgs,
     UserSendMessageResponse,
-    UserSendMessageWithTransferToChannelArgs,
-    UserSendMessageWithTransferToChannelResponse,
-    UserSendMessageWithTransferToGroupArgs,
-    UserSendMessageWithTransferToGroupResponse,
     UserSetAvatarArgs,
     UserSetBioArgs,
     UserSetCommunityIndexesArgs,
@@ -171,13 +153,9 @@ import {
     UserSetMessageReminderResponse,
     UserSetPinNumberArgs,
     UserSetProfileBackgroundArgs,
-    UserSwapTokensArgs,
-    UserSwapTokensResponse,
     UserTipMessageArgs,
     UserTipMessageResponse,
-    UserTokenSwapStatusArgs,
     UserUnfinishedTokenSwapsResponse,
-    UserTokenSwapStatusResponse,
     UserUnblockUserArgs,
     UserUndeleteMessagesArgs,
     UserUndeleteMessagesResponse,
@@ -187,11 +165,6 @@ import {
     UserUpdateChatSettingsArgs,
     UserUpdatesArgs,
     UserUpdatesResponse,
-    UserWithdrawBtcArgs,
-    UserWithdrawBtcResponse,
-    UserWithdrawCryptoArgs,
-    UserWithdrawCryptoResponse,
-    UserWithdrawViaOneSecArgs,
 } from "../../typebox";
 import type { ChatsDb } from "../../utils/chatsDb";
 import {
@@ -208,14 +181,12 @@ import type { IChatEventsReader } from "../common/chatEvents";
 import {
     acceptP2PSwapSuccess,
     addressToIcrcAccount,
-    apiAccount,
     apiChatIdentifier,
     apiCommunityPermissions,
     apiExternalBotPermissions,
     apiGroupPermissions,
     apiMaybeAccessGateConfig,
     apiMessageContent,
-    apiPendingCryptocurrencyWithdrawal,
     apiReplyContextArgs,
     createGroupSuccess,
     deletedMessageSuccess,
@@ -245,13 +216,8 @@ import {
     savedCryptoAccountsResponse,
     searchDirectChatSuccess,
     sendMessageResponse,
-    sendMessageWithTransferToChannelResponse,
-    sendMessageWithTransferToGroupResponse,
-    swapTokensSuccess,
     tipMessageResponse,
-    tokenSwapStatusResponse,
     unfinishedTokenSwapsResponse,
-    withdrawCryptoResponse,
 } from "./mappersV2";
 
 export class UserClient
@@ -268,7 +234,7 @@ export class UserClient
         private readonly chatsDb: ChatsDb,
         private readonly userDb: UserDb,
     ) {
-        // A MultiUser canister holds many users, so the canister is not always the user id
+        // A MultiUser canister holds many users, so the canister is not the user id
         super(identity, agent, userCanisterId(userId).toText(), "User");
         this.userId = userId;
     }
@@ -661,81 +627,7 @@ export class UserClient
     // from their wallet, the account of the principal they sign in with, unless they chose another
     // account to send it from.
     private transferFromWallet(content: MessageContent): MessageContent {
-        return isMultiUserCanisterUser(this.userId)
-            ? transferFrom(content, encodeIcrcAccount({ owner: this.principal }))
-            : content;
-    }
-
-    sendMessageWithTransferToGroup(
-        groupId: GroupChatIdentifier,
-        recipientId: string | undefined,
-        sender: CreatedUser,
-        event: EventWrapper<Message>,
-        threadRootMessageIndex: number | undefined,
-        rulesAccepted: number | undefined,
-        messageFilterFailed: bigint | undefined,
-        pin: string | undefined,
-    ): Promise<[SendMessageResponse, Message]> {
-        this.chatsDb.removeFailedMessage(groupId, event.event.messageId, threadRootMessageIndex);
-        return this.sendMessageWithTransferToGroupToBackend(
-            groupId,
-            recipientId,
-            sender,
-            event,
-            threadRootMessageIndex,
-            rulesAccepted,
-            messageFilterFailed,
-            pin,
-        )
-            .then(
-                this.chatsDb.setCachedMessageFromSendResponse(
-                    groupId,
-                    event,
-                    threadRootMessageIndex,
-                ),
-            )
-            .catch((err) => {
-                this.chatsDb.recordFailedMessage(groupId, event);
-                throw err;
-            });
-    }
-
-    private sendMessageWithTransferToGroupToBackend(
-        groupId: GroupChatIdentifier,
-        recipientId: string | undefined,
-        sender: CreatedUser,
-        event: EventWrapper<Message>,
-        threadRootMessageIndex: number | undefined,
-        rulesAccepted: number | undefined,
-        messageFilterFailed: bigint | undefined,
-        pin: string | undefined,
-    ): Promise<[SendMessageResponse, Message]> {
-        const content = apiMessageContent(event.event.content);
-
-        const req = {
-            thread_root_message_index: threadRootMessageIndex,
-            content,
-            sender_name: sender.username,
-            sender_display_name: sender.displayName,
-            rules_accepted: rulesAccepted,
-            mentioned: [],
-            message_id: event.event.messageId,
-            group_id: principalStringToBytes(groupId.groupId),
-            replies_to: mapOptional(event.event.repliesTo, (replyContext) =>
-                apiReplyContextArgs(groupId, replyContext),
-            ),
-            block_level_markdown: true,
-            message_filter_failed: messageFilterFailed,
-            pin,
-            og_previews: event.event.ogPreviews.map(apiOgPreview),
-        };
-        return this.update(
-            "send_message_with_transfer_to_group",
-            req,
-            (resp) => sendMessageWithTransferToGroupResponse(resp, event.event.sender, recipientId),
-            UserSendMessageWithTransferToGroupArgs,
-            UserSendMessageWithTransferToGroupResponse,
-        ).then((resp) => [resp, event.event]);
+        return transferFrom(content, encodeIcrcAccount({ owner: this.principal }));
     }
 
     loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
@@ -763,84 +655,6 @@ export class UserClient
 
     deleteCryptoAccount(account: string): Promise<DeleteCryptoAccountResponse> {
         return this.update("delete_crypto_account", account, unitResult, Type.String(), UnitResult);
-    }
-
-    sendMessageWithTransferToChannel(
-        chatId: ChannelIdentifier,
-        recipientId: string | undefined,
-        sender: CreatedUser,
-        event: EventWrapper<Message>,
-        threadRootMessageIndex: number | undefined,
-        communityRulesAccepted: number | undefined,
-        channelRulesAccepted: number | undefined,
-        messageFilterFailed: bigint | undefined,
-        pin: string | undefined,
-    ): Promise<[SendMessageResponse, Message]> {
-        this.chatsDb.removeFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
-        return this.sendMessageWithTransferToChannelToBackend(
-            chatId,
-            recipientId,
-            sender,
-            event,
-            threadRootMessageIndex,
-            communityRulesAccepted,
-            channelRulesAccepted,
-            messageFilterFailed,
-            pin,
-        )
-            .then(
-                this.chatsDb.setCachedMessageFromSendResponse(
-                    chatId,
-                    event,
-                    threadRootMessageIndex,
-                ),
-            )
-            .catch((err) => {
-                this.chatsDb.recordFailedMessage(chatId, event);
-                throw err;
-            });
-    }
-
-    private sendMessageWithTransferToChannelToBackend(
-        id: ChannelIdentifier,
-        recipientId: string | undefined,
-        sender: CreatedUser,
-        event: EventWrapper<Message>,
-        threadRootMessageIndex: number | undefined,
-        communityRulesAccepted: number | undefined,
-        channelRulesAccepted: number | undefined,
-        messageFilterFailed: bigint | undefined,
-        pin: string | undefined,
-    ): Promise<[SendMessageResponse, Message]> {
-        const content = apiMessageContent(event.event.content);
-
-        const req = {
-            thread_root_message_index: threadRootMessageIndex,
-            content,
-            sender_name: sender.username,
-            sender_display_name: sender.displayName,
-            mentioned: [],
-            message_id: event.event.messageId,
-            community_id: principalStringToBytes(id.communityId),
-            channel_id: toBigInt32(id.channelId),
-            replies_to: mapOptional(event.event.repliesTo, (replyContext) =>
-                apiReplyContextArgs(id, replyContext),
-            ),
-            block_level_markdown: true,
-            community_rules_accepted: communityRulesAccepted,
-            channel_rules_accepted: channelRulesAccepted,
-            message_filter_failed: messageFilterFailed,
-            pin,
-            og_previews: event.event.ogPreviews.map(apiOgPreview),
-        };
-        return this.update(
-            "send_message_with_transfer_to_channel",
-            req,
-            (resp) =>
-                sendMessageWithTransferToChannelResponse(resp, event.event.sender, recipientId),
-            UserSendMessageWithTransferToChannelArgs,
-            UserSendMessageWithTransferToChannelResponse,
-        ).then((resp) => [resp, event.event]);
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
@@ -1159,20 +973,6 @@ export class UserClient
         return this.update("set_bio", { text: bio }, unitResult, UserSetBioArgs, UnitResult);
     }
 
-    withdrawCryptocurrency(
-        domain: PendingCryptocurrencyWithdrawal,
-        pin: string | undefined,
-    ): Promise<WithdrawCryptocurrencyResponse> {
-        const req = apiPendingCryptocurrencyWithdrawal(domain, pin);
-        return this.update(
-            "withdraw_crypto_v2",
-            req,
-            withdrawCryptoResponse,
-            UserWithdrawCryptoArgs,
-            UserWithdrawCryptoResponse,
-        );
-    }
-
     private toChatInList(chatId: ChatIdentifier, favourite: boolean): UserChatInList {
         if (favourite) {
             return {
@@ -1327,45 +1127,6 @@ export class UserClient
         );
     }
 
-    swapTokens(
-        swapId: bigint,
-        inputToken: CryptocurrencyDetails,
-        outputToken: CryptocurrencyDetails,
-        amountIn: bigint,
-        minAmountOut: bigint,
-        exchangeArgs: ExchangeTokenSwapArgs,
-        pin: string | undefined,
-    ): Promise<SwapTokensResponse> {
-        return this.update(
-            "swap_tokens",
-            {
-                swap_id: swapId,
-                input_token: apiTokenInfo(inputToken),
-                output_token: apiTokenInfo(outputToken),
-                input_amount: amountIn,
-                exchange_args: apiExchangeArgs(exchangeArgs),
-                min_output_amount: minAmountOut,
-                pin,
-            },
-            (resp) => mapResult(resp, swapTokensSuccess),
-            UserSwapTokensArgs,
-            UserSwapTokensResponse,
-        );
-    }
-
-    tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
-        const args = {
-            swap_id: swapId,
-        };
-        return this.query(
-            "token_swap_status",
-            args,
-            tokenSwapStatusResponse,
-            UserTokenSwapStatusArgs,
-            UserTokenSwapStatusResponse,
-        );
-    }
-
     // Records a swap the user is about to make straight from their own wallet, so that it can be found
     // again if it doesn't finish (see `unfinishedTokenSwaps`), checking their PIN first
     markTokenSwapStarted(
@@ -1420,28 +1181,6 @@ export class UserClient
             unfinishedTokenSwapsResponse,
             TEmpty,
             UserUnfinishedTokenSwapsResponse,
-        );
-    }
-
-    approveTransfer(
-        spender: IcrcAccount,
-        ledger: string,
-        amount: bigint,
-        expiresIn: bigint | undefined,
-        pin: string | undefined,
-    ): Promise<ApproveTransferResponse> {
-        return this.update(
-            "approve_transfer",
-            {
-                spender: apiAccount(spender),
-                ledger_canister_id: principalStringToBytes(ledger),
-                amount,
-                expires_in: expiresIn,
-                pin,
-            },
-            unitResult,
-            UserApproveTransferArgs,
-            UnitResult,
         );
     }
 
@@ -1532,8 +1271,8 @@ export class UserClient
         );
     }
 
-    // Only a MultiUser canister checks a PIN on its own, which it does ahead of each payment the
-    // user approves from their wallet, so that one with the wrong PIN is never approved
+    // Checks a PIN on its own, ahead of each payment the user approves or sends from their wallet, so
+    // that none is approved or sent with the wrong PIN
     checkPinNumber(pin: string): Promise<CheckPinNumberResponse> {
         return this.update(
             "check_pin_number",
@@ -1679,48 +1418,6 @@ export class UserClient
             { user_id: principalStringToBytes(this.userId) },
             isSuccess,
             UserUpdateBtcBalanceArgs,
-            UnitResult,
-        );
-    }
-
-    withdrawBtc(
-        address: string,
-        amount: bigint,
-        pin: string | undefined,
-    ): Promise<WithdrawBtcResponse> {
-        return this.update(
-            "withdraw_btc",
-            {
-                address,
-                amount,
-                pin,
-            },
-            unitResult,
-            UserWithdrawBtcArgs,
-            UserWithdrawBtcResponse,
-        );
-    }
-
-    withdrawViaOneSec(
-        ledger: string,
-        tokenSymbol: string,
-        chain: EvmChain,
-        address: string,
-        amount: bigint,
-        pin: string | undefined,
-    ): Promise<WithdrawViaOneSecResponse> {
-        return this.update(
-            "withdraw_via_one_sec",
-            {
-                ledger_canister_id: principalStringToBytes(ledger),
-                token_symbol: tokenSymbol,
-                evm_chain: chain,
-                address,
-                amount,
-                pin,
-            },
-            unitResult,
-            UserWithdrawViaOneSecArgs,
             UnitResult,
         );
     }

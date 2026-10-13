@@ -2,8 +2,9 @@ use crate::env::ENV;
 use crate::utils::{now_millis, now_nanos, tick_many, wait_for_deleted_canister_to_be_uninstalled};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
-use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE};
+use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, PRIZE_FEE_PERCENT};
 use itertools::Itertools;
+use multi_user_canister::mark_read::{ChatMessagesRead, ThreadRead};
 use pocket_ic::PocketIc;
 use std::collections::HashMap;
 use std::ops::Deref;
@@ -12,7 +13,6 @@ use types::{
     CanisterId, Chat, ChatEvent, ChatId, CommunityId, CryptoTransaction, EventIndex, MessageContentInitial, MultiUserChat,
     PendingCryptoTransaction, PrizeContentInitial, ReplyContext, TextContent, icrc1,
 };
-use user_canister::mark_read::{ChatMessagesRead, ThreadRead};
 
 #[test]
 fn import_group_succeeds() {
@@ -190,7 +190,7 @@ fn read_up_to_data_maintained_after_import() {
         env,
         user2.principal,
         user2.user_id.canister_id(),
-        &user_canister::mark_read::Args {
+        &multi_user_canister::mark_read::Args {
             messages_read: vec![ChatMessagesRead {
                 chat_id: group_id,
                 read_up_to: Some(4.into()),
@@ -254,14 +254,14 @@ fn pending_prizes_transferred_to_community() {
     let fee = ICP_TRANSFER_FEE;
     let message_id = random_from_u128();
     let prizes = vec![100000; 2];
-    let amount_to_transfer = prizes.iter().sum::<u128>() + fee * prizes.len() as u128;
+    let total = prizes.iter().sum::<u128>();
+    let amount_to_transfer = total + fee * prizes.len() as u128 + total * PRIZE_FEE_PERCENT as u128 / 100;
 
-    client::user::send_message_with_transfer_to_group(
+    client::group::send_message_with_transfer(
         env,
-        user1.principal,
-        user1.canister(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
+        &user1,
+        group_id,
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::Prize(PrizeContentInitial {
@@ -292,7 +292,8 @@ fn pending_prizes_transferred_to_community() {
 
             rules_accepted: None,
             message_filter_failed: None,
-            pin: None,
+            forwarding: false,
+            new_achievement: false,
             og_previews: Vec::new(),
         },
     );
@@ -314,7 +315,8 @@ fn pending_prizes_transferred_to_community() {
     tick_many(env, 20);
 
     let community_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
-    assert_eq!(community_balance, amount_to_transfer - fee);
+    // The group moves the unclaimed prizes and the fee for paying out each, less the fee for moving them
+    assert_eq!(community_balance, total + fee);
 
     let local_user_index = canister_ids.local_user_index(env, community_id);
 
@@ -364,7 +366,7 @@ fn private_replies_to_group_updated_to_community() {
         env,
         user2.principal,
         user2.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user1.user_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),

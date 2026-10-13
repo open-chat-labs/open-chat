@@ -20,7 +20,6 @@ pub enum Response {
 #[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(default)]
 pub struct ExportExtras {
-    pub former_members: Vec<UserId>,
     // Each migration from a user's old id to their new id
     pub migrated_user_ids: Vec<(UserId, UserId)>,
 }
@@ -51,7 +50,6 @@ mod tests {
     fn export_with_extras() -> Vec<u8> {
         let mut bytes = msgpack::serialize_then_unwrap(chat());
         let extras = ExportExtras {
-            former_members: vec![user_id(2)],
             migrated_user_ids: vec![(user_id(3), user_id(4))],
         };
         msgpack::serialize(&extras, &mut bytes).unwrap();
@@ -74,7 +72,6 @@ mod tests {
         let extras: ExportExtras = msgpack::deserialize_then_unwrap(remaining);
 
         assert_eq!(chat, self::chat());
-        assert_eq!(extras.former_members, vec![user_id(2)]);
         assert_eq!(extras.migrated_user_ids, vec![(user_id(3), user_id(4))]);
     }
 

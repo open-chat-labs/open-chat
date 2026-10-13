@@ -41,7 +41,6 @@ ic-cdk-management-canister = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc-ledger-types = { workspace = true }
-itertools = { workspace = true }
 json = { path = "../../../libraries/json" }
 jwt = { path = "../../../libraries/jwt" }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
@@ -51,8 +50,6 @@ multi_user_canister = { path = "../../multi_user/api" }
 multi_user_canister_c2c_client = { path = "../../multi_user/c2c_client" }
 notifications_index_canister = { path = "../../notifications_index/api" }
 oc_error_codes = { path = "../../../libraries/error_codes" }
-online_users_canister = { path = "../../online_users/api" }
-online_users_canister_c2c_client = { path = "../../online_users/c2c_client" }
 p256_key_pair = { path = "../../../libraries/p256_key_pair" }
 per_round_timer = { path = "../../../libraries/per_round_timer" }
 principal_to_user_id_map = { path = "../../../libraries/principal_to_user_id_map" }
@@ -69,8 +66,6 @@ stable_memory_map = { path = "../../../libraries/stable_memory_map" }
 timer_job_queues = { path = "../../../libraries/timer_job_queues" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
-user_canister = { path = "../../user/api" }
-user_canister_c2c_client = { path = "../../user/c2c_client" }
 user_ids_set = { path = "../../../libraries/user_ids_set" }
 user_index_canister = { path = "../../user_index/api" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }

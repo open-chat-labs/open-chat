@@ -11,24 +11,22 @@ use chat_events::{
 use direct_chat::{DirectChat, EventsTtlChange, EventsTtlLatestChange};
 use ledger_utils::format_crypto_amount_with_symbol;
 use local_user_index_canister::is_user_or_multi_user_canister::Response as CanisterKind;
+use multi_user_canister::{
+    C2CReplyContext, DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs,
+    MessageActivity, MessageActivityEvent, P2PSwapStatusChange, SetEventsTtl, TipMessageArgs as C2CTipMessageArgs,
+    ToggleReactionArgs,
+};
 use types::{
     CanisterId, Chat, DirectChatUserNotificationPayload, DirectMessageNotification, DirectMessageTipped,
     DirectReactionAddedNotification, EventIndex, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId,
     MessageIndex, OCResult, OgPreview, P2PSwapStatus, TimestampMillis, UserId, UserType, VideoCallPresence,
 };
-use user_canister::{
-    C2CReplyContext, DeleteUndeleteMessagesArgs as C2CDeleteUndeleteMessagesArgs, EditMessageArgs as C2CEditMessageArgs,
-    MessageActivity, MessageActivityEvent, P2PSwapStatusChange, SetEventsTtl, TipMessageArgs as C2CTipMessageArgs,
-    ToggleReactionArgs,
-};
 use utils::migrated_user_ids::MigratedUserIds;
 
-// Whether a sender is one a canister of this kind can act for: a User canister acts only for its
-// own user, whose id is the canister's id, and a MultiUser canister only for the users it holds,
-// whose ids carry an index, never as its own canister id
+// Whether a sender is one a canister of this kind can act for: a MultiUser canister acts only for the
+// users it holds, whose ids carry an index, never as its own canister id
 pub fn can_act_for(kind: CanisterKind, sender: UserId, caller: CanisterId) -> bool {
     match kind {
-        CanisterKind::UserCanister => sender == UserId::from(caller),
         CanisterKind::MultiUserCanister => sender.index() != 0 && sender.canister_id() == caller,
         CanisterKind::Neither => false,
     }
@@ -412,15 +410,12 @@ pub fn tip_message(
 }
 
 // Applies the sender's change to the status of a P2P swap between them, adding the swap's
-// completion to the recipient's message activity feed, and recording in the recipient's own record
-// of the swap, if they have one, that it has ended. Returns whether the change was applied.
+// completion to the recipient's message activity feed. Returns whether the change was applied.
 pub fn p2p_swap_change_status(user: &mut User, sender: UserId, args: P2PSwapStatusChange, now: TimestampMillis) -> bool {
     let Some(mut chat) = user.direct_chats.get_mut(&sender.into()) else {
         return false;
     };
     let completed = matches!(args.status, P2PSwapStatus::Completed(_));
-    let ended = args.status.has_ended();
-    let swap_id = chat.get_p2p_swap(None, args.message_id).map(|swap| swap.swap_id);
 
     if chat.set_p2p_swap_status(None, args.message_id, args.status, now).is_err() {
         return false;
@@ -447,10 +442,6 @@ pub fn p2p_swap_change_status(user: &mut User, sender: UserId, args: P2PSwapStat
         None
     };
     drop(chat);
-
-    if ended && let Some(swap_id) = swap_id {
-        user.p2p_swaps.mark_ended(swap_id, now);
-    }
     if let Some(activity) = activity {
         user.push_message_activity(activity, now);
     }

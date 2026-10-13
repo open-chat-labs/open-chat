@@ -129,10 +129,10 @@ function hexStringToUint8Array(hex: string): Uint8Array {
 const SUBACCOUNT_LENGTH = 32;
 
 // The ledger account holding a user's funds. Mirrors `impl From<UserIdAndPrincipal> for Account` in
-// backend/libraries/types/src/user.rs: a user alone in their canister holds their funds in that
-// canister's account, whose id is their user id, while anyone else, such as a user in a MultiUser
-// canister, holds their own funds in the account of the principal they sign in with. `principal` is
-// only called for the latter, so a user alone in their canister never needs it.
+// backend/libraries/types/src/user.rs: the id a user had before being migrated to a MultiUser
+// canister was that of their User canister, whose account held their funds, while anyone else, such
+// as a user in a MultiUser canister, holds their own funds in the account of the principal they sign
+// in with. `principal` is only called for the latter, so an earlier id's wallet never needs it.
 export function userWalletAccount(userId: string, principal: () => string): IcrcAccount {
     const userIdPrincipal = Principal.fromText(userId);
     return {
@@ -156,16 +156,14 @@ export function isAccountOfMultiUserCanisterUserId(address: string): boolean {
 }
 
 // The account a user's canister spends as when it pulls funds the user has approved via ICRC-2, so
-// the spender the user has to approve. A User canister spends as itself. A canister holding many
-// users spends each user's approval under a subaccount derived from their principal, mirroring
-// `ledger_utils::spender_subaccount`, so that it only ever spends a user's own approval. As with
-// `userWalletAccount`, `principal` is only called for a user in a MultiUser canister.
+// the spender the user has to approve. The MultiUser canister holding the user spends each user's
+// approval under a subaccount derived from their principal, mirroring
+// `ledger_utils::spender_subaccount`, so that it only ever spends a user's own approval.
 export function userCanisterSpenderAccount(userId: string, principal: () => string): IcrcAccount {
-    const owner = userCanisterId(userId);
-    if (!isMultiUserCanisterUser(userId)) {
-        return { owner };
-    }
-    return { owner, subaccount: spenderSubaccount(Principal.fromText(principal())) };
+    return {
+        owner: userCanisterId(userId),
+        subaccount: spenderSubaccount(Principal.fromText(principal())),
+    };
 }
 
 // The account a group or community spends as when it pulls a payment from one of its members: its
@@ -179,17 +177,16 @@ export function memberSpenderAccount(canisterId: string, principal: () => string
 }
 
 // The account which pulls a payment the user makes from their wallet, so the spender their wallet
-// has to approve. The user's canister pulls it, except that a user who holds their own funds has the
-// group or community pull a payment in a message or a tip in a group or channel, since their
-// canister can't make the transfer for them. `chatId` is the chat such a payment is made in, and is
-// left out for any other payment, eg. accepting a P2P swap, which the user's canister makes wherever
-// it is.
+// has to approve. The user's canister pulls it, except that the group or community pulls a payment
+// in a message or a tip in a group or channel, since the user's canister can't make the transfer
+// for them. `chatId` is the chat such a payment is made in, and is left out for any other payment,
+// eg. accepting a P2P swap, which the user's canister makes wherever it is.
 export function paymentSpenderAccount(
     userId: string,
     chatId: ChatIdentifier | undefined,
     principal: () => string,
 ): IcrcAccount {
-    if (isMultiUserCanisterUser(userId) && chatId !== undefined && chatId.kind !== "direct_chat") {
+    if (chatId !== undefined && chatId.kind !== "direct_chat") {
         return memberSpenderAccount(
             chatId.kind === "channel" ? chatId.communityId : chatId.groupId,
             principal,
@@ -198,18 +195,11 @@ export function paymentSpenderAccount(
     return userCanisterSpenderAccount(userId, principal);
 }
 
-// What a payment pulled from a wallet costs on top of the transfers it makes. A payment from an
-// external wallet, or from the wallet of a user who holds their own funds, is pulled once the
-// wallet has approved whatever pulls it (see `paymentSpenderAccount`), and the ledger charges its
-// transfer fee for the approval. A payment from the OpenChat wallet of a user alone in their
-// canister costs nothing more, since their canister holds their funds and makes the transfers
-// itself.
-export function walletApprovalFee(
-    userId: string,
-    transferFee: bigint,
-    fromExternalWallet: boolean,
-): bigint {
-    return fromExternalWallet || isMultiUserCanisterUser(userId) ? transferFee : 0n;
+// What a payment pulled from a wallet costs on top of the transfers it makes. A payment from the
+// user's wallet, or from an external wallet, is pulled once the wallet has approved whatever pulls
+// it (see `paymentSpenderAccount`), and the ledger charges its transfer fee for the approval.
+export function walletApprovalFee(transferFee: bigint): bigint {
+    return transferFee;
 }
 
 // How long an approval made for a single payment stays spendable. The allowance is the whole of the
@@ -228,9 +218,10 @@ export function spenderSubaccount(principal: Principal): Uint8Array {
 
 // The user whose wallet this ledger account might be, which is what lets the UI name the other side
 // of a transaction. Only an account with the default subaccount can be a wallet (see
-// `userWalletAccount`), and then it is the owner's: a User canister's id is its user's id, and the
-// principal of a user in a MultiUser canister is left for the caller to resolve, since it is not
-// their user id. Undefined for any other subaccount.
+// `userWalletAccount`), and then it is the owner's: the id of the User canister a user had before
+// being migrated to a MultiUser canister is the id they had then, and the principal of a user in a
+// MultiUser canister is left for the caller to resolve, since it is not their user id. Undefined for
+// any other subaccount.
 //
 // There is no equivalent for the ICP ledger's AccountIdentifier, which is a hash and so cannot be
 // inverted.

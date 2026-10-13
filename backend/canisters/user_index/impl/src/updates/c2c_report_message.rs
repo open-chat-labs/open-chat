@@ -1,6 +1,6 @@
 use crate::{
     RuntimeState,
-    guards::caller_is_user_canister_or_group_index,
+    guards::caller_is_multi_user_canister_or_group_index,
     model::moderation::{self, ModerationAlert},
     model::reported_messages::{
         AddReportArgs, AddReportResult, AutomatedOutcome, ModerationAction, RecordOutcomeResult, build_message_to_reporter,
@@ -29,7 +29,7 @@ enum ReportAction {
     CsamProtectionOnly(u64),
 }
 
-#[update(guard = "caller_is_user_canister_or_group_index", msgpack = true)]
+#[update(guard = "caller_is_multi_user_canister_or_group_index", msgpack = true)]
 #[trace]
 fn c2c_report_message(args: Args) -> Response {
     match mutate_state(|state| add_report(&args, state)) {

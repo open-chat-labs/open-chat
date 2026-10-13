@@ -22,15 +22,16 @@ fn proposal_fee_is_only_taken_from_the_callers_own_wallet() {
         env,
         canister_ids,
         controller,
+        ..
     } = wrapper.env();
 
     let alice = client::register_user(env, canister_ids);
-    let bob = client::register_user_in_multi_user_canister(env, canister_ids);
+    let bob = client::register_user(env, canister_ids);
     let mallory = client::register_user(env, canister_ids);
 
-    // Alice's wallet is her User canister's account, and Bob's, as a user in a MultiUser canister,
-    // is his principal's. Each holds CHAT and has approved the ProposalsBot to pull it.
-    let alice_wallet = alice.canister();
+    // Each user's wallet is their principal's account. Alice's and Bob's hold CHAT and have approved
+    // the ProposalsBot to pull it.
+    let alice_wallet = alice.principal;
     let bob_wallet = bob.principal;
     let amount = 100_000_000;
     let balance = 10 * amount;
@@ -75,7 +76,7 @@ fn proposal_fee_is_only_taken_from_the_callers_own_wallet() {
     let proposals_bot: CanisterId = canister_ids.proposals_bot;
 
     // Mallory can't have the fee taken from Alice's or Bob's wallet, whether into the ProposalsBot's
-    // account or her own, nor from her own wallet into anyone's account but the ProposalsBot's
+    // account or her own, nor from her canister's account, which holds no one's funds
     for (from, to) in [
         (alice_wallet, proposals_bot),
         (alice_wallet, mallory.principal),

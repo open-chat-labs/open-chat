@@ -106,7 +106,7 @@ mod tests {
 
         let leaderboards = TopUpLeaderboards::build(
             [
-                (a, ChildCanisterType::User, a_top_ups.as_slice()),
+                (a, ChildCanisterType::MultiUser, a_top_ups.as_slice()),
                 (b, ChildCanisterType::Group, b_top_ups.as_slice()),
             ]
             .into_iter(),
@@ -138,8 +138,10 @@ mod tests {
             })
             .collect();
 
-        let leaderboards =
-            TopUpLeaderboards::build(top_ups.iter().map(|(c, t)| (*c, ChildCanisterType::User, t.as_slice())), now);
+        let leaderboards = TopUpLeaderboards::build(
+            top_ups.iter().map(|(c, t)| (*c, ChildCanisterType::MultiUser, t.as_slice())),
+            now,
+        );
 
         assert_eq!(leaderboards.last_7_days.len(), MAX_ENTRIES);
         assert_eq!(leaderboards.last_7_days.first().unwrap().total, 150);

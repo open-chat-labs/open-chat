@@ -17,6 +17,7 @@ use group_canister::send_message_v2::{Response::*, *};
 use group_chat_core::SendMessageSuccess;
 use group_community_common::{NewP2PSwap, prize_refund, validate_prize};
 use ledger_utils::{TransferRecipient, UserTransfer};
+use multi_user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 use oc_error_codes::OCErrorCode;
 use tracing::error;
 use types::{
@@ -24,7 +25,6 @@ use types::{
     EventWrapper, GroupChatUserNotificationPayload, GroupMessageNotification, Message, MessageContent, MessageContentInitial,
     MessageContentType, MessageIndex, OCResult, P2PSwapLocation, TimestampMillis, User, UserIdAndPrincipal, UserType, icrc2,
 };
-use user_canister::{GroupCanisterEvent, MessageActivity, MessageActivityEvent};
 
 #[update(msgpack = true)]
 #[trace]
@@ -449,22 +449,6 @@ async fn send_message_with_transfer(args: Args) -> OCResult<SuccessResult> {
                 .swap
                 .create(swap.escrow_canister_id, swap.local_user_index_canister_id, swap.now)
                 .await;
-
-            // Once the swap exists it may pay out or refund to the member's wallet, so it is recorded
-            // against them in their canister, just as a swap created via their canister is
-            if let Some(swap_id) = match &result {
-                Ok((swap_id, _)) => Some(*swap_id),
-                Err((_, swap_id)) => *swap_id,
-            } {
-                mutate_state(|state| {
-                    let now = state.env.now();
-                    state.push_event_to_user(
-                        user.user_id,
-                        GroupCanisterEvent::P2PSwapCreated(Box::new(swap.swap.created(swap_id, swap.now))),
-                        now,
-                    )
-                });
-            }
 
             let (swap_id, completed) = match result {
                 Ok(ok) => ok,

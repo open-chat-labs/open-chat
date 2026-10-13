@@ -8,8 +8,8 @@ pub(crate) fn build() -> RegularJobs<Data> {
     RegularJobs::new(vec![check_cycles_balance])
 }
 
-// Asks the LocalUserIndex for a top up when the balance runs low, as the User canister does, but
-// keeping a larger balance since this canister hosts many users
+// Asks the LocalUserIndex for a top up when the balance runs low, keeping a large balance since
+// this canister hosts many users
 fn check_cycles_balance(_: &dyn Environment, data: &mut Data) {
     utils::cycles::check_cycles_balance_with_min(data.local_user_index_canister_id, MULTI_USER_CANISTER_MIN_CYCLES_BALANCE);
 }

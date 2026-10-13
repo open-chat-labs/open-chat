@@ -1,10 +1,10 @@
 use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
+use multi_user_canister::search_messages::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use std::collections::HashSet;
 use types::{MessageIndex, OCResult};
-use user_canister::search_messages::{Response::*, *};
 
 const MIN_TERM_LENGTH: u8 = 3;
 const MAX_TERM_LENGTH: u8 = 30;

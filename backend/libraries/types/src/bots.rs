@@ -408,7 +408,7 @@ impl BotInstallationLocation {
         match self {
             BotInstallationLocation::Community(c) => (*c).into(),
             BotInstallationLocation::Group(g) => (*g).into(),
-            // A user's canister is not their id if they are one of many in a MultiUser canister
+            // A user's id is not their canister's id, since they are one of many in a MultiUser canister
             BotInstallationLocation::User(u) => UserId::from(*u).canister_id(),
         }
     }

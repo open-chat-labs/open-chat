@@ -3,10 +3,10 @@ use crate::{MultiUserEventPusher, RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::AddRemoveReactionArgs;
+use multi_user_canister::remove_reaction::*;
+use multi_user_canister::{ToggleReactionArgs, UserCanisterEvent};
 use oc_error_codes::OCErrorCode;
 use types::{EventIndex, MessageId, MessageIndex, OCResult, Reaction, UserId};
-use user_canister::remove_reaction::*;
-use user_canister::{ToggleReactionArgs, UserCanisterEvent};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]

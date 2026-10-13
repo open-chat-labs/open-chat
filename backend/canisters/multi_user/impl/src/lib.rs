@@ -1,6 +1,5 @@
 use crate::model::local_user_index_event_batch::LocalUserIndexEventBatch;
 use crate::model::user_canister_event_batch::UserCanisterEventBatch;
-use crate::model::user_imports::UserImports;
 use crate::model::users::Users;
 use crate::timer_job_types::{ClaimOrResetStreakInsuranceJob, DeleteFileReferencesJob, RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
@@ -12,6 +11,7 @@ use direct_chat::DirectChat;
 use event_store_types::{Event, EventBuilder};
 use ledger_utils::certified::CertifiedTransfers;
 use local_user_index_canister::{UserEvent as LocalUserIndexEvent, UserEventWithUserId};
+use multi_user_canister::UserCanisterEvent;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::prelude::StdRng;
@@ -27,7 +27,6 @@ use types::{
     ReferralStatus, TimestampMillis, Timestamped, UserCanisterStreakInsuranceClaim, UserCanisterStreakInsurancePayment, UserId,
     UserNotification, UserType,
 };
-use user_canister::UserCanisterEvent;
 use user_core::User;
 use user_core::{Community, GroupChat};
 use utils::async_work::AsyncWorkGuard;
@@ -245,12 +244,12 @@ impl RuntimeState {
         });
     }
 
-    // Sends a direct chat event from the user at `sender_index` to `recipient`, as the User canister
-    // does for its user. A recipient whose id is in this canister has it applied straight away,
-    // exactly as if it had come from another canister, while any other is sent it via the canister
-    // holding their latest id (which is this one for a user migrated here since having `recipient`,
-    // keeping the order of any events already queued for them). Nothing is sent to the sender
-    // themselves or to a bot, since no bot handles these events, and they would be retried forever.
+    // Sends a direct chat event from the user at `sender_index` to `recipient`. A recipient whose
+    // id is in this canister has it applied straight away, exactly as if it had come from another
+    // canister, while any other is sent it via the canister holding their latest id (which is this
+    // one for a user migrated here since having `recipient`, keeping the order of any events
+    // already queued for them). Nothing is sent to the sender themselves or to a bot, since no bot
+    // handles these events, and they would be retried forever.
     pub fn send_user_canister_event(&mut self, sender_index: u16, recipient: UserId, event: UserCanisterEvent) {
         let sender = self.user_id(sender_index);
         let recipient_is_bot = recipient == OPENCHAT_BOT_USER_ID
@@ -283,7 +282,7 @@ impl RuntimeState {
             IdempotentEnvelope {
                 created_at: self.env.now(),
                 idempotency_id: self.env.rng().next_u64(),
-                value: user_canister::c2c_user_canister_v2::Event {
+                value: multi_user_canister::c2c_user_canister_v2::Event {
                     sender,
                     recipient,
                     event,
@@ -293,7 +292,7 @@ impl RuntimeState {
         );
     }
 
-    // Queues a notification for the user at `recipient_index`, as the User canister does for its user
+    // Queues a notification for the user at `recipient_index`
     pub fn push_notification(
         &mut self,
         sender: Option<UserId>,
@@ -341,8 +340,7 @@ impl RuntimeState {
     }
 
     // Records the status `referred` has reached for the user at `referrer_index` who referred them,
-    // telling the LocalUserIndex of their CHIT if it earned them any. This is the User canister's
-    // handling of the `SetReferralStatus` event.
+    // telling the LocalUserIndex of their CHIT if it earned them any
     pub fn set_referral_status(
         &mut self,
         referrer_index: u16,
@@ -379,8 +377,7 @@ impl RuntimeState {
         self.push_local_user_index_canister_event(user_index, LocalUserIndexEvent::NotifyChit(notify_chit), now);
     }
 
-    // Records a payment for streak insurance by the user at `user_index`, as the User canister's
-    // `mark_streak_insurance_payment`
+    // Records a payment for streak insurance by the user at `user_index`
     pub fn mark_streak_insurance_payment(&mut self, user_index: u16, payment: UserCanisterStreakInsurancePayment) {
         if self
             .data
@@ -409,7 +406,7 @@ impl RuntimeState {
     }
 
     // Records a day of streak insurance being used up to keep the streak of the user at
-    // `user_index`, as the User canister's `mark_streak_insurance_claim`
+    // `user_index`
     pub fn mark_streak_insurance_claim(&mut self, user_index: u16, claim: UserCanisterStreakInsuranceClaim) {
         if self
             .data
@@ -519,9 +516,9 @@ impl RuntimeState {
     }
 
     // A removed group or community only has a small number of entries, so they are removed
-    // immediately, as in the User canister, so that none are left to be wiped by a later garbage
-    // collection if the user rejoins. Any which can't be removed within this message are left for
-    // the garbage collection job.
+    // immediately, so that none are left to be wiped by a later garbage collection if the user
+    // rejoins. Any which can't be removed within this message are left for the garbage collection
+    // job.
     pub fn garbage_collect_removed_chat_keys(&mut self, user_index: u16, prefixes: Vec<BaseKeyPrefix>) {
         let remaining: Vec<_> = self
             .data
@@ -605,7 +602,7 @@ impl RuntimeState {
         if !thread_prefixes.is_empty() {
             self.garbage_collect_stable_memory_keys(user_index, thread_prefixes);
         }
-        // As in the User canister, each copy of the chat deletes the files of its expired messages.
+        // Each copy of the chat deletes the files of its expired messages.
         // A file already deleted from the other copy is simply not found.
         if !files_to_delete.is_empty() {
             DeleteFileReferencesJob { files: files_to_delete }.execute();
@@ -636,7 +633,6 @@ impl RuntimeState {
             queued_local_user_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             queued_user_canister_events: self.data.user_canister_events_queue.len() as u32,
             known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
-            user_imports_in_progress: self.data.user_imports.len() as u32,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -666,8 +662,8 @@ struct Data {
     // The indexes of deleted users, all of whose entries in the stable memory map are yet to be
     // removed by the garbage collection job
     pub deleted_users_to_garbage_collect: Vec<u16>,
-    // Events from other canisters are checked against this, as in the User canister. Each sender
-    // batches its events for this canister's users together, so one checker covers them all.
+    // Events from other canisters are checked against this. Each sender batches its events for this
+    // canister's users together, so one checker covers them all.
     pub idempotency_checker: IdempotencyChecker,
     // The MultiUser canisters the LocalUserIndex has confirmed, which may send events on behalf of
     // any of their users
@@ -678,12 +674,6 @@ struct Data {
     // The latest ids of migrated users, as looked up from the LocalUserIndex whenever a user's id is found to
     // have changed
     pub migrated_user_ids: MigratedUserIds,
-    // The users being imported from canisters of their own, keyed by their old id
-    #[serde(default)]
-    pub user_imports: UserImports,
-    // The hashes of the migrations the UserIndex has cancelled, none of which are ever imported
-    #[serde(default)]
-    pub abandoned_user_imports: HashSet<types::Hash>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -723,15 +713,13 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
-            user_imports: UserImports::default(),
-            abandoned_user_imports: HashSet::new(),
             rng_seed,
             test_mode,
         }
     }
 }
 
-// The User canister's `UserEventPusher`, but naming the user the events are from, since the
+// Pushes event store events to the LocalUserIndex, naming the user they are from, since the
 // LocalUserIndex queue in this canister is shared by many users
 pub struct MultiUserEventPusher<'a> {
     pub user_id: UserId,
@@ -770,7 +758,6 @@ pub struct Metrics {
     pub queued_local_user_index_events: u32,
     pub queued_user_canister_events: u32,
     pub known_multi_user_canisters: u32,
-    pub user_imports_in_progress: u32,
     pub canister_ids: CanisterIds,
 }
 

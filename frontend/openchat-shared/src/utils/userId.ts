@@ -2,10 +2,10 @@ import { Principal } from "@icp-sdk/core/principal";
 
 // Helpers for the layout of a UserId, mirroring `UserId` in backend/libraries/types/src/user.rs.
 //
-// A user with a User canister of their own is identified by that canister's id. A user held in a
-// MultiUser canister alongside others is identified by that canister's leading u64 followed by
-// their index within it, the index taking the place of the canister id's two trailing tag bytes.
-// Bots and webhooks are identified by some other principal.
+// A user, held in a MultiUser canister alongside others, is identified by that canister's leading
+// u64 followed by their index within it, the index taking the place of the canister id's two
+// trailing tag bytes. The id a user had before being migrated to a MultiUser canister was that of
+// the User canister they had. Bots and webhooks are identified by some other principal.
 
 // The IC's canister ids are a big-endian u64 followed by two class tag bytes, so they are always
 // exactly this long and always end in exactly these bytes.
@@ -17,9 +17,10 @@ const INDEXED_TAG = 0x80;
 // The largest index the seven spare bits of a UserId's final byte, plus the byte before it, hold.
 export const MAX_USER_INDEX = (1 << 15) - 1;
 
-// Whether the user's data is held in a MultiUser canister alongside other users', rather than in
-// a User canister of their own. Mirrors `UserId::is_indexed`. False for anything which is not a
-// principal, such as the anonymous user's id, so it is safe on any value the current user id holds.
+// Whether `userId` is the id of a user in a MultiUser canister, rather than one a user had before
+// being migrated there, or a bot's or webhook's. Mirrors `UserId::is_indexed`. False for anything
+// which is not a principal, such as the anonymous user's id, so it is safe on any value the current
+// user id holds.
 export function isMultiUserCanisterUser(userId: string): boolean {
     let bytes: Uint8Array;
     try {

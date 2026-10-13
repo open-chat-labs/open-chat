@@ -5,39 +5,15 @@ use stable_memory_map::{
     CommunityKey, CommunityKeyPrefix, HeapStableSplitMap, HeapStableSplitMapMut, HeapStableSplitMapRef,
     HeapStableSplitMapValue, KeyPrefix, RemovedChatKeyPrefix,
 };
-use std::collections::HashMap;
 use types::{CanisterId, CommunityId, TimestampMillis};
 
 // The communities the user is in, each of which (with each of its channels) is stored whole in the
 // stable memory map (see `HeapStableSplitMap`). The heap only holds each community's index and when it was
 // last updated.
 #[derive(Serialize, Deserialize, Default)]
-#[serde(from = "CommunitiesCombined")]
 pub struct Communities {
     communities_created: u32,
     communities_v2: HeapStableSplitMap<Community>,
-}
-
-// Reads both the current layout and the one before it, in which every community was on the heap (see
-// `GroupChatsCombined`)
-#[derive(Deserialize)]
-struct CommunitiesCombined {
-    communities_created: u32,
-    #[serde(default)]
-    communities: HashMap<CommunityId, Community>,
-    #[serde(default)]
-    communities_v2: HeapStableSplitMap<Community>,
-}
-
-impl From<CommunitiesCombined> for Communities {
-    fn from(value: CommunitiesCombined) -> Self {
-        let mut communities_v2 = value.communities_v2;
-        communities_v2.extend_from_heap(value.communities);
-        Communities {
-            communities_created: value.communities_created,
-            communities_v2,
-        }
-    }
 }
 
 // What is kept on the heap for each community
@@ -150,11 +126,6 @@ impl Communities {
         self.communities_v2.is_empty()
     }
 
-    // Moves every community still on the heap into stable memory, returning how many were moved
-    pub fn migrate_to_stable_memory(&mut self) -> usize {
-        self.communities_v2.migrate_to_stable_memory()
-    }
-
     fn next_index(&self) -> u32 {
         self.communities_v2
             .entries()
@@ -171,9 +142,9 @@ mod tests {
     use candid::Principal;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use multi_user_canister::mark_read::ChannelMessagesRead;
     use stable_memory_map::{with_map, with_map_mut};
     use types::ChannelId;
-    use user_canister::mark_read::ChannelMessagesRead;
 
     #[test]
     fn removed_since_excludes_communities_rejoined() {
@@ -240,50 +211,6 @@ mod tests {
         assert_eq!(ids, vec![community(1), community(2)]);
         assert!(communities.any_updated(49));
         assert!(!communities.any_updated(50));
-    }
-
-    #[test]
-    fn communities_from_the_previous_layout_are_moved_into_stable_memory() {
-        init_stable_memory_map();
-        let local_user_index = Principal::from_slice(&[9; 10]);
-
-        #[derive(Serialize)]
-        struct CommunitiesPrevious {
-            communities_created: u32,
-            communities: HashMap<CommunityId, Community>,
-        }
-        let mut previous_community = Community::new(community(1), local_user_index, 7, 10);
-        previous_community.mark_read(vec![channel_read(3, 4)], 20);
-        let previous = CommunitiesPrevious {
-            communities_created: 1,
-            communities: HashMap::from([(community(1), previous_community)]),
-        };
-        let mut communities: Communities = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(previous));
-        assert_eq!(communities.len(), 1);
-        assert_eq!(communities.communities_created(), 1);
-        assert_eq!(communities.next_index(), 8);
-        assert!(!is_stored(community(1)));
-
-        assert_eq!(communities.migrate_to_stable_memory(), 1);
-        assert!(is_stored(community(1)));
-        let migrated = communities.iter().next().unwrap();
-        assert_eq!(migrated.index.value, 7);
-        assert_eq!(
-            migrated
-                .channels
-                .get(&ChannelId::from(3u32))
-                .unwrap()
-                .messages_read
-                .read_by_me_up_to
-                .value,
-            Some(4.into())
-        );
-        drop(migrated);
-        assert_eq!(communities.next_index(), 8);
-
-        let deserialized: Communities = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&communities));
-        assert_eq!(deserialized.len(), 1);
-        assert_eq!(deserialized.updated_since(15).count(), 1);
     }
 
     fn channel_read(channel_id: u32, read_up_to: u32) -> ChannelMessagesRead {

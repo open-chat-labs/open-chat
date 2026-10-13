@@ -4,11 +4,10 @@ use candid::Principal;
 use canister_timer_jobs::{Job, TimerJobs};
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use constants::{MINUTE_IN_MS, OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
+use multi_user_canister::C2CReplyContext;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
-use user_canister::C2CReplyContext;
-use user_core::migration::MigratedTimerJob;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -68,8 +67,7 @@ pub struct ClaimOrResetStreakInsuranceJob {
     pub user_index: u16,
 }
 
-// Marks a call ended in one user's copy of the chat once its maximum duration is up, as the User
-// canister's job of the same name does
+// Marks a call ended in one user's copy of the chat once its maximum duration is up
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MarkVideoCallEndedJob {
     pub user_index: u16,
@@ -105,46 +103,6 @@ pub struct MarkP2PSwapExpiredJob {
 }
 
 impl TimerJob {
-    // A job handed over by the canister of a user being migrated here, for the user at `user_index`
-    pub fn migrated(user_index: u16, job: MigratedTimerJob) -> TimerJob {
-        match job {
-            MigratedTimerJob::HardDeleteMessageContent {
-                chat_id,
-                thread_root_message_index,
-                message_id,
-            } => TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
-                user_index,
-                chat_id,
-                thread_root_message_index,
-                message_id,
-            })),
-            MigratedTimerJob::DeleteFileReferences { files } => {
-                TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files })
-            }
-            MigratedTimerJob::MessageReminder {
-                reminder_id,
-                chat,
-                thread_root_message_index,
-                event_index,
-                notes,
-                reminder_created_message_index,
-            } => TimerJob::MessageReminder(Box::new(MessageReminderJob {
-                user_index,
-                reminder_id,
-                chat,
-                thread_root_message_index,
-                event_index,
-                notes,
-                reminder_created_message_index,
-            })),
-            MigratedTimerJob::MarkVideoCallEnded { them, message_id } => TimerJob::MarkVideoCallEnded(MarkVideoCallEndedJob {
-                user_index,
-                them,
-                message_id,
-            }),
-        }
-    }
-
     // The index of the user the job is for, if it is for one user's state rather than the escrow
     // canister's or the storage buckets'
     pub fn user_index(&self) -> Option<u16> {
@@ -233,8 +191,8 @@ impl Job for HardDeleteMessageContentJob {
                     })
                 })
                 .flatten()?;
-            // Only the sender's copy of the message deletes its files and cancels its swap, as in the
-            // User canister, since each copy of the chat references the same files and swap.
+            // Only the sender's copy of the message deletes its files and cancels its swap, since each
+            // copy of the chat references the same files and swap.
             // Including a message the user sent under an earlier id, from before they were migrated.
             if !state.data.migrated_user_ids.is_same_user(sender, my_user_id) {
                 return Some((Vec::new(), None));

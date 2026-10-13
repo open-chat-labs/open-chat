@@ -13,10 +13,16 @@ use types::ChatEvent;
 #[test_case(5)]
 fn retries_after_failures(failures: usize) {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        platform_operator,
+        ..
+    } = wrapper.env();
 
     let user1 = client::register_user(env, canister_ids);
-    let user2 = client::register_user(env, canister_ids);
+    // In a canister of their own, so that stopping it doesn't stop user1's
+    let user2 = client::register_user_in_new_multi_user_canister(env, canister_ids, *platform_operator);
     let message_id = random_from_u128();
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
@@ -28,7 +34,7 @@ fn retries_after_failures(failures: usize) {
     assert_eq!(events_response1.events.len(), 1);
     assert!(matches!(events_response1.events[0].event, ChatEvent::Message(_)));
 
-    stop_canister(env, user2.local_user_index, user2.user_id.canister_id());
+    stop_canister(env, user2.local_user_index, user2.canister());
 
     client::user::happy_path::add_reaction(env, &user1, user2.user_id, "1", message_id);
     // Long enough for each attempt to reach the stopped canister and the failure to come back, even
@@ -40,7 +46,7 @@ fn retries_after_failures(failures: usize) {
         tick_many(env, 25);
     }
 
-    start_canister(env, user2.local_user_index, user2.user_id.canister_id());
+    start_canister(env, user2.local_user_index, user2.canister());
     env.tick();
     env.advance_time(Duration::from_secs(100));
     tick_many(env, 10);

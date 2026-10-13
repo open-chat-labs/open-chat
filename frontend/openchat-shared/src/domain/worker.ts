@@ -238,11 +238,7 @@ import type {
     SetDisplayNameResponse,
     SetMessageReminderResponse,
     SetUsernameResponse,
-    SetUserUpgradeConcurrencyResponse,
     CreateMultiUserCanisterResponse,
-    MigrateUsersResponse,
-    UserMigrationResponse,
-    UsersToMigrate,
     FundsInPreviousWallet,
     MoveFundsOutcome,
     SubmitProofOfUniquePersonhoodResponse,
@@ -250,7 +246,6 @@ import type {
     SuspendUserResponse,
     SwapTokensResponse,
     SwapTokensStep,
-    TokenSwapStatusResponse,
     UnpinChatResponse,
     UnsuspendUserResponse,
     User,
@@ -383,13 +378,7 @@ export type WorkerRequest =
     | SetGroupModerationFlags
     | SetGroupUpgradeConcurrency
     | SetCommunityUpgradeConcurrency
-    | SetUserUpgradeConcurrency
     | CreateMultiUserCanister
-    | SetMultiUserCanistersEnabled
-    | MigrateUsers
-    | SetUserMigrationConcurrency
-    | GetUserMigration
-    | CancelUserMigration
     | MarkLocalGroupIndexFull
     | SetDiamondMembershipFees
     | StakeNeuronForSubmittingProposals
@@ -463,7 +452,6 @@ export type WorkerRequest =
     | GetTokenSwaps
     | GetTokenSwapQuotes
     | SwapTokens
-    | TokenSwapStatus
     | RecoverUnfinishedTokenSwaps
     | ApproveTransfer
     | ApproveAccessGatePayment
@@ -523,7 +511,6 @@ export type WorkerRequest =
     | UpdateRegisteredBot
     | GetBotDefinition
     | CallBotCommandEndpoint
-    | WithdrawFromIcpSwap
     | RegisterWebhook
     | UpdateWebhook
     | RegenerateWebhook
@@ -951,11 +938,6 @@ type SwapTokens = {
     minAmountOut: bigint;
     dex: DexId;
     pin: string | undefined;
-};
-
-type TokenSwapStatus = {
-    kind: "tokenSwapStatus";
-    swapId: bigint;
 };
 
 type RecoverUnfinishedTokenSwaps = {
@@ -1832,40 +1814,9 @@ type SetCommunityUpgradeConcurrency = {
     kind: "setCommunityUpgradeConcurrency";
 };
 
-type SetUserUpgradeConcurrency = {
-    value: number;
-    kind: "setUserUpgradeConcurrency";
-};
-
 type CreateMultiUserCanister = {
     localUserIndexCanisterId: string;
     kind: "createMultiUserCanister";
-};
-
-type SetMultiUserCanistersEnabled = {
-    enabled: boolean;
-    kind: "setMultiUserCanistersEnabled";
-};
-
-type MigrateUsers = {
-    users: UsersToMigrate;
-    kind: "migrateUsers";
-};
-
-type SetUserMigrationConcurrency = {
-    value: number;
-    kind: "setUserMigrationConcurrency";
-};
-
-type GetUserMigration = {
-    userId: string;
-    kind: "userMigration";
-};
-
-type CancelUserMigration = {
-    userId: string;
-    multiUserCanisterId: string;
-    kind: "cancelUserMigration";
 };
 
 type MarkLocalGroupIndexFull = {
@@ -2081,15 +2032,6 @@ type DeleteUser = {
     delegation: JsonnableDelegationChain;
 };
 
-type WithdrawFromIcpSwap = {
-    kind: "withdrawFromIcpSwap";
-    userId: string;
-    swapId: bigint;
-    inputToken: boolean;
-    amount: bigint | undefined;
-    fee: bigint | undefined;
-};
-
 type CreateAccountLinkingCode = {
     kind: "createAccountLinkingCode";
 };
@@ -2263,7 +2205,6 @@ export type WorkerResponseInner =
     | [DexId, bigint][]
     | SwapTokensResponse
     | SwapTokensStep
-    | TokenSwapStatusResponse
     | DiamondMembershipFees[]
     | TranslationCorrections
     | AcceptP2PSwapResponse
@@ -2833,20 +2774,8 @@ export type WorkerResult<T> = T extends Init
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetCommunityUpgradeConcurrency
     ? SetGroupUpgradeConcurrencyResponse
-    : T extends SetUserUpgradeConcurrency
-    ? SetUserUpgradeConcurrencyResponse
     : T extends CreateMultiUserCanister
     ? CreateMultiUserCanisterResponse
-    : T extends SetMultiUserCanistersEnabled
-    ? boolean
-    : T extends MigrateUsers
-    ? MigrateUsersResponse
-    : T extends SetUserMigrationConcurrency
-    ? boolean
-    : T extends GetUserMigration
-    ? UserMigrationResponse
-    : T extends CancelUserMigration
-    ? Success | OCError
     : T extends MarkLocalGroupIndexFull
     ? boolean
     : T extends SetDiamondMembershipFees
@@ -2991,8 +2920,6 @@ export type WorkerResult<T> = T extends Init
     ? [DexId, bigint][]
     : T extends SwapTokens
     ? SwapTokensResponse | SwapTokensStep
-    : T extends TokenSwapStatus
-    ? TokenSwapStatusResponse
     : T extends RecoverUnfinishedTokenSwaps
     ? void
     : T extends DeleteDirectChat
@@ -3104,8 +3031,6 @@ export type WorkerResult<T> = T extends Init
     : T extends UninstallBot
     ? boolean
     : T extends UpdateInstalledBot
-    ? boolean
-    : T extends WithdrawFromIcpSwap
     ? boolean
     : T extends RegisterWebhook
     ? FullWebhookDetails | undefined

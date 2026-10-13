@@ -1,5 +1,5 @@
 use crate::updates::c2c_notify_low_balance::top_up_and_retry_if_out_of_cycles;
-use crate::{CanisterToRefund, RuntimeState, UserIndexEvent, UserToDelete, jobs, mutate_state};
+use crate::{RuntimeState, UserIndexEvent, UserToDelete, mutate_state};
 use constants::SECOND_IN_MS;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -46,20 +46,8 @@ async fn process_user(user: UserToDelete) {
                 let removed = state.data.local_users.remove(&user_id);
                 state.data.daily_puzzle_engine.remove_user(user_id);
                 // Only decrement once, even if a duplicate DeleteUser event queued the user twice
-                if removed && user_id.index() != 0 {
+                if removed {
                     state.data.local_multi_user_canisters.on_user_removed(&user_id.canister_id());
-                }
-
-                // The user's canister has been uninstalled but still holds its cycles
-                if removed && user_id.index() == 0 {
-                    state.data.users_requiring_upgrade.remove_failed(&user_id.canister_id());
-                    state.data.cycles_refund_queue.push_back(CanisterToRefund {
-                        canister_id: user_id.canister_id(),
-                        attempt: 0,
-                        retry_after: 0,
-                        return_to_pool: false,
-                    });
-                    jobs::refund_cycles::start_job_if_required(state, None);
                 }
 
                 let now = state.env.now();
@@ -87,35 +75,25 @@ async fn process_user_inner(user: &UserToDelete) -> Result<DeleteUserSuccess, C2
     let user_id = user.user_id;
     let canister_id = user_id.canister_id();
 
-    let args = user_canister::c2c_groups_and_communities::Args { user_id };
-    let (groups, communities) = match top_up_and_retry_if_out_of_cycles(canister_id, || {
-        user_canister_c2c_client::c2c_groups_and_communities(canister_id, &args)
+    let args = multi_user_canister::c2c_groups_and_communities::Args { user_id };
+    let response = top_up_and_retry_if_out_of_cycles(canister_id, || {
+        multi_user_canister_c2c_client::c2c_groups_and_communities(canister_id, &args)
     })
-    .await
-    {
-        Ok(response) => (response.groups, response.communities),
-        // A canister too old to have the method can't say which groups and communities its user is
-        // in, so it's deleted without them being told, leaving them holding the user as a member
-        Err(error) if error.is_method_not_found() => (Vec::new(), Vec::new()),
-        Err(error) => return Err(error),
-    };
+    .await?;
 
-    if user_id.index() == 0 {
-        utils::canister::uninstall(canister_id).await?;
-    } else {
-        // A user held in a MultiUser canister shares it with other users, so only they are removed
-        let args = multi_user_canister::c2c_delete_user::Args { user_id };
-        top_up_and_retry_if_out_of_cycles(canister_id, || {
-            multi_user_canister_c2c_client::c2c_delete_user(canister_id, &args)
-        })
-        .await?;
-    }
+    // The user shares their MultiUser canister with other users, so only they are removed
+    let args = multi_user_canister::c2c_delete_user::Args { user_id };
+    top_up_and_retry_if_out_of_cycles(canister_id, || {
+        multi_user_canister_c2c_client::c2c_delete_user(canister_id, &args)
+    })
+    .await?;
 
     Ok(DeleteUserSuccess::Deleted(
-        groups
+        response
+            .groups
             .into_iter()
             .map(|g| g.into())
-            .chain(communities.into_iter().map(|c| c.into()))
+            .chain(response.communities.into_iter().map(|c| c.into()))
             .collect(),
     ))
 }

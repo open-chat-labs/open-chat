@@ -28,7 +28,7 @@ To run the website run `npm --prefix frontend run dev`. This process doesn't exi
 
 Open the website at `http://localhost:5001/`.
 
-To upgrade a canister run `./scripts/upgrade-canister-local.sh <DFX_IDENTITY_NAME> <CANISTER_NAME> <VERSION>` (eg. `./scripts/upgrade-canister-local.sh default user 1.0.0`)
+To upgrade a canister run `./scripts/upgrade-canister-local.sh <DFX_IDENTITY_NAME> <CANISTER_NAME> <VERSION>` (eg. `./scripts/upgrade-canister-local.sh default group 1.0.0`)
 
 To start again with a fresh install, stop DFX, then run `rm -rf .dfx`, then start from the top of these instructions again.
 

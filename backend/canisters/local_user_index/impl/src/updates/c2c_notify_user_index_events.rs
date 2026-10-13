@@ -1,25 +1,21 @@
 use crate::guards::caller_is_user_index;
-use crate::model::users_to_migrate::{UserToCloseOut, UserToImport, UserToMigrate};
-use crate::{CanisterToRefund, CommunityEvent, GroupEvent, RuntimeState, UserEvent, UserToDelete, jobs, mutate_state};
+use crate::{CommunityEvent, GroupEvent, RuntimeState, UserEvent, UserToDelete, jobs, mutate_state};
 use canister_api_macros::update;
 use canister_time::now_millis;
 use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_user_index_events::*;
 use local_user_index_canister::{UserIndexEvent, UserRegistered};
-use p256_key_pair::P256KeyPair;
-use stable_memory_map::StableMemoryMap;
-use std::cell::LazyCell;
-use std::cmp::min;
-use std::collections::{BTreeSet, HashSet};
-use tracing::{error, info};
-use types::{
-    BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotRegisteredEvent, CanisterId, MAX_USER_INDEX,
-    PushIfNotContains, TimestampMillis,
-};
-use user_canister::{
+use multi_user_canister::{
     DiamondMembershipPaymentReceived, DisplayNameChanged, ExternalAchievementAwarded, OpenChatBotMessageV2,
     PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedCommunityOrChannel, UserJoinedGroup,
     UserSuspended, UsernameChanged,
+};
+use p256_key_pair::P256KeyPair;
+use stable_memory_map::StableMemoryMap;
+use std::cell::LazyCell;
+use types::{
+    BotEvent, BotInstallationLocation, BotLifecycleEvent, BotNotification, BotRegisteredEvent, PushIfNotContains,
+    TimestampMillis,
 };
 
 #[update(guard = "caller_is_user_index", msgpack = true)]
@@ -142,17 +138,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 .global_users
                 .set_platform_moderator(ev.user_id, ev.is_platform_moderator);
         }
-        UserIndexEvent::MaxConcurrentCanisterUpgradesChanged(ev) => {
-            state.data.max_concurrent_user_upgrades = ev.value;
-            info!("Max concurrent canister upgrades set to {}", ev.value);
-        }
-        UserIndexEvent::UserUpgradeConcurrencyChanged(ev) => {
-            state.data.user_upgrade_concurrency = min(state.data.max_concurrent_user_upgrades, ev.value);
-            if state.data.user_upgrade_concurrency > 0 {
-                jobs::upgrade_users::start_job_if_required(state);
-            }
-            info!("User upgrade concurrency set to {}", ev.value);
-        }
         UserIndexEvent::UserJoinedGroup(ev) => {
             state.push_event_to_user(
                 ev.user_id,
@@ -242,26 +227,6 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::UpdateChitBalance(user_id, chit_record) => {
             state.data.global_users.insert_chit_record(user_id, chit_record);
         }
-        UserIndexEvent::RefundDeletedUserCycles(canister_ids) => {
-            let mut queued: HashSet<CanisterId> = state.data.cycles_refund_queue.iter().map(|c| c.canister_id).collect();
-            for canister_id in canister_ids {
-                // Deleted users' canisters used to be added to the canister pool, from which they
-                // may yet become live canisters, so any still in it are left alone. Any which have
-                // since become live are left alone by the job, which checks when it gets to them.
-                if !state.data.local_users.contains(&canister_id.into())
-                    && !state.data.canister_pool.contains(&canister_id)
-                    && queued.insert(canister_id)
-                {
-                    state.data.cycles_refund_queue.push_back(CanisterToRefund {
-                        canister_id,
-                        attempt: 0,
-                        retry_after: 0,
-                        return_to_pool: false,
-                    });
-                }
-            }
-            jobs::refund_cycles::start_job_if_required(state, None);
-        }
         UserIndexEvent::AddCanisterToPool(canister_id) => {
             if !state.data.canister_pool.contains(&canister_id) {
                 state.data.canister_pool.push(canister_id);
@@ -328,15 +293,10 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
                 state.push_event_to_user(user_id.into(), UserEvent::BotUpdated(Box::new(ev)), **now);
             }
         },
-        // The UserIndex names users by their latest ids, but a migration may not have reached here yet
         UserIndexEvent::UserBlocked(user_id, blocked) => {
-            let user_id = state.data.migrated_user_ids.latest(user_id);
-            let blocked = state.data.migrated_user_ids.latest(blocked);
             state.data.blocked_users.insert((blocked, user_id), ());
         }
         UserIndexEvent::UserUnblocked(user_id, unblocked) => {
-            let user_id = state.data.migrated_user_ids.latest(user_id);
-            let unblocked = state.data.migrated_user_ids.latest(unblocked);
             state.data.blocked_users.remove(&(unblocked, user_id));
         }
         UserIndexEvent::SetPremiumItemCost(ev) => state.data.premium_items.set(ev.item_id, ev.chit_cost),
@@ -357,108 +317,15 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
         UserIndexEvent::SetMediaScanConfig(config) => {
             state.data.media_scan_config = config;
         }
-        UserIndexEvent::SetMultiUserCanistersEnabled(enabled) => {
-            state.data.multi_user_canisters_enabled = enabled;
-        }
         UserIndexEvent::SetCallPushEnabled(enabled) => {
             state.data.call_push_enabled = enabled;
         }
         UserIndexEvent::SetDailyPuzzleCanisterId(canister_id) => {
             state.set_daily_puzzle_canister_id(canister_id);
         }
-        UserIndexEvent::StartUserMigration(ev) => {
-            state.data.users_to_migrate.push(UserToMigrate {
-                user_id: ev.user_id,
-                multi_user_canister_id: ev.multi_user_canister_id,
-                attempt: 0,
-                not_before: 0,
-            });
-            jobs::start_user_migrations::start_job_if_required(state);
-        }
-        UserIndexEvent::ImportUser(ev) => {
-            // A later migration of the user replaces any earlier one still waiting to be imported
-            state.data.users_to_import.replace(UserToImport {
-                user_id: ev.user_id,
-                multi_user_canister_id: ev.multi_user_canister_id,
-                user_hash: ev.user_hash,
-                attempt: 0,
-                not_before: 0,
-            });
-            jobs::import_users::start_job_if_required(state);
-        }
+        // Seeds a LocalUserIndex added after users were migrated with their old ids
         UserIndexEvent::UserIdMigrated(ev) => {
-            if state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id) {
-                // The user's old canister, if this LocalUserIndex controls it, stays in `local_users`
-                // until it has been uninstalled
-                if ev.old_user_id.index() == 0 && state.data.local_users.contains(&ev.old_user_id) {
-                    state.data.users_to_close_out.push(UserToCloseOut {
-                        user_id: ev.old_user_id,
-                        attempt: 0,
-                        not_before: 0,
-                    });
-                    jobs::close_out_migrated_users::start_job_if_required(state);
-                }
-                if let Some(principal) = state.data.global_users.migrate_user_id(ev.old_user_id, ev.new_user_id) {
-                    let canister_id = ev.new_user_id.canister_id();
-                    if state.data.local_multi_user_canisters.contains(&canister_id)
-                        && !state.data.local_users.contains(&ev.new_user_id)
-                    {
-                        state.data.local_users.add(ev.new_user_id, principal, None, **now);
-                        state.data.local_multi_user_canisters.on_user_added(&canister_id);
-                        if ev.new_user_id.index() == MAX_USER_INDEX {
-                            state.data.local_multi_user_canisters.mark_full(&canister_id);
-                        }
-                    }
-                }
-                // Any events still queued for the user's old canister, eg. those which failed while it
-                // was frozen, are sent on to their new id
-                state.move_events_queued_for_migrated_user(ev.old_user_id);
-                state.move_daily_puzzle_data_for_migrated_user(ev.old_user_id);
-                state
-                    .data
-                    .blocked_users
-                    .migrate_user_id(ev.old_user_id, ev.new_user_id, &ev.blocked_users);
-                // The NotificationsIndex moves its own copies, without telling the LocalUserIndexes
-                state
-                    .data
-                    .web_push_subscriptions
-                    .migrate_user_id(ev.old_user_id, ev.new_user_id);
-                state.data.fcm_token_store.migrate_user_id(ev.old_user_id, ev.new_user_id);
-                for user_id in ev.users_to_notify {
-                    state.notify_user_of_migrated_user_id(user_id, ev.old_user_id, ev.new_user_id, **now);
-                }
-                for (old_user_id, new_user_id) in ev.migrated_earlier {
-                    state.notify_user_of_migrated_user_id(ev.new_user_id, old_user_id, new_user_id, **now);
-                }
-                // Also any group or community the user joined via this LocalUserIndex recently, which
-                // may have been after their old canister was exported, so isn't among `canisters_to_notify`
-                let mut canisters_to_notify: BTreeSet<CanisterId> = ev.canisters_to_notify.into_iter().collect();
-                canisters_to_notify.extend(state.data.recent_joins.joined_by(ev.old_user_id, **now));
-                for canister_id in canisters_to_notify {
-                    state.notify_group_or_community_of_migrated_user_id(canister_id, ev.old_user_id, ev.new_user_id, **now);
-                }
-            }
-        }
-        UserIndexEvent::EventForMigratedUser(ev) => match msgpack::deserialize::<UserEvent, _>(ev.event.as_slice()) {
-            Ok(event) => {
-                if !state.push_event_to_user(ev.user_id, event, **now) {
-                    info!(user_id = %ev.user_id, "Event for migrated user dropped, user not found");
-                }
-            }
-            // Only if the LocalUserIndex which queued it is on a later version, with a new type of event
-            Err(error) => error!(user_id = %ev.user_id, ?error, "Failed to deserialize event for migrated user"),
-        },
-        UserIndexEvent::DailyPuzzleDataForMigratedUser(ev) => match msgpack::deserialize(ev.data.as_slice()) {
-            Ok(data) => {
-                state.data.daily_puzzle_engine.import_user(ev.user_id, data);
-                // On again if the user has been migrated since the UserIndex sent it here
-                state.move_daily_puzzle_data_for_migrated_user(ev.user_id);
-            }
-            Err(error) => error!(user_id = %ev.user_id, ?error, "Failed to deserialize daily puzzle data for migrated user"),
-        },
-        UserIndexEvent::NotifyBot(notification) => {
-            let this_canister_id = state.env.canister_id();
-            state.push_bot_notification(*notification, this_canister_id, **now);
+            state.data.migrated_user_ids.insert(ev.old_user_id, ev.new_user_id);
         }
     }
 }

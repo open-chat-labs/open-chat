@@ -1,9 +1,9 @@
 use crate::updates::c2c_local_user_index::BotMessage;
 use crate::{ThreadsRead, User, openchat_bot};
 use chat_events::ChatInternal;
+use multi_user_canister::mark_read::ChannelMessagesRead;
 use stable_memory_map::BaseKeyPrefix;
 use types::{ChannelId, Chat, CommunityId, CommunityImportedInto, DeletedGroupInfoInternal, MultiUserChat, TimestampMillis};
-use user_canister::mark_read::ChannelMessagesRead;
 
 // What removing the group leaves the caller to do
 pub struct GroupDeleted {

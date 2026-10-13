@@ -10,7 +10,6 @@
         Switch,
     } from "component-lib";
     import {
-        currentUserIdStore,
         exchangeRatesLookupStore as exchangeRatesLookup,
         formatTokens,
         swappableTokensStore,
@@ -22,7 +21,7 @@
         type SwapFromWalletStep,
         type SwapTokensResponse,
     } from "@client";
-    import { isMultiUserCanisterUser, random128 } from "@shared";
+    import { random128 } from "@shared";
     import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Alert from "svelte-material-icons/AlertOutline.svelte";
@@ -537,7 +536,6 @@
 
 {#if swapping && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
     <SwapProgress
-        {swapId}
         tokenIn={detailsIn.symbol}
         tokenOut={detailsOut.symbol}
         ledgerIn={detailsIn.ledger}
@@ -546,7 +544,6 @@
         decimalsOut={detailsOut.decimals}
         dex={dexName(bestQuote[0])}
         {swapResponse}
-        fromWallet={isMultiUserCanisterUser($currentUserIdStore)}
         {swapStep} />
 {/if}
 

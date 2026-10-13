@@ -2021,8 +2021,6 @@
         "noEligibleNeuronsMoreInfo": "Để biết thêm thông tin về bỏ phiếu và quản trị, hãy đọc <a target=\"_blank\" href=\"https://oc.app/blog/governance\">bài đăng trên blog này</a> .",
         "noEligibleNeuronsPrincipalIntro": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm principal OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.",
         "noEligibleNeuronsPrincipalLabel": "Principal OpenChat của bạn là:",
-        "noEligibleNeuronsUserIdIntro": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm id người dùng OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.",
-        "noEligibleNeuronsUserIdLabel": "Id người dùng OpenChat của bạn là:",
         "notificationsAction": "Thông báo Chỉ mục Hành động",
         "openchatInstallerAction": "Hành động cài đặt OpenChat",
         "passing": {
@@ -2382,14 +2380,10 @@
         "noQuotes": "Không có DEX nào cung cấp báo giá để hoán đổi {tokenIn}",
         "proceedWithSwap": "Việc hoán đổi chỉ được tiến hành nếu số tiền {tokenOut} nhận được ít nhất là 98% số tiền được báo giá. Bạn có muốn tiếp tục và thử hoán đổi không?",
         "progress": {
-            "deposit": "Chuyển {amountIn} {tokenIn} sang {dex}",
             "done": "Hoán đổi hoàn tất",
             "error": "Lỗi hoán đổi - không có khoản tiền nào bị mất",
             "failed": "Hoán đổi không thành công - tỷ giá hối đoái đã thay đổi",
-            "get": "Nhận tài khoản tiền gửi",
             "insufficientFunds": "Hoán đổi không thành công - không đủ tiền",
-            "notify": "Thông báo {dex} về khoản tiền gửi",
-            "refund": "Hoàn tiền {amountIn} {tokenIn} từ {dex}",
             "swap": "Hướng dẫn {dex} thực hiện hoán đổi",
             "withdraw": "Rút {amountOut} {tokenOut} từ {dex}"
         },

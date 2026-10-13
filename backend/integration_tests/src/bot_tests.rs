@@ -900,7 +900,10 @@ fn send_multiple_updates_to_same_message(chat_type: ChatType) {
         }
     };
 
-    let local_user_index = canister_ids.local_user_index(env, chat.canister_id());
+    // A direct chat is held by the owner's canister, which holds other users too, so isn't named by
+    // the chat's id
+    let chat_canister_id = if matches!(chat, Chat::Direct(_)) { owner.canister() } else { chat.canister_id() };
+    let local_user_index = canister_ids.local_user_index(env, chat_canister_id);
 
     // Register a bot
     let bot_name = random_string();

@@ -2133,6 +2133,8 @@ dependencies = [
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
+ "multi_user_canister",
+ "multi_user_canister_c2c_client",
  "oc_error_codes",
  "principal_to_user_id_map",
  "proptest",
@@ -2150,8 +2152,6 @@ dependencies = [
  "tracing",
  "types",
  "url",
- "user_canister",
- "user_canister_c2c_client",
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
@@ -4550,6 +4550,8 @@ dependencies = [
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
+ "multi_user_canister",
+ "multi_user_canister_c2c_client",
  "oc_error_codes",
  "principal_to_user_id_map",
  "rand 0.10.2",
@@ -4561,8 +4563,6 @@ dependencies = [
  "timer_job_queues",
  "tracing",
  "types",
- "user_canister",
- "user_canister_c2c_client",
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
@@ -4608,13 +4608,13 @@ dependencies = [
  "ledger_utils",
  "local_user_index_canister_c2c_client",
  "msgpack",
+ "multi_user_canister",
  "oc_error_codes",
  "serde",
  "serde_json",
  "serde_repr",
  "tracing",
  "types",
- "user_canister",
  "utils",
 ]
 
@@ -4687,6 +4687,8 @@ dependencies = [
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
+ "multi_user_canister",
+ "multi_user_canister_c2c_client",
  "oc_error_codes",
  "rand 0.10.2",
  "search",
@@ -4697,8 +4699,6 @@ dependencies = [
  "timer_job_queues",
  "tracing",
  "types",
- "user_canister",
- "user_canister_c2c_client",
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
@@ -6267,7 +6267,6 @@ dependencies = [
  "translations_canister",
  "types",
  "unruly",
- "user_canister",
  "user_index_canister",
  "utils",
  "wat",
@@ -6670,9 +6669,9 @@ dependencies = [
 name = "legacy_bot_api"
 version = "0.1.0"
 dependencies = [
+ "multi_user_canister",
  "serde",
  "types",
- "user_canister",
 ]
 
 [[package]]
@@ -6811,6 +6810,7 @@ dependencies = [
  "event_store_types",
  "group_canister",
  "ic-ledger-types",
+ "multi_user_canister",
  "notifications_index_canister",
  "oc_error_codes",
  "serde",
@@ -6818,7 +6818,6 @@ dependencies = [
  "ts-rs",
  "ts_export",
  "types",
- "user_canister",
 ]
 
 [[package]]
@@ -6882,7 +6881,6 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "icrc-ledger-types",
- "itertools 0.15.0",
  "json",
  "jwt",
  "ledger_utils",
@@ -6892,8 +6890,6 @@ dependencies = [
  "multi_user_canister_c2c_client",
  "notifications_index_canister",
  "oc_error_codes",
- "online_users_canister",
- "online_users_canister_c2c_client",
  "p256_key_pair",
  "per_round_timer",
  "principal_to_user_id_map",
@@ -6910,8 +6906,6 @@ dependencies = [
  "timer_job_queues",
  "tracing",
  "types",
- "user_canister",
- "user_canister_c2c_client",
  "user_ids_set",
  "user_index_canister",
  "user_index_canister_c2c_client",
@@ -7245,8 +7239,17 @@ name = "multi_user_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "chat_events",
+ "constants",
+ "ic-ledger-types",
+ "ic_principal",
+ "icrc-ledger-types",
+ "msgpack",
  "oc_error_codes",
  "serde",
+ "serde_bytes",
+ "ts-rs",
+ "ts_export",
  "types",
 ]
 
@@ -7298,6 +7301,7 @@ dependencies = [
  "local_user_index_canister_c2c_client",
  "msgpack",
  "multi_user_canister",
+ "multi_user_canister_c2c_client",
  "oc_error_codes",
  "rand 0.10.2",
  "serde",
@@ -7309,8 +7313,6 @@ dependencies = [
  "timer_job_queues",
  "tracing",
  "types",
- "user_canister",
- "user_canister_c2c_client",
  "user_core",
  "user_index_canister",
  "user_index_canister_c2c_client",
@@ -12830,123 +12832,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "user_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "chat_events",
- "constants",
- "ic-ledger-types",
- "ic_principal",
- "icrc-ledger-types",
- "msgpack",
- "oc_error_codes",
- "serde",
- "serde_bytes",
- "sha256",
- "ts-rs",
- "ts_export",
- "types",
-]
-
-[[package]]
-name = "user_canister_c2c_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client",
- "ic-cdk 0.20.3",
- "msgpack",
- "tracing",
- "types",
- "user_canister",
-]
-
-[[package]]
-name = "user_canister_client"
-version = "0.1.0"
-dependencies = [
- "canister_client",
- "ic-agent",
- "ic_principal",
- "msgpack",
- "types",
- "user_canister",
-]
-
-[[package]]
-name = "user_canister_impl"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "candid",
- "canister_api_macros",
- "canister_logger",
- "canister_state_macros",
- "canister_timer_jobs",
- "canister_tracing_macros",
- "chat_events",
- "ckbtc_minter_canister",
- "ckbtc_minter_canister_c2c_client",
- "community_canister",
- "community_canister_c2c_client",
- "constants",
- "direct_chat",
- "escrow_canister",
- "escrow_canister_c2c_client",
- "event_store_types",
- "fire_and_forget_handler",
- "futures",
- "git_commit_id",
- "governance_clients",
- "group_canister",
- "group_canister_c2c_client",
- "group_index_canister",
- "group_index_canister_c2c_client",
- "http_request",
- "ic-cdk 0.20.3",
- "ic-cdk-timers",
- "ic-ledger-types",
- "ic-stable-structures",
- "ic_principal",
- "icpswap_swap_pool_canister",
- "icpswap_swap_pool_canister_c2c_client",
- "icrc-ledger-types",
- "icrc_ledger_canister",
- "icrc_ledger_canister_c2c_client",
- "installed_bots",
- "itertools 0.15.0",
- "ledger_utils",
- "legacy_bot_api",
- "legacy_bot_c2c_client",
- "local_user_index_canister",
- "local_user_index_canister_c2c_client",
- "msgpack",
- "oc_error_codes",
- "one_sec_minter_canister",
- "one_sec_minter_canister_c2c_client",
- "rand 0.10.2",
- "serde",
- "serde_bytes",
- "sha256",
- "stable_memory",
- "stable_memory_map",
- "storage_bucket_client",
- "taco_exchange_canister",
- "taco_exchange_canister_c2c_client",
- "test-case",
- "timer_job_queues",
- "tracing",
- "types",
- "user_canister",
- "user_canister_c2c_client",
- "user_core",
- "user_index_canister",
- "user_index_canister_c2c_client",
- "utils",
-]
-
-[[package]]
 name = "user_core"
 version = "0.1.0"
 dependencies = [
@@ -12970,6 +12855,7 @@ dependencies = [
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
+ "multi_user_canister",
  "oc_error_codes",
  "one_sec_minter_canister",
  "one_sec_minter_canister_c2c_client",
@@ -12978,7 +12864,6 @@ dependencies = [
  "stable_memory_map",
  "tracing",
  "types",
- "user_canister",
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
@@ -12988,7 +12873,6 @@ dependencies = [
 name = "user_ids_set"
 version = "0.1.0"
 dependencies = [
- "ic-stable-structures",
  "ic_principal",
  "serde",
  "stable_memory_map",
@@ -13044,7 +12928,6 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_api_macros",
- "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_time",
@@ -13086,8 +12969,6 @@ dependencies = [
  "msgpack",
  "multi_user_canister",
  "multi_user_canister_c2c_client",
- "notifications_index_canister",
- "notifications_index_canister_c2c_client",
  "oc_error_codes",
  "online_users_canister",
  "online_users_canister_c2c_client",
@@ -13110,8 +12991,6 @@ dependencies = [
  "tracing",
  "types",
  "url",
- "user_canister",
- "user_canister_c2c_client",
  "user_ids_set",
  "user_index_canister",
  "utils",

@@ -2021,8 +2021,6 @@
         "noEligibleNeuronsMoreInfo": "有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。",
         "noEligibleNeuronsPrincipalIntro": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat principal 作为热键添加到您想要投票的任何神经元。",
         "noEligibleNeuronsPrincipalLabel": "您的 OpenChat principal 是：",
-        "noEligibleNeuronsUserIdIntro": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您想要投票的任何神经元。",
-        "noEligibleNeuronsUserIdLabel": "您的 OpenChat 用户 ID 是：",
         "notificationsAction": "通知索引操作",
         "openchatInstallerAction": "OpenChat 安装程序操作",
         "passing": {
@@ -2382,14 +2380,10 @@
         "noQuotes": "没有 DEX 提供兑换 {tokenIn} 的报价",
         "proceedWithSwap": "只有当收到的 {tokenOut} 金额至少达到报价金额的 98% 时，交换才会进行。您想继续尝试交换吗？",
         "progress": {
-            "deposit": "将 {amountIn} {tokenIn} 转移到 {dex}",
             "done": "兑换完成",
             "error": "兑换错误 - 没有资金损失",
             "failed": "兑换失败 - 汇率已更改",
-            "get": "获取存款账户",
             "insufficientFunds": "兑换失败-资金不足",
-            "notify": "通知{dex}存款",
-            "refund": "从 {dex} 撤回 {amountIn}  {tokenIn} ",
             "swap": "指示 {dex} 执行交换",
             "withdraw": "从 {dex} 提取 {amountOut} {tokenOut} "
         },

@@ -19,14 +19,14 @@ fn c2c_leave_group(args: Args) -> Response {
 
 fn c2c_leave_group_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let caller = state.env.caller();
-    let user_id = args.user_id.unwrap_or(caller.into());
+    let user_id = args.user_id;
     if user_id.canister_id() != caller {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
     }
     let now = state.env.now();
 
     let result = state.data.chat.leave(user_id, now)?;
-    state.data.remove_user(user_id, Some(args.principal), false);
+    state.data.remove_user(user_id, Some(args.principal));
 
     state.push_bot_notification(result.bot_notification);
     handle_activity_notification(state);

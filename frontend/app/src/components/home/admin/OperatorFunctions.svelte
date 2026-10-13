@@ -6,8 +6,6 @@
         type ProposedProtectedAction,
         type ResourceKey,
         type UpdateMarketMakerConfigArgs,
-        type UserMigrationResponse,
-        type UsersToMigrate,
     } from "@client";
     import { Principal } from "@icp-sdk/core/principal";
     import { Body, BodySmall, ColourVars, Column, Row, Subtitle, Title } from "component-lib";
@@ -37,15 +35,7 @@
     let error: ResourceKey | undefined = $state(undefined);
     let groupUpgradeConcurrency = $state("10");
     let communityUpgradeConcurrency = $state("10");
-    let userUpgradeConcurrency = $state("10");
     let multiUserCanisterLocalUserIndex = $state("");
-    let migrateLongestOfflineCount = $state("");
-    let migrateUserIds = $state("");
-    let userMigrationConcurrency = $state("");
-    let userMigrationUserId = $state("");
-    // The status of `userMigrationUserId`'s migration, as of the last check
-    let userMigration: { userId: string; status: UserMigrationResponse } | undefined =
-        $state(undefined);
     const busy = $state(new SvelteSet<number>());
     let governanceCanisterId = $state("");
     let stake = $state("0");
@@ -93,20 +83,10 @@
     let communityUpgradeConcurrencyInvalid = $derived(
         isNaN(parseInt(communityUpgradeConcurrency, 0)),
     );
-    let userUpgradeConcurrencyInvalid = $derived(isNaN(parseInt(userUpgradeConcurrency, 0)));
     let multiUserCanisterLocalUserIndexInvalid = $derived(
         multiUserCanisterLocalUserIndex.trim() === "" ||
             !isValidPrincipal(multiUserCanisterLocalUserIndex.trim()),
     );
-    let migrateLongestOfflineCountInvalid = $derived(
-        !isU32(migrateLongestOfflineCount) || parseInt(migrateLongestOfflineCount.trim(), 10) === 0,
-    );
-    let migrateUserIdsInvalid = $derived(
-        parseUserIds(migrateUserIds).length === 0 ||
-            parseUserIds(migrateUserIds).some((id) => !isValidPrincipal(id)),
-    );
-    let userMigrationConcurrencyInvalid = $derived(!isU32(userMigrationConcurrency));
-    let userMigrationUserIdInvalid = $derived(!isValidPrincipal(userMigrationUserId.trim()));
     let exchangeIdInvalid = $derived(isNaN(parseInt(exchangeId, 0)));
     let tokenLedgerValid = $derived(tokenLedger.length > 0);
 
@@ -311,28 +291,6 @@
             });
     }
 
-    function setUserUpgradeConcurrency(): void {
-        error = undefined;
-        addBusy(2);
-        client
-            .setUserUpgradeConcurrency(parseInt(userUpgradeConcurrency, 10))
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(
-                        i18nKey(`User upgrade concurrency set to ${userUpgradeConcurrency}`),
-                    );
-                } else {
-                    error = i18nKey(
-                        `Failed to set user upgrade concurrency to ${userUpgradeConcurrency}`,
-                    );
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(2);
-            });
-    }
-
     function createMultiUserCanister(): void {
         error = undefined;
         const localUserIndex = multiUserCanisterLocalUserIndex.trim();
@@ -356,150 +314,6 @@
             .finally(() => {
                 removeBusy(15);
             });
-    }
-
-    // Recorded on the UserIndex and fanned out to every LocalUserIndex. There is no query for the
-    // current value (it is only surfaced in metrics), hence separate Enable / Disable buttons
-    // rather than a toggle
-    function setMultiUserCanistersEnabled(enabled: boolean): void {
-        error = undefined;
-        addBusy(16);
-        client
-            .setMultiUserCanistersEnabled(enabled)
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(
-                        i18nKey(`MultiUser canisters ${enabled ? "enabled" : "disabled"}`),
-                    );
-                } else {
-                    error = i18nKey(
-                        `Failed to ${enabled ? "enable" : "disable"} MultiUser canisters`,
-                    );
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(16);
-            });
-    }
-
-    // The canister rejects anything which doesn't fit its u32 arguments
-    function isU32(value: string): boolean {
-        const trimmed = value.trim();
-        return /^\d+$/.test(trimmed) && Number(trimmed) <= 4_294_967_295;
-    }
-
-    function parseUserIds(value: string): string[] {
-        return value
-            .split(",")
-            .map((id) => id.trim())
-            .filter((id) => id !== "");
-    }
-
-    // Users who can't be migrated, or who are already queued or being migrated, are skipped
-    function migrateUsers(users: UsersToMigrate): void {
-        error = undefined;
-        addBusy(17);
-        client
-            .migrateUsers(users)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    toastStore.showSuccessToast(
-                        i18nKey(
-                            users.kind === "specific"
-                                ? `Queued ${resp.queued.length} of ${users.userIds.length} users for migration`
-                                : `Queued ${resp.queued.length} users for migration`,
-                        ),
-                    );
-                } else {
-                    error = i18nKey(
-                        `Failed to queue users for migration: ${resp.message ?? `code ${resp.code}`}`,
-                    );
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(17);
-            });
-    }
-
-    function setUserMigrationConcurrency(): void {
-        error = undefined;
-        const value = parseInt(userMigrationConcurrency.trim(), 10);
-        addBusy(18);
-        client
-            .setUserMigrationConcurrency(value)
-            .then((success) => {
-                if (success) {
-                    toastStore.showSuccessToast(
-                        i18nKey(`User migration concurrency set to ${value}`),
-                    );
-                } else {
-                    error = i18nKey(`Failed to set user migration concurrency to ${value}`);
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(18);
-            });
-    }
-
-    // Doesn't clear `error`, so that a failed cancel stays on screen after the re-check which follows it
-    function checkUserMigration(userId: string): Promise<void> {
-        addBusy(19);
-        return client
-            .userMigration(userId)
-            .then((status) => {
-                userMigration = { userId, status };
-            })
-            .finally(() => {
-                removeBusy(19);
-            });
-    }
-
-    // Unfreezes the user's canister. Fails once the MultiUser canister has imported the user.
-    function cancelUserMigration(userId: string, multiUserCanisterId: string): void {
-        error = undefined;
-        addBusy(21);
-        client
-            .cancelUserMigration(userId, multiUserCanisterId)
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    toastStore.showSuccessToast(i18nKey(`Migration of ${userId} cancelled`));
-                } else {
-                    error = i18nKey(
-                        `Failed to cancel the migration of ${userId}: ${resp.message ?? `code ${resp.code}`}`,
-                    );
-                    toastStore.showFailureToast(error);
-                }
-            })
-            .finally(() => {
-                removeBusy(21);
-                // Refresh the status on screen, if it is still this user's
-                if (userMigration?.userId === userId) {
-                    checkUserMigration(userId);
-                }
-            });
-    }
-
-    function formatUserMigration(status: UserMigrationResponse): string {
-        const at = (timestamp: bigint) => new Date(Number(timestamp)).toLocaleString();
-        switch (status.kind) {
-            case "not_found":
-                return "Not queued, being migrated, failed or imported";
-            case "error":
-                return `Failed to look up the migration: ${status.message ?? `code ${status.code}`}`;
-            case "queued":
-                return "Queued";
-            case "requested":
-                return `Requested at ${at(status.timestamp)}, to ${status.multiUserCanisterId}`;
-            case "started":
-                return `Started at ${at(status.timestamp)}, to ${status.multiUserCanisterId} (${status.userBytes} bytes, User canister v${status.wasmVersion})`;
-            case "imported":
-                return `Imported at ${at(status.timestamp)} into ${status.multiUserCanisterId}, as ${status.newUserId}`;
-            case "failed":
-                return `Failed at ${at(status.timestamp)}, to ${status.multiUserCanisterId}: ${status.error.message ?? `code ${status.error.code}`}`;
-        }
     }
 
     function strToBigInt(str: string): bigint | undefined {
@@ -940,18 +754,6 @@
     </section>
 
     <section class="operator-function">
-        <div class="title">Set user upgrade concurrency</div>
-        <ButtonGroup align="fill">
-            <Input invalid={userUpgradeConcurrencyInvalid} bind:value={userUpgradeConcurrency} />
-            <Button
-                tiny
-                disabled={busy.has(2) || userUpgradeConcurrencyInvalid}
-                loading={busy.has(2)}
-                onClick={setUserUpgradeConcurrency}>Apply</Button>
-        </ButtonGroup>
-    </section>
-
-    <section class="operator-function">
         <div class="title">Create MultiUser canister</div>
         <ButtonGroup align="fill">
             <Input
@@ -964,106 +766,6 @@
                 loading={busy.has(15)}
                 onClick={createMultiUserCanister}>Create</Button>
         </ButtonGroup>
-    </section>
-
-    <section class="operator-function">
-        <div class="title">MultiUser canisters</div>
-        <ButtonGroup align="fill">
-            <Button
-                tiny
-                disabled={busy.has(16)}
-                loading={busy.has(16)}
-                onClick={() => setMultiUserCanistersEnabled(true)}>Enable</Button>
-            <Button
-                tiny
-                secondary
-                disabled={busy.has(16)}
-                loading={busy.has(16)}
-                onClick={() => setMultiUserCanistersEnabled(false)}>Disable</Button>
-        </ButtonGroup>
-    </section>
-
-    <section class="operator-function">
-        <div class="title">Migrate users to MultiUser canisters</div>
-        <div class="hint">
-            Queues users in canisters of their own to be migrated to the MultiUser canister with the
-            fewest users. Users who can't be migrated, or who are already queued or being migrated,
-            are skipped, as are those who have failed to be migrated unless named by id.
-        </div>
-        <ButtonGroup align="fill">
-            <Input
-                invalid={migrateLongestOfflineCountInvalid}
-                placeholder={i18nKey("Number of longest offline users")}
-                bind:value={migrateLongestOfflineCount} />
-            <Button
-                tiny
-                disabled={busy.has(17) || migrateLongestOfflineCountInvalid}
-                loading={busy.has(17)}
-                onClick={() =>
-                    migrateUsers({
-                        kind: "longest_offline",
-                        count: parseInt(migrateLongestOfflineCount.trim(), 10),
-                    })}>Migrate</Button>
-        </ButtonGroup>
-        <ButtonGroup align="fill">
-            <Input
-                invalid={migrateUserIdsInvalid}
-                placeholder={i18nKey("Comma separated user ids")}
-                bind:value={migrateUserIds} />
-            <Button
-                tiny
-                disabled={busy.has(17) || migrateUserIdsInvalid}
-                loading={busy.has(17)}
-                onClick={() =>
-                    migrateUsers({ kind: "specific", userIds: parseUserIds(migrateUserIds) })}
-                >Migrate</Button>
-        </ButtonGroup>
-    </section>
-
-    <section class="operator-function">
-        <div class="title">Set user migration concurrency</div>
-        <ButtonGroup align="fill">
-            <Input
-                invalid={userMigrationConcurrencyInvalid}
-                placeholder={i18nKey("Max users being migrated at once")}
-                bind:value={userMigrationConcurrency} />
-            <Button
-                tiny
-                disabled={busy.has(18) || userMigrationConcurrencyInvalid}
-                loading={busy.has(18)}
-                onClick={setUserMigrationConcurrency}>Apply</Button>
-        </ButtonGroup>
-    </section>
-
-    <section class="operator-function">
-        <div class="title">User migration status</div>
-        <ButtonGroup align="fill">
-            <Input
-                invalid={userMigrationUserIdInvalid}
-                placeholder={i18nKey("User id")}
-                bind:value={userMigrationUserId} />
-            <Button
-                tiny
-                disabled={busy.has(19) || userMigrationUserIdInvalid}
-                loading={busy.has(19)}
-                onClick={() => {
-                    error = undefined;
-                    checkUserMigration(userMigrationUserId.trim());
-                }}>Check</Button>
-        </ButtonGroup>
-        {#if userMigration !== undefined}
-            {@const { userId, status } = userMigration}
-            <div class="hint">{userId}: {formatUserMigration(status)}</div>
-            {#if status.kind === "requested" || status.kind === "started"}
-                <Button
-                    tiny
-                    secondary
-                    disabled={busy.has(21)}
-                    loading={busy.has(21)}
-                    onClick={() => cancelUserMigration(userId, status.multiUserCanisterId)}
-                    >Cancel migration</Button>
-            {/if}
-        {/if}
     </section>
 
     {#if currentFees !== undefined}

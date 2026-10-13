@@ -273,14 +273,14 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
 }
 
 // Ticks until the user's canister lists the community, ie. the join event has been delivered, and
-// returns the user's copy of it. This can take many rounds, since a newly created User canister can
+// returns the user's copy of it. This can take many rounds, since a newly created canister can
 // take around 10 rounds to handle its first message, and the event goes via the UserIndex if the user
 // is on a different subnet from the community.
 pub(super) fn wait_for_community_membership(
     env: &mut PocketIc,
     user: &User,
     community_id: CommunityId,
-) -> user_canister::CommunitySummary {
+) -> multi_user_canister::CommunitySummary {
     for _ in 0..30 {
         let initial_state = client::user::happy_path::initial_state(env, user);
         if let Some(community) = initial_state

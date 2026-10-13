@@ -1,9 +1,9 @@
 use crate::User;
+use multi_user_canister::update_bot::Args;
 use oc_error_codes::OCErrorCode;
 use types::{
     BotEvent, BotInstallationLocation, BotInstalledEvent, BotLifecycleEvent, BotNotification, OCResult, TimestampMillis, UserId,
 };
-use user_canister::update_bot::Args;
 
 // Updates the permissions the user grants the bot, returning the notification to send the bot
 pub fn update_bot(user: &mut User, args: Args, my_user_id: UserId, now: TimestampMillis) -> OCResult<BotNotification> {

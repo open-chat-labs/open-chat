@@ -3,9 +3,9 @@ use crate::{RuntimeState, execute_update_async, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use ledger_utils::Payer;
+use multi_user_canister::c2c_charge_user_account::*;
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult};
-use user_canister::c2c_charge_user_account::*;
 
 // Users hold their own funds in their own wallets, so they are always charged via ICRC-2: from their
 // wallet, or the external account they are paying from, either of which must have approved this
@@ -35,7 +35,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<(Payer, CanisterId)> {
         .with_user(index, |user| user.principal)
         .ok_or(OCErrorCode::TargetUserNotFound)?;
 
-    let payer = Payer::Approved {
+    let payer = Payer {
         from: args.from_account.unwrap_or(wallet.into()),
         spender_subaccount: Some(ledger_utils::spender_subaccount(wallet)),
     };

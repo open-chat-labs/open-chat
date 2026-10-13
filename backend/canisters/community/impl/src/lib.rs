@@ -25,6 +25,7 @@ use ledger_utils::certified::CertifiedTransfers;
 use model::events::CommunityEventInternal;
 use model::user_event_batch::UserEventBatch;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
+use multi_user_canister::CommunityCanisterEvent;
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use rand::rngs::StdRng;
@@ -43,7 +44,6 @@ use types::{
     Rules, TimestampMillis, Timestamped, UserId, UserIdAndPrincipal, UserNotification, UserType, icrc1,
 };
 use types::{BotSubscriptions, CommunityId};
-use user_canister::CommunityCanisterEvent;
 use utils::async_work::AsyncWorkGuard;
 use utils::canister::trap_if_frozen;
 use utils::env::Environment;
@@ -130,8 +130,8 @@ impl RuntimeState {
         Ok(self.member_user(user_id))
     }
 
-    // The member's wallet, for paying them. A user sharing a MultiUser canister with others holds
-    // their funds under the principal held for them, and everyone else under their user id.
+    // The member's wallet, for paying them. A user holds their funds under the principal held for
+    // them, and anyone else whose id carries no index, eg. a bot, under their user id.
     pub fn member_wallet(&self, user_id: UserId) -> OCResult<icrc1::Account> {
         if !user_id.is_indexed() {
             return Ok(user_id.as_principal().into());
@@ -166,7 +166,7 @@ impl RuntimeState {
     }
 
     // The calling member, or when `user_id` is given, that member, whom the caller must hold (a
-    // MultiUser canister acting for one of its users, or a User canister for its own user)
+    // MultiUser canister acting for one of its users)
     pub fn get_calling_member(&self, user_id: Option<UserId>, verify: bool) -> Result<CommunityMemberInternal, OCErrorCode> {
         let caller = self.env.caller();
         let Some(user_id) = user_id else {
@@ -876,7 +876,7 @@ impl Data {
         principal: Option<Principal>,
         now: TimestampMillis,
     ) -> Option<CommunityMemberInternal> {
-        let removed = self.members.remove(user_id, principal, false, now);
+        let removed = self.members.remove(user_id, principal, now);
         self.channels.leave_all_channels(user_id, now);
         self.expiring_members.remove_member(user_id, None);
         self.expiring_member_actions.remove_member(user_id, None);

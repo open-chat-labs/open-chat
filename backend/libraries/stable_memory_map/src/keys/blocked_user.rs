@@ -6,7 +6,7 @@ use types::UserId;
 // The users the user has blocked, keyed by user id, with empty values. Not to be confused with
 // `KeyType::BlockedUsers`, which the user index canisters use for pairs of user ids.
 //
-// Each user canister currently holds a single user, so the prefix is just the key type.
+// The user's index is added by the key scope (see `key_scope`), so the prefix is just the key type.
 key!(BlockedUserKey, BlockedUserKeyPrefix, KeyType::BlockedUser);
 
 impl BlockedUserKeyPrefix {

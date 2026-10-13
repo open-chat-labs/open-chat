@@ -34,8 +34,6 @@ generate_c2c_call!(c2c_trigger_upgrade);
 generate_c2c_call!(c2c_upgrade_community_canister_wasm);
 generate_c2c_call!(c2c_upgrade_group_canister_wasm);
 generate_c2c_call!(c2c_upgrade_multi_user_canister_wasm);
-generate_c2c_call!(c2c_upgrade_user_canister_wasm);
-generate_c2c_call!(c2c_user_canister, 300);
 generate_c2c_call!(c2c_user_principals_v2);
 generate_c2c_call!(c2c_user_canister_v2, 300);
 generate_c2c_call!(c2c_verify_sign_in_proof, 300);

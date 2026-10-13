@@ -1,7 +1,7 @@
 use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, read_state};
 use canister_api_macros::query;
-use user_canister::initial_state::{Response::*, *};
+use multi_user_canister::initial_state::{Response::*, *};
 
 #[query(guard = "caller_is_hosted_user", msgpack = true)]
 fn initial_state(_args: Args) -> Response {

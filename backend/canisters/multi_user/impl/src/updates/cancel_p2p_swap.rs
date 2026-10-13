@@ -3,11 +3,11 @@ use crate::timer_job_types::CancelP2PSwapInEscrowCanisterJob;
 use crate::{RuntimeState, execute_update};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::cancel_p2p_swap::*;
 use types::{OCResult, UserId};
-use user_canister::cancel_p2p_swap::*;
 
-// The User canister's `cancel_p2p_swap`. This canister created the swap in the escrow canister for
-// the user, so may cancel it there, which refunds their deposit to their wallet.
+// This canister created the swap in the escrow canister for the user, so may cancel it there, which
+// refunds their deposit to their wallet.
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
 fn cancel_p2p_swap(args: Args) -> Response {

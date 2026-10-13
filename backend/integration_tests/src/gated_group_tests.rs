@@ -1,6 +1,5 @@
 use crate::env::ENV;
 use crate::setup::install_sns_governance;
-use crate::user_migration_tests::{migrate, platform_operator, wait_until_local_user_index_knows_of_migration};
 use crate::utils::{tick_many, try_metrics};
 use crate::{TestEnv, User, client};
 use candid::Principal;
@@ -37,7 +36,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::create_group::Args {
+        &multi_user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
             description: format!("{group_name}_description"),
@@ -50,7 +49,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool, is_invited: bool) {
             messages_visible_to_non_members: None,
         },
     ) {
-        user_canister::create_group::Response::Success(result) => result.chat_id,
+        multi_user_canister::create_group::Response::Success(result) => result.chat_id,
         response => panic!("'create_group' error: {response:?}"),
     };
 
@@ -117,7 +116,7 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::create_group::Args {
+        &multi_user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
             description: format!("{group_name}_description"),
@@ -136,13 +135,13 @@ fn public_group_token_balance_gate_check(has_sufficient_balance: bool) {
             messages_visible_to_non_members: None,
         },
     ) {
-        user_canister::create_group::Response::Success(result) => result.chat_id,
+        multi_user_canister::create_group::Response::Success(result) => result.chat_id,
         response => panic!("'create_group' error: {response:?}"),
     };
 
     let amount = if has_sufficient_balance { min_balance } else { min_balance - 1 };
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, amount);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user2, amount);
 
     let join_group_response = client::local_user_index::join_group(
         env,
@@ -198,7 +197,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::create_group::Args {
+        &multi_user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
             description: format!("{group_name}_description"),
@@ -223,7 +222,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
             messages_visible_to_non_members: None,
         },
     ) {
-        user_canister::create_group::Response::Success(result) => result.chat_id,
+        multi_user_canister::create_group::Response::Success(result) => result.chat_id,
         response => panic!("'create_group' error: {response:?}"),
     };
 
@@ -235,7 +234,7 @@ fn public_group_composite_gate_check(is_diamond: bool, has_sufficient_balance: b
 
     let amount = if has_sufficient_balance { min_balance } else { min_balance - 1 };
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, amount);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user2, amount);
 
     let join_group_response = client::local_user_index::join_group(
         env,
@@ -278,7 +277,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
 
-    let original_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
+    let original_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1);
 
     let group_name = random_string();
     let amount = 1_0000_0000;
@@ -306,7 +305,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::create_group::Args {
+        &multi_user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
             description: format!("{group_name}_description"),
@@ -319,14 +318,14 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
             messages_visible_to_non_members: None,
         },
     ) {
-        user_canister::create_group::Response::Success(result) => result.chat_id,
+        multi_user_canister::create_group::Response::Success(result) => result.chat_id,
         response => panic!("'create_group' error: {response:?}"),
     };
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, amount);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user2, amount);
     client::ledger::happy_path::approve(
         env,
-        user2.user_id.canister_id(),
+        user2.principal,
         canister_ids.icp_ledger,
         member_spender_account(group_id.into(), &user2),
         amount - fee,
@@ -335,7 +334,7 @@ fn owner_receives_transfer_after_user_joins_via_payment_gate(composite_gate: boo
 
     tick_many(env, 3);
 
-    let balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
+    let balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1);
 
     assert_eq!(balance - original_balance, (amount * 98) / 100);
 }
@@ -348,12 +347,11 @@ enum Gated {
 
 // A member approves the group or community to pull a gate's payment from their wallet, and it pulls
 // the payment when they join, spending the approval made under the member's own spender
-// subaccount, as for any other payment it pulls from a member's wallet. A user alone in their
-// canister has it make the approval, from its account. A user in a MultiUser canister holds their
-// own funds, in their principal's account, so the website makes the approval on the ledger itself.
-#[test_case(Gated::Group, true; "group_multi_user")]
-#[test_case(Gated::Channel, false; "channel_user_canister")]
-fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canister: bool) {
+// subaccount, as for any other payment it pulls from a member's wallet. Users hold their own funds,
+// in their principal's account, so the website makes the approval on the ledger itself.
+#[test_case(Gated::Group; "group")]
+#[test_case(Gated::Channel; "channel")]
+fn member_pays_payment_gate_from_their_wallet(gated: Gated) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -363,37 +361,19 @@ fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canist
     } = wrapper.env();
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let user = if in_multi_user_canister {
-        client::register_user_in_multi_user_canister(env, canister_ids)
-    } else {
-        client::register_user(env, canister_ids)
-    };
-    let wallet = if in_multi_user_canister { user.principal } else { user.canister() };
+    let user = client::register_user(env, canister_ids);
+    let wallet = user.principal;
 
     let amount = 1_0000_0000;
     let fee = 10_000;
     let (spender, channel_id) = create_gated(env, &owner, &gated, payment_gate(canister_ids.icp_ledger, amount, fee));
     let spender_account = member_spender_account(spender, &user);
 
-    let owner_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id);
+    let owner_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &owner);
 
     // The wallet holds the gate's amount, and approves the gate's amount less the approval's fee
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, wallet, amount);
-    if in_multi_user_canister {
-        client::ledger::happy_path::approve(env, wallet, canister_ids.icp_ledger, spender_account, amount - fee);
-    } else {
-        client::user::happy_path::approve_transfer(
-            env,
-            &user,
-            &user_canister::approve_transfer::Args {
-                spender: spender_account.into(),
-                ledger_canister_id: canister_ids.icp_ledger,
-                amount: amount - fee,
-                expires_in: None,
-                pin: None,
-            },
-        );
-    }
+    client::ledger::happy_path::approve(env, wallet, canister_ids.icp_ledger, spender_account, amount - fee);
 
     match gated {
         Gated::Group => client::group::happy_path::join_group(env, user.principal, spender.into()),
@@ -414,7 +394,7 @@ fn member_pays_payment_gate_from_their_wallet(gated: Gated, in_multi_user_canist
         0
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, owner.user_id) - owner_balance,
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &owner) - owner_balance,
         (amount * 98) / 100
     );
 }
@@ -434,8 +414,8 @@ fn payment_gate_is_only_paid_with_an_approval_under_the_members_spender_subaccou
     } = wrapper.env();
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let alice = client::register_user_in_multi_user_canister(env, canister_ids);
-    let bob = client::register_user_in_multi_user_canister(env, canister_ids);
+    let alice = client::register_user(env, canister_ids);
+    let bob = client::register_user(env, canister_ids);
 
     let amount = 1_0000_0000;
     let fee = 10_000;
@@ -486,35 +466,19 @@ fn payment_gate_is_only_paid_with_an_approval_under_the_members_spender_subaccou
 // The neurons a user has, as the hotkeys they list
 #[derive(Clone, Copy)]
 enum Neurons {
-    // One listing their User canister, which they are still in
-    UserCanister,
-    // The rest are after they have been migrated to a MultiUser canister. One listing their principal.
+    // One listing their principal
     Principal,
-    // One listing their old User canister
-    OldUserCanister,
     // One listing someone else
     Neither,
-    // Two, each with half the stake the gate requires, one listing their principal and the other their
-    // old User canister
-    SplitAcrossIds,
-    // One with half the stake the gate requires, listing both their principal and their old User
-    // canister, so counted only once
-    SharedAcrossIds,
 }
 
-// A user in a MultiUser canister is told to add their principal as a hotkey on their neurons, since no
-// one can add their user id. A migrated user's neurons may still list their old User canister, so
-// neurons listing either count, both when they join and when the gate is checked again as it expires.
-#[test_case(Gated::Group, Neurons::UserCanister; "group_user_canister")]
+// A user is told to add their principal as a hotkey on their neurons, since no one can add their user
+// id, so neurons listing it count, both when they join and when the gate is checked again as it
+// expires
 #[test_case(Gated::Group, Neurons::Principal; "group_principal")]
-#[test_case(Gated::Group, Neurons::OldUserCanister; "group_old_user_canister")]
 #[test_case(Gated::Group, Neurons::Neither; "group_neither")]
-#[test_case(Gated::Group, Neurons::SplitAcrossIds; "group_split_across_ids")]
-#[test_case(Gated::Group, Neurons::SharedAcrossIds; "group_shared_across_ids")]
 #[test_case(Gated::Community, Neurons::Principal; "community_principal")]
-#[test_case(Gated::Community, Neurons::OldUserCanister; "community_old_user_canister")]
 #[test_case(Gated::Channel, Neurons::Principal; "channel_principal")]
-#[test_case(Gated::Channel, Neurons::OldUserCanister; "channel_old_user_canister")]
 fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -525,26 +489,12 @@ fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
     } = wrapper.env();
 
     let owner = client::register_diamond_user(env, canister_ids, *controller);
-    let user = client::register_user(env, canister_ids);
-    let migrated_user = (!matches!(neurons, Neurons::UserCanister)).then(|| {
-        let operator = platform_operator(env, canister_ids, *controller);
-        let multi_user_canister =
-            client::user_index::happy_path::create_multi_user_canister(env, *controller, canister_ids, user.local_user_index);
-        migrate(env, canister_ids, &operator, &user, multi_user_canister)
-    });
-    let member = migrated_user.as_ref().unwrap_or(&user);
+    let member = client::register_user(env, canister_ids);
 
     let stake_e8s = 1_0000_0000;
-    let half_stake_e8s = stake_e8s / 2;
     let neurons_hotkeys_and_stakes = match neurons {
-        Neurons::UserCanister | Neurons::OldUserCanister => vec![(vec![user.canister()], stake_e8s)],
-        Neurons::Principal => vec![(vec![user.principal], stake_e8s)],
+        Neurons::Principal => vec![(vec![member.principal], stake_e8s)],
         Neurons::Neither => vec![(vec![random_principal()], stake_e8s)],
-        Neurons::SplitAcrossIds => vec![
-            (vec![user.principal], half_stake_e8s),
-            (vec![user.canister()], half_stake_e8s),
-        ],
-        Neurons::SharedAcrossIds => vec![(vec![user.principal, user.canister()], half_stake_e8s)],
     };
     let dissolve_delay = 30 * DAY_IN_MS;
     let governance_canister_id = install_sns_governance(env, *controller, neurons_hotkeys_and_stakes, dissolve_delay / 1000);
@@ -560,12 +510,7 @@ fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
     };
     let (canister_id, channel_id) = create_gated(env, &owner, &gated, gate_config);
 
-    // The group or community is told the user's old ids by its LocalUserIndex, once that knows of the
-    // migration
     let local_user_index = canister_ids.local_user_index(env, canister_id);
-    if let Some(migrated_user) = &migrated_user {
-        wait_until_local_user_index_knows_of_migration(env, local_user_index, &user, migrated_user.user_id);
-    }
 
     let result = match gated {
         Gated::Group => {
@@ -627,11 +572,7 @@ fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
 
     match neurons {
         Neurons::Neither => assert!(matches!(result, Err(GateCheckFailedReason::NoSnsNeuronsFound)), "{result:?}"),
-        Neurons::SharedAcrossIds => assert!(
-            matches!(result, Err(GateCheckFailedReason::NoSnsNeuronsWithRequiredStakeFound)),
-            "{result:?}"
-        ),
-        _ => {
+        Neurons::Principal => {
             assert!(result.is_ok(), "{result:?}");
 
             // Move the time forward so that the gate expires and is checked again, which takes a few
@@ -647,7 +588,7 @@ fn sns_neuron_gate_counts_neurons_listing(gated: Gated, neurons: Neurons) {
                     .membership
                     .map(|m| m.lapsed),
                 Gated::Channel => {
-                    client::community::happy_path::channel_summary(env, member, canister_id.into(), channel_id.unwrap())
+                    client::community::happy_path::channel_summary(env, &member, canister_id.into(), channel_id.unwrap())
                         .membership
                         .map(|m| m.lapsed)
                 }
@@ -684,7 +625,7 @@ fn create_gated(
             env,
             owner.principal,
             owner.canister(),
-            &user_canister::create_community::Args {
+            &multi_user_canister::create_community::Args {
                 is_public: true,
                 name: name.clone(),
                 description: format!("{name}_description"),
@@ -699,7 +640,7 @@ fn create_gated(
                 primary_language: "en".to_string(),
             },
         ) {
-            user_canister::create_community::Response::Success(result) => (Principal::from(result.community_id), None),
+            multi_user_canister::create_community::Response::Success(result) => (Principal::from(result.community_id), None),
             response => panic!("'create_community' error: {response:?}"),
         },
         Gated::Channel => {
@@ -718,7 +659,7 @@ fn create_gated(
             env,
             owner.principal,
             owner.canister(),
-            &user_canister::create_group::Args {
+            &multi_user_canister::create_group::Args {
                 is_public: true,
                 name: name.clone(),
                 description: format!("{name}_description"),
@@ -731,7 +672,7 @@ fn create_gated(
                 messages_visible_to_non_members: None,
             },
         ) {
-            user_canister::create_group::Response::Success(result) => (Principal::from(result.chat_id), None),
+            multi_user_canister::create_group::Response::Success(result) => (Principal::from(result.chat_id), None),
             response => panic!("'create_group' error: {response:?}"),
         },
     }
@@ -755,7 +696,7 @@ fn only_selected_composite_gate_checked_if_index_provided() {
         env,
         user1.principal,
         user1.user_id.canister_id(),
-        &user_canister::create_group::Args {
+        &multi_user_canister::create_group::Args {
             is_public: true,
             name: group_name.clone(),
             description: format!("{group_name}_description"),
@@ -785,26 +726,26 @@ fn only_selected_composite_gate_checked_if_index_provided() {
             messages_visible_to_non_members: None,
         },
     ) {
-        user_canister::create_group::Response::Success(result) => result.chat_id,
+        multi_user_canister::create_group::Response::Success(result) => result.chat_id,
         response => panic!("'create_group' error: {response:?}"),
     };
 
     let user2 = client::register_user(env, canister_ids);
 
     let initial_balance = 10_0000_0000;
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id, initial_balance);
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, initial_balance);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user2, initial_balance);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user2, initial_balance);
 
     client::ledger::happy_path::approve(
         env,
-        user2.user_id.canister_id(),
+        user2.principal,
         canister_ids.icp_ledger,
         member_spender_account(group_id.into(), &user2),
         initial_balance,
     );
     client::ledger::happy_path::approve(
         env,
-        user2.user_id.canister_id(),
+        user2.principal,
         canister_ids.chat_ledger,
         member_spender_account(group_id.into(), &user2),
         initial_balance,
@@ -831,10 +772,10 @@ fn only_selected_composite_gate_checked_if_index_provided() {
     );
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2),
         initial_balance - 10_000
     );
-    assert!(client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user2.user_id) < initial_balance - 100_000);
+    assert!(client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user2) < initial_balance - 100_000);
 }
 
 // Two members joining make two equal payments to the owner. If both have to be retried, and the
@@ -855,32 +796,28 @@ fn equal_gate_payments_retried_in_the_same_round_are_both_made() {
     let amount = 1_000_000;
     let fee = 10_000;
     let (canister_id, _) = create_gated(env, &owner, &Gated::Group, payment_gate(ledger, amount, fee));
-    let owner_balance = client::ledger::happy_path::balance_of(env, ledger, owner.user_id);
+    let owner_balance = client::ledger::happy_path::balance_of(env, ledger, &owner);
 
     // Each member's payment is taken while the ledger is running, but the ledger is stopped before
     // the owner is paid, so the payment to the owner is retried 10 seconds later. Time doesn't pass
     // as the rounds do, so both retries fall due at the same time.
     for _ in 0..2 {
         let user = client::register_user(env, canister_ids);
-        client::ledger::happy_path::transfer(env, *controller, ledger, user.user_id, amount);
-        client::user::happy_path::approve_transfer(
+        client::ledger::happy_path::transfer(env, *controller, ledger, &user, amount);
+        client::ledger::happy_path::approve(
             env,
-            &user,
-            &user_canister::approve_transfer::Args {
-                spender: member_spender_account(canister_id, &user).into(),
-                ledger_canister_id: ledger,
-                amount: amount - fee,
-                expires_in: None,
-                pin: None,
-            },
+            user.principal,
+            ledger,
+            member_spender_account(canister_id, &user),
+            amount - fee,
         );
 
-        let balance = client::ledger::happy_path::balance_of(env, ledger, user.user_id);
+        let balance = client::ledger::happy_path::balance_of(env, ledger, &user);
 
         let message_id = submit_join(env, &user, canister_id);
         let charged = (0..50).any(|_| {
             env.tick();
-            client::ledger::happy_path::balance_of(env, ledger, user.user_id) < balance
+            client::ledger::happy_path::balance_of(env, ledger, &user) < balance
         });
         assert!(charged);
         client::stop_canister(env, *controller, ledger);
@@ -893,7 +830,7 @@ fn equal_gate_payments_retried_in_the_same_round_are_both_made() {
     env.advance_time(Duration::from_secs(11));
     tick_many(env, 10);
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, ledger, owner.user_id) - owner_balance,
+        client::ledger::happy_path::balance_of(env, ledger, &owner) - owner_balance,
         2 * 970_000
     );
     assert_eq!(metric(env, canister_id, "payments_awaiting_retry"), 0);

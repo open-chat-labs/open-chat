@@ -1,7 +1,7 @@
 use crate::env::ENV;
 use crate::utils::{chat_token_info, icp_token_info, now_millis, tick_many, wait_for_direct_chat};
 use crate::{TestEnv, User, client};
-use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, MINUTE_IN_MS};
+use constants::{CHAT_TRANSFER_FEE, DAY_IN_MS, ICP_TRANSFER_FEE, MINUTE_IN_MS};
 use oc_error_codes::OCErrorCode;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
@@ -25,8 +25,11 @@ fn p2p_swap_in_direct_chat_succeeds() {
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_100_000_000);
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, 11_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user1, 1_100_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user2, 11_000_000_000);
+    // Each approves their canister to deposit their side of the swap from their wallet
+    client::approve_user_canister(env, &user1, canister_ids.icp_ledger, 1_000_000_000 + 2 * ICP_TRANSFER_FEE);
+    client::approve_user_canister(env, &user2, canister_ids.chat_ledger, 10_000_000_000 + 2 * CHAT_TRANSFER_FEE);
 
     let message_id = random_from_u128();
 
@@ -34,7 +37,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id,
@@ -58,7 +61,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_v2::Response::TransferSuccessV2(_)
+        multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
     wait_for_direct_chat(env, &user2, user1.user_id);
@@ -67,7 +70,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
         env,
         user2.principal,
         user2.canister(),
-        &user_canister::accept_p2p_swap::Args {
+        &multi_user_canister::accept_p2p_swap::Args {
             user_id: user1.user_id,
             thread_root_message_index: None,
             message_id,
@@ -78,18 +81,18 @@ fn p2p_swap_in_direct_chat_succeeds() {
 
     assert!(matches!(
         accept_offer_response,
-        user_canister::accept_p2p_swap::Response::Success(_)
+        multi_user_canister::accept_p2p_swap::Response::Success(_)
     ));
 
     tick_many(env, 10);
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user1),
         10_000_000_000
     );
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2),
         1_000_000_000
     );
 
@@ -132,17 +135,16 @@ fn p2p_swap_in_group_succeeds() {
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
     client::group::happy_path::join_group(env, user2.principal, group_id);
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_100_000_000);
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, 11_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user1, 1_100_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user2, 11_000_000_000);
 
     let message_id = random_from_u128();
 
-    let send_message_response = client::user::send_message_with_transfer_to_group(
+    let send_message_response = client::group::send_message_with_transfer(
         env,
-        user1.principal,
-        user1.canister(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
+        &user1,
+        group_id,
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
@@ -161,15 +163,19 @@ fn p2p_swap_in_group_succeeds() {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
-            pin: None,
+            forwarding: false,
+            new_achievement: false,
             og_previews: Vec::new(),
         },
     );
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_with_transfer_to_group::Response::Success(_)
+        group_canister::send_message_v2::Response::Success(_)
     ));
+
+    // user2 approves their canister to deposit their side of the swap from their wallet
+    client::approve_user_canister(env, &user2, canister_ids.chat_ledger, 10_000_000_000 + 2 * CHAT_TRANSFER_FEE);
 
     let accept_offer_response = client::group::accept_p2p_swap(
         env,
@@ -192,12 +198,12 @@ fn p2p_swap_in_group_succeeds() {
     tick_many(env, 10);
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user1),
         10_000_000_000
     );
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2),
         1_000_000_000
     );
 
@@ -213,9 +219,10 @@ fn p2p_swap_in_group_succeeds() {
     );
 }
 
-// A swap where neither side spends from their OpenChat canister - both deposits are pulled via
-// ICRC-2 against allowances the external wallets granted. This is how swapping from an external
-// wallet works. The proceeds still land in each user's OpenChat account, not back in their wallet.
+// A swap where neither side spends from their OpenChat wallet - both deposits are pulled via ICRC-2
+// against allowances the external wallets granted, under each user's spender subaccount. This is how
+// swapping from an external wallet works. The proceeds still land in each user's OpenChat wallet,
+// not back in the external one.
 #[test]
 fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
     let mut wrapper = ENV.deref().get();
@@ -235,13 +242,25 @@ fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1_wallet, 1_100_000_000);
     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2_wallet, 11_000_000_000);
 
-    client::ledger::happy_path::approve(env, user1_wallet, canister_ids.icp_ledger, user1.user_id, 1_050_000_000);
-    client::ledger::happy_path::approve(env, user2_wallet, canister_ids.chat_ledger, user2.user_id, 10_500_000_000);
+    client::ledger::happy_path::approve(
+        env,
+        user1_wallet,
+        canister_ids.icp_ledger,
+        spender(&user1, user1.canister()),
+        1_050_000_000,
+    );
+    client::ledger::happy_path::approve(
+        env,
+        user2_wallet,
+        canister_ids.chat_ledger,
+        spender(&user2, user2.canister()),
+        10_500_000_000,
+    );
 
     // A diamond user is funded with ICP to pay for their membership, so what we check afterwards is
     // that these balances are untouched, not that they are empty.
-    let user1_icp_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
-    let user2_chat_balance = client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user2.user_id);
+    let user1_icp_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1);
+    let user2_chat_balance = client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user2);
 
     let message_id = random_from_u128();
 
@@ -249,7 +268,7 @@ fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id,
@@ -273,7 +292,7 @@ fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_v2::Response::TransferSuccessV2(_)
+        multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
     wait_for_direct_chat(env, &user2, user1.user_id);
@@ -282,7 +301,7 @@ fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
         env,
         user2.principal,
         user2.canister(),
-        &user_canister::accept_p2p_swap::Args {
+        &multi_user_canister::accept_p2p_swap::Args {
             user_id: user1.user_id,
             thread_root_message_index: None,
             message_id,
@@ -293,28 +312,28 @@ fn p2p_swap_in_direct_chat_from_approved_accounts_succeeds() {
 
     assert!(matches!(
         accept_offer_response,
-        user_canister::accept_p2p_swap::Response::Success(_)
+        multi_user_canister::accept_p2p_swap::Response::Success(_)
     ));
 
     tick_many(env, 10);
 
-    // Each side is paid into their OpenChat account, having funded the swap from their wallet.
+    // Each side is paid into their OpenChat wallet, having funded the swap from the external one.
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user1),
         10_000_000_000
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2),
         1_000_000_000
     );
 
-    // Neither user's own account was ever debited.
+    // Neither user's own wallet was ever debited.
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1),
         user1_icp_balance
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user2.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user2),
         user2_chat_balance
     );
 
@@ -354,22 +373,34 @@ fn p2p_swap_in_group_from_approved_accounts_succeeds() {
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1_wallet, 1_100_000_000);
     client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2_wallet, 11_000_000_000);
 
-    client::ledger::happy_path::approve(env, user1_wallet, canister_ids.icp_ledger, user1.user_id, 1_050_000_000);
-    client::ledger::happy_path::approve(env, user2_wallet, canister_ids.chat_ledger, user2.user_id, 10_500_000_000);
+    // The group pulls user1's deposit, and user2's canister pulls theirs
+    client::ledger::happy_path::approve(
+        env,
+        user1_wallet,
+        canister_ids.icp_ledger,
+        spender(&user1, group_id.into()),
+        1_050_000_000,
+    );
+    client::ledger::happy_path::approve(
+        env,
+        user2_wallet,
+        canister_ids.chat_ledger,
+        spender(&user2, user2.canister()),
+        10_500_000_000,
+    );
 
     // A diamond user is funded with ICP to pay for their membership, so what we check afterwards is
     // that these balances are untouched, not that they are empty.
-    let user1_icp_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
-    let user2_chat_balance = client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user2.user_id);
+    let user1_icp_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1);
+    let user2_chat_balance = client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user2);
 
     let message_id = random_from_u128();
 
-    let send_message_response = client::user::send_message_with_transfer_to_group(
+    let send_message_response = client::group::send_message_with_transfer(
         env,
-        user1.principal,
-        user1.canister(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
+        &user1,
+        group_id,
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
@@ -388,14 +419,15 @@ fn p2p_swap_in_group_from_approved_accounts_succeeds() {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
-            pin: None,
+            forwarding: false,
+            new_achievement: false,
             og_previews: Vec::new(),
         },
     );
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_with_transfer_to_group::Response::Success(_)
+        group_canister::send_message_v2::Response::Success(_)
     ));
 
     let accept_offer_response = client::group::accept_p2p_swap(
@@ -419,25 +451,25 @@ fn p2p_swap_in_group_from_approved_accounts_succeeds() {
     tick_many(env, 10);
 
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user1),
         10_000_000_000
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user2),
         1_000_000_000
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1),
         user1_icp_balance
     );
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user2.user_id),
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user2),
         user2_chat_balance
     );
 }
 
-// Spending from our own account would need an approval we had granted ourselves, so it is rejected
-// up front rather than left to fail at the ledger.
+// Spending from an account of the user's canister would need an approval it had granted itself, so it
+// is rejected up front rather than left to fail at the ledger.
 #[test]
 fn p2p_swap_from_own_account_is_rejected() {
     let mut wrapper = ENV.deref().get();
@@ -451,13 +483,13 @@ fn p2p_swap_from_own_account_is_rejected() {
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_100_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user1, 1_100_000_000);
 
     let send_message_response = client::user::send_message_v2(
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),
@@ -468,7 +500,7 @@ fn p2p_swap_from_own_account_is_rejected() {
                 token1_amount: 10_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
-                from_account: Some(icrc1::Account::legacy_for_user(user1.user_id)),
+                from_account: Some(user1.canister().into()),
             }),
             replies_to: None,
             forwarding: false,
@@ -481,7 +513,7 @@ fn p2p_swap_from_own_account_is_rejected() {
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_v2::Response::Error(_)
+        multi_user_canister::send_message_v2::Response::Error(_)
     ));
 }
 
@@ -498,8 +530,10 @@ fn accept_p2p_swap_from_own_account_is_rejected() {
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
     let user2 = client::register_user(env, canister_ids);
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_100_000_000);
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, 11_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user1, 1_100_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user2, 11_000_000_000);
+
+    client::approve_user_canister(env, &user1, canister_ids.icp_ledger, 1_000_000_000 + 2 * ICP_TRANSFER_FEE);
 
     let message_id = random_from_u128();
 
@@ -507,7 +541,7 @@ fn accept_p2p_swap_from_own_account_is_rejected() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id,
@@ -535,18 +569,18 @@ fn accept_p2p_swap_from_own_account_is_rejected() {
         env,
         user2.principal,
         user2.canister(),
-        &user_canister::accept_p2p_swap::Args {
+        &multi_user_canister::accept_p2p_swap::Args {
             user_id: user1.user_id,
             thread_root_message_index: None,
             message_id,
             pin: None,
-            from_account: Some(icrc1::Account::legacy_for_user(user2.user_id)),
+            from_account: Some(user2.canister().into()),
         },
     );
 
     assert!(matches!(
         accept_offer_response,
-        user_canister::accept_p2p_swap::Response::Error(_)
+        multi_user_canister::accept_p2p_swap::Response::Error(_)
     ));
 }
 
@@ -566,13 +600,8 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
 
     let original_chat_balance = 11_000_000_000;
 
-    client::ledger::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.chat_ledger,
-        user1.user_id,
-        original_chat_balance,
-    );
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user1, original_chat_balance);
+    client::approve_user_canister(env, &user1, canister_ids.chat_ledger, 10_000_000_000 + 2 * CHAT_TRANSFER_FEE);
 
     let message_id = random_from_u128();
 
@@ -580,7 +609,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id,
@@ -604,7 +633,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_v2::Response::TransferSuccessV2(_)
+        multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
     // user2's canister ignores the escrow canister's notification of the cancellation if it arrives
@@ -616,7 +645,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
             env,
             user1.principal,
             user1.canister(),
-            &user_canister::delete_messages::Args {
+            &multi_user_canister::delete_messages::Args {
                 user_id: user2.user_id,
                 thread_root_message_index: None,
                 message_ids: vec![message_id],
@@ -625,7 +654,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
 
         assert!(matches!(
             delete_message_response,
-            user_canister::delete_messages::Response::Success
+            multi_user_canister::delete_messages::Response::Success
         ));
 
         env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS));
@@ -634,7 +663,7 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
             env,
             user1.principal,
             user1.canister(),
-            &user_canister::cancel_p2p_swap::Args {
+            &multi_user_canister::cancel_p2p_swap::Args {
                 user_id: user2.user_id,
                 message_id,
             },
@@ -642,15 +671,16 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
 
         assert!(matches!(
             cancel_swap_response,
-            user_canister::cancel_p2p_swap::Response::Success
+            multi_user_canister::cancel_p2p_swap::Response::Success
         ));
     }
 
     tick_many(env, 10);
 
+    // The deposit was refunded, less the fees for approving, depositing and refunding it
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
-        original_chat_balance - (2 * CHAT_TRANSFER_FEE)
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user1),
+        original_chat_balance - (3 * CHAT_TRANSFER_FEE)
     );
 
     if !delete_message {
@@ -697,22 +727,15 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
 
     let original_chat_balance = 11_000_000_000;
 
-    client::ledger::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.chat_ledger,
-        user1.user_id,
-        original_chat_balance,
-    );
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user1, original_chat_balance);
 
     let message_id = random_from_u128();
 
-    let send_message_response = client::user::send_message_with_transfer_to_group(
+    let send_message_response = client::group::send_message_with_transfer(
         env,
-        user1.principal,
-        user1.canister(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
+        &user1,
+        group_id,
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
@@ -731,14 +754,15 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
-            pin: None,
+            forwarding: false,
+            new_achievement: false,
             og_previews: Vec::new(),
         },
     );
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_with_transfer_to_group::Response::Success(_)
+        group_canister::send_message_v2::Response::Success(_)
     ));
 
     tick_many(env, 3);
@@ -781,9 +805,10 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
 
     tick_many(env, 10);
 
+    // The deposit was refunded, less the fees for approving, depositing and refunding it
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
-        original_chat_balance - (2 * CHAT_TRANSFER_FEE)
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user1),
+        original_chat_balance - (3 * CHAT_TRANSFER_FEE)
     );
 
     if !delete_message {
@@ -815,13 +840,8 @@ fn deposit_refunded_if_swap_expires() {
 
     let original_chat_balance = 11_000_000_000;
 
-    client::ledger::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.chat_ledger,
-        user1.user_id,
-        original_chat_balance,
-    );
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user1, original_chat_balance);
+    client::approve_user_canister(env, &user1, canister_ids.chat_ledger, 10_000_000_000 + 2 * CHAT_TRANSFER_FEE);
 
     let message_id = random_from_u128();
 
@@ -829,7 +849,7 @@ fn deposit_refunded_if_swap_expires() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id,
@@ -853,7 +873,7 @@ fn deposit_refunded_if_swap_expires() {
 
     assert!(matches!(
         send_message_response,
-        user_canister::send_message_v2::Response::TransferSuccessV2(_)
+        multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
     // Let the offer reach user2's canister before jumping ahead, else the call delivering it, which
@@ -866,9 +886,10 @@ fn deposit_refunded_if_swap_expires() {
     // even across subnets
     tick_many(env, 30);
 
+    // The deposit was refunded, less the fees for approving, depositing and refunding it
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, user1.user_id),
-        original_chat_balance - (2 * CHAT_TRANSFER_FEE)
+        client::ledger::happy_path::balance_of(env, canister_ids.chat_ledger, &user1),
+        original_chat_balance - (3 * CHAT_TRANSFER_FEE)
     );
 
     let user1_event = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![1.into()])
@@ -913,7 +934,7 @@ fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
 
     let group_id = client::user::happy_path::create_group(env, &user, &random_string(), true, true);
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user.user_id, 1_100_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user, 1_100_000_000);
 
     let message_id = random_from_u128();
 
@@ -927,12 +948,11 @@ fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
         },
     );
 
-    let send_message_response = client::user::send_message_with_transfer_to_group(
+    let send_message_response = client::group::send_message_with_transfer(
         env,
-        user.principal,
-        user.canister(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
+        &user,
+        group_id,
+        group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
@@ -951,7 +971,8 @@ fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
-            pin: None,
+            forwarding: false,
+            new_achievement: false,
             og_previews: Vec::new(),
         },
     );
@@ -967,7 +988,7 @@ fn p2p_swap_blocked_if_token_disabled(input_token: bool) {
         },
     );
 
-    if let user_canister::send_message_with_transfer_to_group::Response::Error(error) = send_message_response {
+    if let group_canister::send_message_v2::Response::Error(error) = send_message_response {
         assert!(
             error
                 .message()
@@ -1009,7 +1030,7 @@ fn p2p_swap_rejected_for_non_diamond_user() {
         env,
         user.principal,
         user.canister(),
-        &user_canister::send_message_v2::Args {
+        &multi_user_canister::send_message_v2::Args {
             recipient: diamond_user.user_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),
@@ -1023,7 +1044,7 @@ fn p2p_swap_rejected_for_non_diamond_user() {
         },
     );
     assert!(
-        matches!(&direct_response, user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
+        matches!(&direct_response, multi_user_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
         "{direct_response:?}"
     );
 
@@ -1032,12 +1053,11 @@ fn p2p_swap_rejected_for_non_diamond_user() {
     client::group::happy_path::join_group(env, user.principal, group_id);
     tick_many(env, 5);
 
-    let group_response = client::user::send_message_with_transfer_to_group(
+    let group_response = client::group::send_message_v2(
         env,
         user.principal,
-        user.canister(),
-        &user_canister::send_message_with_transfer_to_group::Args {
-            group_id,
+        group_id.into(),
+        &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id: random_from_u128(),
             content: swap_content(),
@@ -1048,12 +1068,13 @@ fn p2p_swap_rejected_for_non_diamond_user() {
             block_level_markdown: false,
             rules_accepted: None,
             message_filter_failed: None,
-            pin: None,
+            forwarding: false,
+            new_achievement: false,
             og_previews: Vec::new(),
         },
     );
     assert!(
-        matches!(&group_response, user_canister::send_message_with_transfer_to_group::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
+        matches!(&group_response, group_canister::send_message_v2::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
         "{group_response:?}"
     );
 
@@ -1068,12 +1089,11 @@ fn p2p_swap_rejected_for_non_diamond_user() {
     client::community::happy_path::join_community(env, user.principal, community_id);
     tick_many(env, 5);
 
-    let channel_response = client::user::send_message_with_transfer_to_channel(
+    let channel_response = client::community::send_message(
         env,
         user.principal,
-        user.canister(),
-        &user_canister::send_message_with_transfer_to_channel::Args {
-            community_id,
+        community_id.into(),
+        &community_canister::send_message::Args {
             channel_id,
             thread_root_message_index: None,
             message_id: random_from_u128(),
@@ -1086,12 +1106,13 @@ fn p2p_swap_rejected_for_non_diamond_user() {
             community_rules_accepted: None,
             channel_rules_accepted: None,
             message_filter_failed: None,
-            pin: None,
+            forwarding: false,
+            new_achievement: false,
             og_previews: Vec::new(),
         },
     );
     assert!(
-        matches!(&channel_response, user_canister::send_message_with_transfer_to_channel::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
+        matches!(&channel_response, community_canister::send_message::Response::Error(e) if e.matches_code(OCErrorCode::NotDiamondMember)),
         "{channel_response:?}"
     );
 }
@@ -1121,9 +1142,11 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
     let user2 = client::register_user(env, canister_ids);
     let attacker = random_principal();
 
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_100_000_000);
-    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, user2.user_id, 11_000_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, &user1, 1_100_000_000);
+    client::ledger::happy_path::transfer(env, *controller, canister_ids.chat_ledger, &user2, 11_000_000_000);
     client::ledger::happy_path::transfer(env, *controller, canister_ids.icp_ledger, attacker, 100_000_000);
+
+    client::approve_user_canister(env, &user1, canister_ids.icp_ledger, 1_000_000_000 + 2 * ICP_TRANSFER_FEE);
 
     let message_id = random_from_u128();
     let content = MessageContentInitial::P2PSwap(P2PSwapContentInitial {
@@ -1142,7 +1165,7 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
                 env,
                 user1.principal,
                 user1.canister(),
-                &user_canister::send_message_v2::Args {
+                &multi_user_canister::send_message_v2::Args {
                     recipient: user2.user_id,
                     thread_root_message_index: None,
                     message_id,
@@ -1156,7 +1179,7 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
                 },
             );
             assert!(
-                matches!(response, user_canister::send_message_v2::Response::TransferSuccessV2(_)),
+                matches!(response, multi_user_canister::send_message_v2::Response::TransferSuccessV2(_)),
                 "{response:?}"
             );
             (Chat::Direct(user2.user_id.into()), user1.canister())
@@ -1165,12 +1188,11 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
             let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
             client::group::happy_path::join_group(env, user2.principal, group_id);
 
-            let response = client::user::send_message_with_transfer_to_group(
+            let response = client::group::send_message_with_transfer(
                 env,
-                user1.principal,
-                user1.canister(),
-                &user_canister::send_message_with_transfer_to_group::Args {
-                    group_id,
+                &user1,
+                group_id,
+                group_canister::send_message_v2::Args {
                     thread_root_message_index: None,
                     message_id,
                     content,
@@ -1181,15 +1203,13 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
                     block_level_markdown: false,
                     rules_accepted: None,
                     message_filter_failed: None,
-                    pin: None,
+                    forwarding: false,
+                    new_achievement: false,
                     og_previews: Vec::new(),
                 },
             );
             assert!(
-                matches!(
-                    response,
-                    user_canister::send_message_with_transfer_to_group::Response::Success(_)
-                ),
+                matches!(response, group_canister::send_message_v2::Response::Success(_)),
                 "{response:?}"
             );
             (Chat::Group(group_id), group_id.into())
@@ -1204,12 +1224,11 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
                 .channel_id;
             client::community::happy_path::join_community(env, user2.principal, community_id);
 
-            let response = client::user::send_message_with_transfer_to_channel(
+            let response = client::community::send_message_with_transfer(
                 env,
-                user1.principal,
-                user1.canister(),
-                &user_canister::send_message_with_transfer_to_channel::Args {
-                    community_id,
+                &user1,
+                community_id,
+                community_canister::send_message::Args {
                     channel_id,
                     thread_root_message_index: None,
                     message_id,
@@ -1222,15 +1241,13 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
                     community_rules_accepted: None,
                     channel_rules_accepted: None,
                     message_filter_failed: None,
-                    pin: None,
+                    forwarding: false,
+                    new_achievement: false,
                     og_previews: Vec::new(),
                 },
             );
             assert!(
-                matches!(
-                    response,
-                    user_canister::send_message_with_transfer_to_channel::Response::Success(_)
-                ),
+                matches!(response, community_canister::send_message::Response::Success(_)),
                 "{response:?}"
             );
             (Chat::Channel(community_id, channel_id), community_id.into())
@@ -1251,7 +1268,7 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
             location: P2PSwapLocation::from_message(chat, None, message_id),
             token0: icp_token_info(),
             token0_amount: other_swap_amount,
-            token0_principal: Some(user1.canister()),
+            token0_principal: Some(user1.principal),
             token1: chat_token_info(),
             token1_amount: 10_000_000,
             token1_principal: None,
@@ -1271,13 +1288,13 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
         canister_ids.icp_ledger,
         icrc1::Account {
             owner: canister_ids.escrow,
-            subaccount: Some(escrow_canister::deposit_subaccount(user1.canister(), other_swap.id)),
+            subaccount: Some(escrow_canister::deposit_subaccount(user1.principal, other_swap.id)),
         },
         other_swap_amount + icp_token_info().fee,
     );
-    client::escrow::happy_path::notify_deposit(env, attacker, canister_ids.escrow, other_swap.id, Some(user1.canister()));
+    client::escrow::happy_path::notify_deposit(env, attacker, canister_ids.escrow, other_swap.id, Some(user1.principal));
 
-    let user1_icp_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.canister());
+    let user1_icp_balance = client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1);
 
     client::escrow::happy_path::cancel_swap(env, attacker, canister_ids.escrow, other_swap.id);
 
@@ -1285,7 +1302,7 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
 
     // The refund is made before the notification is sent, so this confirms the attack ran
     assert_eq!(
-        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, user1.canister()),
+        client::ledger::happy_path::balance_of(env, canister_ids.icp_ledger, &user1),
         user1_icp_balance + other_swap_amount
     );
 
@@ -1310,14 +1327,16 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
         verify_swap_status(swap_event(env, user), |status| matches!(status, P2PSwapStatus::Open));
     }
 
-    // The swap can still be accepted and completed
+    // The swap can still be accepted and completed, user2 having approved their canister to deposit
+    // their side of it from their wallet
+    client::approve_user_canister(env, &user2, canister_ids.chat_ledger, 10_000_000_000 + 2 * CHAT_TRANSFER_FEE);
     match chat {
         Chat::Direct(_) => {
             let response = client::user::accept_p2p_swap(
                 env,
                 user2.principal,
                 user2.canister(),
-                &user_canister::accept_p2p_swap::Args {
+                &multi_user_canister::accept_p2p_swap::Args {
                     user_id: user1.user_id,
                     thread_root_message_index: None,
                     message_id,
@@ -1326,7 +1345,7 @@ fn cancelling_other_swap_naming_message_leaves_swap_unchanged(swap_chat: SwapCha
                 },
             );
             assert!(
-                matches!(response, user_canister::accept_p2p_swap::Response::Success(_)),
+                matches!(response, multi_user_canister::accept_p2p_swap::Response::Success(_)),
                 "{response:?}"
             );
         }
@@ -1389,4 +1408,12 @@ pub(crate) fn verify_swap_status<F: FnOnce(&P2PSwapStatus) -> bool>(event: ChatE
     };
 
     assert!(predicate(&p.status), "{:?}", p.status);
+}
+
+// The account `canister_id` pulls from under the user's spender subaccount
+fn spender(user: &User, canister_id: types::CanisterId) -> icrc_ledger_types::icrc1::account::Account {
+    icrc_ledger_types::icrc1::account::Account {
+        owner: canister_id,
+        subaccount: Some(ledger_utils::spender_subaccount(user.principal)),
+    }
 }

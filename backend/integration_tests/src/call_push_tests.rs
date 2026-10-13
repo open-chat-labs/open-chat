@@ -195,7 +195,7 @@ fn start_direct_call_lasting(
         env,
         VIDEO_CALL_OPERATOR,
         callee.canister_id(),
-        &user_canister::start_video_call_v2::Args {
+        &multi_user_canister::start_video_call_v2::Args {
             user_id: callee,
             message_id,
             initiator: caller.user_id,
@@ -322,7 +322,7 @@ fn invariant_2_a_muted_chat_never_pushes_a_call() {
         env,
         callee.principal,
         callee.user_id.canister_id(),
-        &user_canister::mute_notifications::Args {
+        &multi_user_canister::mute_notifications::Args {
             chat_id: caller.user_id.into(),
         },
     );

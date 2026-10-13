@@ -4,10 +4,10 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use chat_events::EditMessageArgs;
 use constants::OPENCHAT_BOT_USER_ID;
+use multi_user_canister::edit_message_v2::*;
+use multi_user_canister::{EditMessageArgs as C2CEditMessageArgs, UserCanisterEvent};
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, EventIndex, OCResult};
-use user_canister::edit_message_v2::*;
-use user_canister::{EditMessageArgs as C2CEditMessageArgs, UserCanisterEvent};
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
@@ -73,7 +73,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         })),
     );
 
-    // As in the User canister, which doesn't award it for the chat with the OpenChat bot
+    // Not awarded for the chat with the OpenChat bot
     if args.user_id != OPENCHAT_BOT_USER_ID {
         state.award_achievement_and_notify(my_index, Achievement::EditedMessage, now);
     }

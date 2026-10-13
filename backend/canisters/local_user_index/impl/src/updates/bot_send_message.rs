@@ -275,7 +275,7 @@ async fn send_message_to_user(
 
     // A user in a MultiUser canister is one of many there, so their id is not their canister's id
     let canister_id = UserId::from(chat_id).canister_id();
-    let c2c_args = user_canister::c2c_bot_send_message::Args {
+    let c2c_args = multi_user_canister::c2c_bot_send_message::Args {
         user_id: chat_id.into(),
         bot_id,
         initiator,
@@ -290,20 +290,20 @@ async fn send_message_to_user(
         og_previews,
     };
     let response = top_up_and_retry_if_out_of_cycles(canister_id, || {
-        user_canister_c2c_client::c2c_bot_send_message(canister_id, &c2c_args)
+        multi_user_canister_c2c_client::c2c_bot_send_message(canister_id, &c2c_args)
     })
     .await;
 
     match response {
         Ok(response) => match response {
-            user_canister::c2c_bot_send_message::Response::Success(result) => Success(SuccessResult {
+            multi_user_canister::c2c_bot_send_message::Response::Success(result) => Success(SuccessResult {
                 message_id,
                 event_index: result.event_index,
                 message_index: result.message_index,
                 timestamp: result.timestamp,
                 expires_at: result.expires_at,
             }),
-            user_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
+            multi_user_canister::c2c_bot_send_message::Response::Error(error) => Error(error),
         },
         Err(error) => Error(error.into()),
     }

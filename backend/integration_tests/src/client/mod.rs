@@ -9,7 +9,10 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::time::Duration;
 use testing::rng::random_internet_identity_principal;
-use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration, HttpRequest, HttpResponse, SignedDelegation};
+use types::{
+    CanisterId, CanisterWasm, CryptoTransaction, DiamondMembershipPlanDuration, HttpRequest, HttpResponse,
+    MessageContentInitial, PendingCryptoTransaction, SignedDelegation, icrc2,
+};
 
 mod macros;
 
@@ -131,9 +134,21 @@ pub fn register_user(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
     register_user_with_referrer(env, canister_ids, None)
 }
 
-// Registers the user in a MultiUser canister rather than in a canister of their own
-pub fn register_user_in_multi_user_canister(env: &mut PocketIc, canister_ids: &CanisterIds) -> User {
-    register_user_with_options(env, canister_ids, None, true)
+pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterIds, referral_code: Option<String>) -> User {
+    register_user_with_options(env, canister_ids, referral_code, None)
+}
+
+pub fn register_user_on_subnet(env: &mut PocketIc, canister_ids: &CanisterIds, subnet: Principal) -> User {
+    register_user_with_referrer_on(env, canister_ids, local_user_index_on_subnet(canister_ids, subnet), None)
+}
+
+pub fn register_user_with_referrer_on(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    local_user_index: CanisterId,
+    referral_code: Option<String>,
+) -> User {
+    register_user_with_options(env, canister_ids, referral_code, Some(local_user_index))
 }
 
 // Registers the user in the given MultiUser canister on the given LocalUserIndex
@@ -152,39 +167,38 @@ pub fn register_user_in_multi_user_canister_on(
         auth_principal,
         public_key,
         Some(local_user_index),
-        true,
         Some(multi_user_canister_id),
     )
     .0
 }
 
-pub fn register_user_on_subnet(env: &mut PocketIc, canister_ids: &CanisterIds, subnet: Principal) -> User {
-    let (auth_principal, public_key) = random_internet_identity_principal();
-    let local_user_index = canister_ids
+// Registers the user in a MultiUser canister created for them, which holds no one else, so that it can
+// be stopped, eg. to fail calls to it, without affecting other users
+pub fn register_user_in_new_multi_user_canister(
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    platform_operator: Principal,
+) -> User {
+    let local_user_index = user_index::happy_path::user_registration_canister(env, canister_ids.user_index);
+    let canister_id =
+        user_index::happy_path::create_multi_user_canister(env, platform_operator, canister_ids, local_user_index);
+    register_user_in_multi_user_canister_on(env, canister_ids, local_user_index, canister_id, None)
+}
+
+fn local_user_index_on_subnet(canister_ids: &CanisterIds, subnet: Principal) -> CanisterId {
+    canister_ids
         .subnets
         .iter()
         .find(|s| s.subnet_id == subnet)
         .unwrap()
-        .local_user_index;
-    register_user_internal(
-        env,
-        canister_ids,
-        None,
-        auth_principal,
-        public_key,
-        Some(local_user_index),
-        false,
-        None,
-    )
-    .0
+        .local_user_index
 }
 
-// Registers the user in a canister of their own on the given LocalUserIndex
-pub fn register_user_with_referrer_on(
+fn register_user_with_options(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
-    local_user_index: CanisterId,
     referral_code: Option<String>,
+    local_user_index: Option<CanisterId>,
 ) -> User {
     let (auth_principal, public_key) = random_internet_identity_principal();
     register_user_internal(
@@ -193,64 +207,16 @@ pub fn register_user_with_referrer_on(
         referral_code,
         auth_principal,
         public_key,
-        Some(local_user_index),
-        false,
-        None,
-    )
-    .0
-}
-
-pub fn register_user_with_referrer(env: &mut PocketIc, canister_ids: &CanisterIds, referral_code: Option<String>) -> User {
-    register_user_with_options(env, canister_ids, referral_code, false)
-}
-
-pub fn register_user_with_options(
-    env: &mut PocketIc,
-    canister_ids: &CanisterIds,
-    referral_code: Option<String>,
-    use_multi_user_canister: bool,
-) -> User {
-    let (auth_principal, public_key) = random_internet_identity_principal();
-    register_user_internal(
-        env,
-        canister_ids,
-        referral_code,
-        auth_principal,
-        public_key,
-        None,
-        use_multi_user_canister,
+        local_user_index,
         None,
     )
     .0
 }
 
 pub fn register_user_and_include_auth(env: &mut PocketIc, canister_ids: &CanisterIds) -> (User, UserAuth) {
-    register_user_and_include_auth_with_options(env, canister_ids, false)
-}
-
-pub fn register_user_in_multi_user_canister_and_include_auth(
-    env: &mut PocketIc,
-    canister_ids: &CanisterIds,
-) -> (User, UserAuth) {
-    register_user_and_include_auth_with_options(env, canister_ids, true)
-}
-
-fn register_user_and_include_auth_with_options(
-    env: &mut PocketIc,
-    canister_ids: &CanisterIds,
-    use_multi_user_canister: bool,
-) -> (User, UserAuth) {
     let (auth_principal, auth_public_key, auth_delegation) = sign_in_with_email(env, canister_ids);
-    let (user, oc_public_key, oc_delegation) = register_user_internal(
-        env,
-        canister_ids,
-        None,
-        auth_principal,
-        auth_public_key.clone(),
-        None,
-        use_multi_user_canister,
-        None,
-    );
+    let (user, oc_public_key, oc_delegation) =
+        register_user_internal(env, canister_ids, None, auth_principal, auth_public_key.clone(), None, None);
 
     let user_auth = UserAuth {
         auth_public_key,
@@ -283,7 +249,8 @@ pub fn upgrade_user(
     duration: DiamondMembershipPlanDuration,
     recurring: bool,
 ) {
-    ledger::happy_path::transfer(env, controller, canister_ids.icp_ledger, user.user_id, 1_000_000_000);
+    ledger::happy_path::transfer(env, controller, canister_ids.icp_ledger, user, 1_000_000_000);
+    approve_user_canister(env, user, canister_ids.icp_ledger, 900_000_000);
 
     user_index::happy_path::pay_for_diamond_membership(
         env,
@@ -297,7 +264,102 @@ pub fn upgrade_user(
     tick_many(env, 4);
 }
 
-#[expect(clippy::too_many_arguments)]
+// Lets the user's canister pull payments from their wallet, as the website does before a payment. The
+// user holds their own funds, so approves their canister to spend them, under their own spender
+// subaccount.
+pub fn approve_user_canister(env: &mut PocketIc, user: &User, ledger_canister_id: CanisterId, amount: u128) {
+    approve_spender(env, user, ledger_canister_id, user.canister(), amount);
+}
+
+// Approves `spender` to pull up to `amount` from the user's wallet, under the user's own spender
+// subaccount, which is the only approval a canister spends for them
+pub fn approve_spender(env: &mut PocketIc, user: &User, ledger_canister_id: CanisterId, spender: CanisterId, amount: u128) {
+    ledger::happy_path::approve(
+        env,
+        user.principal,
+        ledger_canister_id,
+        icrc_ledger_types::icrc1::account::Account {
+            owner: spender,
+            subaccount: Some(ledger_utils::spender_subaccount(user.principal)),
+        },
+        amount,
+    );
+}
+
+// Readies a message's transfer to be pulled from the user's wallet by `spender`, as the website does,
+// since users hold their own funds: an ICRC1 transfer is made an ICRC2 one from their wallet, and
+// `spender` is approved to pull it. Content without a transfer is returned as it is.
+pub fn pay_from_wallet(
+    env: &mut PocketIc,
+    user: &User,
+    spender: CanisterId,
+    content: MessageContentInitial,
+) -> MessageContentInitial {
+    let (content, ledger, allowance) = match content {
+        // A transfer from another account is approved by that account
+        MessageContentInitial::Crypto(c) if !from_wallet(&c.transfer, user.principal) => {
+            return MessageContentInitial::Crypto(c);
+        }
+        MessageContentInitial::Prize(p) if !from_wallet(&p.transfer, user.principal) => return MessageContentInitial::Prize(p),
+        MessageContentInitial::Crypto(mut c) => {
+            let (transfer, ledger, allowance) = transfer_from_wallet(c.transfer, user.principal);
+            c.transfer = transfer;
+            (MessageContentInitial::Crypto(c), ledger, allowance)
+        }
+        MessageContentInitial::Prize(mut p) => {
+            let (transfer, ledger, allowance) = transfer_from_wallet(p.transfer, user.principal);
+            p.transfer = transfer;
+            (MessageContentInitial::Prize(p), ledger, allowance)
+        }
+        // A swap funded from another account is approved by that account
+        MessageContentInitial::P2PSwap(p) if p.from_account.is_some() => return MessageContentInitial::P2PSwap(p),
+        // The swap's deposit is its amount plus a fee, and pulling it costs another fee
+        MessageContentInitial::P2PSwap(p) => {
+            let (ledger, allowance) = (p.token0.ledger, p.token0_amount + 2 * p.token0.fee);
+            (MessageContentInitial::P2PSwap(p), ledger, allowance)
+        }
+        content => return content,
+    };
+    approve_spender(env, user, ledger, spender, allowance);
+    content
+}
+
+// Whether the transfer is from the wallet of `principal`, as an ICRC1 one always is. The wallet is the
+// default subaccount, which can also be given explicitly as all zeros.
+fn from_wallet(transfer: &CryptoTransaction, principal: Principal) -> bool {
+    match transfer {
+        CryptoTransaction::Pending(PendingCryptoTransaction::ICRC2(t)) => {
+            t.from.owner == principal && t.from.subaccount.is_none_or(|s| s == [0; 32])
+        }
+        _ => true,
+    }
+}
+
+// The transfer as an ICRC2 one from `from`'s wallet, along with its ledger and the allowance needed to
+// pull it, being its amount plus the fee
+fn transfer_from_wallet(transfer: CryptoTransaction, from: Principal) -> (CryptoTransaction, CanisterId, u128) {
+    let transfer = match transfer {
+        CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(t)) => icrc2::PendingCryptoTransaction {
+            ledger: t.ledger,
+            token_symbol: t.token_symbol,
+            amount: t.amount,
+            from: from.into(),
+            to: t.to,
+            fee: t.fee,
+            memo: t.memo,
+            created: t.created,
+        },
+        CryptoTransaction::Pending(PendingCryptoTransaction::ICRC2(t)) => t,
+        transfer => panic!("Unexpected transfer: {transfer:?}"),
+    };
+    let (ledger, allowance) = (transfer.ledger, transfer.amount + transfer.fee);
+    (
+        CryptoTransaction::Pending(PendingCryptoTransaction::ICRC2(transfer)),
+        ledger,
+        allowance,
+    )
+}
+
 fn register_user_internal(
     env: &mut PocketIc,
     canister_ids: &CanisterIds,
@@ -305,7 +367,6 @@ fn register_user_internal(
     auth_principal: Principal,
     public_key: Vec<u8>,
     local_user_index: Option<CanisterId>,
-    use_multi_user_canister: bool,
     multi_user_canister_id: Option<CanisterId>,
 ) -> (User, Vec<u8>, SignedDelegation) {
     let session_key = random::<[u8; 32]>().to_vec();
@@ -335,7 +396,6 @@ fn register_user_internal(
         local_user_index,
         create_identity_result.user_key.clone(),
         referral_code,
-        use_multi_user_canister,
         multi_user_canister_id,
     );
 

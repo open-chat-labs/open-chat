@@ -159,11 +159,7 @@ import type {
     SetMemberDisplayNameResponse,
     SetMessageReminderResponse,
     SetPinNumberResponse,
-    SetUserUpgradeConcurrencyResponse,
     CreateMultiUserCanisterResponse,
-    MigrateUsersResponse,
-    UserMigrationResponse,
-    UsersToMigrate,
     FundsInPreviousWallet,
     MoveFundsFromOldCanisterResponse,
     MoveFundsOutcome,
@@ -189,7 +185,6 @@ import type {
     TokenExchangeRates,
     TokenInfo,
     TokenSwapPool,
-    TokenSwapStatusResponse,
     TopUpNeuronResponse,
     UnblockUserResponse,
     UndeleteMessageResponse,
@@ -221,6 +216,7 @@ import type {
     WaitAllResult,
     WalletConfig,
     WithdrawBtcResponse,
+    WithdrawViaOneSecResponse,
     WithdrawCryptocurrencyResponse,
     VaultFileChunkResponse,
     VaultFileInfoResponse,
@@ -248,6 +244,7 @@ import {
     Lazy,
     MAX_ACTIVITY_EVENTS,
     ONE_MINUTE_MILLIS,
+    ONE_SEC_TOKENS,
     Stream,
     SyncHeadMoved,
     UnsupportedValueError,
@@ -258,7 +255,6 @@ import {
     encodeIcrcAccount,
     isCanisterId,
     isError,
-    isMultiUserCanisterUser,
     isSuccessfulEventsResponse,
     memberSpenderAccount,
     mergeEventStreamResponses,
@@ -424,6 +420,7 @@ export class OpenChatAgent extends EventTarget {
     // Lazy loaded clients which may never end up being used
     private _bitcoinClient: Lazy<BitcoinClient>;
     private _ckbtcMinterClient: Lazy<CkbtcMinterClient>;
+    private _ckbtcWithdrawalMinterClient: Lazy<CkbtcMinterClient>;
     private _dexesAgent: Lazy<DexesAgent>;
     private _marketMakerClient: Lazy<MarketMakerClient>;
     private _proposalsBotClient: Lazy<ProposalsBotClient>;
@@ -506,6 +503,11 @@ export class OpenChatAgent extends EventTarget {
                     this.config.bitcoinMainnetEnabled,
                 ),
         );
+        // Withdrawals spend the ckBTC the Registry lists, which is mainnet ckBTC in every environment,
+        // so they go through the mainnet minter wherever the rest of the BTC flow uses testnet
+        this._ckbtcWithdrawalMinterClient = new Lazy(
+            () => new CkbtcMinterClient(this.identity, this._agent, true),
+        );
         this._dexesAgent = new Lazy(() => new DexesAgent(this._agent));
         this._marketMakerClient = new Lazy(
             () => new MarketMakerClient(identity, this._agent, config.marketMakerCanister),
@@ -560,21 +562,14 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // The ledger account holding the funds of `userId`. That is the principal's account for anyone
-    // but a user alone in their canister, and only the current user's principal is known here, so
-    // for anyone else `userId` has to be a canister, such as a User canister or the translations
-    // canister.
+    // but a canister, which holds funds in its own, and only the current user's principal is known
+    // here, so for anyone else `userId` has to be a canister, such as the User canister a user had
+    // before being migrated to a MultiUser canister, or the translations canister.
     private walletAccount(userId: string): IcrcAccount {
         if (userId !== this._userClient.userId && !isCanisterId(Principal.fromText(userId))) {
             throw new Error(`Only the current user's wallet is known, not ${userId}'s`);
         }
         return userWalletAccount(userId, () => this.principal.toText());
-    }
-
-    // Whether the user holds their own funds, in the account of the principal they sign in with,
-    // rather than their canister holding them, as it does for a user alone in it. A canister can
-    // only pull a payment from such a user's wallet once they have approved it as spender.
-    private holdsOwnFunds(): boolean {
-        return isMultiUserCanisterUser(this._userClient.userId);
     }
 
     // Approves `spender` to pull a payment from the user's wallet, as the user, returning the error
@@ -637,10 +632,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // Approves the user's canister to pull a payment from the user's wallet, just before each
-    // payment it will pull, if the user holds their own funds. A user alone in their canister needs
-    // no approval, since the canister holds their funds itself, and neither does a payment from
-    // another account (`fromAccount`), whose owner has approved it already. `pin` is checked before
-    // the approval (see `approveToPull`).
+    // payment it will pull. A payment from another account (`fromAccount`) needs no approval, since
+    // its owner has approved it already. `pin` is checked before the approval (see
+    // `approveToPull`).
     private approveUserCanisterToPull(
         ledger: string,
         amount: bigint,
@@ -648,7 +642,7 @@ export class OpenChatAgent extends EventTarget {
         fromAccount: string | undefined,
         pin: string | undefined,
     ): Promise<OCError | undefined> {
-        if (fromAccount !== undefined || !this.holdsOwnFunds()) {
+        if (fromAccount !== undefined) {
             return Promise.resolve(undefined);
         }
         const userId = this._userClient.userId;
@@ -863,10 +857,10 @@ export class OpenChatAgent extends EventTarget {
 
             event = await this.stampTransferWithIcTime(event);
 
-            // A user who holds their own funds can't have their canister make a transfer for them
+            // A transfer in a group or channel is pulled from the sender's wallet by the group or
+            // community itself
             if (
                 chatId.kind !== "direct_chat" &&
-                this.holdsOwnFunds() &&
                 (event.event.content.kind === "crypto_content" ||
                     event.event.content.kind === "prize_content_initial" ||
                     event.event.content.kind === "p2p_swap_content_initial")
@@ -889,28 +883,6 @@ export class OpenChatAgent extends EventTarget {
             }
 
             if (chatId.kind === "channel") {
-                if (
-                    event.event.content.kind === "crypto_content" ||
-                    event.event.content.kind === "prize_content_initial" ||
-                    event.event.content.kind === "p2p_swap_content_initial"
-                ) {
-                    return resolve(
-                        await this.userClient.sendMessageWithTransferToChannel(
-                            chatId,
-                            event.event.content.kind !== "p2p_swap_content_initial"
-                                ? event.event.content.transfer.recipient
-                                : undefined,
-                            user,
-                            event,
-                            threadRootMessageIndex,
-                            acceptedRules?.community,
-                            acceptedRules?.chat,
-                            messageFilterFailed,
-                            pin,
-                        ),
-                        true,
-                    );
-                }
                 return resolve(
                     await this.sendChannelMessage(
                         chatId,
@@ -929,27 +901,6 @@ export class OpenChatAgent extends EventTarget {
                 );
             }
             if (chatId.kind === "group_chat") {
-                if (
-                    event.event.content.kind === "crypto_content" ||
-                    event.event.content.kind === "prize_content_initial" ||
-                    event.event.content.kind === "p2p_swap_content_initial"
-                ) {
-                    return resolve(
-                        await this.userClient.sendMessageWithTransferToGroup(
-                            chatId,
-                            event.event.content.kind !== "p2p_swap_content_initial"
-                                ? event.event.content.transfer.recipient
-                                : undefined,
-                            user,
-                            event,
-                            threadRootMessageIndex,
-                            acceptedRules?.chat,
-                            messageFilterFailed,
-                            pin,
-                        ),
-                        true,
-                    );
-                }
                 return resolve(
                     await this.sendGroupMessage(
                         chatId,
@@ -1089,10 +1040,9 @@ export class OpenChatAgent extends EventTarget {
 
     // Sends a message holding a transfer straight to its group or community, which pulls the
     // transfer from the sender's wallet, once approved to, into the wallet it knows the recipient
-    // by. This is how a user who holds their own funds sends one, since their canister can't make
-    // the transfer for them. A transfer from another account is pulled from that instead, which
-    // its owner has to have approved the group or community to spend from (see
-    // `paymentSpenderAccount`).
+    // by, since the sender's canister can't make the transfer for them. A transfer from another
+    // account is pulled from that instead, which its owner has to have approved the group or
+    // community to spend from (see `paymentSpenderAccount`).
     private async sendMessageWithTransferDirectly(
         chatId: GroupChatIdentifier | ChannelIdentifier,
         user: CreatedUser,
@@ -1917,10 +1867,10 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
-    // The direct chats among those the User canister removed which were moved onto the other user's
-    // new id, after they were migrated to a MultiUser canister, rather than deleted, each mapped to
-    // that id (see `findMovedDirectChats`). The users are looked up by the ids the chats were under,
-    // for which the UserIndex returns their latest ids. Throws if they can't be.
+    // The direct chats among those the current user's canister removed which were moved onto the
+    // other user's new id, after they were migrated to a MultiUser canister, rather than deleted,
+    // each mapped to that id (see `findMovedDirectChats`). The users are looked up by the ids the
+    // chats were under, for which the UserIndex returns their latest ids. Throws if they can't be.
     #movedDirectChats(
         removed: string[],
         added: DirectChatSummary[],
@@ -2037,10 +1987,10 @@ export class OpenChatAgent extends EventTarget {
         };
 
         const previousUpdatesTimestamp = mapOptional(current?.latestUserCanisterUpdates, Number);
-        // Summary updates for the groups and communities already cached, started before the User
-        // canister call rather than after it: they only need what is cached, and waiting for the
-        // User canister first put a whole extra round trip in front of every pass. Chats the User
-        // canister reports as added are fetched once it has answered.
+        // Summary updates for the groups and communities already cached, started before the call to
+        // the user's canister rather than after it: they only need what is cached, and waiting for
+        // the user's canister first put a whole extra round trip in front of every pass. Chats the
+        // user's canister reports as added are fetched once it has answered.
         let cachedSummaryUpdates:
             | Promise<WaitAllResult<GroupAndCommunitySummaryUpdatesResponseBatch>>
             | undefined = undefined;
@@ -2118,13 +2068,13 @@ export class OpenChatAgent extends EventTarget {
             streakInsurance = new UpdatableOption(current.streakInsurance);
             premiumItems = new Updatable(current.premiumItems);
 
-            // A chat the User canister goes on to report as removed is queried for nothing, as it
+            // A chat the user's canister goes on to report as removed is queried for nothing, as it
             // was before; the removal filter below drops whatever comes back for it
             cachedSummaryUpdates = this.#getSummaryUpdatesFromLocalUserIndexes(
                 summaryUpdatesArgsByLocalUserIndex(currentGroups, currentCommunities),
                 previousUpdatesTimestamp,
             );
-            // Nothing awaits this until the User canister has answered, so a rejection meanwhile
+            // Nothing awaits this until the user's canister has answered, so a rejection meanwhile
             // would be reported as unhandled, and would stay unhandled if this pass threw before
             // reaching the await. The await below still sees the rejection.
             cachedSummaryUpdates.catch(() => undefined);
@@ -2135,7 +2085,7 @@ export class OpenChatAgent extends EventTarget {
                     current.latestUserCanisterUpdates,
                 );
                 // Found before anything is taken from the answer, so that if the users can't be
-                // looked up, the answer is dropped, as if the User canister hadn't given one, and
+                // looked up, the answer is dropped, as if the user's canister hadn't given one, and
                 // is fetched again on the next pass, rather than a move being taken for a deletion
                 const moved =
                     userResponse.kind === "success"
@@ -2235,7 +2185,7 @@ export class OpenChatAgent extends EventTarget {
                     premiumItems.updateIfNotUndefined(userResponse.premiumItems);
                 }
             } catch (error) {
-                console.error("Failed to get updates from User canister", error);
+                console.error("Failed to get updates from the user's canister", error);
             }
 
             directChats = directChatsAdded.concat(
@@ -2616,7 +2566,7 @@ export class OpenChatAgent extends EventTarget {
     /**
      * Brings one cached group, or the community holding a channel, up to date with a single
      * summary-updates query, and writes just that chat back to the cache. Much cheaper than a full
-     * updates pass, which also asks the User canister and every other group and community.
+     * updates pass, which also asks the user's canister and every other group and community.
      *
      * Resolves false when this can't be done on its own and a full pass is needed instead: the
      * chat isn't cached, the cache is empty, or the answer is one only a full pass handles (the
@@ -3838,9 +3788,9 @@ export class OpenChatAgent extends EventTarget {
     }
 
     // The canisters which control `canisterId`. The IC certifies these for any canister, so unlike
-    // a canister's own `local_user_index` query, they can be had for a User canister which has been
-    // uninstalled, as one is once its user has been migrated to a MultiUser canister. A User
-    // canister is controlled by the LocalUserIndex which created it.
+    // a canister's own `local_user_index` query, they can be had for a User canister, each of which
+    // was uninstalled once its user had been migrated to a MultiUser canister. A User canister is
+    // controlled by the LocalUserIndex which created it.
     private async canisterControllers(canisterId: string): Promise<string[]> {
         // `CanisterStatus` doesn't fetch the root key itself, as calls do, when the agent has to
         if (this._agent.rootKey === null) {
@@ -3989,20 +3939,25 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    // A user who holds their own funds sends them from their wallet on the ledger, as themselves,
-    // since their canister can't send them. Only their canister could check their PIN, so it isn't
-    // checked when they do.
+    // The user sends their funds from their wallet on the ledger, as themselves, since their
+    // canister can't send them. `pin` is checked by their canister first, if they have set one, so
+    // that nothing is sent with the wrong PIN, as it is before a payment from their wallet is
+    // approved (see `approveToPull`).
     async withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
         pin: string | undefined,
     ): Promise<WithdrawCryptocurrencyResponse> {
         if (offline()) return CommonResponses.offline();
 
-        const stamped = { ...domain, createdAtNanos: await icNowNanos(this._agent, domain.ledger) };
-        if (this.holdsOwnFunds()) {
-            return this._ledgerClient.withdraw(stamped);
+        if (pin !== undefined) {
+            const checked = await this.userClient.checkPinNumber(pin);
+            if (checked.kind === "error") {
+                return checked;
+            }
         }
-        return this.userClient.withdrawCryptocurrency(stamped, pin);
+
+        const stamped = { ...domain, createdAtNanos: await icNowNanos(this._agent, domain.ledger) };
+        return this._ledgerClient.withdraw(stamped);
     }
 
     getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
@@ -4089,39 +4044,26 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<RegisterProposalVoteResponse> {
         if (offline()) return CommonResponses.offline();
 
-        // A User canister votes with the neurons hot-keyed to it. A MultiUser canister can't, since
-        // its users share its principal, so for them vote with the neurons hot-keyed to their own
-        // principal from here, then record the vote against the message.
-        if (isMultiUserCanisterUser(this._userClient.userId)) {
-            const voteResponse = await this.voteWithNeurons(
-                governanceCanisterId,
-                proposalId,
-                isNns,
-                adopt,
-            );
-            if (voteResponse.kind !== "success") return voteResponse;
-
-            switch (chatId.kind) {
-                case "group_chat":
-                    return this._groupClient.registerProposalVoteV2(
-                        chatId.groupId,
-                        messageIndex,
-                        adopt,
-                    );
-                case "channel":
-                    return this._communityClient.registerProposalVoteV2(
-                        chatId,
-                        messageIndex,
-                        adopt,
-                    );
-            }
-        }
+        // A MultiUser canister can't vote with its users' neurons, since they share its principal,
+        // so vote with the neurons hot-keyed to the user's own principal from here, then record the
+        // vote against the message.
+        const voteResponse = await this.voteWithNeurons(
+            governanceCanisterId,
+            proposalId,
+            isNns,
+            adopt,
+        );
+        if (voteResponse.kind !== "success") return voteResponse;
 
         switch (chatId.kind) {
             case "group_chat":
-                return this._groupClient.registerProposalVote(chatId.groupId, messageIndex, adopt);
+                return this._groupClient.registerProposalVoteV2(
+                    chatId.groupId,
+                    messageIndex,
+                    adopt,
+                );
             case "channel":
-                return this._communityClient.registerProposalVote(chatId, messageIndex, adopt);
+                return this._communityClient.registerProposalVoteV2(chatId, messageIndex, adopt);
         }
     }
 
@@ -4528,36 +4470,10 @@ export class OpenChatAgent extends EventTarget {
         return this._groupIndexClient.setCommunityUpgradeConcurrency(value);
     }
 
-    setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
-        if (offline()) return Promise.resolve("offline");
-
-        return this._userIndexClient.setUserUpgradeConcurrency(value);
-    }
-
     createMultiUserCanister(
         localUserIndexCanisterId: string,
     ): Promise<CreateMultiUserCanisterResponse> {
         return this._userIndexClient.createMultiUserCanister(localUserIndexCanisterId);
-    }
-
-    setMultiUserCanistersEnabled(enabled: boolean): Promise<boolean> {
-        return this._userIndexClient.setMultiUserCanistersEnabled(enabled);
-    }
-
-    migrateUsers(users: UsersToMigrate): Promise<MigrateUsersResponse> {
-        return this._userIndexClient.migrateUsers(users);
-    }
-
-    setUserMigrationConcurrency(value: number): Promise<boolean> {
-        return this._userIndexClient.setUserMigrationConcurrency(value);
-    }
-
-    userMigration(userId: string): Promise<UserMigrationResponse> {
-        return this._userIndexClient.userMigration(userId);
-    }
-
-    cancelUserMigration(userId: string, multiUserCanisterId: string): Promise<Success | OCError> {
-        return this._userIndexClient.cancelUserMigration(userId, multiUserCanisterId);
     }
 
     markLocalGroupIndexFull(canisterId: string, full: boolean): Promise<boolean> {
@@ -4935,29 +4851,19 @@ export class OpenChatAgent extends EventTarget {
                               zeroForOne: pool.token0 === inputTokenDetails.ledger,
                           };
 
-                // A user who holds their own funds swaps straight from their wallet, since their
-                // canister can't spend from it
-                const response = this.holdsOwnFunds()
-                    ? await this.swapTokensFromWallet(
-                          swapId,
-                          inputTokenDetails,
-                          outputTokenDetails,
-                          amountIn,
-                          minAmountOut,
-                          pool,
-                          exchangeArgs,
-                          pin,
-                          (step) => resolve({ kind: "swap_step", ...step }, false),
-                      )
-                    : await this.userClient.swapTokens(
-                          swapId,
-                          inputTokenDetails,
-                          outputTokenDetails,
-                          amountIn,
-                          minAmountOut,
-                          exchangeArgs,
-                          pin,
-                      );
+                // The user swaps straight from their wallet, since their canister can't spend from
+                // it
+                const response = await this.swapTokensFromWallet(
+                    swapId,
+                    inputTokenDetails,
+                    outputTokenDetails,
+                    amountIn,
+                    minAmountOut,
+                    pool,
+                    exchangeArgs,
+                    pin,
+                    (step) => resolve({ kind: "swap_step", ...step }, false),
+                );
                 resolve(response, true);
             } catch (err) {
                 reject(err);
@@ -4965,15 +4871,14 @@ export class OpenChatAgent extends EventTarget {
         });
     }
 
-    // Swaps straight from the wallet of a user who holds their own funds, via ICPSwap, which pulls the
-    // input from the wallet and pays the output back to it. The input swapped is `amountIn` less the
-    // fees for approving the pool and for its pull, so the swap takes `amountIn` from the wallet in
-    // all, as a swap made by the user's canister does. The swap is recorded in the user's canister
-    // as it starts, which checks the user's PIN before anything is approved, and as it ends, so that
-    // one which doesn't finish, eg. because the user leaves part way through, is found again (see
-    // `recoverUnfinishedTokenSwaps`), and they get the achievement for swapping once it has. Each
-    // step after the swap is recorded is reported to `onStep` as it starts, the last being ICPSwap
-    // paying the output to the wallet.
+    // Swaps straight from the user's wallet, via ICPSwap, which pulls the input from the wallet and
+    // pays the output back to it. The input swapped is `amountIn` less the fees for approving the
+    // pool and for its pull, so the swap takes `amountIn` from the wallet in all. The swap is
+    // recorded in the user's canister as it starts, which checks the user's PIN before anything is
+    // approved, and as it ends, so that one which doesn't finish, eg. because the user leaves part
+    // way through, is found again (see `recoverUnfinishedTokenSwaps`), and they get the achievement
+    // for swapping once it has. Each step after the swap is recorded is reported to `onStep` as it
+    // starts, the last being ICPSwap paying the output to the wallet.
     private async swapTokensFromWallet(
         swapId: bigint,
         inputTokenDetails: CryptocurrencyDetails,
@@ -5118,7 +5023,7 @@ export class OpenChatAgent extends EventTarget {
     // lists swaps which can't still be in progress. A swap whose pool can't be checked, or whose
     // funds can't be withdrawn, is left to be tried again next time.
     async recoverUnfinishedTokenSwaps(): Promise<void> {
-        if (!this.holdsOwnFunds() || offline()) return;
+        if (offline()) return;
 
         for (const swap of await this.userClient.unfinishedTokenSwaps()) {
             const recovered = await this.withdrawFromPool(swap).catch((err) => {
@@ -5182,15 +5087,11 @@ export class OpenChatAgent extends EventTarget {
         return new IcpSwapPoolClient(this.identity, this._agent, canisterId, token0, token1);
     }
 
-    tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
-        return this.userClient.tokenSwapStatus(swapId);
-    }
-
     private swapProviders(): DexId[] {
         const swapProviders = this._registryValue?.swapProviders ?? [];
-        // A user who holds their own funds swaps straight from their wallet (see
-        // `swapTokensFromWallet`), which is only supported via ICPSwap so far
-        return this.holdsOwnFunds() ? swapProviders.filter((p) => p === "icpswap") : swapProviders;
+        // The user swaps straight from their wallet (see `swapTokensFromWallet`), which is only
+        // supported via ICPSwap so far
+        return swapProviders.filter((p) => p === "icpswap");
     }
 
     // Approves `spender`, a canister such as the ProposalsBot which spends as its own default
@@ -5232,14 +5133,11 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    // Approves `spender` to pull up to `amount` from the user's wallet within `expiresIn` ms. A user
-    // alone in their canister has it make the approval, which checks their PIN, and replaces
-    // whatever the spender could pull before.
-    //
-    // A user who holds their own funds can't have their canister approve anything, so approves the
-    // spender on the ledger themselves, once their canister has checked their PIN, adding `amount`
-    // to what it may pull already, with the approval's fee on top. Without `expiresIn` their
-    // approval lasts only long enough for a payment pulled at once, rather than never lapsing.
+    // Approves `spender` to pull up to `amount` from the user's wallet within `expiresIn` ms. The
+    // user's canister can't approve anything, so the user approves the spender on the ledger
+    // themselves, once their canister has checked their PIN, adding `amount` to what it may pull
+    // already, with the approval's fee on top. Without `expiresIn` the approval lasts only long
+    // enough for a payment pulled at once, rather than never lapsing.
     private approveSpender(
         spender: IcrcAccount,
         ledger: string,
@@ -5247,10 +5145,6 @@ export class OpenChatAgent extends EventTarget {
         expiresIn: bigint | undefined,
         pin: string | undefined,
     ): Promise<ApproveTransferResponse> {
-        if (!this.holdsOwnFunds()) {
-            return this.userClient.approveTransfer(spender, ledger, amount, expiresIn, pin);
-        }
-
         return this.approveToPull(
             spender,
             ledger,
@@ -5377,9 +5271,9 @@ export class OpenChatAgent extends EventTarget {
             if (error !== undefined) {
                 return error;
             }
-        } else if (this.holdsOwnFunds()) {
-            // A user who holds their own funds tips in a group or channel by having the group or
-            // community pull the tip from their wallet, since their canister can't make it for them
+        } else {
+            // A tip in a group or channel is pulled from the user's wallet by the group or
+            // community, since the user's canister can't make it for them
             if (transfer.fromAccount === undefined) {
                 const spender = this.chatSpenderAccount(chatId);
                 const error = await this.approveToPull(spender, transfer.ledger, amount, fee, pin);
@@ -5388,7 +5282,7 @@ export class OpenChatAgent extends EventTarget {
                 }
             }
             // Only a tip pulled by a group or community carries a stamp, a user's canister stamping
-            // the tips it pulls or makes itself
+            // the tips it pulls itself
             const wallet = encodeIcrcAccount(this.walletAccount(this._userClient.userId));
             const paid = {
                 ...transfer,
@@ -5595,23 +5489,58 @@ export class OpenChatAgent extends EventTarget {
         return false;
     }
 
-    withdrawBtc(
+    // Withdraws BTC straight from the user's wallet, as the user, since their canister can't spend
+    // from it. The ckBTC minter is approved to burn `amount` of ckBTC from the wallet, then sends
+    // that much BTC, less its fees, to `address`. `pin` is checked before the approval (see
+    // `approveToPull`).
+    async withdrawBtc(
         address: string,
         amount: bigint,
         pin: string | undefined,
     ): Promise<WithdrawBtcResponse> {
-        return this.userClient.withdrawBtc(address, amount, pin);
+        const minter = this._ckbtcWithdrawalMinterClient.get();
+        const error = await this.approveToPull(
+            { owner: Principal.fromText(minter.canisterId) },
+            minter.ledger,
+            amount,
+            this.ledgerFee(minter.ledger),
+            pin,
+        );
+        if (error !== undefined) {
+            return error;
+        }
+        return minter.retrieveBtcWithApproval(address, amount);
     }
 
-    withdrawViaOneSec(
+    // Withdraws a token to an EVM chain via OneSec straight from the user's wallet, as the user, since
+    // their canister can't spend from it. OneSec is approved to take `amount` of the token from the
+    // wallet, then sends that much, less its fees, to `address` on `chain`. `pin` is checked before
+    // the approval (see `approveToPull`).
+    async withdrawViaOneSec(
         ledger: string,
         tokenSymbol: string,
         chain: EvmChain,
         address: string,
         amount: bigint,
         pin: string | undefined,
-    ) {
-        return this.userClient.withdrawViaOneSec(ledger, tokenSymbol, chain, address, amount, pin);
+    ): Promise<WithdrawViaOneSecResponse> {
+        if (!ONE_SEC_TOKENS.includes(tokenSymbol.toUpperCase())) {
+            return { kind: "error", code: ErrorCode.CurrencyNotSupported, message: undefined };
+        }
+
+        const minter = this._oneSecMinterClient.get();
+        const error = await this.approveToPull(
+            { owner: Principal.fromText(minter.canisterId) },
+            ledger,
+            amount,
+            this.ledgerFee(ledger),
+            pin,
+        );
+        if (error !== undefined) {
+            return error;
+        }
+        const wallet = this.walletAccount(this._userClient.userId);
+        return minter.transferIcpToEvm(tokenSymbol, chain, address, wallet, amount);
     }
 
     getCkbtcMinterDepositInfo(): Promise<CkbtcMinterDepositInfo> {
@@ -6001,24 +5930,6 @@ export class OpenChatAgent extends EventTarget {
                 }
             }
         });
-    }
-
-    async withdrawFromIcpSwap(
-        userId: string,
-        swapId: bigint,
-        inputToken: boolean,
-        amount: bigint | undefined,
-        fee: bigint | undefined,
-    ): Promise<boolean> {
-        const localUserIndex = await this.getLocalUserIndexForUser(userId);
-        return this._localUserIndexClient.withdrawFromIcpSwap(
-            localUserIndex,
-            userId,
-            swapId,
-            inputToken,
-            amount,
-            fee,
-        );
     }
 
     async payForStreakInsurance(

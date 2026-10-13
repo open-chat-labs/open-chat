@@ -47,26 +47,28 @@ pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId,
         _ => unreachable!(),
     };
 
-    let c2c_args = user_canister::c2c_charge_user_account::Args {
+    let c2c_args = multi_user_canister::c2c_charge_user_account::Args {
         user_id,
         ledger_canister_id: args.ledger,
         amount: ICP::from_e8s(args.expected_price_e8s - fee as u64),
         // Renewals are taken long after the user last approved anything, so they always come from
-        // the user's own wallet - `from_account` only funds the payment the user is making now. For
-        // a user in a MultiUser canister, who holds their own funds, that needs a standing approval.
+        // the user's own wallet - `from_account` only funds the payment the user is making now. A
+        // user holds their own funds, so that needs a standing approval.
         from_account: manual_payment.then_some(args.from_account).flatten(),
     };
 
-    let response = match user_canister_c2c_client::c2c_charge_user_account(user_id.canister_id(), &c2c_args).await {
+    let response = match multi_user_canister_c2c_client::c2c_charge_user_account(user_id.canister_id(), &c2c_args).await {
         Ok(result) => match result {
-            user_canister::c2c_charge_user_account::Response::Success(block_index) => {
+            multi_user_canister::c2c_charge_user_account::Response::Success(block_index) => {
                 mutate_state(|state| process_charge(args, user_id, block_index, manual_payment, state))
             }
-            user_canister::c2c_charge_user_account::Response::TransferError(error) => process_error(error),
-            user_canister::c2c_charge_user_account::Response::TransferErrorV2(error) => process_error_v2(error),
-            user_canister::c2c_charge_user_account::Response::TransferFromError(error) => process_transfer_from_error(error),
-            user_canister::c2c_charge_user_account::Response::InternalError(error) => InternalError(error),
-            user_canister::c2c_charge_user_account::Response::Error(error) => Error(error),
+            multi_user_canister::c2c_charge_user_account::Response::TransferError(error) => process_error(error),
+            multi_user_canister::c2c_charge_user_account::Response::TransferErrorV2(error) => process_error_v2(error),
+            multi_user_canister::c2c_charge_user_account::Response::TransferFromError(error) => {
+                process_transfer_from_error(error)
+            }
+            multi_user_canister::c2c_charge_user_account::Response::InternalError(error) => InternalError(error),
+            multi_user_canister::c2c_charge_user_account::Response::Error(error) => Error(error),
         },
         Err(error) => Error(error.into()),
     };

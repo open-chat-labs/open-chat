@@ -1,10 +1,10 @@
 use crate::{P2PSwap, User};
 use candid::Principal;
+use multi_user_canister::accept_p2p_swap::Args;
 use oc_error_codes::OCErrorCode;
 use types::{
     CanisterId, Chat, MessageId, OCResult, P2PSwapAccepted, P2PSwapLocation, ReserveP2PSwapSuccess, TimestampMillis, UserId,
 };
-use user_canister::accept_p2p_swap::Args;
 
 // The swap reserved for the user while their deposit is made
 pub struct Reserved {

@@ -1,5 +1,5 @@
 //! Clients for the NNS and SNS governance canisters, and voting on a proposal with every neuron a
-//! canister controls, shared by the User and MultiUser canisters
+//! canister controls
 
 pub mod nns;
 pub mod sns;

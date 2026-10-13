@@ -2,9 +2,9 @@ use crate::guards::caller_is_hosted_user;
 use crate::{RuntimeState, execute_update_async, mutate_state, read_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
+use multi_user_canister::set_pin_number::*;
 use oc_error_codes::OCErrorCode;
 use types::{Achievement, FieldTooLongResult, FieldTooShortResult};
-use user_canister::set_pin_number::*;
 
 const MIN_LENGTH: usize = 4;
 const MAX_LENGTH: usize = 20;
@@ -28,14 +28,14 @@ async fn set_pin_number_impl(args: Args) -> Response {
     });
 
     // A user who has forgotten their PIN resets it by signing in again, which the LocalUserIndex
-    // verifies for them, as it does for a user in a canister of their own
+    // verifies for them
     let signed_in_again = match &args.verification {
         PinNumberVerification::Reauthenticated(sign_in_proof_jwt) if pin_enabled => {
             match local_user_index_canister_c2c_client::c2c_verify_sign_in_proof(
                 local_user_index_canister_id,
                 &local_user_index_canister::c2c_verify_sign_in_proof::Args {
                     sign_in_proof_jwt: sign_in_proof_jwt.clone(),
-                    user_id: Some(my_user_id),
+                    user_id: my_user_id,
                 },
             )
             .await
