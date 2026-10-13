@@ -20,6 +20,9 @@ pub struct LocalMultiUserCanister {
     // aren't reused, so it can take no more users, however many have since been deleted
     #[serde(default)]
     pub full: bool,
+    // Whether the canister has finished replacing migrated users' old ids with their latest ids
+    #[serde(default)]
+    pub user_id_migration_complete: bool,
 }
 
 impl LocalMultiUserCanisterMap {
@@ -33,6 +36,7 @@ impl LocalMultiUserCanisterMap {
                 created: now,
                 user_count: 0,
                 full: false,
+                user_id_migration_complete: false,
             },
         );
     }

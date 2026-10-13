@@ -61,6 +61,7 @@ async fn run() {
         }
     }
 
+    mutate_state(|state| state.report_user_id_migration_progress());
     TIMER_ID.set(None);
     read_state(start_job_if_required);
 }

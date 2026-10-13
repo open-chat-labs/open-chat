@@ -601,6 +601,22 @@ impl RuntimeState {
         }
     }
 
+    // Tells the LocalUserIndex when the jobs which replace migrated users' old ids with their latest
+    // ids (first in the community's state, then in its events) become complete, or start again, so that
+    // it can report how many of its canisters have finished. Called at the end of each run of either.
+    pub fn report_user_id_migration_progress(&mut self) {
+        let complete =
+            self.data.user_ids_in_state_migration.is_complete() && self.data.user_ids_in_events_migration.is_complete();
+        if complete != self.data.user_id_migration_complete_reported {
+            self.data.user_id_migration_complete_reported = complete;
+            self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+                created_at: self.env.now(),
+                idempotency_id: self.env.rng().next_u64(),
+                value: local_user_index_canister::CommunityEvent::UserIdMigrationComplete(complete),
+            });
+        }
+    }
+
     pub fn mark_activity_for_user(&mut self, user_id: UserId) {
         let now = self.env.now();
 
@@ -731,6 +747,9 @@ struct Data {
     // `import_groups::process_channel_members`)
     #[serde(default)]
     channels_importing_members: BTreeSet<ChannelId>,
+    // Whether the LocalUserIndex was last told the user id migration jobs are complete
+    #[serde(default)]
+    user_id_migration_complete_reported: bool,
 }
 
 impl Data {
@@ -846,6 +865,7 @@ impl Data {
             user_ids_in_events_migration: UserIdsInEventsMigration::default(),
             user_ids_in_state_migration: UserIdsInStateMigration::default(),
             channels_importing_members: BTreeSet::new(),
+            user_id_migration_complete_reported: false,
             public_channel_list_updated: now,
         }
     }

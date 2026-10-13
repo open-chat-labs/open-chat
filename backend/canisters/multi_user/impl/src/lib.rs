@@ -109,6 +109,26 @@ struct RuntimeState {
 }
 
 impl RuntimeState {
+    // Tells the LocalUserIndex when the jobs which replace migrated users' old ids with their latest
+    // ids (first in what users hold outside their chats' events, then in those events) become
+    // complete, so that it can report how many of its canisters have finished. Called at the end of
+    // each run of either. The event is about the canister, so names the canister's own id.
+    pub fn report_user_id_migration_progress(&mut self) {
+        let complete = self.data.their_user_ids_migration.complete && self.data.user_ids_in_events_migration.is_complete();
+        if complete != self.data.user_id_migration_complete_reported {
+            self.data.user_id_migration_complete_reported = complete;
+            let canister_id = self.env.canister_id();
+            self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
+                created_at: self.env.now(),
+                idempotency_id: self.env.rng().next_u64(),
+                value: UserEventWithUserId {
+                    user_id: canister_id.into(),
+                    event: LocalUserIndexEvent::UserIdMigrationComplete(complete),
+                },
+            });
+        }
+    }
+
     pub fn new(env: Box<dyn Environment>, data: Data, regular_jobs: RegularJobs<Data>) -> RuntimeState {
         RuntimeState { env, data, regular_jobs }
     }
@@ -683,6 +703,9 @@ struct Data {
     pub user_ids_in_events_migration: UserIdsInEventsMigration<(u16, u32, EventContext)>,
     #[serde(default)]
     pub their_user_ids_migration: TheirUserIdsMigration,
+    // Whether the LocalUserIndex was last told the user id migration jobs are complete
+    #[serde(default)]
+    pub user_id_migration_complete_reported: bool,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -724,6 +747,7 @@ impl Data {
             migrated_user_ids: MigratedUserIds::default(),
             user_ids_in_events_migration: UserIdsInEventsMigration::default(),
             their_user_ids_migration: TheirUserIdsMigration::default(),
+            user_id_migration_complete_reported: false,
             rng_seed,
             test_mode,
         }
