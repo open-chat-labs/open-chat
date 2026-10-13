@@ -169,7 +169,7 @@ impl DirectChats {
 
     // The id of every chat, without reading the chats from stable memory
     pub fn ids(&self) -> impl Iterator<Item = ChatId> + '_ {
-        self.direct_chats_v2.entries().map(|(chat_id, _)| chat_id)
+        self.direct_chats_v2.ids()
     }
 
     pub fn len(&self) -> usize {
@@ -186,11 +186,21 @@ impl DirectChats {
         }
     }
 
-    pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
+    // Points the private replies to messages in the `old` chat at the `new` chat. Each reply is
+    // recorded under the id the other user in its chat had when it was sent, which the chat may
+    // since have moved off (see `migrate_their_user_id`).
+    pub fn migrate_replies(
+        &mut self,
+        old: ChatInternal,
+        new: ChatInternal,
+        migrated_user_ids: &MigratedUserIds,
+        now: TimestampMillis,
+    ) {
         if let ChatInternal::Group(chat_id) = old {
             // The replies are all read and removed up front, since updating each one writes to the
             // stable memory map
             for (user_id, message_index) in private_replies::take(chat_id) {
+                let user_id = self.latest_user_id(user_id, migrated_user_ids);
                 if let Some(mut chat) = self.get_mut(&user_id.into()) {
                     chat.migrate_reply(message_index, old, new, now);
                 }
@@ -298,7 +308,9 @@ impl DirectChats {
 mod tests {
     use super::*;
     use candid::Principal;
-    use chat_events::{MessageContentInternal, NullEventPusher, PushMessageArgs, TextContentInternal};
+    use chat_events::{
+        MessageContentInternal, NullEventPusher, PushMessageArgs, Reader, ReplyContextInternal, TextContentInternal,
+    };
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use stable_memory_map::{KeyScope, with_key_scope, with_map, with_map_mut};
@@ -347,6 +359,41 @@ mod tests {
         assert!(direct_chats.removed_since(0).is_empty());
         // Nor is anything done for a user there is no chat with
         assert!(!direct_chats.migrate_their_user_id(user(4), user(5), 100));
+    }
+
+    #[test]
+    fn private_replies_are_migrated_in_a_chat_moved_onto_a_migrated_users_new_id() {
+        init_stable_memory_map();
+        let (me, old, new) = (user(1), user(2), user(3));
+        let group = ChatInternal::Group(Principal::from_slice(&[10; 10]).into());
+        let channel = ChatInternal::Channel(Principal::from_slice(&[11; 10]).into(), 1u32.into());
+        let mut direct_chats = DirectChats::default();
+        let mut chat = direct_chats.get_or_create(me, old, UserType::User, || 1, 10);
+        let message_index = chat
+            .push_message::<NullEventPusher>(
+                PushMessageArgs {
+                    replies_to: Some(ReplyContextInternal {
+                        chat_if_other: Some((group, None)),
+                        event_index: 5.into(),
+                    }),
+                    ..message(me, 1, 10)
+                },
+                None,
+                None,
+            )
+            .event
+            .message_index;
+        drop(chat);
+        direct_chats.mark_private_reply(old, group, message_index);
+        direct_chats.migrate_their_user_id(old, new, 20);
+        let mut migrated_user_ids = MigratedUserIds::default();
+        migrated_user_ids.insert(old, new);
+
+        direct_chats.migrate_replies(group, channel, &migrated_user_ids, 30);
+
+        let chat = direct_chats.get(&new.into()).unwrap();
+        let message = chat.main_events_reader().message_internal(message_index.into()).unwrap();
+        assert_eq!(message.replies_to.unwrap().chat_if_other, Some((channel, None)));
     }
 
     #[test]
