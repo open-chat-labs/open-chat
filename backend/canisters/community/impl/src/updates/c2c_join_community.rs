@@ -130,7 +130,7 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> OCResult<IsPermitt
                     }),
                 referred_by_member: args
                     .referred_by
-                    .is_some_and(|user_id| state.data.members.get_by_user_id(&user_id).is_some()),
+                    .is_some_and(|referred_by| state.data.referring_member(referred_by).is_some()),
                 total_chit_earned: args.total_chit_earned,
                 composite_gate_index: args.composite_gate_index,
                 now: state.env.now(),
@@ -161,12 +161,7 @@ pub(crate) fn join_community_impl(
         state.push_community_event(CommunityEventInternal::UsersUnblocked(Box::new(event)));
     }
 
-    let referred_by = state
-        .data
-        .invited_users
-        .get(&args.user_id)
-        .map(|i| i.invited_by)
-        .or(args.referred_by);
+    let referred_by = state.data.referrer_of_joining_user(args.user_id, args.referred_by);
 
     let result = state
         .data

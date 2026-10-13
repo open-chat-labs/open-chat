@@ -44,6 +44,11 @@ impl<T: Ord> MinBinaryHeap<T> {
         self.heap.drain().map(|e| e.0)
     }
 
+    // Every item, in no particular order
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.heap.iter().map(|e| &e.0)
+    }
+
     pub fn peek(&self) -> Option<&T> {
         self.heap.peek().map(|e| &e.0)
     }

@@ -2483,6 +2483,18 @@ impl ChatEvents {
             .migrate_user(self.main.stable_memory_prefix(), old_user_id, new_user_id)
     }
 
+    // The ids of the users whose metrics are still held on the heap (see `PerUserMetrics`)
+    pub fn user_ids_with_metrics_on_heap(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.per_user_metrics.user_ids_on_heap()
+    }
+
+    // The ids of up to `max_count` of the users with metrics in stable memory, in key order,
+    // starting after `after`
+    pub fn user_ids_with_metrics_in_stable_memory(&self, after: Option<UserId>, max_count: usize) -> Vec<UserId> {
+        self.per_user_metrics
+            .user_ids_in_stable_memory(self.main.stable_memory_prefix(), after, max_count)
+    }
+
     // The users who have metrics in the chat
     pub fn user_ids_with_metrics(&self) -> BTreeSet<UserId> {
         self.per_user_metrics.user_ids(self.main.stable_memory_prefix())

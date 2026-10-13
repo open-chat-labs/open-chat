@@ -19,7 +19,7 @@ use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AccessRulesInternal, AddResult, MembersToAdd};
 use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PendingPaymentsQueue,
-    UserCache,
+    UserCache, UserIdsInStateMigration, UserIdsInStateMigrationMetrics,
 };
 use ic_principal::Principal;
 use installed_bots::InstalledBots;
@@ -35,7 +35,7 @@ use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 use stable_memory_map::{BaseKeyPrefix, ChatEventKeyPrefix};
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::ops::Deref;
 use timer_job_queues::{BatchedTimerJobQueue, GroupedTimerJobQueue};
 use types::{
@@ -550,6 +550,7 @@ impl RuntimeState {
             queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
             user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
+            user_ids_in_state_migration: self.data.user_ids_in_state_migration.metrics(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -615,6 +616,55 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
     InstructionCountsLog::init(get_instruction_counts_index_memory(), get_instruction_counts_data_memory())
 }
 
+#[cfg(test)]
+impl Data {
+    // A public community created by the given user, with the given channels, and a fresh stable
+    // memory map
+    fn new_for_tests(
+        creator_user_id: UserId,
+        creator_principal: Principal,
+        description: String,
+        channels: Vec<(ChannelId, String)>,
+    ) -> Data {
+        use ic_stable_structures::DefaultMemoryImpl;
+        use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+        use rand::SeedableRng;
+
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
+
+        let canister_id = |i: u8| CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1]);
+        Data::new(
+            Principal::from_slice(&[200]).into(),
+            creator_principal,
+            creator_user_id,
+            UserType::User,
+            true,
+            "name".to_string(),
+            description,
+            Rules::default(),
+            None,
+            None,
+            CommunityPermissions::default(),
+            "en".to_string(),
+            canister_id(10),
+            canister_id(11),
+            canister_id(12),
+            canister_id(13).into(),
+            canister_id(14),
+            canister_id(15),
+            None,
+            channels,
+            None,
+            0,
+            Vec::new(),
+            true,
+            &mut StdRng::seed_from_u64(1),
+            0,
+        )
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 struct Data {
     is_public: Timestamped<bool>,
@@ -675,6 +725,12 @@ struct Data {
     migrated_user_ids: MigratedUserIds,
     #[serde(default)]
     user_ids_in_events_migration: UserIdsInEventsMigration<jobs::update_user_ids_in_events::EventLocation>,
+    #[serde(default)]
+    user_ids_in_state_migration: UserIdsInStateMigration<jobs::update_user_ids_in_state::StatePosition>,
+    // The channels imported from groups whose members are still being added to the community (see
+    // `import_groups::process_channel_members`)
+    #[serde(default)]
+    channels_importing_members: BTreeSet<ChannelId>,
 }
 
 impl Data {
@@ -788,6 +844,8 @@ impl Data {
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
             user_ids_in_events_migration: UserIdsInEventsMigration::default(),
+            user_ids_in_state_migration: UserIdsInStateMigration::default(),
+            channels_importing_members: BTreeSet::new(),
             public_channel_list_updated: now,
         }
     }
@@ -811,10 +869,36 @@ impl Data {
         }
     }
 
+    // The invitation is looked for under the latest id of the user the principal is mapped to as
+    // well, since while old user ids are being replaced (see `update_user_ids_in_state`) it may have
+    // been moved before the principal is
     pub fn is_invited(&self, caller: Principal) -> bool {
         self.members
             .lookup_user_id(caller)
-            .is_some_and(|u| self.invited_users.get(&u).is_some())
+            .is_some_and(|u| self.invited_users.contains(&u) || self.invited_users.contains(&self.migrated_user_ids.latest(u)))
+    }
+
+    // Who referred a user joining the community: whoever invited them, if they were invited,
+    // otherwise the referrer the client gave. Either way, only a member is taken as the referrer, by
+    // the id they are held under (see `referring_member`).
+    pub fn referrer_of_joining_user(&self, user_id: UserId, referred_by: Option<UserId>) -> Option<UserId> {
+        match self.invited_users.get(&user_id) {
+            Some(invitation) => self.referring_member(invitation.invited_by),
+            None => referred_by.and_then(|referred_by| self.referring_member(referred_by)),
+        }
+    }
+
+    // The id a referrer is held under as a member. The id given may be one a user had before being
+    // migrated to a MultiUser canister (eg. one given by the client, or an inviter's which hasn't been
+    // replaced yet), or not a member's at all. It is taken as it is if it is a member's, which, while
+    // old user ids are being replaced, may still be an old id, so that the joining user is added to
+    // the referrer's referrals, both then being moved along with the referrer's membership. Otherwise
+    // it is taken as the user's latest id if that is a member's. Otherwise there is no referrer, so
+    // that an id which isn't a member's is never stored.
+    pub fn referring_member(&self, user_id: UserId) -> Option<UserId> {
+        [user_id, self.migrated_user_ids.latest(user_id)]
+            .into_iter()
+            .find(|u| self.members.contains(u))
     }
 
     pub fn build_chat_metrics(&mut self, now: TimestampMillis) {
@@ -1496,6 +1580,7 @@ pub struct Metrics {
     pub queued_local_index_events: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
+    pub user_ids_in_state_migration: UserIdsInStateMigrationMetrics,
     pub canister_ids: CanisterIds,
 }
 
@@ -1529,4 +1614,106 @@ pub enum CallerResult {
 
 fn new_user_events_queue() -> GroupedTimerJobQueue<UserEventBatch> {
     GroupedTimerJobQueue::new(5, true)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::invited_users::UserInvitation;
+
+    fn canister_id(i: u8) -> CanisterId {
+        CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1])
+    }
+
+    // The User canister ids migrated users had, and the ids they were migrated to
+    fn old_user_id(i: u8) -> UserId {
+        canister_id(100 + i).into()
+    }
+
+    fn new_user_id(i: u8) -> UserId {
+        UserId::new_indexed(canister_id(1), i as u16)
+    }
+
+    #[test]
+    fn the_referrer_is_a_members_id_or_the_latest_id_of_a_member() {
+        let owner = new_user_id(1);
+        let mut data = Data::new_for_tests(owner, Principal::from_slice(&[1]), String::new(), Vec::new());
+        // User 2 is a member under their latest id, user 3 is still a member under their old id
+        // while old ids are being replaced, and user 4 isn't a member
+        data.members
+            .add(new_user_id(2), Principal::from_slice(&[2]), UserType::User, None, 0);
+        data.members
+            .add(old_user_id(3), Principal::from_slice(&[3]), UserType::User, None, 0);
+        for i in 2..=4 {
+            data.migrated_user_ids.insert(old_user_id(i), new_user_id(i));
+        }
+
+        assert_eq!(data.referring_member(owner), Some(owner));
+        assert_eq!(data.referring_member(old_user_id(2)), Some(new_user_id(2)));
+        assert_eq!(data.referring_member(new_user_id(2)), Some(new_user_id(2)));
+        assert_eq!(data.referring_member(old_user_id(3)), Some(old_user_id(3)));
+        assert_eq!(data.referring_member(old_user_id(4)), None);
+        assert_eq!(data.referring_member(new_user_id(4)), None);
+
+        // Without an invitation, the referrer the client gives is taken, if they are a member
+        assert_eq!(
+            data.referrer_of_joining_user(new_user_id(6), Some(old_user_id(2))),
+            Some(new_user_id(2))
+        );
+        assert_eq!(data.referrer_of_joining_user(new_user_id(6), Some(new_user_id(4))), None);
+        assert_eq!(data.referrer_of_joining_user(new_user_id(6), None), None);
+    }
+
+    #[test]
+    fn an_inviter_still_held_under_their_old_id_keeps_their_referrals_in_step() {
+        let owner = new_user_id(1);
+        let mut data = Data::new_for_tests(owner, Principal::from_slice(&[1]), String::new(), Vec::new());
+        // User 3 invited user 5, and is still a member under their old id while old ids are being
+        // replaced, though their migration is known
+        data.members
+            .add(old_user_id(3), Principal::from_slice(&[3]), UserType::User, None, 0);
+        data.migrated_user_ids.insert(old_user_id(3), new_user_id(3));
+        data.invited_users.add(
+            new_user_id(5),
+            UserInvitation {
+                invited_by: old_user_id(3),
+                timestamp: 0,
+            },
+        );
+
+        // The inviter is taken as the referrer rather than whoever the client gives, by the id they
+        // are held under, so user 5 is added to their referrals
+        let referred_by = data.referrer_of_joining_user(new_user_id(5), Some(owner));
+        assert_eq!(referred_by, Some(old_user_id(3)));
+        data.members
+            .add(new_user_id(5), Principal::from_slice(&[5]), UserType::User, referred_by, 0);
+        let inviter = data.members.get_by_user_id(&old_user_id(3)).unwrap();
+        assert_eq!(inviter.referrals(), &BTreeSet::from([new_user_id(5)]));
+
+        // Once the inviter is moved onto their latest id, both sides of the referral are
+        data.migrate_user_ids(&[old_user_id(3)], new_user_id(3), None, 1);
+        let inviter = data.members.get_by_user_id(&new_user_id(3)).unwrap();
+        assert_eq!(inviter.referrals(), &BTreeSet::from([new_user_id(5)]));
+        let invited = data.members.get_by_user_id(&new_user_id(5)).unwrap();
+        assert_eq!(invited.referred_by, Some(new_user_id(3)));
+    }
+
+    #[test]
+    fn an_invitation_moved_before_the_principal_is_still_found() {
+        let mut data = Data::new_for_tests(new_user_id(1), Principal::from_slice(&[1]), String::new(), Vec::new());
+        let principal = Principal::from_slice(&[2]);
+        data.members.add_user_id(principal, old_user_id(2));
+        data.invited_users.add(
+            new_user_id(2),
+            UserInvitation {
+                invited_by: new_user_id(1),
+                timestamp: 0,
+            },
+        );
+        assert!(!data.is_invited(principal));
+
+        data.migrated_user_ids.insert(old_user_id(2), new_user_id(2));
+
+        assert!(data.is_invited(principal));
+    }
 }
