@@ -8,7 +8,7 @@ use multi_user_canister::C2CReplyContext;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
-use user_core::mentions::replace_mentioned_users;
+use utils::mentions::replace_mentioned_users;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {

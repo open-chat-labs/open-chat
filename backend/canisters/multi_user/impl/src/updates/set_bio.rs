@@ -4,7 +4,7 @@ use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use multi_user_canister::set_bio::*;
 use types::{Achievement, OCResult};
-use user_core::mentions::replace_mentioned_users;
+use utils::mentions::replace_mentioned_users;
 
 #[update(guard = "caller_is_hosted_user", msgpack = true)]
 #[trace]
