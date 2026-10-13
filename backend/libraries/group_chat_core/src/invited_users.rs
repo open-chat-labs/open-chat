@@ -57,6 +57,11 @@ impl InvitedUsers {
         self.users.keys()
     }
 
+    // The id of each invited user and of whoever invited them
+    pub fn user_ids_and_inviters(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.users.values().flat_map(|i| [i.invited, i.invited_by])
+    }
+
     pub fn last_updated(&self) -> TimestampMillis {
         self.last_updated
     }

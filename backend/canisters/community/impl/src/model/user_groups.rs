@@ -123,6 +123,11 @@ impl UserGroups {
         self.last_updated
     }
 
+    // The members of every user group, those in more than one being returned once for each
+    pub fn user_ids(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.groups.iter().flat_map(|g| g.members.value.iter().copied())
+    }
+
     pub fn deleted_since(&self, since: TimestampMillis) -> Vec<u32> {
         self.deleted
             .iter()

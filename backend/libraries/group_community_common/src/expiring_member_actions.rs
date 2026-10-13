@@ -61,6 +61,13 @@ impl ExpiringMemberActions {
     pub fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }
+
+    pub fn user_ids(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.queue.iter().flat_map(|action| match action {
+            ExpiringMemberAction::UserLookup(user_ids) => user_ids.clone(),
+            ExpiringMemberAction::AsyncGateCheck(d) => vec![d.user_id],
+        })
+    }
 }
 
 #[derive(Serialize, Deserialize)]

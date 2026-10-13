@@ -66,4 +66,9 @@ impl InvitedUsers {
     pub fn user_ids(&self) -> impl Iterator<Item = &UserId> {
         self.users.keys()
     }
+
+    // The id of each invited user and of whoever invited them
+    pub fn user_ids_and_inviters(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.users.iter().flat_map(|(user_id, i)| [*user_id, i.invited_by])
+    }
 }

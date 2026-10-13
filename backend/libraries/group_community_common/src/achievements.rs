@@ -22,6 +22,10 @@ impl Achievements {
         }
     }
 
+    pub fn user_ids(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.achievements.keys().copied()
+    }
+
     pub fn remove_user(&mut self, user_id: &UserId) {
         self.achievements.remove(user_id);
     }

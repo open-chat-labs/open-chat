@@ -24,6 +24,9 @@ pub(crate) fn c2c_unfreeze_group_impl(user_id: UserId, state: &mut RuntimeState)
         // If an import into a community has been abandoned, the users' metrics which were copied
         // onto the heap for the import need moving back into stable memory
         jobs::migrate_chat_events_to_stable_memory::start_job_if_required(state);
+        // And the job which replaces old user ids in the state, which is held back while the group is
+        // being imported, can carry on
+        jobs::update_user_ids_in_state::start_job_if_required(state);
 
         Success(EventWrapper {
             index: push_event_result.index,
