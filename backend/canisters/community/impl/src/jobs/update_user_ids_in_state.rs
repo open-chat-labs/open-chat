@@ -75,7 +75,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 // leaving them members of the channel but not the community. So the job waits until the members of
 // every group being imported have been added, including any whose import was finalized by an
 // earlier version, which are only known by their jobs still being queued.
-fn is_held(data: &Data) -> bool {
+pub(crate) fn is_held(data: &Data) -> bool {
     !data.channels_importing_members.is_empty()
         || data.timer_jobs.iter().any(|(_, job)| {
             matches!(
