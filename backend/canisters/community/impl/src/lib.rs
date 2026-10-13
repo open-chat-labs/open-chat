@@ -134,9 +134,11 @@ impl RuntimeState {
     }
 
     // The member's wallet, for paying them. A user holds their funds under the principal held for
-    // them, and anyone else whose id carries no index, eg. a bot, under their user id.
+    // them, and anyone else whose id carries no index, eg. a bot, under their user id, other than a
+    // User canister (see `verify_not_old_user_id`).
     pub fn member_wallet(&self, user_id: UserId) -> OCResult<icrc1::Account> {
         if !user_id.is_indexed() {
+            self.data.verify_not_old_user_id(user_id)?;
             return Ok(user_id.as_principal().into());
         }
         let user = self.member_user(user_id);
@@ -878,6 +880,17 @@ impl Data {
         self.user_ids_in_state_migration.is_complete()
             && self.user_ids_in_events_migration.is_complete()
             && !jobs::update_user_ids_in_state::is_held(self)
+    }
+
+    // Refuses a User canister's id, which users had before being migrated to MultiUser canisters.
+    // Every user has been, so such an id names nobody, unless it is a bot's with a canister of its
+    // own, which is a member as a bot. Other bots and webhooks have ids which aren't canisters'.
+    pub fn verify_not_old_user_id(&self, user_id: UserId) -> OCResult {
+        if user_id.is_canister() && !self.members.bots().contains_key(&user_id) {
+            Err(OCErrorCode::TargetUserNotFound.into())
+        } else {
+            Ok(())
+        }
     }
 
     pub fn is_frozen(&self) -> bool {

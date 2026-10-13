@@ -2,6 +2,7 @@ use crate::{RuntimeState, model::external_achievements::AwardResult, mutate_stat
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{ExternalAchievementAwarded, UserIndexEvent};
+use oc_error_codes::OCErrorCode;
 use user_index_canister::award_external_achievement::{Response::*, *};
 
 #[update(candid = true)]
@@ -11,6 +12,13 @@ fn award_external_achievement(args: Args) -> Response {
 }
 
 fn award_external_achievement_impl(args: Args, state: &mut RuntimeState) -> Response {
+    // Only users are awarded achievements, and every user has an indexed id now that all have been
+    // migrated to MultiUser canisters, so any other id, eg. a User canister's which a user had
+    // before, is refused before it uses up any of the budget
+    if !args.user_id.is_indexed() || state.data.users.get_by_user_id(&args.user_id).is_none() {
+        return Error(OCErrorCode::TargetUserNotFound.into());
+    }
+
     let result = match state.data.external_achievements.award(
         args.achievement_id,
         args.user_id,

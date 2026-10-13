@@ -1,5 +1,5 @@
 use crate::guards::caller_is_hosted_user;
-use crate::{RuntimeState, execute_update};
+use crate::{RuntimeState, execute_update, verify_not_old_user_id};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
 use local_user_index_canister::UserEvent as LocalUserIndexEvent;
@@ -13,6 +13,8 @@ fn block_user(args: Args) -> Response {
 }
 
 fn block_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    verify_not_old_user_id(args.user_id)?;
+
     let now = state.env.now();
     let my_index = state.caller_user_index_or_trap();
     let data = &mut state.data;
