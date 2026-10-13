@@ -551,6 +551,7 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
             user_ids_in_state_migration: self.data.user_ids_in_state_migration.metrics(),
+            user_id_migration_complete_reported: self.data.user_id_migration_complete_reported,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -605,8 +606,11 @@ impl RuntimeState {
     // ids (first in the community's state, then in its events) become complete, or start again, so that
     // it can report how many of its canisters have finished. Called at the end of each run of either.
     pub fn report_user_id_migration_progress(&mut self) {
-        let complete =
-            self.data.user_ids_in_state_migration.is_complete() && self.data.user_ids_in_events_migration.is_complete();
+        // While a group's members are still being imported the state job is certain to run again, so
+        // the community isn't counted as complete until they have been
+        let complete = self.data.user_ids_in_state_migration.is_complete()
+            && self.data.user_ids_in_events_migration.is_complete()
+            && !jobs::update_user_ids_in_state::is_held(&self.data);
         if complete != self.data.user_id_migration_complete_reported {
             self.data.user_id_migration_complete_reported = complete;
             self.data.local_user_index_event_sync_queue.push(IdempotentEnvelope {
@@ -1601,6 +1605,7 @@ pub struct Metrics {
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
     pub user_ids_in_state_migration: UserIdsInStateMigrationMetrics,
+    pub user_id_migration_complete_reported: bool,
     pub canister_ids: CanisterIds,
 }
 

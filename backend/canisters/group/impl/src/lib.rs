@@ -636,6 +636,7 @@ impl RuntimeState {
             stable_memory_sizes: memory::memory_sizes(),
             user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
             user_ids_in_state_migration: self.data.user_ids_in_state_migration.metrics(),
+            user_id_migration_complete_reported: self.data.user_id_migration_complete_reported,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -1320,6 +1321,7 @@ pub struct Metrics {
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
     pub user_ids_in_state_migration: UserIdsInStateMigrationMetrics,
+    pub user_id_migration_complete_reported: bool,
     pub canister_ids: CanisterIds,
 }
 
