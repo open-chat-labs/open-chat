@@ -93,6 +93,14 @@ pub struct User {
     pub premium_items: PremiumItems,
 }
 
+// Every id the user with `user_id` has had which `migrated_user_ids` knows of, latest last
+pub(crate) fn all_ids_of(user_id: UserId, migrated_user_ids: &MigratedUserIds) -> Vec<UserId> {
+    let latest = migrated_user_ids.latest(user_id);
+    let mut user_ids = migrated_user_ids.previous_ids(latest);
+    user_ids.push(latest);
+    user_ids
+}
+
 // How much `User::migrate_user_ids` moved onto users' latest ids
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct UserIdsMigrated {
@@ -427,16 +435,33 @@ impl User {
         if self.suspended.value { Err(OCErrorCode::InitiatorSuspended) } else { Ok(()) }
     }
 
-    // Blocks the user with the given id, returning false if they were already blocked. The caller
-    // tells the LocalUserIndex (`UserBlocked`) if the user is newly blocked.
-    pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
-        self.blocked_users.block(user_id, now)
+    // Blocks the user under their latest id, since a client which hasn't yet heard that they have
+    // been migrated to a MultiUser canister names them by the id they had before, as does the chat
+    // with them if it was left under that id (see `DirectChats::migrate_their_user_id`). Returns
+    // the id they were blocked under, or None if they already were. The caller tells the
+    // LocalUserIndex (`UserBlocked`).
+    pub fn block_user(&mut self, user_id: UserId, migrated_user_ids: &MigratedUserIds, now: TimestampMillis) -> Option<UserId> {
+        let latest = migrated_user_ids.latest(user_id);
+        self.blocked_users.block(latest, now).then_some(latest)
     }
 
-    // Unblocks the user with the given id, returning false if they weren't blocked. The caller tells
-    // the LocalUserIndex (`UserUnblocked`) if the user is newly unblocked.
-    pub fn unblock_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
-        self.blocked_users.unblock(user_id, now)
+    // Unblocks the user under every id they have had, since a block can still be under an id they
+    // had before being migrated until the `migrate_their_user_ids` job reaches the user. Returns the
+    // ids they were unblocked under, which the caller tells the LocalUserIndex of (`UserUnblocked`).
+    pub fn unblock_user(&mut self, user_id: UserId, migrated_user_ids: &MigratedUserIds, now: TimestampMillis) -> Vec<UserId> {
+        all_ids_of(user_id, migrated_user_ids)
+            .into_iter()
+            .filter(|user_id| self.blocked_users.unblock(*user_id, now))
+            .collect()
+    }
+
+    // Whether the user has blocked `user_id`, under that id or the latest id they have been
+    // migrated to (see `block_user`)
+    pub fn has_blocked(&self, user_id: UserId, migrated_user_ids: &MigratedUserIds) -> bool {
+        self.blocked_users.contains(&user_id) || {
+            let latest = migrated_user_ids.latest(user_id);
+            latest != user_id && self.blocked_users.contains(&latest)
+        }
     }
 
     // Awards the achievement along with its CHIT, returning false if the user already had it. The
@@ -681,6 +706,34 @@ mod tests {
                 ..Default::default()
             }
         );
+    }
+
+    #[test]
+    fn blocks_are_added_under_the_latest_id_and_removed_under_both() {
+        init_stable_memory_map();
+        let (old, latest, other) = (user_id(2), user_id(3), user_id(4));
+        let mut migrated_user_ids = MigratedUserIds::default();
+        migrated_user_ids.insert(old, latest);
+        let mut user = User::new(Principal::from_slice(&[1]), "user".to_string(), None, 0);
+
+        assert_eq!(user.block_user(old, &migrated_user_ids, 10), Some(latest));
+        assert_eq!(user.block_user(latest, &migrated_user_ids, 10), None);
+        assert_eq!(user.blocked_users.all(), vec![latest]);
+        assert!(user.has_blocked(old, &migrated_user_ids));
+        assert!(user.has_blocked(latest, &migrated_user_ids));
+        assert!(!user.has_blocked(other, &migrated_user_ids));
+
+        // A block still under the old id, before the user's blocks have been moved off it, is
+        // removed too, whichever id they are named by
+        for named_by in [old, latest] {
+            user.blocked_users.block(old, 20);
+            user.blocked_users.block(latest, 20);
+            assert_eq!(user.unblock_user(named_by, &migrated_user_ids, 30), vec![old, latest]);
+            assert!(!user.has_blocked(old, &migrated_user_ids));
+            assert!(user.unblock_user(named_by, &migrated_user_ids, 40).is_empty());
+        }
+        user.blocked_users.block(other, 50);
+        assert_eq!(user.unblock_user(other, &migrated_user_ids, 60), vec![other]);
     }
 
     fn init_stable_memory_map() {

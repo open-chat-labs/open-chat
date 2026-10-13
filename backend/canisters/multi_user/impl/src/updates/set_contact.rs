@@ -11,9 +11,12 @@ fn set_contact(args: Args) -> Response {
     execute_update(|state| set_contact_impl(args, state)).into()
 }
 
-fn set_contact_impl(mut args: Args, state: &mut RuntimeState) -> OCResult {
-    // A client which hasn't yet heard that the user has been migrated to a MultiUser canister names
-    // them by their old id
-    args.contact.user_id = state.data.migrated_user_ids.latest(args.contact.user_id);
-    state.with_caller_user_mut(|_, user| user_core::updates::set_contact(user, args))
+fn set_contact_impl(args: Args, state: &mut RuntimeState) -> OCResult {
+    let my_index = state.caller_user_index_or_trap();
+    let data = &mut state.data;
+    data.users
+        .with_user_mut(my_index, |user| {
+            user_core::updates::set_contact(user, args, &data.migrated_user_ids)
+        })
+        .expect("User not found")
 }

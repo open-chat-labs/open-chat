@@ -79,5 +79,19 @@ mod tests {
             HashMap::from([(Chat::Direct(user_id(4).into()), 10)])
         );
         assert!(user.favourite_chats.pinned().is_empty());
+
+        // Pins still under the old id, before the user's pins have been moved off it, are unpinned
+        // too
+        user.direct_chats.pin(user_id(2).into(), 30).unwrap();
+        user.favourite_chats.pin(Chat::Direct(user_id(2).into()), 30).unwrap();
+        for chat in [direct(2), favourite(2)] {
+            let args = multi_user_canister::unpin_chat_v2::Args { chat };
+            unpin_chat_v2(&mut user, args, &migrated_user_ids, 40).unwrap();
+        }
+        assert_eq!(
+            user.direct_chats.pinned_chats(),
+            HashMap::from([(Chat::Direct(user_id(4).into()), 10)])
+        );
+        assert!(user.favourite_chats.pinned().is_empty());
     }
 }
