@@ -4,7 +4,7 @@ use crate::{
     model::moderation::{self, ModerationAlert},
     model::reported_messages::{
         AddReportArgs, AddReportResult, AutomatedOutcome, ModerationAction, RecordOutcomeResult, build_message_to_reporter,
-        build_message_to_sender,
+        build_message_to_sender, latest_chat,
     },
     mutate_state, read_state,
     timer_job_types::{ProcessReportClassification, TimerJob},
@@ -31,7 +31,18 @@ enum ReportAction {
 
 #[update(guard = "caller_is_multi_user_canister_or_group_index", msgpack = true)]
 #[trace]
-fn c2c_report_message(args: Args) -> Response {
+fn c2c_report_message(mut args: Args) -> Response {
+    // Until the jobs replacing the ids users had before being migrated to a MultiUser canister (#9929)
+    // and moving direct chats off them (#9933) have completed everywhere, a chat can still name the
+    // sender, or the other user in a direct chat, by an old id. Remove along with the rest of the
+    // mapping of old ids to new once they have.
+    read_state(|state| {
+        let migrated_user_ids = &state.data.migrated_user_ids;
+        args.reporter = migrated_user_ids.latest(args.reporter);
+        args.message.sender = migrated_user_ids.latest(args.message.sender);
+        args.chat_id = latest_chat(args.chat_id, migrated_user_ids);
+    });
+
     match mutate_state(|state| add_report(&args, state)) {
         Ok(ReportAction::CsamAssertion(report_index)) => {
             // The reporter asserts the content is CSAM: quarantine the media in the vault

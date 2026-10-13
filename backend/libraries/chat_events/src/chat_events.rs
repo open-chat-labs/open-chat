@@ -2483,6 +2483,17 @@ impl ChatEvents {
             .migrate_user(self.main.stable_memory_prefix(), old_user_id, new_user_id)
     }
 
+    // The users who have metrics in the chat
+    pub fn user_ids_with_metrics(&self) -> BTreeSet<UserId> {
+        self.per_user_metrics.user_ids(self.main.stable_memory_prefix())
+    }
+
+    // Removes the user's metrics from the chat. `skip_their_metrics` does this for the other user in
+    // a direct chat, but only under the id they have in it now.
+    pub fn remove_user_metrics(&mut self, user_id: UserId) -> bool {
+        self.per_user_metrics.remove(self.main.stable_memory_prefix(), user_id)
+    }
+
     pub fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: F) -> usize {
         self.main.event_count_since(since, &filter)
             + self

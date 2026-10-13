@@ -149,6 +149,22 @@
         "title": "Aktivitäten Feed"
     },
     "addedBy": "{changedBy} hat {changed} zu {level} hinzugefügt",
+    "addressBook": {
+        "add": "Adresse hinzufügen",
+        "address": "Adresse",
+        "addressPlaceholder": "Geben Sie die Adresse ein",
+        "alreadySaved": "Diese Adresse ist bereits als „{name}“ gespeichert",
+        "confirmDelete": "„{name}“ aus Ihrem Adressbuch löschen?",
+        "delete": "Löschen",
+        "deleteFailed": "Leider konnten wir diese Adresse nicht löschen",
+        "empty": "Sie haben noch keine Adressen gespeichert. Gespeicherte Adressen können Sie beim Senden von Token aus Ihrer Wallet auswählen.",
+        "name": "Name",
+        "namePlaceholder": "Geben Sie einen Namen für diese Adresse ein",
+        "nameTaken": "Sie haben bereits eine Adresse unter diesem Namen gespeichert",
+        "rename": "Umbenennen",
+        "saveFailed": "Leider konnten wir diese Adresse nicht speichern",
+        "title": "Adressbuch"
+    },
     "admin": "Administrator",
     "advanced": "Fortgeschritten",
     "airdropWarning": "Um sich für den nächsten Airdrop zu qualifizieren, müssen Sie Mitglied des Kanals **{channelName}** in der Community **{communityName}** sein. [Klicken Sie hier, um beizutreten.]({url})",

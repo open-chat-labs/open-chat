@@ -149,6 +149,22 @@
         "title": "הזנת פעילות"
     },
     "addedBy": "{changedBy} הוסיף את {changed} ל-{level}",
+    "addressBook": {
+        "add": "הוספת כתובת",
+        "address": "כתובת",
+        "addressPlaceholder": "הזן את הכתובת",
+        "alreadySaved": "כתובת זו כבר שמורה בשם \"{name}\"",
+        "confirmDelete": "למחוק את \"{name}\" מפנקס הכתובות?",
+        "delete": "מחיקה",
+        "deleteFailed": "מצטערים, לא הצלחנו למחוק כתובת זו",
+        "empty": "עדיין לא שמרת כתובות. ניתן לבחור כתובות שמורות בעת שליחת טוקנים מהארנק שלך.",
+        "name": "שם",
+        "namePlaceholder": "הזן שם עבור כתובת זו",
+        "nameTaken": "כבר יש לך כתובת שמורה בשם זה",
+        "rename": "שינוי שם",
+        "saveFailed": "מצטערים, לא הצלחנו לשמור כתובת זו",
+        "title": "פנקס כתובות"
+    },
     "admin": "אדמין",
     "advanced": "מִתקַדֵם",
     "airdropWarning": "כדי להעפיל ל-Airdrop הבא, עליך להיות חבר בערוץ **{channelName}** בקהילת **{communityName}**. [לחץ כאן כדי להצטרף.]({url})",
