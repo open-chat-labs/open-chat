@@ -37,6 +37,10 @@ impl RegistryTokens {
         })
     }
 
+    pub fn burn_fees(&self) -> impl Iterator<Item = (CanisterId, u128)> + '_ {
+        self.burn_fees.iter().map(|(&ledger, &burn_fee)| (ledger, burn_fee))
+    }
+
     pub fn is_empty(&self) -> bool {
         self.fees.is_empty()
     }

@@ -49,7 +49,7 @@ impl Tokens {
                 decimals,
                 fee,
                 // A token whose ledger burns a fee isn't added, but its ledger could start burning
-                // one later, which `set_burn_fee` then records
+                // one later, which `check_for_token_updates` then records
                 burn_fee: 0,
                 logo,
                 logo_id,
@@ -93,6 +93,9 @@ impl Tokens {
                 if let Some(fee) = args.fee {
                     t.fee = fee;
                 }
+                if let Some(burn_fee) = args.burn_fee {
+                    t.burn_fee = burn_fee;
+                }
                 if let Some(one_sec_enabled) = args.one_sec_enabled {
                     t.one_sec_enabled = one_sec_enabled;
                 }
@@ -110,22 +113,6 @@ impl Tokens {
                 if t.supported_standards != supported_standards {
                     t.supported_standards = supported_standards;
                     info!(%ledger_canister_id, "Updated token standards");
-                    true
-                } else {
-                    false
-                }
-            },
-            now,
-        );
-    }
-
-    pub fn set_burn_fee(&mut self, ledger_canister_id: CanisterId, burn_fee: u128, now: TimestampMillis) {
-        self.apply_update(
-            ledger_canister_id,
-            |t| {
-                if t.burn_fee != burn_fee {
-                    t.burn_fee = burn_fee;
-                    info!(%ledger_canister_id, burn_fee, "Updated token burn fee");
                     true
                 } else {
                     false
