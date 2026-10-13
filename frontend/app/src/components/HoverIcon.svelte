@@ -27,13 +27,14 @@
 
     // Enter and Space click the icon, as they would a native button, so wrappers which handle
     // the click themselves (such as MenuIcon) respond to them too. The key stops here so that
-    // window and document listeners for Enter don't act on it a second time.
+    // window and document listeners for Enter don't act on it a second time, and holding it down
+    // clicks only once.
     function keydown(e: KeyboardEvent & { currentTarget: HTMLDivElement }) {
         if (e.target !== e.currentTarget || (e.key !== "Enter" && e.key !== " ")) return;
 
         e.preventDefault();
         e.stopPropagation();
-        if (!disabled) {
+        if (!disabled && !e.repeat) {
             e.currentTarget.click();
         }
     }
@@ -66,6 +67,10 @@
 
         &.compact {
             padding: $sp2;
+        }
+
+        &.disabled {
+            cursor: default;
         }
 
         &:not(.disabled):hover {

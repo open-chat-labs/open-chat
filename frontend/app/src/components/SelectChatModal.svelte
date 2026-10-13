@@ -284,11 +284,13 @@
 
 <section>
     <SectionHeader border={false} gap>
-        <HoverIcon>
+        <HoverIcon tabindex={-1}>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
         <h4><Translatable resourceKey={i18nKey("sendTo")} /></h4>
-        <span role="button" tabindex="0" title={$_("close")} class="close" onclick={onClose}>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <span title={$_("close")} class="close" onclick={onClose}>
             <HoverIcon>
                 <Close size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>

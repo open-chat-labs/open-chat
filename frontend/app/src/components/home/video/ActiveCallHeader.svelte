@@ -39,12 +39,8 @@
     <div class="header">
         {#if $mobileWidth}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <div
-                tabindex="0"
-                role="button"
-                class="back"
-                class:rtl={$rtlStore}
-                onclick={onClearSelection}>
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <div class="back" class:rtl={$rtlStore} onclick={onClearSelection}>
                 <HoverIcon>
                     {#if $rtlStore}
                         <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
