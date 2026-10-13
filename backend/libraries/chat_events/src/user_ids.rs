@@ -2,9 +2,7 @@ use crate::{ChatEventInternal, ChatInternal, MessageContentInternal, MessageInte
 use candid::Principal;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use types::{BotCommand, BotCommandArgValue, Chat, ChatId, ModerationReportStatus, P2PSwapStatus, SenderContext, UserId};
-
-// How a user is mentioned in text, eg. `@UserId(rrkah-fqaaa-aaaaa-aaaaq-cai)`
-pub(crate) const MENTION_PREFIX: &str = "@UserId(";
+use utils::mentions::replace_mentioned_users;
 
 impl ChatEventInternal {
     // Passes every user id in the event through `f`, replacing each with the id returned, and
@@ -189,6 +187,8 @@ impl MessageContentInternal {
                 u.optional_mentions(&mut s.caption);
             }
             MessageContentInternal::VideoCall(v) => u.keys(&mut v.participants),
+            // A shared daily puzzle result holds its caption in its JSON
+            MessageContentInternal::Custom(c) if c.kind == "daily_result" => u.mentions_in_utf8(&mut c.data),
             MessageContentInternal::Encrypted(_) | MessageContentInternal::Custom(_) => {}
         }
     }
@@ -341,33 +341,20 @@ impl<'a> UserIdUpdater<'a> {
         *chat_id = user_id.into();
     }
 
-    // The users mentioned in the text, eg. `@UserId(rrkah-fqaaa-aaaaa-aaaaq-cai)`
+    // The users mentioned in the text (see `utils::mentions`)
     pub fn mentions(&mut self, text: &mut String) {
-        if !text.contains(MENTION_PREFIX) {
-            return;
-        }
-        let mut updated = String::with_capacity(text.len());
-        let mut rest = text.as_str();
-        let mut changed = false;
-        while let Some(index) = rest.find(MENTION_PREFIX) {
-            let start = index + MENTION_PREFIX.len();
-            updated.push_str(&rest[..start]);
-            rest = &rest[start..];
-            if let Some(len) = rest.find(')')
-                && let Ok(principal) = Principal::from_text(&rest[..len])
-            {
-                let user_id = UserId::from(principal);
-                let new_user_id = (self.f)(user_id);
-                if new_user_id != user_id {
-                    updated.push_str(&new_user_id.to_string());
-                    rest = &rest[len..];
-                    changed = true;
-                }
-            }
-        }
-        if changed {
-            updated.push_str(rest);
+        if let Some(updated) = replace_mentioned_users(text, &mut *self.f) {
             *text = updated;
+            self.changed = true;
+        }
+    }
+
+    // The users mentioned in text held as UTF-8, eg. a caption in a custom message's JSON
+    pub fn mentions_in_utf8(&mut self, bytes: &mut Vec<u8>) {
+        if let Ok(text) = std::str::from_utf8(bytes)
+            && let Some(updated) = replace_mentioned_users(text, &mut *self.f)
+        {
+            *bytes = updated.into_bytes();
             self.changed = true;
         }
     }
@@ -780,6 +767,34 @@ mod tests {
         };
         assert_eq!(e.new_description, mention(user_id(11)));
         assert_eq!(e.previous_description, mention(user_id(12)));
+    }
+
+    #[test]
+    fn mentions_in_a_shared_daily_puzzle_results_caption_are_replaced() {
+        let json = |user: UserId, mentioned: UserId| {
+            format!(r#"{{"v":1,"userId":"{user}","caption":"well done {}"}}"#, mention(mentioned)).into_bytes()
+        };
+        let content = |data: Vec<u8>, kind: &str| {
+            MessageContentInternal::Custom(crate::CustomContentInternal {
+                kind: kind.to_string(),
+                data,
+            })
+        };
+
+        // The result's user id is left as it was, since the puzzle's results are recorded under it
+        let (changed, updated) = update(message(user_id(1), content(json(user_id(1), user_id(2)), "daily_result")));
+        assert!(changed);
+        let MessageContentInternal::Custom(c) = updated.content else {
+            panic!();
+        };
+        assert_eq!(c.data, json(user_id(1), user_id(12)));
+
+        // Other kinds of custom content are left alone
+        let (_, updated) = update(message(user_id(3), content(json(user_id(1), user_id(2)), "other")));
+        let MessageContentInternal::Custom(c) = updated.content else {
+            panic!();
+        };
+        assert_eq!(c.data, json(user_id(1), user_id(2)));
     }
 
     #[test]

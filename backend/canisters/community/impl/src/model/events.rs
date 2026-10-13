@@ -434,3 +434,61 @@ impl From<CommunityMemberJoinedInternal> for CommunityMemberJoined {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+    use std::collections::HashMap;
+
+    fn user_id(i: u8) -> UserId {
+        Principal::from_slice(&[i]).into()
+    }
+
+    // Users 1 and 2 have been migrated to 11 and 12
+    fn latest(user_id: UserId) -> UserId {
+        match user_id.as_slice() {
+            [1] => self::user_id(11),
+            [2] => self::user_id(12),
+            _ => user_id,
+        }
+    }
+
+    #[test]
+    fn ids_and_mentions_in_a_description_change_are_replaced() {
+        let mut event = CommunityEventInternal::DescriptionChanged(Box::new(GroupDescriptionChanged {
+            new_description: format!("@UserId({})", user_id(1)),
+            previous_description: format!("@UserId({})", user_id(3)),
+            changed_by: user_id(2),
+        }));
+
+        assert!(event.update_user_ids(&mut latest));
+
+        let CommunityEventInternal::DescriptionChanged(e) = event else {
+            panic!();
+        };
+        assert_eq!(e.new_description, format!("@UserId({})", user_id(11)));
+        assert_eq!(e.previous_description, format!("@UserId({})", user_id(3)));
+        assert_eq!(e.changed_by, user_id(12));
+    }
+
+    #[test]
+    fn both_sides_of_referrals_are_replaced() {
+        let mut event = CommunityEventInternal::MembersRemoved(Box::new(CommunityMembersRemoved {
+            user_ids: vec![user_id(1), user_id(3)],
+            removed_by: user_id(4),
+            referred_by: HashMap::from([(user_id(1), user_id(2)), (user_id(3), user_id(4))]),
+        }));
+
+        assert!(event.update_user_ids(&mut latest));
+
+        let CommunityEventInternal::MembersRemoved(e) = event else {
+            panic!();
+        };
+        assert_eq!(e.user_ids, vec![user_id(11), user_id(3)]);
+        assert_eq!(
+            e.referred_by,
+            HashMap::from([(user_id(11), user_id(12)), (user_id(3), user_id(4))])
+        );
+    }
+}

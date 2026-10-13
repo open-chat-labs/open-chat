@@ -4,7 +4,6 @@ use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::per_user_metrics::PerUserMetrics;
 use crate::search_index::SearchIndex;
-use crate::user_ids::MENTION_PREFIX;
 use crate::*;
 use candid::Principal;
 use constants::{ONE_MB, OPENCHAT_BOT_USER_ID};
@@ -34,6 +33,7 @@ use types::{
     UserIdAndPrincipal, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation,
     is_default,
 };
+use utils::mentions::MENTION_PREFIX;
 use utils::migrated_user_ids::MigratedUserIds;
 
 // The patchable fields of a moderation-report card; each is applied when present so that
@@ -4128,23 +4128,35 @@ mod tests {
         assert_eq!(events.recently_updated_events(0, 1000), recently_updated);
     }
 
-    #[test]
-    fn search_finds_a_mention_under_the_users_latest_id() {
+    // `on_heap`: whether the message is still in the search index's legacy heap map
+    // `sender_migrated`: whether the message's sender is the migrated user too
+    #[test_case::test_case(false, false)]
+    #[test_case::test_case(false, true)]
+    #[test_case::test_case(true, false)]
+    #[test_case::test_case(true, true)]
+    fn search_finds_a_mention_under_the_users_latest_id(on_heap: bool, sender_migrated: bool) {
         let (mut events, _, _) = setup_events();
-        let sender: UserId = Principal::from_slice(&[2]).into();
         let old_user_id: UserId = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap().into();
         let new_user_id = UserId::new_indexed(Principal::from_text("yaxqu-oqaaa-aaaaf-br7ya-cai").unwrap(), 1);
-        let message_index = push_message(&mut events, sender, 100, text_content(&format!("hi @UserId({old_user_id})")));
-        let search = |events: &ChatEvents, term: &str| -> Vec<MessageIndex> {
+        let sender = if sender_migrated { old_user_id } else { Principal::from_slice(&[2]).into() };
+        let content = text_content(&format!("hi @UserId({old_user_id})"));
+        let message_index = push_message(&mut events, sender, 100, content.clone());
+        if on_heap {
+            let prefix = events.main.stable_memory_prefix().clone();
             events
-                .search_messages(MessageIndex::default(), term, &HashSet::new(), 10)
+                .search_index
+                .move_to_heap(&prefix, message_index, sender, Document::from(&content));
+        }
+        let search = |events: &ChatEvents, term: &str, users: &[UserId]| -> Vec<MessageIndex> {
+            events
+                .search_messages(MessageIndex::default(), term, &users.iter().copied().collect(), 10)
                 .into_iter()
                 .map(|m| m.message_index)
                 .collect()
         };
         let old_term = old_user_id.to_string()[..5].to_string();
         let new_term = new_user_id.to_string()[..5].to_string();
-        assert_eq!(search(&events, &old_term), vec![message_index]);
+        assert_eq!(search(&events, &old_term, &[]), vec![message_index]);
 
         let mut after = None;
         while let Some(context) =
@@ -4160,8 +4172,13 @@ mod tests {
             panic!();
         };
         assert_eq!(text.text, format!("hi @UserId({new_user_id})"));
-        assert_eq!(search(&events, &new_term), vec![message_index]);
-        assert!(search(&events, &old_term).is_empty());
+        assert_eq!(search(&events, &new_term, &[]), vec![message_index]);
+        assert!(search(&events, &old_term, &[]).is_empty());
+        let latest_sender = if sender_migrated { new_user_id } else { sender };
+        assert_eq!(search(&events, &new_term, &[latest_sender]), vec![message_index]);
+        if sender_migrated {
+            assert!(search(&events, "", &[old_user_id]).is_empty());
+        }
     }
 
     #[test]
