@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Replace migrated users' old ids with their latest in reported messages, so that sanctions reach the sender ([#9941](https://github.com/open-chat-labs/open-chat/pull/9941))
+- Replace migrated users' old ids with their latest in reported messages, including new ones, so that sanctions reach the sender ([#9941](https://github.com/open-chat-labs/open-chat/pull/9941))
 
 ## [[2.0.2131](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2131-user_index)] - 2026-10-12
 

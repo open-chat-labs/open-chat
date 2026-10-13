@@ -598,15 +598,11 @@ impl ReportedMessages {
             *user_id = latest;
             replaced
         };
-        let latest_chat = |chat: Chat| match chat {
-            Chat::Direct(chat_id) => Chat::Direct(migrated_user_ids.latest(chat_id.into()).into()),
-            chat => chat,
-        };
 
         for (index, message) in self.messages.iter_mut().enumerate() {
             let mut replaced = false;
 
-            let chat_id = latest_chat(message.chat_id);
+            let chat_id = latest_chat(message.chat_id, migrated_user_ids);
             if chat_id != message.chat_id {
                 message.chat_id = chat_id;
                 replaced = true;
@@ -651,7 +647,7 @@ impl ReportedMessages {
         let mut lookup = HashMap::with_capacity(self.lookup.len());
         let mut replaced_keys = Vec::new();
         for ((chat, thread_root_message_index, message_index), index) in self.lookup.drain() {
-            let latest = latest_chat(chat);
+            let latest = latest_chat(chat, migrated_user_ids);
             if latest == chat {
                 lookup.insert((chat, thread_root_message_index, message_index), index);
             } else {
@@ -682,6 +678,15 @@ impl ReportedMessages {
         self.recent_reports_per_reporter = recent_reports_per_reporter;
 
         result
+    }
+}
+
+// The chat, with the other user in a direct chat named by their latest id rather than one they had
+// before being migrated to a MultiUser canister
+pub fn latest_chat(chat: Chat, migrated_user_ids: &MigratedUserIds) -> Chat {
+    match chat {
+        Chat::Direct(chat_id) => Chat::Direct(migrated_user_ids.latest(chat_id.into()).into()),
+        chat => chat,
     }
 }
 

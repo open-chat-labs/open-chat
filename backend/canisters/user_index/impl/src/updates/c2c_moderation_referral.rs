@@ -1,6 +1,6 @@
 use crate::guards::caller_is_group_index;
 use crate::model::moderation::{self, ModerationAlert};
-use crate::model::reported_messages::{AddProactiveDetectionArgs, ModerationAction};
+use crate::model::reported_messages::{AddProactiveDetectionArgs, ModerationAction, latest_chat};
 use crate::{RuntimeState, mutate_state};
 use canister_api_macros::update;
 use canister_tracing_macros::trace;
@@ -19,7 +19,13 @@ fn c2c_moderation_referral(args: Args) -> Response {
     Response::Success
 }
 
-fn c2c_moderation_referral_impl(args: Args, state: &mut RuntimeState) {
+fn c2c_moderation_referral_impl(mut args: Args, state: &mut RuntimeState) {
+    // Until the job replacing the ids users had before being migrated to a MultiUser canister (#9929)
+    // has completed everywhere, a chat can still name the sender by an old id. Remove along with the
+    // rest of the mapping of old ids to new once it has.
+    args.sender = state.data.migrated_user_ids.latest(args.sender);
+    args.chat_id = latest_chat(args.chat_id, &state.data.migrated_user_ids);
+
     let now = state.env.now();
     let Some(categories) = ModerationCategories::from_bits(args.flags) else {
         return;

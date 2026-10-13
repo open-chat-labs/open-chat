@@ -886,12 +886,14 @@ impl UserMap {
 
     // One-off: a report made after its sender was migrated to a MultiUser canister, but naming them
     // by their old id, wasn't recorded against them, since no user has that id. Records it, unless it
-    // already is. Returns whether it was recorded.
+    // already is, keeping the user's reports in the order they were made. Returns whether it was
+    // recorded.
     pub fn add_reported_message_if_missing(&mut self, user_id: UserId, report_index: u64) -> bool {
         if let Some(user) = self.users.get_mut(&user_id)
             && !user.reported_messages.contains(&report_index)
         {
-            user.reported_messages.push(report_index);
+            let position = user.reported_messages.partition_point(|i| *i < report_index);
+            user.reported_messages.insert(position, report_index);
             true
         } else {
             false
@@ -1369,12 +1371,15 @@ mod tests {
             None,
         );
         user_map.push_reported_message(user_id, 1);
+        user_map.push_reported_message(user_id, 4);
 
         assert!(!user_map.add_reported_message_if_missing(user_id, 1));
+        // An earlier report goes in order, since the user's reports are walked latest first
         assert!(user_map.add_reported_message_if_missing(user_id, 2));
         assert!(!user_map.add_reported_message_if_missing(user_id, 2));
+        assert!(user_map.add_reported_message_if_missing(user_id, 5));
         assert!(!user_map.add_reported_message_if_missing(Principal::from_slice(&[3, 2]).into(), 3));
 
-        assert_eq!(user_map.get_by_user_id(&user_id).unwrap().reported_messages, vec![1, 2]);
+        assert_eq!(user_map.get_by_user_id(&user_id).unwrap().reported_messages, vec![1, 2, 4, 5]);
     }
 }
