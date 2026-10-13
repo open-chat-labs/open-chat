@@ -99,54 +99,94 @@ impl CommunityMembers {
         user_id: UserId,
         principal: Principal,
         user_type: UserType,
-        mut referred_by: Option<UserId>,
+        referred_by: Option<UserId>,
         now: TimestampMillis,
     ) -> AddResult {
-        if self.blocked.contains(&user_id) {
-            AddResult::Blocked
-        } else if let Vacant(e) = self.members_and_channels.entry(user_id) {
-            e.insert(Vec::new());
+        let mut members = MembersToAdd::default();
+        members.push(user_id, principal, user_type, referred_by);
+        let (_, result) = self.add_many(members, now).pop().unwrap();
+        result
+    }
 
-            if referred_by == Some(user_id) {
-                referred_by = None;
-            }
+    // Adds the members in the order they were pushed, then writes those added to stable memory, along
+    // with their principals, together, so that each node of the map is written once rather than once
+    // per member. Returns each one's result.
+    pub fn add_many(&mut self, members: MembersToAdd, now: TimestampMillis) -> Vec<(UserId, AddResult)> {
+        let mut results = Vec::with_capacity(members.0.len());
+        let mut referrals = Vec::new();
+        for MemberToAdd {
+            user_id,
+            principal,
+            user_type,
+            mut referred_by,
+        } in members.0
+        {
+            let result = if self.blocked.contains(&user_id) {
+                AddResult::Blocked
+            } else if let Vacant(e) = self.members_and_channels.entry(user_id) {
+                e.insert(Vec::new());
 
-            let member = CommunityMemberInternal {
-                user_id,
-                principal,
-                date_added: now,
-                role: CommunityRole::Member,
-                suspended: Timestamped::default(),
-                rules_accepted: None,
-                user_type,
-                display_name: Timestamped::default(),
-                referred_by,
-                referrals: BTreeSet::new(),
-                referrals_removed: BTreeSet::new(),
-                lapsed: Timestamped::default(),
+                if referred_by == Some(user_id) {
+                    referred_by = None;
+                }
+                // A referrer who isn't a member by now isn't updated, as when members are added one at
+                // a time
+                if let Some(referrer) = referred_by
+                    && self.members_and_channels.contains_key(&referrer)
+                {
+                    referrals.push((referrer, user_id));
+                }
+
+                let member = CommunityMemberInternal {
+                    user_id,
+                    principal,
+                    date_added: now,
+                    role: CommunityRole::Member,
+                    suspended: Timestamped::default(),
+                    rules_accepted: None,
+                    user_type,
+                    display_name: Timestamped::default(),
+                    referred_by,
+                    referrals: BTreeSet::new(),
+                    referrals_removed: BTreeSet::new(),
+                    lapsed: Timestamped::default(),
+                };
+                if user_type.is_bot() {
+                    self.bots.insert(user_id, user_type);
+                }
+                self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
+                AddResult::Success(Box::new(member))
+            } else {
+                AddResult::AlreadyInCommunity
             };
-            self.add_user_id(principal, user_id);
-            self.members_map.insert(member.user_id, member.clone());
-            if user_type.is_bot() {
-                self.bots.insert(user_id, user_type);
-            }
-            self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
+            results.push((user_id, result));
+        }
 
-            if let Some(referrer) = referred_by
-                && matches!(
-                    self.update_member(&referrer, |m| {
-                        m.add_referral(user_id);
-                        true
-                    }),
-                    Some(true)
-                )
-            {
+        let added: Vec<_> = results
+            .iter()
+            .filter_map(|(_, result)| match result {
+                AddResult::Success(member) => Some(member.as_ref().clone()),
+                _ => None,
+            })
+            .collect();
+        self.principal_to_user_id_map
+            .insert_many(added.iter().map(|m| (m.principal, m.user_id)));
+        self.members_map.insert_many(added);
+
+        // The referrers are updated once the members have been written, since they may be among them
+        for (referrer, user_id) in referrals {
+            if matches!(
+                self.update_member(&referrer, |m| {
+                    m.add_referral(user_id);
+                    true
+                }),
+                Some(true)
+            ) {
                 self.members_with_referrals.insert(referrer);
             }
-            AddResult::Success(Box::new(member))
-        } else {
-            AddResult::AlreadyInCommunity
         }
+
+        results
     }
 
     pub fn add_user_id(&mut self, principal: Principal, user_id: UserId) {
@@ -731,17 +771,27 @@ impl CommunityMembers {
     }
 
     pub fn update_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) {
-        if matches!(
-            self.update_member(&user_id, |m| {
-                if lapsed {
-                    // Owners can't lapse
-                    !m.is_owner() && m.set_lapsed(true, now)
-                } else {
-                    m.set_lapsed(false, now)
-                }
-            }),
-            Some(true)
-        ) {
+        self.update_lapsed_many([user_id], lapsed, now);
+    }
+
+    // As `update_lapsed` for each of the users, writing the members updated to stable memory together
+    // (see `update_many`)
+    pub fn update_lapsed_many(&mut self, user_ids: impl IntoIterator<Item = UserId>, lapsed: bool, now: TimestampMillis) {
+        let mut updated = Vec::new();
+        self.update_many(user_ids, |m| {
+            let changed = if lapsed {
+                // Owners can't lapse
+                !m.is_owner() && m.set_lapsed(true, now)
+            } else {
+                m.set_lapsed(false, now)
+            };
+            if changed {
+                updated.push(m.user_id);
+            }
+            changed
+        });
+
+        for user_id in updated {
             if lapsed {
                 self.lapsed.insert(user_id);
             } else {
@@ -771,37 +821,40 @@ impl CommunityMembers {
     }
 
     // Unlapses, in order of user id, the members who lapsed before `start_unlapsing` was called,
-    // until `keep_going` returns false or there are none left. Each is written to stable memory, so
-    // a great many are unlapsed a batch at a time (see the `unlapse_members` job). Members who have
-    // lapsed since, under an access gate set since, are left lapsed. Returns those unlapsed.
+    // until `keep_going` returns false or there are none left. Each is read from stable memory, so a
+    // great many are unlapsed a batch at a time (see the `unlapse_members` job), and those unlapsed
+    // are written back together once it stops. Members who have lapsed since, under an access gate
+    // set since, are left lapsed. Returns those unlapsed.
     pub fn unlapse_while(&mut self, now: TimestampMillis, mut keep_going: impl FnMut() -> bool) -> Vec<UserId> {
         let Some(Unlapsing { before, mut after }) = self.unlapsing else {
             return Vec::new();
         };
         self.prune_member_updates(now);
         let mut unlapsed = Vec::new();
+        let mut members_unlapsed = Vec::new();
         loop {
             if !keep_going() {
                 self.unlapsing = Some(Unlapsing { before, after });
-                return unlapsed;
+                break;
             }
             let start = after.map_or(Bound::Unbounded, Bound::Excluded);
             let Some(user_id) = self.lapsed.range((start, Bound::Unbounded)).next().copied() else {
                 self.unlapsing = None;
-                return unlapsed;
+                break;
             };
             after = Some(user_id);
 
-            let mut not_lapsed = false;
-            let updated = self.update_member(&user_id, |m| {
-                not_lapsed = !m.lapsed.value;
-                m.lapsed.timestamp <= before && m.set_lapsed(false, now)
-            });
+            let mut member = self.members_map.get(&user_id);
+            let not_lapsed = member.as_ref().is_some_and(|m| !m.lapsed.value);
+            let updated = member
+                .as_mut()
+                .map(|m| m.lapsed.timestamp <= before && m.set_lapsed(false, now));
             match updated {
                 Some(true) => {
                     self.lapsed.remove(&user_id);
                     self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
                     unlapsed.push(user_id);
+                    members_unlapsed.extend(member);
                 }
                 // A member whose record says they aren't lapsed, or who isn't a member, shouldn't be
                 // in the set (eg. if the members were imported from a group which was unlapsing them)
@@ -814,6 +867,8 @@ impl CommunityMembers {
                 Some(false) => {}
             }
         }
+        self.members_map.insert_many(members_unlapsed);
+        unlapsed
     }
 
     // A member who has been migrated to a new user id may now come before the cursor, so the lapsed
@@ -857,6 +912,26 @@ impl CommunityMembers {
             self.members_map.insert(member.user_id, member);
         }
         Some(updated)
+    }
+
+    // Applies `update_fn` to each of the members in turn, as `update_member` does, then writes back
+    // those it updated together, so that each node of the stable memory map is written once rather
+    // than once per member. A member given more than once is updated from where it last left them.
+    fn update_many<F: FnMut(&mut CommunityMemberInternal) -> bool>(
+        &mut self,
+        user_ids: impl IntoIterator<Item = UserId>,
+        mut update_fn: F,
+    ) {
+        let mut updated: BTreeMap<UserId, CommunityMemberInternal> = BTreeMap::new();
+        for user_id in user_ids {
+            let Some(mut member) = updated.get(&user_id).cloned().or_else(|| self.members_map.get(&user_id)) else {
+                continue;
+            };
+            if update_fn(&mut member) {
+                updated.insert(user_id, member);
+            }
+        }
+        self.members_map.insert_many(updated.into_values());
     }
 
     // Whether any update made after `since` has been pruned, so that `iter_latest_updates(since)`
@@ -1086,6 +1161,37 @@ impl Member for CommunityMemberInternal {
         } else {
             false
         }
+    }
+}
+
+// The members to be added to the community together (see `CommunityMembers::add_many`)
+#[derive(Default)]
+pub struct MembersToAdd(Vec<MemberToAdd>);
+
+struct MemberToAdd {
+    user_id: UserId,
+    principal: Principal,
+    user_type: UserType,
+    referred_by: Option<UserId>,
+}
+
+impl MembersToAdd {
+    pub fn push(&mut self, user_id: UserId, principal: Principal, user_type: UserType, referred_by: Option<UserId>) {
+        self.0.push(MemberToAdd {
+            user_id,
+            principal,
+            user_type,
+            referred_by,
+        });
+    }
+
+    pub fn contains(&self, user_id: &UserId) -> bool {
+        self.0.iter().any(|m| m.user_id == *user_id)
+    }
+
+    #[cfg(test)]
+    pub fn user_ids(&self) -> Vec<UserId> {
+        self.0.iter().map(|m| m.user_id).collect()
     }
 }
 
@@ -1480,6 +1586,172 @@ mod tests {
         members.start_unlapsing(30);
         assert_eq!(members.unlapse_while(30, || true), user_ids([3]));
         assert!(members.lapsed().is_empty());
+    }
+
+    #[test]
+    fn add_many_matches_adding_one_at_a_time() {
+        // User 3 has been invited, so their principal is already mapped, and user 5 is blocked
+        let setup = || {
+            let mut members = members_for_page_tests(1);
+            members.add_user_id(principal_for(long_user_id(&[3])), long_user_id(&[3]));
+            members.block(long_user_id(&[5]), 1);
+            members
+        };
+        // Of different lengths, so that the order of the user ids differs from that of their keys, as
+        // does the order of the principals. Of the referrers, user 1 is already a member, user 9,9 is
+        // added before the member they referred, user 7,7,7 after, and user 7,7,7 refers themselves.
+        let members_to_add = [
+            (&[9, 9][..], Some(&[1][..])),
+            (&[3], Some(&[7, 7, 7])),
+            (&[5], None),
+            (&[2], Some(&[9, 9])),
+            (&[9, 9], None),
+            (&[7, 7, 7], Some(&[7, 7, 7])),
+        ]
+        .map(|(user_id, referred_by)| (long_user_id(user_id), referred_by.map(long_user_id)));
+        let user_type = |user_id: UserId| if user_id == long_user_id(&[2]) { UserType::BotV2 } else { UserType::User };
+
+        let mut one_at_a_time = setup();
+        let results: Vec<_> = members_to_add
+            .iter()
+            .map(|(u, r)| {
+                (
+                    *u,
+                    result_name(&one_at_a_time.add(*u, principal_for(*u), user_type(*u), *r, 10)),
+                )
+            })
+            .collect();
+        let expected = stored_state(&one_at_a_time);
+
+        let mut together = setup();
+        let mut to_add = MembersToAdd::default();
+        for (user_id, referred_by) in members_to_add {
+            to_add.push(user_id, principal_for(user_id), user_type(user_id), referred_by);
+        }
+        let results_together: Vec<_> = together
+            .add_many(to_add, 10)
+            .iter()
+            .map(|(user_id, result)| (*user_id, result_name(result)))
+            .collect();
+
+        assert_eq!(results_together, results);
+        assert_eq!(stored_state(&together), expected);
+        assert_eq!(together.len(), 5);
+        assert_eq!(
+            together.lookup_user_id(principal_for(long_user_id(&[7, 7, 7]))),
+            Some(long_user_id(&[7, 7, 7]))
+        );
+        let referrals = |user_id| together.get_by_user_id(&long_user_id(user_id)).unwrap().referrals;
+        assert_eq!(referrals(&[1]), BTreeSet::from([long_user_id(&[9, 9])]));
+        assert_eq!(referrals(&[9, 9]), BTreeSet::from([long_user_id(&[2])]));
+        assert!(referrals(&[7, 7, 7]).is_empty());
+        together.check_invariants();
+    }
+
+    #[test]
+    fn update_lapsed_many_matches_updating_one_at_a_time() {
+        // User 1 is the owner, so can't lapse, user 3 is given twice, and user 4 isn't a member
+        let user_ids = [&[9, 9][..], &[1], &[3], &[2, 1], &[3], &[4]].map(long_user_id);
+        let setup = || {
+            let mut members = members_for_page_tests(1);
+            for user_id in [&[2, 1][..], &[3], &[9, 9]].map(long_user_id) {
+                members.add(user_id, principal_for(user_id), UserType::User, None, 1);
+            }
+            members
+        };
+
+        let mut one_at_a_time = setup();
+        for user_id in user_ids {
+            one_at_a_time.update_lapsed(user_id, true, 10);
+        }
+        one_at_a_time.update_lapsed(long_user_id(&[3]), false, 11);
+        let expected = stored_state(&one_at_a_time);
+
+        let mut together = setup();
+        together.update_lapsed_many(user_ids, true, 10);
+        together.update_lapsed_many([long_user_id(&[3])], false, 11);
+
+        assert_eq!(stored_state(&together), expected);
+        assert_eq!(together.lapsed().len(), 2);
+        together.check_invariants();
+    }
+
+    #[test]
+    fn members_unlapsed_together_match_those_updated_one_at_a_time() {
+        let lapsed = [&[2, 1][..], &[3], &[9, 9], &[4], &[2]].map(long_user_id);
+        let setup = || {
+            let mut members = members_for_page_tests(1);
+            for user_id in lapsed {
+                members.add(user_id, principal_for(user_id), UserType::User, None, 1);
+                members.update_lapsed(user_id, true, 2);
+            }
+            members
+        };
+        // In order of user id, which is by length first
+        let first_four = [&[2][..], &[3], &[4], &[2, 1]].map(long_user_id);
+
+        // Each member unlapsed is written as when updated on their own
+        let mut one_at_a_time = setup();
+        for user_id in first_four {
+            one_at_a_time.update_member(&user_id, |m| m.set_lapsed(false, 10));
+        }
+        let expected = one_at_a_time.members_map.all_entries();
+
+        let mut together = setup();
+        together.start_unlapsing(5);
+        let mut asked = 0;
+        let unlapsed = together.unlapse_while(10, || {
+            asked += 1;
+            asked <= 4
+        });
+
+        assert_eq!(unlapsed, first_four.to_vec());
+        assert_eq!(together.members_map.all_entries(), expected);
+        assert_eq!(
+            together.lapsed().iter().copied().collect::<Vec<_>>(),
+            vec![long_user_id(&[9, 9])]
+        );
+        together.check_invariants();
+    }
+
+    // What's held in stable memory for each member and principal, along with what's held on the heap
+    fn stored_state(members: &CommunityMembers) -> impl PartialEq + std::fmt::Debug + use<> {
+        use stable_memory_map::{KeyPrefix, PrincipalKeyPrefix, with_map};
+
+        let prefix = PrincipalKeyPrefix::new_for_principal_to_user_id_map();
+        let principals: Vec<_> = with_map(|m| {
+            m.range(prefix.create_key(&Principal::from_slice(&[]))..)
+                .map(|(k, v)| (k.as_ref().to_vec(), v))
+                .collect()
+        });
+        (
+            members.members_map.all_entries(),
+            principals,
+            members.principal_to_user_id_map.len(),
+            members.members_and_channels.clone(),
+            members.bots.clone(),
+            members.lapsed.clone(),
+            members.members_with_referrals.clone(),
+            members.updates.clone(),
+        )
+    }
+
+    fn result_name(result: &AddResult) -> &'static str {
+        match result {
+            AddResult::Success(_) => "Success",
+            AddResult::AlreadyInCommunity => "AlreadyInCommunity",
+            AddResult::Blocked => "Blocked",
+        }
+    }
+
+    fn long_user_id(bytes: &[u8]) -> UserId {
+        Principal::from_slice(bytes).into()
+    }
+
+    // Each a different length to the user id, and in a different order
+    fn principal_for(user_id: UserId) -> Principal {
+        let bytes = user_id.as_slice();
+        Principal::from_slice(&vec![255 - bytes[0]; 4 - bytes.len()])
     }
 
     // Holds users 1 to `count`, of whom user 1 is the owner
