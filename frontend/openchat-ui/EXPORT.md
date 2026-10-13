@@ -61,15 +61,19 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **Field** — from source hash `5b2c7160`.
 - **FileMessage** — from source hash `1e982d63`.
 - **Icon** — from source hash `88fc81a7`.
+- **IconButton** — from source hash `f00be3d6`.
 - **LinkPreview** — from source hash `ebdc8a5b`.
 - **ListSectionLabel** — from source hash `0ec0eea5`.
+- **MediaMessage** — from source hash `67e8474e`.
 - **Menu** — from source hash `fd3b9a33`.
 - **MenuItem** — from source hash `81252d62`.
 - **PageHeader** — from source hash `5a474f84`.
 - **PanelCover** — from source hash `8d024aca`.
 - **PanelNavRow** — from source hash `f29bf4af`.
 - **Pill** — from source hash `594a3b26`.
+- **PollMessage** — from source hash `19377bd9`.
 - **PrizeMessage** — from source hash `44eff81b`.
+- **ProgressTimeline** — from source hash `90f18732`.
 - **ProposalMessage** — from source hash `e4139d49`.
 - **QuickAmountChips** — from source hash `a622f26e`.
 - **RequirementChip** — from source hash `3ea36e0b`.
@@ -87,6 +91,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **TextArea** — from source hash `6aad1311`.
 - **ThresholdBar** — from source hash `3a0c0b95`.
 - **TileButtons** — from source hash `58a09cd3`.
+- **TimedToggle** — from source hash `3ee63b57`.
 - **Toggle** — from source hash `4b90cec2`.
 - **TokenAvatar** — from source hash `362ee2f9`.
 - **TokenPicker** — from source hash `8699ab5d`.
@@ -94,7 +99,10 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **TransactionRow** — from source hash `235ffaf2`.
 - **TransferMessage** — from source hash `06196d3d`.
 - **TypingIndicator** — from source hash `e4d33efe`.
+- **UndoToast** — from source hash `d1ec11e9`.
 - **UnreadDivider** — from source hash `d4f40e6e`.
+- **UserChip** — from source hash `348ce6b7`.
+- **VoiceMessage** — from source hash `e210f6a8`.
 - **Waveform** — from source hash `d43e3c8e`.
 
 ## Known gaps

@@ -58,6 +58,7 @@ export const samples: Record<string, Record<string, unknown>> = {
   TileButtons: { tiles: ['video', 'mute', 'search'] },
   TypingIndicator: { names: ['Danielle', 'Priya'], colors: ['violet', 'teal'] },
   ComposerBar: { typingNames: ['Danielle', 'Priya'] },
+  PollMessage: { options: [{ label: 'Tuesday evening', votes: 12 }, { label: 'Wednesday lunch', votes: 31 }, { label: 'Thursday evening', votes: 7 }] },
   SegmentedTabs: { labels: ['All', 'Direct', 'Groups', 'Unread'] },
   PrizeMessage: { token: { symbol: 'ICP', mark: '\u221E', gradient: 'linear-gradient(140deg,#ff5f9e,#6a2bff)', edge: '#7a2f8f', edge2: '#5c2370' } },
   SwapOffer: {

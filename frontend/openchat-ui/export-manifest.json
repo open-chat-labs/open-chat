@@ -182,8 +182,7 @@
       "sourceHash": "f00be3d6",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/IconButton.svelte",
-        "src/lib/components/IconButton.logic.js"
+        "src/lib/components/IconButton.svelte"
       ],
       "group": "library"
     },
@@ -275,8 +274,7 @@
       "sourceHash": "90f18732",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/ProgressTimeline.svelte",
-        "src/lib/components/ProgressTimeline.logic.js"
+        "src/lib/components/ProgressTimeline.svelte"
       ],
       "group": "library"
     },
@@ -376,8 +374,7 @@
       "sourceHash": "3ee63b57",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/TimedToggle.svelte",
-        "src/lib/components/TimedToggle.logic.js"
+        "src/lib/components/TimedToggle.svelte"
       ],
       "group": "library"
     },
@@ -431,8 +428,7 @@
       "sourceHash": "d1ec11e9",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/UndoToast.svelte",
-        "src/lib/components/UndoToast.logic.js"
+        "src/lib/components/UndoToast.svelte"
       ],
       "group": "library"
     },
@@ -450,8 +446,7 @@
       "sourceHash": "348ce6b7",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/UserChip.svelte",
-        "src/lib/components/UserChip.logic.js"
+        "src/lib/components/UserChip.svelte"
       ],
       "group": "library"
     },
@@ -461,8 +456,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/VoiceMessage.svelte",
-        "src/lib/components/VoiceMessage.logic.js"
+        "src/lib/components/VoiceMessage.svelte"
       ]
     },
     "ChatPicker": {
@@ -863,8 +857,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/MediaMessage.svelte",
-        "src/lib/components/MediaMessage.logic.js"
+        "src/lib/components/MediaMessage.svelte"
       ]
     },
     "MemeFighterDialog": {
@@ -943,8 +936,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/PollMessage.svelte",
-        "src/lib/components/PollMessage.logic.js"
+        "src/lib/components/PollMessage.svelte"
       ]
     },
     "PrizeBuilderDialog": {
