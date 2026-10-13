@@ -49,7 +49,7 @@
     import AccountSelector from "./AccountSelector.svelte";
     import Scanner from "./Scanner.svelte";
     import SuccessIcon from "./SuccessIcon.svelte";
-    import type { TokenState } from "./walletState.svelte";
+    import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
 
     interface Props {
         tokenState: TokenState;

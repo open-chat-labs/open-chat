@@ -21,7 +21,7 @@
     import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TokenInput from "./TokenInput.svelte";
     import TransferFeesMessage from "./TransferFeesMessage.svelte";
-    import { TokenState } from "./wallet/walletState.svelte";
+    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
 
     interface Props {
         ledger: string;

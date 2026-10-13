@@ -8,7 +8,7 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import TokenSelector from "./wallet/TokenSelector.svelte";
-    import { TokenState } from "./wallet/walletState.svelte";
+    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
     import { getProxyAdjustedBlobUrl } from "../../utils/media";
 
     const client = getContext<OpenChat>("client");

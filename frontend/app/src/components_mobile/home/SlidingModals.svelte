@@ -95,7 +95,7 @@
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import UserInformation from "./user_profile/UserInformation.svelte";
     import ActiveCallParticipants from "./video/ActiveCallParticipants.svelte";
-    import type { TokenState } from "./wallet/walletState.svelte";
+    import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
     /**
      * It is tempting to think that this can completely replace the right panel on mobile but it's not quite so simple.
      * It can replace everything _that is not represented by it's own route_. That is because at the moment

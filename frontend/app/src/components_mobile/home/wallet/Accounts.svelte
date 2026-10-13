@@ -11,7 +11,7 @@
     import Translatable from "@shared_components/Translatable.svelte";
     import RestrictedFeature from "../profile/RestrictedFeature.svelte";
     import WalletToken from "./WalletToken.svelte";
-    import type { ConversionToken } from "./walletState.svelte";
+    import type { ConversionToken } from "@shared_components/home/wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
 

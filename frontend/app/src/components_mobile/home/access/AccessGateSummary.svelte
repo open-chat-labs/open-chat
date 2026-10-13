@@ -28,7 +28,7 @@
     import Lifetime from "svelte-material-icons/DiamondStone.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import AccessGateText from "../access_gates/AccessGateText.svelte";
-    import { TokenState } from "../wallet/walletState.svelte";
+    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
     import AccessGateBox from "./AccessGateBox.svelte";
 
     const client = getContext<OpenChat>("client");

@@ -29,7 +29,7 @@
     import TokenInput from "../TokenInput.svelte";
     import TransferFeesMessage from "../TransferFeesMessage.svelte";
     import SuccessIcon from "./SuccessIcon.svelte";
-    import type { TokenState } from "./walletState.svelte";
+    import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
 

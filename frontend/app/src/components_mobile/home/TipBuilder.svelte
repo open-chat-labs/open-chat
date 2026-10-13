@@ -40,7 +40,7 @@
     import SourceWalletSelector from "./SourceWalletSelector.svelte";
     import TipButton from "./TipButton.svelte";
     import TokenInput from "./TokenInput.svelte";
-    import { TokenState } from "./wallet/walletState.svelte";
+    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
     const increments: Increment[] = [1, 10, 100];
