@@ -1,146 +1,281 @@
-<!-- Generated from lib/AccessGatesCards.dc.html (source hash 7f4effa4) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Access gates as cards (alternative layout to AccessGates): each gate is a card with its icon, description and
+     value chips; configurable gates open inline editors (asset picker + numeric fields) until complete.
+     "Add gate" opens a catalogue. All / Any decides how gates combine; an optional periodic re-check sits below.
+     Non-diamond users see an upgrade card instead. onChange({ count, mode, gates }) on every gate change. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './AccessGatesCards.logic.js';
+  import type { AccessGatesCardsState, AccessGateRule } from '../../lib/types';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import TimedToggle from '../../lib/components/TimedToggle.svelte';
 
+  type Asset = string | { label: string; soon: true };
+  type Field = { key: 'a' | 'b'; placeholder: string; unit: string; required?: boolean };
+  type GateType = {
+    label: string;
+    icon: string;
+    desc: string;
+    assets?: Asset[];
+    repeatable?: boolean;
+    uniqueAsset?: boolean;
+    fields?: Field[];
+    chips?: (g: AccessGateRule) => ({ label: string; dot?: boolean } | false | '')[];
+    soon?: boolean;
+  };
+
+  const DOTS: Record<string, string> = {
+    CHAT: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
+    ICP: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
+    BTC: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
+    BOB: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
+    USDC: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+    USDT: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
+    KINIC: 'linear-gradient(140deg,#FF6B8B,#C13584)',
+    Motoko: 'linear-gradient(140deg,#FF6B8B,#C13584)',
+    ICPanda: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
+    TACO: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
+    'Dragging Karma Points': 'linear-gradient(140deg,#B06BFF,#6A2BFF)',
+    'Internet Computer': 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+  };
+  const DOT_FALLBACK = 'linear-gradient(140deg,#8E9BB3,#5A6478)';
+
+  const TOKENS: Asset[] = ['CHAT', 'ICP', 'BTC', 'BOB', 'USDC', 'USDT', 'KINIC'];
+  const NERVOUS: Asset[] = ['CHAT', 'Motoko', 'ICPanda', 'TACO', 'Dragging Karma Points', { label: 'Internet Computer', soon: true }];
+
+  const TYPES: Record<string, GateType> = {
+    lifetime: { label: 'Lifetime diamond membership', icon: 'diamond', desc: 'Grants access to users who hold a lifetime membership.' },
+    diamond: { label: 'Diamond membership', icon: 'diamond-outline', desc: 'Requires an active diamond membership.' },
+    neuron: {
+      label: 'Neuron holder',
+      icon: 'neuron',
+      desc: 'Users must stake a neuron with specific criteria.',
+      assets: NERVOUS,
+      repeatable: true,
+      fields: [
+        { key: 'a', placeholder: 'Minimum dissolve delay', unit: 'days' },
+        { key: 'b', placeholder: 'Minimum stake', unit: 'tokens' },
+      ],
+      chips: (g) => [g.asset && { label: g.asset, dot: true }, g.a && { label: `${g.a}d delay` }, g.b && { label: `${g.b} staked` }],
+    },
+    payment: {
+      label: 'Payment',
+      icon: 'payment',
+      desc: 'Access is granted after a one-time or recurring entry fee.',
+      assets: TOKENS,
+      repeatable: true,
+      fields: [{ key: 'a', placeholder: 'Amount', unit: 'tokens', required: true }],
+      chips: (g) => [g.asset && { label: g.asset, dot: true }, g.a && { label: `${g.a} tokens` }],
+    },
+    balance: {
+      label: 'Minimum token balance',
+      icon: 'balance',
+      desc: 'Requires holding a minimum amount of a token.',
+      assets: TOKENS,
+      repeatable: true,
+      uniqueAsset: true,
+      fields: [{ key: 'a', placeholder: 'Minimum balance', unit: 'tokens', required: true }],
+      chips: (g) => [g.asset && { label: g.asset, dot: true }, g.a && { label: `min ${g.a}` }],
+    },
+    credential: { label: 'Verified credential', icon: 'credential', desc: 'Only users with a valid external credential can enter.' },
+    unique: { label: 'Unique person', icon: 'person', desc: 'Limited to verified unique humans.' },
+    locked: { label: 'Locked', icon: 'lock', desc: 'Invited users only; not open to the public.' },
+    chit: {
+      label: 'Minimum CHIT earned',
+      icon: 'chit',
+      desc: 'Requires a minimum amount of CHIT earned.',
+      fields: [{ key: 'a', placeholder: 'Minimum CHIT earned', unit: 'CHIT', required: true }],
+      chips: (g) => [g.a && { label: `${g.a} CHIT` }],
+    },
+    nft: { label: 'NFT holder', icon: 'nft', desc: 'Must hold a specific NFT.', soon: true },
+  };
+
+  const MODES = ['All', 'Any'] as const;
+  const INTERVALS = ['1 day', '1 week', '2 weeks', '1 month', '3 months', '6 months'];
+  const assetName = (a: Asset) => (typeof a === 'string' ? a : a.label);
+  const mask = (icon: string) => `var(--icon-${icon}) center/contain no-repeat`;
+
   interface Props {
+    /** false shows the upgrade card instead of the editor. */
     isDiamond?: boolean;
     onUpgrade?: () => void;
-    onChange?: (state: object) => void;
-    [key: string]: unknown;
+    onChange?: (state: AccessGatesCardsState) => void;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { isDiamond = true, onUpgrade, onChange }: Props = $props();
+
+  let gates = $state<AccessGateRule[]>([]);
+  let modeIndex = $state(0);
+  let editing = $state<string | null>(null);
+  let pickerOpen = $state(false);
+  let intervalOn = $state(false);
+  let every = $state('1 month');
+
+  function emit() {
+    onChange?.({ count: gates.length, mode: MODES[modeIndex], gates });
+  }
+
+  function add(key: string) {
+    const t = TYPES[key];
+    if (t.soon) return;
+    const gate = { id: `g${Date.now()}`, type: key, asset: '', a: '', b: '' };
+    gates = [...gates, gate];
+    pickerOpen = false;
+    editing = t.fields || t.assets ? gate.id : null;
+    emit();
+  }
+
+  function patch(id: string, change: Partial<AccessGateRule>) {
+    gates = gates.map((g) => (g.id === id ? { ...g, ...change } : g));
+    emit();
+  }
+
+  function remove(id: string) {
+    gates = gates.filter((g) => g.id !== id);
+    if (editing === id) editing = null;
+    emit();
+  }
+
+  function complete(g: AccessGateRule) {
+    const t = TYPES[g.type];
+    if (t.assets && !g.asset) return false;
+    return !(t.fields ?? []).some((f) => f.required && !g[f.key].trim());
+  }
 </script>
 
-<div style="width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:var(--space-22)">
-
-  {#if v.locked}
-    <div style="display:flex;flex-direction:column;gap:var(--space-16);min-width:0;padding:var(--space-22);box-sizing:border-box;border-radius:var(--radius-xl);background:linear-gradient(150deg,rgba(255,86,114,.14),rgba(61,155,255,.12));box-shadow:inset 0 0 0 1px rgba(255,130,152,.4)">
-      <span style="font:var(--weight-bold) var(--text-lg)/1.25 var(--font-sans);color:var(--ink,#ECECF1)">Upgrade to Diamond</span>
-      <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-2,#C9C9D4);text-wrap:pretty">Only diamond members can add access gates.</span>
-      <div style="display:flex;align-items:center;justify-content:center;height:var(--control-lg,40px);box-sizing:border-box;border-radius:var(--radius-md);background:var(--accent,#FF5672);font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:var(--on-accent,#2E0512);cursor:pointer;user-select:none" onclick={v.onUpgrade} role="button" tabindex="0">Get Diamond</div>
+<div class="gates">
+  {#if !isDiamond}
+    <div class="upsell">
+      <span class="upsell-title">Upgrade to Diamond</span>
+      <span class="upsell-text">Only diamond members can add access gates.</span>
+      <div class="upsell-button" onclick={onUpgrade} role="button" tabindex="0">Get Diamond</div>
     </div>
-  {/if}
-
-  {#if v.unlocked}
-    <div style="display:flex;align-items:center;gap:var(--space-16);min-width:0;padding-inline:var(--space-2)">
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-4)">
-        <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-3,#9A9AA8)">ACCESS GATES {t(v.countLabel)}</span>
-        <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">Invited people never have to pass gates.</span>
+  {:else}
+    <div class="head">
+      <div class="head-text">
+        <span class="head-title">ACCESS GATES {gates.length ? `(${gates.length})` : ''}</span>
+        <span class="head-hint">Invited people never have to pass gates.</span>
       </div>
-      <div style="flex:none;display:grid;grid-template-columns:minmax(0,1fr);width:190px"><SegmentedTabs labels={v.modeLabels} selectedIndex={v.modeIndex} dotIndexes={v.noDots} onSelect={v.onMode}></SegmentedTabs></div>
+      <div class="modes"><SegmentedTabs labels={[...MODES]} selectedIndex={modeIndex} dotIndexes={[]} onSelect={(i) => (modeIndex = i)} /></div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:var(--space-10);min-width:0">
-      {#each v.cards ?? [] as c, i0}
-        <div style="display:flex;flex-direction:column;gap:var(--space-12);min-width:0;padding:var(--space-16);box-sizing:border-box;border-radius:var(--radius-lg);background:var(--overlay-1,rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px {c.line}">
-          <div style="display:flex;align-items:flex-start;gap:var(--space-12);min-width:0">
-            <span style="flex:none;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:var(--radius-md);background:{c.tile};box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1))">
-              <span style="width:20px;height:20px;background:{c.iconInk};mask:{c.mask}"></span>
-            </span>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-              <span style="font:var(--weight-semibold) var(--text-base)/1.25 var(--font-sans);color:var(--ink,#ECECF1);text-wrap:pretty">{t(c.title)}</span>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">{t(c.desc)}</span>
+    <div class="cards">
+      {#each gates as g}
+        {@const t = TYPES[g.type]}
+        {@const ok = complete(g)}
+        {@const chips = (t.chips?.(g) ?? []).filter((c) => !!c)}
+        <div class="card" class:incomplete={!ok}>
+          <div class="card-head">
+            <span class="tile"><span class="tile-icon" style:mask={mask(t.icon)}></span></span>
+            <div class="card-text">
+              <span class="card-title">{t.label}</span>
+              <span class="card-desc">{t.desc}</span>
             </div>
-            <div style="flex:none;display:flex;gap:2px">
-              {#if c.configurable}
-                <span class="dc-p0" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-sm);cursor:pointer" onclick={c.onEdit} role="button" tabindex="0" aria-label="Edit values" title="Edit values">
-                  <span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.editMask}"></span>
-                </span>
+            <div class="card-tools">
+              {#if t.fields || t.assets}
+                <span class="tool" onclick={() => (editing = g.id)} role="button" tabindex="0" aria-label="Edit values" title="Edit values"><span class="tool-icon" style:mask={mask('edit')}></span></span>
               {/if}
-              <span class="dc-p1" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-sm);cursor:pointer" onclick={c.onRemove} role="button" tabindex="0" aria-label="Remove gate" title="Remove gate">
-                <span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.closeMask}"></span>
-              </span>
+              <span class="tool" onclick={() => remove(g.id)} role="button" tabindex="0" aria-label="Remove gate" title="Remove gate"><span class="tool-icon" style:mask={mask('close')}></span></span>
             </div>
           </div>
 
-          {#if c.hasChips}
-            <div style="display:flex;flex-wrap:wrap;gap:var(--space-6);min-width:0;padding-inline-start:50px">
-              {#each c.chips ?? [] as chip, i1}
-                <span style="display:inline-flex;align-items:center;gap:var(--space-6);padding:var(--space-6) var(--space-10);border-radius:var(--radius-sm);background:var(--overlay-2,rgba(255,255,255,.07));box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.08))">
-                  {#if chip.hasDot}
-                    <span style="flex:none;width:13px;height:13px;border-radius:var(--radius-pill);background:{chip.dot}"></span>
-                  {/if}
-                  <span style="font:var(--weight-medium) var(--text-sm)/1.2 var(--font-mono);color:var(--ink-2,#C9C9D4)">{t(chip.label)}</span>
-                </span>
+          {#if editing !== g.id && chips.length > 0}
+            <div class="chips">
+              {#each chips as chip}
+                {#if chip}
+                  <span class="chip">
+                    {#if chip.dot}<span class="chip-dot" style:background={DOTS[chip.label] ?? DOT_FALLBACK}></span>{/if}
+                    <span class="chip-label">{chip.label}</span>
+                  </span>
+                {/if}
               {/each}
             </div>
           {/if}
 
-          {#if c.editing}
-            <div style="display:flex;flex-direction:column;gap:var(--space-12);min-width:0;padding-inline-start:50px">
-              {#if c.needsAsset}
-                <div style="display:flex;flex-wrap:wrap;gap:var(--space-6);min-width:0">
-                  {#each c.assets ?? [] as a, i2}
-                    <span style="display:inline-flex;align-items:center;gap:var(--space-6);padding:var(--space-6) var(--space-10);border-radius:var(--radius-pill);background:{a.bg};box-shadow:inset 0 0 0 1px {a.line};font:var(--weight-semibold) var(--text-sm)/1.2 var(--font-sans);color:{a.ink};cursor:{a.cursor};user-select:none" onclick={a.onSelect} role="button" tabindex="0">
-                      <span style="flex:none;width:14px;height:14px;border-radius:var(--radius-pill);background:{a.dot}"></span>
-                      <span>{t(a.label)}</span>
+          {#if editing === g.id}
+            <div class="editor">
+              {#if t.assets}
+                <div class="assets">
+                  {#each t.assets as a}
+                    {@const name = assetName(a)}
+                    {@const soon = typeof a !== 'string' && a.soon}
+                    {@const taken = !!t.uniqueAsset && gates.some((x) => x.type === g.type && x.asset === name && x.id !== g.id)}
+                    <span
+                      class="asset"
+                      class:selected={g.asset === name}
+                      class:unavailable={soon || taken}
+                      onclick={() => !soon && !taken && patch(g.id, { asset: name })}
+                      role="button"
+                      tabindex="0"
+                    >
+                      <span class="asset-dot" style:background={DOTS[name] ?? DOT_FALLBACK}></span>
+                      <span>{soon ? `${name} (soon)` : taken ? `${name} (used)` : name}</span>
                     </span>
                   {/each}
                 </div>
               {/if}
-              {#each c.fields ?? [] as f, i3}
-                <div style="display:flex;align-items:center;gap:var(--space-10);min-width:0;max-width:320px;padding:0 var(--space-12);height:42px;box-sizing:border-box;border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:inset 0 0 0 1px {f.line}">
-                  <input style="flex:1;min-width:0;background:none;border:0;outline:none;font:var(--weight-medium) var(--text-md)/1.2 var(--font-sans);color:var(--ink,#ECECF1)" value={f.value} oninput={f.onInput} placeholder={f.placeholder} inputmode="numeric">
-                  <span style="flex:none;font:var(--weight-medium) var(--text-sm)/1 var(--font-mono);color:var(--ink-4,#7C7C8C)">{t(f.unit)}</span>
+              {#each t.fields ?? [] as f}
+                <div class="field" class:missing={f.required && !g[f.key].trim()}>
+                  <input value={g[f.key]} oninput={(e) => patch(g.id, { [f.key]: e.currentTarget.value.replace(/[^\d.]/g, '') })} placeholder={f.placeholder} inputmode="numeric" />
+                  <span class="unit">{f.unit}</span>
                 </div>
               {/each}
-              <div style="display:flex;gap:var(--space-8)">
-                <div style="flex:none;display:flex;align-items:center;justify-content:center;padding:0 var(--space-14);height:34px;box-sizing:border-box;border-radius:var(--radius-md);background:{c.doneBg};font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:{c.doneInk};cursor:{c.doneCursor};user-select:none" onclick={c.onDone} role="button" tabindex="0">Done</div>
+              <div class="done-row">
+                <div class="done" class:ready={ok} onclick={() => ok && (editing = null)} role="button" tabindex="0">Done</div>
               </div>
             </div>
           {/if}
         </div>
       {/each}
 
-      {#if v.empty}
-        <div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-8);padding:var(--space-26) var(--space-18);box-sizing:border-box;border-radius:var(--radius-lg);border:1px dashed var(--line-2,rgba(255,255,255,.14))">
-          <span style="font:var(--weight-semibold) var(--text-base)/1.3 var(--font-sans);color:var(--ink-2,#C9C9D4)">No gates yet</span>
-          <span style="max-width:320px;text-align:center;font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">Add a gate to control who can join.</span>
+      {#if gates.length === 0}
+        <div class="empty">
+          <span class="empty-title">No gates yet</span>
+          <span class="empty-hint">Add a gate to control who can join.</span>
         </div>
       {/if}
 
-      <div class="dc-p2" style="display:flex;align-items:center;justify-content:center;gap:var(--space-8);height:44px;box-sizing:border-box;border-radius:var(--radius-lg);border:1px dashed var(--line-2,rgba(255,255,255,.18));font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.onOpenPicker} role="button" tabindex="0">
-        <span style="width:15px;height:15px;background:var(--accent,#FF5672);mask:{v.plusMask}"></span>
+      <div class="add" onclick={() => (pickerOpen = true)} role="button" tabindex="0">
+        <span class="add-icon"></span>
         <span>Add gate</span>
       </div>
     </div>
 
-    <div style="height:1px;background:var(--line-1,rgba(255,255,255,.07))"></div>
+    <div class="rule"></div>
 
-    <div style="display:flex;flex-direction:column;gap:var(--space-12);min-width:0;padding-inline:var(--space-2)">
-      <div style="display:grid;grid-template-columns:minmax(0,1fr)"><TimedToggle density="flush" label="Re-check members periodically" prefix="Every" offHint="Members are checked once, when they join." on={v.intervalOn} value={v.every} options={v.intervals} onChange={v.onIntervalOn} onDurationChange={v.onEvery}></TimedToggle></div>
+    <div class="recheck">
+      <div class="recheck-cell">
+        <TimedToggle
+          density="flush"
+          label="Re-check members periodically"
+          prefix="Every"
+          offHint="Members are checked once, when they join."
+          on={intervalOn}
+          value={every}
+          options={INTERVALS}
+          onChange={(on) => (intervalOn = on)}
+          onDurationChange={(value) => (every = value)}
+        />
+      </div>
     </div>
   {/if}
 
-  {#if v.pickerOpen}
-    <div style="position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:var(--space-22)" role="dialog" aria-modal="true">
-      <div style="position:absolute;inset:0;background:var(--scrim)" onclick={v.onClosePicker} aria-hidden="true"></div>
-      <div style="position:relative;width:100%;max-width:480px;max-height:100%;display:flex;flex-direction:column;box-sizing:border-box;border-radius:var(--radius-xl);background:var(--surface-1,#0e0e12);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),0 30px 70px rgba(0,0,0,.45);overflow:hidden">
-        <div style="flex:none;display:flex;align-items:center;gap:var(--space-12);padding:var(--space-16) var(--space-18);border-block-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-          <span style="flex:1;min-width:0;font:var(--weight-bold) var(--text-lg)/1.2 var(--font-sans);color:var(--ink,#ECECF1)">Add a gate</span>
-          <span class="dc-p3" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onClosePicker} role="button" tabindex="0">
-            <span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.closeMask}"></span>
-          </span>
+  {#if pickerOpen}
+    <div class="picker-layer" role="dialog" aria-modal="true">
+      <div class="scrim" onclick={() => (pickerOpen = false)} aria-hidden="true"></div>
+      <div class="picker">
+        <div class="picker-head">
+          <span class="picker-title">Add a gate</span>
+          <span class="picker-close" onclick={() => (pickerOpen = false)} role="button" tabindex="0"><span class="tool-icon" style:mask={mask('close')}></span></span>
         </div>
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:var(--space-12);display:flex;flex-direction:column;gap:2px">
-          {#each v.catalogue ?? [] as g, i4}
-            <div class="dc-p4" style="display:flex;align-items:flex-start;gap:var(--space-12);min-width:0;padding:var(--space-12);border-radius:var(--radius-md);cursor:{g.cursor}" onclick={g.onAdd} role="button" tabindex="0">
-              <span style="flex:none;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:var(--radius-sm);background:var(--overlay-1,rgba(255,255,255,.05))">
-                <span style="width:17px;height:17px;background:{g.ink};mask:{g.mask}"></span>
-              </span>
-              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-                <div style="display:flex;align-items:center;gap:var(--space-6);min-width:0">
-                  <span style="font:var(--weight-semibold) var(--text-md)/1.25 var(--font-sans);color:{g.ink}">{t(g.label)}</span>
-                  {#if g.soon}
-                    <span style="flex:none;padding:1px var(--space-6);border-radius:var(--radius-pill);background:var(--overlay-2,rgba(255,255,255,.09));font:var(--weight-semibold) var(--text-2xs)/1.4 var(--font-mono);color:var(--ink-4,#7C7C8C)">SOON</span>
-                  {/if}
+        <div class="catalogue">
+          {#each Object.entries(TYPES) as [key, t]}
+            {@const used = !t.repeatable && gates.some((g) => g.type === key)}
+            <div class="option" class:unavailable={t.soon || used} onclick={() => !used && add(key)} role="button" tabindex="0">
+              <span class="option-tile"><span class="option-icon" style:mask={mask(t.icon)}></span></span>
+              <div class="option-text">
+                <div class="option-line">
+                  <span class="option-label">{t.label}</span>
+                  {#if t.soon}<span class="soon">SOON</span>{/if}
                 </div>
-                <span style="font:var(--weight-regular) var(--text-sm)/1.4 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(g.desc)}</span>
+                <span class="option-desc">{used ? 'Already added' : t.desc}</span>
               </div>
             </div>
           {/each}
@@ -151,9 +286,528 @@
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p1:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p2:hover{background:var(--accent-soft,rgba(255,86,114,.1)) !important}
-  .dc-p3:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p4:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
+  .gates {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-22);
+  }
+
+  .upsell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    min-width: 0;
+    padding: var(--space-22);
+    box-sizing: border-box;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(150deg, rgba(255, 86, 114, 0.14), rgba(61, 155, 255, 0.12));
+    box-shadow: inset 0 0 0 1px rgba(255, 130, 152, 0.4);
+  }
+
+  .upsell-title {
+    font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .upsell-text {
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+    text-wrap: pretty;
+  }
+
+  .upsell-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--control-lg, 40px);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--accent, #ff5672);
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--on-accent, #2e0512);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-16);
+    min-width: 0;
+    padding-inline: var(--space-2);
+  }
+
+  .head-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .head-title {
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .head-hint {
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .modes {
+    flex: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 190px;
+  }
+
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+    min-width: 0;
+  }
+
+  .card {
+    --card-line: var(--line-2, rgba(255, 255, 255, 0.08));
+    --card-tile: color-mix(in srgb, var(--status-verified, #3d9bff) 16%, transparent);
+    --card-ink: var(--status-verified, #3d9bff);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    min-width: 0;
+    padding: var(--space-16);
+    box-sizing: border-box;
+    border-radius: var(--radius-lg);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    box-shadow: inset 0 0 0 1px var(--card-line);
+  }
+
+  .card.incomplete {
+    --card-line: color-mix(in srgb, var(--status-warning, #ffb03d) 45%, transparent);
+    --card-tile: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    --card-ink: var(--status-warning, #ffb03d);
+  }
+
+  .card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-12);
+    min-width: 0;
+  }
+
+  .tile {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    background: var(--card-tile);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .tile-icon {
+    width: 20px;
+    height: 20px;
+    background: var(--card-ink);
+  }
+
+  .card-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .card-title {
+    font: var(--weight-semibold) var(--text-base) / 1.25 var(--font-sans);
+    color: var(--ink, #ececf1);
+    text-wrap: pretty;
+  }
+
+  .card-desc {
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    text-wrap: pretty;
+  }
+
+  .card-tools {
+    flex: none;
+    display: flex;
+    gap: 2px;
+  }
+
+  .tool,
+  .picker-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .picker-close {
+    flex: none;
+    width: 30px;
+    height: 30px;
+  }
+
+  .tool:hover,
+  .picker-close:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .tool-icon {
+    width: 15px;
+    height: 15px;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .chips,
+  .editor {
+    min-width: 0;
+    padding-inline-start: 50px;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-6) var(--space-10);
+    border-radius: var(--radius-sm);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
+  }
+
+  .chip-dot {
+    flex: none;
+    width: 13px;
+    height: 13px;
+    border-radius: var(--radius-pill);
+  }
+
+  .chip-label {
+    font: var(--weight-medium) var(--text-sm) / 1.2 var(--font-mono);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .editor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+  }
+
+  .assets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+    min-width: 0;
+  }
+
+  .asset {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-6) var(--space-10);
+    border-radius: var(--radius-pill);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    font: var(--weight-semibold) var(--text-sm) / 1.2 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .asset.selected {
+    background: color-mix(in srgb, var(--accent, #ff5672) 12%, transparent);
+    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    color: var(--accent-bright, #ff8298);
+  }
+
+  .asset.unavailable {
+    color: var(--ink-4, #7c7c8c);
+    cursor: not-allowed;
+  }
+
+  .asset-dot {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border-radius: var(--radius-pill);
+  }
+
+  .field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    min-width: 0;
+    max-width: 320px;
+    padding: 0 var(--space-12);
+    height: 42px;
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
+  }
+
+  .field.missing {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--status-warning, #ffb03d) 50%, transparent);
+  }
+
+  .field input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: 0;
+    outline: none;
+    font: var(--weight-medium) var(--text-md) / 1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .unit {
+    flex: none;
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .done-row {
+    display: flex;
+    gap: var(--space-8);
+  }
+
+  .done {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 var(--space-14);
+    height: 34px;
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    cursor: not-allowed;
+    user-select: none;
+  }
+
+  .done.ready {
+    background: var(--accent, #ff5672);
+    color: var(--on-accent, #2e0512);
+    cursor: pointer;
+  }
+
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-8);
+    padding: var(--space-26) var(--space-18);
+    box-sizing: border-box;
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--line-2, rgba(255, 255, 255, 0.14));
+  }
+
+  .empty-title {
+    font: var(--weight-semibold) var(--text-base) / 1.3 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .empty-hint {
+    max-width: 320px;
+    text-align: center;
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+    height: 44px;
+    box-sizing: border-box;
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--line-2, rgba(255, 255, 255, 0.18));
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .add:hover {
+    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+  }
+
+  .add-icon {
+    width: 15px;
+    height: 15px;
+    background: var(--accent, #ff5672);
+    mask: var(--icon-plus) center/contain no-repeat;
+  }
+
+  .rule {
+    height: 1px;
+    background: var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .recheck {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    min-width: 0;
+    padding-inline: var(--space-2);
+  }
+
+  .recheck-cell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .picker-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-22);
+  }
+
+  .scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--scrim);
+  }
+
+  .picker {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    border-radius: var(--radius-xl);
+    background: var(--surface-1, #0e0e12);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      0 30px 70px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+  }
+
+  .picker-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-16) var(--space-18);
+    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .picker-title {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-bold) var(--text-lg) / 1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .catalogue {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--space-12);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .option {
+    --option-ink: var(--ink, #ececf1);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-12);
+    min-width: 0;
+    padding: var(--space-12);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+
+  .option.unavailable {
+    --option-ink: var(--ink-4, #7c7c8c);
+    cursor: not-allowed;
+  }
+
+  .option:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .option-tile {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .option-icon {
+    width: 17px;
+    height: 17px;
+    background: var(--option-ink);
+  }
+
+  .option-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .option-line {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    min-width: 0;
+  }
+
+  .option-label {
+    font: var(--weight-semibold) var(--text-md) / 1.25 var(--font-sans);
+    color: var(--option-ink);
+  }
+
+  .soon {
+    flex: none;
+    padding: 1px var(--space-6);
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    font: var(--weight-semibold) var(--text-2xs) / 1.4 var(--font-mono);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .option-desc {
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
 </style>
