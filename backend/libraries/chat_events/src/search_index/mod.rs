@@ -131,6 +131,44 @@ impl SearchIndex {
         });
     }
 
+    // Updates the index of each message whose text has changed from `old` to `new`, eg. once the ids
+    // of the users it mentions have been replaced with their latest ids. `sender` is each message's
+    // current sender. The tokens added across every message are written together.
+    pub fn update_many(
+        &mut self,
+        events_prefix: &ChatEventKeyPrefix,
+        changes: Vec<(MessageIndex, UserId, Document, Document)>,
+    ) {
+        let token_prefix = SearchTokenKeyPrefix::new_from_events_prefix(events_prefix);
+        let mut to_remove = Vec::new();
+        let mut to_add = Vec::new();
+        for (message_index, sender, old, new) in changes {
+            if self.on_heap.contains_key(&message_index) {
+                self.update(events_prefix, message_index, sender, &old, &new);
+                continue;
+            }
+            let old_tokens = document_tokens(&old);
+            let new_tokens = document_tokens(&new);
+            to_remove.extend(
+                old_tokens
+                    .difference(&new_tokens)
+                    .map(|token| token_prefix.create_key_for_token(token, message_index)),
+            );
+            to_add.extend(
+                new_tokens
+                    .difference(&old_tokens)
+                    .map(|token| token_prefix.create_key_for_token(token, message_index)),
+            );
+        }
+        to_add.sort();
+        with_map_mut(|m| {
+            for key in to_remove {
+                m.remove(key);
+            }
+            m.insert_many(to_add.into_iter().map(|key| (key, Vec::new())));
+        });
+    }
+
     fn remove_from_stable_memory(
         events_prefix: &ChatEventKeyPrefix,
         message_index: MessageIndex,
