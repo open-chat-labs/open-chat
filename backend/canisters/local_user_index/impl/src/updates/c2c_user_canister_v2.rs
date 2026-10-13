@@ -11,7 +11,8 @@ use types::{BotEvent, BotLifecycleEvent, Notification, StreakInsuranceClaim, Str
 use user_index_canister::BotInstalled;
 
 // Takes events from MultiUser canisters. Each event names the user it is from, which must be one of
-// the users the calling canister hosts.
+// the users the calling canister hosts, other than an event about the canister itself, which names
+// the canister.
 #[update(guard = "caller_is_local_multi_user_canister", msgpack = true)]
 #[trace]
 fn c2c_user_canister_v2(args: ArgsInternal) -> Response {
@@ -23,7 +24,12 @@ fn c2c_user_canister_v2_impl(args: ArgsInternal, state: &mut RuntimeState) -> Re
     let now = LazyCell::new(now_millis);
     for event in args.events {
         let user_id = event.value.user_id;
-        if !is_valid_user_for_caller(user_id, caller) {
+        let is_valid = if event.value.event.is_about_canister() {
+            user_id == UserId::from(caller)
+        } else {
+            is_valid_user_for_caller(user_id, caller)
+        };
+        if !is_valid {
             continue;
         }
         if state
@@ -101,6 +107,11 @@ fn handle_event<F: FnOnce() -> TimestampMillis>(
             state.push_event_to_user_index(UserIndexEvent::SetMaxStreak(user_id, max_streak), **now);
         }
         UserEvent::EventStoreEvent(event) => state.data.event_store_client.push(event),
+        UserEvent::UserIdMigrationComplete(complete) => {
+            if let Some(canister) = state.data.local_multi_user_canisters.get_mut(&user_id.canister_id()) {
+                canister.user_id_migration_complete = complete;
+            }
+        }
         UserEvent::Notification(mut notification) => {
             if let Notification::Bot(bot_notification) = &mut *notification
                 && let BotEvent::Lifecycle(BotLifecycleEvent::Installed(event)) = &bot_notification.event

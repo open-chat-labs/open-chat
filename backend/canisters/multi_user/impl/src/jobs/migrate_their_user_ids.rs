@@ -116,7 +116,10 @@ async fn run() {
     });
 
     let Some((from, to, user_ids)) = batch else {
-        mutate_state(complete);
+        mutate_state(|state| {
+            complete(state);
+            state.report_user_id_migration_progress();
+        });
         TIMER_ID.set(None);
         return;
     };
@@ -162,6 +165,7 @@ async fn run() {
         );
     });
 
+    mutate_state(|state| state.report_user_id_migration_progress());
     TIMER_ID.set(None);
     read_state(start_job_if_required);
 }
