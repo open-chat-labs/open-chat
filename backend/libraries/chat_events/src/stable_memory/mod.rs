@@ -163,6 +163,16 @@ impl EventsMap for ChatEventsStableStorage {
         with_map_mut(|m| m.insert(key, event_to_bytes(event)));
     }
 
+    fn insert_many(&mut self, events: Vec<EventWrapperInternal<ChatEventInternal>>) {
+        with_map_mut(|m| {
+            m.insert_many(
+                events
+                    .into_iter()
+                    .map(|event| (self.prefix.create_key(&event.index), event_to_bytes(event))),
+            )
+        });
+    }
+
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
         with_map_mut(|m| m.remove(self.prefix.create_key(&event_index))).map(|v| bytes_to_event(&v))
     }

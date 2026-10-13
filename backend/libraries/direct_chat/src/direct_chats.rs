@@ -9,6 +9,7 @@ use stable_memory_map::{
     HeapStableSplitMapValue, KeyPrefix, RemovedChatKeyPrefix,
 };
 use std::collections::HashMap;
+use std::ops::ControlFlow;
 use types::{Chat, ChatId, MessageIndex, OCResult, TimestampMillis, Timestamped, UserId, UserType};
 use utils::migrated_user_ids::MigratedUserIds;
 
@@ -142,6 +143,28 @@ impl DirectChats {
     // Every chat, each of which is read from stable memory as the iterator reaches it
     pub fn iter(&self) -> impl Iterator<Item = DirectChatRef<'_>> {
         self.direct_chats_v2.iter()
+    }
+
+    // The id of each chat, ordered by its key_id, which, unlike its id, stays the same for as long as
+    // the chat exists (see `migrate_their_user_id`)
+    pub fn ids_ordered_by_key_id(&self) -> Vec<(u32, ChatId)> {
+        let mut ids: Vec<_> = self
+            .direct_chats_v2
+            .entries()
+            .map(|(chat_id, entry)| (entry.key_id, chat_id))
+            .collect();
+        ids.sort_unstable();
+        ids
+    }
+
+    // Applies `f` to each of the chats given in turn until it returns `Break`, then writes back
+    // every chat it was applied to together (see `HeapStableSplitMap::update_many`)
+    pub fn update_many<B>(
+        &mut self,
+        chat_ids: impl IntoIterator<Item = ChatId>,
+        f: impl FnMut(&ChatId, &mut DirectChat) -> ControlFlow<B>,
+    ) -> Option<B> {
+        self.direct_chats_v2.update_many(chat_ids, f)
     }
 
     pub fn len(&self) -> usize {

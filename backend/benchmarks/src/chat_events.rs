@@ -124,7 +124,7 @@ fn import_events() -> BenchResult {
         let Some((last, _)) = batch.last() else {
             break;
         };
-        after = Some(last.clone());
+        after = Some(*last);
         batches.push(batch);
     }
 
