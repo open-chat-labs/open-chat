@@ -46,6 +46,10 @@ impl UserCache {
         }
     }
 
+    pub fn user_ids(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.map.keys().copied()
+    }
+
     pub fn get(&self, user_id: &UserId) -> Option<&CachedUser> {
         self.map.get(user_id)
     }

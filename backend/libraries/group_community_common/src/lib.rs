@@ -10,6 +10,7 @@ mod payment_receipts;
 mod pending_payments_queue;
 mod unlapsing;
 mod user_cache;
+mod user_ids_in_state_migration;
 
 pub use achievements::*;
 pub use expiring_member_actions::*;
@@ -22,3 +23,4 @@ pub use payment_receipts::*;
 pub use pending_payments_queue::*;
 pub use unlapsing::*;
 pub use user_cache::*;
+pub use user_ids_in_state_migration::*;

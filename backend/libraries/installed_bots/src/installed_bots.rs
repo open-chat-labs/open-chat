@@ -104,6 +104,23 @@ impl InstalledBots {
         removed
     }
 
+    // Passes the id of the user who added each bot through `f`, replacing each with the id returned,
+    // and records an update for each bot changed so that clients are sent it again
+    pub fn update_added_by(&mut self, f: &mut dyn FnMut(UserId) -> UserId, now: TimestampMillis) -> bool {
+        let mut updated = Vec::new();
+        for (bot_id, bot) in self.bots.iter_mut() {
+            let added_by = f(bot.added_by);
+            if added_by != bot.added_by {
+                bot.added_by = added_by;
+                updated.push(*bot_id);
+            }
+        }
+        for bot_id in updated.iter() {
+            self.prune_then_insert_member_update(*bot_id, BotUpdate::Updated, now);
+        }
+        !updated.is_empty()
+    }
+
     pub fn get(&self, bot_id: &UserId) -> Option<&BotInternal> {
         self.bots.get(bot_id)
     }
@@ -171,4 +188,28 @@ pub struct BotInternal {
     pub autonomous_permissions: Option<BotPermissions>,
     #[serde(default)]
     pub default_subscriptions: Option<BotSubscriptions>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn user_id(i: u8) -> UserId {
+        Principal::from_slice(&[i]).into()
+    }
+
+    #[test]
+    fn added_by_is_replaced_and_an_update_recorded() {
+        let mut bots = InstalledBots::default();
+        bots.add(user_id(1), user_id(10), BotPermissions::default(), None, None, 1);
+        bots.add(user_id(2), user_id(11), BotPermissions::default(), None, None, 1);
+
+        let updated = bots.update_added_by(&mut |u| if u == user_id(10) { user_id(20) } else { u }, 5);
+
+        assert!(updated);
+        assert_eq!(bots.get(&user_id(1)).unwrap().added_by, user_id(20));
+        assert_eq!(bots.get(&user_id(2)).unwrap().added_by, user_id(11));
+        assert!(bots.iter_latest_updates(1).eq([(user_id(1), BotUpdate::Updated)]));
+        assert!(!bots.update_added_by(&mut |u| if u == user_id(10) { user_id(20) } else { u }, 6));
+    }
 }

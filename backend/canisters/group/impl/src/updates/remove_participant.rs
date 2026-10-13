@@ -44,6 +44,8 @@ async fn c2c_bot_remove_user(args: group_canister::c2c_bot_remove_user::Args) ->
 }
 
 async fn remove_participant_impl(user_to_remove: UserId, block: bool, ext_caller: Option<Caller>) -> OCResult {
+    let user_to_remove = if block { latest_user_id(user_to_remove).await? } else { user_to_remove };
+
     // Check the caller can remove the user
     let prepare_result = match read_state(|state| prepare(user_to_remove, block, ext_caller, state))? {
         Some(ok) => ok,
@@ -62,6 +64,40 @@ async fn remove_participant_impl(user_to_remove: UserId, block: bool, ext_caller
 
     // Remove the user from the group
     mutate_state(|state| commit(user_to_remove, block, prepare_result.remove, prepare_result.removed_by, state))
+}
+
+// The latest id of a user being blocked, who may be referred to by an id they had before being
+// migrated to a MultiUser canister (eg. one seen in an old message), so that the block is never
+// recorded under an old id. An unindexed id which the group doesn't know is looked up in the
+// LocalUserIndex. Anything still held under an old id is moved onto the latest id first, so that
+// a member under the old id is removed along with being blocked.
+async fn latest_user_id(user_id: UserId) -> OCResult<UserId> {
+    let (known_latest, local_user_index_canister_id) = read_state(|state| {
+        let migrated_user_ids = &state.data.migrated_user_ids;
+        let known = user_id.is_indexed() || migrated_user_ids.contains(&user_id);
+        (
+            known.then(|| migrated_user_ids.latest(user_id)),
+            state.data.local_user_index_canister_id,
+        )
+    });
+
+    let latest = match known_latest {
+        Some(latest) => latest,
+        None => {
+            let args = local_user_index_canister::migrated_user_ids::Args { user_ids: vec![user_id] };
+            let local_user_index_canister::migrated_user_ids::Response::Success(migrated) =
+                local_user_index_canister_c2c_client::migrated_user_ids(local_user_index_canister_id, &args).await?;
+            migrated.get(&user_id).copied().unwrap_or(user_id)
+        }
+    };
+
+    if latest != user_id {
+        mutate_state(|state| {
+            let now = state.env.now();
+            state.data.migrate_user_ids(&[user_id], latest, None, now);
+        });
+    }
+    Ok(latest)
 }
 
 struct PrepareResult {

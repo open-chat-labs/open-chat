@@ -1,5 +1,5 @@
 use crate::activity_notifications::extract_activity;
-use crate::jobs::{migrate_chat_events_to_stable_memory, unlapse_members, update_user_ids_in_events};
+use crate::jobs::{migrate_chat_events_to_stable_memory, unlapse_members, update_user_ids_in_events, update_user_ids_in_state};
 use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
@@ -258,6 +258,12 @@ pub(crate) fn finalize_group_import(group_id: ChatId) {
             migrate_chat_events_to_stable_memory::start_job_if_required(state);
             // The group may have been unlapsing its members when it was exported
             unlapse_members::start_job_if_required(state);
+            // The channel's state may still hold ids which users had before being migrated to
+            // MultiUser canisters (eg. its members, or those it blocked, who are blocked from the
+            // community above), so the community's state is passed through again, which holds back
+            // the job which replaces them in the events until done
+            state.data.user_ids_in_state_migration.restart();
+            update_user_ids_in_state::start_job_if_required(state);
             // The channel's events may still hold ids which users had before being migrated to
             // MultiUser canisters, so are scanned for them, from the start if the scan has passed it
             let migration = &mut state.data.user_ids_in_events_migration;

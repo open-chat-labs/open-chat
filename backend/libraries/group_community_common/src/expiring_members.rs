@@ -88,6 +88,10 @@ impl ExpiringMembers {
     pub fn next_expiry(&self) -> Option<TimestampMillis> {
         self.heap.peek().map(|m| m.expires)
     }
+
+    pub fn user_ids(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.heap.iter().map(|m| m.user_id)
+    }
 }
 
 #[cfg(test)]

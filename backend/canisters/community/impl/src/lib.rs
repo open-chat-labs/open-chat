@@ -19,7 +19,7 @@ use gated_groups::{GatePayment, calculate_gate_payments};
 use group_chat_core::{AccessRulesInternal, AddResult};
 use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PendingPaymentsQueue,
-    UserCache,
+    UserCache, UserIdsInStateMigration, UserIdsInStateMigrationMetrics,
 };
 use ic_principal::Principal;
 use installed_bots::InstalledBots;
@@ -550,6 +550,7 @@ impl RuntimeState {
             queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
             user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
+            user_ids_in_state_migration: self.data.user_ids_in_state_migration.metrics(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -675,6 +676,8 @@ struct Data {
     migrated_user_ids: MigratedUserIds,
     #[serde(default)]
     user_ids_in_events_migration: UserIdsInEventsMigration<jobs::update_user_ids_in_events::EventLocation>,
+    #[serde(default)]
+    user_ids_in_state_migration: UserIdsInStateMigration<jobs::update_user_ids_in_state::StatePosition>,
 }
 
 impl Data {
@@ -788,6 +791,7 @@ impl Data {
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
             user_ids_in_events_migration: UserIdsInEventsMigration::default(),
+            user_ids_in_state_migration: UserIdsInStateMigration::default(),
             public_channel_list_updated: now,
         }
     }
@@ -815,6 +819,16 @@ impl Data {
         self.members
             .lookup_user_id(caller)
             .is_some_and(|u| self.invited_users.get(&u).is_some())
+    }
+
+    // The member who referred a user joining the community, by their latest id. The id comes from the
+    // client, so may be one a user had before being migrated to a MultiUser canister, or not a
+    // member's at all, in which case there is no referrer, so that only members' latest ids are
+    // stored.
+    pub fn referring_member(&self, referred_by: Option<UserId>) -> Option<UserId> {
+        referred_by
+            .map(|user_id| self.migrated_user_ids.latest(user_id))
+            .filter(|user_id| self.members.contains(user_id))
     }
 
     pub fn build_chat_metrics(&mut self, now: TimestampMillis) {
@@ -1479,6 +1493,7 @@ pub struct Metrics {
     pub queued_local_index_events: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
+    pub user_ids_in_state_migration: UserIdsInStateMigrationMetrics,
     pub canister_ids: CanisterIds,
 }
 

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use stable_memory_map::{ChatEventKeyPrefix, EntryExt, Key, KeyPrefix, UserMetricsKeyPrefix, with_map, with_map_mut};
 use std::cmp::{max, min};
 use std::collections::BTreeMap;
+use std::ops::Bound;
 use types::{Chat, ChatId, TimestampMillis, UserId};
 
 // Each user's metrics within a chat. The entries are stored in the stable memory map for small
@@ -149,6 +150,32 @@ impl PerUserMetrics {
 
     pub fn on_heap_count(&self) -> usize {
         self.on_heap.len()
+    }
+
+    pub fn user_ids_on_heap(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.on_heap.keys().copied()
+    }
+
+    // The ids of up to `max_count` of the users with metrics in stable memory, in key order,
+    // starting after `after`
+    pub fn user_ids_in_stable_memory(
+        &self,
+        events_prefix: &ChatEventKeyPrefix,
+        after: Option<UserId>,
+        max_count: usize,
+    ) -> Vec<UserId> {
+        let prefix = UserMetricsKeyPrefix::new_from_events_prefix(events_prefix);
+        let start = match after {
+            Some(user_id) => Bound::Excluded(prefix.create_key(&user_id)),
+            None => Bound::Included(prefix.create_key(&Principal::from_slice(&[]).into())),
+        };
+        with_map(|m| {
+            m.range((start, Bound::Unbounded))
+                .take_while(|(k, _)| k.matches_prefix(&prefix))
+                .take(max_count)
+                .map(|(k, _)| k.user_id())
+                .collect()
+        })
     }
 }
 
@@ -470,6 +497,46 @@ mod tests {
         model.insert(newest, new_metrics);
         assert_matches_model(&metrics, chat, &model);
         assert_eq!(stable_user_ids(chat), vec![other, legacy_new, newest]);
+    }
+
+    #[test]
+    fn user_ids_in_stable_memory_are_read_a_batch_at_a_time() {
+        init_stable_memory_map();
+        let chat = Chat::Channel(Principal::anonymous().into(), ChannelId::from(1u32));
+        let other_chat = Chat::Channel(Principal::anonymous().into(), ChannelId::from(2u32));
+        let (mut metrics, mut model) = legacy_metrics(&[user_id(100)]);
+        let mut other_metrics = PerUserMetrics::default();
+        for i in 0..5 {
+            apply(&mut metrics, &mut model, chat, false, user_id(i), MetricKey::Polls, true, 1);
+            apply(
+                &mut other_metrics,
+                &mut Model::new(),
+                other_chat,
+                false,
+                user_id(i + 10),
+                MetricKey::Polls,
+                true,
+                1,
+            );
+        }
+
+        let mut batches = Vec::new();
+        let mut after = None;
+        loop {
+            let user_ids = metrics.user_ids_in_stable_memory(&p(chat), after, 2);
+            if user_ids.is_empty() {
+                break;
+            }
+            after = user_ids.last().copied();
+            batches.push(user_ids);
+        }
+
+        // Only the chat's entries in stable memory, those on the heap being read separately
+        assert_eq!(
+            batches,
+            vec![vec![user_id(0), user_id(1)], vec![user_id(2), user_id(3)], vec![user_id(4)]]
+        );
+        assert_eq!(metrics.user_ids_on_heap().collect::<Vec<_>>(), vec![user_id(100)]);
     }
 
     #[allow(clippy::too_many_arguments)]

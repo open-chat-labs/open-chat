@@ -1491,6 +1491,40 @@ impl GroupChatCore {
         members_updated || invitations_updated || metrics_updated
     }
 
+    // The ids under which `migrate_user_id` moves records, ie. memberships, blocks, invitations
+    // (along with who sent them) and the metrics still held on the heap. Those in stable memory are
+    // read a batch at a time via `ChatEvents::user_ids_with_metrics_in_stable_memory`.
+    pub fn user_ids_holding_records(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.members
+            .member_ids()
+            .iter()
+            .copied()
+            .chain(self.members.blocked())
+            .chain(self.invited_users.user_ids_and_inviters())
+            .chain(self.events.user_ids_with_metrics_on_heap())
+    }
+
+    // Passes each user id the chat holds outside its events and the records moved by
+    // `migrate_user_id` through `f`, replacing each with the id returned: who created the chat, the
+    // senders of @everyone mentions, and the users mentioned in the description and rules. Used to
+    // replace the ids users had before being migrated to MultiUser canisters with their latest ids.
+    // The description and rules are marked as updated if changed, so that clients which ask for them
+    // are sent them again, but the rules keep their version, so needn't be accepted again.
+    pub fn update_user_ids_outside_records(&mut self, f: &mut dyn FnMut(UserId) -> UserId, now: TimestampMillis) {
+        self.created_by = f(self.created_by);
+        for mention in self.at_everyone_mentions.values_mut() {
+            mention.0 = f(mention.0);
+        }
+        if let Some(description) = utils::mentions::replace_mentioned_users(&self.description.value, f) {
+            self.description = Timestamped::new(description, now);
+        }
+        if let Some(text) = utils::mentions::replace_mentioned_users(&self.rules.text.value, f) {
+            let mut rules = self.rules.value.clone();
+            rules.text.value = text;
+            self.rules = Timestamped::new(rules, now);
+        }
+    }
+
     pub fn remove_member(
         &mut self,
         caller: Caller,
@@ -2398,6 +2432,68 @@ mod tests {
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use types::{BotCaller, BotInitiator};
+
+    #[test]
+    fn user_ids_outside_records_are_replaced() {
+        let (mut chat, owner, muted_member) = setup();
+        chat.description = Timestamped::new(format!("Run by @UserId({owner}) and @UserId({muted_member})"), 1);
+        chat.rules = Timestamped::new(
+            AccessRulesInternal::new(Rules {
+                text: format!("Ask @UserId({owner})"),
+                enabled: true,
+            }),
+            1,
+        );
+        let rules_version = chat.rules.text.version;
+        send_bot_message(&mut chat, "@everyone hello", false);
+        assert_eq!(chat.at_everyone_mentions.len(), 1);
+
+        let [new_owner, new_bot_id] = [user_id(50), user_id(51)];
+        let mut f = |user_id| {
+            if user_id == owner {
+                new_owner
+            } else if user_id == bot_id() {
+                new_bot_id
+            } else {
+                user_id
+            }
+        };
+        chat.update_user_ids_outside_records(&mut f, 30);
+
+        assert_eq!(chat.created_by, new_owner);
+        assert_eq!(
+            chat.description.value,
+            format!("Run by @UserId({new_owner}) and @UserId({muted_member})")
+        );
+        assert_eq!(chat.description.timestamp, 30);
+        assert_eq!(chat.rules.text.value, format!("Ask @UserId({new_owner})"));
+        assert_eq!(chat.rules.text.version, rules_version);
+        assert_eq!(chat.rules.timestamp, 30);
+        assert!(chat.at_everyone_mentions.values().all(|m| m.sender() == new_bot_id));
+
+        // Nothing is marked as updated once there is nothing left to replace
+        chat.update_user_ids_outside_records(&mut f, 40);
+        assert_eq!(chat.description.timestamp, 30);
+        assert_eq!(chat.rules.timestamp, 30);
+    }
+
+    #[test]
+    fn user_ids_holding_records_include_blocked_and_invited_users_and_who_invited_them() {
+        let (mut chat, owner, muted_member) = setup();
+        chat.members.block(user_id(20), 1);
+        chat.invited_users.add(UserInvitation {
+            invited: user_id(21),
+            invited_by: user_id(22),
+            timestamp: 1,
+            min_visible_event_index: EventIndex::default(),
+            min_visible_message_index: MessageIndex::default(),
+        });
+
+        assert_eq!(
+            sorted(chat.user_ids_holding_records().collect()),
+            sorted(vec![owner, muted_member, user_id(20), user_id(21), user_id(22)])
+        );
+    }
 
     #[test]
     fn finalising_bot_message_which_mentions_everyone_notifies_everyone() {

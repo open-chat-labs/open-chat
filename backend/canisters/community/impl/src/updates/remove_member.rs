@@ -11,8 +11,8 @@ use multi_user_canister::{CommunityCanisterEvent, RemovedFromCommunity};
 use oc_error_codes::OCErrorCode;
 use std::collections::HashMap;
 use types::{
-    BotCaller, BotPermissions, Caller, CanisterId, ChatPermission, CommunityMembersRemoved, CommunityPermission, CommunityRole,
-    CommunityUsersBlocked, OCResult, UnitResult, UserId,
+    BotCaller, BotPermissions, C2CError, Caller, CanisterId, ChatPermission, CommunityMembersRemoved, CommunityPermission,
+    CommunityRole, CommunityUsersBlocked, OCResult, UnitResult, UserId,
 };
 
 #[update(msgpack = true)]
@@ -62,6 +62,15 @@ async fn c2c_bot_remove_user_impl(args: community_canister::c2c_bot_remove_user:
 }
 
 async fn remove_member_impl(user_id: UserId, block: bool, ext_caller: Option<Caller>) -> UnitResult {
+    let user_id = if block {
+        match latest_user_id(user_id).await {
+            Ok(user_id) => user_id,
+            Err(error) => return Response::Error(error.into()),
+        }
+    } else {
+        user_id
+    };
+
     // Check the caller can remove the user
     let prepare_result = match read_state(|state| prepare(user_id, block, ext_caller, state)) {
         Ok(ok) => ok,
@@ -83,6 +92,40 @@ async fn remove_member_impl(user_id: UserId, block: bool, ext_caller: Option<Cal
     mutate_state(|state| commit(user_id, block, prepare_result.removed_by, state));
 
     Response::Success
+}
+
+// The latest id of a user being blocked, who may be referred to by an id they had before being
+// migrated to a MultiUser canister (eg. one seen in an old message), so that the block is never
+// recorded under an old id. An unindexed id which the community doesn't know is looked up in the
+// LocalUserIndex. Anything still held under an old id is moved onto the latest id first, so that
+// a member under the old id is removed along with being blocked.
+async fn latest_user_id(user_id: UserId) -> Result<UserId, C2CError> {
+    let (known_latest, local_user_index_canister_id) = read_state(|state| {
+        let migrated_user_ids = &state.data.migrated_user_ids;
+        let known = user_id.is_indexed() || migrated_user_ids.contains(&user_id);
+        (
+            known.then(|| migrated_user_ids.latest(user_id)),
+            state.data.local_user_index_canister_id,
+        )
+    });
+
+    let latest = match known_latest {
+        Some(latest) => latest,
+        None => {
+            let args = local_user_index_canister::migrated_user_ids::Args { user_ids: vec![user_id] };
+            let local_user_index_canister::migrated_user_ids::Response::Success(migrated) =
+                local_user_index_canister_c2c_client::migrated_user_ids(local_user_index_canister_id, &args).await?;
+            migrated.get(&user_id).copied().unwrap_or(user_id)
+        }
+    };
+
+    if latest != user_id {
+        mutate_state(|state| {
+            let now = state.env.now();
+            state.data.migrate_user_ids(&[user_id], latest, None, now);
+        });
+    }
+    Ok(latest)
 }
 
 struct PrepareResult {

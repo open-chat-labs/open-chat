@@ -17,7 +17,7 @@ use group_canister::c2c_export_group::ExportExtras;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersSuccess, UserInvitation};
 use group_community_common::{
     Achievements, ExpiringMemberActions, ExpiringMembers, PaymentReceipts, PaymentRecipient, PendingPayment,
-    PendingPaymentReason, PendingPaymentsQueue, UserCache,
+    PendingPaymentReason, PendingPaymentsQueue, UserCache, UserIdsInStateMigration, UserIdsInStateMigrationMetrics,
 };
 use ic_principal::Principal;
 use installed_bots::InstalledBots;
@@ -635,6 +635,7 @@ impl RuntimeState {
             queued_local_index_events: self.data.local_user_index_event_sync_queue.len() as u32,
             stable_memory_sizes: memory::memory_sizes(),
             user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
+            user_ids_in_state_migration: self.data.user_ids_in_state_migration.metrics(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -731,6 +732,8 @@ struct Data {
     migrated_user_ids: MigratedUserIds,
     #[serde(default)]
     user_ids_in_events_migration: UserIdsInEventsMigration<EventContext>,
+    #[serde(default)]
+    user_ids_in_state_migration: UserIdsInStateMigration<jobs::update_user_ids_in_state::StatePosition>,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -829,6 +832,7 @@ impl Data {
             certified_transfers: CertifiedTransfers::default(),
             migrated_user_ids: MigratedUserIds::default(),
             user_ids_in_events_migration: UserIdsInEventsMigration::default(),
+            user_ids_in_state_migration: UserIdsInStateMigration::default(),
         }
     }
 
@@ -1244,6 +1248,7 @@ pub struct Metrics {
     pub queued_local_index_events: u32,
     pub stable_memory_sizes: BTreeMap<u8, u64>,
     pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
+    pub user_ids_in_state_migration: UserIdsInStateMigrationMetrics,
     pub canister_ids: CanisterIds,
 }
 

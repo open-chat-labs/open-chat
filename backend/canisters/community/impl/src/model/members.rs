@@ -451,7 +451,43 @@ impl CommunityMembers {
             }
             updated = true;
         }
+        // Moving the membership moves the user's places in user groups, which should only hold
+        // members, but any left under the old id are moved as well
+        self.user_groups.migrate_user_id(old_user_id, new_user_id, now);
         updated
+    }
+
+    // The ids under which `migrate_user_id` moves records, ie. memberships, blocks and places in
+    // user groups
+    pub fn user_ids_holding_records(&self) -> impl Iterator<Item = UserId> + '_ {
+        self.members_and_channels
+            .keys()
+            .copied()
+            .chain(self.blocked.iter().copied())
+            .chain(self.user_groups.user_ids())
+    }
+
+    // Passes the ids in the `referred_by` and `referrals` of up to `max_count` members, in key order
+    // starting after `after`, through `f`, replacing each with the id returned. Returns the last
+    // member passed if there may be more after them, otherwise None.
+    pub fn update_referral_user_ids(
+        &mut self,
+        after: Option<UserId>,
+        max_count: usize,
+        f: &mut dyn FnMut(UserId) -> UserId,
+    ) -> Option<UserId> {
+        self.members_map.update_referral_user_ids(after, max_count, f)
+    }
+
+    // Passes the user ids of up to `max_count` entries in the map of principals, in key order
+    // starting after `after`, through `f` (see `PrincipalToUserIdMap::update_user_ids`)
+    pub fn update_principal_user_ids(
+        &mut self,
+        after: Option<Principal>,
+        max_count: usize,
+        f: &mut dyn FnMut(UserId) -> UserId,
+    ) -> Option<Principal> {
+        self.principal_to_user_id_map.update_user_ids(after, max_count, f)
     }
 
     fn principal_if_mapped_to(&self, user_id: &UserId) -> Option<Principal> {
@@ -1505,6 +1541,54 @@ mod tests {
                 2,
             )
             .unwrap();
+    }
+
+    #[test]
+    fn referral_user_ids_are_updated_a_batch_at_a_time() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init(memory.get(MemoryId::new(1)));
+
+        let user_id = |i: u16| UserId::from(Principal::from_slice(&i.to_be_bytes()));
+        let principal = |i: u16| {
+            let [b0, b1] = i.to_be_bytes();
+            Principal::from_slice(&[1, b0, b1])
+        };
+        // A former member, who referred every member but the first and last
+        let [old_referrer, new_referrer] = [user_id(1000), user_id(1001)];
+        let mut members = CommunityMembers::new(principal(0), user_id(0), UserType::User, Vec::new(), 0);
+        for i in 1..150 {
+            members.add(user_id(i), principal(i), UserType::User, Some(old_referrer), 0);
+        }
+        // Referred by the first member, who holds them among their referrals
+        members.add(user_id(200), principal(200), UserType::User, Some(user_id(0)), 0);
+
+        let mut f = |u| {
+            if u == old_referrer {
+                new_referrer
+            } else if u == user_id(200) {
+                user_id(201)
+            } else {
+                u
+            }
+        };
+        let mut batches = 0;
+        let mut after = None;
+        loop {
+            after = members.update_referral_user_ids(after, 100, &mut f);
+            batches += 1;
+            if after.is_none() {
+                break;
+            }
+        }
+
+        assert_eq!(batches, 2);
+        for i in 1..150 {
+            assert_eq!(members.get_by_user_id(&user_id(i)).unwrap().referred_by, Some(new_referrer));
+        }
+        let first = members.get_by_user_id(&user_id(0)).unwrap();
+        assert_eq!(first.referrals(), &BTreeSet::from([user_id(201)]));
+        assert_eq!(members.get_by_user_id(&user_id(200)).unwrap().referred_by, Some(user_id(0)));
+        members.check_invariants();
     }
 
     fn member_ids(members: &[CommunityMember]) -> Vec<UserId> {

@@ -1,6 +1,6 @@
 use crate::model::channels::Channels;
 use crate::model::events::CommunityEvents;
-use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{Data, RuntimeState, mutate_state, read_state, run_regular_jobs};
 use chat_events::UserIdsInEventsMigration;
 use ic_cdk_timers::TimerId;
 use serde::{Deserialize, Serialize};
@@ -36,12 +36,19 @@ thread_local! {
 // scan in the LocalUserIndex, or scans a batch of events. This can be removed once it has completed
 // in every community.
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none() && !state.data.user_ids_in_events_migration.is_complete() {
+    if TIMER_ID.get().is_none() && is_required(&state.data) {
         start_timer(Duration::ZERO);
         true
     } else {
         false
     }
+}
+
+// The job waits until the old ids have been replaced throughout the rest of the community's state
+// (see `update_user_ids_in_state`), which starts it once done, since until then they can still be
+// written into new events
+pub(crate) fn is_required(data: &Data) -> bool {
+    !data.user_ids_in_events_migration.is_complete() && data.user_ids_in_state_migration.is_complete()
 }
 
 // `TIMER_ID` stays set until the run has finished, including while it waits on a lookup, so that
