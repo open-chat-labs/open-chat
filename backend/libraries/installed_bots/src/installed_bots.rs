@@ -104,6 +104,23 @@ impl InstalledBots {
         removed
     }
 
+    // Records `user_id` as having added each bot which was added under one of `previous_user_ids`,
+    // the ids the user had before being migrated to a MultiUser canister, marking each such bot
+    // updated so that clients are sent it again. Returns how many there were.
+    pub fn migrate_added_by(&mut self, previous_user_ids: &[UserId], user_id: UserId, now: TimestampMillis) -> u32 {
+        let mut bot_ids = Vec::new();
+        for (bot_id, bot) in self.bots.iter_mut() {
+            if previous_user_ids.contains(&bot.added_by) {
+                bot.added_by = user_id;
+                bot_ids.push(*bot_id);
+            }
+        }
+        for bot_id in bot_ids.iter() {
+            self.prune_then_insert_member_update(*bot_id, BotUpdate::Updated, now);
+        }
+        bot_ids.len() as u32
+    }
+
     pub fn get(&self, bot_id: &UserId) -> Option<&BotInternal> {
         self.bots.get(bot_id)
     }
@@ -171,4 +188,30 @@ pub struct BotInternal {
     pub autonomous_permissions: Option<BotPermissions>,
     #[serde(default)]
     pub default_subscriptions: Option<BotSubscriptions>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn user_id(i: u8) -> UserId {
+        Principal::from_slice(&[i]).into()
+    }
+
+    #[test]
+    fn bots_added_under_a_previous_id_are_recorded_as_added_by_the_latest() {
+        let mut bots = InstalledBots::default();
+        let (old, latest, bot1, bot2) = (user_id(1), user_id(2), user_id(10), user_id(11));
+        bots.add(bot1, old, BotPermissions::default(), None, None, 10);
+        bots.add(bot2, latest, BotPermissions::default(), None, None, 20);
+
+        assert_eq!(bots.migrate_added_by(&[old], latest, 30), 1);
+
+        assert!(bots.get(&bot1).is_some_and(|b| b.added_by == latest));
+        assert!(bots.get(&bot2).is_some_and(|b| b.added_by == latest));
+        let updates: Vec<_> = bots.iter_latest_updates(20).collect();
+        assert!(matches!(updates.as_slice(), [(bot_id, BotUpdate::Updated)] if *bot_id == bot1));
+        assert_eq!(bots.migrate_added_by(&[old], latest, 40), 0);
+        assert_eq!(bots.last_updated(), 30);
+    }
 }

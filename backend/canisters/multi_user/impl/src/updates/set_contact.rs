@@ -12,5 +12,11 @@ fn set_contact(args: Args) -> Response {
 }
 
 fn set_contact_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    state.with_caller_user_mut(|_, user| user_core::updates::set_contact(user, args))
+    let my_index = state.caller_user_index_or_trap();
+    let data = &mut state.data;
+    data.users
+        .with_user_mut(my_index, |user| {
+            user_core::updates::set_contact(user, args, &data.migrated_user_ids)
+        })
+        .expect("User not found")
 }

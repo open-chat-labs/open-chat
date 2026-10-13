@@ -1,9 +1,10 @@
 use candid::Principal;
 use multi_user_canister::Referral;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{Entry, KeyPrefix, ReferralKey, ReferralKeyPrefix, with_map, with_map_mut};
+use stable_memory_map::{Entry, EntryExt, KeyPrefix, ReferralKey, ReferralKeyPrefix, with_map, with_map_mut};
 use std::ops::RangeInclusive;
 use types::{ReferralStatus, TimestampMillis, Timestamped, UserId};
+use utils::migrated_user_ids::MigratedUserIds;
 
 // The users the user has referred, stored in the stable memory map for small entries keyed by
 // user id, each value holding the referral's status and when it was last updated
@@ -47,6 +48,45 @@ impl Referrals {
         }
 
         chit_reward_diff
+    }
+
+    // The ids the referrals are held under
+    pub fn user_ids(&self) -> Vec<UserId> {
+        with_map(|m| m.range(all_keys()).map(|(key, _)| key.user_id()).collect())
+    }
+
+    // Moves each referral held under an id the referred user had before being migrated to a
+    // MultiUser canister onto their latest id, keeping whichever status is worth more if they also
+    // have a referral under that id. No CHIT is awarded, since it was as each status was reached.
+    // Each referral moved is marked updated, so that clients are sent it under its new id. Returns
+    // how many were moved.
+    pub fn migrate_user_ids(&mut self, migrated_user_ids: &MigratedUserIds, now: TimestampMillis) -> u32 {
+        let to_move: Vec<_> = self
+            .user_ids()
+            .into_iter()
+            .filter_map(|user_id| migrated_user_ids.get(&user_id).map(|latest| (user_id, latest)))
+            .collect();
+        if to_move.is_empty() {
+            return 0;
+        }
+        let prefix = ReferralKeyPrefix::new();
+        with_map_mut(|m| {
+            for (user_id, latest) in to_move.iter() {
+                let Some(bytes) = m.remove(prefix.create_key(user_id)) else {
+                    continue;
+                };
+                let mut status = value_from_bytes(&bytes).value;
+                let entry = m.entry(prefix.create_key(latest));
+                if let Some(existing) = entry.value().map(|bytes| value_from_bytes(&bytes).value)
+                    && existing.chit_reward() >= status.chit_reward()
+                {
+                    status = existing;
+                }
+                entry.set(value_to_bytes(status, now));
+            }
+        });
+        self.last_updated = self.last_updated.max(now);
+        to_move.len() as u32
     }
 
     pub fn list(&self) -> Vec<Referral> {
@@ -219,6 +259,53 @@ mod tests {
         );
         assert!(referrals.list().iter().any(|r| r.user_id == user_id(4)));
         assert!(!referrals.list().iter().any(|r| r.user_id == user_id(5)));
+    }
+
+    #[test]
+    fn referrals_under_previous_ids_are_moved_onto_the_latest_keeping_the_higher_status() {
+        init_stable_memory_map();
+        let mut referrals = Referrals::default();
+        let mut migrated_user_ids = MigratedUserIds::default();
+        // Referred under an old id only
+        migrated_user_ids.insert(user_id(1), user_id(2));
+        referrals.set_status(user_id(1), &[], ReferralStatus::Diamond, 10);
+        // Under both, with the higher status under the old id, then under the new id
+        migrated_user_ids.insert(user_id(3), user_id(4));
+        referrals.set_status(user_id(3), &[], ReferralStatus::LifetimeDiamond, 10);
+        referrals.set_status(user_id(4), &[], ReferralStatus::Registered, 10);
+        migrated_user_ids.insert(user_id(5), user_id(6));
+        referrals.set_status(user_id(5), &[], ReferralStatus::Registered, 10);
+        referrals.set_status(user_id(6), &[], ReferralStatus::UniquePerson, 10);
+        // Not migrated
+        referrals.set_status(user_id(7), &[], ReferralStatus::Registered, 10);
+        let verified = referrals.total_verified();
+
+        assert_eq!(referrals.migrate_user_ids(&migrated_user_ids, 20), 3);
+
+        let mut list = referrals.list();
+        list.sort_by_key(|r| r.user_id);
+        let statuses: Vec<_> = list.iter().map(|r| (r.user_id, status_to_u8(r.status))).collect();
+        assert_eq!(
+            statuses,
+            vec![
+                (user_id(2), status_to_u8(ReferralStatus::Diamond)),
+                (user_id(4), status_to_u8(ReferralStatus::LifetimeDiamond)),
+                (user_id(6), status_to_u8(ReferralStatus::UniquePerson)),
+                (user_id(7), status_to_u8(ReferralStatus::Registered)),
+            ]
+        );
+        // Each moved referral is sent to clients again
+        let mut updated: Vec<_> = referrals.updated_since(10).into_iter().map(|r| r.user_id).collect();
+        updated.sort();
+        assert_eq!(updated, vec![user_id(2), user_id(4), user_id(6)]);
+        assert_eq!(referrals.total_verified(), verified);
+        assert_eq!(referrals.migrate_user_ids(&migrated_user_ids, 30), 0);
+
+        // A later status under the latest id earns only what it is worth more than the one moved
+        assert_eq!(
+            referrals.set_status(user_id(2), &[user_id(1)], ReferralStatus::Diamond, 40),
+            0
+        );
     }
 
     #[test]

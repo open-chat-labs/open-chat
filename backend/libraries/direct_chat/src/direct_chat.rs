@@ -110,6 +110,58 @@ impl DirectChat {
         self.them_migrated_at = Some(now);
     }
 
+    // Whether the chat holds anything outside its events which `migrate_user_ids` would change
+    pub(crate) fn holds_user_ids_to_migrate(&self, my_user_id: UserId, migrated_user_ids: &MigratedUserIds) -> bool {
+        self.latest_ttl_change_by(my_user_id, migrated_user_ids).is_some()
+            || self.events.user_ids_with_metrics().iter().any(|u| *u != my_user_id)
+    }
+
+    // Moves what the chat holds outside its events under ids which either user had before being
+    // migrated to a MultiUser canister onto the ids the chat has for them now: who made the latest
+    // change to its TTL, and the user's own metrics. Any other metrics are removed, since only the
+    // user's own are ever read (see `ChatEvents::skip_their_metrics`), which leaves those of the
+    // other user under any id they had before. Returns whether anything changed.
+    pub(crate) fn migrate_user_ids(&mut self, my_user_id: UserId, migrated_user_ids: &MigratedUserIds) -> bool {
+        let mut changed = false;
+        if let Some(by) = self.latest_ttl_change_by(my_user_id, migrated_user_ids)
+            && let EventsTtlLatestChange::Changed(change) = &mut self.events_ttl_latest_change
+        {
+            change.by = by;
+            changed = true;
+        }
+        for user_id in self.events.user_ids_with_metrics() {
+            if user_id == my_user_id {
+                continue;
+            }
+            if migrated_user_ids.is_same_user(user_id, my_user_id) {
+                self.events.migrate_user_metrics(user_id, my_user_id);
+            } else {
+                self.events.remove_user_metrics(user_id);
+            }
+            changed = true;
+        }
+        changed
+    }
+
+    // Who made the latest change to the TTL, if it is recorded under an id which either user had
+    // before being migrated: the id the chat has for that user now, as a change made since would be
+    // recorded under. Both copies of the chat end up with the same ids, so they still settle a tie
+    // between two changes the same way (see `EventsTtlChange::supersedes`).
+    fn latest_ttl_change_by(&self, my_user_id: UserId, migrated_user_ids: &MigratedUserIds) -> Option<UserId> {
+        let EventsTtlLatestChange::Changed(change) = self.events_ttl_latest_change else {
+            return None;
+        };
+        if change.by == my_user_id || change.by == self.them {
+            None
+        } else if migrated_user_ids.is_same_user(change.by, my_user_id) {
+            Some(my_user_id)
+        } else if migrated_user_ids.is_same_user(change.by, self.them) {
+            Some(self.them)
+        } else {
+            None
+        }
+    }
+
     // The id unique to the chat which its stable memory keys are built from
     pub fn key_id(&self) -> u32 {
         self.events
@@ -651,6 +703,7 @@ mod tests {
     use chat_events::{MessageContentInternal, NullEventPusher, TextContentInternal};
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
+    use std::collections::BTreeSet;
 
     #[test]
     fn messages_are_read_by_their_sender_and_read_positions_are_kept_per_user() {
@@ -757,6 +810,47 @@ mod tests {
 
     fn changed(by: u8, at: TimestampMillis) -> EventsTtlLatestChange {
         EventsTtlLatestChange::Changed(EventsTtlChange { by: user(by), at })
+    }
+
+    #[test]
+    fn ids_held_outside_the_events_are_moved_onto_the_ids_the_chat_has_now() {
+        init_stable_memory_map();
+        let (me, them, my_old, their_old, other) = (user(1), user(2), user(11), user(12), user(3));
+        let mut migrated_user_ids = MigratedUserIds::default();
+        migrated_user_ids.insert(my_old, me);
+        migrated_user_ids.insert(their_old, them);
+        let mut chat = DirectChat::new(me, them, UserType::User, 1, None, 123, 1);
+        // Messages sent under every id, the other user's metrics only being skipped under their
+        // current id
+        for (i, sender) in [me, my_old, them, their_old, other].into_iter().enumerate() {
+            chat.push_message::<NullEventPusher>(message(sender, i as u128, 10), None, None);
+        }
+        chat.set_events_time_to_live(their_old, Some(1000), 20);
+        assert_eq!(
+            chat.events().user_ids_with_metrics(),
+            BTreeSet::from([me, my_old, their_old, other])
+        );
+
+        assert!(chat.holds_user_ids_to_migrate(me, &migrated_user_ids));
+        assert!(chat.migrate_user_ids(me, &migrated_user_ids));
+
+        assert_eq!(chat.events_ttl_latest_change(), changed(2, 20));
+        // The user's metrics under their old id are merged into their own, and the rest removed
+        assert_eq!(chat.events().user_ids_with_metrics(), BTreeSet::from([me]));
+        let my_metrics = chat.events().user_metrics(&me, None).unwrap().hydrate();
+        assert_eq!(my_metrics.text_messages, 2);
+        assert!(!chat.holds_user_ids_to_migrate(me, &migrated_user_ids));
+        assert!(!chat.migrate_user_ids(me, &migrated_user_ids));
+
+        // A change recorded under the user's own old id is moved onto their id
+        chat.set_events_time_to_live(my_old, Some(2000), 30);
+        assert!(chat.migrate_user_ids(me, &migrated_user_ids));
+        assert_eq!(chat.events_ttl_latest_change(), changed(1, 30));
+
+        // As nothing is for a user who hasn't been migrated
+        chat.set_events_time_to_live(other, Some(3000), 40);
+        assert!(!chat.holds_user_ids_to_migrate(me, &migrated_user_ids));
+        assert_eq!(chat.events_ttl_latest_change(), changed(3, 40));
     }
 
     #[test]
