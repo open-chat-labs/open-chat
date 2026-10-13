@@ -24,24 +24,24 @@ async fn approve(args: Args) -> Response {
         Err(error) => return InternalError(format!("{error:?}")),
     };
 
-    // The proposer is paid at their wallet, which for a user in a MultiUser canister is their
-    // principal's account, so that is looked up. Anyone else's is the account of their user id.
-    let proposer = read_state(|state| state.data.translations.proposed_by(args.id));
-    let proposer_principal = match proposer {
-        Some(proposer) if proposer.is_indexed() => match lookup_user(proposer.as_principal(), user_index_canister_id).await {
-            Ok(Some(user)) if user.user_id == proposer => user.principal,
-            Ok(_) => return InternalError(format!("Proposer not found: {proposer}")),
-            Err(error) => return InternalError(format!("{error:?}")),
-        },
-        Some(proposer) => proposer.as_principal(),
-        None => return NotFound,
+    let Some(proposer) = read_state(|state| state.data.translations.proposed_by(args.id)) else {
+        return NotFound;
+    };
+
+    // Users hold their own funds, in their principal's account, so the proposer's principal is looked
+    // up. A proposer who has been deleted isn't found, so isn't paid.
+    let recipient_account = match lookup_user(proposer.as_principal(), user_index_canister_id).await {
+        // The lookup also resolves the principal a user signs in with, which isn't their user id
+        Ok(Some(user)) if user.user_id == proposer => UserIdAndPrincipal::new(user.user_id, user.principal).into(),
+        Ok(_) => return InternalError(format!("Proposer not found: {proposer}")),
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     mutate_state(|state| match state.data.translations.approve(args.id, user_id, now) {
         ApproveResponse::Success(result) => {
             if !result.previously_approved {
                 state.data.pending_payments_queue.push(PendingPayment {
-                    recipient_account: UserIdAndPrincipal::new(result.proposed_by, proposer_principal).into(),
+                    recipient_account,
                     timestamp: now,
                     ledger: CHAT_LEDGER_CANISTER_ID,
                     fee: CHAT_TRANSFER_FEE,

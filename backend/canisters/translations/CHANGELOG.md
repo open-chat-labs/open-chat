@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Retry payments whose ledger can't be called after a growing delay rather than every round, and park those to uninstalled or deleted ledgers ([#9794](https://github.com/open-chat-labs/open-chat/pull/9794))
 - Read the log buffers in the order `pre_upgrade` writes them, so upgrades no longer rotate errors, logs and traces ([#9856](https://github.com/open-chat-labs/open-chat/pull/9856))
+- Pay approved translations to the proposer's wallet rather than their old User canister's, and rewrite migrated users' old ids to their latest ([#9937](https://github.com/open-chat-labs/open-chat/pull/9937))
 
 ## [[2.0.2072](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2072-translations)] - 2026-09-29
 
