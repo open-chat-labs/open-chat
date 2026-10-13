@@ -63,6 +63,11 @@ impl<L: Copy + Eq + Hash> UserIdsInEventsMigration<L> {
         self.scan_complete
     }
 
+    // Whether any events have been scanned
+    pub fn has_started(&self) -> bool {
+        self.scanned_up_to.is_some() || self.scan_complete
+    }
+
     // The last event scanned, from which the next batch carries on. None before the first batch.
     pub fn scanned_up_to(&self) -> Option<L> {
         self.scanned_up_to
@@ -268,5 +273,21 @@ mod tests {
 
         assert!(!migration.is_complete());
         assert_eq!(migration.scanned_up_to(), None);
+    }
+
+    #[test]
+    fn the_scan_has_started_once_any_events_have_been_scanned() {
+        let mut migration = UserIdsInEventsMigration::<u32>::default();
+        assert!(!migration.has_started());
+
+        migration.record_scanned_up_to(Some(1));
+        assert!(migration.has_started());
+
+        // Including when there turned out to be none
+        let mut migration = UserIdsInEventsMigration::<u32>::default();
+        migration.record_scanned_up_to(None);
+        assert!(migration.has_started());
+        migration.restart_scan();
+        assert!(!migration.has_started());
     }
 }

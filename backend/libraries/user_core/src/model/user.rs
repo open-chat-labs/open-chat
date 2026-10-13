@@ -1,3 +1,4 @@
+use crate::mentions::replace_mentioned_users;
 use crate::{
     BlockedUsers, ChitEvents, Communities, Community, Contacts, FavouriteChats, GameChitKeys, GroupChat, GroupChats,
     HotGroupExclusions, Membership, MessageActivityEvents, P2PSwaps, PinNumber, PremiumItems, ProfileDocument, Referrals,
@@ -92,27 +93,120 @@ pub struct User {
     pub premium_items: PremiumItems,
 }
 
+// How much `User::migrate_user_ids` moved onto users' latest ids
+#[derive(Default, Debug, PartialEq, Eq)]
+pub struct UserIdsMigrated {
+    // The ids found to have been migrated which the user held a chat, pin, favourite, block or
+    // contact under
+    pub old_user_ids_found: u32,
+    // How many of those chats were left under the old id, since the user already had a chat under
+    // the other user's latest id (see `DirectChats::migrate_their_user_id`)
+    pub chats_left_under_old_ids: u32,
+    // Who referred the user, and the users they referred
+    pub referrals: u32,
+    pub message_activity_events: u32,
+    pub private_replies: u32,
+    // The chats whose latest change to their TTL, or whose metrics, were updated
+    pub direct_chats: u32,
+    pub bots: u32,
+    // Whether any mentions in the user's bio were
+    pub bio: bool,
+}
+
 impl User {
     // Moves what the user holds under the id of another user onto that user's new id once they are
-    // migrated to a MultiUser canister: their chat with them, their block of them and their contact
-    // for them. The ids in the chat's events are replaced separately, by the MultiUser canister's
-    // `update_user_ids_in_events` job.
+    // migrated to a MultiUser canister: their chat with them, their pin and favourite of it, their
+    // block of them and their contact for them. A pin or favourite of a chat which doesn't exist,
+    // which either can be, is moved too. The ids in the chat's events are replaced separately, by
+    // the MultiUser canister's `update_user_ids_in_events` job.
     pub fn migrate_their_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) {
         if self.blocked_users.unblock(old_user_id, now) {
             self.blocked_users.block(new_user_id, now);
         }
-        if self.direct_chats.migrate_their_user_id(old_user_id, new_user_id, now) {
+        self.direct_chats.migrate_their_user_id(old_user_id, new_user_id, now);
+        // Unless the chat was left under the old id, since there is one under the new id too
+        if !self.direct_chats.exists(&old_user_id.into()) {
             self.favourite_chats.migrate_their_user_id(old_user_id, new_user_id, now);
         }
         self.contacts.migrate_user_id(old_user_id, new_user_id);
     }
 
-    // The ids of the other users whom the user holds anything under which `migrate_their_user_id`
-    // moves: their direct chats, blocks and contacts
+    // Moves everything the user holds outside their direct chats' events under ids which they, or
+    // other users, had before being migrated to a MultiUser canister onto those users' latest ids,
+    // or, for something which names a direct chat, onto the id the chat is under now (see
+    // `DirectChats::latest_user_id`). `migrated_user_ids` must know the migrations of the ids
+    // `their_user_ids` returns, and of the user's own previous ids.
+    pub fn migrate_user_ids(
+        &mut self,
+        my_user_id: UserId,
+        migrated_user_ids: &MigratedUserIds,
+        now: TimestampMillis,
+    ) -> UserIdsMigrated {
+        let mut migrated = UserIdsMigrated::default();
+        for old_user_id in self.ids_of_users_with_chats_blocks_or_contacts() {
+            if let Some(latest) = migrated_user_ids.get(&old_user_id) {
+                self.migrate_their_user_id(old_user_id, latest, now);
+                migrated.old_user_ids_found += 1;
+                if self.direct_chats.exists(&old_user_id.into()) {
+                    migrated.chats_left_under_old_ids += 1;
+                }
+            }
+        }
+        if let Some(latest) = self.referred_by.and_then(|user_id| migrated_user_ids.get(&user_id)) {
+            self.referred_by = Some(latest);
+            migrated.referrals += 1;
+        }
+        migrated.referrals += self.referrals.migrate_user_ids(migrated_user_ids, now);
+        let direct_chats = &self.direct_chats;
+        migrated.message_activity_events = self.message_activity_events.migrate_user_ids(
+            |chat| direct_chats.latest_chat(chat, migrated_user_ids),
+            |user_id| migrated_user_ids.latest(user_id),
+            now,
+        );
+        migrated.private_replies = self.direct_chats.migrate_private_reply_user_ids(migrated_user_ids);
+        migrated.direct_chats = self.direct_chats.migrate_user_ids_in_chats(my_user_id, migrated_user_ids);
+        migrated.bots = self
+            .bots
+            .migrate_added_by(&migrated_user_ids.previous_ids(my_user_id), my_user_id, now);
+        if let Some(bio) = replace_mentioned_users(&self.bio.value, |user_id| migrated_user_ids.latest(user_id)) {
+            self.bio = Timestamped::new(bio, now);
+            migrated.bio = true;
+        }
+        migrated
+    }
+
+    // The ids of the other users whom the user holds anything under which `migrate_user_ids` moves
+    // onto their latest ids. Those which have been migrated are found from these.
     pub fn their_user_ids(&self) -> HashSet<UserId> {
+        let mut user_ids = self.ids_of_users_with_chats_blocks_or_contacts();
+        user_ids.extend(self.referred_by);
+        user_ids.extend(self.referrals.user_ids());
+        user_ids.extend(self.message_activity_events.user_ids());
+        user_ids.extend(self.direct_chats.private_reply_user_ids());
+        replace_mentioned_users(&self.bio.value, |user_id| {
+            user_ids.insert(user_id);
+            user_id
+        });
+        user_ids
+    }
+
+    // The ids of the other users whom the user has a direct chat with, or a pin or favourite of a
+    // direct chat with, or has blocked or holds a contact for
+    fn ids_of_users_with_chats_blocks_or_contacts(&self) -> HashSet<UserId> {
+        let pinned = self.direct_chats.pinned_chats().into_keys();
+        let favourites = self
+            .favourite_chats
+            .chats()
+            .iter()
+            .chain(self.favourite_chats.pinned().keys());
         self.direct_chats
             .ids()
             .map(UserId::from)
+            .chain(
+                pinned
+                    .chain(favourites.copied())
+                    .filter_map(|chat| if let Chat::Direct(chat_id) = chat { Some(chat_id.into()) } else { None }),
+            )
             .chain(self.blocked_users.all())
             .chain(self.contacts.all().into_iter().map(|(user_id, _)| user_id))
             .collect()
@@ -422,10 +516,13 @@ impl User {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chat_events::ChatInternal;
+    use direct_chat::EventsTtlLatestChange;
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use multi_user_canister::ManualWallet;
     use multi_user_canister::set_contact::OptionalContact;
+    use std::collections::HashMap;
     use types::{CanisterId, OptionUpdate, UserType};
 
     #[test]
@@ -465,21 +562,161 @@ mod tests {
     }
 
     #[test]
-    fn their_user_ids_are_those_of_the_users_direct_chats_blocks_and_contacts() {
-        let memory = MemoryManager::init(DefaultMemoryImpl::default());
-        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
-        let user_id = |i: u8| -> UserId { Principal::from_slice(&[i; 10]).into() };
+    fn their_user_ids_are_every_id_of_another_user_held_outside_the_chats_events() {
+        init_stable_memory_map();
         let me = user_id(1);
-        let mut user = User::new(Principal::from_slice(&[1]), "user".to_string(), None, 0);
+        let mut user = User::new(Principal::from_slice(&[1]), "user".to_string(), Some(user_id(12)), 0);
         user.direct_chats.get_or_create(me, user_id(2), UserType::User, || 1, 10);
         user.direct_chats.get_or_create(me, user_id(3), UserType::User, || 2, 10);
         user.blocked_users.block(user_id(3), 20);
         user.blocked_users.block(user_id(4), 20);
-        user.contacts.set_contact(OptionalContact {
-            user_id: user_id(5),
-            nickname: OptionUpdate::SetToSome("five".to_string()),
-        });
+        set_contact(&mut user, user_id(5));
+        // Pins and favourites of chats which don't exist
+        user.direct_chats.pin(user_id(6).into(), 20).unwrap();
+        user.favourite_chats.add(Chat::Direct(user_id(7).into()), 20).unwrap();
+        user.favourite_chats.pin(Chat::Direct(user_id(8).into()), 20).unwrap();
+        user.favourite_chats.add(group(), 20).unwrap();
+        user.message_activity_events
+            .push(activity_event(Chat::Direct(user_id(9).into()), 1, 30, user_id(10)), 30);
+        user.direct_chats
+            .mark_private_reply(user_id(11), ChatInternal::Group(group_id()), 1.into());
+        user.referrals.set_status(user_id(13), &[], ReferralStatus::Registered, 40);
+        user.bio = Timestamped::new(format!("Friend of @UserId({})", user_id(14)), 50);
 
-        assert_eq!(user.their_user_ids(), (2..=5).map(user_id).collect());
+        assert_eq!(user.their_user_ids(), (2..=14).map(user_id).collect());
+    }
+
+    #[test]
+    fn everything_held_under_ids_from_before_a_migration_is_moved_onto_the_latest_ids() {
+        init_stable_memory_map();
+        let (me, my_old) = (user_id(1), user_id(101));
+        let old = |i: u8| user_id(100 + i);
+        let mut migrated_user_ids = MigratedUserIds::default();
+        migrated_user_ids.insert(my_old, me);
+        for i in 2..=9 {
+            migrated_user_ids.insert(old(i), user_id(i));
+        }
+        let mut user = User::new(Principal::from_slice(&[1]), "user".to_string(), Some(old(2)), 0);
+        // A pin and favourites of chats which don't exist
+        user.direct_chats.pin(old(3).into(), 10).unwrap();
+        user.favourite_chats.pin(Chat::Direct(old(3).into()), 10).unwrap();
+        user.favourite_chats.add(Chat::Direct(old(4).into()), 10).unwrap();
+        // A chat left under the old id, since there is one under the new id, is favourited under both
+        user.direct_chats.get_or_create(me, old(5), UserType::User, || 1, 10);
+        user.direct_chats.get_or_create(me, user_id(5), UserType::User, || 2, 10);
+        user.favourite_chats.add(Chat::Direct(old(5).into()), 10).unwrap();
+        user.favourite_chats.add(Chat::Direct(user_id(5).into()), 10).unwrap();
+        user.referrals.set_status(old(6), &[], ReferralStatus::Diamond, 10);
+        user.message_activity_events
+            .push(activity_event(Chat::Direct(old(7).into()), 1, 10, old(7)), 10);
+        user.direct_chats
+            .mark_private_reply(old(8), ChatInternal::Group(group_id()), 1.into());
+        user.direct_chats
+            .get_or_create(me, user_id(9), UserType::User, || 3, 10)
+            .set_events_time_to_live(old(9), Some(1000), 10);
+        user.bots.add(user_id(50), my_old, BotPermissions::default(), None, None, 10);
+        user.bio = Timestamped::new(format!("Friend of @UserId({}) and @UserId({})", old(2), user_id(3)), 10);
+
+        let migrated = user.migrate_user_ids(me, &migrated_user_ids, 100);
+
+        assert_eq!(user.referred_by, Some(user_id(2)));
+        assert_eq!(
+            user.direct_chats.pinned_chats(),
+            HashMap::from([(Chat::Direct(user_id(3).into()), 10)])
+        );
+        assert_eq!(
+            user.favourite_chats.chats(),
+            &[
+                Chat::Direct(user_id(5).into()),
+                Chat::Direct(old(5).into()),
+                Chat::Direct(user_id(4).into()),
+                Chat::Direct(user_id(3).into()),
+            ]
+        );
+        assert_eq!(
+            user.favourite_chats.pinned().keys().collect::<Vec<_>>(),
+            vec![&Chat::Direct(user_id(3).into())]
+        );
+        assert_eq!(user.referrals.user_ids(), vec![user_id(6)]);
+        let event = user.message_activity_events.latest_events(0).pop().unwrap();
+        assert_eq!(
+            (event.chat, event.user_id),
+            (Chat::Direct(user_id(7).into()), Some(user_id(7)))
+        );
+        assert_eq!(user.direct_chats.private_reply_user_ids(), HashSet::from([user_id(8)]));
+        assert!(matches!(
+            user.direct_chats.get(&user_id(9).into()).unwrap().events_ttl_latest_change(),
+            EventsTtlLatestChange::Changed(change) if change.by == user_id(9)
+        ));
+        assert!(user.bots.get(&user_id(50)).is_some_and(|bot| bot.added_by == me));
+        assert_eq!(
+            user.bio,
+            Timestamped::new(format!("Friend of @UserId({}) and @UserId({})", user_id(2), user_id(3)), 100)
+        );
+        assert_eq!(
+            migrated,
+            UserIdsMigrated {
+                old_user_ids_found: 3,
+                chats_left_under_old_ids: 1,
+                referrals: 2,
+                message_activity_events: 1,
+                private_replies: 1,
+                direct_chats: 1,
+                bots: 1,
+                bio: true,
+            }
+        );
+        // Clients are sent what changed
+        assert!(user.direct_chats.pinned_chats_if_updated(99).is_some());
+        assert!(user.favourite_chats.any_updated(99));
+        assert_eq!(user.referrals.updated_since(99).len(), 1);
+        assert!(user.bots.last_updated() > 99);
+
+        // Running again finds nothing more
+        assert_eq!(
+            user.migrate_user_ids(me, &migrated_user_ids, 200),
+            UserIdsMigrated {
+                old_user_ids_found: 1,
+                chats_left_under_old_ids: 1,
+                ..Default::default()
+            }
+        );
+    }
+
+    fn init_stable_memory_map() {
+        let memory = MemoryManager::init(DefaultMemoryImpl::default());
+        stable_memory_map::init_with_small_entries_map(memory.get(MemoryId::new(1)), memory.get(MemoryId::new(2)));
+    }
+
+    fn user_id(i: u8) -> UserId {
+        Principal::from_slice(&[i; 10]).into()
+    }
+
+    fn group_id() -> ChatId {
+        Principal::from_slice(&[200; 10]).into()
+    }
+
+    fn group() -> Chat {
+        Chat::Group(group_id())
+    }
+
+    fn set_contact(user: &mut User, user_id: UserId) {
+        user.contacts.set_contact(OptionalContact {
+            user_id,
+            nickname: OptionUpdate::SetToSome("nickname".to_string()),
+        });
+    }
+
+    fn activity_event(chat: Chat, message_index: u32, timestamp: TimestampMillis, user_id: UserId) -> MessageActivityEvent {
+        MessageActivityEvent {
+            chat,
+            thread_root_message_index: None,
+            message_index: message_index.into(),
+            message_id: (message_index as u64).into(),
+            event_index: message_index.into(),
+            activity: multi_user_canister::MessageActivity::Reaction,
+            timestamp,
+            user_id: Some(user_id),
+        }
     }
 }

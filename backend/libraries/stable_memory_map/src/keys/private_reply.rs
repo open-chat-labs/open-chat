@@ -1,5 +1,6 @@
 use crate::keys::macros::key;
 use crate::{KeyPrefix, KeyType};
+use std::ops::RangeInclusive;
 use types::{ChatId, MessageIndex, UserId};
 
 // The messages the user has sent in their direct chats which privately reply to a message in a
@@ -48,6 +49,17 @@ impl KeyPrefix for PrivateReplyKeyPrefix {
 }
 
 impl PrivateReplyKey {
+    // The range of the keys of every reply, whichever group it replies to. A group chat id is at most
+    // 29 bytes, so no key's length byte is as high as the end's.
+    pub fn all() -> RangeInclusive<PrivateReplyKey> {
+        let key_type = KeyType::PrivateReplyToGroup as u8;
+        PrivateReplyKey(vec![key_type])..=PrivateReplyKey(vec![key_type, u8::MAX])
+    }
+
+    pub fn group_chat_id(&self) -> ChatId {
+        ChatId::from(ic_principal::Principal::from_slice(&self.0[2..self.prefix_len()]))
+    }
+
     pub fn message_index(&self) -> MessageIndex {
         let start = self.prefix_len();
         u32::from_be_bytes(self.0[start..start + 4].try_into().unwrap()).into()
@@ -92,6 +104,8 @@ mod tests {
             assert_eq!(key_bytes.len(), 26);
             assert_eq!(KeyType::PrivateReplyToGroup.map_class(), MapClass::SmallEntries);
             assert!(key.matches_prefix(&prefix));
+            assert!(PrivateReplyKey::all().contains(&key));
+            assert_eq!(key.group_chat_id(), chat_id);
             assert_eq!(key.message_index(), message_index);
             assert_eq!(key.user_id(), user_id);
 
@@ -101,6 +115,19 @@ mod tests {
             assert_eq!(deserialized, key);
             assert_eq!(deserialized.0, key_bytes);
             assert_eq!(BaseKey::from(deserialized).as_slice(), key_bytes.as_slice());
+        }
+    }
+
+    #[test]
+    fn every_key_is_within_the_range_of_all_keys() {
+        let user = UserId::from(Principal::from_slice(&[u8::MAX; 29]));
+        for chat_id in [
+            ChatId::from(Principal::from_slice(&[])),
+            ChatId::from(Principal::from_slice(&[u8::MAX; 29])),
+        ] {
+            let key = PrivateReplyKeyPrefix::new(chat_id).create_key(&(user, u32::MAX.into()));
+            assert!(PrivateReplyKey::all().contains(&key));
+            assert_eq!(key.group_chat_id(), chat_id);
         }
     }
 

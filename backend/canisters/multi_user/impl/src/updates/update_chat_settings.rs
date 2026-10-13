@@ -15,7 +15,14 @@ async fn update_chat_settings(args: Args) -> Response {
     execute_update_async(|| update_chat_settings_impl(args)).await
 }
 
-async fn update_chat_settings_impl(args: Args) -> Response {
+async fn update_chat_settings_impl(mut args: Args) -> Response {
+    // A client which hasn't yet heard that the other user has been migrated to a MultiUser canister
+    // names them by their old id, so the chat with them, which this may create, is named by the id it
+    // is under now
+    args.user_id = read_state(|state| {
+        state.with_caller_user(|_, user| user.direct_chats.latest_user_id(args.user_id, &state.data.migrated_user_ids))
+    });
+
     // A user in another canister whom the caller has no chat with yet is looked up in the
     // LocalUserIndex, which gives whether they are a user or a bot
     let mut their_user_type = UserType::User;

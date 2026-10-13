@@ -13,8 +13,13 @@ fn pin_chat_v2(args: Args) -> Response {
 
 fn pin_chat_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
-    let my_index =
-        state.with_caller_user_mut(|my_index, user| user_core::updates::pin_chat_v2(user, args, now).map(|()| my_index))?;
+    let my_index = state.caller_user_index_or_trap();
+    let data = &mut state.data;
+    data.users
+        .with_user_mut(my_index, |user| {
+            user_core::updates::pin_chat_v2(user, args, &data.migrated_user_ids, now)
+        })
+        .expect("User not found")?;
     state.award_achievement_and_notify(my_index, Achievement::PinnedChat, now);
     Ok(())
 }
