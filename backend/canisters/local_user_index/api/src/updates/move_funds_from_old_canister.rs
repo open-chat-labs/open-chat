@@ -36,8 +36,9 @@ pub enum MoveFundsResult {
     // `amount` arrived in the caller's wallet, the ledger having charged `fee` on top, including any
     // fee it burned
     Moved { amount: u128, fee: u128, block_index: u64 },
-    // The balance didn't exceed the fee, as known to the Registry or as the ledger gave when it
-    // rejected that fee, together with any fee the ledger burns, so there was nothing to move
+    // The balance, less the fee (as known to the Registry, or as the ledger gave when it rejected
+    // that fee) and any fee the ledger burns, didn't exceed the fee, so there was nothing to move.
+    // Some ledgers reject a transfer of an amount which doesn't exceed the fee.
     NothingToMove,
     // If the transfer timed out (a `C2CError` with reject code 6, `SYS_UNKNOWN`) it may still have
     // been made, in which case a later call finds nothing left to move
