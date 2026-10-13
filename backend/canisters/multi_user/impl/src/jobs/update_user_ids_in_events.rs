@@ -4,6 +4,7 @@ use chat_events::UserIdsInEventsMigration;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::collections::{BTreeMap, HashMap};
+use std::ops::ControlFlow;
 use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{CanisterId, ChatId, EventContext, UserId};
@@ -125,26 +126,33 @@ fn scan(
 
         let stopped_at = users
             .with_user_mut(user_index, |user| {
-                for (key_id, chat_id) in user.direct_chats.ids_ordered_by_key_id() {
-                    let after = match start {
-                        Some((start_key_id, _)) if key_id < start_key_id => continue,
-                        Some((start_key_id, context)) if key_id == start_key_id => Some(context),
-                        _ => None,
-                    };
-                    let Some(mut chat) = user.direct_chats.get_mut(&chat_id) else {
-                        continue;
-                    };
-                    if let Some(context) = chat.update_user_ids(
+                let key_ids: HashMap<ChatId, u32> = user
+                    .direct_chats
+                    .ids_ordered_by_key_id()
+                    .into_iter()
+                    .filter(|(key_id, _)| start.is_none_or(|(start_key_id, _)| *key_id >= start_key_id))
+                    .map(|(key_id, chat_id)| (chat_id, key_id))
+                    .collect();
+                let mut chat_ids: Vec<_> = key_ids.keys().copied().collect();
+                chat_ids.sort_unstable_by_key(|chat_id| key_ids[chat_id]);
+
+                // The chats are written back together once the batch stops
+                user.direct_chats.update_many(chat_ids, |chat_id, chat| {
+                    let key_id = key_ids[chat_id];
+                    let after = start
+                        .filter(|(start_key_id, _)| *start_key_id == key_id)
+                        .map(|(_, context)| context);
+                    match chat.update_user_ids(
                         after,
                         &mut |context, user_id| {
                             migration.latest_user_id(user_id, (user_index, key_id, context), migrated_user_ids)
                         },
                         should_stop,
                     ) {
-                        return Some((key_id, context));
+                        Some(context) => ControlFlow::Break((key_id, context)),
+                        None => ControlFlow::Continue(()),
                     }
-                }
-                None
+                })
             })
             .flatten();
 
@@ -183,12 +191,20 @@ fn update_events(state: &mut RuntimeState) {
         for (user_index, events_by_chat) in events_by_user {
             data.users.with_user_mut(user_index, |user| {
                 let chat_ids: HashMap<u32, ChatId> = user.direct_chats.ids_ordered_by_key_id().into_iter().collect();
+                // In order of key_id, so that the chats are written back together in key order
+                let mut events_by_chat_id: HashMap<ChatId, Vec<EventContext>> = HashMap::new();
+                let mut ordered_chat_ids = Vec::new();
                 for (key_id, contexts) in events_by_chat {
-                    let Some(mut chat) = chat_ids.get(&key_id).and_then(|chat_id| user.direct_chats.get_mut(chat_id)) else {
-                        continue;
-                    };
-                    updated += chat.update_user_ids_in_events(contexts, &mut |user_id| migrated_user_ids.latest(user_id));
+                    if let Some(chat_id) = chat_ids.get(&key_id) {
+                        ordered_chat_ids.push(*chat_id);
+                        events_by_chat_id.insert(*chat_id, contexts);
+                    }
                 }
+                user.direct_chats.update_many(ordered_chat_ids, |chat_id, chat| {
+                    let contexts = events_by_chat_id.remove(chat_id).unwrap_or_default();
+                    updated += chat.update_user_ids_in_events(contexts, &mut |user_id| migrated_user_ids.latest(user_id));
+                    ControlFlow::<()>::Continue(())
+                });
             });
         }
         if ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_PER_BATCH {

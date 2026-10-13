@@ -12,6 +12,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::marker::PhantomData;
+use std::ops::ControlFlow;
 use std::ops::{Deref, DerefMut};
 
 pub trait HeapStableSplitMapValue: Serialize + DeserializeOwned {
@@ -125,13 +126,45 @@ impl<V: HeapStableSplitMapValue> HeapStableSplitMap<V> {
             .map(|(id, entry)| HeapStableSplitMapRef::new(read(id, entry)))
     }
 
-    // Applies `f` to every value, writing each back
+    // Applies `f` to every value, writing them back together (see `update_many`)
     pub fn for_each_mut(&mut self, mut f: impl FnMut(&V::Id, &mut V)) {
-        for (id, entry) in self.in_stable_memory.iter_mut() {
-            let mut value = read(id, entry);
-            f(id, &mut value);
-            *entry = write(id, entry, &value);
+        let ids: Vec<_> = self.ids().collect();
+        self.update_many(ids, |id, value| {
+            f(id, value);
+            ControlFlow::<()>::Continue(())
+        });
+    }
+
+    // Applies `f` to each value whose id is given in turn, skipping ids which aren't held, until it
+    // returns `Break`, whose value is returned. Every value `f` was applied to is then written back,
+    // all together, so that each node of the stable memory map is written once rather than once per
+    // value, which saves the most when the values' keys are close together.
+    pub fn update_many<B>(
+        &mut self,
+        ids: impl IntoIterator<Item = V::Id>,
+        mut f: impl FnMut(&V::Id, &mut V) -> ControlFlow<B>,
+    ) -> Option<B> {
+        let mut to_write = Vec::new();
+        let mut result = None;
+        for id in ids {
+            let Some(entry) = self.in_stable_memory.get_mut(&id) else {
+                continue;
+            };
+            let mut value = read(&id, entry);
+            let flow = f(&id, &mut value);
+            let new_entry = value.entry();
+            let key = V::key(&id, &new_entry);
+            debug_assert!(key == V::key(&id, entry), "A value's key must never change");
+            *entry = new_entry;
+            to_write.push((key, value.to_bytes()));
+            if let ControlFlow::Break(b) = flow {
+                result = Some(b);
+                break;
+            }
         }
+        to_write.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
+        with_map_mut(|m| m.insert_many(to_write));
+        result
     }
 
     pub fn len(&self) -> usize {
@@ -291,6 +324,32 @@ mod tests {
         assert!(values.is_empty());
         assert!(values.get(&1).is_none());
         assert!(values.remove(&1).is_none());
+    }
+
+    #[test]
+    fn update_many_writes_back_each_value_updated_until_it_breaks() {
+        init();
+        let mut values = HeapStableSplitMap::default();
+        for id in 1..=4 {
+            values.insert(id, item("x", id as u64));
+        }
+
+        let result = values.update_many([3, 5, 1, 2, 4], |id, value| {
+            value.updated += 10;
+            if *id == 2 { ControlFlow::Break(*id) } else { ControlFlow::Continue(()) }
+        });
+
+        assert_eq!(result, Some(2));
+        // 5 isn't held, and 4 comes after the value it broke on
+        for (id, updated) in [(1, 11), (2, 12), (3, 13), (4, 4)] {
+            assert_eq!(values.get(&id).unwrap().updated, updated);
+            assert_eq!(values.entry(&id), Some(updated));
+        }
+
+        values.for_each_mut(|_, value| value.updated += 100);
+        for (id, updated) in [(1, 111), (2, 112), (3, 113), (4, 104)] {
+            assert_eq!(values.get(&id).unwrap().updated, updated);
+        }
     }
 
     #[test]
