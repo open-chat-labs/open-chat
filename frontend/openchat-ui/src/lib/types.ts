@@ -1,5 +1,15 @@
 // Shared prop types. The export referenced these by name without defining them;
 // each shape mirrors what the matching .logic.js file produces or reads.
+import type { Component, ComponentProps } from 'svelte';
+import type ChatBubble from './components/ChatBubble.svelte';
+import type FileMessage from './components/FileMessage.svelte';
+import type LinkPreview from './components/LinkPreview.svelte';
+import type MediaMessage from './components/MediaMessage.svelte';
+import type PollMessage from './components/PollMessage.svelte';
+import type PrizeMessage from './components/PrizeMessage.svelte';
+import type SwapOfferMessage from './components/SwapOffer.svelte';
+import type TransferMessage from './components/TransferMessage.svelte';
+import type VoiceMessage from './components/VoiceMessage.svelte';
 
 /** One entry of Menu `items` (and DmPanel `menuItems`), rendered as a MenuItem. */
 export interface MenuItem {
@@ -14,20 +24,39 @@ export interface MenuItem {
   onSelect?: () => void;
 }
 
+/** Fields every message in a MessageGroup can carry, whatever its kind. */
+interface GroupMessageBase {
+  time: string;
+  /** Deleted messages render as a tombstone and get no menu. */
+  deleted?: boolean;
+  reactions?: { emoji: string; count: number; mine?: boolean }[];
+}
+
+/** Props a message kind takes from MessageGroup itself rather than from the message. */
+type GroupOwned = 'side' | 'lastInGroup' | 'onToggleReaction';
+
+type KindProps<C extends Component<any>> = Omit<ComponentProps<C>, GroupOwned | 'time'>;
+
+/** One message inside a MessageGroup; `kind` picks the component that renders it (text when absent). */
+export type GroupMessage = GroupMessageBase &
+  (
+    | ({ kind?: 'text' } & KindProps<typeof ChatBubble>)
+    | ({ kind: 'voice' } & KindProps<typeof VoiceMessage>)
+    | ({ kind: 'image' | 'album' | 'video' | 'gif' } & Omit<KindProps<typeof MediaMessage>, 'kind'>)
+    | ({ kind: 'file' } & KindProps<typeof FileMessage>)
+    | ({ kind: 'link' } & KindProps<typeof LinkPreview>)
+    | ({ kind: 'transfer' } & KindProps<typeof TransferMessage>)
+    | ({ kind: 'swap' } & KindProps<typeof SwapOfferMessage>)
+    | ({ kind: 'poll' } & KindProps<typeof PollMessage>)
+    | ({ kind: 'prize' } & KindProps<typeof PrizeMessage>)
+  );
+
 /** One sender's run of messages, as rendered by MessageGroup (ThreadPanel `replies`). */
 export interface MessageGroupItem {
-  side?: string;
+  side?: 'received' | 'sent';
   name?: string;
-  color?: string;
-  messages: {
-    kind?: 'text' | 'voice' | 'image' | 'album' | 'video' | 'gif' | 'file' | 'link' | 'transfer' | 'swap' | 'poll' | 'prize';
-    text?: string;
-    time: string;
-    status?: string;
-    forwarded?: boolean;
-    edited?: boolean;
-    deleted?: boolean;
-  }[];
+  color?: 'violet' | 'amber' | 'teal' | 'blue';
+  messages: GroupMessage[];
 }
 
 /** One row offered by TokenPicker. */

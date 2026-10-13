@@ -1,134 +1,206 @@
-<!-- Generated from lib/ChatBubble.dc.html (source hash 1c51c112) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Text message bubble: optional reply quote (sent side), forwarded tag, code block, text with an inline time/status stamp,
+     failed + Retry line, thread link and reaction chips. Emoji-only messages of one or two emoji render large.
+     Reaction chips are limited to maxReactionRows; the rest fold into a "+N" chip that expands them. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './ChatBubble.logic.js';
+  import { untrack } from 'svelte';
+
+  // count grapheme clusters so flags, skin tones and ZWJ families read as one emoji
+  const SEG = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter(undefined, { granularity: 'grapheme' }) : null;
+  const EMOJI_RE = /\p{Extended_Pictographic}/u;
+
+  function emojiOnlyCount(text: string) {
+    const t = text.trim();
+    if (!t || !EMOJI_RE.test(t)) return 0;
+    const units = SEG ? [...SEG.segment(t)].map((s) => s.segment) : [...t];
+    const glyphs = units.filter((u) => u.trim() !== '');
+    // every visible cluster must be pictographic — no mixed text
+    return glyphs.length && glyphs.every((g) => EMOJI_RE.test(g)) ? glyphs.length : 0;
+  }
+
+  const STATUS: Record<string, string> = { sending: 'clock', sent: 'check', delivered: 'check-double', failed: 'failed' };
+
+  interface Reaction {
+    emoji: string;
+    count: number;
+    mine?: boolean;
+  }
 
   interface Props {
-    text?: string;
-    time?: string;
+    text: string;
+    time: string;
+    side?: 'sent' | 'received';
+    lastInGroup?: boolean;
+    status?: 'sending' | 'sent' | 'delivered' | 'failed';
+    /** Shown under a failed message; defaults by side. */
     failedText?: string;
+    retryAction?: () => void;
+    /** Shown above the text, as in pasted snippets. */
+    code?: string;
     forwarded?: boolean;
     edited?: boolean;
     deleted?: boolean;
+    deletedText?: string;
+    /** Sent side only. */
+    quoteName?: string;
+    quoteText?: string;
+    reactions?: Reaction[];
     maxReactionRows?: number;
+    onToggleReaction?: (emoji: string) => void;
     onShowAllReactions?: () => void;
     threadCount?: number;
     threadLastAt?: string;
     onOpenThread?: () => void;
-    lastInGroup?: boolean;
-    status?: string;
-    side?: string;
-    quoteName?: string;
-    quoteText?: string;
-    reactions?: {emoji: string, count: number}[];
-    onToggleReaction?: (emoji: string) => void;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let {
+    text,
+    time,
+    side = 'sent',
+    lastInGroup = true,
+    status = 'delivered',
+    failedText = '',
+    retryAction,
+    code = '',
+    forwarded = false,
+    edited = false,
+    deleted = false,
+    deletedText = 'This message was deleted',
+    quoteName = '',
+    quoteText = '',
+    reactions = [],
+    maxReactionRows = 1,
+    onToggleReaction,
+    onShowAllReactions,
+    threadCount = 0,
+    threadLastAt = '',
+    onOpenThread,
+  }: Props = $props();
+
+  const sent = $derived(side === 'sent');
+  const emojiCount = $derived(emojiOnlyCount(text));
+  const scale = $derived(
+    emojiCount === 1 ? { size: '42px', leading: '1.15' } : emojiCount === 2 ? { size: '32px', leading: '1.2' } : { size: 'var(--text-base)', leading: '1.5' },
+  );
+
+  // fit === null renders every chip so their rows can be measured
+  let fit = $state<number | null>(null);
+  let expanded = $state(false);
+  let chips = $state<HTMLDivElement>();
+  let bubble = $state<HTMLDivElement>();
+
+  const shown = $derived(fit === null || expanded ? reactions : reactions.slice(0, fit));
+  const hidden = $derived(reactions.length - shown.length);
+
+  // no arithmetic: let the browser wrap, read how many rows it actually used,
+  // and drop one chip per pass until it fits. Monotonic, so it always terminates.
+  $effect(() => {
+    shown;
+    const el = chips;
+    if (!el || untrack(() => expanded)) return;
+    const kids = [...el.children];
+    if (!kids.length) return;
+    const rows = new Set(kids.map((k) => Math.round(k.getBoundingClientRect().top))).size;
+    if (rows <= Math.max(1, maxReactionRows)) return;
+    const count = untrack(() => (fit === null ? reactions.length : fit));
+    if (count > 1) fit = count - 1;
+  });
+
+  // the bubble's width is set by the message text, so it is a stable trigger:
+  // observing the chip row instead would feed the chip count back into its own constraint
+  $effect(() => {
+    const el = bubble;
+    if (!el) return;
+    let last = el.getBoundingClientRect().width;
+    const ro = new ResizeObserver(() => {
+      const w = el.getBoundingClientRect().width;
+      if (!w || Math.abs(w - last) < 1) return;
+      last = w;
+      if (!untrack(() => expanded)) fit = null; // show all, then converge down again
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
 </script>
 
-<div style="width:100%;display:flex;justify-content:flex-start">
-  {#if v.isDeleted}
-    <div style="max-width:675px;min-width:0;display:flex;align-items:center;gap:var(--space-8);padding:var(--space-12) var(--space-14);box-sizing:border-box;border-radius:{v.deletedRadius};box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1))">
-      <span style="flex:none;width:14px;height:14px;background:var(--ink-4,#6E6E7C);mask:{v.trashMask}"></span>
-      <span style="font:var(--weight-regular) var(--text-base)/1.4 var(--font-sans);font-style:italic;color:var(--ink-4,#6E6E7C)">{t(v.deletedText)}</span>
-      <span style="flex:none;margin-inline-start:var(--space-6);font:var(--weight-regular) var(--text-xs)/1 var(--font-mono);color:var(--ink-4,#6E6E7C)">{t(v.time)}</span>
+{#snippet stamp()}{edited ? 'edited · ' : ''}{time}{#if sent}<span class="tick" style:mask="var(--icon-{STATUS[status] ?? 'check-double'}) center/contain no-repeat"></span>{/if}{/snippet}
+
+<div class="wrap">
+  {#if deleted}
+    <div class="deleted" class:sent>
+      <span class="trash"></span>
+      <span class="deleted-text">{deletedText}</span>
+      <span class="deleted-time">{time}</span>
     </div>
-  {/if}
-  {#if v.isSent}
-    <div style="max-width:675px;min-width:0;display:flex;flex-direction:column;align-items:flex-start">
-      <div style="text-align:start;background:var(--bubble-send-bg,#B83E52);border-start-start-radius:{v.rSS};border-start-end-radius:{v.rSE};border-end-end-radius:{v.rEE};border-end-start-radius:{v.rES};padding:var(--space-12) var(--space-14)" data-oc-bubble>
-        {#if v.hasQuote}
-          <div style="display:flex;gap:var(--space-8);padding:var(--space-8) var(--space-10);border-radius:var(--radius-md);background:var(--bubble-reply,#8C2A3D);margin:-5px -6px 8px">
-            <span style="flex:none;width:4px;border-radius:var(--radius-pill);background:var(--bubble-text-soft,rgba(255,255,255,.6))"></span>
-            <div style="min-width:0">
-              <div style="font:var(--weight-bold) var(--text-sm)/1.3 var(--font-sans);color:var(--bubble-text,#fff)">{t(v.quoteName)}</div>
-              <div style="font:var(--weight-regular) var(--text-sm)/1.4 var(--font-sans);color:var(--bubble-text-soft,rgba(255,255,255,.78));overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{t(v.quoteText)}</div>
+  {:else}
+    <div class="column" class:sent>
+      <div class="bubble" class:last={lastInGroup} bind:this={bubble} data-oc-bubble>
+        {#if sent && quoteName}
+          <div class="quote">
+            <span class="quote-bar"></span>
+            <div class="quote-body">
+              <div class="quote-name">{quoteName}</div>
+              <div class="quote-text">{quoteText}</div>
             </div>
           </div>
         {/if}
-        {#if v.forwarded}
-          <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6)">
-            <span style="flex:none;width:12px;height:12px;background:var(--bubble-text-soft,rgba(255,255,255,.82));mask:{v.forwardMask}"></span>
-            <span style="font:var(--weight-medium) var(--text-sm)/1 var(--font-sans);font-style:italic;color:var(--bubble-text-soft,rgba(255,255,255,.82))">Forwarded</span>
-          </div>
+        {#if forwarded}
+          <div class="forwarded"><span class="forward-icon"></span><span class="forward-label">Forwarded</span></div>
         {/if}
-        {#if v.hasCode}
-          <pre style="margin:0 0 var(--space-6);padding:var(--space-10) var(--space-12);border-radius:var(--radius-md);background:rgba(0,0,0,.28);max-width:100%;box-sizing:border-box;white-space:pre-wrap;overflow-wrap:anywhere;font:var(--weight-regular) var(--text-sm)/1.55 var(--font-mono);color:var(--bubble-text,#fff)">{t(v.code)}</pre>
+        {#if code}
+          <pre class="code">{code}</pre>
         {/if}
-        <p style="position:relative;margin:0;font:var(--weight-regular) {v.textSize}/{v.textLeading} var(--font-sans);color:var(--bubble-text,#fff);text-wrap:pretty;overflow-wrap:anywhere">{t(v.text)}<span style="display:inline-flex;visibility:hidden;align-items:flex-end;vertical-align:bottom;gap:var(--space-4);margin:0 0 -1px 9px;font:var(--weight-regular) var(--text-xs)/1 var(--font-mono);color:var(--bubble-text-soft,rgba(255,255,255,.82))" aria-hidden="true">{t(v.editedMark)}{t(v.time)}<span style="width:14px;height:14px;margin-bottom:-2px;background:{v.statusColor};mask:{v.statusMask}"></span></span><span style="position:absolute;right:0;bottom:0;display:inline-flex;align-items:flex-end;gap:var(--space-4);font:var(--weight-regular) var(--text-xs)/1 var(--font-mono);color:var(--bubble-text-soft,rgba(255,255,255,.82))">{t(v.editedMark)}{t(v.time)}<span style="width:14px;height:14px;margin-bottom:-2px;background:{v.statusColor};mask:{v.statusMask}"></span></span></p>
+        <p class="text" style:font-size={scale.size} style:line-height={scale.leading}>{text}<span class="stamp spacer" aria-hidden="true">{@render stamp()}</span><span class="stamp corner">{@render stamp()}</span></p>
       </div>
-      {#if v.isFailed}
-        <div style="display:flex;align-items:center;gap:var(--space-6);margin-top:var(--space-6);padding-inline-end:var(--space-14)">
-          <span style="font:var(--weight-medium) var(--text-sm)/1 var(--font-sans);color:var(--status-danger,#F5493D)">{t(v.failedText)}</span>
-          <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--status-danger,#F5493D);text-decoration:underline;cursor:pointer" onclick={v.retryAction} role="button" tabindex="0">Retry</span>
+      {#if status === 'failed'}
+        <div class="failed">
+          <span class="failed-text">{failedText || (sent ? 'Not delivered' : "Couldn't load")}</span>
+          <span class="retry" onclick={retryAction} role="button" tabindex="0">Retry</span>
         </div>
       {/if}
-      {#if v.hasThread}
-        <div class="dc-p0" style="display:flex;align-items:center;gap:var(--space-6);margin-top:var(--space-6);min-height:var(--control-sm,30px);padding:var(--space-6) var(--space-10);box-sizing:border-box;border-radius:var(--radius-sm);cursor:pointer;align-self:{v.threadAlign}" onclick={v.onOpenThread} role="button" tabindex="0">
-          <span style="flex:none;width:14px;height:14px;background:var(--accent,#FF5672);mask:{v.replyMask}" data-oc-flip></span>
-          <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--accent,#FF5672);white-space:nowrap">{t(v.threadLabel)}</span>
-          <span style="font:var(--weight-regular) var(--text-sm)/1 var(--font-sans);color:var(--ink-3,#8A8A99);white-space:nowrap">{t(v.threadMeta)}</span>
+      {#if threadCount > 0}
+        <div class="thread" onclick={onOpenThread} role="button" tabindex="0">
+          <span class="thread-icon" data-oc-flip></span>
+          <span class="thread-count">{threadCount === 1 ? '1 reply' : `${threadCount} replies`}</span>
+          <span class="thread-meta">{threadLastAt ? `Last reply ${threadLastAt}` : ''}</span>
         </div>
       {/if}
-      {#if v.hasReactions}
-        <div style="width:0;min-width:100%;box-sizing:border-box;padding-inline-start:8px;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:var(--space-4);margin-top:{v.reactionsShift};position:relative;z-index:2" use:ref={v.reactionsRef}>
-          {#each v.reactions ?? [] as r, i0}
-            <span class="dc-p1" style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-6) var(--space-8);border-radius:var(--radius-pill);background:{r.bg};box-shadow:{r.ring};font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:{r.ink};cursor:pointer;user-select:none" data-oc-chip onclick={r.toggle} role="button" tabindex="0" aria-pressed={r.mineStr} aria-label={r.aria}>{t(r.emoji)} {t(r.count)}</span>
+      {#if reactions.length > 0}
+        <div class="reactions" class:after-thread={threadCount > 0} bind:this={chips}>
+          {#each shown as r}
+            <span
+              class="chip"
+              class:mine={r.mine}
+              data-oc-chip
+              onclick={() => onToggleReaction?.(r.emoji)}
+              role="button"
+              tabindex="0"
+              aria-pressed={!!r.mine}
+              aria-label="{r.mine ? 'Remove your ' : 'Add '}{r.emoji} · {r.count}">{r.emoji} {r.count}</span
+            >
           {/each}
-          {#if v.hasMoreReactions}
-            <span class="dc-p2" style="display:flex;align-items:center;padding:var(--space-6) var(--space-8);border-radius:var(--radius-pill);background:var(--card-2,#191921);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1));font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--ink-2,#B9B9C6);cursor:pointer;white-space:nowrap" data-oc-more onclick={v.onShowAllReactions} role="button" tabindex="0">{t(v.moreReactionsLabel)}</span>
+          {#if hidden > 0}
+            <span
+              class="chip-more"
+              data-oc-more
+              onclick={() => {
+                onShowAllReactions?.();
+                expanded = true;
+                fit = null;
+              }}
+              role="button"
+              tabindex="0">+{hidden}</span
+            >
           {/if}
-          {#if v.isExpanded}
-            <span class="dc-p3" style="display:flex;align-items:center;justify-content:center;height:24px;min-width:24px;box-sizing:border-box;border-radius:var(--radius-pill);background:var(--card-2,#191921);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1));cursor:pointer" onclick={v.onCollapseReactions} role="button" tabindex="0">
-              <span style="width:10px;height:10px;background:var(--ink-2,#B9B9C6);mask:{v.closeMask}"></span>
-            </span>
-          {/if}
-        </div>
-      {/if}
-    </div>
-  {/if}
-  {#if v.isReceived}
-    <div style="max-width:675px;min-width:0;display:flex;flex-direction:column;align-items:flex-start">
-      <div style="text-align:start;background:var(--bubble-recv-bg,#191921);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07));border-start-start-radius:{v.rSS};border-start-end-radius:{v.rSE};border-end-end-radius:{v.rEE};border-end-start-radius:{v.rES};padding:var(--space-12) var(--space-14)" data-oc-bubble>
-        {#if v.forwarded}
-          <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6)">
-            <span style="flex:none;width:12px;height:12px;background:var(--ink-3,#8A8A99);mask:{v.forwardMask}"></span>
-            <span style="font:var(--weight-medium) var(--text-sm)/1 var(--font-sans);font-style:italic;color:var(--ink-3,#8A8A99)">Forwarded</span>
-          </div>
-        {/if}
-        {#if v.hasCode}
-          <pre style="margin:0 0 var(--space-6);padding:var(--space-10) var(--space-12);border-radius:var(--radius-md);background:rgba(0,0,0,.28);max-width:100%;box-sizing:border-box;white-space:pre-wrap;overflow-wrap:anywhere;font:var(--weight-regular) var(--text-sm)/1.55 var(--font-mono);color:var(--status-online,#2EE6A8)">{t(v.code)}</pre>
-        {/if}
-        <p style="position:relative;margin:0;font:var(--weight-regular) {v.textSize}/{v.textLeading} var(--font-sans);color:var(--bubble-recv-text,#E4E4EC);text-wrap:pretty;overflow-wrap:anywhere">{t(v.text)}<span style="display:inline-flex;visibility:hidden;align-items:flex-end;vertical-align:bottom;margin:0 0 -1px 9px;font:var(--weight-regular) var(--text-xs)/1 var(--font-mono);color:var(--meta,#9393A2)" aria-hidden="true">{t(v.editedMark)}{t(v.time)}</span><span style="position:absolute;right:0;bottom:0;display:inline-flex;align-items:flex-end;font:var(--weight-regular) var(--text-xs)/1 var(--font-mono);color:var(--meta,#9393A2)">{t(v.editedMark)}{t(v.time)}</span></p>
-      </div>
-      {#if v.isFailed}
-        <div style="display:flex;align-items:center;gap:var(--space-6);margin-top:var(--space-6);padding-inline-start:var(--space-14)">
-          <span style="font:var(--weight-medium) var(--text-sm)/1 var(--font-sans);color:var(--status-danger,#F5493D)">{t(v.failedText)}</span>
-          <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--status-danger,#F5493D);text-decoration:underline;cursor:pointer" onclick={v.retryAction} role="button" tabindex="0">Retry</span>
-        </div>
-      {/if}
-      {#if v.hasThread}
-        <div class="dc-p4" style="display:flex;align-items:center;gap:var(--space-6);margin-top:var(--space-6);min-height:var(--control-sm,30px);padding:var(--space-6) var(--space-10);box-sizing:border-box;border-radius:var(--radius-sm);cursor:pointer;align-self:{v.threadAlign}" onclick={v.onOpenThread} role="button" tabindex="0">
-          <span style="flex:none;width:14px;height:14px;background:var(--accent,#FF5672);mask:{v.replyMask}" data-oc-flip></span>
-          <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--accent,#FF5672);white-space:nowrap">{t(v.threadLabel)}</span>
-          <span style="font:var(--weight-regular) var(--text-sm)/1 var(--font-sans);color:var(--ink-3,#8A8A99);white-space:nowrap">{t(v.threadMeta)}</span>
-        </div>
-      {/if}
-      {#if v.hasReactions}
-        <div style="width:0;min-width:100%;box-sizing:border-box;padding-inline-start:8px;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:var(--space-4);margin-top:{v.reactionsShift};position:relative;z-index:2" use:ref={v.reactionsRef}>
-          {#each v.reactions ?? [] as r, i1}
-            <span class="dc-p5" style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-6) var(--space-8);border-radius:var(--radius-pill);background:{r.bg};box-shadow:{r.ring};font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:{r.ink};cursor:pointer;user-select:none" data-oc-chip onclick={r.toggle} role="button" tabindex="0" aria-pressed={r.mineStr} aria-label={r.aria}>{t(r.emoji)} {t(r.count)}</span>
-          {/each}
-          {#if v.hasMoreReactions}
-            <span class="dc-p6" style="display:flex;align-items:center;padding:var(--space-6) var(--space-8);border-radius:var(--radius-pill);background:var(--card-2,#191921);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1));font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--ink-2,#B9B9C6);cursor:pointer;white-space:nowrap" data-oc-more onclick={v.onShowAllReactions} role="button" tabindex="0">{t(v.moreReactionsLabel)}</span>
-          {/if}
-          {#if v.isExpanded}
-            <span class="dc-p7" style="display:flex;align-items:center;justify-content:center;height:24px;min-width:24px;box-sizing:border-box;border-radius:var(--radius-pill);background:var(--card-2,#191921);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1));cursor:pointer" onclick={v.onCollapseReactions} role="button" tabindex="0">
-              <span style="width:10px;height:10px;background:var(--ink-2,#B9B9C6);mask:{v.closeMask}"></span>
-            </span>
+          {#if expanded}
+            <span
+              class="collapse"
+              onclick={() => {
+                expanded = false;
+                fit = null;
+              }}
+              role="button"
+              tabindex="0"><span class="collapse-icon"></span></span
+            >
           {/if}
         </div>
       {/if}
@@ -137,14 +209,342 @@
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p1:hover{filter:brightness(1.15) !important}
-  .dc-p1:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p2:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p3:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p4:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p5:hover{filter:brightness(1.15) !important}
-  .dc-p5:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p6:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p7:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
+  .wrap {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .deleted {
+    max-width: 675px;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: var(--space-12) var(--space-14);
+    box-sizing: border-box;
+    border-radius: var(--radius-xs) var(--radius-xl) var(--radius-xl) var(--radius-xl);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .deleted.sent {
+    border-radius: var(--radius-xl) var(--radius-xs) var(--radius-xl) var(--radius-xl);
+  }
+
+  .trash {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    background: var(--ink-4, #6e6e7c);
+    mask: var(--icon-trash) center/contain no-repeat;
+  }
+
+  .deleted-text {
+    font: var(--weight-regular) var(--text-base) / 1.4 var(--font-sans);
+    font-style: italic;
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .deleted-time {
+    flex: none;
+    margin-inline-start: var(--space-6);
+    font: var(--weight-regular) var(--text-xs) / 1 var(--font-mono);
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .column {
+    --msg-ink: var(--bubble-recv-text, #e4e4ec);
+    --msg-soft: var(--ink-3, #8a8a99);
+    --msg-stamp: var(--meta, #9393a2);
+    max-width: 675px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .column.sent {
+    --msg-ink: var(--bubble-text, #fff);
+    --msg-soft: var(--bubble-text-soft, rgba(255, 255, 255, 0.82));
+    --msg-stamp: var(--bubble-text-soft, rgba(255, 255, 255, 0.82));
+  }
+
+  /* every bubble is left-aligned, so the avatar-facing edge is inline-start for both sides */
+  .bubble {
+    text-align: start;
+    background: var(--bubble-recv-bg, #191921);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    border-start-start-radius: var(--radius-xs);
+    border-start-end-radius: var(--radius-xl);
+    border-end-end-radius: var(--radius-xl);
+    border-end-start-radius: var(--radius-xs);
+    padding: var(--space-12) var(--space-14);
+  }
+
+  .bubble.last {
+    border-end-start-radius: var(--radius-xl);
+  }
+
+  .sent .bubble {
+    background: var(--bubble-send-bg, #b83e52);
+    box-shadow: none;
+  }
+
+  .quote {
+    display: flex;
+    gap: var(--space-8);
+    padding: var(--space-8) var(--space-10);
+    border-radius: var(--radius-md);
+    background: var(--bubble-reply, #8c2a3d);
+    margin: -5px -6px 8px;
+  }
+
+  .quote-bar {
+    flex: none;
+    width: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--bubble-text-soft, rgba(255, 255, 255, 0.6));
+  }
+
+  .quote-body {
+    min-width: 0;
+  }
+
+  .quote-name {
+    font: var(--weight-bold) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--bubble-text, #fff);
+  }
+
+  .quote-text {
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--bubble-text-soft, rgba(255, 255, 255, 0.78));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .forwarded {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+
+  .forward-icon {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    background: var(--msg-soft);
+    mask: var(--icon-forward) center/contain no-repeat;
+  }
+
+  .forward-label {
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
+    font-style: italic;
+    color: var(--msg-soft);
+  }
+
+  .code {
+    margin: 0 0 var(--space-6);
+    padding: var(--space-10) var(--space-12);
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.28);
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font: var(--weight-regular) var(--text-sm) / 1.55 var(--font-mono);
+    color: var(--status-online, #2ee6a8);
+  }
+
+  .sent .code {
+    color: var(--bubble-text, #fff);
+  }
+
+  .text {
+    position: relative;
+    margin: 0;
+    font-family: var(--font-sans);
+    font-weight: var(--weight-regular);
+    color: var(--msg-ink);
+    text-wrap: pretty;
+    overflow-wrap: anywhere;
+  }
+
+  .stamp {
+    display: inline-flex;
+    align-items: flex-end;
+    font: var(--weight-regular) var(--text-xs) / 1 var(--font-mono);
+    color: var(--msg-stamp);
+  }
+
+  .sent .stamp {
+    gap: var(--space-4);
+  }
+
+  /* invisible copy reserves room on the last line so the stamp never overlaps text */
+  .spacer {
+    visibility: hidden;
+    vertical-align: bottom;
+    margin: 0 0 -1px 9px;
+  }
+
+  .corner {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+  }
+
+  .tick {
+    width: 14px;
+    height: 14px;
+    margin-bottom: -2px;
+    background: var(--bubble-tick, rgba(255, 255, 255, 0.9));
+  }
+
+  .failed {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    margin-top: var(--space-6);
+    padding-inline-start: var(--space-14);
+  }
+
+  .sent .failed {
+    padding-inline-start: 0;
+    padding-inline-end: var(--space-14);
+  }
+
+  .failed-text,
+  .retry {
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
+    color: var(--status-danger, #f5493d);
+  }
+
+  .retry {
+    font-weight: var(--weight-semibold);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .thread {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    margin-top: var(--space-6);
+    min-height: var(--control-sm, 30px);
+    padding: var(--space-6) var(--space-10);
+    box-sizing: border-box;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    align-self: flex-start;
+  }
+
+  .thread:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .thread-icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    background: var(--accent, #ff5672);
+    mask: var(--icon-reply) center/contain no-repeat;
+  }
+
+  .thread-count,
+  .thread-meta {
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    white-space: nowrap;
+  }
+
+  .thread-meta {
+    font-weight: var(--weight-regular);
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .reactions {
+    width: 0;
+    min-width: 100%;
+    box-sizing: border-box;
+    padding-inline-start: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: var(--space-4);
+    margin-top: -9px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .reactions.after-thread {
+    margin-top: var(--space-6);
+  }
+
+  /* chips overlap the bubble's bottom edge, so their backgrounds are opaque */
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-6) var(--space-8);
+    border-radius: var(--radius-pill);
+    background: var(--card-2, #191921);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-2, #b9b9c6);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .chip.mine {
+    background: color-mix(in oklch, var(--accent, #ff5672) 20%, var(--card-2, #191921));
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 55%, transparent);
+    color: var(--ink, #ececf1);
+  }
+
+  .chip:hover {
+    filter: brightness(1.15);
+  }
+
+  .chip:focus-visible {
+    box-shadow: var(--focus-ring);
+    outline: none;
+  }
+
+  .chip-more,
+  .collapse {
+    display: flex;
+    align-items: center;
+    border-radius: var(--radius-pill);
+    background: var(--card-2, #191921);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    cursor: pointer;
+  }
+
+  .chip-more {
+    padding: var(--space-6) var(--space-8);
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-2, #b9b9c6);
+    white-space: nowrap;
+  }
+
+  .collapse {
+    justify-content: center;
+    height: 24px;
+    min-width: 24px;
+    box-sizing: border-box;
+  }
+
+  .chip-more:hover,
+  .collapse:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .collapse-icon {
+    width: 10px;
+    height: 10px;
+    background: var(--ink-2, #b9b9c6);
+    mask: var(--icon-close) center/contain no-repeat;
+  }
 </style>

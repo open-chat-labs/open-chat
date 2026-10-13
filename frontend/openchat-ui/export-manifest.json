@@ -72,8 +72,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/ChatBubble.svelte",
-        "src/lib/components/ChatBubble.logic.js"
+        "src/lib/components/ChatBubble.svelte"
       ]
     },
     "ChatRow": {
@@ -226,8 +225,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/MessageGroup.svelte",
-        "src/lib/components/MessageGroup.logic.js"
+        "src/lib/components/MessageGroup.svelte"
       ]
     },
     "PageHeader": {
