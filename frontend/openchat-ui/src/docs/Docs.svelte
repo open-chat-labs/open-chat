@@ -5,7 +5,18 @@
   import meta from './meta.json';
   import { samples, overlays } from './samples';
 
-  type Prop = { name: string; type: string; default: unknown; editor: string | null; options: string[] | null; section: string | null };
+  // `default` is the demo value (fed to the live demo); `componentDefault` is the source text of the component's own default
+  type Prop = {
+    name: string;
+    type: string;
+    default: unknown;
+    editor: string | null;
+    options: string[] | null;
+    section: string | null;
+    required?: boolean;
+    componentDefault?: string | null;
+    doc?: string;
+  };
   type Meta = { group?: 'library' | 'app'; name: string; source: string; hash: string; description: string; preview: { width?: number | string; height?: number | string } | null; props: Prop[] };
 
   const comps: Record<string, any> = { ...(Lib as any), ...(App as any) };
@@ -26,7 +37,6 @@
     return out;
   };
   const px = (x: number | string | undefined, fallback: string) => (x == null ? fallback : typeof x === 'number' ? x + 'px' : x);
-  const fmt = (d: unknown) => (d === null || d === undefined ? '' : typeof d === 'string' ? JSON.stringify(d) : JSON.stringify(d));
   const propsFor = (m: Meta) => {
     const base = { ...defaults(m), ...(samples[m.name] ?? {}) };
     if (isOverlay(m.name)) return { ...base, onClose: () => (open[m.name] = false), onSend: () => (open[m.name] = false) };
@@ -93,9 +103,14 @@
             <tbody>
               {#each m.props as p}
                 <tr>
-                  <td><code>{p.name}</code></td>
+                  <td>
+                    <code>{p.name}</code>
+                    {#if p.doc}<div class="prop-doc">{p.doc}</div>{/if}
+                  </td>
                   <td><code>{p.options ? p.options.map((o) => JSON.stringify(o)).join(' | ') : p.type}</code></td>
-                  <td><code>{fmt(p.default)}</code></td>
+                  <td>
+                    {#if p.required}<span class="required">required</span>{:else}<code>{p.componentDefault ?? '—'}</code>{/if}
+                  </td>
                 </tr>
               {/each}
             </tbody>
@@ -136,4 +151,6 @@
   th { text-align: left; font: 600 11px/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-4); padding: 8px 10px; border-bottom: 1px solid var(--line-1); }
   td { padding: 8px 10px; border-bottom: 1px solid var(--line-1); vertical-align: top; color: var(--ink-2); }
   td code { font: 400 12px/1.5 var(--font-mono); overflow-wrap: anywhere; }
+  .prop-doc { margin-top: 2px; color: var(--ink-4); }
+  .required { font: 600 11px/1 var(--font-mono); letter-spacing: 0.04em; color: var(--accent-bright); }
 </style>

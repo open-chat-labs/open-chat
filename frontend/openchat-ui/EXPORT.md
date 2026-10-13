@@ -13,8 +13,8 @@ npm run check    # svelte-check (types)
 ## Layout
 - `src/lib/components/X.svelte` — **library** (app-agnostic) components. Markup + scoped CSS for hover/active/focus states, typed `Props`.
 - `src/app/components/X.svelte` — **app** components: OpenChat screens, panels, dialogs and flows, built on the library. Entry: `src/app/index.ts`.
-- `X.logic.js` next to each — the component's logic class, carried over verbatim from the prototype. `renderVals()` returns the view model the markup reads as `v`.
-- `src/lib/dc/runtime.svelte.ts` — `useLogic()` binds a logic class to runes (setState → rerender, componentDidMount/DidUpdate/WillUnmount). `t()` text helper, `use:ref` for refs.
+- Every component is plain Svelte 5: typed `Props` via `$props()`, state in runes, scoped CSS. The export's `.logic.js` classes and the `useLogic` runtime are gone (see "Converted to plain Svelte 5").
+- `src/lib/types.ts` — shared prop types (menu items, messages, wallet tokens, prizes / transfers / swaps, group settings, composer attachments …), exported from `src/lib/index.ts`.
 - `src/lib/styles/tokens.css` (+ generated `icons.css`), `global.css` (keyframes and global rules collected from components).
 - `src/lib/icons.js` — canonical icon set; `Icon.svelte` or `mask: var(--icon-<name>)`.
 - `src/lib/behaviours/a11y.js` and `tooltip.js` — imported once in `main.ts`.
@@ -25,69 +25,101 @@ npm run check    # svelte-check (types)
 - Colours only through tokens. Callbacks: `onClick` activate · `onSelect(value)` pick · `onChange(value)` primary value · `onInput` text · `onClose` dismiss.
 - Sizes `sm | md | lg`; numeric px only on Avatar, TokenAvatar, Icon, Spinner.
 
-## How the conversion maps
+## How the original export mapped (history)
+The converted components no longer follow this; it describes the generated code they started from.
 - `{{ x }}` → `{v.x}` (text through `t()`), `<sc-for>` → `{#each}`, `<sc-if>` → `{#if}`, `<dc-import name="lib/X">` → `<X>` (kebab props → camelCase; a `style` on the import becomes a wrapping `<div>`; `key` → `{#key}`).
 - `style-hover` / `style-focus` / … → a scoped class (`.dc-pN:hover{…}`); live values inside them go through CSS custom properties.
 - React event props → DOM events (`onClick` → `onclick`; `onChange` on text inputs → `oninput`, matching React's per-keystroke behaviour).
 - The converter itself lives in the prototype project (`export/tools/dc2svelte.js`), so re-exports are mechanical.
 
-## Hand-edited during export
-Re-exporting these overwrites the hand edits — re-apply them (they're small).
-- **Spinner** — ring rendered as Svelte SVG markup (pass 1).
-- **MemberRow** — typing dots rendered as markup (pass 1).
-- **CallEvent** — live pulse tile as markup; `pulse()` removed from the logic (pass 2).
-- **MiniCall** — status dot as markup; call timer ticks with `setInterval` + `forceUpdate` instead of a React hook (pass 2).
-- **TokenCoin** — coin layers/faces as `{#each}` markup; logic rewritten to return plain data (pass 2).
-
 ## Converted to plain Svelte 5
 No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, styles as scoped classes, typed props. Do not re-export these; port design changes by hand.
+- **AccessGates** — from source hash `fceffeb8`.
+- **AccessGatesCards** — from source hash `7f4effa4`.
+- **AchievementToast** — from source hash `f37efbac`.
+- **AchievementsDialog** — from source hash `0faa1b00`.
+- **ActivityPanel** — from source hash `937a1630`.
 - **ActivityRow** — from source hash `ada8248e`.
 - **AmountCard** — from source hash `39ed836c`.
+- **AuthDialog** — from source hash `f22ab84b`.
 - **Avatar** — from source hash `1f9bbb41`.
 - **AvatarStack** — from source hash `5c9166f0`.
 - **Badge** — from source hash `ac70dfd9`.
+- **BalanceCard** — from source hash `34499a8e`.
 - **Banner** — from source hash `0beff5f6`.
+- **BotDialog** — from source hash `dccd49b7`.
 - **Button** — from source hash `8b5cf575`.
 - **CallEvent** — from source hash `229acee3`.
+- **CallPanel** — from source hash `956d6791`.
 - **ChatBubble** — from source hash `1c51c112`.
+- **ChatListHeader** — from source hash `aa5b1850`.
+- **ChatListPanel** — from source hash `1eb60abb`.
 - **ChatPicker** — from source hash `3d01a726`.
 - **ChatRow** — from source hash `d9730629`.
+- **ChitDialog** — from source hash `556edac8`.
 - **ComposerBar** — from source hash `6f9180bd`.
 - **Confetti** — from source hash `29b4b5be`.
 - **ContextMenu** — from source hash `c325b36b`.
+- **ConversationHeader** — from source hash `ccaba540`.
+- **ConvertToCommunityDialog** — from source hash `a749f89a`.
 - **CopyButton** — from source hash `454e21c1`.
 - **Countdown** — from source hash `4ac813fd`.
+- **CreateGroupDialog** — from source hash `eedb6471`.
+- **DailyPuzzleCard** — from source hash `022361e6`.
+- **DeleteGroupDialog** — from source hash `e8ca1d1b`.
 - **DetailRow** — from source hash `10ca55c5`.
 - **DetailSection** — from source hash `e0ad49a0`.
 - **DialogShell** — from source hash `972fe63e`.
+- **DiamondDialog** — from source hash `39751360`.
+- **DmChatSettings** — from source hash `a1189237`.
+- **DmPanel** — from source hash `38415146`.
 - **DurationChips** — from source hash `f945e31c`.
 - **EmojiPicker** — from source hash `20d1754a`.
 - **EmptyState** — from source hash `824a4c25`.
+- **ExploreCommunities** — from source hash `8685dae7`.
 - **Field** — from source hash `5b2c7160`.
 - **FileMessage** — from source hash `1e982d63`.
+- **GroupPanel** — from source hash `dba9b54f`.
+- **GroupSettingsDialog** — from source hash `68b6847a`.
+- **GroupStats** — from source hash `def7d7a1`.
 - **Icon** — from source hash `88fc81a7`.
 - **IconButton** — from source hash `f00be3d6`.
+- **ImportToCommunityDialog** — from source hash `601977ac`.
+- **InfoPanel** — from source hash `e4f3dc4d`.
+- **InviteDialog** — from source hash `408fbcd8`.
+- **JoinGateDialog** — from source hash `3a62b79a`.
+- **LeaderboardDialog** — from source hash `b977d80f`.
+- **LeaveGroupDialog** — from source hash `935490b2`.
 - **LinkPreview** — from source hash `ebdc8a5b`.
 - **ListSectionLabel** — from source hash `0ec0eea5`.
 - **MediaMessage** — from source hash `67e8474e`.
 - **MemberRow** — from source hash `d9f8023f`.
+- **MemeFighterDialog** — from source hash `a1fc291c`.
 - **Menu** — from source hash `fd3b9a33`.
 - **MenuItem** — from source hash `81252d62`.
 - **MessageActions** — from source hash `b8b56d84`.
 - **MessageComposer** — from source hash `4f18c46b`.
 - **MessageGroup** — from source hash `39508894`.
+- **MiniCall** — from source hash `e6c8db6f`.
+- **NavRail** — from source hash `42bdb472`.
+- **NewChannelDialog** — from source hash `01911d9c`.
 - **PageHeader** — from source hash `5a474f84`.
 - **PanelCover** — from source hash `8d024aca`.
 - **PanelNavRow** — from source hash `f29bf4af`.
 - **Pill** — from source hash `594a3b26`.
+- **PollBuilderDialog** — from source hash `4e7ef431`.
 - **PollMessage** — from source hash `19377bd9`.
+- **PrizeBuilderDialog** — from source hash `5169413b`.
 - **PrizeMessage** — from source hash `44eff81b`.
+- **ProfileDialog** — from source hash `3f17d9eb`.
 - **ProgressTimeline** — from source hash `90f18732`.
 - **ProposalMessage** — from source hash `e4139d49`.
+- **PuzzleDialog** — from source hash `f417539c`.
 - **QuickAmountChips** — from source hash `a622f26e`.
 - **RequirementChip** — from source hash `3ea36e0b`.
 - **RoundIconButton** — from source hash `93c63369`.
 - **SegmentedTabs** — from source hash `e4cc2aed`.
+- **SendCryptoDialog** — from source hash `71f44ae8`.
 - **ShareBar** — from source hash `d827e12e`.
 - **SideCard** — from source hash `2385dab3`.
 - **Skeleton** — from source hash `a4b6cf89`.
@@ -97,13 +129,18 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **StatCard** — from source hash `99b85629`.
 - **StatsDonut** — from source hash `44598fe9`.
 - **StepIndicator** — from source hash `491490cf`.
+- **StreakInsuranceDialog** — from source hash `ba4875a6`.
 - **SwapOffer** — from source hash `da54ba4f`.
+- **SwapOfferDialog** — from source hash `35fa8254`.
 - **TextArea** — from source hash `6aad1311`.
+- **ThreadList** — from source hash `4e4977fb`.
+- **ThreadPanel** — from source hash `e35352d5`.
 - **ThresholdBar** — from source hash `3a0c0b95`.
 - **TileButtons** — from source hash `58a09cd3`.
 - **TimedToggle** — from source hash `3ee63b57`.
 - **Toggle** — from source hash `4b90cec2`.
 - **TokenAvatar** — from source hash `362ee2f9`.
+- **TokenCoin** — from source hash `8398db54`.
 - **TokenPicker** — from source hash `8699ab5d`.
 - **Tooltip** — from source hash `27d349b2`.
 - **TransactionRow** — from source hash `235ffaf2`.
@@ -111,20 +148,30 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **TypingIndicator** — from source hash `e4d33efe`.
 - **UndoToast** — from source hash `d1ec11e9`.
 - **UnreadDivider** — from source hash `d4f40e6e`.
+- **UpgradeBanner** — from source hash `af894647`.
 - **UserChip** — from source hash `348ce6b7`.
+- **UserDialog** — from source hash `47a5b5d4`.
+- **UserGroupDialog** — from source hash `2c0cc062`.
+- **VideoTile** — from source hash `3d3f0853`.
 - **VoiceMessage** — from source hash `e210f6a8`.
+- **WalletMain** — from source hash `abda06dc`.
+- **WalletPanel** — from source hash `464ebf46`.
+- **WalletReceive** — from source hash `2b04c83d`.
+- **WalletRecipients** — from source hash `8d8543ca`.
+- **WalletSend** — from source hash `7681cb15`.
+- **WalletSettingsDialog** — from source hash `a69b5e15`.
+- **WalletSwap** — from source hash `9e10abdb`.
 - **Waveform** — from source hash `d43e3c8e`.
+- **WebhookDialog** — from source hash `af5a6630`.
 
 ## Known gaps
-- Not yet verified with `npm run build` / `svelte-check` — run both first and fix what they flag (expect a11y warnings on custom roles; they're intentional and covered by `a11y.js`).
+- `npm run build` and `svelte-check` pass (0 errors). The remaining warnings are a11y notes on custom `role="button"` elements; keyboard activation for those is handled globally by `a11y.js`.
 - The app **shell** (`OpenChat App.dc.html`: layout, routing between chats/wallet/explore, call persistence, demo data) is not exported — only its components. Wire them in your own routes.
 - App components still carry local sample data where the prototype did; move it to fixtures when connecting the backend.
 - `Countdown` isn't used by the message bubbles yet (they take pre-formatted strings).
 
 ## Keeping in sync with the prototype
-Every component file starts with a comment carrying the **source hash** of the prototype file it came from, and `export-manifest.json` lists source, hash, group and export date per component.
-To update: in the prototype, ask to "re-export changed components" — each `lib/X.dc.html` is hashed (FNV-1a) and compared with the manifest; only changed ones are regenerated, and `EXPORT-LOG.md` gets a dated entry.
-If you edit an exported component by hand, add it under "Hand-edited" so a re-export doesn't overwrite it blindly.
+Every component was hand-converted after export, so **do not re-export**: regenerating a component would overwrite the conversion. Each file's source hash (in `export-manifest.json` and the tables below) records which prototype version it was converted from; when the prototype changes, compare against that hash and port the change by hand.
 
 ## Library (73)
 | Component | Source | Source hash | Exported |

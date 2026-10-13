@@ -14,3 +14,10 @@
 - Docs: Library / App tabs; every *Dialog opens from a button. global.css +36 rules/keyframes.
 - Not verified with build / svelte-check yet. App shell not exported.
 - Re-exported ChitDialog (prototype fix), DailyPuzzleCard, MiniCall (props metadata now parsed).
+
+## 2026-10-13 — hand conversion to plain Svelte 5
+- All 129 components (73 library, 56 app) converted from `.logic.js` + `useLogic` to plain Svelte 5: typed `$props()`, runes, scoped CSS. `src/lib/dc/` removed.
+- Demo fallbacks dropped (props that only had made-up demo values are now required); demo data lives in `src/docs/samples.ts`.
+- Shared prop types in `src/lib/types.ts`. `meta.json` prop lists regenerated from each component's `Props` (with `required`, real default and doc).
+- Verified against the export with a pixel diff of every docs demo (both themes) and scripted interaction comparisons; intended changes are listed in the git history.
+- Do not re-export: port prototype changes by hand.

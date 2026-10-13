@@ -486,8 +486,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/AccessGates.svelte",
-        "src/app/components/AccessGates.logic.js"
+        "src/app/components/AccessGates.svelte"
       ]
     },
     "AccessGatesCards": {
@@ -496,8 +495,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/AccessGatesCards.svelte",
-        "src/app/components/AccessGatesCards.logic.js"
+        "src/app/components/AccessGatesCards.svelte"
       ]
     },
     "AchievementToast": {
@@ -506,8 +504,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/AchievementToast.svelte",
-        "src/app/components/AchievementToast.logic.js"
+        "src/app/components/AchievementToast.svelte"
       ]
     },
     "AchievementsDialog": {
@@ -516,8 +513,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/AchievementsDialog.svelte",
-        "src/app/components/AchievementsDialog.logic.js"
+        "src/app/components/AchievementsDialog.svelte"
       ]
     },
     "ActivityPanel": {
@@ -526,8 +522,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/ActivityPanel.svelte",
-        "src/app/components/ActivityPanel.logic.js"
+        "src/app/components/ActivityPanel.svelte"
       ]
     },
     "AuthDialog": {
@@ -536,8 +531,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/AuthDialog.svelte",
-        "src/app/components/AuthDialog.logic.js"
+        "src/app/components/AuthDialog.svelte"
       ]
     },
     "AvatarStack": {
@@ -555,8 +549,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/BalanceCard.svelte",
-        "src/app/components/BalanceCard.logic.js"
+        "src/app/components/BalanceCard.svelte"
       ]
     },
     "BotDialog": {
@@ -565,8 +558,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/BotDialog.svelte",
-        "src/app/components/BotDialog.logic.js"
+        "src/app/components/BotDialog.svelte"
       ]
     },
     "CallEvent": {
@@ -584,8 +576,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/CallPanel.svelte",
-        "src/app/components/CallPanel.logic.js"
+        "src/app/components/CallPanel.svelte"
       ]
     },
     "ChatListHeader": {
@@ -594,8 +585,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/ChatListHeader.svelte",
-        "src/app/components/ChatListHeader.logic.js"
+        "src/app/components/ChatListHeader.svelte"
       ]
     },
     "ChatListPanel": {
@@ -604,8 +594,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/ChatListPanel.svelte",
-        "src/app/components/ChatListPanel.logic.js"
+        "src/app/components/ChatListPanel.svelte"
       ]
     },
     "ChitDialog": {
@@ -614,8 +603,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/ChitDialog.svelte",
-        "src/app/components/ChitDialog.logic.js"
+        "src/app/components/ChitDialog.svelte"
       ]
     },
     "Confetti": {
@@ -633,8 +621,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/ConversationHeader.svelte",
-        "src/app/components/ConversationHeader.logic.js"
+        "src/app/components/ConversationHeader.svelte"
       ]
     },
     "ConvertToCommunityDialog": {
@@ -643,8 +630,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/ConvertToCommunityDialog.svelte",
-        "src/app/components/ConvertToCommunityDialog.logic.js"
+        "src/app/components/ConvertToCommunityDialog.svelte"
       ]
     },
     "Countdown": {
@@ -662,8 +648,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/CreateGroupDialog.svelte",
-        "src/app/components/CreateGroupDialog.logic.js"
+        "src/app/components/CreateGroupDialog.svelte"
       ]
     },
     "DailyPuzzleCard": {
@@ -672,8 +657,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/DailyPuzzleCard.svelte",
-        "src/app/components/DailyPuzzleCard.logic.js"
+        "src/app/components/DailyPuzzleCard.svelte"
       ]
     },
     "DeleteGroupDialog": {
@@ -682,8 +666,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/DeleteGroupDialog.svelte",
-        "src/app/components/DeleteGroupDialog.logic.js"
+        "src/app/components/DeleteGroupDialog.svelte"
       ]
     },
     "DiamondDialog": {
@@ -692,8 +675,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/DiamondDialog.svelte",
-        "src/app/components/DiamondDialog.logic.js"
+        "src/app/components/DiamondDialog.svelte"
       ]
     },
     "DmChatSettings": {
@@ -702,8 +684,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/DmChatSettings.svelte",
-        "src/app/components/DmChatSettings.logic.js"
+        "src/app/components/DmChatSettings.svelte"
       ]
     },
     "DmPanel": {
@@ -712,8 +693,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/DmPanel.svelte",
-        "src/app/components/DmPanel.logic.js"
+        "src/app/components/DmPanel.svelte"
       ]
     },
     "EmojiPicker": {
@@ -731,8 +711,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/ExploreCommunities.svelte",
-        "src/app/components/ExploreCommunities.logic.js"
+        "src/app/components/ExploreCommunities.svelte"
       ]
     },
     "FileMessage": {
@@ -750,8 +729,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/GroupPanel.svelte",
-        "src/app/components/GroupPanel.logic.js"
+        "src/app/components/GroupPanel.svelte"
       ]
     },
     "GroupSettingsDialog": {
@@ -760,8 +738,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/GroupSettingsDialog.svelte",
-        "src/app/components/GroupSettingsDialog.logic.js"
+        "src/app/components/GroupSettingsDialog.svelte"
       ]
     },
     "GroupStats": {
@@ -770,8 +747,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/GroupStats.svelte",
-        "src/app/components/GroupStats.logic.js"
+        "src/app/components/GroupStats.svelte"
       ]
     },
     "ImportToCommunityDialog": {
@@ -780,8 +756,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/ImportToCommunityDialog.svelte",
-        "src/app/components/ImportToCommunityDialog.logic.js"
+        "src/app/components/ImportToCommunityDialog.svelte"
       ]
     },
     "InfoPanel": {
@@ -790,8 +765,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/InfoPanel.svelte",
-        "src/app/components/InfoPanel.logic.js"
+        "src/app/components/InfoPanel.svelte"
       ]
     },
     "InviteDialog": {
@@ -800,8 +774,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/InviteDialog.svelte",
-        "src/app/components/InviteDialog.logic.js"
+        "src/app/components/InviteDialog.svelte"
       ]
     },
     "JoinGateDialog": {
@@ -810,8 +783,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/JoinGateDialog.svelte",
-        "src/app/components/JoinGateDialog.logic.js"
+        "src/app/components/JoinGateDialog.svelte"
       ]
     },
     "LeaderboardDialog": {
@@ -820,8 +792,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/LeaderboardDialog.svelte",
-        "src/app/components/LeaderboardDialog.logic.js"
+        "src/app/components/LeaderboardDialog.svelte"
       ]
     },
     "LeaveGroupDialog": {
@@ -830,8 +801,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/LeaveGroupDialog.svelte",
-        "src/app/components/LeaveGroupDialog.logic.js"
+        "src/app/components/LeaveGroupDialog.svelte"
       ]
     },
     "LinkPreview": {
@@ -858,8 +828,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/MemeFighterDialog.svelte",
-        "src/app/components/MemeFighterDialog.logic.js"
+        "src/app/components/MemeFighterDialog.svelte"
       ]
     },
     "MessageActions": {
@@ -886,8 +855,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/MiniCall.svelte",
-        "src/app/components/MiniCall.logic.js"
+        "src/app/components/MiniCall.svelte"
       ]
     },
     "NavRail": {
@@ -896,8 +864,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/NavRail.svelte",
-        "src/app/components/NavRail.logic.js"
+        "src/app/components/NavRail.svelte"
       ]
     },
     "NewChannelDialog": {
@@ -906,8 +873,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/NewChannelDialog.svelte",
-        "src/app/components/NewChannelDialog.logic.js"
+        "src/app/components/NewChannelDialog.svelte"
       ]
     },
     "PollBuilderDialog": {
@@ -916,8 +882,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/PollBuilderDialog.svelte",
-        "src/app/components/PollBuilderDialog.logic.js"
+        "src/app/components/PollBuilderDialog.svelte"
       ]
     },
     "PollMessage": {
@@ -935,8 +900,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/PrizeBuilderDialog.svelte",
-        "src/app/components/PrizeBuilderDialog.logic.js"
+        "src/app/components/PrizeBuilderDialog.svelte"
       ]
     },
     "PrizeMessage": {
@@ -954,8 +918,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/ProfileDialog.svelte",
-        "src/app/components/ProfileDialog.logic.js"
+        "src/app/components/ProfileDialog.svelte"
       ]
     },
     "ProposalMessage": {
@@ -973,8 +936,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/PuzzleDialog.svelte",
-        "src/app/components/PuzzleDialog.logic.js"
+        "src/app/components/PuzzleDialog.svelte"
       ]
     },
     "RequirementChip": {
@@ -1001,8 +963,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/SendCryptoDialog.svelte",
-        "src/app/components/SendCryptoDialog.logic.js"
+        "src/app/components/SendCryptoDialog.svelte"
       ]
     },
     "SnapFloat": {
@@ -1029,8 +990,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/StreakInsuranceDialog.svelte",
-        "src/app/components/StreakInsuranceDialog.logic.js"
+        "src/app/components/StreakInsuranceDialog.svelte"
       ]
     },
     "SwapOffer": {
@@ -1048,8 +1008,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/SwapOfferDialog.svelte",
-        "src/app/components/SwapOfferDialog.logic.js"
+        "src/app/components/SwapOfferDialog.svelte"
       ]
     },
     "ThreadList": {
@@ -1058,8 +1017,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/ThreadList.svelte",
-        "src/app/components/ThreadList.logic.js"
+        "src/app/components/ThreadList.svelte"
       ]
     },
     "ThreadPanel": {
@@ -1068,8 +1026,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/ThreadPanel.svelte",
-        "src/app/components/ThreadPanel.logic.js"
+        "src/app/components/ThreadPanel.svelte"
       ]
     },
     "ThresholdBar": {
@@ -1087,8 +1044,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/TokenCoin.svelte",
-        "src/app/components/TokenCoin.logic.js"
+        "src/app/components/TokenCoin.svelte"
       ]
     },
     "TransferMessage": {
@@ -1106,8 +1062,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/UpgradeBanner.svelte",
-        "src/app/components/UpgradeBanner.logic.js"
+        "src/app/components/UpgradeBanner.svelte"
       ]
     },
     "UserDialog": {
@@ -1116,8 +1071,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/UserDialog.svelte",
-        "src/app/components/UserDialog.logic.js"
+        "src/app/components/UserDialog.svelte"
       ]
     },
     "UserGroupDialog": {
@@ -1126,8 +1080,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/UserGroupDialog.svelte",
-        "src/app/components/UserGroupDialog.logic.js"
+        "src/app/components/UserGroupDialog.svelte"
       ]
     },
     "VideoTile": {
@@ -1136,8 +1089,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/VideoTile.svelte",
-        "src/app/components/VideoTile.logic.js"
+        "src/app/components/VideoTile.svelte"
       ]
     },
     "WalletMain": {
@@ -1146,8 +1098,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/WalletMain.svelte",
-        "src/app/components/WalletMain.logic.js"
+        "src/app/components/WalletMain.svelte"
       ]
     },
     "WalletPanel": {
@@ -1156,8 +1107,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/WalletPanel.svelte",
-        "src/app/components/WalletPanel.logic.js"
+        "src/app/components/WalletPanel.svelte"
       ]
     },
     "WalletReceive": {
@@ -1166,8 +1116,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/WalletReceive.svelte",
-        "src/app/components/WalletReceive.logic.js"
+        "src/app/components/WalletReceive.svelte"
       ]
     },
     "WalletRecipients": {
@@ -1176,8 +1125,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/WalletRecipients.svelte",
-        "src/app/components/WalletRecipients.logic.js"
+        "src/app/components/WalletRecipients.svelte"
       ]
     },
     "WalletSend": {
@@ -1186,8 +1134,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/WalletSend.svelte",
-        "src/app/components/WalletSend.logic.js"
+        "src/app/components/WalletSend.svelte"
       ]
     },
     "WalletSettingsDialog": {
@@ -1196,8 +1143,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/WalletSettingsDialog.svelte",
-        "src/app/components/WalletSettingsDialog.logic.js"
+        "src/app/components/WalletSettingsDialog.svelte"
       ]
     },
     "WalletSwap": {
@@ -1206,8 +1152,7 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/WalletSwap.svelte",
-        "src/app/components/WalletSwap.logic.js"
+        "src/app/components/WalletSwap.svelte"
       ]
     },
     "Waveform": {
@@ -1225,17 +1170,10 @@
       "exportedAt": "2026-10-13",
       "group": "app",
       "files": [
-        "src/app/components/WebhookDialog.svelte",
-        "src/app/components/WebhookDialog.logic.js"
+        "src/app/components/WebhookDialog.svelte"
       ]
     }
   },
-  "handEdited": {
-    "Spinner": "ring as SVG markup",
-    "MemberRow": "typing dots as markup",
-    "CallEvent": "live pulse tile as markup",
-    "MiniCall": "status dot markup; timer ticks via setInterval",
-    "TokenCoin": "coin layers/faces as markup; logic rewritten"
-  },
-  "converter": "export/tools/dc2svelte.js (prototype project)"
+  "converter": "export/tools/dc2svelte.js (prototype project)",
+  "converted": "All components hand-converted to plain Svelte 5 (no .logic.js); re-exporting would overwrite them. Port prototype changes by hand."
 }
