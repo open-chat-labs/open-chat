@@ -17,7 +17,7 @@
     import SlidingPageContent from "../SlidingPageContent.svelte";
     import TokenCard from "./TokenCard.svelte";
     import Transactions from "./Transactions.svelte";
-    import { TokenState } from "./walletState.svelte";
+    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
 
     interface Props {
         tokenState: TokenState;

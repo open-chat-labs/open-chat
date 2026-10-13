@@ -3,8 +3,7 @@
         BTC_SYMBOL,
         CKBTC_SYMBOL,
         type CkbtcMinterWithdrawalInfo,
-        cryptoBalanceStore,
-        cryptoLookup,
+        enhancedCryptoLookup,
         currentUserIdStore,
         currentUserStore,
         type EvmChain,
@@ -24,7 +23,7 @@
         isICRCAddressValid,
         userWalletAccount,
     } from "@shared";
-    import { getContext, onMount } from "svelte";
+    import { getContext, onMount, untrack } from "svelte";
     import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
@@ -42,6 +41,7 @@
     import AccountSelector from "./AccountSelector.svelte";
     import SaveAccount from "./SaveAccount.svelte";
     import Scanner from "./Scanner.svelte";
+    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
 
     interface Props {
         ledger: string;
@@ -53,7 +53,6 @@
     const client = getContext<OpenChat>("client");
 
     let error: ResourceKey | undefined = $state();
-    let amountToSend: bigint = $state(0n);
     let ckbtcMinterWithdrawalInfo = $state<CkbtcMinterWithdrawalInfo>();
     let busy = $state(false);
     let valid = $state(false);
@@ -71,34 +70,34 @@
         (info) => (ckbtcMinterWithdrawalInfo = info),
     );
 
-    let cryptoBalance = $derived($cryptoBalanceStore.get(ledger) ?? 0n);
-    let tokenDetails = $derived($cryptoLookup.get(ledger)!);
+    // Built once: the modal is opened for one ledger, and rebuilding it whenever the lookup changes
+    // would reset the amount being typed. The balance is read live from the balance store.
+    const tokenState = new TokenState(untrack(() => $enhancedCryptoLookup.get(ledger)));
     // The user's own wallet, which they can't send to
     let account = $derived(
-        tokenDetails?.symbol === ICP_SYMBOL
+        tokenState.symbol === ICP_SYMBOL
             ? $currentUserStore.cryptoAccount
             : encodeIcrcAccount(
                   userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal),
               ),
     );
-    let symbol = $derived(tokenDetails.symbol);
+    let symbol = $derived(tokenState.symbol);
     let selectedNetwork = $state<string>();
     let isBtc = $derived(symbol === BTC_SYMBOL);
     let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
     let oneSecEnabled = $derived(
-        tokenDetails.oneSecEnabled && tokenDetails.evmContractAddresses.length > 0,
+        tokenState.token.oneSecEnabled && tokenState.token.evmContractAddresses.length > 0,
     );
     let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
     let networks = $derived.by(() => {
         if (isBtc) {
             return [BTC_SYMBOL, CKBTC_SYMBOL];
         } else if (oneSecEnabled) {
-            return client.oneSecGetNetworks(tokenDetails.symbol);
+            return client.oneSecGetNetworks(tokenState.symbol);
         } else {
             return [];
         }
     });
-    let transferFees = $derived(tokenDetails?.transferFee ?? 0n);
     // Refused whichever way the send is made, since anything sent there would be lost
     let targetIsUserIdAccount = $derived(client.isAccountOfMultiUserCanisterUserId(targetAccount));
     let targetAccountValid = $derived.by(() => {
@@ -116,7 +115,7 @@
     let oneSecFeesForToken = $derived.by(() => {
         if (!isOneSecNetwork || oneSecFees === undefined) return undefined;
         return oneSecFees.find(
-            (f) => f.sourceToken === tokenDetails.symbol && f.destinationChain === selectedNetwork,
+            (f) => f.sourceToken === tokenState.symbol && f.destinationChain === selectedNetwork,
         );
     });
 
@@ -138,10 +137,6 @@
     });
     let title = $derived(i18nKey("cryptoAccount.sendToken", { symbol }));
 
-    let remainingBalance = $derived(
-        amountToSend > BigInt(0) ? cryptoBalance - amountToSend - transferFees : cryptoBalance,
-    );
-
     let errorMessage = $derived(error !== undefined ? error : $pinNumberErrorMessageStore);
     let networkFee = $derived.by(() => {
         if (isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined) {
@@ -149,7 +144,7 @@
         } else if (isOneSecNetwork && oneSecFeesForToken !== undefined) {
             return (
                 oneSecFeesForToken.latestTransferFee +
-                (amountToSend * BigInt(100 * oneSecFeesForToken.protocolFeePercent)) / BigInt(10000)
+                (tokenState.draftAmount * BigInt(100 * oneSecFeesForToken.protocolFeePercent)) / BigInt(10000)
             );
         } else {
             return undefined;
@@ -158,7 +153,7 @@
     let networkFeeFormatted = $derived(
         networkFee === undefined
             ? undefined
-            : `~${client.formatTokens(networkFee, tokenDetails.decimals)}`,
+            : `~${client.formatTokens(networkFee, tokenState.decimals)}`,
     );
 
     onMount(async () => {
@@ -177,7 +172,7 @@
     const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees());
     $effect(() => {
         if (isBtcNetwork) {
-            ckbtcMinterInfoRequests.debounced(amountToSend);
+            ckbtcMinterInfoRequests.debounced(tokenState.draftAmount);
         } else if (isOneSecNetwork) {
             // Filter to where source token equals destination token since we're dealing with cross-chain withdrawals
             oneSecFeesPromise
@@ -226,29 +221,29 @@
         error = undefined;
 
         const withdrawTokensPromise = isBtcNetwork
-            ? client.withdrawBtc(targetAccount, amountToSend)
+            ? client.withdrawBtc(targetAccount, tokenState.draftAmount)
             : isOneSecNetwork
               ? client.withdrawViaOneSec(
                     ledger,
                     symbol,
                     selectedNetwork as EvmChain,
                     targetAccount,
-                    amountToSend,
+                    tokenState.draftAmount,
                 )
               : client.withdrawCryptocurrency({
                     kind: "pending",
                     ledger,
                     token: symbol,
                     to: targetAccount,
-                    amountE8s: amountToSend,
-                    feeE8s: transferFees,
+                    amountE8s: tokenState.draftAmount,
+                    feeE8s: tokenState.transferFee,
                     createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
                 });
 
         withdrawTokensPromise
             .then((resp) => {
                 if (resp.kind === "completed" || resp.kind === "success") {
-                    amountToSend = BigInt(0);
+                    tokenState.draftAmount = 0n;
                     balanceWithRefresh?.refresh();
                     toastStore.showSuccessToast(
                         i18nKey("cryptoAccount.sendSucceeded", {
@@ -300,7 +295,7 @@
             <BalanceWithRefresh
                 bind:this={balanceWithRefresh}
                 {ledger}
-                value={remainingBalance}
+                value={tokenState.remainingBalance}
                 label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
                 onRefreshed={onBalanceRefreshed}
@@ -325,11 +320,11 @@
                 <div class="token-input">
                     <TokenInput
                         {ledger}
-                        {transferFees}
+                        transferFees={tokenState.transferFees}
                         {minAmount}
-                        maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
+                        maxAmount={BigInt(Math.max(0, Number(tokenState.maxAmount)))}
                         bind:valid={validAmount}
-                        bind:amount={amountToSend} />
+                        bind:amount={tokenState.draftAmount} />
                 </div>
                 <div class="target">
                     <Input

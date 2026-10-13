@@ -19,7 +19,7 @@
     import QrCode from "svelte-material-icons/Qrcode.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import Translatable from "@shared_components/Translatable.svelte";
-    import { TokenState } from "../wallet/walletState.svelte";
+    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
     import AccessGateExpiry from "@shared_components/home/access/AccessGateExpiry.svelte";
 
     interface Props {

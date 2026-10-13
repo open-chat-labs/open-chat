@@ -41,7 +41,7 @@
     import SwapProgress from "./SwapProgress.svelte";
     import TokenCard from "./TokenCard.svelte";
     import TokenSelector from "./TokenSelector.svelte";
-    import { TokenState } from "./walletState.svelte";
+    import { TokenState } from "@shared_components/home/wallet/walletState.svelte";
 
     interface Props {
         inToken: TokenState;
