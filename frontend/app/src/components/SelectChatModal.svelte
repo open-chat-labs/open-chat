@@ -284,12 +284,14 @@
 
 <section>
     <SectionHeader border={false} gap>
-        <HoverIcon>
+        <span class="icon">
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
+        </span>
         <h4><Translatable resourceKey={i18nKey("sendTo")} /></h4>
-        <span role="button" tabindex="0" title={$_("close")} class="close" onclick={onClose}>
-            <HoverIcon>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <span class="close" onclick={onClose}>
+            <HoverIcon title={$_("close")}>
                 <Close size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
@@ -489,6 +491,11 @@
         @include mobile() {
             width: 100%;
         }
+    }
+
+    .icon {
+        display: flex;
+        padding: $sp3;
     }
 
     .no-chats {
