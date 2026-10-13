@@ -34,7 +34,7 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> OCResult {
         .with_user_mut(my_index, |user| {
             user.verify_not_suspended()?;
 
-            if user.blocked_users.contains(&args.user_id) {
+            if user.has_blocked(args.user_id, &state.data.migrated_user_ids) {
                 return Err(OCErrorCode::TargetUserBlocked.into());
             }
 

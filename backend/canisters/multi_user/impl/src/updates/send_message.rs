@@ -470,7 +470,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> OCResult<PrepareOk> {
         .with_user(my_user_id, |user| -> OCResult<Option<Recipient>> {
             user.verify_not_suspended()?;
 
-            if user.blocked_users.contains(&args.recipient) {
+            if user.has_blocked(args.recipient, &state.data.migrated_user_ids) {
                 return Err(OCErrorCode::TargetUserBlocked.into());
             }
 

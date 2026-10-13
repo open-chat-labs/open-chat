@@ -1,9 +1,11 @@
+use crate::jobs::migrate_their_user_ids::TheirUserIdsMigration;
 use crate::model::users::Users;
 use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
 use chat_events::UserIdsInEventsMigration;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::collections::{BTreeMap, HashMap};
+use std::hash::Hash;
 use std::ops::ControlFlow;
 use std::time::Duration;
 use tracing::{error, info, trace};
@@ -25,12 +27,23 @@ thread_local! {
 // been migrated, looks up a batch of the ids found by the scan in the LocalUserIndex, or scans a
 // batch of events. This can be removed once it has completed in every MultiUser canister.
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none() && !state.data.user_ids_in_events_migration.is_complete() {
+    let data = &state.data;
+    if TIMER_ID.get().is_none() && is_required(&data.their_user_ids_migration, &data.user_ids_in_events_migration) {
         start_timer(Duration::ZERO);
         true
     } else {
         false
     }
+}
+
+// The job doesn't start until the `migrate_their_user_ids` job has completed, since until then a
+// chat can still be under an old id, so an event added to it can hold that id after the scan has
+// passed it (eg. the recipient of crypto sent in it). That job starts this one once it completes.
+fn is_required<L: Copy + Eq + Hash>(
+    their_user_ids_migration: &TheirUserIdsMigration,
+    migration: &UserIdsInEventsMigration<L>,
+) -> bool {
+    their_user_ids_migration.complete && !migration.is_complete()
 }
 
 // `TIMER_ID` stays set until the run has finished, including while it waits on a lookup, so that
@@ -342,6 +355,19 @@ mod tests {
 
         assert_eq!(senders(&users, 1, user_id(11)), vec![new_user_id(); 30]);
         assert_eq!(senders(&users, 3, user_id(12)), vec![new_user_id(); 50]);
+    }
+
+    #[test]
+    fn the_job_waits_for_the_migrate_their_user_ids_job_to_complete() {
+        let mut their_user_ids_migration = TheirUserIdsMigration::default();
+        let mut migration = UserIdsInEventsMigration::<u32>::default();
+        assert!(!is_required(&their_user_ids_migration, &migration));
+
+        their_user_ids_migration.complete = true;
+        assert!(is_required(&their_user_ids_migration, &migration));
+
+        migration.record_scanned_up_to(None);
+        assert!(!is_required(&their_user_ids_migration, &migration));
     }
 
     #[test]
