@@ -1,38 +1,91 @@
-<!-- Generated from lib/PanelCover.dc.html (source hash 8d024aca) on 2026-10-07. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Cover band at the top of a side panel, with square icon actions pinned to its leading and trailing corners. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './PanelCover.logic.js';
+  const MASKS = {
+    favourite: 'var(--icon-heart) center/contain no-repeat',
+    close: 'var(--icon-close) center/contain no-repeat',
+    share: 'var(--icon-share) center/contain no-repeat',
+    edit: 'var(--icon-edit) center/contain no-repeat',
+    manage: 'var(--icon-manage) center/contain no-repeat',
+    info: 'var(--icon-info) center/contain no-repeat',
+    more: 'var(--icon-more) center/contain no-repeat',
+    invite: 'var(--icon-invite) center/contain no-repeat',
+  };
+
+  type Action = keyof typeof MASKS;
 
   interface Props {
+    /** CSS background; a striped placeholder when empty. */
     cover?: string;
-    actions?: ('favourite'|'close'|'share'|'edit')[];
-    trailActions?: string[];
-    handlers?: Record<string,()=>void>;
-    [key: string]: unknown;
+    /** Leading-corner actions. */
+    actions?: Action[];
+    /** Trailing-corner actions. */
+    trailActions?: Action[];
+    /** Click handler per action key. */
+    handlers?: Partial<Record<Action, () => void>>;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { cover = '', actions = ['close'], trailActions = [], handlers = {} }: Props = $props();
 </script>
 
-<div style="position:relative;height:118px;flex:none;margin:var(--space-8) var(--space-8) 0;border-radius:var(--radius-lg);overflow:hidden;background:{v.cover}">
-  <div style="position:absolute;top:var(--space-8);inset-inline-start:var(--space-8);display:flex;gap:var(--space-6)">
-    {#each (v.leadActions ?? []) as action, action_i}
-      <div class="dc-p0" style="width:30px;height:30px;border-radius:var(--radius-sm);background:var(--card-2,#1B1B21);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12));display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick={action?.onPress} role="button" tabindex="0">
-        <span style="width:16px;height:16px;background:var(--ink-3,#9A9AA8);mask:{action?.mask}"></span>
+{#snippet group(names: Action[], side: 'lead' | 'trail')}
+  <div class="actions {side}">
+    {#each names as name}
+      <div class="action" onclick={handlers[name]} role="button" tabindex="0">
+        <span class="icon" style:mask={MASKS[name] ?? MASKS.close}></span>
       </div>
     {/each}
   </div>
-  <div style="position:absolute;top:var(--space-8);inset-inline-end:var(--space-8);display:flex;gap:var(--space-6)">
-    {#each (v.trailActions ?? []) as action, action_i}
-      <div class="dc-p1" style="width:30px;height:30px;border-radius:var(--radius-sm);background:var(--card-2,#1B1B21);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12));display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick={action?.onPress} role="button" tabindex="0">
-        <span style="width:16px;height:16px;background:var(--ink-3,#9A9AA8);mask:{action?.mask}"></span>
-      </div>
-    {/each}
-  </div>
+{/snippet}
+
+<div class="cover" style:background={cover || 'repeating-linear-gradient(115deg,#1d1424 0 10px,#241a2d 10px 20px)'}>
+  {@render group(actions, 'lead')}
+  {@render group(trailActions, 'trail')}
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p1:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
+  .cover {
+    position: relative;
+    height: 118px;
+    flex: none;
+    margin: var(--space-8) var(--space-8) 0;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .actions {
+    position: absolute;
+    top: var(--space-8);
+    display: flex;
+    gap: var(--space-6);
+  }
+
+  .lead {
+    inset-inline-start: var(--space-8);
+  }
+
+  .trail {
+    inset-inline-end: var(--space-8);
+  }
+
+  .action {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    background: var(--card-2, #1b1b21);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .action:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+  }
+
+  .icon {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-3, #9a9aa8);
+  }
 </style>

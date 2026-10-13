@@ -1,32 +1,87 @@
-<!-- Generated from lib/TypingIndicator.dc.html (source hash e4d33efe) on 2026-10-07. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Who is typing: overlapping gradient faces, three bouncing dots and a label ("Priya is typing", "2 people are typing"). -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './TypingIndicator.logic.js';
+  const GRADIENTS: Record<string, string> = {
+    violet: 'linear-gradient(140deg,#8C6BFF,#FF5EAE)',
+    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
+    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
+    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+  };
 
   interface Props {
-    names?: string[];
+    names: string[];
+    /** Face colours, cycled over names: violet | amber | teal | blue. */
     colors?: string[];
+    /** Ring around each face; match the surface behind. */
     ringColor?: string;
+    /** Overrides the generated label. */
     label?: string;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { names, colors = ['violet', 'teal'], ringColor = 'var(--card,#0e0e12)', label = '' }: Props = $props();
+
+  const text = $derived(label || (names.length > 1 ? `${names.length} people are typing` : `${names[0]} is typing`));
 </script>
 
-<div style="display:flex;align-items:center;gap:var(--space-10)">
-  <div style="flex:none;display:flex">
-    {#each (v.people ?? []) as p, p_i}
-      <span style="width:24px;height:24px;border-radius:var(--radius-pill);background:{p?.gradient};box-shadow:0 0 0 2px {v.ringColor};margin-inline-start:{p?.offset}"></span>
+<div class="typing">
+  <div class="faces">
+    {#each names as _, i}
+      <span class="face" style:background={GRADIENTS[colors[i % colors.length]] ?? GRADIENTS.violet} style:box-shadow="0 0 0 2px {ringColor}"></span>
     {/each}
   </div>
-  <div style="display:flex;align-items:center;gap:var(--space-8)">
-    <div style="display:flex;align-items:center;gap:3px">
-      <span style="width:5px;height:5px;border-radius:var(--radius-pill);background:var(--ink-3,#8A8A99);animation:oc-typing 1.2s infinite var(--ease-standard)"></span>
-      <span style="width:5px;height:5px;border-radius:var(--radius-pill);background:var(--ink-3,#8A8A99);animation:oc-typing 1.2s .18s infinite var(--ease-standard)"></span>
-      <span style="width:5px;height:5px;border-radius:var(--radius-pill);background:var(--ink-3,#8A8A99);animation:oc-typing 1.2s .36s infinite var(--ease-standard)"></span>
+  <div class="status">
+    <div class="dots">
+      <span class="dot"></span>
+      <span class="dot" style:animation-delay=".18s"></span>
+      <span class="dot" style:animation-delay=".36s"></span>
     </div>
-    <span style="font:var(--weight-medium) var(--text-sm)/1 var(--font-sans);color:var(--ink-3,#8A8A99)">{t(v.label)}</span>
+    <span class="label">{text}</span>
   </div>
 </div>
+
+<style>
+  .typing {
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+  }
+
+  .faces {
+    flex: none;
+    display: flex;
+  }
+
+  .face {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-pill);
+  }
+
+  .face + .face {
+    margin-inline-start: -9px;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+
+  .dots {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: var(--radius-pill);
+    background: var(--ink-3, #8a8a99);
+    animation: oc-typing 1.2s infinite var(--ease-standard);
+  }
+
+  .label {
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+  }
+</style>

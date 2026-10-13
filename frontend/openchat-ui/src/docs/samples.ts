@@ -54,4 +54,7 @@ export const samples: Record<string, Record<string, unknown>> = {
   SortableInputList: { values: ['Pizza', 'Tacos', 'Sushi'] },
   Countdown: { to: Date.now() + 3 * 3600e3 + 12 * 60e3 },
   MessageActions: { open: true, point: { x: 240, y: 240 } },
+  PanelCover: { actions: ['close'], trailActions: ['favourite'] },
+  TileButtons: { tiles: ['video', 'mute', 'search'] },
+  TypingIndicator: { names: ['Danielle', 'Priya'], colors: ['violet', 'teal'] },
 };

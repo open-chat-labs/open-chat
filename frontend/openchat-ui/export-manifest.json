@@ -36,8 +36,7 @@
       "sourceHash": "1f9bbb41",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/Avatar.svelte",
-        "src/lib/components/Avatar.logic.js"
+        "src/lib/components/Avatar.svelte"
       ],
       "group": "library"
     },
@@ -56,8 +55,7 @@
       "sourceHash": "0beff5f6",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/Banner.svelte",
-        "src/lib/components/Banner.logic.js"
+        "src/lib/components/Banner.svelte"
       ],
       "group": "library"
     },
@@ -116,8 +114,7 @@
       "sourceHash": "454e21c1",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/CopyButton.svelte",
-        "src/lib/components/CopyButton.logic.js"
+        "src/lib/components/CopyButton.svelte"
       ],
       "group": "library"
     },
@@ -135,8 +132,7 @@
       "sourceHash": "e0ad49a0",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/DetailSection.svelte",
-        "src/lib/components/DetailSection.logic.js"
+        "src/lib/components/DetailSection.svelte"
       ],
       "group": "library"
     },
@@ -155,8 +151,7 @@
       "sourceHash": "f945e31c",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/DurationChips.svelte",
-        "src/lib/components/DurationChips.logic.js"
+        "src/lib/components/DurationChips.svelte"
       ],
       "group": "library"
     },
@@ -262,8 +257,7 @@
       "sourceHash": "8d024aca",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/PanelCover.svelte",
-        "src/lib/components/PanelCover.logic.js"
+        "src/lib/components/PanelCover.svelte"
       ],
       "group": "library"
     },
@@ -384,8 +378,7 @@
       "sourceHash": "58a09cd3",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/TileButtons.svelte",
-        "src/lib/components/TileButtons.logic.js"
+        "src/lib/components/TileButtons.svelte"
       ],
       "group": "library"
     },
@@ -404,8 +397,7 @@
       "sourceHash": "4b90cec2",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/Toggle.svelte",
-        "src/lib/components/Toggle.logic.js"
+        "src/lib/components/Toggle.svelte"
       ],
       "group": "library"
     },
@@ -442,8 +434,7 @@
       "sourceHash": "e4d33efe",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/TypingIndicator.svelte",
-        "src/lib/components/TypingIndicator.logic.js"
+        "src/lib/components/TypingIndicator.svelte"
       ],
       "group": "library"
     },
@@ -510,8 +501,7 @@
       "sourceHash": "a4b6cf89",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/Skeleton.svelte",
-        "src/lib/components/Skeleton.logic.js"
+        "src/lib/components/Skeleton.svelte"
       ],
       "group": "library"
     },
@@ -660,8 +650,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/Confetti.svelte",
-        "src/lib/components/Confetti.logic.js"
+        "src/lib/components/Confetti.svelte"
       ]
     },
     "ConversationHeader": {
@@ -690,8 +679,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/Countdown.svelte",
-        "src/lib/components/Countdown.logic.js"
+        "src/lib/components/Countdown.svelte"
       ]
     },
     "CreateGroupDialog": {
@@ -1058,8 +1046,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/SnapFloat.svelte",
-        "src/lib/components/SnapFloat.logic.js"
+        "src/lib/components/SnapFloat.svelte"
       ]
     },
     "SortableInputList": {
@@ -1147,8 +1134,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/TransferMessage.svelte",
-        "src/lib/components/TransferMessage.logic.js"
+        "src/lib/components/TransferMessage.svelte"
       ]
     },
     "UpgradeBanner": {
