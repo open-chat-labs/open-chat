@@ -73,14 +73,13 @@ impl Contacts {
     }
 
     // Moves the contact for another user onto their new id once they are migrated to a MultiUser
-    // canister, unless there is already one for their new id
+    // canister. If there is already one for their new id, that one is kept and the old one dropped.
     pub fn migrate_user_id(&mut self, old_user_id: UserId, new_user_id: UserId) {
         let prefix = ContactKeyPrefix::new();
         with_map_mut(|m| {
-            if m.contains_key(prefix.create_key(&new_user_id)) {
-                return;
-            }
-            if let Some(bytes) = m.remove(prefix.create_key(&old_user_id)) {
+            if let Some(bytes) = m.remove(prefix.create_key(&old_user_id))
+                && !m.contains_key(prefix.create_key(&new_user_id))
+            {
                 m.insert(prefix.create_key(&new_user_id), bytes);
             }
         });
@@ -171,9 +170,9 @@ mod tests {
         contacts.migrate_user_id(user_id(1), user_id(4));
         assert_eq!(nicknames(&contacts), owned(&[(2, "two"), (3, "three"), (4, "one")]));
 
-        // A contact already held for the new id is kept
+        // A contact already held for the new id is kept, and the old one dropped
         contacts.migrate_user_id(user_id(2), user_id(3));
-        assert_eq!(nicknames(&contacts), owned(&[(2, "two"), (3, "three"), (4, "one")]));
+        assert_eq!(nicknames(&contacts), owned(&[(3, "three"), (4, "one")]));
     }
 
     #[test]
