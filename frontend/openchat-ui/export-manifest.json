@@ -211,8 +211,7 @@
       "sourceHash": "fd3b9a33",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/Menu.svelte",
-        "src/lib/components/Menu.logic.js"
+        "src/lib/components/Menu.svelte"
       ],
       "group": "library"
     },
@@ -295,8 +294,7 @@
       "sourceHash": "e4cc2aed",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/SegmentedTabs.svelte",
-        "src/lib/components/SegmentedTabs.logic.js"
+        "src/lib/components/SegmentedTabs.svelte"
       ],
       "group": "library"
     },
@@ -360,8 +358,7 @@
       "sourceHash": "6aad1311",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/TextArea.svelte",
-        "src/lib/components/TextArea.logic.js"
+        "src/lib/components/TextArea.svelte"
       ],
       "group": "library"
     },
@@ -739,8 +736,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/EmojiPicker.svelte",
-        "src/lib/components/EmojiPicker.logic.js"
+        "src/lib/components/EmojiPicker.svelte"
       ]
     },
     "ExploreCommunities": {
@@ -759,8 +755,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/FileMessage.svelte",
-        "src/lib/components/FileMessage.logic.js"
+        "src/lib/components/FileMessage.svelte"
       ]
     },
     "GroupPanel": {
@@ -968,8 +963,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/PrizeMessage.svelte",
-        "src/lib/components/PrizeMessage.logic.js"
+        "src/lib/components/PrizeMessage.svelte"
       ]
     },
     "ProfileDialog": {
@@ -988,8 +982,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/ProposalMessage.svelte",
-        "src/lib/components/ProposalMessage.logic.js"
+        "src/lib/components/ProposalMessage.svelte"
       ]
     },
     "PuzzleDialog": {
@@ -1045,8 +1038,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/SortableInputList.svelte",
-        "src/lib/components/SortableInputList.logic.js"
+        "src/lib/components/SortableInputList.svelte"
       ]
     },
     "StreakInsuranceDialog": {

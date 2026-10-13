@@ -58,6 +58,8 @@ export const samples: Record<string, Record<string, unknown>> = {
   TileButtons: { tiles: ['video', 'mute', 'search'] },
   TypingIndicator: { names: ['Danielle', 'Priya'], colors: ['violet', 'teal'] },
   ComposerBar: { typingNames: ['Danielle', 'Priya'] },
+  SegmentedTabs: { labels: ['All', 'Direct', 'Groups', 'Unread'] },
+  PrizeMessage: { token: { symbol: 'ICP', mark: '\u221E', gradient: 'linear-gradient(140deg,#ff5f9e,#6a2bff)', edge: '#7a2f8f', edge2: '#5c2370' } },
   SwapOffer: {
     give: { amount: '20', symbol: 'ICP', mark: '\u221E', usd: '$1,095.87', gradient: 'linear-gradient(140deg,#ff5f9e,#6a2bff)' },
     get: { amount: '100', symbol: 'CHAT', mark: 'C', usd: '$1,113.35', gradient: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
