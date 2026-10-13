@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Record each ledger's burn fee and pass it to the LocalUserIndexes ([#9935](https://github.com/open-chat-labs/open-chat/pull/9935))
+
 ### Removed
 
 - Stop charging listing fees to the account of a user's id, which only User canisters held funds in ([#9919](https://github.com/open-chat-labs/open-chat/pull/9919))
