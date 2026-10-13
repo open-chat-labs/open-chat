@@ -73,7 +73,7 @@ import {
     type SyncTouched,
 } from "./sync";
 
-const CACHE_VERSION = 155;
+const CACHE_VERSION = 156;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -331,6 +331,16 @@ async function clearChatsAndCurrentUser(
     await tx.objectStore("currentUser").clear();
 }
 
+// So that no session starts under an id the user had before being migrated to a MultiUser
+// canister. With no cached user, the session waits for the live one, which is under their latest
+// id.
+async function clearCurrentUserStore(
+    _db: IDBPDatabase<ChatSchema>,
+    tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
+) {
+    await tx.objectStore("currentUser").clear();
+}
+
 async function createPublicProfileStore(
     db: IDBPDatabase<ChatSchema>,
     _tx: IDBPTransaction<ChatSchema, StoreNames<ChatSchema>[], "versionchange">,
@@ -442,7 +452,8 @@ export class ChatsDb {
             .withMigration(151, createChatRowStores)
             .withMigration(152, clearDetailsStores)
             .withMigration(153, clearChatsStore)
-            .withMigration(154, clearEventsAndCachePrimer);
+            .withMigration(154, clearEventsAndCachePrimer)
+            .withMigration(155, clearCurrentUserStore);
     }
 
     getDb(): Database {
