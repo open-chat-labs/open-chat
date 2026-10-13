@@ -1,0 +1,47 @@
+/* Keyframes and global rules collected from component <helmet> blocks. */
+html,body{margin:0}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--surface-0,#07070a)}
+@keyframes ocTypingDot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}
+@keyframes oc-spin{to{transform:rotate(360deg)}}
+@keyframes oc-typing{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+@keyframes oc-toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes oc-toast-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(6px) scale(.98)}}
+
+/* 2026-10-13 — pass 2: rules from new/changed component helmets */
+[data-oc-header]{container-type:inline-size}
+@container (max-width:520px){[data-oc-call-label]{display:none}[data-oc-call]{width:var(--control-md,34px);padding:0}}
+a{color:var(--accent,#FF5672)}
+a:hover{color:var(--accent-bright,#FF8298)}
+[role="button"]:focus{outline:none}
+[role="button"]:focus-visible{outline:2px solid var(--accent,#FF5672);outline-offset:2px}
+@keyframes oc-dlg-in{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes oc-veil-in{from{opacity:0}to{opacity:1}}
+@keyframes oc-dlg-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(8px) scale(.98)}}
+@keyframes oc-veil-out{from{opacity:1}to{opacity:0}}
+@keyframes oc-step-in{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
+@keyframes ocCallPulse{0%{box-shadow:0 0 0 0 color-mix(in oklch,var(--status-online,#2EE6A8) 55%,transparent)}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@keyframes auth-rise{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+[data-auth-input]::placeholder{color:var(--ink-4,#7C7C8C)}
+@keyframes oc-chit-pop{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes oc-tip-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+@keyframes oc-pz-pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes oc-pz-shake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 4px))}75%{transform:translateX(calc(-50% + 4px))}}
+/* standalone preview only: the rail itself is transparent in the app */
+body:has([data-mode="dark"]){background:#07070a}
+body:has([data-mode="light"]){background:#E7E5E0}
+@keyframes ocCoinSpin{0%{transform:rotateX(-8deg) rotateY(0deg)}100%{transform:rotateX(-8deg) rotateY(360deg)}}
+@media (prefers-reduced-motion:reduce){[data-oc-motion]{animation:none !important}}
+@keyframes ocActsIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+@keyframes ocMaIn{from{opacity:0;transform:translateY(4px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes ocMaFade{from{opacity:0}to{opacity:1}}
+@keyframes ocRecPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+@keyframes ex-bar-in{from{opacity:0;transform:translateY(28px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes ex-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+[data-ex-popular-grid]{grid-template-columns:repeat(3,minmax(0,1fr))}
+@container (max-width:720px){[data-ex-popular-grid]{grid-template-columns:minmax(0,1fr)}}
+@container (max-width:640px){[data-ex-row]{grid-template-columns:minmax(0,1fr) 72px 100px !important}[data-ex-col]{display:none !important}}
+@container (max-width:420px){[data-ex-row]{grid-template-columns:minmax(0,1fr) 92px !important}[data-ex-row] > :nth-child(2){display:none !important}}
+@keyframes ex-hero-in{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+input::placeholder{color:var(--ink-4,#8A8A99)}
+@keyframes oc-sheet-in{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){[data-oc-motion]{animation:none!important}}

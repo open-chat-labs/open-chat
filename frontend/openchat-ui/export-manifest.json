@@ -1,0 +1,1313 @@
+{
+  "package": "@openchat/ui",
+  "exportedAt": "2026-10-13",
+  "pass": 2,
+  "scope": "library + app components + docs",
+  "source": "OpenChat design prototype",
+  "tokens": {
+    "source": "lib/tokens.css"
+  },
+  "icons": {
+    "source": "lib/icons.js",
+    "count": 142
+  },
+  "components": {
+    "ActivityRow": {
+      "source": "lib/ActivityRow.dc.html",
+      "sourceHash": "ada8248e",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/ActivityRow.svelte",
+        "src/lib/components/ActivityRow.logic.js"
+      ],
+      "group": "library"
+    },
+    "AmountCard": {
+      "source": "lib/AmountCard.dc.html",
+      "sourceHash": "39ed836c",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/AmountCard.svelte",
+        "src/lib/components/AmountCard.logic.js"
+      ],
+      "group": "library"
+    },
+    "Avatar": {
+      "source": "lib/Avatar.dc.html",
+      "sourceHash": "1f9bbb41",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Avatar.svelte",
+        "src/lib/components/Avatar.logic.js"
+      ],
+      "group": "library"
+    },
+    "Badge": {
+      "source": "lib/Badge.dc.html",
+      "sourceHash": "ac70dfd9",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Badge.svelte",
+        "src/lib/components/Badge.logic.js"
+      ],
+      "group": "library"
+    },
+    "Banner": {
+      "source": "lib/Banner.dc.html",
+      "sourceHash": "0beff5f6",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Banner.svelte",
+        "src/lib/components/Banner.logic.js"
+      ],
+      "group": "library"
+    },
+    "Button": {
+      "source": "lib/Button.dc.html",
+      "sourceHash": "8b5cf575",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Button.svelte",
+        "src/lib/components/Button.logic.js"
+      ],
+      "group": "library"
+    },
+    "ChatBubble": {
+      "source": "lib/ChatBubble.dc.html",
+      "sourceHash": "1c51c112",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/ChatBubble.svelte",
+        "src/lib/components/ChatBubble.logic.js"
+      ]
+    },
+    "ChatRow": {
+      "source": "lib/ChatRow.dc.html",
+      "sourceHash": "d9730629",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/ChatRow.svelte",
+        "src/lib/components/ChatRow.logic.js"
+      ]
+    },
+    "ComposerBar": {
+      "source": "lib/ComposerBar.dc.html",
+      "sourceHash": "6f9180bd",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/ComposerBar.svelte",
+        "src/lib/components/ComposerBar.logic.js"
+      ]
+    },
+    "ContextMenu": {
+      "source": "lib/ContextMenu.dc.html",
+      "sourceHash": "c325b36b",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/ContextMenu.svelte",
+        "src/lib/components/ContextMenu.logic.js"
+      ],
+      "group": "library"
+    },
+    "CopyButton": {
+      "source": "lib/CopyButton.dc.html",
+      "sourceHash": "454e21c1",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/CopyButton.svelte",
+        "src/lib/components/CopyButton.logic.js"
+      ],
+      "group": "library"
+    },
+    "DetailRow": {
+      "source": "lib/DetailRow.dc.html",
+      "sourceHash": "10ca55c5",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/DetailRow.svelte",
+        "src/lib/components/DetailRow.logic.js"
+      ],
+      "group": "library"
+    },
+    "DetailSection": {
+      "source": "lib/DetailSection.dc.html",
+      "sourceHash": "e0ad49a0",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/DetailSection.svelte",
+        "src/lib/components/DetailSection.logic.js"
+      ],
+      "group": "library"
+    },
+    "DialogShell": {
+      "source": "lib/DialogShell.dc.html",
+      "sourceHash": "972fe63e",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/DialogShell.svelte",
+        "src/lib/components/DialogShell.logic.js"
+      ],
+      "group": "library"
+    },
+    "DurationChips": {
+      "source": "lib/DurationChips.dc.html",
+      "sourceHash": "f945e31c",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/DurationChips.svelte",
+        "src/lib/components/DurationChips.logic.js"
+      ],
+      "group": "library"
+    },
+    "EmptyState": {
+      "source": "lib/EmptyState.dc.html",
+      "sourceHash": "824a4c25",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/EmptyState.svelte",
+        "src/lib/components/EmptyState.logic.js"
+      ],
+      "group": "library"
+    },
+    "Field": {
+      "source": "lib/Field.dc.html",
+      "sourceHash": "5b2c7160",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Field.svelte",
+        "src/lib/components/Field.logic.js"
+      ],
+      "group": "library"
+    },
+    "Icon": {
+      "source": "lib/Icon.dc.html",
+      "sourceHash": "88fc81a7",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Icon.svelte",
+        "src/lib/components/Icon.logic.js"
+      ],
+      "group": "library"
+    },
+    "IconButton": {
+      "source": "lib/IconButton.dc.html",
+      "sourceHash": "f00be3d6",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/IconButton.svelte",
+        "src/lib/components/IconButton.logic.js"
+      ],
+      "group": "library"
+    },
+    "ListSectionLabel": {
+      "source": "lib/ListSectionLabel.dc.html",
+      "sourceHash": "0ec0eea5",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/ListSectionLabel.svelte",
+        "src/lib/components/ListSectionLabel.logic.js"
+      ],
+      "group": "library"
+    },
+    "MemberRow": {
+      "source": "lib/MemberRow.dc.html",
+      "sourceHash": "d9f8023f",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/MemberRow.svelte",
+        "src/lib/components/MemberRow.logic.js"
+      ],
+      "group": "library"
+    },
+    "Menu": {
+      "source": "lib/Menu.dc.html",
+      "sourceHash": "fd3b9a33",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Menu.svelte",
+        "src/lib/components/Menu.logic.js"
+      ],
+      "group": "library"
+    },
+    "MenuItem": {
+      "source": "lib/MenuItem.dc.html",
+      "sourceHash": "81252d62",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/MenuItem.svelte",
+        "src/lib/components/MenuItem.logic.js"
+      ],
+      "group": "library"
+    },
+    "MessageGroup": {
+      "source": "lib/MessageGroup.dc.html",
+      "sourceHash": "39508894",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/MessageGroup.svelte",
+        "src/lib/components/MessageGroup.logic.js"
+      ]
+    },
+    "PageHeader": {
+      "source": "lib/PageHeader.dc.html",
+      "sourceHash": "5a474f84",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/PageHeader.svelte",
+        "src/lib/components/PageHeader.logic.js"
+      ],
+      "group": "library"
+    },
+    "PanelCover": {
+      "source": "lib/PanelCover.dc.html",
+      "sourceHash": "8d024aca",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/PanelCover.svelte",
+        "src/lib/components/PanelCover.logic.js"
+      ],
+      "group": "library"
+    },
+    "PanelNavRow": {
+      "source": "lib/PanelNavRow.dc.html",
+      "sourceHash": "f29bf4af",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/PanelNavRow.svelte",
+        "src/lib/components/PanelNavRow.logic.js"
+      ],
+      "group": "library"
+    },
+    "Pill": {
+      "source": "lib/Pill.dc.html",
+      "sourceHash": "594a3b26",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Pill.svelte",
+        "src/lib/components/Pill.logic.js"
+      ],
+      "group": "library"
+    },
+    "ProgressTimeline": {
+      "source": "lib/ProgressTimeline.dc.html",
+      "sourceHash": "90f18732",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/ProgressTimeline.svelte",
+        "src/lib/components/ProgressTimeline.logic.js"
+      ],
+      "group": "library"
+    },
+    "QuickAmountChips": {
+      "source": "lib/QuickAmountChips.dc.html",
+      "sourceHash": "a622f26e",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/QuickAmountChips.svelte",
+        "src/lib/components/QuickAmountChips.logic.js"
+      ],
+      "group": "library"
+    },
+    "SegmentedTabs": {
+      "source": "lib/SegmentedTabs.dc.html",
+      "sourceHash": "e4cc2aed",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/SegmentedTabs.svelte",
+        "src/lib/components/SegmentedTabs.logic.js"
+      ],
+      "group": "library"
+    },
+    "ShareBar": {
+      "source": "lib/ShareBar.dc.html",
+      "sourceHash": "d827e12e",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/ShareBar.svelte",
+        "src/lib/components/ShareBar.logic.js"
+      ],
+      "group": "library"
+    },
+    "SideCard": {
+      "source": "lib/SideCard.dc.html",
+      "sourceHash": "2385dab3",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/SideCard.svelte",
+        "src/lib/components/SideCard.logic.js"
+      ],
+      "group": "library"
+    },
+    "Spinner": {
+      "source": "lib/Spinner.dc.html",
+      "sourceHash": "8547dbf9",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Spinner.svelte",
+        "src/lib/components/Spinner.logic.js"
+      ],
+      "group": "library"
+    },
+    "StatCard": {
+      "source": "lib/StatCard.dc.html",
+      "sourceHash": "99b85629",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/StatCard.svelte",
+        "src/lib/components/StatCard.logic.js"
+      ],
+      "group": "library"
+    },
+    "StatsDonut": {
+      "source": "lib/StatsDonut.dc.html",
+      "sourceHash": "44598fe9",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/StatsDonut.svelte",
+        "src/lib/components/StatsDonut.logic.js"
+      ],
+      "group": "library"
+    },
+    "StepIndicator": {
+      "source": "lib/StepIndicator.dc.html",
+      "sourceHash": "491490cf",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/StepIndicator.svelte",
+        "src/lib/components/StepIndicator.logic.js"
+      ],
+      "group": "library"
+    },
+    "TextArea": {
+      "source": "lib/TextArea.dc.html",
+      "sourceHash": "6aad1311",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/TextArea.svelte",
+        "src/lib/components/TextArea.logic.js"
+      ],
+      "group": "library"
+    },
+    "TileButtons": {
+      "source": "lib/TileButtons.dc.html",
+      "sourceHash": "58a09cd3",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/TileButtons.svelte",
+        "src/lib/components/TileButtons.logic.js"
+      ],
+      "group": "library"
+    },
+    "TimedToggle": {
+      "source": "lib/TimedToggle.dc.html",
+      "sourceHash": "3ee63b57",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/TimedToggle.svelte",
+        "src/lib/components/TimedToggle.logic.js"
+      ],
+      "group": "library"
+    },
+    "Toggle": {
+      "source": "lib/Toggle.dc.html",
+      "sourceHash": "4b90cec2",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Toggle.svelte",
+        "src/lib/components/Toggle.logic.js"
+      ],
+      "group": "library"
+    },
+    "TokenAvatar": {
+      "source": "lib/TokenAvatar.dc.html",
+      "sourceHash": "362ee2f9",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/TokenAvatar.svelte",
+        "src/lib/components/TokenAvatar.logic.js"
+      ],
+      "group": "library"
+    },
+    "TokenPicker": {
+      "source": "lib/TokenPicker.dc.html",
+      "sourceHash": "8699ab5d",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/TokenPicker.svelte"
+      ],
+      "group": "library"
+    },
+    "TransactionRow": {
+      "source": "lib/TransactionRow.dc.html",
+      "sourceHash": "235ffaf2",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/TransactionRow.svelte",
+        "src/lib/components/TransactionRow.logic.js"
+      ]
+    },
+    "TypingIndicator": {
+      "source": "lib/TypingIndicator.dc.html",
+      "sourceHash": "e4d33efe",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/TypingIndicator.svelte",
+        "src/lib/components/TypingIndicator.logic.js"
+      ],
+      "group": "library"
+    },
+    "UndoToast": {
+      "source": "lib/UndoToast.dc.html",
+      "sourceHash": "d1ec11e9",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/UndoToast.svelte",
+        "src/lib/components/UndoToast.logic.js"
+      ],
+      "group": "library"
+    },
+    "UnreadDivider": {
+      "source": "lib/UnreadDivider.dc.html",
+      "sourceHash": "d4f40e6e",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/UnreadDivider.svelte",
+        "src/lib/components/UnreadDivider.logic.js"
+      ],
+      "group": "library"
+    },
+    "UserChip": {
+      "source": "lib/UserChip.dc.html",
+      "sourceHash": "348ce6b7",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/UserChip.svelte",
+        "src/lib/components/UserChip.logic.js"
+      ],
+      "group": "library"
+    },
+    "VoiceMessage": {
+      "source": "lib/VoiceMessage.dc.html",
+      "sourceHash": "e210f6a8",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/VoiceMessage.svelte",
+        "src/lib/components/VoiceMessage.logic.js"
+      ]
+    },
+    "ChatPicker": {
+      "source": "lib/ChatPicker.dc.html",
+      "sourceHash": "3d01a726",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/ChatPicker.svelte",
+        "src/lib/components/ChatPicker.logic.js"
+      ],
+      "group": "library"
+    },
+    "Tooltip": {
+      "source": "lib/Tooltip.dc.html",
+      "sourceHash": "27d349b2",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Tooltip.svelte",
+        "src/lib/components/Tooltip.logic.js"
+      ],
+      "group": "library"
+    },
+    "Skeleton": {
+      "source": "lib/Skeleton.dc.html",
+      "sourceHash": "a4b6cf89",
+      "exportedAt": "2026-10-07",
+      "files": [
+        "src/lib/components/Skeleton.svelte",
+        "src/lib/components/Skeleton.logic.js"
+      ],
+      "group": "library"
+    },
+    "AccessGates": {
+      "source": "lib/AccessGates.dc.html",
+      "sourceHash": "fceffeb8",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/AccessGates.svelte",
+        "src/app/components/AccessGates.logic.js"
+      ]
+    },
+    "AccessGatesCards": {
+      "source": "lib/AccessGatesCards.dc.html",
+      "sourceHash": "7f4effa4",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/AccessGatesCards.svelte",
+        "src/app/components/AccessGatesCards.logic.js"
+      ]
+    },
+    "AchievementToast": {
+      "source": "lib/AchievementToast.dc.html",
+      "sourceHash": "f37efbac",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/AchievementToast.svelte",
+        "src/app/components/AchievementToast.logic.js"
+      ]
+    },
+    "AchievementsDialog": {
+      "source": "lib/AchievementsDialog.dc.html",
+      "sourceHash": "0faa1b00",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/AchievementsDialog.svelte",
+        "src/app/components/AchievementsDialog.logic.js"
+      ]
+    },
+    "ActivityPanel": {
+      "source": "lib/ActivityPanel.dc.html",
+      "sourceHash": "937a1630",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/ActivityPanel.svelte",
+        "src/app/components/ActivityPanel.logic.js"
+      ]
+    },
+    "AuthDialog": {
+      "source": "lib/AuthDialog.dc.html",
+      "sourceHash": "f22ab84b",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/AuthDialog.svelte",
+        "src/app/components/AuthDialog.logic.js"
+      ]
+    },
+    "AvatarStack": {
+      "source": "lib/AvatarStack.dc.html",
+      "sourceHash": "5c9166f0",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/AvatarStack.svelte",
+        "src/lib/components/AvatarStack.logic.js"
+      ]
+    },
+    "BalanceCard": {
+      "source": "lib/BalanceCard.dc.html",
+      "sourceHash": "34499a8e",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/BalanceCard.svelte",
+        "src/app/components/BalanceCard.logic.js"
+      ]
+    },
+    "BotDialog": {
+      "source": "lib/BotDialog.dc.html",
+      "sourceHash": "dccd49b7",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/BotDialog.svelte",
+        "src/app/components/BotDialog.logic.js"
+      ]
+    },
+    "CallEvent": {
+      "source": "lib/CallEvent.dc.html",
+      "sourceHash": "229acee3",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/CallEvent.svelte",
+        "src/lib/components/CallEvent.logic.js"
+      ]
+    },
+    "CallPanel": {
+      "source": "lib/CallPanel.dc.html",
+      "sourceHash": "956d6791",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/CallPanel.svelte",
+        "src/app/components/CallPanel.logic.js"
+      ]
+    },
+    "ChatListHeader": {
+      "source": "lib/ChatListHeader.dc.html",
+      "sourceHash": "aa5b1850",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/ChatListHeader.svelte",
+        "src/app/components/ChatListHeader.logic.js"
+      ]
+    },
+    "ChatListPanel": {
+      "source": "lib/ChatListPanel.dc.html",
+      "sourceHash": "1eb60abb",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/ChatListPanel.svelte",
+        "src/app/components/ChatListPanel.logic.js"
+      ]
+    },
+    "ChitDialog": {
+      "source": "lib/ChitDialog.dc.html",
+      "sourceHash": "556edac8",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/ChitDialog.svelte",
+        "src/app/components/ChitDialog.logic.js"
+      ]
+    },
+    "Confetti": {
+      "source": "lib/Confetti.dc.html",
+      "sourceHash": "29b4b5be",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/Confetti.svelte",
+        "src/lib/components/Confetti.logic.js"
+      ]
+    },
+    "ConversationHeader": {
+      "source": "lib/ConversationHeader.dc.html",
+      "sourceHash": "ccaba540",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/ConversationHeader.svelte",
+        "src/app/components/ConversationHeader.logic.js"
+      ]
+    },
+    "ConvertToCommunityDialog": {
+      "source": "lib/ConvertToCommunityDialog.dc.html",
+      "sourceHash": "a749f89a",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/ConvertToCommunityDialog.svelte",
+        "src/app/components/ConvertToCommunityDialog.logic.js"
+      ]
+    },
+    "Countdown": {
+      "source": "lib/Countdown.dc.html",
+      "sourceHash": "4ac813fd",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/Countdown.svelte",
+        "src/lib/components/Countdown.logic.js"
+      ]
+    },
+    "CreateGroupDialog": {
+      "source": "lib/CreateGroupDialog.dc.html",
+      "sourceHash": "eedb6471",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/CreateGroupDialog.svelte",
+        "src/app/components/CreateGroupDialog.logic.js"
+      ]
+    },
+    "DailyPuzzleCard": {
+      "source": "lib/DailyPuzzleCard.dc.html",
+      "sourceHash": "022361e6",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/DailyPuzzleCard.svelte",
+        "src/app/components/DailyPuzzleCard.logic.js"
+      ]
+    },
+    "DeleteGroupDialog": {
+      "source": "lib/DeleteGroupDialog.dc.html",
+      "sourceHash": "e8ca1d1b",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/DeleteGroupDialog.svelte",
+        "src/app/components/DeleteGroupDialog.logic.js"
+      ]
+    },
+    "DiamondDialog": {
+      "source": "lib/DiamondDialog.dc.html",
+      "sourceHash": "39751360",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/DiamondDialog.svelte",
+        "src/app/components/DiamondDialog.logic.js"
+      ]
+    },
+    "DmChatSettings": {
+      "source": "lib/DmChatSettings.dc.html",
+      "sourceHash": "a1189237",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/DmChatSettings.svelte",
+        "src/app/components/DmChatSettings.logic.js"
+      ]
+    },
+    "DmPanel": {
+      "source": "lib/DmPanel.dc.html",
+      "sourceHash": "38415146",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/DmPanel.svelte",
+        "src/app/components/DmPanel.logic.js"
+      ]
+    },
+    "EmojiPicker": {
+      "source": "lib/EmojiPicker.dc.html",
+      "sourceHash": "20d1754a",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/EmojiPicker.svelte",
+        "src/lib/components/EmojiPicker.logic.js"
+      ]
+    },
+    "ExploreCommunities": {
+      "source": "lib/ExploreCommunities.dc.html",
+      "sourceHash": "8685dae7",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/ExploreCommunities.svelte",
+        "src/app/components/ExploreCommunities.logic.js"
+      ]
+    },
+    "FileMessage": {
+      "source": "lib/FileMessage.dc.html",
+      "sourceHash": "1e982d63",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/FileMessage.svelte",
+        "src/lib/components/FileMessage.logic.js"
+      ]
+    },
+    "GroupPanel": {
+      "source": "lib/GroupPanel.dc.html",
+      "sourceHash": "dba9b54f",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/GroupPanel.svelte",
+        "src/app/components/GroupPanel.logic.js"
+      ]
+    },
+    "GroupSettingsDialog": {
+      "source": "lib/GroupSettingsDialog.dc.html",
+      "sourceHash": "68b6847a",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/GroupSettingsDialog.svelte",
+        "src/app/components/GroupSettingsDialog.logic.js"
+      ]
+    },
+    "GroupStats": {
+      "source": "lib/GroupStats.dc.html",
+      "sourceHash": "def7d7a1",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/GroupStats.svelte",
+        "src/app/components/GroupStats.logic.js"
+      ]
+    },
+    "ImportToCommunityDialog": {
+      "source": "lib/ImportToCommunityDialog.dc.html",
+      "sourceHash": "601977ac",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/ImportToCommunityDialog.svelte",
+        "src/app/components/ImportToCommunityDialog.logic.js"
+      ]
+    },
+    "InfoPanel": {
+      "source": "lib/InfoPanel.dc.html",
+      "sourceHash": "e4f3dc4d",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/InfoPanel.svelte",
+        "src/app/components/InfoPanel.logic.js"
+      ]
+    },
+    "InviteDialog": {
+      "source": "lib/InviteDialog.dc.html",
+      "sourceHash": "408fbcd8",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/InviteDialog.svelte",
+        "src/app/components/InviteDialog.logic.js"
+      ]
+    },
+    "JoinGateDialog": {
+      "source": "lib/JoinGateDialog.dc.html",
+      "sourceHash": "3a62b79a",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/JoinGateDialog.svelte",
+        "src/app/components/JoinGateDialog.logic.js"
+      ]
+    },
+    "LeaderboardDialog": {
+      "source": "lib/LeaderboardDialog.dc.html",
+      "sourceHash": "b977d80f",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/LeaderboardDialog.svelte",
+        "src/app/components/LeaderboardDialog.logic.js"
+      ]
+    },
+    "LeaveGroupDialog": {
+      "source": "lib/LeaveGroupDialog.dc.html",
+      "sourceHash": "935490b2",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/LeaveGroupDialog.svelte",
+        "src/app/components/LeaveGroupDialog.logic.js"
+      ]
+    },
+    "LinkPreview": {
+      "source": "lib/LinkPreview.dc.html",
+      "sourceHash": "ebdc8a5b",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/LinkPreview.svelte",
+        "src/lib/components/LinkPreview.logic.js"
+      ]
+    },
+    "MediaMessage": {
+      "source": "lib/MediaMessage.dc.html",
+      "sourceHash": "67e8474e",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/MediaMessage.svelte",
+        "src/lib/components/MediaMessage.logic.js"
+      ]
+    },
+    "MemeFighterDialog": {
+      "source": "lib/MemeFighterDialog.dc.html",
+      "sourceHash": "a1fc291c",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/MemeFighterDialog.svelte",
+        "src/app/components/MemeFighterDialog.logic.js"
+      ]
+    },
+    "MessageActions": {
+      "source": "lib/MessageActions.dc.html",
+      "sourceHash": "b8b56d84",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/MessageActions.svelte",
+        "src/lib/components/MessageActions.logic.js"
+      ]
+    },
+    "MessageComposer": {
+      "source": "lib/MessageComposer.dc.html",
+      "sourceHash": "4f18c46b",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/MessageComposer.svelte",
+        "src/lib/components/MessageComposer.logic.js"
+      ]
+    },
+    "MiniCall": {
+      "source": "lib/MiniCall.dc.html",
+      "sourceHash": "e6c8db6f",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/MiniCall.svelte",
+        "src/app/components/MiniCall.logic.js"
+      ]
+    },
+    "NavRail": {
+      "source": "lib/NavRail.dc.html",
+      "sourceHash": "42bdb472",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/NavRail.svelte",
+        "src/app/components/NavRail.logic.js"
+      ]
+    },
+    "NewChannelDialog": {
+      "source": "lib/NewChannelDialog.dc.html",
+      "sourceHash": "01911d9c",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/NewChannelDialog.svelte",
+        "src/app/components/NewChannelDialog.logic.js"
+      ]
+    },
+    "PollBuilderDialog": {
+      "source": "lib/PollBuilderDialog.dc.html",
+      "sourceHash": "4e7ef431",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/PollBuilderDialog.svelte",
+        "src/app/components/PollBuilderDialog.logic.js"
+      ]
+    },
+    "PollMessage": {
+      "source": "lib/PollMessage.dc.html",
+      "sourceHash": "19377bd9",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/PollMessage.svelte",
+        "src/lib/components/PollMessage.logic.js"
+      ]
+    },
+    "PrizeBuilderDialog": {
+      "source": "lib/PrizeBuilderDialog.dc.html",
+      "sourceHash": "5169413b",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/PrizeBuilderDialog.svelte",
+        "src/app/components/PrizeBuilderDialog.logic.js"
+      ]
+    },
+    "PrizeMessage": {
+      "source": "lib/PrizeMessage.dc.html",
+      "sourceHash": "44eff81b",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/PrizeMessage.svelte",
+        "src/lib/components/PrizeMessage.logic.js"
+      ]
+    },
+    "ProfileDialog": {
+      "source": "lib/ProfileDialog.dc.html",
+      "sourceHash": "3f17d9eb",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/ProfileDialog.svelte",
+        "src/app/components/ProfileDialog.logic.js"
+      ]
+    },
+    "ProposalMessage": {
+      "source": "lib/ProposalMessage.dc.html",
+      "sourceHash": "e4139d49",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/ProposalMessage.svelte",
+        "src/lib/components/ProposalMessage.logic.js"
+      ]
+    },
+    "PuzzleDialog": {
+      "source": "lib/PuzzleDialog.dc.html",
+      "sourceHash": "f417539c",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/PuzzleDialog.svelte",
+        "src/app/components/PuzzleDialog.logic.js"
+      ]
+    },
+    "RequirementChip": {
+      "source": "lib/RequirementChip.dc.html",
+      "sourceHash": "3ea36e0b",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/RequirementChip.svelte",
+        "src/lib/components/RequirementChip.logic.js"
+      ]
+    },
+    "RoundIconButton": {
+      "source": "lib/RoundIconButton.dc.html",
+      "sourceHash": "93c63369",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/RoundIconButton.svelte",
+        "src/lib/components/RoundIconButton.logic.js"
+      ]
+    },
+    "SendCryptoDialog": {
+      "source": "lib/SendCryptoDialog.dc.html",
+      "sourceHash": "71f44ae8",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/SendCryptoDialog.svelte",
+        "src/app/components/SendCryptoDialog.logic.js"
+      ]
+    },
+    "SnapFloat": {
+      "source": "lib/SnapFloat.dc.html",
+      "sourceHash": "87d22dad",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/SnapFloat.svelte",
+        "src/lib/components/SnapFloat.logic.js"
+      ]
+    },
+    "SortableInputList": {
+      "source": "lib/SortableInputList.dc.html",
+      "sourceHash": "eb476c6d",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/SortableInputList.svelte",
+        "src/lib/components/SortableInputList.logic.js"
+      ]
+    },
+    "StreakInsuranceDialog": {
+      "source": "lib/StreakInsuranceDialog.dc.html",
+      "sourceHash": "ba4875a6",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/StreakInsuranceDialog.svelte",
+        "src/app/components/StreakInsuranceDialog.logic.js"
+      ]
+    },
+    "SwapOffer": {
+      "source": "lib/SwapOffer.dc.html",
+      "sourceHash": "da54ba4f",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/SwapOffer.svelte",
+        "src/lib/components/SwapOffer.logic.js"
+      ]
+    },
+    "SwapOfferDialog": {
+      "source": "lib/SwapOfferDialog.dc.html",
+      "sourceHash": "35fa8254",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/SwapOfferDialog.svelte",
+        "src/app/components/SwapOfferDialog.logic.js"
+      ]
+    },
+    "ThreadList": {
+      "source": "lib/ThreadList.dc.html",
+      "sourceHash": "4e4977fb",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/ThreadList.svelte",
+        "src/app/components/ThreadList.logic.js"
+      ]
+    },
+    "ThreadPanel": {
+      "source": "lib/ThreadPanel.dc.html",
+      "sourceHash": "e35352d5",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/ThreadPanel.svelte",
+        "src/app/components/ThreadPanel.logic.js"
+      ]
+    },
+    "ThresholdBar": {
+      "source": "lib/ThresholdBar.dc.html",
+      "sourceHash": "3a0c0b95",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/ThresholdBar.svelte",
+        "src/lib/components/ThresholdBar.logic.js"
+      ]
+    },
+    "TokenCoin": {
+      "source": "lib/TokenCoin.dc.html",
+      "sourceHash": "8398db54",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/TokenCoin.svelte",
+        "src/app/components/TokenCoin.logic.js"
+      ]
+    },
+    "TransferMessage": {
+      "source": "lib/TransferMessage.dc.html",
+      "sourceHash": "06196d3d",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/TransferMessage.svelte",
+        "src/lib/components/TransferMessage.logic.js"
+      ]
+    },
+    "UpgradeBanner": {
+      "source": "lib/UpgradeBanner.dc.html",
+      "sourceHash": "af894647",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/UpgradeBanner.svelte",
+        "src/app/components/UpgradeBanner.logic.js"
+      ]
+    },
+    "UserDialog": {
+      "source": "lib/UserDialog.dc.html",
+      "sourceHash": "47a5b5d4",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/UserDialog.svelte",
+        "src/app/components/UserDialog.logic.js"
+      ]
+    },
+    "UserGroupDialog": {
+      "source": "lib/UserGroupDialog.dc.html",
+      "sourceHash": "2c0cc062",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/UserGroupDialog.svelte",
+        "src/app/components/UserGroupDialog.logic.js"
+      ]
+    },
+    "VideoTile": {
+      "source": "lib/VideoTile.dc.html",
+      "sourceHash": "3d3f0853",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/VideoTile.svelte",
+        "src/app/components/VideoTile.logic.js"
+      ]
+    },
+    "WalletMain": {
+      "source": "lib/WalletMain.dc.html",
+      "sourceHash": "abda06dc",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/WalletMain.svelte",
+        "src/app/components/WalletMain.logic.js"
+      ]
+    },
+    "WalletPanel": {
+      "source": "lib/WalletPanel.dc.html",
+      "sourceHash": "464ebf46",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/WalletPanel.svelte",
+        "src/app/components/WalletPanel.logic.js"
+      ]
+    },
+    "WalletReceive": {
+      "source": "lib/WalletReceive.dc.html",
+      "sourceHash": "2b04c83d",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/WalletReceive.svelte",
+        "src/app/components/WalletReceive.logic.js"
+      ]
+    },
+    "WalletRecipients": {
+      "source": "lib/WalletRecipients.dc.html",
+      "sourceHash": "8d8543ca",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/WalletRecipients.svelte",
+        "src/app/components/WalletRecipients.logic.js"
+      ]
+    },
+    "WalletSend": {
+      "source": "lib/WalletSend.dc.html",
+      "sourceHash": "7681cb15",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/WalletSend.svelte",
+        "src/app/components/WalletSend.logic.js"
+      ]
+    },
+    "WalletSettingsDialog": {
+      "source": "lib/WalletSettingsDialog.dc.html",
+      "sourceHash": "a69b5e15",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/WalletSettingsDialog.svelte",
+        "src/app/components/WalletSettingsDialog.logic.js"
+      ]
+    },
+    "WalletSwap": {
+      "source": "lib/WalletSwap.dc.html",
+      "sourceHash": "9e10abdb",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/WalletSwap.svelte",
+        "src/app/components/WalletSwap.logic.js"
+      ]
+    },
+    "Waveform": {
+      "source": "lib/Waveform.dc.html",
+      "sourceHash": "d43e3c8e",
+      "exportedAt": "2026-10-13",
+      "group": "library",
+      "files": [
+        "src/lib/components/Waveform.svelte",
+        "src/lib/components/Waveform.logic.js"
+      ]
+    },
+    "WebhookDialog": {
+      "source": "lib/WebhookDialog.dc.html",
+      "sourceHash": "af5a6630",
+      "exportedAt": "2026-10-13",
+      "group": "app",
+      "files": [
+        "src/app/components/WebhookDialog.svelte",
+        "src/app/components/WebhookDialog.logic.js"
+      ]
+    }
+  },
+  "handEdited": {
+    "Spinner": "ring as SVG markup",
+    "MemberRow": "typing dots as markup",
+    "CallEvent": "live pulse tile as markup",
+    "MiniCall": "status dot markup; timer ticks via setInterval",
+    "TokenCoin": "coin layers/faces as markup; logic rewritten"
+  },
+  "converter": "export/tools/dc2svelte.js (prototype project)"
+}
