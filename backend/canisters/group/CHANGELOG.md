@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Replace the ids users had before being migrated with their latest ids in every event ([#9929](https://github.com/open-chat-labs/open-chat/pull/9929))
+- Replace the ids of mentioned users and of direct chats replied to with their latest ids ([#9939](https://github.com/open-chat-labs/open-chat/pull/9939))
 
 ### Removed
 
