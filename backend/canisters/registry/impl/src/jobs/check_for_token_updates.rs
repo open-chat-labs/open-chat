@@ -73,6 +73,11 @@ async fn check_for_token_updates(ledger_canister_id: CanisterId) -> Result<(), C
                 state.data.tokens.update(args, state.env.now());
             }
 
+            state
+                .data
+                .tokens
+                .set_burn_fee(ledger_canister_id, metadata_helper.burn_fee(), state.env.now());
+
             if token.enabled && !metadata_helper.is_icrc1_compatible() {
                 state
                     .data

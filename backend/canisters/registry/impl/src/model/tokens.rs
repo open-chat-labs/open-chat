@@ -48,6 +48,9 @@ impl Tokens {
                 symbol,
                 decimals,
                 fee,
+                // A token whose ledger burns a fee isn't added, but its ledger could start burning
+                // one later, which `set_burn_fee` then records
+                burn_fee: 0,
                 logo,
                 logo_id,
                 info_url,
@@ -107,6 +110,22 @@ impl Tokens {
                 if t.supported_standards != supported_standards {
                     t.supported_standards = supported_standards;
                     info!(%ledger_canister_id, "Updated token standards");
+                    true
+                } else {
+                    false
+                }
+            },
+            now,
+        );
+    }
+
+    pub fn set_burn_fee(&mut self, ledger_canister_id: CanisterId, burn_fee: u128, now: TimestampMillis) {
+        self.apply_update(
+            ledger_canister_id,
+            |t| {
+                if t.burn_fee != burn_fee {
+                    t.burn_fee = burn_fee;
+                    info!(%ledger_canister_id, burn_fee, "Updated token burn fee");
                     true
                 } else {
                     false
@@ -224,6 +243,7 @@ pub struct TokenMetrics {
     symbol: String,
     decimals: u8,
     fee: u128,
+    burn_fee: u128,
     logo_length: usize,
     logo_id: Option<u128>,
     info_url: String,
@@ -247,6 +267,7 @@ impl From<&TokenDetails> for TokenMetrics {
             symbol: value.symbol.clone(),
             decimals: value.decimals,
             fee: value.fee,
+            burn_fee: value.burn_fee,
             logo_length: value.logo.len(),
             logo_id: value.logo_id,
             info_url: value.info_url.clone(),
