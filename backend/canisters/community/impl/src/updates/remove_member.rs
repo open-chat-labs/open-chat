@@ -247,7 +247,7 @@ mod tests {
     }
 
     #[test]
-    fn a_user_canister_id_is_refused_unless_a_bots() {
+    fn a_user_canister_id_is_refused_unless_it_is_a_bot_member() {
         let owner = new_user_id(1);
         let mut data = Data::new_for_tests(owner, Principal::from_slice(&[1]), String::new(), Vec::new());
         let bot_id: UserId = canister_id(50).into();
