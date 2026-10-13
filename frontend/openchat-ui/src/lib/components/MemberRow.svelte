@@ -1,103 +1,468 @@
-<!-- Generated from lib/MemberRow.dc.html (source hash d9f8023f) on 2026-10-07. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Person / bot / webhook row for member lists and pickers, or the "invite" call-to-action row.
+     Right side, in priority: actionLabel button, activity (typing dots / "now" / "2m"), badge, an icon affordance, else a kebab.
+     icon "toggle" is a round add/check picker and tints the whole row while selected. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './MemberRow.logic.js';
+  const ICONS = {
+    check: 'check',
+    plus: 'plus',
+    close: 'close',
+    chevron: 'chevron-right',
+    star: 'star',
+    message: 'chat',
+  };
+
+  const GRADIENTS = {
+    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
+    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
+    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
+    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+    rose: 'linear-gradient(140deg,#FF6B8B,#C13584)',
+    plum: 'linear-gradient(140deg,#B06BFF,#6A2BFF)',
+    slate: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
+  };
 
   interface Props {
-    title?: string;
+    title: string;
+    /** Members: a handle (mono). Bots: a description (prose, two lines). */
     subtitle?: string;
-    variant?: string;
+    variant?: 'member' | 'bot' | 'webhook' | 'invite';
+    /** Role chip next to the name. */
     tag?: string;
-    color?: string;
+    /** Your own row: adds a YOU chip. */
+    isYou?: boolean;
+    color?: keyof typeof GRADIENTS;
+    /** Photo URL over the gradient. */
+    image?: string;
     online?: boolean;
-    icon?: string;
+    /** Ring around the online dot; match the surface behind. */
+    ringColor?: string;
+    /** "typing" (animated dots), "now", or a short "2m"-style time since active. */
+    activity?: string;
+    icon?: '' | 'toggle' | keyof typeof ICONS;
     selected?: boolean;
     disabled?: boolean;
+    /** Dimmed avatar and name (e.g. pending). */
     muted?: boolean;
     badge?: string;
+    /** Row hover colour, for raised surfaces where the default is too faint. */
+    hoverBg?: string;
+    /** Defaults to onClick. */
     onIcon?: () => void;
     actionLabel?: string;
     onAction?: () => void;
     showMenu?: boolean;
     onMenu?: () => void;
     onClick?: () => void;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let {
+    title,
+    subtitle = '',
+    variant = 'member',
+    tag = '',
+    isYou = false,
+    color = 'violet',
+    image = '',
+    online = false,
+    ringColor = 'var(--card,#0e0e12)',
+    activity = '',
+    icon = '',
+    selected = false,
+    disabled = false,
+    muted = false,
+    badge = '',
+    hoverBg = '',
+    onIcon,
+    actionLabel = '',
+    onAction,
+    showMenu = true,
+    onMenu,
+    onClick,
+  }: Props = $props();
+
+  const invite = $derived(variant === 'invite');
+  const toggle = $derived(icon === 'toggle');
 </script>
 
-<div class="dc-p0" style="--oc-row-hover:{v.rowHoverBg};width:100%;box-sizing:border-box;display:flex;align-items:center;gap:var(--space-12);padding:var(--space-8) var(--space-8);border-radius:var(--radius-md);background:{v.rowBg};opacity:{v.rowOpacity};cursor:{v.rowCursor};" onclick={v.onPress} role="button" tabindex="0">
-  {#if v.isInvite}
-    <span style="flex:none;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:var(--radius-md);background:var(--accent-soft,rgba(255,86,114,.12));box-shadow:inset 0 0 0 1px var(--accent-dim,rgba(255,86,114,.35))">
-      <span style="width:18px;height:18px;background:var(--accent,#FF5672);mask:{v.inviteMask}"></span>
+<div
+  class="member"
+  class:disabled
+  class:picked={toggle && selected}
+  style:--row-hover={hoverBg && !disabled ? hoverBg : null}
+  onclick={onClick}
+  role="button"
+  tabindex="0"
+>
+  {#if invite}
+    <span class="invite-tile"><span class="invite-icon"></span></span>
+  {:else}
+    <span class="avatar" class:square={variant === 'bot' || variant === 'webhook'} class:muted style:background={GRADIENTS[color] ?? GRADIENTS.violet}>
+      {#if image}
+        <span class="photo" style:background="url({image}) center/cover no-repeat"></span>
+      {/if}
+      {#if online}
+        <span class="online" style:box-shadow="0 0 0 2px {ringColor}"></span>
+      {/if}
+      {#if variant === 'webhook'}
+        <span class="hook" title="Webhook"><span class="hook-icon"></span></span>
+      {/if}
     </span>
   {/if}
-  {#if v.hasAvatar}
-    <span style="position:relative;flex:none;width:38px;height:38px;border-radius:{v.avatarRadius};background:{v.avatarGradient};opacity:{v.avatarOpacity}">
-      {#if v.hasPhoto}
-        <span style="position:absolute;inset:0;border-radius:inherit;background:{v.photo}"></span>
+  <div class="body">
+    <div class="name-line">
+      <span class="name" class:invite class:muted>{title}</span>
+      {#if tag}
+        <span class="chip">{tag}</span>
       {/if}
-      {#if v.online}
-        <span style="position:absolute;inset-inline-end:-1px;inset-block-end:-1px;width:11px;height:11px;border-radius:var(--radius-pill);background:var(--status-online,#2EE6A8);box-shadow:0 0 0 2px {v.ringColor}"></span>
-      {/if}
-      {#if v.isWebhook}
-        <span style="position:absolute;inset-inline-end:-5px;inset-block-end:-5px;display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:var(--radius-pill);background:var(--card,#0e0e12);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12))" title="Webhook">
-          <span style="width:11px;height:11px;background:var(--accent,#FF5672);mask:{v.hookMask}"></span>
-        </span>
-      {/if}
-    </span>
-  {/if}
-  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-    <div style="display:flex;align-items:center;gap:var(--space-6);min-width:0">
-      <span style="font:var(--weight-semibold) var(--text-base)/1.25 var(--font-sans);color:{v.titleColor};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{t(v.title)}</span>
-      {#if v.hasTag}
-        <span style="flex:none;padding:2px var(--space-6);border-radius:var(--radius-pill);background:var(--overlay-2,rgba(255,255,255,.09));font:var(--weight-semibold) var(--text-2xs)/1.3 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-3,#9A9AA8)">{t(v.tag)}</span>
-      {/if}
-      {#if v.isYou}
-        <span style="flex:none;padding:2px var(--space-6);border-radius:var(--radius-pill);background:var(--accent-soft,rgba(255,86,114,.12));font:var(--weight-semibold) var(--text-2xs)/1.3 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--accent-bright,#FF8298)">YOU</span>
+      {#if isYou}
+        <span class="chip you">YOU</span>
       {/if}
     </div>
-    {#if v.hasSubtitle}
-      <span style="font:var(--weight-regular) {v.subtitleSize}/1.4 {v.subtitleFont};color:var(--ink-4,#7C7C8C);overflow:hidden;text-overflow:ellipsis;{v.subtitleClamp}">{t(v.subtitle)}</span>
+    {#if subtitle}
+      <span class="subtitle" class:prose={variant === 'bot'}>{subtitle}</span>
     {/if}
   </div>
-  {#if v.showAction}
-    <span class="dc-p1" style="flex:none;display:flex;align-items:center;gap:var(--space-6);padding:var(--space-6) var(--space-8);border-radius:var(--radius-sm);cursor:pointer;" onclick={v.onAction} role="button" tabindex="0">
-      <span style="width:15px;height:15px;background:var(--accent,#FF5672);mask:{v.inviteMask}"></span>
-      <span style="font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--accent,#FF5672);white-space:nowrap">{t(v.actionLabel)}</span>
+  {#if actionLabel}
+    <span class="action" onclick={onAction} role="button" tabindex="0">
+      <span class="action-icon"></span>
+      <span class="action-label">{actionLabel}</span>
     </span>
   {/if}
-  {#if v.isTyping}
-    <span style="flex:none;display:flex;align-items:center;padding:0 var(--space-2)" title="Typing">{#if v.typingDots}<span style="display:flex;gap:3px">{#each [0, 1, 2] as d}<span style="width:4px;height:4px;border-radius:50%;background:var(--accent-bright,#FF8298);animation:ocTypingDot 1.2s {d * 0.15}s infinite ease-in-out"></span>{/each}</span>{/if}</span>
+  {#if activity === 'typing'}
+    <span class="typing" title="Typing"><span class="dots">{#each [0, 1, 2] as d}<span class="typing-dot" style:animation-delay="{d * 0.15}s"></span>{/each}</span></span>
+  {:else if activity}
+    <span class="activity" class:now={activity === 'now'}>{activity}</span>
   {/if}
-  {#if v.hasActivityText}
-    <span style="flex:none;font:{v.activityWeight} var(--text-sm)/1 var(--font-sans);color:{v.activityInk}">{t(v.activity)}</span>
+  {#if badge}
+    <span class="badge">{badge}</span>
   {/if}
-  {#if v.hasBadge}
-    <span style="flex:none;padding:2px var(--space-8);border-radius:var(--radius-pill);background:var(--overlay-2,rgba(255,255,255,.07));font:var(--weight-semibold) var(--text-2xs)/1.4 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-4,#7C7C8C)">{t(v.badge)}</span>
+  {#if toggle && !disabled}
+    <span class="toggle" class:selected><span class="toggle-icon"></span></span>
   {/if}
-  {#if v.showToggle}
-    <span style="flex:none;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:var(--radius-pill);background:{v.toggleBg};box-shadow:inset 0 0 0 1px {v.toggleLine}">
-      <span style="width:14px;height:14px;background:{v.toggleInk};mask:{v.toggleMask}"></span>
+  {#if icon && !toggle}
+    <span class="icon-button" class:selected onclick={onIcon ?? onClick} role="button" tabindex="0">
+      <span class="icon" style:mask="var(--icon-{ICONS[icon] ?? 'chevron-right'}) center/contain no-repeat"></span>
     </span>
   {/if}
-  {#if v.showIcon}
-    <span class="dc-p2" style="flex:none;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-sm);background:{v.iconBg};cursor:pointer;" onclick={v.onIcon} role="button" tabindex="0">
-      <span style="width:16px;height:16px;background:{v.iconInk};mask:{v.iconMaskValue}"></span>
-    </span>
-  {/if}
-  {#if v.showMenu}
-    <span class="dc-p3" style="flex:none;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:var(--radius-sm);" onclick={v.onMenu} role="button" tabindex="0">
-      <span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.menuMask}"></span>
+  {#if showMenu && !invite && !actionLabel && !icon && !badge}
+    <span class="kebab" onclick={onMenu} role="button" tabindex="0">
+      <span class="kebab-icon"></span>
     </span>
   {/if}
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--oc-row-hover) !important}
-  .dc-p1:hover{background:var(--accent-soft,rgba(255,86,114,.12)) !important}
-  .dc-p2:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p3:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
+  .member {
+    --row-hover: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-8) var(--space-8);
+    border-radius: var(--radius-md);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .member.picked {
+    --row-hover: color-mix(in srgb, var(--accent, #ff5672) 12%, transparent);
+    background: color-mix(in srgb, var(--accent, #ff5672) 8%, transparent);
+  }
+
+  .member.disabled {
+    --row-hover: transparent;
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .member:hover {
+    background: var(--row-hover);
+  }
+
+  .invite-tile {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
+    box-shadow: inset 0 0 0 1px var(--accent-dim, rgba(255, 86, 114, 0.35));
+  }
+
+  .invite-icon,
+  .action-icon {
+    background: var(--accent, #ff5672);
+    mask: var(--icon-invite) center/contain no-repeat;
+  }
+
+  .invite-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .avatar {
+    position: relative;
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-pill);
+  }
+
+  .avatar.square {
+    border-radius: var(--radius-md);
+  }
+
+  .avatar.muted {
+    opacity: 0.7;
+  }
+
+  .photo {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  .online {
+    position: absolute;
+    inset-inline-end: -1px;
+    inset-block-end: -1px;
+    width: 11px;
+    height: 11px;
+    border-radius: var(--radius-pill);
+    background: var(--status-online, #2ee6a8);
+  }
+
+  .hook {
+    position: absolute;
+    inset-inline-end: -5px;
+    inset-block-end: -5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--radius-pill);
+    background: var(--card, #0e0e12);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+  }
+
+  .hook-icon {
+    width: 11px;
+    height: 11px;
+    background: var(--accent, #ff5672);
+    mask: var(--icon-hook) center/contain no-repeat;
+  }
+
+  .body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .name-line {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    min-width: 0;
+  }
+
+  .name {
+    font: var(--weight-semibold) var(--text-base) / 1.25 var(--font-sans);
+    color: var(--ink, #e4e4ec);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .name.muted {
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .name.invite {
+    color: var(--accent, #ff5672);
+  }
+
+  .chip {
+    flex: none;
+    padding: 2px var(--space-6);
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    font: var(--weight-semibold) var(--text-2xs) / 1.3 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .chip.you {
+    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
+    color: var(--accent-bright, #ff8298);
+  }
+
+  /* members show a handle in mono; bots describe themselves in prose */
+  .subtitle {
+    font: var(--weight-regular) var(--text-xs) / 1.4 var(--font-mono);
+    color: var(--ink-4, #7c7c8c);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .subtitle.prose {
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: normal;
+  }
+
+  .action {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-6) var(--space-8);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .action:hover {
+    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
+  }
+
+  .action-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .action-label {
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    white-space: nowrap;
+  }
+
+  .typing {
+    flex: none;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-2);
+  }
+
+  .dots {
+    display: flex;
+    gap: 3px;
+  }
+
+  .typing-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent-bright, #ff8298);
+    animation: ocTypingDot 1.2s infinite ease-in-out;
+  }
+
+  .activity {
+    flex: none;
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .activity.now {
+    font-weight: var(--weight-semibold);
+    color: var(--status-online, #2ee6a8);
+  }
+
+  .badge {
+    flex: none;
+    padding: 2px var(--space-8);
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    font: var(--weight-semibold) var(--text-2xs) / 1.4 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .toggle {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+  }
+
+  .toggle.selected {
+    background: var(--accent, #ff5672);
+    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+  }
+
+  .toggle-icon {
+    width: 14px;
+    height: 14px;
+    background: var(--ink-2, #b9b9c6);
+    mask: var(--icon-plus) center/contain no-repeat;
+  }
+
+  .toggle.selected .toggle-icon {
+    background: var(--on-accent, #2e0512);
+    mask: var(--icon-check) center/contain no-repeat;
+  }
+
+  .icon-button {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .icon-button.selected {
+    background: var(--accent, #ff5672);
+  }
+
+  .icon-button:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .icon {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .icon-button.selected .icon {
+    background: var(--on-accent, #2e0512);
+  }
+
+  .kebab {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius-sm);
+  }
+
+  .kebab:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .kebab-icon {
+    width: 15px;
+    height: 15px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-kebab) center/contain no-repeat;
+  }
 </style>

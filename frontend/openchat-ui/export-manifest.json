@@ -82,8 +82,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/ChatRow.svelte",
-        "src/lib/components/ChatRow.logic.js"
+        "src/lib/components/ChatRow.svelte"
       ]
     },
     "ComposerBar": {
@@ -199,8 +198,7 @@
       "sourceHash": "d9f8023f",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/MemberRow.svelte",
-        "src/lib/components/MemberRow.logic.js"
+        "src/lib/components/MemberRow.svelte"
       ],
       "group": "library"
     },
@@ -872,8 +870,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/MessageActions.svelte",
-        "src/lib/components/MessageActions.logic.js"
+        "src/lib/components/MessageActions.svelte"
       ]
     },
     "MessageComposer": {

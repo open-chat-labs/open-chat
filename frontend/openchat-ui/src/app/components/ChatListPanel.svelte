@@ -63,7 +63,7 @@
             <div style="padding:0 var(--space-8) var(--space-6);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-3,#8A8A99)">{t(group.label)} <span style="color:var(--ink-4,#6E6E7C)">{t(group.count)}</span></div>
           {/if}
           {#each group.rows ?? [] as row, i1}
-            <div style="display:grid;grid-template-columns:minmax(0,1fr)"><ChatRow liveCall={row.liveCall} muted={row.muted} fav={row.fav} title={row.title} kind={row.kind} preview={row.preview} time={row.time} unreadCount={row.unreadCount} color={row.color} online={row.online} verified={row.verified} pinned={row.pinned} selected={row.selected} onClick={row.onSelect} menuItems={row.menu}></ChatRow></div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr)"><ChatRow liveCall={row.liveCall} muted={row.muted} title={row.title} kind={row.kind} preview={row.preview} time={row.time} unreadCount={row.unreadCount} color={row.color} online={row.online} verified={row.verified} pinned={row.pinned} selected={row.selected} onClick={row.onSelect} menuItems={row.menu}></ChatRow></div>
           {/each}
         </div>
       {/each}

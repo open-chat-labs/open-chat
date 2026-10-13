@@ -50,6 +50,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **Button** — from source hash `8b5cf575`.
 - **CallEvent** — from source hash `229acee3`.
 - **ChatPicker** — from source hash `3d01a726`.
+- **ChatRow** — from source hash `d9730629`.
 - **ComposerBar** — from source hash `6f9180bd`.
 - **Confetti** — from source hash `29b4b5be`.
 - **ContextMenu** — from source hash `c325b36b`.
@@ -68,8 +69,10 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **LinkPreview** — from source hash `ebdc8a5b`.
 - **ListSectionLabel** — from source hash `0ec0eea5`.
 - **MediaMessage** — from source hash `67e8474e`.
+- **MemberRow** — from source hash `d9f8023f`.
 - **Menu** — from source hash `fd3b9a33`.
 - **MenuItem** — from source hash `81252d62`.
+- **MessageActions** — from source hash `b8b56d84`.
 - **PageHeader** — from source hash `5a474f84`.
 - **PanelCover** — from source hash `8d024aca`.
 - **PanelNavRow** — from source hash `f29bf4af`.
