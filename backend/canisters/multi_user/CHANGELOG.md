@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Move each user's chats, blocks and contacts off other users' old ids ([#9933](https://github.com/open-chat-labs/open-chat/pull/9933))
 - Replace the ids of mentioned users and of direct chats replied to with their latest ids ([#9939](https://github.com/open-chat-labs/open-chat/pull/9939))
 - Move everything else users hold outside their chats' events off old user ids ([#9942](https://github.com/open-chat-labs/open-chat/pull/9942))
+- Tell the LocalUserIndex when the jobs replacing migrated users' old ids have completed ([#9949](https://github.com/open-chat-labs/open-chat/pull/9949))
 
 ### Removed
 
