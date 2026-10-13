@@ -14,7 +14,10 @@ impl ChatEventInternal {
         let u = &mut updater;
         match self {
             ChatEventInternal::Message(m) => m.update_user_ids(u),
-            ChatEventInternal::GroupChatCreated(e) => u.id(&mut e.created_by),
+            ChatEventInternal::GroupChatCreated(e) => {
+                u.id(&mut e.created_by);
+                u.mentions(&mut e.description);
+            }
             ChatEventInternal::GroupNameChanged(e) => u.id(&mut e.changed_by),
             ChatEventInternal::GroupDescriptionChanged(e) => {
                 u.id(&mut e.changed_by);
@@ -56,7 +59,10 @@ impl ChatEventInternal {
             ChatEventInternal::PermissionsChanged(e) => u.id(&mut e.changed_by),
             ChatEventInternal::GroupVisibilityChanged(e) => u.id(&mut e.changed_by),
             ChatEventInternal::GroupInviteCodeChanged(e) => u.id(&mut e.changed_by),
-            ChatEventInternal::ChatFrozen(e) => u.id(&mut e.frozen_by),
+            ChatEventInternal::ChatFrozen(e) => {
+                u.id(&mut e.frozen_by);
+                u.optional_mentions(&mut e.reason);
+            }
             ChatEventInternal::ChatUnfrozen(e) => u.id(&mut e.unfrozen_by),
             ChatEventInternal::EventsTimeToLiveUpdated(e) => u.id(&mut e.updated_by),
             ChatEventInternal::GroupGateUpdated(e) => u.id(&mut e.updated_by),
@@ -161,6 +167,7 @@ impl MessageContentInternal {
             MessageContentInternal::ReportedMessage(r) => {
                 for report in r.reports.iter_mut() {
                     u.id(&mut report.reported_by);
+                    u.optional_mentions(&mut report.notes);
                 }
             }
             MessageContentInternal::ModerationReport(r) => {
@@ -368,8 +375,13 @@ impl<'a> UserIdUpdater<'a> {
     pub fn bot_command(&mut self, command: &mut BotCommand) {
         self.id(&mut command.initiator);
         for arg in command.args.iter_mut() {
-            if let BotCommandArgValue::User(user_id) = &mut arg.value {
-                self.id(user_id);
+            match &mut arg.value {
+                BotCommandArgValue::User(user_id) => self.id(user_id),
+                BotCommandArgValue::String(text) => self.mentions(text),
+                BotCommandArgValue::Integer(_)
+                | BotCommandArgValue::Decimal(_)
+                | BotCommandArgValue::Boolean(_)
+                | BotCommandArgValue::DateTime(_) => {}
             }
         }
     }
@@ -405,9 +417,9 @@ mod tests {
     use crate::{DeletedByInternal, PollConfigInternal, ProposalContentInternal, TextContentInternal, ThreadSummaryInternal};
     use std::collections::HashMap;
     use types::{
-        BotCommand, BotCommandArg, BotMessageContext, GroupDescriptionChanged, ModerationReportContent,
-        ModerationReportResolution, NnsProposal, Proposal, ProposalDecisionStatus, ProposalRewardStatus, Reaction, Tally, Tips,
-        UsersBlocked,
+        BotCommand, BotCommandArg, BotMessageContext, GroupCreated, GroupDescriptionChanged, GroupFrozen, MessageReport,
+        ModerationReportContent, ModerationReportResolution, NnsProposal, Proposal, ProposalDecisionStatus,
+        ProposalRewardStatus, Reaction, Tally, Tips, UsersBlocked,
     };
 
     fn user_id(i: u8) -> UserId {
@@ -767,6 +779,70 @@ mod tests {
         };
         assert_eq!(e.new_description, mention(user_id(11)));
         assert_eq!(e.previous_description, mention(user_id(12)));
+    }
+
+    #[test]
+    fn mentions_in_a_groups_creation_and_freezing_are_replaced() {
+        let mut created = ChatEventInternal::GroupChatCreated(Box::new(GroupCreated {
+            name: "group".to_string(),
+            description: mention(user_id(1)),
+            created_by: user_id(3),
+        }));
+        assert!(created.update_user_ids(&mut latest));
+        let ChatEventInternal::GroupChatCreated(e) = created else {
+            panic!();
+        };
+        assert_eq!(e.description, mention(user_id(11)));
+
+        let mut frozen = ChatEventInternal::ChatFrozen(Box::new(GroupFrozen {
+            frozen_by: user_id(3),
+            reason: Some(mention(user_id(2))),
+        }));
+        assert!(frozen.update_user_ids(&mut latest));
+        let ChatEventInternal::ChatFrozen(e) = frozen else {
+            panic!();
+        };
+        assert_eq!(e.reason, Some(mention(user_id(12))));
+    }
+
+    #[test]
+    fn mentions_in_report_notes_and_bot_command_text_are_replaced() {
+        let content = MessageContentInternal::ReportedMessage(crate::ReportedMessageInternal {
+            reports: vec![MessageReport {
+                reported_by: user_id(3),
+                timestamp: 0,
+                reason_code: 0,
+                notes: Some(mention(user_id(1))),
+            }],
+        });
+        let (changed, updated) = update(message(user_id(3), content));
+        assert!(changed);
+        let MessageContentInternal::ReportedMessage(r) = updated.content else {
+            panic!();
+        };
+        assert_eq!(r.reports[0].notes, Some(mention(user_id(11))));
+
+        let mut command = BotCommand {
+            name: "command".to_string(),
+            args: vec![
+                BotCommandArg {
+                    name: "text".to_string(),
+                    value: BotCommandArgValue::String(mention(user_id(2))),
+                },
+                BotCommandArg {
+                    name: "number".to_string(),
+                    value: BotCommandArgValue::Integer(1),
+                },
+            ],
+            initiator: user_id(3),
+            meta: None,
+        };
+        let mut f = latest;
+        let mut updater = UserIdUpdater::new(&mut f);
+        updater.bot_command(&mut command);
+        assert!(updater.changed());
+        assert!(matches!(&command.args[0].value, BotCommandArgValue::String(text) if *text == mention(user_id(12))));
+        assert!(matches!(command.args[1].value, BotCommandArgValue::Integer(1)));
     }
 
     #[test]

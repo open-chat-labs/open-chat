@@ -38,7 +38,13 @@ fn post_upgrade(args: Args) {
 
     // TODO remove after the release containing this has been deployed, and the jobs replacing old ids
     // in every chat (#9929, #9933) have completed
-    mutate_state(replace_old_user_ids);
+    mutate_state(|state| {
+        replace_old_user_ids(state);
+        // The storage buckets were last told the vault reviewers' ids before they were migrated, and
+        // record views of quarantined material under them, so are told their latest ids. Sent from
+        // here since a fire-and-forget call can't be queued in a unit test.
+        moderation::sync_vault_reviewers(state);
+    });
 
     let total_instructions = ic_cdk::api::call_context_instruction_counter();
     info!(version = %args.wasm_version, total_instructions, user_wasm_removed, "Post-upgrade complete");
@@ -61,6 +67,7 @@ fn replace_old_user_ids(state: &mut RuntimeState) -> ReplaceOldUserIdsSummary {
         }
     }
     let (suspended_by_replaced, installed_by_replaced) = state.data.users.replace_old_user_ids(&state.data.migrated_user_ids);
+    let vault_reviewers_replaced = replace_old_vault_reviewer_ids(state);
 
     // Checked once the reports are recorded against their senders, since whether another report keeps
     // a sender sanctioned depends on them
@@ -76,6 +83,7 @@ fn replace_old_user_ids(state: &mut RuntimeState) -> ReplaceOldUserIdsSummary {
         sanctions_to_review,
         suspended_by_replaced,
         installed_by_replaced,
+        vault_reviewers_replaced,
     };
     for s in summary.sanctions_to_review.iter() {
         error!(
@@ -96,9 +104,28 @@ fn replace_old_user_ids(state: &mut RuntimeState) -> ReplaceOldUserIdsSummary {
         recent_reporters_replaced = summary.reports.recent_reporters_replaced,
         suspended_by_replaced = summary.suspended_by_replaced,
         installed_by_replaced = summary.installed_by_replaced,
+        vault_reviewers_replaced = summary.vault_reviewers_replaced,
         "Replaced old user ids with their latest"
     );
     summary
+}
+
+// Replaces any vault reviewer held under an old id with their latest id, since a reviewer who isn't
+// found under their id isn't passed on to the storage buckets. Returns how many were replaced.
+fn replace_old_vault_reviewer_ids(state: &mut RuntimeState) -> usize {
+    let migrated_user_ids = &state.data.migrated_user_ids;
+    let mut replaced = 0;
+    state.data.vault_reviewers = std::mem::take(&mut state.data.vault_reviewers)
+        .into_iter()
+        .map(|user_id| {
+            let latest = migrated_user_ids.latest(user_id);
+            if latest != user_id {
+                replaced += 1;
+            }
+            latest
+        })
+        .collect();
+    replaced
 }
 
 // A verdict recorded on a report after its sender was migrated, but naming their old id, found no user
@@ -142,6 +169,7 @@ struct ReplaceOldUserIdsSummary {
     sanctions_to_review: Vec<SanctionToReview>,
     suspended_by_replaced: usize,
     installed_by_replaced: usize,
+    vault_reviewers_replaced: usize,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -161,6 +189,7 @@ mod tests {
     use crate::model::user::User;
     use candid::Principal;
     use constants::{DAY_IN_MS, OPENCHAT_BOT_USER_ID};
+    use std::collections::HashSet;
     use types::Chat;
     use utils::env::test::TestEnv;
 
@@ -225,6 +254,7 @@ mod tests {
         let mut state = RuntimeState::new(Box::new(env), Data::default());
         let (old_moderator, latest_moderator) = (user_id(3), user_id(4));
         state.data.migrated_user_ids.insert(old_moderator, latest_moderator);
+        state.data.vault_reviewers.insert(old_moderator);
         for i in 0..6 {
             let (old, latest) = sender_ids(i);
             state.data.migrated_user_ids.insert(old, latest);
@@ -293,8 +323,10 @@ mod tests {
                 ],
                 suspended_by_replaced: 1,
                 installed_by_replaced: 0,
+                vault_reviewers_replaced: 1,
             }
         );
+        assert_eq!(state.data.vault_reviewers, HashSet::from([latest_moderator]));
 
         let reported_messages = |i| {
             state
