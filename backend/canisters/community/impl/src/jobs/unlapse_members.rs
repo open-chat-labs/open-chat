@@ -7,8 +7,8 @@ use tracing::trace;
 use types::{ChannelId, TimestampMillis, UserId};
 
 // Once the access gate of a community, or of one of its channels, has been removed, the members who
-// had lapsed are unlapsed. Each is written to stable memory, so a great many are unlapsed a batch at
-// a time (see `CommunityMembers::unlapse_while` and `GroupMembers::unlapse_while`).
+// had lapsed are unlapsed. Each is read from and written to stable memory, so a great many are
+// unlapsed a batch at a time (see `CommunityMembers::unlapse_while` and `GroupMembers::unlapse_while`).
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();

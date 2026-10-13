@@ -845,36 +845,31 @@ impl GroupChatCore {
                         .into_iter()
                         .map(|f| migrated_user_ids.latest(f))
                         .collect();
-                    for follower in followers {
-                        self.members.update_member(&follower, |m| {
-                            // Bump the thread timestamp for all followers
-                            m.followed_threads.insert(root_message_index, now);
+                    self.members.update_many(followers, |m| {
+                        // Bump the thread timestamp for all followers
+                        m.followed_threads.insert(root_message_index, now);
 
-                            let user_id = m.user_id();
-                            if user_id != initiator {
-                                let mentioned =
-                                    mentions.contains(&user_id) || (is_first_reply && user_id == root_message_sender);
+                        let user_id = m.user_id();
+                        if user_id != initiator {
+                            let mentioned = mentions.contains(&user_id) || (is_first_reply && user_id == root_message_sender);
 
-                                if mentioned {
-                                    m.mentions.add(thread_root_message_index, message_index, message_id, now);
-                                }
-
-                                if mentioned || !m.notifications_muted().value {
-                                    users_to_notify.insert(user_id);
-                                }
+                            if mentioned {
+                                m.mentions.add(thread_root_message_index, message_index, message_id, now);
                             }
-                            true
-                        });
-                    }
-                }
-            } else {
-                for mentioned in mentions {
-                    self.members.update_member(&mentioned, |m| {
-                        m.mentions.add(thread_root_message_index, message_index, message_id, now);
+
+                            if mentioned || !m.notifications_muted().value {
+                                users_to_notify.insert(user_id);
+                            }
+                        }
                         true
                     });
-                    users_to_notify.insert(mentioned);
                 }
+            } else {
+                self.members.update_many(mentions.iter().copied(), |m| {
+                    m.mentions.add(thread_root_message_index, message_index, message_id, now);
+                    true
+                });
+                users_to_notify.extend(mentions);
 
                 // Notify everyone who has not muted @everyone mentions
                 if everyone_mentioned {
@@ -2029,12 +2024,25 @@ impl GroupChatCore {
     }
 
     fn unfollow_removed_threads(&mut self, threads: &[ExpiredThread]) {
+        // Each follower is updated once for all of the threads they followed, and the followers
+        // updated are written back together
+        let mut threads_by_follower: BTreeMap<UserId, Vec<MessageIndex>> = BTreeMap::new();
         for thread in threads.iter() {
             for user_id in thread.followers.iter() {
-                self.members
-                    .update_member(user_id, |m| m.followed_threads.remove(thread.root_message_index).is_some());
+                threads_by_follower
+                    .entry(*user_id)
+                    .or_default()
+                    .push(thread.root_message_index);
             }
         }
+        let user_ids: Vec<_> = threads_by_follower.keys().copied().collect();
+        self.members.update_many(user_ids, |m| {
+            let mut updated = false;
+            for root_message_index in threads_by_follower[&m.user_id()].iter() {
+                updated |= m.followed_threads.remove(*root_message_index).is_some();
+            }
+            updated
+        });
     }
 
     pub fn most_recent_mentions(&self, member: &GroupMemberInternal, since: Option<TimestampMillis>) -> Vec<HydratedMention> {
@@ -2480,6 +2488,110 @@ mod tests {
             .selected_group_updates(30, chat.details_last_updated(), Some(owner))
             .unwrap();
         assert_eq!(updates.pinned_messages_removed, vec![MessageIndex::default()]);
+    }
+
+    #[test]
+    fn a_thread_reply_updates_every_follower() {
+        let (mut chat, owner, muted_member) = setup();
+        // Of different lengths, so that their order differs from that of their keys
+        let [member1, member2] = [&[9, 9][..], &[4]].map(|bytes| UserId::from(Principal::from_slice(bytes)));
+        for user_id in [member1, member2] {
+            chat.members.add(
+                user_id,
+                None,
+                1,
+                EventIndex::default(),
+                MessageIndex::default(),
+                false,
+                UserType::User,
+            );
+        }
+
+        // The first reply makes its sender, those it mentions and the root message's sender followers
+        let root = MessageIndex::default();
+        send_as(&mut chat, owner, None, 1, &[], 10);
+        send_as(&mut chat, member1, Some(root), 2, &[member2], 20);
+        let result = send_as(&mut chat, muted_member, Some(root), 3, &[], 30);
+
+        for user_id in [owner, member1, member2, muted_member] {
+            let member = chat.members.get(&user_id).unwrap();
+            assert_eq!(member.followed_threads.get(&root), Some(30));
+            let mentioned = member.mentions.iter_most_recent(None).count();
+            assert_eq!(mentioned, if user_id == owner || user_id == member2 { 1 } else { 0 });
+        }
+        assert_eq!(sorted(result.users_to_notify), sorted(vec![owner, member1, member2]));
+    }
+
+    #[test]
+    fn unfollowing_removed_threads_matches_unfollowing_each_in_turn() {
+        let removed_threads = |owner, member| {
+            [
+                ExpiredThread {
+                    root_message_index: 0.into(),
+                    followers: [owner, member].into_iter().collect(),
+                },
+                ExpiredThread {
+                    root_message_index: 1.into(),
+                    followers: [member].into_iter().collect(),
+                },
+            ]
+        };
+        // Each member follows 3 threads, of which 2 are removed, and the owner 1 of them
+        let setup_following = || {
+            let (mut chat, owner, member) = setup();
+            for (root_message_index, user_id) in [(0, owner), (0, member), (1, member), (2, member)] {
+                chat.members.update_member(&user_id, |m| {
+                    m.followed_threads.insert(root_message_index.into(), 5);
+                    true
+                });
+            }
+            (chat, owner, member)
+        };
+
+        let (mut one_at_a_time, owner, member) = setup_following();
+        for thread in removed_threads(owner, member) {
+            for user_id in thread.followers.iter() {
+                one_at_a_time
+                    .members
+                    .update_member(user_id, |m| m.followed_threads.remove(thread.root_message_index).is_some());
+            }
+        }
+        let expected = one_at_a_time.members.stored_entries();
+
+        let (mut together, owner, member) = setup_following();
+        together.unfollow_removed_threads(&removed_threads(owner, member));
+
+        assert_eq!(together.members.stored_entries(), expected);
+        let followed = |user_id| together.members.get(&user_id).unwrap().followed_threads.len();
+        assert_eq!((followed(owner), followed(member)), (0, 1));
+    }
+
+    fn send_as(
+        chat: &mut GroupChatCore,
+        sender: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: u64,
+        mentioned: &[UserId],
+        now: TimestampMillis,
+    ) -> SendMessageSuccess {
+        chat.send_message(
+            &Caller::User(UserIdAndPrincipal::new(sender, sender.as_principal())),
+            thread_root_message_index,
+            message_id.into(),
+            text_content("hello"),
+            None,
+            mentioned,
+            false,
+            None,
+            false,
+            false,
+            NullEventPusher,
+            true,
+            Vec::new(),
+            &MigratedUserIds::default(),
+            now,
+        )
+        .unwrap()
     }
 
     // Sends an unfinalised bot message, then finalises it with the given text

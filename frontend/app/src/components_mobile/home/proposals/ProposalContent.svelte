@@ -19,10 +19,10 @@
         type OpenChat,
         type ProposalContent,
         ProposalDecisionStatus,
-        type RegisterProposalVoteResponse,
         proposalTopicsStore,
+        proposalVotesStore,
     } from "@client";
-    import { ErrorCode, type ReadonlyMap } from "@shared";
+    import { type ReadonlyMap } from "@shared";
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
@@ -32,7 +32,6 @@
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import { i18nKey } from "../../../i18n/i18n";
     import { NamedNeurons } from "../../../stores/namedNeurons";
-    import { proposalVotes } from "../../../stores/proposalVotes";
     import { now } from "../../../stores/time";
     import { toastStore } from "../../../stores/toast";
     import { round2 } from "../../../utils/math";
@@ -75,7 +74,7 @@
     );
     let isNns = $derived(content.proposal.kind === "nns");
     let voteStatus = $derived(
-        $proposalVotes.get(messageId) ??
+        $proposalVotesStore.get(messageId) ??
             (content.myVote !== undefined ? (content.myVote ? "adopted" : "rejected") : undefined),
     );
     let proposal = $derived(content.proposal);
@@ -142,59 +141,23 @@
         });
     }
 
-    function onVote(adopt: boolean) {
-        if (votingDisabled || (chatId.kind !== "group_chat" && chatId.kind !== "channel")) {
-            return;
+    async function onVote(adopt: boolean) {
+        if (votingDisabled) return;
+
+        const outcome = await client.voteOnProposal(chatId, messageIndex, messageId, content, adopt);
+        switch (outcome.kind) {
+            case "voted":
+            case "skipped":
+                break;
+            case "no_eligible_neurons":
+                showNeuronInfo = true;
+                break;
+            case "failed":
+                toastStore.showFailureToast(outcome.message);
+                break;
+            default:
+                outcome satisfies never;
         }
-
-        const mId = messageId;
-        proposalVotes.insert(mId, adopt ? "adopting" : "rejecting");
-
-        let success = false;
-        client
-            .registerProposalVote(
-                chatId,
-                messageIndex,
-                content.governanceCanisterId,
-                proposal.id,
-                isNns,
-                adopt,
-            )
-            .then((resp) => {
-                if (resp.kind === "success") {
-                    success = true;
-                    proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
-                    client.getProposalVoteDetails(
-                        messageId,
-                        content.governanceCanisterId,
-                        proposal.id,
-                        isNns,
-                    );
-                } else if (resp.kind === "error" && resp.code === ErrorCode.NoEligibleNeurons) {
-                    showNeuronInfo = true;
-                } else {
-                    const err = registerProposalVoteErrorMessage(resp);
-                    if (err) toastStore.showFailureToast(i18nKey("proposal." + err));
-                }
-            })
-            .catch((err) => {
-                client.logError("Unable to vote on proposal", err);
-                toastStore.showFailureToast(i18nKey("proposal.voteFailed"));
-            })
-            .finally(() => {
-                if (!success) {
-                    proposalVotes.delete(mId);
-                }
-            });
-    }
-
-    function registerProposalVoteErrorMessage(
-        resp: RegisterProposalVoteResponse,
-    ): string | undefined {
-        if (resp.kind === "error" && resp.code === ErrorCode.NoChange) return "alreadyVoted";
-        if (resp.kind === "error" && resp.code === ErrorCode.ProposalNotAcceptingVotes)
-            return "proposalNotAcceptingVotes";
-        return "voteFailed";
     }
 
     function expand() {

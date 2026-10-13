@@ -99,6 +99,12 @@ impl GroupMembers {
         self.members_map.set_chat(chat);
     }
 
+    // The key and value of each member as stored
+    #[cfg(test)]
+    pub fn stored_entries(&self) -> Vec<(Vec<u8>, Vec<u8>)> {
+        self.members_map.all_entries()
+    }
+
     pub fn read_members_as_bytes_from_stable_memory(&self, after: Option<UserId>) -> Vec<(UserId, ByteBuf)> {
         self.members_map.read_members_as_bytes(after, ONE_MB as usize)
     }
@@ -118,46 +124,82 @@ impl GroupMembers {
         notifications_muted: bool,
         user_type: UserType,
     ) -> AddResult {
-        if self.blocked.contains(&user_id) {
-            AddResult::Blocked
-        } else if let Some(limit) = self.user_limit_reached() {
-            AddResult::MemberLimitReached(limit)
-        } else if self.member_ids.insert(user_id) {
-            let member = GroupMemberInternal {
-                user_id,
-                principal,
-                date_added: now,
-                role: Timestamped::new(GroupRoleInternal::Member, 0),
-                min_visible_event_index,
-                min_visible_message_index,
-                notifications_muted: Timestamped::new(notifications_muted, 0),
-                at_everyone_muted: Timestamped::new(false, 0),
-                mentions: Mentions::default(),
-                followed_threads: TimestampedSet::default(),
-                unfollowed_threads: TimestampedSet::default(),
-                proposal_votes: BTreeSet::default(),
-                latest_proposal_vote_removed: 0,
-                suspended: Timestamped::default(),
-                rules_accepted: None,
-                user_type,
-                lapsed: Timestamped::default(),
+        let mut members = MembersToAdd::default();
+        members.push(
+            user_id,
+            principal,
+            min_visible_event_index,
+            min_visible_message_index,
+            notifications_muted,
+            user_type,
+        );
+        let (_, result) = self.add_many(members, now).pop().unwrap();
+        result
+    }
+
+    // Adds the members in the order they were pushed, then writes those added to stable memory
+    // together, so that each node of the map is written once rather than once per member. Returns
+    // each one's result.
+    pub fn add_many(&mut self, members: MembersToAdd, now: TimestampMillis) -> Vec<(UserId, AddResult)> {
+        let mut results = Vec::with_capacity(members.0.len());
+        for MemberToAdd {
+            user_id,
+            principal,
+            min_visible_event_index,
+            min_visible_message_index,
+            notifications_muted,
+            user_type,
+        } in members.0
+        {
+            let result = if self.blocked.contains(&user_id) {
+                AddResult::Blocked
+            } else if let Some(limit) = self.user_limit_reached() {
+                AddResult::MemberLimitReached(limit)
+            } else if self.member_ids.insert(user_id) {
+                let member = GroupMemberInternal {
+                    user_id,
+                    principal,
+                    date_added: now,
+                    role: Timestamped::new(GroupRoleInternal::Member, 0),
+                    min_visible_event_index,
+                    min_visible_message_index,
+                    notifications_muted: Timestamped::new(notifications_muted, 0),
+                    at_everyone_muted: Timestamped::new(false, 0),
+                    mentions: Mentions::default(),
+                    followed_threads: TimestampedSet::default(),
+                    unfollowed_threads: TimestampedSet::default(),
+                    proposal_votes: BTreeSet::default(),
+                    latest_proposal_vote_removed: 0,
+                    suspended: Timestamped::default(),
+                    rules_accepted: None,
+                    user_type,
+                    lapsed: Timestamped::default(),
+                };
+                if user_type.is_bot() {
+                    self.bots.insert(user_id, user_type);
+                }
+                if !notifications_muted {
+                    self.notifications_unmuted.insert(user_id);
+                }
+                self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
+                AddResult::Success(Box::new(AddMemberSuccess {
+                    member,
+                    unlapse: false,
+                    bot_notification: None,
+                }))
+            } else {
+                AddResult::AlreadyInGroup
             };
-            self.members_map.insert(member.user_id, member.clone());
-            if user_type.is_bot() {
-                self.bots.insert(user_id, user_type);
-            }
-            if !notifications_muted {
-                self.notifications_unmuted.insert(user_id);
-            }
-            self.prune_then_insert_member_update(user_id, MemberUpdate::Added, now);
-            AddResult::Success(Box::new(AddMemberSuccess {
-                member,
-                unlapse: false,
-                bot_notification: None,
-            }))
-        } else {
-            AddResult::AlreadyInGroup
+            results.push((user_id, result));
         }
+
+        self.members_map
+            .insert_many(results.iter().filter_map(|(_, result)| match result {
+                AddResult::Success(success) => Some(success.member.clone()),
+                _ => None,
+            }));
+
+        results
     }
 
     pub fn remove(&mut self, user_id: UserId, now: TimestampMillis) -> Option<GroupMemberInternal> {
@@ -346,6 +388,26 @@ impl GroupMembers {
         Some(updated)
     }
 
+    // Applies `update_fn` to each of the members in turn, as `update_member` does, then writes back
+    // those it updated together, so that each node of the stable memory map is written once rather
+    // than once per member. A member given more than once is updated from where it last left them.
+    pub fn update_many<F: FnMut(&mut GroupMemberInternal) -> bool>(
+        &mut self,
+        user_ids: impl IntoIterator<Item = UserId>,
+        mut update_fn: F,
+    ) {
+        let mut updated: BTreeMap<UserId, GroupMemberInternal> = BTreeMap::new();
+        for user_id in user_ids {
+            let Some(mut member) = updated.get(&user_id).cloned().or_else(|| self.members_map.get(&user_id)) else {
+                continue;
+            };
+            if update_fn(&mut member) {
+                updated.insert(user_id, member);
+            }
+        }
+        self.members_map.insert_many(updated.into_values());
+    }
+
     pub fn is_blocked(&self, user_id: &UserId) -> bool {
         self.blocked.contains(user_id)
     }
@@ -528,37 +590,40 @@ impl GroupMembers {
     }
 
     // Unlapses, in order of user id, the members who lapsed before `start_unlapsing` was called,
-    // until `keep_going` returns false or there are none left. Each is written to stable memory, so
-    // a great many are unlapsed a batch at a time (see the `unlapse_members` job). Members who have
-    // lapsed since, under an access gate set since, are left lapsed. Returns those unlapsed.
+    // until `keep_going` returns false or there are none left. Each is read from stable memory, so a
+    // great many are unlapsed a batch at a time (see the `unlapse_members` job), and those unlapsed
+    // are written back together once it stops. Members who have lapsed since, under an access gate
+    // set since, are left lapsed. Returns those unlapsed.
     pub fn unlapse_while(&mut self, now: TimestampMillis, mut keep_going: impl FnMut() -> bool) -> Vec<UserId> {
         let Some(Unlapsing { before, mut after }) = self.unlapsing else {
             return Vec::new();
         };
         self.prune_member_updates(now);
         let mut unlapsed = Vec::new();
+        let mut members_unlapsed = Vec::new();
         loop {
             if !keep_going() {
                 self.unlapsing = Some(Unlapsing { before, after });
-                return unlapsed;
+                break;
             }
             let start = after.map_or(Bound::Unbounded, Bound::Excluded);
             let Some(user_id) = self.lapsed.range((start, Bound::Unbounded)).next().copied() else {
                 self.unlapsing = None;
-                return unlapsed;
+                break;
             };
             after = Some(user_id);
 
-            let mut not_lapsed = false;
-            let updated = self.update_member(&user_id, |m| {
-                not_lapsed = !m.lapsed.value;
-                m.lapsed.timestamp <= before && m.set_lapsed(false, now)
-            });
+            let mut member = self.members_map.get(&user_id);
+            let not_lapsed = member.as_ref().is_some_and(|m| !m.lapsed.value);
+            let updated = member
+                .as_mut()
+                .map(|m| m.lapsed.timestamp <= before && m.set_lapsed(false, now));
             match updated {
                 Some(true) => {
                     self.lapsed.remove(&user_id);
                     self.updates.insert((now, user_id, MemberUpdate::Unlapsed));
                     unlapsed.push(user_id);
+                    members_unlapsed.extend(member);
                 }
                 // A member whose record says they aren't lapsed, or who isn't a member, shouldn't be
                 // in the set (eg. if the members were imported from a group which was unlapsing them)
@@ -571,6 +636,8 @@ impl GroupMembers {
                 Some(false) => {}
             }
         }
+        self.members_map.insert_many(members_unlapsed);
+        unlapsed
     }
 
     // A member who has been migrated to a new user id may now come before the cursor, so the lapsed
@@ -582,25 +649,34 @@ impl GroupMembers {
     }
 
     pub fn update_lapsed(&mut self, user_id: UserId, lapsed: bool, now: TimestampMillis) {
-        if !self.member_ids.contains(&user_id) {
-            return;
-        }
-        if lapsed && self.owners.contains(&user_id) {
-            // Owners can't lapse
-            return;
-        }
+        self.update_lapsed_many([user_id], lapsed, now);
+    }
 
-        let updated = if lapsed { self.lapsed.insert(user_id) } else { self.lapsed.remove(&user_id) };
+    // As `update_lapsed` for each of the users, writing the members updated to stable memory together
+    // (see `update_many`)
+    pub fn update_lapsed_many(&mut self, user_ids: impl IntoIterator<Item = UserId>, lapsed: bool, now: TimestampMillis) {
+        let mut updated = Vec::new();
+        for user_id in user_ids {
+            if !self.member_ids.contains(&user_id) {
+                continue;
+            }
+            if lapsed && self.owners.contains(&user_id) {
+                // Owners can't lapse
+                continue;
+            }
 
-        if updated {
-            self.update_member(&user_id, |m| m.set_lapsed(lapsed, now));
+            let changed = if lapsed { self.lapsed.insert(user_id) } else { self.lapsed.remove(&user_id) };
+            if changed {
+                updated.push(user_id);
 
-            self.prune_then_insert_member_update(
-                user_id,
-                if lapsed { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
-                now,
-            );
+                self.prune_then_insert_member_update(
+                    user_id,
+                    if lapsed { MemberUpdate::Lapsed } else { MemberUpdate::Unlapsed },
+                    now,
+                );
+            }
         }
+        self.update_many(updated, |m| m.set_lapsed(lapsed, now));
     }
 
     pub fn owners(&self) -> &BTreeSet<UserId> {
@@ -771,6 +847,40 @@ impl Members for GroupMembers {
                 .filter(|id| !self.owners.contains(id) && !self.lapsed.contains(id))
                 .copied(),
         )
+    }
+}
+
+// The members to be added to a group or channel together (see `GroupMembers::add_many`)
+#[derive(Default)]
+pub struct MembersToAdd(Vec<MemberToAdd>);
+
+struct MemberToAdd {
+    user_id: UserId,
+    principal: Option<Principal>,
+    min_visible_event_index: EventIndex,
+    min_visible_message_index: MessageIndex,
+    notifications_muted: bool,
+    user_type: UserType,
+}
+
+impl MembersToAdd {
+    pub fn push(
+        &mut self,
+        user_id: UserId,
+        principal: Option<Principal>,
+        min_visible_event_index: EventIndex,
+        min_visible_message_index: MessageIndex,
+        notifications_muted: bool,
+        user_type: UserType,
+    ) {
+        self.0.push(MemberToAdd {
+            user_id,
+            principal,
+            min_visible_event_index,
+            min_visible_message_index,
+            notifications_muted,
+            user_type,
+        });
     }
 }
 
@@ -1384,6 +1494,216 @@ mod tests {
         members.start_unlapsing(30);
         assert_eq!(members.unlapse_while(30, || true), user_ids([3]));
         assert!(members.lapsed().is_empty());
+    }
+
+    #[test]
+    fn add_many_matches_adding_one_at_a_time() {
+        let members_to_add = || {
+            [
+                (&[9][..], true, UserType::User),
+                (&[2, 1], false, UserType::User),
+                (&[5], false, UserType::User),
+                (&[2], true, UserType::BotV2),
+                (&[7, 7, 7], false, UserType::User),
+                (&[2, 1], true, UserType::User),
+                (&[8], false, UserType::User),
+            ]
+            .into_iter()
+            .enumerate()
+            .map(|(i, (id, notifications_muted, user_type))| MemberToAdd {
+                user_id: long_user_id(id),
+                principal: (i % 2 == 0).then(|| Principal::from_slice(&[200, i as u8])),
+                min_visible_event_index: (i as u32).into(),
+                min_visible_message_index: (i as u32 / 2).into(),
+                notifications_muted,
+                user_type,
+            })
+            .collect::<Vec<_>>()
+        };
+        // User 5 is blocked and user 8 is already a member
+        let setup = || {
+            let mut members = members_for_migration_tests();
+            members.block(long_user_id(&[5]), 1);
+            members.add(long_user_id(&[8]), None, 1, 0.into(), 0.into(), true, UserType::User);
+            members
+        };
+
+        let mut one_at_a_time = setup();
+        let results: Vec<_> = members_to_add()
+            .into_iter()
+            .map(|m| {
+                let result = one_at_a_time.add(
+                    m.user_id,
+                    m.principal,
+                    10,
+                    m.min_visible_event_index,
+                    m.min_visible_message_index,
+                    m.notifications_muted,
+                    m.user_type,
+                );
+                (m.user_id, result_name(&result))
+            })
+            .collect();
+        let expected = stored_state(&one_at_a_time);
+
+        let mut together = setup();
+        let mut to_add = MembersToAdd::default();
+        for m in members_to_add() {
+            to_add.push(
+                m.user_id,
+                m.principal,
+                m.min_visible_event_index,
+                m.min_visible_message_index,
+                m.notifications_muted,
+                m.user_type,
+            );
+        }
+        let results_together: Vec<_> = together
+            .add_many(to_add, 10)
+            .iter()
+            .map(|(user_id, result)| (*user_id, result_name(result)))
+            .collect();
+
+        assert_eq!(results_together, results);
+        assert_eq!(stored_state(&together), expected);
+        assert_eq!(together.len(), 6);
+        together.check_invariants();
+    }
+
+    #[test]
+    fn update_many_matches_updating_one_at_a_time() {
+        // User 3 is given twice, and user 4 isn't a member. Only users 2 and 3 are updated each time.
+        let user_ids = [&[2, 1][..], &[3], &[9, 9], &[3], &[4], &[2]].map(long_user_id);
+        let setup = || {
+            let mut members = members_for_migration_tests();
+            for user_id in [&[2, 1][..], &[3], &[9, 9], &[2]].map(long_user_id) {
+                members.add(user_id, None, 1, 0.into(), 0.into(), true, UserType::User);
+            }
+            members
+        };
+        let update = |calls: &mut u32, m: &mut GroupMemberInternal| {
+            *calls += 1;
+            m.mentions
+                .add(None, (*calls).into(), (*calls as u64).into(), 10 + *calls as u64);
+            [&[2, 1][..], &[3]].map(long_user_id).contains(&m.user_id)
+        };
+
+        let mut one_at_a_time = setup();
+        let mut calls = 0;
+        for user_id in user_ids {
+            one_at_a_time.update_member(&user_id, |m| update(&mut calls, m));
+        }
+        let expected = stored_state(&one_at_a_time);
+
+        let mut together = setup();
+        let mut calls_together = 0;
+        together.update_many(user_ids, |m| update(&mut calls_together, m));
+
+        assert_eq!(calls_together, calls);
+        assert_eq!(stored_state(&together), expected);
+        // User 3 is left with the mentions added by both updates
+        assert_eq!(
+            together
+                .get(&long_user_id(&[3]))
+                .unwrap()
+                .mentions
+                .iter_most_recent(None)
+                .count(),
+            2
+        );
+    }
+
+    #[test]
+    fn update_lapsed_many_matches_updating_one_at_a_time() {
+        // User 1 is the owner, so can't lapse, user 3 is given twice, and user 4 isn't a member
+        let user_ids = [&[9, 9][..], &[1], &[3], &[2, 1], &[3], &[4]].map(long_user_id);
+        let setup = || {
+            let mut members = members_for_migration_tests();
+            for user_id in [&[2, 1][..], &[3], &[9, 9]].map(long_user_id) {
+                members.add(user_id, None, 1, 0.into(), 0.into(), true, UserType::User);
+            }
+            members
+        };
+
+        let mut one_at_a_time = setup();
+        for user_id in user_ids {
+            one_at_a_time.update_lapsed(user_id, true, 10);
+        }
+        one_at_a_time.update_lapsed(long_user_id(&[3]), false, 11);
+        let expected = stored_state(&one_at_a_time);
+
+        let mut together = setup();
+        together.update_lapsed_many(user_ids, true, 10);
+        together.update_lapsed_many([long_user_id(&[3])], false, 11);
+
+        assert_eq!(stored_state(&together), expected);
+        assert_eq!(together.lapsed().len(), 2);
+        together.check_invariants();
+    }
+
+    #[test]
+    fn members_unlapsed_together_match_those_updated_one_at_a_time() {
+        let lapsed = [&[2, 1][..], &[3], &[9, 9], &[4], &[2]].map(long_user_id);
+        let setup = || {
+            let mut members = members_for_migration_tests();
+            for user_id in lapsed {
+                members.add(user_id, None, 1, 0.into(), 0.into(), true, UserType::User);
+                members.update_lapsed(user_id, true, 2);
+            }
+            members
+        };
+
+        // In order of user id, which is by length first
+        let first_four = [&[2][..], &[3], &[4], &[2, 1]].map(long_user_id);
+
+        // Each member unlapsed is written as when updated on their own
+        let mut one_at_a_time = setup();
+        for user_id in first_four {
+            one_at_a_time.update_member(&user_id, |m| m.set_lapsed(false, 10));
+        }
+        let expected = one_at_a_time.members_map.all_entries();
+
+        let mut together = setup();
+        together.start_unlapsing(5);
+        let mut asked = 0;
+        let unlapsed = together.unlapse_while(10, || {
+            asked += 1;
+            asked <= 4
+        });
+
+        assert_eq!(unlapsed, first_four.to_vec());
+        assert_eq!(together.members_map.all_entries(), expected);
+        assert_eq!(
+            together.lapsed().iter().copied().collect::<Vec<_>>(),
+            vec![long_user_id(&[9, 9])]
+        );
+        together.check_invariants();
+    }
+
+    // What's held in stable memory for each member, along with what's held on the heap
+    fn stored_state(members: &GroupMembers) -> impl PartialEq + std::fmt::Debug + use<> {
+        (
+            members.members_map.all_entries(),
+            members.member_ids.clone(),
+            members.owners.clone(),
+            members.notifications_unmuted.clone(),
+            members.bots.clone(),
+            members.lapsed.clone(),
+            members.updates.clone(),
+        )
+    }
+
+    fn result_name(result: &AddResult) -> &'static str {
+        match result {
+            AddResult::Success(_) => "Success",
+            AddResult::AlreadyInGroup => "AlreadyInGroup",
+            AddResult::MemberLimitReached(_) => "MemberLimitReached",
+            AddResult::Blocked => "Blocked",
+        }
+    }
+
+    fn long_user_id(bytes: &[u8]) -> UserId {
+        Principal::from_slice(bytes).into()
     }
 
     // Holds users 1 to `count`, of whom user 1 is the owner

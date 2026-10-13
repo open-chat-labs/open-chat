@@ -52,13 +52,22 @@ fn run() {
         let mut check_gate_actions = Vec::new();
         let mut any_lapsed = false;
         let mut processed = 0u32;
+        let mut to_lapse = Vec::new();
 
         loop {
             // Many members can fall due together (eg. those who were already members when an
             // expiring gate was added), so once the instructions for this run are used up the
-            // rest are left for the next
-            if processed > 0 && processed.is_multiple_of(100) && ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_PER_RUN {
-                break;
+            // rest are left for the next. Those lapsed are written to stable memory together, a
+            // batch per 100 members processed.
+            if processed > 0 && processed.is_multiple_of(100) {
+                state
+                    .data
+                    .chat
+                    .members
+                    .update_lapsed_many(mem::take(&mut to_lapse), true, now);
+                if ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_PER_RUN {
+                    break;
+                }
             }
             let Some(member) = state.data.expiring_members.pop_if_expires_before(now) else {
                 break;
@@ -135,7 +144,7 @@ fn run() {
                     });
                 }
                 AccessGateExpiryBehaviour::Lapse => {
-                    state.data.chat.members.update_lapsed(member.user_id, true, now);
+                    to_lapse.push(member.user_id);
                     any_lapsed = true;
                 }
                 AccessGateExpiryBehaviour::Invalid => {
@@ -143,6 +152,7 @@ fn run() {
                 }
             }
         }
+        state.data.chat.members.update_lapsed_many(to_lapse, true, now);
 
         if !users_to_lookup.is_empty() {
             state
