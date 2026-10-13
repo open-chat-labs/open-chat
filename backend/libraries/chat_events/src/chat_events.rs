@@ -1196,30 +1196,44 @@ impl ChatEvents {
 
     pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<ProposalUpdate>, now: TimestampMillis) -> bool {
         let mut mark_chat_updated = false;
+        // The events updated are written back together once every update has been applied, so that
+        // each node of the stable memory map is written once rather than once per proposal. An event
+        // updated more than once is read from those already updated.
+        let mut updated: BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>> = BTreeMap::new();
         for update in updates {
             // If only the tally has been updated, skip marking the message as having been updated
             let should_mark_updated = update.deadline.is_some() || update.reward_status.is_some() || update.status.is_some();
             let tally_update = update.latest_tally.clone();
 
-            if let Ok(success) = self.update_message(
-                None,
-                update.message_id.into(),
-                EventIndex::default(),
-                now,
-                should_mark_updated,
-                ChatEventType::MessageOther,
-                |message, _| Self::update_proposal_inner(message, user_id, update, now),
-            ) {
-                if !matches!(success.value, ProposalRewardStatus::AcceptVotes) {
-                    self.active_proposal_tallies.remove(&success.event_index);
-                } else if let Some(tally) = tally_update {
-                    self.active_proposal_tallies.insert(success.event_index, tally);
-                }
-                if should_mark_updated {
-                    mark_chat_updated = true;
-                }
+            let Some(event_index) = self.main.event_index(update.message_id.into()) else {
+                continue;
+            };
+            let Some(mut event) = updated
+                .get(&event_index)
+                .cloned()
+                .or_else(|| self.main.get_event(event_index.into(), EventIndex::default(), None))
+            else {
+                continue;
+            };
+            let Ok(reward_status) = Self::update_message_inner(&mut event, |message, _| {
+                Self::update_proposal_inner(message, user_id, update, now)
+            }) else {
+                continue;
+            };
+            updated.insert(event_index, event);
+
+            if !matches!(reward_status, ProposalRewardStatus::AcceptVotes) {
+                self.active_proposal_tallies.remove(&event_index);
+            } else if let Some(tally) = tally_update {
+                self.active_proposal_tallies.insert(event_index, tally);
+            }
+            if should_mark_updated {
+                self.last_updated_timestamps
+                    .mark_updated(self.main.stable_memory_prefix(), None, event_index, now);
+                mark_chat_updated = true;
             }
         }
+        self.main.replace_events(updated.into_values().collect());
         mark_chat_updated
     }
 
@@ -3954,32 +3968,7 @@ mod tests {
             1,
         );
 
-        let proposal = ProposalContentInternal {
-            governance_canister_id: Principal::from_slice(&[3]),
-            proposal: Proposal::NNS(NnsProposal {
-                id: 1,
-                topic: 1,
-                proposer: 1,
-                created: 1,
-                title: "title".to_string(),
-                summary: "summary".to_string(),
-                url: String::new(),
-                status: ProposalDecisionStatus::Open,
-                reward_status: ProposalRewardStatus::AcceptVotes,
-                tally: Tally {
-                    yes: 0,
-                    no: 0,
-                    total: 0,
-                    timestamp: 1,
-                },
-                deadline: 1000,
-                payload_text_rendering: None,
-                last_updated: 1,
-            }),
-            votes: BTreeMap::new(),
-        };
-
-        let proposal_message_index = push_message(&mut events, sender, 1, MessageContentInternal::GovernanceProposal(proposal));
+        let proposal_message_index = push_message(&mut events, sender, 1, proposal_content(1));
         let text_message_index = push_message(
             &mut events,
             sender,
@@ -3990,6 +3979,94 @@ mod tests {
         );
 
         (events, proposal_message_index, text_message_index)
+    }
+
+    fn proposal_content(id: u64) -> MessageContentInternal {
+        MessageContentInternal::GovernanceProposal(ProposalContentInternal {
+            governance_canister_id: Principal::from_slice(&[3]),
+            proposal: Proposal::NNS(NnsProposal {
+                id,
+                topic: 1,
+                proposer: 1,
+                created: 1,
+                title: "title".to_string(),
+                summary: "summary".to_string(),
+                url: String::new(),
+                status: ProposalDecisionStatus::Open,
+                reward_status: ProposalRewardStatus::AcceptVotes,
+                tally: tally(0),
+                deadline: 1000,
+                payload_text_rendering: None,
+                last_updated: 1,
+            }),
+            votes: BTreeMap::new(),
+        })
+    }
+
+    fn tally(yes: u64) -> Tally {
+        Tally {
+            yes,
+            no: 0,
+            total: 100,
+            timestamp: 1,
+        }
+    }
+
+    #[test]
+    fn proposals_updated_together_match_those_updated_one_at_a_time() {
+        let sender: UserId = Principal::from_slice(&[2]).into();
+        let setup = || {
+            let (mut events, _, _) = setup_events();
+            push_message(&mut events, sender, 3, proposal_content(2));
+            push_message(&mut events, sender, 4, proposal_content(3));
+            events
+        };
+        let update = |message_id: u128, status, reward_status, yes: Option<u64>| ProposalUpdate {
+            message_id: message_id.into(),
+            status,
+            reward_status,
+            latest_tally: yes.map(tally),
+            deadline: None,
+        };
+        // Message 2 isn't a proposal, message 99 doesn't exist, and the proposal in message 1 is
+        // updated twice
+        let updates = || {
+            vec![
+                update(4, None, None, Some(10)),
+                update(1, None, None, Some(5)),
+                update(3, Some(ProposalDecisionStatus::Adopted), None, Some(60)),
+                update(2, Some(ProposalDecisionStatus::Rejected), None, None),
+                update(99, None, None, Some(1)),
+                update(
+                    1,
+                    Some(ProposalDecisionStatus::Rejected),
+                    Some(ProposalRewardStatus::Settled),
+                    Some(7),
+                ),
+            ]
+        };
+        let state = |events: &ChatEvents| {
+            (
+                events.read_events_as_bytes_from_stable_memory(None),
+                events.active_proposal_tallies(),
+                events.recently_updated_events(0, 100),
+            )
+        };
+
+        let mut one_at_a_time = setup();
+        let mut mark_chat_updated = false;
+        for update in updates() {
+            mark_chat_updated |= one_at_a_time.update_proposals(sender, vec![update], 20);
+        }
+        let expected = state(&one_at_a_time);
+
+        let mut together = setup();
+        assert_eq!(together.update_proposals(sender, updates(), 20), mark_chat_updated);
+        assert!(mark_chat_updated);
+        assert_eq!(state(&together), expected);
+        // Only the proposals still accepting votes have active tallies
+        let tallies: Vec<_> = together.active_proposal_tallies().into_iter().map(|(_, t)| t.yes).collect();
+        assert_eq!(tallies, vec![60, 10]);
     }
 
     #[test]
