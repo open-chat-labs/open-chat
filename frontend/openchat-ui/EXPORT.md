@@ -41,7 +41,27 @@ Re-exporting these overwrites the hand edits — re-apply them (they're small).
 
 ## Converted to plain Svelte 5
 No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, styles as scoped classes, typed props. Do not re-export these; port design changes by hand.
-- **TokenPicker** — from source hash `8699ab5d` (2026-10-13).
+- **AmountCard** — from source hash `39ed836c`.
+- **AvatarStack** — from source hash `5c9166f0`.
+- **DetailRow** — from source hash `10ca55c5`.
+- **Icon** — from source hash `88fc81a7`.
+- **ListSectionLabel** — from source hash `0ec0eea5`.
+- **PageHeader** — from source hash `5a474f84`.
+- **PanelNavRow** — from source hash `f29bf4af`.
+- **Pill** — from source hash `594a3b26`.
+- **QuickAmountChips** — from source hash `a622f26e`.
+- **RequirementChip** — from source hash `3ea36e0b`.
+- **RoundIconButton** — from source hash `93c63369`.
+- **ShareBar** — from source hash `d827e12e`.
+- **SideCard** — from source hash `2385dab3`.
+- **Spinner** — from source hash `8547dbf9`.
+- **StatCard** — from source hash `99b85629`.
+- **StepIndicator** — from source hash `491490cf`.
+- **ThresholdBar** — from source hash `3a0c0b95`.
+- **TokenAvatar** — from source hash `362ee2f9`.
+- **TokenPicker** — from source hash `8699ab5d`.
+- **Tooltip** — from source hash `27d349b2`.
+- **UnreadDivider** — from source hash `d4f40e6e`.
 
 ## Known gaps
 - Not yet verified with `npm run build` / `svelte-check` — run both first and fix what they flag (expect a11y warnings on custom roles; they're intentional and covered by `a11y.js`).

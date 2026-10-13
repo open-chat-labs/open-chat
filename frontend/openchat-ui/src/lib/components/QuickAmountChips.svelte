@@ -1,21 +1,51 @@
-<!-- Generated from lib/QuickAmountChips.dc.html (source hash a622f26e) on 2026-10-07. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Fraction-of-balance shortcuts. Emits onSelect(fraction); the parent turns it into an amount (respecting decimals and fees). -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './QuickAmountChips.logic.js';
-
   interface Props {
     options?: number[];
-    size?: string;
+    size?: 'sm' | 'md';
     onSelect?: (fraction: number) => void;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { options = [0.25, 0.5, 0.75, 1], size = 'sm', onSelect }: Props = $props();
 </script>
 
-<div style="display:flex;align-items:center;gap:6px" role="group" aria-label="Quick amounts">{#each (v.chips ?? []) as c, c_i}<span class="dc-p0" style="flex:none;height:{v.h};padding:0 {v.padX};display:flex;align-items:center;border-radius:{v.radius};background:var(--overlay-1,rgba(255,255,255,.06));font:600 {v.fs}/1 var(--font-sans);color:var(--ink-2,#C9C9D4);cursor:pointer;user-select:none;" onclick={c?.pick} role="button" tabindex="0">{t(c?.label)}</span>{/each}</div>
+<div class="chips" role="group" aria-label="Quick amounts">
+  {#each options as fraction}
+    <span class="chip" class:md={size === 'md'} onclick={() => onSelect?.(fraction)} role="button" tabindex="0">
+      {fraction >= 1 ? 'Max' : `${Math.round(fraction * 100)}%`}
+    </span>
+  {/each}
+</div>
 
 <style>
-  .dc-p0:hover{background:var(--overlay-2,rgba(255,255,255,.1)) !important}
+  .chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .chip {
+    flex: none;
+    height: 28px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
+    font: 600 12px/1 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .chip:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .md {
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 9px;
+    font-size: 12.5px;
+  }
 </style>

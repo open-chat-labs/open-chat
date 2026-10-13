@@ -1,26 +1,82 @@
-<!-- Generated from lib/AvatarStack.dc.html (source hash 5c9166f0) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Overlapping avatars. Up to `max` shown; past that, max-1 faces + a "+N" badge.
+     people: [{ grad|color|src, initial?, name? }] or plain CSS background strings. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './AvatarStack.logic.js';
+  type Person = string | { grad?: string; color?: string; src?: string; initial?: string; name?: string };
 
   interface Props {
-    people?: Array<string | { grad?: string; src?: string; initial?: string; name?: string }>;
+    people?: Person[];
     max?: number;
     size?: number;
     initials?: boolean;
     ring?: string;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { people = [], max = 4, size = 28, initials = false, ring = 'var(--surface-2,#191921)' }: Props = $props();
+
+  const faces = $derived(
+    people.map((x) =>
+      typeof x === 'string'
+        ? { bg: x, initial: '' }
+        : {
+            bg: x.src ? `center/cover url(${x.src})` : x.grad || x.color || 'var(--surface-3,#24242e)',
+            initial: initials ? x.initial || '' : '',
+          },
+    ),
+  );
+  const over = $derived(faces.length > max);
+  const shown = $derived(over ? faces.slice(0, max - 1) : faces);
+  const overlap = $derived(`${Math.round(size * 0.28)}px`);
 </script>
 
-<span style="display:inline-flex;align-items:center;padding-left:{v.overlap}" role="img" aria-label={v.aria}>
-  {#each v.shown ?? [] as f, i0}
-    <span style="flex:none;width:{v.px};height:{v.px};margin-left:{v.neg};border-radius:50%;background:{f.bg};box-shadow:0 0 0 2px {v.ring};display:flex;align-items:center;justify-content:center;font:700 {v.fpx}/1 var(--font-sans);color:#0e0e12">{t(f.initial)}</span>
+<span
+  class="stack"
+  style:padding-left={overlap}
+  style:--size="{size}px"
+  style:--font-size="{Math.round(size * 0.4)}px"
+  style:--overlap="-{overlap}"
+  style:--ring={ring}
+  role="img"
+  aria-label="{faces.length} {faces.length === 1 ? 'person' : 'people'}"
+>
+  {#each shown as face}
+    <span class="face" style:background={face.bg}>{face.initial}</span>
   {/each}
-  {#if v.hasMore}
-    <span style="flex:none;height:{v.px};min-width:{v.px};box-sizing:border-box;margin-left:{v.neg};padding:0 6px;border-radius:999px;background:var(--surface-3,#24242e);box-shadow:0 0 0 2px {v.ring};display:flex;align-items:center;justify-content:center;font:600 {v.fpx}/1 var(--font-mono);color:var(--ink,#ECECF1)">{t(v.more)}</span>
+  {#if over}
+    <span class="more">+{faces.length - shown.length}</span>
   {/if}
 </span>
+
+<style>
+  .stack {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .face,
+  .more {
+    flex: none;
+    height: var(--size);
+    margin-left: var(--overlap);
+    box-shadow: 0 0 0 2px var(--ring);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .face {
+    width: var(--size);
+    border-radius: 50%;
+    font: 700 var(--font-size) / 1 var(--font-sans);
+    color: #0e0e12;
+  }
+
+  .more {
+    min-width: var(--size);
+    box-sizing: border-box;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--surface-3, #24242e);
+    font: 600 var(--font-size) / 1 var(--font-mono);
+    color: var(--ink, #ececf1);
+  }
+</style>

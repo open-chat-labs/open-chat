@@ -73,12 +73,17 @@
 
         <div class="demo" style="min-height:{px(m.preview?.height, '80px')}">
           <div class="stage" style="width:min(100%, {px(m.preview?.width, '100%')})">
-            {#if isOverlay(m.name)}
-              <button class="open" onclick={() => (open[m.name] = true)}>Open {m.name}</button>
-              {#if open[m.name] && C}<C {...propsFor(m)} />{/if}
-            {:else if C}
-              <C {...propsFor(m)} />
-            {/if}
+            <svelte:boundary>
+              {#if isOverlay(m.name)}
+                <button class="open" onclick={() => (open[m.name] = true)}>Open {m.name}</button>
+                {#if open[m.name] && C}<C {...propsFor(m)} />{/if}
+              {:else if C}
+                <C {...propsFor(m)} />
+              {/if}
+              {#snippet failed(error)}
+                <pre class="demo-error">{String((error as Error)?.message ?? error)}</pre>
+              {/snippet}
+            </svelte:boundary>
           </div>
         </div>
 
@@ -125,6 +130,7 @@
   .desc { margin: 0; max-width: 760px; font: 400 13.5px/1.6 var(--font-sans); color: var(--ink-3); white-space: pre-line; }
   .demo { box-sizing: border-box; padding: 24px; border-radius: 20px; background: var(--surface-1); box-shadow: inset 0 0 0 1px var(--line-1); display: flex; align-items: flex-start; justify-content: center; }
   .stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); }
+  .demo-error { margin: 0; padding: 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--status-danger, #f5493d) 14%, transparent); color: var(--status-danger, #f5493d); font: 500 12px/1.5 var(--font-mono); white-space: pre-wrap; }
   .open { justify-self: start; height: 40px; padding: 0 16px; border: 0; border-radius: 10px; background: var(--overlay-2); color: var(--ink); font: 600 13.5px/1 var(--font-sans); cursor: pointer; }
   table { width: 100%; border-collapse: collapse; font: 400 12.5px/1.5 var(--font-sans); }
   th { text-align: left; font: 600 11px/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-4); padding: 8px 10px; border-bottom: 1px solid var(--line-1); }

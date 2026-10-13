@@ -1,28 +1,71 @@
-<!-- Generated from lib/PageHeader.dc.html (source hash 5a474f84) on 2026-10-07. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Header for workspace pages (wallet token page, Send, Receive, Swap): back · optional 28px token avatar · title · trailing slot.
+     Trailing content (steps, balance) is passed as children. -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './PageHeader.logic.js';
   import IconButton from './IconButton.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
 
   interface Props {
-    title?: string;
+    title: string;
     backLabel?: string;
     avatarMark?: string;
     avatarGradient?: string;
     onBack?: () => void;
     children?: Snippet;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { title, backLabel = 'Back', avatarMark, avatarGradient, onBack, children }: Props = $props();
 </script>
 
-<div style="flex:none;width:100%;height:var(--header-h,66px);box-sizing:border-box;display:flex;align-items:center;gap:var(--space-10);padding:0 var(--space-24) 0 {v.padStart};border-bottom:1px solid var(--line-1,rgba(255,255,255,.07))">
-  {#if v.hasBack}<div style="flex:none;display:flex"><IconButton label={v.backLabel} variant="ghost" icon="back" onClick={v.onBack}></IconButton></div>{/if}
-  {#if v.hasAvatar}<TokenAvatar size={28} mark={v.avatarMark} gradient={v.avatarGradient}></TokenAvatar>{/if}
-  <span style="flex:1;min-width:0;font:var(--weight-bold) var(--text-lg)/1 var(--font-sans);color:var(--ink,#ECECF1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(v.title)}</span>
-  {#if v.hasTrailing}<div style="flex:none;display:flex;align-items:center;gap:var(--space-8)">{@render v.children?.()}</div>{/if}
+<div class="page-header" class:has-back={!!onBack}>
+  {#if onBack}
+    <div class="back"><IconButton label={backLabel} variant="ghost" icon="back" onClick={onBack} /></div>
+  {/if}
+  {#if avatarMark}
+    <TokenAvatar size={28} mark={avatarMark} gradient={avatarGradient} />
+  {/if}
+  <span class="title">{title}</span>
+  {#if children}
+    <div class="trailing">{@render children()}</div>
+  {/if}
 </div>
+
+<style>
+  .page-header {
+    flex: none;
+    width: 100%;
+    height: var(--header-h, 66px);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    padding: 0 var(--space-24);
+    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .has-back {
+    padding-left: var(--space-14);
+  }
+
+  .back {
+    flex: none;
+    display: flex;
+  }
+
+  .title {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .trailing {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+</style>

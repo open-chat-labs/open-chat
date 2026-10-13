@@ -1,19 +1,35 @@
-<!-- Generated from lib/Icon.dc.html (source hash 88fc81a7) on 2026-10-07. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- One glyph from the canonical set (lib/icons.js → lib/styles/icons.css). Colour follows currentColor unless set.
+     flip mirrors direction-bearing glyphs in RTL. label makes it announced; otherwise it is decorative. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './Icon.logic.js';
-
   interface Props {
-    icon?: string;
-    size?: number;
+    icon: string;
+    size?: number | string;
     color?: string;
     flip?: boolean;
     label?: string;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { icon, size = 16, color = 'currentColor', flip = false, label }: Props = $props();
+
+  const px = $derived(typeof size === 'number' ? `${size}px` : size);
 </script>
 
-<span style="flex:none;display:inline-block;vertical-align:middle;width:{v.px};height:{v.px};background:{v.color};mask:{v.mask}" role={v.role} aria-label={v.label} aria-hidden={v.hidden} data-oc-flip={v.flip}></span>
+<span
+  class="icon"
+  style:width={px}
+  style:height={px}
+  style:background={color}
+  style:mask="var(--icon-{icon}) center/contain no-repeat"
+  role={label ? 'img' : undefined}
+  aria-label={label || undefined}
+  aria-hidden={label ? undefined : 'true'}
+  data-oc-flip={flip ? '' : undefined}
+></span>
+
+<style>
+  .icon {
+    flex: none;
+    display: inline-block;
+    vertical-align: middle;
+  }
+</style>

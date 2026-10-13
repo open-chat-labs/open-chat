@@ -1,45 +1,171 @@
-<!-- Generated from lib/AmountCard.dc.html (source hash 39ed836c) on 2026-10-07. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- You pay / you get card: label + balance, big amount (input when onChange is given), token pill that opens a picker,
+     fiat/notice line, optional quick chips. position "top" | "bottom" adds the extra padding a flip button overlapping the seam needs. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './AmountCard.logic.js';
   import ListSectionLabel from './ListSectionLabel.svelte';
   import QuickAmountChips from './QuickAmountChips.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
 
   interface Props {
-    label?: string;
+    label: string;
     meta?: string;
     value?: string;
     note?: string;
-    tone?: string;
+    tone?: 'default' | 'danger';
     muted?: boolean;
-    symbol?: string;
+    symbol: string;
     mark?: string;
     gradient?: string;
-    position?: string;
-    onChange?: (e) => void;
+    position?: 'top' | 'bottom' | 'alone';
+    onChange?: (e: Event & { currentTarget: HTMLInputElement }) => void;
     onQuickSelect?: (fraction: number) => void;
     onTokenClick?: () => void;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let {
+    label,
+    meta = '',
+    value,
+    note = '',
+    tone = 'default',
+    muted = false,
+    symbol,
+    mark,
+    gradient,
+    position = 'top',
+    onChange,
+    onQuickSelect,
+    onTokenClick,
+  }: Props = $props();
+
+  const empty = $derived(!onChange && (value == null || value === ''));
 </script>
 
-<div style="display:flex;flex-direction:column;gap:12px;padding:{v.pad};box-sizing:border-box;border-radius:12px;background:var(--overlay-1,rgba(255,255,255,.04))">
-  <ListSectionLabel label={v.label} meta={v.meta}></ListSectionLabel>
-  <div style="display:flex;align-items:center;gap:12px">
-    {#if v.editable}<input style="flex:1;min-width:0;border:0;outline:0;padding:0;background:transparent;font:700 32px/1 var(--font-sans);color:{v.valueInk}" value={v.value} oninput={v.onChange} inputmode="decimal" placeholder="0" aria-label={v.label} />{/if}
-    {#if v.readOnly}<span style="flex:1;min-width:0;font:700 32px/1 var(--font-sans);color:{v.valueInk};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(v.shown)}</span>{/if}
-    <span class="dc-p0" style="flex:none;display:flex;align-items:center;gap:8px;height:40px;padding:0 10px 0 6px;border-radius:var(--radius-pill);background:var(--overlay-2,rgba(255,255,255,.07));cursor:pointer;user-select:none;" onclick={v.onPickToken} aria-label="Change token" role="button" tabindex="0" title="Change token"><TokenAvatar size={28} symbol={v.symbol} mark={v.mark} gradient={v.gradient}></TokenAvatar><span style="font:700 14px/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.symbol)}</span><span style="width:12px;height:12px;background:var(--ink-3,#9A9AA8);mask:{v.caret}"></span></span>
+<div class="amount-card {position}">
+  <ListSectionLabel {label} {meta} />
+  <div class="main">
+    {#if onChange}
+      <input
+        class="amount"
+        class:danger={tone === 'danger'}
+        class:muted
+        value={value ?? ''}
+        oninput={onChange}
+        inputmode="decimal"
+        placeholder="0"
+        aria-label={label}
+      />
+    {:else}
+      <span class="amount shown" class:danger={tone === 'danger'} class:muted={empty || muted}>{empty ? '—' : value}</span>
+    {/if}
+    <span class="token" onclick={onTokenClick} aria-label="Change token" role="button" tabindex="0" title="Change token">
+      <TokenAvatar size={28} {symbol} {mark} {gradient} />
+      <span class="symbol">{symbol}</span>
+      <span class="caret"></span>
+    </span>
   </div>
-  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">
-    <span style="flex:1;min-width:120px;font:500 12.5px/1 var(--font-mono);color:{v.noteInk}">{t(v.note)}</span>
-    {#if v.hasChips}<QuickAmountChips onSelect={v.onChip}></QuickAmountChips>{/if}
+  <div class="foot">
+    <span class="note" class:danger={tone === 'danger'}>{note}</span>
+    {#if onQuickSelect}<QuickAmountChips onSelect={onQuickSelect} />{/if}
   </div>
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--btn-hover) !important}
+  .amount-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    box-sizing: border-box;
+    border-radius: 12px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+  }
+
+  .top {
+    padding: 18px 18px 22px;
+  }
+
+  .bottom {
+    padding: 22px 18px 18px;
+  }
+
+  .main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .amount {
+    flex: 1;
+    min-width: 0;
+    font: 700 32px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  input.amount {
+    border: 0;
+    outline: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .shown {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .amount.muted {
+    color: var(--ink-5, #6e6e7c);
+  }
+
+  .amount.danger {
+    color: var(--status-danger, #f5493d);
+  }
+
+  .token {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 10px 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .token:hover {
+    background: var(--btn-hover);
+  }
+
+  .symbol {
+    font: 700 14px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .caret {
+    width: 12px;
+    height: 12px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-chevron-down) center/contain no-repeat;
+  }
+
+  .foot {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .note {
+    flex: 1;
+    min-width: 120px;
+    font: 500 12.5px/1 var(--font-mono);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .note.danger {
+    color: var(--status-danger, #f5493d);
+  }
 </style>

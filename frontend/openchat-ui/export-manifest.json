@@ -27,8 +27,7 @@
       "sourceHash": "39ed836c",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/AmountCard.svelte",
-        "src/lib/components/AmountCard.logic.js"
+        "src/lib/components/AmountCard.svelte"
       ],
       "group": "library"
     },
@@ -127,8 +126,7 @@
       "sourceHash": "10ca55c5",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/DetailRow.svelte",
-        "src/lib/components/DetailRow.logic.js"
+        "src/lib/components/DetailRow.svelte"
       ],
       "group": "library"
     },
@@ -187,8 +185,7 @@
       "sourceHash": "88fc81a7",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/Icon.svelte",
-        "src/lib/components/Icon.logic.js"
+        "src/lib/components/Icon.svelte"
       ],
       "group": "library"
     },
@@ -207,8 +204,7 @@
       "sourceHash": "0ec0eea5",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/ListSectionLabel.svelte",
-        "src/lib/components/ListSectionLabel.logic.js"
+        "src/lib/components/ListSectionLabel.svelte"
       ],
       "group": "library"
     },
@@ -257,8 +253,7 @@
       "sourceHash": "5a474f84",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/PageHeader.svelte",
-        "src/lib/components/PageHeader.logic.js"
+        "src/lib/components/PageHeader.svelte"
       ],
       "group": "library"
     },
@@ -277,8 +272,7 @@
       "sourceHash": "f29bf4af",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/PanelNavRow.svelte",
-        "src/lib/components/PanelNavRow.logic.js"
+        "src/lib/components/PanelNavRow.svelte"
       ],
       "group": "library"
     },
@@ -287,8 +281,7 @@
       "sourceHash": "594a3b26",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/Pill.svelte",
-        "src/lib/components/Pill.logic.js"
+        "src/lib/components/Pill.svelte"
       ],
       "group": "library"
     },
@@ -307,8 +300,7 @@
       "sourceHash": "a622f26e",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/QuickAmountChips.svelte",
-        "src/lib/components/QuickAmountChips.logic.js"
+        "src/lib/components/QuickAmountChips.svelte"
       ],
       "group": "library"
     },
@@ -327,8 +319,7 @@
       "sourceHash": "d827e12e",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/ShareBar.svelte",
-        "src/lib/components/ShareBar.logic.js"
+        "src/lib/components/ShareBar.svelte"
       ],
       "group": "library"
     },
@@ -337,8 +328,7 @@
       "sourceHash": "2385dab3",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/SideCard.svelte",
-        "src/lib/components/SideCard.logic.js"
+        "src/lib/components/SideCard.svelte"
       ],
       "group": "library"
     },
@@ -347,8 +337,7 @@
       "sourceHash": "8547dbf9",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/Spinner.svelte",
-        "src/lib/components/Spinner.logic.js"
+        "src/lib/components/Spinner.svelte"
       ],
       "group": "library"
     },
@@ -357,8 +346,7 @@
       "sourceHash": "99b85629",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/StatCard.svelte",
-        "src/lib/components/StatCard.logic.js"
+        "src/lib/components/StatCard.svelte"
       ],
       "group": "library"
     },
@@ -377,8 +365,7 @@
       "sourceHash": "491490cf",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/StepIndicator.svelte",
-        "src/lib/components/StepIndicator.logic.js"
+        "src/lib/components/StepIndicator.svelte"
       ],
       "group": "library"
     },
@@ -427,8 +414,7 @@
       "sourceHash": "362ee2f9",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/TokenAvatar.svelte",
-        "src/lib/components/TokenAvatar.logic.js"
+        "src/lib/components/TokenAvatar.svelte"
       ],
       "group": "library"
     },
@@ -476,8 +462,7 @@
       "sourceHash": "d4f40e6e",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/UnreadDivider.svelte",
-        "src/lib/components/UnreadDivider.logic.js"
+        "src/lib/components/UnreadDivider.svelte"
       ],
       "group": "library"
     },
@@ -516,8 +501,7 @@
       "sourceHash": "27d349b2",
       "exportedAt": "2026-10-07",
       "files": [
-        "src/lib/components/Tooltip.svelte",
-        "src/lib/components/Tooltip.logic.js"
+        "src/lib/components/Tooltip.svelte"
       ],
       "group": "library"
     },
@@ -597,8 +581,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/AvatarStack.svelte",
-        "src/lib/components/AvatarStack.logic.js"
+        "src/lib/components/AvatarStack.svelte"
       ]
     },
     "BalanceCard": {
@@ -1047,8 +1030,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/RequirementChip.svelte",
-        "src/lib/components/RequirementChip.logic.js"
+        "src/lib/components/RequirementChip.svelte"
       ]
     },
     "RoundIconButton": {
@@ -1057,8 +1039,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/RoundIconButton.svelte",
-        "src/lib/components/RoundIconButton.logic.js"
+        "src/lib/components/RoundIconButton.svelte"
       ]
     },
     "SendCryptoDialog": {
@@ -1147,8 +1128,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/ThresholdBar.svelte",
-        "src/lib/components/ThresholdBar.logic.js"
+        "src/lib/components/ThresholdBar.svelte"
       ]
     },
     "TokenCoin": {

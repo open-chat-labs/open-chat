@@ -1,19 +1,65 @@
-<!-- Generated from lib/RequirementChip.dc.html (source hash 3ea36e0b) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Gate / requirement chip. state: met (green check) | unmet (amber lock) | neutral (no verdict yet, e.g. guest). size sm 22 | md 26. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './RequirementChip.logic.js';
+  type State = 'met' | 'unmet' | 'neutral';
 
   interface Props {
-    label?: string;
-    state?: 'met' | 'unmet' | 'neutral';
+    label: string;
+    state?: State;
+    /** Shorthand for state: true → met, false → unmet. */
     met?: boolean;
+    /** Icon for the neutral state. */
     icon?: string;
     size?: 'sm' | 'md';
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { label, state, met, icon, size = 'md' }: Props = $props();
+
+  const resolved: State = $derived(state ?? (met === true ? 'met' : met === false ? 'unmet' : 'neutral'));
+  const glyph = $derived(resolved === 'met' ? 'check' : resolved === 'unmet' ? 'lock' : icon || 'shield');
+  const verdict = $derived(resolved === 'met' ? ' — met' : resolved === 'unmet' ? ' — not met' : '');
 </script>
 
-<span style="flex:none;display:inline-flex;align-items:center;gap:5px;height:{v.h};padding:0 {v.px};border-radius:999px;background:{v.bg};font:600 {v.fs}/1 var(--font-sans);color:{v.ink};white-space:nowrap" role="listitem" aria-label={v.aria}><span style="width:12px;height:12px;background:currentColor;mask:{v.mask}" aria-hidden="true"></span>{t(v.label)}</span>
+<span class="chip {resolved}" class:sm={size === 'sm'} role="listitem" aria-label={label + verdict}>
+  <span class="glyph" style:mask="var(--icon-{glyph}) center/contain no-repeat" aria-hidden="true"></span>{label}
+</span>
+
+<style>
+  .chip {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 26px;
+    padding: 0 9px;
+    border-radius: 999px;
+    font: 600 12px/1 var(--font-sans);
+    white-space: nowrap;
+  }
+
+  .sm {
+    height: 22px;
+    padding: 0 8px;
+    font-size: 11.5px;
+  }
+
+  .met {
+    background: color-mix(in oklch, var(--status-online, #2ee6a8) 13%, transparent);
+    color: var(--status-online, #2ee6a8);
+  }
+
+  .unmet {
+    background: color-mix(in oklch, var(--status-warning, #ffb03d) 14%, transparent);
+    color: var(--status-warning, #ffb03d);
+  }
+
+  .neutral {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    color: var(--ink-2, #b9b9c6);
+  }
+
+  .glyph {
+    width: 12px;
+    height: 12px;
+    background: currentColor;
+  }
+</style>
