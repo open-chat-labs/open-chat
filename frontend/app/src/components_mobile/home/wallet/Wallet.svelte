@@ -7,7 +7,7 @@
     import Accounts from "./Accounts.svelte";
     import OverallBalance from "./OverallBalance.svelte";
     import TokenToggle from "./TokenToggle.svelte";
-    import type { ConversionToken } from "./walletState.svelte";
+    import type { ConversionToken } from "@shared_components/home/wallet/walletState.svelte";
 
     const client = getContext<OpenChat>("client");
 

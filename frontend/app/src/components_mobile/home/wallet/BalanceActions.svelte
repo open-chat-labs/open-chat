@@ -19,7 +19,7 @@
     import TrayArrowUp from "svelte-material-icons/TrayArrowUp.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import TokenSelector from "./TokenSelector.svelte";
-    import { TokenState, type ConversionToken } from "./walletState.svelte";
+    import { TokenState, type ConversionToken } from "@shared_components/home/wallet/walletState.svelte";
 
     type TokenSelectorParams = {
         title: ResourceKey;

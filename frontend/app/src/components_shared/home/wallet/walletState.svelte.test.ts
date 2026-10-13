@@ -1,10 +1,12 @@
 import {
+    cryptoBalanceStore,
     exchangeRatesLookupStore,
     LEDGER_CANISTER_CKBTC,
     LEDGER_CANISTER_CKETH,
     LEDGER_CANISTER_ICP,
     type EnhancedTokenDetails,
 } from "@client";
+import { flushSync } from "svelte";
 import { afterEach, describe, expect, test } from "vitest";
 import { TokenState } from "./walletState.svelte";
 
@@ -118,4 +120,52 @@ describe("TokenState unit value", () => {
 
         expect(new TokenState(tendy, "btc").formattedUnitValue).toBe("?????");
     });
+
+    // A TokenState built before the rates load must not show them as unknown for the rest of its life
+    test("unit value and converted balance follow the rates after it is built", () => {
+        cryptoBalanceStore.setBalance(icp.ledger, 100_000_000n);
+        const state = new TokenState(icp);
+        let unit = "";
+        let converted = "";
+        const stop = $effect.root(() => {
+            $effect(() => {
+                unit = state.formattedUnitValue;
+                converted = state.formattedConvertedValue;
+            });
+        });
+        flushSync();
+        expect(unit).toBe("?????");
+
+        exchangeRatesLookupStore.set(new Map([[LEDGER_CANISTER_ICP, { toUSD: 4 }]]));
+        flushSync();
+
+        expect(unit).toBe("$4.00");
+        expect(converted).toBe("$4.00");
+        stop();
+    });
 });
+
+describe("TokenState balance", () => {
+    // A TokenState is often built once (eg. for a send form) and must not keep the balance it was
+    // built with, or the max amount stops the user sending, or lets them try to send what they don't have
+    test("max amount and remaining balance follow the balance store after it is built", () => {
+        cryptoBalanceStore.setBalance(icp.ledger, 100_000n);
+        const state = new TokenState(icp);
+        let rendered = 0n;
+        const stop = $effect.root(() => {
+            $effect(() => {
+                rendered = state.maxAmount;
+            });
+        });
+        flushSync();
+
+        cryptoBalanceStore.setBalance(icp.ledger, 500_000n);
+        flushSync();
+
+        expect(rendered).toBe(490_000n);
+        expect(state.maxAmount).toBe(490_000n);
+        expect(state.remainingBalance).toBe(500_000n);
+        stop();
+    });
+});
+
