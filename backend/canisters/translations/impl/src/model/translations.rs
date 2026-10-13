@@ -90,10 +90,7 @@ impl Translations {
             previously_approved,
         });
 
-        ApproveResponse::Success(ApproveSuccess {
-            proposed_by,
-            previously_approved,
-        })
+        ApproveResponse::Success(ApproveSuccess { previously_approved })
     }
 
     pub fn reject(&mut self, id: u64, reason: RejectReason, user_id: UserId, now: TimestampMillis) -> RejectResponse {
@@ -246,17 +243,18 @@ impl Translations {
     }
 
     // One-off: a user who proposed a translation of a record under their old id, then another under
-    // their latest id, has both still proposed, since `propose` didn't know the ids were the same user's.
-    // Once the ids are rewritten, this overrides each such proposal which a later one by the same user
-    // supersedes, as `propose` would have. Returns the number of proposals overridden.
+    // their latest id, still has the first proposed, since `propose` didn't know the ids were the same
+    // user's. Once the ids are rewritten, this overrides each proposal which a later one by the same
+    // user supersedes, whatever has since become of the later one, as `propose` would have. Returns the
+    // number of proposals overridden.
     pub fn override_superseded_proposals(&mut self) -> usize {
         let mut overridden = 0;
         for indexes in self.records.values() {
             let mut proposers = HashSet::new();
             for index in indexes.iter().rev() {
                 if let Some(translation) = self.translations.get_mut(*index)
-                    && matches!(translation.status, TranslationStatus::Proposed)
                     && !proposers.insert(translation.proposed.who)
+                    && matches!(translation.status, TranslationStatus::Proposed)
                 {
                     translation.status = TranslationStatus::Overidden;
                     overridden += 1;
@@ -363,7 +361,6 @@ pub enum ApproveResponse {
 }
 
 pub struct ApproveSuccess {
-    pub proposed_by: UserId,
     pub previously_approved: bool,
 }
 
@@ -704,7 +701,7 @@ mod tests {
         let ApproveResponse::Success(result) = translations.approve(1, user_id(USER3), 3) else {
             panic!("ApproveSuccess expected");
         };
-        assert_eq!(result.proposed_by, latest1);
+        assert_eq!(translations.proposed_by(1), Some(latest1));
         assert!(result.previously_approved);
     }
 
@@ -737,6 +734,27 @@ mod tests {
 
         // Each user is now left with one proposal of the record, so running it again changes nothing
         assert_eq!(translations.override_superseded_proposals(), 0);
+    }
+
+    #[test]
+    fn proposal_superseded_under_latest_id_is_overridden_once_the_later_one_is_decided() {
+        let mut translations = Translations::default();
+        let latest1 = indexed_user_id(1);
+
+        // USER1 proposes under their old id, then under their latest id, and the later proposal is
+        // rejected before the ids are known to be the same user's
+        translations.propose(test_proposal_1());
+        translations.propose(ProposeArgs {
+            user_id: latest1,
+            ..test_proposal_2()
+        });
+        translations.reject(1, RejectReason::IncorrectMeaning, user_id(USER3), 3);
+        translations.rewrite_user_ids(&HashMap::from([(user_id(USER1), latest1)]));
+
+        assert_eq!(translations.override_superseded_proposals(), 1);
+
+        assert!(matches!(translations.translations[0].status, TranslationStatus::Overidden));
+        assert!(translations.proposed().is_empty());
     }
 
     fn ids(translations: &Translations, id: usize) -> (UserId, Option<UserId>) {
