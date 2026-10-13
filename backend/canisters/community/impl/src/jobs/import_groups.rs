@@ -5,9 +5,10 @@ use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
 use crate::model::groups_being_imported::{GroupToImport, GroupToImportAction};
 use crate::model::members::{AddResult, CommunityMembers, MembersToAdd};
 use crate::timer_job_types::{
-    FinalizeGroupImportJob, JoinMembersToPublicChannelJob, ProcessGroupImportChannelMembersJob, TimerJob,
+    FinalizeGroupImportJob, JoinMembersToPublicChannelJob, MarkGroupImportCompleteJob, ProcessGroupImportChannelMembersJob,
+    TimerJob,
 };
-use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
+use crate::{Data, RuntimeState, mutate_state, read_state, run_regular_jobs};
 use chat_events::ChatEvents;
 use constants::{OPENCHAT_BOT_USER_ID, SECOND_IN_MS};
 use group_canister::c2c_export_group::{Args, ExportExtras, Response};
@@ -16,7 +17,7 @@ use ic_cdk::call::RejectCode;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::collections::{BTreeMap, HashMap};
-use std::ops::Bound;
+use std::ops::{Bound, Deref};
 use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{
@@ -521,11 +522,15 @@ fn complete_processing_channel_members(group_id: ChatId, channel_id: ChannelId, 
         // which replaces them in the events until done
         update_user_ids_in_state::on_channel_members_imported(&mut state.data, channel_id);
         update_user_ids_in_state::start_job_if_required(state);
-    });
 
-    ic_cdk_timers::set_timer(Duration::ZERO, async move {
-        run_regular_jobs();
-        mark_import_complete(group_id, channel_id)
+        // Queued as a job, so that it survives an upgrade and the channel can't be deleted until it
+        // has run (see `is_importing_into_channel`)
+        let now = state.env.now();
+        state.data.timer_jobs.enqueue_job(
+            TimerJob::MarkGroupImportComplete(MarkGroupImportCompleteJob { group_id, channel_id }),
+            now,
+            now,
+        );
     });
     info!(%group_id, "'process_channel_members' completed");
 }
@@ -554,7 +559,12 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
 
     mutate_state(|state| {
         let now = state.env.now();
-        state.data.channels.get_mut(&channel_id).unwrap().date_imported = Some(now);
+        // Only possible for a channel deleted during its import before that was refused
+        let Some(channel) = state.data.channels.get_mut(&channel_id) else {
+            error!(%group_id, ?channel_id, "Channel deleted before its import was complete");
+            return;
+        };
+        channel.date_imported = Some(now);
         let channel = state.data.channels.get(&channel_id).unwrap();
         let public_community_activity = state.data.is_public.then(|| extract_activity(now, &state.data));
 
@@ -589,6 +599,24 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
     });
 
     info!(%group_id, "'mark_import_complete' completed");
+}
+
+// Whether a group is still being imported into the channel, ie. its members are still being added to
+// the community, or the GroupIndex is yet to be told that the import is complete. That needs the
+// channel, so it can't be deleted until then. Imports finalized by an earlier version are only
+// recorded in `channels_importing_members` once their first batch runs, so are known by their jobs
+// until then.
+pub(crate) fn is_importing_into_channel(channel_id: ChannelId, data: &Data) -> bool {
+    data.channels_importing_members.contains(&channel_id)
+        || data.timer_jobs.iter().any(|(_, job)| {
+            matches!(
+                job.deref().borrow().as_ref(),
+                Some(
+                    TimerJob::ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob { channel_id: c, .. })
+                    | TimerJob::MarkGroupImportComplete(MarkGroupImportCompleteJob { channel_id: c, .. })
+                ) if *c == channel_id
+            )
+        })
 }
 
 // Whether retrying the import could ever succeed. A batch which is too large for the group to
