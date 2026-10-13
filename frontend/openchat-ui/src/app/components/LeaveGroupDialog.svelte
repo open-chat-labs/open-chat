@@ -1,57 +1,272 @@
-<!-- Generated from lib/LeaveGroupDialog.dc.html (source hash 935490b2) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Confirm leaving a group, channel or community. Cancel / confirm play the close animation, then call back. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './LeaveGroupDialog.logic.js';
+  import { onDestroy } from 'svelte';
 
   interface Props {
-    groupName?: string;
+    groupName: string;
+    noun?: 'group' | 'channel' | 'community';
+    /** Overrides the explanation, which otherwise depends on the noun. */
     body?: string;
     onConfirm?: () => void;
     onCancel?: () => void;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { groupName, noun = 'group', body, onConfirm, onCancel }: Props = $props();
+
+  const text = $derived(
+    body ??
+      (noun === 'community'
+        ? 'You will leave every channel in this community, and it disappears from your nav rail. You can rejoin later if it is public, or by invite.'
+        : `You will stop receiving messages from this ${noun}, and it disappears from your chat list. Anyone in the ${noun} can invite you back later.`),
+  );
+
+  let closing = $state(false);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  onDestroy(() => clearTimeout(timer));
+
+  // play the exit animation, then hand control back
+  function close(then?: () => void) {
+    if (closing) return;
+    closing = true;
+    timer = setTimeout(() => {
+      closing = false;
+      then?.();
+    }, 170);
+  }
 </script>
 
-<div style="position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:var(--space-22)" role="dialog" aria-modal="true">
-  <div style="position:absolute;inset:0;background:var(--oc-veil,rgba(3,3,6,.72));backdrop-filter:var(--oc-veil-blur,blur(4px));-webkit-backdrop-filter:var(--oc-veil-blur,blur(4px));animation:{v.veilAnim}" onclick={v.onCancel} aria-hidden="true"></div>
-  <div style="position:relative;width:100%;max-width:460px;max-height:100%;box-sizing:border-box;display:flex;flex-direction:column;border-radius:var(--radius-xl);background:var(--surface-1,#0e0e12);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),var(--shadow-modal,0 30px 70px rgba(0,0,0,.45));overflow:hidden;animation:{v.cardAnim}">
-
-    <div style="flex:none;display:flex;align-items:center;gap:var(--space-12);padding:var(--space-16) var(--space-18);border-block-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-      <span style="flex:none;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1))">
-        <span style="width:19px;height:19px;background:var(--ink-2,#B9B9C6);mask:{v.leaveMask}"></span>
-      </span>
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-        <span style="font:var(--weight-bold) var(--text-lg)/1.25 var(--font-sans);color:var(--ink,#ECECF1)">Leave a {t(v.noun)}</span>
-        <span style="font:var(--weight-regular) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-4,#7C7C8C);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{t(v.groupName)}</span>
+<div class="layer" class:closing role="dialog" aria-modal="true">
+  <div class="veil" onclick={() => close(onCancel)} aria-hidden="true"></div>
+  <div class="card">
+    <div class="head">
+      <span class="badge"><span class="badge-icon"></span></span>
+      <div class="titles">
+        <span class="title">Leave a {noun}</span>
+        <span class="subtitle">{groupName}</span>
       </div>
-      <span class="dc-p0" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onCancel} role="button" tabindex="0">
-        <span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.closeMask}"></span>
-      </span>
+      <span class="close" onclick={() => close(onCancel)} role="button" tabindex="0"><span class="close-icon"></span></span>
     </div>
 
-    <div style="flex:1;min-height:0;overflow-y:auto;padding:var(--space-32) var(--space-18);display:flex;flex-direction:column;gap:var(--space-32)">
-      <div style="display:flex;flex-direction:column;gap:var(--space-14);min-width:0;padding-inline:var(--space-14)">
-        <span style="font:var(--weight-bold) var(--text-2xl)/1.3 var(--font-sans);letter-spacing:var(--tracking-tight);color:var(--ink,#ECECF1);text-wrap:pretty">Leave <span style="color:var(--accent-bright,#FF8298)">{t(v.groupName)}</span>?</span>
-        <span style="font:var(--weight-regular) var(--text-base)/1.55 var(--font-sans);color:var(--ink-2,#B9B9C6);text-wrap:pretty">{t(v.body)}</span>
+    <div class="body">
+      <div class="copy">
+        <span class="question">Leave <span class="name">{groupName}</span>?</span>
+        <span class="text">{text}</span>
       </div>
     </div>
 
-    <div style="flex:none;display:flex;align-items:center;gap:var(--space-8);padding:var(--space-16) var(--space-18);border-block-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-      <span class="dc-p1" style="flex:none;padding:var(--space-10) var(--space-14);border-radius:var(--radius-md);font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.onCancel} role="button" tabindex="0">Cancel</span>
-      <span style="flex:1"></span>
-      <div class="dc-p2" style="flex:none;display:flex;align-items:center;gap:var(--space-8);padding:0 var(--space-18);height:var(--control-lg,40px);box-sizing:border-box;border-radius:var(--radius-md);background:var(--accent,#FF5672);font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:var(--on-accent,#2E0512);cursor:pointer;user-select:none" onclick={v.onConfirm} role="button" tabindex="0">
-        <span style="width:16px;height:16px;background:var(--on-accent,#2E0512);mask:{v.leaveMask}"></span>
-        <span>Leave {t(v.noun)}</span>
+    <div class="foot">
+      <span class="cancel" onclick={() => close(onCancel)} role="button" tabindex="0">Cancel</span>
+      <span class="grow"></span>
+      <div class="confirm" onclick={() => close(onConfirm)} role="button" tabindex="0">
+        <span class="confirm-icon"></span>
+        <span>Leave {noun}</span>
       </div>
     </div>
   </div>
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p1:hover{background:var(--accent-soft,rgba(255,86,114,.1)) !important}
-  .dc-p2:hover{background:var(--accent-hover,#ff6d85) !important}
+  .layer {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-22);
+  }
+
+  .veil {
+    position: absolute;
+    inset: 0;
+    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
+    backdrop-filter: var(--oc-veil-blur, blur(4px));
+    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
+    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
+  }
+
+  .card {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    max-height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-xl);
+    background: var(--surface-1, #0e0e12);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+    overflow: hidden;
+    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  .closing .veil {
+    animation: oc-veil-out 170ms var(--ease-standard) both;
+  }
+
+  .closing .card {
+    animation: oc-dlg-out 170ms var(--ease-standard) both;
+  }
+
+  .head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-16) var(--space-18);
+    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .badge {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .badge-icon {
+    width: 19px;
+    height: 19px;
+    background: var(--ink-2, #b9b9c6);
+    mask: var(--icon-leave) center/contain no-repeat;
+  }
+
+  .titles {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .title {
+    font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .subtitle {
+    font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .close {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .close:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .close-icon {
+    width: 15px;
+    height: 15px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-close) center/contain no-repeat;
+  }
+
+  .body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--space-32) var(--space-18);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-32);
+  }
+
+  .copy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-14);
+    min-width: 0;
+    padding-inline: var(--space-14);
+  }
+
+  .question {
+    font: var(--weight-bold) var(--text-2xl) / 1.3 var(--font-sans);
+    letter-spacing: var(--tracking-tight);
+    color: var(--ink, #ececf1);
+    text-wrap: pretty;
+  }
+
+  .name {
+    color: var(--accent-bright, #ff8298);
+  }
+
+  .text {
+    font: var(--weight-regular) var(--text-base) / 1.55 var(--font-sans);
+    color: var(--ink-2, #b9b9c6);
+    text-wrap: pretty;
+  }
+
+  .foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: var(--space-16) var(--space-18);
+    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .cancel {
+    flex: none;
+    padding: var(--space-10) var(--space-14);
+    border-radius: var(--radius-md);
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .cancel:hover {
+    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+  }
+
+  .grow {
+    flex: 1;
+  }
+
+  .confirm {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: 0 var(--space-18);
+    height: var(--control-lg, 40px);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--accent, #ff5672);
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--on-accent, #2e0512);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .confirm:hover {
+    background: var(--accent-hover, #ff6d85);
+  }
+
+  .confirm-icon {
+    width: 16px;
+    height: 16px;
+    background: var(--on-accent, #2e0512);
+    mask: var(--icon-leave) center/contain no-repeat;
+  }
 </style>

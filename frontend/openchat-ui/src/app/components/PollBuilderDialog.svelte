@@ -1,113 +1,598 @@
-<!-- Generated from lib/PollBuilderDialog.dc.html (source hash 4e7ef431) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Poll builder dialog (composer + → Poll). Question first; answers keep one empty row at the end (up to 10, drag/remove);
+     duration pills; settings in a summary row that expands in place; live preview beside the form at ≥960px.
+     Publish → onPublish(poll) (host closes and shows "Poll sent · Undo"). Closing with content asks "Discard this poll?".
+     Ctrl/⌘+Enter publishes; Enter in an answer moves to the next one. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './PollBuilderDialog.logic.js';
+  import { onMount } from 'svelte';
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
   import PollMessage from '../../lib/components/PollMessage.svelte';
   import SortableInputList from '../../lib/components/SortableInputList.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
 
+  const Q_MAX = 250;
+  const A_MAX = 75;
+  const DURATIONS: [string, number][] = [
+    ['1 hour', 3600e3],
+    ['6 hours', 6 * 3600e3],
+    ['1 day', 86400e3],
+    ['3 days', 3 * 86400e3],
+    ['1 week', 7 * 86400e3],
+    ['1 month', 30 * 86400e3],
+  ];
+
+  export interface PollDraft {
+    question: string;
+    options: { label: string; votes: number }[];
+    multiple: boolean;
+    publicVotes: boolean;
+    canChange: boolean;
+    hideResults: boolean;
+    endsIn: string;
+    endsAt: number;
+  }
+
   interface Props {
     z?: number;
+    /** Show the live preview beside the form on wide screens. */
     preview?: boolean;
-    onPublish?: (poll: { question: string; options: { label: string; votes: number }[]; multiple: boolean; publicVotes: boolean; canChange: boolean; hideResults: boolean; endsIn: string; endsAt: number }) => void;
+    onPublish?: (poll: PollDraft) => void;
     onClose?: () => void;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { z = 80, preview = true, onPublish, onClose }: Props = $props();
+
+  let question = $state('');
+  let answers = $state<string[]>(['', '']);
+  let duration = $state(2);
+  let publicVotes = $state(false);
+  let multiple = $state(false);
+  let locked = $state(false);
+  let hideResults = $state(false);
+  let settingsOpen = $state(false);
+  let confirming = $state(false);
+  let vw = $state(typeof window === 'undefined' ? 1200 : window.innerWidth);
+
+  let box: HTMLDivElement;
+  let questionField = $state<HTMLTextAreaElement>();
+
+  const wide = $derived(vw >= 960 && preview);
+  const clean = $derived(answers.map((x) => x.trim()));
+  const filled = $derived(clean.filter(Boolean));
+  const isDup = (x: string, i: number) => !!x && clean.findIndex((y) => y.toLowerCase() === x.toLowerCase()) !== i;
+  const hasDup = $derived(clean.some(isDup));
+  const ok = $derived(!!question.trim() && filled.length >= 2 && !hasDup);
+  const end = $derived(new Date(Date.now() + DURATIONS[duration][1]));
+  const reason = $derived(
+    !question.trim()
+      ? 'Add a question'
+      : filled.length < 2
+        ? 'Add at least two answers'
+        : hasDup
+          ? 'Answers must be different'
+          : `Ready · ends ${end.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}, ${end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`,
+  );
+
+  const settings = $derived([
+    { label: 'Public votes', help: 'Everyone can see who voted for what. Off: votes are anonymous.', on: publicVotes, toggle: () => (publicVotes = !publicVotes) },
+    { label: 'Allow multiple answers', help: 'People can pick more than one answer.', on: multiple, toggle: () => (multiple = !multiple) },
+    { label: 'Lock votes', help: "Once someone votes, they can't change it.", on: locked, toggle: () => (locked = !locked) },
+    { label: 'Hide results until it ends', help: 'Nobody sees the results until the poll closes.', on: hideResults, toggle: () => (hideResults = !hideResults) },
+  ]);
+  const summary = $derived(
+    [
+      publicVotes ? 'Public votes' : 'Anonymous',
+      multiple ? 'Multiple answers' : 'One answer',
+      locked ? 'Votes locked' : 'Can change vote',
+      hideResults ? 'Results hidden until it ends' : 'Results visible',
+    ].join(' · '),
+  );
+
+  // question field grows with its content (no fixed rows)
+  function grow(t: HTMLTextAreaElement | undefined) {
+    if (!t) return;
+    t.style.height = 'auto';
+    t.style.height = `${t.scrollHeight}px`;
+  }
+
+  function publish() {
+    if (!ok) return;
+    onPublish?.({
+      question: question.trim(),
+      options: filled.map((label) => ({ label, votes: 0 })),
+      multiple,
+      publicVotes,
+      canChange: !locked,
+      hideResults,
+      endsIn: DURATIONS[duration][0],
+      endsAt: end.getTime(),
+    });
+  }
+
+  // closing with content asks first; an empty poll just closes
+  function requestClose() {
+    if (question.trim() || filled.length) confirming = true;
+    else onClose?.();
+  }
+
+  function onKey(e: KeyboardEvent) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      publish();
+      return;
+    }
+    const target = e.target as HTMLElement;
+    if (e.key === 'Enter' && target.tagName === 'INPUT') {
+      e.preventDefault();
+      const answerInputs = () => [...box.querySelectorAll<HTMLInputElement>('input[aria-label^="Answer"]')];
+      const i = answerInputs().indexOf(target as HTMLInputElement);
+      setTimeout(() => answerInputs()[i + 1]?.focus(), 0);
+    }
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      if (confirming) confirming = false;
+      else requestClose();
+    }
+  }
+
+  onMount(() => {
+    const resize = () => {
+      grow(questionField);
+      vw = window.innerWidth;
+    };
+    window.addEventListener('resize', resize);
+    const focusTimer = setTimeout(() => {
+      resize();
+      box.querySelector('textarea')?.focus();
+    }, 60);
+    return () => {
+      clearTimeout(focusTimer);
+      window.removeEventListener('resize', resize);
+    };
+  });
 </script>
 
-<div style="position:fixed;inset:0;z-index:{v.z};display:flex;align-items:center;justify-content:center;padding:24px">
-  <div style="position:absolute;inset:0;background:var(--scrim);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)" onclick={v.onClose} aria-hidden="true"></div>
-  <div style="position:relative;width:100%;max-width:{v.dlgW};max-height:100%;outline:none;display:flex;flex-direction:column;overflow:hidden;border-radius:var(--radius-xl,22px);background:var(--surface-1,#0e0e12);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),0 24px 64px rgba(0,0,0,.45)" use:ref={v.boxRef} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label="Create a poll" onkeydown={v.onKey}>
-          <div style="flex:none;display:flex;align-items:center;gap:12px;height:var(--header-h,66px);box-sizing:border-box;padding:0 12px 0 22px;border-bottom:1px solid var(--line-1,rgba(255,255,255,.07))">
-            <span style="flex:1;font:700 17px/1 var(--font-sans);color:var(--ink,#ECECF1)">Create a poll</span>
-            <IconButton variant="ghost" icon="close" label="Close" onClick={v.onClose}></IconButton>
+<div class="layer" style:z-index={z}>
+  <div class="scrim" onclick={requestClose} aria-hidden="true"></div>
+  <div class="dialog" class:wide bind:this={box} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label="Create a poll" onkeydown={onKey}>
+    <div class="header">
+      <span class="heading">Create a poll</span>
+      <IconButton variant="ghost" icon="close" label="Close" onClick={requestClose} />
+    </div>
+    <div class="content">
+      <div class="form">
+        <div class="section">
+          <label class="label" for="poll-question">Question</label>
+          <div class="question">
+            <textarea
+              id="poll-question"
+              bind:this={questionField}
+              rows="2"
+              data-autogrow=""
+              value={question}
+              oninput={(e) => {
+                grow(e.currentTarget);
+                question = e.currentTarget.value.slice(0, Q_MAX);
+              }}
+              placeholder="What do you want to ask?"
+              aria-label="Poll question"
+            ></textarea>
+            {#if Q_MAX - question.length <= 40}<span class="left">{Q_MAX - question.length}</span>{/if}
           </div>
-          <div style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:{v.grid}">
-            <div style="display:flex;flex-direction:column;gap:22px;padding:20px 22px 22px;min-width:0">
-              <div style="display:flex;flex-direction:column;gap:8px">
-                <label style="font:600 13px/1 var(--font-sans);color:var(--ink-2,#C9C9D4)">Question</label>
-                <div style="display:flex;align-items:flex-start;gap:8px;padding:12px 14px;border-radius:12px;background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1))">
-                  <textarea style="flex:1;min-width:0;resize:none;overflow:hidden;min-height:44px;border:0;outline:none;background:transparent;padding:0;font:600 15px/1.45 var(--font-sans);color:var(--ink,#ECECF1)" rows="2" data-autogrow="" value={v.q} oninput={v.onQ} placeholder="What do you want to ask?" aria-label="Poll question"></textarea>
-                  <span style="display:{v.qCountShow};font:500 11.5px/1 var(--font-mono);color:var(--ink-4,#8A8A99)">{t(v.qLeft)}</span>
-                </div>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:8px">
-                <div style="display:flex;align-items:baseline;justify-content:space-between"><label style="font:600 13px/1 var(--font-sans);color:var(--ink-2,#C9C9D4)">Answers</label><span style="font:400 12px/1 var(--font-sans);color:var(--ink-4,#8A8A99)">{t(v.ansHint)}</span></div>
-                <div style="display:flex;flex-direction:column;gap:6px">
-                  <SortableInputList values={v.ansValues} onChange={v.onAnsList} min={2} max={10} maxLength={v.ansMax} itemLabel="Answer" label="Poll answers"></SortableInputList>
-                </div>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:10px">
-                <label style="font:600 13px/1 var(--font-sans);color:var(--ink-2,#C9C9D4)">Duration</label>
-                <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px" role="radiogroup" aria-label="Poll duration">
-                  {#each v.durations ?? [] as m, i0}
-                    <span style="display:flex;align-items:center;justify-content:center;height:34px;padding:0 4px;white-space:nowrap;overflow:hidden;border-radius:17px;background:{m.bg};box-shadow:{m.ring};font:600 12.5px/1 var(--font-sans);letter-spacing:-.01em;color:{m.ink};cursor:pointer;user-select:none" onclick={m.pick} role="radio" aria-checked={m.checked} tabindex="0">{t(m.label)}</span>
-                  {/each}
-                </div>
-              </div>
-              {#if v.isFull}<div style="display:flex;flex-direction:column;gap:4px">
-                <label style="font:600 13px/1 var(--font-sans);color:var(--ink-2,#C9C9D4);padding-bottom:6px">Settings</label>
-                {#each v.settings ?? [] as s, i1}
-                  <div style="display:flex;align-items:flex-start;gap:14px;padding:10px 0">
-                    <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:600 13.5px/1.3 var(--font-sans);color:var(--ink,#ECECF1)">{t(s.label)}</span><span style="font:400 12.5px/1.45 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">{t(s.help)}</span></span>
-                    <Toggle on={s.on} label="" onChange={s.toggle}></Toggle>
-                  </div>
-                {/each}
-              </div>{/if}
-              {#if v.isDisclosure}
-                <div style="display:flex;flex-direction:column;border-radius:12px;background:var(--overlay-1,rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-                  <span style="display:flex;align-items:center;gap:10px;min-height:48px;padding:8px 14px;cursor:pointer" onclick={v.toggleOpen} role="button" tabindex="0" aria-expanded={v.openStr}>
-                    <span style="width:16px;height:16px;background:var(--ink-3,#9A9AA8);mask:var(--icon-gear) center/contain no-repeat"></span>
-                    <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:600 13.5px/1.2 var(--font-sans);color:var(--ink,#ECECF1)">Settings</span><span style="font:400 12px/1.35 var(--font-sans);color:var(--ink-3,#9A9AA8)">{t(v.summary)}</span></span>
-                    <span style="width:12px;height:12px;background:var(--ink-3,#9A9AA8);mask:var(--icon-chevron-down) center/contain no-repeat;transform:{v.chev};transition:transform var(--duration-base,.2s)"></span>
-                  </span>
-                  {#if v.open}<div style="display:flex;flex-direction:column;padding:0 14px 6px;border-top:1px solid var(--line-1,rgba(255,255,255,.07))">{#each v.settings ?? [] as s, i2}
-                  <div style="display:flex;align-items:flex-start;gap:14px;padding:10px 0">
-                    <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:600 13.5px/1.3 var(--font-sans);color:var(--ink,#ECECF1)">{t(s.label)}</span><span style="font:400 12.5px/1.45 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">{t(s.help)}</span></span>
-                    <Toggle on={s.on} label="" onChange={s.toggle}></Toggle>
-                  </div>
-                {/each}</div>{/if}
-                </div>
-              {/if}
-              {#if v.isChips}
-                <div style="display:flex;flex-direction:column;gap:10px">
-                  <label style="font:600 13px/1 var(--font-sans);color:var(--ink-2,#C9C9D4)">Settings</label>
-                  <div style="display:flex;flex-wrap:wrap;gap:6px">
-                    {#each v.settings ?? [] as s, i3}
-                      <span style="display:flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 10px;border-radius:17px;background:{s.bg};box-shadow:{s.ring};font:600 12.5px/1 var(--font-sans);color:{s.ink};cursor:pointer;user-select:none" onclick={s.toggle} role="switch" aria-checked={s.onStr} tabindex="0" title={s.help}><span style="width:14px;height:14px;background:currentColor;mask:{s.mask}"></span>{t(s.label)}</span>
-                    {/each}
-                  </div>
-                  <span style="font:400 12px/1.45 var(--font-sans);color:var(--ink-4,#8A8A99);text-wrap:pretty">{t(v.chipNote)}</span>
-                </div>
-              {/if}
-            </div>
-            {#if v.hasPreview}
-              <div style="display:flex;flex-direction:column;gap:12px;padding:20px 22px;border-left:1px solid var(--line-1,rgba(255,255,255,.07));background:var(--surface-0,#07070a)">
-                <span style="font:600 10.5px/1 var(--font-mono);letter-spacing:.08em;color:var(--ink-4,#8A8A99)">PREVIEW · HOW IT LOOKS IN THE CHAT</span>
-                <PollMessage side="sent" question={v.pq} options={v.pOpts} multiple={v.multi} publicVotes={v.pub} canChange={v.change} endsIn={v.endsIn} time="now"></PollMessage>
-              </div>
-            {/if}
+        </div>
+        <div class="section">
+          <div class="label-row"><span class="label">Answers</span><span class="hint">{filled.length < 2 ? 'At least 2' : `${filled.length} of 10`}</span></div>
+          <div class="answers">
+            <SortableInputList values={answers} onChange={(vals) => (answers = [...vals, ''])} min={2} max={10} maxLength={A_MAX} itemLabel="Answer" label="Poll answers" />
           </div>
-          <div style="display:flex;align-items:center;gap:14px;padding:14px 22px;border-top:1px solid var(--line-1,rgba(255,255,255,.07))">
-            <span style="flex:1;min-width:0;font:500 12.5px/1.4 var(--font-sans);color:{v.reasonInk};text-wrap:pretty">{t(v.reason)}</span>
-            <span style="flex:none;display:flex;align-items:center;gap:8px;height:42px;padding:0 18px;border-radius:var(--radius-md,10px);background:{v.pubBg};font:600 14px/1 var(--font-sans);color:{v.pubInk};cursor:{v.pubCursor}" onclick={v.publish} role="button" tabindex={v.pubTab} aria-disabled={v.pubDisabled}><span style="width:15px;height:15px;background:currentColor;mask:var(--icon-poll) center/contain no-repeat"></span>{t(v.pubLabel)}</span>
+        </div>
+        <div class="section durations-section">
+          <span class="label">Duration</span>
+          <div class="durations" role="radiogroup" aria-label="Poll duration">
+            {#each DURATIONS as [label], i}
+              <span class="duration" class:on={i === duration} onclick={() => (duration = i)} role="radio" aria-checked={i === duration} tabindex="0">{label}</span>
+            {/each}
           </div>
-          {#if v.confirming}
-            <div style="position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--scrim,rgba(3,3,6,.6));backdrop-filter:blur(4px)">
-              <div style="width:min(360px,100%);display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:18px;background:var(--surface-2,#191921);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),0 18px 48px rgba(0,0,0,.5)" role="alertdialog" aria-label="Discard this poll?">
-                <span style="font:700 16px/1.2 var(--font-sans);color:var(--ink,#ECECF1)">Discard this poll?</span>
-                <span style="font:400 13px/1.5 var(--font-sans);color:var(--ink-3,#9A9AA8)">Your question and answers will be lost.</span>
-                <div style="display:flex;justify-content:flex-end;gap:8px">
-                  <Button label="Keep editing" variant="ghost" onClick={v.keep}></Button>
-                  <Button label="Discard" variant="danger" onClick={v.discard}></Button>
+        </div>
+        <div class="settings">
+          <span class="settings-row" onclick={() => (settingsOpen = !settingsOpen)} role="button" tabindex="0" aria-expanded={settingsOpen}>
+            <span class="gear"></span>
+            <span class="settings-text"><span class="settings-title">Settings</span><span class="settings-summary">{summary}</span></span>
+            <span class="chevron" class:open={settingsOpen}></span>
+          </span>
+          {#if settingsOpen}
+            <div class="settings-list">
+              {#each settings as s}
+                <div class="setting">
+                  <span class="setting-text"><span class="setting-label">{s.label}</span><span class="setting-help">{s.help}</span></span>
+                  <Toggle on={s.on} label="" onChange={s.toggle} />
                 </div>
-              </div>
+              {/each}
             </div>
           {/if}
         </div>
+      </div>
+      {#if wide}
+        <div class="preview">
+          <span class="preview-label">PREVIEW · HOW IT LOOKS IN THE CHAT</span>
+          <PollMessage
+            side="sent"
+            question={question.trim() || 'Your question'}
+            options={(filled.length ? filled : ['Answer 1', 'Answer 2']).map((label) => ({ label, votes: 0 }))}
+            {multiple}
+            {publicVotes}
+            canChange={!locked}
+            endsIn={DURATIONS[duration][0]}
+            time="now"
+          />
+        </div>
+      {/if}
+    </div>
+    <div class="footer">
+      <span class="reason" class:ok>{reason}</span>
+      <span class="publish" class:ok onclick={publish} role="button" tabindex={ok ? 0 : -1} aria-disabled={!ok}><span class="publish-icon"></span>Publish</span>
+    </div>
+    {#if confirming}
+      <div class="confirm-layer">
+        <div class="confirm" role="alertdialog" aria-label="Discard this poll?">
+          <span class="confirm-title">Discard this poll?</span>
+          <span class="confirm-text">Your question and answers will be lost.</span>
+          <div class="confirm-actions">
+            <Button label="Keep editing" variant="ghost" onClick={() => (confirming = false)} />
+            <Button label="Discard" variant="danger" onClick={() => onClose?.()} />
+          </div>
+        </div>
+      </div>
+    {/if}
+  </div>
 </div>
+
+<style>
+  .layer {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--scrim);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .dialog {
+    position: relative;
+    width: 100%;
+    max-width: 540px;
+    max-height: 100%;
+    outline: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--radius-xl, 22px);
+    background: var(--surface-1, #0e0e12);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      0 24px 64px rgba(0, 0, 0, 0.45);
+  }
+
+  .dialog.wide {
+    max-width: 900px;
+  }
+
+  .header {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: var(--header-h, 66px);
+    box-sizing: border-box;
+    padding: 0 12px 0 22px;
+    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .heading {
+    flex: 1;
+    font: 700 17px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wide .content {
+    grid-template-columns: minmax(0, 1fr) 374px;
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    padding: 20px 22px 22px;
+    min-width: 0;
+  }
+
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .durations-section {
+    gap: 10px;
+  }
+
+  .label {
+    font: 600 13px/1 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .label-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .hint {
+    font: 400 12px/1 var(--font-sans);
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .question {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+  }
+
+  textarea {
+    flex: 1;
+    min-width: 0;
+    resize: none;
+    overflow: hidden;
+    min-height: 44px;
+    border: 0;
+    outline: none;
+    background: transparent;
+    padding: 0;
+    font: 600 15px/1.45 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .left {
+    font: 500 11.5px/1 var(--font-mono);
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .answers {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .durations {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .duration {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 34px;
+    padding: 0 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    border-radius: 17px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    font: 600 12.5px/1 var(--font-sans);
+    letter-spacing: -0.01em;
+    color: var(--ink-2, #c9c9d4);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .duration.on {
+    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
+    box-shadow: inset 0 0 0 1.5px var(--accent, #ff5672);
+    color: var(--accent-bright, #ff8298);
+  }
+
+  .settings {
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+
+  .gear {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-gear) center/contain no-repeat;
+  }
+
+  .settings-text,
+  .setting-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .settings-title {
+    font: 600 13.5px/1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .settings-summary {
+    font: 400 12px/1.35 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .chevron {
+    width: 12px;
+    height: 12px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-chevron-down) center/contain no-repeat;
+    transition: transform var(--duration-base, 0.2s);
+  }
+
+  .chevron.open {
+    transform: rotate(180deg);
+  }
+
+  .settings-list {
+    display: flex;
+    flex-direction: column;
+    padding: 0 14px 6px;
+    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .setting {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 10px 0;
+  }
+
+  .setting-label {
+    font: 600 13.5px/1.3 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .setting-help {
+    font: 400 12.5px/1.45 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    text-wrap: pretty;
+  }
+
+  .preview {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px 22px;
+    border-left: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    background: var(--surface-0, #07070a);
+  }
+
+  .preview-label {
+    font: 600 10.5px/1 var(--font-mono);
+    letter-spacing: 0.08em;
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .footer {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 22px;
+    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .reason {
+    flex: 1;
+    min-width: 0;
+    font: 500 12.5px/1.4 var(--font-sans);
+    color: var(--status-warning, #ffb03d);
+    text-wrap: pretty;
+  }
+
+  .reason.ok {
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .publish {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 18px;
+    border-radius: var(--radius-md, 10px);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    font: 600 14px/1 var(--font-sans);
+    color: var(--ink-4, #8a8a99);
+    cursor: not-allowed;
+  }
+
+  .publish.ok {
+    background: var(--accent, #ff5672);
+    color: var(--on-accent, #2e0512);
+    cursor: pointer;
+  }
+
+  .publish-icon {
+    width: 15px;
+    height: 15px;
+    background: currentColor;
+    mask: var(--icon-poll) center/contain no-repeat;
+  }
+
+  .confirm-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--scrim, rgba(3, 3, 6, 0.6));
+    backdrop-filter: blur(4px);
+  }
+
+  .confirm {
+    width: min(360px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    border-radius: 18px;
+    background: var(--surface-2, #191921);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      0 18px 48px rgba(0, 0, 0, 0.5);
+  }
+
+  .confirm-title {
+    font: 700 16px/1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .confirm-text {
+    font: 400 13px/1.5 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+</style>
