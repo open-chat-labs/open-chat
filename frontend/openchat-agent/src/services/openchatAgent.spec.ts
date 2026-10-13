@@ -1085,9 +1085,11 @@ describe("OpenChatAgent moving funds from the user's previous wallets", () => {
         return ledgers.map((ledger) => ({ previousUserId, ledger, balance: 1_000_000n }));
     }
 
-    test("finds the balances above the fee on each token in the wallets of previous canisters", async () => {
-        balances.set(`${PREVIOUS}:${ICP_LEDGER}`, FEE + 1n);
-        balances.set(`${PREVIOUS}:${LEDGER_CANISTER_CHAT}`, CHAT_FEE);
+    // The LocalUserIndex only moves an amount which exceeds the fee, so a balance must exceed twice
+    // the fee
+    test("finds the balances above twice the fee on each token in the wallets of previous canisters", async () => {
+        balances.set(`${PREVIOUS}:${ICP_LEDGER}`, 2n * FEE + 1n);
+        balances.set(`${PREVIOUS}:${LEDGER_CANISTER_CHAT}`, 2n * CHAT_FEE);
         balances.set(`${OTHER_PREVIOUS}:${LEDGER_CANISTER_CHAT}`, 5_000n);
 
         // A previous id in a MultiUser canister had no wallet of its own, and the dead ledger's
@@ -1099,7 +1101,7 @@ describe("OpenChatAgent moving funds from the user's previous wallets", () => {
         ]);
 
         expect(found).toEqual([
-            { previousUserId: PREVIOUS, ledger: ICP_LEDGER, balance: FEE + 1n },
+            { previousUserId: PREVIOUS, ledger: ICP_LEDGER, balance: 2n * FEE + 1n },
             { previousUserId: OTHER_PREVIOUS, ledger: LEDGER_CANISTER_CHAT, balance: 5_000n },
         ]);
         expect(balanceOwners).toEqual(new Set([PREVIOUS, OTHER_PREVIOUS]));

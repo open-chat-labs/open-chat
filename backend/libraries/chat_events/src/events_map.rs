@@ -9,6 +9,8 @@ pub trait EventsMap {
     fn new(stable_memory_prefix: ChatEventKeyPrefix) -> Self;
     fn get(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>>;
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>);
+    // Inserts the events, which must be in order of index, together
+    fn insert_many(&mut self, events: Vec<EventWrapperInternal<ChatEventInternal>>);
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>>;
     fn range<R: RangeBounds<EventIndex>>(
         &self,
@@ -31,6 +33,12 @@ impl EventsMap for ChatEventsMap {
 
     fn insert(&mut self, event: EventWrapperInternal<ChatEventInternal>) {
         self.0.insert(event.index, event);
+    }
+
+    fn insert_many(&mut self, events: Vec<EventWrapperInternal<ChatEventInternal>>) {
+        for event in events {
+            self.insert(event);
+        }
     }
 
     fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {

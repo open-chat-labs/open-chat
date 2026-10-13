@@ -245,6 +245,20 @@ impl ChatEventsList {
         self.events_map.remove(event_index)
     }
 
+    // Up to `max_count` of the events from `start` onwards, in order, ignoring when each expires
+    pub(crate) fn events_from(&self, start: EventIndex, max_count: usize) -> Vec<EventWrapperInternal<ChatEventInternal>> {
+        self.events_map.range(start..).take(max_count).collect()
+    }
+
+    pub(crate) fn event_at(&self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        self.events_map.get(event_index)
+    }
+
+    // Writes back events which have been changed in place, which must be in order of index
+    pub(crate) fn replace_events(&mut self, events: Vec<EventWrapperInternal<ChatEventInternal>>) {
+        self.events_map.insert_many(events);
+    }
+
     pub fn latest_event_index(&self) -> Option<EventIndex> {
         self.latest_event_index
     }
@@ -1229,8 +1243,7 @@ mod tests {
     fn export_events(events: &ChatEvents) -> Vec<(EventContext, ByteBuf)> {
         let mut exported = Vec::new();
         loop {
-            let batch =
-                events.read_events_as_bytes_from_stable_memory(exported.last().map(|(c, _): &(EventContext, _)| c.clone()));
+            let batch = events.read_events_as_bytes_from_stable_memory(exported.last().map(|(c, _): &(EventContext, _)| *c));
             if batch.is_empty() {
                 return exported;
             }

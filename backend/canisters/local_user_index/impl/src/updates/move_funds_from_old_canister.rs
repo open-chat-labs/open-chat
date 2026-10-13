@@ -194,8 +194,8 @@ struct Transfer {
     amount: u128,
 }
 
-// Looks up the old canister's balance on each ledger, returning the transfers of those with a
-// balance which exceeds the fees, and the outcomes for the rest
+// Looks up the old canister's balance on each ledger, returning the transfers of those with enough
+// to move (see `amount_to_move`), and the outcomes for the rest
 async fn transfers_to_make(
     old_canister_id: CanisterId,
     ledgers: Vec<(CanisterId, Fees)>,
@@ -261,13 +261,14 @@ fn to_u128(value: Nat) -> u128 {
     value.0.try_into().unwrap_or(u128::MAX)
 }
 
-// The amount left of `balance` once the fee, and any burn fee, are taken off it, or None if nothing
-// is left
+// The amount left of `balance` once the fee, and any burn fee, are taken off it, or None if that
+// doesn't exceed the fee. Some ledgers (eg. WUMBO, SNEED and TRAPRE) reject a transfer of an amount
+// which doesn't exceed the fee, so no ledger is sent one.
 fn amount_to_move(balance: u128, fees: Fees) -> Option<u128> {
     balance
         .checked_sub(fees.fee)
         .and_then(|b| b.checked_sub(fees.burn_fee))
-        .filter(|&amount| amount > 0)
+        .filter(|&amount| amount > fees.fee)
 }
 
 // Makes the transfer as the old canister, through the relay, of the balance less the fees. A ledger
@@ -417,8 +418,21 @@ mod tests {
             fee: 10_000,
             burn_fee: 0,
         };
-        assert_eq!(amount_to_move(10_001, fees), Some(1));
-        assert_eq!(amount_to_move(10_000, fees), None);
+        assert_eq!(amount_to_move(20_001, fees), Some(10_001));
+        assert_eq!(amount_to_move(20_000, fees), None);
+        assert_eq!(amount_to_move(10_001, fees), None);
+    }
+
+    #[test]
+    fn amount_to_move_must_exceed_the_fee() {
+        // DITTO, which burns 0.01 DITTO on each transfer, on top of a fee of 0.01 DITTO
+        let fees = Fees {
+            fee: 1_000_000,
+            burn_fee: 1_000_000,
+        };
+        assert_eq!(amount_to_move(3_000_001, fees), Some(1_000_001));
+        assert_eq!(amount_to_move(3_000_000, fees), None);
+        assert_eq!(amount_to_move(2_500_000, fees), None);
     }
 
     #[test]
