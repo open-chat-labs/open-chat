@@ -1,4 +1,5 @@
 use crate::guards::caller_is_local_user_index;
+use crate::jobs::import_groups::is_importing_into_channel;
 use crate::{
     RuntimeState, activity_notifications::handle_activity_notification, execute_update, model::events::CommunityEventInternal,
 };
@@ -61,6 +62,10 @@ fn delete_channel_impl(channel_id: ChannelId, ext_caller: Option<Caller>, state:
             .is_some_and(|member| member.role().can_delete_group())
     {
         return Err(OCErrorCode::InitiatorNotAuthorized.into());
+    }
+
+    if is_importing_into_channel(channel_id, &state.data) {
+        return Err(OCErrorCode::GroupAlreadyBeingImported.into());
     }
 
     let now = state.env.now();
