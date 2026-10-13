@@ -699,7 +699,8 @@ impl RuntimeState {
     }
 
     fn user_id_migrations_complete(&self) -> UserIdMigrationsComplete {
-        // Once this few remain, each is listed, so that any which are stuck can be found
+        // Up to this many of the canisters which haven't finished are listed, so that any which are
+        // stuck can be found
         const MAX_REMAINING_LISTED: usize = 50;
 
         let incomplete_groups: Vec<CanisterId> = self
@@ -723,21 +724,17 @@ impl RuntimeState {
             .filter(|(_, c)| !c.user_id_migration_complete)
             .map(|(canister_id, _)| *canister_id)
             .collect();
-        let remaining_count = incomplete_groups.len() + incomplete_communities.len() + incomplete_multi_user_canisters.len();
 
         UserIdMigrationsComplete {
             groups: (self.data.local_groups.len() - incomplete_groups.len()) as u32,
             communities: (self.data.local_communities.len() - incomplete_communities.len()) as u32,
             multi_user_canisters: (self.data.local_multi_user_canisters.len() - incomplete_multi_user_canisters.len()) as u32,
-            remaining: if remaining_count <= MAX_REMAINING_LISTED {
-                incomplete_groups
-                    .into_iter()
-                    .chain(incomplete_communities)
-                    .chain(incomplete_multi_user_canisters)
-                    .collect()
-            } else {
-                Vec::new()
-            },
+            remaining: incomplete_groups
+                .into_iter()
+                .chain(incomplete_communities)
+                .chain(incomplete_multi_user_canisters)
+                .take(MAX_REMAINING_LISTED)
+                .collect(),
         }
     }
 
@@ -1200,7 +1197,7 @@ pub struct UserIdMigrationsComplete {
     pub groups: u32,
     pub communities: u32,
     pub multi_user_canisters: u32,
-    // The canisters which haven't finished, listed once 50 or fewer remain
+    // Up to 50 of the canisters which haven't finished
     pub remaining: Vec<CanisterId>,
 }
 

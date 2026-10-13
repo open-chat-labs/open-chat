@@ -635,15 +635,6 @@ fn init_instruction_counts_log() -> InstructionCountsLog {
 
 #[cfg(test)]
 impl Data {
-    // Whether the jobs replacing migrated users' old ids have finished. While a group's members are
-    // still being imported the state job is certain to run again, so the community isn't complete
-    // until they have been.
-    pub fn user_id_migration_complete(&self) -> bool {
-        self.user_ids_in_state_migration.is_complete()
-            && self.user_ids_in_events_migration.is_complete()
-            && !jobs::update_user_ids_in_state::is_held(self)
-    }
-
     // A public community created by the given user, with the given channels, and a fresh stable
     // memory map
     fn new_for_tests(
@@ -878,6 +869,15 @@ impl Data {
             user_id_migration_complete_reported: false,
             public_channel_list_updated: now,
         }
+    }
+
+    // Whether the jobs replacing migrated users' old ids have finished. While a group's members are
+    // still being imported the state job is certain to run again, so the community isn't complete
+    // until they have been.
+    pub fn user_id_migration_complete(&self) -> bool {
+        self.user_ids_in_state_migration.is_complete()
+            && self.user_ids_in_events_migration.is_complete()
+            && !jobs::update_user_ids_in_state::is_held(self)
     }
 
     pub fn is_frozen(&self) -> bool {
