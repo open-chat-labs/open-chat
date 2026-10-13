@@ -18,12 +18,16 @@ fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
     let my_index = state.caller_user_index_or_trap();
     let now = state.env.now();
 
-    let Some((prefixes, blocked)) = state
-        .data
+    let data = &mut state.data;
+    let Some((prefixes, blocked)) = data
         .users
         .with_user_mut(my_index, |user| {
             let chat = user.remove_direct_chat(args.user_id, now)?;
-            let blocked = args.block_user && user.block_user(args.user_id, now);
+            // Under the other user's latest id, which the chat may not be under (see `block_user`)
+            let blocked = args
+                .block_user
+                .then(|| user.block_user(args.user_id, &data.migrated_user_ids, now))
+                .flatten();
             Some((chat.stable_memory_key_prefixes(), blocked))
         })
         .flatten()
@@ -31,8 +35,8 @@ fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
         return Response::Error(OCErrorCode::ChatNotFound.into());
     };
 
-    if blocked {
-        state.push_local_user_index_canister_event(my_index, LocalUserIndexEvent::UserBlocked(args.user_id), now);
+    if let Some(user_id) = blocked {
+        state.push_local_user_index_canister_event(my_index, LocalUserIndexEvent::UserBlocked(user_id), now);
     }
     state.garbage_collect_stable_memory_keys(my_index, prefixes);
 

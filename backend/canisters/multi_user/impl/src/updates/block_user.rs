@@ -14,13 +14,18 @@ fn block_user(args: Args) -> Response {
 
 fn block_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
     let now = state.env.now();
-    let (my_index, changed) = state.with_caller_user_mut(|index, user| -> OCResult<_> {
-        user.verify_not_suspended()?;
-        Ok((index, user.block_user(args.user_id, now)))
-    })?;
+    let my_index = state.caller_user_index_or_trap();
+    let data = &mut state.data;
+    let blocked = data
+        .users
+        .with_user_mut(my_index, |user| -> OCResult<_> {
+            user.verify_not_suspended()?;
+            Ok(user.block_user(args.user_id, &data.migrated_user_ids, now))
+        })
+        .expect("User not found")?;
 
-    if changed {
-        state.push_local_user_index_canister_event(my_index, LocalUserIndexEvent::UserBlocked(args.user_id), now);
+    if let Some(user_id) = blocked {
+        state.push_local_user_index_canister_event(my_index, LocalUserIndexEvent::UserBlocked(user_id), now);
     }
     Ok(())
 }

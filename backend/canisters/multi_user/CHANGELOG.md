@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Replace the ids users had before being migrated with their latest ids in every event ([#9929](https://github.com/open-chat-labs/open-chat/pull/9929))
 - Move each user's chats, blocks and contacts off other users' old ids ([#9933](https://github.com/open-chat-labs/open-chat/pull/9933))
 - Replace the ids of mentioned users and of direct chats replied to with their latest ids ([#9939](https://github.com/open-chat-labs/open-chat/pull/9939))
+- Move everything else users hold outside their chats' events off old user ids ([#9942](https://github.com/open-chat-labs/open-chat/pull/9942))
 
 ### Removed
 
@@ -18,6 +19,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Remove the `withdraw_btc` and `withdraw_via_one_sec` stubs ([#9921](https://github.com/open-chat-labs/open-chat/pull/9921))
 - Remove what was only needed while users were being migrated, including the `UserIdMigrated` event and reading the heap layouts kept for imported users ([#9922](https://github.com/open-chat-labs/open-chat/pull/9922))
 - Remove the endpoints the website only called for users outside MultiUser canisters: `swap_tokens`, `approve_transfer`, `withdraw_crypto_v2`, `token_swap_status` and `c2c_withdraw_from_icpswap` ([#9924](https://github.com/open-chat-labs/open-chat/pull/9924))
+
+### Fixed
+
+- Fix saving an address under a name with multi-byte characters, and renaming one to a name already in use ([#9944](https://github.com/open-chat-labs/open-chat/pull/9944))
 
 ## [[2.0.2136](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2136-multi_user)] - 2026-10-12
 

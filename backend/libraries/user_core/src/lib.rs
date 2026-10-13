@@ -11,6 +11,7 @@
 //! do afterwards back as data rather than through callbacks.
 
 pub mod event_recipient;
+pub mod mentions;
 pub mod model;
 pub mod openchat_bot;
 pub mod queries;

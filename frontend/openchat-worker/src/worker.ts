@@ -1232,7 +1232,7 @@ function getAction(
             return agent.userClient.saveCryptoAccount(payload.namedAccount);
 
         case "deleteCryptoAccount":
-            return agent.userClient.deleteCryptoAccount(payload.account);
+            return agent.userClient.deleteCryptoAccount(payload.name);
 
         case "canSwap":
             return agent.canSwap(payload.tokenLedgers);

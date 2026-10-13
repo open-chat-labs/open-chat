@@ -20,7 +20,10 @@ impl SavedCryptoAccounts {
     // name isn't already used for a different account
     pub fn save(&mut self, mut account: NamedAccount) -> OCResult {
         account.name = account.name.trim().to_string();
-        account.name.truncate(MAX_NAME_LENGTH);
+        // Truncated by characters, since truncating by bytes panics part way through a character
+        if let Some((index, _)) = account.name.char_indices().nth(MAX_NAME_LENGTH) {
+            account.name.truncate(index);
+        }
         account.account = account.account.trim().to_string();
 
         if !is_valid_account(&account.account) {
@@ -28,14 +31,16 @@ impl SavedCryptoAccounts {
         }
 
         let name_lowercase = account.name.to_lowercase();
-        for named_account in self.0.iter_mut() {
-            if named_account.account == account.account {
-                named_account.name = account.name;
-                return Ok(());
-            }
-            if named_account.name.to_lowercase() == name_lowercase {
-                return Err(OCErrorCode::NameTaken.into());
-            }
+        if self
+            .0
+            .iter()
+            .any(|named| named.account != account.account && named.name.to_lowercase() == name_lowercase)
+        {
+            return Err(OCErrorCode::NameTaken.into());
+        }
+        if let Some(named_account) = self.0.iter_mut().find(|named| named.account == account.account) {
+            named_account.name = account.name;
+            return Ok(());
         }
         if self.0.len() >= MAX_SAVED_CRYPTO_ACCOUNTS {
             return Err(OCErrorCode::LimitReached.with_message(MAX_SAVED_CRYPTO_ACCOUNTS));
@@ -133,6 +138,36 @@ mod tests {
 
         accounts.delete("renamed");
         assert!(accounts.all().is_empty());
+    }
+
+    #[test]
+    fn names_are_truncated_by_characters() {
+        let mut accounts = SavedCryptoAccounts::default();
+        // 30 characters, each two bytes long
+        let name = "ж".repeat(30);
+        accounts
+            .save(NamedAccount {
+                name,
+                account: "2vxsx-fae".to_string(),
+            })
+            .unwrap();
+        assert_eq!(accounts.all()[0].name, "ж".repeat(MAX_NAME_LENGTH));
+    }
+
+    #[test]
+    fn renaming_to_a_later_accounts_name_is_refused() {
+        let mut accounts = SavedCryptoAccounts::default();
+        let named = |name: &str, account: &str| NamedAccount {
+            name: name.to_string(),
+            account: account.to_string(),
+        };
+        let other = Principal::from_slice(&[1]).to_string();
+        accounts.save(named("first", "2vxsx-fae")).unwrap();
+        accounts.save(named("second", &other)).unwrap();
+
+        let error = accounts.save(named("SECOND", "2vxsx-fae")).unwrap_err();
+        assert!(error.matches_code(OCErrorCode::NameTaken), "{error:?}");
+        assert_eq!(accounts.all(), [named("first", "2vxsx-fae"), named("second", &other)]);
     }
 
     #[test]

@@ -1,5 +1,6 @@
 use ic_principal::Principal;
 use stable_memory_map::{KeyPrefix, PrivateReplyKey, PrivateReplyKeyPrefix, with_map, with_map_mut};
+use std::collections::HashSet;
 use std::ops::RangeInclusive;
 use types::{ChatId, MessageIndex, UserId};
 
@@ -33,6 +34,43 @@ pub fn take(group_chat_id: ChatId) -> Vec<(UserId, MessageIndex)> {
             })
             .collect()
     })
+}
+
+// The ids of the users the replies were sent to, whichever group they reply to
+pub fn user_ids() -> HashSet<UserId> {
+    with_map(|m| m.range(PrivateReplyKey::all()).map(|(key, _)| key.user_id()).collect())
+}
+
+// Replaces the id of the user each reply was sent to with `f` of it, whichever group it replies to,
+// returning how many were replaced. A reply which ends up the same as another is only stored once.
+pub fn update_user_ids(f: impl Fn(UserId) -> UserId) -> u32 {
+    let to_update: Vec<(PrivateReplyKey, PrivateReplyKey)> = with_map(|m| {
+        m.range(PrivateReplyKey::all())
+            .filter_map(|(key, _)| {
+                let user_id = key.user_id();
+                let latest = f(user_id);
+                (latest != user_id).then(|| {
+                    let new_key = PrivateReplyKeyPrefix::new(key.group_chat_id()).create_key(&(latest, key.message_index()));
+                    (key, new_key)
+                })
+            })
+            .collect()
+    });
+    if to_update.is_empty() {
+        return 0;
+    }
+    let count = to_update.len() as u32;
+    let mut new_keys: Vec<_> = to_update.iter().map(|(_, new_key)| new_key.clone()).collect();
+    // In key order, so that each node is written once
+    new_keys.sort_unstable();
+    new_keys.dedup();
+    with_map_mut(|m| {
+        for (key, _) in to_update {
+            m.remove(key);
+        }
+        m.insert_many(new_keys.into_iter().map(|key| (key, Vec::new())));
+    });
+    count
 }
 
 // The range of keys of the replies to the given group. The iterators over this range borrow the
@@ -73,6 +111,25 @@ mod tests {
         add(chat(1), user(1), 10.into());
 
         assert_eq!(take(chat(1)), vec![(user(1), 10.into())]);
+    }
+
+    #[test]
+    fn the_ids_replies_were_sent_to_are_replaced_in_every_group() {
+        init_stable_memory_map();
+        add(chat(1), user(1), 10.into());
+        add(chat(1), user(2), 20.into());
+        add(chat(2), user(1), 30.into());
+        // Ends up the same as the reply to the first group sent to user 3
+        add(chat(1), user(3), 10.into());
+
+        assert_eq!(user_ids(), HashSet::from([user(1), user(2), user(3)]));
+        let updated = update_user_ids(|user_id| if user_id == user(1) { user(3) } else { user_id });
+
+        assert_eq!(updated, 2);
+        assert_eq!(user_ids(), HashSet::from([user(2), user(3)]));
+        assert_eq!(take(chat(1)), vec![(user(3), 10.into()), (user(2), 20.into())]);
+        assert_eq!(take(chat(2)), vec![(user(3), 30.into())]);
+        assert_eq!(update_user_ids(|_| user(4)), 0);
     }
 
     fn chat(i: u8) -> ChatId {
