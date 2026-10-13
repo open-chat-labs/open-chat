@@ -77,6 +77,8 @@ mod tests {
             &format!("@UserId({}_)", u1()),
             &format!("@UserId({}", u1()),
             "@UserId(",
+            "@UserId()",
+            "@UserId(not a principal)",
         ] {
             assert_eq!(replace(text), (None, Vec::new()), "{text}");
         }
@@ -90,6 +92,22 @@ mod tests {
         assert_eq!(
             replace(&format!("123@UserId({u1})___@UserId({u2})___&&&!!!")),
             (Some(format!("123@UserId({u3})___@UserId({u2})___&&&!!!")), vec![u1, u2])
+        );
+        // Several in one text, including the same user twice
+        assert_eq!(
+            replace(&format!("Hi @UserId({u1}), @UserId({u2}) and @UserId({u1})!")),
+            (
+                Some(format!("Hi @UserId({u3}), @UserId({u2}) and @UserId({u3})!")),
+                vec![u1, u2, u1]
+            )
+        );
+        // After malformed mentions, including one left open
+        assert_eq!(
+            replace(&format!("@UserId() @UserId({u1} @UserId(not a principal) @UserId({u1})")),
+            (
+                Some(format!("@UserId() @UserId({u1} @UserId(not a principal) @UserId({u3})")),
+                vec![u1]
+            )
         );
         // Adjacent, and with text which isn't ASCII around them
         assert_eq!(
