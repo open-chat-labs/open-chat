@@ -75,7 +75,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 // leaving them members of the channel but not the community. So the job waits until the members of
 // every group being imported have been added, including any whose import was finalized by an
 // earlier version, which are only known by their jobs still being queued.
-fn is_held(data: &Data) -> bool {
+pub(crate) fn is_held(data: &Data) -> bool {
     !data.channels_importing_members.is_empty()
         || data.timer_jobs.iter().any(|(_, job)| {
             matches!(
@@ -694,6 +694,30 @@ mod tests {
         assert!(data.members.is_blocked(&new_user_id(8)));
         assert!(!data.members.is_blocked(&old_user_id(8)));
         assert!(update_user_ids_in_events::is_required(&data));
+    }
+
+    #[test]
+    fn the_community_is_not_complete_while_a_groups_members_are_being_imported() {
+        let mut data = setup();
+        let finish = |data: &mut Data| {
+            run_to_completion(data, &mut || false);
+            prepare_events_migration(data);
+            data.user_ids_in_events_migration.record_scanned_up_to(None);
+        };
+        finish(&mut data);
+        assert!(data.user_id_migration_complete());
+
+        // Both jobs are still complete, but the state job will run again once the members are in
+        data.channels_importing_members.insert(channel_id(5));
+        assert!(data.user_ids_in_state_migration.is_complete());
+        assert!(data.user_ids_in_events_migration.is_complete());
+        assert!(!data.user_id_migration_complete());
+
+        on_channel_members_imported(&mut data, channel_id(5));
+        assert!(!data.user_id_migration_complete());
+
+        finish(&mut data);
+        assert!(data.user_id_migration_complete());
     }
 
     #[test]

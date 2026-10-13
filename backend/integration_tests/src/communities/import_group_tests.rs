@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::utils::{now_millis, now_nanos, tick_many, wait_for_deleted_canister_to_be_uninstalled};
+use crate::utils::{metrics, now_millis, now_nanos, tick_many, tick_until, wait_for_deleted_canister_to_be_uninstalled};
 use crate::{CanisterIds, TestEnv, User, client};
 use candid::Principal;
 use constants::{HOUR_IN_MS, ICP_SYMBOL, ICP_TRANSFER_FEE, PRIZE_FEE_PERCENT};
@@ -162,6 +162,15 @@ fn import_group_adds_its_members_to_the_community_a_batch_at_a_time() {
                 .any(|c| c.channel_id == import_group_response.channel_id)
         );
     }
+
+    // The import restarts the jobs replacing old user ids, so that they cover the imported channel,
+    // and the community reports them complete again once they've finished
+    tick_until(env, |env| {
+        let metrics = metrics(env, community_id.into());
+        metrics["user_ids_in_state_migration"]["complete"] == true
+            && metrics["user_ids_in_events_migration"]["complete"] == true
+            && metrics["user_id_migration_complete_reported"] == true
+    });
 }
 
 #[test]

@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Write the members and proposal events updated in bulk to stable memory together ([#9940](https://github.com/open-chat-labs/open-chat/pull/9940))
 - Replace the ids users had before being migrated with their latest ids throughout the rest of the community's state ([#9943](https://github.com/open-chat-labs/open-chat/pull/9943))
 - Tell the LocalUserIndex when the jobs replacing migrated users' old ids have completed ([#9949](https://github.com/open-chat-labs/open-chat/pull/9949))
+- Don't report the community complete while a group's members are still being imported, and show what was last reported in the metrics ([#9950](https://github.com/open-chat-labs/open-chat/pull/9950))
 
 ### Removed
 
@@ -24,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Apply changes sent by other canisters while frozen by a platform moderator ([#9912](https://github.com/open-chat-labs/open-chat/pull/9912))
 - Keep the cached copy of an event up to date once earlier cached events have been removed ([#9929](https://github.com/open-chat-labs/open-chat/pull/9929))
+- Finish importing a group's members if its channel is deleted meanwhile, rather than trapping ([#9950](https://github.com/open-chat-labs/open-chat/pull/9950))
 
 ## [[2.0.2134](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2134-community)] - 2026-10-12
 

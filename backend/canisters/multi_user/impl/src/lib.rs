@@ -656,6 +656,7 @@ impl RuntimeState {
             known_multi_user_canisters: self.data.known_multi_user_canisters.len() as u32,
             user_ids_in_events_migration: self.data.user_ids_in_events_migration.metrics(),
             their_user_ids_migration: self.data.their_user_ids_migration.clone(),
+            user_id_migration_complete_reported: self.data.user_id_migration_complete_reported,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
@@ -795,6 +796,7 @@ pub struct Metrics {
     pub known_multi_user_canisters: u32,
     pub user_ids_in_events_migration: UserIdsInEventsMigrationMetrics,
     pub their_user_ids_migration: TheirUserIdsMigration,
+    pub user_id_migration_complete_reported: bool,
     pub canister_ids: CanisterIds,
 }
 

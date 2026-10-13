@@ -39,9 +39,16 @@ fn local_user_index_counts_canisters_which_have_finished_replacing_old_user_ids(
         (CanisterId::from(community_id), "communities"),
         (other_user.canister(), "multi_user_canisters"),
     ] {
-        let local_user_index = canister_ids.local_user_index(env, canister_id);
-        let before = before[&(local_user_index, kind)];
-        tick_until(env, |env| complete_count(env, local_user_index, kind) > before);
+        // The canister has finished and its report has been sent
+        let queue_length_key = if kind == "multi_user_canisters" {
+            "queued_local_user_index_events"
+        } else {
+            "queued_local_index_events"
+        };
+        tick_until(env, |env| {
+            let canister_metrics = metrics(env, canister_id);
+            canister_metrics["user_id_migration_complete_reported"] == true && canister_metrics[queue_length_key] == 0
+        });
 
         let canister_metrics = metrics(env, canister_id);
         let state_migration = if kind == "multi_user_canisters" {
@@ -51,6 +58,12 @@ fn local_user_index_counts_canisters_which_have_finished_replacing_old_user_ids(
         };
         assert_eq!(canister_metrics[state_migration]["complete"], true, "{kind}");
         assert_eq!(canister_metrics["user_ids_in_events_migration"]["complete"], true, "{kind}");
+
+        // And its LocalUserIndex counts it, the canister not having existed before. The report may
+        // still be on its way, since the queue is empty as soon as it is sent.
+        let local_user_index = canister_ids.local_user_index(env, canister_id);
+        let before = before[&(local_user_index, kind)];
+        tick_until(env, |env| complete_count(env, local_user_index, kind) > before);
     }
 }
 
