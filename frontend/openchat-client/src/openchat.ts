@@ -9301,11 +9301,11 @@ export class OpenChat {
             .catch(() => ({ kind: "failure" }));
     }
 
-    deleteCryptoAccount(account: string): Promise<DeleteCryptoAccountResponse> {
+    deleteCryptoAccount(name: string): Promise<DeleteCryptoAccountResponse> {
         return this.#worker
             .send({
                 kind: "deleteCryptoAccount",
-                account,
+                name,
             })
             .catch(() => ({ kind: "failure" }));
     }

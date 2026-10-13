@@ -1,6 +1,7 @@
 <script lang="ts">
     import { iconSize, mobileWidth, pinNumberRequiredStore } from "@client";
     import { _ } from "svelte-i18n";
+    import BookAccountOutline from "svelte-material-icons/BookAccountOutline.svelte";
     import EyeOff from "svelte-material-icons/EyeOffOutline.svelte";
     import Eye from "svelte-material-icons/EyeOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
@@ -22,6 +23,7 @@
     import Overlay from "../../Overlay.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import Accounts from "./Accounts.svelte";
+    import AddressBook from "./AddressBook.svelte";
     import ManageAccounts from "./ManageAccounts.svelte";
     import SetPinNumberModal from "./SetPinNumberModal.svelte";
 
@@ -31,6 +33,7 @@
     let { onClose }: Props = $props();
     let pinAction: PinOperation | undefined = $state(undefined);
     let managing = $state(false);
+    let showingAddressBook = $state(false);
     let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = $state("none");
     const conversionOptions = [
         { id: "none", label: $_("cryptoAccount.tokens") },
@@ -109,6 +112,19 @@
                                         {/snippet}
                                     </MenuItem>
                                 {/if}
+                                <MenuItem onclick={() => (showingAddressBook = true)}>
+                                    {#snippet icon()}
+                                        <BookAccountOutline
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"} />
+                                    {/snippet}
+                                    {#snippet text()}
+                                        <div>
+                                            <Translatable
+                                                resourceKey={i18nKey("addressBook.title")} />
+                                        </div>
+                                    {/snippet}
+                                </MenuItem>
                                 <MenuItem onclick={() => (managing = true)}>
                                     {#snippet icon()}
                                         <TuneVertical
@@ -163,6 +179,10 @@
         bind:selectedConversion
         {conversionOptions}
         onClose={() => (managing = false)} />
+{/if}
+
+{#if showingAddressBook}
+    <AddressBook onClose={() => (showingAddressBook = false)} />
 {/if}
 
 <style lang="scss">
