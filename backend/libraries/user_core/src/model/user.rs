@@ -95,7 +95,8 @@ pub struct User {
 impl User {
     // Moves what the user holds under the id of another user onto that user's new id once they are
     // migrated to a MultiUser canister: their chat with them, their block of them and their contact
-    // for them. Messages keep the id they were sent under.
+    // for them. The ids in the chat's events are replaced separately, by the MultiUser canister's
+    // `update_user_ids_in_events` job.
     pub fn migrate_their_user_id(&mut self, old_user_id: UserId, new_user_id: UserId, now: TimestampMillis) {
         if self.blocked_users.unblock(old_user_id, now) {
             self.blocked_users.block(new_user_id, now);

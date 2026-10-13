@@ -14,6 +14,8 @@ mod metrics;
 mod per_user_metrics;
 mod search_index;
 mod stable_memory;
+mod user_ids;
+mod user_ids_migration;
 
 pub use crate::chat_event_internal::*;
 pub use crate::chat_events::*;
@@ -21,6 +23,8 @@ pub use crate::chat_events_list::*;
 pub use crate::events_map::*;
 pub use crate::message_content_internal::*;
 pub use crate::metrics::*;
+pub use crate::user_ids::UserIdUpdater;
+pub use crate::user_ids_migration::*;
 
 pub trait EventPusher {
     fn push(&mut self, event: Event);
