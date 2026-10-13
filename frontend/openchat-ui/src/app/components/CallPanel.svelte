@@ -1,85 +1,565 @@
-<!-- Generated from lib/CallPanel.dc.html (source hash 956d6791) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Live call surface. Inline (in the conversation column, under the header) or full screen (`full`).
+     Layout rule: with 1–2 other people your own video floats as a draggable window that snaps to a corner;
+     with 3+ others everyone, you included, gets an equal tile. Sharing your screen puts it on stage with people in a strip.
+     Full screen hides the top bar and controls after 3s without pointer movement.
+     Host owns mute (`muted` + onToggleMute) so the call bar / mini window stay in sync; camera and sharing live here. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './CallPanel.logic.js';
+  import { onMount, tick, untrack } from 'svelte';
   import RoundIconButton from '../../lib/components/RoundIconButton.svelte';
   import VideoTile from './VideoTile.svelte';
 
+  interface Person {
+    name: string;
+    initial: string;
+    grad: string;
+    muted?: boolean;
+    /** Feed background; defaults from a palette. */
+    bg?: string;
+    /** Feed aspect ratio, width / height. */
+    ratio?: number;
+  }
+
   interface Props {
-    title?: string;
+    title: string;
+    /** The other participants. */
+    people: Person[];
     media?: 'video' | 'voice';
     full?: boolean;
     muted?: boolean;
-    people?: Array<{name:string;initial:string;grad:string;muted?:boolean}>;
+    /** Call start, ms epoch. */
     start?: number;
+    /** Header avatar; defaults to the first participant's. */
     avatarGrad?: string;
     onToggleMute?: () => void;
     onToggleFull?: (full: boolean) => void;
     panelOpen?: boolean;
+    /** Shows the details toggle (with panelOpen state). */
     onTogglePanel?: () => void;
+    /** Shows the details button when there is no onTogglePanel. */
     onDetails?: () => void;
     onMinimise?: () => void;
     onLeave?: () => void;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let {
+    title,
+    people,
+    media = 'video',
+    full = false,
+    muted = false,
+    start,
+    avatarGrad,
+    onToggleMute,
+    onToggleFull,
+    panelOpen = false,
+    onTogglePanel,
+    onDetails,
+    onMinimise,
+    onLeave,
+  }: Props = $props();
+
+  const ME = { name: 'You', initial: 'I', grad: 'linear-gradient(140deg,#FF9F45,#FF5672)', bg: 'linear-gradient(165deg,#3d434c,#22262d)' };
+  const BGS = [
+    'linear-gradient(165deg,#4a3b45,#1d1a22)',
+    'linear-gradient(165deg,#2f3a44,#1a2026)',
+    'linear-gradient(165deg,#43392f,#221d18)',
+    'linear-gradient(165deg,#3b3446,#1e1a24)',
+    'linear-gradient(165deg,#2e4038,#18221e)',
+  ];
+  const fmt = (s: number) => {
+    const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60;
+    return `${h ? `${h}:${String(m).padStart(2, '0')}` : m}:${String(x).padStart(2, '0')}`;
+  };
+
+  let root: HTMLDivElement;
+  let pip = $state<HTMLDivElement>();
+  let camOverride = $state<boolean | null>(null);
+  let sharing = $state(false);
+  let idle = $state(false);
+  let corner = $state('br');
+  let now = $state(Date.now());
+
+  let idleTimer: ReturnType<typeof setTimeout> | undefined;
+  let drag: { x: number; y: number; moved: boolean } | null = null;
+
+  const cam = $derived(camOverride ?? media === 'video');
+  const others = $derived(people.map((o, i) => ({ bg: BGS[i % BGS.length], ...o })));
+  // the active speaker rotates every 2.6s until real audio levels are wired in
+  const speaking = $derived(others.length ? Math.floor(now / 2600) % others.length : -1);
+  const pipMode = $derived(!sharing && others.length <= 2);
+
+  type Tile = { name: string; initial: string; grad: string; bg: string; ratio: number; muted: boolean; speaking: boolean; big: boolean };
+  const selfTile = $derived<Tile>({ ...ME, bg: cam ? ME.bg : '#16161c', ratio: 4 / 3, muted, speaking: false, big: false });
+  const tileOf = (o: (typeof others)[number], i: number, big = false): Tile => ({
+    name: o.name,
+    initial: o.initial,
+    grad: o.grad,
+    bg: o.bg,
+    ratio: o.ratio || 4 / 3,
+    muted: !!o.muted,
+    speaking: i === speaking,
+    big,
+  });
+  const tiles = $derived(sharing ? [] : pipMode ? others.map((o, i) => tileOf(o, i, others.length === 1)) : [...others.map((o, i) => tileOf(o, i)), selfTile]);
+  const strip = $derived(sharing ? [...others.map((o, i) => tileOf(o, i)), selfTile] : []);
+  const cols = $derived(
+    sharing || (pipMode && others.length !== 2)
+      ? 'minmax(0,1fr)'
+      : pipMode
+        ? 'repeat(2,minmax(0,1fr))'
+        : `repeat(${tiles.length <= 4 ? 2 : tiles.length <= 9 ? 3 : 4},minmax(0,1fr))`,
+  );
+
+  const panelShown = $derived(!!onTogglePanel && panelOpen);
+  const chromeHidden = $derived(full && idle);
+
+  function wake() {
+    clearTimeout(idleTimer);
+    idle = false;
+    if (full) idleTimer = setTimeout(() => (idle = true), 3000);
+  }
+
+  onMount(() => {
+    const timer = setInterval(() => (now = Date.now()), 1000);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(idleTimer);
+    };
+  });
+
+  $effect(() => {
+    full;
+    untrack(wake);
+  });
+
+  function pipDown(e: PointerEvent) {
+    if (!pip) return;
+    drag = { x: e.clientX, y: e.clientY, moved: false };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    pip.style.transition = 'none';
+  }
+
+  function pipMove(e: PointerEvent) {
+    if (!drag || !pip) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+    pip.style.transform = `translate(${dx}px,${dy}px)`;
+  }
+
+  async function pipUp() {
+    const d = drag, el = pip;
+    drag = null;
+    if (!d || !el) return;
+    const r = root.getBoundingClientRect(), b = el.getBoundingClientRect();
+    const cx = b.left + b.width / 2 - r.left, cy = b.top + b.height / 2 - r.top;
+    const v = cy < r.height / 3 ? 't' : cy > (r.height * 2) / 3 ? 'b' : 'm';
+    const h = cx < r.width / 3 ? 'l' : cx > (r.width * 2) / 3 ? 'r' : 'c';
+    // the centre is the stage: push to the nearer horizontal edge instead
+    // FLIP: positions jump between auto/px (not animatable), so glide from the drop point with a transform
+    el.style.transform = '';
+    el.style.transition = 'none';
+    corner = v === 'm' && h === 'c' ? 'm' + (cx < r.width / 2 ? 'l' : 'r') : v + h;
+    await tick();
+    const n = el.getBoundingClientRect();
+    el.style.transform = `translate(${b.left - n.left}px,${b.top - n.top}px)`;
+    void el.offsetWidth;
+    el.style.transition = 'transform 720ms cubic-bezier(.16,1,.3,1)';
+    el.style.transform = '';
+  }
+
+  const pipInset = $derived(full ? '20px' : '12px');
+  const controls = $derived([
+    { label: muted ? 'Unmute' : 'Mute', icon: muted ? 'mic-off' : 'mic', variant: muted ? 'off' : 'default', pressed: muted, press: () => onToggleMute?.() },
+    { label: cam ? 'Turn camera off' : 'Turn camera on', icon: cam ? 'video' : 'video-off', variant: cam ? 'default' : 'off', pressed: !cam, press: () => (camOverride = !cam) },
+    { label: sharing ? 'Stop sharing' : 'Share screen', icon: 'screen-share', variant: sharing ? 'on' : 'default', pressed: sharing, press: () => (sharing = !sharing) },
+    { label: 'Leave call', icon: 'phone-off', variant: 'danger', pressed: undefined, press: () => onLeave?.() },
+  ] as const);
 </script>
 
-<div style="position:relative;width:100%;height:100%;box-sizing:border-box;overflow:hidden;border-radius:{v.radius};background:#0b0b0f;cursor:{v.cursor};color:#fff" use:ref={v.rootRef} onmousemove={v.wake} data-screen-label={v.screenLabel}>
-  <div style="position:absolute;inset:{v.stageInset};display:grid;grid-template-columns:{v.cols};grid-auto-rows:minmax(0,1fr);gap:8px">
-    {#if v.sharing}
-      <div style="position:relative;border-radius:10px;overflow:hidden;background:repeating-linear-gradient(135deg,#191921 0 14px,#15151b 14px 28px);box-shadow:inset 0 0 0 2px var(--accent,#FF5672);display:flex;align-items:center;justify-content:center">
-        <span style="font:500 13px/1 var(--font-mono);color:var(--ink-4,#7C7C8C)">Your shared screen</span>
-      </div>
+<div class="call" class:full class:idle={chromeHidden} bind:this={root} onmousemove={wake} data-screen-label={full ? 'Call · full screen' : 'Call'} role="group">
+  <div class="stage" class:sharing style:grid-template-columns={cols}>
+    {#if sharing}
+      <div class="shared"><span class="shared-label">Your shared screen</span></div>
     {/if}
-    {#each v.tiles ?? [] as tk, i0}
-      <div style="position:relative;min-width:0;min-height:0"><VideoTile nameLabel={tk.name} initial={tk.initial} grad={tk.grad} feed={tk.bg} ratio={tk.ratioN} muted={tk.mutedB} speaking={tk.speakingB} big={tk.bigB}></VideoTile></div>
+    {#each tiles as tile}
+      <div class="cell"><VideoTile nameLabel={tile.name} initial={tile.initial} grad={tile.grad} feed={tile.bg} ratio={tile.ratio} muted={tile.muted} speaking={tile.speaking} big={tile.big} /></div>
     {/each}
   </div>
 
-  {#if v.hasStrip}
-    <div style="position:absolute;top:{v.stripTop};inset-inline-end:12px;bottom:{v.stripBottom};width:{v.stripW};display:flex;flex-direction:column;gap:8px;overflow:hidden">
-      {#each v.strip ?? [] as tk, i1}
-        <div style="position:relative;flex:none;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:{tk.bg};box-shadow:{tk.ring},0 8px 20px rgba(0,0,0,.4)">
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><span style="width:38px;height:38px;border-radius:50%;background:{tk.grad};display:flex;align-items:center;justify-content:center;font:700 14px/1 var(--font-sans);color:#0e0e12">{t(tk.initial)}</span></div>
-          <span style="position:absolute;inset-inline-start:6px;bottom:6px;height:20px;padding:0 8px;display:flex;align-items:center;gap:5px;border-radius:10px;background:rgba(0,0,0,.55);font:600 11px/1 var(--font-sans)"><span style="width:10px;height:10px;background:{tk.micInk};mask:{tk.micMask}"></span>{t(tk.name)}</span>
+  {#if sharing}
+    <div class="strip">
+      {#each strip as tile}
+        <div class="strip-tile" class:speaking={tile.speaking} style:background={tile.bg}>
+          <div class="strip-center"><span class="strip-avatar" style:background={tile.grad}>{tile.initial}</span></div>
+          <span class="tag"><span class="tag-mic" class:muted={tile.muted} style:mask="var(--icon-{tile.muted ? 'mic-off' : 'mic'}) center/contain no-repeat"></span>{tile.name}</span>
         </div>
       {/each}
     </div>
   {/if}
 
-  {#if v.hasPip}
-    <div style="position:absolute;z-index:2;top:{v.pipT};bottom:{v.pipB};left:{v.pipL};right:{v.pipR};translate:{v.pipTr};width:{v.pipW};aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:{v.self.bg};box-shadow:0 10px 28px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.16);cursor:grab;touch-action:none;transition:none" use:ref={v.pipRef} onpointerdown={v.pipDown} onpointermove={v.pipMove} onpointerup={v.pipUp} title="Drag to move">
-      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><span style="width:40px;height:40px;border-radius:50%;background:{v.self.grad};display:flex;align-items:center;justify-content:center;font:700 15px/1 var(--font-sans);color:#0e0e12">{t(v.self.initial)}</span></div>
-      <span style="position:absolute;inset-inline-start:6px;bottom:6px;height:20px;padding:0 8px;display:flex;align-items:center;gap:5px;border-radius:10px;background:rgba(0,0,0,.55);font:600 11px/1 var(--font-sans)"><span style="width:10px;height:10px;background:{v.self.micInk};mask:{v.self.micMask}"></span>You</span>
+  {#if pipMode}
+    <div
+      class="pip"
+      bind:this={pip}
+      style:top={corner[0] === 't' ? (full ? '70px' : '62px') : corner[0] === 'm' ? '50%' : 'auto'}
+      style:bottom={corner[0] === 'b' ? (full ? '108px' : '86px') : 'auto'}
+      style:left={corner[1] === 'l' ? pipInset : corner[1] === 'c' ? '50%' : 'auto'}
+      style:right={corner[1] === 'r' ? pipInset : 'auto'}
+      style:translate="{corner[1] === 'c' ? '-50%' : '0'} {corner[0] === 'm' ? '-50%' : '0'}"
+      style:background={selfTile.bg}
+      onpointerdown={pipDown}
+      onpointermove={pipMove}
+      onpointerup={pipUp}
+      title="Drag to move"
+      role="img"
+      aria-label="Your video"
+    >
+      <div class="strip-center"><span class="pip-avatar" style:background={selfTile.grad}>{selfTile.initial}</span></div>
+      <span class="tag"><span class="tag-mic" class:muted style:mask="var(--icon-{muted ? 'mic-off' : 'mic'}) center/contain no-repeat"></span>You</span>
     </div>
   {/if}
 
-  <div style="position:absolute;z-index:3;inset:0 0 auto;display:flex;align-items:center;gap:10px;padding:{v.barPad};background:linear-gradient(180deg,rgba(0,0,0,.6),transparent);opacity:{v.chromeOpacity};transition:opacity 300ms;pointer-events:{v.chromePointer}">
-    <span style="flex:none;width:34px;height:34px;border-radius:50%;background:{v.avatarGrad}"></span>
-    <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
-      <span style="font:700 15px/1 var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(v.title)}</span>
-      <span style="display:flex;align-items:center;gap:6px;font:600 12px/1 var(--font-mono);color:rgba(255,255,255,.8)"><span style="width:7px;height:7px;border-radius:50%;background:var(--status-online,#2EE6A8)"></span>{t(v.elapsed)} · {t(v.countLabel)}</span>
+  <div class="top chrome">
+    <span class="top-avatar" style:background={avatarGrad ?? others[0]?.grad ?? 'transparent'}></span>
+    <span class="top-text">
+      <span class="top-title">{title}</span>
+      <span class="top-meta"><span class="live-dot"></span>{fmt(Math.max(0, Math.floor((now - (start ?? now)) / 1000)))} · {others.length + 1} in call</span>
     </span>
-    {#if v.sharing}
-      <span style="flex:none;display:flex;align-items:center;gap:8px;height:30px;padding:0 6px 0 12px;border-radius:15px;background:var(--accent,#FF5672);color:var(--on-accent,#2E0512);font:700 12.5px/1 var(--font-sans);cursor:pointer" onclick={v.toggleShare} role="button" tabindex="0"><span style="width:13px;height:13px;background:currentColor;mask:var(--icon-screen-share) center/contain no-repeat"></span>You're sharing<span style="height:22px;padding:0 9px;display:flex;align-items:center;border-radius:11px;background:rgba(46,5,18,.18)">Stop</span></span>
+    {#if sharing}
+      <span class="sharing" onclick={() => (sharing = !sharing)} role="button" tabindex="0"><span class="sharing-icon"></span>You're sharing<span class="sharing-stop">Stop</span></span>
     {/if}
-    {#if v.hasPanel}<span class="dc-p0" style="flex:none;width:34px;height:34px;border-radius:50%;background:{v.panelBg};display:flex;align-items:center;justify-content:center;cursor:pointer" onclick={v.onTogglePanel} role="button" tabindex="0" aria-label={v.panelLabel} aria-pressed={v.panelOpenStr} title={v.panelLabel}><span style="width:15px;height:15px;background:#fff;mask:var(--icon-panel) center/contain no-repeat"></span></span>{/if}
-    <span class="dc-p1" style="flex:none;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;cursor:pointer" onclick={v.onMinimise} role="button" tabindex="0" aria-label="Minimise to see messages" title="Minimise to see messages"><span style="width:15px;height:15px;background:#fff;mask:var(--icon-chat) center/contain no-repeat"></span></span>
-    <span class="dc-p2" style="flex:none;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;cursor:pointer" onclick={v.onToggleFull} role="button" tabindex="0" aria-label={v.fullLabel} title={v.fullLabel}><span style="width:15px;height:15px;background:#fff;mask:{v.fullMask}"></span></span>
+    {#if !full && (onTogglePanel || onDetails)}
+      <span
+        class="top-button"
+        class:on={panelShown}
+        onclick={() => (onTogglePanel ? onTogglePanel() : onDetails?.())}
+        role="button"
+        tabindex="0"
+        aria-label={panelShown ? 'Hide details' : 'Details'}
+        aria-pressed={panelShown}
+        title={panelShown ? 'Hide details' : 'Details'}><span class="top-icon" style:mask="var(--icon-panel) center/contain no-repeat"></span></span
+      >
+    {/if}
+    <span class="top-button" onclick={() => onMinimise?.()} role="button" tabindex="0" aria-label="Minimise to see messages" title="Minimise to see messages"
+      ><span class="top-icon" style:mask="var(--icon-chat) center/contain no-repeat"></span></span
+    >
+    <span class="top-button" onclick={() => onToggleFull?.(!full)} role="button" tabindex="0" aria-label={full ? 'Exit full screen' : 'Full screen'} title={full ? 'Exit full screen' : 'Full screen'}
+      ><span class="top-icon" style:mask="var(--icon-{full ? 'minimize' : 'maximize'}) center/contain no-repeat"></span></span
+    >
   </div>
 
-  <div style="position:absolute;z-index:3;inset-inline:0;bottom:{v.pillBottom};display:flex;justify-content:center;opacity:{v.chromeOpacity};transition:opacity 300ms;pointer-events:{v.chromePointer}">
-    <div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:999px;background:rgba(14,14,18,.8);backdrop-filter:blur(12px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)" role="toolbar" aria-label="Call controls">
-      {#each v.controls ?? [] as b, i2}<RoundIconButton icon={b.icon} label={b.label} variant={b.variant} pressed={b.pressedBool} size={v.btnSizeKey} onPress={b.press}></RoundIconButton>{/each}
+  <div class="bottom chrome">
+    <div class="pill" role="toolbar" aria-label="Call controls">
+      {#each controls as b}<RoundIconButton icon={b.icon} label={b.label} variant={b.variant} pressed={b.pressed} size={full ? 'lg' : 'md'} onPress={b.press} />{/each}
     </div>
   </div>
 </div>
 
 <style>
-  .dc-p0:hover{background:rgba(0,0,0,.6) !important}
-  .dc-p1:hover{background:rgba(0,0,0,.6) !important}
-  .dc-p2:hover{background:rgba(0,0,0,.6) !important}
+  .call {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #0b0b0f;
+    cursor: default;
+    color: #fff;
+  }
+
+  .call.full {
+    border-radius: 0;
+  }
+
+  .call.idle {
+    cursor: none;
+  }
+
+  .stage {
+    position: absolute;
+    inset: 62px 12px 86px 12px;
+    display: grid;
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .stage.sharing {
+    inset: 62px 168px 86px 12px;
+  }
+
+  .full .stage {
+    inset: 70px 20px 108px 20px;
+  }
+
+  .full .stage.sharing {
+    inset: 70px 200px 108px 20px;
+  }
+
+  .shared {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: repeating-linear-gradient(135deg, #191921 0 14px, #15151b 14px 28px);
+    box-shadow: inset 0 0 0 2px var(--accent, #ff5672);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .shared-label {
+    font: 500 13px/1 var(--font-mono);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .cell {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .strip {
+    position: absolute;
+    top: 62px;
+    inset-inline-end: 12px;
+    bottom: 86px;
+    width: 144px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .full .strip {
+    top: 70px;
+    bottom: 108px;
+    width: 168px;
+  }
+
+  .strip-tile {
+    position: relative;
+    flex: none;
+    aspect-ratio: 4/3;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 8px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .strip-tile.speaking {
+    box-shadow:
+      inset 0 0 0 2px var(--accent, #ff5672),
+      0 8px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .strip-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .strip-avatar,
+  .pip-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 700 14px/1 var(--font-sans);
+    color: #0e0e12;
+  }
+
+  .pip-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+
+  .tag {
+    position: absolute;
+    inset-inline-start: 6px;
+    bottom: 6px;
+    height: 20px;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.55);
+    font: 600 11px/1 var(--font-sans);
+  }
+
+  .tag-mic {
+    width: 10px;
+    height: 10px;
+    background: #fff;
+  }
+
+  .tag-mic.muted {
+    background: var(--status-danger, #f5493d);
+  }
+
+  .pip {
+    position: absolute;
+    z-index: 2;
+    width: 281px;
+    aspect-ratio: 4/3;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow:
+      0 10px 28px rgba(0, 0, 0, 0.45),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+    cursor: grab;
+    touch-action: none;
+    transition: none;
+  }
+
+  .full .pip {
+    width: 375px;
+  }
+
+  .chrome {
+    position: absolute;
+    z-index: 3;
+    opacity: 1;
+    transition: opacity 300ms;
+    pointer-events: auto;
+  }
+
+  .idle .chrome {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .top {
+    inset: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), transparent);
+  }
+
+  .full .top {
+    padding: 14px 16px;
+  }
+
+  .top-avatar {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+  }
+
+  .top-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .top-title {
+    font: 700 15px/1 var(--font-sans);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .top-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font: 600 12px/1 var(--font-mono);
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--status-online, #2ee6a8);
+  }
+
+  .sharing {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+    padding: 0 6px 0 12px;
+    border-radius: 15px;
+    background: var(--accent, #ff5672);
+    color: var(--on-accent, #2e0512);
+    font: 700 12.5px/1 var(--font-sans);
+    cursor: pointer;
+  }
+
+  .sharing-icon {
+    width: 13px;
+    height: 13px;
+    background: currentColor;
+    mask: var(--icon-screen-share) center/contain no-repeat;
+  }
+
+  .sharing-stop {
+    height: 22px;
+    padding: 0 9px;
+    display: flex;
+    align-items: center;
+    border-radius: 11px;
+    background: rgba(46, 5, 18, 0.18);
+  }
+
+  .top-button {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .top-button.on {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .top-button:hover {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  .top-icon {
+    width: 15px;
+    height: 15px;
+    background: #fff;
+  }
+
+  .bottom {
+    inset-inline: 0;
+    bottom: 12px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .full .bottom {
+    bottom: 20px;
+  }
+
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 999px;
+    background: rgba(14, 14, 18, 0.8);
+    backdrop-filter: blur(12px);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  }
 </style>

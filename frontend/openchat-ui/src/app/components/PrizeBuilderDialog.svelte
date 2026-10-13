@@ -1,8 +1,26 @@
-<!-- Generated from lib/PrizeBuilderDialog.dc.html (source hash 5169413b) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Prize builder (composer + → Prize). Amount first; winners, expiry and claim restrictions as summary rows that open in place.
+     Preview + cost column beside the form at ≥960px. "Attach prize" → onAttach(prize): the host puts it in the composer,
+     where the user adds a caption and sends. Pass `initial` (a previous onAttach value) to edit. Ctrl/⌘+Enter attaches, Esc closes. -->
+<script lang="ts" module>
+  /** A token the prize can be paid in, with what the builder needs to price and validate it. */
+  export interface PrizeToken {
+    symbol: string;
+    mark: string;
+    gradient: string;
+    /** Wallet balance. */
+    bal: number;
+    /** Ledger fee per transfer. */
+    fee: number;
+    /** Minimum amount per winner. */
+    minPer: number;
+    /** Display decimals. */
+    dp: number;
+  }
+</script>
+
 <script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './PrizeBuilderDialog.logic.js';
-  import type { Prize } from '../../lib/types';
+  import { onMount } from 'svelte';
+  import type { Prize, PrizeDraft } from '../../lib/types';
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
   import PrizeMessage from '../../lib/components/PrizeMessage.svelte';
@@ -10,80 +28,256 @@
   import Toggle from '../../lib/components/Toggle.svelte';
   import TokenAvatar from '../../lib/components/TokenAvatar.svelte';
 
+  const DURS: [string, string, number][] = [
+    ['1 hour', '1h', 3600e3],
+    ['6 hours', '6h', 6 * 3600e3],
+    ['1 day', '1d', 86400e3],
+    ['7 days', '7d', 7 * 86400e3],
+    ['30 days', '30d', 30 * 86400e3],
+    ['90 days', '90d', 90 * 86400e3],
+  ];
+  type GateKey = 'auth' | 'diamond' | 'lifetime' | 'chit' | 'streak';
+  const GATES: { k: GateKey; label: string; icon: string; pick?: 'chit' | 'streak' }[] = [
+    { k: 'auth', label: 'Authenticated', icon: 'passkey' },
+    { k: 'diamond', label: 'Diamond', icon: 'diamond-outline' },
+    { k: 'lifetime', label: 'Lifetime Diamond', icon: 'diamond' },
+    { k: 'chit', label: 'CHIT earned', icon: 'chit', pick: 'chit' },
+    { k: 'streak', label: 'Streak', icon: 'flame', pick: 'streak' },
+  ];
+  const PICKS = {
+    streak: { title: 'Minimum streak', opts: [3, 7, 14, 30, 100, 365], fmt: (n: number) => `${n} days` },
+    chit: { title: 'Minimum CHIT earned', opts: [1000, 5000, 10000, 50000, 100000], fmt: (n: number) => `${n >= 1000 ? n / 1000 + 'k' : n} CHIT` },
+  };
+  const fmt = (n: number, dp: number) => Number(n.toFixed(dp)).toLocaleString('en-US', { maximumFractionDigits: dp });
+
   interface Props {
+    /** Tokens the prize can be paid in; the first is the default. */
+    tokens: PrizeToken[];
     z?: number;
+    /** A previous onAttach value, to edit it. */
     initial?: Prize | null;
     onAttach?: (prize: Prize) => void;
     onClose?: () => void;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { tokens, z = 80, initial = null, onAttach, onClose }: Props = $props();
+
+  const start: PrizeDraft = { tok: tokens[0].symbol, amt: '', win: '20', dur: 2, even: false, gates: {}, streak: 7, chit: 10000, ...initial?.draft };
+  let tok = $state(start.tok);
+  let amt = $state(start.amt);
+  let win = $state(start.win);
+  let dur = $state(start.dur);
+  let even = $state(start.even);
+  let gates = $state<Record<string, boolean | number>>(start.gates);
+  let streak = $state(start.streak);
+  let chit = $state(start.chit);
+  let pick = $state<'chit' | 'streak' | null>(null);
+  let tokOpen = $state(false);
+  let row = $state<'win' | 'dur' | 'who' | null>(null);
+  let vw = $state(typeof window === 'undefined' ? 1200 : window.innerWidth);
+  let amountInput: HTMLInputElement;
+
+  const T = $derived(tokens.find((t) => t.symbol === tok) ?? tokens[0]);
+  const a = $derived(parseFloat(amt) || 0);
+  const w = $derived(parseInt(win, 10) || 0);
+  const fee = $derived(T.fee * (Math.max(w, 1) + 1));
+  const min = $derived(T.minPer * Math.max(w, 1));
+  const max = $derived(Math.max(0, T.bal - fee));
+  const F = (n: number) => fmt(n, T.dp);
+  const reason = $derived(
+    w < 1 || w > 1000
+      ? 'Choose 1 to 1,000 winners'
+      : !a
+        ? 'Enter an amount'
+        : a < min
+          ? `Minimum for ${w} winners is ${F(min)} ${T.symbol}`
+          : a > max
+            ? `Not enough ${T.symbol} (max ${F(max)} after fees)`
+            : '',
+  );
+  const ok = $derived(!reason);
+  const gateOn = $derived(GATES.filter((g) => gates[g.k]));
+  const gateLabel = (g: (typeof GATES)[number]) =>
+    g.k === 'streak'
+      ? `${streak}+ day streak`
+      : g.k === 'chit'
+        ? `${PICKS.chit.fmt(chit)}+`
+        : g.k === 'diamond'
+          ? 'Diamond members'
+          : g.k === 'auth'
+            ? 'Authenticated users'
+            : g.label;
+  const total = $derived(a + fee);
+  const wide = $derived(vw >= 960);
+  const perWinner = $derived(
+    !a || !w ? 'a share of the prize' : even ? `${F(a / w)} ${T.symbol} each` : `a random amount, avg ${F(a / w)} ${T.symbol}`,
+  );
+  const rows = $derived([
+    { k: 'win' as const, icon: 'trophy', label: 'Winners', value: `${w} · ${even ? 'even split' : 'random amounts'}` },
+    { k: 'dur' as const, icon: 'timer', label: 'Ends after', value: DURS[dur][0] },
+    { k: 'who' as const, icon: 'shield', label: 'Who can claim', value: gateOn.length ? gateOn.map(gateLabel).join(' · ') : 'Anyone in this chat' },
+  ]);
+  const costRows = $derived([
+    { label: 'Prize', value: `${F(a)} ${T.symbol}` },
+    { label: 'Fees', value: `${F(fee)} ${T.symbol}` },
+    { label: 'Total', value: `${F(total)} ${T.symbol}`, strong: true },
+    { label: 'Balance after', value: `${F(Math.max(0, T.bal - total))} ${T.symbol}`, short: T.bal - total < 0 },
+  ]);
+  const quiet = $derived(ok || reason === 'Enter an amount');
+
+  function toggleGate(g: (typeof GATES)[number]) {
+    if (gates[g.k]) {
+      const n = { ...gates };
+      delete n[g.k];
+      gates = n;
+      pick = null;
+      return;
+    }
+    if (g.pick) {
+      pick = pick === g.pick ? null : g.pick;
+      return;
+    }
+    const n: Record<string, boolean | number> = { ...gates, [g.k]: true };
+    // Lifetime already counts as Diamond, so the two replace each other
+    if (g.k === 'diamond') delete n.lifetime;
+    if (g.k === 'lifetime') delete n.diamond;
+    gates = n;
+    pick = null;
+  }
+
+  function choose(n: number) {
+    if (!pick) return;
+    if (pick === 'chit') chit = n;
+    else streak = n;
+    gates = { ...gates, [pick]: true };
+    pick = null;
+  }
+
+  function attach() {
+    if (!ok || !onAttach) return;
+    onAttach({
+      token: { symbol: T.symbol, mark: T.mark, gradient: T.gradient },
+      amount: a,
+      amountText: `${F(a)} ${T.symbol}`,
+      winners: w,
+      even,
+      endsIn: DURS[dur][1],
+      endsInLabel: DURS[dur][0],
+      endsAt: Date.now() + DURS[dur][2],
+      gates: gateOn.map((g) => ({ label: gateLabel(g), met: true })),
+      fee,
+      feeText: `${F(fee)} ${T.symbol}`,
+      totalText: `${F(total)} ${T.symbol}`,
+      summary: [`${w}${w === 1 ? ' winner' : ' winners'}`, DURS[dur][1], ...(gateOn.length ? [`${gateOn.length}${gateOn.length > 1 ? ' rules' : ' rule'}`] : [])].join(' · '),
+      draft: { tok, amt, win, dur, even, gates, streak, chit },
+    });
+  }
+
+  function onKey(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      if (tokOpen) tokOpen = false;
+      else onClose?.();
+    } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      attach();
+    }
+  }
+
+  onMount(() => {
+    const t = setTimeout(() => amountInput?.focus(), 60);
+    return () => clearTimeout(t);
+  });
 </script>
 
-<div style="position:fixed;inset:0;z-index:{v.z};display:flex;align-items:center;justify-content:center;padding:24px">
-  <div style="position:absolute;inset:0;background:var(--scrim);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)" onclick={v.onClose} aria-hidden="true"></div>
-  <div style="position:relative;width:100%;max-width:{v.dlgW};max-height:100%;outline:none;display:flex;flex-direction:column;overflow:hidden;border-radius:var(--radius-xl,22px);background:var(--surface-1,#0e0e12);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),0 24px 64px rgba(0,0,0,.45)" use:ref={v.boxRef} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={v.title} onkeydown={v.onKey}>
-    <div style="flex:none;display:flex;align-items:center;gap:12px;height:var(--header-h,66px);box-sizing:border-box;padding:0 12px 0 22px;border-bottom:1px solid var(--line-1,rgba(255,255,255,.07))">
-      <span style="flex:1;font:700 17px/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.title)}</span>
-      <IconButton variant="ghost" icon="close" label="Close" onClick={v.onClose}></IconButton>
+<svelte:window bind:innerWidth={vw} />
+
+<div class="layer" style:z-index={z}>
+  <div class="scrim" onclick={() => onClose?.()} aria-hidden="true"></div>
+  <div class="dialog" class:wide data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label={initial ? 'Edit prize' : 'Create a prize'} onkeydown={onKey}>
+    <div class="head">
+      <span class="title">{initial ? 'Edit prize' : 'Create a prize'}</span>
+      <IconButton variant="ghost" icon="close" label="Close" onClick={() => onClose?.()} />
     </div>
-    <div style="flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:{v.grid}">
-      <div style="display:flex;flex-direction:column;gap:18px;padding:22px;min-width:0">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px 16px 18px;border-radius:18px;background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1))">
-          <div class="dc-p0" style="display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;border-radius:999px;background:var(--overlay-1,rgba(255,255,255,.05));cursor:pointer" onclick={v.openTok} role="button" tabindex="0" aria-label="Change prize token" aria-haspopup="dialog">
-            <TokenAvatar symbol={v.tok.symbol} mark={v.tok.mark} gradient={v.tok.gradient} size={28}></TokenAvatar>
-            <span style="font:700 14px/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.tok.symbol)}</span>
-            <span style="font:500 12px/1 var(--font-mono);color:var(--ink-4,#8A8A99)">{t(v.balText)}</span>
-            <span style="width:14px;height:14px;background:var(--ink-3,#9A9AA8);-webkit-mask:var(--icon-chevron-down) center/contain no-repeat;mask:var(--icon-chevron-down) center/contain no-repeat"></span>
+    <div class="body">
+      <div class="form">
+        <div class="amount-card">
+          <div class="token" onclick={() => (tokOpen = true)} role="button" tabindex="0" aria-label="Change prize token" aria-haspopup="dialog">
+            <TokenAvatar symbol={T.symbol} mark={T.mark} gradient={T.gradient} size={28} />
+            <span class="token-symbol">{T.symbol}</span>
+            <span class="token-bal">{F(T.bal)} {T.symbol}</span>
+            <span class="chevron"></span>
           </div>
-          <input style="width:100%;border:0;outline:none;background:transparent;text-align:center;font:700 40px/1.1 var(--font-sans);letter-spacing:-.02em;color:var(--ink,#ECECF1)" use:ref={v.amtRef} value={v.amt} oninput={v.onAmt} inputmode="decimal" placeholder="0" aria-label="Total prize amount">
-          <span style="font:400 12px/1.4 var(--font-sans);color:{v.amtHintInk};text-align:center">{t(v.amtHint)}</span>
-          <QuickAmountChips size="sm" onSelect={v.onQuick}></QuickAmountChips>
+          <input
+            class="amount"
+            bind:this={amountInput}
+            value={amt}
+            oninput={(e) => (amt = e.currentTarget.value.replace(/[^0-9.]/g, ''))}
+            inputmode="decimal"
+            placeholder="0"
+            aria-label="Total prize amount"
+          />
+          <span class="amount-hint" class:warn={!quiet}>{ok ? `Fee ${F(fee)} ${T.symbol} (${Math.max(w, 1) + 1} transfers) is added on top` : reason}</span>
+          <QuickAmountChips size="sm" onSelect={(f) => (amt = String(Number((max * f).toFixed(T.dp))))} />
         </div>
-        <div style="display:flex;flex-direction:column;border-radius:14px;background:var(--surface-2,#15151b);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07));overflow:hidden">
-          {#each v.rows ?? [] as r, i0}
-            <div style="display:flex;flex-direction:column;border-top:{r.line}">
-              <div class="dc-p1" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer" onclick={r.onClick} role="button" tabindex="0" aria-expanded={r.open}>
-                <span style="width:18px;height:18px;flex:none;background:var(--ink-3,#9A9AA8);-webkit-mask:{r.mask};mask:{r.mask}"></span>
-                <span style="flex:none;font:600 13.5px/1 var(--font-sans);color:var(--ink-2,#C9C9D4)">{t(r.label)}</span>
-                <span style="flex:1;min-width:0;text-align:right;font:500 13px/1.3 var(--font-sans);color:var(--ink,#ECECF1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{t(r.value)}</span>
-                <span style="width:14px;height:14px;flex:none;background:var(--ink-4,#8A8A99);transform:rotate({r.rot});transition:transform .2s;-webkit-mask:var(--icon-chevron-down) center/contain no-repeat;mask:var(--icon-chevron-down) center/contain no-repeat"></span>
+        <div class="rows">
+          {#each rows as r, i}
+            <div class="row" class:ruled={i > 0}>
+              <div
+                class="row-head"
+                onclick={() => {
+                  row = row === r.k ? null : r.k;
+                  pick = null;
+                }}
+                role="button"
+                tabindex="0"
+                aria-expanded={row === r.k}
+              >
+                <span class="row-icon" style:mask="var(--icon-{r.icon}) center/contain no-repeat" style:-webkit-mask="var(--icon-{r.icon}) center/contain no-repeat"></span>
+                <span class="row-label">{r.label}</span>
+                <span class="row-value">{r.value}</span>
+                <span class="row-chevron" class:open={row === r.k}></span>
               </div>
-              {#if r.isWin}
-                <div style="display:flex;flex-direction:column;gap:12px;padding:2px 16px 16px">
-                  <div style="display:flex;align-items:center;gap:6px;height:44px;padding:0 4px;border-radius:12px;background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1))">
-                    <button class="dc-p2" style="width:36px;height:36px;border:0;border-radius:9px;background:var(--overlay-1,rgba(255,255,255,.05));color:var(--ink,#ECECF1);font:500 20px/1 var(--font-sans);cursor:pointer" onclick={v.winDown} aria-label="Fewer winners">−</button>
-                    <input style="flex:1;min-width:0;border:0;outline:none;background:transparent;text-align:center;font:700 16px/1 var(--font-sans);color:var(--ink,#ECECF1)" value={v.win} oninput={v.onWin} inputmode="numeric" aria-label="Number of winners">
-                    <button class="dc-p3" style="width:36px;height:36px;border:0;border-radius:9px;background:var(--overlay-1,rgba(255,255,255,.05));color:var(--ink,#ECECF1);font:500 20px/1 var(--font-sans);cursor:pointer" onclick={v.winUp} aria-label="More winners">+</button>
+              {#if row === r.k && r.k === 'win'}
+                <div class="panel column">
+                  <div class="stepper">
+                    <button class="step" onclick={() => (win = String(Math.max(1, w - 1)))} aria-label="Fewer winners">−</button>
+                    <input value={win} oninput={(e) => (win = e.currentTarget.value.replace(/\D/g, '').slice(0, 4))} inputmode="numeric" aria-label="Number of winners" />
+                    <button class="step" onclick={() => (win = String(Math.min(1000, w + 1)))} aria-label="More winners">+</button>
                   </div>
-                  <span style="margin-top:-4px;font:400 12px/1.4 var(--font-sans);color:var(--ink-4,#8A8A99)">1 to 1,000 winners</span>
-                  <Toggle label="Split evenly" help="Off: each winner gets a random amount." on={v.even} onChange={v.onEven}></Toggle>
+                  <span class="range">1 to 1,000 winners</span>
+                  <Toggle label="Split evenly" help="Off: each winner gets a random amount." on={even} onChange={(v) => (even = v)} />
                 </div>
               {/if}
-              {#if r.isDur}
-                <div style="display:flex;flex-wrap:wrap;gap:6px;padding:2px 16px 16px">
-                  {#each v.durs ?? [] as d, i1}
-                    <button style="height:34px;padding:0 14px;border:0;border-radius:999px;background:{d.bg};box-shadow:inset 0 0 0 1px {d.ring};color:{d.ink};font:600 13px/1 var(--font-sans);cursor:pointer" onclick={d.onClick} aria-pressed={d.sel}>{t(d.label)}</button>
+              {#if row === r.k && r.k === 'dur'}
+                <div class="panel wrap">
+                  {#each DURS as d, j}
+                    <button class="choice" class:on={j === dur} onclick={() => (dur = j)} aria-pressed={j === dur}>{d[0]}</button>
                   {/each}
                 </div>
               {/if}
-              {#if r.isWho}
-                <div style="display:flex;flex-direction:column;gap:10px;padding:2px 16px 16px">
-                  <div style="display:flex;flex-wrap:wrap;gap:6px">
-                    {#each v.chips ?? [] as ch, i2}
-                      <button style="display:flex;align-items:center;gap:7px;height:34px;padding:0 12px 0 10px;border:0;border-radius:999px;background:{ch.bg};box-shadow:inset 0 0 0 1px {ch.ring};color:{ch.ink};font:600 13px/1 var(--font-sans);cursor:pointer" onclick={ch.onClick} aria-pressed={ch.on}>
-                        <span style="width:15px;height:15px;background:currentColor;-webkit-mask:{ch.mask};mask:{ch.mask}"></span>{t(ch.label)}<span style="width:12px;height:12px;background:currentColor;opacity:.8;-webkit-mask:{ch.trail};mask:{ch.trail}"></span>
+              {#if row === r.k && r.k === 'who'}
+                <div class="panel column gap10">
+                  <div class="chips">
+                    {#each GATES as g}
+                      {@const on = !!gates[g.k]}
+                      <button class="choice gate" class:on onclick={() => toggleGate(g)} aria-pressed={on}>
+                        <span class="gate-icon" style:mask="var(--icon-{g.icon}) center/contain no-repeat" style:-webkit-mask="var(--icon-{g.icon}) center/contain no-repeat"></span>{on
+                          ? gateLabel(g)
+                          : g.label}<span
+                          class="gate-trail"
+                          style:mask="var(--icon-{on ? 'close' : g.pick ? 'chevron-down' : 'plus'}) center/contain no-repeat"
+                          style:-webkit-mask="var(--icon-{on ? 'close' : g.pick ? 'chevron-down' : 'plus'}) center/contain no-repeat"
+                        ></span>
                       </button>
                     {/each}
                   </div>
-                  {#if v.pickOpen}
-                    <div style="display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:12px;background:var(--surface-1,#0e0e12);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-                      <span style="font:600 12.5px/1.3 var(--font-sans);color:var(--ink-2,#C9C9D4)">{t(v.pickTitle)}</span>
-                      <div style="display:flex;flex-wrap:wrap;gap:6px">
-                        {#each v.pickOpts ?? [] as p, i3}
-                          <button style="height:32px;padding:0 12px;border:0;border-radius:999px;background:{p.bg};box-shadow:inset 0 0 0 1px {p.ring};color:{p.ink};font:600 12.5px/1 var(--font-sans);cursor:pointer" onclick={p.onClick}>{t(p.label)}</button>
+                  {#if pick}
+                    <div class="picker">
+                      <span class="picker-title">{PICKS[pick].title}</span>
+                      <div class="chips">
+                        {#each PICKS[pick].opts as n}
+                          <button class="choice small" class:on={n === (pick === 'chit' ? chit : streak)} onclick={() => choose(n)}>{PICKS[pick].fmt(n)} or more</button>
                         {/each}
                       </div>
                     </div>
@@ -94,37 +288,56 @@
           {/each}
         </div>
       </div>
-      {#if v.wide}
-        <div style="display:flex;flex-direction:column;gap:18px;padding:22px;background:var(--surface-0,#07070a);border-left:1px solid var(--line-1,rgba(255,255,255,.07))">
-          <span style="font:600 11px/1 var(--font-mono);letter-spacing:.08em;color:var(--ink-4,#8A8A99)">PREVIEW</span>
-          <PrizeMessage token={v.tok} winners={v.winN} claimed={0} endsIn={v.durShort} endingSoon={false} gates={v.gates} state="open" note="" time="now"></PrizeMessage>
-          <div style="display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:14px;background:var(--surface-1,#0e0e12);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-            {#each v.costRows ?? [] as c, i4}
-              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-top:{c.pad};border-top:{c.line}">
-                <span style="font:{c.weight} 13px/1.3 var(--font-sans);color:{c.labelInk}">{t(c.label)}</span>
-                <span style="font:{c.weight} 13px/1.3 var(--font-mono);color:{c.valueInk}">{t(c.value)}</span>
+      {#if wide}
+        <div class="aside">
+          <span class="caption">PREVIEW</span>
+          <PrizeMessage
+            token={{ symbol: T.symbol, mark: T.mark, gradient: T.gradient }}
+            winners={Math.max(1, w)}
+            claimed={0}
+            endsIn={DURS[dur][1]}
+            endingSoon={false}
+            gates={gateOn.map((g) => ({ label: gateLabel(g), met: true }))}
+            state="open"
+            note=""
+            time="now"
+          />
+          <div class="costs">
+            {#each costRows as c, i}
+              <div class="cost" class:total={i === 2}>
+                <span class="cost-label" class:strong={c.strong}>{c.label}</span>
+                <span class="cost-value" class:strong={c.strong} class:warn={c.short}>{c.value}</span>
               </div>
             {/each}
           </div>
-          <span style="font:400 12px/1.5 var(--font-sans);color:var(--ink-4,#8A8A99);text-wrap:pretty">{t(v.perWinnerLong)}</span>
+          <span class="per-winner">Each winner gets {perWinner}. Unclaimed prizes return to you when it ends.</span>
         </div>
       {/if}
     </div>
-    <div style="flex:none;display:flex;align-items:center;gap:10px;padding:14px 22px;border-top:1px solid var(--line-1,rgba(255,255,255,.07))">
-      <span style="flex:1;min-width:0;font:500 12.5px/1.35 var(--font-sans);color:{v.footInk}">{t(v.footText)}</span>
-      <Button label="Cancel" variant="ghost" onClick={v.onClose}></Button>
-      <Button label={v.cta} disabled={v.notOk} onClick={v.attach}></Button>
+    <div class="foot">
+      <span class="foot-text" class:quiet={reason === 'Enter an amount'} class:warn={!quiet}>{ok ? `Total ${F(total)} ${T.symbol} incl. fees` : reason}</span>
+      <Button label="Cancel" variant="ghost" onClick={() => onClose?.()} />
+      <Button label={initial ? 'Update prize' : 'Attach prize'} disabled={!ok} onClick={attach} />
     </div>
-    {#if v.tokOpen}
-      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--scrim,rgba(0,0,0,.5));backdrop-filter:blur(4px)">
-        <div style="width:100%;max-width:380px;display:flex;flex-direction:column;border-radius:18px;background:var(--surface-2,#15151b);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),0 16px 40px rgba(0,0,0,.4);overflow:hidden" role="dialog" aria-label="Prize token">
-          <div style="display:flex;align-items:center;padding:0 8px 0 18px;height:54px;border-bottom:1px solid var(--line-1,rgba(255,255,255,.07))"><span style="flex:1;font:700 15px/1 var(--font-sans);color:var(--ink,#ECECF1)">Prize token</span><IconButton variant="ghost" icon="close" label="Close" onClick={v.closeTok}></IconButton></div>
-          <div style="display:flex;flex-direction:column;padding:6px">
-            {#each v.toks ?? [] as tk, i5}
-              <div class="dc-p4" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:{tk.bg};cursor:pointer" onclick={tk.onClick} role="button" tabindex="0">
-                <TokenAvatar symbol={tk.symbol} mark={tk.mark} gradient={tk.gradient} size={40}></TokenAvatar>
-                <span style="flex:1;font:600 14px/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(tk.symbol)}</span>
-                <span style="font:500 13px/1 var(--font-mono);color:var(--ink-3,#9A9AA8)">{t(tk.bal)}</span>
+    {#if tokOpen}
+      <div class="token-layer">
+        <div class="token-sheet" role="dialog" aria-label="Prize token">
+          <div class="sheet-head"><span class="sheet-title">Prize token</span><IconButton variant="ghost" icon="close" label="Close" onClick={() => (tokOpen = false)} /></div>
+          <div class="sheet-list">
+            {#each tokens as t}
+              <div
+                class="sheet-row"
+                class:current={t.symbol === T.symbol}
+                onclick={() => {
+                  tok = t.symbol;
+                  tokOpen = false;
+                }}
+                role="button"
+                tabindex="0"
+              >
+                <TokenAvatar symbol={t.symbol} mark={t.mark} gradient={t.gradient} size={40} />
+                <span class="sheet-symbol">{t.symbol}</span>
+                <span class="sheet-bal">{fmt(t.bal, t.dp)}</span>
               </div>
             {/each}
           </div>
@@ -135,12 +348,503 @@
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--overlay-2,rgba(255,255,255,.1)) !important}
-  .dc-p0:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p1:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p1:focus-visible{box-shadow:inset var(--focus-ring) !important;outline:none !important}
-  .dc-p2:hover{background:var(--overlay-2,rgba(255,255,255,.1)) !important}
-  .dc-p3:hover{background:var(--overlay-2,rgba(255,255,255,.1)) !important}
-  .dc-p4:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p4:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
+  .layer {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--scrim);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .dialog {
+    position: relative;
+    width: 100%;
+    max-width: 540px;
+    max-height: 100%;
+    outline: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--radius-xl, 22px);
+    background: var(--surface-1, #0e0e12);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      0 24px 64px rgba(0, 0, 0, 0.45);
+  }
+
+  .dialog.wide {
+    max-width: 900px;
+  }
+
+  .head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: var(--header-h, 66px);
+    box-sizing: border-box;
+    padding: 0 12px 0 22px;
+    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .title {
+    flex: 1;
+    font: 700 17px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wide .body {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 22px;
+    min-width: 0;
+  }
+
+  .amount-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 16px 18px;
+    border-radius: 18px;
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .token {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px 6px 6px;
+    border-radius: 999px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    cursor: pointer;
+  }
+
+  .token:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .token:focus-visible,
+  .sheet-row:focus-visible {
+    box-shadow: var(--focus-ring);
+    outline: none;
+  }
+
+  .token-symbol {
+    font: 700 14px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .token-bal {
+    font: 500 12px/1 var(--font-mono);
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .chevron,
+  .row-chevron {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    -webkit-mask: var(--icon-chevron-down) center/contain no-repeat;
+    mask: var(--icon-chevron-down) center/contain no-repeat;
+  }
+
+  .chevron {
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .amount {
+    width: 100%;
+    border: 0;
+    outline: none;
+    background: transparent;
+    text-align: center;
+    font: 700 40px/1.1 var(--font-sans);
+    letter-spacing: -0.02em;
+    color: var(--ink, #ececf1);
+  }
+
+  .amount-hint {
+    font: 400 12px/1.4 var(--font-sans);
+    color: var(--ink-4, #8a8a99);
+    text-align: center;
+  }
+
+  .amount-hint.warn,
+  .foot-text.warn,
+  .cost-value.warn {
+    color: var(--status-warning, #ffb03d);
+  }
+
+  .rows {
+    display: flex;
+    flex-direction: column;
+    border-radius: 14px;
+    background: var(--surface-2, #15151b);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    overflow: hidden;
+  }
+
+  .row {
+    display: flex;
+    flex-direction: column;
+    border-top: 0;
+  }
+
+  .row.ruled {
+    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .row-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+  }
+
+  .row-head:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .row-head:focus-visible {
+    box-shadow: inset var(--focus-ring);
+    outline: none;
+  }
+
+  .row-icon {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .row-label {
+    flex: none;
+    font: 600 13.5px/1 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .row-value {
+    flex: 1;
+    min-width: 0;
+    text-align: right;
+    font: 500 13px/1.3 var(--font-sans);
+    color: var(--ink, #ececf1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .row-chevron {
+    background: var(--ink-4, #8a8a99);
+    transform: rotate(0deg);
+    transition: transform 0.2s;
+  }
+
+  .row-chevron.open {
+    transform: rotate(180deg);
+  }
+
+  .panel {
+    display: flex;
+    padding: 2px 16px 16px;
+  }
+
+  .panel.column {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .panel.column.gap10 {
+    gap: 10px;
+  }
+
+  .panel.wrap {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 44px;
+    padding: 0 4px;
+    border-radius: 12px;
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .step {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    color: var(--ink, #ececf1);
+    font: 500 20px/1 var(--font-sans);
+    cursor: pointer;
+  }
+
+  .step:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .stepper input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    text-align: center;
+    font: 700 16px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .range {
+    margin-top: -4px;
+    font: 400 12px/1.4 var(--font-sans);
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .choice {
+    height: 34px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    color: var(--ink-2, #c9c9d4);
+    font: 600 13px/1 var(--font-sans);
+    cursor: pointer;
+  }
+
+  .choice.on {
+    background: color-mix(in oklch, var(--accent, #ff5672) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 55%, transparent);
+    color: var(--accent-bright, #ff8298);
+  }
+
+  .choice.gate {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 12px 0 10px;
+  }
+
+  .choice.small {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 12.5px;
+  }
+
+  .gate-icon {
+    width: 15px;
+    height: 15px;
+    background: currentColor;
+  }
+
+  .gate-trail {
+    width: 12px;
+    height: 12px;
+    background: currentColor;
+    opacity: 0.8;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .picker {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--surface-1, #0e0e12);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .picker-title {
+    font: 600 12.5px/1.3 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .aside {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 22px;
+    background: var(--surface-0, #07070a);
+    border-left: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .caption {
+    font: 600 11px/1 var(--font-mono);
+    letter-spacing: 0.08em;
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .costs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--surface-1, #0e0e12);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .cost {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .cost.total {
+    padding-top: 10px;
+    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .cost-label,
+  .cost-value {
+    font: 500 13px/1.3 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .cost-value {
+    font-family: var(--font-mono);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .cost-label.strong,
+  .cost-value.strong {
+    font-weight: 700;
+    color: var(--ink, #ececf1);
+  }
+
+  .per-winner {
+    font: 400 12px/1.5 var(--font-sans);
+    color: var(--ink-4, #8a8a99);
+    text-wrap: pretty;
+  }
+
+  .foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .foot-text {
+    flex: 1;
+    min-width: 0;
+    font: 500 12.5px/1.35 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .foot-text.quiet {
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .token-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--scrim, rgba(0, 0, 0, 0.5));
+    backdrop-filter: blur(4px);
+  }
+
+  .token-sheet {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 18px;
+    background: var(--surface-2, #15151b);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      0 16px 40px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+  }
+
+  .sheet-head {
+    display: flex;
+    align-items: center;
+    padding: 0 8px 0 18px;
+    height: 54px;
+    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .sheet-title {
+    flex: 1;
+    font: 700 15px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .sheet-list {
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+  }
+
+  .sheet-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .sheet-row.current,
+  .sheet-row:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .sheet-symbol {
+    flex: 1;
+    font: 600 14px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .sheet-bal {
+    font: 500 13px/1 var(--font-mono);
+    color: var(--ink-3, #9a9aa8);
+  }
 </style>

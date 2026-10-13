@@ -1,137 +1,736 @@
-<!-- Generated from lib/MemeFighterDialog.dc.html (source hash a1fc291c) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Meme Fighter (composer + → Meme Fighter). ≥960px: templates beside a preview + numbered fields.
+     Narrower: two steps, pick → write, Back in the header. "Add to message" (or Cmd/Ctrl+Enter) renders the meme to a PNG
+     and calls onAttach({ src, template }); the host adds it to the composer's photo tray. Esc goes back, then closes.
+     Text is fitted with the same rule in the preview and the PNG: the largest size where whole words fit each box. -->
+<script lang="ts" module>
+  export interface MemeTemplate {
+    id: string;
+    name: string;
+    /** Vibe keys it is listed under: fresh, happy, anxiety, lol, angry. */
+    vibes: string[];
+    /** Aspect ratio, width / height. */
+    ar: number;
+    /** Panel grid columns. */
+    cols: number;
+    /** Panel backgrounds (CSS colours or two-stop linear gradients), row by row. */
+    cells: string[];
+    /** Text boxes as [x, y, width, height] in % of the image. */
+    boxes: [number, number, number, number][];
+  }
+</script>
+
 <script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './MemeFighterDialog.logic.js';
+  import { onMount, tick } from 'svelte';
   import Button from '../../lib/components/Button.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
 
+  const VIBES: [string, string, string][] = [
+    ['fresh', '🌱', 'Fresh'],
+    ['happy', '😁', 'Happy'],
+    ['anxiety', '😬', 'Anxiety'],
+    ['lol', '🤣', 'LOL'],
+    ['angry', '😡', 'Angry'],
+  ];
+  const RENDER_W = 900;
+  const colsCss = (n: number) => (n === 1 ? 'minmax(0,1fr)' : `repeat(${n},minmax(0,1fr))`);
+
+  // largest size where whole words fit the box width and all lines fit its height (same rule for preview and PNG)
+  function fitBox(x: CanvasRenderingContext2D, t: MemeTemplate, b: MemeTemplate['boxes'][number], s: string, W: number) {
+    const H = W / t.ar, bw = (b[2] / 100) * W * 0.94, bh = (b[3] / 100) * H * 0.92;
+    const words = s.split(/\s+/).filter(Boolean);
+    const wrap = (size: number) => {
+      x.font = `${size}px Anton, Impact, sans-serif`;
+      const out: string[] = [];
+      let line = '';
+      for (const w of words) {
+        const tl = line ? `${line} ${w}` : w;
+        if (x.measureText(tl).width > bw && line) {
+          out.push(line);
+          line = w;
+        } else line = tl;
+      }
+      out.push(line);
+      return out;
+    };
+    let size = Math.min(bh * 0.7, 110), lines = wrap(size);
+    while (size > 10) {
+      lines = wrap(size);
+      const widest = Math.max(...lines.map((l) => x.measureText(l).width));
+      if (lines.length * size * 1.05 <= bh && widest <= bw) break;
+      size -= 1;
+    }
+    return { size, lines };
+  }
+
+  let measure: CanvasRenderingContext2D | null = null;
+  const measureCtx = () => (measure ??= document.createElement('canvas').getContext('2d')!);
+
+  // canvas render of a template + texts → PNG blob URL
+  function renderMeme(t: MemeTemplate, texts: string[]) {
+    const W = RENDER_W, H = Math.round(W / t.ar), c = document.createElement('canvas');
+    c.width = W;
+    c.height = H;
+    const x = c.getContext('2d')!, rows = Math.ceil(t.cells.length / t.cols), cw = W / t.cols, ch = H / rows;
+    x.fillStyle = '#111';
+    x.fillRect(0, 0, W, H);
+    t.cells.forEach((cell, i) => {
+      const cx = (i % t.cols) * cw, cy = Math.floor(i / t.cols) * ch;
+      const m = cell.match(/#[0-9a-f]{6}/gi);
+      if (m && m.length > 1) {
+        const g = x.createLinearGradient(cx, cy, cx + cw, cy + ch);
+        g.addColorStop(0, m[0]);
+        g.addColorStop(1, m[1]);
+        x.fillStyle = g;
+      } else x.fillStyle = cell;
+      x.fillRect(cx + 1, cy + 1, cw - 2, ch - 2);
+    });
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    x.lineJoin = 'round';
+    x.fillStyle = '#fff';
+    x.strokeStyle = '#000';
+    t.boxes.forEach((b, i) => {
+      const s = (texts[i] || '').trim().toUpperCase();
+      if (!s) return;
+      const f = fitBox(x, t, b, s, W);
+      const bx = (b[0] / 100) * W, by = (b[1] / 100) * H, bw = (b[2] / 100) * W, bh = (b[3] / 100) * H;
+      x.font = `${f.size}px Anton, Impact, sans-serif`;
+      x.lineWidth = Math.max(3, f.size / 9);
+      const lh = f.size * 1.05, top = by + bh / 2 - ((f.lines.length - 1) * lh) / 2;
+      f.lines.forEach((l, k) => {
+        x.strokeText(l, bx + bw / 2, top + k * lh);
+        x.fillText(l, bx + bw / 2, top + k * lh);
+      });
+    });
+    // blob URL, not a data URL: inline style strings split on ";" and would cut "data:image/png;base64"
+    return new Promise<string>((res) => c.toBlob((blob) => res(URL.createObjectURL(blob!)), 'image/png'));
+  }
+
   interface Props {
+    templates: MemeTemplate[];
     z?: number;
     onAttach?: (meme: { src: string; template: string }) => void;
     onClose?: () => void;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { templates, z = 80, onAttach, onClose }: Props = $props();
+
+  let box: HTMLDivElement;
+  let vw = $state(typeof window === 'undefined' ? 1200 : window.innerWidth);
+  let view = $state<'browse' | 'edit'>('browse');
+  let tplId = $state<string | null>(null);
+  let texts = $state<Record<string, string[]>>({});
+  let query = $state('');
+  let vibe = $state<string | null>(null);
+  let focused = $state<number | null>(null);
+  let busy = $state(false);
+  let fontsReady = $state(0);
+
+  const wide = $derived(vw >= 960);
+  const T = $derived(templates.find((t) => t.id === tplId) ?? templates[0]);
+  const current = $derived(texts[T.id] ?? []);
+  const list = $derived.by(() => {
+    const q = query.trim().toLowerCase();
+    return templates.filter((t) => (!q || t.name.toLowerCase().includes(q)) && (!vibe || t.vibes.includes(vibe)));
+  });
+  const picked = $derived(wide || view === 'edit');
+  const narrowEdit = $derived(!wide && view === 'edit');
+  const hasText = $derived(current.some((v) => v && v.trim()));
+
+  const boxes = $derived.by(() => {
+    fontsReady;
+    const RH = RENDER_W / T.ar, cq = (px: number) => `${((px / RENDER_W) * 100).toFixed(2)}cqw`;
+    return T.boxes.map((b, i) => {
+      const raw = (current[i] || '').trim();
+      const f = fitBox(measureCtx(), T, b, (raw || `Text ${i + 1}`).toUpperCase(), RENDER_W);
+      const bh = (b[3] / 100) * RH, used = f.lines.length * f.size * 1.05;
+      return {
+        b,
+        fs: cq(f.size),
+        padT: cq(Math.max(0, (bh - used) / 2 - f.size * 0.06)),
+        padX: cq((b[2] / 100) * RENDER_W * 0.03),
+        shown: raw ? f.lines.join('\n') : '',
+      };
+    });
+  });
+
+  // switching templates carries text into matching boxes
+  async function open(t: MemeTemplate) {
+    if (!texts[t.id]) texts = { ...texts, [t.id]: current.slice(0, t.boxes.length) };
+    tplId = t.id;
+    view = 'edit';
+    await tick();
+    box.querySelector<HTMLInputElement>('input[aria-label^="Text 1"]')?.focus();
+  }
+
+  function setText(i: number, value: string) {
+    const next = current.slice();
+    next[i] = value;
+    texts = { ...texts, [T.id]: next };
+  }
+
+  async function generate() {
+    if (!hasText || busy || !onAttach) return;
+    busy = true;
+    try {
+      await document.fonts.load('48px Anton');
+    } catch {}
+    const src = await renderMeme(T, current);
+    onAttach({ src, template: T.name });
+  }
+
+  function onKey(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      if (narrowEdit) view = 'browse';
+      else onClose?.();
+    } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      generate();
+    }
+  }
+
+  onMount(() => {
+    document.fonts?.load('48px Anton').then(() => fontsReady++).catch(() => {});
+    const t = setTimeout(() => box.querySelector('input')?.focus(), 60);
+    return () => clearTimeout(t);
+  });
 </script>
 
-<div style="position:fixed;inset:0;z-index:{v.z};display:flex;align-items:center;justify-content:center;padding:{v.outerPad}">
-  <div style="position:absolute;inset:0;background:var(--scrim);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)" onclick={v.onClose} aria-hidden="true"></div>
-  <div style="position:relative;width:100%;max-width:{v.dlgW};height:{v.dlgH};max-height:100%;outline:none;display:flex;flex-direction:column;overflow:hidden;border-radius:var(--radius-xl,22px);background:var(--surface-1,#0e0e12);color:var(--ink,#ECECF1);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),0 24px 64px rgba(0,0,0,.45)" use:ref={v.boxRef} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label="Meme Fighter" onkeydown={v.onKey}>
-    <div style="flex:none;display:flex;align-items:center;gap:8px;height:{v.headH};box-sizing:border-box;padding:0 12px 0 {v.headPadL};border-bottom:1px solid var(--line-1,rgba(255,255,255,.07))">
-      {#if v.showBack}<IconButton variant="ghost" icon="back" label="Back to templates" onClick={v.back}></IconButton>{/if}
-      <span style="flex:1;padding-left:{v.titlePad};font:700 17px/1 var(--font-sans)">{t(v.headTitle)}</span>
-      <IconButton variant="ghost" icon="close" label="Close" onClick={v.onClose}></IconButton>
-    </div>
-    {#if v.wide}
-      <div style="flex:1;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr)">
-        <div style="min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:16px;border-right:1px solid var(--line-1,rgba(255,255,255,.07))">
-          <div style="flex:none;display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-radius:11px;background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1))">
-            <span style="width:15px;height:15px;flex:none;background:var(--ink-3,#9A9AA8);-webkit-mask:var(--icon-search) center/contain no-repeat;mask:var(--icon-search) center/contain no-repeat"></span>
-            <input style="flex:1;min-width:0;border:0;outline:none;background:transparent;font:500 13.5px/1 var(--font-sans);color:var(--ink,#ECECF1)" value={v.q} oninput={v.onQ} placeholder="Search templates" aria-label="Search templates">
-          </div>
-          <div style="flex:none;display:flex;flex-wrap:wrap;gap:6px">
-            {#each v.vibes ?? [] as vb, i0}
-              <button style="display:flex;align-items:center;gap:5px;height:30px;padding:0 10px 0 8px;border:0;border-radius:999px;background:{vb.bg};box-shadow:inset 0 0 0 1px {vb.ring};color:{vb.ink};font:600 12px/1 var(--font-sans);cursor:pointer" onclick={vb.onClick} aria-pressed={vb.sel}><span style="font-size:13px;line-height:1">{t(vb.emoji)}</span>{t(vb.label)}</button>
-            {/each}
-          </div>
-          <div style="flex:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
-            {#each v.all ?? [] as tk, i1}
-              <div style="display:flex;flex-direction:column;gap:6px;cursor:pointer" onclick={tk.onClick} role="button" tabindex="0" aria-pressed={tk.sel} aria-label={tk.name}>
-                <div class="dc-p0" style="display:grid;grid-template-columns:{tk.cols};gap:2px;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#111;box-shadow:{tk.ring}">
-                  {#each tk.cells ?? [] as c, i2}<span style="background:{c}"></span>{/each}
-                </div>
-                <span style="font:600 12px/1.2 var(--font-sans);color:{tk.ink}">{t(tk.name)}</span>
-              </div>
-            {/each}
-          </div>
-          {#if v.noResults}<span style="padding:20px 0;text-align:center;font:400 13px/1.4 var(--font-sans);color:var(--ink-4,#8A8A99)">No templates match</span>{/if}
+<svelte:window bind:innerWidth={vw} />
+
+{#snippet thumbs(narrow: boolean)}
+  <div class="thumbs" class:narrow>
+    {#each list as t}
+      {@const sel = picked && t.id === T.id}
+      <div class="thumb" onclick={() => open(t)} role="button" tabindex="0" aria-pressed={narrow ? undefined : sel} aria-label={t.name}>
+        <div class="art" class:sel class:hoverable={!narrow} style:grid-template-columns={colsCss(t.cols)}>
+          {#each t.cells as cell}<span style:background={cell}></span>{/each}
         </div>
-        <div style="min-height:0;display:flex;flex-direction:column">
-          <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:18px;padding:22px">
-            <div style="position:relative;flex:none;width:100%;max-width:{v.c2Max};align-self:center;aspect-ratio:{v.ar};border-radius:14px;overflow:hidden;container-type:inline-size">
-              <div style="position:absolute;inset:0;display:grid;grid-template-columns:{v.tpl.cols};gap:2px;background:#111">
-                {#each v.tpl.cells ?? [] as c, i3}<span style="background:{c}"></span>{/each}
-              </div>
-              {#each v.boxes ?? [] as b, i4}
-                <div style="position:absolute;left:{b.x};top:{b.y};width:{b.w};height:{b.h};display:flex;align-items:center;justify-content:center;padding:0 {b.padX};box-sizing:border-box;border-radius:8px;outline:{b.cOutline};outline-offset:-2px">
-                  <span style="text-align:center;text-transform:uppercase;font:400 {b.fs}/1.05 'Anton',Impact,sans-serif;color:#fff;-webkit-text-stroke:1px #000;paint-order:stroke fill;text-shadow:0 1px 2px rgba(0,0,0,.6);word-break:normal;overflow-wrap:normal;white-space:pre-line">{t(b.shown)}</span>
-                  <span style="position:absolute;top:-1px;left:-1px;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:6px 0 6px 0;background:var(--accent,#FF5672);font:700 11px/1 var(--font-mono);color:var(--on-accent,#2E0512)">{t(b.n)}</span>
-                </div>
-              {/each}
-            </div>
-            <div style="flex:none;display:flex;flex-direction:column;gap:10px">
-              {#each v.boxes ?? [] as b, i5}
-                <label style="display:flex;align-items:center;gap:10px;height:46px;padding:0 6px 0 8px;border-radius:12px;background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1))">
-                  <span style="flex:none;min-width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:7px;background:var(--accent,#FF5672);font:700 12px/1 var(--font-mono);color:var(--on-accent,#2E0512)">{t(b.n)}</span>
-                  <input style="flex:1;min-width:0;border:0;outline:none;background:transparent;font:500 14px/1 var(--font-sans);color:var(--ink,#ECECF1)" value={b.value} oninput={b.onInput} onfocus={b.onFocus} onblur={v.blurC} placeholder={b.phLong} aria-label={b.label}>
-                </label>
-              {/each}
-            </div>
-          </div>
-          <div style="flex:none;display:flex;align-items:center;gap:10px;padding:14px 20px;border-top:1px solid var(--line-1,rgba(255,255,255,.07))">
-            <span style="flex:1;min-width:0;font:600 13px/1.35 var(--font-sans)">{t(v.tpl.name)}</span>
-            {#if v.hasText}<Button label="Clear text" variant="ghost" onClick={v.clear}></Button>{/if}
-            <Button label={v.cta} disabled={v.noText} onClick={v.generate}></Button>
+        <span class="thumb-name" class:sel>{t.name}</span>
+      </div>
+    {/each}
+  </div>
+  {#if list.length === 0}<span class="none">No templates match</span>{/if}
+{/snippet}
+
+{#snippet filters(narrow: boolean)}
+  <div class="search" class:narrow>
+    <span class="search-icon"></span>
+    <input bind:value={query} placeholder="Search templates" aria-label="Search templates" />
+  </div>
+  <div class="vibes" class:narrow>
+    {#each VIBES as [key, emoji, label]}
+      <button class="vibe" class:on={vibe === key} onclick={() => (vibe = vibe === key ? null : key)} aria-pressed={vibe === key}><span class="vibe-emoji">{emoji}</span>{label}</button>
+    {/each}
+  </div>
+{/snippet}
+
+{#snippet editor(narrow: boolean)}
+  <div class="preview" class:narrow style:max-width={T.ar < 1 ? `${Math.round((narrow ? 260 : 300) * T.ar)}px` : narrow ? '100%' : '460px'} style:aspect-ratio={String(T.ar)}>
+    <div class="cells" style:grid-template-columns={colsCss(T.cols)}>
+      {#each T.cells as cell}<span style:background={cell}></span>{/each}
+    </div>
+    {#each boxes as bx, i}
+      <div
+        class="box"
+        class:focused={focused === i}
+        style:left="{bx.b[0]}%"
+        style:top="{bx.b[1]}%"
+        style:width="{bx.b[2]}%"
+        style:height="{bx.b[3]}%"
+        style:padding="0 {bx.padX}"
+      >
+        <span class="meme-text" style:font-size={bx.fs}>{bx.shown}</span>
+        <span class="box-n">{i + 1}</span>
+      </div>
+    {/each}
+  </div>
+  <div class="fields">
+    {#each boxes as _, i}
+      <label class="field">
+        <span class="field-n">{i + 1}</span>
+        <input
+          value={current[i] || ''}
+          oninput={(e) => setText(i, e.currentTarget.value)}
+          onfocus={() => (focused = i)}
+          onblur={() => (focused = null)}
+          placeholder="Text for box {i + 1}"
+          aria-label="Text {i + 1} of {T.boxes.length}"
+        />
+      </label>
+    {/each}
+  </div>
+{/snippet}
+
+<div class="layer" class:wide style:z-index={z}>
+  <div class="scrim" onclick={() => onClose?.()} aria-hidden="true"></div>
+  <div class="dialog" bind:this={box} data-oc-managed="" tabindex="-1" role="dialog" aria-modal="true" aria-label="Meme Fighter" onkeydown={onKey}>
+    <div class="head" class:back={narrowEdit}>
+      {#if narrowEdit}<IconButton variant="ghost" icon="back" label="Back to templates" onClick={() => (view = 'browse')} />{/if}
+      <span class="title">{narrowEdit ? T.name : 'Meme Fighter'}</span>
+      <IconButton variant="ghost" icon="close" label="Close" onClick={() => onClose?.()} />
+    </div>
+    {#if wide}
+      <div class="split">
+        <div class="side">
+          {@render filters(false)}
+          {@render thumbs(false)}
+        </div>
+        <div class="main">
+          <div class="main-scroll">{@render editor(false)}</div>
+          <div class="foot">
+            <span class="foot-name">{T.name}</span>
+            {#if hasText}<Button label="Clear text" variant="ghost" onClick={() => (texts = { ...texts, [T.id]: [] })} />{/if}
+            <Button label={busy ? 'Adding…' : 'Add to message'} disabled={!hasText || busy} onClick={generate} />
           </div>
         </div>
       </div>
-    {/if}
-    {#if v.narrowBrowse}
-      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:14px 16px 20px">
-          <div style="flex:none;display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;border-radius:12px;background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1))">
-            <span style="width:16px;height:16px;flex:none;background:var(--ink-3,#9A9AA8);-webkit-mask:var(--icon-search) center/contain no-repeat;mask:var(--icon-search) center/contain no-repeat"></span>
-            <input style="flex:1;min-width:0;border:0;outline:none;background:transparent;font:500 14px/1 var(--font-sans);color:var(--ink,#ECECF1)" value={v.q} oninput={v.onQ} placeholder="Search templates" aria-label="Search templates">
-          </div>
-          <div style="flex:none;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px">
-            {#each v.vibes ?? [] as vb, i6}
-              <button style="flex:none;display:flex;align-items:center;gap:6px;height:36px;padding:0 12px 0 10px;border:0;border-radius:999px;background:{vb.bg};box-shadow:inset 0 0 0 1px {vb.ring};color:{vb.ink};font:600 13px/1 var(--font-sans);cursor:pointer" onclick={vb.onClick} aria-pressed={vb.sel}><span style="font-size:15px;line-height:1">{t(vb.emoji)}</span>{t(vb.label)}</button>
-            {/each}
-          </div>
-          <div style="flex:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
-            {#each v.all ?? [] as tk, i7}
-              <div style="display:flex;flex-direction:column;gap:7px;cursor:pointer" onclick={tk.onClick} role="button" tabindex="0" aria-label={tk.name}>
-                <div style="display:grid;grid-template-columns:{tk.cols};gap:2px;aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:#111;box-shadow:{tk.ring}">
-                  {#each tk.cells ?? [] as c, i8}<span style="background:{c}"></span>{/each}
-                </div>
-                <span style="font:600 12.5px/1.2 var(--font-sans);color:{tk.ink}">{t(tk.name)}</span>
-              </div>
-            {/each}
-          </div>
-          {#if v.noResults}<span style="padding:20px 0;text-align:center;font:400 13px/1.4 var(--font-sans);color:var(--ink-4,#8A8A99)">No templates match</span>{/if}
-        </div>
-    {/if}
-    {#if v.narrowEdit}
-      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:16px">
-          <div style="position:relative;flex:none;width:100%;max-width:{v.nMax};align-self:center;aspect-ratio:{v.ar};border-radius:12px;overflow:hidden;container-type:inline-size">
-            <div style="position:absolute;inset:0;display:grid;grid-template-columns:{v.tpl.cols};gap:2px;background:#111">
-              {#each v.tpl.cells ?? [] as c, i9}<span style="background:{c}"></span>{/each}
-            </div>
-            {#each v.boxes ?? [] as b, i10}
-              <div style="position:absolute;left:{b.x};top:{b.y};width:{b.w};height:{b.h};display:flex;align-items:center;justify-content:center;padding:0 {b.padX};box-sizing:border-box;border-radius:7px;outline:{b.cOutline};outline-offset:-2px">
-                <span style="text-align:center;text-transform:uppercase;font:400 {b.fs}/1.05 'Anton',Impact,sans-serif;color:#fff;-webkit-text-stroke:1px #000;paint-order:stroke fill;text-shadow:0 1px 2px rgba(0,0,0,.6);word-break:normal;overflow-wrap:normal;white-space:pre-line">{t(b.shown)}</span>
-                <span style="position:absolute;top:-1px;left:-1px;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;border-radius:5px 0 5px 0;background:var(--accent,#FF5672);font:700 10px/1 var(--font-mono);color:var(--on-accent,#2E0512)">{t(b.n)}</span>
-              </div>
-            {/each}
-          </div>
-          <div style="flex:none;display:flex;flex-direction:column;gap:10px">
-            {#each v.boxes ?? [] as b, i11}
-              <label style="display:flex;align-items:center;gap:10px;height:48px;padding:0 6px 0 8px;border-radius:12px;background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1))">
-                <span style="flex:none;min-width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:7px;background:var(--accent,#FF5672);font:700 12px/1 var(--font-mono);color:var(--on-accent,#2E0512)">{t(b.n)}</span>
-                <input style="flex:1;min-width:0;border:0;outline:none;background:transparent;font:500 15px/1 var(--font-sans);color:var(--ink,#ECECF1)" value={b.value} oninput={b.onInput} onfocus={b.onFocus} onblur={v.blurC} placeholder={b.phLong} aria-label={b.label}>
-              </label>
-            {/each}
-          </div>
-        </div>
-        <div style="flex:none;display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--line-1,rgba(255,255,255,.07))">
-          {#if v.hasText}<Button label="Clear" variant="ghost" onClick={v.clear}></Button>{/if}
-          <div style="flex:1;min-width:0"><Button label={v.cta} disabled={v.noText} onClick={v.generate} fullWidth={true}></Button></div>
-        </div>
+    {:else if view !== 'edit'}
+      <div class="narrow-scroll">
+        {@render filters(true)}
+        {@render thumbs(true)}
+      </div>
+    {:else}
+      <div class="narrow-scroll edit">{@render editor(true)}</div>
+      <div class="foot narrow">
+        {#if hasText}<Button label="Clear" variant="ghost" onClick={() => (texts = { ...texts, [T.id]: [] })} />{/if}
+        <div class="grow"><Button label={busy ? 'Adding…' : 'Add to message'} disabled={!hasText || busy} onClick={generate} fullWidth={true} /></div>
+      </div>
     {/if}
   </div>
 </div>
 
 <style>
-  .dc-p0:hover{box-shadow:0 0 0 2px var(--accent,#FF5672) !important}
+  .layer {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .layer.wide {
+    padding: 24px;
+  }
+
+  .scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--scrim);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .dialog {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    height: 760px;
+    max-height: 100%;
+    outline: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: var(--radius-xl, 22px);
+    background: var(--surface-1, #0e0e12);
+    color: var(--ink, #ececf1);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      0 24px 64px rgba(0, 0, 0, 0.45);
+  }
+
+  .wide .dialog {
+    max-width: 920px;
+    height: 660px;
+  }
+
+  .head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 60px;
+    box-sizing: border-box;
+    padding: 0 12px 0 22px;
+    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .wide .head {
+    height: 66px;
+  }
+
+  .head.back {
+    padding-left: 10px;
+  }
+
+  .title {
+    flex: 1;
+    padding-left: 0;
+    font: 700 17px/1 var(--font-sans);
+  }
+
+  .back .title {
+    padding-left: 4px;
+  }
+
+  .split {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+
+  .side {
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    border-right: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .search {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 11px;
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .search.narrow {
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 12px;
+  }
+
+  .search-icon {
+    width: 15px;
+    height: 15px;
+    flex: none;
+    background: var(--ink-3, #9a9aa8);
+    -webkit-mask: var(--icon-search) center/contain no-repeat;
+    mask: var(--icon-search) center/contain no-repeat;
+  }
+
+  .narrow .search-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font: 500 13.5px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .search.narrow input {
+    font-size: 14px;
+  }
+
+  .vibes {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .vibes.narrow {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+
+  .vibe {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 30px;
+    padding: 0 10px 0 8px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px transparent;
+    color: var(--ink-2, #c9c9d4);
+    font: 600 12px/1 var(--font-sans);
+    cursor: pointer;
+  }
+
+  .narrow .vibe {
+    flex: none;
+    gap: 6px;
+    height: 36px;
+    padding: 0 12px 0 10px;
+    font-size: 13px;
+  }
+
+  .vibe.on {
+    background: color-mix(in oklch, var(--accent, #ff5672) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 55%, transparent);
+    color: var(--accent-bright, #ff8298);
+  }
+
+  .vibe-emoji {
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  .narrow .vibe-emoji {
+    font-size: 15px;
+  }
+
+  .thumbs {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .thumbs.narrow {
+    gap: 12px;
+  }
+
+  .thumb {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .narrow .thumb {
+    gap: 7px;
+  }
+
+  .art {
+    display: grid;
+    gap: 2px;
+    aspect-ratio: 4/3;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #111;
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .narrow .art {
+    border-radius: 12px;
+  }
+
+  .art.sel,
+  .art.hoverable:hover {
+    box-shadow: 0 0 0 2px var(--accent, #ff5672);
+  }
+
+  .thumb-name {
+    font: 600 12px/1.2 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .narrow .thumb-name {
+    font-size: 12.5px;
+  }
+
+  .thumb-name.sel {
+    color: var(--ink, #ececf1);
+  }
+
+  .none {
+    padding: 20px 0;
+    text-align: center;
+    font: 400 13px/1.4 var(--font-sans);
+    color: var(--ink-4, #8a8a99);
+  }
+
+  .main {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 22px;
+  }
+
+  .narrow-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 14px 16px 20px;
+  }
+
+  .narrow-scroll.edit {
+    padding: 16px;
+  }
+
+  .preview {
+    position: relative;
+    flex: none;
+    width: 100%;
+    align-self: center;
+    border-radius: 14px;
+    overflow: hidden;
+    container-type: inline-size;
+  }
+
+  .preview.narrow {
+    border-radius: 12px;
+  }
+
+  .cells {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    gap: 2px;
+    background: #111;
+  }
+
+  .box {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border-radius: 8px;
+    outline: 1.5px dashed rgba(255, 255, 255, 0.7);
+    outline-offset: -2px;
+  }
+
+  .narrow .box {
+    border-radius: 7px;
+  }
+
+  .box.focused {
+    outline: 2px solid var(--accent, #ff5672);
+  }
+
+  .meme-text {
+    text-align: center;
+    text-transform: uppercase;
+    font-family: 'Anton', Impact, sans-serif;
+    font-weight: 400;
+    line-height: 1.05;
+    color: #fff;
+    -webkit-text-stroke: 1px #000;
+    paint-order: stroke fill;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    word-break: normal;
+    overflow-wrap: normal;
+    white-space: pre-line;
+  }
+
+  .box-n {
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    min-width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px 0 6px 0;
+    background: var(--accent, #ff5672);
+    font: 700 11px/1 var(--font-mono);
+    color: var(--on-accent, #2e0512);
+  }
+
+  .narrow .box-n {
+    min-width: 18px;
+    height: 18px;
+    border-radius: 5px 0 5px 0;
+    font-size: 10px;
+  }
+
+  .fields {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 46px;
+    padding: 0 6px 0 8px;
+    border-radius: 12px;
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .narrow-scroll .field {
+    height: 48px;
+  }
+
+  .field-n {
+    flex: none;
+    min-width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: var(--accent, #ff5672);
+    font: 700 12px/1 var(--font-mono);
+    color: var(--on-accent, #2e0512);
+  }
+
+  .field input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font: 500 14px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .narrow-scroll .field input {
+    font-size: 15px;
+  }
+
+  .foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .foot.narrow {
+    gap: 8px;
+    padding: 12px 16px;
+  }
+
+  .foot-name {
+    flex: 1;
+    min-width: 0;
+    font: 600 13px/1.35 var(--font-sans);
+  }
+
+  .grow {
+    flex: 1;
+    min-width: 0;
+  }
 </style>
