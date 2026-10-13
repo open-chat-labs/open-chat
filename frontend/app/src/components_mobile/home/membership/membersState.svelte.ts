@@ -1,5 +1,6 @@
 import { i18nKey } from "@src/i18n/i18n";
 import { toastStore } from "@src/stores/toast";
+import { reactiveValue } from "@src/utils/reactiveValue";
 import {
     compareRoles,
     currentUserIdStore,
@@ -37,21 +38,23 @@ import {
     type WebhookDetails,
 } from "@client";
 
+// A community has no webhooks
+const noWebhooks: ReadonlyMap<string, WebhookDetails> = new Map();
+
 export class MemberManagement {
     #usersToAddOrInvite = $state<UserSummary[]>([]);
     #inviting = $state(false);
-    #members = $state<ReadonlyMap<string, Member>>(new Map());
-    #lapsed = $state<ReadonlySet<string>>(new Set());
-    #blocked = $state<ReadonlySet<string>>(new Set());
-    #invited = $state<ReadonlySet<string>>(new Set());
-    #bots = $state<ReadonlyMap<string, GrantedBotPermissions>>(new Map());
-    #webhooks = $state<ReadonlyMap<string, WebhookDetails>>(new Map());
+    // Read through `reactiveValue`, so the stores are only subscribed to while a page renders them
+    #members: () => ReadonlyMap<string, Member>;
+    #lapsed: () => ReadonlySet<string>;
+    #blocked: () => ReadonlySet<string>;
+    #invited: () => ReadonlySet<string>;
+    #bots: () => ReadonlyMap<string, GrantedBotPermissions>;
+    #webhooks: () => ReadonlyMap<string, WebhookDetails>;
     #togglingSharingLink = $state(false);
     // undefined until the link has loaded
     #inviteLink = $state<InviteLink>();
     #confirmingResetLink = $state(false);
-
-    destroy: () => void;
 
     constructor(
         private client: OpenChat,
@@ -82,21 +85,15 @@ export class MemberManagement {
                 ? selectedCommunityBotsStore
                 : selectedChatBotsStore;
 
-        const unsubs = [
-            membersStore.subscribe((m) => (this.#members = m)),
-            lapsedStore.subscribe((m) => (this.#lapsed = m)),
-            blockedStore.subscribe((m) => (this.#blocked = m)),
-            invitedStore.subscribe((m) => (this.#invited = m)),
-            botsStore.subscribe((b) => (this.#bots = b)),
-        ];
-
-        if (collection.kind !== "community") {
-            unsubs.push(selectedChatWebhooksStore.subscribe((h) => (this.#webhooks = h)));
-        }
-
-        this.destroy = () => {
-            unsubs.forEach((u) => u());
-        };
+        this.#members = reactiveValue(membersStore);
+        this.#lapsed = reactiveValue(lapsedStore);
+        this.#blocked = reactiveValue(blockedStore);
+        this.#invited = reactiveValue(invitedStore);
+        this.#bots = reactiveValue(botsStore);
+        this.#webhooks =
+            collection.kind === "community"
+                ? () => noWebhooks
+                : reactiveValue(selectedChatWebhooksStore);
     }
 
     get inviting() {
@@ -116,27 +113,27 @@ export class MemberManagement {
     }
 
     get invited() {
-        return this.#invited;
+        return this.#invited();
     }
 
     get blocked() {
-        return this.#blocked;
+        return this.#blocked();
     }
 
     get lapsed() {
-        return this.#lapsed;
+        return this.#lapsed();
     }
 
     get members() {
-        return this.#members;
+        return this.#members();
     }
 
     get bots() {
-        return this.#bots;
+        return this.#bots();
     }
 
     get webhooks() {
-        return this.#webhooks;
+        return this.#webhooks();
     }
 
     get level() {
