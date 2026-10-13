@@ -30,12 +30,15 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 fn run() {
     TIMER_ID.set(None);
     mutate_state(|state| {
-        let removed = state.data.files.remove_queued_accessors_while(MAX_FILES_PER_STEP, || {
-            ic_cdk::api::instruction_counter() <= MAX_INSTRUCTIONS_PER_RUN
-        });
-        let files_removed = removed.len();
-        for file in removed {
-            state.data.push_event_to_index(EventToSync::FileRemoved(file));
+        let mut files_removed = 0;
+        while let Some(removed) = state.data.files.remove_next_queued_accessor(MAX_FILES_PER_STEP) {
+            files_removed += removed.len();
+            for file in removed {
+                state.data.push_event_to_index(EventToSync::FileRemoved(file));
+            }
+            if ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_PER_RUN {
+                break;
+            }
         }
         let complete = !start_job_if_required(state);
         if files_removed > 0 || !complete {

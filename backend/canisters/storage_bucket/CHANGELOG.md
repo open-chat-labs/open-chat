@@ -6,10 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Changed
-
-- Write back the files whose accessors are removed together ([#9940](https://github.com/open-chat-labs/open-chat/pull/9940))
-
 ### Removed
 
 - Remove `c2c_user_ids_migrated` and replacing migrated users' old ids among files' accessors ([#9922](https://github.com/open-chat-labs/open-chat/pull/9922))

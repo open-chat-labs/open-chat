@@ -4067,6 +4067,15 @@ mod tests {
         // Only the proposals still accepting votes have active tallies
         let tallies: Vec<_> = together.active_proposal_tallies().into_iter().map(|(_, t)| t.yes).collect();
         assert_eq!(tallies, vec![60, 10]);
+        // Only the proposals whose statuses changed are marked as updated, not those whose tallies
+        // alone changed
+        let event_index = |message_id: u128| together.main.event_index(MessageId::from(message_id).into()).unwrap();
+        let marked_updated: BTreeSet<_> = together
+            .recently_updated_events(10, 100)
+            .into_iter()
+            .map(|(_, e, _)| e)
+            .collect();
+        assert_eq!(marked_updated, BTreeSet::from([event_index(1), event_index(3)]));
     }
 
     #[test]

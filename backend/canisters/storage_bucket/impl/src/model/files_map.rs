@@ -1,7 +1,6 @@
 use crate::model::files::File;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{FileIdToFileKeyPrefix, KeyPrefix, LazyValue, StableMemoryMap, with_map_mut};
-use std::collections::BTreeMap;
+use stable_memory_map::{FileIdToFileKeyPrefix, LazyValue, StableMemoryMap};
 use types::FileId;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -39,22 +38,9 @@ impl FilesMap {
         self.len
     }
 
-    // Writes back files already in the map, together, so that each node of the stable memory map is
-    // written once rather than once per file (see `StableMemoryMapInner::insert_many`). Their keys are
-    // in order of file id, as the files are given. Each replaces a file, so the count is unchanged.
-    pub fn update_many(&mut self, files: BTreeMap<FileId, File>) {
-        with_map_mut(|m| {
-            m.insert_many(
-                files
-                    .into_iter()
-                    .map(|(file_id, file)| (self.prefix.create_key(&file_id), file_to_bytes(file))),
-            )
-        });
-    }
-
     #[cfg(test)]
     pub fn get_all(&self) -> Vec<(FileId, File)> {
-        use stable_memory_map::with_map;
+        use stable_memory_map::{KeyPrefix, with_map};
         with_map(|m| {
             m.range(self.prefix.create_key(&0)..)
                 .map(|(k, v)| (k.file_id(), bytes_to_file(v)))
