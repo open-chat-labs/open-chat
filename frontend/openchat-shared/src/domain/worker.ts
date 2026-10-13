@@ -896,7 +896,7 @@ type SaveCryptoAccount = {
 
 type DeleteCryptoAccount = {
     kind: "deleteCryptoAccount";
-    account: string;
+    name: string;
 };
 
 type TipMessage = {

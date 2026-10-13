@@ -1,5 +1,4 @@
 import type { HttpAgent, Identity } from "@icp-sdk/core/agent";
-import { Type } from "@sinclair/typebox";
 import {
     encodeIcrcAccount,
     MAX_EVENTS,
@@ -111,6 +110,7 @@ import {
     UserDeletedMessageResponse,
     UserDeleteGroupArgs,
     UserDeleteMessagesArgs,
+    UserDeleteSavedCryptoAccountArgs,
     UserEditMessageArgs,
     UserEventsArgs,
     UserEventsByIndexArgs,
@@ -653,8 +653,14 @@ export class UserClient
         );
     }
 
-    deleteCryptoAccount(account: string): Promise<DeleteCryptoAccountResponse> {
-        return this.update("delete_crypto_account", account, unitResult, Type.String(), UnitResult);
+    deleteCryptoAccount(name: string): Promise<DeleteCryptoAccountResponse> {
+        return this.update(
+            "delete_saved_crypto_account",
+            { name },
+            unitResult,
+            UserDeleteSavedCryptoAccountArgs,
+            UnitResult,
+        );
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {

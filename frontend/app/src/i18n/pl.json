@@ -149,6 +149,22 @@
         "title": "Kanał aktywności"
     },
     "addedBy": "{changedBy} dodał {changed} do {level}",
+    "addressBook": {
+        "add": "Dodaj adres",
+        "address": "Adres",
+        "addressPlaceholder": "Wprowadź adres",
+        "alreadySaved": "Ten adres jest już zapisany jako „{name}”",
+        "confirmDelete": "Usunąć „{name}” z książki adresowej?",
+        "delete": "Usuń",
+        "deleteFailed": "Niestety nie udało się usunąć tego adresu",
+        "empty": "Nie masz jeszcze zapisanych adresów. Zapisane adresy możesz wybrać podczas wysyłania tokenów ze swojego portfela.",
+        "name": "Nazwa",
+        "namePlaceholder": "Wprowadź nazwę tego adresu",
+        "nameTaken": "Masz już zapisany adres o tej nazwie",
+        "rename": "Zmień nazwę",
+        "saveFailed": "Niestety nie udało się zapisać tego adresu",
+        "title": "Książka adresowa"
+    },
     "admin": "Admin",
     "advanced": "Zaawansowany",
     "airdropWarning": "Aby zakwalifikować się do następnego Airdropu, musisz być członkiem kanału **{channelName}** w społeczności **{communityName}**. [Kliknij tutaj, aby dołączyć.]({url})",

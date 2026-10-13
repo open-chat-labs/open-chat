@@ -149,6 +149,22 @@
         "title": "活动动态"
     },
     "addedBy": "{changedBy} 将 {changed} 添加到 {level}",
+    "addressBook": {
+        "add": "添加地址",
+        "address": "地址",
+        "addressPlaceholder": "输入地址",
+        "alreadySaved": "此地址已保存为“{name}”",
+        "confirmDelete": "要从地址簿中删除“{name}”吗？",
+        "delete": "删除",
+        "deleteFailed": "抱歉，我们无法删除此地址",
+        "empty": "您还没有保存任何地址。从钱包发送代币时，可以选择您保存的地址。",
+        "name": "名称",
+        "namePlaceholder": "输入此地址的名称",
+        "nameTaken": "您已有一个以此名称保存的地址",
+        "rename": "重命名",
+        "saveFailed": "抱歉，我们无法保存此地址",
+        "title": "地址簿"
+    },
     "admin": "管理员",
     "advanced": "高级",
     "airdropWarning": "为了获得下一次空投的资格，您必须是 **{channelName}** 社区中 **{communityName}** 频道的成员。[单击此处加入。]({url})",
