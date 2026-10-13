@@ -16,7 +16,7 @@ use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
-use group_chat_core::{AccessRulesInternal, AddResult};
+use group_chat_core::{AccessRulesInternal, AddResult, MembersToAdd};
 use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PendingPaymentsQueue,
     UserCache,
@@ -1110,16 +1110,22 @@ impl Data {
 
             let gate_expiry = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry());
 
-            for (user_id, user_type) in users_to_add {
-                match channel.chat.members.add(
-                    user_id,
+            // The members are added together, so that they're written to stable memory together
+            let mut members = MembersToAdd::default();
+            for (user_id, user_type) in users_to_add.iter() {
+                members.push(
+                    *user_id,
                     None,
-                    now,
                     min_visible_event_index,
                     min_visible_message_index,
                     channel.chat.is_public.value,
-                    user_type,
-                ) {
+                    *user_type,
+                );
+            }
+            let results = channel.chat.members.add_many(members, now);
+
+            for ((user_id, user_type), (_, result)) in users_to_add.into_iter().zip(results) {
+                match result {
                     AddResult::Success(_) => {
                         self.members.mark_member_joined_channel(user_id, channel.id);
 

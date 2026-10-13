@@ -1188,6 +1188,11 @@ impl MembersToAdd {
     pub fn contains(&self, user_id: &UserId) -> bool {
         self.0.iter().any(|m| m.user_id == *user_id)
     }
+
+    #[cfg(test)]
+    pub fn user_ids(&self) -> Vec<UserId> {
+        self.0.iter().map(|m| m.user_id).collect()
+    }
 }
 
 pub enum AddResult {
