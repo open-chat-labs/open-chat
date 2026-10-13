@@ -1,179 +1,378 @@
-<!-- Generated from lib/WalletSettingsDialog.dc.html (source hash a69b5e15) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
-<script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './WalletSettingsDialog.logic.js';
-  import Toggle from '../../lib/components/Toggle.svelte';
-
-  interface Props {
-    value?: { pinOn?: boolean; autoConfig?: boolean; minBalance?: string; tokens?: string[]; currency?: string; recipients?: Array<{id:string;name:string;address:string;token?:string|null}> } | null;
-    section?: string;
-    onChange?: (settings: object) => void;
-    onCancel?: () => void;
-    [key: string]: unknown;
+<!-- Wallet settings, applied as you go (every change reaches onChange at once). Sections: Tokens (automatic list by
+     minimum value, or hand-picked through the Token list sheet), Security (PIN on transfers, set or changed through a
+     two-step sheet), Display currency, and Recipients (saved addresses; only reachable via `section`). -->
+<script lang="ts" module>
+  /** A saved send-to address; the network is read off the address itself. */
+  export interface SavedRecipient {
+    id: string;
+    name: string;
+    address: string;
+    /** Only this token can be sent to it. */
+    token?: string | null;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  export interface WalletSettings {
+    pinOn: boolean;
+    /** Show every held token worth at least minBalance (USD); off = only `tokens`. */
+    autoConfig: boolean;
+    minBalance: string;
+    /** Hand-picked token symbols. */
+    tokens: string[];
+    currency: 'USD' | 'BTC' | 'ETH' | 'ICP';
+    recipients: SavedRecipient[];
+  }
 </script>
 
-<div style="position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:var(--space-22)" data-screen-label="Wallet settings" role="dialog" aria-modal="true">
-  <div style="position:absolute;inset:0;background:var(--oc-veil,rgba(3,3,6,.72));backdrop-filter:var(--oc-veil-blur,blur(4px));-webkit-backdrop-filter:var(--oc-veil-blur,blur(4px));animation:{v.veilAnim}" onclick={v.onClose} aria-hidden="true"></div>
+<script lang="ts">
+  import { onDestroy, tick } from 'svelte';
+  import type { WalletToken } from '../../lib/types';
+  import Toggle from '../../lib/components/Toggle.svelte';
 
-  <div style="position:relative;display:flex;flex-direction:column;width:100%;max-width:680px;height:606px;max-height:100%;box-sizing:border-box;border-radius:var(--radius-xl);background:var(--surface-1,#0e0e12);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),var(--shadow-modal,0 30px 70px rgba(0,0,0,.45));overflow:hidden;animation:{v.cardAnim}">
+  type Section = 'tokens' | 'recipients' | 'security' | 'currency';
 
-    <div style="flex:none;display:flex;align-items:center;gap:var(--space-12);padding:var(--space-16) var(--space-22);border-block-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-        <span style="font:var(--weight-bold) var(--text-lg)/1.25 var(--font-sans);color:var(--ink,#ECECF1)">Wallet settings</span>
-        <span style="font:var(--weight-regular) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-4,#7C7C8C)">Changes apply as you make them</span>
+  // which network an address belongs to, read off its own shape
+  const NETWORKS = [
+    { id: 'BTC', test: (a: string) => /^(bc1[a-z0-9]{20,}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})$/.test(a) },
+    { id: 'ETH', test: (a: string) => /^0x[0-9a-fA-F]{40}$/.test(a) },
+    { id: 'XRP', test: (a: string) => /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/.test(a) },
+    { id: 'ICP', test: (a: string) => /^([a-z0-9]{5}-){4,10}[a-z0-9]{3}$/.test(a) || /^[0-9a-f]{64}$/.test(a) },
+  ];
+  const detect = (a: string) => {
+    const v = a.trim();
+    if (!v) return null;
+    return NETWORKS.find((n) => n.test(v))?.id ?? 'unknown';
+  };
+  const shortAddr = (a: string) => (a.length > 26 ? `${a.slice(0, 12)}…${a.slice(-8)}` : a);
+  const money = (v: number) => `$${v.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  const CURRENCIES = ['USD', 'BTC', 'ETH', 'ICP'] as const;
+  const CHIP_CAP = 10;
+  const NAV: { key: Section; label: string; icon: string }[] = [
+    { key: 'tokens', label: 'Tokens', icon: 'coins' },
+    { key: 'security', label: 'Security', icon: 'lock' },
+    { key: 'currency', label: 'Display currency', icon: 'currency' },
+  ];
+
+  interface Props {
+    /** Wallet tokens; the ones with a balance can be listed. */
+    tokens: WalletToken[];
+    value?: Partial<WalletSettings> | null;
+    section?: Section;
+    onChange?: (settings: WalletSettings) => void;
+    onCancel?: () => void;
+  }
+
+  let { tokens, value = null, section = 'tokens', onChange, onCancel }: Props = $props();
+
+  // values in USD, matching the wallet panel's holdings
+  const held = $derived(tokens.filter((t) => t.held > 0).map((t) => ({ symbol: t.symbol, mark: t.mark, grad: t.grad, value: Math.round(t.price * t.held) })));
+
+  let tabOverride = $state<Section | null>(null);
+  let closing = $state(false);
+  // the dialog keeps its own copy once anything changes
+  let local = $state<WalletSettings | null>(null);
+  let listOpen = $state(false);
+  let query = $state('');
+  let recipQuery = $state('');
+  let sheet = $state<{ editId: string | null; address: string; name: string; token: string | null } | null>(null);
+  let confirmId = $state<string | null>(null);
+  let pin = $state<{ mode: 'set' | 'change'; step: 'set' | 'confirm'; value: string; first: string; error: boolean } | null>(null);
+  let pinInput = $state<HTMLInputElement>();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  onDestroy(() => clearTimeout(timer));
+
+  const settings = $derived<WalletSettings>(
+    local ?? {
+      pinOn: value?.pinOn ?? false,
+      autoConfig: value?.autoConfig ?? true,
+      minBalance: value?.minBalance ?? '',
+      tokens: value?.tokens ?? held.map((t) => t.symbol),
+      currency: value?.currency ?? 'USD',
+      recipients: value?.recipients ?? [],
+    },
+  );
+  const tab = $derived(tabOverride ?? section);
+  const floor = $derived(parseFloat(settings.minBalance || '0') || 0);
+  const picked = $derived(settings.tokens);
+  const autoOn = $derived(settings.autoConfig !== false);
+  const shown = $derived(autoOn ? held.filter((t) => t.value >= floor) : held.filter((t) => picked.includes(t.symbol)));
+  const q = $derived(query.trim().toLowerCase());
+  const filtered = $derived(q ? held.filter((t) => t.symbol.toLowerCase().includes(q)) : held);
+
+  const saved = $derived(settings.recipients);
+  const rq = $derived(recipQuery.trim().toLowerCase());
+  const shownRecips = $derived(rq ? saved.filter((r) => `${r.name} ${r.address}`.toLowerCase().includes(rq)) : saved);
+  const draftAddr = $derived(sheet?.address.trim() ?? '');
+  const draftNet = $derived(detect(draftAddr));
+  const dupe = $derived(saved.find((r) => r.address === draftAddr && r.id !== sheet?.editId));
+  const draftValid = $derived(!!draftNet && draftNet !== 'unknown' && !dupe);
+
+  // apply-as-you-go: every change lands in the parent immediately
+  function apply(patch: Partial<WalletSettings>) {
+    const next = { ...settings, ...patch };
+    local = next;
+    onChange?.(next);
+  }
+
+  function close() {
+    if (closing) return;
+    closing = true;
+    timer = setTimeout(() => onCancel?.(), 170);
+  }
+
+  function saveRecipient() {
+    if (!sheet || !draftValid) return;
+    const entry: SavedRecipient = { id: sheet.editId ?? `r${Date.now()}`, name: sheet.name.trim() || `${draftNet} recipient`, address: draftAddr, token: sheet.token };
+    const next = sheet.editId ? saved.map((r) => (r.id === sheet!.editId ? entry : r)) : [...saved, entry];
+    sheet = null;
+    apply({ recipients: next });
+  }
+
+  function togglePin(on: boolean) {
+    if (on) pin = { mode: 'set', step: 'set', value: '', first: '', error: false };
+    else apply({ pinOn: false });
+  }
+
+  function pinNext() {
+    if (!pin || pin.value.length !== 6) return;
+    if (pin.step === 'set') pin = { ...pin, step: 'confirm', first: pin.value, value: '', error: false };
+    else if (pin.value !== pin.first) pin = { ...pin, value: '', error: true };
+    else {
+      pin = null;
+      apply({ pinOn: true });
+    }
+  }
+
+  // keep the hidden PIN input focused while the sheet is open
+  $effect(() => {
+    if (!pin || !pinInput) return;
+    pin.value;
+    pin.step;
+    pin.error;
+    tick().then(() => {
+      if (pinInput && document.activeElement !== pinInput) pinInput.focus();
+    });
+  });
+</script>
+
+{#snippet glyph(name: string, size: number, ink: string)}<span class="glyph" style:width="{size}px" style:height="{size}px" style:background={ink} style:mask="var(--icon-{name}) center/contain no-repeat"
+  ></span>{/snippet}
+
+{#snippet sheetHeader(title: string, sub: string, mono: boolean, onClose: () => void, onBack?: () => void)}
+  <div class="sheet-head">
+    {#if onBack}
+      <span class="square back" onclick={onBack} role="button" tabindex="0">{@render glyph('back', 15, 'var(--ink-2,#C9C9D4)')}</span>
+    {/if}
+    <div class="sheet-titles">
+      <span class="sheet-title">{title}</span>
+      <span class="sheet-sub" class:mono>{sub}</span>
+    </div>
+    <span class="square small" onclick={onClose} role="button" tabindex="0">{@render glyph('close', 14, 'var(--ink-3,#9A9AA8)')}</span>
+  </div>
+{/snippet}
+
+<div class="layer" data-screen-label="Wallet settings" role="dialog" aria-modal="true">
+  <div class="veil" class:closing onclick={close} aria-hidden="true"></div>
+
+  <div class="card" class:closing>
+    <div class="header">
+      <div class="header-text">
+        <span class="header-title">Wallet settings</span>
+        <span class="header-sub">Changes apply as you make them</span>
       </div>
-      <span class="dc-p0" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onClose} role="button" tabindex="0">
-        <span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.closeMask}"></span>
-      </span>
+      <span class="square" onclick={close} role="button" tabindex="0">{@render glyph('close', 15, 'var(--ink-3,#9A9AA8)')}</span>
     </div>
 
-    <div style="flex:1;min-height:0;display:flex;overflow:hidden">
-      <div style="flex:none;width:196px;display:flex;flex-direction:column;gap:2px;padding:var(--space-14) var(--space-10);border-inline-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-        {#each v.nav ?? [] as n, i0}
-          <span class="dc-p1" style="display:flex;align-items:center;gap:var(--space-10);height:40px;padding:0 var(--space-12);border-radius:var(--radius-md);background:{n.bg};cursor:pointer;user-select:none" onclick={n.onSelect} role="button" tabindex="0">
-            <span style="flex:none;width:16px;height:16px;background:{n.ink};mask:{n.mask}"></span>
-            <span style="flex:1;min-width:0;font:{n.weight} var(--text-md)/1 var(--font-sans);color:{n.ink}">{t(n.label)}</span>
+    <div class="main">
+      <div class="nav">
+        {#each NAV as n}
+          <span class="nav-item" class:on={tab === n.key} onclick={() => (tabOverride = n.key)} role="button" tabindex="0">
+            {@render glyph(n.icon, 16, 'var(--nav-ink)')}
+            <span class="nav-label">{n.label}</span>
           </span>
         {/each}
       </div>
 
-      <div style="flex:1;min-width:0;overflow-y:auto;display:flex;flex-direction:column;gap:var(--space-32);padding:var(--space-26) var(--space-22)">
-        {#if v.isTokens}
-          <div style="flex:none;display:flex;align-items:flex-start;gap:var(--space-16)">
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-6)">
-              <span style="font:var(--weight-bold) var(--text-md)/1.3 var(--font-sans);color:var(--ink,#ECECF1)">Automatic configuration</span>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.5 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">{t(v.autoDesc)}</span>
+      <div class="content">
+        {#if tab === 'tokens'}
+          <div class="setting">
+            <div class="setting-text">
+              <span class="setting-title">Automatic configuration</span>
+              <span class="setting-desc">{autoOn ? 'Any token with a balance shows up, as long as it clears the minimum value.' : 'Off — the wallet shows only the tokens you picked.'}</span>
             </div>
-            <div style="flex:none;margin-block-start:2px"><Toggle on={v.autoOn} onChange={v.onAutoToggle}></Toggle></div>
+            <div class="setting-toggle">
+              <Toggle
+                on={autoOn}
+                onChange={(on) => apply({ autoConfig: on, tokens: on ? picked : held.filter((t) => t.value >= floor).map((t) => t.symbol) })}
+              />
+            </div>
           </div>
 
-          {#if v.autoOn}
-            <div style="flex:none;display:flex;align-items:center;gap:var(--space-12)">
-              <span style="flex:1;min-width:0;font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-4,#7C7C8C)">MINIMUM VALUE</span>
-              <div style="flex:none;display:flex;align-items:center;gap:var(--space-8);width:140px;padding:0 var(--space-14);height:40px;box-sizing:border-box;border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-                <span style="flex:none;font:var(--weight-semibold) var(--text-md)/1 var(--font-mono);color:var(--ink-4,#7C7C8C)">$</span>
-                <input style="flex:1;min-width:0;background:none;border:0;outline:none;font:var(--weight-semibold) var(--text-md)/1.3 var(--font-mono);color:var(--ink,#ECECF1)" value={v.minBalance} oninput={v.onMinBalance} placeholder="0" inputmode="decimal">
+          {#if autoOn}
+            <div class="minimum">
+              <span class="eyebrow grow">MINIMUM VALUE</span>
+              <div class="money-field">
+                <span class="dollar">$</span>
+                <input
+                  value={settings.minBalance}
+                  oninput={(e) => apply({ minBalance: e.currentTarget.value.replace(/[^0-9.]/g, '') })}
+                  placeholder="0"
+                  inputmode="decimal"
+                />
               </div>
             </div>
           {/if}
 
-          <div class="dc-p2" style="flex:none;display:flex;flex-direction:column;gap:var(--space-12);padding:var(--space-14);border-radius:var(--radius-md);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07));cursor:pointer" onclick={v.onOpenList} role="button" tabindex="0">
-            <div style="flex:none;display:flex;align-items:center;gap:var(--space-12)">
-              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-                <span style="font:var(--weight-semibold) var(--text-md)/1.2 var(--font-sans);color:var(--ink,#ECECF1)">Token list</span>
-                <span style="font:var(--weight-regular) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.listSub)}</span>
+          <div
+            class="list-card"
+            onclick={() => {
+              listOpen = true;
+              query = '';
+            }}
+            role="button"
+            tabindex="0"
+          >
+            <div class="list-card-head">
+              <div class="list-card-text">
+                <span class="list-card-title">Token list</span>
+                <span class="list-card-sub"
+                  >{autoOn ? `${shown.length} of ${held.length} tokens shown · set by the minimum` : `${picked.length} of ${held.length} tokens shown · chosen by you`}</span
+                >
               </div>
-              <span style="flex:none;width:14px;height:14px;background:var(--ink-4,#7C7C8C);mask:{v.chevronMask}"></span>
+              {@render glyph('chevron-right', 14, 'var(--ink-4,#7C7C8C)')}
             </div>
-            <div style="display:flex;flex-wrap:wrap;gap:var(--space-6)">
-              {#each v.shownChips ?? [] as c, i1}
-                <span style="flex:none;display:flex;align-items:center;gap:var(--space-6);height:26px;padding:0 var(--space-8) 0 3px;box-sizing:border-box;border-radius:var(--radius-pill);background:var(--overlay-1,rgba(255,255,255,.05))">
-                  <span style="flex:none;display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:var(--radius-pill);background:{c.gradient};font:var(--weight-bold) 9px/1 var(--font-sans);color:#0b0b0f">{t(c.mark)}</span>
-                  <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--ink-2,#C9C9D4)">{t(c.symbol)}</span>
-                </span>
+            <div class="chips">
+              {#each shown.slice(0, CHIP_CAP) as c}
+                <span class="chip"><span class="chip-mark" style:background={c.grad}>{c.mark}</span><span class="chip-symbol">{c.symbol}</span></span>
               {/each}
-              {#if v.chipsOverflow}
-                <span style="flex:none;display:flex;align-items:center;height:26px;padding:0 var(--space-10);box-sizing:border-box;border-radius:var(--radius-pill);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07));font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.chipsMore)}</span>
+              {#if shown.length > CHIP_CAP}
+                <span class="chip-more">+{shown.length - CHIP_CAP} more</span>
               {/if}
-              {#if v.noneShown}
-                <span style="font:var(--weight-regular) var(--text-sm)/1.6 var(--font-sans);color:var(--status-danger,#F5493D)">Nothing selected — the wallet is empty.</span>
+              {#if shown.length === 0}
+                <span class="none">Nothing selected — the wallet is empty.</span>
               {/if}
             </div>
           </div>
         {/if}
 
-        {#if v.isSecurity}
-          <div style="flex:none;display:flex;align-items:flex-start;gap:var(--space-16)">
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-6)">
-              <div style="display:flex;align-items:center;gap:var(--space-8);flex-wrap:wrap">
-                <span style="font:var(--weight-bold) var(--text-md)/1.3 var(--font-sans);color:var(--ink,#ECECF1)">PIN on transfers</span>
-                <span style="flex:none;display:flex;align-items:center;gap:5px;height:20px;padding:0 var(--space-8);box-sizing:border-box;border-radius:var(--radius-pill);background:{v.pinBadgeBg}">
-                  <span style="width:10px;height:10px;background:{v.pinBadgeInk};mask:{v.pinBadgeMask}"></span>
-                  <span style="font:var(--weight-semibold) 10.5px/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:{v.pinBadgeInk}">{t(v.pinBadge)}</span>
-                </span>
+        {#if tab === 'security'}
+          <div class="setting">
+            <div class="setting-text">
+              <div class="pin-head">
+                <span class="setting-title">PIN on transfers</span>
+                <span class="pin-badge" class:set={settings.pinOn}
+                  >{@render glyph(settings.pinOn ? 'check' : 'lock', 10, 'var(--badge-ink)')}<span class="pin-badge-label">{settings.pinOn ? 'SET' : 'NOT SET'}</span></span
+                >
               </div>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.5 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">{t(v.pinDesc)}</span>
+              <span class="setting-desc"
+                >{settings.pinOn
+                  ? 'Six digits, asked for before anything leaves the wallet. Receiving and swapping are unaffected.'
+                  : 'Turn this on to add a six-digit step before anything leaves the wallet.'}</span
+              >
             </div>
-            <div style="flex:none;margin-block-start:2px"><Toggle on={v.pinSwitch} onChange={v.onPinToggle}></Toggle></div>
+            <div class="setting-toggle"><Toggle on={settings.pinOn || pin?.mode === 'set'} onChange={togglePin} /></div>
           </div>
-          {#if v.pinOn}
-            <span class="dc-p3" style="flex:none;display:flex;align-items:center;justify-content:center;gap:var(--space-8);height:40px;border-radius:var(--radius-md);box-shadow:inset 0 0 0 1px var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.onChangePin} role="button" tabindex="0">
-              <span style="font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:var(--accent,#FF5672)">Change PIN</span>
-              <span style="width:14px;height:14px;background:var(--accent,#FF5672);mask:{v.lockMask}"></span>
+          {#if settings.pinOn}
+            <span class="change-pin" onclick={() => (pin = { mode: 'change', step: 'set', value: '', first: '', error: false })} role="button" tabindex="0">
+              <span class="change-pin-label">Change PIN</span>
+              {@render glyph('lock', 14, 'var(--accent,#FF5672)')}
             </span>
           {/if}
         {/if}
 
-        {#if v.isCurrency}
-          <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-4,#7C7C8C)">SHOW VALUES IN</span>
-          <div style="flex:none;display:flex;flex-direction:column;gap:var(--space-6);margin-block-start:calc(-1 * var(--space-22))">
-            {#each v.currencies ?? [] as c, i2}
-              <span class="dc-p4" style="display:flex;align-items:center;gap:var(--space-12);height:44px;padding:0 var(--space-14);border-radius:var(--radius-md);background:{c.bg};cursor:pointer;user-select:none" onclick={c.onSelect} role="button" tabindex="0">
-                <span style="flex:1;min-width:0;font:var(--weight-semibold) var(--text-md)/1 var(--font-mono);color:var(--ink,#ECECF1)">{t(c.label)}</span>
-                <span style="flex:none;font:var(--weight-regular) var(--text-sm)/1 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(c.note)}</span>
-                <span style="flex:none;width:16px;height:16px;background:{c.tickInk};mask:{v.checkMask}"></span>
+        {#if tab === 'currency'}
+          <span class="eyebrow">SHOW VALUES IN</span>
+          <div class="currencies">
+            {#each CURRENCIES as c}
+              {@const on = settings.currency === c}
+              <span class="currency" class:on onclick={() => apply({ currency: c })} role="button" tabindex="0">
+                <span class="currency-code">{c}</span>
+                <span class="currency-note">{c === 'USD' ? 'Default' : `Priced from ${c}`}</span>
+                {@render glyph('check', 16, on ? 'var(--accent,#FF5672)' : 'transparent')}
               </span>
             {/each}
           </div>
         {/if}
-        {#if v.isRecipients}
-          <div style="flex:none;display:flex;flex-direction:column;gap:var(--space-14);margin-block-end:calc(-1 * var(--space-32))">
-            <div style="display:flex;align-items:flex-start;gap:var(--space-12)">
-              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-6)">
-                <span style="font:var(--weight-bold) var(--text-md)/1.3 var(--font-sans);color:var(--ink,#ECECF1)">Saved recipients</span>
-                <span style="font:var(--weight-regular) var(--text-sm)/1.5 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">Addresses you can pick when sending. The network is detected from the address itself.</span>
+
+        {#if tab === 'recipients'}
+          <div class="recipients">
+            <div class="recipients-head">
+              <div class="setting-text">
+                <span class="setting-title">Saved recipients</span>
+                <span class="setting-desc">Addresses you can pick when sending. The network is detected from the address itself.</span>
               </div>
-              <span class="dc-p5" style="flex:none;display:flex;align-items:center;gap:var(--space-8);height:34px;padding:0 var(--space-12);box-sizing:border-box;border-radius:var(--radius-md);background:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.onAddRecipient} role="button" tabindex="0">
-                <span style="width:13px;height:13px;background:var(--on-accent,#2E0512);mask:{v.plusMask}"></span>
-                <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--on-accent,#2E0512)">Add</span>
-              </span>
+              <span
+                class="add"
+                onclick={() => {
+                  sheet = { editId: null, address: '', name: '', token: null };
+                  confirmId = null;
+                }}
+                role="button"
+                tabindex="0">{@render glyph('plus', 13, 'var(--on-accent,#2E0512)')}<span class="add-label">Add</span></span
+              >
             </div>
 
-            {#if v.recipSearchable}
-              <div style="display:flex;align-items:center;gap:var(--space-10);height:40px;padding:0 var(--space-12);box-sizing:border-box;border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-                <span style="flex:none;width:14px;height:14px;background:var(--ink-4,#7C7C8C);mask:{v.searchMask}"></span>
-                <input style="flex:1;min-width:0;background:none;border:0;outline:none;font:var(--weight-medium) var(--text-md)/1.3 var(--font-sans);color:var(--ink,#ECECF1)" value={v.recipQuery} oninput={v.onRecipQuery} placeholder="Search name or address…">
+            {#if saved.length > 5}
+              <div class="search">
+                {@render glyph('search', 14, 'var(--ink-4,#7C7C8C)')}
+                <input bind:value={recipQuery} placeholder="Search name or address…" />
               </div>
             {/if}
 
-            <div style="display:flex;flex-direction:column;gap:var(--space-6)">
-              {#each v.recipients ?? [] as r, i3}
-                <div class="dc-p6" style="display:flex;align-items:center;gap:var(--space-12);min-height:58px;padding:var(--space-8) var(--space-12);box-sizing:border-box;border-radius:var(--radius-md);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-                  <span style="flex:none;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:var(--radius-pill);background:{r.gradient};font:var(--weight-bold) var(--text-sm)/1 var(--font-sans);color:{r.markInk}">{t(r.mark)}</span>
-                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-                    <div style="display:flex;align-items:center;gap:var(--space-8);min-width:0">
-                      <span style="flex:none;max-width:190px;font:var(--weight-semibold) var(--text-md)/1.2 var(--font-sans);color:var(--ink,#ECECF1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{t(r.name)}</span>
-                      <span style="flex:none;display:flex;align-items:center;height:18px;padding:0 var(--space-6);box-sizing:border-box;border-radius:var(--radius-sm);background:var(--overlay-2,rgba(255,255,255,.08));font:var(--weight-semibold) 10px/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-2,#C9C9D4)">{t(r.badge)}</span>
+            <div class="recipient-list">
+              {#each shownRecips as r}
+                {@const net = detect(r.address)}
+                {@const tok = r.token ? held.find((t) => t.symbol === r.token) : undefined}
+                <div class="recipient">
+                  <span class="recipient-mark" class:token={!!tok} style:background={tok ? tok.grad : 'var(--overlay-2,rgba(255,255,255,.1))'}
+                    >{tok ? tok.mark : (r.name || '?').trim().charAt(0).toUpperCase()}</span
+                  >
+                  <div class="recipient-text">
+                    <div class="recipient-line">
+                      <span class="recipient-name">{r.name}</span>
+                      <span class="recipient-badge">{r.token ? r.token : net === 'unknown' ? 'UNKNOWN' : net}</span>
                     </div>
-                    <span style="font:var(--weight-regular) var(--text-sm)/1.2 var(--font-mono);color:var(--ink-4,#7C7C8C);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{t(r.short)}</span>
+                    <span class="recipient-address">{shortAddr(r.address)}</span>
                   </div>
-                  {#if r.idle}
-                    <div style="flex:none;display:flex;gap:2px">
-                      <span class="dc-p7" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={r.onEdit} role="button" tabindex="0" aria-label="Edit recipient" title="Edit recipient">
-                        <span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.editMask}"></span>
-                      </span>
-                      <span class="dc-p8" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={r.onAskRemove} role="button" tabindex="0" aria-label="Remove recipient" title="Remove recipient">
-                        <span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.trashMask}"></span>
-                      </span>
+                  {#if confirmId === r.id}
+                    <div class="confirm">
+                      <span class="keep" onclick={() => (confirmId = null)} role="button" tabindex="0">Keep</span>
+                      <span
+                        class="remove"
+                        onclick={() => {
+                          confirmId = null;
+                          apply({ recipients: saved.filter((x) => x.id !== r.id) });
+                        }}
+                        role="button"
+                        tabindex="0">Remove</span
+                      >
                     </div>
-                  {/if}
-                  {#if r.confirming}
-                    <div style="flex:none;display:flex;align-items:center;gap:var(--space-8)">
-                      <span class="dc-p9" style="display:flex;align-items:center;height:28px;padding:0 var(--space-10);box-sizing:border-box;border-radius:var(--radius-sm);font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--ink-2,#C9C9D4);cursor:pointer;user-select:none" onclick={r.onCancelRemove} role="button" tabindex="0">Keep</span>
-                      <span class="dc-p10" style="display:flex;align-items:center;height:28px;padding:0 var(--space-10);box-sizing:border-box;border-radius:var(--radius-sm);background:var(--status-danger,#F5493D);font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:#2b0704;cursor:pointer;user-select:none" onclick={r.onRemove} role="button" tabindex="0">Remove</span>
+                  {:else}
+                    <div class="row-actions">
+                      <span
+                        class="square"
+                        onclick={() => {
+                          sheet = { editId: r.id, address: r.address, name: r.name, token: r.token ?? null };
+                          confirmId = null;
+                        }}
+                        role="button"
+                        tabindex="0"
+                        aria-label="Edit recipient"
+                        title="Edit recipient">{@render glyph('edit', 15, 'var(--ink-3,#9A9AA8)')}</span
+                      >
+                      <span class="square" onclick={() => (confirmId = r.id)} role="button" tabindex="0" aria-label="Remove recipient" title="Remove recipient"
+                        >{@render glyph('trash', 15, 'var(--ink-3,#9A9AA8)')}</span
+                      >
                     </div>
                   {/if}
                 </div>
               {/each}
 
-              {#if v.recipEmpty}
-                <div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-10);padding:var(--space-32) var(--space-22);border-radius:var(--radius-lg);border:1px dashed var(--line-2,rgba(255,255,255,.14))">
-                  <span style="width:22px;height:22px;background:var(--ink-4,#7C7C8C);mask:{v.usersMask}"></span>
-                  <span style="font:var(--weight-regular) var(--text-md)/1.5 var(--font-sans);color:var(--ink-4,#7C7C8C);text-align:center;text-wrap:pretty">{t(v.recipEmptyLabel)}</span>
+              {#if shownRecips.length === 0}
+                <div class="recipients-empty">
+                  {@render glyph('users', 22, 'var(--ink-4,#7C7C8C)')}
+                  <span class="recipients-empty-text"
+                    >{saved.length === 0 ? 'No saved recipients yet. Add one and it will be offered whenever you send.' : `Nothing matches "${recipQuery.trim()}".`}</span
+                  >
                 </div>
               {/if}
             </div>
@@ -182,168 +381,191 @@
       </div>
     </div>
 
-    <div style="flex:none;display:flex;align-items:center;gap:var(--space-12);padding:var(--space-14) var(--space-22);border-block-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-      <span style="flex:1;min-width:0;font:var(--weight-regular) var(--text-sm)/1.4 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.footerNote)}</span>
-      <div class="dc-p11" style="flex:none;display:flex;align-items:center;padding:0 var(--space-18);height:38px;box-sizing:border-box;border-radius:var(--radius-md);background:var(--overlay-2,rgba(255,255,255,.09));font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:var(--ink,#ECECF1);cursor:pointer;user-select:none" onclick={v.onClose} role="button" tabindex="0">Done</div>
+    <div class="footer">
+      <span class="footer-note">Saved automatically · values in {settings.currency}</span>
+      <div class="done" onclick={close} role="button" tabindex="0">Done</div>
     </div>
 
-    {#if v.listOpen}
-      <div style="position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:var(--space-22)">
-        <div style="position:absolute;inset:0;background:rgba(3,3,6,.66);animation:oc-veil-in 160ms ease-out both" onclick={v.onCloseList} aria-hidden="true"></div>
-        <div style="position:relative;display:flex;flex-direction:column;width:100%;max-width:420px;height:100%;box-sizing:border-box;border-radius:var(--radius-xl);background:var(--surface-1,#15151b);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12)),0 24px 60px rgba(0,0,0,.5);overflow:hidden;animation:oc-sheet-in 200ms cubic-bezier(.2,.8,.3,1) both">
-          <div style="flex:none;display:flex;align-items:center;gap:var(--space-12);padding:var(--space-16) var(--space-18);border-block-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-              <span style="font:var(--weight-bold) var(--text-md)/1.25 var(--font-sans);color:var(--ink,#ECECF1)">Token list</span>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.listHeaderSub)}</span>
-            </div>
-            <span class="dc-p12" style="flex:none;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onCloseList} role="button" tabindex="0">
-              <span style="width:14px;height:14px;background:var(--ink-3,#9A9AA8);mask:{v.closeMask}"></span>
-            </span>
-          </div>
+    {#if listOpen}
+      <div class="sheet-layer">
+        <div class="sheet-veil dim" onclick={() => (listOpen = false)} aria-hidden="true"></div>
+        <div class="sheet list-sheet">
+          {@render sheetHeader('Token list', autoOn ? 'Set automatically' : 'You choose what appears', false, () => (listOpen = false))}
 
-          <div style="flex:none;padding:var(--space-14) var(--space-18) 0">
-            <div style="display:flex;align-items:center;gap:var(--space-10);height:42px;padding:0 var(--space-12);box-sizing:border-box;border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-              <span style="flex:none;width:15px;height:15px;background:var(--ink-4,#7C7C8C);mask:{v.searchMask}"></span>
-              <input style="flex:1;min-width:0;background:none;border:0;outline:none;font:var(--weight-medium) var(--text-md)/1.3 var(--font-sans);color:var(--ink,#ECECF1)" value={v.query} oninput={v.onQuery} placeholder="Search tokens…">
-              {#if v.hasQuery}
-                <span class="dc-p13" style="flex:none;display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:var(--radius-pill);cursor:pointer" onclick={v.onClearQuery} role="button" tabindex="0">
-                  <span style="width:11px;height:11px;background:var(--ink-3,#9A9AA8);mask:{v.closeMask}"></span>
-                </span>
+          <div class="list-search-wrap">
+            <div class="search tall">
+              {@render glyph('search', 15, 'var(--ink-4,#7C7C8C)')}
+              <input bind:value={query} placeholder="Search tokens…" />
+              {#if query.length > 0}
+                <span class="clear" onclick={() => (query = '')} role="button" tabindex="0">{@render glyph('close', 11, 'var(--ink-3,#9A9AA8)')}</span>
               {/if}
             </div>
           </div>
 
-          <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:var(--space-12);padding:var(--space-14) var(--space-18) var(--space-18)">
-            {#if v.autoOn}
-              <div style="display:flex;flex-direction:column;gap:var(--space-10);padding:var(--space-12) var(--space-14);border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05))">
-                <span style="font:var(--weight-regular) var(--text-sm)/1.5 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">Automatic configuration decides this list right now — it follows the minimum value. Take it over to choose by hand.</span>
-                <span class="dc-p14" style="display:flex;align-items:center;justify-content:center;height:34px;border-radius:var(--radius-sm);box-shadow:inset 0 0 0 1px var(--accent,#FF5672);font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.onTakeOver} role="button" tabindex="0">Take over the list</span>
+          <div class="sheet-body list-body">
+            {#if autoOn}
+              <div class="take-over">
+                <span class="take-over-text">Automatic configuration decides this list right now — it follows the minimum value. Take it over to choose by hand.</span>
+                <span class="take-over-button" onclick={() => apply({ autoConfig: false, tokens: held.filter((t) => t.value >= floor).map((t) => t.symbol) })} role="button" tabindex="0"
+                  >Take over the list</span
+                >
               </div>
             {/if}
 
-            <div style="display:flex;flex-direction:column;gap:var(--space-6)">
-              {#each v.rows ?? [] as tk, i4}
-                <div class="dc-p15" style="display:flex;align-items:center;gap:var(--space-12);height:52px;padding:0 var(--space-12);box-sizing:border-box;border-radius:var(--radius-md);background:{tk.rowBg};opacity:{tk.opacity};cursor:{tk.cursor};user-select:none;transition:background 160ms ease-out" onclick={tk.onToggle} role="button" tabindex="0">
-                  <span style="flex:none;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-pill);background:{tk.gradient};font:var(--weight-bold) var(--text-xs)/1 var(--font-sans);color:#0b0b0f">{t(tk.mark)}</span>
-                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-                    <span style="font:var(--weight-bold) var(--text-md)/1.2 var(--font-sans);color:var(--ink,#ECECF1)">{t(tk.symbol)}</span>
-                    <span style="font:var(--weight-regular) var(--text-sm)/1.2 var(--font-mono);color:var(--ink-4,#7C7C8C)">{t(tk.value)}</span>
+            <div class="token-rows">
+              {#each filtered as tk}
+                {@const on = autoOn ? tk.value >= floor : picked.includes(tk.symbol)}
+                <div
+                  class="token-row"
+                  class:on
+                  class:locked={autoOn}
+                  class:dimmed={autoOn && !on}
+                  onclick={autoOn ? undefined : () => apply({ tokens: on ? picked.filter((x) => x !== tk.symbol) : [...picked, tk.symbol] })}
+                  role="button"
+                  tabindex="0"
+                >
+                  <span class="token-mark" style:background={tk.grad}>{tk.mark}</span>
+                  <div class="token-text">
+                    <span class="token-symbol">{tk.symbol}</span>
+                    <span class="token-value">{money(tk.value)}</span>
                   </div>
-                  <span style="flex:none;width:18px;height:18px;background:{tk.tickInk};mask:{tk.tickMask}"></span>
+                  {@render glyph(on ? 'check' : 'circle', 18, on ? 'var(--accent,#FF5672)' : 'var(--line-2,rgba(255,255,255,.14))')}
                 </div>
               {/each}
-              {#if v.noRows}
-                <span style="padding:var(--space-14) var(--space-12);font:var(--weight-regular) var(--text-md)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.noRowsLabel)}</span>
+              {#if filtered.length === 0}
+                <span class="no-rows">No token matches "{query.trim()}".</span>
               {/if}
             </div>
           </div>
 
-          <div style="flex:none;display:flex;align-items:center;gap:var(--space-12);padding:var(--space-14) var(--space-18);border-block-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-            <span style="flex:1;min-width:0;font:var(--weight-regular) var(--text-sm)/1.4 var(--font-sans);color:{v.listFootInk}">{t(v.listFootNote)}</span>
-            <div style="flex:none;display:flex;align-items:center;padding:0 var(--space-16);height:36px;box-sizing:border-box;border-radius:var(--radius-md);background:var(--overlay-2,rgba(255,255,255,.09));font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:var(--ink,#ECECF1);cursor:pointer;user-select:none" onclick={v.onCloseList} role="button" tabindex="0">Done</div>
+          <div class="sheet-foot">
+            <span class="sheet-foot-note" class:warn={!autoOn && picked.length === 0}
+              >{autoOn ? `Follows the minimum of ${money(floor)}.` : picked.length === 0 ? 'Pick at least one token — the wallet is empty.' : 'Applied as you pick.'}</span
+            >
+            <div class="done small" onclick={() => (listOpen = false)} role="button" tabindex="0">Done</div>
           </div>
         </div>
       </div>
     {/if}
 
-    {#if v.pinOpen}
-      <div style="position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:var(--space-22)">
-        <div style="position:absolute;inset:0;background:var(--scrim);animation:oc-veil-in 160ms ease-out both" onclick={v.onPinCancel} aria-hidden="true"></div>
-        <div style="position:relative;display:flex;flex-direction:column;width:100%;max-width:392px;max-height:100%;box-sizing:border-box;border-radius:var(--radius-xl);background:var(--surface-1,#15151b);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12)),0 24px 60px rgba(0,0,0,.5);overflow:hidden;animation:oc-sheet-in 200ms cubic-bezier(.2,.8,.3,1) both">
-          <div style="flex:none;display:flex;align-items:center;gap:var(--space-12);padding:var(--space-16) var(--space-18);border-block-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-            {#if v.pinIsConfirm}
-              <span class="dc-p16" style="flex:none;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onPinBack} role="button" tabindex="0">
-                <span style="width:15px;height:15px;background:var(--ink-2,#C9C9D4);mask:{v.backMask}"></span>
-              </span>
-            {/if}
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-              <span style="font:var(--weight-bold) var(--text-md)/1.25 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.pinTitle)}</span>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.3 var(--font-mono);color:var(--ink-4,#7C7C8C)">{t(v.pinStepLabel)}</span>
-            </div>
-            <span class="dc-p17" style="flex:none;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onPinCancel} role="button" tabindex="0">
-              <span style="width:14px;height:14px;background:var(--ink-3,#9A9AA8);mask:{v.closeMask}"></span>
-            </span>
-          </div>
+    {#if pin}
+      {@const confirmStep = pin.step === 'confirm'}
+      {@const ready = pin.value.length === 6}
+      <div class="sheet-layer pin-layer">
+        <div class="sheet-veil" onclick={() => (pin = null)} aria-hidden="true"></div>
+        <div class="sheet pin-sheet">
+          {@render sheetHeader(
+            confirmStep ? 'Confirm your PIN' : pin.mode === 'set' ? 'Set up a PIN' : 'Choose a new PIN',
+            confirmStep ? 'Step 2 of 2' : 'Step 1 of 2',
+            true,
+            () => (pin = null),
+            confirmStep ? () => (pin = pin && { ...pin, step: 'set', value: pin.first, error: false }) : undefined,
+          )}
 
-          <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:var(--space-22);padding:var(--space-22) var(--space-18)">
-            <span style="font:var(--weight-regular) var(--text-md)/1.55 var(--font-sans);color:var(--ink-2,#B9B9C6);text-wrap:pretty">{t(v.pinBlurb)}</span>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-12);padding:var(--space-22) var(--space-14);border-radius:var(--radius-lg);background:var(--overlay-1,rgba(255,255,255,.035));cursor:text" onclick={v.pinFocus} role="button" tabindex="0">
-              <div style="position:relative;display:flex;gap:var(--space-8)">
-                {#each v.pinDigits ?? [] as d, i5}
-                  <span style="display:flex;align-items:flex-end;justify-content:center;width:34px;height:42px;box-sizing:border-box;padding-block-end:var(--space-6);border-block-end:2px solid {d.line};font:var(--weight-bold) var(--text-xl,20px)/1 var(--font-mono);color:var(--ink,#ECECF1);transition:border-color 160ms ease-out">{t(d.glyph)}</span>
+          <div class="sheet-body">
+            <span class="pin-blurb"
+              >{confirmStep
+                ? 'Type the same six digits again — a typo here would lock you out of transfers.'
+                : 'Six digits, asked for before anything leaves the wallet. Receiving and swapping stay unaffected.'}</span
+            >
+            <div class="pin-pad" onclick={() => pinInput?.focus()} role="button" tabindex="0">
+              <div class="pin-digits">
+                {#each [0, 1, 2, 3, 4, 5] as i}
+                  <span class="pin-digit" class:filled={pin.value.length >= i} class:error={pin.error}>{pin.value.length > i ? '•' : ''}</span>
                 {/each}
-                <input style="position:absolute;inset:0;width:100%;opacity:0;border:0;outline:none;background:none;caret-color:transparent;cursor:text" use:ref={v.pinRef} value={v.pinValue} oninput={v.onPinInput} inputmode="numeric" autocomplete="off" maxlength="6">
+                <input
+                  class="pin-input"
+                  bind:this={pinInput}
+                  value={pin.value}
+                  oninput={(e) => (pin = pin && { ...pin, value: e.currentTarget.value.replace(/[^0-9]/g, '').slice(0, 6), error: false })}
+                  inputmode="numeric"
+                  autocomplete="off"
+                  maxlength="6"
+                />
               </div>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.4 var(--font-sans);color:{v.pinNoteInk}">{t(v.pinNote)}</span>
+              <span class="pin-note" class:error={pin.error}>{pin.error ? 'Those did not match — start again.' : 'Numbers only'}</span>
             </div>
           </div>
 
-          <div style="flex:none;display:flex;align-items:center;gap:var(--space-8);padding:var(--space-14) var(--space-18);border-block-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-            <span class="dc-p18" style="flex:none;padding:var(--space-8) var(--space-12);border-radius:var(--radius-md);font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.onPinCancel} role="button" tabindex="0">Cancel</span>
-            <span style="flex:1"></span>
-            <div style="flex:none;display:flex;align-items:center;gap:var(--space-8);padding:0 var(--space-16);height:38px;box-sizing:border-box;border-radius:var(--radius-md);background:{v.pinBtnBg};font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:{v.pinBtnInk};cursor:{v.pinBtnCursor};user-select:none" onclick={v.onPinNext} role="button" tabindex="0">
-              <span>{t(v.pinBtnLabel)}</span>
-              <span style="width:15px;height:15px;background:{v.pinBtnInk};mask:{v.pinBtnMask}"></span>
+          <div class="sheet-foot">
+            <span class="cancel" onclick={() => (pin = null)} role="button" tabindex="0">Cancel</span>
+            <span class="grow"></span>
+            <div class="primary" class:ready onclick={pinNext} role="button" tabindex="0">
+              <span>{confirmStep ? 'Save PIN' : 'Continue'}</span>
+              {@render glyph(confirmStep ? 'lock' : 'arrow', 15, 'var(--primary-ink)')}
             </div>
           </div>
         </div>
       </div>
     {/if}
 
-    {#if v.recipSheet}
-      <div style="position:absolute;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;padding:var(--space-22)">
-        <div style="position:absolute;inset:0;background:var(--scrim);animation:oc-veil-in 160ms ease-out both" onclick={v.onRecipCancel} aria-hidden="true"></div>
-        <div style="position:relative;display:flex;flex-direction:column;width:100%;max-width:440px;max-height:100%;box-sizing:border-box;border-radius:var(--radius-xl);background:var(--surface-1,#15151b);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12)),0 24px 60px rgba(0,0,0,.5);overflow:hidden;animation:oc-sheet-in 200ms cubic-bezier(.2,.8,.3,1) both">
-          <div style="flex:none;display:flex;align-items:center;gap:var(--space-12);padding:var(--space-16) var(--space-18);border-block-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-              <span style="font:var(--weight-bold) var(--text-md)/1.25 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.recipTitle)}</span>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-4,#7C7C8C)">The network is detected from the address</span>
-            </div>
-            <span class="dc-p19" style="flex:none;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onRecipCancel} role="button" tabindex="0">
-              <span style="width:14px;height:14px;background:var(--ink-3,#9A9AA8);mask:{v.closeMask}"></span>
-            </span>
-          </div>
+    {#if sheet}
+      <div class="sheet-layer recipient-layer">
+        <div class="sheet-veil" onclick={() => (sheet = null)} aria-hidden="true"></div>
+        <div class="sheet recipient-sheet">
+          {@render sheetHeader(sheet.editId ? 'Edit recipient' : 'Add a recipient', 'The network is detected from the address', false, () => (sheet = null))}
 
-          <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:var(--space-22);padding:var(--space-22) var(--space-18)">
-            <div style="display:flex;flex-direction:column;gap:var(--space-8)">
-              <span style="font:var(--weight-semibold) var(--text-xs)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-4,#7C7C8C)">ADDRESS</span>
-              <textarea style="width:100%;box-sizing:border-box;resize:none;padding:var(--space-12) var(--space-14);border:0;outline:none;border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:inset 0 0 0 1px {v.recipAddrLine};font:var(--weight-medium) var(--text-md)/1.5 var(--font-mono);color:var(--ink,#ECECF1);word-break:break-all" value={v.recipAddress} oninput={v.onRecipAddress} placeholder="Paste the recipient's address" rows="2"></textarea>
-              {#if v.recipHasNote}
-                <div style="display:flex;align-items:center;gap:var(--space-8);min-width:0;padding:var(--space-10) var(--space-12);border-radius:var(--radius-md);background:{v.recipNoteBg}">
-                  <span style="flex:none;width:14px;height:14px;background:{v.recipNoteInk};mask:{v.recipNoteMask}"></span>
-                  <span style="flex:1;min-width:0;font:var(--weight-medium) var(--text-sm)/1.4 var(--font-sans);color:{v.recipNoteInk};text-wrap:pretty">{t(v.recipNote)}</span>
+          <div class="sheet-body">
+            <div class="form-field">
+              <span class="eyebrow small">ADDRESS</span>
+              <textarea
+                class="address-input"
+                class:valid={draftValid}
+                class:invalid={!!draftAddr && !draftValid}
+                value={sheet.address}
+                oninput={(e) => (sheet = sheet && { ...sheet, address: e.currentTarget.value })}
+                placeholder="Paste the recipient's address"
+                rows="2"
+              ></textarea>
+              {#if draftAddr}
+                <div class="address-note" class:valid={draftValid}>
+                  {@render glyph(draftValid ? 'check' : 'warning', 14, 'var(--note-ink)')}
+                  <span class="address-note-text"
+                    >{dupe
+                      ? `Already saved as “${dupe.name}”.`
+                      : draftNet === 'unknown'
+                        ? 'That is not an address we recognise — check for a missing character.'
+                        : `${draftNet} address detected`}</span
+                  >
                 </div>
               {/if}
             </div>
 
-            <div style="display:flex;flex-direction:column;gap:var(--space-8)">
-              <span style="font:var(--weight-semibold) var(--text-xs)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-4,#7C7C8C)">NAME</span>
-              <input style="width:100%;box-sizing:border-box;height:44px;padding:0 var(--space-14);border:0;outline:none;border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07));font:var(--weight-medium) var(--text-md)/1.3 var(--font-sans);color:var(--ink,#ECECF1)" value={v.recipName} oninput={v.onRecipName} placeholder={v.recipNamePlaceholder}>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.4 var(--font-sans);color:var(--ink-4,#7C7C8C)">Only you see this — it replaces the address in send screens.</span>
+            <div class="form-field">
+              <span class="eyebrow small">NAME</span>
+              <input
+                class="name-input"
+                value={sheet.name}
+                oninput={(e) => (sheet = sheet && { ...sheet, name: e.currentTarget.value })}
+                placeholder={draftValid ? `${draftNet} recipient` : "Recipient's name or title"}
+              />
+              <span class="field-hint">Only you see this — it replaces the address in send screens.</span>
             </div>
 
-            <div style="display:flex;flex-direction:column;gap:var(--space-8)">
-              <span style="font:var(--weight-semibold) var(--text-xs)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-4,#7C7C8C)">RESTRICT TO ONE TOKEN <span style="color:var(--ink-4,#6E6E7C)">· OPTIONAL</span></span>
-              <div style="display:flex;flex-wrap:wrap;gap:var(--space-6)">
-                {#each v.recipTokenChips ?? [] as c, i6}
-                  <span class="dc-p20" style="flex:none;display:flex;align-items:center;gap:var(--space-6);height:32px;padding:{c.padding};box-sizing:border-box;border-radius:var(--radius-pill);background:{c.bg};box-shadow:{c.ring};cursor:pointer;user-select:none" onclick={c.onSelect} role="button" tabindex="0">
-                    {#if c.hasDot}
-                      <span style="flex:none;display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:var(--radius-pill);background:{c.gradient};font:var(--weight-bold) 9px/1 var(--font-sans);color:#0b0b0f">{t(c.mark)}</span>
+            <div class="form-field">
+              <span class="eyebrow small">RESTRICT TO ONE TOKEN <span class="optional">· OPTIONAL</span></span>
+              <div class="token-chips">
+                {#each [{ symbol: null, label: 'Any token', mark: '', grad: 'transparent' }, ...held.map((t) => ({ symbol: t.symbol, label: t.symbol, mark: t.mark, grad: t.grad }))] as c}
+                  <span class="token-chip" class:on={sheet.token === c.symbol} class:dotted={!!c.symbol} onclick={() => (sheet = sheet && { ...sheet, token: c.symbol })} role="button" tabindex="0">
+                    {#if c.symbol}
+                      <span class="token-chip-mark" style:background={c.grad}>{c.mark}</span>
                     {/if}
-                    <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:{c.ink}">{t(c.label)}</span>
+                    <span class="token-chip-label">{c.label}</span>
                   </span>
                 {/each}
               </div>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(v.recipTokenHint)}</span>
+              <span class="field-hint wrap"
+                >{sheet.token ? `Send screens will only offer ${sheet.token} for this recipient.` : 'Leave as Any token to send anything this network supports.'}</span
+              >
             </div>
           </div>
 
-          <div style="flex:none;display:flex;align-items:center;gap:var(--space-8);padding:var(--space-14) var(--space-18);border-block-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-            <span class="dc-p21" style="flex:none;padding:var(--space-8) var(--space-12);border-radius:var(--radius-md);font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.onRecipCancel} role="button" tabindex="0">Cancel</span>
-            <span style="flex:1"></span>
-            <div style="flex:none;display:flex;align-items:center;gap:var(--space-8);padding:0 var(--space-16);height:38px;box-sizing:border-box;border-radius:var(--radius-md);background:{v.recipSaveBg};font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:{v.recipSaveInk};cursor:{v.recipSaveCursor};user-select:none" onclick={v.onRecipSave} role="button" tabindex="0">
-              <span>{t(v.recipSaveLabel)}</span>
-              <span style="width:15px;height:15px;background:{v.recipSaveInk};mask:{v.checkMask}"></span>
+          <div class="sheet-foot">
+            <span class="cancel" onclick={() => (sheet = null)} role="button" tabindex="0">Cancel</span>
+            <span class="grow"></span>
+            <div class="primary" class:ready={draftValid} onclick={saveRecipient} role="button" tabindex="0">
+              <span>{sheet.editId ? 'Save changes' : 'Save recipient'}</span>
+              {@render glyph('check', 15, 'var(--primary-ink)')}
             </div>
           </div>
         </div>
@@ -353,26 +575,1147 @@
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p1:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p2:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p3:hover{background:var(--accent-soft,rgba(255,86,114,.12)) !important}
-  .dc-p4:hover{background:var(--overlay-2,rgba(255,255,255,.07)) !important}
-  .dc-p5:hover{filter:brightness(1.08) !important}
-  .dc-p6:hover{background:var(--overlay-1,rgba(255,255,255,.04)) !important}
-  .dc-p7:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p8:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p9:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p10:hover{filter:brightness(1.08) !important}
-  .dc-p11:hover{filter:brightness(1.15) !important}
-  .dc-p12:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p13:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p14:hover{background:var(--accent-soft,rgba(255,86,114,.12)) !important}
-  .dc-p15:hover{background:var(--overlay-2,rgba(255,255,255,.07)) !important}
-  .dc-p16:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p17:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p18:hover{background:var(--accent-soft,rgba(255,86,114,.1)) !important}
-  .dc-p19:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p20:hover{filter:brightness(1.15) !important}
-  .dc-p21:hover{background:var(--accent-soft,rgba(255,86,114,.1)) !important}
+  .layer {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-22);
+  }
+
+  .veil {
+    position: absolute;
+    inset: 0;
+    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
+    backdrop-filter: var(--oc-veil-blur, blur(4px));
+    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
+    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
+  }
+
+  .veil.closing {
+    animation: oc-veil-out 170ms var(--ease-standard) both;
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 680px;
+    height: 606px;
+    max-height: 100%;
+    box-sizing: border-box;
+    border-radius: var(--radius-xl);
+    background: var(--surface-1, #0e0e12);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+    overflow: hidden;
+    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  .card.closing {
+    animation: oc-dlg-out 170ms var(--ease-standard) both;
+  }
+
+  .glyph {
+    flex: none;
+  }
+
+  .grow {
+    flex: 1;
+  }
+
+  .header {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-16) var(--space-22);
+    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .header-text,
+  .sheet-titles {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .header-title {
+    font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .header-sub,
+  .sheet-sub {
+    font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .sheet-sub.mono {
+    font-family: var(--font-mono);
+  }
+
+  .square {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .square.small {
+    width: 28px;
+    height: 28px;
+  }
+
+  .square.back {
+    width: 32px;
+    height: 32px;
+  }
+
+  .square:hover,
+  .clear:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .nav {
+    flex: none;
+    width: 196px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-14) var(--space-10);
+    border-inline-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .nav-item {
+    --nav-ink: var(--ink-3, #9a9aa8);
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    height: 40px;
+    padding: 0 var(--space-12);
+    border-radius: var(--radius-md);
+    background: transparent;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .nav-item.on {
+    --nav-ink: var(--ink, #ececf1);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .nav-item:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .nav-label {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
+    color: var(--nav-ink);
+  }
+
+  .on .nav-label {
+    font-weight: var(--weight-semibold);
+  }
+
+  .content {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-32);
+    padding: var(--space-26) var(--space-22);
+  }
+
+  .setting {
+    flex: none;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-16);
+  }
+
+  .setting-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .setting-title {
+    font: var(--weight-bold) var(--text-md) / 1.3 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .setting-desc {
+    font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    text-wrap: pretty;
+  }
+
+  .setting-toggle {
+    flex: none;
+    margin-block-start: 2px;
+  }
+
+  .eyebrow {
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .eyebrow.grow {
+    min-width: 0;
+  }
+
+  .eyebrow.small {
+    font-size: var(--text-xs);
+  }
+
+  .optional {
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .minimum {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+  }
+
+  .money-field {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    width: 140px;
+    padding: 0 var(--space-14);
+    height: 40px;
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .dollar {
+    flex: none;
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-mono);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .money-field input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: 0;
+    outline: none;
+    font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-mono);
+    color: var(--ink, #ececf1);
+  }
+
+  .list-card {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    padding: var(--space-14);
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    cursor: pointer;
+  }
+
+  .list-card:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .list-card-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+  }
+
+  .list-card-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .list-card-title {
+    font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .list-card-sub {
+    font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+  }
+
+  .chip {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    height: 26px;
+    padding: 0 var(--space-8) 0 3px;
+    box-sizing: border-box;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .chip-mark,
+  .token-chip-mark {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-pill);
+    font: var(--weight-bold) 9px/1 var(--font-sans);
+    color: #0b0b0f;
+  }
+
+  .chip-symbol {
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .chip-more {
+    flex: none;
+    display: flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 var(--space-10);
+    box-sizing: border-box;
+    border-radius: var(--radius-pill);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .none {
+    font: var(--weight-regular) var(--text-sm) / 1.6 var(--font-sans);
+    color: var(--status-danger, #f5493d);
+  }
+
+  .pin-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    flex-wrap: wrap;
+  }
+
+  .pin-badge {
+    --badge-ink: var(--ink-4, #7c7c8c);
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 20px;
+    padding: 0 var(--space-8);
+    box-sizing: border-box;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+  }
+
+  .pin-badge.set {
+    --badge-ink: var(--status-online, #2ee6a8);
+    background: var(--category-b-soft, rgba(46, 230, 168, 0.12));
+  }
+
+  .pin-badge-label {
+    font: var(--weight-semibold) 10.5px/1 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    color: var(--badge-ink);
+  }
+
+  .change-pin {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+    height: 40px;
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .change-pin:hover,
+  .take-over-button:hover {
+    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
+  }
+
+  .change-pin-label {
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+  }
+
+  .currencies {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    margin-block-start: calc(-1 * var(--space-22));
+  }
+
+  .currency {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    height: 44px;
+    padding: 0 var(--space-14);
+    border-radius: var(--radius-md);
+    background: transparent;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .currency.on {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .currency:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+  }
+
+  .currency-code {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-mono);
+    color: var(--ink, #ececf1);
+  }
+
+  .currency-note {
+    flex: none;
+    font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .recipients {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-14);
+    margin-block-end: calc(-1 * var(--space-32));
+  }
+
+  .recipients-head {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-12);
+  }
+
+  .add {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    height: 34px;
+    padding: 0 var(--space-12);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .add:hover {
+    filter: brightness(1.08);
+  }
+
+  .add-label {
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--on-accent, #2e0512);
+  }
+
+  .search {
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    height: 40px;
+    padding: 0 var(--space-12);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .search.tall {
+    height: 42px;
+  }
+
+  .search input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: 0;
+    outline: none;
+    font: var(--weight-medium) var(--text-md) / 1.3 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .clear {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+  }
+
+  .recipient-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .recipient {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    min-height: 58px;
+    padding: var(--space-8) var(--space-12);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .recipient:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+  }
+
+  .recipient-mark {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-pill);
+    font: var(--weight-bold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .recipient-mark.token {
+    color: #0b0b0f;
+  }
+
+  .recipient-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .recipient-line {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    min-width: 0;
+  }
+
+  .recipient-name {
+    flex: none;
+    max-width: 190px;
+    font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .recipient-badge {
+    flex: none;
+    display: flex;
+    align-items: center;
+    height: 18px;
+    padding: 0 var(--space-6);
+    box-sizing: border-box;
+    border-radius: var(--radius-sm);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    font: var(--weight-semibold) 10px/1 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .recipient-address {
+    font: var(--weight-regular) var(--text-sm) / 1.2 var(--font-mono);
+    color: var(--ink-4, #7c7c8c);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .row-actions {
+    flex: none;
+    display: flex;
+    gap: 2px;
+  }
+
+  .confirm {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+  }
+
+  .keep,
+  .remove {
+    display: flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 var(--space-10);
+    box-sizing: border-box;
+    border-radius: var(--radius-sm);
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .keep:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .remove {
+    background: var(--status-danger, #f5493d);
+    color: #2b0704;
+  }
+
+  .remove:hover {
+    filter: brightness(1.08);
+  }
+
+  .recipients-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-10);
+    padding: var(--space-32) var(--space-22);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--line-2, rgba(255, 255, 255, 0.14));
+  }
+
+  .recipients-empty-text {
+    font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-align: center;
+    text-wrap: pretty;
+  }
+
+  .footer {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-14) var(--space-22);
+    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .footer-note {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .done {
+    flex: none;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-18);
+    height: 38px;
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .done:not(.small):hover {
+    filter: brightness(1.15);
+  }
+
+  .done.small {
+    padding: 0 var(--space-16);
+    height: 36px;
+  }
+
+  /* sheets over the card */
+  .sheet-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-22);
+  }
+
+  .sheet-layer.pin-layer {
+    z-index: 6;
+  }
+
+  .sheet-layer.recipient-layer {
+    z-index: 7;
+  }
+
+  .sheet-veil {
+    position: absolute;
+    inset: 0;
+    background: var(--scrim);
+    animation: oc-veil-in 160ms ease-out both;
+  }
+
+  .sheet-veil.dim {
+    background: rgba(3, 3, 6, 0.66);
+  }
+
+  .sheet {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 100%;
+    box-sizing: border-box;
+    border-radius: var(--radius-xl);
+    background: var(--surface-1, #15151b);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)),
+      0 24px 60px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    animation: oc-sheet-in 200ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  }
+
+  .list-sheet {
+    max-width: 420px;
+    height: 100%;
+  }
+
+  .pin-sheet {
+    max-width: 392px;
+  }
+
+  .recipient-sheet {
+    max-width: 440px;
+  }
+
+  .sheet-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-16) var(--space-18);
+    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .sheet-title {
+    font: var(--weight-bold) var(--text-md) / 1.25 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .sheet-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-22);
+    padding: var(--space-22) var(--space-18);
+  }
+
+  .sheet-body.list-body {
+    gap: var(--space-12);
+    padding: var(--space-14) var(--space-18) var(--space-18);
+  }
+
+  .sheet-foot {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: var(--space-14) var(--space-18);
+    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .list-sheet .sheet-foot {
+    gap: var(--space-12);
+  }
+
+  .sheet-foot-note {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .sheet-foot-note.warn {
+    color: var(--status-danger, #f5493d);
+  }
+
+  .list-search-wrap {
+    flex: none;
+    padding: var(--space-14) var(--space-18) 0;
+  }
+
+  .take-over {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+    padding: var(--space-12) var(--space-14);
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .take-over-text {
+    font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    text-wrap: pretty;
+  }
+
+  .take-over-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .token-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .token-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    height: 52px;
+    padding: 0 var(--space-12);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: transparent;
+    cursor: pointer;
+    user-select: none;
+    transition: background 160ms ease-out;
+  }
+
+  .token-row.on {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .token-row.locked {
+    cursor: default;
+  }
+
+  .token-row.dimmed {
+    opacity: 0.45;
+  }
+
+  .token-row:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+  }
+
+  .token-mark {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-pill);
+    font: var(--weight-bold) var(--text-xs) / 1 var(--font-sans);
+    color: #0b0b0f;
+  }
+
+  .token-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .token-symbol {
+    font: var(--weight-bold) var(--text-md) / 1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .token-value {
+    font: var(--weight-regular) var(--text-sm) / 1.2 var(--font-mono);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .no-rows {
+    padding: var(--space-14) var(--space-12);
+    font: var(--weight-regular) var(--text-md) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .pin-blurb {
+    font: var(--weight-regular) var(--text-md) / 1.55 var(--font-sans);
+    color: var(--ink-2, #b9b9c6);
+    text-wrap: pretty;
+  }
+
+  .pin-pad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-22) var(--space-14);
+    border-radius: var(--radius-lg);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.035));
+    cursor: text;
+  }
+
+  .pin-digits {
+    position: relative;
+    display: flex;
+    gap: var(--space-8);
+  }
+
+  .pin-digit {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 34px;
+    height: 42px;
+    box-sizing: border-box;
+    padding-block-end: var(--space-6);
+    border-block-end: 2px solid var(--line-2, rgba(255, 255, 255, 0.14));
+    font: var(--weight-bold) var(--text-xl, 20px) / 1 var(--font-mono);
+    color: var(--ink, #ececf1);
+    transition: border-color 160ms ease-out;
+  }
+
+  .pin-digit.filled {
+    border-block-end-color: var(--accent, #ff5672);
+  }
+
+  .pin-digit.error {
+    border-block-end-color: var(--status-danger, #f5493d);
+  }
+
+  .pin-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    opacity: 0;
+    border: 0;
+    outline: none;
+    background: none;
+    caret-color: transparent;
+    cursor: text;
+  }
+
+  .pin-note {
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .pin-note.error {
+    color: var(--status-danger, #f5493d);
+  }
+
+  .cancel {
+    flex: none;
+    padding: var(--space-8) var(--space-12);
+    border-radius: var(--radius-md);
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .cancel:hover {
+    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+  }
+
+  .primary {
+    --primary-ink: var(--ink-4, #7c7c8c);
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: 0 var(--space-16);
+    height: 38px;
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--primary-ink);
+    cursor: not-allowed;
+    user-select: none;
+  }
+
+  .primary.ready {
+    --primary-ink: var(--on-accent, #2e0512);
+    background: var(--accent, #ff5672);
+    cursor: pointer;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .address-input {
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
+    padding: var(--space-12) var(--space-14);
+    border: 0;
+    outline: none;
+    border-radius: var(--radius-md);
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    font: var(--weight-medium) var(--text-md) / 1.5 var(--font-mono);
+    color: var(--ink, #ececf1);
+    word-break: break-all;
+  }
+
+  .address-input.valid {
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.14));
+  }
+
+  .address-input.invalid {
+    box-shadow: inset 0 0 0 1px var(--status-danger, #f5493d);
+  }
+
+  .address-note {
+    --note-ink: var(--status-danger, #f5493d);
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    min-width: 0;
+    padding: var(--space-10) var(--space-12);
+    border-radius: var(--radius-md);
+    background: var(--status-danger-soft, rgba(245, 73, 61, 0.12));
+  }
+
+  .address-note.valid {
+    --note-ink: var(--status-online, #2ee6a8);
+    background: var(--category-b-soft, rgba(46, 230, 168, 0.12));
+  }
+
+  .address-note-text {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--note-ink);
+    text-wrap: pretty;
+  }
+
+  .name-input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 44px;
+    padding: 0 var(--space-14);
+    border: 0;
+    outline: none;
+    border-radius: var(--radius-md);
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    font: var(--weight-medium) var(--text-md) / 1.3 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .field-hint {
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .field-hint.wrap {
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+
+  .token-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+  }
+
+  .token-chip {
+    --chip-ink: var(--ink-2, #c9c9d4);
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    height: 32px;
+    padding: 0 var(--space-12);
+    box-sizing: border-box;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .token-chip.dotted {
+    padding: 0 var(--space-10) 0 4px;
+  }
+
+  .token-chip.on {
+    --chip-ink: var(--accent, #ff5672);
+    background: var(--accent-soft, rgba(255, 86, 114, 0.14));
+    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+  }
+
+  .token-chip:hover {
+    filter: brightness(1.15);
+  }
+
+  .token-chip-mark {
+    width: 22px;
+    height: 22px;
+  }
+
+  .token-chip-label {
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--chip-ink);
+  }
 </style>

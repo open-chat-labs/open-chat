@@ -1,7 +1,9 @@
-<!-- Generated from lib/InviteDialog.dc.html (source hash 408fbcd8) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Add or invite people to a group / channel, or share its link. Tabs: Add from community (canAdd: channels inside a
+     community), Invite people (search `people`; `frequent` ones are listed until you search) and Share link (toggle,
+     copy, share to a chat, QR). embedded renders it as the Invite page of a manage dialog: no veil, own header, no
+     footer on Share link, and the host can switch tabs through initialTab. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './InviteDialog.logic.js';
+  import { onDestroy, untrack } from 'svelte';
   import ChatPicker from '../../lib/components/ChatPicker.svelte';
   import Field from '../../lib/components/Field.svelte';
   import MemberRow from '../../lib/components/MemberRow.svelte';
@@ -9,192 +11,371 @@
   import Toggle from '../../lib/components/Toggle.svelte';
   import UndoToast from '../../lib/components/UndoToast.svelte';
 
+  type Color = 'violet' | 'amber' | 'teal' | 'blue' | 'slate' | 'plum';
+  type TabKey = 'add' | 'invite' | 'share';
+
+  const GRADIENTS: Record<Color, string> = {
+    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
+    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
+    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
+    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+    slate: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
+    plum: 'linear-gradient(140deg,#b06bff,#6a2bff)',
+  };
+
+  export interface InvitePerson {
+    name: string;
+    handle: string;
+    color: Color;
+    /** Listed before you search. */
+    frequent?: boolean;
+  }
+
   interface Props {
-    groupName?: string;
-    initialTab?: string;
+    groupName: string;
+    /** "people" opens Add from community when canAdd, else Invite people. */
+    initialTab?: 'people' | 'invite' | 'share';
     shareOn?: boolean;
+    /** Defaults to a link made from groupName. */
     shareLink?: string;
+    /** Word used in the share copy ("group", "channel", "community"). */
+    noun?: string;
+    /** Channels inside a community: adds the "Add from community" tab. */
     canAdd?: boolean;
     communityName?: string;
-    communityMembers?: {name: string, handle: string, color: string}[];
+    communityMembers?: { name: string; handle: string; color: Color }[];
+    /** Handles already in the channel (shown, not pickable). */
     inChannel?: string[];
+    /** Everyone you can invite. */
+    people: InvitePerson[];
+    /** Invited but not accepted yet. */
+    pending?: { title: string; handle: string; color: Color }[];
+    /** Without invite rights the page is view-only: no footer. */
+    canInvite?: boolean;
+    embedded?: boolean;
     onAdd?: (handles: string[]) => void;
     onInvite?: (handles: string[]) => void;
     onCancel?: () => void;
-    chats?: { name: string, kind?: string, grad: string, radius?: string }[];
-    onShareToChat?: (v: { chat: string, message: string }) => void;
-    [key: string]: unknown;
+    /** Embedded: the close button. */
+    onClose?: () => void;
+    /** Embedded: reports whether anything is picked. */
+    onDirtyChange?: (dirty: boolean) => void;
+    chats?: { name: string; kind?: string; grad: string; radius?: string }[];
+    onShareToChat?: (v: { chat: string; message: string }) => void;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let {
+    groupName,
+    initialTab = 'people',
+    shareOn: shareOnProp = true,
+    shareLink,
+    noun = 'group',
+    canAdd = false,
+    communityName = 'the community',
+    communityMembers = [],
+    inChannel = [],
+    people,
+    pending = [],
+    canInvite = true,
+    embedded = false,
+    onAdd,
+    onInvite,
+    onCancel,
+    onClose,
+    onDirtyChange,
+    chats = [],
+    onShareToChat,
+  }: Props = $props();
+
+  const keys = $derived<TabKey[]>(canAdd ? ['add', 'invite', 'share'] : ['invite', 'share']);
+  const tabFor = (want: Props['initialTab']) => {
+    const k: TabKey = want === 'share' ? 'share' : want === 'invite' ? 'invite' : canAdd ? 'add' : 'invite';
+    return Math.max(0, keys.indexOf(k));
+  };
+
+  let tab = $state(untrack(() => tabFor(initialTab)));
+  let addQuery = $state('');
+  let addPicked = $state<string[]>([]);
+  let query = $state('');
+  let picked = $state<string[]>([]);
+  let shareOn = $state(untrack(() => shareOnProp));
+  let linkCopied = $state(false);
+  let pickerOpen = $state(false);
+  let toast = $state<{ id: number; text: string } | null>(null);
+  let copyTimer: ReturnType<typeof setTimeout> | undefined;
+  let toastTimer: ReturnType<typeof setTimeout> | undefined;
+  onDestroy(() => {
+    clearTimeout(copyTimer);
+    clearTimeout(toastTimer);
+  });
+
+  // embedded: the host can re-point the open page at another tab
+  let lastInitial = untrack(() => initialTab);
+  $effect(() => {
+    const want = initialTab;
+    untrack(() => {
+      if (embedded && want !== lastInitial && want) tab = tabFor(want);
+      lastInitial = want;
+    });
+  });
+
+  // embedded: tell the host when there is something picked
+  let reportedDirty: boolean | undefined;
+  $effect(() => {
+    const dirty = picked.length > 0 || addPicked.length > 0;
+    untrack(() => {
+      if (reportedDirty !== undefined && reportedDirty !== dirty) onDirtyChange?.(dirty);
+      reportedDirty = dirty;
+    });
+  });
+
+  const key = $derived(keys[tab] ?? keys[0]);
+  const matches = (p: { name: string; handle: string }, q: string) => `${p.name} ${p.handle}`.toLowerCase().includes(q);
+
+  const aq = $derived(addQuery.trim().toLowerCase());
+  const addPool = $derived((aq ? communityMembers.filter((p) => matches(p, aq)) : communityMembers).slice(0, 30));
+  const outsideMatch = $derived(!!aq && people.some((p) => !communityMembers.some((m) => m.handle === p.handle) && matches(p, aq)));
+
+  const q = $derived(query.trim().toLowerCase());
+  const pool = $derived(q ? people.filter((p) => matches(p, q)) : people.filter((p) => p.frequent));
+
+  const link = $derived(
+    shareLink ??
+      `oc.app/group/${groupName
+        .toLowerCase()
+        .replace(/^#/, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')}-8f2a`,
+  );
+  const tabLabels = $derived(keys.map((k) => (k === 'add' ? 'Add from community' : k === 'invite' ? 'Invite people' : 'Share link')));
+  const tabCounts = $derived(keys.map((k) => (k === 'add' ? addPicked.length || null : k === 'invite' ? picked.length || null : null)));
+
+  const gradientOf = (handle: string, list: { handle: string; color: Color }[]) => GRADIENTS[list.find((p) => p.handle === handle)?.color ?? 'violet'] ?? GRADIENTS.slate;
+  const toggleIn = (list: string[], handle: string) => (list.includes(handle) ? list.filter((h) => h !== handle) : [...list, handle]);
+  const countLabel = (n: number) => `${n}${n === 1 ? ' person selected' : ' people selected'}`;
+
+  function cancel() {
+    if (embedded && onClose) onClose();
+    else onCancel?.();
+  }
+
+  function copyLink() {
+    try {
+      navigator.clipboard?.writeText(`https://${link}`);
+    } catch {}
+    linkCopied = true;
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => (linkCopied = false), 1600);
+  }
+
+  function sentToChat(x: { chat: string; message: string }) {
+    const id = Date.now();
+    pickerOpen = false;
+    toast = { id, text: `Invite link sent to ${x.chat}` };
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      if (toast?.id === id) toast = null;
+    }, 4000);
+    onShareToChat?.(x);
+  }
+
+  function add() {
+    if (addPicked.length) onAdd?.(addPicked.slice());
+    if (embedded) {
+      addPicked = [];
+      addQuery = '';
+    }
+  }
+
+  function send() {
+    if (!picked.length) return;
+    onInvite?.(picked.slice());
+    if (embedded) {
+      picked = [];
+      query = '';
+    }
+  }
 </script>
 
-<div style="position:{v.rootPos};inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:{v.rootPad};box-sizing:border-box">
-  {#if v.notEmbedded}
-  <div style="position:absolute;inset:0;background:var(--oc-veil,rgba(3,3,6,.72));backdrop-filter:var(--oc-veil-blur,blur(4px));-webkit-backdrop-filter:var(--oc-veil-blur,blur(4px))" onclick={v.onCancel} aria-hidden="true"></div>
+{#snippet chips(handles: string[], list: { handle: string; color: Color }[], label: string, clear: () => void, toggle: (h: string) => void)}
+  <div class="picked">
+    <div class="picked-head">
+      <span class="list-label">{label}</span>
+      <span class="grow"></span>
+      <span class="clear-all" onclick={clear} role="button" tabindex="0">Clear all</span>
+    </div>
+    <div class="chips">
+      {#each handles as handle}
+        <span class="chip">
+          <span class="chip-face" style:background={gradientOf(handle, list)}></span>
+          <span class="chip-handle">{handle}</span>
+          <span class="chip-remove" onclick={() => toggle(handle)} role="button" tabindex="0"><span class="chip-remove-icon"></span></span>
+        </span>
+      {/each}
+    </div>
+  </div>
+{/snippet}
+
+{#snippet tabs()}
+  <SegmentedTabs labels={tabLabels} counts={tabCounts} selectedIndex={tab} dotIndexes={[]} onSelect={(i) => (tab = i)} />
+{/snippet}
+
+<div class="layer" class:embedded>
+  {#if !embedded}
+    <div class="veil" onclick={cancel} aria-hidden="true"></div>
   {/if}
 
-  <div style="position:relative;width:100%;max-width:{v.cardMax};height:{v.cardH};display:flex;flex-direction:column;box-sizing:border-box;border-radius:{v.cardRadius};background:var(--surface-1,#0e0e12);box-shadow:{v.cardShadow};overflow:hidden">
-
-    {#if v.isEmbedded}
-    <div style="flex:none;display:flex;align-items:center;gap:var(--space-10);height:71px;box-sizing:border-box;padding:0 var(--space-16) 0 var(--space-24);border-block-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-      <span style="flex:1;min-width:0;font:var(--weight-bold) var(--text-lg)/1.2 var(--font-sans);color:var(--ink,#ECECF1)">Invite and share</span>
-      <span class="dc-p0" style="flex:none;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onCancel} role="button" tabindex="0" aria-label="Close" title="Close">
-        <span style="width:16px;height:16px;background:var(--ink-3,#9A9AA8);mask:{v.closeMask}"></span>
-      </span>
-    </div>
-    {/if}
-
-    {#if v.notEmbedded}
-    <div style="flex:none;display:flex;flex-direction:column;gap:var(--space-14);padding:var(--space-16) var(--space-18);border-block-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-      <div style="display:flex;align-items:center;gap:var(--space-12);min-width:0">
-        <span style="flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1))">
-          <span style="width:18px;height:18px;background:var(--ink-2,#B9B9C6);mask:{v.addUserMask}"></span>
-        </span>
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-          <span style="font:var(--weight-bold) var(--text-lg)/1.25 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.dialogTitle)}</span>
-          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:var(--weight-regular) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.groupName)}</span>
-        </div>
-        <span class="dc-p1" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onCancel} role="button" tabindex="0">
-          <span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.closeMask}"></span>
-        </span>
+  <div class="card">
+    {#if embedded}
+      <div class="embedded-head">
+        <span class="embedded-title">Invite and share</span>
+        <span class="icon-button large" onclick={cancel} role="button" tabindex="0" aria-label="Close" title="Close"><span class="close-icon large"></span></span>
       </div>
-      <div style="display:grid;grid-template-columns:minmax(0,1fr)"><SegmentedTabs labels={v.tabLabels} counts={v.tabCounts} selectedIndex={v.tab} dotIndexes={v.none} onSelect={v.onTab}></SegmentedTabs></div>
-    </div>
+    {:else}
+      <div class="head">
+        <div class="head-row">
+          <span class="head-tile"><span class="head-icon"></span></span>
+          <div class="head-text">
+            <span class="head-title">{canAdd ? 'Add or invite people' : 'Invite people'}</span>
+            <span class="head-sub">{groupName}</span>
+          </div>
+          <span class="icon-button" onclick={cancel} role="button" tabindex="0"><span class="close-icon"></span></span>
+        </div>
+        <div class="tabs">{@render tabs()}</div>
+      </div>
     {/if}
 
-    <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:var(--space-22) var(--space-18) var(--space-26);display:flex;flex-direction:column;align-items:center">
-      <div style="width:100%;max-width:520px;display:flex;flex-direction:column;gap:var(--space-22);min-width:0">
-        {#if v.isEmbedded}
-          <div style="display:grid;grid-template-columns:minmax(0,1fr);margin-bottom:calc(var(--space-10) - var(--space-22))"><SegmentedTabs labels={v.tabLabels} counts={v.tabCounts} selectedIndex={v.tab} dotIndexes={v.none} onSelect={v.onTab}></SegmentedTabs></div>
+    <div class="body">
+      <div class="column">
+        {#if embedded}
+          <div class="tabs embedded-tabs">{@render tabs()}</div>
         {/if}
 
-        {#if v.isAddTab}
-          <div style="display:grid;grid-template-columns:minmax(0,1fr);min-width:0"><Field placeholder={v.addPlaceholder} value={v.addQuery} onInput={v.onAddQuery} onClear={v.onClearAddQuery} showShortcut={false}></Field></div>
-          <span style="padding-inline:var(--space-4);margin-top:calc(var(--space-12) * -1);font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">People you add join {t(v.groupName)} straight away. Only {t(v.communityName)} members can be added.</span>
+        {#if key === 'add'}
+          <div class="field">
+            <Field
+              placeholder="Search {communityName} members"
+              value={addQuery}
+              onInput={(e) => (addQuery = e.currentTarget.value)}
+              onClear={() => (addQuery = '')}
+              showShortcut={false}
+            />
+          </div>
+          <span class="hint">People you add join {groupName} straight away. Only {communityName} members can be added.</span>
 
-          {#if v.hasAddPicked}
-            <div style="display:flex;flex-direction:column;gap:var(--space-16);min-width:0;margin-top:var(--space-10)">
-              <div style="display:flex;align-items:baseline;gap:var(--space-10);min-width:0;padding-inline:var(--space-4)">
-                <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);text-transform:uppercase;color:var(--ink-4,#7C7C8C)">{t(v.addPickedLabel)}</span>
-                <span style="flex:1"></span>
-                <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.onClearAddAll} role="button" tabindex="0">Clear all</span>
-              </div>
-              <div style="display:flex;flex-wrap:wrap;gap:var(--space-8);min-width:0">
-                {#each v.addPicked ?? [] as p, i0}
-                  <span style="display:flex;align-items:center;gap:var(--space-8);padding:4px var(--space-10) 4px 4px;border-radius:var(--radius-pill);background:color-mix(in srgb, var(--status-verified,#3D9BFF) 12%, transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--status-verified,#3D9BFF) 34%, transparent)">
-                    <span style="flex:none;width:24px;height:24px;border-radius:var(--radius-pill);background:{p.gradient}"></span>
-                    <span style="font:var(--weight-medium) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1);white-space:nowrap">{t(p.handle)}</span>
-                    <span style="flex:none;display:flex;align-items:center;justify-content:center;width:16px;height:16px;cursor:pointer" onclick={p.onToggle} role="button" tabindex="0">
-                      <span style="width:11px;height:11px;background:var(--ink-2,#C9C9D4);mask:{v.closeMask}"></span>
-                    </span>
-                  </span>
-                {/each}
-              </div>
-            </div>
+          {#if addPicked.length > 0}
+            {@render chips(addPicked, communityMembers, `SELECTED · ${addPicked.length}`, () => (addPicked = []), (h) => (addPicked = toggleIn(addPicked, h)))}
           {/if}
 
-          <div style="display:flex;flex-direction:column;gap:var(--space-12);min-width:0;margin-top:var(--space-10)">
-            <span style="padding-inline-start:var(--space-4);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);text-transform:uppercase;color:var(--ink-4,#7C7C8C)">{t(v.addListLabel)}</span>
-            <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
-              {#each v.addPeople ?? [] as u, i1}
-                <div style="display:grid;grid-template-columns:minmax(0,1fr)"><MemberRow title={u.name} subtitle={u.handle} color={u.color} icon="toggle" selected={u.sel} disabled={u.inChannel} badge={u.badge} onClick={u.onToggle}></MemberRow></div>
+          <div class="list-block">
+            <span class="list-label start">{aq ? 'SEARCH RESULTS' : `${communityName.toUpperCase()} MEMBERS`}</span>
+            <div class="rows">
+              {#each addPool as u}
+                {@const member = inChannel.includes(u.handle)}
+                <div class="row">
+                  <MemberRow
+                    title={u.name}
+                    subtitle={u.handle}
+                    color={u.color || 'slate'}
+                    icon="toggle"
+                    selected={addPicked.includes(u.handle)}
+                    disabled={member}
+                    badge={member ? 'IN CHANNEL' : ''}
+                    onClick={() => !member && (addPicked = toggleIn(addPicked, u.handle))}
+                  />
+                </div>
               {/each}
             </div>
-            {#if v.addNoResults}
-              <div style="display:flex;flex-direction:column;align-items:flex-start;gap:var(--space-10);padding:var(--space-14) var(--space-10)">
-                <span style="font:var(--weight-regular) var(--text-base)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">No one in {t(v.communityName)} matches “{t(v.addQuery)}”.</span>
-                {#if v.outsideMatch}
-                  <span class="dc-p2" style="display:flex;align-items:center;gap:var(--space-8);height:38px;padding:0 var(--space-14);border-radius:var(--radius-md);background:var(--overlay-2,rgba(255,255,255,.08));font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1);cursor:pointer;user-select:none" onclick={v.inviteInstead} role="button" tabindex="0"><span>Invite “{t(v.addQuery)}” instead</span></span>
+            {#if aq && addPool.length === 0}
+              <div class="no-results">
+                <span class="no-results-text">No one in {communityName} matches “{addQuery}”.</span>
+                {#if outsideMatch}
+                  <span
+                    class="invite-instead"
+                    onclick={() => {
+                      tab = keys.indexOf('invite');
+                      query = addQuery;
+                    }}
+                    role="button"
+                    tabindex="0"><span>Invite “{addQuery}” instead</span></span
+                  >
                 {/if}
               </div>
             {/if}
           </div>
         {/if}
 
-        {#if v.isPeopleTab}
-          <div style="display:grid;grid-template-columns:minmax(0,1fr);min-width:0"><Field placeholder="Search people by name or @handle" value={v.query} onInput={v.onQuery} onClear={v.onClearQuery} showShortcut={false}></Field></div>
+        {#if key === 'invite'}
+          <div class="field">
+            <Field placeholder="Search people by name or @handle" value={query} onInput={(e) => (query = e.currentTarget.value)} onClear={() => (query = '')} showShortcut={false} />
+          </div>
 
-          {#if v.hasPicked}
-            <div style="display:flex;flex-direction:column;gap:var(--space-16);min-width:0;margin-top:var(--space-10)">
-              <div style="display:flex;align-items:baseline;gap:var(--space-10);min-width:0;padding-inline:var(--space-4)">
-                <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);text-transform:uppercase;color:var(--ink-4,#7C7C8C)">{t(v.pickedLabel)}</span>
-                <span style="flex:1"></span>
-                <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.onClearAll} role="button" tabindex="0">Clear all</span>
-              </div>
-              <div style="display:flex;flex-wrap:wrap;gap:var(--space-8);min-width:0">
-                {#each v.picked ?? [] as p, i2}
-                  <span style="display:flex;align-items:center;gap:var(--space-8);padding:4px var(--space-10) 4px 4px;border-radius:var(--radius-pill);background:color-mix(in srgb, var(--status-verified,#3D9BFF) 12%, transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--status-verified,#3D9BFF) 34%, transparent)">
-                    <span style="flex:none;width:24px;height:24px;border-radius:var(--radius-pill);background:{p.gradient}"></span>
-                    <span style="font:var(--weight-medium) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1);white-space:nowrap">{t(p.handle)}</span>
-                    <span style="flex:none;display:flex;align-items:center;justify-content:center;width:16px;height:16px;cursor:pointer" onclick={p.onToggle} role="button" tabindex="0">
-                      <span style="width:11px;height:11px;background:var(--ink-2,#C9C9D4);mask:{v.closeMask}"></span>
-                    </span>
-                  </span>
-                {/each}
-              </div>
-            </div>
+          {#if picked.length > 0}
+            {@render chips(picked, people, `SELECTED · ${picked.length}`, () => (picked = []), (h) => (picked = toggleIn(picked, h)))}
           {/if}
 
-          <div style="display:flex;flex-direction:column;gap:var(--space-12);min-width:0;margin-top:var(--space-10)">
-            <span style="padding-inline-start:var(--space-4);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);text-transform:uppercase;color:var(--ink-4,#7C7C8C)">{t(v.listLabel)}</span>
-            <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
-              {#each v.people ?? [] as u, i3}
-                <div style="display:grid;grid-template-columns:minmax(0,1fr)"><MemberRow title={u.name} subtitle={u.handle} color={u.color} icon="toggle" selected={u.sel} onClick={u.onToggle}></MemberRow></div>
+          <div class="list-block">
+            <span class="list-label start">{q ? 'SEARCH RESULTS' : 'FREQUENTLY CONTACTED'}</span>
+            <div class="rows">
+              {#each pool as u}
+                <div class="row">
+                  <MemberRow title={u.name} subtitle={u.handle} color={u.color} icon="toggle" selected={picked.includes(u.handle)} onClick={() => (picked = toggleIn(picked, u.handle))} />
+                </div>
               {/each}
             </div>
-            {#if v.noResults}
-              <span style="padding:var(--space-14) var(--space-10);font:var(--weight-regular) var(--text-base)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">No people match “{t(v.query)}”.</span>
+            {#if q && pool.length === 0}
+              <span class="no-people">No people match “{query}”.</span>
             {/if}
           </div>
 
-          {#if v.hasPending}
-            <div style="display:flex;flex-direction:column;gap:var(--space-12);min-width:0">
-              <span style="padding-inline-start:var(--space-4);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);text-transform:uppercase;color:var(--ink-4,#7C7C8C)">{t(v.pendingLabel)}</span>
-              <span style="padding-inline:var(--space-4);font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">Invited, but they have not accepted yet.</span>
-              <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
-                {#each v.pendingUsers ?? [] as u, i4}
-                  <div style="display:grid;grid-template-columns:minmax(0,1fr)"><MemberRow title={u.title} subtitle={u.handle} color={u.color} muted={true} badge="PENDING" showMenu={false}></MemberRow></div>
+          {#if pending.length > 0 && !q}
+            <div class="pending">
+              <span class="list-label start">PENDING · {pending.length}</span>
+              <span class="hint plain">Invited, but they have not accepted yet.</span>
+              <div class="rows">
+                {#each pending as u}
+                  <div class="row"><MemberRow title={u.title} subtitle={u.handle} color={u.color} muted={true} badge="PENDING" showMenu={false} /></div>
                 {/each}
               </div>
             </div>
           {/if}
         {/if}
 
-        {#if v.isShareTab}
-          <div style="display:flex;align-items:flex-start;gap:var(--space-14);min-width:0;padding-inline:var(--space-4);margin-top:var(--space-12)">
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-              <span style="font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#E4E4EC)">Enable sharing via link</span>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">A link and QR code anyone can use to preview and join the {t(v.noun)}.</span>
+        {#if key === 'share'}
+          <div class="share-toggle">
+            <div class="share-text">
+              <span class="share-title">Enable sharing via link</span>
+              <span class="share-sub">A link and QR code anyone can use to preview and join the {noun}.</span>
             </div>
-            <div style="flex:none;display:flex"><Toggle on={v.shareOn} onChange={v.onShareOn}></Toggle></div>
+            <div class="toggle"><Toggle on={shareOn} onChange={(on) => (shareOn = on)} /></div>
           </div>
 
-          {#if v.shareOn}
-            <div style="display:flex;flex-direction:column;gap:var(--space-16);min-width:0">
-              <div style="display:flex;flex-direction:column;gap:var(--space-8);padding:var(--space-14) var(--space-16);box-sizing:border-box;border-radius:var(--radius-lg);background:var(--status-chit-soft,rgba(255,159,69,.14));box-shadow:inset 0 0 0 1px var(--status-chit,#FF9F45)">
-                <div style="display:flex;align-items:center;gap:var(--space-8);min-width:0">
-                  <span style="flex:none;width:16px;height:16px;background:var(--status-chit,#FF9F45);mask:{v.warnMask}"></span>
-                  <span style="flex:1;min-width:0;font:var(--weight-semibold) var(--text-base)/1.25 var(--font-sans);color:var(--ink,#E4E4EC);text-wrap:pretty">Anyone with the link can join</span>
+          {#if shareOn}
+            <div class="share-body">
+              <div class="warning">
+                <div class="warning-head">
+                  <span class="warning-icon"></span>
+                  <span class="warning-title">Anyone with the link can join</span>
                 </div>
-                <span style="font:var(--weight-regular) var(--text-md)/1.5 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">Access gates are ignored for people who join by link.</span>
+                <span class="warning-body">Access gates are ignored for people who join by link.</span>
               </div>
 
-              <div style="display:flex;align-items:flex-start;gap:var(--space-12);min-width:0;padding:var(--space-14) var(--space-16);box-sizing:border-box;border-radius:var(--radius-lg);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.08))">
-                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-4)">
-                  <span style="font:var(--weight-medium) var(--text-xs)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-4,#7C7C8C)">{t(v.shareHeading)}</span>
-                  <span style="font:var(--weight-semibold) var(--text-md)/1.5 var(--font-mono);color:var(--ink,#E4E4EC);overflow-wrap:anywhere">{t(v.shareLink)}</span>
+              <div class="link-box">
+                <div class="link-text">
+                  <span class="link-heading">SHARE {noun.toUpperCase()} VIA LINK</span>
+                  <span class="link">{link}</span>
                 </div>
-                <span style="flex:none;display:flex;gap:var(--space-4)">
-                  <span class="dc-p3" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.copyLink} role="button" tabindex="0" title={v.copyTitle} aria-label={v.copyTitle}><span style="width:16px;height:16px;background:{v.copyInk};mask:{v.copyNowMask}"></span></span>
-                  <span class="dc-p4" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.openPicker} role="button" tabindex="0" title="Share to chat" aria-label="Share to chat"><span style="width:16px;height:16px;background:var(--ink-3,#9A9AA8);mask:var(--icon-send) center/contain no-repeat"></span></span>
+                <span class="link-actions">
+                  <span class="icon-button" onclick={copyLink} role="button" tabindex="0" title={linkCopied ? 'Copied' : 'Copy link'} aria-label={linkCopied ? 'Copied' : 'Copy link'}
+                    ><span class="link-icon" class:copied={linkCopied}></span></span
+                  >
+                  <span class="icon-button" onclick={() => (pickerOpen = true)} role="button" tabindex="0" title="Share to chat" aria-label="Share to chat"><span class="send-icon"></span></span>
                 </span>
               </div>
 
-              <div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-10);padding:var(--space-18);box-sizing:border-box;border-radius:var(--radius-lg);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.08))">
-                <span style="width:100%;max-width:230px;aspect-ratio:1;border-radius:var(--radius-md);background:var(--surface-2,#191921);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.08));display:flex;align-items:center;justify-content:center;font:var(--weight-medium) var(--text-sm)/1.4 var(--font-mono);color:var(--ink-4,#7C7C8C);text-align:center">QR CODE</span>
-                <span style="font:var(--weight-regular) var(--text-sm)/1.4 var(--font-sans);color:var(--ink-4,#7C7C8C);text-align:center;text-wrap:pretty">Scan to preview and join the {t(v.noun)}.</span>
+              <div class="qr-box">
+                <span class="qr">QR CODE</span>
+                <span class="qr-caption">Scan to preview and join the {noun}.</span>
               </div>
             </div>
           {/if}
@@ -202,48 +383,641 @@
       </div>
     </div>
 
-    {#if v.showFooter}
-    <div style="flex:none;display:flex;align-items:center;gap:var(--space-8);padding:var(--space-16) var(--space-18);border-block-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-      {#if v.notEmbedded}
-      <span class="dc-p5" style="flex:none;padding:var(--space-10) var(--space-14);border-radius:var(--radius-md);font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.onCancel} role="button" tabindex="0">{t(v.cancelLabel)}</span>
-      {/if}
-      <span style="flex:1"></span>
-      {#if v.isAddTab}
-        {#if v.hasAddPicked}
-          <span style="margin-inline-end:var(--space-8);font:var(--weight-regular) var(--text-sm)/1 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.addNote)}</span>
+    {#if canInvite && !(embedded && key === 'share')}
+      <div class="footer">
+        {#if !embedded}
+          <span class="cancel" onclick={cancel} role="button" tabindex="0">{key === 'share' ? 'Done' : 'Cancel'}</span>
         {/if}
-        <div class="dc-p6" style="flex:none;display:flex;align-items:center;gap:var(--space-8);padding:0 var(--space-18);height:var(--control-lg,40px);box-sizing:border-box;border-radius:var(--radius-md);background:{v.addCtaBg};font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:{v.addCtaInk};cursor:{v.addCtaCursor};user-select:none" onclick={v.onAdd} role="button" tabindex="0">
-          <span style="width:17px;height:17px;background:{v.addCtaInk};mask:{v.plusMask}"></span>
-          <span>{t(v.addCtaLabel)}</span>
-        </div>
-      {/if}
-      {#if v.isPeopleTab}
-        {#if v.hasPicked}
-          <span style="margin-inline-end:var(--space-8);font:var(--weight-regular) var(--text-sm)/1 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.sendNote)}</span>
+        <span class="grow"></span>
+        {#if key === 'add'}
+          {#if addPicked.length > 0}
+            <span class="note">{countLabel(addPicked.length)}</span>
+          {/if}
+          <div class="cta" class:ready={addPicked.length > 0} onclick={add} role="button" tabindex="0">
+            <span class="cta-icon" style:mask="var(--icon-plus) center/contain no-repeat"></span>
+            <span>Add to {groupName}</span>
+          </div>
         {/if}
-        <div class="dc-p7" style="flex:none;display:flex;align-items:center;gap:var(--space-8);padding:0 var(--space-18);height:var(--control-lg,40px);box-sizing:border-box;border-radius:var(--radius-md);background:{v.sendBg};font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:{v.sendInk};cursor:{v.sendCursor};user-select:none" onclick={v.onSend} role="button" tabindex="0">
-          <span style="width:17px;height:17px;background:{v.sendInk};mask:{v.addUserMask}"></span>
-          <span>Send invites</span>
-        </div>
-      {/if}
-    </div>
+        {#if key === 'invite'}
+          {#if picked.length > 0}
+            <span class="note">{countLabel(picked.length)}</span>
+          {/if}
+          <div class="cta" class:ready={picked.length > 0} onclick={send} role="button" tabindex="0">
+            <span class="cta-icon" style:mask="var(--icon-invite) center/contain no-repeat"></span>
+            <span>Send invites</span>
+          </div>
+        {/if}
+      </div>
     {/if}
   </div>
-  {#if v.pickerOpen}
-    <ChatPicker title="Share invite link" previewLabel="INVITE LINK" item={v.pickerItem} chats={v.pickerChats} z={95} onSend={v.onPickerSend} onClose={v.closePicker}></ChatPicker>
+  {#if pickerOpen}
+    <ChatPicker title="Share invite link" previewLabel="INVITE LINK" item={{ title: 'Invite link', sub: link, icon: 'link' }} {chats} z={95} onSend={sentToChat} onClose={() => (pickerOpen = false)} />
   {/if}
-  {#if v.hasSentToast}
-    <div style="position:fixed;left:0;right:0;bottom:24px;z-index:96;display:flex;justify-content:center;pointer-events:none"><div style="pointer-events:auto;width:min(420px, calc(100% - 48px));display:grid;grid-template-columns:minmax(0,1fr)">{#key v.sentToastKey}<UndoToast shown={true} tone="success" icon="check" message={v.sentToast} actionLabel="" onClose={v.closeSentToast}></UndoToast>{/key}</div></div>
+  {#if toast}
+    <div class="toast-layer">
+      <div class="toast">
+        {#key toast.id}<UndoToast shown={true} tone="success" icon="check" message={toast.text} actionLabel="" onClose={() => (toast = null)} />{/key}
+      </div>
+    </div>
   {/if}
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p1:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p2:hover{background:var(--overlay-3,rgba(255,255,255,.13)) !important}
-  .dc-p3:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p4:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p5:hover{background:var(--accent-soft,rgba(255,86,114,.1)) !important}
-  .dc-p6:hover{filter:brightness(1.08) !important}
-  .dc-p7:hover{filter:brightness(1.08) !important}
+  .layer {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-22);
+    box-sizing: border-box;
+  }
+
+  .layer.embedded {
+    position: absolute;
+    padding: 0;
+  }
+
+  .veil {
+    position: absolute;
+    inset: 0;
+    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
+    backdrop-filter: var(--oc-veil-blur, blur(4px));
+    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
+  }
+
+  .card {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    height: min(700px, 100%);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    border-radius: var(--radius-xl);
+    background: var(--surface-1, #0e0e12);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      0 30px 70px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+  }
+
+  .embedded .card {
+    max-width: none;
+    height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .embedded-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    height: 71px;
+    box-sizing: border-box;
+    padding: 0 var(--space-16) 0 var(--space-24);
+    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .embedded-title {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-bold) var(--text-lg) / 1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .icon-button {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .icon-button.large {
+    width: 34px;
+    height: 34px;
+  }
+
+  .icon-button:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .close-icon {
+    width: 15px;
+    height: 15px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-close) center/contain no-repeat;
+  }
+
+  .close-icon.large {
+    width: 16px;
+    height: 16px;
+  }
+
+  .head {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-14);
+    padding: var(--space-16) var(--space-18);
+    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .head-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    min-width: 0;
+  }
+
+  .head-tile {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .head-icon {
+    width: 18px;
+    height: 18px;
+    background: var(--ink-2, #b9b9c6);
+    mask: var(--icon-invite) center/contain no-repeat;
+  }
+
+  .head-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .head-title {
+    font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .head-sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .tabs,
+  .field,
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .field {
+    min-width: 0;
+  }
+
+  .embedded-tabs {
+    margin-bottom: calc(var(--space-10) - var(--space-22));
+  }
+
+  .body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: var(--space-22) var(--space-18) var(--space-26);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .column {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-22);
+    min-width: 0;
+  }
+
+  .hint {
+    padding-inline: var(--space-4);
+    margin-top: calc(var(--space-12) * -1);
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .hint.plain {
+    margin-top: 0;
+  }
+
+  .picked {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    min-width: 0;
+    margin-top: var(--space-10);
+  }
+
+  .picked-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-10);
+    min-width: 0;
+    padding-inline: var(--space-4);
+  }
+
+  .list-label {
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .list-label.start {
+    padding-inline-start: var(--space-4);
+  }
+
+  .grow {
+    flex: 1;
+  }
+
+  .clear-all {
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-8);
+    min-width: 0;
+  }
+
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: 4px var(--space-10) 4px 4px;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--status-verified, #3d9bff) 12%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--status-verified, #3d9bff) 34%, transparent);
+  }
+
+  .chip-face {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-pill);
+  }
+
+  .chip-handle {
+    font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+    white-space: nowrap;
+  }
+
+  .chip-remove {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+
+  .chip-remove-icon {
+    width: 11px;
+    height: 11px;
+    background: var(--ink-2, #c9c9d4);
+    mask: var(--icon-close) center/contain no-repeat;
+  }
+
+  .list-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    min-width: 0;
+    margin-top: var(--space-10);
+  }
+
+  .rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+
+  .no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-10);
+    padding: var(--space-14) var(--space-10);
+  }
+
+  .no-results-text {
+    font: var(--weight-regular) var(--text-base) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .invite-instead {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    height: 38px;
+    padding: 0 var(--space-14);
+    border-radius: var(--radius-md);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .invite-instead:hover {
+    background: var(--overlay-3, rgba(255, 255, 255, 0.13));
+  }
+
+  .no-people {
+    padding: var(--space-14) var(--space-10);
+    font: var(--weight-regular) var(--text-base) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .pending {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    min-width: 0;
+  }
+
+  .share-toggle {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-14);
+    min-width: 0;
+    padding-inline: var(--space-4);
+    margin-top: var(--space-12);
+  }
+
+  .share-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .share-title {
+    font: var(--weight-semibold) var(--text-base) / 1.2 var(--font-sans);
+    color: var(--ink, #e4e4ec);
+  }
+
+  .share-sub {
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .toggle {
+    flex: none;
+    display: flex;
+  }
+
+  .share-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-16);
+    min-width: 0;
+  }
+
+  .warning {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    padding: var(--space-14) var(--space-16);
+    box-sizing: border-box;
+    border-radius: var(--radius-lg);
+    background: var(--status-chit-soft, rgba(255, 159, 69, 0.14));
+    box-shadow: inset 0 0 0 1px var(--status-chit, #ff9f45);
+  }
+
+  .warning-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    min-width: 0;
+  }
+
+  .warning-icon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    background: var(--status-chit, #ff9f45);
+    mask: var(--icon-warning) center/contain no-repeat;
+  }
+
+  .warning-title {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-semibold) var(--text-base) / 1.25 var(--font-sans);
+    color: var(--ink, #e4e4ec);
+    text-wrap: pretty;
+  }
+
+  .warning-body {
+    font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    text-wrap: pretty;
+  }
+
+  .link-box,
+  .qr-box {
+    padding: var(--space-14) var(--space-16);
+    box-sizing: border-box;
+    border-radius: var(--radius-lg);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
+  }
+
+  .link-box {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-12);
+    min-width: 0;
+  }
+
+  .link-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .link-heading {
+    font: var(--weight-medium) var(--text-xs) / 1 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .link {
+    font: var(--weight-semibold) var(--text-md) / 1.5 var(--font-mono);
+    color: var(--ink, #e4e4ec);
+    overflow-wrap: anywhere;
+  }
+
+  .link-actions {
+    flex: none;
+    display: flex;
+    gap: var(--space-4);
+  }
+
+  .link-icon,
+  .send-icon {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .link-icon {
+    mask: var(--icon-copy) center/contain no-repeat;
+  }
+
+  .link-icon.copied {
+    background: var(--status-online, #2ee6a8);
+    mask: var(--icon-check) center/contain no-repeat;
+  }
+
+  .send-icon {
+    mask: var(--icon-send) center/contain no-repeat;
+  }
+
+  .qr-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-10);
+    padding: var(--space-18);
+  }
+
+  .qr {
+    width: 100%;
+    max-width: 230px;
+    aspect-ratio: 1;
+    border-radius: var(--radius-md);
+    background: var(--surface-2, #191921);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: var(--weight-medium) var(--text-sm) / 1.4 var(--font-mono);
+    color: var(--ink-4, #7c7c8c);
+    text-align: center;
+  }
+
+  .qr-caption {
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-align: center;
+    text-wrap: pretty;
+  }
+
+  .footer {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: var(--space-16) var(--space-18);
+    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .cancel {
+    flex: none;
+    padding: var(--space-10) var(--space-14);
+    border-radius: var(--radius-md);
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .cancel:hover {
+    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+  }
+
+  .note {
+    margin-inline-end: var(--space-8);
+    font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .cta {
+    --cta-ink: var(--ink-4, #7c7c8c);
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    padding: 0 var(--space-18);
+    height: var(--control-lg, 40px);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--cta-ink);
+    cursor: not-allowed;
+    user-select: none;
+  }
+
+  .cta.ready {
+    --cta-ink: var(--on-accent, #2e0512);
+    background: var(--accent, #ff5672);
+    cursor: pointer;
+  }
+
+  .cta:hover {
+    filter: brightness(1.08);
+  }
+
+  .cta-icon {
+    width: 17px;
+    height: 17px;
+    background: var(--cta-ink);
+  }
+
+  .toast-layer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 24px;
+    z-index: 96;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .toast {
+    pointer-events: auto;
+    width: min(420px, calc(100% - 48px));
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
 </style>
