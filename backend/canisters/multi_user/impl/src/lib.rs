@@ -75,7 +75,9 @@ fn check_can_chat_with(user_id: UserId, user_type: UserType) -> OCResult {
 
 // Refuses a User canister's id, which users had before being migrated to MultiUser canisters. Every
 // user has been, so such an id names nobody, and no bot chatted with from here has a canister of its
-// own (see `check_can_chat_with`).
+// own (see `check_can_chat_with`). Callers pass the latest id `MigratedUserIds` gives, since clients
+// still name users by their old ids in the events from before they were migrated, so only an old
+// id which this canister doesn't know the latest id for is refused.
 fn verify_not_old_user_id(user_id: UserId) -> OCResult {
     if user_id.is_canister() { Err(OCErrorCode::TargetUserNotFound.into()) } else { Ok(()) }
 }

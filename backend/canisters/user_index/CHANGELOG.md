@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Refuse to award an external achievement to an id which isn't a user's ([#9953](https://github.com/open-chat-labs/open-chat/pull/9953))
+- Award external achievements to users' latest ids, refusing any id which isn't a user's ([#9953](https://github.com/open-chat-labs/open-chat/pull/9953))
 
 ### Removed
 

@@ -63,9 +63,10 @@ async fn c2c_bot_remove_user_impl(args: community_canister::c2c_bot_remove_user:
 
 async fn remove_member_impl(user_id: UserId, block: bool, ext_caller: Option<Caller>) -> UnitResult {
     let user_id = match mutate_state(|state| {
-        state.data.verify_not_old_user_id(user_id)?;
         let now = state.env.now();
-        OCResult::Ok(if block { latest_user_id(user_id, &mut state.data, now) } else { user_id })
+        let latest = latest_user_id(user_id, &mut state.data, now);
+        state.data.verify_not_old_user_id(latest)?;
+        OCResult::Ok(latest)
     }) {
         Ok(user_id) => user_id,
         Err(error) => return Response::Error(error),
@@ -97,10 +98,10 @@ async fn remove_member_impl(user_id: UserId, block: bool, ext_caller: Option<Cal
     Response::Success
 }
 
-// The latest id of a user being blocked, who may be referred to by an earlier id which
-// `MigratedUserIds` records them as having been migrated from (eg. one seen in an old message), so
-// that the block is never recorded under an old id. Anything still held under an old id is moved
-// onto the latest id first, so that a member under the old id is removed along with being blocked.
+// The latest id of a user being removed or blocked, who may be referred to by an id they had before
+// being migrated (eg. one seen in an old message), so that a block is never recorded under an old
+// id. Anything still held under an old id is moved onto the latest id first, so that a member under
+// the old id is removed.
 fn latest_user_id(user_id: UserId, data: &mut Data, now: TimestampMillis) -> UserId {
     let latest = data.migrated_user_ids.latest(user_id);
     if latest != user_id {
@@ -260,7 +261,7 @@ mod tests {
     }
 
     #[test]
-    fn a_member_blocked_by_an_id_they_were_migrated_from_is_moved_onto_their_latest_id_and_blocked_under_it() {
+    fn a_member_blocked_by_an_old_id_is_moved_onto_their_latest_id_and_blocked_under_it() {
         let owner = new_user_id(1);
         let channel_id = ChannelId::from(1u32);
         let mut data = Data::new_for_tests(
@@ -270,10 +271,9 @@ mod tests {
             vec![(channel_id, "one".to_string())],
         );
         let principal = Principal::from_slice(&[2]);
-        let earlier_user_id = UserId::new_indexed(canister_id(2), 2);
-        data.members.add(earlier_user_id, principal, UserType::User, None, 0);
+        data.members.add(old_user_id(2), principal, UserType::User, None, 0);
         data.channels.get_mut(&channel_id).unwrap().chat.members.add(
-            earlier_user_id,
+            old_user_id(2),
             None,
             0,
             EventIndex::default(),
@@ -281,17 +281,21 @@ mod tests {
             false,
             UserType::User,
         );
-        data.members.mark_member_joined_channel(earlier_user_id, channel_id);
-        data.migrated_user_ids.insert(earlier_user_id, new_user_id(2));
+        data.members.mark_member_joined_channel(old_user_id(2), channel_id);
+        data.migrated_user_ids.insert(old_user_id(2), new_user_id(2));
+
+        // A User canister's id which the community doesn't know the latest id for is refused
+        assert_eq!(latest_user_id(old_user_id(3), &mut data, 1), old_user_id(3));
+        assert!(data.verify_not_old_user_id(old_user_id(3)).is_err());
 
         // Their membership is moved onto their latest id, under which they are then blocked, as
         // `remove_member_impl` and `commit` do
-        assert_eq!(latest_user_id(earlier_user_id, &mut data, 1), new_user_id(2));
+        assert_eq!(latest_user_id(old_user_id(2), &mut data, 1), new_user_id(2));
         assert_eq!(data.members.lookup_user_id(principal), Some(new_user_id(2)));
         data.remove_user_from_community(new_user_id(2), None, 2);
         data.members.block(new_user_id(2), 2);
 
-        for user_id in [earlier_user_id, new_user_id(2)] {
+        for user_id in [old_user_id(2), new_user_id(2)] {
             assert!(!data.members.contains(&user_id));
             assert!(!data.channels.get(&channel_id).unwrap().chat.members.contains(&user_id));
         }

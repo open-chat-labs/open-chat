@@ -12,16 +12,17 @@ fn award_external_achievement(args: Args) -> Response {
 }
 
 fn award_external_achievement_impl(args: Args, state: &mut RuntimeState) -> Response {
-    // Only users are awarded achievements, and every user has an indexed id now that all have been
-    // migrated to MultiUser canisters, so any other id, eg. a User canister's which a user had
-    // before, is refused before it uses up any of the budget
-    if !args.user_id.is_indexed() || state.data.users.get_by_user_id(&args.user_id).is_none() {
+    // Only users are awarded achievements, by their latest ids, and every user has an indexed id now
+    // that all have been migrated to MultiUser canisters. So any other id, eg. a User canister's
+    // which isn't known to have been migrated, is refused before it uses up any of the budget.
+    let user_id = state.data.migrated_user_ids.latest(args.user_id);
+    if !user_id.is_indexed() || state.data.users.get_by_user_id(&user_id).is_none() {
         return Error(OCErrorCode::TargetUserNotFound.into());
     }
 
     let result = match state.data.external_achievements.award(
         args.achievement_id,
-        args.user_id,
+        user_id,
         state.env.caller(),
         state.env.now(),
         state.data.test_mode && state.is_caller_governance_principal(),
@@ -35,10 +36,10 @@ fn award_external_achievement_impl(args: Args, state: &mut RuntimeState) -> Resp
     };
 
     state.push_event_to_local_user_index(
-        args.user_id,
+        user_id,
         UserIndexEvent::ExternalAchievementAwarded(ExternalAchievementAwarded {
             id: args.achievement_id,
-            user_id: args.user_id,
+            user_id,
             name: result.name,
             chit_reward: result.chit_reward,
         }),

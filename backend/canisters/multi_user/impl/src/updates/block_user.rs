@@ -13,7 +13,7 @@ fn block_user(args: Args) -> Response {
 }
 
 fn block_user_impl(args: Args, state: &mut RuntimeState) -> OCResult {
-    verify_not_old_user_id(args.user_id)?;
+    verify_not_old_user_id(state.data.migrated_user_ids.latest(args.user_id))?;
 
     let now = state.env.now();
     let my_index = state.caller_user_index_or_trap();

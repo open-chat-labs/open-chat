@@ -1,12 +1,13 @@
-use crate::verify_not_old_user_id;
+use crate::{read_state, verify_not_old_user_id};
 use oc_error_codes::OCErrorCode;
 use types::{CanisterId, OCResult, UserId, icrc1};
 
-// The wallet of a user in another canister. A user holds their own funds in their principal's
-// account, which is looked up. A bot's wallet is the account of its user id. A User canister's id,
-// which users had before being migrated to MultiUser canisters, isn't paid (see
+// The wallet of a user in another canister, by their latest id. A user holds their own funds in
+// their principal's account, which is looked up. A bot's wallet is the account of its user id. A
+// User canister's id, which users had before being migrated to MultiUser canisters, isn't paid (see
 // `verify_not_old_user_id`).
 pub async fn user_wallet(user_id: UserId, local_user_index_canister_id: CanisterId) -> OCResult<icrc1::Account> {
+    let user_id = read_state(|state| state.data.migrated_user_ids.latest(user_id));
     if !user_id.is_indexed() {
         return bot_wallet(user_id);
     }
