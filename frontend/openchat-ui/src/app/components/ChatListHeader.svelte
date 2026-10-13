@@ -1,55 +1,206 @@
-<!-- Generated from lib/ChatListHeader.dc.html (source hash aa5b1850) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Top of the chat list. dms: a plain "Chats" title. community: the community's avatar, name and lock + meta line (opens details).
+     The ⋯ menu defaults to the standard actions for each kind; "Create new group" calls onCreateGroup, other items without
+     their own onSelect report their label through onMenu. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './ChatListHeader.logic.js';
+  import { onMount } from 'svelte';
+  import type { MenuItem } from '../../lib/types';
   import Avatar from '../../lib/components/Avatar.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
   import Menu from '../../lib/components/Menu.svelte';
 
+  const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
+
+  const DMS_MENU: MenuItem[] = [
+    { label: 'Create new group', mask: icon('group') },
+    { label: 'Mark all as read', mask: icon('check-double') },
+  ];
+
+  const COMMUNITY_MENU: MenuItem[] = [
+    { label: 'Members', mask: icon('users') },
+    { label: 'Invite', mask: icon('invite') },
+    { label: 'Edit community', mask: icon('edit') },
+    { label: 'New channel', mask: icon('plus') },
+    { label: 'Add embedded channel', mask: icon('embed') },
+    { label: 'Mark all as read', mask: icon('check-double') },
+    { label: 'Leave community', mask: icon('exit'), variant: 'danger' },
+  ];
+
   interface Props {
-    kind?: string;
+    kind?: 'dms' | 'community';
+    /** Community name; the dms header reads "Chats" unless given. */
     title?: string;
-    visibility?: string;
+    visibility?: 'Public' | 'Private';
     memberCount?: number;
+    /** Overrides the "Public · 248 members" line. */
     meta?: string;
-    color?: string;
-    menuItems?: {label:string,variant?:string,mask?:string}[];
+    color?: 'violet' | 'amber' | 'teal' | 'blue';
+    menuItems?: MenuItem[];
     openDetails?: () => void;
-    [key: string]: unknown;
+    onCreateGroup?: () => void;
+    onMenu?: (label: string) => void;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let { kind = 'dms', title, visibility = 'Public', memberCount = 0, meta, color = 'teal', menuItems, openDetails, onCreateGroup, onMenu }: Props = $props();
+
+  let open = $state(false);
+  let menuBox: HTMLDivElement;
+
+  const community = $derived(kind === 'community');
+  const items = $derived(
+    (menuItems ?? (community ? COMMUNITY_MENU : DMS_MENU)).map((it) => ({
+      ...it,
+      onSelect: () => {
+        open = false;
+        if (it.onSelect) it.onSelect();
+        // the host renders the dialog; mounting it here would trap its fixed layout inside the list column
+        else if (/^create new group$/i.test(it.label)) onCreateGroup?.();
+        else onMenu?.(it.label);
+      },
+    })),
+  );
+
+  onMount(() => {
+    const away = (e: MouseEvent) => {
+      if (open && !menuBox.contains(e.target as Node)) open = false;
+    };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open) open = false;
+    };
+    document.addEventListener('click', away, true);
+    document.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('click', away, true);
+      document.removeEventListener('keydown', esc);
+    };
+  });
 </script>
 
-<div style="width: 100%; box-sizing: border-box; display: flex; align-items: center; gap: var(--space-12); padding: var(--space-10) 0 var(--space-10) var(--space-10); background: var(--surface-1,#0e0e12)">
-  {#if v.isPlain}
-    <span style="flex:1;min-width:0;font:var(--weight-bold) var(--text-xl)/1.2 var(--font-sans);letter-spacing:var(--tracking-tight);color:var(--ink,#ECECF1)">{t(v.title)}</span>
-  {/if}
-  {#if v.isCommunity}
-    <div class="dc-p0" style="flex:1;min-width:0;display:flex;align-items:center;gap:var(--space-10);padding:var(--space-6);margin:calc(var(--space-6) * -1);border-radius:var(--radius-md);cursor:pointer" onclick={v.openDetails} role="button" tabindex="0">
-      <div style="flex:none;display:flex"><Avatar size={38} shape="squircle" color={v.color} online={false}></Avatar></div>
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-        <span style="font:var(--weight-bold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#ECECF1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{t(v.title)}</span>
-        <div style="display:flex;align-items:center;gap:var(--space-6);min-width:0">
-          <span style="flex:none;width:13px;height:13px;background:{v.lockColor};mask:{v.lockMask}"></span>
-          <span style="font:var(--weight-regular) var(--text-sm)/1.2 var(--font-sans);color:var(--ink-3,#8A8A99);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{t(v.meta)}</span>
+<div class="header">
+  {#if community}
+    <div class="community" onclick={openDetails} role="button" tabindex="0">
+      <div class="avatar"><Avatar size={38} shape="squircle" {color} online={false} /></div>
+      <div class="names">
+        <span class="name">{title}</span>
+        <div class="meta-line">
+          <span class="lock" class:private={visibility === 'Private'}></span>
+          <span class="meta">{meta ?? `${visibility} · ${memberCount} members`}</span>
         </div>
       </div>
     </div>
+  {:else}
+    <span class="title">{title ?? 'Chats'}</span>
   {/if}
-  <div style="flex:none;position:relative;display:flex" use:ref={v.menuRef}>
-    <div style="flex:none;display:inline-flex" onclick={v.toggleMenu}>
-      <IconButton variant="ghost" pressed={v.menuOpen} icon="more"></IconButton>
+  <div class="menu-anchor" bind:this={menuBox}>
+    <div class="menu-button" onclick={() => (open = !open)} role="presentation">
+      <IconButton variant="ghost" pressed={open} icon="more" />
     </div>
-    {#if v.menuOpen}
-      <div style="position:absolute;top:calc(100% + 6px);inset-inline-end:0;z-index:var(--z-modal,60)">
-        <Menu items={v.menuItems} minWidth={v.menuWidth}></Menu>
+    {#if open}
+      <div class="popover">
+        <Menu {items} minWidth={community ? '246px' : '200px'} />
       </div>
     {/if}
   </div>
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
+  .header {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-10) 0 var(--space-10) var(--space-10);
+    background: var(--surface-1, #0e0e12);
+  }
+
+  .title {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-bold) var(--text-xl) / 1.2 var(--font-sans);
+    letter-spacing: var(--tracking-tight);
+    color: var(--ink, #ececf1);
+  }
+
+  .community {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    padding: var(--space-6);
+    margin: calc(var(--space-6) * -1);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+
+  .community:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .avatar {
+    flex: none;
+    display: flex;
+  }
+
+  .names {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .name {
+    font: var(--weight-bold) var(--text-base) / 1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .meta-line {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    min-width: 0;
+  }
+
+  .lock {
+    flex: none;
+    width: 13px;
+    height: 13px;
+    background: var(--status-online, #2ee6a8);
+    mask: var(--icon-lock-open) center/contain no-repeat;
+  }
+
+  .lock.private {
+    background: var(--status-danger, #f5493d);
+    mask: var(--icon-lock) center/contain no-repeat;
+  }
+
+  .meta {
+    font: var(--weight-regular) var(--text-sm) / 1.2 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .menu-anchor {
+    flex: none;
+    position: relative;
+    display: flex;
+  }
+
+  .menu-button {
+    flex: none;
+    display: inline-flex;
+  }
+
+  .popover {
+    position: absolute;
+    top: calc(100% + 6px);
+    inset-inline-end: 0;
+    z-index: var(--z-modal, 60);
+  }
 </style>

@@ -1,7 +1,13 @@
-<!-- Generated from lib/GroupPanel.dc.html (source hash dba9b54f) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Side panel for a group, community or channel. Main view: cover, avatar, name and byline, role summary, live tiles
+     (call / mute / @everyone), about, then member, bot and user-group previews and the access & rules rows.
+     Sub-views (members with Lapsed / Blocked tabs and role menus, bots & webhooks, permissions, access gates, rules,
+     user groups, pinned messages, stats) open in place; editing happens in host dialogs via onDialog.
+     quick: the compact panel built around who's online now, your mute / @everyone / favourite pills and an invite card;
+     it never drills in (sub-views go to onManage) except to read pinned messages.
+     embedded: the same sub-views inside the host's manage dialog. The open sub-view persists under storageKey. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './GroupPanel.logic.js';
+  import { onDestroy, onMount, tick, untrack, type ComponentProps } from 'svelte';
+  import type { GroupRole, GroupSettings, MenuItem } from '../../lib/types';
   import Field from '../../lib/components/Field.svelte';
   import GroupStats from './GroupStats.svelte';
   import IconButton from '../../lib/components/IconButton.svelte';
@@ -14,589 +20,2684 @@
   import Skeleton from '../../lib/components/Skeleton.svelte';
   import TileButtons from '../../lib/components/TileButtons.svelte';
 
-  interface Props {
-    viewRequest?: string;
-    storageKey?: string;
-    title?: string;
-    createdBy?: string;
-    about?: string;
-    memberTotal?: number;
-    members?: {title:string,handle:string,tag?:string,color?:string}[];
-    bots?: {title:string,handle:string,tag?:string,color?:string}[];
-    tiles?: string[];
-    tileHandlers?: Record<string, () => void>;
-    onInvite?: () => void;
-    cover?: string;
-    membersLoading?: boolean;
-    [key: string]: unknown;
+  type MemberColor = ComponentProps<typeof MemberRow>['color'];
+  type View = 'main' | 'usergroups' | 'usergroup' | 'members' | 'bots' | 'permissions' | 'gates' | 'rules' | 'stats' | 'pinned';
+  type MuteKey = '8h' | '1w' | 'always';
+  type Dialog = 'settings' | 'usergroup' | 'user' | 'bot' | 'webhook' | 'invite' | 'convert' | 'delete' | 'import' | 'newchannel' | 'embed' | 'leave';
+  type Permissions = GroupSettings['permissions'];
+
+  interface Person {
+    title: string;
+    handle: string;
+    /** OWNER, ADMIN, MODERATOR, YOU (your own row), LAPSED, BLOCKED or empty. */
+    tag?: string;
+    color?: MemberColor;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  interface Bot {
+    variant?: 'bot' | 'webhook';
+    title: string;
+    subtitle?: string;
+    color?: MemberColor;
+    tag?: string;
+    /** Webhooks: the endpoint. */
+    url?: string;
+    /** Avatar image URL. */
+    image?: string;
+  }
+
+  interface UserGroup {
+    key: string;
+    title: string;
+    color?: MemberColor;
+    members: { name: string; handle: string; color?: MemberColor }[];
+  }
+
+  /** Builder-shaped, so the read view and the editor open from the same object. */
+  interface GateState {
+    rules: { id?: string; type: string; asset?: string; a?: string; b?: string }[];
+    joiner?: string;
+    intervalOn?: boolean;
+    every?: string;
+  }
+
+  interface Pin {
+    date: string;
+    author: string;
+    color?: 'violet' | 'amber' | 'teal' | 'blue';
+    text?: string;
+    code?: string;
+    time: string;
+  }
+
+  const GRADIENTS = {
+    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
+    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
+    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
+    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+  };
+  const grad = (c?: string) => GRADIENTS[c as keyof typeof GRADIENTS] ?? GRADIENTS.violet;
+  // cover choices are muted grounds, one per accent family, so the avatar stays the focus (tokens --cover-<key>)
+  const COVER_KEYS = ['plum', 'teal', 'violet', 'amber', 'slate'];
+  const mask = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
+
+  const PERM_ROLES: { key: GroupRole; label: string; tint: string }[] = [
+    { key: 'member', label: 'Members', tint: '#5FA8FF' },
+    { key: 'moderator', label: 'Moderator', tint: '#2EE6A8' },
+    { key: 'admin', label: 'Admin', tint: '#FFB03D' },
+    { key: 'owner', label: 'Owner', tint: '#FF5672' },
+    { key: 'nobody', label: 'Nobody', tint: '#6E6E7C' },
+  ];
+  const PERM_GENERAL: { key: string; short: string; def: GroupRole }[] = [
+    { key: 'roles', short: 'Change roles', def: 'owner' },
+    { key: 'edit', short: 'Edit group info', def: 'admin' },
+    { key: 'invite', short: 'Invite users', def: 'member' },
+    { key: 'remove', short: 'Remove members', def: 'moderator' },
+    { key: 'delete', short: 'Delete messages', def: 'moderator' },
+    { key: 'pin', short: 'Pin messages', def: 'moderator' },
+    { key: 'react', short: 'React', def: 'member' },
+    { key: 'everyone', short: 'Mention @everyone', def: 'admin' },
+    { key: 'calls', short: 'Start calls', def: 'member' },
+  ];
+  const PERM_CONTENT = [
+    { key: 'text', label: 'Text messages' },
+    { key: 'image', label: 'Images' },
+    { key: 'video', label: 'Videos' },
+    { key: 'audio', label: 'Audio' },
+    { key: 'file', label: 'Files' },
+    { key: 'poll', label: 'Polls' },
+    { key: 'crypto', label: 'Crypto transfers' },
+    { key: 'giphy', label: 'GIFs' },
+    { key: 'prize', label: 'Prizes' },
+    { key: 'meme', label: 'Meme Fighter' },
+    { key: 'p2p', label: 'P2P swaps' },
+  ];
+  const INHERIT = 'inherit';
+  // the shape the create-group modal emits; used when the panel gets no permissions
+  function defaultPermissions(): Permissions {
+    const o: Permissions = { general: {}, messages: { default: 'member' }, threads: null };
+    for (const p of PERM_GENERAL) o.general[p.key] = p.def;
+    for (const c of PERM_CONTENT) o.messages[c.key] = INHERIT;
+    return o;
+  }
+
+  const GATE_TYPES: Record<string, { label: string; icon: string; tint: string }> = {
+    lifetime: { label: 'Lifetime diamond membership', icon: 'diamond', tint: '#7FC0FF' },
+    diamond: { label: 'Diamond membership', icon: 'diamond', tint: '#7FC0FF' },
+    unique: { label: 'Unique person', icon: 'person', tint: '#5CE9BC' },
+    credential: { label: 'Verified credential', icon: 'credential', tint: '#5CE9BC' },
+    balance: { label: 'Minimum token balance', icon: 'balance', tint: '#FFB03D' },
+    chit: { label: 'Minimum CHIT earned', icon: 'chit', tint: '#FFB03D' },
+    payment: { label: 'Payment', icon: 'payment', tint: '#FF8298' },
+    neuron: { label: 'Neuron holder', icon: 'neuron', tint: '#FF8298' },
+    locked: { label: 'Locked', icon: 'lock', tint: '#9A9AA8' },
+  };
+
+  // the builder stores an asset plus up to two numeric fields per rule; this turns that back into the
+  // one-line value the read view shows ("min 100 CHAT", "10 USDT", neuron reads asset first)
+  function gateValue(r: GateState['rules'][number]) {
+    if (r.type === 'balance') return r.asset && r.a ? `min ${r.a} ${r.asset}` : r.a ? `min ${r.a}` : r.asset || '';
+    if (r.type === 'payment') return r.asset && r.a ? `${r.a} ${r.asset}` : r.a || r.asset || '';
+    if (r.type === 'chit') return r.a ? `${r.a} CHIT` : '';
+    if (r.type === 'neuron') return [r.asset, r.a && `${r.a}d dissolve delay`, r.b && `${r.b} staked`].filter(Boolean).join(' · ');
+    return r.asset || '';
+  }
+
+  const MUTE_SPANS: { key: MuteKey; label: string; tile: string }[] = [
+    { key: '8h', label: 'For 8 hours', tile: 'Muted · 8h' },
+    { key: '1w', label: 'For 1 week', tile: 'Muted · 1w' },
+    { key: 'always', label: 'Until I turn it back on', tile: 'Muted' },
+  ];
+
+  type MenuEntry = MenuItem & { action?: string; view?: View };
+  const MENU_ITEMS: MenuEntry[] = [
+    { label: 'Favourite', action: 'favourite', mask: mask('heart') },
+    { label: 'Group settings', action: 'settings', mask: mask('gear') },
+    { label: 'Group stats', view: 'stats', mask: mask('poll') },
+    { variant: 'separator', label: '', action: 'sep-bots' },
+    { label: 'Add a bot', action: 'addbot', mask: mask('bot') },
+    { label: 'Create a webhook', action: 'webhook', mask: mask('hook') },
+    { variant: 'separator', label: '', action: 'sep-after-bots' },
+    { label: 'Convert to community', action: 'convert', mask: mask('community') },
+    { label: 'Import to community', action: 'import', mask: mask('import') },
+    { label: 'Leave group', variant: 'danger', action: 'leave', mask: mask('leave') },
+    { label: 'Delete group', variant: 'danger', action: 'delete', mask: mask('trash') },
+  ];
+  const SCOPE_MENU_EXTRA: MenuEntry[] = [
+    { variant: 'separator', label: '', action: 'sep-channels' },
+    { label: 'New channel', action: 'newchannel', mask: mask('plus') },
+    { label: 'Add embedded channel', action: 'embed', mask: mask('embed') },
+    { label: 'New user group', action: 'newusergroup', mask: mask('invite') },
+  ];
+  const SUBVIEWS: Record<Exclude<View, 'main'>, string> & { botsOnly: string } = {
+    usergroups: 'User groups',
+    usergroup: 'User group',
+    members: 'Members',
+    bots: 'Bots & webhooks',
+    botsOnly: 'Bots',
+    permissions: 'Permissions',
+    gates: 'Access gates',
+    rules: 'Group rules',
+    stats: 'Group stats',
+    pinned: 'Pinned messages',
+  };
+  const isView = (v: string): v is View => v === 'main' || (v in SUBVIEWS && v !== 'botsOnly');
+
+  const MEMBER_TABS = ['Members', 'Lapsed', 'Blocked'];
+  const MEMBER_LIST_TITLES = ['Current', 'Lapsed', 'Blocked'];
+  const MEMBER_NOTES = [
+    '',
+    'When a member of your group no longer satisfies the access gates set in the group settings, they become a lapsed member!',
+    'Users which have been blocked from accessing this group.',
+  ];
+  // role ladder: member → moderator → admin → owner
+  const LADDER = ['', 'MODERATOR', 'ADMIN', 'OWNER'];
+  const ROLE_NAMES: Record<string, string> = { '': 'Member', MODERATOR: 'Moderator', ADMIN: 'Admin', OWNER: 'Owner' };
+  // presence until it is wired: the first few people online are typing / active
+  const ACTIVITY = ['typing', 'now', '2m', '6m'];
+
+  interface Props {
+    scope?: 'group' | 'community' | 'channel';
+    title: string;
+    /** Owner's handle in the byline. */
+    ownerHandle: string;
+    /** Undefined or empty reads "No description yet". */
+    about?: string;
+    color?: keyof typeof GRADIENTS;
+    /** Cover swatch key (plum, teal, violet, amber, slate); an uploaded coverUrl wins. */
+    coverKey?: string;
+    coverUrl?: string;
+    /** CSS background when neither coverKey nor coverUrl is set. */
+    cover?: string;
+    avatar?: string;
+    isPublic?: boolean;
+    visibleHistory?: boolean;
+    disappearOn?: boolean;
+    disappearAfter?: string;
+    /** Channels: the community it belongs to. */
+    communityName?: string;
+    communityColor?: keyof typeof GRADIENTS;
+    onOpenCommunity?: (view?: 'members') => void;
+    /** Defaults to members.length. */
+    memberTotal?: number;
+    members?: Person[];
+    lapsed?: Person[];
+    blocked?: Person[];
+    membersLoading?: boolean;
+    /** Quick panel: how many are online (defaults to an estimate). */
+    onlineCount?: number;
+    viewerRole?: string;
+    canModerate?: boolean;
+    canChangeRoles?: boolean;
+    canInvite?: boolean;
+    inviteLink?: string;
+    bots?: Bot[];
+    /** Bots added this session (one row per title). */
+    extraBots?: Bot[];
+    removedBots?: string[];
+    webhooks?: Bot[];
+    extraWebhooks?: Bot[];
+    webhookUrls?: Record<string, string>;
+    /** Offered in the bots view when not installed. */
+    recommendedBots?: Bot[];
+    canManageBots?: boolean;
+    /** Manage dialog: show only bots or only webhooks. */
+    botsPart?: '' | 'bots' | 'webhooks';
+    userGroups?: UserGroup[];
+    permissions?: Permissions;
+    gateState?: GateState | null;
+    /** Overrides the number of gates in the nav row. */
+    gateCount?: number;
+    rules?: { enabled: boolean; text: string };
+    pinned?: Pin[];
+    /** Narrow windows open the pinned list on its own: close only. */
+    pinnedOnly?: boolean;
+    /** Shown in the stats view. */
+    stats?: ComponentProps<typeof GroupStats> | null;
+    isFavourite?: boolean;
+    /** Host-controlled mute; omitted = kept here. */
+    mutedUntil?: MuteKey | null;
+    muteEveryone?: boolean;
+    quick?: boolean;
+    embedded?: boolean;
+    /** Quick panel cover icon: manage (managers) or info. */
+    manageIcon?: 'manage' | 'info';
+    manageLabel?: string;
+    /** Replaces the ⋯ menu. */
+    menuOverride?: MenuItem[];
+    coverHandlers?: ComponentProps<typeof PanelCover>['handlers'];
+    tileHandlers?: Record<string, (e?: Event) => void>;
+    /** A view to open ("members", "settings", …); anything after "#" is ignored. Re-send to re-open. */
+    viewRequest?: string | null;
+    /** localStorage key for the open view; "" opts out. */
+    storageKey?: string;
+    onDialog?: (kind: Dialog, payload?: unknown, tab?: string) => void;
+    onManage?: (view: View) => void;
+    onViewChange?: (view: View) => void;
+    onToggleFavourite?: () => void;
+    onMuteChange?: (key: MuteKey | null) => void;
+    onMuteEveryoneChange?: (on: boolean) => void;
+    onClose?: () => void;
+  }
+
+  let {
+    scope = 'group',
+    title,
+    ownerHandle,
+    about,
+    color = 'teal',
+    coverKey,
+    coverUrl,
+    cover,
+    avatar = '',
+    isPublic = false,
+    visibleHistory = true,
+    disappearOn = true,
+    disappearAfter = '12 hours',
+    communityName,
+    communityColor = 'amber',
+    onOpenCommunity,
+    memberTotal,
+    members = [],
+    lapsed = [],
+    blocked = [],
+    membersLoading = false,
+    onlineCount,
+    viewerRole = 'Owner',
+    canModerate = true,
+    canChangeRoles = true,
+    canInvite = true,
+    inviteLink,
+    bots = [],
+    extraBots = [],
+    removedBots = [],
+    webhooks = [],
+    extraWebhooks = [],
+    webhookUrls,
+    recommendedBots = [],
+    canManageBots = true,
+    botsPart = '',
+    userGroups = [],
+    permissions,
+    gateState = null,
+    gateCount,
+    rules = { enabled: false, text: '' },
+    pinned = [],
+    pinnedOnly = false,
+    stats = null,
+    isFavourite,
+    mutedUntil,
+    muteEveryone,
+    quick = false,
+    embedded = false,
+    manageIcon = 'manage',
+    manageLabel,
+    menuOverride,
+    coverHandlers = {},
+    tileHandlers = {},
+    viewRequest = null,
+    storageKey = 'oc.groupPanel.view',
+    onDialog,
+    onManage,
+    onViewChange,
+    onToggleFavourite,
+    onMuteChange,
+    onMuteEveryoneChange,
+    onClose,
+  }: Props = $props();
+
+  // per-instance key so a second mount (library specimen, community panel) cannot overwrite the running app's view
+  function readStored(key: string): View {
+    if (!key) return 'main';
+    try {
+      const v = localStorage.getItem(key);
+      return v && isView(v) ? v : 'main';
+    } catch {
+      return 'main';
+    }
+  }
+
+  let storedView = $state<View>(untrack(() => readStored(storageKey)));
+  let menuOpen = $state(false);
+  // one popover at a time: a row menu ("m:<handle>"), owner confirmation ("owner:…"), sole-owner notice ("sole:…") or user-group menu (key)
+  let popover = $state<string | null>(null);
+  let muteMenu = $state<{ top: number; left: number } | null>(null);
+  let memberTab = $state(0);
+  let ugKey = $state<string | null>(null);
+  let ugQuery = $state('');
+  let ugMemberQuery = $state('');
+  let botQuery = $state('');
+  let roles = $state<Record<string, string>>({});
+  let selfRole = $state<string | null>(null);
+  let removedMembers = $state<string[]>([]);
+  let unblocked = $state<string[]>([]);
+  let removedBlocked = $state<string[]>([]);
+  let ownMute = $state<MuteKey | null>(null);
+  let ownMuteAll = $state(false);
+  let aboutOpen = $state(false);
+  let aboutLong = $state(false);
+  let linkCopied = $state(false);
+  let copyTimer: ReturnType<typeof setTimeout> | undefined;
+  onDestroy(() => clearTimeout(copyTimer));
+
+  let root: HTMLDivElement;
+  let aboutEl = $state<HTMLParagraphElement>();
+
+  const view = $derived<View>(quick && storedView !== 'pinned' ? 'main' : storedView);
+  const noun = $derived(scope === 'community' ? 'Community' : scope === 'channel' ? 'Channel' : 'Group');
+  const nounLower = $derived(noun.toLowerCase());
+  const perms = $derived(permissions ?? defaultPermissions());
+  const muted = $derived(mutedUntil !== undefined ? mutedUntil : ownMute);
+  const muteAll = $derived(muteEveryone ?? ownMuteAll);
+  const total = $derived(memberTotal ?? members.length);
+  const aboutText = $derived(about ?? '');
+
+  function go(next: View) {
+    // the quick panel never drills in; deeper views live in the host's manage dialog.
+    // pinned is reading, not managing, so it opens inside the quick panel
+    if (quick && next !== 'main' && next !== 'pinned') {
+      menuOpen = false;
+      onManage?.(next);
+      return;
+    }
+    storedView = next;
+    menuOpen = false;
+    onViewChange?.(next);
+    if (storageKey) {
+      try {
+        localStorage.setItem(storageKey, next);
+      } catch {}
+    }
+  }
+
+  const settingsPayload = () => ({
+    info: { name: title, about: aboutText, color, coverKey: coverKey ?? 'plum', avatar },
+    settings: { isPublic, history: visibleHistory, disappearOn, after: disappearAfter },
+    gates: gateState,
+    rules,
+    permissions: perms,
+  });
+
+  function request(req: string | null) {
+    if (!req) return;
+    const target = req.split('#')[0];
+    if (isView(target)) go(target);
+    else if (target === 'settings') onDialog?.('settings', settingsPayload(), 'group');
+  }
+
+  // a request can arrive with the mount (e.g. switching from channel to community details) or later
+  let lastRequest: string | null = null;
+  $effect(() => {
+    const req = viewRequest;
+    untrack(() => {
+      if (req && req !== lastRequest) request(req);
+      lastRequest = req;
+    });
+  });
+
+  // a new description starts collapsed
+  let lastAbout = untrack(() => about);
+  $effect(() => {
+    const a = about;
+    untrack(() => {
+      if (a !== lastAbout) aboutOpen = false;
+      lastAbout = a;
+    });
+  });
+
+  // offer More only when the text is actually clamped
+  $effect(() => {
+    aboutText;
+    view;
+    const el = aboutEl;
+    if (!el || untrack(() => aboutOpen)) return;
+    tick().then(() => (aboutLong = el.scrollHeight - el.clientHeight > 2));
+  });
+
+  onMount(() => {
+    // in-panel backdrops only cover this panel; presses elsewhere on the page close menus here
+    const away = (e: PointerEvent) => {
+      if (root.contains(e.target as Node)) return;
+      if (menuOpen || muteMenu || popover) {
+        menuOpen = false;
+        muteMenu = null;
+        popover = null;
+      }
+    };
+    document.addEventListener('pointerdown', away, true);
+    return () => document.removeEventListener('pointerdown', away, true);
+  });
+
+  const placeUnder = (el: Element | null) => {
+    const panel = el?.closest('[data-panel-root]');
+    if (!el || !panel) return { top: 212, left: 16 };
+    const r = el.getBoundingClientRect(), b = panel.getBoundingClientRect();
+    return { top: r.bottom - b.top + 6, left: Math.max(16, Math.min(r.left - b.left, b.width - 232)) };
+  };
+
+  function setMute(key: MuteKey | null) {
+    muteMenu = null;
+    ownMute = key;
+    onMuteChange?.(key);
+  }
+
+  function toggleMuteAll() {
+    ownMuteAll = !muteAll;
+    onMuteEveryoneChange?.(!muteAll);
+  }
+
+  const openUser = (m: Person) => () => onDialog?.('user', { title: m.title, handle: m.handle, color: m.color, isSelf: m.tag === 'YOU' });
+  const openBot = (b: Bot, installed: boolean) => () => onDialog?.('bot', { name: b.title, description: b.subtitle, color: b.color, installed });
+  const openHook = (h: Bot) => () => onDialog?.('webhook', { dialogMode: 'edit', name: h.title, color: h.color, url: webhookUrls?.[h.title] ?? h.url, avatarUrl: h.image });
+
+  // ── bots & webhooks ──
+  const installedBots = $derived(bots.concat(extraBots.filter((e) => !bots.some((b) => b.title === e.title))).filter((b) => !removedBots.includes(b.title)));
+  const hooks = $derived(webhooks.concat(extraWebhooks.filter((e) => !webhooks.some((h) => h.title === e.title))));
+  // people who can't manage bots only see what's installed: no webhooks, no recommendations
+  const allowHooks = $derived(scope !== 'community' && canManageBots && botsPart !== 'bots');
+  const showBotLists = $derived(botsPart !== 'webhooks');
+  const allBots = $derived(allowHooks ? installedBots.concat(hooks) : installedBots);
+  const botNeedle = $derived(botQuery.trim().toLowerCase());
+  const botMatches = (x: Bot) => !botNeedle || `${x.title} ${x.subtitle || ''}`.toLowerCase().includes(botNeedle);
+  const shownBots = $derived(installedBots.filter(botMatches));
+  const shownHooks = $derived(allowHooks ? hooks.filter(botMatches) : []);
+  const shownRecommended = $derived(recommendedBots.filter((r) => !installedBots.some((b) => b.title === r.title)).filter(botMatches));
+
+  // ── members ──
+  const youFirst = (list: Person[]) => {
+    const i = list.findIndex((m) => m.tag === 'YOU');
+    return i > 0 ? [list[i], ...list.slice(0, i), ...list.slice(i + 1)] : list;
+  };
+  const withRole = (list: Person[]) => list.filter((m) => !removedMembers.includes(m.handle)).map((m) => (roles[m.handle] != null ? { ...m, tag: roles[m.handle] } : m));
+  const visibleBlocked = $derived(blocked.filter((m) => !unblocked.includes(m.handle) && !removedBlocked.includes(m.handle)));
+  const memberSets = $derived([youFirst(withRole(members)), youFirst(withRole(lapsed)), youFirst(visibleBlocked)]);
+  const tabIdx = $derived(canModerate ? memberTab : 0);
+  const viewerIsOwner = $derived(viewerRole.toUpperCase() === 'OWNER');
+
+  const memberRows = $derived.by(() => {
+    const all = memberSets[tabIdx];
+    const blockedTab = tabIdx === 2;
+    const otherOwners = memberSets[0].filter((x) => x.tag === 'OWNER').length;
+    const others = all.filter((x) => x.tag !== 'YOU');
+    const onlineN = tabIdx === 0 ? Math.min(Math.max(others.length - 2, 0), Math.max(Math.round((Number(total) || others.length) / 4), 1)) : 0;
+    return all.map((m) => {
+      const self = m.tag === 'YOU';
+      const rank = LADDER.indexOf(m.tag === 'LAPSED' ? '' : m.tag || '');
+      // members can't act on anyone; moderators can remove regular members; owners are only managed by owners,
+      // and your own row only offers stepping down once someone else is an owner
+      const hasMenu = blockedTab ? canModerate : self ? viewerIsOwner : rank === 3 ? viewerIsOwner : canModerate && rank >= 0 && (canChangeRoles || rank === 0);
+      const current = self ? (selfRole ?? viewerRole.toUpperCase().replace('MEMBER', '')) : (LADDER[rank] ?? '');
+      const soleOwner = self && current === 'OWNER' && otherOwners === 0;
+      const setRole = (r: string) => {
+        popover = null;
+        if (self) selfRole = r;
+        else roles = { ...roles, [m.handle]: r };
+      };
+      const roleItems: MenuItem[] =
+        blockedTab || !canChangeRoles
+          ? []
+          : [
+              ...LADDER.slice()
+                .reverse()
+                .filter((r) => r !== 'OWNER' || viewerIsOwner)
+                .map((r) => ({
+                  label: ROLE_NAMES[r],
+                  checkMask: r === current ? mask('check') : '',
+                  onSelect: () => {
+                    if (r === current) popover = null;
+                    else if (r === 'OWNER') popover = `owner:${m.handle}`;
+                    else setRole(r);
+                  },
+                })),
+              { variant: 'separator' as const, label: '' },
+            ];
+      const items: MenuItem[] = self
+        ? roleItems.filter((it) => it.variant !== 'separator')
+        : !blockedTab
+          ? [
+              ...roleItems,
+              {
+                label: 'Remove member',
+                mask: mask('user-minus'),
+                variant: 'danger',
+                onSelect: () => {
+                  popover = null;
+                  removedMembers = [...removedMembers, m.handle];
+                },
+              },
+            ]
+          : [
+              {
+                label: 'Unblock',
+                mask: mask('circle-check'),
+                onSelect: () => {
+                  popover = null;
+                  unblocked = [...unblocked, m.handle];
+                },
+              },
+              {
+                label: 'Remove',
+                mask: mask('user-minus'),
+                variant: 'danger',
+                onSelect: () => {
+                  popover = null;
+                  removedBlocked = [...removedBlocked, m.handle];
+                },
+              },
+            ];
+      const selfTag = self ? ({ OWNER: 'OWNER', ADMIN: 'ADMIN', MODERATOR: 'MODERATOR' } as Record<string, string>)[selfRole ?? viewerRole.toUpperCase()] || '' : undefined;
+      const oi = others.indexOf(m);
+      const isOn = !self && oi >= 0 && oi < onlineN;
+      return {
+        ...m,
+        tag: self ? selfTag : m.tag,
+        isYou: self,
+        online: isOn || (self && tabIdx === 0),
+        activity: isOn ? ACTIVITY[oi] || '' : '',
+        hasMenu,
+        menuKey: soleOwner ? `sole:${m.handle}` : `m:${m.handle}`,
+        heading: blockedTab || !canChangeRoles ? '' : self ? 'YOUR ROLE' : 'ROLE',
+        items,
+        confirmOwner: () => setRole('OWNER'),
+      };
+    });
+  });
+
+  // ── quick panel ──
+  const quickOnline = $derived.by(() => {
+    if (!quick) return { rows: [] as (Person & { online: boolean; activity: string })[], count: 0 };
+    const others = members.filter((m) => m.tag !== 'YOU');
+    const totalN = Number(memberTotal ?? others.length) || others.length;
+    const count = onlineCount ?? Math.min(Math.max(others.length - 2, 0), Math.max(Math.round(totalN / 4), 1));
+    const shown = others.slice(0, Math.min(24, Math.max(count, 0)));
+    const list = shown.length ? shown : count === 0 ? others.slice(0, 3) : [];
+    return {
+      rows: list.map((m, i) => ({ ...m, online: count > 0, activity: count > 0 ? ACTIVITY[i] || '' : ['1h', '3h', '1d'][i] || '' })),
+      count,
+      shown: shown.length,
+      total: totalN,
+    };
+  });
+  const slimBots = $derived(allBots.filter((b) => b.variant !== 'webhook').slice(0, 3));
+
+  // ── main view bits ──
+  const coverCss = $derived(
+    coverUrl ? `url(${coverUrl}) center/cover no-repeat` : coverKey ? `var(--cover-${COVER_KEYS.includes(coverKey) ? coverKey : 'plum'})` : cover || 'var(--cover-plum)',
+  );
+  // role split reads at a glance; the raw total lives in "View all"
+  const roleSummary = $derived.by(() => {
+    const owners = members.filter((m) => m.tag === 'OWNER').length || 1;
+    const admins = members.filter((m) => m.tag === 'ADMIN').length;
+    return `${owners} owner · ${admins} admins · ${Math.max(total - owners - admins, 0)} members`;
+  });
+  const muteSpan = $derived(MUTE_SPANS.find((o) => o.key === muted));
+  const tiles = $derived([
+    ...(scope === 'community' ? [] : (['video'] as const)),
+    { icon: 'mute' as const, label: scope === 'community' && !muted ? 'Mute all channels' : muted ? (muteSpan?.tile ?? 'Muted') : 'Mute', on: !!muted },
+    { icon: 'everyone' as const, label: muteAll ? '@everyone muted' : 'Mute @everyone', on: muteAll },
+  ]);
+  const tileHandlersAll = $derived({
+    ...tileHandlers,
+    // muting is reversible, so no confirmation — but it asks for how long,
+    // which makes an accidental tap cost hours rather than forever
+    mute: (e?: Event) => {
+      if (!muted) muteMenu = placeUnder((e?.currentTarget as Element | null) ?? null);
+      else setMute(null);
+    },
+    everyone: toggleMuteAll,
+  });
+  const muteOptions = $derived<{ label: string; key: MuteKey | null; separator?: boolean }[]>(
+    muted && quick ? [{ label: 'Unmute notifications', key: null }] : MUTE_SPANS.map((o) => ({ label: o.label, key: o.key })),
+  );
+
+  // ── permissions, gates, rules ──
+  const effective = (key: string) => (perms.messages[key] === INHERIT ? perms.messages.default : perms.messages[key]);
+  const roleDigest = $derived(
+    PERM_ROLES.filter((r) => r.key !== 'nobody').map((r, ri) => {
+      // each role lists what IT adds; the trailing chip carries the inheritance
+      const own = [...PERM_GENERAL.filter((p) => perms.general[p.key] === r.key).map((p) => p.short), ...PERM_CONTENT.filter((c) => effective(c.key) === r.key).map((c) => c.label)];
+      return { label: r.label.toUpperCase(), tint: r.tint, caps: own, none: own.length === 0 && ri === 0, inherits: ri > 0 ? `Everything ${PERM_ROLES[ri - 1].label.replace(/s$/, '').toLowerCase()} can do` : '' };
+    }),
+  );
+  // anything set to Nobody belongs to no role, so it gets its own line
+  const disabledPerms = $derived([
+    ...PERM_GENERAL.filter((p) => perms.general[p.key] === 'nobody').map((p) => p.short),
+    ...PERM_CONTENT.filter((c) => effective(c.key) === 'nobody').map((c) => c.label),
+  ]);
+  const threadExceptions = $derived(perms.threads ? PERM_CONTENT.filter((c) => perms.threads![c.key] !== INHERIT).length : 0);
+  const threadLine = $derived(
+    perms.threads
+      ? threadExceptions
+        ? `${threadExceptions} ${threadExceptions === 1 ? 'exception' : 'exceptions'} set for threads`
+        : 'Threads use their own set.'
+      : 'Threads follow the message permissions.',
+  );
+  // the most-asked question first ("can members invite?"), then how far the set has been tuned
+  const permHint = $derived.by(() => {
+    const changed =
+      PERM_GENERAL.filter((x) => perms.general[x.key] !== x.def).length +
+      PERM_CONTENT.filter((c) => perms.messages[c.key] !== INHERIT).length +
+      (perms.messages.default !== 'member' ? 1 : 0) +
+      (perms.threads ? 1 : 0);
+    const invite = perms.general.invite;
+    const who = invite === 'member' ? 'Members can invite' : invite === 'nobody' ? 'Nobody can invite' : `${PERM_ROLES.find((r) => r.key === invite)?.label ?? 'Admin'} can invite`;
+    return `${who} · ${changed ? `${changed} changed from defaults` : 'defaults everywhere'}`;
+  });
+  const gateCards = $derived(
+    (gateState?.rules ?? []).map((r) => {
+      const t = GATE_TYPES[r.type] || GATE_TYPES.locked;
+      return { label: t.label, detail: gateValue(r), icon: t.icon, tint: t.tint };
+    }),
+  );
+  // rules arrive as free text; the sub-view splits it into numbered lines
+  const ruleLines = $derived(
+    rules.enabled
+      ? rules.text
+          .split('\n')
+          .map((l) => l.replace(/^[•\-\s]+/, '').trim())
+          .filter(Boolean)
+      : [],
+  );
+  const gatesN = $derived(gateCount ?? gateCards.length);
+  const every = $derived(gateState?.every ?? '90 days');
+  const navRows = $derived([
+    { label: 'Permissions', hint: permHint, view: 'permissions' as const },
+    {
+      label: 'Access gates',
+      hint:
+        scope === 'channel' && !gatesN
+          ? 'Community gates apply · none set for this channel'
+          : gatesN
+            ? `${gatesN} gates · ${gateState?.intervalOn === false ? 'checked once at join' : `re-checked every ${every}`}`
+            : 'No gates — anyone invited can join',
+      view: 'gates' as const,
+    },
+    { label: `${noun} rules`, hint: ruleLines.length ? `${ruleLines.length} rules for members` : 'No rules set yet', view: 'rules' as const },
+  ]);
+
+  // ── user groups ──
+  const ugCur = $derived(userGroups.find((g) => g.key === ugKey) ?? null);
+  const ugShown = $derived(userGroups.filter((g) => !ugQuery.trim() || g.title.toLowerCase().includes(ugQuery.trim().toLowerCase())));
+  const ugSubtitle = (g: UserGroup) => (g.members.length === 1 ? '1 member' : `${g.members.length} members`);
+  const ugMembersShown = $derived(
+    ugCur ? ugCur.members.filter((m) => !ugMemberQuery.trim() || `${m.name} ${m.handle}`.toLowerCase().includes(ugMemberQuery.trim().toLowerCase())) : [],
+  );
+  function openUserGroup(g: UserGroup) {
+    ugKey = g.key;
+    ugMemberQuery = '';
+    popover = null;
+    go('usergroup');
+  }
+  const ugDialog = (dialogMode: 'create' | 'edit' | 'delete', key: string | null) => onDialog?.('usergroup', { dialogMode, key });
+
+  // ── pinned ──
+  const pinnedDays = $derived.by(() => {
+    const days: { date: string; items: (Pin & { messages: { text: string; code: string; time: string }[] })[] }[] = [];
+    for (const p of pinned) {
+      let d = days.find((x) => x.date === p.date);
+      if (!d) days.push((d = { date: p.date, items: [] }));
+      d.items.push({ ...p, messages: [{ text: p.text || '', code: p.code || '', time: p.time }] });
+    }
+    return days;
+  });
+
+  // ── sub-view header ──
+  const subviewTitle = $derived(
+    view === 'main'
+      ? ''
+      : view === 'bots' && botsPart === 'webhooks'
+        ? 'Webhooks'
+        : view === 'usergroup' && ugCur
+          ? ugCur.title
+          : view === 'members' && scope !== 'group'
+            ? `${noun} members`
+            : (view === 'bots' && !allowHooks ? SUBVIEWS.botsOnly : SUBVIEWS[view]).replace(/^Group\b/, noun),
+  );
+  const subviewSub = $derived(view === 'usergroup' && ugCur ? `User group in ${title}` : view === 'members' && scope === 'channel' ? `#${title} in ${communityName ?? ''}` : '');
+  const userGroupsView = $derived(view === 'usergroups' || (view === 'usergroup' && !ugCur));
+
+  // ── ⋯ menu ──
+  const menuItems = $derived.by(() => {
+    if (menuOverride) return menuOverride.map((it) => (it.onSelect ? { ...it, onSelect: () => ((menuOpen = false), it.onSelect?.()) } : it));
+    const close = (fn?: () => void) => () => {
+      menuOpen = false;
+      fn?.();
+    };
+    return MENU_ITEMS.filter((it) => scope === 'group' || !['convert', 'import', 'sep-after-bots'].includes(it.action ?? ''))
+      .filter((it) => scope !== 'community' || !['favourite', 'webhook'].includes(it.action ?? ''))
+      .flatMap((it) => (scope === 'community' && it.view === 'stats' ? [it, ...SCOPE_MENU_EXTRA] : [it]))
+      .map((it): MenuItem => {
+        const label =
+          it.action === 'favourite'
+            ? isFavourite
+              ? 'Remove from favourites'
+              : 'Add to favourites'
+            : it.action === 'newusergroup'
+              ? it.label
+              : it.label.replace(/\bgroup\b/i, (m) => (m[0] === 'G' ? noun : nounLower));
+        const a = it.action;
+        const onSelect = it.view
+          ? () => go(it.view!)
+          : a === 'settings'
+            ? close(() => onDialog?.('settings', settingsPayload(), 'group'))
+            : a === 'favourite'
+              ? close(onToggleFavourite)
+              : a === 'addbot'
+                ? close(() => go('bots'))
+                : a === 'webhook'
+                  ? close(() => onDialog?.('webhook', { dialogMode: 'register' }))
+                  : a === 'newusergroup'
+                    ? close(() => onDialog?.('usergroup', { dialogMode: 'create', key: null }))
+                    : a === 'convert' || a === 'delete' || a === 'import' || a === 'newchannel' || a === 'embed' || a === 'leave'
+                      ? close(() => onDialog?.(a))
+                      : close();
+        return { label, variant: it.variant, mask: it.mask, onSelect };
+      });
+  });
+
+  const inviteText = $derived(inviteLink || `oc.app/${scope === 'channel' ? 'c/' : 'g/'}${(title || 'group').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`);
+
+  const coverHandlersAll = $derived({
+    ...coverHandlers,
+    more: () => (menuOpen = !menuOpen),
+    manage: () => onManage?.('main'),
+    info: () => onManage?.('main'),
+    invite: () => onDialog?.('invite', null, 'people'),
+    share: () => onDialog?.('invite', null, 'share'),
+  });
+
+  function link(fn: () => void) {
+    return (e: MouseEvent) => {
+      e.preventDefault();
+      fn();
+    };
+  }
 </script>
 
-<div style="position:relative;width:100%;height:100%;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;background:var(--surface-1,#0e0e12);border-radius:{v.rootRadius}" use:ref={v.awayRef} data-panel-root="true">
+{#snippet sectionHead(label: string, count: number, onView: () => void)}
+  <div class="section-head">
+    <span class="section-label">{label}</span>
+    <a class="view-all" href="#top" onclick={link(onView)}>View all ({count})</a>
+  </div>
+{/snippet}
 
-  {#if v.isMain}
-    <div style="flex:1;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:{v.mainPadBottom};display:flex;flex-direction:column" onscroll={v.onMainScroll}>
-      <div style="flex:none;display:grid;grid-template-columns:minmax(0,1fr)"><PanelCover cover={v.cover} actions={v.coverActions} trailActions={v.coverTrailActions} handlers={v.coverHandlers}></PanelCover></div>
+{#snippet confirm(heading: string, body: string, action: string, onAction: (() => void) | null)}
+  <div class="scrim" onclick={() => (popover = null)} role="presentation"></div>
+  <div class="ask">
+    <div class="ask-text">
+      <span class="ask-title">{heading}</span>
+      <span class="ask-body">{body}</span>
+    </div>
+    <div class="ask-actions">
+      {#if onAction}
+        <span class="ask-cancel" onclick={() => (popover = null)} role="button" tabindex="0">Cancel</span>
+        <span class="ask-confirm" onclick={onAction} role="button" tabindex="0">{action}</span>
+      {:else}
+        <span class="ask-ok" onclick={() => (popover = null)} role="button" tabindex="0">{action}</span>
+      {/if}
+    </div>
+  </div>
+{/snippet}
 
-      <div style="padding:0 var(--space-16) {v.identityPadBottom};margin-top:{v.avatarLift};display:flex;flex-direction:column;align-items:center;gap:var(--space-10)">
-        <div style="position:relative;width:{v.avatarSize};height:{v.avatarSize};margin-bottom:{v.avatarGap};border-radius:{v.avatarRadius};background:{v.avatarGradient};box-shadow:0 0 0 4px var(--surface-1,#0e0e12)"></div>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-6);max-width:100%">
-          <div style="display:flex;align-items:center;justify-content:center;gap:var(--space-8);min-width:0;max-width:100%">
-            <span style="min-width:0;font:var(--weight-bold) var(--text-xl)/1.2 var(--font-sans);letter-spacing:var(--tracking-tight);color:var(--ink,#ECECF1);text-align:center;text-wrap:pretty">{t(v.title)}</span>
-            {#if v.showFavHeart}
-              <span style="flex:none;width:15px;height:15px;background:var(--accent,#FF5672);mask:{v.heartFilled}" title="In your favourites"></span>
+{#snippet rowMenu(heading: string, items: MenuItem[], minWidth: string)}
+  <div class="scrim" onclick={() => (popover = null)} role="presentation"></div>
+  <div class="row-menu"><Menu {minWidth} {heading} {items} /></div>
+{/snippet}
+
+<div class="panel" class:embedded bind:this={root} data-panel-root="true">
+  {#if view === 'main'}
+    <div class="main" class:quick onscroll={() => (muteMenu = null)}>
+      <div class="cover"><PanelCover cover={coverCss} actions={['close']} trailActions={quick ? [manageIcon, 'more'] : ['invite', 'share', 'more']} handlers={coverHandlersAll} /></div>
+
+      <div class="identity" class:quick>
+        <div class="avatar" class:round={scope === 'channel'} style:background={grad(color)}></div>
+        <div class="names">
+          <div class="title-line">
+            <span class="title">{scope === 'channel' ? '#' : ''}{title}</span>
+            {#if !quick && isFavourite}
+              <span class="fav-heart" title="In your favourites"></span>
             {/if}
           </div>
-          {#if v.isChannelScope}
-            <span style="display:flex;align-items:center;gap:var(--space-6);font:var(--weight-regular) var(--text-md)/1 var(--font-sans);color:var(--ink-3,#9A9AA8)">{#if v.isQuick}<span style="flex:none;width:12px;height:12px;background:var(--ink-3,#9A9AA8);mask:{v.accessMask}"></span>{/if}{t(v.channelIn)}{#if v.notQuick}<a style="color:var(--accent,#FF5672);text-decoration:none" href="#" onclick={v.openCommunity}>{t(v.communityName)}</a>{/if}{#if v.isQuick}<span class="dc-p0" style="display:inline-flex;align-items:center;gap:var(--space-4);height:26px;padding:0 var(--space-6) 0 var(--space-10);border-radius:var(--radius-pill);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.08));font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--ink,#ECECF1);cursor:pointer;user-select:none" onclick={v.openCommunity} aria-label="View community" role="button" tabindex="0" title="View community">{t(v.communityName)}<span style="flex:none;width:12px;height:12px;background:var(--ink-3,#9A9AA8);mask:{v.chevMask}" data-oc-flip=""></span></span>{/if}</span>
+          {#if scope === 'channel'}
+            <span class="byline"
+              >{#if quick}<span class="access-icon" class:public={isPublic}></span>{/if}{quick ? `${isPublic ? 'Public' : 'Private'} channel in` : 'channel in'}{#if quick}<span
+                  class="community-chip"
+                  onclick={() => onOpenCommunity?.()}
+                  aria-label="View community"
+                  role="button"
+                  tabindex="0"
+                  title="View community">{communityName ?? 'OpenChat'}<span class="chip-chevron" data-oc-flip=""></span></span
+                >{:else}<a href="#top" onclick={link(() => onOpenCommunity?.())}>{communityName ?? 'OpenChat'}</a>{/if}</span
+            >
+          {:else if quick}
+            <span class="byline"><span class="access-icon" class:public={isPublic}></span>{isPublic ? 'Public' : 'Private'} {nounLower} · created by <a href="#top">{ownerHandle}</a></span>
+          {:else}
+            <span class="byline plain">{nounLower} created by <a href="#top">{ownerHandle}</a></span>
           {/if}
-          {#if v.showQuickByline}
-            <span style="display:flex;align-items:center;gap:var(--space-6);font:var(--weight-regular) var(--text-md)/1 var(--font-sans);color:var(--ink-3,#9A9AA8)"><span style="flex:none;width:12px;height:12px;background:var(--ink-3,#9A9AA8);mask:{v.accessMask}"></span>{t(v.quickByline)} <a style="color:var(--accent,#FF5672);text-decoration:none" href="#">{t(v.ownerHandle)}</a></span>
-          {/if}
-          {#if v.showFullByline}
-            <span style="font:var(--weight-regular) var(--text-md)/1 var(--font-sans);color:var(--ink-3,#9A9AA8)">{t(v.bylineNoun)} created by <a style="color:var(--accent,#FF5672);text-decoration:none" href="#">{t(v.ownerHandle)}</a></span>
-          {/if}
-          {#if v.notQuick}
-          <div class="dc-p1" style="display:flex;align-items:center;gap:var(--space-6);margin-top:var(--space-2);padding:var(--space-4) var(--space-8);border-radius:var(--radius-pill);cursor:pointer" onclick={v.goMembers} role="button" tabindex="0">
-            <span style="flex:none;width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.membersMask}"></span>
-            <span style="font:var(--weight-medium) var(--text-md)/1 var(--font-sans);color:var(--ink-2,#C9C9D4)">{t(v.roleSummary)}</span>
-          </div>
+          {#if !quick}
+            <div class="role-summary" onclick={() => go('members')} role="button" tabindex="0">
+              <span class="users-icon"></span>
+              <span class="role-text">{roleSummary}</span>
+            </div>
           {/if}
         </div>
-        {#if v.isQuick}
-          <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:var(--space-8);margin-top:var(--space-8)">
-            <span class="dc-p2" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 9px 0 12px;box-sizing:border-box;border-radius:var(--radius-pill);background:{v.mutePillBg};box-shadow:inset 0 0 0 1px {v.mutePillLine};font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:{v.mutePillInk};cursor:pointer;user-select:none" onclick={v.onMutePill} aria-label={v.muteTitle} role="button" tabindex="0" title={v.muteTitle}>
-              <span style="flex:none;width:14px;height:14px;background:{v.mutePillInk};mask:{v.mutePillMask}"></span>{t(v.mutePillLabel)}
-              <span style="width:1px;height:16px;margin:0 2px 0 3px;background:var(--line-2,rgba(255,255,255,.12))"></span><span style="flex:none;width:12px;height:12px;background:{v.mutePillInk};mask:{v.caretMask}"></span>
+        {#if quick}
+          <div class="pills">
+            <span class="pill mute" class:on={!!muted} onclick={(e) => (muteMenu = placeUnder(e.currentTarget))} aria-label={muted ? 'Unmute notifications' : 'Mute notifications'} role="button" tabindex="0" title={muted ? 'Unmute notifications' : 'Mute notifications'}>
+              <span class="pill-icon" style:mask={mask(muted ? 'bell-off' : 'bell')}></span>{muted ? 'Muted' : 'Mute'}
+              <span class="pill-divider"></span><span class="caret"></span>
             </span>
-            <span class="dc-p3" style="display:flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 11px;box-sizing:border-box;border-radius:var(--radius-pill);background:{v.everyoneBg};box-shadow:inset 0 0 0 1px {v.everyoneLine};font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:{v.everyoneInk};cursor:pointer;user-select:none" onclick={v.onEveryonePill} aria-label={v.everyoneTitle} role="button" tabindex="0" title={v.everyoneTitle} aria-pressed={v.everyoneOn}>
-              <span style="flex:none;width:14px;height:14px;background:{v.everyoneInk};mask:{v.everyoneMask}"></span>@everyone
-            </span>
-            {#if v.canFavPill}
-              <span class="dc-p4" style="display:flex;align-items:center;gap:7px;height:34px;padding:0 13px 0 12px;box-sizing:border-box;border-radius:var(--radius-pill);background:{v.favPillBg};box-shadow:inset 0 0 0 1px {v.favPillLine};font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:{v.favPillInk};cursor:pointer;user-select:none" onclick={v.onFavPill} role="button" tabindex="0">
-                <span style="flex:none;width:14px;height:14px;background:{v.favPillInk};mask:{v.favPillMask}"></span>{t(v.favPillLabel)}
-              </span>
+            <!-- @everyone is its own toggle: it silences mass mentions, not notifications -->
+            <span
+              class="pill everyone"
+              class:on={muteAll}
+              onclick={toggleMuteAll}
+              aria-label={muteAll ? '@everyone mentions are muted. Click to allow them' : 'Mute @everyone mentions'}
+              role="button"
+              tabindex="0"
+              title={muteAll ? '@everyone mentions are muted. Click to allow them' : 'Mute @everyone mentions'}
+              aria-pressed={muteAll}><span class="pill-icon" style:mask={mask(muteAll ? 'at-off' : 'at')}></span>@everyone</span
+            >
+            {#if onToggleFavourite}
+              <span class="pill fav" class:on={!!isFavourite} onclick={onToggleFavourite} role="button" tabindex="0"><span class="pill-icon" style:mask={mask('heart')}></span>{isFavourite ? 'Favourited' : 'Favourite'}</span>
             {/if}
           </div>
+        {:else}
+          <div class="tiles"><TileButtons columns={scope === 'community' ? 2 : 3} {tiles} handlers={tileHandlersAll} /></div>
         {/if}
-        {#if v.notQuick}
-        <div style="width:100%;margin-top:var(--space-14);display:grid;grid-template-columns:minmax(0,1fr)"><TileButtons columns={v.tileColumns} tiles={v.tiles} handlers={v.tileHandlers}></TileButtons></div>
-        {/if}
-        {#if v.showAccessCard}
-          <div style="width:100%;display:flex;align-items:center;gap:var(--space-12);min-height:56px;padding:var(--space-10) var(--space-12) var(--space-10) var(--space-10);box-sizing:border-box;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-            <span style="flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:12px;background:var(--overlay-2,rgba(255,255,255,.07))"><span style="width:17px;height:17px;background:var(--ink-2,#C9C9D4);mask:{v.accessMask}"></span></span>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-              <span style="font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.accessTitle)}</span>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.4 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">{t(v.accessBody)}</span>
+        {#if !quick && (scope === 'community' || scope === 'channel')}
+          <div class="card">
+            <span class="card-icon"><span class="card-glyph" style:mask={mask(isPublic ? 'globe' : 'lock')}></span></span>
+            <div class="card-text">
+              <span class="card-title">{isPublic ? 'Public' : 'Private'} {scope === 'channel' ? 'channel' : 'community'}</span>
+              <span class="card-body"
+                >{scope === 'channel'
+                  ? isPublic
+                    ? `Anyone in ${communityName ?? 'the community'} can find and join it.`
+                    : 'Only people added or invited can join, even though the community may be public.'
+                  : isPublic
+                    ? 'Anyone can find and join. Individual channels can still be private.'
+                    : 'Only people you invite can join, and it won’t appear in search.'}</span
+              >
             </div>
           </div>
         {/if}
-        {#if v.showCommunityCard}
-          <div class="dc-p5" style="width:100%;display:flex;align-items:center;gap:var(--space-12);min-height:56px;padding:var(--space-10) var(--space-12) var(--space-10) var(--space-10);box-sizing:border-box;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07));cursor:pointer;user-select:none" onclick={v.openCommunity} role="button" tabindex="0">
-            <span style="flex:none;width:36px;height:36px;border-radius:12px;background:{v.communityGradient}"></span>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-              <span style="font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#ECECF1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{t(v.communityName)}</span>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.2 var(--font-sans);color:var(--ink-3,#9A9AA8)">View community details</span>
+        {#if !quick && scope === 'channel'}
+          <div class="card link-card" onclick={() => onOpenCommunity?.()} role="button" tabindex="0">
+            <span class="community-mark" style:background={grad(communityColor)}></span>
+            <div class="card-text">
+              <span class="card-title clip">{communityName ?? 'OpenChat'}</span>
+              <span class="card-body">View community details</span>
             </div>
-            <span style="flex:none;width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.chevMask}"></span>
+            <span class="chevron"></span>
           </div>
         {/if}
-        <div style="width:100%;margin-top:var(--space-6);display:flex;flex-direction:column;align-items:center;gap:var(--space-6)">
-          <p style="margin:0;font:var(--weight-regular) var(--text-md)/1.55 var(--font-sans);color:{v.aboutInk};text-wrap:pretty;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:{v.aboutClamp};overflow:hidden" use:ref={v.aboutRef}>{t(v.about)}</p>
-          {#if v.aboutCanToggle}
-            <span class="dc-p6" style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none;padding:var(--space-4) var(--space-6);border-radius:var(--radius-sm)" onclick={v.toggleAbout} role="button" tabindex="0">{t(v.aboutToggleLabel)}</span>
+        <div class="about">
+          <p class="about-text" class:empty={!aboutText} bind:this={aboutEl} style:-webkit-line-clamp={aboutOpen ? 'unset' : quick ? '2' : '4'}>{aboutText || 'No description yet'}</p>
+          {#if aboutLong}
+            <span class="about-toggle" onclick={() => (aboutOpen = !aboutOpen)} role="button" tabindex="0">{aboutOpen ? (quick ? 'Less' : 'Show less') : quick ? 'More' : 'Show more'}</span>
           {/if}
         </div>
       </div>
 
-      <div style="flex:1 0 auto;padding:0 var(--space-16) var(--space-16);display:flex;flex-direction:column;gap:var(--space-22)">
-
-
-        {#if v.showPinnedRow}
-          <div class="dc-p7" style="display:flex;align-items:center;gap:var(--space-12);min-width:0;padding:var(--space-10) var(--space-12);border-radius:var(--radius-lg);background:var(--overlay-1,rgba(255,255,255,.05));cursor:pointer;user-select:none" onclick={v.goPinned} role="button" tabindex="0">
-            <span style="flex:none;width:16px;height:16px;background:var(--ink-2,#C9C9D4);mask:{v.pinMask}"></span>
-            <span style="flex:1;min-width:0;font:var(--weight-semibold) var(--text-md)/1.2 var(--font-sans);color:var(--ink,#ECECF1)">Pinned messages</span>
-            <span style="flex:none;font:var(--weight-medium) var(--text-sm)/1 var(--font-mono);color:var(--ink-3,#9A9AA8)">{t(v.pinnedCount)}</span>
-            <span style="flex:none;width:14px;height:14px;background:var(--ink-4,#7C7C8C);mask:{v.pinChevMask}" data-oc-flip=""></span>
+      <div class="sections">
+        {#if quick}
+          <div class="online-card">
+            <div class="online-head">
+              <span class="online-dot"></span>
+              <span class="online-title">{quickOnline.count > 0 ? 'Online now' : 'Members'} <span class="online-count">{quickOnline.count > 0 ? `· ${quickOnline.count}` : ''}</span></span>
+              <span class="online-of">{quickOnline.count > 0 ? `of ${quickOnline.total?.toLocaleString('en-US')}` : ''}</span>
+            </div>
+            <!-- the online list fills down to the panel edge -->
+            <div class="online-list">
+              {#if membersLoading}
+                <Skeleton variant="member" count={6} />
+              {:else}
+                {#each quickOnline.rows as m}
+                  <div class="cell">
+                    <MemberRow
+                      title={m.title}
+                      subtitle={m.handle}
+                      tag={m.tag}
+                      color={m.color}
+                      online={m.online}
+                      ringColor="var(--surface-2,#191921)"
+                      hoverBg="var(--overlay-2,rgba(255,255,255,.09))"
+                      activity={m.activity}
+                      showMenu={false}
+                      onClick={openUser(m)}
+                    />
+                  </div>
+                {/each}
+              {/if}
+              {#if quickOnline.count === 0}
+                <span class="none-online">No one else is online. Recently active:</span>
+              {/if}
+              {#if quickOnline.count > (quickOnline.shown ?? 0)}
+                <span class="more-online">+ {(quickOnline.count - (quickOnline.shown ?? 0)).toLocaleString('en-US')} more online</span>
+              {/if}
+            </div>
+            <div class="online-foot">
+              {#if canInvite}
+                <span class="foot-action invite" onclick={() => onDialog?.('invite', null, 'people')} role="button" tabindex="0"><span class="invite-icon"></span>Invite</span>
+              {/if}
+              <span class="foot-action all" onclick={() => go('members')} role="button" tabindex="0">View all {quickOnline.total?.toLocaleString('en-US')}</span>
+            </div>
           </div>
+          {#if slimBots.length > 0}
+            <div class="bots-slim" onclick={() => go('bots')} role="button" tabindex="0">
+              <div class="bot-stack">{#each slimBots as b}<span class="bot-face" style:background={grad(b.color)}></span>{/each}</div>
+              <span class="bots-text">Bots <span class="bots-names">· {slimBots.map((b) => b.title).join(', ')}</span></span>
+              <span class="chevron small" data-oc-flip=""></span>
+            </div>
+          {/if}
         {/if}
 
-        {#if v.isQuick}
-          <div style="flex:1 0 auto;display:flex;flex-direction:column;border-radius:var(--radius-xl,16px);background:var(--overlay-1,rgba(255,255,255,.04))">
-            <div style="flex:none;display:flex;align-items:center;gap:var(--space-8);min-height:56px;padding:var(--space-18) var(--space-16);box-sizing:border-box;border-bottom:1px solid var(--line-1,rgba(255,255,255,.07))">
-              <span style="flex:none;width:8px;height:8px;border-radius:50%;background:var(--status-online,#2EE6A8);box-shadow:0 0 0 3px color-mix(in srgb, var(--status-online,#2EE6A8) 18%, transparent)"></span>
-              <span style="flex:1;min-width:0;font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.onlineTitle)} <span style="font:var(--weight-medium) var(--text-md)/1 var(--font-mono);color:var(--ink-4,#7C7C8C)">{t(v.onlineCountLabel)}</span></span>
-              <span style="flex:none;font:var(--weight-medium) var(--text-md)/1 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.onlineOf)}</span>
-            </div>
-            <div style="flex:1 1 0px;min-height:236px;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-14) var(--space-6)">
-              {#if v.membersLoading}<Skeleton variant="member" count={6}></Skeleton>{/if}
-{#each v.membersShown ?? [] as m, i0}
-                <div style="display:grid;grid-template-columns:minmax(0,1fr)"><MemberRow title={m.title} subtitle={m.handle} tag={m.tag} color={m.color} online={m.online} ringColor="var(--surface-2,#191921)" hoverBg="var(--overlay-2,rgba(255,255,255,.09))" activity={m.activity} showMenu={false} onClick={m.onOpen}></MemberRow></div>
+        {#if !embedded && !quick}
+          <div class="section">
+            {@render sectionHead(scope === 'group' ? 'MEMBERS' : `${noun.toUpperCase()} MEMBERS`, total, () => go('members'))}
+            <div class="rows">
+              {#each members.slice(0, allBots.length ? 3 : 5) as m}
+                <div class="cell"><MemberRow title={m.title} subtitle={m.handle} tag={m.tag} color={m.color} onClick={openUser(m)} /></div>
               {/each}
-              {#if v.noneOnline}
-                <span style="padding:var(--space-4) var(--space-10) var(--space-8);font:var(--weight-regular) var(--text-md)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C)">No one else is online. Recently active:</span>
-              {/if}
-              {#if v.hasMoreOnline}
-                <span style="padding:var(--space-10) var(--space-10) var(--space-4);font:var(--weight-medium) var(--text-md)/1 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.moreOnlineLabel)}</span>
-              {/if}
-            </div>
-            <div style="flex:none;display:flex;border-top:1px solid var(--line-1,rgba(255,255,255,.07))">
-              {#if v.showInviteCard}
-                <span class="dc-p8" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:56px;border-inline-end:1px solid var(--line-1,rgba(255,255,255,.07));font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1);cursor:pointer;user-select:none;border-end-start-radius:var(--radius-xl,16px)" onclick={v.goInvitePeople} role="button" tabindex="0"><span style="flex:none;width:14px;height:14px;background:var(--ink,#ECECF1);mask:{v.invitePeopleMask}"></span>Invite</span>
-              {/if}
-              <span class="dc-p9" style="flex:1;display:flex;align-items:center;justify-content:center;height:56px;font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink-2,#C9C9D4);cursor:pointer;user-select:none;border-end-end-radius:var(--radius-xl,16px)" onclick={v.goMembers} role="button" tabindex="0">{t(v.viewAllMembersLabel)}</span>
             </div>
           </div>
-          {#if v.hasBotsSlim}
-            <div class="dc-p10" style="flex:none;display:flex;align-items:center;gap:var(--space-12);min-height:56px;padding:var(--space-12) var(--space-16);box-sizing:border-box;border-radius:var(--radius-xl,16px);background:var(--overlay-1,rgba(255,255,255,.04));cursor:pointer;user-select:none" onclick={v.goBots} role="button" tabindex="0">
-              <div style="flex:none;display:flex">
-                {#each v.botStack ?? [] as b, i1}<span style="width:30px;height:30px;margin-inline-end:-7px;border-radius:9px;background:{b.gradient};box-shadow:0 0 0 2px var(--surface-1,#0e0e12)"></span>{/each}
-              </div>
-              <span style="flex:1;min-width:0;margin-inline-start:7px;font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#ECECF1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Bots <span style="font-weight:var(--weight-regular);color:var(--ink-3,#9A9AA8)">· {t(v.botNames)}</span></span>
-              <span style="flex:none;width:14px;height:14px;background:var(--ink-4,#7C7C8C);mask:{v.chevMask}" data-oc-flip=""></span>
-            </div>
-          {/if}
-        {/if}
 
-        {#if v.showMemberPreview}
-        <div style="display:flex;flex-direction:column;gap:var(--space-10);min-width:0">
-          <div style="display:flex;align-items:baseline;gap:var(--space-10);padding-top:var(--space-16);border-top:1px solid var(--line-1,rgba(255,255,255,.07))">
-            <span style="flex:1;min-width:0;padding-inline-start:var(--space-8);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-3,#9A9AA8)">{t(v.membersLabel)}</span>
-            <a style="flex:none;font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--accent,#FF5672);text-decoration:none" href="#" onclick={v.goMembers}>View all ({t(v.memberTotal)})</a>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:var(--space-4)">
-            {#each v.memberPreview ?? [] as m, i2}
-              <div style="position:relative;display:grid;grid-template-columns:minmax(0,1fr)">
-                <MemberRow title={m.title} subtitle={m.handle} tag={m.tag} color={m.color} onClick={m.onOpen} onMenu={m.toggleMenu} showMenu={m.hasMenu}></MemberRow>
-                {#if m.menuOpen}
-                  <div style="position:fixed;inset:0;z-index:19" onclick={v.closeUgMenu}></div>
-                  <div style="position:absolute;inset-inline-end:var(--space-4);top:calc(100% - 6px);z-index:20;display:grid;grid-template-columns:max-content"><Menu minWidth="220px" heading={m.menuHeading} items={m.menuItems}></Menu></div>
-                {/if}
-                {#if m.ownerAsk}
-                  <div style="position:fixed;inset:0;z-index:19" onclick={v.closeUgMenu}></div>
-                  <div style="position:absolute;inset-inline-end:var(--space-4);top:calc(100% - 6px);z-index:20;width:260px;display:flex;flex-direction:column;gap:var(--space-12);padding:var(--space-14);box-sizing:border-box;border-radius:var(--radius-lg);background:var(--surface-2,#191921);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),var(--shadow-panel,0 8px 24px rgba(0,0,0,.28))">
-                    <div style="display:flex;flex-direction:column;gap:var(--space-6)">
-                      <span style="font:var(--weight-semibold) var(--text-base)/1.3 var(--font-sans);color:var(--ink,#ECECF1);text-wrap:pretty">Make {t(m.title)} an owner?</span>
-                      <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">Owners have full control, including deleting the {t(v.nounLower)} and changing other owners.</span>
-                    </div>
-                    <div style="display:flex;justify-content:flex-end;gap:var(--space-6)">
-                      <span class="dc-p11" style="display:flex;align-items:center;height:34px;padding:0 var(--space-12);border-radius:var(--radius-md);font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink-2,#C9C9D4);cursor:pointer;user-select:none" onclick={v.closeUgMenu} role="button" tabindex="0">Cancel</span>
-                      <span class="dc-p12" style="display:flex;align-items:center;height:34px;padding:0 var(--space-14);border-radius:var(--radius-md);background:var(--accent,#FF5672);font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--on-accent,#2E0512);cursor:pointer;user-select:none" onclick={m.confirmOwner} role="button" tabindex="0">Make owner</span>
-                    </div>
+          {#if allBots.length > 0}
+            <div class="section">
+              {@render sectionHead(allowHooks ? 'BOTS & WEBHOOKS' : 'BOTS', allBots.length, () => go('bots'))}
+              <div class="rows">
+                {#each allBots.slice(0, 2) as b}
+                  <div class="cell">
+                    <MemberRow variant={b.variant} title={b.title} subtitle={b.subtitle} tag={b.tag} color={b.color} image={b.image} icon="chevron" showMenu={false} onClick={b.variant === 'webhook' ? openHook(b) : openBot(b, true)} />
                   </div>
-                {/if}
-              </div>
-            {/each}
-          </div>
-        </div>
-        {/if}
-
-        {#if v.hasBots}
-        <div style="display:flex;flex-direction:column;gap:var(--space-10);min-width:0">
-          <div style="display:flex;align-items:baseline;gap:var(--space-10);padding-top:var(--space-16);border-top:1px solid var(--line-1,rgba(255,255,255,.07))">
-            <span style="flex:1;min-width:0;padding-inline-start:var(--space-8);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-3,#9A9AA8)">{t(v.botsSectionLabel)}</span>
-            <a style="flex:none;font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--accent,#FF5672);text-decoration:none" href="#" onclick={v.goBots}>View all ({t(v.botTotal)})</a>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:var(--space-4)">
-            {#each v.botPreview ?? [] as b, i3}
-              <div style="display:grid;grid-template-columns:minmax(0,1fr)"><MemberRow variant={b.variant} title={b.title} subtitle={b.subtitle} tag={b.tag} color={b.color} image={b.image} icon="chevron" showMenu={false} onClick={b.onOpen}></MemberRow></div>
-            {/each}
-          </div>
-        </div>
-        {/if}
-
-
-        {#if v.showUserGroupPreview}
-        <div style="display:flex;flex-direction:column;gap:var(--space-10);min-width:0">
-          <div style="display:flex;align-items:baseline;gap:var(--space-10);padding-top:var(--space-16);border-top:1px solid var(--line-1,rgba(255,255,255,.07))">
-            <span style="flex:1;min-width:0;padding-inline-start:var(--space-8);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-3,#9A9AA8)">USER GROUPS</span>
-            <a style="flex:none;font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--accent,#FF5672);text-decoration:none" href="#" onclick={v.goUserGroups}>View all ({t(v.userGroupTotal)})</a>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:var(--space-4)">
-            {#each v.userGroupPreview ?? [] as u, i4}
-              <div style="display:grid;grid-template-columns:minmax(0,1fr)"><MemberRow title={u.title} subtitle={u.subtitle} color={u.color} icon="chevron" showMenu={false} onClick={u.open}></MemberRow></div>
-            {/each}
-          </div>
-        </div>
-        {/if}
-
-        {#if v.showNavRows}
-        <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
-          <div style="padding-top:var(--space-16);padding-bottom:var(--space-4);border-top:1px solid var(--line-1,rgba(255,255,255,.07))">
-            <span style="padding-inline-start:var(--space-8);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-3,#9A9AA8)">ACCESS &amp; RULES</span>
-          </div>
-          {#each v.navRows ?? [] as nav, i5}
-            <div style="display:grid;grid-template-columns:minmax(0,1fr)"><PanelNavRow label={nav.label} hint={nav.hint} value={nav.value} highlight={nav.highlight} onClick={nav.onPress}></PanelNavRow></div>
-          {/each}
-        </div>
-        {/if}
-
-
-      </div>
-    </div>
-  {/if}
-
-  {#if v.isSubview}
-    <div style="flex:none;display:flex;align-items:center;gap:var(--space-10);height:71px;box-sizing:border-box;padding:0 var(--space-16);border-bottom:1px solid var(--line-1,rgba(255,255,255,.07))">
-      {#if v.showBack}
-      <span class="dc-p13" style="flex:none;display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.goBack} role="button" tabindex="0">
-        <span style="width:17px;height:17px;background:var(--ink-2,#C9C9D4);mask:{v.backMask}"></span>
-      </span>
-      {/if}
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-        <span style="min-width:0;font:var(--weight-bold) var(--text-lg)/1.2 var(--font-sans);color:var(--ink,#ECECF1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{t(v.subviewTitle)}</span>
-        {#if v.hasSubviewSub}
-          <span style="min-width:0;font:var(--weight-regular) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-4,#7C7C8C);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{t(v.subviewSub)}</span>
-        {/if}
-      </div>
-      {#if v.hasSubviewMeta}
-        <span style="flex:none;font:var(--weight-medium) var(--text-sm)/1 var(--font-mono);color:var(--ink-4,#7C7C8C)">{t(v.subviewMeta)}</span>
-      {/if}
-      {#if v.hasSubviewShare}
-        <div style="flex:none;display:flex"><IconButton label="Add members" variant="ghost" icon="userPlus" onClick={v.goAddMembers}></IconButton></div>
-        <div style="flex:none;display:flex"><IconButton label="Share invite link" variant="ghost" icon="share" onClick={v.goShare}></IconButton></div>
-      {/if}
-      {#if v.isUserGroupsView}
-        <div class="dc-p14" style="flex:none;display:flex;align-items:center;gap:var(--space-6);height:34px;padding:0 var(--space-12) 0 var(--space-10);border-radius:var(--radius-md);background:var(--overlay-2,rgba(255,255,255,.09));font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1);cursor:pointer;user-select:none" onclick={v.newUserGroup} role="button" tabindex="0"><span style="flex:none;width:14px;height:14px;background:var(--ink,#ECECF1);mask:{v.plusMask}"></span>New user group</div>
-      {/if}
-      {#if v.isUserGroupView}
-        <div style="flex:none;display:flex"><IconButton label="Edit user group" variant="ghost" icon="edit" onClick={v.editUserGroup}></IconButton></div>
-      {/if}
-      {#if v.hasSubviewEdit}
-        <div style="flex:none;display:flex"><IconButton variant="ghost" icon="edit" onClick={v.onSubviewEdit}></IconButton></div>
-      {/if}
-      {#if v.showHeaderRegister}
-        <div class="dc-p15" style="flex:none;display:flex;align-items:center;gap:var(--space-6);height:34px;padding:0 var(--space-12) 0 var(--space-10);border-radius:var(--radius-md);background:var(--overlay-2,rgba(255,255,255,.09));font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1);cursor:pointer;user-select:none" onclick={v.registerWebhook} role="button" tabindex="0"><span style="flex:none;width:14px;height:14px;background:var(--ink,#ECECF1);mask:{v.plusMask}"></span>Register webhook</div>
-      {/if}
-      {#if v.showSubClose}
-        <div style="flex:none;display:flex"><IconButton label="Close" variant="ghost" icon="close" onClick={v.onSubClose}></IconButton></div>
-      {/if}
-    </div>
-
-    <div style="flex:1;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;padding:var(--space-16) var(--space-16) var(--space-32);display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:var(--space-16)">
-
-      {#if v.isMembersView}
-        <div style="width:100%;max-width:520px;align-self:center;box-sizing:border-box;display:flex;flex-direction:column;gap:var(--space-10);min-width:0">
-          {#if v.showMemberTabs}
-          <div style="display:grid;grid-template-columns:minmax(0,1fr);padding-top:var(--space-6)"><SegmentedTabs labels={v.memberTabs} selectedIndex={v.memberTab} dotOnLast={false} dotIndexes={v.memberDots} onSelect={v.setMemberTab}></SegmentedTabs></div>
-          {/if}
-          <div style="display:grid;grid-template-columns:minmax(0,1fr);padding-top:{v.memberSearchPad}"><Field placeholder={v.memberSearchPlaceholder} showShortcut={false}></Field></div>
-          {#if v.showCommMembersBanner}
-            <div class="dc-p16" style="display:flex;align-items:center;gap:var(--space-12);min-width:0;margin-top:var(--space-4);padding:var(--space-12) var(--space-12) var(--space-12) var(--space-14);box-sizing:border-box;border-radius:var(--radius-md);background:color-mix(in oklch,var(--accent,#FF5672) 8%,transparent);box-shadow:inset 0 0 0 1px color-mix(in oklch,var(--accent,#FF5672) 24%,transparent);cursor:pointer;user-select:none" onclick={v.openCommMembers} role="button" tabindex="0">
-              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-                <span style="font:var(--weight-semibold) var(--text-md)/1.3 var(--font-sans);color:var(--ink,#ECECF1);text-wrap:pretty">Looking for {t(v.communityName)} community members?</span>
-                <span style="font:var(--weight-regular) var(--text-sm)/1.35 var(--font-sans);color:var(--ink-3,#9A9AA8)">This list only shows who's in this channel.</span>
-              </div>
-              <span style="flex:none;width:16px;height:16px;background:var(--accent,#FF5672);mask:{v.chevMask}"></span>
-            </div>
-          {/if}
-          <div style="display:flex;flex-direction:column;gap:var(--space-12);min-width:0;padding-top:var(--space-22)">
-            <span style="padding-inline-start:var(--space-4);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);text-transform:uppercase;color:var(--ink-4,#7C7C8C)">{t(v.memberListTitle)}</span>
-            {#if v.hasMemberNote}
-              <span style="padding-inline:var(--space-4);font:var(--weight-regular) var(--text-md)/1.5 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">{t(v.memberNote)}</span>
-            {/if}
-            <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
-            {#each v.memberList ?? [] as m, i6}
-              <div style="position:relative;display:grid;grid-template-columns:minmax(0,1fr)">
-                <MemberRow title={m.title} subtitle={m.handle} tag={m.tag} isYou={m.isYou} color={m.color} online={m.online} activity={m.activity} onClick={m.onOpen} onMenu={m.toggleMenu} showMenu={m.hasMenu}></MemberRow>
-                {#if m.menuOpen}
-                  <div style="position:fixed;inset:0;z-index:19" onclick={v.closeUgMenu}></div>
-                  <div style="position:absolute;inset-inline-end:var(--space-4);top:calc(100% - 6px);z-index:20;display:grid;grid-template-columns:max-content"><Menu minWidth="220px" heading={m.menuHeading} items={m.menuItems}></Menu></div>
-                {/if}
-                {#if m.soleAsk}
-                  <div style="position:fixed;inset:0;z-index:19" onclick={v.closeUgMenu}></div>
-                  <div style="position:absolute;inset-inline-end:var(--space-4);top:calc(100% - 6px);z-index:20;width:260px;display:flex;flex-direction:column;gap:var(--space-12);padding:var(--space-14);box-sizing:border-box;border-radius:var(--radius-lg);background:var(--surface-2,#191921);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),var(--shadow-panel,0 8px 24px rgba(0,0,0,.28))">
-                    <div style="display:flex;flex-direction:column;gap:var(--space-6)">
-                      <span style="font:var(--weight-semibold) var(--text-base)/1.3 var(--font-sans);color:var(--ink,#ECECF1);text-wrap:pretty">You're the only owner</span>
-                      <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">Make someone else an owner before you change your own role.</span>
-                    </div>
-                    <div style="display:flex;justify-content:flex-end">
-                      <span class="dc-p17" style="display:flex;align-items:center;height:34px;padding:0 var(--space-14);border-radius:var(--radius-md);background:var(--overlay-2,rgba(255,255,255,.09));font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1);cursor:pointer;user-select:none" onclick={v.closeUgMenu} role="button" tabindex="0">Got it</span>
-                    </div>
-                  </div>
-                {/if}
-                {#if m.ownerAsk}
-                  <div style="position:fixed;inset:0;z-index:19" onclick={v.closeUgMenu}></div>
-                  <div style="position:absolute;inset-inline-end:var(--space-4);top:calc(100% - 6px);z-index:20;width:260px;display:flex;flex-direction:column;gap:var(--space-12);padding:var(--space-14);box-sizing:border-box;border-radius:var(--radius-lg);background:var(--surface-2,#191921);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),var(--shadow-panel,0 8px 24px rgba(0,0,0,.28))">
-                    <div style="display:flex;flex-direction:column;gap:var(--space-6)">
-                      <span style="font:var(--weight-semibold) var(--text-base)/1.3 var(--font-sans);color:var(--ink,#ECECF1);text-wrap:pretty">Make {t(m.title)} an owner?</span>
-                      <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">Owners have full control, including deleting the {t(v.nounLower)} and changing other owners.</span>
-                    </div>
-                    <div style="display:flex;justify-content:flex-end;gap:var(--space-6)">
-                      <span class="dc-p18" style="display:flex;align-items:center;height:34px;padding:0 var(--space-12);border-radius:var(--radius-md);font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink-2,#C9C9D4);cursor:pointer;user-select:none" onclick={v.closeUgMenu} role="button" tabindex="0">Cancel</span>
-                      <span class="dc-p19" style="display:flex;align-items:center;height:34px;padding:0 var(--space-14);border-radius:var(--radius-md);background:var(--accent,#FF5672);font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--on-accent,#2E0512);cursor:pointer;user-select:none" onclick={m.confirmOwner} role="button" tabindex="0">Make owner</span>
-                    </div>
-                  </div>
-                {/if}
-              </div>
-            {/each}
-            </div>
-          </div>
-        </div>
-      {/if}
-
-      {#if v.isBotsView}
-        <div style="width:100%;max-width:520px;align-self:center;box-sizing:border-box;display:flex;flex-direction:column;gap:var(--space-26);min-width:0;padding-top:var(--space-6)">
-          <div style="display:grid;grid-template-columns:minmax(0,1fr)"><Field placeholder={v.botsSearchPlaceholder} value={v.botQuery} onInput={v.onBotQuery} onClear={v.clearBotQuery} showShortcut={false}></Field></div>
-
-          {#if v.hasInstalledBots}
-            <div style="display:flex;flex-direction:column;gap:var(--space-8);min-width:0">
-              <span style="padding-inline-start:var(--space-4);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);text-transform:uppercase;color:var(--ink-4,#7C7C8C)">{t(v.installedLabel)}</span>
-              <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
-                {#each v.installedBots ?? [] as b, i7}
-                  <div style="display:grid;grid-template-columns:minmax(0,1fr)"><MemberRow variant="bot" title={b.title} subtitle={b.subtitle} color={b.color} icon="chevron" showMenu={false} onClick={b.onOpen}></MemberRow></div>
                 {/each}
               </div>
             </div>
           {/if}
 
-          {#if v.allowWebhooks}
-          <div style="display:flex;flex-direction:column;gap:var(--space-8);min-width:0">
-            <span style="padding-inline-start:var(--space-4);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);text-transform:uppercase;color:var(--ink-4,#7C7C8C)">{t(v.webhooksLabel)}</span>
-            <span style="padding-inline:var(--space-4);font:var(--weight-regular) var(--text-sm)/1.5 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">Webhooks let your own tools post into this group over HTTP.</span>
-            {#if v.showListRegister}
-            <div class="dc-p20" style="display:flex;align-items:center;gap:var(--space-12);min-width:0;margin-block-start:var(--space-4);padding:var(--space-8);border-radius:var(--radius-md);cursor:pointer" onclick={v.registerWebhook} role="button" tabindex="0">
-              <span style="flex:none;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:var(--radius-md);background:var(--accent-soft,rgba(255,86,114,.12));box-shadow:inset 0 0 0 1px var(--accent-dim,rgba(255,86,114,.35))">
-                <span style="width:18px;height:18px;background:var(--accent,#FF5672);mask:{v.hookMask}"></span>
-              </span>
-              <span style="flex:1;min-width:0;font:var(--weight-semibold) var(--text-base)/1.25 var(--font-sans);color:var(--accent,#FF5672)">Register a webhook</span>
-            </div>
-            {/if}
-            {#if v.noWebhooksYet}
-              <span style="padding:var(--space-10) var(--space-4) 0;font:var(--weight-regular) var(--text-base)/1.5 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">No webhooks yet. <a style="font-weight:var(--weight-semibold)" href="#" onclick={v.registerWebhookLink}>Register a webhook</a></span>
-            {/if}
-            <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
-              {#each v.webhooks ?? [] as h, i8}
-                <div style="display:grid;grid-template-columns:minmax(0,1fr)"><MemberRow variant="webhook" title={h.title} subtitle={h.subtitle} color={h.color} image={h.image} icon="chevron" showMenu={false} onClick={h.onOpen}></MemberRow></div>
-              {/each}
-            </div>
-          </div>
-          {/if}
-
-          {#if v.hasRecommended}
-            <div style="display:flex;flex-direction:column;gap:var(--space-8);min-width:0">
-              <span style="padding-inline-start:var(--space-4);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);text-transform:uppercase;color:var(--ink-4,#7C7C8C)">{t(v.recommendedLabel)}</span>
-              <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0">
-                {#each v.recommended ?? [] as b, i9}
-                  <div style="display:grid;grid-template-columns:minmax(0,1fr)"><MemberRow variant="bot" title={b.title} subtitle={b.subtitle} color={b.color} icon="chevron" showMenu={false} onClick={b.onOpen}></MemberRow></div>
+          {#if scope === 'community'}
+            <div class="section">
+              {@render sectionHead('USER GROUPS', userGroups.length, () => go('usergroups'))}
+              <div class="rows">
+                {#each userGroups.slice(0, 2) as g}
+                  <div class="cell"><MemberRow title={g.title} subtitle={ugSubtitle(g)} color={g.color || 'slate'} icon="chevron" showMenu={false} onClick={() => openUserGroup(g)} /></div>
                 {/each}
               </div>
             </div>
           {/if}
 
-          {#if v.noBotsInstalled}
-            <span style="padding:var(--space-14) var(--space-4);font:var(--weight-regular) var(--text-base)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">No bots are installed in this {t(v.nounLower)}.</span>
+          <div class="nav">
+            <div class="nav-head"><span class="section-label">ACCESS &amp; RULES</span></div>
+            {#each navRows as nav}
+              <div class="cell"><PanelNavRow label={nav.label} hint={nav.hint} value="" highlight={false} onClick={() => go(nav.view)} /></div>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    </div>
+  {:else}
+    <div class="sub-head">
+      <!-- narrow windows open the pinned list on its own: close only, nothing to go back to -->
+      {#if (!embedded || view === 'usergroup') && !(pinnedOnly && view === 'pinned')}
+        <span class="back" onclick={() => go(view === 'usergroup' ? 'usergroups' : 'main')} role="button" tabindex="0"><span class="back-icon"></span></span>
+      {/if}
+      <div class="sub-titles">
+        <span class="sub-title">{subviewTitle}</span>
+        {#if subviewSub}
+          <span class="sub-sub">{subviewSub}</span>
+        {/if}
+      </div>
+      {#if view === 'members' && !embedded}
+        <div class="slot"><IconButton label="Add members" variant="ghost" icon="userPlus" onClick={() => onDialog?.('invite', null, 'people')} /></div>
+        <div class="slot"><IconButton label="Share invite link" variant="ghost" icon="share" onClick={() => onDialog?.('invite', null, 'share')} /></div>
+      {/if}
+      {#if userGroupsView}
+        <div class="head-button" onclick={() => ugDialog('create', null)} role="button" tabindex="0"><span class="plus-icon"></span>New user group</div>
+      {/if}
+      {#if view === 'usergroup' && ugCur}
+        <div class="slot"><IconButton label="Edit user group" variant="ghost" icon="edit" onClick={() => ugCur && ugDialog('edit', ugCur.key)} /></div>
+      {/if}
+      {#if view === 'permissions' || view === 'gates' || view === 'rules'}
+        <!-- the sidebar is for reading; editing happens in a focused modal the host renders, deep-linked to this tab -->
+        <div class="slot"><IconButton variant="ghost" icon="edit" onClick={() => onDialog?.('settings', settingsPayload(), view)} /></div>
+      {/if}
+      {#if embedded && botsPart === 'webhooks' && allowHooks && view === 'bots'}
+        <!-- in the manage dialog's Webhooks section the create action lives in the header, like New channel -->
+        <div class="head-button" onclick={() => onDialog?.('webhook', { dialogMode: 'register' })} role="button" tabindex="0"><span class="plus-icon"></span>Register webhook</div>
+      {/if}
+      {#if embedded || (pinnedOnly && view === 'pinned')}
+        <div class="slot">
+          <IconButton
+            label="Close"
+            variant="ghost"
+            icon="close"
+            onClick={() => {
+              if (!embedded) go('main');
+              onClose?.();
+            }}
+          />
+        </div>
+      {/if}
+    </div>
+
+    <div class="sub-body">
+      {#if view === 'members'}
+        <div class="column">
+          {#if canModerate}
+            <div class="cell tabs"><SegmentedTabs labels={MEMBER_TABS} selectedIndex={tabIdx} dotOnLast={false} dotIndexes={lapsed.length ? [1] : []} onSelect={(i) => (memberTab = i)} /></div>
           {/if}
-          {#if v.noBotMatches}
-            <span style="padding:var(--space-14) var(--space-4);font:var(--weight-regular) var(--text-base)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">Nothing matches “{t(v.botQuery)}”.</span>
+          <div class="cell" class:pad-top={!canModerate}><Field placeholder="Search {MEMBER_TABS[tabIdx].toLowerCase()}" showShortcut={false} /></div>
+          {#if scope === 'channel' && tabIdx === 0}
+            <div class="banner" onclick={() => onOpenCommunity?.('members')} role="button" tabindex="0">
+              <div class="card-text">
+                <span class="banner-title">Looking for {communityName ?? 'OpenChat'} community members?</span>
+                <span class="banner-body">This list only shows who's in this channel.</span>
+              </div>
+              <span class="chevron accent"></span>
+            </div>
+          {/if}
+          <div class="list-block">
+            <span class="list-title">{MEMBER_LIST_TITLES[tabIdx]} members · {[total, lapsed.length, visibleBlocked.length][tabIdx]}</span>
+            {#if MEMBER_NOTES[tabIdx]}
+              <span class="list-note">{MEMBER_NOTES[tabIdx]}</span>
+            {/if}
+            <div class="rows">
+              {#each memberRows as m}
+                <div class="cell anchor">
+                  <MemberRow
+                    title={m.title}
+                    subtitle={m.handle}
+                    tag={m.tag}
+                    isYou={m.isYou}
+                    color={m.color}
+                    online={m.online}
+                    activity={m.activity}
+                    onClick={openUser(m)}
+                    onMenu={m.hasMenu ? () => (popover = popover === m.menuKey ? null : m.menuKey) : undefined}
+                    showMenu={m.hasMenu}
+                  />
+                  {#if popover === `m:${m.handle}` && m.hasMenu}
+                    {@render rowMenu(m.heading, m.items, '220px')}
+                  {/if}
+                  {#if popover === `sole:${m.handle}`}
+                    {@render confirm("You're the only owner", 'Make someone else an owner before you change your own role.', 'Got it', null)}
+                  {/if}
+                  {#if popover === `owner:${m.handle}`}
+                    {@render confirm(`Make ${m.title} an owner?`, `Owners have full control, including deleting the ${nounLower} and changing other owners.`, 'Make owner', m.confirmOwner)}
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          </div>
+        </div>
+      {/if}
+
+      {#if view === 'bots'}
+        <div class="column roomy">
+          <div class="cell">
+            <Field
+              placeholder={!showBotLists ? 'Search webhooks' : allowHooks ? 'Search bots and webhooks' : 'Search bots'}
+              value={botQuery}
+              onInput={(e) => (botQuery = e.currentTarget.value)}
+              onClear={() => (botQuery = '')}
+              showShortcut={false}
+            />
+          </div>
+
+          {#if shownBots.length > 0 && showBotLists}
+            <div class="bot-block">
+              <span class="list-title">INSTALLED BOTS · {installedBots.length}</span>
+              <div class="rows">
+                {#each shownBots as b}
+                  <div class="cell"><MemberRow variant="bot" title={b.title} subtitle={b.subtitle} color={b.color} icon="chevron" showMenu={false} onClick={openBot(b, true)} /></div>
+                {/each}
+              </div>
+            </div>
+          {/if}
+
+          {#if allowHooks}
+            <div class="bot-block">
+              <span class="list-title">WEBHOOKS · {hooks.length}</span>
+              <span class="list-note small">Webhooks let your own tools post into this group over HTTP.</span>
+              {#if !(embedded && botsPart === 'webhooks')}
+                <div class="register" onclick={() => onDialog?.('webhook', { dialogMode: 'register' })} role="button" tabindex="0">
+                  <span class="register-tile"><span class="hook-icon"></span></span>
+                  <span class="register-label">Register a webhook</span>
+                </div>
+              {/if}
+              {#if embedded && botsPart === 'webhooks' && hooks.length === 0 && !botNeedle}
+                <span class="no-hooks">No webhooks yet. <a href="#top" onclick={link(() => onDialog?.('webhook', { dialogMode: 'register' }))}>Register a webhook</a></span>
+              {/if}
+              <div class="rows">
+                {#each shownHooks as h}
+                  <div class="cell"><MemberRow variant="webhook" title={h.title} subtitle={h.subtitle} color={h.color} image={h.image} icon="chevron" showMenu={false} onClick={openHook(h)} /></div>
+                {/each}
+              </div>
+            </div>
+          {/if}
+
+          {#if shownRecommended.length > 0 && canManageBots && showBotLists}
+            <div class="bot-block">
+              <span class="list-title">RECOMMENDED BOTS · {shownRecommended.length}</span>
+              <div class="rows">
+                {#each shownRecommended as b}
+                  <div class="cell"><MemberRow variant="bot" title={b.title} subtitle={b.subtitle} color={b.color} icon="chevron" showMenu={false} onClick={openBot(b, false)} /></div>
+                {/each}
+              </div>
+            </div>
+          {/if}
+
+          {#if !canManageBots && !botNeedle && shownBots.length === 0}
+            <span class="empty-line">No bots are installed in this {nounLower}.</span>
+          {/if}
+          {#if botNeedle && (!showBotLists || shownBots.length === 0) && (!allowHooks || shownHooks.length === 0) && (!canManageBots || !showBotLists || shownRecommended.length === 0)}
+            <span class="empty-line">Nothing matches “{botQuery}”.</span>
           {/if}
         </div>
       {/if}
 
-      {#if v.isPermissionsView}
-        <div style="display:flex;flex-direction:column;gap:var(--space-32);min-width:0">
-          {#each v.roleDigest ?? [] as r, i10}
-            <div style="display:flex;flex-direction:column;gap:var(--space-10);min-width:0">
-              <span style="padding-inline-start:var(--space-4);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);text-transform:uppercase;color:{r.tint}">{t(r.label)}</span>
-              <div style="display:flex;flex-wrap:wrap;gap:var(--space-6);min-width:0">
-                {#each r.caps ?? [] as c, i11}
-                  <span style="padding:5px var(--space-10);border-radius:var(--radius-sm);background:{c.wash};box-shadow:inset 0 0 0 1px {c.line};font:var(--weight-medium) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-2,#C9C9D4)">{t(c.label)}</span>
+      {#if view === 'permissions'}
+        <div class="perms">
+          {#each roleDigest as r}
+            <div class="perm-role">
+              <span class="list-title" style:color={r.tint}>{r.label}</span>
+              <div class="caps">
+                {#each r.caps as cap}
+                  <span class="cap" style:background="color-mix(in srgb, {r.tint} 12%, transparent)" style:box-shadow="inset 0 0 0 1px color-mix(in srgb, {r.tint} 30%, transparent)">{cap}</span>
                 {/each}
                 {#if r.none}
-                  <span style="font:var(--weight-regular) var(--text-sm)/1.4 var(--font-sans);color:var(--ink-4,#7C7C8C)">Reading only</span>
+                  <span class="reading-only">Reading only</span>
                 {/if}
                 {#if r.inherits}
-                  <span style="display:flex;align-items:center;gap:5px;padding:5px var(--space-10);border-radius:var(--radius-sm);background:var(--overlay-1,rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1));font:var(--weight-medium) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-4,#7C7C8C)">
-                    <span style="flex:none;width:11px;height:11px;background:var(--ink-4,#7C7C8C);mask:{v.plusMask}"></span>
-                    <span>{t(r.inheritsLabel)}</span>
-                  </span>
+                  <span class="inherits"><span class="inherits-icon"></span><span>{r.inherits}</span></span>
                 {/if}
               </div>
             </div>
           {/each}
 
-          {#if v.hasDisabledPerms}
-            <div style="display:flex;flex-direction:column;gap:var(--space-10);min-width:0">
-              <span style="padding-inline-start:var(--space-4);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);text-transform:uppercase;color:var(--ink-4,#7C7C8C)">OFF FOR EVERYONE</span>
-              <div style="display:flex;flex-wrap:wrap;gap:var(--space-6);min-width:0">
-                {#each v.disabledPerms ?? [] as d, i12}
-                  <span style="padding:5px var(--space-10);border-radius:var(--radius-sm);background:var(--overlay-1,rgba(255,255,255,.04));box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12));font:var(--weight-medium) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-4,#7C7C8C);text-decoration:line-through">{t(d.label)}</span>
+          {#if disabledPerms.length}
+            <div class="perm-role">
+              <span class="list-title">OFF FOR EVERYONE</span>
+              <div class="caps">
+                {#each disabledPerms as d}
+                  <span class="cap off">{d}</span>
                 {/each}
               </div>
             </div>
           {/if}
 
-          <div style="display:flex;flex-direction:column;gap:var(--space-6);min-width:0;padding:var(--space-12) var(--space-14);box-sizing:border-box;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.035));box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-            <span style="font:var(--weight-semibold) var(--text-md)/1.2 var(--font-sans);color:var(--ink-2,#C9C9D4)">Threads</span>
-            <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(v.threadPermLine)}</span>
+          <div class="threads-card">
+            <span class="threads-title">Threads</span>
+            <span class="threads-line">{threadLine}</span>
           </div>
         </div>
       {/if}
 
-      {#if v.isGatesView}
-        <div style="display:flex;flex-direction:column;gap:var(--space-18);min-width:0">
-          {#if v.hasGates}
-            <div style="display:flex;align-items:center;gap:var(--space-10);min-width:0;padding:var(--space-12) var(--space-14);box-sizing:border-box;border-radius:var(--radius-md);border:1px solid var(--line-1,rgba(255,255,255,.07))">
-              <span style="flex:none;width:15px;height:15px;background:var(--ink-4,#7C7C8C);mask:{v.clockMask}"></span>
-              <span style="flex:1;min-width:0;font:var(--weight-regular) var(--text-sm)/1.4 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(v.recheckLine)}</span>
+      {#if view === 'gates'}
+        <div class="gates">
+          {#if gateCards.length > 0}
+            <div class="recheck">
+              <span class="clock-icon"></span>
+              <span class="recheck-line"
+                >{gateState?.intervalOn === false
+                  ? 'Members are checked when they join, and not re-checked after that.'
+                  : `Members are re-checked every ${every}. Anyone who no longer qualifies is moved to Lapsed.`}</span
+              >
             </div>
-
-            <div style="display:flex;flex-direction:column;gap:var(--space-12);min-width:0">
-              <span style="padding-inline-start:var(--space-4);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);text-transform:uppercase;color:var(--ink-4,#7C7C8C)">{t(v.gateJoinerLabel)}</span>
-              <div style="display:flex;flex-direction:column;gap:var(--space-8);min-width:0">
-                {#each v.gateCards ?? [] as g, i13}
-                  <div style="display:flex;align-items:center;gap:var(--space-12);min-width:0;padding:13px var(--space-14);box-sizing:border-box;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.035));box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-                    <span style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);background:{g.wash}">
-                      <span style="width:15px;height:15px;background:{g.tint};mask:{g.mask}"></span>
-                    </span>
-                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-                      <span style="font:var(--weight-semibold) var(--text-md)/1.3 var(--font-sans);color:var(--ink,#E4E4EC);text-wrap:pretty">{t(g.label)}</span>
-                      {#if g.hasDetail}
-                        <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(g.detail)}</span>
+            <div class="gate-block">
+              <span class="list-title">{(gateState?.joiner ?? 'All') === 'All' ? 'ALL OF THESE' : 'ANY ONE OF THESE'}</span>
+              <div class="gate-list">
+                {#each gateCards as g}
+                  <div class="gate">
+                    <span class="gate-badge" style:background="color-mix(in srgb, {g.tint} 14%, transparent)"><span class="gate-icon" style:background={g.tint} style:mask={mask(g.icon)}></span></span>
+                    <div class="card-text">
+                      <span class="gate-label">{g.label}</span>
+                      {#if g.detail}
+                        <span class="gate-detail">{g.detail}</span>
                       {/if}
                     </div>
                   </div>
                 {/each}
               </div>
             </div>
-          {/if}
-          {#if v.noGates}
-            <div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-6);padding:var(--space-26) var(--space-18);box-sizing:border-box;border-radius:var(--radius-md);border:1px dashed var(--line-2,rgba(255,255,255,.14))">
-              <span style="font:var(--weight-semibold) var(--text-md)/1.3 var(--font-sans);color:var(--ink-2,#C9C9D4)">No gates set</span>
-              <span style="max-width:260px;text-align:center;font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">Anyone invited can join without meeting a requirement.</span>
+          {:else}
+            <div class="dashed">
+              <span class="dashed-title">No gates set</span>
+              <span class="dashed-body">Anyone invited can join without meeting a requirement.</span>
             </div>
           {/if}
         </div>
       {/if}
 
-      {#if v.isRulesView}
-        <div style="align-self:stretch;display:flex;flex-direction:column;gap:var(--space-14);min-width:0;box-sizing:border-box;padding-inline:var(--space-10)">
-          {#if v.hasRules}
-            {#each v.rules ?? [] as rule, i14}
-              <div style="display:flex;gap:var(--space-10);min-width:0">
-                <span style="flex:none;width:18px;font:var(--weight-semibold) var(--text-xs)/1.5 var(--font-mono);color:var(--ink-4,#7C7C8C)">{t(rule.n)}</span>
-                <span style="flex:1;min-width:0;font:var(--weight-regular) var(--text-md)/1.5 var(--font-sans);color:var(--ink-2,#C9C9D4);text-wrap:pretty">{t(rule.text)}</span>
-              </div>
+      {#if view === 'rules'}
+        <div class="rules">
+          {#if ruleLines.length > 0}
+            {#each ruleLines as text, i}
+              <div class="rule"><span class="rule-n">{i + 1}.</span><span class="rule-text">{text}</span></div>
             {/each}
-            <span style="font:var(--weight-regular) var(--text-sm)/1.5 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">Break the rules and your messages may be deleted, or you may be blocked from the group.</span>
-          {/if}
-          {#if v.noRules}
-            <div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-6);padding:var(--space-26) var(--space-18);box-sizing:border-box;border-radius:var(--radius-md);border:1px dashed var(--line-2,rgba(255,255,255,.14))">
-              <span style="font:var(--weight-semibold) var(--text-md)/1.3 var(--font-sans);color:var(--ink-2,#C9C9D4)">No rules set</span>
-              <span style="max-width:260px;text-align:center;font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">Members can join without agreeing to anything.</span>
+            <span class="rules-note">Break the rules and your messages may be deleted, or you may be blocked from the group.</span>
+          {:else}
+            <div class="dashed">
+              <span class="dashed-title">No rules set</span>
+              <span class="dashed-body">Members can join without agreeing to anything.</span>
             </div>
           {/if}
         </div>
       {/if}
 
-      {#if v.isUserGroupsView}
-        <div style="width:100%;max-width:520px;align-self:center;box-sizing:border-box;display:flex;flex-direction:column;gap:var(--space-10);min-width:0">
-          <div style="display:grid;grid-template-columns:minmax(0,1fr);padding-top:var(--space-6)"><Field placeholder="Search user groups" value={v.ugQuery} onInput={v.onUgQuery} onClear={v.clearUgQuery} showShortcut={false}></Field></div>
-          <div style="display:flex;flex-direction:column;gap:var(--space-8);min-width:0;padding-top:var(--space-18)">
-            <span style="padding-inline-start:var(--space-4);font:var(--weight-semibold) var(--text-md)/1.35 var(--font-sans);color:var(--ink,#ECECF1)">User groups ({t(v.userGroupTotal)})</span>
-            <span style="padding-inline:var(--space-4);font:var(--weight-regular) var(--text-md)/1.5 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">Mention a set of members at once, like @developers, and give them permissions together.</span>
+      {#if userGroupsView}
+        <div class="column">
+          <div class="cell tabs"><Field placeholder="Search user groups" value={ugQuery} onInput={(e) => (ugQuery = e.currentTarget.value)} onClear={() => (ugQuery = '')} showShortcut={false} /></div>
+          <div class="ug-intro">
+            <span class="ug-title">User groups ({userGroups.length})</span>
+            <span class="list-note">Mention a set of members at once, like @developers, and give them permissions together.</span>
           </div>
-          <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0;padding-top:var(--space-6)">
-            {#each v.userGroupRows ?? [] as u, i15}
-              <div style="position:relative;display:grid;grid-template-columns:minmax(0,1fr)">
-                <MemberRow title={u.title} subtitle={u.subtitle} color={u.color} onClick={u.open} onMenu={u.toggleMenu}></MemberRow>
-                {#if u.menuOpen}
-                  <div style="position:fixed;inset:0;z-index:19" onclick={v.closeUgMenu}></div>
-                  <div style="position:absolute;inset-inline-end:var(--space-4);top:calc(100% - 6px);z-index:20;display:grid;grid-template-columns:max-content"><Menu minWidth="180px" items={u.menuItems}></Menu></div>
+          <div class="rows padded">
+            {#each ugShown as g}
+              <div class="cell anchor">
+                <MemberRow title={g.title} subtitle={ugSubtitle(g)} color={g.color || 'slate'} onClick={() => openUserGroup(g)} onMenu={() => (popover = popover === g.key ? null : g.key)} />
+                {#if popover === g.key}
+                  {@render rowMenu(
+                    '',
+                    [
+                      { label: 'Edit', mask: mask('edit'), onSelect: () => ((popover = null), ugDialog('edit', g.key)) },
+                      { label: 'Delete', mask: mask('trash'), variant: 'danger', onSelect: () => ((popover = null), ugDialog('delete', g.key)) },
+                    ],
+                    '180px',
+                  )}
                 {/if}
               </div>
             {/each}
-            {#if v.noUgMatches}
-              <span style="padding:var(--space-18) var(--space-4);text-align:center;font:var(--weight-regular) var(--text-md)/1.4 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.ugEmptyText)}</span>
+            {#if ugShown.length === 0}
+              <span class="ug-empty">{userGroups.length ? `No user groups match “${ugQuery}”` : 'No user groups yet. Create one with +.'}</span>
             {/if}
           </div>
         </div>
       {/if}
 
-      {#if v.isUserGroupView}
-        <div style="width:100%;max-width:520px;align-self:center;box-sizing:border-box;display:flex;flex-direction:column;gap:var(--space-10);min-width:0">
-          <div style="display:grid;grid-template-columns:minmax(0,1fr);padding-top:var(--space-6)"><Field placeholder="Search group members" value={v.ugMemberQuery} onInput={v.onUgMemberQuery} onClear={v.clearUgMemberQuery} showShortcut={false}></Field></div>
-          <div style="display:flex;flex-direction:column;gap:var(--space-8);min-width:0;padding-top:var(--space-18)">
-            <span style="padding-inline-start:var(--space-4);font:var(--weight-semibold) var(--text-md)/1.35 var(--font-sans);color:var(--ink,#ECECF1)">Members ({t(v.ugMemberTotal)})</span>
-            <span style="padding-inline:var(--space-4);font:var(--weight-regular) var(--text-md)/1.5 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">Mention them all with <span style="font-family:var(--font-mono);color:var(--ink-2,#C9C9D4)">{t(v.ugMention)}</span>.</span>
+      {#if view === 'usergroup' && ugCur}
+        <div class="column">
+          <div class="cell tabs"><Field placeholder="Search group members" value={ugMemberQuery} onInput={(e) => (ugMemberQuery = e.currentTarget.value)} onClear={() => (ugMemberQuery = '')} showShortcut={false} /></div>
+          <div class="ug-intro">
+            <span class="ug-title">Members ({ugCur.members.length})</span>
+            <span class="list-note">Mention them all with <span class="mention">@{ugCur.title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')}</span>.</span>
           </div>
-          <div style="display:flex;flex-direction:column;gap:var(--space-4);min-width:0;padding-top:var(--space-6)">
-            {#each v.ugMembers ?? [] as m, i16}
-              <div style="display:grid;grid-template-columns:minmax(0,1fr)"><MemberRow title={m.name} subtitle={m.handle} color={m.color} showMenu={false} onClick={m.open}></MemberRow></div>
+          <div class="rows padded">
+            {#each ugMembersShown as m}
+              <div class="cell"><MemberRow title={m.name} subtitle={m.handle} color={m.color} showMenu={false} onClick={() => onDialog?.('user', { title: m.name, handle: m.handle, color: m.color })} /></div>
             {/each}
-            {#if v.noUgMemberMatches}
-              <span style="padding:var(--space-18) var(--space-4);text-align:center;font:var(--weight-regular) var(--text-md)/1.4 var(--font-sans);color:var(--ink-4,#7C7C8C)">No members match “{t(v.ugMemberQuery)}”</span>
+            {#if ugMembersShown.length === 0 && ugMemberQuery}
+              <span class="ug-empty">No members match “{ugMemberQuery}”</span>
             {/if}
           </div>
         </div>
       {/if}
 
-      {#if v.isPinnedView}
-        <div style="width:100%;max-width:520px;align-self:center;box-sizing:border-box;display:flex;flex-direction:column;gap:var(--space-18);min-width:0;padding-top:var(--space-6)">
-          {#each v.pinnedGroups ?? [] as day, i17}
-            <div style="display:flex;flex-direction:column;gap:var(--space-14);min-width:0">
-              <span style="align-self:center;padding:7px var(--space-14);border-radius:var(--radius-pill);background:var(--overlay-2,rgba(255,255,255,.07));font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--ink-2,#C9C9D4)">{t(day.date)}</span>
-              {#each day.items ?? [] as p, i18}
-                <div style="display:grid;grid-template-columns:minmax(0,1fr)"><MessageGroup side="received" senderName={p.author} color={p.color} showAvatar={true} showName={true} messages={p.messages}></MessageGroup></div>
+      {#if view === 'pinned'}
+        <div class="column pinned">
+          {#each pinnedDays as day}
+            <div class="pin-day">
+              <span class="pin-date">{day.date}</span>
+              {#each day.items as p}
+                <div class="cell"><MessageGroup side="received" senderName={p.author} color={p.color} showAvatar={true} showName={true} messages={p.messages} /></div>
               {/each}
             </div>
           {/each}
-          {#if v.noPinned}
-            <span style="padding:var(--space-24) var(--space-4);text-align:center;font:var(--weight-regular) var(--text-base)/1.5 var(--font-sans);color:var(--ink-4,#7C7C8C)">Nothing is pinned yet.</span>
+          {#if pinned.length === 0}
+            <span class="empty-line center">Nothing is pinned yet.</span>
           {/if}
         </div>
       {/if}
 
-      {#if v.isStatsView}
-        <div style="width:100%;max-width:520px;align-self:center;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr);padding-top:var(--space-6)"><GroupStats mix={v.statSlices} engagement={v.statExtras}></GroupStats></div>
+      {#if view === 'stats'}
+        <div class="column stats">
+          {#if stats}
+            <GroupStats {...stats} />
+          {:else}
+            <span class="empty-line center">No stats yet.</span>
+          {/if}
+        </div>
       {/if}
-
     </div>
   {/if}
 
-  {#if v.muteMenuOpen}
-    <div style="position:absolute;inset:0;z-index:44" onclick={v.closeMuteMenu} aria-hidden="true"></div>
-    <div style="position:absolute;z-index:45;top:{v.muteMenuTop};left:{v.muteMenuLeft};width:216px;display:flex;flex-direction:column;gap:2px;padding:var(--space-8);box-sizing:border-box;border-radius:var(--radius-md);background:var(--surface-2,#17171d);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12)),0 18px 40px rgba(0,0,0,.5)">
-      <span style="padding:var(--space-6) var(--space-8) var(--space-8);font:var(--weight-regular) var(--text-xs)/1.4 var(--font-sans);color:var(--ink-4,#7C7C8C)">Mute notifications for</span>
-      {#each v.muteOptions ?? [] as o, i19}
-        <div class="dc-p21" style="display:flex;align-items:center;min-width:0;padding:var(--space-8);border-radius:var(--radius-sm);font:var(--weight-medium) var(--text-md)/1.3 var(--font-sans);color:var(--ink-2,#C9C9D4);cursor:pointer;user-select:none" onclick={o.onSelect} role="button" tabindex="0">{t(o.label)}</div>
+  {#if muteMenu}
+    <div class="local-scrim mute-scrim" onclick={() => (muteMenu = null)} aria-hidden="true"></div>
+    <div class="mute-menu" style:top="{muteMenu.top}px" style:left="{muteMenu.left}px">
+      <span class="mute-title">Mute notifications for</span>
+      {#each muteOptions as o}
+        <div class="mute-option" onclick={() => setMute(o.key)} role="button" tabindex="0">{o.label}</div>
       {/each}
     </div>
   {/if}
 
-  {#if v.menuOpen}
-    <div style="position:absolute;inset:0;z-index:40" onclick={v.closeMenu} aria-hidden="true"></div>
-    <div style="position:absolute;top:46px;inset-inline-end:var(--space-16);z-index:41;display:grid;grid-template-columns:max-content;justify-items:end">
-      <Menu items={v.menuItems}></Menu>
-    </div>
+  {#if menuOpen}
+    <div class="local-scrim" onclick={() => (menuOpen = false)} aria-hidden="true"></div>
+    <div class="panel-menu"><Menu items={menuItems} /></div>
   {/if}
-
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p1:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p2:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p3:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p4:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p5:hover{background:var(--overlay-2,rgba(255,255,255,.08)) !important}
-  .dc-p6:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p7:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p8:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p9:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p10:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p11:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p12:hover{filter:brightness(1.08) !important}
-  .dc-p13:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p14:hover{background:var(--btn-hover,rgba(255,255,255,.12)) !important}
-  .dc-p15:hover{background:var(--btn-hover,rgba(255,255,255,.12)) !important}
-  .dc-p16:hover{background:color-mix(in oklch,var(--accent,#FF5672) 13%,transparent) !important}
-  .dc-p17:hover{background:var(--btn-hover,rgba(255,255,255,.12)) !important}
-  .dc-p18:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p19:hover{filter:brightness(1.08) !important}
-  .dc-p20:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p21:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
+  .panel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface-1, #0e0e12);
+    border-radius: var(--radius-2xl);
+  }
+
+  .panel.embedded {
+    border-radius: 0;
+  }
+
+  .cell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cell.anchor {
+    position: relative;
+  }
+
+  .main {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: var(--space-32);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main.quick {
+    padding-bottom: 0px;
+  }
+
+  .cover {
+    flex: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .identity {
+    padding: 0 var(--space-16) var(--space-16);
+    margin-top: -34px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-10);
+  }
+
+  .identity.quick {
+    padding-bottom: var(--space-26);
+    margin-top: -52px;
+  }
+
+  .avatar {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 0px;
+    border-radius: 24px;
+    box-shadow: 0 0 0 4px var(--surface-1, #0e0e12);
+  }
+
+  .avatar.round {
+    border-radius: 50%;
+  }
+
+  .quick .avatar {
+    width: 104px;
+    height: 104px;
+    margin-bottom: var(--space-6);
+  }
+
+  .names {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-6);
+    max-width: 100%;
+  }
+
+  .title-line {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .title {
+    min-width: 0;
+    font: var(--weight-bold) var(--text-xl) / 1.2 var(--font-sans);
+    letter-spacing: var(--tracking-tight);
+    color: var(--ink, #ececf1);
+    text-align: center;
+    text-wrap: pretty;
+  }
+
+  .fav-heart {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    background: var(--accent, #ff5672);
+    mask: var(--icon-heart-filled) center/contain no-repeat;
+  }
+
+  .byline {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    font: var(--weight-regular) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .byline.plain {
+    display: inline;
+  }
+
+  .byline a {
+    color: var(--accent, #ff5672);
+    text-decoration: none;
+  }
+
+  .access-icon {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-lock) center/contain no-repeat;
+  }
+
+  .access-icon.public {
+    mask: var(--icon-globe) center/contain no-repeat;
+  }
+
+  .community-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-4);
+    height: 26px;
+    padding: 0 var(--space-6) 0 var(--space-10);
+    border-radius: var(--radius-pill);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.08));
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .community-chip:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .chip-chevron {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-chevron-right) center/contain no-repeat;
+  }
+
+  .role-summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    margin-top: var(--space-2);
+    padding: var(--space-4) var(--space-8);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+  }
+
+  .role-summary:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .users-icon {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-users) center/contain no-repeat;
+  }
+
+  .role-text {
+    font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .pills {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-8);
+    margin-top: var(--space-8);
+  }
+
+  .pill {
+    --pill-ink: var(--ink-2, #c9c9d4);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    box-sizing: border-box;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--pill-ink);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .pill.on {
+    --pill-ink: var(--accent-bright, #ff8298);
+    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+    box-shadow: inset 0 0 0 1px var(--accent, #ff5672);
+  }
+
+  .pill:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .pill.mute {
+    padding: 0 9px 0 12px;
+  }
+
+  .pill.everyone {
+    gap: 6px;
+    padding: 0 12px 0 11px;
+  }
+
+  .pill.fav {
+    padding: 0 13px 0 12px;
+  }
+
+  .pill-icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    background: var(--pill-ink);
+  }
+
+  .pill-divider {
+    width: 1px;
+    height: 16px;
+    margin: 0 2px 0 3px;
+    background: var(--line-2, rgba(255, 255, 255, 0.12));
+  }
+
+  .caret {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    background: var(--pill-ink);
+    mask: var(--icon-chevron-down) center/contain no-repeat;
+  }
+
+  .tiles {
+    width: 100%;
+    margin-top: var(--space-14);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    min-height: 56px;
+    padding: var(--space-10) var(--space-12) var(--space-10) var(--space-10);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .link-card {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .link-card:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+  }
+
+  .card-icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+  }
+
+  .card-glyph {
+    width: 17px;
+    height: 17px;
+    background: var(--ink-2, #c9c9d4);
+  }
+
+  .community-mark {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+
+  .card-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .card-title {
+    font: var(--weight-semibold) var(--text-base) / 1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .clip {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card-body {
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    text-wrap: pretty;
+  }
+
+  .link-card .card-body {
+    line-height: 1.2;
+  }
+
+  .chevron {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-chevron-right) center/contain no-repeat;
+  }
+
+  .chevron.small {
+    width: 14px;
+    height: 14px;
+    background: var(--ink-4, #7c7c8c);
+  }
+
+  .chevron.accent {
+    width: 16px;
+    height: 16px;
+    background: var(--accent, #ff5672);
+  }
+
+  .about {
+    width: 100%;
+    margin-top: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-6);
+  }
+
+  .about-text {
+    margin: 0;
+    font: var(--weight-regular) var(--text-md) / 1.55 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+    text-wrap: pretty;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .about-text.empty {
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .about-toggle {
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+    padding: var(--space-4) var(--space-6);
+    border-radius: var(--radius-sm);
+  }
+
+  .about-toggle:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .sections {
+    flex: 1 0 auto;
+    padding: 0 var(--space-16) var(--space-16);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-22);
+  }
+
+  .online-card {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-xl, 16px);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+  }
+
+  .online-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    min-height: 56px;
+    padding: var(--space-18) var(--space-16);
+    box-sizing: border-box;
+    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .online-dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--status-online, #2ee6a8);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--status-online, #2ee6a8) 18%, transparent);
+  }
+
+  .online-title {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .online-count {
+    font: var(--weight-medium) var(--text-md) / 1 var(--font-mono);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .online-of {
+    flex: none;
+    font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .online-list {
+    flex: 1 1 0px;
+    min-height: 236px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-14) var(--space-6);
+  }
+
+  .none-online {
+    padding: var(--space-4) var(--space-10) var(--space-8);
+    font: var(--weight-regular) var(--text-md) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .more-online {
+    padding: var(--space-10) var(--space-10) var(--space-4);
+    font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .online-foot {
+    flex: none;
+    display: flex;
+    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .foot-action {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .foot-action:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .foot-action.invite {
+    gap: 7px;
+    border-inline-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    color: var(--ink, #ececf1);
+    border-end-start-radius: var(--radius-xl, 16px);
+  }
+
+  .foot-action.all {
+    color: var(--ink-2, #c9c9d4);
+    border-end-end-radius: var(--radius-xl, 16px);
+  }
+
+  .invite-icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    background: var(--ink, #ececf1);
+    mask: var(--icon-invite) center/contain no-repeat;
+  }
+
+  .bots-slim {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    min-height: 56px;
+    padding: var(--space-12) var(--space-16);
+    box-sizing: border-box;
+    border-radius: var(--radius-xl, 16px);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .bots-slim:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .bot-stack {
+    flex: none;
+    display: flex;
+  }
+
+  .bot-face {
+    width: 30px;
+    height: 30px;
+    margin-inline-end: -7px;
+    border-radius: 9px;
+    box-shadow: 0 0 0 2px var(--surface-1, #0e0e12);
+  }
+
+  .bots-text {
+    flex: 1;
+    min-width: 0;
+    margin-inline-start: 7px;
+    font: var(--weight-semibold) var(--text-base) / 1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bots-names {
+    font-weight: var(--weight-regular);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+    min-width: 0;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-10);
+    padding-top: var(--space-16);
+    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .section-label {
+    flex: 1;
+    min-width: 0;
+    padding-inline-start: var(--space-8);
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .view-all {
+    flex: none;
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    text-decoration: none;
+  }
+
+  .rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+
+  .rows.padded {
+    padding-top: var(--space-6);
+  }
+
+  .nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+
+  .nav-head {
+    padding-top: var(--space-16);
+    padding-bottom: var(--space-4);
+    border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .sub-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    height: 71px;
+    box-sizing: border-box;
+    padding: 0 var(--space-16);
+    border-bottom: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .back {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .back:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .back-icon {
+    width: 17px;
+    height: 17px;
+    background: var(--ink-2, #c9c9d4);
+    mask: var(--icon-back) center/contain no-repeat;
+  }
+
+  .sub-titles {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .sub-title {
+    min-width: 0;
+    font: var(--weight-bold) var(--text-lg) / 1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sub-sub {
+    min-width: 0;
+    font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .slot {
+    flex: none;
+    display: flex;
+  }
+
+  .head-button {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    height: 34px;
+    padding: 0 var(--space-12) 0 var(--space-10);
+    border-radius: var(--radius-md);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .head-button:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.12));
+  }
+
+  .plus-icon {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    background: var(--ink, #ececf1);
+    mask: var(--icon-plus) center/contain no-repeat;
+  }
+
+  .sub-body {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: var(--space-16) var(--space-16) var(--space-32);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: var(--space-16);
+  }
+
+  .column {
+    width: 100%;
+    max-width: 520px;
+    align-self: center;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+    min-width: 0;
+  }
+
+  .column.roomy {
+    gap: var(--space-26);
+    padding-top: var(--space-6);
+  }
+
+  .column.pinned {
+    gap: var(--space-18);
+    padding-top: var(--space-6);
+  }
+
+  .column.stats {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: var(--space-6);
+  }
+
+  .cell.tabs {
+    padding-top: var(--space-6);
+  }
+
+  .cell.pad-top {
+    padding-top: var(--space-6);
+  }
+
+  .banner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    min-width: 0;
+    margin-top: var(--space-4);
+    padding: var(--space-12) var(--space-12) var(--space-12) var(--space-14);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: color-mix(in oklch, var(--accent, #ff5672) 8%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 24%, transparent);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .banner:hover {
+    background: color-mix(in oklch, var(--accent, #ff5672) 13%, transparent);
+  }
+
+  .banner-title {
+    font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-sans);
+    color: var(--ink, #ececf1);
+    text-wrap: pretty;
+  }
+
+  .banner-body {
+    font: var(--weight-regular) var(--text-sm) / 1.35 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .list-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    min-width: 0;
+    padding-top: var(--space-22);
+  }
+
+  .list-title {
+    padding-inline-start: var(--space-4);
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .list-note {
+    padding-inline: var(--space-4);
+    font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    text-wrap: pretty;
+  }
+
+  .list-note.small {
+    font-size: var(--text-sm);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 19;
+  }
+
+  .row-menu {
+    position: absolute;
+    inset-inline-end: var(--space-4);
+    top: calc(100% - 6px);
+    z-index: 20;
+    display: grid;
+    grid-template-columns: max-content;
+  }
+
+  .ask {
+    position: absolute;
+    inset-inline-end: var(--space-4);
+    top: calc(100% - 6px);
+    z-index: 20;
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    padding: var(--space-14);
+    box-sizing: border-box;
+    border-radius: var(--radius-lg);
+    background: var(--surface-2, #191921);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      var(--shadow-panel, 0 8px 24px rgba(0, 0, 0, 0.28));
+  }
+
+  .ask-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .ask-title {
+    font: var(--weight-semibold) var(--text-base) / 1.3 var(--font-sans);
+    color: var(--ink, #ececf1);
+    text-wrap: pretty;
+  }
+
+  .ask-body {
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    text-wrap: pretty;
+  }
+
+  .ask-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-6);
+  }
+
+  .ask-cancel,
+  .ask-confirm,
+  .ask-ok {
+    display: flex;
+    align-items: center;
+    height: 34px;
+    border-radius: var(--radius-md);
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .ask-cancel {
+    padding: 0 var(--space-12);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .ask-cancel:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .ask-confirm {
+    padding: 0 var(--space-14);
+    background: var(--accent, #ff5672);
+    color: var(--on-accent, #2e0512);
+  }
+
+  .ask-confirm:hover {
+    filter: brightness(1.08);
+  }
+
+  .ask-ok {
+    padding: 0 var(--space-14);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    color: var(--ink, #ececf1);
+  }
+
+  .ask-ok:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.12));
+  }
+
+  .bot-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    min-width: 0;
+  }
+
+  .register {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    min-width: 0;
+    margin-block-start: var(--space-4);
+    padding: var(--space-8);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+
+  .register:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .register-tile {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-md);
+    background: var(--accent-soft, rgba(255, 86, 114, 0.12));
+    box-shadow: inset 0 0 0 1px var(--accent-dim, rgba(255, 86, 114, 0.35));
+  }
+
+  .hook-icon {
+    width: 18px;
+    height: 18px;
+    background: var(--accent, #ff5672);
+    mask: var(--icon-hook) center/contain no-repeat;
+  }
+
+  .register-label {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-semibold) var(--text-base) / 1.25 var(--font-sans);
+    color: var(--accent, #ff5672);
+  }
+
+  .no-hooks {
+    padding: var(--space-10) var(--space-4) 0;
+    font: var(--weight-regular) var(--text-base) / 1.5 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    text-wrap: pretty;
+  }
+
+  .no-hooks a {
+    font-weight: var(--weight-semibold);
+  }
+
+  .empty-line {
+    padding: var(--space-14) var(--space-4);
+    font: var(--weight-regular) var(--text-base) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .empty-line.center {
+    padding: var(--space-24) var(--space-4);
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .perms {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-32);
+    min-width: 0;
+  }
+
+  .perm-role {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+    min-width: 0;
+  }
+
+  .caps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+    min-width: 0;
+  }
+
+  .cap {
+    padding: 5px var(--space-10);
+    border-radius: var(--radius-sm);
+    font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .cap.off {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    color: var(--ink-4, #7c7c8c);
+    text-decoration: line-through;
+  }
+
+  .reading-only {
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .inherits {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px var(--space-10);
+    border-radius: var(--radius-sm);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .inherits-icon {
+    flex: none;
+    width: 11px;
+    height: 11px;
+    background: var(--ink-4, #7c7c8c);
+    mask: var(--icon-plus) center/contain no-repeat;
+  }
+
+  .threads-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    min-width: 0;
+    padding: var(--space-12) var(--space-14);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.035));
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .threads-title {
+    font: var(--weight-semibold) var(--text-md) / 1.2 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .threads-line {
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .gates {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-18);
+    min-width: 0;
+  }
+
+  .recheck {
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    min-width: 0;
+    padding: var(--space-12) var(--space-14);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .clock-icon {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    background: var(--ink-4, #7c7c8c);
+    mask: var(--icon-clock) center/contain no-repeat;
+  }
+
+  .recheck-line {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .gate-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    min-width: 0;
+  }
+
+  .gate-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    min-width: 0;
+  }
+
+  .gate {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    min-width: 0;
+    padding: 13px var(--space-14);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.035));
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .gate-badge {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+  }
+
+  .gate-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .gate-label {
+    font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-sans);
+    color: var(--ink, #e4e4ec);
+    text-wrap: pretty;
+  }
+
+  .gate-detail {
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .dashed {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-6);
+    padding: var(--space-26) var(--space-18);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--line-2, rgba(255, 255, 255, 0.14));
+  }
+
+  .dashed-title {
+    font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .dashed-body {
+    max-width: 260px;
+    text-align: center;
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .rules {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-14);
+    min-width: 0;
+    box-sizing: border-box;
+    padding-inline: var(--space-10);
+  }
+
+  .rule {
+    display: flex;
+    gap: var(--space-10);
+    min-width: 0;
+  }
+
+  .rule-n {
+    flex: none;
+    width: 18px;
+    font: var(--weight-semibold) var(--text-xs) / 1.5 var(--font-mono);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .rule-text {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+    text-wrap: pretty;
+  }
+
+  .rules-note {
+    font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .ug-intro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    min-width: 0;
+    padding-top: var(--space-18);
+  }
+
+  .ug-title {
+    padding-inline-start: var(--space-4);
+    font: var(--weight-semibold) var(--text-md) / 1.35 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .mention {
+    font-family: var(--font-mono);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .ug-empty {
+    padding: var(--space-18) var(--space-4);
+    text-align: center;
+    font: var(--weight-regular) var(--text-md) / 1.4 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .pin-day {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-14);
+    min-width: 0;
+  }
+
+  .pin-date {
+    align-self: center;
+    padding: 7px var(--space-14);
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .local-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+  }
+
+  .mute-scrim {
+    z-index: 44;
+  }
+
+  .mute-menu {
+    position: absolute;
+    z-index: 45;
+    width: 216px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-8);
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+    background: var(--surface-2, #17171d);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)),
+      0 18px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .mute-title {
+    padding: var(--space-6) var(--space-8) var(--space-8);
+    font: var(--weight-regular) var(--text-xs) / 1.4 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .mute-option {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding: var(--space-8);
+    border-radius: var(--radius-sm);
+    font: var(--weight-medium) var(--text-md) / 1.3 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .mute-option:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .panel-menu {
+    position: absolute;
+    top: 46px;
+    inset-inline-end: var(--space-16);
+    z-index: 41;
+    display: grid;
+    grid-template-columns: max-content;
+    justify-items: end;
+  }
 </style>

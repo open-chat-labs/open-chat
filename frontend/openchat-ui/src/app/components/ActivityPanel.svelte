@@ -1,50 +1,183 @@
-<!-- Generated from lib/ActivityPanel.dc.html (source hash 937a1630) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Activity feed: reactions, mentions, replies and payments, grouped by day, filtered by All / Mentions / Payments.
+     Opening a row marks it read and calls onOpen(chat, item) — every row lands on the message in its chat, payments included. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './ActivityPanel.logic.js';
   import ActivityRow from '../../lib/components/ActivityRow.svelte';
   import EmptyState from '../../lib/components/EmptyState.svelte';
   import SegmentedTabs from '../../lib/components/SegmentedTabs.svelte';
   import Skeleton from '../../lib/components/Skeleton.svelte';
 
-  interface Props {
-    items?: {day:string,title:string,context:string,preview?:string,time:string,unread?:boolean,color?:string,kind?:string,reactions?:string[],type?:string,chat?:string}[] | null;
-    onOpen?: (chat: string, item: object) => void;
-    loading?: boolean;
-    [key: string]: unknown;
+  interface ActivityItem {
+    /** Day heading the item sits under; consecutive items share it. */
+    day: string;
+    title: string;
+    context: string;
+    preview?: string;
+    time: string;
+    unread?: boolean;
+    color?: 'violet' | 'blue' | 'teal' | 'amber' | 'plum';
+    kind?: 'user' | 'group';
+    reactions?: string[];
+    type?: 'reaction' | 'mention' | 'reply' | 'payment';
+    /** Chat to open. */
+    chat?: string;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  interface Props {
+    items: ActivityItem[];
+    onOpen?: (chat: string | undefined, item: ActivityItem) => void;
+    loading?: boolean;
+  }
+
+  let { items, onOpen, loading = false }: Props = $props();
+
+  let tab = $state(0);
+  // titles opened (or marked) here
+  let read = $state<string[]>([]);
+
+  const isUnread = (it: ActivityItem) => !!it.unread && !read.includes(it.title);
+  const shown = $derived(items.filter((it) => tab === 0 || (tab === 1 && it.type === 'mention') || (tab === 2 && it.type === 'payment')));
+  const counts = $derived([items.length, items.filter((i) => i.type === 'mention').length, items.filter((i) => i.type === 'payment').length]);
+  const hasUnread = $derived(items.some(isUnread));
+
+  function open(it: ActivityItem) {
+    if (!read.includes(it.title)) read = [...read, it.title];
+    onOpen?.(it.chat, it);
+  }
 </script>
 
-<div style="width:100%;height:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:var(--space-10);padding:var(--space-10);overflow:hidden;background:var(--surface-1,#0e0e12)" data-screen-label="Activity">
-  <div style="flex:none;display:flex;flex-direction:column;gap:var(--space-10)">
-    <div style="display:flex;align-items:center;gap:var(--space-12);min-width:0;min-height:var(--control-md,34px);padding:var(--space-10) 0 var(--space-10) var(--space-10)">
-      <span style="flex:1;min-width:0;font:var(--weight-bold) var(--text-xl)/1.2 var(--font-sans);letter-spacing:var(--tracking-tight);color:var(--ink,#ECECF1)">Activity</span>
-      {#if v.hasUnread}
-        <span class="dc-p0" style="flex:none;display:inline-flex;align-items:center;height:var(--control-md,34px);padding:0 var(--space-8);border-radius:var(--radius-sm);font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.onMarkAll} role="button" tabindex="0">Mark all read</span>
+<div class="panel" data-screen-label="Activity">
+  <div class="top">
+    <div class="title-row">
+      <span class="title">Activity</span>
+      {#if hasUnread}
+        <span class="mark-all" onclick={() => (read = items.map((i) => i.title))} role="button" tabindex="0">Mark all read</span>
       {/if}
     </div>
-    <div style="display:grid;grid-template-columns:minmax(0,1fr)"><SegmentedTabs labels={v.tabLabels} counts={v.tabCounts} selectedIndex={v.tab} dotOnLast={false} onSelect={v.onTab}></SegmentedTabs></div>
+    <div class="tabs"><SegmentedTabs labels={['All', 'Mentions', 'Payments']} {counts} selectedIndex={tab} dotOnLast={false} onSelect={(i) => (tab = i)} /></div>
   </div>
 
-  <div style="flex:1;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:var(--space-4)">
-    {#if v.loading}<Skeleton variant="activity" count={7}></Skeleton>{/if}
-{#each v.loadedOr.feed ?? [] as row, i0}
-      {#if row.isDay}
-        <span style="padding:{row.topPad} var(--space-8) var(--space-6);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-3,#8A8A99)">{t(row.day)}</span>
-      {/if}
-      {#if row.isItem}
-        <div style="display:grid;grid-template-columns:minmax(0,1fr)"><ActivityRow title={row.title} context={row.context} preview={row.preview} time={row.time} unread={row.unread} color={row.color} kind={row.kind} reactions={row.reactions} onClick={row.onPress}></ActivityRow></div>
-      {/if}
-    {/each}
-    {#if v.isEmpty}
-      <div style="flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);align-content:center"><EmptyState preset="no-results" title={v.emptyTitle} body={v.emptyBody}></EmptyState></div>
+  <div class="feed">
+    {#if loading}
+      <Skeleton variant="activity" count={7} />
+    {:else}
+      {#each shown as it, i}
+        {#if i === 0 || shown[i - 1].day !== it.day}
+          <span class="day" class:first={i === 0}>{it.day}</span>
+        {/if}
+        <div class="row">
+          <ActivityRow
+            title={it.title}
+            context={it.context}
+            preview={it.preview ?? ''}
+            time={it.time}
+            unread={isUnread(it)}
+            color={it.color ?? 'violet'}
+            kind={it.kind ?? 'user'}
+            reactions={it.reactions ?? []}
+            onClick={() => open(it)}
+          />
+        </div>
+      {/each}
+    {/if}
+    {#if shown.length === 0}
+      <div class="empty">
+        <EmptyState
+          preset="no-results"
+          title={tab === 1 ? 'No mentions' : 'No payments'}
+          body={tab === 1 ? 'When someone @mentions you, it shows up here.' : 'Tokens sent to you in a chat show up here.'}
+        />
+      </div>
     {/if}
   </div>
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--accent-soft,rgba(255,86,114,.1)) !important}
+  .panel {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+    padding: var(--space-10);
+    overflow: hidden;
+    background: var(--surface-1, #0e0e12);
+  }
+
+  .top {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+  }
+
+  .title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    min-width: 0;
+    min-height: var(--control-md, 34px);
+    padding: var(--space-10) 0 var(--space-10) var(--space-10);
+  }
+
+  .title {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-bold) var(--text-xl) / 1.2 var(--font-sans);
+    letter-spacing: var(--tracking-tight);
+    color: var(--ink, #ececf1);
+  }
+
+  .mark-all {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    height: var(--control-md, 34px);
+    padding: 0 var(--space-8);
+    border-radius: var(--radius-sm);
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .mark-all:hover {
+    background: var(--accent-soft, rgba(255, 86, 114, 0.1));
+  }
+
+  .tabs,
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .feed {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .day {
+    padding: var(--space-26) var(--space-8) var(--space-6);
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .day.first {
+    padding-top: var(--space-8);
+  }
+
+  .empty {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+  }
 </style>
