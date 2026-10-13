@@ -30,9 +30,9 @@
         publish("editRecipient", { account, onComplete: () => publish("closeModalPage") });
     }
 
-    async function deleteAccount({ account }: NamedAccount) {
+    async function deleteAccount({ name, account }: NamedAccount) {
         deleting = account;
-        const res = await client.deleteCryptoAccount(account);
+        const res = await client.deleteCryptoAccount(name);
         if (res.kind === "success") {
             const accts = await client.loadSavedCryptoAccounts();
             namedAccountsStore.set(accts);

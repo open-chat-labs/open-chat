@@ -33,6 +33,7 @@ use types::{
     UserIdAndPrincipal, VideoCall, VideoCallEndedEventPayload, VideoCallParticipants, VideoCallPresence, VoteOperation,
     is_default,
 };
+use utils::mentions::MENTION_PREFIX;
 use utils::migrated_user_ids::MigratedUserIds;
 
 // The patchable fields of a moderation-report card; each is applied when present so that
@@ -448,20 +449,38 @@ impl ChatEvents {
     ) -> u32 {
         let mut updated = Vec::new();
         let mut sender_changes = Vec::new();
+        let mut document_changes = Vec::new();
         for mut event in events {
             let context = EventContext::new(thread_root_message_index, event.index);
-            let sender = if let ChatEventInternal::Message(m) = &event.event { Some(m.sender) } else { None };
+            let (sender, document) = if let ChatEventInternal::Message(m) = &event.event {
+                // The document is only needed if the message is indexed and its text mentions
+                // someone whose id may be replaced
+                let document = (search_index.is_some()
+                    && m.deleted_by.is_none()
+                    && m.content.text().is_some_and(|t| t.contains(MENTION_PREFIX)))
+                .then(|| Document::from(&m.content));
+                (Some(m.sender), document)
+            } else {
+                (None, None)
+            };
             if event.event.update_user_ids(&mut |user_id| f(context, user_id)) {
-                if let (Some(old_sender), ChatEventInternal::Message(m)) = (sender, &event.event)
-                    && m.sender != old_sender
-                {
-                    sender_changes.push((m.message_index, old_sender, m.sender));
+                if let ChatEventInternal::Message(m) = &event.event {
+                    if let Some(old_sender) = sender
+                        && m.sender != old_sender
+                    {
+                        sender_changes.push((m.message_index, old_sender, m.sender));
+                    }
+                    if let Some(old_document) = document {
+                        document_changes.push((m.message_index, m.sender, old_document, Document::from(&m.content)));
+                    }
                 }
                 updated.push(event);
             }
         }
         if let Some(search_index) = search_index {
-            search_index.change_senders(events_list.stable_memory_prefix(), sender_changes);
+            let prefix = events_list.stable_memory_prefix();
+            search_index.change_senders(prefix, sender_changes);
+            search_index.update_many(prefix, document_changes);
         }
         let count = updated.len() as u32;
         events_list.replace_events(updated);
@@ -1196,30 +1215,44 @@ impl ChatEvents {
 
     pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<ProposalUpdate>, now: TimestampMillis) -> bool {
         let mut mark_chat_updated = false;
+        // The events updated are written back together once every update has been applied, so that
+        // each node of the stable memory map is written once rather than once per proposal. An event
+        // updated more than once is read from those already updated.
+        let mut updated: BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>> = BTreeMap::new();
         for update in updates {
             // If only the tally has been updated, skip marking the message as having been updated
             let should_mark_updated = update.deadline.is_some() || update.reward_status.is_some() || update.status.is_some();
             let tally_update = update.latest_tally.clone();
 
-            if let Ok(success) = self.update_message(
-                None,
-                update.message_id.into(),
-                EventIndex::default(),
-                now,
-                should_mark_updated,
-                ChatEventType::MessageOther,
-                |message, _| Self::update_proposal_inner(message, user_id, update, now),
-            ) {
-                if !matches!(success.value, ProposalRewardStatus::AcceptVotes) {
-                    self.active_proposal_tallies.remove(&success.event_index);
-                } else if let Some(tally) = tally_update {
-                    self.active_proposal_tallies.insert(success.event_index, tally);
-                }
-                if should_mark_updated {
-                    mark_chat_updated = true;
-                }
+            let Some(event_index) = self.main.event_index(update.message_id.into()) else {
+                continue;
+            };
+            let Some(mut event) = updated
+                .get(&event_index)
+                .cloned()
+                .or_else(|| self.main.get_event(event_index.into(), EventIndex::default(), None))
+            else {
+                continue;
+            };
+            let Ok(reward_status) = Self::update_message_inner(&mut event, |message, _| {
+                Self::update_proposal_inner(message, user_id, update, now)
+            }) else {
+                continue;
+            };
+            updated.insert(event_index, event);
+
+            if !matches!(reward_status, ProposalRewardStatus::AcceptVotes) {
+                self.active_proposal_tallies.remove(&event_index);
+            } else if let Some(tally) = tally_update {
+                self.active_proposal_tallies.insert(event_index, tally);
+            }
+            if should_mark_updated {
+                self.last_updated_timestamps
+                    .mark_updated(self.main.stable_memory_prefix(), None, event_index, now);
+                mark_chat_updated = true;
             }
         }
+        self.main.replace_events(updated.into_values().collect());
         mark_chat_updated
     }
 
@@ -2448,6 +2481,17 @@ impl ChatEvents {
     pub fn migrate_user_metrics(&mut self, old_user_id: UserId, new_user_id: UserId) -> bool {
         self.per_user_metrics
             .migrate_user(self.main.stable_memory_prefix(), old_user_id, new_user_id)
+    }
+
+    // The users who have metrics in the chat
+    pub fn user_ids_with_metrics(&self) -> BTreeSet<UserId> {
+        self.per_user_metrics.user_ids(self.main.stable_memory_prefix())
+    }
+
+    // Removes the user's metrics from the chat. `skip_their_metrics` does this for the other user in
+    // a direct chat, but only under the id they have in it now.
+    pub fn remove_user_metrics(&mut self, user_id: UserId) -> bool {
+        self.per_user_metrics.remove(self.main.stable_memory_prefix(), user_id)
     }
 
     pub fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: F) -> usize {
@@ -3954,32 +3998,7 @@ mod tests {
             1,
         );
 
-        let proposal = ProposalContentInternal {
-            governance_canister_id: Principal::from_slice(&[3]),
-            proposal: Proposal::NNS(NnsProposal {
-                id: 1,
-                topic: 1,
-                proposer: 1,
-                created: 1,
-                title: "title".to_string(),
-                summary: "summary".to_string(),
-                url: String::new(),
-                status: ProposalDecisionStatus::Open,
-                reward_status: ProposalRewardStatus::AcceptVotes,
-                tally: Tally {
-                    yes: 0,
-                    no: 0,
-                    total: 0,
-                    timestamp: 1,
-                },
-                deadline: 1000,
-                payload_text_rendering: None,
-                last_updated: 1,
-            }),
-            votes: BTreeMap::new(),
-        };
-
-        let proposal_message_index = push_message(&mut events, sender, 1, MessageContentInternal::GovernanceProposal(proposal));
+        let proposal_message_index = push_message(&mut events, sender, 1, proposal_content(1));
         let text_message_index = push_message(
             &mut events,
             sender,
@@ -3990,6 +4009,103 @@ mod tests {
         );
 
         (events, proposal_message_index, text_message_index)
+    }
+
+    fn proposal_content(id: u64) -> MessageContentInternal {
+        MessageContentInternal::GovernanceProposal(ProposalContentInternal {
+            governance_canister_id: Principal::from_slice(&[3]),
+            proposal: Proposal::NNS(NnsProposal {
+                id,
+                topic: 1,
+                proposer: 1,
+                created: 1,
+                title: "title".to_string(),
+                summary: "summary".to_string(),
+                url: String::new(),
+                status: ProposalDecisionStatus::Open,
+                reward_status: ProposalRewardStatus::AcceptVotes,
+                tally: tally(0),
+                deadline: 1000,
+                payload_text_rendering: None,
+                last_updated: 1,
+            }),
+            votes: BTreeMap::new(),
+        })
+    }
+
+    fn tally(yes: u64) -> Tally {
+        Tally {
+            yes,
+            no: 0,
+            total: 100,
+            timestamp: 1,
+        }
+    }
+
+    #[test]
+    fn proposals_updated_together_match_those_updated_one_at_a_time() {
+        let sender: UserId = Principal::from_slice(&[2]).into();
+        let setup = || {
+            let (mut events, _, _) = setup_events();
+            push_message(&mut events, sender, 3, proposal_content(2));
+            push_message(&mut events, sender, 4, proposal_content(3));
+            events
+        };
+        let update = |message_id: u128, status, reward_status, yes: Option<u64>| ProposalUpdate {
+            message_id: message_id.into(),
+            status,
+            reward_status,
+            latest_tally: yes.map(tally),
+            deadline: None,
+        };
+        // Message 2 isn't a proposal, message 99 doesn't exist, and the proposal in message 1 is
+        // updated twice
+        let updates = || {
+            vec![
+                update(4, None, None, Some(10)),
+                update(1, None, None, Some(5)),
+                update(3, Some(ProposalDecisionStatus::Adopted), None, Some(60)),
+                update(2, Some(ProposalDecisionStatus::Rejected), None, None),
+                update(99, None, None, Some(1)),
+                update(
+                    1,
+                    Some(ProposalDecisionStatus::Rejected),
+                    Some(ProposalRewardStatus::Settled),
+                    Some(7),
+                ),
+            ]
+        };
+        let state = |events: &ChatEvents| {
+            (
+                events.read_events_as_bytes_from_stable_memory(None),
+                events.active_proposal_tallies(),
+                events.recently_updated_events(0, 100),
+            )
+        };
+
+        let mut one_at_a_time = setup();
+        let mut mark_chat_updated = false;
+        for update in updates() {
+            mark_chat_updated |= one_at_a_time.update_proposals(sender, vec![update], 20);
+        }
+        let expected = state(&one_at_a_time);
+
+        let mut together = setup();
+        assert_eq!(together.update_proposals(sender, updates(), 20), mark_chat_updated);
+        assert!(mark_chat_updated);
+        assert_eq!(state(&together), expected);
+        // Only the proposals still accepting votes have active tallies
+        let tallies: Vec<_> = together.active_proposal_tallies().into_iter().map(|(_, t)| t.yes).collect();
+        assert_eq!(tallies, vec![60, 10]);
+        // Only the proposals whose statuses changed are marked as updated, not those whose tallies
+        // alone changed
+        let event_index = |message_id: u128| together.main.event_index(MessageId::from(message_id).into()).unwrap();
+        let marked_updated: BTreeSet<_> = together
+            .recently_updated_events(10, 100)
+            .into_iter()
+            .map(|(_, e, _)| e)
+            .collect();
+        assert_eq!(marked_updated, BTreeSet::from([event_index(1), event_index(3)]));
     }
 
     #[test]
@@ -4107,6 +4223,59 @@ mod tests {
 
         // Clients aren't sent the events again
         assert_eq!(events.recently_updated_events(0, 1000), recently_updated);
+    }
+
+    // `on_heap`: whether the message is still in the search index's legacy heap map
+    // `sender_migrated`: whether the message's sender is the migrated user too
+    #[test_case::test_case(false, false)]
+    #[test_case::test_case(false, true)]
+    #[test_case::test_case(true, false)]
+    #[test_case::test_case(true, true)]
+    fn search_finds_a_mention_under_the_users_latest_id(on_heap: bool, sender_migrated: bool) {
+        let (mut events, _, _) = setup_events();
+        let old_user_id: UserId = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap().into();
+        let new_user_id = UserId::new_indexed(Principal::from_text("yaxqu-oqaaa-aaaaf-br7ya-cai").unwrap(), 1);
+        let sender = if sender_migrated { old_user_id } else { Principal::from_slice(&[2]).into() };
+        let content = text_content(&format!("hi @UserId({old_user_id})"));
+        let message_index = push_message(&mut events, sender, 100, content.clone());
+        if on_heap {
+            let prefix = events.main.stable_memory_prefix().clone();
+            events
+                .search_index
+                .move_to_heap(&prefix, message_index, sender, Document::from(&content));
+        }
+        let search = |events: &ChatEvents, term: &str, users: &[UserId]| -> Vec<MessageIndex> {
+            events
+                .search_messages(MessageIndex::default(), term, &users.iter().copied().collect(), 10)
+                .into_iter()
+                .map(|m| m.message_index)
+                .collect()
+        };
+        let old_term = old_user_id.to_string()[..5].to_string();
+        let new_term = new_user_id.to_string()[..5].to_string();
+        assert_eq!(search(&events, &old_term, &[]), vec![message_index]);
+
+        let mut after = None;
+        while let Some(context) =
+            events.update_user_ids(after, &mut |_, u| if u == old_user_id { new_user_id } else { u }, &mut || {
+                false
+            })
+        {
+            after = Some(context);
+        }
+
+        let message = events.main_events_reader().message_internal(message_index.into()).unwrap();
+        let MessageContentInternal::Text(text) = message.content else {
+            panic!();
+        };
+        assert_eq!(text.text, format!("hi @UserId({new_user_id})"));
+        assert_eq!(search(&events, &new_term, &[]), vec![message_index]);
+        assert!(search(&events, &old_term, &[]).is_empty());
+        let latest_sender = if sender_migrated { new_user_id } else { sender };
+        assert_eq!(search(&events, &new_term, &[latest_sender]), vec![message_index]);
+        if sender_migrated {
+            assert!(search(&events, "", &[old_user_id]).is_empty());
+        }
     }
 
     #[test]

@@ -149,6 +149,22 @@
         "title": "Nguồn cấp dữ liệu hoạt động"
     },
     "addedBy": "{changedBy} đã thêm {changed} vào {level}",
+    "addressBook": {
+        "add": "Thêm địa chỉ",
+        "address": "Địa chỉ",
+        "addressPlaceholder": "Nhập địa chỉ",
+        "alreadySaved": "Địa chỉ này đã được lưu với tên \"{name}\"",
+        "confirmDelete": "Xóa \"{name}\" khỏi sổ địa chỉ của bạn?",
+        "delete": "Xóa",
+        "deleteFailed": "Rất tiếc, chúng tôi không thể xóa địa chỉ này",
+        "empty": "Bạn chưa lưu địa chỉ nào. Bạn có thể chọn các địa chỉ đã lưu khi gửi token từ ví của mình.",
+        "name": "Tên",
+        "namePlaceholder": "Nhập tên cho địa chỉ này",
+        "nameTaken": "Bạn đã có một địa chỉ được lưu với tên này",
+        "rename": "Đổi tên",
+        "saveFailed": "Rất tiếc, chúng tôi không thể lưu địa chỉ này",
+        "title": "Sổ địa chỉ"
+    },
     "admin": "Quản trị viên",
     "advanced": "Nâng cao",
     "airdropWarning": "Để đủ điều kiện tham gia Airdrop tiếp theo, bạn phải là thành viên của kênh **{channelName}** trong cộng đồng **{communityName}**. [Nhấp vào đây để tham gia.]({url})",

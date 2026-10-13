@@ -1,12 +1,17 @@
+use crate::jobs::update_user_ids_in_events;
 use crate::model::users::Users;
+use crate::timer_job_types::TimerJob;
 use crate::{RuntimeState, mutate_state, read_state, run_regular_jobs};
+use chat_events::UserIdsInEventsMigration;
 use ic_cdk_timers::TimerId;
 use serde::{Deserialize, Serialize};
 use std::cell::Cell;
 use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 use std::time::Duration;
 use tracing::{error, info, trace};
-use types::{TimestampMillis, UserId};
+use types::{CanisterId, TimestampMillis, UserId};
+use user_core::UserIdsMigrated;
 use utils::migrated_user_ids::MigratedUserIds;
 
 // Gathering the ids to look up stops once past the first limit, and moving users off old ids once
@@ -26,7 +31,8 @@ pub struct TheirUserIdsMigration {
     // The index from which the next batch of users starts
     pub next_user_index: u16,
     pub complete: bool,
-    // How many times a user was found to hold anything under another user's old id
+    // How many times a user was found to hold a chat, pin, favourite, block or contact under
+    // another user's old id
     pub old_user_ids_found: u32,
     // How many of those chats were left under the old id, since the user already had a chat under
     // the other user's latest id (see `DirectChats::migrate_their_user_id`)
@@ -34,15 +40,47 @@ pub struct TheirUserIdsMigration {
     // How many ids have been looked up in the LocalUserIndex, an id held by users in more than one
     // batch being looked up once for each
     pub user_ids_looked_up: u32,
+    // How many of each of the other things which hold ids were updated (see `UserIdsMigrated`)
+    #[serde(default)]
+    pub referrals_updated: u32,
+    #[serde(default)]
+    pub message_activity_events_updated: u32,
+    #[serde(default)]
+    pub private_replies_updated: u32,
+    #[serde(default)]
+    pub direct_chats_updated: u32,
+    #[serde(default)]
+    pub bots_updated: u32,
+    #[serde(default)]
+    pub bios_updated: u32,
+    #[serde(default)]
+    pub timer_jobs_updated: u32,
 }
 
-// Moves what each user holds under other users' old ids, ie. their direct chats, blocks and
-// contacts, onto those users' latest ids (see `User::migrate_their_user_id`), which otherwise only
-// happens once the other user makes contact. Goes through the users in order of index, a batch at a
-// time: the ids the batch's users hold which `MigratedUserIds` doesn't know are looked up in the
-// LocalUserIndex, any migrations found are added to `MigratedUserIds`, and then each of the batch's
-// users is moved off any id it has a migration for. This can be removed once it has completed in
-// every MultiUser canister.
+impl TheirUserIdsMigration {
+    fn record(&mut self, migrated: UserIdsMigrated) {
+        self.old_user_ids_found += migrated.old_user_ids_found;
+        self.chats_left_under_old_ids += migrated.chats_left_under_old_ids;
+        self.referrals_updated += migrated.referrals;
+        self.message_activity_events_updated += migrated.message_activity_events;
+        self.private_replies_updated += migrated.private_replies;
+        self.direct_chats_updated += migrated.direct_chats;
+        self.bots_updated += migrated.bots;
+        self.bios_updated += u32::from(migrated.bio);
+    }
+}
+
+// Moves everything each user holds outside their direct chats' events under ids which they, or
+// other users, had before being migrated to MultiUser canisters onto those users' latest ids (see
+// `User::migrate_user_ids`): their direct chats, pins, favourites, blocks and contacts, which
+// otherwise only move once the other user makes contact, and who referred them, their referrals,
+// message activity events, private replies, bio, the TTL changes and metrics in their chats and the
+// bots they installed. Goes through the users in order of index, a batch at a time: the ids the
+// batch's users hold which `MigratedUserIds` doesn't know are looked up in the LocalUserIndex, any
+// migrations found are added to `MigratedUserIds`, and then each of the batch's users is moved off
+// any id it has a migration for. Once every user has been, the timer jobs are too, then the
+// `update_user_ids_in_events` job, which is held back until then, is started. This can be removed
+// once it has completed in every MultiUser canister.
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.their_user_ids_migration.complete {
         start_timer(Duration::ZERO);
@@ -63,23 +101,22 @@ async fn run() {
     run_regular_jobs();
 
     let (batch, local_user_index_canister_id) = read_state(|state| {
-        let from = state.data.their_user_ids_migration.next_user_index;
-        let batch = user_ids_to_look_up(&state.data.users, &state.data.migrated_user_ids, from, &mut || {
+        let data = &state.data;
+        let from = data.their_user_ids_migration.next_user_index;
+        let timer_job_user_ids = timer_job_user_ids(
+            data.timer_jobs
+                .iter()
+                .filter_map(|(_, wrapper)| wrapper.borrow().as_ref().map(|job| (job.user_index(), job.user_ids()))),
+        );
+        let batch = user_ids_to_look_up(&data.users, &data.migrated_user_ids, &timer_job_user_ids, from, &mut || {
             ic_cdk::api::instruction_counter() > MAX_INSTRUCTIONS_TO_GATHER
         })
         .map(|(user_ids, to)| (from, to, user_ids));
-        (batch, state.data.local_user_index_canister_id)
+        (batch, data.local_user_index_canister_id)
     });
 
     let Some((from, to, user_ids)) = batch else {
-        mutate_state(|state| {
-            let migration = &mut state.data.their_user_ids_migration;
-            migration.complete = true;
-            info!(
-                ?migration,
-                "Finished moving users' chats, blocks and contacts off old user ids"
-            );
-        });
+        mutate_state(complete);
         TIMER_ID.set(None);
         return;
     };
@@ -111,10 +148,12 @@ async fn run() {
 
     mutate_state(|state| {
         let now = state.env.now();
+        let canister_id = state.env.canister_id();
         let data = &mut state.data;
         migrate(
             &mut data.users,
             &data.migrated_user_ids,
+            canister_id,
             from,
             to,
             &mut data.their_user_ids_migration,
@@ -127,14 +166,99 @@ async fn run() {
     read_state(start_job_if_required);
 }
 
-// The ids held by the users from index `from` onwards which may have been migrated and which
-// `migrated_user_ids` doesn't know, gathered from as many users as fit in one lookup, or until
-// `should_stop` returns true, along with the index after the last of those users. None if there are
-// no users from `from` onwards. Only an unindexed id, which was a User canister's, can be one a
-// user has been migrated from, so MultiUser users' ids are never looked up.
+// Once every user has been moved off the old ids, moves the timer jobs off them, then starts the
+// job which replaces the old ids in the events
+fn complete(state: &mut RuntimeState) {
+    let timer_jobs_updated = update_timer_jobs(state);
+    let data = &mut state.data;
+    data.their_user_ids_migration.timer_jobs_updated += timer_jobs_updated;
+    let events_scan_restarted = mark_complete(&mut data.their_user_ids_migration, &mut data.user_ids_in_events_migration);
+    info!(
+        migration = ?data.their_user_ids_migration,
+        events_scan_restarted,
+        "Finished moving what users hold outside their chats' events off old user ids"
+    );
+    update_user_ids_in_events::start_job_if_required(state);
+}
+
+// Marks the job complete, which lets the job which replaces the old ids in the events start (see
+// `update_user_ids_in_events::is_required`). That job is held back until now since, while a chat
+// was still under an old id, an event added to it could hold that id after the scan had passed it,
+// so a scan which has already started is restarted. Returns whether it was.
+fn mark_complete<L: Copy + Eq + Hash>(
+    migration: &mut TheirUserIdsMigration,
+    events_migration: &mut UserIdsInEventsMigration<L>,
+) -> bool {
+    migration.complete = true;
+    if events_migration.has_started() {
+        events_migration.restart_scan();
+        true
+    } else {
+        false
+    }
+}
+
+// Replaces the ids the timer jobs hold (see `TimerJob::with_latest_user_ids`), whose migrations
+// were looked up along with those of the users the jobs are for. A job can't be changed in place,
+// so each is cancelled and queued again, due when it was. Returns how many were.
+fn update_timer_jobs(state: &mut RuntimeState) -> u32 {
+    let now = state.env.now();
+    let data = &mut state.data;
+    let users = &data.users;
+    let migrated_user_ids = &data.migrated_user_ids;
+    let latest_chat_user_id = |user_index: u16, user_id: UserId| {
+        users
+            .with_user(user_index, |user| {
+                user.direct_chats.latest_user_id(user_id, migrated_user_ids)
+            })
+            .unwrap_or(user_id)
+    };
+    let latest_user_id = |user_id: UserId| migrated_user_ids.latest(user_id);
+    let updated: Vec<(TimerJob, TimestampMillis)> = data
+        .timer_jobs
+        .iter()
+        .filter_map(|(due, wrapper)| {
+            wrapper
+                .borrow()
+                .as_ref()
+                .and_then(|job| job.with_latest_user_ids(latest_chat_user_id, latest_user_id))
+                .map(|job| (job, *due))
+        })
+        .collect();
+    if updated.is_empty() {
+        return 0;
+    }
+    data.timer_jobs
+        .cancel_jobs(|job| job.with_latest_user_ids(latest_chat_user_id, latest_user_id).is_some());
+    let count = updated.len() as u32;
+    for (job, due) in updated {
+        data.timer_jobs.enqueue_job(job, due, now);
+    }
+    count
+}
+
+// The ids each user's timer jobs hold, keyed by the user's index
+fn timer_job_user_ids(jobs: impl Iterator<Item = (Option<u16>, Vec<UserId>)>) -> HashMap<u16, Vec<UserId>> {
+    let mut user_ids: HashMap<u16, Vec<UserId>> = HashMap::new();
+    for (user_index, job_user_ids) in jobs {
+        if let Some(user_index) = user_index
+            && !job_user_ids.is_empty()
+        {
+            user_ids.entry(user_index).or_default().extend(job_user_ids);
+        }
+    }
+    user_ids
+}
+
+// The ids held by the users from index `from` onwards, and by their timer jobs, which may have been
+// migrated and which `migrated_user_ids` doesn't know, gathered from as many users as fit in one
+// lookup, or until `should_stop` returns true, along with the index after the last of those users.
+// None if there are no users from `from` onwards. Only an unindexed id, which was a User canister's,
+// can be one a user has been migrated from, so MultiUser users' ids are never looked up.
 fn user_ids_to_look_up(
     users: &Users,
     migrated_user_ids: &MigratedUserIds,
+    timer_job_user_ids: &HashMap<u16, Vec<UserId>>,
     from: u16,
     should_stop: &mut dyn FnMut() -> bool,
 ) -> Option<(Vec<UserId>, u16)> {
@@ -145,6 +269,7 @@ fn user_ids_to_look_up(
             user_ids.extend(
                 user.their_user_ids()
                     .into_iter()
+                    .chain(timer_job_user_ids.get(&user_index).into_iter().flatten().copied())
                     .filter(|user_id| !user_id.is_indexed() && !migrated_user_ids.contains(user_id)),
             )
         });
@@ -177,9 +302,11 @@ fn record_lookup(
 // added since the batch's ids were gathered have indexes of `to` or above, so are left to the next.
 // If `should_stop` returns true first, the next batch starts after the last user moved instead, and
 // the ids looked up for the rest are known by then.
+#[expect(clippy::too_many_arguments)]
 fn migrate(
     users: &mut Users,
     migrated_user_ids: &MigratedUserIds,
+    canister_id: CanisterId,
     from: u16,
     to: u16,
     migration: &mut TheirUserIdsMigration,
@@ -188,17 +315,12 @@ fn migrate(
 ) {
     let mut next = from;
     while let Some(user_index) = users.next_index(next).filter(|i| *i < to) {
-        users.with_user_mut(user_index, |user| {
-            for old_user_id in user.their_user_ids() {
-                if let Some(latest) = migrated_user_ids.get(&old_user_id) {
-                    user.migrate_their_user_id(old_user_id, latest, now);
-                    migration.old_user_ids_found += 1;
-                    if user.direct_chats.exists(&old_user_id.into()) {
-                        migration.chats_left_under_old_ids += 1;
-                    }
-                }
-            }
-        });
+        let my_user_id = UserId::new_indexed(canister_id, user_index);
+        if let Some(migrated) =
+            users.with_user_mut(user_index, |user| user.migrate_user_ids(my_user_id, migrated_user_ids, now))
+        {
+            migration.record(migrated);
+        }
         next = user_index + 1;
         if should_stop() {
             migration.next_user_index = next;
@@ -215,7 +337,7 @@ mod tests {
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use multi_user_canister::set_contact::OptionalContact;
-    use types::{CanisterId, Chat, OptionUpdate, UserType};
+    use types::{BotPermissions, CanisterId, Chat, OptionUpdate, Timestamped, UserType};
 
     fn canister_id(i: u8) -> CanisterId {
         CanisterId::from_slice(&[0, 0, 0, 0, 0, 0, 0, i, 1, 1])
@@ -238,6 +360,11 @@ mod tests {
     // A bot, whose id is unindexed but was never migrated
     fn bot_id() -> UserId {
         canister_id(50).into()
+    }
+
+    // The User canister id user 2 had
+    fn my_old_user_id() -> UserId {
+        canister_id(200).into()
     }
 
     // Three users: user 1 has a chat with migrated user 1, as a favourite, and has blocked migrated
@@ -304,13 +431,20 @@ mod tests {
     ) -> (TheirUserIdsMigration, Vec<HashSet<UserId>>) {
         let mut migration = TheirUserIdsMigration::default();
         let mut looked_up = Vec::new();
-        while let Some((user_ids, to)) = user_ids_to_look_up(users, migrated_user_ids, migration.next_user_index, should_stop) {
+        while let Some((user_ids, to)) = user_ids_to_look_up(
+            users,
+            migrated_user_ids,
+            &HashMap::new(),
+            migration.next_user_index,
+            should_stop,
+        ) {
             let migrated = lookup().get_many(user_ids.iter().copied());
             record_lookup(user_ids.len(), &migrated, migrated_user_ids, &mut migration);
             looked_up.push(user_ids.into_iter().collect());
             migrate(
                 users,
                 migrated_user_ids,
+                canister_id(1),
                 migration.next_user_index,
                 to,
                 &mut migration,
@@ -326,6 +460,7 @@ mod tests {
         let mut lookup = MigratedUserIds::default();
         lookup.insert(old_user_id(1), new_user_id(1));
         lookup.insert(old_user_id(2), new_user_id(2));
+        lookup.insert(old_user_id(3), new_user_id(3));
         lookup
     }
 
@@ -439,22 +574,40 @@ mod tests {
         let mut migrated_user_ids = MigratedUserIds::default();
         let mut migration = TheirUserIdsMigration::default();
 
-        let (user_ids, to) = user_ids_to_look_up(&users, &migrated_user_ids, 0, &mut || false).unwrap();
+        let (user_ids, to) = user_ids_to_look_up(&users, &migrated_user_ids, &HashMap::new(), 0, &mut || false).unwrap();
         record_lookup(
             user_ids.len(),
             &lookup().get_many(user_ids),
             &mut migrated_user_ids,
             &mut migration,
         );
-        migrate(&mut users, &migrated_user_ids, 0, to, &mut migration, 100, &mut || true);
+        migrate(
+            &mut users,
+            &migrated_user_ids,
+            canister_id(1),
+            0,
+            to,
+            &mut migration,
+            100,
+            &mut || true,
+        );
 
         // Only user 1 was moved, and the next batch starts after them, with nothing left to look up
         assert_eq!(migration.next_user_index, 2);
         assert_eq!(contacts(&users, 2), vec![(old_user_id(1), Some("one".to_string()))]);
-        let (user_ids, to) = user_ids_to_look_up(&users, &migrated_user_ids, 2, &mut || false).unwrap();
+        let (user_ids, to) = user_ids_to_look_up(&users, &migrated_user_ids, &HashMap::new(), 2, &mut || false).unwrap();
         assert_eq!(user_ids, vec![bot_id()]);
 
-        migrate(&mut users, &migrated_user_ids, 2, to, &mut migration, 100, &mut || false);
+        migrate(
+            &mut users,
+            &migrated_user_ids,
+            canister_id(1),
+            2,
+            to,
+            &mut migration,
+            100,
+            &mut || false,
+        );
 
         assert_eq!(contacts(&users, 2), vec![(new_user_id(1), Some("one".to_string()))]);
         assert_eq!(migration.next_user_index, 4);
@@ -466,21 +619,129 @@ mod tests {
         let mut migrated_user_ids = MigratedUserIds::default();
         let mut migration = TheirUserIdsMigration::default();
 
-        let (_, to) = user_ids_to_look_up(&users, &migrated_user_ids, 0, &mut || false).unwrap();
+        let (_, to) = user_ids_to_look_up(&users, &migrated_user_ids, &HashMap::new(), 0, &mut || false).unwrap();
         let index = users.add(Principal::from_slice(&[4]), "user4".to_string(), None, 0).unwrap();
         users.with_user_mut(index, |user| user.blocked_users.block(old_user_id(1), 0));
         migrated_user_ids.insert(old_user_id(1), new_user_id(1));
-        migrate(&mut users, &migrated_user_ids, 0, to, &mut migration, 100, &mut || false);
+        migrate(
+            &mut users,
+            &migrated_user_ids,
+            canister_id(1),
+            0,
+            to,
+            &mut migration,
+            100,
+            &mut || false,
+        );
 
         users.with_user(index, |user| assert_eq!(user.blocked_users.all(), vec![old_user_id(1)]));
         assert_eq!(migration.next_user_index, index);
 
-        let (user_ids, to) = user_ids_to_look_up(&users, &migrated_user_ids, index, &mut || false).unwrap();
+        let (user_ids, to) = user_ids_to_look_up(&users, &migrated_user_ids, &HashMap::new(), index, &mut || false).unwrap();
         assert!(user_ids.is_empty());
-        migrate(&mut users, &migrated_user_ids, index, to, &mut migration, 100, &mut || false);
+        migrate(
+            &mut users,
+            &migrated_user_ids,
+            canister_id(1),
+            index,
+            to,
+            &mut migration,
+            100,
+            &mut || false,
+        );
 
         users.with_user(index, |user| assert_eq!(user.blocked_users.all(), vec![new_user_id(1)]));
-        assert!(user_ids_to_look_up(&users, &migrated_user_ids, migration.next_user_index, &mut || false).is_none());
+        assert!(
+            user_ids_to_look_up(
+                &users,
+                &migrated_user_ids,
+                &HashMap::new(),
+                migration.next_user_index,
+                &mut || false
+            )
+            .is_none()
+        );
+    }
+
+    #[test]
+    fn ids_held_anywhere_else_are_looked_up_and_moved_too() {
+        let mut users = setup();
+        // Migrated user 3 is only held in these
+        let mention = |user_id: UserId| format!("Friend of @UserId({user_id})");
+        users.with_user_mut(2, |user| {
+            user.referred_by = Some(old_user_id(3));
+            user.bio = Timestamped::new(mention(old_user_id(3)), 0);
+            user.direct_chats.pin(old_user_id(3).into(), 0).unwrap();
+            user.bots
+                .add(bot_id(), my_old_user_id(), BotPermissions::default(), None, None, 0);
+        });
+        // The user's own previous id is known from when they were imported
+        let mut migrated_user_ids = MigratedUserIds::default();
+        migrated_user_ids.insert(my_old_user_id(), user_id(2));
+
+        let (migration, looked_up) = run_to_completion(&mut users, &mut migrated_user_ids, &mut || false);
+
+        assert!(looked_up[0].contains(&old_user_id(3)));
+        assert!(!looked_up[0].contains(&my_old_user_id()));
+        users.with_user(2, |user| {
+            assert_eq!(user.referred_by, Some(new_user_id(3)));
+            assert_eq!(user.bio.value, mention(new_user_id(3)));
+            assert_eq!(
+                user.direct_chats.pinned_chats(),
+                HashMap::from([(Chat::Direct(new_user_id(3).into()), 0)])
+            );
+            assert!(user.bots.get(&bot_id()).is_some_and(|bot| bot.added_by == user_id(2)));
+        });
+        assert_eq!(migration.old_user_ids_found, 5);
+        assert_eq!(migration.referrals_updated, 1);
+        assert_eq!(migration.bios_updated, 1);
+        assert_eq!(migration.bots_updated, 1);
+    }
+
+    #[test]
+    fn ids_held_by_the_timer_jobs_of_a_batchs_users_are_looked_up_with_theirs() {
+        let users = setup();
+        let migrated_user_ids = MigratedUserIds::default();
+        let timer_job_user_ids = timer_job_user_ids(
+            [
+                (Some(1), vec![old_user_id(3)]),
+                (Some(1), Vec::new()),
+                (None, vec![old_user_id(4)]),
+                // A user who has been deleted
+                (Some(5), vec![old_user_id(5)]),
+            ]
+            .into_iter(),
+        );
+        assert_eq!(timer_job_user_ids.len(), 2);
+
+        let (user_ids, _) = user_ids_to_look_up(&users, &migrated_user_ids, &timer_job_user_ids, 0, &mut || true).unwrap();
+
+        assert_eq!(
+            user_ids.into_iter().collect::<HashSet<_>>(),
+            HashSet::from([old_user_id(1), old_user_id(2), old_user_id(3)])
+        );
+    }
+
+    #[test]
+    fn completing_restarts_a_scan_of_the_events_which_has_already_started() {
+        let mut migration = TheirUserIdsMigration::default();
+        let mut events_migration = UserIdsInEventsMigration::<u32>::default();
+        assert!(!mark_complete(&mut migration, &mut events_migration));
+        assert!(migration.complete);
+        assert!(!events_migration.has_started());
+
+        // Released before this job, the events job may have scanned some, or all, of the events
+        for scanned_up_to in [Some(1), None] {
+            let mut migration = TheirUserIdsMigration::default();
+            let mut events_migration = UserIdsInEventsMigration::<u32>::default();
+            events_migration.record_scanned_up_to(scanned_up_to);
+
+            assert!(mark_complete(&mut migration, &mut events_migration));
+
+            assert!(migration.complete);
+            assert!(!events_migration.has_started());
+            assert!(!events_migration.is_complete());
+        }
     }
 
     #[test]
@@ -488,8 +749,8 @@ mod tests {
         let users = setup();
         let migrated_user_ids = MigratedUserIds::default();
 
-        assert!(user_ids_to_look_up(&users, &migrated_user_ids, 0, &mut || false).is_some());
-        assert!(user_ids_to_look_up(&users, &migrated_user_ids, 3, &mut || false).is_some());
-        assert!(user_ids_to_look_up(&users, &migrated_user_ids, 4, &mut || false).is_none());
+        assert!(user_ids_to_look_up(&users, &migrated_user_ids, &HashMap::new(), 0, &mut || false).is_some());
+        assert!(user_ids_to_look_up(&users, &migrated_user_ids, &HashMap::new(), 3, &mut || false).is_some());
+        assert!(user_ids_to_look_up(&users, &migrated_user_ids, &HashMap::new(), 4, &mut || false).is_none());
     }
 }

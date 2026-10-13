@@ -149,6 +149,22 @@
         "title": "Canal de actividades"
     },
     "addedBy": "{changedBy} agregó {changed} a {level}",
+    "addressBook": {
+        "add": "Añadir dirección",
+        "address": "Dirección",
+        "addressPlaceholder": "Introduzca la dirección",
+        "alreadySaved": "Esta dirección ya está guardada como \"{name}\"",
+        "confirmDelete": "¿Eliminar \"{name}\" de su libreta de direcciones?",
+        "delete": "Eliminar",
+        "deleteFailed": "Lo sentimos, no hemos podido eliminar esta dirección",
+        "empty": "Todavía no ha guardado ninguna dirección. Las direcciones que guarde se pueden elegir al enviar tokens desde su cartera.",
+        "name": "Nombre",
+        "namePlaceholder": "Introduzca un nombre para esta dirección",
+        "nameTaken": "Ya tiene una dirección guardada con este nombre",
+        "rename": "Cambiar nombre",
+        "saveFailed": "Lo sentimos, no hemos podido guardar esta dirección",
+        "title": "Libreta de direcciones"
+    },
     "admin": "admin",
     "advanced": "Avanzado",
     "airdropWarning": "Para poder participar del próximo Airdrop, debes ser miembro del canal **{channelName}** en la comunidad **{communityName}**. [Haz clic aquí para unirte.]({url})",

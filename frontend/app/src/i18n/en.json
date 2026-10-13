@@ -149,6 +149,22 @@
         "title": "Activity feed"
     },
     "addedBy": "{changedBy} added {changed} to the {level}",
+    "addressBook": {
+        "add": "Add address",
+        "address": "Address",
+        "addressPlaceholder": "Enter the address",
+        "alreadySaved": "This address is already saved as \"{name}\"",
+        "confirmDelete": "Delete \"{name}\" from your address book?",
+        "delete": "Delete",
+        "deleteFailed": "Sorry, we were unable to delete this address",
+        "empty": "You haven't saved any addresses yet. Addresses you save can be chosen when sending tokens from your wallet.",
+        "name": "Name",
+        "namePlaceholder": "Enter a name for this address",
+        "nameTaken": "You already have an address saved with this name",
+        "rename": "Rename",
+        "saveFailed": "Sorry, we were unable to save this address",
+        "title": "Address book"
+    },
     "admin": "admin",
     "advanced": "Advanced",
     "airdropWarning": "In order to qualify for the next Airdrop, you must be a member of the **{channelName}** channel in the **{communityName}** community. [Click here to join.]({url})",

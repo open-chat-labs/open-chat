@@ -90,3 +90,18 @@ describe("UserClient sending crypto in a direct chat", () => {
         );
     });
 });
+
+describe("UserClient deleting a saved crypto account", () => {
+    test("the account is deleted by name", async () => {
+        const updates: [string, unknown][] = [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const client = Object.create(UserClient.prototype) as any;
+        client.update = (method: string, args: unknown) => {
+            updates.push([method, args]);
+            return Promise.resolve({ kind: "success" });
+        };
+
+        await client.deleteCryptoAccount("Savings");
+        expect(updates).toEqual([["delete_saved_crypto_account", { name: "Savings" }]]);
+    });
+});

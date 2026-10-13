@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Leave a ledger's burn fee behind when moving funds from old canisters ([#9935](https://github.com/open-chat-labs/open-chat/pull/9935))
 - Only move amounts which exceed the fee from old canisters, as some ledgers require ([#9936](https://github.com/open-chat-labs/open-chat/pull/9936))
+- Replace migrated users' old ids with their latest in the bots' owners and permitted install locations ([#9941](https://github.com/open-chat-labs/open-chat/pull/9941))
 
 ## [[2.0.2130](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2130-local_user_index)] - 2026-10-12
 
