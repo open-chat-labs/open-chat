@@ -1,5 +1,6 @@
 <script lang="ts">
     import { AvatarSize, iconSize, mobileWidth } from "@client";
+    import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
     import { rtlStore } from "../../../stores/rtl";
@@ -41,7 +42,7 @@
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div class="back" class:rtl={$rtlStore} onclick={onClearSelection}>
-                <HoverIcon>
+                <HoverIcon title={$_("back")}>
                     {#if $rtlStore}
                         <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
                     {:else}
