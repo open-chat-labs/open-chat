@@ -74,6 +74,7 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 - **Menu** — from source hash `fd3b9a33`.
 - **MenuItem** — from source hash `81252d62`.
 - **MessageActions** — from source hash `b8b56d84`.
+- **MessageComposer** — from source hash `4f18c46b`.
 - **MessageGroup** — from source hash `39508894`.
 - **PageHeader** — from source hash `5a474f84`.
 - **PanelCover** — from source hash `8d024aca`.

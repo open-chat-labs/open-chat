@@ -1,203 +1,1326 @@
-<!-- Generated from lib/MessageComposer.dc.html (source hash 4f18c46b) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Message composer: + menu (photo/video, file, poll, prize, send / swap crypto, Meme Fighter), emoji/GIF picker, auto-growing text,
+     mic ↔ send swap, and a voice flow: recording (live waveform + timer) → review (play back, seek) → send or delete.
+     Optional reply / edit strip (context) and a staged attachment (chip or media tray). Esc closes menus, cancels the
+     reply/edit, or deletes a recording. `demo` forces a state for docs/screenshots; otherwise fully interactive. -->
 <script lang="ts">
-  import { useLogic, t, ref } from '../dc/runtime.svelte';
-  import Logic from './MessageComposer.logic.js';
+  import { onMount, tick, untrack } from 'svelte';
+  import type { ComposerAttachment, ComposerContext, MenuItem } from '../types';
   import EmojiPicker from './EmojiPicker.svelte';
   import Menu from './Menu.svelte';
   import SegmentedTabs from './SegmentedTabs.svelte';
   import TokenAvatar from './TokenAvatar.svelte';
 
+  type AttachKind = 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter';
+
+  const GIF_CATS = ['Trending', 'Reactions', 'Celebrate', 'Crypto', 'Thanks'] as const;
+  const GIF_TONES = [
+    'linear-gradient(150deg,#5CB8FF,#2F6BFF)',
+    'linear-gradient(150deg,#FF8FA8,#E0456A)',
+    'linear-gradient(150deg,#FFC061,#F58A2E)',
+    'linear-gradient(150deg,#2EE6A8,#1FA6B8)',
+    'linear-gradient(150deg,#E27BFF,#9B3FD9)',
+    'linear-gradient(150deg,#8B7BFF,#5B3FD9)',
+  ];
+  const GIF_WORDS: Record<(typeof GIF_CATS)[number], string[]> = {
+    Trending: ['mic drop', "let's go", 'this is fine', 'no way', 'mood', 'facepalm', 'slow clap', 'hype'],
+    Reactions: ['lol', 'shocked', 'eye roll', 'nod', 'shrug', 'yikes'],
+    Celebrate: ['confetti', 'dance', 'cheers', 'woohoo', 'fireworks', 'trophy'],
+    Crypto: ['to the moon', 'hodl', 'wagmi', 'gm', 'number go up', 'diamond hands'],
+    Thanks: ['thank you', 'bow', 'high five', 'appreciate it', 'hug', 'legend'],
+  };
+  const HEIGHTS = ['112px', '150px', '132px', '96px', '140px', '118px', '104px', '146px'];
+  const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  const amp = () => 0.18 + Math.random() * 0.82;
+
   interface Props {
-    demo?: string;
+    /** Forces a state for docs and screenshots. */
+    demo?: 'interactive' | 'idle' | 'typing' | 'plus' | 'emoji' | 'gif' | 'recording' | 'review';
     placeholder?: string;
     onSend?: (text: string) => void;
-    onAttach?: (kind: 'file' | 'poll' | 'prize' | 'crypto' | 'memeFighter') => void;
+    onAttach?: (kind: AttachKind) => void;
     onGif?: (query: string) => void;
     onVoice?: (r: { duration: number }) => void;
-    attachment?: { type: 'prize' | 'transfer' | 'file' | 'media'; title?: string; summary?: string; token?: object; tint?: string; items?: { kind: 'image' | 'video'; src?: string; bg?: string; dur?: string }[] } | null;
+    attachment?: ComposerAttachment | null;
     onEditAttachment?: () => void;
     onRemoveAttachment?: () => void;
     onAddMedia?: () => void;
     onRemoveMediaItem?: (index: number) => void;
-    context?: { key: string; mode: 'reply' | 'edit'; name?: string; quote: string; thumb?: string; text?: string } | null;
+    context?: ComposerContext | null;
     onCancelContext?: () => void;
     onSubmitEdit?: (text: string) => void;
     onJumpContext?: () => void;
-    [key: string]: unknown;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let {
+    demo = 'interactive',
+    placeholder = 'Message',
+    onSend,
+    onAttach,
+    onGif,
+    onVoice,
+    attachment = null,
+    onEditAttachment,
+    onRemoveAttachment,
+    onAddMedia,
+    onRemoveMediaItem,
+    context = null,
+    onCancelContext,
+    onSubmitEdit,
+    onJumpContext,
+  }: Props = $props();
+
+  let root: HTMLDivElement;
+  let input = $state<HTMLTextAreaElement>();
+  let search = $state<HTMLInputElement>();
+  let wave = $state<HTMLDivElement>();
+
+  let draft = $state('');
+  let menu = $state<'plus' | 'picker' | null>(null);
+  let tab = $state(0);
+  let query = $state('');
+  let gifCat = $state(0);
+  let voice = $state<'recording' | 'review' | null>(null);
+  let secs = $state(0);
+  let levels = $state<number[]>([]);
+  let playing = $state(false);
+  let playPos = $state(0);
+  let focused = $state(false);
+  let seeking = $state(false);
+  let barCount = $state(40);
+
+  let recTimer: ReturnType<typeof setInterval> | undefined;
+  let playTimer: ReturnType<typeof setInterval> | undefined;
+  let endSeek: (() => void) | null = null;
+
+  const editing = $derived(context?.mode === 'edit');
+  const att = $derived(editing ? null : attachment);
+  const hasContent = $derived(!!draft.trim() || !!att);
+  const needle = $derived(query.trim().toLowerCase());
+  const gifWords = $derived(needle ? [...GIF_WORDS.Trending, ...GIF_WORDS.Reactions].filter((w) => w.includes(needle)) : GIF_WORDS[GIF_CATS[gifCat]]);
+
+  // waveform: recording shows the latest samples scrolling in from the right; review shows the whole take, played part highlighted
+  const bars = $derived.by(() => {
+    if (voice === 'review') {
+      const step = Math.max(1, levels.length / barCount);
+      return Array.from({ length: barCount }, (_, i) => ({ h: Math.round(4 + (levels[Math.floor(i * step)] ?? 0.2) * 22), played: i / barCount < playPos, idle: false }));
+    }
+    // always barCount slots so the waveform spans the full width; empty leading slots show a quiet baseline
+    const tail = levels.slice(-barCount), pad = barCount - tail.length;
+    return Array.from({ length: barCount }, (_, i) => (i < pad ? { h: 3, played: false, idle: true } : { h: Math.round(4 + tail[i - pad] * 22), played: false, idle: false }));
+  });
+
+  const plusItems: MenuItem[] = [
+    { label: 'Photo or video', mask: 'var(--icon-image) center/contain no-repeat', onSelect: () => attach('media') },
+    { label: 'File', mask: 'var(--icon-file) center/contain no-repeat', onSelect: () => attach('file') },
+    { label: 'Poll', mask: 'var(--icon-poll) center/contain no-repeat', onSelect: () => attach('poll') },
+    { label: 'Prize message', mask: 'var(--icon-trophy) center/contain no-repeat', onSelect: () => attach('prize') },
+    { label: 'Send crypto', mask: 'var(--icon-wallet-send) center/contain no-repeat', onSelect: () => attach('crypto') },
+    { label: 'Swap crypto', mask: 'var(--icon-swap) center/contain no-repeat', onSelect: () => attach('swap') },
+    { label: 'Meme Fighter', mask: 'var(--icon-joystick) center/contain no-repeat', onSelect: () => attach('memeFighter') },
+  ];
+
+  function attach(kind: AttachKind) {
+    menu = null;
+    onAttach?.(kind);
+  }
+
+  function grow() {
+    const t = input;
+    if (!t) return;
+    t.style.height = '22px';
+    const h = t.scrollHeight - 14;
+    t.style.height = `${Math.min(h, 160)}px`;
+    t.style.overflowY = h > 160 ? 'auto' : 'hidden';
+  }
+
+  async function insert(text: string) {
+    const t = input;
+    const a = t ? t.selectionStart : draft.length, b = t ? t.selectionEnd : draft.length;
+    draft = draft.slice(0, a) + text + draft.slice(b);
+    await tick();
+    if (t) {
+      t.focus();
+      t.selectionStart = t.selectionEnd = a + text.length;
+      grow();
+    }
+  }
+
+  async function send() {
+    if (!hasContent && !editing) return;
+    if (editing) {
+      onSubmitEdit?.(draft.trim());
+      return;
+    }
+    const text = draft.trim();
+    draft = '';
+    await tick();
+    grow();
+    onSend?.(text);
+    input?.focus();
+  }
+
+  function startTicking() {
+    clearInterval(recTimer);
+    let n = 0;
+    recTimer = setInterval(() => {
+      n++;
+      levels = [...levels, amp()].slice(-200);
+      if (n % 8 === 0) secs++;
+    }, 125);
+  }
+
+  function resume() {
+    const dur = Math.max(1, secs) * 1000;
+    clearInterval(playTimer);
+    playing = true;
+    playTimer = setInterval(() => {
+      const next = playPos + 100 / dur;
+      if (next >= 1) {
+        clearInterval(playTimer);
+        playPos = 1;
+        playing = false;
+      } else playPos = next;
+    }, 100);
+  }
+
+  function startRecording() {
+    voice = 'recording';
+    secs = 0;
+    levels = [];
+    menu = null;
+    startTicking();
+  }
+
+  function stopRecording() {
+    clearInterval(recTimer);
+    voice = 'review';
+    playPos = 0;
+    playing = false;
+  }
+
+  function resetVoice() {
+    clearInterval(recTimer);
+    clearInterval(playTimer);
+    voice = null;
+    secs = 0;
+    levels = [];
+    playing = false;
+    playPos = 0;
+  }
+
+  function sendVoice() {
+    const duration = secs;
+    resetVoice();
+    onVoice?.({ duration });
+  }
+
+  function togglePlay() {
+    if (playing) {
+      clearInterval(playTimer);
+      playing = false;
+      return;
+    }
+    if (playPos >= 1) playPos = 0;
+    resume();
+  }
+
+  async function togglePicker() {
+    const opening = menu !== 'picker';
+    menu = opening ? 'picker' : null;
+    query = '';
+    if (opening && demo === 'interactive') {
+      await tick();
+      search?.focus({ preventScroll: true });
+    }
+  }
+
+  function rootKey(e: KeyboardEvent) {
+    if (e.key !== 'Escape') return;
+    if (context && !menu && !voice) {
+      e.stopPropagation();
+      onCancelContext?.();
+    } else if (menu) {
+      e.stopPropagation();
+      menu = null;
+      input?.focus();
+    } else if (voice) {
+      e.stopPropagation();
+      resetVoice();
+    }
+  }
+
+  // review waveform doubles as a seek slider: click/drag anywhere, arrows step 1s, Home/End jump
+  function seekStart(e: PointerEvent) {
+    const el = wave;
+    if (voice !== 'review' || !el) return;
+    e.preventDefault();
+    const at = (x: number) => {
+      const r = el.getBoundingClientRect();
+      return Math.max(0, Math.min(1, (x - r.left) / r.width));
+    };
+    const wasPlaying = playing;
+    clearInterval(playTimer);
+    playPos = at(e.clientX);
+    seeking = true;
+    playing = false;
+    el.focus({ preventScroll: true });
+    const move = (ev: PointerEvent) => (playPos = at(ev.clientX));
+    const up = () => {
+      endSeek?.();
+      seeking = false;
+      if (wasPlaying) resume();
+    };
+    endSeek = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      endSeek = null;
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
+  function seekKey(e: KeyboardEvent) {
+    if (voice !== 'review') return;
+    const step = 1 / Math.max(1, secs);
+    const k = ({ ArrowRight: step, ArrowUp: step, ArrowLeft: -step, ArrowDown: -step } as Record<string, number>)[e.key];
+    if (k != null) {
+      e.preventDefault();
+      playPos = Math.max(0, Math.min(1, playPos + k));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      playPos = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      playPos = 1;
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      togglePlay();
+    }
+  }
+
+  function applyDemo(d: Props['demo']) {
+    if (!d || d === 'interactive') return;
+    clearInterval(recTimer);
+    clearInterval(playTimer);
+    menu = null;
+    voice = null;
+    draft = '';
+    tab = 0;
+    playing = false;
+    playPos = 0;
+    focused = false;
+    if (d === 'typing') {
+      draft = 'Shipping the composer today — anyone want a preview?';
+      focused = true;
+    } else if (d === 'plus') menu = 'plus';
+    else if (d === 'emoji') menu = 'picker';
+    else if (d === 'gif') {
+      menu = 'picker';
+      tab = 1;
+    } else if (d === 'recording' || d === 'review') {
+      levels = Array.from({ length: 160 }, amp);
+      voice = d;
+      secs = d === 'recording' ? 7 : 12;
+      if (d === 'recording') startTicking();
+      else playPos = 0.35;
+    }
+  }
+
+  // demo changes re-apply the forced state
+  $effect(() => {
+    const d = demo;
+    untrack(() => applyDemo(d));
+  });
+
+  // reply/edit context: edit pre-fills the original text; both move focus into the input
+  let prevContext = untrack(() => context);
+  $effect(() => {
+    const next = context;
+    untrack(async () => {
+      const prev = prevContext;
+      prevContext = next;
+      if (prev?.key === next?.key) return;
+      if (next?.mode === 'edit') {
+        draft = next.text ?? '';
+        menu = null;
+        await tick();
+        if (input) {
+          input.focus({ preventScroll: true });
+          input.selectionStart = input.selectionEnd = input.value.length;
+          grow();
+        }
+      } else if (prev?.mode === 'edit' && !next) {
+        draft = '';
+        await tick();
+        grow();
+      } else if (next) input?.focus({ preventScroll: true });
+    });
+  });
+
+  onMount(() => {
+    const down = (e: MouseEvent) => {
+      if (menu && !root.contains(e.target as Node)) menu = null;
+    };
+    document.addEventListener('mousedown', down);
+    // bar count follows the available width: one 3px bar per ~5px, so spacing stays tight at any size
+    const fit = () => (barCount = Math.max(16, Math.min(120, Math.floor((root.getBoundingClientRect().width - 170) / 5))));
+    const ro = new ResizeObserver(fit);
+    ro.observe(root);
+    fit();
+    return () => {
+      document.removeEventListener('mousedown', down);
+      ro.disconnect();
+      endSeek?.();
+      clearInterval(recTimer);
+      clearInterval(playTimer);
+    };
+  });
+
+  const removeLabel = $derived(
+    att?.type === 'swap' ? 'Remove swap offer' : att?.type === 'transfer' ? 'Remove transfer' : att?.type === 'file' ? 'Remove file' : 'Remove prize',
+  );
+  const chip = $derived.by(() => {
+    if (!att || att.type === 'media') return null;
+    if (att.type === 'file') return { label: att.title, meta: att.summary, title: '' };
+    if (att.type === 'swap') return { label: att.title, meta: att.summary, title: att.hint };
+    const label = att.type === 'transfer' ? att.title : `${att.amountText} prize`;
+    return {
+      label,
+      meta: att.summary + (att.feeText ? ` · +${att.feeText} fee` : ''),
+      title: att.totalText ? `${att.summary} · ${att.totalText} total incl. fees` : '',
+    };
+  });
 </script>
 
-<div style="position:relative;width:100%" use:ref={v.rootRef} onkeydown={v.onRootKey}>
-  {#if v.plusOpen}
-    <div style="position:absolute;left:0;bottom:calc(100% + 8px);z-index:20">
-      <Menu heading="ADD TO MESSAGE" minWidth="232px" items={v.plusItems}></Menu>
+<div class="composer" bind:this={root} onkeydown={rootKey} role="group">
+  {#if menu === 'plus'}
+    <div class="popup">
+      <Menu heading="ADD TO MESSAGE" minWidth="232px" items={plusItems} />
     </div>
   {/if}
-  {#if v.pickerOpen}
-    <div style="position:absolute;left:0;bottom:calc(100% + 8px);z-index:20;width:min(360px,100%);height:400px;box-sizing:border-box;display:flex;flex-direction:column;gap:var(--space-10);padding:var(--space-10);border-radius:var(--radius-lg);background:var(--surface-2,#191921);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),var(--shadow-panel,0 8px 24px rgba(0,0,0,.28))" role="dialog" aria-label={v.pickerLabel}>
-      <SegmentedTabs labels={v.pickerTabs} selectedIndex={v.pickerIndex} onSelect={v.onPickerTab}></SegmentedTabs>
-      {#if v.isGifTab}
-      <div style="flex:none;display:flex;align-items:center;gap:var(--space-8);height:38px;padding:0 var(--space-12);border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-        <span style="flex:none;width:15px;height:15px;background:var(--ink-4,#8A8A99);mask:var(--icon-search) center/contain no-repeat"></span>
-        <input style="flex:1;min-width:0;height:100%;padding:0;border:0;outline:none;background:transparent;font:var(--weight-regular) var(--text-sm)/1 var(--font-sans);color:var(--ink,#ECECF1)" use:ref={v.searchRef} value={v.query} oninput={v.onQuery} placeholder={v.searchPlaceholder} aria-label={v.searchPlaceholder}>
-      </div>
-      {/if}
-      {#if v.isEmojiTab}
-        <div style="flex:1;min-height:0;display:grid;grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr);margin:0 calc(var(--space-10) * -1) calc(var(--space-10) * -1)">
-          <div style="min-height:0;height:100%"><EmojiPicker onPick={v.pickEmoji} onClose={v.closePicker} autoFocus={v.pickerAutoFocus}></EmojiPicker></div>
+  {#if menu === 'picker'}
+    <div class="popup picker" role="dialog" aria-label={tab ? 'GIFs' : 'Emoji'}>
+      <SegmentedTabs
+        labels={['Emoji', 'GIF']}
+        selectedIndex={tab}
+        dotOnLast={false}
+        onSelect={(i) => {
+          tab = i;
+          query = '';
+        }}
+      />
+      {#if tab === 0}
+        <div class="emoji-area">
+          <div class="fill"><EmojiPicker onPick={insert} onClose={() => (menu = null)} autoFocus={demo === 'interactive'} /></div>
         </div>
-      {/if}
-
-      {#if v.isGifTab}
-        <div style="flex:none;display:flex;gap:var(--space-6);overflow-x:auto">
-          {#each v.gifCats ?? [] as c, i0}
-            <span style="flex:none;display:flex;align-items:center;height:28px;padding:0 var(--space-10);border-radius:var(--radius-pill);background:{c.bg};font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);color:{c.ink};cursor:pointer;user-select:none" onclick={c.pick} role="button" tabindex="0" aria-pressed={c.pressed}>{t(c.label)}</span>
+      {:else}
+        <div class="search">
+          <span class="search-icon"></span>
+          <input bind:this={search} bind:value={query} placeholder="Search GIFs" aria-label="Search GIFs" />
+        </div>
+        <div class="cats">
+          {#each GIF_CATS as cat, i}
+            {@const on = !needle && i === gifCat}
+            <span
+              class="cat"
+              class:on
+              onclick={() => {
+                gifCat = i;
+                query = '';
+              }}
+              role="button"
+              tabindex="0"
+              aria-pressed={on}>{cat}</span
+            >
           {/each}
         </div>
-        <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden"><div style="column-count:2;column-gap:var(--space-6)">
-          {#each v.gifs ?? [] as gf, i1}
-            <span class="dc-p0" style="position:relative;display:block;break-inside:avoid;margin-bottom:var(--space-6);height:{gf.h};border-radius:var(--radius-md);background:{gf.bg};overflow:hidden;cursor:pointer" onclick={gf.pick} role="button" tabindex="0" aria-label={gf.label}>
-              <span style="position:absolute;left:8px;bottom:7px;padding:3px 6px;border-radius:5px;background:rgba(0,0,0,.45);font:var(--weight-semibold) 10.5px/1 var(--font-sans);color:#fff">{t(gf.label)}</span>
-            </span>
-          {/each}
+        <div class="gif-scroll">
+          <div class="gif-columns">
+            {#each gifWords as word, i}
+              <span
+                class="gif"
+                style:height={HEIGHTS[i % HEIGHTS.length]}
+                style:background={GIF_TONES[(i + gifCat) % GIF_TONES.length]}
+                onclick={() => {
+                  menu = null;
+                  onGif?.(word);
+                }}
+                role="button"
+                tabindex="0"
+                aria-label={word}><span class="gif-label">{word}</span></span
+              >
+            {/each}
           </div>
         </div>
       {/if}
     </div>
   {/if}
 
-  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--space-8);row-gap:var(--space-12,12px);min-height:52px;box-sizing:border-box;padding:var(--space-8);border-radius:var(--radius-xl);background:var(--field,#14141a);box-shadow:{v.barRing};transition:box-shadow var(--duration-fast,.12s)">
-    {#if v.hasMediaTray}
-      <div style="flex:1 0 100%;min-width:0;display:flex;flex-wrap:wrap;gap:var(--space-8);padding:2px">
-        {#each v.trayItems ?? [] as m, i2}
-          <div style="position:relative;flex:none;width:72px;height:72px;border-radius:var(--radius-md,12px);overflow:hidden;background:{m.bg}">
-            {#if m.hasVideo}<video style="width:100%;height:100%;object-fit:cover;display:block" src={m.src} muted playsinline preload="metadata"></video>{/if}
-            {#if m.isVideo}<span style="position:absolute;left:5px;bottom:5px;display:flex;align-items:center;gap:3px;padding:3px 5px;border-radius:5px;background:rgba(0,0,0,.55);font:600 10.5px/1 var(--font-mono);color:#fff"><span style="width:8px;height:8px;background:#fff;mask:var(--icon-play) center/contain no-repeat"></span>{t(m.dur)}</span>{/if}
-            <span class="dc-p1" style="position:absolute;top:4px;right:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(0,0,0,.6);cursor:pointer" onclick={m.onRemove} role="button" tabindex="0" aria-label={m.removeLabel} title="Remove"><span style="width:10px;height:10px;background:#fff;mask:var(--icon-close) center/contain no-repeat"></span></span>
+  <div class="bar" class:focused={focused || !!menu} class:recording={voice === 'recording'} class:editing>
+    {#if att?.type === 'media'}
+      <div class="tray">
+        {#each att.items as item, i}
+          <div class="thumb" style:background={item.src && item.kind === 'image' ? `center/cover no-repeat url(${item.src})` : item.bg || 'var(--surface-2,#15151b)'}>
+            {#if item.kind === 'video' && item.src}<video src={item.src} muted playsinline preload="metadata"></video>{/if}
+            {#if item.kind === 'video'}<span class="duration"><span class="duration-icon"></span>{item.dur || 'Video'}</span>{/if}
+            <span class="thumb-remove" onclick={() => onRemoveMediaItem?.(i)} role="button" tabindex="0" aria-label="Remove {item.kind === 'video' ? 'video' : 'photo'} {i + 1}" title="Remove"
+              ><span class="thumb-remove-icon"></span></span
+            >
           </div>
         {/each}
-        {#if v.trayCanAdd}
-          <span class="dc-p2" style="flex:none;width:72px;height:72px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-md,12px);box-shadow:inset 0 0 0 1.5px var(--line-2,rgba(255,255,255,.14));cursor:pointer" onclick={v.addMedia} role="button" tabindex="0" aria-label="Add photos or videos" title="Add more"><span style="width:20px;height:20px;background:var(--ink-3,#9A9AA8);mask:var(--icon-plus) center/contain no-repeat"></span></span>
+        {#if att.items.length < 10}
+          <span class="tray-add" onclick={onAddMedia} role="button" tabindex="0" aria-label="Add photos or videos" title="Add more"><span class="tray-add-icon"></span></span>
         {/if}
       </div>
     {/if}
-    {#if v.hasCtx}
-      <div style="flex:1 0 100%;min-width:0;display:flex;align-items:center;gap:10px;min-height:44px;box-sizing:border-box;padding:4px 4px 4px 6px;border-radius:16px;background:var(--surface-2,#191921)" role="status" aria-label={v.ctxLabel}>
-        <span class="dc-p3" style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;border-radius:12px" onclick={v.jumpCtx} role="button" tabindex="0" title="Show original message">
-          {#if v.ctxHasThumb}<span style="flex:none;width:36px;height:36px;border-radius:10px;background:{v.ctxThumb}"></span>{/if}
-          {#if v.ctxNoThumb}<span style="flex:none;width:32px;height:32px;border-radius:50%;background:{v.ctxIconBg};display:flex;align-items:center;justify-content:center"><span style="width:15px;height:15px;background:{v.ctxInk};mask:{v.ctxMask}"></span></span>{/if}
-          <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:600 12.5px/1.1 var(--font-sans);color:{v.ctxInk}">{t(v.ctxLabel)}</span><span style="font:400 13px/1.2 var(--font-sans);color:var(--ink-3,#A3A3B2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(v.ctxQuote)}</span></span>
+    {#if context && !voice}
+      <div class="context" role="status" aria-label={editing ? 'Editing message' : `Replying to ${context.name || 'message'}`}>
+        <span class="context-main" onclick={onJumpContext} role="button" tabindex="0" title="Show original message">
+          {#if context.thumb}
+            <span class="context-thumb" style:background={context.thumb}></span>
+          {:else}
+            <span class="context-icon" class:editing><span class="context-glyph" style:mask="var(--icon-{editing ? 'edit' : 'reply'}) center/contain no-repeat"></span></span>
+          {/if}
+          <span class="context-text"
+            ><span class="context-label" class:editing>{editing ? 'Editing message' : `Replying to ${context.name || 'message'}`}</span><span class="context-quote">{context.quote}</span></span
+          >
         </span>
-        <span class="dc-p4" style="width:32px;height:32px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer" onclick={v.cancelCtx} role="button" tabindex="0" aria-label={v.ctxCancel} data-tip={v.ctxCancel}><span style="width:13px;height:13px;background:var(--ink-2,#C9C9D4);mask:var(--icon-close) center/contain no-repeat"></span></span>
+        <span class="round-close" onclick={onCancelContext} role="button" tabindex="0" aria-label={editing ? 'Cancel edit' : 'Cancel reply'} data-tip={editing ? 'Cancel edit' : 'Cancel reply'}
+          ><span class="close-icon"></span></span
+        >
       </div>
     {/if}
-    {#if v.hasChip}
-      <div style="flex:1 0 100%;min-width:0;display:flex;align-items:center;gap:10px;height:44px;box-sizing:border-box;padding:0 6px;border-radius:999px;background:color-mix(in oklch,var(--accent,#FF5672) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in oklch,var(--accent,#FF5672) 32%,transparent)">
-        {#if v.attIsFile}<span style="width:32px;height:32px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:50%;background:{v.attTint}"><span style="width:15px;height:15px;background:#fff;mask:var(--icon-file) center/contain no-repeat"></span></span>{/if}
-        {#if v.attHasPair}<div style="flex:none;display:flex"><TokenAvatar symbol={v.attA.symbol} mark={v.attA.mark} gradient={v.attA.gradient} size={28}></TokenAvatar><div style="margin-left:-8px;border-radius:50%;box-shadow:0 0 0 2px var(--field,#14141a)"><TokenAvatar symbol={v.attB.symbol} mark={v.attB.mark} gradient={v.attB.gradient} size={28}></TokenAvatar></div></div>{/if}
-        {#if v.attHasToken}<TokenAvatar symbol={v.att.token.symbol} mark={v.att.token.mark} gradient={v.att.token.gradient} size={28}></TokenAvatar>{/if}
-        <span style="flex:none;font:var(--weight-bold,700) 14px/1 var(--font-sans);color:var(--ink,#ECECF1);white-space:nowrap">{t(v.attLabel)}</span>
-        <span style="flex:1;min-width:0;font:var(--weight-medium,500) 13px/1 var(--font-sans);color:var(--ink-3,#9A9AA8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title={v.attTitle}>{t(v.attMeta)}</span>
-        {#if v.attEditable}<span class="dc-p5" style="flex:none;padding:6px 8px;border-radius:var(--radius-sm);font:var(--weight-semibold,600) 13px/1 var(--font-sans);color:var(--accent-bright,#FF8298);cursor:pointer" onclick={v.editAttachment} role="button" tabindex="0">Edit</span>{/if}
-        <span class="dc-p6" style="width:32px;height:32px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer" onclick={v.removeAttachment} role="button" tabindex="0" aria-label={v.attRemove} title={v.attRemove}><span style="width:13px;height:13px;background:var(--ink-2,#C9C9D4);mask:var(--icon-close) center/contain no-repeat"></span></span>
-      </div>
-    {/if}
-    {#if v.isCompose}
-      <div style="flex:none;display:flex;gap:var(--space-2)">
-        {#if v.showPlus}<span class="dc-p7" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-md);background:{v.plusBg};cursor:pointer" onclick={v.togglePlus} role="button" tabindex="0" aria-label="Add to message" aria-expanded={v.plusExpanded} aria-haspopup="menu" title="Add file, poll, prize, crypto or game">
-          <span style="width:18px;height:18px;background:{v.plusInk};mask:var(--icon-plus) center/contain no-repeat;transform:{v.plusRotate};transition:transform var(--duration-base,.2s)"></span></span>
+    {#if att && chip}
+      <div class="chip">
+        {#if att.type === 'file'}
+          <span class="file-tile" style:background={att.tint || 'var(--overlay-2,rgba(255,255,255,.1))'}><span class="file-icon"></span></span>
+        {:else if att.type === 'swap'}
+          <div class="pair">
+            <TokenAvatar symbol={att.pair[0].symbol} mark={att.pair[0].mark} gradient={att.pair[0].gradient} size={28} />
+            <div class="pair-second"><TokenAvatar symbol={att.pair[1].symbol} mark={att.pair[1].mark} gradient={att.pair[1].gradient} size={28} /></div>
+          </div>
+        {:else if att.type !== 'media'}
+          <TokenAvatar symbol={att.token.symbol} mark={att.token.mark} gradient={att.token.gradient} size={28} />
         {/if}
-        <span class="dc-p8" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-md);background:{v.emojiBg};cursor:pointer" onclick={v.togglePicker} role="button" tabindex="0" aria-label="Emoji and GIFs" aria-expanded={v.pickerExpanded} aria-haspopup="dialog" title="Emoji and GIFs">
-          <span style="width:18px;height:18px;background:{v.emojiInk};mask:var(--icon-emoji) center/contain no-repeat"></span>
-        </span>
+        <span class="chip-label">{chip.label}</span>
+        <span class="chip-meta" title={chip.title}>{chip.meta}</span>
+        {#if att.type !== 'file'}<span class="chip-edit" onclick={onEditAttachment} role="button" tabindex="0">Edit</span>{/if}
+        <span class="round-close" onclick={onRemoveAttachment} role="button" tabindex="0" aria-label={removeLabel} title={removeLabel}><span class="close-icon"></span></span>
       </div>
-      <div style="flex:1;min-width:0;display:flex;align-items:center;min-height:36px;padding:0 var(--space-4)">
-        <textarea style="flex:1;min-width:0;height:22px;max-height:160px;padding:7px 0;box-sizing:content-box;border:0;outline:none;resize:none;overflow-y:hidden;scrollbar-width:thin;background:transparent;font:var(--weight-regular) var(--text-base)/22px var(--font-sans);color:var(--ink,#ECECF1)" use:ref={v.inputRef} rows="1" value={v.draft} oninput={v.onDraft} onkeydown={v.onKey} onfocus={v.onFocus} onblur={v.onBlur} placeholder={v.placeholder} aria-label={v.placeholder}></textarea>
+    {/if}
+    {#if !voice}
+      <div class="tools">
+        {#if !editing}
+          <span
+            class="tool"
+            class:open={menu === 'plus'}
+            onclick={() => (menu = menu === 'plus' ? null : 'plus')}
+            role="button"
+            tabindex="0"
+            aria-label="Add to message"
+            aria-expanded={menu === 'plus'}
+            aria-haspopup="menu"
+            title="Add file, poll, prize, crypto or game"><span class="tool-icon plus"></span></span
+          >
+        {/if}
+        <span class="tool" class:open={menu === 'picker'} onclick={togglePicker} role="button" tabindex="0" aria-label="Emoji and GIFs" aria-expanded={menu === 'picker'} aria-haspopup="dialog" title="Emoji and GIFs"
+          ><span class="tool-icon emoji"></span></span
+        >
       </div>
-      {#if v.showMic}
-        <span class="dc-p9" style="flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));cursor:pointer" onclick={v.startRec} role="button" tabindex="0" aria-label="Record voice message" title="Record voice message">
-          <span style="width:18px;height:18px;background:var(--ink-2,#C9C9D4);mask:var(--icon-mic) center/contain no-repeat"></span>
-        </span>
+      <div class="input-wrap">
+        <textarea
+          bind:this={input}
+          rows="1"
+          value={draft}
+          oninput={(e) => {
+            draft = e.currentTarget.value;
+            grow();
+          }}
+          onkeydown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+              e.preventDefault();
+              send();
+            }
+          }}
+          onfocus={() => (focused = true)}
+          onblur={() => (focused = false)}
+          placeholder={att ? 'Add a caption' : placeholder}
+          aria-label={att ? 'Add a caption' : placeholder}
+        ></textarea>
+      </div>
+      {#if hasContent || editing}
+        <span class="action send" onclick={send} role="button" tabindex="0" aria-label={editing ? 'Save edit' : 'Send message'} title={editing ? 'Save (Enter)' : 'Send (Enter)'}
+          ><span class="send-icon" style:mask="var(--icon-{editing ? 'check' : 'send'}) center/contain no-repeat"></span></span
+        >
+      {:else}
+        <span class="action mic" onclick={startRecording} role="button" tabindex="0" aria-label="Record voice message" title="Record voice message"><span class="mic-icon"></span></span>
       {/if}
-      {#if v.showSend}
-        <span class="dc-p10" style="flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-md);background:var(--accent,#FF5672);cursor:pointer" onclick={v.send} role="button" tabindex="0" aria-label={v.sendLabel} title={v.sendTitle}>
-          <span style="width:17px;height:17px;background:var(--on-accent,#2E0512);mask:{v.sendMask}"></span>
-        </span>
-      {/if}
-    {/if}
-
-    {#if v.isVoice}
-      <span class="dc-p11" style="flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-md);cursor:pointer" onclick={v.cancelRec} role="button" tabindex="0" aria-label="Delete recording" title="Delete (Esc)">
-        <span style="width:18px;height:18px;background:var(--status-danger,#FF4D4D);mask:var(--icon-trash) center/contain no-repeat"></span>
-      </span>
-      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:var(--space-10);height:36px;padding:0 var(--space-4)">
-        {#if v.isRecording}
-          <span style="flex:none;width:9px;height:9px;border-radius:50%;background:var(--status-danger,#FF4D4D);animation:ocRecPulse 1.2s ease-in-out infinite" aria-hidden="true"></span>
+    {:else}
+      <span class="action delete" onclick={resetVoice} role="button" tabindex="0" aria-label="Delete recording" title="Delete (Esc)"><span class="delete-icon"></span></span>
+      <div class="voice">
+        {#if voice === 'recording'}
+          <span class="rec-dot" aria-hidden="true"></span>
+        {:else}
+          <span class="play" onclick={togglePlay} role="button" tabindex="0" aria-label={playing ? 'Pause' : 'Play recording'}
+            ><span class="play-icon" style:mask="var(--icon-{playing ? 'stop' : 'play'}) center/contain no-repeat"></span></span
+          >
         {/if}
-        {#if v.isReview}
-          <span class="dc-p12" style="flex:none;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--overlay-2,rgba(255,255,255,.1));cursor:pointer" onclick={v.togglePlay} role="button" tabindex="0" aria-label={v.playLabel}>
-            <span style="width:12px;height:12px;background:var(--ink,#ECECF1);mask:{v.playMask}"></span>
-          </span>
-        {/if}
-        <span style="flex:none;min-width:36px;font:var(--weight-medium) var(--text-sm)/1 var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap;color:{v.timeInk}" aria-live="off">{t(v.timeLabel)}</span>
-        <div class="dc-p13" style="position:relative;flex:1;min-width:0;height:32px;display:flex;align-items:center;justify-content:space-between;gap:0;overflow:hidden;border-radius:6px;outline:none;cursor:{v.waveCursor};touch-action:none" use:ref={v.waveRef} role={v.waveRole} tabindex={v.waveTab} aria-label={v.waveLabel} aria-valuemin={v.waveMin} aria-valuemax={v.waveMax} aria-valuenow={v.waveNow} aria-valuetext={v.waveText} aria-hidden={v.waveHidden} onpointerdown={v.onSeekStart} onkeydown={v.onSeekKey}>
-          {#each v.bars ?? [] as b, i3}
-            <span style="flex:none;width:3px;height:{b.h};border-radius:2px;background:{b.bg};transition:height .12s;pointer-events:none"></span>
+        <span class="timer" class:recording={voice === 'recording'} aria-live="off">{voice === 'review' ? `${mmss(secs * Math.min(1, playPos))} / ${mmss(secs)}` : mmss(secs)}</span>
+        <div
+          class="wave"
+          class:seekable={voice === 'review'}
+          bind:this={wave}
+          role={voice === 'review' ? 'slider' : undefined}
+          tabindex={voice === 'review' ? 0 : undefined}
+          aria-label={voice === 'review' ? 'Seek' : undefined}
+          aria-valuemin={voice === 'review' ? 0 : undefined}
+          aria-valuemax={voice === 'review' ? secs : undefined}
+          aria-valuenow={voice === 'review' ? Math.round(secs * playPos) : undefined}
+          aria-valuetext={voice === 'review' ? `${mmss(secs * playPos)} of ${mmss(secs)}` : undefined}
+          aria-hidden={voice === 'review' ? undefined : 'true'}
+          onpointerdown={seekStart}
+          onkeydown={seekKey}
+        >
+          {#each bars as b}
+            <span class="wave-bar" class:played={b.played} class:idle={b.idle} class:review={voice === 'review'} style:height="{b.h}px"></span>
           {/each}
-          {#if v.isReview}
-            <span style="position:absolute;top:0;bottom:0;left:{v.handleLeft};width:0;pointer-events:none" aria-hidden="true">
-              <span style="position:absolute;top:2px;bottom:2px;left:-1px;width:2px;border-radius:1px;background:var(--ink,#ECECF1)"></span>
-              <span style="position:absolute;top:50%;left:-6px;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:var(--ink,#ECECF1);box-shadow:0 0 0 2px var(--field,#14141a),0 1px 4px rgba(0,0,0,.4);transform:scale({v.handleScale});transition:transform var(--duration-fast,.12s)"></span>
+          {#if voice === 'review'}
+            <span class="handle" style:left="{Math.min(1, playPos) * 100}%" aria-hidden="true">
+              <span class="handle-line"></span>
+              <span class="handle-knob" class:seeking></span>
             </span>
           {/if}
         </div>
       </div>
-      {#if v.isRecording}
-        <span class="dc-p14" style="flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));cursor:pointer" onclick={v.stopRec} role="button" tabindex="0" aria-label="Stop recording" title="Stop and review">
-          <span style="width:12px;height:12px;border-radius:3px;background:var(--ink-2,#C9C9D4)"></span>
-        </span>
+      {#if voice === 'recording'}
+        <span class="action stop" onclick={stopRecording} role="button" tabindex="0" aria-label="Stop recording" title="Stop and review"><span class="stop-icon"></span></span>
       {/if}
-      <span class="dc-p15" style="flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-md);background:var(--accent,#FF5672);cursor:pointer" onclick={v.sendVoice} role="button" tabindex="0" aria-label="Send voice message" title="Send voice message">
-        <span style="width:17px;height:17px;background:var(--on-accent,#2E0512);mask:var(--icon-send) center/contain no-repeat"></span>
-      </span>
+      <span class="action send" onclick={sendVoice} role="button" tabindex="0" aria-label="Send voice message" title="Send voice message"
+        ><span class="send-icon" style:mask="var(--icon-send) center/contain no-repeat"></span></span
+      >
     {/if}
   </div>
-  {#if v.isRecording}
-    <span style="position:absolute;left:0;right:0;top:calc(100% + 6px);text-align:center;font:var(--weight-regular) var(--text-xs)/1 var(--font-sans);color:var(--ink-4,#8A8A99)">Recording · Esc to delete · stop to listen back</span>
+  {#if voice === 'recording'}
+    <span class="rec-hint">Recording · Esc to delete · stop to listen back</span>
   {/if}
 </div>
 
 <style>
-  .dc-p0:hover{filter:brightness(1.12) !important}
-  .dc-p0:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p1:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p2:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p2:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p3:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p4:hover{background:var(--overlay-2,rgba(255,255,255,.1)) !important}
-  .dc-p4:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p5:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p5:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p6:hover{background:var(--overlay-2,rgba(255,255,255,.1)) !important}
-  .dc-p6:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p7:hover{background:var(--overlay-2,rgba(255,255,255,.08)) !important}
-  .dc-p7:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p8:hover{background:var(--overlay-2,rgba(255,255,255,.08)) !important}
-  .dc-p8:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p9:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p9:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p10:hover{filter:brightness(1.08) !important}
-  .dc-p10:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p11:hover{background:var(--status-danger-soft,rgba(255,77,77,.12)) !important}
-  .dc-p11:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p12:hover{background:var(--btn-hover,rgba(255,255,255,.14)) !important}
-  .dc-p12:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p13:focus-visible{box-shadow:var(--focus-ring) !important}
-  .dc-p14:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p14:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
-  .dc-p15:hover{filter:brightness(1.08) !important}
-  .dc-p15:focus-visible{box-shadow:var(--focus-ring) !important;outline:none !important}
+  .composer {
+    position: relative;
+    width: 100%;
+  }
+
+  .popup {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 8px);
+    z-index: 20;
+  }
+
+  .picker {
+    width: min(360px, 100%);
+    height: 400px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+    padding: var(--space-10);
+    border-radius: var(--radius-lg);
+    background: var(--surface-2, #191921);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      var(--shadow-panel, 0 8px 24px rgba(0, 0, 0, 0.28));
+  }
+
+  .emoji-area {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    margin: 0 calc(var(--space-10) * -1) calc(var(--space-10) * -1);
+  }
+
+  .fill {
+    min-height: 0;
+    height: 100%;
+  }
+
+  .search {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    height: 38px;
+    padding: 0 var(--space-12);
+    border-radius: var(--radius-md);
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .search-icon {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    background: var(--ink-4, #8a8a99);
+    mask: var(--icon-search) center/contain no-repeat;
+  }
+
+  .search input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .cats {
+    flex: none;
+    display: flex;
+    gap: var(--space-6);
+    overflow-x: auto;
+  }
+
+  .cat {
+    flex: none;
+    display: flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 var(--space-10);
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .cat.on {
+    background: var(--ink, #ececf1);
+    color: var(--surface-1, #0e0e12);
+  }
+
+  .gif-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .gif-columns {
+    column-count: 2;
+    column-gap: var(--space-6);
+  }
+
+  .gif {
+    position: relative;
+    display: block;
+    break-inside: avoid;
+    margin-bottom: var(--space-6);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .gif:hover {
+    filter: brightness(1.12);
+  }
+
+  .gif-label {
+    position: absolute;
+    left: 8px;
+    bottom: 7px;
+    padding: 3px 6px;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.45);
+    font: var(--weight-semibold) 10.5px/1 var(--font-sans);
+    color: #fff;
+  }
+
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-8);
+    row-gap: var(--space-12, 12px);
+    min-height: 52px;
+    box-sizing: border-box;
+    padding: var(--space-8);
+    border-radius: var(--radius-xl);
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.08));
+    transition: box-shadow var(--duration-fast, 0.12s);
+  }
+
+  .bar.recording {
+    box-shadow: inset 0 0 0 1px var(--status-danger-line, rgba(255, 77, 77, 0.4));
+  }
+
+  .bar.focused {
+    box-shadow: inset 0 0 0 1px var(--line-3, rgba(255, 255, 255, 0.22));
+  }
+
+  .bar.editing {
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 55%, transparent);
+  }
+
+  .tray {
+    flex: 1 0 100%;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-8);
+    padding: 2px;
+  }
+
+  .thumb {
+    position: relative;
+    flex: none;
+    width: 72px;
+    height: 72px;
+    border-radius: var(--radius-md, 12px);
+    overflow: hidden;
+  }
+
+  .thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .duration {
+    position: absolute;
+    left: 5px;
+    bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 5px;
+    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.55);
+    font: 600 10.5px/1 var(--font-mono);
+    color: #fff;
+  }
+
+  .duration-icon {
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    mask: var(--icon-play) center/contain no-repeat;
+  }
+
+  .thumb-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+  }
+
+  .thumb-remove-icon {
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    mask: var(--icon-close) center/contain no-repeat;
+  }
+
+  .tray-add {
+    flex: none;
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md, 12px);
+    box-shadow: inset 0 0 0 1.5px var(--line-2, rgba(255, 255, 255, 0.14));
+    cursor: pointer;
+  }
+
+  .tray-add:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .tray-add-icon {
+    width: 20px;
+    height: 20px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-plus) center/contain no-repeat;
+  }
+
+  .context {
+    flex: 1 0 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 4px 4px 4px 6px;
+    border-radius: 16px;
+    background: var(--surface-2, #191921);
+  }
+
+  .context-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    border-radius: 12px;
+  }
+
+  .context-thumb {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .context-icon {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: color-mix(in oklch, var(--accent, #ff5672) 18%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .context-icon.editing {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+  }
+
+  .context-glyph {
+    width: 15px;
+    height: 15px;
+    background: var(--accent-bright, #ff8298);
+  }
+
+  .editing .context-glyph {
+    background: var(--ink-2, #c9c9d4);
+  }
+
+  .context-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .context-label {
+    font: 600 12.5px/1.1 var(--font-sans);
+    color: var(--accent-bright, #ff8298);
+  }
+
+  .context-label.editing {
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .context-quote {
+    font: 400 13px/1.2 var(--font-sans);
+    color: var(--ink-3, #a3a3b2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .round-close {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .round-close:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .close-icon {
+    width: 13px;
+    height: 13px;
+    background: var(--ink-2, #c9c9d4);
+    mask: var(--icon-close) center/contain no-repeat;
+  }
+
+  .chip {
+    flex: 1 0 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 44px;
+    box-sizing: border-box;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--accent, #ff5672) 14%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 32%, transparent);
+  }
+
+  .file-tile {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .file-icon {
+    width: 15px;
+    height: 15px;
+    background: #fff;
+    mask: var(--icon-file) center/contain no-repeat;
+  }
+
+  .pair {
+    flex: none;
+    display: flex;
+  }
+
+  .pair-second {
+    margin-left: -8px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--field, #14141a);
+  }
+
+  .chip-label {
+    flex: none;
+    font: var(--weight-bold, 700) 14px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+    white-space: nowrap;
+  }
+
+  /* fee stays inside the chip so the composer keeps its height */
+  .chip-meta {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-medium, 500) 13px/1 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chip-edit {
+    flex: none;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    font: var(--weight-semibold, 600) 13px/1 var(--font-sans);
+    color: var(--accent-bright, #ff8298);
+    cursor: pointer;
+  }
+
+  .chip-edit:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .tools {
+    flex: none;
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .tool {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .tool:hover,
+  .tool.open {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+  }
+
+  .tool-icon {
+    width: 18px;
+    height: 18px;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .open .tool-icon {
+    background: var(--ink, #ececf1);
+  }
+
+  .tool-icon.plus {
+    mask: var(--icon-plus) center/contain no-repeat;
+    transition: transform var(--duration-base, 0.2s);
+  }
+
+  .open .tool-icon.plus {
+    transform: rotate(45deg);
+  }
+
+  .tool-icon.emoji {
+    mask: var(--icon-emoji) center/contain no-repeat;
+  }
+
+  .input-wrap {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 var(--space-4);
+  }
+
+  textarea {
+    flex: 1;
+    min-width: 0;
+    height: 22px;
+    max-height: 160px;
+    padding: 7px 0;
+    box-sizing: content-box;
+    border: 0;
+    outline: none;
+    resize: none;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    background: transparent;
+    font: var(--weight-regular) var(--text-base) / 22px var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .action {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+
+  .action.send {
+    background: var(--accent, #ff5672);
+  }
+
+  .action.send:hover {
+    filter: brightness(1.08);
+  }
+
+  .action.mic,
+  .action.stop {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .action.mic:hover,
+  .action.stop:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+  }
+
+  .action.delete:hover {
+    background: var(--status-danger-soft, rgba(255, 77, 77, 0.12));
+  }
+
+  .send-icon {
+    width: 17px;
+    height: 17px;
+    background: var(--on-accent, #2e0512);
+  }
+
+  .mic-icon {
+    width: 18px;
+    height: 18px;
+    background: var(--ink-2, #c9c9d4);
+    mask: var(--icon-mic) center/contain no-repeat;
+  }
+
+  .delete-icon {
+    width: 18px;
+    height: 18px;
+    background: var(--status-danger, #ff4d4d);
+    mask: var(--icon-trash) center/contain no-repeat;
+  }
+
+  .stop-icon {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    background: var(--ink-2, #c9c9d4);
+  }
+
+  .tool:focus-visible,
+  .action:focus-visible,
+  .play:focus-visible,
+  .round-close:focus-visible,
+  .chip-edit:focus-visible,
+  .context-main:focus-visible,
+  .thumb-remove:focus-visible,
+  .tray-add:focus-visible,
+  .gif:focus-visible {
+    box-shadow: var(--focus-ring);
+    outline: none;
+  }
+
+  .voice {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-10);
+    height: 36px;
+    padding: 0 var(--space-4);
+  }
+
+  .rec-dot {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--status-danger, #ff4d4d);
+    animation: ocRecPulse 1.2s ease-in-out infinite;
+  }
+
+  .play {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    cursor: pointer;
+  }
+
+  .play:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.14));
+  }
+
+  .play-icon {
+    width: 12px;
+    height: 12px;
+    background: var(--ink, #ececf1);
+  }
+
+  .timer {
+    flex: none;
+    min-width: 36px;
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .timer.recording {
+    color: var(--status-danger, #ff4d4d);
+  }
+
+  .wave {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    overflow: hidden;
+    border-radius: 6px;
+    outline: none;
+    cursor: default;
+    touch-action: none;
+  }
+
+  .wave.seekable {
+    cursor: pointer;
+  }
+
+  .wave:focus-visible {
+    box-shadow: var(--focus-ring);
+  }
+
+  .wave-bar {
+    flex: none;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--ink-2, #c9c9d4);
+    transition: height 0.12s;
+    pointer-events: none;
+  }
+
+  .wave-bar.idle {
+    background: var(--overlay-3, rgba(255, 255, 255, 0.14));
+  }
+
+  .wave-bar.review {
+    background: var(--ink-4, #8a8a99);
+  }
+
+  .wave-bar.review.played {
+    background: var(--accent-bright, #ff8298);
+  }
+
+  .handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    pointer-events: none;
+  }
+
+  .handle-line {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: -1px;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--ink, #ececf1);
+  }
+
+  .handle-knob {
+    position: absolute;
+    top: 50%;
+    left: -6px;
+    width: 12px;
+    height: 12px;
+    margin-top: -6px;
+    border-radius: 50%;
+    background: var(--ink, #ececf1);
+    box-shadow:
+      0 0 0 2px var(--field, #14141a),
+      0 1px 4px rgba(0, 0, 0, 0.4);
+    transition: transform var(--duration-fast, 0.12s);
+  }
+
+  .handle-knob.seeking {
+    transform: scale(1.25);
+  }
+
+  .rec-hint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    text-align: center;
+    font: var(--weight-regular) var(--text-xs) / 1 var(--font-sans);
+    color: var(--ink-4, #8a8a99);
+  }
 </style>

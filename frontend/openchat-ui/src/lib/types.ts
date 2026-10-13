@@ -193,3 +193,35 @@ export interface GroupSettings {
     threads: Record<string, GroupRole | 'inherit'> | null;
   };
 }
+
+/** A file staged in MessageComposer, shown as a chip. */
+export interface FileAttachment {
+  type: 'file';
+  title: string;
+  summary: string;
+  /** Tile colour behind the file icon. */
+  tint?: string;
+}
+
+/** Photos / videos staged in MessageComposer, shown as a thumbnail tray (up to 10). */
+export interface MediaAttachment {
+  type: 'media';
+  items: { kind: 'image' | 'video'; src?: string; bg?: string; dur?: string }[];
+}
+
+/** What MessageComposer can stage above the text: a prize, transfer or swap offer chip, a file chip or a media tray. */
+export type ComposerAttachment = (Prize & { type?: 'prize' }) | Transfer | SwapOffer | FileAttachment | MediaAttachment;
+
+/** Reply / edit strip above MessageComposer's input; a new `key` re-focuses the input (edit also pre-fills `text`). */
+export interface ComposerContext {
+  key: string;
+  mode: 'reply' | 'edit';
+  /** Who is being replied to. */
+  name?: string;
+  quote: string;
+  /** CSS background for a media thumbnail. */
+  thumb?: string;
+  /** Edit mode: the original text. */
+  text?: string;
+}
+

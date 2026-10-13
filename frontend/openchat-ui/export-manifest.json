@@ -877,8 +877,7 @@
       "exportedAt": "2026-10-13",
       "group": "library",
       "files": [
-        "src/lib/components/MessageComposer.svelte",
-        "src/lib/components/MessageComposer.logic.js"
+        "src/lib/components/MessageComposer.svelte"
       ]
     },
     "MiniCall": {
