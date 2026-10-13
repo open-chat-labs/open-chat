@@ -2,11 +2,13 @@ use constants::{DAY_IN_MS, HOUR_IN_MS};
 use local_user_index_canister::{OpenChatBotMessageV2, UserIndexEvent};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use types::{
     BlobReference, Chat, MessageContent, MessageContentInitial, MessageId, MessageIndex, ModerationReportResolution,
     ModerationReportStatus, TextContent, TimestampMillis, UserId,
 };
 use user_index_canister::resolve_moderation_report::ModerationVerdict;
+use utils::migrated_user_ids::MigratedUserIds;
 
 // Generous cap on how many not-yet-reported messages a single user can report per hour, so that
 // one user cannot mass-report to trigger unbounded OpenAI calls and flood the moderation channel
@@ -576,6 +578,121 @@ impl ReportedMessages {
         }
         false
     }
+
+    // One-off: replaces the ids users had before being migrated to a MultiUser canister with their
+    // latest ids, in each report and in the lookup and rate limiting keyed by them. Until then a
+    // sanction against a sender named by their old id finds no user, so is silently skipped.
+    // Each report stays at its index, since users, alerts, timer jobs and authority reports refer
+    // to it by that. Where two entries become one:
+    // - a lookup key, ie. a direct chat message reported under each of the other user's ids, stays
+    //   with the report already under the latest id, which is the one new reports find, or else
+    //   goes to the later report;
+    // - a reporter who reported a message under each of their ids keeps the earlier time;
+    // - a reporter's recent report times under each of their ids are combined;
+    // - a user who asserted CSAM under each of their ids is listed once.
+    pub fn replace_old_user_ids(&mut self, migrated_user_ids: &MigratedUserIds) -> ReplaceOldUserIdsResult {
+        let mut result = ReplaceOldUserIdsResult::default();
+        let replace = |user_id: &mut UserId| {
+            let latest = migrated_user_ids.latest(*user_id);
+            let replaced = latest != *user_id;
+            *user_id = latest;
+            replaced
+        };
+        let latest_chat = |chat: Chat| match chat {
+            Chat::Direct(chat_id) => Chat::Direct(migrated_user_ids.latest(chat_id.into()).into()),
+            chat => chat,
+        };
+
+        for (index, message) in self.messages.iter_mut().enumerate() {
+            let mut replaced = false;
+
+            let chat_id = latest_chat(message.chat_id);
+            if chat_id != message.chat_id {
+                message.chat_id = chat_id;
+                replaced = true;
+            }
+            if replace(&mut message.sender) {
+                result.senders_replaced.push((index as u64, message.sender));
+                replaced = true;
+            }
+            if message.reports.keys().any(|r| migrated_user_ids.latest(*r) != *r) {
+                let mut reports = HashMap::with_capacity(message.reports.len());
+                for (reporter, timestamp) in message.reports.drain() {
+                    reports
+                        .entry(migrated_user_ids.latest(reporter))
+                        .and_modify(|t: &mut TimestampMillis| *t = (*t).min(timestamp))
+                        .or_insert(timestamp);
+                }
+                message.reports = reports;
+                replaced = true;
+            }
+            if message.csam_asserted_by.iter().any(|u| migrated_user_ids.latest(*u) != *u) {
+                let mut asserted_by = Vec::with_capacity(message.csam_asserted_by.len());
+                for user_id in message.csam_asserted_by.drain(..).map(|u| migrated_user_ids.latest(u)) {
+                    if !asserted_by.contains(&user_id) {
+                        asserted_by.push(user_id);
+                    }
+                }
+                message.csam_asserted_by = asserted_by;
+                replaced = true;
+            }
+            if let Some(ReportOutcome::Automated(outcome)) = &mut message.outcome
+                && let Some(verdict) = &mut outcome.human_verdict
+                && replace(&mut verdict.moderator)
+            {
+                replaced = true;
+            }
+
+            if replaced {
+                result.reports_updated += 1;
+            }
+        }
+
+        let mut lookup = HashMap::with_capacity(self.lookup.len());
+        let mut replaced_keys = Vec::new();
+        for ((chat, thread_root_message_index, message_index), index) in self.lookup.drain() {
+            let latest = latest_chat(chat);
+            if latest == chat {
+                lookup.insert((chat, thread_root_message_index, message_index), index);
+            } else {
+                replaced_keys.push(((latest, thread_root_message_index, message_index), index));
+            }
+        }
+        result.lookup_keys_replaced = replaced_keys.len();
+        // Latest first, so that where keys become the same, the later report keeps it
+        replaced_keys.sort_unstable_by_key(|(_, index)| std::cmp::Reverse(*index));
+        for (key, index) in replaced_keys {
+            match lookup.entry(key) {
+                Entry::Occupied(_) => result.lookup_keys_merged += 1,
+                Entry::Vacant(e) => {
+                    e.insert(index);
+                }
+            }
+        }
+        self.lookup = lookup;
+
+        let mut recent_reports_per_reporter: HashMap<UserId, Vec<TimestampMillis>> =
+            HashMap::with_capacity(self.recent_reports_per_reporter.len());
+        for (mut reporter, timestamps) in self.recent_reports_per_reporter.drain() {
+            if replace(&mut reporter) {
+                result.recent_reporters_replaced += 1;
+            }
+            recent_reports_per_reporter.entry(reporter).or_default().extend(timestamps);
+        }
+        self.recent_reports_per_reporter = recent_reports_per_reporter;
+
+        result
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct ReplaceOldUserIdsResult {
+    pub reports_updated: usize,
+    // Each report whose sender was replaced, with the sender's latest id
+    pub senders_replaced: Vec<(u64, UserId)>,
+    pub lookup_keys_replaced: usize,
+    pub lookup_keys_merged: usize,
+    pub recent_reporters_replaced: usize,
 }
 
 pub enum ContestResult {
@@ -1216,6 +1333,149 @@ mod tests {
         let bytes = msgpack::serialize_then_unwrap(&automated);
         let deserialized: ReportOutcome = msgpack::deserialize_then_unwrap(&bytes);
         assert!(matches!(deserialized, ReportOutcome::Automated(_)));
+    }
+
+    #[test]
+    fn old_user_ids_are_replaced_with_the_latest() {
+        let user_id = |i: u8| -> UserId { Principal::from_slice(&[i]).into() };
+        let (old_sender, latest_sender) = (user_id(1), user_id(2));
+        let (old_reporter, latest_reporter) = (user_id(3), user_id(4));
+        let (old_peer, latest_peer) = (user_id(5), user_id(6));
+        let (old_moderator, latest_moderator) = (user_id(7), user_id(8));
+        let unmigrated = user_id(9);
+        let group = Chat::Group(Principal::from_slice(&[10]).into());
+
+        let mut migrated_user_ids = MigratedUserIds::default();
+        for (old, latest) in [
+            (old_sender, latest_sender),
+            (old_reporter, latest_reporter),
+            (old_peer, latest_peer),
+            (old_moderator, latest_moderator),
+        ] {
+            migrated_user_ids.insert(old, latest);
+        }
+
+        let mut reported_messages = ReportedMessages::default();
+        let args = |chat_id, sender, reporter, timestamp| AddReportArgs {
+            chat_id,
+            sender,
+            reporter,
+            csam: true,
+            timestamp,
+            ..dummy_report_args()
+        };
+        // The same direct chat message reported before and after the other user was migrated, the
+        // second time by the reporter under both of their ids
+        assert_eq!(
+            reported_messages.add_report(args(Chat::Direct(old_peer.into()), old_sender, old_reporter, 10)),
+            AddReportResult::New(0)
+        );
+        assert_eq!(
+            reported_messages.add_report(args(Chat::Direct(latest_peer.into()), latest_sender, old_reporter, 20)),
+            AddReportResult::New(1)
+        );
+        assert_eq!(
+            reported_messages.add_report(args(Chat::Direct(latest_peer.into()), latest_sender, latest_reporter, 30)),
+            AddReportResult::ExistingPending(1)
+        );
+        // A report naming nobody who was migrated, except the reporter
+        assert_eq!(
+            reported_messages.add_report(args(group, unmigrated, latest_reporter, 40)),
+            AddReportResult::New(2)
+        );
+        // Another direct chat message reported under the other user's latest id, then their old one
+        let message_index2 = MessageIndex::from(2);
+        for (index, peer) in [(3, latest_peer), (4, old_peer)] {
+            assert_eq!(
+                reported_messages.add_report(AddReportArgs {
+                    message_index: message_index2,
+                    ..args(Chat::Direct(peer.into()), unmigrated, unmigrated, 50)
+                }),
+                AddReportResult::New(index)
+            );
+        }
+        // And a direct chat message with another user reported under two of their old ids, their having
+        // been migrated twice
+        let (oldest_peer2, middle_peer2, latest_peer2) = (user_id(11), user_id(12), user_id(13));
+        migrated_user_ids.insert(oldest_peer2, middle_peer2);
+        migrated_user_ids.insert(middle_peer2, latest_peer2);
+        let message_index3 = MessageIndex::from(3);
+        for (index, peer) in [(5, oldest_peer2), (6, middle_peer2)] {
+            assert_eq!(
+                reported_messages.add_report(AddReportArgs {
+                    message_index: message_index3,
+                    ..args(Chat::Direct(peer.into()), unmigrated, unmigrated, 60)
+                }),
+                AddReportResult::New(index)
+            );
+        }
+        reported_messages.messages[0].outcome = Some(ReportOutcome::Automated(AutomatedOutcome {
+            human_verdict: Some(HumanVerdict {
+                verdict: ModerationVerdict::Upheld,
+                moderator: old_moderator,
+                timestamp: 50,
+            }),
+            ..dummy_outcome()
+        }));
+
+        let result = reported_messages.replace_old_user_ids(&migrated_user_ids);
+
+        assert_eq!(
+            result,
+            ReplaceOldUserIdsResult {
+                reports_updated: 5,
+                senders_replaced: vec![(0, latest_sender)],
+                lookup_keys_replaced: 4,
+                lookup_keys_merged: 3,
+                recent_reporters_replaced: 1,
+            }
+        );
+
+        let report = reported_messages.get(0).unwrap();
+        assert_eq!(report.chat_id, Chat::Direct(latest_peer.into()));
+        assert_eq!(report.sender, latest_sender);
+        assert_eq!(report.reports, HashMap::from([(latest_reporter, 10)]));
+        assert_eq!(report.csam_asserted_by, vec![latest_reporter]);
+        assert_eq!(report.human_verdict().unwrap().moderator, latest_moderator);
+
+        // The reporter's two reports of the message are merged, keeping the earlier
+        let report = reported_messages.get(1).unwrap();
+        assert_eq!(report.reports, HashMap::from([(latest_reporter, 20)]));
+        assert_eq!(report.csam_asserted_by, vec![latest_reporter]);
+
+        let report = reported_messages.get(2).unwrap();
+        assert_eq!(report.chat_id, group);
+        assert_eq!(report.sender, unmigrated);
+
+        let latest_chat = Chat::Direct(latest_peer.into());
+        let latest_chat2 = Chat::Direct(latest_peer2.into());
+        for (index, chat_id) in [(3, latest_chat), (4, latest_chat), (5, latest_chat2), (6, latest_chat2)] {
+            assert_eq!(reported_messages.get(index).unwrap().chat_id, chat_id);
+        }
+
+        // Every report is kept. Where the key of each of a message's reports becomes the same, the
+        // one already under the latest id keeps it, or else the later one.
+        let message_index = dummy_report_args().message_index;
+        assert_eq!(
+            reported_messages.lookup,
+            HashMap::from([
+                ((latest_chat, None, message_index), 1),
+                ((group, None, message_index), 2),
+                ((latest_chat, None, message_index2), 3),
+                ((latest_chat2, None, message_index3), 6),
+            ])
+        );
+
+        let mut recent_reports = reported_messages.recent_reports_per_reporter[&latest_reporter].clone();
+        recent_reports.sort();
+        assert_eq!(recent_reports, vec![10, 20, 40]);
+        assert_eq!(reported_messages.recent_reports_per_reporter.len(), 2);
+
+        // Every old id has now been replaced, so running it again changes nothing
+        assert_eq!(
+            reported_messages.replace_old_user_ids(&migrated_user_ids),
+            ReplaceOldUserIdsResult::default()
+        );
     }
 
     fn dummy_report_args() -> AddReportArgs {
