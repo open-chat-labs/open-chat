@@ -1,7 +1,7 @@
 use crate::CommunityMemberInternal;
 use ic_principal::Principal;
 use serde::{Deserialize, Serialize};
-use stable_memory_map::{StableMemoryMap, UserIdKeyPrefix};
+use stable_memory_map::{KeyPrefix, StableMemoryMap, UserIdKeyPrefix, with_map_mut};
 use std::collections::BTreeSet;
 use types::{CommunityRole, TimestampMillis, Timestamped, UserId, UserType, Version, is_default};
 
@@ -31,9 +31,35 @@ impl MembersStableStorage {
         map
     }
 
+    // Writes the members together, so that each node of the stable memory map is written once rather
+    // than once per member (see `StableMemoryMapInner::insert_many`). Keys are ordered by their bytes
+    // whereas user ids are ordered by length first, so the keys are sorted here. A member given more
+    // than once is left as last given.
+    pub fn insert_many(&mut self, members: impl IntoIterator<Item = CommunityMemberInternal>) {
+        let mut entries: Vec<_> = members
+            .into_iter()
+            .map(|member| (self.prefix.create_key(&member.user_id), member_to_bytes(member.into())))
+            .collect();
+        entries.sort_by(|(k1, _), (k2, _)| k1.cmp(k2));
+        with_map_mut(|m| m.insert_many(entries));
+    }
+
+    // The key and value of each member as stored
+    #[cfg(test)]
+    pub fn all_entries(&self) -> Vec<(Vec<u8>, Vec<u8>)> {
+        use stable_memory_map::{Key, with_map};
+
+        with_map(|m| {
+            m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)
+                .take_while(|(k, _)| k.matches_prefix(&self.prefix))
+                .map(|(k, v)| (k.as_ref().to_vec(), v))
+                .collect()
+        })
+    }
+
     #[cfg(test)]
     pub fn all_members(&self) -> Vec<CommunityMemberInternal> {
-        use stable_memory_map::{Key, KeyPrefix, with_map};
+        use stable_memory_map::{Key, with_map};
 
         with_map(|m| {
             m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)

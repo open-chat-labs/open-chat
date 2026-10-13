@@ -8807,6 +8807,7 @@ dependencies = [
 name = "principal_to_user_id_map"
 version = "0.1.0"
 dependencies = [
+ "ic-stable-structures",
  "ic_principal",
  "serde",
  "stable_memory_map",

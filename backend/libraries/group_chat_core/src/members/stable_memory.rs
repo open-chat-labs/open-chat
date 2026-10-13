@@ -37,6 +37,19 @@ impl MembersStableStorage {
         self.prefix = UserIdKeyPrefix::new_from_chat(chat);
     }
 
+    // Writes the members together, so that each node of the stable memory map is written once rather
+    // than once per member (see `StableMemoryMapInner::insert_many`). Keys are ordered by their bytes
+    // whereas user ids are ordered by length first, so the keys are sorted here. A member given more
+    // than once is left as last given.
+    pub fn insert_many(&mut self, members: impl IntoIterator<Item = GroupMemberInternal>) {
+        let mut entries: Vec<_> = members
+            .into_iter()
+            .map(|member| (self.prefix.create_key(&member.user_id), member_to_bytes(member.into())))
+            .collect();
+        entries.sort_by(|(k1, _), (k2, _)| k1.cmp(k2));
+        with_map_mut(|m| m.insert_many(entries));
+    }
+
     // Used to efficiently read all members from stable memory when migrating a group into a community
     pub fn read_members_as_bytes(&self, after: Option<UserId>, max_bytes: usize) -> Vec<(UserId, ByteBuf)> {
         let start_key = match after {
@@ -57,6 +70,17 @@ impl MembersStableStorage {
                     total_bytes < max_bytes
                 })
                 .map(|(k, v)| (k.user_id(), ByteBuf::from(remove_principal(v))))
+                .collect()
+        })
+    }
+
+    // The key and value of each member as stored
+    #[cfg(test)]
+    pub fn all_entries(&self) -> Vec<(Vec<u8>, Vec<u8>)> {
+        with_map(|m| {
+            m.range(self.prefix.create_key(&Principal::from_slice(&[]).into())..)
+                .take_while(|(k, _)| k.matches_prefix(&self.prefix))
+                .map(|(k, v)| (k.as_ref().to_vec(), v))
                 .collect()
         })
     }

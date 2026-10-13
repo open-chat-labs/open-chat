@@ -16,7 +16,7 @@ use constants::{ICP_LEDGER_CANISTER_ID, OPENCHAT_BOT_USER_ID};
 use event_store_types::Event;
 use fire_and_forget_handler::FireAndForgetHandler;
 use gated_groups::{GatePayment, calculate_gate_payments};
-use group_chat_core::{AccessRulesInternal, AddResult};
+use group_chat_core::{AccessRulesInternal, AddResult, MembersToAdd};
 use group_community_common::{
     Achievements, ExpiringMember, ExpiringMemberActions, ExpiringMembers, Members, PaymentReceipts, PendingPaymentsQueue,
     UserCache,
@@ -966,12 +966,23 @@ impl Data {
     }
 
     pub fn update_lapsed(&mut self, user_id: UserId, channel_id: Option<ChannelId>, lapsed: bool, now: TimestampMillis) {
+        self.update_lapsed_many(vec![user_id], channel_id, lapsed, now);
+    }
+
+    // As `update_lapsed` for each of the users, writing the members updated to stable memory together
+    pub fn update_lapsed_many(
+        &mut self,
+        user_ids: Vec<UserId>,
+        channel_id: Option<ChannelId>,
+        lapsed: bool,
+        now: TimestampMillis,
+    ) {
         if let Some(channel_id) = channel_id {
             if let Some(channel) = self.channels.get_mut(&channel_id) {
-                channel.chat.members.update_lapsed(user_id, lapsed, now);
+                channel.chat.members.update_lapsed_many(user_ids, lapsed, now);
             }
         } else {
-            self.members.update_lapsed(user_id, lapsed, now);
+            self.members.update_lapsed_many(user_ids, lapsed, now);
         }
     }
 
@@ -1099,16 +1110,22 @@ impl Data {
 
             let gate_expiry = channel.chat.gate_config.value.as_ref().and_then(|gc| gc.expiry());
 
-            for (user_id, user_type) in users_to_add {
-                match channel.chat.members.add(
-                    user_id,
+            // The members are added together, so that they're written to stable memory together
+            let mut members = MembersToAdd::default();
+            for (user_id, user_type) in users_to_add.iter() {
+                members.push(
+                    *user_id,
                     None,
-                    now,
                     min_visible_event_index,
                     min_visible_message_index,
                     channel.chat.is_public.value,
-                    user_type,
-                ) {
+                    *user_type,
+                );
+            }
+            let results = channel.chat.members.add_many(members, now);
+
+            for ((user_id, user_type), (_, result)) in users_to_add.into_iter().zip(results) {
+                match result {
                     AddResult::Success(_) => {
                         self.members.mark_member_joined_channel(user_id, channel.id);
 

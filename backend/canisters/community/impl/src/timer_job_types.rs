@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::import_groups::{finalize_group_import, mark_import_complete, process_channel_members};
-use crate::updates::c2c_join_channel::join_channel_unchecked;
+use crate::updates::c2c_join_channel::join_channel_unchecked_many;
 use crate::updates::end_video_call::end_video_call_impl;
 use crate::{RuntimeState, can_borrow_state, flush_pending_events, mutate_state, read_state, run_regular_jobs};
 use candid::Principal;
@@ -597,22 +597,24 @@ impl JoinMembersToPublicChannelJob {
             }
 
             let mut users_added = Vec::new();
-            let mut processed = 0u32;
             let now = state.env.now();
-            while let Some(user_id) = self.members.pop() {
-                // A member queued under an id the community has since been told they've been migrated from
-                let user_id = state.data.migrated_user_ids.latest(user_id);
-                if let Some(member) = state.data.members.get_by_user_id(&user_id) {
-                    match join_channel_unchecked(
-                        user_id,
-                        member.user_type,
-                        channel,
-                        &mut state.data.members,
-                        state.data.is_public.value,
-                        false,
-                        false,
-                        now,
-                    ) {
+            // The members are joined 100 at a time, those added in each batch being written to stable
+            // memory together. Every member counts towards a batch, whether added or not, since each
+            // costs a read from stable memory.
+            while !self.members.is_empty() {
+                let mut users = Vec::new();
+                for user_id in self.members.drain(self.members.len().saturating_sub(100)..).rev() {
+                    // A member queued under an id the community has since been told they've been migrated from
+                    let user_id = state.data.migrated_user_ids.latest(user_id);
+                    if let Some(member) = state.data.members.get_by_user_id(&user_id) {
+                        users.push((user_id, member.user_type));
+                    }
+                }
+
+                for (user_id, result) in
+                    join_channel_unchecked_many(users, channel, &mut state.data.members, state.data.is_public.value, now)
+                {
+                    match result {
                         AddResult::Success(_) => users_added.push(user_id),
                         AddResult::MemberLimitReached(_) => {
                             // The channel is full, so none of the remaining members can be added
@@ -623,10 +625,7 @@ impl JoinMembersToPublicChannelJob {
                     }
                 }
 
-                // Every member counts towards the check, whether added or not, since each costs a
-                // read from stable memory
-                processed += 1;
-                if processed.is_multiple_of(100) && ic_cdk::api::instruction_counter() > 2_000_000_000 {
+                if ic_cdk::api::instruction_counter() > 2_000_000_000 {
                     break;
                 }
             }
