@@ -1,4 +1,3 @@
-use crate::mentions::replace_mentioned_users;
 use crate::{
     BlockedUsers, ChitEvents, Communities, Community, Contacts, FavouriteChats, GameChitKeys, GroupChat, GroupChats,
     HotGroupExclusions, Membership, MessageActivityEvents, P2PSwaps, PinNumber, PremiumItems, ProfileDocument, Referrals,
@@ -17,6 +16,7 @@ use types::{
     Achievement, BotDefinitionUpdate, BotInitiator, BotPermissions, BotUpdated, Chat, ChatId, ChitEvent, ChitEventType,
     CommunityId, MultiUserChat, ReferralStatus, TimestampMillis, Timestamped, UniquePersonProof, UserId,
 };
+use utils::mentions::replace_mentioned_users;
 use utils::migrated_user_ids::MigratedUserIds;
 
 // The state of a single user, many of whom are held in each MultiUser canister.

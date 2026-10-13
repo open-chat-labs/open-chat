@@ -10,7 +10,7 @@ use multi_user_canister::set_message_reminder_v2::{Response::*, *};
 use oc_error_codes::OCErrorCode;
 use rand::Rng;
 use types::{Achievement, FieldTooLongResult, OCResult};
-use user_core::mentions::replace_mentioned_users;
+use utils::mentions::replace_mentioned_users;
 
 const MAX_NOTES_LENGTH: usize = 1000;
 
