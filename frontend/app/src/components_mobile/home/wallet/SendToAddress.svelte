@@ -10,29 +10,9 @@
         InputIconButton,
         Sheet,
     } from "component-lib";
-    import {
-        BTC_SYMBOL,
-        CKBTC_SYMBOL,
-        type CkbtcMinterWithdrawalInfo,
-        currentUserIdStore,
-        currentUserStore,
-        type EvmChain,
-        formatTokens,
-        ICP_SYMBOL,
-        Lazy,
-        namedAccountsStore,
-        type OneSecTransferFees,
-        type OpenChat,
-        type ResourceKey,
-    } from "@client";
-    import {
-        encodeIcrcAccount,
-        isAccountIdentifierValid,
-        isICRCAddressValid,
-        publish,
-        userWalletAccount,
-    } from "@shared";
-    import { getContext, onDestroy, onMount } from "svelte";
+    import { formatTokens, namedAccountsStore, type OpenChat, type ResourceKey } from "@client";
+    import { publish } from "@shared";
+    import { getContext, untrack } from "svelte";
     import { _ } from "svelte-i18n";
     import Account from "svelte-material-icons/AccountBoxOutline.svelte";
     import ChevronRight from "svelte-material-icons/ChevronRight.svelte";
@@ -40,7 +20,6 @@
     import SendOutline from "svelte-material-icons/SendOutline.svelte";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
     import { pinNumberErrorMessageStore } from "../../../stores/pinNumber";
-    import { CkbtcWithdrawalInfoRequests } from "../../../utils/ckbtcWithdrawalInfo";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import Translatable from "@shared_components/Translatable.svelte";
     import NetworkSelector from "../NetworkSelector.svelte";
@@ -50,6 +29,7 @@
     import Scanner from "./Scanner.svelte";
     import SuccessIcon from "./SuccessIcon.svelte";
     import type { TokenState } from "@shared_components/home/wallet/walletState.svelte";
+    import { WithdrawForm } from "@shared_components/home/wallet/withdrawForm.svelte";
 
     interface Props {
         tokenState: TokenState;
@@ -63,209 +43,67 @@
     let status = $state<"idle" | "sending" | "sent" | "error">("idle");
     let busy = $derived(status === "sending");
     let error: ResourceKey | undefined = $state();
-    let ckbtcMinterWithdrawalInfo = $state<CkbtcMinterWithdrawalInfo>();
-    let valid = $state(false);
-    const validAccountName = $state(false);
-    const capturingAccount = $state(false);
-    let validAmount = $state(false);
-    let targetAccount: string = $state("");
     let showAddressBook = $state(false);
-    let namedAccount = $derived($namedAccountsStore.find((a) => a.account === targetAccount));
 
     let scanner: Scanner;
-    const ckbtcMinterInfoRequests = new CkbtcWithdrawalInfoRequests(
-        (amount) => client.getCkbtcMinterWithdrawalInfo(amount),
-        (info) => (ckbtcMinterWithdrawalInfo = info),
+
+    // The page is opened for one token
+    const form = new WithdrawForm(client, untrack(() => tokenState));
+    let namedAccount = $derived(
+        $namedAccountsStore.find((a) => a.account === form.targetAccount),
     );
-
-    // The user's own wallet, which they can't send to
-    let account = $derived(
-        tokenState.symbol === ICP_SYMBOL
-            ? $currentUserStore.cryptoAccount
-            : encodeIcrcAccount(
-                  userWalletAccount($currentUserIdStore, () => client.OcIdentityPrincipal),
-              ),
-    );
-    let selectedNetwork = $state<string>();
-    let isBtc = $derived(tokenState.symbol === BTC_SYMBOL);
-    let isBtcNetwork = $derived(selectedNetwork === BTC_SYMBOL);
-    let oneSecEnabled = $derived(
-        tokenState.token.oneSecEnabled && tokenState.token.evmContractAddresses.length > 0,
-    );
-    let isOneSecNetwork = $derived(oneSecEnabled && selectedNetwork !== ICP_SYMBOL);
-    let networks = $derived.by(() => {
-        if (isBtc) {
-            return [BTC_SYMBOL, CKBTC_SYMBOL];
-        } else if (oneSecEnabled) {
-            return client.oneSecGetNetworks(tokenState.symbol);
-        } else {
-            return [];
-        }
-    });
-    // Refused whichever way the send is made, since anything sent there would be lost
-    let targetIsUserIdAccount = $derived(client.isAccountOfMultiUserCanisterUserId(targetAccount));
-    let targetAccountValid = $derived.by(() => {
-        if (targetAccount.length === 0 || targetAccount === account) return false;
-        // Checked before the network, since BTC sent over the ckBTC network goes to an IC account
-        if (targetIsUserIdAccount) return false;
-        if (isBtc) return targetAccount.length >= 14;
-        if (isOneSecNetwork) return targetAccount.length === 42;
-        if (isICRCAddressValid(targetAccount)) return true;
-        if (tokenState.symbol === ICP_SYMBOL && isAccountIdentifierValid(targetAccount))
-            return true;
-        return false;
-    });
-
-    let oneSecFees = $state<OneSecTransferFees[]>();
-    let oneSecFeesForToken = $derived.by(() => {
-        if (!isOneSecNetwork || oneSecFees === undefined) return undefined;
-        return oneSecFees.find(
-            (f) => f.sourceToken === tokenState.symbol && f.destinationChain === selectedNetwork,
-        );
-    });
-
-    let minAmount = $derived.by(() => {
-        if (isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined) {
-            return ckbtcMinterWithdrawalInfo.minWithdrawalAmount;
-        }
-        if (isOneSecNetwork && oneSecFeesForToken !== undefined) {
-            return oneSecFeesForToken.minAmount;
-        }
-        return 0n;
-    });
-    let validSend = $derived(validAmount && targetAccountValid);
-    $effect(() => {
-        // If sending via the BTC network we must wait until the ckbtc minter info is loaded to correctly apply the min amount
-        valid =
-            (capturingAccount ? validAccountName : validSend) &&
-            (!isBtcNetwork || ckbtcMinterWithdrawalInfo !== undefined);
-    });
-
     let errorMessage = $derived(error !== undefined ? error : $pinNumberErrorMessageStore);
-    let networkFee = $derived.by(() => {
-        if (isBtcNetwork && ckbtcMinterWithdrawalInfo !== undefined) {
-            return ckbtcMinterWithdrawalInfo.feeEstimate;
-        } else if (isOneSecNetwork && oneSecFeesForToken !== undefined) {
-            return (
-                oneSecFeesForToken.latestTransferFee +
-                (tokenState.draftAmount * BigInt(100 * oneSecFeesForToken.protocolFeePercent)) /
-                    10000n
-            );
-        } else {
-            return undefined;
-        }
-    });
-    let networkFeeFormatted = $derived(
-        networkFee === undefined
-            ? undefined
-            : `~${client.formatTokens(networkFee, tokenState.decimals)}`,
-    );
-
-    onMount(async () => {
-        if (isBtc) {
-            ckbtcMinterInfoRequests.now(0n);
-        }
-    });
-
-    onDestroy(() => ckbtcMinterInfoRequests.cancel());
-
-    // Whenever the networks list changes, autoselect the first one
-    $effect(() => {
-        selectedNetwork = networks[0];
-    });
-
-    const oneSecFeesPromise = new Lazy(() => client.oneSecGetTransferFees());
-    $effect(() => {
-        if (isBtcNetwork) {
-            ckbtcMinterInfoRequests.debounced(tokenState.draftAmount);
-        } else if (isOneSecNetwork) {
-            // Filter to where source token equals destination token since we're dealing with cross-chain withdrawals
-            oneSecFeesPromise
-                .get()
-                .then(
-                    (fees) =>
-                        (oneSecFees = fees.filter(
-                            (f) =>
-                                f.sourceToken === f.destinationToken &&
-                                f.sourceChain === ICP_SYMBOL,
-                        )),
-                );
-        }
-    });
-
 
     function scan() {
         scanner?.scan();
     }
 
-    function send() {
-        if (!valid) return;
+    async function send() {
+        if (!form.canSend) return;
 
         status = "sending";
         error = undefined;
+        const outcome = await form.send();
 
-        const withdrawTokensPromise = isBtcNetwork
-            ? client.withdrawBtc(targetAccount, tokenState.draftAmount)
-            : isOneSecNetwork
-              ? client.withdrawViaOneSec(
-                    tokenState.ledger,
-                    tokenState.symbol,
-                    selectedNetwork as EvmChain,
-                    targetAccount,
-                    tokenState.draftAmount,
-                )
-              : client.withdrawCryptocurrency({
-                    kind: "pending",
-                    ledger: tokenState.ledger,
-                    token: tokenState.symbol,
-                    to: targetAccount,
-                    amountE8s: tokenState.draftAmount,
-                    feeE8s: tokenState.transferFee,
-                    createdAtNanos: BigInt(Date.now()) * 1_000_000n,
-                });
-
-        withdrawTokensPromise
-            .then((resp) => {
-                if (resp.kind === "completed" || resp.kind === "success") {
-                    status = "sent";
-                } else if (resp.kind === "failed" || resp.kind === "error") {
-                    error = i18nKey("cryptoAccount.sendFailed", { symbol: tokenState.symbol });
-                    client.logMessage(`Unable to withdraw ${tokenState.symbol}`, resp);
-                    status = "error";
-                }
-            })
-            .catch((err) => {
-                if (err !== "cancelled") {
-                    error = i18nKey("cryptoAccount.sendFailed", { symbol: tokenState.symbol });
-                    client.logError(`Unable to withdraw ${tokenState.symbol}`, err);
-                    status = "error";
-                }
-            });
+        switch (outcome.kind) {
+            case "sent":
+                status = "sent";
+                break;
+            case "cancelled":
+                status = "idle";
+                break;
+            case "failed":
+                error = outcome.message;
+                status = "error";
+                break;
+            default:
+                outcome satisfies never;
+        }
     }
 
     function saveAddress() {
         publish("addRecipient", {
-            account: { name: "", account: targetAccount },
+            account: { name: "", account: form.targetAccount },
             onComplete: () => publish("closeModalStack"),
         });
         tokenState.draftAmount = 0n;
-        targetAccount = "";
+        form.targetAccount = "";
         status = "idle";
     }
 </script>
 
-<Scanner onData={(data) => (targetAccount = data)} bind:this={scanner} />
+<Scanner onData={(data) => (form.targetAccount = data)} bind:this={scanner} />
 
-{#if networks.length > 0 && selectedNetwork !== undefined}
-    <NetworkSelector {networks} bind:selectedNetwork />
+{#if form.networks.length > 0 && form.selectedNetwork !== undefined}
+    <NetworkSelector networks={form.networks} bind:selectedNetwork={form.selectedNetwork} />
 {/if}
 
 <Input
-    bind:value={targetAccount}
+    bind:value={form.targetAccount}
     countdown={false}
     maxlength={100}
     disabled={busy}
-    error={targetAccount.length > 0 && !targetAccountValid}
+    error={form.targetAccount.length > 0 && !form.targetAccountValid}
     placeholder={interpolate($_, i18nKey("cryptoAccount.sendTarget"))}>
     {#snippet iconButtons(color)}
         <!-- The target can't change mid-send, since the success sheet shows it as the recipient -->
@@ -288,7 +126,7 @@
     {/snippet}
 </Input>
 
-{#if targetIsUserIdAccount}
+{#if form.targetIsUserIdAccount}
     <ErrorMessage
         ><Translatable resourceKey={i18nKey("cryptoAccount.sendToUserId")} /></ErrorMessage>
 {/if}
@@ -296,19 +134,19 @@
 <TokenInput
     balance={tokenState.cryptoBalance}
     ledger={tokenState.ledger}
-    {minAmount}
+    minAmount={form.minAmount}
     disabled={busy}
-    error={!validAmount}
-    bind:valid={validAmount}
+    error={!form.validAmount}
+    bind:valid={form.validAmount}
     maxAmount={tokenState.maxAmount}
     bind:amount={tokenState.draftAmount}>
     {#snippet subtext()}
-        {`Minimum amount ${minAmount} ${tokenState.symbol}`}
+        {`Minimum amount ${form.minAmount} ${tokenState.symbol}`}
     {/snippet}
 </TokenInput>
 
 {#if showAddressBook}
-    <AccountSelector onDismiss={() => (showAddressBook = false)} bind:targetAccount />
+    <AccountSelector onDismiss={() => (showAddressBook = false)} bind:targetAccount={form.targetAccount} />
 {/if}
 
 {#if errorMessage !== undefined}
@@ -321,14 +159,14 @@
         <TransferFeesMessage
             symbol={tokenState.symbol}
             tokenDecimals={tokenState.decimals}
-            {networkFee}
+            networkFee={form.networkFee}
             transferFees={tokenState.transferFees} />
     </Container>
 
     <CommonButton2
         onClick={send}
         loading={status === "sending"}
-        disabled={!valid}
+        disabled={!form.canSend}
         variant="primary"
         mode="regular">
         {#snippet icon(color, size)}
@@ -356,7 +194,7 @@
                     {/if}
                 </BodySmall>
                 <Body fontWeight={"bold"}>
-                    {targetAccount}
+                    {form.targetAccount}
                 </Body>
             </Container>
             <Container
@@ -381,7 +219,7 @@
                         {formatTokens(tokenState.transferFees, tokenState.decimals)}
                     </Body>
                 </Container>
-                {#if networkFeeFormatted !== undefined}
+                {#if form.networkFeeFormatted !== undefined}
                     <Container mainAxisAlignment={"spaceBetween"}>
                         <BodySmall colour={"textSecondary"}>
                             <Translatable resourceKey={i18nKey("Network fee")} />
@@ -389,7 +227,7 @@
                         <Body width={"hug"} fontWeight={"bold"}>
                             <Translatable
                                 resourceKey={i18nKey("cryptoAccount.networkFee", {
-                                    amount: networkFeeFormatted,
+                                    amount: form.networkFeeFormatted,
                                     token: tokenState.symbol,
                                 })} />
                         </Body>
@@ -419,7 +257,7 @@
                  the recipient form with a save button that never enables and no way to see why.
                  Keyed on the selected network, not the token: BTC sent over the ckBTC network
                  goes to an IC principal, which can be saved. -->
-            {#if namedAccount === undefined && !isBtcNetwork && !isOneSecNetwork}
+            {#if namedAccount === undefined && form.route.kind === "ledger"}
                 <Button secondary onClick={saveAddress}>
                     {#snippet icon(color)}
                         <Account {color} />
