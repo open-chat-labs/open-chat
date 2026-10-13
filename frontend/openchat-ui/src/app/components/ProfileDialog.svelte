@@ -1,120 +1,1080 @@
-<!-- Generated from lib/ProfileDialog.dc.html (source hash 3f17d9eb) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
+<!-- Profile & settings: a nav rail of sections (profile, stats, CHIT, Diamond, chats & calls, communities, sign-in providers,
+     appearance, storage, bots, link device, delete account, invite, about) and the selected section. Profile fields edit
+     in place; delete account runs a four-step "are you sure" flow; log out confirms first. Esc closes the innermost layer.
+     The CHIT calendar draws on a synthetic claim history (as exported) until a real history is passed in. -->
+<script lang="ts" module>
+  export type ProfileSection =
+    | 'profile'
+    | 'stats'
+    | 'chit'
+    | 'diamond'
+    | 'chats'
+    | 'communities'
+    | 'signin'
+    | 'appearance'
+    | 'storage'
+    | 'bots'
+    | 'device'
+    | 'delete'
+    | 'invite'
+    | 'about';
+
+  export interface SigninMethod {
+    type: 'passkey' | 'ii' | 'email';
+    id: string;
+    title: string;
+    /** How the method is named in "Confirm with your …". */
+    short?: string;
+    /** "Last used …" line. */
+    used?: string;
+    /** The method this session signed in with (can't be unlinked). */
+    current?: boolean;
+  }
+
+  export interface ChatSettings {
+    enterSends: boolean;
+    doubleClick: boolean;
+    notifications: boolean;
+    lowBandwidth: boolean;
+    hideBlocked: boolean;
+    cameraOn: boolean;
+    micOn: boolean;
+    activeSpeaker: boolean;
+    offensive: boolean;
+    adult: boolean;
+    underReview: boolean;
+    ringtone: 'boring' | 'pleasant' | 'boomboom' | 'twostep' | 'siren';
+  }
+
+  export interface ChitSettingsPatch {
+    enabled?: boolean;
+    notify?: boolean;
+    hideAfterClaim?: boolean;
+    puzzle?: boolean;
+    puzzleRemind?: boolean;
+    utc?: boolean;
+  }
+
+  type NavItem = [ProfileSection, string, string, ('chit' | 'diamond' | 'danger')?];
+
+  const NAV: { label: string; items: NavItem[] }[] = [
+    { label: 'ACCOUNT', items: [['profile', 'Profile', 'user'], ['stats', 'Your stats', 'poll'], ['chit', 'CHIT', 'zap', 'chit'], ['diamond', 'Diamond', 'gem', 'diamond']] },
+    { label: 'SETTINGS', items: [['chats', 'Chats & calls', 'chat'], ['communities', 'Communities', 'users'], ['signin', 'Sign-in providers', 'key'], ['appearance', 'Appearance', 'eye']] },
+    { label: 'ADVANCED', items: [['storage', 'Storage & cache', 'refresh'], ['bots', 'Bot configuration', 'bot'], ['device', 'Link new device', 'device'], ['delete', 'Delete account', 'trash', 'danger']] },
+    { label: 'OPENCHAT', items: [['invite', 'Invite friends', 'share'], ['about', 'About', 'info']] },
+  ];
+  const TITLES: Record<string, string> = Object.fromEntries(NAV.flatMap((g) => g.items.map((i) => [i[0], i[1]])));
+
+  const FIELDS = [
+    { key: 'name', label: 'Display name', max: 25, placeholder: 'Add a display name', hint: 'Optional · shown instead of your username', mono: false, area: false },
+    { key: 'handle', label: 'Username', max: 20, placeholder: '', hint: 'Letters, numbers and underscores', mono: true, area: false },
+    { key: 'about', label: 'About', max: 2000, placeholder: 'Tell people about yourself', hint: 'Optional', mono: false, area: true },
+  ] as const;
+  type FieldKey = (typeof FIELDS)[number]['key'];
+
+  const MIX_COLORS = ['#5B8CFF', '#B06BFF', '#FFB03D', '#2EE6A8', '#6E6E7C'];
+
+  const GRADS: Record<string, string> = {
+    teal: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)',
+    violet: 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
+    amber: 'linear-gradient(140deg,#ffb03d,#ff4d4d)',
+    blue: 'linear-gradient(140deg,#5FA8FF,#8C6BFF)',
+    plum: 'linear-gradient(140deg,#B06BFF,#6A2BFF)',
+    rose: 'linear-gradient(140deg,#FF6B8B,#C13584)',
+    slate: 'linear-gradient(140deg,#8E9BB3,#5A6478)',
+  };
+
+  const FONT_SIZES = [
+    { key: 'small', label: 'Small', glyph: '11px', scale: 0.92 },
+    { key: 'default', label: 'Default', glyph: '13px', scale: 1 },
+    { key: 'large', label: 'Large', glyph: '15px', scale: 1.1 },
+    { key: 'larger', label: 'Larger', glyph: '17px', scale: 1.2 },
+  ] as const;
+
+  const THEME_PREVIEW = {
+    system: { bg: 'linear-gradient(115deg,#0e0e12 0 50%,#FFFFFF 50% 100%)', recv: 'rgba(128,128,140,.45)', bar: 'linear-gradient(115deg,#191921 0 50%,#E7E5E0 50% 100%)' },
+    dark: { bg: '#0e0e12', recv: '#22222c', bar: '#191921' },
+    light: { bg: '#FFFFFF', recv: '#EFEDE8', bar: '#E7E5E0' },
+  };
+  const THEMES = [['system', 'System'], ['dark', 'Dark'], ['light', 'Light']] as const;
+  const ACCENTS = [['pink', 'Pink', '#FF5672'], ['blue', 'Blue', '#3D9BFF'], ['orange', 'Orange', '#FF8A3D'], ['green', 'Green', '#2EE6A8']] as const;
+
+  const CHAT_GROUPS: { label: string; rows: [keyof ChatSettings, string, string][] }[] = [
+    {
+      label: 'CHATS',
+      rows: [
+        ['enterSends', 'Enter key sends message', 'Use Shift + Enter for a new line.'],
+        ['doubleClick', 'Double-click to reply or edit', 'Double-click someone else’s message to reply, or your own to edit it.'],
+        ['notifications', 'Notifications', 'Get notified about new messages while OpenChat is in the background.'],
+        ['lowBandwidth', 'Low bandwidth', 'Uses less data when your connection is poor. Media loads on demand.'],
+        ['hideBlocked', 'Hide messages from blocked users', 'Removes their messages from group and community chats too. You may lose some conversation context.'],
+      ],
+    },
+    {
+      label: 'VIDEO CALLS',
+      rows: [
+        ['cameraOn', 'Start with camera on', 'Your camera is live as soon as you join a call.'],
+        ['micOn', 'Start with microphone on', 'You join calls unmuted.'],
+        ['activeSpeaker', 'Start in speaker view', 'Calls open with whoever is talking shown large, instead of a grid.'],
+      ],
+    },
+    {
+      label: 'RESTRICTED CONTENT',
+      rows: [
+        ['offensive', 'Offensive', 'Show communities and groups marked as offensive.'],
+        ['adult', 'Adult', 'Show communities and groups flagged as adult content.'],
+        ['underReview', 'Under review', 'Show communities and groups that are currently under review.'],
+      ],
+    },
+  ];
+  const CHAT_DEFAULTS: ChatSettings = {
+    enterSends: true,
+    doubleClick: true,
+    notifications: true,
+    lowBandwidth: false,
+    hideBlocked: false,
+    cameraOn: false,
+    micOn: true,
+    activeSpeaker: false,
+    offensive: false,
+    adult: true,
+    underReview: false,
+    ringtone: 'pleasant',
+  };
+
+  // rough envelope per tone so each waveform reads differently
+  const WAVES: Record<ChatSettings['ringtone'], (x: number) => number> = {
+    boring: (x) => 0.35 + 0.1 * Math.sin(x * 40),
+    pleasant: (x) => 0.3 + 0.55 * Math.pow(Math.sin(x * Math.PI), 1.5) * (0.75 + 0.25 * Math.sin(x * 23)),
+    boomboom: (x) => (Math.sin(x * Math.PI * 4) > 0.2 ? 0.9 : 0.2) * (0.8 + 0.2 * Math.sin(x * 51)),
+    twostep: (x) => (Math.floor(x * 8) % 2 ? 0.35 : 0.8) * (0.7 + 0.3 * Math.abs(Math.sin(x * 37))),
+    siren: (x) => 0.25 + 0.7 * Math.abs(Math.sin(x * Math.PI * 2)),
+  };
+  const RINGTONES: [ChatSettings['ringtone'], string][] = [['boring', 'Boring'], ['pleasant', 'Pleasant'], ['boomboom', 'Boom boom'], ['twostep', 'Two step flava'], ['siren', 'Siren']];
+
+  // synthetic claim history back to the join month, against a fixed "today" (as exported)
+  const TODAY = Date.UTC(2026, 8, 23);
+  const DAY = 864e5;
+  const JOINED = { y: 2021, m: 10 };
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const tier = (d: number) => (d >= 365 ? 600 : d >= 100 ? 500 : d >= 30 ? 400 : d >= 14 ? 300 : d >= 7 ? 200 : d >= 3 ? 150 : 100);
+  const dayKey = (t: number) => new Date(t).toISOString().slice(0, 10);
+  type ClaimRecord = { amount: number; day: number; min: number; insured?: false } | { insured: true; day: number };
+
+  function buildHistory(runLength: number, insuredDays: string[]) {
+    const map: Record<string, ClaimRecord> = {};
+    const runStart = TODAY - runLength * DAY;
+    let t = Date.UTC(JOINED.y, JOINED.m, 1), run = 0, seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    while (t < runStart - DAY) {
+      if (rnd() < 0.1) run = 0;
+      else {
+        run++;
+        map[dayKey(t)] = { amount: tier(run), day: run, min: 300 + Math.floor(rnd() * 960) };
+      }
+      t += DAY;
+    }
+    for (let i = 0; i < runLength; i++) {
+      const k = dayKey(runStart + i * DAY);
+      map[k] = insuredDays.includes(k) ? { insured: true, day: i + 1 } : { amount: tier(i + 1), day: i + 1, min: 300 + ((i * 137 + 61) % 960) };
+    }
+    return map;
+  }
+
+  const SI_TYPES = {
+    passkey: { label: 'PASSKEYS', icon: 'passkey', noun: 'Passkey', addLabel: 'Add a passkey', addTitle: 'Add a passkey', empty: 'No other passkeys yet.' },
+    ii: { label: 'INTERNET IDENTITY', icon: 'ii', noun: 'Internet Identity', addLabel: 'Link an Internet Identity', addTitle: 'Link an Internet Identity', empty: 'No Internet Identity linked.' },
+    email: { label: 'EMAIL', icon: 'mail', noun: 'Email', addLabel: 'Add an email', addTitle: 'Add an email', empty: 'No email linked.' },
+  };
+
+  const ABOUT_LINKS: Record<string, [string, string]> = {
+    architecture: ['Architecture', 'layers'],
+    blog: ['Blog', 'news'],
+    faq: ['FAQ', 'info'],
+    features: ['Features', 'sparkle'],
+    guidelines: ['Guidelines', 'shield'],
+    metrics: ['Metrics', 'poll'],
+    roadmap: ['Roadmap', 'map'],
+    whitepaper: ['Whitepaper', 'file'],
+  };
+  const ABOUT_GROUPS = [
+    { label: 'THE PRODUCT', keys: ['features', 'roadmap', 'metrics'] },
+    { label: 'HOW IT WORKS', keys: ['architecture', 'whitepaper', 'faq'] },
+    { label: 'COMMUNITY', keys: ['blog', 'guidelines'] },
+  ];
+
+  const LINK_STEPS = ['Open the OpenChat app on your new device', 'Choose “Link an existing account”', 'Enter the code shown here'];
+  const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const fmt = (n: number) => Number(n).toLocaleString('en-US');
+  const icon = (name: string) => `var(--icon-${name}) center/contain no-repeat`;
+  const BLANK_GIF = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+</script>
+
 <script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './ProfileDialog.logic.js';
+  import { onDestroy, onMount, tick, untrack } from 'svelte';
   import Badge from '../../lib/components/Badge.svelte';
   import Toggle from '../../lib/components/Toggle.svelte';
 
   interface Props {
+    handle: string;
+    userId: string;
+    memberSince: string;
+    streak: number;
+    /** CHIT balance. */
+    balance: number;
     name?: string;
-    handle?: string;
     about?: string;
+    /** CSS background for the avatar / cover. */
+    avatar?: string;
+    cover?: string;
     isDiamond?: boolean;
     isVerified?: boolean;
-    streak?: number;
-    balance?: number;
+    /** Today's CHIT can still be claimed. */
     claimable?: boolean;
-    section?: string;
-    memberSince?: string;
-    userId?: string;
+    /** Section to open on. */
+    section?: ProfileSection;
+
+    // CHIT
+    chitEnabled?: boolean;
+    chitNotify?: boolean;
+    chitHideAfterClaim?: boolean;
+    puzzleShown?: boolean;
+    puzzleRemind?: boolean;
+    /** Calendar shows claim times in UTC instead of local time. */
+    chitUtc?: boolean;
+    /** Local time offset used for the calendar's claim times. */
+    utcOffsetMinutes?: number;
+    /** Minute of day today's claim was made (when already claimed). */
+    claimMinute?: number;
+    achievementsLeft?: number;
+    /** All-time CHIT earned, shown in the delete flow. */
+    chitEarned?: number;
+
+    // stats
+    onlineMinutes?: number;
+    onlineMinutesPrev?: number;
+    messageMix?: { label: string; count: number; color?: string }[];
+    engagement?: { count: string; label: string }[];
+    reported?: number;
+
+    // settings
+    communities?: { name: string; color: string }[];
+    /** Custom display name per community name. */
+    communityNames?: Record<string, string>;
+    signinMethods?: SigninMethod[];
+    /** How the log-out confirmation names the sign-in method. */
+    signInProvider?: string;
+    chatSettings?: Partial<ChatSettings>;
+    themePref?: 'system' | 'dark' | 'light';
+    accentPref?: 'pink' | 'blue' | 'orange' | 'green';
+    fontSize?: 'small' | 'default' | 'large' | 'larger';
+    storageUsedMB?: number;
+    /** Seconds a device-link code stays valid. */
+    linkCodeTtl?: number;
+    inviteLink?: string;
+    icHost?: string;
+    storageIndex?: string;
+    publicKey?: string;
+    platform?: string;
+    version?: string;
+
     onClose?: () => void;
     onChit?: () => void;
-    onSave?: (v:{name:string,handle:string,about:string}) => void;
+    onEarn?: () => void;
+    onDiamond?: () => void;
+    onSave?: (v: { name: string; handle: string; about: string }) => void;
     onLogout?: () => void;
+    onDeleteAccount?: () => void;
     onShare?: () => void;
-    onCoverEdit?: (isDiamond:boolean) => void;
+    onShareApp?: (link: string) => void;
+    onCoverEdit?: (isDiamond: boolean) => void;
     onPhotoEdit?: () => void;
     onVerify?: () => void;
-    onDiamond?: () => void;
-    [key: string]: unknown;
+    onChitSettings?: (patch: ChitSettingsPatch) => void;
+    onChitBribe?: () => void;
+    onCommunityName?: (community: string, name: string | null) => void;
+    onChatSettings?: (settings: ChatSettings) => void;
+    onAppearance?: (patch: { theme?: string; accent?: string; font?: string }) => void;
+    onClearCache?: () => void;
+    onReportIssue?: () => void;
   }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+
+  let {
+    handle,
+    userId,
+    memberSince,
+    streak,
+    balance,
+    name = '',
+    about = '',
+    avatar = 'linear-gradient(140deg,#ff5f9e,#6a2bff)',
+    cover = 'var(--cover-pattern)',
+    isDiamond = false,
+    isVerified = false,
+    claimable = true,
+    section: initialSection = 'profile',
+    chitEnabled = true,
+    chitNotify = true,
+    chitHideAfterClaim = false,
+    puzzleShown = true,
+    puzzleRemind = false,
+    chitUtc = false,
+    utcOffsetMinutes = 120,
+    claimMinute = 560,
+    achievementsLeft = 0,
+    chitEarned = 0,
+    onlineMinutes = 0,
+    onlineMinutesPrev = 0,
+    messageMix = [],
+    engagement = [],
+    reported = 0,
+    communities = [],
+    communityNames = {},
+    signinMethods = [],
+    signInProvider = 'your passkey',
+    chatSettings = {},
+    themePref = 'dark',
+    accentPref = 'pink',
+    fontSize = 'default',
+    storageUsedMB,
+    linkCodeTtl = 180,
+    inviteLink,
+    icHost = 'https://icp-api.io',
+    storageIndex = 'rturd-qaaaa-aaaaf-aabaq-cai',
+    publicKey = '-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEquEHzJr9605Oy796e4z7LKow46DVNUnDOQWavi86vEhRAAfdbVh/Lgmxfi44LPb6S0wnCRm9kI/XdK1DYw2Eaw==\n-----END PUBLIC KEY-----',
+    platform = 'Web',
+    version = '',
+    onClose,
+    onChit,
+    onEarn,
+    onDiamond,
+    onSave,
+    onLogout,
+    onDeleteAccount,
+    onShare,
+    onShareApp,
+    onCoverEdit,
+    onPhotoEdit,
+    onVerify,
+    onChitSettings,
+    onChitBribe,
+    onCommunityName,
+    onChatSettings,
+    onAppearance,
+    onClearCache,
+    onReportIssue,
+  }: Props = $props();
+
+  // ---- shell ----
+  let section = $derived<ProfileSection>(initialSection);
+  let closing = $state(false);
+  /** Field being edited: a profile field key or "comm:<community>". */
+  let editing = $state<string | null>(null);
+  let draft = $state('');
+  let field = $state<HTMLInputElement | HTMLTextAreaElement>();
+
+  const timers = new Set<ReturnType<typeof setTimeout>>();
+  const later = (fn: () => void, ms: number) => {
+    const t = setTimeout(() => {
+      timers.delete(t);
+      fn();
+    }, ms);
+    timers.add(t);
+    return t;
+  };
+  const cancel = (t: ReturnType<typeof setTimeout> | undefined) => {
+    if (t === undefined) return;
+    clearTimeout(t);
+    timers.delete(t);
+  };
+
+  function close(fn?: () => void) {
+    if (closing) return;
+    closing = true;
+    later(() => {
+      closing = false;
+      fn?.();
+    }, 170);
+  }
+
+  function go(next: ProfileSection) {
+    section = next;
+    editing = null;
+  }
+
+  function startEdit(key: string, value: string) {
+    editing = key;
+    draft = value;
+  }
+
+  function stopEdit() {
+    editing = null;
+    draft = '';
+  }
+
+  // focus the field being edited, caret at the end
+  $effect(() => {
+    if (!editing || !field) return;
+    const el = field;
+    untrack(() => {
+      el.focus();
+      const n = el.value.length;
+      try {
+        el.setSelectionRange(n, n);
+      } catch {}
+    });
+  });
+
+  // ---- profile ----
+  let saved = $state<Partial<Record<FieldKey, string>>>({});
+  const values = $derived({ name: saved.name ?? name, handle: saved.handle ?? handle, about: saved.about ?? about });
+  const shownName = $derived(values.name || values.handle);
+  let copied = $state(false);
+  let copiedTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function validate(key: string, v: string) {
+    if (key === 'handle') {
+      if (v.length < 3) return 'At least 3 characters';
+      if (!/^[A-Za-z0-9_]+$/.test(v)) return 'Only letters, numbers and underscores';
+    }
+    return null;
+  }
+
+  function saveField() {
+    const key = editing as FieldKey | null;
+    if (!key || validate(key, draft)) return;
+    const v = key === 'about' ? draft : draft.trim();
+    saved = { ...saved, [key]: v };
+    stopEdit();
+    onSave?.({ ...values, [key]: v });
+  }
+
+  function copyText(text: string) {
+    try {
+      navigator.clipboard?.writeText(text);
+    } catch {}
+  }
+
+  function copyUserId() {
+    copyText(userId);
+    cancel(copiedTimer);
+    copied = true;
+    copiedTimer = later(() => (copied = false), 1400);
+  }
+
+  const chitTag = $derived(balance >= 1e6 ? `${+(balance / 1e6).toFixed(1)}M` : balance >= 1e3 ? `${+(balance / 1e3).toFixed(1)}K` : String(balance));
+
+  // ---- stats ----
+  const mixTotal = $derived(messageMix.reduce((s, x) => s + x.count, 0) || 1);
+  const mixTop = $derived(Math.max(1, ...messageMix.map((x) => x.count)));
+  const onlinePct = $derived(onlineMinutesPrev ? Math.round(((onlineMinutes - onlineMinutesPrev) / onlineMinutesPrev) * 1000) / 10 : 0);
+  // neutral until it becomes a signal worth flagging
+  const reportTone = $derived(reported >= 25 ? 'var(--status-danger,#F5493D)' : reported >= 10 ? 'var(--status-warning,#FFB03D)' : null);
+
+  // ---- CHIT ----
+  let monthOffset = $state(0);
+  let hoverDay = $state<number | null>(null);
+  const setChit = (patch: ChitSettingsPatch) => onChitSettings?.(patch);
+  const puzzleMode = $derived(!puzzleShown ? 'off' : puzzleRemind ? 'remind' : 'show');
+
+  const calendar = $derived.by(() => {
+    const runLength = claimable ? streak : streak - 1;
+    const hist = buildHistory(runLength, ['2026-09-07']);
+    if (!claimable) hist[dayKey(TODAY)] = { amount: tier(runLength + 1), day: runLength + 1, min: claimMinute };
+    const now = new Date(TODAY);
+    const total = now.getUTCFullYear() * 12 + now.getUTCMonth();
+    const minTotal = JOINED.y * 12 + JOINED.m;
+    const view = Math.max(minTotal, total - monthOffset);
+    const y = Math.floor(view / 12), mo = view % 12;
+    const lead = new Date(Date.UTC(y, mo, 1)).getUTCDay();
+    const dim = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate();
+    const hhmm = (m: number) => {
+      m = ((m % 1440) + 1440) % 1440;
+      return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+    };
+    type Cell = {
+      day?: number;
+      kind: 'blank' | 'claim' | 'future' | 'insured' | 'claimed' | 'missed';
+      amount?: number;
+      col: number;
+      head?: string;
+      lines?: { text: string; tone: 'ink' | 'chit' | 'online' | 'muted' }[];
+      title?: string;
+    };
+    const cells: Cell[] = [];
+    let chit = 0, claimed = 0, insured = 0;
+    for (let i = 0; i < lead; i++) cells.push({ kind: 'blank', col: i });
+    for (let d = 1; d <= dim; d++) {
+      const t = Date.UTC(y, mo, d), rec = hist[dayKey(t)], col = (lead + d - 1) % 7;
+      const head = `${WEEKDAYS[new Date(t).getUTCDay()]} ${d} ${MONTHS[mo]}`;
+      if (t === TODAY && claimable) cells.push({ day: d, kind: 'claim', col, title: 'Claim today’s CHIT' });
+      else if (t > TODAY) cells.push({ day: d, kind: 'future', col });
+      else if (rec?.insured) {
+        insured++;
+        cells.push({
+          day: d,
+          kind: 'insured',
+          col,
+          head,
+          lines: [
+            { text: 'Missed · covered by insurance', tone: 'online' },
+            { text: `Streak kept at day ${rec.day}`, tone: 'muted' },
+          ],
+        });
+      } else if (rec && 'amount' in rec) {
+        chit += rec.amount;
+        claimed++;
+        const time = chitUtc ? `${hhmm(rec.min)} UTC` : `${hhmm(rec.min + utcOffsetMinutes)} local time`;
+        cells.push({
+          day: d,
+          kind: 'claimed',
+          amount: rec.amount,
+          col,
+          head,
+          lines: [
+            { text: `Claimed at ${time}`, tone: 'ink' },
+            { text: `+${rec.amount} CHIT · day ${rec.day} of streak`, tone: 'chit' },
+          ],
+        });
+      } else cells.push({ day: d, kind: 'missed', col, title: `${d} ${MONTHS[mo].slice(0, 3)} · not claimed` });
+    }
+    while (cells.length % 7) cells.push({ kind: 'blank', col: cells.length % 7 });
+    return { cells, label: `${MONTHS[mo]} ${y}`, chit, claimed, insured, canPrev: view > minTotal, canNext: view < total, maxOffset: total - minTotal };
+  });
+
+  // ---- chats & calls ----
+  let chatOverrides = $state<Partial<ChatSettings>>({});
+  let playing = $state<ChatSettings['ringtone'] | null>(null);
+  let previewTimer: ReturnType<typeof setTimeout> | undefined;
+  const chat = $derived<ChatSettings>({ ...CHAT_DEFAULTS, ...chatSettings, ...chatOverrides });
+
+  function setChat<K extends keyof ChatSettings>(key: K, value: ChatSettings[K]) {
+    const current = chat;
+    chatOverrides = { ...chatOverrides, [key]: value };
+    onChatSettings?.({ ...current, [key]: value });
+  }
+
+  function preview(e: Event, tone: ChatSettings['ringtone']) {
+    e.stopPropagation();
+    cancel(previewTimer);
+    if (playing === tone) {
+      playing = null;
+      return;
+    }
+    playing = tone;
+    previewTimer = later(() => (playing = null), 2500);
+  }
+
+  // ---- communities ----
+  let commOverrides = $state<Record<string, string>>({});
+  let commQuery = $state('');
+  const commNames = $derived({ ...communityNames, ...commOverrides });
+  const shownCommunities = $derived.by(() => {
+    const q = commQuery.trim().toLowerCase();
+    return q ? communities.filter((c) => c.name.toLowerCase().includes(q)) : communities;
+  });
+
+  function commitCommunity(community: string, value: string) {
+    commOverrides = { ...commOverrides, [community]: value };
+    stopEdit();
+    onCommunityName?.(community, value || null);
+  }
+
+  // ---- sign-in providers ----
+  type Adding = { type: SigninMethod['type']; step: 'new' | 'email' | 'code' | 'confirm'; email: string; code: string; waiting?: boolean };
+  let siRemoved = $state<string[]>([]);
+  let siAdded = $state<SigninMethod[]>([]);
+  let siAdding = $state<Adding | null>(null);
+  let siToast = $state<{ text: string; undo?: () => void } | null>(null);
+  let siStepTimer: ReturnType<typeof setTimeout> | undefined;
+  let siToastTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const siAll = $derived([...signinMethods, ...siAdded].filter((x) => !siRemoved.includes(x.id)));
+  const siCurrent = $derived(siAll.find((x) => x.current) ?? siAll[0]);
+  const emailOk = $derived(!!siAdding && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(siAdding.email));
+  const codeOk = $derived(!!siAdding && /^\d{6}$/.test(siAdding.code));
+  const siBlocked = $derived(!!siAdding && ((siAdding.step === 'email' && !emailOk) || (siAdding.step === 'code' && !codeOk)));
+
+  function toast(text: string, undo?: () => void) {
+    cancel(siToastTimer);
+    siToast = { text, undo };
+    siToastTimer = later(() => (siToast = null), 5000);
+  }
+
+  function updateAdding(patch: Partial<Adding>) {
+    if (siAdding) siAdding = { ...siAdding, ...patch };
+  }
+
+  function finishAdding(method: SigninMethod) {
+    siAdded = [...siAdded, method];
+    siAdding = null;
+    toast(`${SI_TYPES[method.type].noun} linked`);
+  }
+
+  function startAdding(type: SigninMethod['type']) {
+    cancel(siStepTimer);
+    siAdding = { type, step: type === 'email' ? 'email' : 'new', email: '', code: '' };
+  }
+
+  function cancelAdding() {
+    cancel(siStepTimer);
+    siAdding = null;
+  }
+
+  function unlink(x: SigninMethod) {
+    siRemoved = [...siRemoved, x.id];
+    toast(`${x.title} unlinked`, () => {
+      siRemoved = siRemoved.filter((id) => id !== x.id);
+      siToast = null;
+    });
+  }
+
+  type CheckItem = { label: string; state: 'done' | 'now' | 'wait' | 'todo'; action?: string; run?: () => void };
+  const checklist = $derived.by((): CheckItem[] => {
+    const a = siAdding;
+    if (!a || !siCurrent) return [];
+    const confirm = (method: SigninMethod): CheckItem => ({
+      label: `Confirm with your ${siCurrent.short}`,
+      state: a.step === 'confirm' ? (a.waiting ? 'wait' : 'now') : 'todo',
+      action: 'Confirm',
+      run: () => {
+        updateAdding({ waiting: true });
+        cancel(siStepTimer);
+        siStepTimer = later(() => finishAdding({ current: false, ...method }), 900);
+      },
+    });
+    if (a.type !== 'email') {
+      const method: SigninMethod =
+        a.type === 'passkey'
+          ? { type: 'passkey', id: `k${Date.now().toString(36).slice(-4)}-new…-lnk1d-cai`, title: 'Passkey on this device', short: 'passkey on this device' }
+          : { type: 'ii', id: '7hq2m-ab3x…-ne9kd-cai', title: 'Internet Identity', short: 'Internet Identity' };
+      return [
+        {
+          label: a.type === 'passkey' ? 'Create a passkey' : 'Sign in with Internet Identity',
+          state: a.step === 'new' ? (a.waiting ? 'wait' : 'now') : 'done',
+          action: a.type === 'passkey' ? 'Create' : 'Sign in',
+          run: () => {
+            updateAdding({ waiting: true });
+            cancel(siStepTimer);
+            siStepTimer = later(() => updateAdding({ step: 'confirm', waiting: false }), 900);
+          },
+        },
+        a.step === 'new' ? { label: `Confirm with your ${siCurrent.short}`, state: 'todo' } : confirm(method),
+      ];
+    }
+    if (a.step === 'confirm')
+      return [{ label: `Verify ${a.email}`, state: 'done' }, confirm({ type: 'email', id: a.email, title: a.email, short: 'email' })];
+    return [];
+  });
+
+  function addingKey(e: KeyboardEvent, ok: boolean, next: Adding['step']) {
+    if (e.key === 'Enter' && ok) updateAdding({ step: next });
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      siAdding = null;
+    }
+  }
+
+  // ---- appearance ----
+  const setAppearance = (patch: { theme?: string; accent?: string; font?: string }) => onAppearance?.(patch);
+  const sampleSize = $derived(onAppearance ? '13.5px' : `${Math.round(13.5 * (FONT_SIZES.find((f) => f.key === fontSize) ?? FONT_SIZES[1]).scale * 10) / 10}px`);
+
+  // ---- storage ----
+  let cache = $state<'idle' | 'busy' | 'done'>('idle');
+  const storageCap = $derived(isDiamond ? 1024 : 100);
+  const storageUsed = $derived(Math.min(storageCap, storageUsedMB ?? 0));
+  const storageRatio = $derived(storageUsed / storageCap);
+  const storageTone = $derived(storageRatio >= 0.95 ? 'var(--status-danger,#F5493D)' : storageRatio >= 0.8 ? 'var(--status-chit,#FF9F45)' : null);
+  const mb = (v: number) => (v >= 1000 ? `${(v / 1024).toFixed(2).replace(/\.?0+$/, '')} GB` : `${Math.round(v * 10) / 10} MB`);
+
+  function clearCache() {
+    if (cache !== 'idle') return;
+    cache = 'busy';
+    later(() => {
+      cache = 'done';
+      onClearCache?.();
+    }, 1200);
+  }
+
+  // ---- bots ----
+  let botCopied = $state<string | null>(null);
+  let botTimer: ReturnType<typeof setTimeout> | undefined;
+  const botRows = $derived([
+    { key: 'host', label: 'IC host URL', value: icHost },
+    { key: 'storage', label: 'OpenStorage index canister', value: storageIndex },
+    { key: 'key', label: 'OpenChat public key', value: publicKey },
+  ]);
+
+  function copyBot(key: string, value: string) {
+    copyText(value);
+    cancel(botTimer);
+    botCopied = key;
+    botTimer = later(() => (botCopied = null), 1400);
+  }
+
+  // ---- link device ----
+  let lcCode = $state<string | null>(null);
+  let lcLeft = $state(0);
+  let lcHidden = $state(false);
+  let lcCopied = $state(false);
+  let lcTicker: ReturnType<typeof setInterval> | undefined;
+  let lcCopyTimer: ReturnType<typeof setTimeout> | undefined;
+  const lcLive = $derived(!!lcCode && lcLeft > 0);
+
+  function newLinkCode() {
+    const code = Array.from({ length: 6 }, () => CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]).join('');
+    const end = Date.now() + linkCodeTtl * 1000;
+    clearInterval(lcTicker);
+    lcHidden = false;
+    lcCode = code;
+    lcLeft = linkCodeTtl;
+    lcCopied = false;
+    lcTicker = setInterval(() => {
+      lcLeft = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+      if (!lcLeft) {
+        clearInterval(lcTicker);
+        lcCode = null;
+        lcHidden = false;
+      }
+    }, 250);
+  }
+
+  function copyLinkCode() {
+    copyText(lcCode ?? '');
+    cancel(lcCopyTimer);
+    lcCopied = true;
+    lcCopyTimer = later(() => (lcCopied = false), 1400);
+  }
+
+  // ---- delete account ----
+  let delOpen = $state(false);
+  let delStep = $state(0);
+  let delBusy = $state(false);
+  let delTyped = $state('');
+  let delTimer: ReturnType<typeof setTimeout> | undefined;
+  const delMatch = $derived(delTyped.trim().replace(/^@/, '').toLowerCase() === values.handle.toLowerCase());
+  const delNextMile = $derived.by(() => {
+    const n = [14, 30, 100, 365].find((v) => v > streak);
+    return n ? `${n - streak} days to your ${n}-day milestone` : 'Every milestone reached';
+  });
+  const delLocked = $derived(delStep === 3 && (!delMatch || delBusy));
+
+  function openDelete() {
+    delOpen = true;
+    delStep = 0;
+    delBusy = false;
+    delTyped = '';
+  }
+
+  function stayNow() {
+    cancel(delTimer);
+    delOpen = false;
+    delStep = 0;
+    delBusy = false;
+    delTyped = '';
+  }
+
+  function deletePrimary() {
+    if (delStep < 3) {
+      if (delStep === 2) onChitBribe?.();
+      stayNow();
+      return;
+    }
+    if (delLocked) return;
+    delBusy = true;
+    delTimer = later(() => {
+      stayNow();
+      close(onDeleteAccount ?? onClose);
+    }, 1400);
+  }
+
+  function deleteSecondary() {
+    if (delBusy) return;
+    if (delStep < 3) delStep++;
+    else stayNow();
+  }
+
+  type Seg = [string, boolean?];
+  const delSteps = $derived([
+    {
+      icon: 'chat',
+      title: 'You’re leaving everyone on read?',
+      body: [['All your chats, photos and contacts will '], ['vanish for good', true], ['. No backups, no take-backs — maybe keep the conversation going?']] as Seg[],
+      primary: 'Okay, I’ll stay',
+      primaryIcon: 'heart',
+      secondary: 'Continue anyway',
+    },
+    {
+      icon: 'wallet',
+      title: 'Your wallet goes with it',
+      body: [['Your crypto wallet lives here too. Deleting your account deletes it, so '], ['move your funds out first', true], [' — or just don’t break up with us.']] as Seg[],
+      primary: 'I’m staying for my wallet',
+      primaryIcon: 'wallet',
+      secondary: 'Still want to continue',
+    },
+    {
+      icon: null,
+      title: 'Think of your CHIT!',
+      body: [
+        ['You’ll lose '],
+        [`${fmt(balance)} CHIT`, true],
+        [' and your '],
+        [`${streak}-day streak`, true],
+        ['. That’s a lot of days to throw away — we could even throw in a few more CHIT…?'],
+      ] as Seg[],
+      primary: 'I love a good bribe, I’ll stay',
+      primaryIcon: 'zap',
+      secondary: 'Keep going',
+    },
+    {
+      icon: 'trash',
+      title: 'This is it. No take-backs.',
+      body: [['Your account, chats, wallet and CHIT will be '], ['gone for good', true], ['. You’ll be asked to sign in again to confirm.']] as Seg[],
+      primary: delBusy ? 'Re-authenticating…' : 'Re-authenticate & delete',
+      primaryIcon: delBusy ? 'refresh' : 'trash',
+      secondary: 'Nah, I’m kidding, I’ll stay',
+    },
+  ]);
+
+  // ---- log out ----
+  let loOpen = $state(false);
+  let loBusy = $state(false);
+
+  function confirmLogout() {
+    if (loBusy) return;
+    loBusy = true;
+    later(() => {
+      loOpen = false;
+      loBusy = false;
+      close(onLogout ?? onClose);
+    }, 900);
+  }
+
+  // ---- invite ----
+  let invCopied = $state(false);
+  let invTimer: ReturnType<typeof setTimeout> | undefined;
+  let qr = $state<{ link: string; src: string } | null>(null);
+  const link = $derived(inviteLink ?? `https://oc.app/?ref=${userId}`);
+
+  // the QR library loads as a global script; retry until it is there
+  $effect(() => {
+    if (section !== 'invite' || qr?.link === link) return;
+    const target = link;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    const build = () => {
+      const lib = (window as any).qrcode;
+      if (!lib) {
+        retry = setTimeout(build, 300);
+        return;
+      }
+      const q = lib(0, 'M');
+      q.addData(target);
+      q.make();
+      const n = q.getModuleCount();
+      let d = '';
+      for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (q.isDark(y, x)) d += `M${x} ${y}h1v1h-1z`;
+      qr = {
+        link: target,
+        src: 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges"><path d="${d}" fill="#000"/></svg>`),
+      };
+    };
+    build();
+    return () => clearTimeout(retry);
+  });
+
+  function copyInvite() {
+    copyText(link);
+    cancel(invTimer);
+    invCopied = true;
+    invTimer = later(() => (invCopied = false), 1400);
+  }
+
+  function shareInvite() {
+    if (navigator.share) navigator.share({ title: 'Join me on OpenChat', url: link }).catch(() => {});
+    else onShareApp?.(link);
+  }
+
+  // ---- keyboard ----
+  onMount(() => {
+    const key = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if ((e.key === 'Enter' || e.key === ' ') && target?.getAttribute?.('role') === 'button') {
+        e.preventDefault();
+        target.click();
+        return;
+      }
+      if (e.key !== 'Escape' || editing) return;
+      if (loOpen) {
+        if (!loBusy) loOpen = false;
+        return;
+      }
+      if (delOpen) {
+        if (!delBusy) {
+          delOpen = false;
+          delStep = 0;
+        }
+        return;
+      }
+      close(onClose);
+    };
+    window.addEventListener('keydown', key);
+    return () => window.removeEventListener('keydown', key);
+  });
+
+  onDestroy(() => {
+    timers.forEach(clearTimeout);
+    clearInterval(lcTicker);
+  });
 </script>
 
-<div style="position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:var(--space-22)" role="dialog" aria-modal="true">
-  <div style="position:absolute;inset:0;background:var(--oc-veil,rgba(3,3,6,.72));backdrop-filter:var(--oc-veil-blur,blur(4px));-webkit-backdrop-filter:var(--oc-veil-blur,blur(4px));animation:{v.veilAnim}" onclick={v.onCancel} aria-hidden="true"></div>
-  <div style="position:relative;display:flex;width:100%;max-width:860px;height:770px;max-height:100%;box-sizing:border-box;border:1px solid var(--line-2,rgba(255,255,255,.1));border-radius:var(--radius-xl);background:var(--surface-1,#0e0e12);box-shadow:var(--shadow-modal,0 30px 70px rgba(0,0,0,.45));overflow:hidden;animation:{v.cardAnim}">
+{#snippet glyph(name: string, cls = 'glyph')}<span class={cls} style:mask={icon(name)}></span>{/snippet}
 
-    <div style="flex:none;width:250px;display:flex;flex-direction:column;background:var(--surface-0,#07070a);border-inline-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:14px 10px 12px">
-        {#each v.nav ?? [] as g, i0}
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <span style="padding:6px 10px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">{t(g.label)}</span>
-            {#each g.items ?? [] as n, i1}
-              <div class="dc-p0" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:var(--radius-sm);background:{n.bg};cursor:pointer;user-select:none" onclick={n.onPress} role="button" tabindex="0">
-                <span style="flex:none;width:15px;height:15px;background:{n.ink};mask:{n.mask}"></span>
-                <span style="flex:1;font:{n.weight} var(--text-md)/1 var(--font-sans);color:{n.labelInk}">{t(n.title)}</span>
-                <span style="font:var(--weight-semibold) 10.5px/1 var(--font-mono);color:{n.metaInk}">{t(n.meta)}</span>
+{#snippet toggleRow(title: string, hint: string, on: boolean, change: (v: boolean) => void)}
+  <div class="setting">
+    <div class="setting-text"><span class="setting-title">{title}</span><span class="setting-hint">{hint}</span></div>
+    <div class="setting-control"><Toggle {on} onChange={change} /></div>
+  </div>
+{/snippet}
+
+{#snippet chatGroup(group: (typeof CHAT_GROUPS)[number])}
+  <div class="block">
+    <span class="caps">{group.label}</span>
+    <div class="list">
+      {#each group.rows as [key, title, hint], i}
+        {#if i > 0}<div class="rule"></div>{/if}
+        {@render toggleRow(title, hint, !!chat[key], (v) => setChat(key, v))}
+      {/each}
+    </div>
+  </div>
+{/snippet}
+
+<div class="layer" class:closing role="dialog" aria-modal="true">
+  <div class="veil" onclick={() => close(onClose)} aria-hidden="true"></div>
+  <div class="card">
+    <div class="rail">
+      <div class="rail-scroll">
+        {#each NAV as group}
+          <div class="nav-group">
+            <span class="nav-label">{group.label}</span>
+            {#each group.items.filter((i) => i[0] !== 'chit' || chitEnabled || section === 'chit') as [key, title, iconName, tone]}
+              {@const on = key === section}
+              <div class="nav-item {tone ?? ''}" class:on onclick={() => (key === 'diamond' ? close(onDiamond) : go(key))} role="button" tabindex="0">
+                <span class="nav-icon" style:mask={icon(iconName)}></span>
+                <span class="nav-title">{title}</span>
+                <span class="nav-meta" class:upgrade={tone === 'diamond' && !isDiamond}
+                  >{tone === 'chit' && chitEnabled ? `${streak}d` : tone === 'diamond' ? (isDiamond ? 'Member' : 'Upgrade') : ''}</span
+                >
               </div>
             {/each}
           </div>
         {/each}
       </div>
-      <div style="flex:none;padding:8px 10px;border-block-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-        <div class="dc-p1" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:var(--radius-sm);cursor:pointer;user-select:none" onclick={v.onLogout} role="button" tabindex="0">
-          <span style="flex:none;width:15px;height:15px;background:var(--ink-3,#8A8A99);mask:{v.m.logout}"></span>
-          <span style="flex:1;font:500 var(--text-md)/1 var(--font-sans);color:var(--ink-2,#B9B9C6)">Log out</span>
+      <div class="rail-foot">
+        <div
+          class="nav-item"
+          onclick={() => {
+            loOpen = true;
+            loBusy = false;
+          }}
+          role="button"
+          tabindex="0"
+        >
+          <span class="nav-icon logout" style:mask={icon('leave')}></span>
+          <span class="nav-title">Log out</span>
         </div>
       </div>
     </div>
 
-    <div style="flex:1;min-width:0;display:flex;flex-direction:column">
-      <div style="flex:none;display:flex;align-items:center;gap:12px;height:69px;box-sizing:border-box;padding:0 26px;border-block-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-        <span style="flex:1;font:var(--weight-bold) var(--text-lg)/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.sectionTitle)}</span>
-        <span class="dc-p2" style="flex:none;display:flex;align-items:center;justify-content:center;width:32px;height:32px;margin-inline-end:-8px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onCancel} aria-label="Close" role="button" tabindex="0" title="Close"><span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.m.close}"></span></span>
+    <div class="main">
+      <div class="main-head">
+        <span class="section-title">{TITLES[section] ?? 'Profile'}</span>
+        <span class="head-close" onclick={() => close(onClose)} aria-label="Close" role="button" tabindex="0" title="Close">{@render glyph('close', 'head-close-glyph')}</span>
       </div>
 
-      {#if v.isProfile}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:18px">
-          <div style="flex:none;position:relative;height:118px;border-radius:var(--radius-lg);background:{v.cover}">
-            <span class="dc-p3" style="position:absolute;top:var(--space-8);inset-inline-end:var(--space-8);display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);background:var(--card-2,#1B1B21);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12));cursor:pointer" onclick={v.onCoverEdit} aria-label="Change cover" role="button" tabindex="0" title="Change cover"><span style="width:16px;height:16px;background:var(--ink-3,#9A9AA8);mask:{v.m.edit}"></span></span>
+      {#if section === 'profile'}
+        <div class="scroll gap-18">
+          <div class="cover" style:background={cover}>
+            <span class="cover-edit" onclick={() => onCoverEdit?.(isDiamond)} aria-label="Change cover" role="button" tabindex="0" title="Change cover">{@render glyph('edit', 'cover-edit-glyph')}</span>
           </div>
-          <div style="flex:none;display:flex;align-items:flex-end;gap:16px;margin-top:-44px;padding-inline:16px">
-            <span style="position:relative;flex:none;width:88px;height:88px;border-radius:var(--radius-pill);background:{v.avatar};box-shadow:0 0 0 4px var(--surface-1,#0e0e12)">
-              <span class="dc-p4" style="position:absolute;bottom:-2px;inset-inline-end:-2px;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);background:var(--card-2,#1B1B21);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12)),0 0 0 3px var(--surface-1,#0e0e12);cursor:pointer" onclick={v.onPhotoEdit} aria-label="Change photo" role="button" tabindex="0" title="Change photo"><span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.m.edit}"></span></span>
+          <div class="identity">
+            <span class="avatar" style:background={avatar}>
+              <span class="photo-edit" onclick={() => onPhotoEdit?.()} aria-label="Change photo" role="button" tabindex="0" title="Change photo">{@render glyph('edit', 'photo-edit-glyph')}</span>
             </span>
-            <div style="position:relative;flex:1;min-width:0;display:flex;flex-direction:column;gap:7px;padding-bottom:4px">
-              <div style="display:flex;align-items:center;gap:6px;min-width:0">
-                <span style="font:var(--weight-bold) var(--text-xl)/1.2 var(--font-sans);letter-spacing:-.01em;color:var(--ink,#ECECF1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{t(v.name)}</span>
-                {#if v.isVerified}<span style="flex:none;display:grid;grid-template-columns:max-content"><Badge variant="verified"></Badge></span>{/if}
-                {#if v.isDiamond}<span style="flex:none;display:grid;grid-template-columns:max-content"><Badge variant="tag" label="DIAMOND"></Badge></span>{/if}
-                {#if v.showChitTag}<span class="dc-p5" style="flex:none;display:grid;grid-template-columns:max-content;border-radius:var(--radius-pill);cursor:pointer" onclick={v.onChitTag} aria-label={v.chitTagTitle} role="button" tabindex="0" title={v.chitTagTitle}><Badge variant="chit" label={v.chitTag}></Badge></span>{/if}
+            <div class="identity-text">
+              <div class="name-line">
+                <span class="display-name">{shownName}</span>
+                {#if isVerified}<span class="badge-slot"><Badge variant="verified" /></span>{/if}
+                {#if isDiamond}<span class="badge-slot"><Badge variant="tag" label="DIAMOND" /></span>{/if}
+                {#if chitEnabled}<span class="badge-slot chit-tag" onclick={() => go('chit')} aria-label="{fmt(balance)} CHIT" role="button" tabindex="0" title="{fmt(balance)} CHIT"
+                    ><Badge variant="chit" label={chitTag} /></span
+                  >{/if}
               </div>
-              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                <span style="font:var(--weight-medium) var(--text-md)/1 var(--font-mono);color:var(--ink-3,#9A9AA8)">@{t(v.handle)}</span>
-              </div>
+              <div class="handle-line"><span class="handle">@{values.handle}</span></div>
             </div>
           </div>
 
-<span style="flex:none;margin-top:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">PUBLIC PROFILE</span>
-          <div style="flex:none;margin-top:-10px;display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));overflow:hidden">
-            {#each v.fields ?? [] as f, i2}
-              <div style="display:flex;flex-direction:column;border-block-start:{f.divider}">
-                {#if f.idle}
-                  <div class="dc-p6" style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px;cursor:pointer" onclick={f.onEdit} role="button" tabindex="0">
-                    <span style="flex:none;width:110px;font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">{t(f.label)}</span>
-                    <span style="flex:1;min-width:0;font:{f.font};color:{f.ink};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(f.display)}</span>
-                    <span style="flex:none;width:14px;height:14px;background:var(--ink-3,#8A8A99);mask:{v.m.edit}"></span>
+          <span class="caps lead-caps">PUBLIC PROFILE</span>
+          <div class="list pull-up">
+            {#each FIELDS as f, i}
+              {@const value = values[f.key]}
+              {@const err = editing === f.key ? validate(f.key, draft) : null}
+              <div class="field" class:ruled={i > 0}>
+                {#if editing !== f.key}
+                  <div class="kv-row editable" onclick={() => startEdit(f.key, value)} role="button" tabindex="0">
+                    <span class="kv-label">{f.label}</span>
+                    <span class="kv-value" class:mono={f.mono} class:area={f.area} class:empty={!value}>{!value ? f.placeholder : f.mono ? `@${value}` : value}</span>
+                    {@render glyph('edit', 'kv-edit')}
                   </div>
-                {/if}
-                {#if f.editing}
-                  <div style="display:flex;flex-direction:column;gap:10px;padding:16px;background:var(--overlay-1,rgba(255,255,255,.05))">
-                    <div style="display:flex;align-items:baseline;gap:8px"><span style="flex:1;font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">{t(f.label)}</span><span style="font:var(--weight-medium) 10.5px/1 var(--font-mono);color:var(--ink-4,#6E6E7C)">{t(f.count)}</span></div>
-                    {#if f.isArea}
-                      <textarea style="box-sizing:border-box;width:100%;resize:none;padding:11px 12px;border:none;outline:none;border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:{f.ring};font:var(--weight-regular) 13px/1.5 var(--font-sans);color:var(--ink,#ECECF1)" use:ref={f.ref} value={f.draft} oninput={f.onInput} onkeydown={f.onKey} maxlength={f.max} rows="3"></textarea>
-                    {/if}
-                    {#if f.isLine}
-                      <div style="display:flex;align-items:center;height:40px;padding:0 12px;border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:{f.ring}">
-                        {#if f.mono}<span style="font:var(--weight-medium) 13px/1 var(--font-mono);color:var(--ink-4,#6E6E7C)">@</span>{/if}
-                        <input style="flex:1;min-width:0;height:100%;padding:0;border:none;outline:none;background:transparent;font:{f.font};color:var(--ink,#ECECF1)" use:ref={f.ref} value={f.draft} oninput={f.onInput} onkeydown={f.onKey} maxlength={f.max} placeholder={f.placeholder}>
+                {:else}
+                  <div class="editor">
+                    <div class="editor-head"><span class="editor-label">{f.label}</span><span class="editor-count">{f.area ? `${draft.length} / ${f.max}` : ''}</span></div>
+                    {#if f.area}
+                      <textarea
+                        class="area-input"
+                        class:invalid={!!err}
+                        bind:this={field}
+                        value={draft}
+                        oninput={(e) => (draft = e.currentTarget.value)}
+                        onkeydown={(e) => {
+                          if (e.key === 'Escape') {
+                            e.stopPropagation();
+                            stopEdit();
+                          } else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                            e.preventDefault();
+                            saveField();
+                          }
+                        }}
+                        maxlength={f.max}
+                        rows="3"
+                      ></textarea>
+                    {:else}
+                      <div class="line-input" class:invalid={!!err}>
+                        {#if f.mono}<span class="at">@</span>{/if}
+                        <input
+                          class:mono={f.mono}
+                          class:roomy={!f.mono}
+                          bind:this={field}
+                          value={draft}
+                          oninput={(e) => (draft = e.currentTarget.value)}
+                          onkeydown={(e) => {
+                            if (e.key === 'Escape') {
+                              e.stopPropagation();
+                              stopEdit();
+                            } else if (e.key === 'Enter') {
+                              e.preventDefault();
+                              saveField();
+                            }
+                          }}
+                          maxlength={f.max}
+                          placeholder={f.placeholder}
+                        />
                       </div>
                     {/if}
-                    <div style="display:flex;align-items:center;gap:8px">
-                      <span style="flex:1;font:var(--weight-regular) 10.5px/1.3 var(--font-sans);color:{f.hintInk}">{t(f.hint)}</span>
-                      <span class="dc-p7" style="padding:8px 12px;border-radius:var(--radius-sm);font:var(--weight-semibold) 12px/1 var(--font-sans);color:var(--ink-2,#B9B9C6);cursor:pointer;user-select:none" onclick={f.onCancel} role="button" tabindex="0">Cancel</span>
-                      <span class="dc-p8" style="display:flex;align-items:center;height:30px;padding:0 14px;border-radius:var(--radius-sm);background:var(--accent,#FF5672);font:var(--weight-semibold) 12px/1 var(--font-sans);color:var(--on-accent,#2E0512);cursor:pointer;user-select:none;opacity:{f.saveOpacity};pointer-events:{f.savePointer}" onclick={f.onSave} role="button" tabindex="0">Save</span>
+                    <div class="editor-foot">
+                      <span class="editor-hint" class:invalid={!!err}>{err || f.hint}</span>
+                      <span class="cancel" onclick={stopEdit} role="button" tabindex="0">Cancel</span>
+                      <span class="save" class:blocked={!!err} onclick={saveField} role="button" tabindex="0">Save</span>
                     </div>
                   </div>
                 {/if}
@@ -122,121 +1082,181 @@
             {/each}
           </div>
 
-          <span style="flex:none;margin-top:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">ACCOUNT</span>
-          <div style="flex:none;margin-top:-10px;display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));overflow:hidden">
-            <div style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px">
-              <span style="flex:none;width:110px;font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">Status</span>
-              <span style="flex:1;display:flex;align-items:center;gap:8px;font:var(--weight-medium) 13px/1 var(--font-sans);color:var(--ink,#ECECF1)"><span style="width:7px;height:7px;border-radius:var(--radius-pill);background:var(--status-online,#2EE6A8)"></span>Online</span>
+          <span class="caps lead-caps">ACCOUNT</span>
+          <div class="list pull-up">
+            <div class="kv-row">
+              <span class="kv-label">Status</span>
+              <span class="status"><span class="online-dot"></span>Online</span>
             </div>
-            <div style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px;border-block-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-              <span style="flex:none;width:110px;font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">Member since</span>
-              <span style="flex:1;font:var(--weight-medium) 13px/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.memberSince)}</span>
+            <div class="kv-row ruled">
+              <span class="kv-label">Member since</span>
+              <span class="kv-plain">{memberSince}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px;border-block-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-              <span style="flex:none;width:110px;font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">User ID</span>
-              <span style="flex:1;min-width:0;font:var(--weight-medium) 12px/1 var(--font-mono);color:var(--ink,#ECECF1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(v.userId)}</span>
-              <span class="dc-p9" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;margin-inline-end:-8px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onCopy} aria-label={v.copyTitle} role="button" tabindex="0" title={v.copyTitle}><span style="width:14px;height:14px;background:{v.copyInk};mask:{v.copyMask}"></span></span>
+            <div class="kv-row ruled">
+              <span class="kv-label">User ID</span>
+              <span class="kv-id">{userId}</span>
+              <span class="copy" onclick={copyUserId} aria-label={copied ? 'Copied' : 'Copy user ID'} role="button" tabindex="0" title={copied ? 'Copied' : 'Copy user ID'}
+                >{@render glyph(copied ? 'check' : 'copy', copied ? 'copy-glyph done' : 'copy-glyph')}</span
+              >
             </div>
           </div>
         </div>
       {/if}
 
-      {#if v.isStats}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-content:start;gap:8px">
-          <div style="grid-column:1/-1;display:flex;align-items:flex-end;gap:14px;padding:18px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05))">
-            <div style="flex:1;display:flex;flex-direction:column;gap:9px"><span style="font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">Online this month</span><span style="font:var(--weight-bold) var(--text-3xl)/1 var(--font-sans);letter-spacing:-.02em;color:var(--ink,#ECECF1)">{t(v.onlineNow)}<span style="margin-inline-start:6px;font:var(--weight-medium) 13px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">min</span></span></div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px">
-              <span style="display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:var(--radius-pill);background:{v.onlineWash};font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:{v.onlineInk}"><span style="width:11px;height:11px;background:{v.onlineInk};mask:{v.onlineMask}"></span>{t(v.onlineDelta)}</span>
-              <span style="font:var(--weight-regular) 11px/1 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.onlinePrev)} last month</span>
+      {#if section === 'stats'}
+        <div class="scroll stats-grid">
+          <div class="stat-online">
+            <div class="online-main">
+              <span class="small-label">Online this month</span><span class="online-figure">{fmt(onlineMinutes)}<span class="online-unit">min</span></span>
+            </div>
+            <div class="online-side">
+              <span class="delta" class:down={onlinePct < 0}
+                ><span class="delta-glyph" style:mask={icon(onlinePct >= 0 ? 'chevron-up' : 'chevron-down')}></span>{onlinePct >= 0 ? '+' : ''}{onlinePct}%</span
+              >
+              <span class="prev">{fmt(onlineMinutesPrev)} last month</span>
             </div>
           </div>
-          {#each v.statExtras ?? [] as e, i3}
-            <div style="min-width:0;display:flex;flex-direction:column;gap:10px;padding:20px 16px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05))"><span style="font:var(--weight-bold) 24px/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(e.count)}</span><span style="font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">{t(e.label)}</span></div>
+          {#each engagement as e}
+            <div class="stat-tile"><span class="tile-figure">{e.count}</span><span class="small-label">{e.label}</span></div>
           {/each}
-          <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:14px;padding:18px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05))">
-            <div style="display:flex;align-items:baseline"><span style="flex:1;font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">Messages sent</span><span style="font:var(--weight-bold) 15px/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.msgTotal)}</span></div>
-            {#each v.statMix ?? [] as x, i4}
-              <div style="display:grid;grid-template-columns:150px minmax(0,1fr) 44px;align-items:center;gap:12px">
-                <span style="font:var(--weight-medium) var(--text-md)/1.2 var(--font-sans);color:var(--ink-2,#C9C9D4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(x.label)}</span>
-                <div style="height:6px;border-radius:var(--radius-pill);background:var(--overlay-1,rgba(255,255,255,.06))"><div style="width:{x.rel};min-width:4px;height:100%;border-radius:var(--radius-pill);background:{x.color}"></div></div>
-                <span style="text-align:end;font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(x.count)}</span>
+          <div class="stat-mix">
+            <div class="mix-head"><span class="small-label grow">Messages sent</span><span class="mix-total">{fmt(mixTotal)}</span></div>
+            {#each messageMix as x, i}
+              <div class="mix-row">
+                <span class="mix-label">{x.label}</span>
+                <div class="mix-track">
+                  <div class="mix-fill" style:width="{((x.count / mixTop) * 100).toFixed(2)}%" style:background={x.color || MIX_COLORS[i % MIX_COLORS.length]}></div>
+                </div>
+                <span class="mix-count">{fmt(x.count)}</span>
               </div>
             {/each}
           </div>
-          <div style="grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:20px 18px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05))">
-            <span style="flex:none;width:17px;height:17px;background:{v.reportInk};mask:{v.m.flag}"></span>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px"><span style="font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1)">Reported messages</span><span style="font:var(--weight-regular) 11px/1.35 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(v.reportNote)}</span></div>
-            <span style="flex:none;font:var(--weight-bold) 24px/1 var(--font-sans);color:{v.reportCountInk}">{t(v.reported)}</span>
+          <div class="stat-report">
+            <span class="report-glyph" style:background={reportTone ?? 'var(--ink-3,#9A9AA8)'} style:mask={icon('flag')}></span>
+            <div class="report-text">
+              <span class="report-title">Reported messages</span><span class="report-note"
+                >{reportTone ? 'Reported or removed often enough that communities may notice' : 'Reported by others or removed by moderators'}</span
+              >
+            </div>
+            <span class="report-count" style:color={reportTone ?? 'var(--ink,#ECECF1)'}>{fmt(reported)}</span>
           </div>
         </div>
       {/if}
 
-      {#if v.isChit}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:16px">
-          <div style="flex:none;display:flex;align-items:center;gap:var(--space-14);padding:var(--space-16);border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05))">
-            <span style="flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--radius-md);background:var(--status-chit-soft,rgba(255,159,69,.14))"><span style="width:18px;height:18px;background:var(--status-chit,#FF9F45);mask:{v.m.zap}"></span></span>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#E4E4EC)">Enable CHIT &amp; related features</span><span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">Earn CHIT for using the app and spend it on emoji packs, backgrounds and themes.</span></div>
-            <div style="flex:none;display:flex"><Toggle on={v.chitEnabled} onChange={v.setChitEnabled}></Toggle></div>
+      {#if section === 'chit'}
+        <div class="scroll gap-16">
+          <div class="chit-master">
+            <span class="chit-badge">{@render glyph('zap', 'chit-badge-glyph')}</span>
+            <div class="setting-text">
+              <span class="setting-title">Enable CHIT &amp; related features</span><span class="setting-hint"
+                >Earn CHIT for using the app and spend it on emoji packs, backgrounds and themes.</span
+              >
+            </div>
+            <div class="setting-control"><Toggle on={chitEnabled} onChange={(v) => setChit({ enabled: v })} /></div>
           </div>
-          {#if v.chitEnabled}
-            <div style="flex:none;display:flex;flex-direction:column;gap:8px">
-              <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">NOTIFICATIONS</span>
-              <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);overflow:hidden;background:var(--overlay-1,rgba(255,255,255,.05))">
-                {#each v.chitKids ?? [] as k, i5}
-                  <div style="height:1px;background:var(--line-1,rgba(255,255,255,.07));display:{k.divider}"></div>
-                  <div style="display:flex;align-items:center;gap:var(--space-14);padding:var(--space-16)">
-                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#E4E4EC)">{t(k.title)}</span><span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(k.hint)}</span></div>
-                    <div style="flex:none;display:flex"><Toggle on={k.on} onChange={k.onChange}></Toggle></div>
-                  </div>
-                {/each}
+          {#if chitEnabled}
+            <div class="block">
+              <span class="caps">NOTIFICATIONS</span>
+              <div class="list">
+                {@render toggleRow('Notify me of achievements', 'A small celebration each time you complete one.', chitNotify, (v) => setChit({ notify: v }))}
+                <div class="rule"></div>
+                {@render toggleRow(
+                  'Hide CHIT icon after claiming',
+                  'Keeps the nav rail tidy once today’s CHIT is in. It comes back when the next claim opens.',
+                  chitHideAfterClaim,
+                  (v) => setChit({ hideAfterClaim: v }),
+                )}
               </div>
             </div>
-            <div style="flex:none;display:flex;flex-direction:column;gap:8px">
-              <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">DAILY PUZZLE</span>
-              <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);overflow:hidden;background:var(--overlay-1,rgba(255,255,255,.05));gap:var(--space-12);padding:var(--space-16)">
-                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#E4E4EC)">Daily puzzle</span><span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">A short logic puzzle in the CHIT modal.</span></div>
-                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:3px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))" role="radiogroup" aria-label="Daily puzzle">
-                  {#each v.puzzleOpts ?? [] as o, i6}
-                    <span class="dc-p10" style="display:flex;align-items:center;justify-content:center;gap:6px;height:34px;border-radius:calc(var(--radius-md) - 3px);background:{o.bg};font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:{o.ink};cursor:pointer;user-select:none" onclick={o.pick} role="radio" aria-checked={o.onStr} tabindex="0"><span style="width:13px;height:13px;background:currentColor;mask:{o.mask}"></span>{t(o.label)}</span>
+            <div class="block">
+              <span class="caps">DAILY PUZZLE</span>
+              <div class="list puzzle">
+                <div class="setting-text"><span class="setting-title">Daily puzzle</span><span class="setting-hint">A short logic puzzle in the CHIT modal.</span></div>
+                <div class="segments three" role="radiogroup" aria-label="Daily puzzle">
+                  {#each [['off', 'Hidden', 'eye-off'], ['show', 'Show', 'eye'], ['remind', 'Show + remind', 'bell']] as [k, label, iconName]}
+                    <span
+                      class="segment"
+                      class:on={puzzleMode === k}
+                      onclick={() => setChit({ puzzle: k !== 'off', puzzleRemind: k === 'remind' })}
+                      role="radio"
+                      aria-checked={puzzleMode === k}
+                      tabindex="0">{@render glyph(iconName, 'segment-glyph')}{label}</span
+                    >
                   {/each}
                 </div>
-                <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(v.puzzleHint)}</span>
+                <span class="setting-hint"
+                  >{puzzleMode === 'off'
+                    ? 'The puzzle card is removed from the CHIT modal.'
+                    : puzzleMode === 'show'
+                      ? 'Shown in the CHIT modal. No dot on the CHIT icon.'
+                      : 'A dot on the CHIT icon when a new puzzle is out.'}</span
+                >
               </div>
             </div>
+          {:else}
+            <p class="chit-off">
+              CHIT is off. You won’t earn CHIT, see streaks or get achievement alerts anywhere in OpenChat. Your {fmt(balance)} CHIT balance is kept for when you turn it back on.
+            </p>
           {/if}
-          {#if v.chitDisabled}
-            <p style="flex:none;margin:-4px 0 0;padding-inline:4px;font:var(--weight-regular) var(--text-md)/1.55 var(--font-sans);color:var(--ink-3,#8A8A99);text-wrap:pretty">CHIT is off. You won’t earn CHIT, see streaks or get achievement alerts anywhere in OpenChat. Your {t(v.balanceLabel)} balance is kept for when you turn it back on.</p>
-          {/if}
-          {#if v.chitEnabled}
-            <div class="dc-p11" style="flex:none;margin-top:8px;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--radius-md);background:var(--status-chit-soft,rgba(255,159,69,.14));cursor:pointer;user-select:none" onclick={v.onEarn} role="button" tabindex="0">
-              <span style="flex:none;width:18px;height:18px;background:var(--status-chit,#FF9F45);mask:{v.m.trophy}"></span>
-              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px"><span style="font:var(--weight-semibold) 13px/1 var(--font-sans);color:var(--ink,#ECECF1)">Ways to earn more</span><span style="font:var(--weight-medium) var(--text-sm)/1 var(--font-mono);color:var(--status-chit,#FF9F45)">{t(v.earnLeft)}</span></div>
-              <span style="flex:none;width:14px;height:14px;background:var(--status-chit,#FF9F45);mask:{v.m.chevRight}"></span>
+          {#if chitEnabled}
+            <div class="earn" onclick={() => close(onEarn)} role="button" tabindex="0">
+              {@render glyph('trophy', 'earn-glyph')}
+              <div class="earn-text"><span class="earn-title">Ways to earn more</span><span class="earn-left">{achievementsLeft} achievements left</span></div>
+              {@render glyph('chevron-right', 'earn-chevron')}
             </div>
-            <div style="flex:none;margin-top:4px;display:flex;align-items:center;gap:8px">
-              <span class="dc-p12" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-sm);background:var(--overlay-1,rgba(255,255,255,.05));cursor:pointer;opacity:{v.prevOpacity};pointer-events:{v.prevPointer}" onclick={v.prevMonth} aria-label="Previous month" role="button" tabindex="0" title="Previous month"><span style="width:14px;height:14px;background:var(--ink-2,#B9B9C6);mask:{v.m.chevLeft}"></span></span>
-              <div style="display:flex;flex-direction:column;gap:5px;min-width:0;padding-inline:4px">
-                <span style="font:var(--weight-bold) 15px/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.monthLabel)}</span>
-                <span style="font:var(--weight-medium) 11px/1 var(--font-mono);color:var(--ink-3,#8A8A99);white-space:nowrap"><span style="color:var(--status-chit,#FF9F45)">{t(v.monthChit)}</span> · {t(v.monthClaimed)} · <span style="color:{v.insuredInk}">{t(v.monthInsured)}</span></span>
+            <div class="month-bar">
+              <span
+                class="month-step"
+                class:disabled={!calendar.canPrev}
+                onclick={() => (monthOffset = Math.min(calendar.maxOffset, monthOffset + 1))}
+                aria-label="Previous month"
+                role="button"
+                tabindex="0"
+                title="Previous month">{@render glyph('back', 'month-glyph')}</span
+              >
+              <div class="month-text">
+                <span class="month-label">{calendar.label}</span>
+                <span class="month-sum"
+                  ><span class="chit-ink">{fmt(calendar.chit)} CHIT</span> · {calendar.claimed} claimed · <span class:online-ink={calendar.insured > 0}>{calendar.insured} insured</span></span
+                >
               </div>
-              <span class="dc-p13" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:var(--radius-sm);background:var(--overlay-1,rgba(255,255,255,.05));cursor:pointer;opacity:{v.nextOpacity};pointer-events:{v.nextPointer}" onclick={v.nextMonth} aria-label="Next month" role="button" tabindex="0" title="Next month"><span style="width:14px;height:14px;background:var(--ink-2,#B9B9C6);mask:{v.m.chevRight}"></span></span>
-              <span style="flex:1"></span>
-              <div style="display:flex;gap:2px;padding:3px;border-radius:var(--radius-sm);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-                {#each v.tzOptions ?? [] as tk, i7}
-                  <span style="display:flex;align-items:center;height:24px;padding:0 10px;border-radius:6px;background:{tk.bg};font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:{tk.ink};cursor:pointer;user-select:none" onclick={tk.pick} role="button" tabindex="0">{t(tk.label)}</span>
+              <span
+                class="month-step"
+                class:disabled={!calendar.canNext}
+                onclick={() => (monthOffset = Math.max(0, monthOffset - 1))}
+                aria-label="Next month"
+                role="button"
+                tabindex="0"
+                title="Next month">{@render glyph('chevron-right', 'month-glyph')}</span
+              >
+              <span class="grow"></span>
+              <div class="segments tz">
+                {#each [['Local', false], ['UTC', true]] as [label, utc]}
+                  <span class="tz-option" class:on={chitUtc === utc} onclick={() => setChit({ utc: utc as boolean })} role="button" tabindex="0">{label}</span>
                 {/each}
               </div>
             </div>
-            <div style="flex:none;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px">
-              {#each v.weekdays ?? [] as w, i8}<span style="padding:4px 0;text-align:center;font:var(--weight-medium) 10.5px/1 var(--font-sans);color:var(--ink-4,#6E6E7C)">{t(w)}</span>{/each}
-              {#each v.calDays ?? [] as d, i9}
-                <div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;height:48px;border-radius:var(--radius-sm);background:{d.bg};box-shadow:{d.ring};opacity:{d.opacity};cursor:{d.cursor};user-select:none" onclick={d.onPress} aria-label={d.title} role="button" tabindex="0" onmouseenter={d.onEnter} onmouseleave={d.onLeave} title={d.title}>
-                  <span style="font:var(--weight-semibold) 12px/1 var(--font-sans);color:{d.ink}">{t(d.label)}</span>
-                  <span style="display:flex;align-items:center;gap:3px;height:10px;font:var(--weight-semibold) 10px/1 var(--font-mono);color:{d.amountInk}"><span style="width:10px;height:10px;background:{d.amountInk};mask:{v.m.shield};display:{d.iconDisplay}"></span>{t(d.amount)}</span>
-                  {#if d.pop}
-                    <div style="position:absolute;z-index:5;bottom:calc(100% + 6px);{d.popAlign};width:max-content;max-width:240px;display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:var(--radius-md);background:var(--surface-2,#191921);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),0 12px 32px rgba(0,0,0,.5);pointer-events:none;text-align:start">
-                      <span style="font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(d.popHead)}</span>
-                      {#each d.popLines ?? [] as l, i10}<span style="font:var(--weight-medium) 11.5px/1.2 var(--font-sans);color:{l.ink};white-space:nowrap">{t(l.text)}</span>{/each}
+            <div class="calendar">
+              {#each ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] as w}<span class="weekday">{w}</span>{/each}
+              {#each calendar.cells as cell}
+                <div
+                  class="day {cell.kind}"
+                  onclick={cell.kind === 'claim' ? () => close(onChit) : undefined}
+                  aria-label={cell.title ?? ''}
+                  role="button"
+                  tabindex="0"
+                  onmouseenter={cell.lines ? () => (hoverDay = cell.day!) : undefined}
+                  onmouseleave={cell.lines ? () => hoverDay === cell.day && (hoverDay = null) : undefined}
+                  title={cell.title ?? ''}
+                >
+                  <span class="day-num">{cell.day ?? ''}</span>
+                  <span class="day-amount"
+                    >{#if cell.kind === 'insured'}<span class="day-shield"></span>{/if}{cell.kind === 'claim' ? 'Claim' : cell.kind === 'claimed' ? cell.amount : ''}</span
+                  >
+                  {#if cell.lines && hoverDay === cell.day}
+                    <div class="pop" class:start={cell.col === 0} class:end={cell.col === 6}>
+                      <span class="pop-head">{cell.head}</span>
+                      {#each cell.lines as line}<span class="pop-line {line.tone}">{line.text}</span>{/each}
                     </div>
                   {/if}
                 </div>
@@ -246,346 +1266,418 @@
         </div>
       {/if}
 
-      {#if v.isChats}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:18px">
-          {#each v.chatGroupsTop ?? [] as g, i11}
-            <div style="flex:none;display:flex;flex-direction:column;gap:8px">
-              <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">{t(g.label)}</span>
-              <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);overflow:hidden;background:var(--overlay-1,rgba(255,255,255,.05))">
-                {#each g.rows ?? [] as r, i12}
-                  <div style="height:1px;background:var(--line-1,rgba(255,255,255,.07));display:{r.divider}"></div>
-                  <div style="display:flex;align-items:center;gap:var(--space-14);padding:var(--space-16)">
-                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#E4E4EC)">{t(r.title)}</span><span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(r.hint)}</span></div>
-                    <div style="flex:none;display:flex"><Toggle on={r.on} onChange={r.onChange}></Toggle></div>
-                  </div>
-                {/each}
-              </div>
-            </div>
+      {#if section === 'chats'}
+        <div class="scroll gap-18">
+          {#each CHAT_GROUPS.slice(0, 2) as group}
+            {@render chatGroup(group)}
           {/each}
-          <div style="flex:none;display:flex;flex-direction:column;gap:8px">
-            <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">RINGTONE</span>
-            <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);overflow:hidden;background:var(--overlay-1,rgba(255,255,255,.05))">
-              {#each v.ringtones ?? [] as tk, i13}
-                <div style="height:1px;background:var(--line-1,rgba(255,255,255,.07));display:{tk.divider}"></div>
-                <div class="dc-p14" style="display:flex;align-items:center;gap:12px;height:52px;padding:0 16px;cursor:pointer;user-select:none" onclick={tk.pick} role="button" tabindex="0">
-                  <span style="flex:1;min-width:0;font:{tk.weight} var(--text-base)/1 var(--font-sans);color:var(--ink,#E4E4EC)">{t(tk.label)}</span>
-                  <span style="flex:none;display:flex;align-items:center;gap:2px;height:20px">
-                    {#each tk.bars ?? [] as b, i14}<span style="width:2px;height:{b.h};border-radius:1px;background:{b.ink}"></span>{/each}
+          <div class="block">
+            <span class="caps">RINGTONE</span>
+            <div class="list">
+              {#each RINGTONES as [tone, label], i}
+                {@const on = chat.ringtone === tone}
+                {@const isPlaying = playing === tone}
+                {#if i > 0}<div class="rule"></div>{/if}
+                <div class="ringtone" onclick={() => setChat('ringtone', tone)} role="button" tabindex="0">
+                  <span class="ringtone-label" class:on>{label}</span>
+                  <span class="wave">
+                    {#each { length: 28 } as _, j}<span
+                        class="wave-bar"
+                        class:selected={on}
+                        class:playing={isPlaying}
+                        style:height="{Math.max(3, Math.round(WAVES[tone](j / 27) * 20))}px"
+                      ></span>{/each}
                   </span>
-                  <span class="dc-p15" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={tk.preview} aria-label={tk.playTitle} role="button" tabindex="0" title={tk.playTitle}><span style="width:12px;height:12px;background:{tk.playInk};mask:{tk.playMask}"></span></span>
-                  <span style="flex:none;display:flex;justify-content:flex-end;width:42px"><span style="width:16px;height:16px;background:var(--accent,#FF5672);mask:{v.m.check};opacity:{tk.checkOpacity}"></span></span>
+                  <span
+                    class="play"
+                    onclick={(e) => preview(e, tone)}
+                    aria-label={isPlaying ? 'Stop preview' : `Preview ${label}`}
+                    role="button"
+                    tabindex="0"
+                    title={isPlaying ? 'Stop preview' : `Preview ${label}`}
+                    ><span class="play-glyph" class:playing={isPlaying} style:mask={icon(isPlaying ? 'stop' : 'play')}></span></span
+                  >
+                  <span class="tick-slot"><span class="tick" class:on></span></span>
                 </div>
               {/each}
             </div>
           </div>
-          {#each v.chatGroupsBottom ?? [] as g, i15}
-            <div style="flex:none;display:flex;flex-direction:column;gap:8px">
-              <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">{t(g.label)}</span>
-              <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);overflow:hidden;background:var(--overlay-1,rgba(255,255,255,.05))">
-                {#each g.rows ?? [] as r, i16}
-                  <div style="height:1px;background:var(--line-1,rgba(255,255,255,.07));display:{r.divider}"></div>
-                  <div style="display:flex;align-items:center;gap:var(--space-14);padding:var(--space-16)">
-                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#E4E4EC)">{t(r.title)}</span><span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(r.hint)}</span></div>
-                    <div style="flex:none;display:flex"><Toggle on={r.on} onChange={r.onChange}></Toggle></div>
-                  </div>
-                {/each}
-              </div>
-            </div>
+          {#each CHAT_GROUPS.slice(2) as group}
+            {@render chatGroup(group)}
           {/each}
         </div>
       {/if}
 
-      {#if v.isCommunities}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:8px">
-          <span style="flex:none;padding-inline:4px;font:var(--weight-regular) var(--text-md)/1.55 var(--font-sans);color:var(--ink-2,#B9B9C6);text-wrap:pretty">Set a different display name in each community you’ve joined. Leave it empty to use your profile name.</span>
-          <span style="flex:none;margin-top:10px;padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">YOUR NAME IN EACH COMMUNITY</span>
-          {#if v.commFilterShown}
-            <div style="flex:none;display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1))"><span style="width:13px;height:13px;background:var(--ink-3,#8A8A99);mask:{v.m.search}"></span><input style="flex:1;min-width:0;height:100%;padding:0;border:none;outline:none;background:transparent;font:var(--weight-medium) 13px/1 var(--font-sans);color:var(--ink,#ECECF1)" value={v.commQuery} oninput={v.onCommQuery} placeholder="Filter communities"></div>
+      {#if section === 'communities'}
+        <div class="scroll gap-8">
+          <span class="lead-text">Set a different display name in each community you’ve joined. Leave it empty to use your profile name.</span>
+          <span class="caps flat spaced">YOUR NAME IN EACH COMMUNITY</span>
+          {#if communities.length > 10}
+            <div class="filter">
+              {@render glyph('search', 'filter-glyph')}<input bind:value={commQuery} placeholder="Filter communities" />
+            </div>
           {/if}
-          <div style="flex:none;display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));overflow:hidden">
-            {#each v.communities ?? [] as c, i17}
-              <div style="height:1px;background:var(--line-1,rgba(255,255,255,.07));display:{c.divider}"></div>
-              {#if c.idle}
-                <div class="dc-p16" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer" onclick={c.onEdit} role="button" tabindex="0">
-                  <span style="flex:none;width:36px;height:36px;border-radius:12px;background:{c.grad}"></span>
-                  <span style="flex:none;width:150px;font:var(--weight-medium) var(--text-md)/1.2 var(--font-sans);color:var(--ink-3,#8A8A99);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(c.name)}</span>
-                  <span style="flex:1;min-width:0;font:{c.font};color:{c.ink};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(c.shown)}</span>
-                  <span style="font:var(--weight-medium) 10.5px/1 var(--font-mono);color:var(--ink-4,#6E6E7C)">{t(c.tag)}</span>
-                  <span style="flex:none;width:14px;height:14px;background:var(--ink-3,#8A8A99);mask:{v.m.edit}"></span>
+          <div class="list flat">
+            {#each shownCommunities as c, i}
+              {@const custom = commNames[c.name] || ''}
+              {@const key = `comm:${c.name}`}
+              {#if i > 0}<div class="rule"></div>{/if}
+              {#if editing !== key}
+                <div class="community" onclick={() => startEdit(key, custom)} role="button" tabindex="0">
+                  <span class="community-face" style:background={GRADS[c.color] || GRADS.slate}></span>
+                  <span class="community-name">{c.name}</span>
+                  <span class="community-shown" class:custom={!!custom}>{custom || shownName}</span>
+                  <span class="community-tag">{custom ? '' : 'default'}</span>
+                  {@render glyph('edit', 'kv-edit')}
                 </div>
-              {/if}
-              {#if c.editing}
-                <div style="display:flex;flex-direction:column;gap:10px;padding:16px;background:var(--overlay-1,rgba(255,255,255,.05))">
-                  <div style="display:flex;align-items:center;gap:10px"><span style="flex:none;width:24px;height:24px;border-radius:8px;background:{c.grad}"></span><span style="font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">Your name in {t(c.name)}</span></div>
-                  <div style="display:flex;align-items:center;height:40px;padding:0 12px;border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:inset 0 0 0 1.5px var(--accent,#FF5672)">
-                    <input style="flex:1;min-width:0;height:100%;padding:0;border:none;outline:none;background:transparent;font:var(--weight-medium) 13px/1 var(--font-sans);color:var(--ink,#ECECF1)" use:ref={c.ref} value={c.draft} oninput={c.onInput} onkeydown={c.onKey} maxlength="25" placeholder={v.defaultName}>
+              {:else}
+                <div class="editor">
+                  <div class="community-edit-head"><span class="community-chip" style:background={GRADS[c.color] || GRADS.slate}></span><span class="editor-label">Your name in {c.name}</span></div>
+                  <div class="line-input">
+                    <input
+                      bind:this={field}
+                      value={draft}
+                      oninput={(e) => (draft = e.currentTarget.value)}
+                      onkeydown={(e) => {
+                        if (e.key === 'Escape') {
+                          e.stopPropagation();
+                          stopEdit();
+                        } else if (e.key === 'Enter') {
+                          e.preventDefault();
+                          commitCommunity(c.name, draft.trim());
+                        }
+                      }}
+                      maxlength="25"
+                      placeholder={shownName}
+                    />
                   </div>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    {#if c.hasCustom}<span class="dc-p17" style="padding:8px 0;font:var(--weight-semibold) 11.5px/1 var(--font-sans);color:var(--ink-3,#8A8A99);cursor:pointer" onclick={c.onReset} role="button" tabindex="0">Use default name</span>{/if}
-                    <span style="flex:1;font:var(--weight-regular) 10.5px/1.3 var(--font-sans);color:var(--ink-4,#6E6E7C)">{t(c.hint)}</span>
-                    <span class="dc-p18" style="padding:8px 12px;border-radius:var(--radius-sm);font:var(--weight-semibold) 12px/1 var(--font-sans);color:var(--ink-2,#B9B9C6);cursor:pointer;user-select:none" onclick={c.onCancel} role="button" tabindex="0">Cancel</span>
-                    <span class="dc-p19" style="display:flex;align-items:center;height:30px;padding:0 14px;border-radius:var(--radius-sm);background:var(--accent,#FF5672);font:var(--weight-semibold) 12px/1 var(--font-sans);color:var(--on-accent,#2E0512);cursor:pointer;user-select:none" onclick={c.onSave} role="button" tabindex="0">Save</span>
+                  <div class="editor-foot">
+                    {#if custom}<span class="reset" onclick={() => commitCommunity(c.name, '')} role="button" tabindex="0">Use default name</span>{/if}
+                    <span class="editor-hint">Leave empty to use {shownName}</span>
+                    <span class="cancel" onclick={stopEdit} role="button" tabindex="0">Cancel</span>
+                    <span class="save" onclick={() => commitCommunity(c.name, draft.trim())} role="button" tabindex="0">Save</span>
                   </div>
                 </div>
               {/if}
             {/each}
           </div>
-          {#if v.commEmpty}
-            <span style="flex:none;padding:12px 4px;font:var(--weight-regular) var(--text-md)/1.4 var(--font-sans);color:var(--ink-4,#6E6E7C)">No communities match “{t(v.commQuery)}”.</span>
+          {#if shownCommunities.length === 0}
+            <span class="no-match">No communities match “{commQuery}”.</span>
           {/if}
         </div>
       {/if}
 
-      {#if v.isSignin}
-        <div style="position:relative;flex:1;min-height:0;display:flex;flex-direction:column">
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px 84px;display:flex;flex-direction:column;gap:18px">
-          <div style="flex:none;display:flex;align-items:center;gap:14px;padding:16px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--status-online,#2EE6A8) 35%,transparent)">
-            <span style="flex:none;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:13px;background:color-mix(in srgb,var(--status-online,#2EE6A8) 14%,transparent)"><span style="width:20px;height:20px;background:var(--status-online,#2EE6A8);mask:{v.siCurrent.icon}"></span></span>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px"><span style="font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--status-online,#2EE6A8)">Signed in with</span><span style="font:var(--weight-semibold) 14px/1.2 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.siCurrent.title)}</span><span style="font:var(--weight-regular) 11.5px/1 var(--font-mono);color:var(--ink-4,#7C7C8C)">{t(v.siCurrent.id)}</span></div>
-            <span style="flex:none;display:flex;align-items:center;gap:6px;font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-4,#6E6E7C)" title="You’re signed in with this method, so it can’t be unlinked"><span style="width:13px;height:13px;background:var(--ink-4,#6E6E7C);mask:{v.m.lock}"></span>Can’t unlink</span>
-          </div>
-          <span style="flex:none;padding-inline:4px;font:var(--weight-regular) var(--text-md)/1.55 var(--font-sans);color:var(--ink-2,#B9B9C6);text-wrap:pretty">The ways you can sign in to this account. You can’t remove the one you’re signed in with right now.</span>
-          {#each v.siGroups ?? [] as g, i18}
-            <div style="flex:none;display:flex;flex-direction:column;gap:8px">
-              <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">{t(g.label)}</span>
-              <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));overflow:hidden">
-                {#each g.items ?? [] as x, i19}
-                  <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-block-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-                    <span style="flex:none;width:16px;height:16px;background:var(--ink-3,#8A8A99);mask:{g.icon}"></span>
-                    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px"><span style="font:var(--weight-semibold) 13px/1.2 var(--font-sans);color:var(--ink,#ECECF1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(x.title)}</span><span style="font:var(--weight-regular) 11px/1 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(x.sub)}</span></div>
-                    <span class="dc-p20" style="flex:none;display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;margin-inline-end:-6px;border-radius:var(--radius-sm);font:var(--weight-semibold) 11.5px/1 var(--font-sans);color:var(--ink-3,#8A8A99);cursor:pointer;user-select:none" onclick={x.onUnlink} role="button" tabindex="0"><span style="width:13px;height:13px;background:currentColor;mask:{v.m.unlink}"></span>Unlink</span>
-                  </div>
-                {/each}
-                {#if g.empty}
-                  <div style="padding:14px 16px 4px;font:var(--weight-regular) 11.5px/1.4 var(--font-sans);color:var(--ink-4,#6E6E7C)">{t(g.emptyText)}</div>
-                {/if}
-                {#if g.addIdle}
-                  <div class="dc-p21" style="display:flex;align-items:center;gap:10px;height:46px;padding:0 16px;font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={g.onAdd} role="button" tabindex="0"><span style="width:13px;height:13px;background:var(--accent,#FF5672);mask:{v.m.plus}"></span>{t(g.addLabel)}</div>
-                {/if}
-                {#if g.adding}
-                  <div style="display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--overlay-1,rgba(255,255,255,.05))">
-                    <div style="display:flex;align-items:center;gap:8px"><span style="flex:1;font:var(--weight-semibold) 13px/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.si.title)}</span><span class="dc-p22" style="padding:6px 10px;border-radius:var(--radius-sm);font:var(--weight-semibold) 12px/1 var(--font-sans);color:var(--ink-2,#B9B9C6);cursor:pointer;user-select:none" onclick={v.si.onCancel} role="button" tabindex="0">Cancel</span></div>
-                    {#if v.si.isEmail}
-                      <div style="display:flex;gap:8px"><div style="flex:1;min-width:0;display:flex;align-items:center;height:40px;padding:0 12px;border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:inset 0 0 0 1.5px var(--accent,#FF5672)"><input style="flex:1;min-width:0;height:100%;padding:0;border:none;outline:none;background:transparent;font:var(--weight-medium) 13px/1 var(--font-sans);color:var(--ink,#ECECF1)" use:ref={v.si.ref} value={v.si.email} oninput={v.si.onEmail} onkeydown={v.si.onEmailKey} placeholder="name@example.com" type="email"></div><span class="dc-p23" style="flex:none;display:flex;align-items:center;height:40px;padding:0 16px;border-radius:var(--radius-md);background:var(--accent,#FF5672);font:var(--weight-semibold) 12.5px/1 var(--font-sans);color:var(--on-accent,#2E0512);cursor:pointer;user-select:none;opacity:{v.si.primaryOpacity};pointer-events:{v.si.primaryPointer}" onclick={v.si.onSend} role="button" tabindex="0">Send code</span></div>
-                      <span style="font:var(--weight-regular) 11px/1.4 var(--font-sans);color:{v.si.hintInk}">{t(v.si.hint)}</span>
-                    {/if}
-                    {#if v.si.isCode}
-                      <div style="display:flex;gap:8px"><div style="flex:1;min-width:0;display:flex;align-items:center;height:40px;padding:0 12px;border-radius:var(--radius-md);background:var(--field,#14141a);box-shadow:inset 0 0 0 1.5px var(--accent,#FF5672)"><input style="flex:1;min-width:0;height:100%;padding:0;border:none;outline:none;background:transparent;font:var(--weight-medium) 13px/1 var(--font-sans);color:var(--ink,#ECECF1)" use:ref={v.si.ref} value={v.si.code} oninput={v.si.onCode} onkeydown={v.si.onCodeKey} placeholder="6-digit code" inputmode="numeric" maxlength="6"></div><span class="dc-p24" style="flex:none;display:flex;align-items:center;height:40px;padding:0 16px;border-radius:var(--radius-md);background:var(--accent,#FF5672);font:var(--weight-semibold) 12.5px/1 var(--font-sans);color:var(--on-accent,#2E0512);cursor:pointer;user-select:none;opacity:{v.si.primaryOpacity};pointer-events:{v.si.primaryPointer}" onclick={v.si.onVerify} role="button" tabindex="0">Verify</span></div>
-                      <span style="font:var(--weight-regular) 11px/1.4 var(--font-sans);color:var(--ink-4,#6E6E7C)">Sent to {t(v.si.email)}. For this prototype any 6 digits work.</span>
-                    {/if}
-                    {#if v.si.isChecklist}
-                      {#each v.si.checklist ?? [] as c, i20}
-                        <div style="display:flex;align-items:center;gap:10px;min-height:32px">
-                          <span style="flex:none;display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:var(--radius-pill);background:{c.bg};box-shadow:{c.ring}"><span style="width:11px;height:11px;background:var(--surface-1,#0e0e12);mask:{v.m.check};display:{c.checkDisplay}"></span></span>
-                          <span style="flex:1;min-width:0;font:{c.font};color:{c.ink}">{t(c.label)}</span>
-                          {#if c.hasAction}<span class="dc-p25" style="flex:none;display:flex;align-items:center;height:30px;padding:0 12px;border-radius:var(--radius-sm);background:var(--accent,#FF5672);font:var(--weight-semibold) 12px/1 var(--font-sans);color:var(--on-accent,#2E0512);cursor:pointer;user-select:none" onclick={c.onAction} role="button" tabindex="0">{t(c.action)}</span>{/if}
-                          {#if c.waiting}<span style="flex:none;font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">Waiting…</span>{/if}
+      {#if section === 'signin'}
+        <div class="signin">
+          <div class="scroll gap-18 toast-room">
+            {#if siCurrent}
+              <div class="current">
+                <span class="current-tile">{@render glyph(SI_TYPES[siCurrent.type].icon, 'current-glyph')}</span>
+                <div class="current-text"><span class="current-kicker">Signed in with</span><span class="current-title">{siCurrent.title}</span><span class="current-id">{siCurrent.id}</span></div>
+                <span class="locked" title="You’re signed in with this method, so it can’t be unlinked">{@render glyph('lock', 'locked-glyph')}Can’t unlink</span>
+              </div>
+            {/if}
+            <span class="lead-text">The ways you can sign in to this account. You can’t remove the one you’re signed in with right now.</span>
+            {#each ['passkey', 'ii', 'email'] as const as type}
+              {@const T = SI_TYPES[type]}
+              {@const items = siAll.filter((x) => x.type === type && x !== siCurrent)}
+              {@const adding = siAdding?.type === type}
+              <div class="block">
+                <span class="caps">{T.label}</span>
+                <div class="list">
+                  {#each items as x}
+                    <div class="method">
+                      {@render glyph(T.icon, 'method-glyph')}
+                      <div class="method-text"><span class="method-title">{x.title + (type === 'email' ? '' : ` · ${x.id.slice(0, 5)}`)}</span><span class="method-sub">{x.used || 'Just linked'}</span></div>
+                      <span class="unlink" onclick={() => unlink(x)} role="button" tabindex="0">{@render glyph('unlink', 'unlink-glyph')}Unlink</span>
+                    </div>
+                  {/each}
+                  {#if !items.length && !adding}
+                    <div class="method-empty">{T.empty}</div>
+                  {/if}
+                  {#if !adding}
+                    <div class="add" onclick={() => startAdding(type)} role="button" tabindex="0">{@render glyph('plus', 'add-glyph')}{T.addLabel}</div>
+                  {:else if siAdding}
+                    <div class="adding">
+                      <div class="adding-head"><span class="adding-title">{SI_TYPES[siAdding.type].addTitle}</span><span class="adding-cancel" onclick={cancelAdding} role="button" tabindex="0">Cancel</span></div>
+                      {#if siAdding.type === 'email' && siAdding.step === 'email'}
+                        <div class="inline-form">
+                          <div class="line-input grow">
+                            <input
+                              bind:this={field}
+                              value={siAdding.email}
+                              oninput={(e) => updateAdding({ email: e.currentTarget.value })}
+                              onkeydown={(e) => addingKey(e, emailOk, 'code')}
+                              placeholder="name@example.com"
+                              type="email"
+                            />
+                          </div>
+                          <span class="primary" class:blocked={siBlocked} onclick={() => updateAdding({ step: 'code' })} role="button" tabindex="0">Send code</span>
                         </div>
-                      {/each}
-                    {/if}
-                  </div>
-                {/if}
+                        <span class="adding-hint" class:invalid={!!siAdding.email && !emailOk}
+                          >{siAdding.email && !emailOk ? 'Enter a full email address' : `We’ll email a one-time code, then ask you to confirm with your ${siCurrent?.short}.`}</span
+                        >
+                      {/if}
+                      {#if siAdding.type === 'email' && siAdding.step === 'code'}
+                        <div class="inline-form">
+                          <div class="line-input grow">
+                            <input
+                              bind:this={field}
+                              value={siAdding.code}
+                              oninput={(e) => updateAdding({ code: e.currentTarget.value.replace(/\D/g, '').slice(0, 6) })}
+                              onkeydown={(e) => addingKey(e, codeOk, 'confirm')}
+                              placeholder="6-digit code"
+                              inputmode="numeric"
+                              maxlength="6"
+                            />
+                          </div>
+                          <span class="primary" class:blocked={siBlocked} onclick={() => updateAdding({ step: 'confirm' })} role="button" tabindex="0">Verify</span>
+                        </div>
+                        <span class="adding-hint">Sent to {siAdding.email}. For this prototype any 6 digits work.</span>
+                      {/if}
+                      {#if siAdding.type !== 'email' || siAdding.step === 'confirm'}
+                        {#each checklist as c}
+                          <div class="check-row">
+                            <span class="check-mark {c.state}"><span class="check-glyph"></span></span>
+                            <span class="check-label {c.state}">{c.label}</span>
+                            {#if c.state === 'now' && c.run}<span class="check-action" onclick={c.run} role="button" tabindex="0">{c.action}</span>{/if}
+                            {#if c.state === 'wait'}<span class="waiting">Waiting…</span>{/if}
+                          </div>
+                        {/each}
+                      {/if}
+                    </div>
+                  {/if}
+                </div>
               </div>
-            </div>
-          {/each}
-        </div>
-        {#if v.siToastShown}
-          <div style="position:absolute;inset-inline:26px;bottom:18px;display:flex;align-items:center;gap:12px;height:46px;padding:0 8px 0 16px;border-radius:var(--radius-md);background:var(--surface-2,#191921);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),0 14px 36px rgba(0,0,0,.5)">
-            <span style="flex:1;min-width:0;font:var(--weight-medium) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(v.siToast)}</span>
-            {#if v.siCanUndo}<span class="dc-p26" style="flex:none;padding:9px 12px;border-radius:var(--radius-sm);font:var(--weight-bold) var(--text-md)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.siUndo} role="button" tabindex="0">Undo</span>{/if}
+            {/each}
           </div>
-        {/if}
+          {#if siToast}
+            <div class="toast">
+              <span class="toast-text">{siToast.text}</span>
+              {#if siToast.undo}<span
+                  class="toast-undo"
+                  onclick={() => {
+                    cancel(siToastTimer);
+                    siToast?.undo?.();
+                  }}
+                  role="button"
+                  tabindex="0">Undo</span
+                >{/if}
+            </div>
+          {/if}
         </div>
       {/if}
 
-      {#if v.isAppearance}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:22px">
-          <div style="flex:none;display:flex;flex-direction:column;gap:10px">
-            <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">THEME</span>
-            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
-              {#each v.apThemes ?? [] as tk, i21}
-                <div class="dc-p27" style="display:flex;flex-direction:column;gap:10px;padding:8px 8px 12px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:{tk.ring};cursor:pointer;user-select:none" onclick={tk.pick} role="button" tabindex="0">
-                  <div style="position:relative;height:84px;border-radius:var(--radius-sm);overflow:hidden;background:{tk.bg};box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-                    <div style="position:absolute;top:10px;inset-inline-start:10px;width:52%;height:14px;border-radius:7px;background:{tk.recv}"></div>
-                    <div style="position:absolute;top:30px;inset-inline-end:10px;width:44%;height:14px;border-radius:7px;background:var(--accent,#FF5672)"></div>
-                    <div style="position:absolute;top:50px;inset-inline-start:10px;width:36%;height:14px;border-radius:7px;background:{tk.recv}"></div>
-                    <div style="position:absolute;inset-inline:0;bottom:0;height:12px;background:{tk.bar}"></div>
+      {#if section === 'appearance'}
+        <div class="scroll gap-22">
+          <div class="block wide-gap">
+            <span class="caps">THEME</span>
+            <div class="themes">
+              {#each THEMES as [k, label]}
+                {@const p = THEME_PREVIEW[k]}
+                <div class="theme" class:on={themePref === k} onclick={() => setAppearance({ theme: k })} role="button" tabindex="0">
+                  <div class="preview" style:background={p.bg}>
+                    <div class="bubble recv one" style:background={p.recv}></div>
+                    <div class="bubble sent"></div>
+                    <div class="bubble recv two" style:background={p.recv}></div>
+                    <div class="preview-bar" style:background={p.bar}></div>
                   </div>
-                  <div style="display:flex;align-items:center;gap:8px;padding-inline:4px">
-                    <span style="flex:none;display:flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:var(--radius-pill);box-shadow:{tk.radioRing}"><span style="width:8px;height:8px;border-radius:var(--radius-pill);background:var(--accent,#FF5672);opacity:{tk.dot}"></span></span>
-                    <span style="flex:1;font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(tk.label)}</span>
+                  <div class="theme-label">
+                    <span class="radio"><span class="radio-dot"></span></span>
+                    <span class="theme-name">{label}</span>
                   </div>
                 </div>
               {/each}
             </div>
-            <span style="padding-inline:4px;font:var(--weight-regular) var(--text-sm)/1.4 var(--font-sans);color:var(--ink-4,#6E6E7C)">System follows your device’s light or dark setting.</span>
+            <span class="note">System follows your device’s light or dark setting.</span>
           </div>
-          <div style="flex:none;display:flex;flex-direction:column;gap:10px">
-            <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">ACCENT COLOUR</span>
-            <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px">
-              {#each v.apAccents ?? [] as a, i22}
-                <div class="dc-p28" style="display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:{a.ring};cursor:pointer;user-select:none" onclick={a.pick} role="button" tabindex="0">
-                  <span style="flex:none;display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:var(--radius-pill);background:{a.color}"><span style="width:12px;height:12px;background:rgba(0,0,0,.7);mask:{v.m.check};opacity:{a.dot}"></span></span>
-                  <span style="flex:1;font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1)">{t(a.label)}</span>
+          <div class="block wide-gap">
+            <span class="caps">ACCENT COLOUR</span>
+            <div class="accents">
+              {#each ACCENTS as [k, label, color]}
+                <div class="accent" class:on={accentPref === k} onclick={() => setAppearance({ accent: k })} role="button" tabindex="0">
+                  <span class="swatch" style:background={color}><span class="swatch-check"></span></span>
+                  <span class="theme-name">{label}</span>
                 </div>
               {/each}
             </div>
           </div>
-          <div style="flex:none;display:flex;flex-direction:column;gap:10px">
-            <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">INTERFACE SIZE</span>
-            <div style="display:flex;flex-direction:column;gap:14px;padding:16px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05))">
-              <div style="display:flex;gap:2px;padding:3px;border-radius:var(--radius-sm);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07))">
-                {#each v.apSizes ?? [] as s, i23}
-                  <span style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:36px;border-radius:6px;background:{s.bg};cursor:pointer;user-select:none" onclick={s.pick} role="button" tabindex="0"><span style="font:var(--weight-bold) {s.glyph}/1 var(--font-sans);color:{s.ink}">A</span><span style="font:var(--weight-semibold) 12px/1 var(--font-sans);color:{s.ink}">{t(s.label)}</span></span>
+          <div class="block wide-gap">
+            <span class="caps">INTERFACE SIZE</span>
+            <div class="list sizes-panel">
+              <div class="segments sizes">
+                {#each FONT_SIZES as f}
+                  <span class="size" class:on={fontSize === f.key} onclick={() => setAppearance({ font: f.key })} role="button" tabindex="0"
+                    ><span class="size-glyph" style:font-size={f.glyph}>A</span><span class="size-label">{f.label}</span></span
+                  >
                 {/each}
               </div>
-              <div style="display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:var(--radius-md);background:var(--surface-1,#0e0e12)">
-                <div style="align-self:flex-start;max-width:78%;padding:var(--space-12) var(--space-14);border-radius:var(--radius-xs) var(--radius-xl) var(--radius-xl) var(--radius-xl);background:var(--bubble-recv-bg,#191921);box-shadow:inset 0 0 0 1px var(--line-1,rgba(255,255,255,.07));font:var(--weight-regular) {v.apSample}/1.45 var(--font-sans);color:var(--bubble-recv-text,#E4E4EC)">Is this size easier to read?</div>
-                <div style="align-self:flex-end;max-width:78%;padding:var(--space-12) var(--space-14);border-radius:var(--radius-xl) var(--radius-xs) var(--radius-xl) var(--radius-xl);background:var(--bubble-send-bg,#B83E52);font:var(--weight-regular) {v.apSample}/1.45 var(--font-sans);color:var(--bubble-text,#FFFFFF)">Much better, thanks.</div>
+              <div class="sample">
+                <div class="sample-bubble recv" style:font-size={sampleSize}>Is this size easier to read?</div>
+                <div class="sample-bubble sent" style:font-size={sampleSize}>Much better, thanks.</div>
               </div>
             </div>
           </div>
         </div>
       {/if}
 
-      {#if v.isStorage}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:22px">
-          <span style="flex:none;padding-inline:4px;font:var(--weight-regular) var(--text-md)/1.55 var(--font-sans);color:var(--ink-2,#B9B9C6);text-wrap:pretty">Files you send are stored on the network. Cached data lives only on this device.</span>
-          <div style="flex:none;display:flex;flex-direction:column;gap:10px">
-            <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">REMOTE STORAGE</span>
-            <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));overflow:hidden">
-              <div style="display:flex;flex-direction:column;gap:14px;padding:18px 16px">
-                <div style="display:flex;align-items:baseline;gap:8px">
-                  <span style="font:var(--weight-bold) 26px/1 var(--font-sans);letter-spacing:-.01em;color:var(--ink,#ECECF1)">{t(v.stUsed)}</span>
-                  <span style="flex:1;font:var(--weight-medium) var(--text-md)/1 var(--font-sans);color:var(--ink-3,#8A8A99)">of {t(v.stCap)} used</span>
-                  <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);color:{v.stPctInk}">{t(v.stPct)}</span>
+      {#if section === 'storage'}
+        <div class="scroll gap-22">
+          <span class="lead-text">Files you send are stored on the network. Cached data lives only on this device.</span>
+          <div class="block wide-gap">
+            <span class="caps">REMOTE STORAGE</span>
+            <div class="list">
+              <div class="usage">
+                <div class="usage-head">
+                  <span class="usage-figure">{mb(storageUsed)}</span>
+                  <span class="usage-of">of {isDiamond ? '1 GB' : '100 MB'} used</span>
+                  <span class="usage-pct" style:color={storageTone ?? 'var(--ink-3,#8A8A99)'}>{Math.round(storageRatio * 100)}%</span>
                 </div>
-                <div style="height:8px;border-radius:var(--radius-pill);background:var(--overlay-1,rgba(255,255,255,.06));overflow:hidden"><div style="width:{v.stPct};min-width:4px;height:100%;border-radius:var(--radius-pill);background:{v.stBar}"></div></div>
-                <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(v.stFree)} left for the images, videos and files you send. Deleting messages you sent frees their space.</span>
+                <div class="usage-track"><div class="usage-fill" style:width="{Math.round(storageRatio * 100)}%" style:background={storageTone ?? 'var(--accent,#FF5672)'}></div></div>
+                <span class="setting-hint">{mb(storageCap - storageUsed)} left for the images, videos and files you send. Deleting messages you sent frees their space.</span>
               </div>
-              {#if v.stUpsell}
-                <div class="dc-p29" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 16px;border-block-start:1px solid var(--line-1,rgba(255,255,255,.07));cursor:pointer" onclick={v.onDiamond} role="button" tabindex="0">
-                  <span style="flex:1;font:var(--weight-medium) var(--text-md)/1.3 var(--font-sans);color:var(--ink-2,#B9B9C6)">Diamond members get 1 GB</span>
-                  <span style="font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--accent,#FF5672)">Get Diamond</span>
+              {#if !isDiamond}
+                <div class="upsell" onclick={() => close(onDiamond)} role="button" tabindex="0">
+                  <span class="upsell-text">Diamond members get 1 GB</span>
+                  <span class="upsell-cta">Get Diamond</span>
                 </div>
               {/if}
             </div>
           </div>
-          <div style="flex:none;display:flex;flex-direction:column;gap:10px">
-            <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">CACHE ON THIS DEVICE</span>
-            <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));overflow:hidden">
-              <div style="display:flex;align-items:center;gap:16px;padding:16px">
-                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
-                  <span style="font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#E4E4EC)">Clear cached data</span>
-                  <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-3,#8A8A99);text-wrap:pretty">Cached data can occasionally become corrupted and stop the app working as it should. Use this as a last resort — your messages stay safe and reload from the network.</span>
+          <div class="block wide-gap">
+            <span class="caps">CACHE ON THIS DEVICE</span>
+            <div class="list">
+              <div class="cache-row">
+                <div class="cache-text">
+                  <span class="setting-title">Clear cached data</span>
+                  <span class="setting-hint muted3"
+                    >Cached data can occasionally become corrupted and stop the app working as it should. Use this as a last resort — your messages stay safe and reload from the network.</span
+                  >
                 </div>
-                <span class="dc-p30" style="flex:none;display:flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:var(--radius-sm);background:{v.ccBg};box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1));font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:{v.ccInk};cursor:{v.ccCursor};white-space:nowrap;user-select:none" onclick={v.onClearCache} role="button" tabindex="0"><span style="width:14px;height:14px;background:{v.ccInk};mask:{v.ccMask};animation:{v.ccSpin}"></span>{t(v.ccLabel)}</span>
+                <span class="outline-button {cache}" onclick={clearCache} role="button" tabindex="0"
+                  ><span class="outline-glyph" class:spin={cache === 'busy'} style:mask={icon(cache === 'done' ? 'check' : 'refresh')}></span>{cache === 'busy'
+                    ? 'Clearing…'
+                    : cache === 'done'
+                      ? 'Cleared'
+                      : 'Clear cache'}</span
+                >
               </div>
-              <div style="display:flex;align-items:center;gap:16px;padding:16px;border-block-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
-                  <span style="font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#E4E4EC)">{t(v.rpTitle)}</span>
-                  <span style="font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-3,#8A8A99);text-wrap:pretty">Please report problems even if clearing the cache fixed them — it helps us stop them happening again.</span>
+              <div class="cache-row ruled">
+                <div class="cache-text">
+                  <span class="setting-title">{cache === 'done' ? 'Did that fix it?' : 'Still having problems?'}</span>
+                  <span class="setting-hint muted3">Please report problems even if clearing the cache fixed them — it helps us stop them happening again.</span>
                 </div>
-                <span class="dc-p31" style="flex:none;display:flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:var(--radius-sm);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1));font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1);cursor:pointer;white-space:nowrap;user-select:none" onclick={v.onReport} role="button" tabindex="0"><span style="width:14px;height:14px;background:var(--ink-2,#B9B9C6);mask:{v.m.flag}"></span>Report an issue</span>
+                <span class="outline-button report" onclick={() => onReportIssue?.()} role="button" tabindex="0">{@render glyph('flag', 'outline-glyph flag')}Report an issue</span>
               </div>
             </div>
           </div>
         </div>
       {/if}
 
-      {#if v.isBots}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:18px">
-          <span style="flex:none;padding-inline:4px;font:var(--weight-regular) var(--text-md)/1.5 var(--font-sans);color:var(--ink-2,#B9B9C6);text-wrap:pretty">Building an OpenChat bot? You’ll need these values for this environment — see the <a href="https://github.com/open-chat-labs/open-chat-bots" target="_blank" rel="noopener">bot development docs</a> for where each one goes.</span>
-          <div style="flex:none;display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));overflow:hidden">
-            {#each v.botRows ?? [] as b, i24}
-              <div style="display:flex;align-items:flex-start;gap:14px;padding:16px;border-block-start:{b.divider}">
-                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:9px">
-                  <span style="font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">{t(b.label)}</span>
-                  <span style="font:var(--weight-medium) 12.5px/1.55 var(--font-mono);color:var(--ink,#ECECF1);white-space:{b.ws};overflow-wrap:anywhere;user-select:all">{t(b.value)}</span>
+      {#if section === 'bots'}
+        <div class="scroll gap-18">
+          <span class="lead-text tight"
+            >Building an OpenChat bot? You’ll need these values for this environment — see the <a href="https://github.com/open-chat-labs/open-chat-bots" target="_blank" rel="noopener"
+              >bot development docs</a
+            > for where each one goes.</span
+          >
+          <div class="list">
+            {#each botRows as b, i}
+              {@const on = botCopied === b.key}
+              <div class="bot-row" class:ruled={i > 0}>
+                <div class="bot-text">
+                  <span class="small-label">{b.label}</span>
+                  <span class="bot-value" class:pre={b.key === 'key'}>{b.value}</span>
                 </div>
-                <span class="dc-p32" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;margin:-6px -8px 0 0;border-radius:var(--radius-sm);cursor:pointer" onclick={b.onCopy} aria-label={b.title} role="button" tabindex="0" title={b.title}><span style="width:15px;height:15px;background:{b.ink};mask:{b.mask}"></span></span>
+                <span class="bot-copy" onclick={() => copyBot(b.key, b.value)} aria-label={on ? 'Copied' : `Copy ${b.label}`} role="button" tabindex="0" title={on ? 'Copied' : `Copy ${b.label}`}
+                  ><span class="bot-copy-glyph" class:on style:mask={icon(on ? 'check' : 'copy')}></span></span
+                >
               </div>
             {/each}
           </div>
         </div>
       {/if}
 
-      {#if v.isDevice}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:18px">
-          <span style="flex:none;padding-inline:4px;font:var(--weight-regular) var(--text-md)/1.55 var(--font-sans);color:var(--ink-2,#B9B9C6);text-wrap:pretty">Use this account on a phone or tablet with the OpenChat app.</span>
-          <div style="flex:none;display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));overflow:hidden">
-            {#each v.lcSteps ?? [] as s, i25}
-              <div style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px;border-block-start:{s.divider}">
-                <span style="flex:none;display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:var(--radius-pill);background:var(--overlay-2,rgba(255,255,255,.08));font:var(--weight-semibold) 12px/1 var(--font-mono);color:var(--ink-2,#B9B9C6)">{t(s.n)}</span>
-                <span style="font:var(--weight-medium) var(--text-md)/1.35 var(--font-sans);color:var(--ink,#E4E4EC)">{t(s.text)}</span>
+      {#if section === 'device'}
+        <div class="scroll gap-18">
+          <span class="lead-text">Use this account on a phone or tablet with the OpenChat app.</span>
+          <div class="list">
+            {#each LINK_STEPS as text, i}
+              <div class="link-step" class:ruled={i > 0}>
+                <span class="step-n">{i + 1}</span>
+                <span class="step-text">{text}</span>
               </div>
             {/each}
           </div>
-          {#if v.lcIdle}
-            <div style="flex:none;display:flex;align-items:center;gap:16px;padding:18px 20px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05))">
-              <span style="flex:none;width:18px;height:18px;background:var(--status-chit,#FF9F45);mask:{v.m.shield}"></span>
-              <span style="flex:1;min-width:0;font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-2,#B9B9C6);text-wrap:pretty">Only use the code on a device you trust — anyone with it can sign in to your account until it expires.</span>
-              <span class="dc-p33" style="flex:none;display:flex;align-items:center;height:38px;padding:0 18px;border-radius:var(--radius-sm);background:var(--accent,#FF5672);font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--on-accent,#fff);cursor:pointer;white-space:nowrap;user-select:none" onclick={v.onShowLink} role="button" tabindex="0">Show code</span>
+          {#if !lcLive}
+            <div class="code-intro">
+              {@render glyph('shield', 'shield-glyph')}
+              <span class="code-warning">Only use the code on a device you trust — anyone with it can sign in to your account until it expires.</span>
+              <span class="show-code" onclick={newLinkCode} role="button" tabindex="0">Show code</span>
             </div>
-          {/if}
-          {#if v.lcLive}
-            <div style="flex:none;display:flex;flex-direction:column;gap:14px;padding:20px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px color-mix(in oklch,var(--accent,#FF5672) 45%,transparent)">
-              <div style="display:flex;align-items:center;gap:14px">
-                <span style="flex:1;min-width:0;font:var(--weight-semibold) 34px/1 var(--font-mono);letter-spacing:.32em;color:var(--ink,#ECECF1);user-select:{v.lcSelect};filter:{v.lcBlur};transition:filter .2s ease">{t(v.lcCodeText)}</span>
-                <span class="dc-p34" style="flex:none;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:var(--radius-sm);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1));cursor:pointer" onclick={v.onCopyLink} aria-label={v.lcCopyLabel} role="button" tabindex="0" title={v.lcCopyLabel}><span style="width:15px;height:15px;background:{v.lcCopyInk};mask:{v.lcCopyMask}"></span></span>
+          {:else}
+            {@const warn = lcLeft <= 30}
+            <div class="code-live">
+              <div class="code-line">
+                <span class="code" class:hidden={lcHidden}>{(lcCode ?? '').slice(0, 3)} {(lcCode ?? '').slice(3)}</span>
+                <span class="code-copy" onclick={copyLinkCode} aria-label={lcCopied ? 'Copied' : 'Copy code'} role="button" tabindex="0" title={lcCopied ? 'Copied' : 'Copy code'}
+                  ><span class="code-copy-glyph" class:on={lcCopied} style:mask={icon(lcCopied ? 'check' : 'copy')}></span></span
+                >
               </div>
-              <div style="height:4px;border-radius:var(--radius-pill);background:var(--overlay-2,rgba(255,255,255,.08));overflow:hidden"><div style="width:{v.lcPct};height:100%;border-radius:var(--radius-pill);background:{v.lcBar};transition:width .25s linear"></div></div>
-              <div style="display:flex;align-items:center;gap:8px">
-                <span style="flex:1;font:var(--weight-medium) var(--text-sm)/1 var(--font-sans);color:{v.lcInk};font-variant-numeric:tabular-nums">{t(v.lcStatus)} · trusted devices only</span>
-                <span style="font:var(--weight-semibold) var(--text-sm)/1 var(--font-sans);color:var(--accent,#FF5672);cursor:pointer;user-select:none" onclick={v.onToggleHide} role="button" tabindex="0">{t(v.lcHideLabel)}</span>
+              <div class="code-track"><div class="code-fill" class:warn style:width="{Math.max(0, Math.min(100, (lcLeft / linkCodeTtl) * 100)).toFixed(1)}%"></div></div>
+              <div class="code-foot">
+                <span class="code-status" class:warn
+                  >Expires in {String(Math.floor(lcLeft / 60)).padStart(2, '0')}:{String(lcLeft % 60).padStart(2, '0')} · trusted devices only</span
+                >
+                <span class="code-toggle" onclick={() => (lcHidden = !lcHidden)} role="button" tabindex="0">{lcHidden ? 'Show code' : 'Hide code'}</span>
               </div>
             </div>
           {/if}
         </div>
       {/if}
 
-      {#if v.isDelete}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:18px">
-          <div style="flex:none;display:flex;flex-direction:column;gap:10px">
-            <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">WHAT YOU’LL LOSE</span>
-            <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));overflow:hidden">
-              {#each v.delLoss ?? [] as l, i26}
-                <div style="display:flex;align-items:center;gap:14px;min-height:68px;padding:12px 16px;box-sizing:border-box;border-block-start:{l.divider}">
-                  <span style="flex:none;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:var(--radius-sm);background:var(--overlay-2,rgba(255,255,255,.08))"><span style="width:18px;height:18px;background:var(--ink-2,#B9B9C6);mask:{l.mask}"></span></span>
-                  <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
-                    <span style="font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#E4E4EC)">{t(l.title)}</span>
-                    <span style="font:var(--weight-regular) var(--text-sm)/1.4 var(--font-sans);color:var(--ink-3,#8A8A99)">{t(l.sub)}</span>
+      {#if section === 'delete'}
+        <div class="scroll gap-18">
+          <div class="block wide-gap">
+            <span class="caps">WHAT YOU’LL LOSE</span>
+            <div class="list">
+              {#each [{ icon: 'chat', title: 'Chats, photos and contacts', sub: 'Every conversation and file you’ve shared' }, { icon: 'wallet', title: 'Your crypto wallet', sub: 'Move your funds out before you delete' }, { icon: 'zap', title: `${fmt(balance)} CHIT and your ${streak}-day streak`, sub: 'Earned CHIT can’t be recovered' }] as l, i}
+                <div class="loss" class:ruled={i > 0}>
+                  <span class="loss-tile">{@render glyph(l.icon, 'loss-glyph')}</span>
+                  <div class="loss-text">
+                    <span class="setting-title">{l.title}</span>
+                    <span class="loss-sub">{l.sub}</span>
                   </div>
                 </div>
               {/each}
             </div>
           </div>
-          <div style="flex:none;display:flex;align-items:center;gap:16px;padding:18px 20px;border-radius:var(--radius-md);box-shadow:inset 0 0 0 1px color-mix(in oklch,var(--status-danger,#F5493D) 40%,transparent)">
-            <span style="flex:1;min-width:0;font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-2,#B9B9C6);text-wrap:pretty">Deleting your account is permanent and can’t be undone.</span>
-            <span class="dc-p35" style="flex:none;display:flex;align-items:center;gap:8px;height:38px;padding:0 18px;border-radius:var(--radius-sm);background:var(--status-danger,#F5493D);font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:#fff;cursor:pointer;white-space:nowrap;user-select:none" onclick={v.onDelOpen} role="button" tabindex="0"><span style="width:14px;height:14px;background:#fff;mask:{v.m.trash}"></span>Delete account…</span>
+          <div class="danger-zone">
+            <span class="danger-text">Deleting your account is permanent and can’t be undone.</span>
+            <span class="danger-button" onclick={openDelete} role="button" tabindex="0">{@render glyph('trash', 'danger-glyph')}Delete account…</span>
           </div>
         </div>
       {/if}
 
-      {#if v.isAbout}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:22px">
-          <div style="flex:none;display:flex;align-items:center;gap:14px;padding-inline:4px">
-            <span style="flex:none;position:relative;width:40px;height:40px;border-radius:var(--radius-pill);background:conic-gradient(from 200deg,#FFB23F,#F7641E 45%,#E0237A 70%,#8A2BB5 90%,#FFB23F)"><span style="position:absolute;inset:10px;border-radius:var(--radius-pill);background:var(--surface-1,#0e0e12)"></span></span>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
-              <span style="font:var(--weight-bold) var(--text-lg)/1 var(--font-sans);color:var(--ink,#ECECF1)">OpenChat</span>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-3,#8A8A99)">Chat that’s owned by its community</span>
+      {#if section === 'about'}
+        <div class="scroll gap-22">
+          <div class="about-head">
+            <span class="logo"><span class="logo-hole"></span></span>
+            <div class="about-text">
+              <span class="about-title">OpenChat</span>
+              <span class="about-sub">Chat that’s owned by its community</span>
             </div>
-            <span style="flex:none;display:flex;align-items:center;height:26px;padding:0 10px;border-radius:var(--radius-pill);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12));font:var(--weight-medium) 11px/1 var(--font-mono);color:var(--ink-3,#8A8A99);white-space:nowrap">{t(v.platform)} · v{t(v.version)}</span>
+            <span class="version">{platform}{version ? ` · v${version}` : ''}</span>
           </div>
-          {#each v.aboutGroups ?? [] as g, i27}
-            <div style="flex:none;display:flex;flex-direction:column;gap:10px">
-              <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">{t(g.label)}</span>
-              <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));overflow:hidden">
-                {#each g.rows ?? [] as a, i28}
-                  <a class="dc-p36" style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px;border-block-start:{a.divider};text-decoration:none;color:inherit" href={a.href} target="_blank" rel="noopener">
-                    <span style="flex:none;width:16px;height:16px;background:var(--ink-3,#8A8A99);mask:{a.mask}"></span>
-                    <span style="flex:1;min-width:0;font:var(--weight-medium) var(--text-md)/1.2 var(--font-sans);color:var(--ink,#E4E4EC)">{t(a.label)}</span>
-                    <span style="flex:none;width:14px;height:14px;background:var(--ink-4,#6E6E7C);mask:{v.m.external}"></span>
+          {#each ABOUT_GROUPS as group}
+            <div class="block wide-gap">
+              <span class="caps">{group.label}</span>
+              <div class="list">
+                {#each group.keys as k, i}
+                  <a class="about-link" class:ruled={i > 0} href="https://oc.app/{k}" target="_blank" rel="noopener">
+                    {@render glyph(ABOUT_LINKS[k][1], 'about-glyph')}
+                    <span class="about-label">{ABOUT_LINKS[k][0]}</span>
+                    {@render glyph('external', 'external-glyph')}
                   </a>
                 {/each}
               </div>
@@ -594,120 +1686,127 @@
         </div>
       {/if}
 
-      {#if v.isInvite}
-        <div style="flex:1;min-height:0;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:22px">
-          <span style="flex:none;padding-inline:4px;font:var(--weight-regular) var(--text-md)/1.55 var(--font-sans);color:var(--ink-2,#B9B9C6);text-wrap:pretty">Share your link with friends and family. You earn CHIT when someone you invite upgrades.</span>
-          <div style="flex:none;display:flex;align-items:stretch;gap:var(--space-22);padding:18px;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05))">
-            <div style="flex:none;width:156px;height:156px;box-sizing:border-box;padding:10px;border-radius:var(--radius-md);background:#fff">
-              <img style="display:block;width:100%;height:100%;image-rendering:pixelated" src={v.invQr} alt="QR code for your invite link">
-            </div>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--space-12)">
-              <span style="font:var(--weight-semibold) var(--text-xs)/1 var(--font-mono);letter-spacing:.06em;color:var(--ink-4,#7C7C8C)">YOUR INVITE LINK</span>
-              <span style="font:var(--weight-medium) 12.5px/1.5 var(--font-mono);color:var(--ink,#ECECF1);overflow-wrap:anywhere;user-select:all">{t(v.invLink)}</span>
-              <div style="display:flex;gap:var(--space-10)">
-                <span class="dc-p37" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;height:38px;border-radius:var(--radius-sm);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12));font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1);cursor:pointer;user-select:none" onclick={v.onInvCopy} role="button" tabindex="0"><span style="width:14px;height:14px;background:{v.invCopyInk};mask:{v.invCopyMask}"></span>{t(v.invCopyLabel)}</span>
-                <span class="dc-p38" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;height:38px;border-radius:var(--radius-sm);background:var(--accent,#FF5672);font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--on-accent,#fff);cursor:pointer;user-select:none" onclick={v.onInvShare} role="button" tabindex="0"><span style="width:14px;height:14px;background:var(--on-accent,#fff);mask:{v.m.share}"></span>Share</span>
+      {#if section === 'invite'}
+        <div class="scroll gap-22">
+          <span class="lead-text">Share your link with friends and family. You earn CHIT when someone you invite upgrades.</span>
+          <div class="invite">
+            <div class="qr"><img src={qr?.link === link ? qr.src : BLANK_GIF} alt="QR code for your invite link" /></div>
+            <div class="invite-side">
+              <span class="invite-caps">YOUR INVITE LINK</span>
+              <span class="invite-link">{link}</span>
+              <div class="invite-actions">
+                <span class="invite-copy" onclick={copyInvite} role="button" tabindex="0"
+                  ><span class="invite-copy-glyph" class:on={invCopied} style:mask={icon(invCopied ? 'check' : 'copy')}></span>{invCopied ? 'Copied' : 'Copy'}</span
+                >
+                <span class="invite-share" onclick={shareInvite} role="button" tabindex="0">{@render glyph('share', 'invite-share-glyph')}Share</span>
               </div>
             </div>
           </div>
-          <div style="flex:none;display:flex;flex-direction:column;gap:10px">
-            <span style="padding-inline:4px;font:var(--weight-semibold) var(--text-xs)/1 var(--font-sans);letter-spacing:.06em;color:var(--ink-4,#6E6E7C)">YOU EARN WHEN A FRIEND…</span>
-            <div style="display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));overflow:hidden">
-              {#each v.invRewards ?? [] as w, i29}
-                <div style="display:flex;align-items:center;gap:14px;min-height:56px;padding:0 16px;border-block-start:{w.divider}">
-                  <span style="flex:none;width:16px;height:16px;background:var(--ink-3,#8A8A99);mask:{w.mask}"></span>
-                  <span style="flex:1;min-width:0;font:var(--weight-medium) var(--text-md)/1.3 var(--font-sans);color:var(--ink,#E4E4EC)">{t(w.label)}</span>
-                  <span style="flex:none;display:flex;align-items:center;gap:5px;font:var(--weight-bold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1);font-variant-numeric:tabular-nums"><span style="width:12px;height:12px;background:var(--status-chit,#FF9F45);mask:{v.m.zap}"></span>{t(w.amount)}</span>
+          <div class="block wide-gap">
+            <span class="caps">YOU EARN WHEN A FRIEND…</span>
+            <div class="list">
+              {#each [['Becomes a Diamond member', '5,000'], ['Gets lifetime Diamond', '15,000']] as [label, amount], i}
+                <div class="reward" class:ruled={i > 0}>
+                  {@render glyph('gem', 'about-glyph')}
+                  <span class="reward-label">{label}</span>
+                  <span class="reward-amount">{@render glyph('zap', 'reward-glyph')}{amount}</span>
                 </div>
               {/each}
             </div>
-            <span style="padding-inline:4px;font:var(--weight-regular) var(--text-sm)/1.45 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">If they later move up a tier, you get the difference.</span>
+            <span class="invite-note">If they later move up a tier, you get the difference.</span>
           </div>
         </div>
       {/if}
 
-      {#if v.isOther}
-        <div style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:26px">
-          <span style="font:var(--weight-regular) var(--text-md)/1.5 var(--font-sans);color:var(--ink-4,#6E6E7C)">{t(v.sectionTitle)} settings aren’t designed yet.</span>
-        </div>
+      {#if section === 'diamond'}
+        <div class="placeholder"><span class="placeholder-text">{TITLES[section]} settings aren’t designed yet.</span></div>
       {/if}
     </div>
   </div>
-  {#if v.delOpen}
-    <div style="position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:var(--space-22)" role="dialog" aria-modal="true">
-      <div style="position:absolute;inset:0;background:var(--scrim);animation:{v.subVeil}" onclick={v.onDelStay} aria-hidden="true"></div>
-      <div style="position:relative;display:flex;flex-direction:column;width:100%;max-width:480px;max-height:100%;box-sizing:border-box;border-radius:var(--radius-xl);background:var(--surface-1,#0e0e12);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),var(--shadow-modal,0 30px 70px rgba(0,0,0,.45));overflow:hidden;animation:{v.subCard}">
-        <div style="flex:none;display:flex;align-items:center;gap:var(--space-12);padding:var(--space-24) var(--space-32) var(--space-22);">
-          {#if v.delCanBack}
-            <span class="dc-p39" style="flex:none;display:flex;align-items:center;justify-content:center;width:32px;height:32px;margin-inline-start:-10px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onDelBack} aria-label="Back" role="button" tabindex="0" title="Back"><span style="width:16px;height:16px;background:var(--ink-2,#C9C9D4);mask:{v.m.chevLeft}"></span></span>
+
+  {#if delOpen}
+    {@const step = delSteps[delStep]}
+    <div class="sub-layer" role="dialog" aria-modal="true">
+      <div class="sub-veil" onclick={() => !delBusy && stayNow()} aria-hidden="true"></div>
+      <div class="sub-card delete">
+        <div class="sub-head">
+          {#if delStep > 0 && !delBusy}
+            <span class="sub-back" onclick={() => (delStep = Math.max(0, delStep - 1))} aria-label="Back" role="button" tabindex="0" title="Back">{@render glyph('back', 'sub-back-glyph')}</span>
           {/if}
-          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
-            <span style="font:var(--weight-bold) var(--text-lg)/1.25 var(--font-sans);color:var(--ink,#ECECF1)">Delete account</span>
-            <span style="font:var(--weight-regular) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.delStepLabel)}</span>
+          <div class="sub-heading">
+            <span class="sub-title">Delete account</span>
+            <span class="sub-step">Step {delStep + 1} of 4</span>
           </div>
-          <span class="dc-p40" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onDelStay} role="button" tabindex="0"><span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.m.close}"></span></span>
+          <span class="sub-close" onclick={() => !delBusy && stayNow()} role="button" tabindex="0">{@render glyph('close', 'sub-close-glyph')}</span>
         </div>
-        <div style="flex:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:0 var(--space-32)">
-          {#each v.delDots ?? [] as d, i30}<span style="height:3px;border-radius:var(--radius-pill);background:{d.bg};transition:background .2s"></span>{/each}
+        <div class="steps">
+          {#each delSteps as _, k}<span class="step-dot" class:passed={k <= delStep} class:final={k === 3}></span>{/each}
         </div>
-        <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:var(--space-22);padding:var(--space-32) var(--space-32) 0">
-          {#if v.delStep.hasIcon}
-            <span style="flex:none;display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:var(--radius-md);background:var(--overlay-2,rgba(255,255,255,.08))"><span style="width:24px;height:24px;background:{v.delStep.iconInk};mask:{v.delStep.icon}"></span></span>
+        <div class="sub-body">
+          {#if step.icon}
+            <span class="step-tile">{@render glyph(step.icon, delStep === 3 ? 'step-glyph final' : 'step-glyph')}</span>
           {/if}
-          <div style="flex:none;display:flex;flex-direction:column;gap:10px">
-            <span style="font:var(--weight-bold) 22px/1.25 var(--font-sans);letter-spacing:-.015em;color:var(--ink,#ECECF1);text-wrap:balance">{t(v.delStep.title)}</span>
-            <span style="font:var(--weight-regular) var(--text-md)/1.6 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">{#each v.delStep.body ?? [] as b, i31}<span style="color:{b.ink};font-weight:{b.w}">{t(b.t)}</span>{/each}</span>
+          <div class="step-copy">
+            <span class="step-title">{step.title}</span>
+            <span class="step-body">{#each step.body as [text, strong]}<span class:strong>{text}</span>{/each}</span>
           </div>
-          {#if v.delStep.isChit}
-            <div style="flex:none;display:flex;flex-direction:column;border-radius:var(--radius-md);background:var(--overlay-1,rgba(255,255,255,.05));overflow:hidden">
-              <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
-                <div style="display:flex;flex-direction:column;gap:10px;padding:18px">
-                  <span style="display:flex;align-items:center;gap:6px;font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)"><span style="width:12px;height:12px;background:var(--accent,#FF5672);mask:{v.m.zap}"></span>Day streak</span>
-                  <span style="font:var(--weight-bold) 30px/1 var(--font-sans);letter-spacing:-.01em;color:var(--ink,#ECECF1)">{t(v.delStreak)}</span>
+          {#if delStep === 2}
+            <div class="list">
+              <div class="chit-pair">
+                <div class="chit-cell">
+                  <span class="small-label icon-label">{@render glyph('zap', 'streak-glyph')}Day streak</span>
+                  <span class="chit-figure">{streak}</span>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:10px;padding:18px;border-inline-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-                  <span style="font:var(--weight-medium) 11px/1 var(--font-sans);color:var(--ink-3,#8A8A99)">CHIT balance</span>
-                  <span style="font:var(--weight-bold) 30px/1 var(--font-sans);letter-spacing:-.01em;color:var(--ink,#ECECF1)">{t(v.delBalance)}</span>
+                <div class="chit-cell ruled-start">
+                  <span class="small-label">CHIT balance</span>
+                  <span class="chit-figure">{fmt(balance)}</span>
                 </div>
               </div>
-              <div style="display:flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-block-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-                <span style="flex:1;min-width:0;font:var(--weight-regular) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-3,#8A8A99)">{t(v.delNextMile)}</span>
-                <span style="flex:none;font:var(--weight-medium) var(--text-sm)/1 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.delEarned)} earned in total</span>
+              <div class="chit-foot">
+                <span class="chit-next">{delNextMile}</span>
+                <span class="chit-earned">{fmt(chitEarned)} earned in total</span>
               </div>
             </div>
           {/if}
-          {#if v.delStep.isFinal}
-            <div style="flex:none;display:flex;flex-direction:column;gap:8px">
-              <span style="font:var(--weight-medium) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-3,#9A9AA8)">Type <span style="font-family:var(--font-mono);color:var(--ink,#ECECF1)">{t(v.delHandle)}</span> to confirm</span>
-              <input style="height:44px;box-sizing:border-box;padding:0 14px;border:none;outline:none;border-radius:var(--radius-sm);background:var(--overlay-1,rgba(255,255,255,.05));box-shadow:inset 0 0 0 1px {v.delInputRing};font:var(--weight-medium) var(--text-md)/1 var(--font-mono);color:var(--ink,#ECECF1)" value={v.delTyped} oninput={v.onDelType} placeholder={v.delHandle} spellcheck="false" autocomplete="off">
+          {#if delStep === 3}
+            <div class="confirm-type">
+              <span class="confirm-label">Type <span class="confirm-handle">@{values.handle}</span> to confirm</span>
+              <input class="confirm-input" class:match={delMatch} bind:value={delTyped} placeholder="@{values.handle}" spellcheck="false" autocomplete="off" />
             </div>
           {/if}
         </div>
-        <div style="flex:none;display:flex;flex-direction:column;gap:var(--space-10);padding:var(--space-32)">
-          <span class="dc-p41" style="display:flex;align-items:center;justify-content:center;gap:10px;height:44px;border-radius:var(--radius-sm);background:{v.delStep.primaryBg};font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:{v.delStep.primaryInk};cursor:{v.delStep.primaryCursor};opacity:{v.delStep.primaryOpacity};user-select:none;transition:opacity .15s" onclick={v.onDelPrimary} role="button" tabindex="0"><span style="width:16px;height:16px;background:{v.delStep.primaryInk};mask:{v.delStep.primaryMask}"></span>{t(v.delStep.primary)}</span>
-          <span class="dc-p42" style="display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:var(--radius-sm);font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink-2,#C9C9D4);cursor:{v.delStep.secondaryCursor};opacity:{v.delStep.secondaryOpacity};user-select:none" onclick={v.onDelSecondary} role="button" tabindex="0">{t(v.delStep.secondary)}<span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.delStep.secondaryMask}"></span></span>
+        <div class="sub-actions">
+          <span class="step-primary" class:final={delStep === 3} class:locked={delLocked} class:faded={delStep === 3 && !delMatch} onclick={deletePrimary} role="button" tabindex="0"
+            ><span class="step-primary-glyph" style:mask={icon(step.primaryIcon)}></span>{step.primary}</span
+          >
+          <span class="step-secondary" class:busy={delBusy} onclick={deleteSecondary} role="button" tabindex="0"
+            >{step.secondary}<span class="step-secondary-glyph" style:mask={icon(delStep === 3 ? 'heart' : 'chevron-right')}></span></span
+          >
         </div>
       </div>
     </div>
   {/if}
-  {#if v.loOpen}
-    <div style="position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;padding:var(--space-22)" role="dialog" aria-modal="true">
-      <div style="position:absolute;inset:0;background:var(--scrim);animation:{v.subVeil}" onclick={v.onLoCancel} aria-hidden="true"></div>
-      <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:var(--space-22);width:100%;max-width:380px;box-sizing:border-box;padding:var(--space-32);border-radius:var(--radius-xl);background:var(--surface-1,#0e0e12);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),var(--shadow-modal,0 30px 70px rgba(0,0,0,.45));animation:{v.subCard}">
-        <div style="flex:none;display:flex;flex-direction:column;align-items:center;gap:12px">
-          <span style="width:64px;height:64px;border-radius:var(--radius-pill);background:{v.avatar};background-size:cover;background-position:center;box-shadow:0 0 0 4px var(--surface-1,#0e0e12),0 0 0 5px var(--line-2,rgba(255,255,255,.1))"></span>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
-            <span style="font:var(--weight-semibold) var(--text-base)/1.2 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.name)}</span>
-            <span style="font:var(--weight-regular) var(--text-sm)/1 var(--font-sans);color:var(--ink-4,#7C7C8C)">@{t(v.handle)}</span>
+
+  {#if loOpen}
+    <div class="sub-layer" role="dialog" aria-modal="true">
+      <div class="sub-veil" onclick={() => !loBusy && (loOpen = false)} aria-hidden="true"></div>
+      <div class="sub-card logout">
+        <div class="lo-who">
+          <span class="lo-avatar" style:background={avatar}></span>
+          <div class="lo-names">
+            <span class="lo-name">{shownName}</span>
+            <span class="lo-handle">@{values.handle}</span>
           </div>
         </div>
-        <div style="flex:none;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center">
-          <span style="font:var(--weight-bold) var(--text-xl)/1.25 var(--font-sans);letter-spacing:-.01em;color:var(--ink,#ECECF1)">Log out of OpenChat?</span>
-          <span style="font:var(--weight-regular) var(--text-md)/1.55 var(--font-sans);color:var(--ink-3,#9A9AA8);text-wrap:pretty">Your chats, wallet and CHIT stay safe. You’ll sign back in with {t(v.loProvider)}.</span>
+        <div class="lo-copy">
+          <span class="lo-title">Log out of OpenChat?</span>
+          <span class="lo-body">Your chats, wallet and CHIT stay safe. You’ll sign back in with {signInProvider}.</span>
         </div>
-        <div style="flex:none;align-self:stretch;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--space-10)">
-          <span class="dc-p43" style="display:flex;align-items:center;justify-content:center;height:44px;border-radius:var(--radius-sm);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12));font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--ink,#ECECF1);cursor:{v.loCursor};opacity:{v.loCancelOpacity};user-select:none" onclick={v.onLoCancel} role="button" tabindex="0">Cancel</span>
-          <span class="dc-p44" style="display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:var(--radius-sm);background:var(--accent,#FF5672);font:var(--weight-semibold) var(--text-md)/1 var(--font-sans);color:var(--on-accent,#fff);cursor:{v.loCursor};user-select:none" onclick={v.onLoConfirm} role="button" tabindex="0"><span style="width:15px;height:15px;background:var(--on-accent,#fff);mask:{v.loMask};animation:{v.loSpin}"></span>{t(v.loLabel)}</span>
+        <div class="lo-actions">
+          <span class="lo-cancel" class:busy={loBusy} onclick={() => !loBusy && (loOpen = false)} role="button" tabindex="0">Cancel</span>
+          <span class="lo-confirm" class:busy={loBusy} onclick={confirmLogout} role="button" tabindex="0"
+            ><span class="lo-glyph" class:spin={loBusy} style:mask={icon(loBusy ? 'refresh' : 'leave')}></span>{loBusy ? 'Logging out…' : 'Log out'}</span
+          >
         </div>
       </div>
     </div>
@@ -715,49 +1814,3105 @@
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p1:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p2:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p3:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p4:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p5:hover{filter:brightness(1.15) !important}
-  .dc-p6:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p7:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p8:hover{background:var(--accent-hover,#ff6d85) !important}
-  .dc-p9:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p10:hover{color:var(--ink,#ECECF1) !important}
-  .dc-p11:hover{filter:brightness(1.12) !important}
-  .dc-p12:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p13:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p14:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p15:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p16:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p17:hover{color:var(--ink,#ECECF1) !important}
-  .dc-p18:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p19:hover{background:var(--accent-hover,#ff6d85) !important}
-  .dc-p20:hover{background:var(--btn-danger-bg,rgba(240,68,56,.08)) !important;color:var(--status-danger,#F5493D) !important}
-  .dc-p21:hover{background:var(--overlay-1,rgba(255,255,255,.05)) !important}
-  .dc-p22:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p23:hover{background:var(--accent-hover,#ff6d85) !important}
-  .dc-p24:hover{background:var(--accent-hover,#ff6d85) !important}
-  .dc-p25:hover{background:var(--accent-hover,#ff6d85) !important}
-  .dc-p26:hover{background:var(--btn-hover,rgba(255,255,255,.1)) !important}
-  .dc-p27:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p28:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p29:hover{background:var(--overlay-1,rgba(255,255,255,.04)) !important}
-  .dc-p30:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p31:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p32:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p33:hover{filter:brightness(1.08) !important}
-  .dc-p34:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p35:hover{filter:brightness(1.08) !important}
-  .dc-p36:hover{background:var(--overlay-1,rgba(255,255,255,.04)) !important}
-  .dc-p37:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p38:hover{filter:brightness(1.08) !important}
-  .dc-p39:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p40:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p41:hover{filter:brightness(1.08) !important}
-  .dc-p42:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p43:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p44:hover{filter:brightness(1.08) !important}
+  /* ---- shell ---- */
+  .layer {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-22);
+  }
+
+  .veil {
+    position: absolute;
+    inset: 0;
+    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
+    backdrop-filter: var(--oc-veil-blur, blur(4px));
+    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
+    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    width: 100%;
+    max-width: 860px;
+    height: 770px;
+    max-height: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--line-2, rgba(255, 255, 255, 0.1));
+    border-radius: var(--radius-xl);
+    background: var(--surface-1, #0e0e12);
+    box-shadow: var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+    overflow: hidden;
+    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  .closing .veil {
+    animation: oc-veil-out 170ms var(--ease-standard) both;
+  }
+
+  .closing .card {
+    animation: oc-dlg-out 170ms var(--ease-standard) both;
+  }
+
+  .rail {
+    flex: none;
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface-0, #07070a);
+    border-inline-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .rail-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 10px 12px;
+  }
+
+  .nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nav-label {
+    padding: 6px 10px;
+    font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
+    letter-spacing: 0.06em;
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .nav-item {
+    --nav-ink: var(--ink-3, #8a8a99);
+    --nav-label: var(--ink-2, #b9b9c6);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .nav-item.on {
+    --nav-ink: var(--ink, #ececf1);
+    --nav-label: var(--ink, #ececf1);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .nav-item.chit {
+    --nav-ink: var(--status-chit, #ff9f45);
+  }
+
+  .nav-item.diamond {
+    --nav-ink: var(--accent, #ff5672);
+  }
+
+  .nav-item.danger {
+    --nav-ink: var(--status-danger, #f5493d);
+    --nav-label: var(--status-danger, #f5493d);
+  }
+
+  .nav-item:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .nav-icon {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    background: var(--nav-ink);
+  }
+
+  .nav-icon.logout {
+    background: var(--ink-3, #8a8a99);
+  }
+
+  .nav-title {
+    flex: 1;
+    font: 500 var(--text-md) / 1 var(--font-sans);
+    color: var(--nav-label);
+  }
+
+  .on .nav-title {
+    font-weight: 600;
+  }
+
+  .nav-meta {
+    font: var(--weight-semibold) 10.5px/1 var(--font-mono);
+    color: var(--status-chit, #ff9f45);
+  }
+
+  .diamond .nav-meta {
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .diamond .nav-meta.upgrade {
+    color: var(--accent, #ff5672);
+  }
+
+  .rail-foot {
+    flex: none;
+    padding: 8px 10px;
+    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 69px;
+    box-sizing: border-box;
+    padding: 0 26px;
+    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .section-title {
+    flex: 1;
+    font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .head-close {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-inline-end: -8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .head-close:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+  }
+
+  .head-close-glyph {
+    width: 15px;
+    height: 15px;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 22px 26px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gap-8 {
+    gap: 8px;
+  }
+
+  .gap-16 {
+    gap: 16px;
+  }
+
+  .gap-18 {
+    gap: 18px;
+  }
+
+  .gap-22 {
+    gap: 22px;
+  }
+
+  /* ---- shared blocks ---- */
+  .caps {
+    padding-inline: 4px;
+    font: var(--weight-semibold) var(--text-xs) / 1 var(--font-sans);
+    letter-spacing: 0.06em;
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .lead-caps {
+    flex: none;
+    margin-top: 4px;
+    padding-inline: 0;
+  }
+
+  .caps.flat {
+    flex: none;
+  }
+
+  .caps.spaced {
+    margin-top: 10px;
+  }
+
+  .block {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .block.wide-gap {
+    gap: 10px;
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    overflow: hidden;
+  }
+
+  .list.flat {
+    flex: none;
+  }
+
+  .list.pull-up {
+    flex: none;
+    margin-top: -10px;
+  }
+
+  .rule {
+    height: 1px;
+    background: var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .ruled {
+    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .lead-text {
+    flex: none;
+    padding-inline: 4px;
+    font: var(--weight-regular) var(--text-md) / 1.55 var(--font-sans);
+    color: var(--ink-2, #b9b9c6);
+    text-wrap: pretty;
+  }
+
+  .lead-text.tight {
+    line-height: 1.5;
+  }
+
+  .note {
+    padding-inline: 4px;
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .small-label {
+    font: var(--weight-medium) 11px/1 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .grow {
+    flex: 1;
+  }
+
+  .setting {
+    display: flex;
+    align-items: center;
+    gap: var(--space-14);
+    padding: var(--space-16);
+  }
+
+  .setting-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .setting-title {
+    font: var(--weight-semibold) var(--text-base) / 1.2 var(--font-sans);
+    color: var(--ink, #e4e4ec);
+  }
+
+  .setting-hint {
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .setting-hint.muted3 {
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .setting-control {
+    flex: none;
+    display: flex;
+  }
+
+  .segments {
+    display: flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--radius-sm);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .kv-edit {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    background: var(--ink-3, #8a8a99);
+  }
+
+  /* ---- profile ---- */
+  .cover {
+    flex: none;
+    position: relative;
+    height: 118px;
+    border-radius: var(--radius-lg);
+  }
+
+  .cover-edit,
+  .photo-edit {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    background: var(--card-2, #1b1b21);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    cursor: pointer;
+  }
+
+  .cover-edit {
+    top: var(--space-8);
+    inset-inline-end: var(--space-8);
+  }
+
+  .photo-edit {
+    bottom: -2px;
+    inset-inline-end: -2px;
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12)),
+      0 0 0 3px var(--surface-1, #0e0e12);
+  }
+
+  .cover-edit:hover,
+  .photo-edit:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+  }
+
+  .cover-edit-glyph {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .photo-edit-glyph {
+    width: 15px;
+    height: 15px;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .identity {
+    flex: none;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    margin-top: -44px;
+    padding-inline: 16px;
+  }
+
+  .avatar {
+    position: relative;
+    flex: none;
+    width: 88px;
+    height: 88px;
+    border-radius: var(--radius-pill);
+    box-shadow: 0 0 0 4px var(--surface-1, #0e0e12);
+  }
+
+  .identity-text {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding-bottom: 4px;
+  }
+
+  .name-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .display-name {
+    font: var(--weight-bold) var(--text-xl) / 1.2 var(--font-sans);
+    letter-spacing: -0.01em;
+    color: var(--ink, #ececf1);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .badge-slot {
+    flex: none;
+    display: grid;
+    grid-template-columns: max-content;
+  }
+
+  .chit-tag {
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+  }
+
+  .chit-tag:hover {
+    filter: brightness(1.15);
+  }
+
+  .handle-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .handle {
+    font: var(--weight-medium) var(--text-md) / 1 var(--font-mono);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .kv-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 56px;
+    padding: 0 16px;
+  }
+
+  .kv-row.editable {
+    cursor: pointer;
+  }
+
+  .kv-row.editable:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .kv-label {
+    flex: none;
+    width: 110px;
+    font: var(--weight-medium) 11px/1 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .kv-value {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-medium) 13px/1.35 var(--font-sans);
+    color: var(--ink, #ececf1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .kv-value.mono {
+    font: var(--weight-medium) 12.5px/1 var(--font-mono);
+  }
+
+  .kv-value.area {
+    color: var(--ink-2, #b9b9c6);
+  }
+
+  .kv-value.empty {
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .editor {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .editor-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .editor-label {
+    flex: 1;
+    font: var(--weight-medium) 11px/1 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .community-edit-head .editor-label {
+    flex: initial;
+  }
+
+  .editor-count {
+    font: var(--weight-medium) 10.5px/1 var(--font-mono);
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .area-input {
+    box-sizing: border-box;
+    width: 100%;
+    resize: none;
+    padding: 11px 12px;
+    border: none;
+    outline: none;
+    border-radius: var(--radius-md);
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1.5px var(--accent, #ff5672);
+    font: var(--weight-regular) 13px/1.5 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .line-input {
+    display: flex;
+    align-items: center;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: var(--radius-md);
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1.5px var(--accent, #ff5672);
+  }
+
+  .line-input.grow {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .area-input.invalid,
+  .line-input.invalid {
+    box-shadow: inset 0 0 0 1.5px var(--status-danger, #f5493d);
+  }
+
+  .line-input input,
+  .filter input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font: var(--weight-medium) 13px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .line-input input.roomy {
+    line-height: 1.35;
+  }
+
+  .line-input input.mono {
+    font: var(--weight-medium) 12.5px/1 var(--font-mono);
+  }
+
+  .at {
+    font: var(--weight-medium) 13px/1 var(--font-mono);
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .editor-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .editor-hint {
+    flex: 1;
+    font: var(--weight-regular) 10.5px/1.3 var(--font-sans);
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .editor-hint.invalid {
+    color: var(--status-danger, #f5493d);
+  }
+
+  .cancel {
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font: var(--weight-semibold) 12px/1 var(--font-sans);
+    color: var(--ink-2, #b9b9c6);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .cancel:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+  }
+
+  .save {
+    display: flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 14px;
+    border-radius: var(--radius-sm);
+    background: var(--accent, #ff5672);
+    font: var(--weight-semibold) 12px/1 var(--font-sans);
+    color: var(--on-accent, #2e0512);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .save:hover {
+    background: var(--accent-hover, #ff6d85);
+  }
+
+  .save.blocked {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .status {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font: var(--weight-medium) 13px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .online-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: var(--radius-pill);
+    background: var(--status-online, #2ee6a8);
+  }
+
+  .kv-plain {
+    flex: 1;
+    font: var(--weight-medium) 13px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .kv-id {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-medium) 12px/1 var(--font-mono);
+    color: var(--ink, #ececf1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .copy {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    margin-inline-end: -8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .copy:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+  }
+
+  .copy-glyph {
+    width: 14px;
+    height: 14px;
+    background: var(--ink-3, #8a8a99);
+  }
+
+  .copy-glyph.done {
+    background: var(--status-online, #2ee6a8);
+  }
+
+  /* ---- stats ---- */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-content: start;
+    gap: 8px;
+  }
+
+  .stat-online,
+  .stat-mix,
+  .stat-report {
+    grid-column: 1/-1;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .stat-online {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .online-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .online-figure {
+    font: var(--weight-bold) var(--text-3xl) / 1 var(--font-sans);
+    letter-spacing: -0.02em;
+    color: var(--ink, #ececf1);
+  }
+
+  .online-unit {
+    margin-inline-start: 6px;
+    font: var(--weight-medium) 13px/1 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .online-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 7px;
+  }
+
+  .delta {
+    --delta: var(--status-online, #2ee6a8);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--delta) 14%, transparent);
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--delta);
+  }
+
+  .delta.down {
+    --delta: var(--status-danger, #f5493d);
+  }
+
+  .delta-glyph {
+    width: 11px;
+    height: 11px;
+    background: var(--delta);
+  }
+
+  .prev {
+    font: var(--weight-regular) 11px/1 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .stat-tile {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px 16px;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .tile-figure,
+  .report-count {
+    font: var(--weight-bold) 24px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .stat-mix {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .mix-head {
+    display: flex;
+    align-items: baseline;
+  }
+
+  .mix-total {
+    font: var(--weight-bold) 15px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .mix-row {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mix-label {
+    font: var(--weight-medium) var(--text-md) / 1.2 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mix-track {
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
+  }
+
+  .mix-fill {
+    min-width: 4px;
+    height: 100%;
+    border-radius: var(--radius-pill);
+  }
+
+  .mix-count {
+    text-align: end;
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .stat-report {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 18px;
+  }
+
+  .report-glyph {
+    flex: none;
+    width: 17px;
+    height: 17px;
+  }
+
+  .report-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .report-title {
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .report-note {
+    font: var(--weight-regular) 11px/1.35 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .report-count {
+    flex: none;
+  }
+
+  /* ---- CHIT ---- */
+  .chit-master {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-14);
+    padding: var(--space-16);
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .chit-badge {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    background: var(--status-chit-soft, rgba(255, 159, 69, 0.14));
+  }
+
+  .chit-badge-glyph {
+    width: 18px;
+    height: 18px;
+    background: var(--status-chit, #ff9f45);
+  }
+
+  .list.puzzle {
+    gap: var(--space-12);
+    padding: var(--space-16);
+  }
+
+  .list.puzzle .setting-text {
+    flex: 1;
+  }
+
+  .segments.three {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 3px;
+    border-radius: var(--radius-md);
+  }
+
+  .segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 34px;
+    border-radius: calc(var(--radius-md) - 3px);
+    background: transparent;
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .segment.on {
+    background: var(--overlay-3, rgba(255, 255, 255, 0.12));
+  }
+
+  .segment.on,
+  .segment:hover {
+    color: var(--ink, #ececf1);
+  }
+
+  .segment-glyph {
+    width: 13px;
+    height: 13px;
+    background: currentColor;
+  }
+
+  .chit-off {
+    flex: none;
+    margin: -4px 0 0;
+    padding-inline: 4px;
+    font: var(--weight-regular) var(--text-md) / 1.55 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+    text-wrap: pretty;
+  }
+
+  .earn {
+    flex: none;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: var(--status-chit-soft, rgba(255, 159, 69, 0.14));
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .earn:hover {
+    filter: brightness(1.12);
+  }
+
+  .earn-glyph {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    background: var(--status-chit, #ff9f45);
+  }
+
+  .earn-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .earn-title {
+    font: var(--weight-semibold) 13px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .earn-left {
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
+    color: var(--status-chit, #ff9f45);
+  }
+
+  .earn-chevron {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    background: var(--status-chit, #ff9f45);
+  }
+
+  .month-bar {
+    flex: none;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .month-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    cursor: pointer;
+  }
+
+  .month-step:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .month-step.disabled {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .month-glyph {
+    width: 14px;
+    height: 14px;
+    background: var(--ink-2, #b9b9c6);
+  }
+
+  .month-text {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    padding-inline: 4px;
+  }
+
+  .month-label {
+    font: var(--weight-bold) 15px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .month-sum {
+    font: var(--weight-medium) 11px/1 var(--font-mono);
+    color: var(--ink-3, #8a8a99);
+    white-space: nowrap;
+  }
+
+  .chit-ink {
+    color: var(--status-chit, #ff9f45);
+  }
+
+  .online-ink {
+    color: var(--status-online, #2ee6a8);
+  }
+
+  .tz-option {
+    display: flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background: transparent;
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .tz-option.on {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    color: var(--ink, #ececf1);
+  }
+
+  .calendar {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .weekday {
+    padding: 4px 0;
+    text-align: center;
+    font: var(--weight-medium) 10.5px/1 var(--font-sans);
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .day {
+    --day-ink: var(--ink-4, #6e6e7c);
+    --day-amount: var(--status-chit, #ff9f45);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: default;
+    user-select: none;
+  }
+
+  .day.claim {
+    --day-ink: var(--ink, #ececf1);
+    box-shadow: inset 0 0 0 1.5px var(--status-chit, #ff9f45);
+    cursor: pointer;
+  }
+
+  .day.future {
+    --day-ink: var(--ink-3, #8a8a99);
+    opacity: 0.5;
+  }
+
+  .day.missed {
+    --day-ink: var(--ink-3, #8a8a99);
+  }
+
+  .day.insured {
+    --day-ink: var(--ink, #ececf1);
+    --day-amount: var(--status-online, #2ee6a8);
+    background: color-mix(in srgb, var(--status-online, #2ee6a8) 12%, transparent);
+  }
+
+  .day.claimed {
+    --day-ink: var(--ink, #ececf1);
+    background: var(--status-chit-soft, rgba(255, 159, 69, 0.14));
+  }
+
+  .day-num {
+    font: var(--weight-semibold) 12px/1 var(--font-sans);
+    color: var(--day-ink);
+  }
+
+  .day-amount {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 10px;
+    font: var(--weight-semibold) 10px/1 var(--font-mono);
+    color: var(--day-amount);
+  }
+
+  .day-shield {
+    width: 10px;
+    height: 10px;
+    background: var(--day-amount);
+    mask: var(--icon-shield) center/contain no-repeat;
+  }
+
+  .pop {
+    position: absolute;
+    z-index: 5;
+    bottom: calc(100% + 6px);
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background: var(--surface-2, #191921);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      0 12px 32px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    text-align: start;
+  }
+
+  .pop.start {
+    inset-inline-start: 0;
+    transform: none;
+  }
+
+  .pop.end {
+    inset-inline-start: auto;
+    inset-inline-end: 0;
+    transform: none;
+  }
+
+  .pop-head {
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .pop-line {
+    font: var(--weight-medium) 11.5px/1.2 var(--font-sans);
+    white-space: nowrap;
+  }
+
+  .pop-line.ink {
+    color: var(--ink, #ececf1);
+  }
+
+  .pop-line.chit {
+    color: var(--status-chit, #ff9f45);
+  }
+
+  .pop-line.online {
+    color: var(--status-online, #2ee6a8);
+  }
+
+  .pop-line.muted {
+    color: var(--ink-3, #8a8a99);
+  }
+
+  /* ---- chats & calls ---- */
+  .ringtone {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 52px;
+    padding: 0 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .ringtone:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .ringtone-label {
+    flex: 1;
+    min-width: 0;
+    font: 500 var(--text-base) / 1 var(--font-sans);
+    color: var(--ink, #e4e4ec);
+  }
+
+  .ringtone-label.on {
+    font-weight: 600;
+  }
+
+  .wave {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 20px;
+  }
+
+  .wave-bar {
+    width: 2px;
+    border-radius: 1px;
+    background: var(--line-3, rgba(255, 255, 255, 0.24));
+  }
+
+  .wave-bar.selected {
+    background: var(--ink-3, #8a8a99);
+  }
+
+  .wave-bar.playing {
+    background: var(--accent, #ff5672);
+  }
+
+  .play {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .play:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+  }
+
+  .play-glyph {
+    width: 12px;
+    height: 12px;
+    background: var(--ink-3, #8a8a99);
+  }
+
+  .play-glyph.playing {
+    background: var(--accent, #ff5672);
+  }
+
+  .tick-slot {
+    flex: none;
+    display: flex;
+    justify-content: flex-end;
+    width: 42px;
+  }
+
+  .tick {
+    width: 16px;
+    height: 16px;
+    background: var(--accent, #ff5672);
+    mask: var(--icon-check) center/contain no-repeat;
+    opacity: 0;
+  }
+
+  .tick.on {
+    opacity: 1;
+  }
+
+  /* ---- communities ---- */
+  .filter {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 12px;
+    border-radius: var(--radius-md);
+    background: var(--field, #14141a);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .filter-glyph {
+    width: 13px;
+    height: 13px;
+    background: var(--ink-3, #8a8a99);
+  }
+
+  .community {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    cursor: pointer;
+  }
+
+  .community:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .community-face {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+
+  .community-name {
+    flex: none;
+    width: 150px;
+    font: var(--weight-medium) var(--text-md) / 1.2 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .community-shown {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-medium) 13px/1.2 var(--font-sans);
+    color: var(--ink-4, #6e6e7c);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .community-shown.custom {
+    font: var(--weight-semibold) 13.5px/1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .community-tag {
+    font: var(--weight-medium) 10.5px/1 var(--font-mono);
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .community-edit-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .community-chip {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+  }
+
+  .reset {
+    padding: 8px 0;
+    font: var(--weight-semibold) 11.5px/1 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+    cursor: pointer;
+  }
+
+  .reset:hover {
+    color: var(--ink, #ececf1);
+  }
+
+  .no-match {
+    flex: none;
+    padding: 12px 4px;
+    font: var(--weight-regular) var(--text-md) / 1.4 var(--font-sans);
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  /* ---- sign-in providers ---- */
+  .signin {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .scroll.toast-room {
+    padding-bottom: 84px;
+  }
+
+  .current {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--status-online, #2ee6a8) 35%, transparent);
+  }
+
+  .current-tile {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--status-online, #2ee6a8) 14%, transparent);
+  }
+
+  .current-glyph {
+    width: 20px;
+    height: 20px;
+    background: var(--status-online, #2ee6a8);
+  }
+
+  .current-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .current-kicker {
+    font: var(--weight-medium) 11px/1 var(--font-sans);
+    color: var(--status-online, #2ee6a8);
+  }
+
+  .current-title {
+    font: var(--weight-semibold) 14px/1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .current-id {
+    font: var(--weight-regular) 11.5px/1 var(--font-mono);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .locked {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font: var(--weight-medium) 11px/1 var(--font-sans);
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .locked-glyph {
+    width: 13px;
+    height: 13px;
+    background: var(--ink-4, #6e6e7c);
+  }
+
+  .method {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .method-glyph {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    background: var(--ink-3, #8a8a99);
+  }
+
+  .method-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .method-title {
+    font: var(--weight-semibold) 13px/1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .method-sub {
+    font: var(--weight-regular) 11px/1 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .unlink {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    margin-inline-end: -6px;
+    border-radius: var(--radius-sm);
+    font: var(--weight-semibold) 11.5px/1 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .unlink:hover {
+    background: var(--btn-danger-bg, rgba(240, 68, 56, 0.08));
+    color: var(--status-danger, #f5493d);
+  }
+
+  .unlink-glyph {
+    width: 13px;
+    height: 13px;
+    background: currentColor;
+  }
+
+  .method-empty {
+    padding: 14px 16px 4px;
+    font: var(--weight-regular) 11.5px/1.4 var(--font-sans);
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .add {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 46px;
+    padding: 0 16px;
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .add:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .add-glyph {
+    width: 13px;
+    height: 13px;
+    background: var(--accent, #ff5672);
+  }
+
+  .adding {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .adding-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .adding-title {
+    flex: 1;
+    font: var(--weight-semibold) 13px/1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .adding-cancel {
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    font: var(--weight-semibold) 12px/1 var(--font-sans);
+    color: var(--ink-2, #b9b9c6);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .adding-cancel:hover,
+  .toast-undo:hover {
+    background: var(--btn-hover, rgba(255, 255, 255, 0.1));
+  }
+
+  .inline-form {
+    display: flex;
+    gap: 8px;
+  }
+
+  .primary,
+  .check-action {
+    flex: none;
+    display: flex;
+    align-items: center;
+    border-radius: var(--radius-sm);
+    background: var(--accent, #ff5672);
+    font: var(--weight-semibold) 12px/1 var(--font-sans);
+    color: var(--on-accent, #2e0512);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .primary {
+    height: 40px;
+    padding: 0 16px;
+    border-radius: var(--radius-md);
+    font-size: 12.5px;
+  }
+
+  .check-action {
+    height: 30px;
+    padding: 0 12px;
+  }
+
+  .primary:hover,
+  .check-action:hover {
+    background: var(--accent-hover, #ff6d85);
+  }
+
+  .primary.blocked {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .adding-hint {
+    font: var(--weight-regular) 11px/1.4 var(--font-sans);
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  .adding-hint.invalid {
+    color: var(--status-danger, #f5493d);
+  }
+
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 32px;
+  }
+
+  .check-mark {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--accent, #ff5672);
+  }
+
+  .check-mark.todo {
+    box-shadow: inset 0 0 0 1.5px var(--line-3, rgba(255, 255, 255, 0.24));
+  }
+
+  .check-mark.done {
+    background: var(--status-online, #2ee6a8);
+    box-shadow: none;
+  }
+
+  .check-glyph {
+    display: none;
+    width: 11px;
+    height: 11px;
+    background: var(--surface-1, #0e0e12);
+    mask: var(--icon-check) center/contain no-repeat;
+  }
+
+  .done .check-glyph {
+    display: block;
+  }
+
+  .check-label {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-semibold) 12.5px/1.3 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .check-label.done,
+  .check-label.todo {
+    font-weight: var(--weight-medium);
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .waiting {
+    flex: none;
+    font: var(--weight-medium) 11px/1 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .toast {
+    position: absolute;
+    inset-inline: 26px;
+    bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 46px;
+    padding: 0 8px 0 16px;
+    border-radius: var(--radius-md);
+    background: var(--surface-2, #191921);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      0 14px 36px rgba(0, 0, 0, 0.5);
+  }
+
+  .toast-text {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .toast-undo {
+    flex: none;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    font: var(--weight-bold) var(--text-md) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* ---- appearance ---- */
+  .themes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .theme {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 8px 8px 12px;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .theme.on,
+  .accent.on {
+    box-shadow: inset 0 0 0 1.5px var(--accent, #ff5672);
+  }
+
+  .theme:hover,
+  .accent:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .preview {
+    position: relative;
+    height: 84px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .bubble {
+    position: absolute;
+    height: 14px;
+    border-radius: 7px;
+  }
+
+  .bubble.one {
+    top: 10px;
+    inset-inline-start: 10px;
+    width: 52%;
+  }
+
+  .bubble.sent {
+    top: 30px;
+    inset-inline-end: 10px;
+    width: 44%;
+    background: var(--accent, #ff5672);
+  }
+
+  .bubble.two {
+    top: 50px;
+    inset-inline-start: 10px;
+    width: 36%;
+  }
+
+  .preview-bar {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 12px;
+  }
+
+  .theme-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-inline: 4px;
+  }
+
+  .radio {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-pill);
+    box-shadow: inset 0 0 0 1.5px var(--line-3, rgba(255, 255, 255, 0.24));
+  }
+
+  .on .radio {
+    box-shadow: inset 0 0 0 1.5px var(--accent, #ff5672);
+  }
+
+  .radio-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-pill);
+    background: var(--accent, #ff5672);
+    opacity: 0;
+  }
+
+  .on .radio-dot,
+  .on .swatch-check {
+    opacity: 1;
+  }
+
+  .theme-name {
+    flex: 1;
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .accents {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .accent {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 48px;
+    padding: 0 12px;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .swatch {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-pill);
+  }
+
+  .swatch-check {
+    width: 12px;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.7);
+    mask: var(--icon-check) center/contain no-repeat;
+    opacity: 0;
+  }
+
+  .list.sizes-panel {
+    gap: 14px;
+    padding: 16px;
+    overflow: visible;
+  }
+
+  .size {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 36px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-3, #8a8a99);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .size.on {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    color: var(--ink, #ececf1);
+  }
+
+  .size-glyph {
+    font-family: var(--font-sans);
+    font-weight: var(--weight-bold);
+    line-height: 1;
+  }
+
+  .size-label {
+    font: var(--weight-semibold) 12px/1 var(--font-sans);
+  }
+
+  .sample {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px;
+    border-radius: var(--radius-md);
+    background: var(--surface-1, #0e0e12);
+  }
+
+  .sample-bubble {
+    max-width: 78%;
+    padding: var(--space-12) var(--space-14);
+    font-family: var(--font-sans);
+    font-weight: var(--weight-regular);
+    line-height: 1.45;
+  }
+
+  .sample-bubble.recv {
+    align-self: flex-start;
+    border-radius: var(--radius-xs) var(--radius-xl) var(--radius-xl) var(--radius-xl);
+    background: var(--bubble-recv-bg, #191921);
+    box-shadow: inset 0 0 0 1px var(--line-1, rgba(255, 255, 255, 0.07));
+    color: var(--bubble-recv-text, #e4e4ec);
+  }
+
+  .sample-bubble.sent {
+    align-self: flex-end;
+    border-radius: var(--radius-xl) var(--radius-xs) var(--radius-xl) var(--radius-xl);
+    background: var(--bubble-send-bg, #b83e52);
+    color: var(--bubble-text, #ffffff);
+  }
+
+  /* ---- storage ---- */
+  .usage {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 16px;
+  }
+
+  .usage-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .usage-figure {
+    font: var(--weight-bold) 26px/1 var(--font-sans);
+    letter-spacing: -0.01em;
+    color: var(--ink, #ececf1);
+  }
+
+  .usage-of {
+    flex: 1;
+    font: var(--weight-medium) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .usage-pct {
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
+  }
+
+  .usage-track {
+    height: 8px;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.06));
+    overflow: hidden;
+  }
+
+  .usage-fill {
+    min-width: 4px;
+    height: 100%;
+    border-radius: var(--radius-pill);
+  }
+
+  .upsell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 56px;
+    padding: 0 16px;
+    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+    cursor: pointer;
+  }
+
+  .upsell:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+  }
+
+  .upsell-text {
+    flex: 1;
+    font: var(--weight-medium) var(--text-md) / 1.3 var(--font-sans);
+    color: var(--ink-2, #b9b9c6);
+  }
+
+  .upsell-cta {
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+  }
+
+  .cache-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .cache-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .outline-button {
+    --button-ink: var(--ink, #ececf1);
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--button-ink);
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .outline-button:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .outline-button.busy,
+  .outline-button.done {
+    cursor: default;
+  }
+
+  .outline-button.done {
+    --button-ink: var(--status-online, #2ee6a8);
+  }
+
+  .outline-glyph {
+    width: 14px;
+    height: 14px;
+    background: var(--button-ink);
+  }
+
+  .outline-glyph.flag {
+    background: var(--ink-2, #b9b9c6);
+  }
+
+  .spin {
+    animation: oc-spin 0.8s linear infinite;
+  }
+
+  /* ---- bots ---- */
+  .bot-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .bot-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .bot-value {
+    font: var(--weight-medium) 12.5px/1.55 var(--font-mono);
+    color: var(--ink, #ececf1);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    user-select: all;
+  }
+
+  .bot-value.pre {
+    white-space: pre-wrap;
+  }
+
+  .bot-copy {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    margin: -6px -8px 0 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .bot-copy:hover,
+  .code-copy:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .bot-copy-glyph {
+    width: 15px;
+    height: 15px;
+    background: var(--ink-3, #8a8a99);
+  }
+
+  .bot-copy-glyph.on,
+  .code-copy-glyph.on,
+  .invite-copy-glyph.on {
+    background: var(--status-online, #2ee6a8);
+  }
+
+  /* ---- link device ---- */
+  .link-step {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 56px;
+    padding: 0 16px;
+  }
+
+  .step-n {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    font: var(--weight-semibold) 12px/1 var(--font-mono);
+    color: var(--ink-2, #b9b9c6);
+  }
+
+  .step-text {
+    font: var(--weight-medium) var(--text-md) / 1.35 var(--font-sans);
+    color: var(--ink, #e4e4ec);
+  }
+
+  .code-intro,
+  .danger-zone {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    border-radius: var(--radius-md);
+  }
+
+  .code-intro {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .shield-glyph {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    background: var(--status-chit, #ff9f45);
+  }
+
+  .code-warning,
+  .danger-text {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-2, #b9b9c6);
+    text-wrap: pretty;
+  }
+
+  .show-code {
+    flex: none;
+    display: flex;
+    align-items: center;
+    height: 38px;
+    padding: 0 18px;
+    border-radius: var(--radius-sm);
+    background: var(--accent, #ff5672);
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: var(--on-accent, #fff);
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .show-code:hover,
+  .danger-button:hover,
+  .invite-share:hover,
+  .step-primary:hover,
+  .lo-confirm:hover {
+    filter: brightness(1.08);
+  }
+
+  .code-live {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent, #ff5672) 45%, transparent);
+  }
+
+  .code-line {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .code {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-semibold) 34px/1 var(--font-mono);
+    letter-spacing: 0.32em;
+    color: var(--ink, #ececf1);
+    user-select: all;
+    filter: none;
+    transition: filter 0.2s ease;
+  }
+
+  .code.hidden {
+    user-select: none;
+    filter: blur(9px);
+  }
+
+  .code-copy {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1));
+    cursor: pointer;
+  }
+
+  .code-copy-glyph {
+    width: 15px;
+    height: 15px;
+    background: var(--ink-2, #b9b9c6);
+  }
+
+  .code-track {
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+    overflow: hidden;
+  }
+
+  .code-fill {
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background: var(--accent, #ff5672);
+    transition: width 0.25s linear;
+  }
+
+  .code-fill.warn {
+    background: var(--status-chit, #ff9f45);
+  }
+
+  .code-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .code-status {
+    flex: 1;
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .code-status.warn {
+    color: var(--status-chit, #ff9f45);
+  }
+
+  .code-toggle {
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-sans);
+    color: var(--accent, #ff5672);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  /* ---- delete ---- */
+  .loss {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 68px;
+    padding: 12px 16px;
+    box-sizing: border-box;
+  }
+
+  .loss-tile {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+  }
+
+  .loss-glyph {
+    width: 18px;
+    height: 18px;
+    background: var(--ink-2, #b9b9c6);
+  }
+
+  .loss-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .loss-sub {
+    font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .danger-zone {
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--status-danger, #f5493d) 40%, transparent);
+  }
+
+  .danger-button {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 18px;
+    border-radius: var(--radius-sm);
+    background: var(--status-danger, #f5493d);
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .danger-glyph {
+    width: 14px;
+    height: 14px;
+    background: #fff;
+  }
+
+  /* ---- about ---- */
+  .about-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-inline: 4px;
+  }
+
+  .logo {
+    flex: none;
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-pill);
+    background: conic-gradient(from 200deg, #ffb23f, #f7641e 45%, #e0237a 70%, #8a2bb5 90%, #ffb23f);
+  }
+
+  .logo-hole {
+    position: absolute;
+    inset: 10px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-1, #0e0e12);
+  }
+
+  .about-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .about-title {
+    font: var(--weight-bold) var(--text-lg) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .about-sub {
+    font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .version {
+    flex: none;
+    display: flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: var(--radius-pill);
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    font: var(--weight-medium) 11px/1 var(--font-mono);
+    color: var(--ink-3, #8a8a99);
+    white-space: nowrap;
+  }
+
+  .about-link,
+  .reward {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 56px;
+    padding: 0 16px;
+  }
+
+  .about-link {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .about-link:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.04));
+  }
+
+  .about-glyph {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    background: var(--ink-3, #8a8a99);
+  }
+
+  .about-label,
+  .reward-label {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-medium) var(--text-md) / 1.2 var(--font-sans);
+    color: var(--ink, #e4e4ec);
+  }
+
+  .reward-label {
+    line-height: 1.3;
+  }
+
+  .external-glyph {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    background: var(--ink-4, #6e6e7c);
+  }
+
+  /* ---- invite ---- */
+  .invite {
+    flex: none;
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-22);
+    padding: 18px;
+    border-radius: var(--radius-md);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+  }
+
+  .qr {
+    flex: none;
+    width: 156px;
+    height: 156px;
+    box-sizing: border-box;
+    padding: 10px;
+    border-radius: var(--radius-md);
+    background: #fff;
+  }
+
+  .qr img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+  }
+
+  .invite-side {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-12);
+  }
+
+  .invite-caps {
+    font: var(--weight-semibold) var(--text-xs) / 1 var(--font-mono);
+    letter-spacing: 0.06em;
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .invite-link {
+    font: var(--weight-medium) 12.5px/1.5 var(--font-mono);
+    color: var(--ink, #ececf1);
+    overflow-wrap: anywhere;
+    user-select: all;
+  }
+
+  .invite-actions {
+    display: flex;
+    gap: var(--space-10);
+  }
+
+  .invite-copy,
+  .invite-share {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .invite-copy {
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    color: var(--ink, #ececf1);
+  }
+
+  .invite-copy:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .invite-copy-glyph {
+    width: 14px;
+    height: 14px;
+    background: var(--ink-2, #b9b9c6);
+  }
+
+  .invite-share {
+    background: var(--accent, #ff5672);
+    color: var(--on-accent, #fff);
+  }
+
+  .invite-share-glyph {
+    width: 14px;
+    height: 14px;
+    background: var(--on-accent, #fff);
+  }
+
+  .reward-amount {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font: var(--weight-bold) var(--text-md) / 1 var(--font-sans);
+    color: var(--ink, #ececf1);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .reward-glyph {
+    width: 12px;
+    height: 12px;
+    background: var(--status-chit, #ff9f45);
+  }
+
+  .invite-note {
+    padding-inline: 4px;
+    font: var(--weight-regular) var(--text-sm) / 1.45 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .placeholder {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 26px;
+  }
+
+  .placeholder-text {
+    font: var(--weight-regular) var(--text-md) / 1.5 var(--font-sans);
+    color: var(--ink-4, #6e6e7c);
+  }
+
+  /* ---- confirmation layers ---- */
+  .sub-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-22);
+  }
+
+  .sub-veil {
+    position: absolute;
+    inset: 0;
+    background: var(--scrim);
+    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
+  }
+
+  .sub-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: var(--radius-xl);
+    background: var(--surface-1, #0e0e12);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  .sub-card.delete {
+    max-width: 480px;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  .sub-head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-24) var(--space-32) var(--space-22);
+  }
+
+  .sub-back,
+  .sub-close {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .sub-back {
+    width: 32px;
+    height: 32px;
+    margin-inline-start: -10px;
+  }
+
+  .sub-back:hover,
+  .sub-close:hover,
+  .step-secondary:hover,
+  .lo-cancel:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .sub-back-glyph {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-2, #c9c9d4);
+  }
+
+  .sub-close-glyph {
+    width: 15px;
+    height: 15px;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .sub-heading {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .sub-title {
+    font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .sub-step {
+    font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .steps {
+    flex: none;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    padding: 0 var(--space-32);
+  }
+
+  .step-dot {
+    height: 3px;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.1));
+    transition: background 0.2s;
+  }
+
+  .step-dot.passed {
+    background: var(--ink, #ececf1);
+  }
+
+  .step-dot.passed.final {
+    background: var(--status-danger, #f5493d);
+  }
+
+  .sub-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-22);
+    padding: var(--space-32) var(--space-32) 0;
+  }
+
+  .step-tile {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-md);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.08));
+  }
+
+  .step-glyph {
+    width: 24px;
+    height: 24px;
+    background: var(--ink, #ececf1);
+  }
+
+  .step-glyph.final {
+    background: var(--status-danger, #f5493d);
+  }
+
+  .step-copy {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .step-title {
+    font: var(--weight-bold) 22px/1.25 var(--font-sans);
+    letter-spacing: -0.015em;
+    color: var(--ink, #ececf1);
+    text-wrap: balance;
+  }
+
+  .step-body {
+    font: var(--weight-regular) var(--text-md) / 1.6 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    text-wrap: pretty;
+  }
+
+  .step-body .strong {
+    color: var(--ink, #ececf1);
+    font-weight: var(--weight-semibold);
+  }
+
+  .chit-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .chit-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px;
+  }
+
+  .chit-cell.ruled-start {
+    border-inline-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .icon-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .streak-glyph {
+    width: 12px;
+    height: 12px;
+    background: var(--accent, #ff5672);
+  }
+
+  .chit-figure {
+    font: var(--weight-bold) 30px/1 var(--font-sans);
+    letter-spacing: -0.01em;
+    color: var(--ink, #ececf1);
+  }
+
+  .chit-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 18px;
+    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .chit-next {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-3, #8a8a99);
+  }
+
+  .chit-earned {
+    flex: none;
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .confirm-type {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .confirm-label {
+    font: var(--weight-medium) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .confirm-handle {
+    font-family: var(--font-mono);
+    color: var(--ink, #ececf1);
+  }
+
+  .confirm-input {
+    height: 44px;
+    box-sizing: border-box;
+    padding: 0 14px;
+    border: none;
+    outline: none;
+    border-radius: var(--radius-sm);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    font: var(--weight-medium) var(--text-md) / 1 var(--font-mono);
+    color: var(--ink, #ececf1);
+  }
+
+  .confirm-input.match {
+    box-shadow: inset 0 0 0 1px var(--status-danger, #f5493d);
+  }
+
+  .sub-actions {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-10);
+    padding: var(--space-32);
+  }
+
+  .step-primary,
+  .step-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .step-primary {
+    --primary-ink: var(--on-accent, #fff);
+    gap: 10px;
+    background: var(--accent, #ff5672);
+    color: var(--primary-ink);
+    transition: opacity 0.15s;
+  }
+
+  .step-primary.final {
+    --primary-ink: #fff;
+    background: var(--status-danger, #f5493d);
+  }
+
+  .step-primary.locked {
+    cursor: default;
+  }
+
+  .step-primary.faded {
+    opacity: 0.4;
+  }
+
+  .step-primary-glyph {
+    width: 16px;
+    height: 16px;
+    background: var(--primary-ink);
+  }
+
+  .step-secondary {
+    gap: 8px;
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .step-secondary.busy,
+  .lo-cancel.busy {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  .step-secondary-glyph {
+    width: 15px;
+    height: 15px;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .sub-card.logout {
+    align-items: center;
+    gap: var(--space-22);
+    max-width: 380px;
+    padding: var(--space-32);
+  }
+
+  .lo-who {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .lo-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-pill);
+    background-size: cover;
+    background-position: center;
+    box-shadow:
+      0 0 0 4px var(--surface-1, #0e0e12),
+      0 0 0 5px var(--line-2, rgba(255, 255, 255, 0.1));
+  }
+
+  .lo-names {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .lo-name {
+    font: var(--weight-semibold) var(--text-base) / 1.2 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .lo-handle {
+    font: var(--weight-regular) var(--text-sm) / 1 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .lo-copy {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .lo-title {
+    font: var(--weight-bold) var(--text-xl) / 1.25 var(--font-sans);
+    letter-spacing: -0.01em;
+    color: var(--ink, #ececf1);
+  }
+
+  .lo-body {
+    font: var(--weight-regular) var(--text-md) / 1.55 var(--font-sans);
+    color: var(--ink-3, #9a9aa8);
+    text-wrap: pretty;
+  }
+
+  .lo-actions {
+    flex: none;
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-10);
+  }
+
+  .lo-cancel,
+  .lo-confirm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    font: var(--weight-semibold) var(--text-md) / 1 var(--font-sans);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .lo-cancel {
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+    color: var(--ink, #ececf1);
+  }
+
+  .lo-confirm {
+    gap: 8px;
+    background: var(--accent, #ff5672);
+    color: var(--on-accent, #fff);
+  }
+
+  .lo-confirm.busy {
+    cursor: default;
+  }
+
+  .lo-glyph {
+    width: 15px;
+    height: 15px;
+    background: var(--on-accent, #fff);
+  }
 </style>

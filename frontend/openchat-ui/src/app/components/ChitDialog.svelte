@@ -1,153 +1,692 @@
-<!-- Generated from lib/ChitDialog.dc.html (source hash 556edac8) on 2026-10-13. Edit freely; see EXPORT.md for how updates are tracked. -->
-<script lang="ts">
-  import { useLogic, t, ref } from '../../lib/dc/runtime.svelte';
-  import Logic from './ChitDialog.logic.js';
-  import DailyPuzzleCard from './DailyPuzzleCard.svelte';
+<!-- Daily CHIT: streak ring (fills toward the next milestone), collected balance, milestone bar, claim button,
+     the daily puzzle card, streak insurance and "ways to earn". Without onClaim it applies the claim itself
+     (streak +1, balance + daily). onAction: settings | leaderboard | insurance | earn | puzzle… (see DailyPuzzleCard). -->
+<script lang="ts" module>
+  import type { PuzzleAction } from './DailyPuzzleCard.svelte';
 
-  interface Props {
-    streak?: number;
-    balance?: number;
-    earned?: number;
-    daily?: number;
-    claimable?: boolean;
-    countdown?: string;
-    onClaim?: (amount: number) => void;
-    onAction?: (kind: string) => void;
-    onClose?: () => void;
-    [key: string]: unknown;
-  }
-  let props: Props = $props();
-  const logic = useLogic(Logic, props);
-  const v = $derived(logic.v);
+  export type ChitAction = 'settings' | 'leaderboard' | 'insurance' | 'earn' | PuzzleAction;
 </script>
 
-<div style="position:fixed;inset:0;z-index:72;display:flex;align-items:center;justify-content:center;padding:var(--space-22)" data-screen-label="CHIT" role="dialog" aria-modal="true">
-  <div style="position:absolute;inset:0;background:var(--oc-veil,rgba(3,3,6,.72));backdrop-filter:var(--oc-veil-blur,blur(4px));-webkit-backdrop-filter:var(--oc-veil-blur,blur(4px));animation:{v.veilAnim}" onclick={v.onClose} aria-hidden="true"></div>
+<script lang="ts">
+  import { onDestroy } from 'svelte';
+  import DailyPuzzleCard from './DailyPuzzleCard.svelte';
 
-  <div style="position:relative;display:flex;flex-direction:column;width:100%;max-width:560px;max-height:100%;box-sizing:border-box;border-radius:var(--radius-xl);background:var(--surface-1,#0e0e12);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.1)),var(--shadow-modal,0 30px 70px rgba(0,0,0,.45));overflow:hidden;animation:{v.cardAnim}">
+  // milestone days that pay a bonus on top of the daily claim, with the position each one takes on the bar —
+  // hand-spaced so the early run stays readable and the long haul to 365 still reads as long
+  const TIERS = [3, 7, 14, 30, 100, 365];
+  const TIER_POS: Record<number, number> = { 3: 8, 7: 16, 14: 32, 30: 48, 100: 67, 365: 100 };
+  const fmt = (n: number) => n.toLocaleString('en-US');
 
-    <div style="flex:none;display:flex;align-items:center;gap:var(--space-12);padding:var(--space-24) var(--space-32);border-block-end:1px solid var(--line-1,rgba(255,255,255,.07))">
-      {#if v.hasBack}
-        <span class="dc-p0" style="flex:none;display:flex;align-items:center;justify-content:center;width:32px;height:32px;margin-inline-start:-10px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onBack} role="button" tabindex="0" aria-label={v.backTitle} title={v.backTitle}>
-          <span style="width:16px;height:16px;background:var(--ink-2,#C9C9D4);mask:{v.backMask}"></span>
-        </span>
+  interface Props {
+    streak: number;
+    balance: number;
+    /** All-time CHIT earned. */
+    earned: number;
+    /** Today's claim. */
+    daily: number;
+    claimable?: boolean;
+    /** Time until the next claim (and the next puzzle). */
+    countdown?: string;
+    /** Insured days bought / already used. */
+    insured?: number;
+    used?: number;
+    /** This month's leaderboard place and score, for the trophy button's label. */
+    boardRank?: number;
+    boardScore?: number;
+    puzzleState?: 'new' | 'progress' | 'solved' | 'hidden' | 'off';
+    puzzleSub?: string;
+    puzzleRemind?: boolean;
+    /** Shows a back arrow (opened from another dialog). */
+    onBack?: () => void;
+    backLabel?: string;
+    onClaim?: (amount: number) => void;
+    onAction?: (kind: ChitAction) => void;
+    onClose?: () => void;
+  }
+
+  let {
+    streak,
+    balance,
+    earned,
+    daily,
+    claimable = true,
+    countdown = '',
+    insured = 0,
+    used = 0,
+    boardRank,
+    boardScore,
+    puzzleState = 'new',
+    puzzleSub,
+    puzzleRemind = false,
+    onBack,
+    backLabel = 'Back',
+    onClaim,
+    onAction,
+    onClose,
+  }: Props = $props();
+
+  let claimedHere = $state<boolean | null>(null);
+  let bonus = $state(0);
+  let closing = $state(false);
+  let closeTimer: ReturnType<typeof setTimeout> | undefined;
+  onDestroy(() => clearTimeout(closeTimer));
+
+  const days = $derived(streak + (onClaim ? 0 : claimedHere ? 1 : 0));
+  const claimed = $derived(claimedHere ?? !claimable);
+  const insuredLeft = $derived(Math.max(insured - used, 0));
+
+  const boardHint = $derived.by(() => {
+    if (boardRank == null) return 'Leaderboard';
+    const r = boardRank;
+    const suffix = r % 10 === 1 && r % 100 !== 11 ? 'st' : r % 10 === 2 && r % 100 !== 12 ? 'nd' : r % 10 === 3 && r % 100 !== 13 ? 'rd' : 'th';
+    return `You are ${r}${suffix} this month${boardScore != null ? ` · ${fmt(boardScore)} CHIT` : ''}`;
+  });
+
+  // progress runs tier to tier so the ring means "distance to the next rate"
+  const nextTier = $derived(TIERS.find((t) => t > days) ?? TIERS[TIERS.length - 1]);
+  const within = $derived.by(() => {
+    const prev = TIERS.filter((t) => t <= days).pop() ?? 0;
+    const span = Math.max(nextTier - prev, 1);
+    return Math.min(Math.max(days - prev, 0), span) / span;
+  });
+
+  // the streak sits between its two bracketing milestones, in their spacing
+  const barPct = $derived.by(() => {
+    if (days <= 0) return 0;
+    const top = TIERS[TIERS.length - 1];
+    if (days >= top) return 100;
+    const hi = TIERS.find((t) => t > days)!;
+    const lo = TIERS.filter((t) => t <= days).pop() ?? 0;
+    const loPos = lo ? TIER_POS[lo] : 0;
+    return loPos + (TIER_POS[hi] - loPos) * ((days - lo) / (hi - lo));
+  });
+
+  const ring = $derived(
+    `conic-gradient(var(--accent,#FF5672) 0turn, var(--status-chit,#FF9F45) ${(0.15 + within * 0.7).toFixed(3)}turn, ` +
+      `var(--overlay-2,rgba(255,255,255,.09)) ${(0.16 + within * 0.7).toFixed(3)}turn, var(--overlay-2,rgba(255,255,255,.09)) 1turn)`,
+  );
+
+  function claim() {
+    // a host that owns the balance applies the claim itself
+    claimedHere = true;
+    bonus = onClaim ? 0 : daily;
+    onClaim?.(daily);
+  }
+
+  function close() {
+    if (closing) return;
+    closing = true;
+    closeTimer = setTimeout(() => onClose?.(), 170);
+  }
+</script>
+
+<div class="layer" class:closing data-screen-label="CHIT" role="dialog" aria-modal="true">
+  <div class="veil" onclick={close} aria-hidden="true"></div>
+
+  <div class="card">
+    <div class="head">
+      {#if onBack}
+        <span class="icon-button back" onclick={onBack} role="button" tabindex="0" aria-label={backLabel} title={backLabel}><span class="glyph back-glyph"></span></span>
       {/if}
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
-        <span style="font:var(--weight-bold) var(--text-lg)/1.25 var(--font-sans);color:var(--ink,#ECECF1)">Daily CHIT</span>
-        <span style="font:var(--weight-regular) var(--text-sm)/1.3 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.subtitle)}</span>
+      <div class="heading">
+        <span class="title">Daily CHIT</span>
+        <span class="subtitle">{claimed ? 'Claimed today — streak safe' : 'Claim today to keep the streak alive'}</span>
       </div>
-      <span class="dc-p1" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onSettings} role="button" tabindex="0" aria-label="CHIT settings" title="CHIT settings">
-        <span style="width:17px;height:17px;background:var(--ink-3,#9A9AA8);mask:var(--icon-gear) center/contain no-repeat"></span>
-      </span>
-      <span class="dc-p2" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onLeaderboard} role="button" tabindex="0" aria-label={v.boardHint} title={v.boardHint}>
-        <span style="width:17px;height:17px;background:var(--ink-3,#9A9AA8);mask:{v.trophyMask}"></span>
-      </span>
-      <span class="dc-p3" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer" onclick={v.onClose} role="button" tabindex="0">
-        <span style="width:15px;height:15px;background:var(--ink-3,#9A9AA8);mask:{v.closeMask}"></span>
-      </span>
+      <span class="icon-button" onclick={() => onAction?.('settings')} role="button" tabindex="0" aria-label="CHIT settings" title="CHIT settings"
+        ><span class="glyph" style:mask="var(--icon-gear) center/contain no-repeat"></span></span
+      >
+      <span class="icon-button" onclick={() => onAction?.('leaderboard')} role="button" tabindex="0" aria-label={boardHint} title={boardHint}
+        ><span class="glyph" style:mask="var(--icon-trophy) center/contain no-repeat"></span></span
+      >
+      <span class="icon-button" onclick={close} role="button" tabindex="0"><span class="glyph close-glyph"></span></span>
     </div>
 
-    <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:var(--space-22);padding:var(--space-26) var(--space-32) var(--space-32)">
-
-      <div style="flex:none;display:flex;align-items:center;gap:var(--space-22);min-width:0">
-        <div style="flex:none;position:relative;width:136px;height:136px;border-radius:var(--radius-pill);background:{v.ringGradient};animation:{v.ringAnim}">
-          <div style="position:absolute;inset:14px;border-radius:var(--radius-pill);background:var(--surface-1,#0e0e12);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
-            <span style="font:var(--weight-bold) var(--text-3xl,34px)/1 var(--font-sans);letter-spacing:var(--tracking-tight);color:var(--ink,#ECECF1)">{t(v.streak)}</span>
-            <span style="font:var(--weight-semibold) var(--text-2xs,10px)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-4,#7C7C8C)">DAY STREAK</span>
+    <div class="body">
+      <div class="summary">
+        <div class="ring" class:pop={!!claimedHere} style:background={ring}>
+          <div class="ring-hole">
+            <span class="streak">{days}</span>
+            <span class="caps">DAY STREAK</span>
           </div>
         </div>
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--space-6)">
-          <span style="font:var(--weight-semibold) var(--text-xs)/1 var(--font-mono);letter-spacing:var(--tracking-wide);color:var(--ink-4,#7C7C8C)">COLLECTED</span>
-          <span style="font:var(--weight-bold) var(--text-3xl,34px)/1.1 var(--font-sans);letter-spacing:var(--tracking-tight);color:var(--ink,#ECECF1)">{t(v.balance)}</span>
-          <span style="font:var(--weight-regular) var(--text-sm)/1.35 var(--font-sans);color:var(--ink-4,#7C7C8C)">{t(v.earnedLine)}</span>
+        <div class="totals">
+          <span class="caps wide">COLLECTED</span>
+          <span class="balance">{fmt(balance + bonus)} CHIT</span>
+          <span class="muted">{fmt(earned)} earned all time</span>
         </div>
       </div>
 
-      <div style="flex:none;display:flex;flex-direction:column;gap:var(--space-12);padding:var(--space-14);border-radius:var(--radius-lg);background:var(--overlay-1,rgba(255,255,255,.045));box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12))">
-        <div style="display:flex;align-items:baseline;gap:var(--space-10);min-width:0;margin:0 10px">
-          <span style="flex:1;min-width:0;font:var(--weight-semibold) var(--text-md)/1.3 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.milestoneTitle)}</span>
-          <span style="flex:none;font:var(--weight-medium) var(--text-sm)/1 var(--font-mono);color:var(--ink-3,#9A9AA8)">{t(v.nextRate)}</span>
+      <div class="milestones">
+        <div class="milestone-head">
+          <span class="milestone-title"
+            >{days >= TIERS[TIERS.length - 1] ? `Every milestone reached — ${fmt(daily)} CHIT a day` : `${nextTier - days} days to the ${nextTier}-day milestone`}</span
+          >
+          <span class="rate">{fmt(daily)} / day</span>
         </div>
-        <div style="position:relative;margin:0 10px">
-          <div style="position:relative;height:8px;border-radius:var(--radius-pill);background:var(--overlay-2,rgba(255,255,255,.09));overflow:hidden">
-            <div style="position:absolute;inset-block:0;inset-inline-start:0;width:{v.progress};background:linear-gradient(90deg,var(--accent,#FF5672),var(--status-chit,#FF9F45));transition:width var(--duration-slow,280ms) var(--ease-out)"></div>
-          </div>
-          {#each v.notches ?? [] as m, i0}
-            <span style="position:absolute;top:-1px;inset-inline-start:{m.pos};width:2px;height:10px;border-radius:1px;background:var(--surface-1,#0e0e12);transform:translateX(-50%)"></span>
+        <div class="bar-wrap">
+          <div class="bar"><div class="fill" style:width="{barPct.toFixed(1)}%"></div></div>
+          <!-- the bar's own end reads as the last milestone, so it needs no notch -->
+          {#each TIERS.slice(0, -1) as tier}
+            <span class="notch" style:inset-inline-start="{TIER_POS[tier]}%"></span>
           {/each}
-          <div style="position:relative;height:18px;margin-block-start:var(--space-8)">
-            {#each v.milestones ?? [] as m, i1}
-              <span style="position:absolute;inset-inline-start:{m.pos};transform:translateX(-50%);font:var(--weight-semibold) var(--text-sm)/1 var(--font-mono);color:{m.ink};white-space:nowrap">{t(m.label)}</span>
+          <div class="labels">
+            {#each TIERS as tier}
+              <span class="tier" class:reached={tier <= days} style:inset-inline-start="{TIER_POS[tier]}%">{tier}</span>
             {/each}
           </div>
         </div>
       </div>
 
-      <div style="flex:none;display:flex;flex-direction:column;gap:var(--space-8)">
-        {#if v.claimable}
-          <div class="dc-p4" style="display:flex;align-items:center;justify-content:center;gap:var(--space-8);height:46px;border-radius:var(--radius-md);background:linear-gradient(100deg,var(--accent,#FF5672),var(--status-chit,#FF9F45));cursor:pointer;user-select:none" onclick={v.onClaim} role="button" tabindex="0">
-            <span style="width:17px;height:17px;background:var(--on-accent,#2E0512);mask:{v.flameMask}"></span>
-            <span style="font:var(--weight-bold) var(--text-base)/1 var(--font-sans);color:var(--on-accent,#2E0512)">{t(v.claimLabel)}</span>
+      <div class="claim-area">
+        {#if !claimed}
+          <div class="claim" onclick={claim} role="button" tabindex="0">
+            <span class="flame"></span>
+            <span class="claim-label">Claim {fmt(daily)} CHIT</span>
           </div>
-        {/if}
-        {#if v.claimed}
-          <div style="display:flex;align-items:center;justify-content:center;gap:var(--space-8);height:46px;border-radius:var(--radius-md);box-shadow:inset 0 0 0 1px var(--line-2,rgba(255,255,255,.12));user-select:none">
-            <span style="width:15px;height:15px;background:var(--status-online,#2EE6A8);mask:{v.checkMask}"></span>
-            <span style="font:var(--weight-semibold) var(--text-base)/1 var(--font-sans);color:var(--ink-2,#C9C9D4)">{t(v.countdownLabel)}</span>
+          <span class="note">The longer you maintain your streak the more daily CHIT you can claim!</span>
+        {:else}
+          <div class="claimed">
+            <span class="check"></span>
+            <span class="claimed-label">Come back in {countdown}</span>
           </div>
-        {/if}
-        {#if v.claimable}
-          <span style="padding-block-start:var(--space-4);font:var(--weight-regular) var(--text-sm)/1.5 var(--font-sans);color:var(--ink-4,#7C7C8C);text-align:center;text-wrap:pretty">The longer you maintain your streak the more daily CHIT you can claim!</span>
-        {/if}
-        {#if v.claimed}
-          <span style="padding-block-start:var(--space-4);font:var(--weight-semibold) var(--text-sm)/1.5 var(--font-sans);color:var(--ink,#ECECF1);text-align:center;text-wrap:pretty">Come back tomorrow to extend your streak!</span>
+          <span class="note strong">Come back tomorrow to extend your streak!</span>
         {/if}
       </div>
 
-      <div style="flex:none;display:flex;flex-direction:column;gap:var(--space-12);margin-block-start:var(--space-4);padding-block-start:var(--space-18);border-block-start:1px solid var(--line-1,rgba(255,255,255,.07))">
-        <DailyPuzzleCard state={v.pzState} sub={v.pzSubProp} countdown={v.pzCountdown} remind={v.pzRemindB} onAction={v.pzAction}></DailyPuzzleCard>
-        <div class="dc-p5" style="flex:none;display:flex;align-items:center;gap:var(--space-12);padding:var(--space-14);border-radius:var(--radius-lg);background:{v.coverBg};box-shadow:{v.coverRing};cursor:pointer;transition:background var(--duration-fast,120ms) var(--ease-out),filter var(--duration-fast,120ms) var(--ease-out)" onclick={v.onInsurance} role="button" tabindex="0">
-          <span style="flex:none;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:var(--radius-md);background:{v.coverTileBg}">
-            <span style="width:18px;height:18px;background:{v.coverInk};mask:{v.coverMask}"></span>
-          </span>
-          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-            <span style="font:var(--weight-semibold) var(--text-md)/1.25 var(--font-sans);color:var(--ink,#ECECF1)">{t(v.coverTitle)}</span>
-            <span style="font:var(--weight-regular) var(--text-sm)/1.35 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(v.coverHint)}</span>
+      <div class="extras">
+        <DailyPuzzleCard state={puzzleState} sub={puzzleSub} {countdown} remind={puzzleRemind} onAction={(k) => onAction?.(k)} />
+        <div class="row cover" class:insured={insuredLeft > 0} onclick={() => onAction?.('insurance')} role="button" tabindex="0">
+          <span class="tile cover-tile"><span class="tile-glyph shield"></span></span>
+          <div class="row-text">
+            <span class="row-title">{insuredLeft > 0 ? `Insured for ${insuredLeft} ${insuredLeft === 1 ? 'day' : 'days'}` : 'No insurance'}</span>
+            <span class="row-hint"
+              >{insuredLeft > 0 ? 'Miss a day and one is spent — the streak carries on' : `Miss tomorrow and ${days} days are gone. Cover starts at 1 CHAT.`}</span
+            >
           </div>
-          {#if v.hasCover}
-            <span style="flex:none;display:flex;align-items:center;gap:3px">
-              {#each v.coverPips ?? [] as p, i2}
-                <span style="width:13px;height:13px;background:{p.ink};mask:{v.coverMask}"></span>
+          {#if insuredLeft > 0}
+            <span class="pips">
+              {#each { length: Math.min(insuredLeft, 7) } as _}
+                <span class="pip"></span>
               {/each}
             </span>
           {/if}
-          <span style="flex:none;width:14px;height:14px;background:{v.coverInk};mask:{v.chevronMask}"></span>
+          <span class="chevron cover-chevron"></span>
         </div>
-        {#each v.links ?? [] as l, i3}
-          <div class="dc-p6" style="display:flex;align-items:center;gap:var(--space-12);padding:var(--space-14);box-sizing:border-box;border-radius:var(--radius-lg);cursor:{l.cursor};transition:background var(--duration-fast,120ms) var(--ease-out)" onclick={l.onPress} role="button" tabindex="0">
-            <span style="flex:none;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:var(--radius-md);background:var(--overlay-2,rgba(255,255,255,.07))">
-              <span style="width:18px;height:18px;background:var(--ink-3,#9A9AA8);mask:{l.mask}"></span>
-            </span>
-            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-              <span style="font:var(--weight-semibold) var(--text-md)/1.25 var(--font-sans);color:var(--ink,#ECECF1)">{t(l.label)}</span>
-              <span style="font:var(--weight-regular) var(--text-sm)/1.35 var(--font-sans);color:var(--ink-4,#7C7C8C);text-wrap:pretty">{t(l.hint)}</span>
-            </div>
-            {#if l.actionable}
-              <span style="flex:none;width:14px;height:14px;background:var(--ink-3,#9A9AA8);mask:{v.chevronMask}"></span>
-            {/if}
+        <div class="row link" onclick={() => onAction?.('earn')} role="button" tabindex="0">
+          <span class="tile"><span class="tile-glyph spark"></span></span>
+          <div class="row-text">
+            <span class="row-title">Ways to earn CHIT</span>
+            <span class="row-hint">51 achievements · 12 left to try</span>
           </div>
-        {/each}
+          <span class="chevron"></span>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <style>
-  .dc-p0:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p1:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p2:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p3:hover{background:var(--overlay-2,rgba(255,255,255,.09)) !important}
-  .dc-p4:hover{filter:brightness(1.06) !important}
-  .dc-p5:hover{filter:brightness(1.14) !important}
-  .dc-p6:hover{background:var(--overlay-1,rgba(255,255,255,.045)) !important}
+  .layer {
+    position: fixed;
+    inset: 0;
+    z-index: 72;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-22);
+  }
+
+  .veil {
+    position: absolute;
+    inset: 0;
+    background: var(--oc-veil, rgba(3, 3, 6, 0.72));
+    backdrop-filter: var(--oc-veil-blur, blur(4px));
+    -webkit-backdrop-filter: var(--oc-veil-blur, blur(4px));
+    animation: oc-veil-in var(--duration-base, 200ms) var(--ease-out) both;
+  }
+
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 560px;
+    max-height: 100%;
+    box-sizing: border-box;
+    border-radius: var(--radius-xl);
+    background: var(--surface-1, #0e0e12);
+    box-shadow:
+      inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.1)),
+      var(--shadow-modal, 0 30px 70px rgba(0, 0, 0, 0.45));
+    overflow: hidden;
+    animation: oc-dlg-in var(--duration-slow, 280ms) var(--ease-out) both;
+  }
+
+  .closing .veil {
+    animation: oc-veil-out 170ms var(--ease-standard) both;
+  }
+
+  .closing .card {
+    animation: oc-dlg-out 170ms var(--ease-standard) both;
+  }
+
+  .head {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-24) var(--space-32);
+    border-block-end: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .icon-button {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+
+  .icon-button:hover {
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+  }
+
+  .icon-button.back {
+    width: 32px;
+    height: 32px;
+    margin-inline-start: -10px;
+  }
+
+  .glyph {
+    width: 17px;
+    height: 17px;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .back-glyph {
+    width: 16px;
+    height: 16px;
+    background: var(--ink-2, #c9c9d4);
+    mask: var(--icon-back) center/contain no-repeat;
+  }
+
+  .close-glyph {
+    width: 15px;
+    height: 15px;
+    mask: var(--icon-close) center/contain no-repeat;
+  }
+
+  .heading {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .title {
+    font: var(--weight-bold) var(--text-lg) / 1.25 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .subtitle {
+    font: var(--weight-regular) var(--text-sm) / 1.3 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-22);
+    padding: var(--space-26) var(--space-32) var(--space-32);
+  }
+
+  .summary {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-22);
+    min-width: 0;
+  }
+
+  .ring {
+    flex: none;
+    position: relative;
+    width: 136px;
+    height: 136px;
+    border-radius: var(--radius-pill);
+  }
+
+  .ring.pop {
+    animation: oc-chit-pop 420ms var(--ease-out);
+  }
+
+  .ring-hole {
+    position: absolute;
+    inset: 14px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-1, #0e0e12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+  }
+
+  .streak,
+  .balance {
+    font: var(--weight-bold) var(--text-3xl, 34px) / 1 var(--font-sans);
+    letter-spacing: var(--tracking-tight);
+    color: var(--ink, #ececf1);
+  }
+
+  .balance {
+    line-height: 1.1;
+  }
+
+  .caps {
+    font: var(--weight-semibold) var(--text-2xs, 10px) / 1 var(--font-mono);
+    letter-spacing: var(--tracking-wide);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .caps.wide {
+    font-size: var(--text-xs);
+  }
+
+  .totals {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .muted {
+    font: var(--weight-regular) var(--text-sm) / 1.35 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+  }
+
+  .milestones {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    padding: var(--space-14);
+    border-radius: var(--radius-lg);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+  }
+
+  .milestone-head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-10);
+    min-width: 0;
+    margin: 0 10px;
+  }
+
+  .milestone-title {
+    flex: 1;
+    min-width: 0;
+    font: var(--weight-semibold) var(--text-md) / 1.3 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .rate {
+    flex: none;
+    font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
+    color: var(--ink-3, #9a9aa8);
+  }
+
+  .bar-wrap {
+    position: relative;
+    margin: 0 10px;
+  }
+
+  .bar {
+    position: relative;
+    height: 8px;
+    border-radius: var(--radius-pill);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.09));
+    overflow: hidden;
+  }
+
+  .fill {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    background: linear-gradient(90deg, var(--accent, #ff5672), var(--status-chit, #ff9f45));
+    transition: width var(--duration-slow, 280ms) var(--ease-out);
+  }
+
+  .notch {
+    position: absolute;
+    top: -1px;
+    width: 2px;
+    height: 10px;
+    border-radius: 1px;
+    background: var(--surface-1, #0e0e12);
+    transform: translateX(-50%);
+  }
+
+  .labels {
+    position: relative;
+    height: 18px;
+    margin-block-start: var(--space-8);
+  }
+
+  .tier {
+    position: absolute;
+    transform: translateX(-50%);
+    font: var(--weight-semibold) var(--text-sm) / 1 var(--font-mono);
+    color: var(--ink-4, #7c7c8c);
+    white-space: nowrap;
+  }
+
+  .tier.reached {
+    color: var(--status-chit, #ff9f45);
+  }
+
+  .claim-area {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .claim,
+  .claimed {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-8);
+    height: 46px;
+    border-radius: var(--radius-md);
+    user-select: none;
+  }
+
+  .claim {
+    background: linear-gradient(100deg, var(--accent, #ff5672), var(--status-chit, #ff9f45));
+    cursor: pointer;
+  }
+
+  .claim:hover {
+    filter: brightness(1.06);
+  }
+
+  .flame {
+    width: 17px;
+    height: 17px;
+    background: var(--on-accent, #2e0512);
+    mask: var(--icon-flame) center/contain no-repeat;
+  }
+
+  .claim-label {
+    font: var(--weight-bold) var(--text-base) / 1 var(--font-sans);
+    color: var(--on-accent, #2e0512);
+  }
+
+  .claimed {
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+  }
+
+  .check {
+    width: 15px;
+    height: 15px;
+    background: var(--status-online, #2ee6a8);
+    mask: var(--icon-check) center/contain no-repeat;
+  }
+
+  .claimed-label {
+    font: var(--weight-semibold) var(--text-base) / 1 var(--font-sans);
+    color: var(--ink-2, #c9c9d4);
+  }
+
+  .note {
+    padding-block-start: var(--space-4);
+    font: var(--weight-regular) var(--text-sm) / 1.5 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-align: center;
+    text-wrap: pretty;
+  }
+
+  .note.strong {
+    font-weight: var(--weight-semibold);
+    color: var(--ink, #ececf1);
+  }
+
+  .extras {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-12);
+    margin-block-start: var(--space-4);
+    padding-block-start: var(--space-18);
+    border-block-start: 1px solid var(--line-1, rgba(255, 255, 255, 0.07));
+  }
+
+  .row {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    padding: var(--space-14);
+    box-sizing: border-box;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+  }
+
+  .cover {
+    --cover-ink: var(--status-warning, #ffb03d);
+    background: color-mix(in srgb, var(--status-warning, #ffb03d) 12%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--status-warning, #ffb03d) 50%, transparent);
+    transition:
+      background var(--duration-fast, 120ms) var(--ease-out),
+      filter var(--duration-fast, 120ms) var(--ease-out);
+  }
+
+  .cover.insured {
+    --cover-ink: var(--status-online, #2ee6a8);
+    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
+    box-shadow: inset 0 0 0 1px var(--line-2, rgba(255, 255, 255, 0.12));
+  }
+
+  .cover:hover {
+    filter: brightness(1.14);
+  }
+
+  .link {
+    transition: background var(--duration-fast, 120ms) var(--ease-out);
+  }
+
+  .link:hover {
+    background: var(--overlay-1, rgba(255, 255, 255, 0.045));
+  }
+
+  .tile {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-md);
+    background: var(--overlay-2, rgba(255, 255, 255, 0.07));
+  }
+
+  .cover-tile {
+    background: color-mix(in srgb, var(--status-warning, #ffb03d) 18%, transparent);
+  }
+
+  .insured .cover-tile {
+    background: color-mix(in srgb, var(--status-online, #2ee6a8) 14%, transparent);
+  }
+
+  .tile-glyph {
+    width: 18px;
+    height: 18px;
+    background: var(--ink-3, #9a9aa8);
+  }
+
+  .shield {
+    background: var(--cover-ink);
+    mask: var(--icon-shield) center/contain no-repeat;
+  }
+
+  .spark {
+    mask: var(--icon-spark) center/contain no-repeat;
+  }
+
+  .row-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .row-title {
+    font: var(--weight-semibold) var(--text-md) / 1.25 var(--font-sans);
+    color: var(--ink, #ececf1);
+  }
+
+  .row-hint {
+    font: var(--weight-regular) var(--text-sm) / 1.35 var(--font-sans);
+    color: var(--ink-4, #7c7c8c);
+    text-wrap: pretty;
+  }
+
+  .pips {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .pip {
+    width: 13px;
+    height: 13px;
+    background: var(--status-online, #2ee6a8);
+    mask: var(--icon-shield) center/contain no-repeat;
+  }
+
+  .chevron {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    background: var(--ink-3, #9a9aa8);
+    mask: var(--icon-chevron-right) center/contain no-repeat;
+  }
+
+  .cover-chevron {
+    background: var(--cover-ink);
+  }
 </style>
