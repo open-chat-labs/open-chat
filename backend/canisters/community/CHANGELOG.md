@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Apply changes sent by other canisters while frozen by a platform moderator ([#9912](https://github.com/open-chat-labs/open-chat/pull/9912))
 - Keep the cached copy of an event up to date once earlier cached events have been removed ([#9929](https://github.com/open-chat-labs/open-chat/pull/9929))
+- Finish importing a group's members if its channel is deleted meanwhile, rather than trapping ([#9950](https://github.com/open-chat-labs/open-chat/pull/9950))
 
 ## [[2.0.2134](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.2134-community)] - 2026-10-12
 
