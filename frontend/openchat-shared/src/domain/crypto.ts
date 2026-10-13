@@ -1,3 +1,4 @@
+import type { ResourceKey } from "../utils/i18n";
 import type { Failure, Success } from "./response";
 
 export const E8S_PER_TOKEN = 100_000_000;
@@ -20,6 +21,31 @@ export const BASE_NETWORK = "Base";
 export const ONE_SEC_TOKENS = [USDC_SYMBOL, USDT_SYMBOL];
 export type EvmChain = typeof ETHEREUM_NETWORK | typeof ARBITRUM_NETWORK | typeof BASE_NETWORK;
 export type Chain = EvmChain | typeof ICP_SYMBOL;
+
+/**
+ * Where a withdrawal from the user's wallet goes: to an account on the token's own ledger, out to
+ * Bitcoin through the ckBTC minter, or out to an EVM chain through OneSec
+ */
+export type WithdrawalRoute =
+    | { kind: "ledger" }
+    | { kind: "btc" }
+    | { kind: "one_sec"; chain: EvmChain };
+
+export type Withdrawal = {
+    ledger: string;
+    symbol: string;
+    route: WithdrawalRoute;
+    to: string;
+    amount: bigint;
+    // the ledger's fee for a single transfer, which a withdrawal on the token's own ledger pays
+    fee: bigint;
+};
+
+/** How a withdrawal went. `cancelled` means the user dismissed the PIN prompt, so nothing was sent */
+export type WithdrawOutcome =
+    | { kind: "sent" }
+    | { kind: "cancelled" }
+    | { kind: "failed"; message: ResourceKey };
 
 export const LEDGER_CANISTER_ICP = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const INDEX_CANISTER_ICP = "qhbym-qaaaa-aaaaa-aaafq-cai";

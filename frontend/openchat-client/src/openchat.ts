@@ -275,6 +275,8 @@ import {
     type ProposalContent,
     type ProposalVoteDetails,
     type ProposalVoteOutcome,
+    type Withdrawal,
+    type WithdrawOutcome,
     type ProposeResponse,
     type PubSubEvents,
     type PublicProfile,
@@ -585,6 +587,7 @@ import {
 } from "./utils/chat";
 import { disableInviteCodeResult, inviteCodeResult } from "./utils/inviteLink";
 import { proposalVoteResult } from "./utils/proposalVote";
+import { withdrawFailed, withdrawResult } from "./utils/withdraw";
 import { joinGroupFailureMessage } from "./utils/join";
 import {
     bioResult,
@@ -7526,7 +7529,69 @@ export class OpenChat {
         return Promise.resolve(undefined);
     }
 
-    async withdrawCryptocurrency(
+    /**
+     * Sends a withdrawal from the user's wallet, prompting for their PIN if they have one, and refreshes
+     * the ledger's balance once it has gone. An address which is the account of a user id in a MultiUser
+     * canister is refused without sending anything: no one can sign for it, so anything sent there is
+     * lost, and since a withdrawal goes straight to the ledger nothing on the backend checks it.
+     */
+    async withdraw(withdrawal: Withdrawal): Promise<WithdrawOutcome> {
+        if (isAccountOfMultiUserCanisterUserId(withdrawal.to)) {
+            return { kind: "failed", message: i18nKey("cryptoAccount.sendToUserId") };
+        }
+
+        let outcome: WithdrawOutcome;
+        try {
+            const resp = await this.#sendWithdrawal(withdrawal);
+            outcome = withdrawResult(resp, withdrawal.symbol);
+            if (outcome.kind === "failed") {
+                this.logMessage(`Unable to withdraw ${withdrawal.symbol}`, resp);
+            }
+        } catch (err) {
+            // the user dismissed the PIN prompt
+            if (err === "cancelled") return { kind: "cancelled" };
+            this.logError(`Unable to withdraw ${withdrawal.symbol}`, err);
+            return withdrawFailed(withdrawal.symbol);
+        }
+
+        if (outcome.kind === "sent") {
+            this.refreshAccountBalance(withdrawal.ledger).catch((err) =>
+                this.logError(
+                    `Unable to refresh ${withdrawal.symbol} balance after a withdrawal`,
+                    err,
+                ),
+            );
+        }
+        return outcome;
+    }
+
+    #sendWithdrawal({
+        ledger,
+        symbol,
+        route,
+        to,
+        amount,
+        fee,
+    }: Withdrawal): Promise<WithdrawCryptocurrencyResponse | WithdrawBtcResponse> {
+        switch (route.kind) {
+            case "ledger":
+                return this.#withdrawCryptocurrency({
+                    kind: "pending",
+                    ledger,
+                    token: symbol,
+                    to,
+                    amountE8s: amount,
+                    feeE8s: fee,
+                    createdAtNanos: BigInt(Date.now()) * 1_000_000n,
+                });
+            case "btc":
+                return this.#withdrawBtc(to, amount);
+            case "one_sec":
+                return this.#withdrawViaOneSec(ledger, symbol, route.chain, to, amount);
+        }
+    }
+
+    async #withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
     ): Promise<WithdrawCryptocurrencyResponse> {
         let pin: string | undefined = undefined;
@@ -10128,7 +10193,7 @@ export class OpenChat {
         return address;
     }
 
-    async withdrawBtc(address: string, amount: bigint): Promise<WithdrawBtcResponse> {
+    async #withdrawBtc(address: string, amount: bigint): Promise<WithdrawBtcResponse> {
         let pin: string | undefined = undefined;
 
         if (pinNumberRequiredStore.value) {
@@ -10151,7 +10216,7 @@ export class OpenChat {
         return response;
     }
 
-    async withdrawViaOneSec(
+    async #withdrawViaOneSec(
         ledger: string,
         tokenSymbol: string,
         chain: EvmChain,
