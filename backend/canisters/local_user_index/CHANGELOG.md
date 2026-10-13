@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Count in the metrics how many Group, Community and MultiUser canisters have finished replacing migrated users' old ids ([#9949](https://github.com/open-chat-labs/open-chat/pull/9949))
+- List the canisters yet to finish replacing migrated users' old ids, once 50 or fewer remain ([#9950](https://github.com/open-chat-labs/open-chat/pull/9950))
 
 ### Removed
 
