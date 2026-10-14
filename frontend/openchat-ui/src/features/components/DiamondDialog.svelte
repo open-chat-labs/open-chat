@@ -99,7 +99,13 @@
   const fmtAmt = (n: number) =>
     Number.isInteger(n) ? n.toLocaleString(i18n.locale ?? 'en') : n.toLocaleString(i18n.locale ?? 'en', { minimumFractionDigits: n >= 1 ? 2 : 0, maximumFractionDigits: dp(n) });
 
-  interface Props {
+  // membership: timed members must say when it ends; lifetime members never expire (no date is shown)
+  type Membership =
+    | { isDiamond?: false; lifetime?: false; memberUntil?: undefined }
+    | { isDiamond: true; lifetime: true; memberUntil?: undefined }
+    | { isDiamond: true; lifetime?: false; /** Current membership end (ISO date). */ memberUntil: string };
+
+  interface BaseProps {
     /** Wallet tokens; the payable ones can pay. */
     tokens: WalletToken[];
     /** CHAT balance (other tokens use their own `held`). */
@@ -115,12 +121,8 @@
     autoRenewDefault?: boolean;
     /** Opens straight on the plans step. */
     plan?: PlanKey | null;
-    isDiamond?: boolean;
-    lifetime?: boolean;
     /** The user's own deposit address for topping up. Without it the Top up option is hidden. */
     depositAddress?: string;
-    /** Current membership end (ISO date); members without it are treated as expiring today. */
-    memberUntil?: string;
     /** Shows a back arrow on the first step. */
     onBack?: () => void;
     /** Resource key (or literal text). */
@@ -132,6 +134,8 @@
     /** Re-read balances (the host updates `tokens` / `balance`). Without it the refresh link is hidden. */
     onRefreshBalance?: () => Promise<unknown> | void;
   }
+
+  type Props = BaseProps & Membership;
 
   let {
     tokens,

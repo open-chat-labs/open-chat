@@ -200,7 +200,10 @@ No `.logic.js` and no `useLogic`: state in runes, view values in `$derived`, sty
 ## Known gaps
 - `npm run build` and `svelte-check` pass (0 errors). The remaining warnings are a11y notes on custom `role="button"` elements; keyboard activation for those is handled globally by `a11y.js`.
 - The app **shell** (`OpenChat App.dc.html`: layout, routing between chats/wallet/explore, call persistence, demo data) is not exported — only its components. Wire them in your own routes.
-- Feature components still carry local sample data where the prototype did; move it to fixtures when connecting the backend.
+- Feature components take account, chain and backend data as props and report every change through host callbacks (by id, promise-based where it can fail). Demo values and stand-in handlers live in `src/docs/samples.ts`.
+- Placeholders kept on purpose until implementation:
+  - **GIF results** in `MessageComposer` (`GIF_WORDS`) are placeholder data; real GIF search needs a host-fed source (ThreadPanel already passes the picked query through `onGif`).
+  - **Your own presence** in `NavRail` is a boolean `profileOnline` (default `false`). Users may later choose a status (away, busy …); that would replace the flag with a status prop.
 - `Countdown` isn't used by the message bubbles yet (they take pre-formatted strings).
 
 ## Keeping in sync with the prototype

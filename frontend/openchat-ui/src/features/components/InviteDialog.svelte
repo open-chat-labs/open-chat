@@ -202,9 +202,8 @@
     }
   }
 
-  async function sentToChat(x: { chat: string; message: string }) {
-    // ChatPicker reports the chat it shows by name; the id is looked up from the same list
-    const chat = chats.find((c) => c.name === x.chat);
+  async function sentToChat(x: { chatId: string; chat: string; message: string }) {
+    const chat = chats.find((c) => c.id === x.chatId);
     if (!chat || !onShareToChat) return;
     if (await attempt('chat', () => onShareToChat({ chatId: chat.id, message: x.message, link }))) {
       pickerOpen = false;

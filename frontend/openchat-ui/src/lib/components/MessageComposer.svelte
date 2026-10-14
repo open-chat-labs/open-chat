@@ -17,7 +17,8 @@
   type AttachKind = 'media' | 'file' | 'poll' | 'prize' | 'crypto' | 'swap' | 'memeFighter';
 
   const GIF_CATS = ['Trending', 'Reactions', 'Celebrate', 'Crypto', 'Thanks'] as const;
-  // GIF_WORDS are placeholder GIF results (data), only the category names are UI copy
+  // GIF_WORDS are placeholder GIF results (data), only the category names are UI copy.
+  // Kept until implementation: real results need a host-fed GIF source (see EXPORT.md, Known gaps).
   const GIF_CAT_KEYS: Record<(typeof GIF_CATS)[number], string> = { Trending: 'ui.messageComposer.gifTrending', Reactions: 'ui.messageComposer.gifReactions', Celebrate: 'ui.messageComposer.gifCelebrate', Crypto: 'ui.messageComposer.gifCrypto', Thanks: 'ui.messageComposer.gifThanks' };
   const GIF_TONES = [
     'linear-gradient(150deg,#5CB8FF,#2F6BFF)',

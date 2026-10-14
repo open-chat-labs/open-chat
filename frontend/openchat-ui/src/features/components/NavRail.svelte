@@ -54,7 +54,8 @@
     profileHandle: string;
     /** Your avatar image. */
     profileAvatarUrl?: string;
-    /** Your own presence dot. */
+    /** Your own presence dot, shown only when the host says so (defaults to false). A future status (away, busy …)
+     *  would replace this flag. */
     profileOnline?: boolean;
     onSelect?: (i: number, item: Item) => void;
     onSelectPin?: (id: string, pin: Pin) => void;
@@ -84,7 +85,7 @@
     profileLabel,
     profileHandle,
     profileAvatarUrl,
-    profileOnline = true,
+    profileOnline = false,
     onSelect,
     onSelectPin,
     exploreActive = false,

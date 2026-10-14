@@ -232,6 +232,7 @@
   let rulesOn = $state(false);
   let rulesText = $state('');
   let savedRulesText = '';
+  let savedRulesOn = false;
   let rulesNewVersion = $state(false);
   let perms = $state<Perms>(defaultPerms(false));
   let threadsOverride = $state(false);
@@ -258,6 +259,7 @@
     rulesOn = rules.enabled !== undefined ? !!rules.enabled : !!(rules.text || '').trim();
     rulesText = rules.text || '';
     savedRulesText = rulesText;
+    savedRulesOn = rulesOn;
     rulesNewVersion = false;
     perms = {
       general: { ...base.general, ...(p?.general ?? {}) },
@@ -359,7 +361,8 @@
   const permGroups = $derived([...new Set(generalList.map((p) => p.group))]);
   const generalChanged = $derived(generalList.filter((p) => perms.general[p.key] !== p.def).length);
   // the text changed from the saved rules: offer making members accept them again
-  const rulesChanged = $derived(rulesOn && rulesText.trim() !== savedRulesText.trim());
+  // new rules (turned on, or the text changed) can ask members to accept them
+  const rulesChanged = $derived(rulesOn && !!rulesText.trim() && (!savedRulesOn || rulesText.trim() !== savedRulesText.trim()));
   const msgExceptions = $derived(CONTENT.filter((c) => perms.messages[c.key] !== INHERIT).length);
   const thrExceptions = $derived(CONTENT.filter((c) => perms.threads[c.key] !== INHERIT).length);
   const permsChanged = $derived(
@@ -478,6 +481,7 @@
     if (embedded) {
       initial = JSON.stringify(saved);
       savedRulesText = rulesOn ? rulesText : '';
+      savedRulesOn = rulesOn;
       rulesNewVersion = false;
       submitted = false;
     }
@@ -895,8 +899,8 @@
                       errorText={t('ui.groupSettingsDialog.rulesError')}
                     />
                   </div>
-                  {#if rulesChanged && savedRulesText.trim() && !viewOnly}
-                    <!-- a real change (not a typo fix) can ask everyone to accept the rules again -->
+                  {#if rulesChanged && !viewOnly}
+                    <!-- new rules, or a real change (not a typo fix), can ask everyone to accept them -->
                     <div class="cell">
                       <Toggle label="ui.groupSettingsDialog.rulesNewVersion" help="ui.groupSettingsDialog.rulesNewVersionHint" on={rulesNewVersion} onChange={(on) => (rulesNewVersion = on)} />
                     </div>

@@ -1,5 +1,6 @@
 <!-- Share something to one chat: pick → preview with optional message → Send.
-     item: what is being shared. onSend({ chat, message }) fires on Send; the parent closes the picker and shows its own toast. -->
+     item: what is being shared. onSend({ chatId, chat, message }) fires on Send with the picked chat's id (and its name for
+     display); the parent closes the picker and shows its own toast. -->
 <script lang="ts">
   import Button from './Button.svelte';
   import DialogShell from './DialogShell.svelte';
@@ -21,6 +22,8 @@
   }
 
   interface Chat {
+    /** The host's id for the chat; passed back on Send. */
+    id: string;
     name: string;
     kind?: string;
     grad: string;
@@ -36,7 +39,7 @@
     previewLabel?: string;
     item?: Item | null;
     chats: Chat[];
-    onSend?: (v: { chat: string; message: string }) => void;
+    onSend?: (v: { chatId: string; chat: string; message: string }) => void;
     onClose?: () => void;
     z?: number;
   }
@@ -57,7 +60,7 @@
   }
 
   function send() {
-    if (to) onSend?.({ chat: to.name, message: message.trim() });
+    if (to) onSend?.({ chatId: to.id, chat: to.name, message: message.trim() });
   }
 </script>
 

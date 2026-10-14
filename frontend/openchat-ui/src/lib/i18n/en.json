@@ -1501,7 +1501,7 @@
       "rulesHelp": "The field grows as you type.",
       "rulesNeeded": "Rules needed",
       "rulesNewVersion": "Ask members to accept the new rules",
-      "rulesNewVersionHint": "Turn on for a real change; leave off for a typo fix.",
+      "rulesNewVersionHint": "Turn on for new rules or a real change; leave off for a typo fix.",
       "rulesPlaceholder": "Anything members should know before they join",
       "sameAsDefault": "Same as default",
       "saveFailed": "Couldn't save. Your changes are still here — try again.",

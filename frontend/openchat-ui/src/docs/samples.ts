@@ -5,10 +5,10 @@ import type { GroupMessage, MenuItem, MessageGroupItem, TokenOption } from '../l
 const icon = (n: string) => `var(--icon-${n}) center/contain no-repeat`;
 
 const chats = [
-  { name: 'Lucy Linden', kind: 'Direct chat', grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
-  { name: 'Design Guild', kind: 'Group · 112 members', grad: 'linear-gradient(140deg,#b06bff,#5b2a86)', radius: '11px' },
-  { name: 'Matt Rivers', kind: 'Direct chat', grad: 'linear-gradient(140deg,#ffb03d,#ff4d4d)' },
-  { name: '#general', kind: 'OpenChat community', grad: 'linear-gradient(140deg,#ff5f9e,#6a2bff)', radius: '11px' },
+  { id: 'chat-0', name: 'Lucy Linden', kind: 'Direct chat', grad: 'linear-gradient(140deg,#2EE6A8,#1FB6FF)' },
+  { id: 'chat-1', name: 'Design Guild', kind: 'Group · 112 members', grad: 'linear-gradient(140deg,#b06bff,#5b2a86)', radius: '11px' },
+  { id: 'chat-2', name: 'Matt Rivers', kind: 'Direct chat', grad: 'linear-gradient(140deg,#ffb03d,#ff4d4d)' },
+  { id: 'chat-3', name: '#general', kind: 'OpenChat community', grad: 'linear-gradient(140deg,#ff5f9e,#6a2bff)', radius: '11px' },
 ];
 
 // InviteDialog: everyone you can invite (frequent ones listed before you search) and invites not yet accepted
@@ -567,7 +567,7 @@ export const samples: Record<string, Record<string, unknown>> = {
     pending: invitePending,
     canInvite: true,
     shareLink: 'https://oc.app/group/the-awesome-group-8f2a',
-    chats: chats.slice(0, 3).map((c, i) => ({ id: `chat-${i}`, ...c })),
+    chats: chats.slice(0, 3),
     onInvite: () => wait(400),
     onAdd: () => wait(400),
     onShareToggle: () => wait(300),
@@ -650,6 +650,7 @@ export const samples: Record<string, Record<string, unknown>> = {
   },
   NavRail: {
     items: [{ icon: 'messages', label: 'docs.features.navRail.chats', dot: true, count: 3 }, { icon: 'bell', label: 'ui.navRail.notifications' }, { icon: 'wallet', label: 'ui.navRail.wallet' }],
+    profileOnline: true,
     pins: [{ id: 'c1', color: 'sunset', name: 'Community 01' }, { id: 'c2', color: 'blue', name: 'Community 02' }, { id: 'c3', color: 'teal', name: 'Community 03', dot: true }, { id: 'c4', color: 'plum', name: 'Community 04' }],
   },
   CallPanel: { people: [{ id: 'u-julian', name: 'julian_jelfs', initial: 'J', grad: 'linear-gradient(140deg,#9BD94B,#4E8F2B)', speaking: true }], onToggleCamera: () => wait(200), onToggleShare: () => wait(200) },
@@ -700,7 +701,7 @@ export const samples: Record<string, Record<string, unknown>> = {
     ],
   },
   // the export rendered an empty community with no gates by default
-  JoinGateDialog: { community: { name: '' }, gates: [] },
+  JoinGateDialog: { community: { name: '' }, gates: [], ownerShare: 0.98 },
   ImportToCommunityDialog: {
     communities: [
       { id: 'c-one', name: 'Community One', members: 1234, channels: 10 },

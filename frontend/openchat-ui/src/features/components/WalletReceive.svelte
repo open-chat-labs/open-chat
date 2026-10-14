@@ -108,10 +108,9 @@
   }
 
   // the picker stays open until the host has posted it
-  async function share(v: { chat: string; message: string }) {
+  async function share(v: { chatId: string; chat: string; message: string }) {
     if (!tok || !net || !address || !id || !onShare || shareBusy) return;
-    // ChatPicker reports the chat it shows by name; map it back to the host's id
-    const target = chats.find((c) => c.name === v.chat);
+    const target = chats.find((c) => c.id === v.chatId);
     if (!target) return;
     shareBusy = true;
     try {
@@ -221,7 +220,7 @@
         title={t('ui.walletReceive.shareToChat')}
         previewLabel={t('ui.walletReceive.sharingAddress')}
         item={{ title: t('ui.walletReceive.shareItemTitle', { symbol: tok.symbol, network: t(net.label) }), sub: `${address.slice(0, 10)}…${address.slice(-8)}`, mark: tok.mark, grad: tok.grad }}
-        chats={chats.map((c) => ({ name: c.name, kind: c.kind, grad: c.grad ?? 'var(--overlay-2)', radius: c.radius }))}
+        chats={chats.map((c) => ({ id: c.id, name: c.name, kind: c.kind, grad: c.grad ?? 'var(--overlay-2)', radius: c.radius }))}
         onSend={share}
         onClose={() => (sharing = false)}
       />

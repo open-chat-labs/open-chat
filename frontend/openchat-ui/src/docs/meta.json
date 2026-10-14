@@ -4982,7 +4982,7 @@
       },
       {
         "name": "chats",
-        "type": "Chat[]",
+        "type": "{ id: string; name: string; kind?: string; grad: string; radius?: string }[]",
         "default": null,
         "editor": null,
         "options": null,
@@ -4993,14 +4993,14 @@
       },
       {
         "name": "onSend",
-        "type": "(v: { chat: string; message: string }) => void",
+        "type": "(v: { chatId: string; chat: string; message: string }) => void",
         "default": null,
         "editor": null,
         "options": null,
         "section": null,
         "required": false,
         "componentDefault": null,
-        "doc": ""
+        "doc": "Send to the picked chat: its id, its name (for display) and the optional message."
       },
       {
         "name": "onClose",
@@ -8103,7 +8103,7 @@
         "section": null,
         "required": false,
         "componentDefault": "''",
-        "doc": "Current membership end (ISO date); members without it are treated as expiring today."
+        "doc": "Current membership end (ISO date). Required for timed members (isDiamond without lifetime); lifetime members never expire."
       },
       {
         "name": "onBack",
@@ -10872,9 +10872,9 @@
         "editor": "float",
         "options": null,
         "section": null,
-        "required": false,
+        "required": true,
         "componentDefault": null,
-        "doc": "Share of payments that goes to the community owner (the rest to the treasury). The split is hidden without it."
+        "doc": "Share of payments that goes to the community owner (the rest to the treasury), e.g. 0.98."
       },
       {
         "name": "z",
@@ -12122,8 +12122,8 @@
         "options": null,
         "section": null,
         "required": false,
-        "componentDefault": "true",
-        "doc": "Your own presence dot."
+        "componentDefault": "false",
+        "doc": "Your own presence dot, shown only when the host says so. A future status (away, busy …) would replace this flag."
       },
       {
         "name": "onSelect",

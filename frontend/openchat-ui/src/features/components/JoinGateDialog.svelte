@@ -43,8 +43,8 @@
     isDiamond?: boolean;
     isLifetime?: boolean;
     recheckDays?: number;
-    /** Share of payments that goes to the community owner (the rest to the treasury). The split is hidden without it. */
-    ownerShare?: number;
+    /** Share of payments that goes to the community owner (the rest to the treasury), e.g. 0.98. */
+    ownerShare: number;
     z?: number;
     onGetDiamond?: () => void;
     /** Join, paying `paid` (ledger + amount each). Reject to keep the dialog open with an error. */
@@ -155,7 +155,7 @@
   });
 
   const split = $derived(
-    pays.length && ownerShare != null
+    pays.length
       ? [
           { label: t('ui.joinGateDialog.ownerShare', { pct: Math.round(ownerShare * 100) }), value: pays.map((r) => `${fmt((r.gate.amount ?? 0) * ownerShare)} ${r.gate.symbol}`).join(' · ') },
           { label: t('ui.joinGateDialog.treasuryShare', { pct: Math.round((1 - ownerShare) * 100) }), value: pays.map((r) => `${fmt((r.gate.amount ?? 0) * (1 - ownerShare))} ${r.gate.symbol}`).join(' · ') },
