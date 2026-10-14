@@ -294,22 +294,6 @@ impl DirectChats {
         moved
     }
 
-    // Writes every chat back to stable memory, so that it is stored in the current format rather than
-    // as when it last changed. A chat which still holds data on the heap from before its events data
-    // was stored in stable memory (see `ChatEvents::legacy_heap_entries`) is left as it is, since
-    // writing it back would lose that data. Returns how many chats were rewritten and how many left.
-    pub fn rewrite_all(&mut self) -> (u32, u32) {
-        let mut left = 0;
-        let rewritten = self.direct_chats_v2.rewrite(|_, chat| {
-            let has_legacy_heap_entries = chat.events().legacy_heap_entries() > 0;
-            if has_legacy_heap_entries {
-                left += 1;
-            }
-            !has_legacy_heap_entries
-        });
-        (rewritten as u32, left)
-    }
-
     // Moves what each chat holds outside its events under ids which either user had before being
     // migrated to a MultiUser canister onto the ids the chat has for them now (see
     // `DirectChat::migrate_user_ids`), returning how many chats were changed. Every chat is read,
@@ -412,7 +396,6 @@ mod tests {
     use ic_stable_structures::DefaultMemoryImpl;
     use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
     use stable_memory_map::{KeyScope, with_key_scope, with_map, with_map_mut};
-    use std::collections::BTreeMap;
     use types::MessageId;
 
     #[test]
@@ -683,86 +666,6 @@ mod tests {
         let deserialized: DirectChats = msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(&direct_chats));
         assert_eq!(entry(&deserialized, them), entry(&direct_chats, them));
         assert!(deserialized.get(&them.into()).unwrap().notifications_muted.value);
-    }
-
-    #[test]
-    fn every_chat_is_rewritten_in_the_current_format() {
-        init_stable_memory_map();
-        let me = user(1);
-        let mut direct_chats = DirectChats::default();
-        direct_chats.get_or_create(me, user(2), UserType::User, || 1, 10);
-        direct_chats.get_or_create(me, user(3), UserType::User, || 2, 10);
-        direct_chats
-            .get_mut(&user(2).into())
-            .unwrap()
-            .push_message::<NullEventPusher>(message(user(2), 1, 20), None, None);
-
-        // Each chat was stored in an earlier format, with a field which is no longer read
-        #[derive(Serialize)]
-        struct Earlier<'a> {
-            #[serde(flatten)]
-            chat: &'a DirectChat,
-            dropped: u32,
-        }
-        for them in [user(2), user(3)] {
-            let chat = direct_chats.get(&them.into()).unwrap();
-            let bytes = msgpack::serialize_then_unwrap(Earlier { chat: &chat, dropped: 5 });
-            with_map_mut(|m| m.insert(DirectChatKeyPrefix::new().create_key(&chat.key_id()), bytes));
-        }
-
-        assert_eq!(direct_chats.rewrite_all(), (2, 0));
-
-        for them in [user(2), user(3)] {
-            let chat = direct_chats.get(&them.into()).unwrap();
-            assert_eq!(stable_memory_bytes(&direct_chats, them), chat.to_bytes());
-        }
-        let chat = direct_chats.get(&user(2).into()).unwrap();
-        assert_eq!(chat.main_events_reader().latest_message_index(), Some(0.into()));
-    }
-
-    #[test]
-    fn a_chat_holding_data_on_the_heap_is_left_as_it_is() {
-        use serde_value::Value;
-        init_stable_memory_map();
-        let me = user(1);
-        let mut direct_chats = DirectChats::default();
-        direct_chats.get_or_create(me, user(2), UserType::User, || 1, 10);
-        direct_chats.get_or_create(me, user(3), UserType::User, || 2, 10);
-
-        // Edits a chat's events as stored, returning the bytes written
-        let edit_events = |direct_chats: &DirectChats, them: UserId, f: &dyn Fn(&mut BTreeMap<Value, Value>)| {
-            let key = DirectChatKeyPrefix::new().create_key(&entry(direct_chats, them).key_id);
-            let mut chat: Value = msgpack::deserialize_then_unwrap(&stable_memory_bytes(direct_chats, them));
-            let Value::Map(fields) = &mut chat else { panic!() };
-            let Some(Value::Map(events)) = fields.get_mut(&Value::String("events".to_string())) else {
-                panic!()
-            };
-            f(events);
-            let bytes = msgpack::serialize_then_unwrap(&chat);
-            with_map_mut(|m| m.insert(key, bytes.clone()));
-            bytes
-        };
-        // User 2's chat holds users' metrics on the heap, as chats did before they were stored in
-        // stable memory, and user 3's has its message event indexes stored as a plain list, as a list
-        // with nothing in stable memory used to be
-        let held = edit_events(&direct_chats, user(2), &|events| {
-            let metrics = BTreeMap::from([(Value::U32(1), Value::U32(2))]);
-            events.insert(Value::String("per_user_metrics".to_string()), Value::Map(metrics));
-        });
-        edit_events(&direct_chats, user(3), &|events| {
-            let Some(Value::Map(main)) = events.get_mut(&Value::String("main".to_string())) else {
-                panic!()
-            };
-            main.insert(Value::String("message_event_indexes".to_string()), Value::Seq(Vec::new()));
-        });
-
-        assert_eq!(direct_chats.rewrite_all(), (1, 1));
-        assert_eq!(stable_memory_bytes(&direct_chats, user(2)), held);
-        let chat = direct_chats.get(&user(3).into()).unwrap();
-        assert_eq!(stable_memory_bytes(&direct_chats, user(3)), chat.to_bytes());
-
-        // Once rewritten, a chat is left as it is
-        assert_eq!(direct_chats.rewrite_all(), (0, 1));
     }
 
     #[test]

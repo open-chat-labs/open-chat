@@ -1,7 +1,6 @@
 use crate::chat_events_list::Reader;
 use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
-use crate::legacy_heap_entries::LegacyHeapEntries;
 use crate::metrics::{ChatMetricsInternal, MetricKey};
 use crate::per_user_metrics::PerUserMetrics;
 use crate::search_index::SearchIndex;
@@ -61,9 +60,6 @@ pub struct ChatEvents {
     metrics: ChatMetricsInternal,
     #[serde(skip)]
     per_user_metrics: PerUserMetrics,
-    // Each user's metrics from before they were stored in stable memory (see `LegacyHeapEntries`)
-    #[serde(rename = "per_user_metrics", default, skip_serializing)]
-    legacy_per_user_metrics: LegacyHeapEntries,
     frozen: bool,
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
@@ -126,7 +122,6 @@ impl ChatEvents {
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
             per_user_metrics: PerUserMetrics,
-            legacy_per_user_metrics: LegacyHeapEntries::default(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -159,7 +154,6 @@ impl ChatEvents {
             threads: BTreeMap::new(),
             metrics: ChatMetricsInternal::default(),
             per_user_metrics: PerUserMetrics,
-            legacy_per_user_metrics: LegacyHeapEntries::default(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             expiring_events: ExpiringEvents::default(),
@@ -307,19 +301,6 @@ impl ChatEvents {
                 self.per_user_metrics
                     .skip_their_metrics(self.main.stable_memory_prefix(), self.chat, my_user_id);
         }
-    }
-
-    // The entries held on the heap from before they were stored in stable memory (see
-    // `LegacyHeapEntries`), which a canister must have none of to upgrade
-    pub fn legacy_heap_entries(&self) -> usize {
-        self.expiring_events.legacy_heap_entries()
-            + self.last_updated_timestamps.legacy_heap_entries()
-            + self.legacy_per_user_metrics.count()
-            + self.search_index.legacy_heap_entries()
-            + std::iter::once(&self.main)
-                .chain(self.threads.values())
-                .map(|l| l.legacy_heap_entries())
-                .sum::<usize>()
     }
 
     // Passes the user ids in each event after `after` (or in every event if `after` is None)
@@ -4339,59 +4320,5 @@ mod tests {
             None,
         );
         message.event.message_index
-    }
-
-    #[test]
-    fn data_from_before_stable_memory_is_counted_but_not_kept() {
-        #[derive(Serialize)]
-        struct LegacyChatEventsList<'a> {
-            #[serde(flatten)]
-            list: &'a ChatEventsList,
-            message_id_map: std::collections::HashMap<MessageId, EventIndex>,
-        }
-        #[derive(Serialize)]
-        struct LegacySearchIndex {
-            map: BTreeMap<MessageIndex, (UserId, String)>,
-        }
-        #[derive(Serialize)]
-        struct LegacyChatEvents<'a> {
-            #[serde(flatten)]
-            events: &'a ChatEvents,
-            per_user_metrics: BTreeMap<UserId, ChatMetricsInternal>,
-        }
-        fn round_trip<T: Serialize, R: serde::de::DeserializeOwned>(value: T) -> R {
-            msgpack::deserialize_then_unwrap(&msgpack::serialize_then_unwrap(value))
-        }
-
-        let (events, _, _) = setup_events();
-        let user1: UserId = Principal::from_slice(&[1]).into();
-        let user2: UserId = Principal::from_slice(&[2]).into();
-
-        let list: ChatEventsList = round_trip(LegacyChatEventsList {
-            list: &events.main,
-            message_id_map: (0..3u64).map(|i| (MessageId::from(i), EventIndex::from(i as u32))).collect(),
-        });
-        assert_eq!(list.legacy_heap_entries(), 3);
-
-        let search_index: SearchIndex = round_trip(LegacySearchIndex {
-            map: (0..2u32)
-                .map(|i| (MessageIndex::from(i), (user1, "hello".to_string())))
-                .collect(),
-        });
-        assert_eq!(search_index.legacy_heap_entries(), 2);
-
-        let legacy = LegacyChatEvents {
-            events: &events,
-            per_user_metrics: [user1, user2]
-                .into_iter()
-                .map(|u| (u, ChatMetricsInternal::default()))
-                .collect(),
-        };
-        let chat_events: ChatEvents = round_trip(legacy);
-        assert_eq!(chat_events.legacy_heap_entries(), 2);
-
-        // And they are dropped once serialized again
-        let chat_events: ChatEvents = round_trip(&chat_events);
-        assert_eq!(chat_events.legacy_heap_entries(), 0);
     }
 }
